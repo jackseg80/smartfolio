@@ -26,9 +26,10 @@ export function ns(persistKey) {
  * @param {Object} options
  * @param {number} options.timeoutMs - Timeout en ms (défaut 5000)
  * @param {AbortSignal} options.signal - Signal externe optionnel
+ * @param {Object} options.headers - Headers optionnels
  * @returns {Promise<Response>}
  */
-export async function fetchWithTimeout(url, { timeoutMs = 5000, signal } = {}) {
+export async function fetchWithTimeout(url, { timeoutMs = 5000, signal, headers, ...fetchOptions } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -38,7 +39,11 @@ export async function fetchWithTimeout(url, { timeoutMs = 5000, signal } = {}) {
   }
 
   try {
-    const resp = await fetch(url, { signal: controller.signal });
+    const resp = await fetch(url, {
+      signal: controller.signal,
+      headers,
+      ...fetchOptions
+    });
     return resp;
   } finally {
     clearTimeout(timer);
@@ -51,11 +56,23 @@ export async function fetchWithTimeout(url, { timeoutMs = 5000, signal } = {}) {
  * @returns {Promise<Object|null>} Mapped data ou null si échec
  */
 export async function fetchRisk() {
+  // 🆕 FIX Nov 2025: Récupérer l'user actif depuis localStorage pour multi-tenant
+  const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+  // Safe debugLogger avec fallback
+  const debugLogger = window.debugLogger || console;
+  debugLogger.debug(`[fetchRisk] Fetching risk data for user: ${activeUser}`);
+
   // 1) Endpoint canonique
   try {
     const r = await fetchWithTimeout(
       '/api/risk/dashboard?min_usd=0&price_history_days=30&lookback_days=30',
-      { timeoutMs: 5000 }
+      {
+        timeoutMs: 5000,
+        headers: {
+          'X-User': activeUser  // 🆕 FIX: Passer l'user actif pour multi-tenant
+        }
+      }
     );
     if (r?.ok) {
       const data = await r.json();

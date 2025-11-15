@@ -207,6 +207,21 @@ if (balanceResult.csvText) {
 }
 ```
 
+### Frontend Fetch avec Multi-Tenant (Nov 2025)
+```javascript
+// ✅ TOUJOURS passer le header X-User pour les endpoints sensibles
+const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+// Endpoints nécessitant X-User: /api/risk/*, /api/portfolio/*, /api/wealth/*,
+// /api/balances/*, /api/execution/*, /api/governance/*, /api/saxo/*
+const response = await fetch('/api/risk/dashboard', {
+    headers: { 'X-User': activeUser }
+});
+
+// ❌ NE JAMAIS: fetch direct sans header X-User sur endpoints user-specific
+// fetch('/api/risk/dashboard')  // → Utilise toujours user par défaut !
+```
+
 ### Decision Index Panel
 ```javascript
 import { renderDecisionIndexPanel } from './components/decision-index-panel.js';
@@ -306,6 +321,7 @@ Select-String -Path "logs\app.log" -Pattern "ERROR|WARNING" | Select-Object -Las
 ❌ **Hardcoder user_id='demo'** → Utiliser dependency injection
 ❌ **Importer de api.main** → Utiliser `services.balance_service` à la place
 ❌ **fetch() direct** au lieu de window.loadBalanceData()
+❌ **fetch() sans header X-User** → Toujours passer `{'X-User': activeUser}` sur endpoints sensibles (Nov 2025)
 ❌ **Mélanger données users** dans caches/fichiers
 ❌ **Inverser Risk Score** dans Decision Index
 ❌ **Oublier de demander restart serveur** → Pas de --reload, toujours demander à l'utilisateur après modifs backend
