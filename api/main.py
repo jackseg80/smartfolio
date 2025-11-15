@@ -127,7 +127,6 @@ from api.kraken_endpoints import router as kraken_router
 from api.smart_taxonomy_endpoints import router as smart_taxonomy_router  # FIXED - aiohttp mocké
 from api.advanced_rebalancing_endpoints import router as advanced_rebalancing_router
 from api.risk_endpoints import router as risk_router
-from api.risk_dashboard_endpoints import router as risk_dashboard_router
 from api.risk_bourse_endpoints import router as risk_bourse_router
 from api.ml_bourse_endpoints import router as ml_bourse_router
 from api.ml_crypto_endpoints import router as ml_crypto_router
@@ -681,7 +680,6 @@ app.include_router(kraken_router)
 app.include_router(smart_taxonomy_router)
 app.include_router(advanced_rebalancing_router)
 app.include_router(risk_router)
-# app.include_router(risk_dashboard_router)  # ⛔️ DÉSACTIVÉ - Conflit route /api/risk/dashboard avec risk_router (Shadow Mode V2)
 app.include_router(execution_history_router)
 app.include_router(monitoring_advanced_router)
 app.include_router(portfolio_monitoring_router)
