@@ -27,6 +27,9 @@ function initializeMLTab() {
 // Chargement du statut ML global et prédictions - UTILISE SOURCE CENTRALISÉE
 async function loadMLPredictions() {
   try {
+    // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+
     // 1) Statut ML global depuis source unifiée
     const { getUnifiedMLStatus } = await import('../shared-ml-functions.js');
     const mlStatus = await getUnifiedMLStatus();
@@ -97,7 +100,9 @@ async function loadMLPredictions() {
     }
 
     // 2) Volatilité BTC/ETH
-    const volResponse = await fetch('/api/ml/volatility/predict/BTC?horizon_days=1');
+    const volResponse = await fetch('/api/ml/volatility/predict/BTC?horizon_days=1', {
+      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+    });
     if (volResponse.ok) {
       const volData = await volResponse.json();
       const vol = volData.volatility_forecast?.volatility_forecast || volData.volatility;
@@ -105,7 +110,9 @@ async function loadMLPredictions() {
         vol ? `${(vol * 100).toFixed(1)}%` : '--';
     }
 
-    const volETHResponse = await fetch('/api/ml/volatility/predict/ETH?horizon_days=1');
+    const volETHResponse = await fetch('/api/ml/volatility/predict/ETH?horizon_days=1', {
+      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+    });
     if (volETHResponse.ok) {
       const volETHData = await volETHResponse.json();
       const vol = volETHData.volatility_forecast?.volatility_forecast || volETHData.volatility;
@@ -114,7 +121,9 @@ async function loadMLPredictions() {
     }
 
     // 3) Régime de marché
-    const regimeResponse = await fetch('/api/ml/regime/current');
+    const regimeResponse = await fetch('/api/ml/regime/current', {
+      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+    });
     if (regimeResponse.ok) {
       const regimeData = await regimeResponse.json();
       const regimeEl = document.getElementById('ml-regime');
@@ -126,7 +135,9 @@ async function loadMLPredictions() {
     }
 
     // 4) ML Sentiment
-    const sentResponse = await fetch('/api/ml/sentiment/symbol/BTC?days=1');
+    const sentResponse = await fetch('/api/ml/sentiment/symbol/BTC?days=1', {
+      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+    });
     if (sentResponse.ok) {
       const sentData = await sentResponse.json();
       const sentEl = document.getElementById('ml-sentiment');
@@ -150,8 +161,13 @@ async function loadMLPredictions() {
 // Fallback vers ancien système si source centralisée échoue
 async function loadMLPredictionsFallback() {
   try {
+    // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+
     // Ancien système comme fallback
-    const statusResponse = await fetch('/api/ml/status');
+    const statusResponse = await fetch('/api/ml/status', {
+      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+    });
     if (statusResponse.ok) {
       const statusData = await statusResponse.json();
       const pipeline = statusData.pipeline_status || {};

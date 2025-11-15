@@ -1089,10 +1089,15 @@ class WealthContextBar {
 
   async fetchAndUpdateRealData() {
     try {
+      // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
+
       // Parallel fetch of all available APIs
       // ✅ Utilise window.loadBalanceData() au lieu de fetch direct (règle CLAUDE.md)
       const [riskData, balancesData] = await Promise.allSettled([
-        fetch('/api/risk/dashboard').then(r => r.json()),
+        fetch('/api/risk/dashboard', {
+          headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+        }).then(r => r.json()),
         window.loadBalanceData
           ? window.loadBalanceData(false)
           : Promise.reject(new Error('loadBalanceData not available - please check global-config.js'))
