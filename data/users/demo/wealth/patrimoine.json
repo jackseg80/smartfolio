@@ -52,6 +52,39 @@
       "acquisition_date": null,
       "notes": "Demo account",
       "metadata": {}
+    },
+    {
+      "id": "51da9a24-2fc8-4ed4-bc7c-6daebdcc5771",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "4fa7a6e6-1028-4ffd-9901-1ac61fea8c65",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "6c4b4a53-8535-4d11-b5b7-d7098a6a6f3b",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
     }
   ]
 }

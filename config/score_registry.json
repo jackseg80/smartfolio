@@ -5,15 +5,27 @@
     "breadth_rotation": 0.25,
     "sentiment": 0.15
   },
-  "contradiction_penalty_cap": 0.30,
+  "contradiction_penalty_cap": 0.3,
   "volatility_window_days": 30,
   "correlation_window_days": 90,
   "sentiment_smoothing_days": 7,
   "bands": {
-    "conservative": [0, 39],
-    "moderate": [40, 59],
-    "aggressive": [60, 79],
-    "high_conviction": [80, 100]
+    "conservative": [
+      0,
+      39
+    ],
+    "moderate": [
+      40,
+      59
+    ],
+    "aggressive": [
+      60,
+      79
+    ],
+    "high_conviction": [
+      80,
+      100
+    ]
   },
   "band_hysteresis": 3.0,
   "phase_factors": {
@@ -37,5 +49,5 @@
     }
   },
   "version": "1.0",
-  "last_updated": "2024-01-15T10:30:00"
+  "last_updated": "2025-11-23 14:48:13.391662"
 }
