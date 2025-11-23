@@ -144,3 +144,14 @@ validation_report.txt
 *_OLD.md
 analyze_*.py  # Temporary analysis scripts
 
+
+# Coverage reports (generated files)
+coverage.xml
+coverage.json
+htmlcov/
+
+# Security scan results (generated)
+security_code.json
+
+# Phase 3 test results (generated)
+phase3_*.json
