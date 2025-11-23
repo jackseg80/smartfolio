@@ -33,8 +33,9 @@ class PortfolioPerformanceOptimizer:
             key_data = json.dumps(data, sort_keys=True)
         else:
             key_data = str(data)
-        
-        return f"{prefix}_{hashlib.md5(key_data.encode()).hexdigest()[:16]}"
+
+        # MD5 used for cache key only (non-cryptographic purpose)
+        return f"{prefix}_{hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:16]}"
     
     def cache_matrix_operation(self, key: str, operation: callable, *args, **kwargs) -> Any:
         """Cache expensive matrix operations"""
@@ -128,8 +129,9 @@ class PortfolioPerformanceOptimizer:
     
     def fast_correlation_matrix(self, cov_matrix: np.ndarray) -> np.ndarray:
         """Fast correlation matrix calculation"""
-        
-        cache_key = f"corr_{hashlib.md5(cov_matrix.tobytes()).hexdigest()[:16]}"
+
+        # MD5 used for cache key only (non-cryptographic purpose)
+        cache_key = f"corr_{hashlib.md5(cov_matrix.tobytes(), usedforsecurity=False).hexdigest()[:16]}"
         
         def compute_corr():
             volatilities = np.sqrt(np.diag(cov_matrix))

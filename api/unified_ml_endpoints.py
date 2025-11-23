@@ -1056,9 +1056,9 @@ async def get_symbol_sentiment(
 
     except Exception as e:
         logger.warning(f"Could not get governance sentiment, using fallback: {e}")
-        # Generate deterministic but realistic sentiment
+        # Generate deterministic but realistic sentiment (non-cryptographic hash)
         import hashlib
-        seed = int(hashlib.md5(f"{symbol}_{days}".encode()).hexdigest(), 16) % 1000
+        seed = int(hashlib.md5(f"{symbol}_{days}".encode(), usedforsecurity=False).hexdigest(), 16) % 1000
         sentiment_value = (seed / 1000) * 1.4 - 0.7  # Range -0.7 to 0.7
         confidence = 0.65
 
