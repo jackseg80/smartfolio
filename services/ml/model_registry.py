@@ -129,8 +129,8 @@ class ModelRegistry:
             logger.error(f"Failed to save model registry: {e}")
 
     def _compute_file_hash(self, file_path: Path) -> str:
-        """Calculer le hash d'un fichier"""
-        hash_md5 = hashlib.md5()
+        """Calculer le hash d'un fichier (checksum, non-cryptographic)"""
+        hash_md5 = hashlib.md5(usedforsecurity=False)
         with open(file_path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 hash_md5.update(chunk)

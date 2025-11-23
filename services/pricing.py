@@ -4,8 +4,6 @@ import os
 import time
 import asyncio
 import logging
-from urllib.request import urlopen
-from urllib.error import URLError
 import httpx
 
 # --- Configuration via env ---
@@ -158,11 +156,14 @@ def _from_binance(symbol: str):
     try:
         pair = f"{symbol.upper()}USDT"
         url = f"https://api.binance.com/api/v3/ticker/price?symbol={pair}"
-        with urlopen(url, timeout=5) as r:
-            obj = json.loads(r.read().decode("utf-8"))
+        # Use httpx for better security (validates http/https schemes only)
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            obj = response.json()
         p = obj.get("price")
         return float(p) if p else None
-    except URLError:
+    except (httpx.HTTPError, httpx.TimeoutException):
         return None
     except (json.JSONDecodeError, ValueError, KeyError):
         return None
@@ -173,11 +174,14 @@ def _from_coingecko(symbol: str):
         if not cid:
             return None
         url = f"https://api.coingecko.com/api/v3/simple/price?ids={cid}&vs_currencies=usd"
-        with urlopen(url, timeout=6) as r:
-            obj = json.loads(r.read().decode("utf-8"))
+        # Use httpx for better security (validates http/https schemes only)
+        with httpx.Client(timeout=6.0) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            obj = response.json()
         p = (obj.get(cid) or {}).get("usd")
         return float(p) if p else None
-    except URLError:
+    except (httpx.HTTPError, httpx.TimeoutException):
         return None
     except (json.JSONDecodeError, ValueError, KeyError):
         return None

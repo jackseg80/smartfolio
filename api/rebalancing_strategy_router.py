@@ -136,7 +136,8 @@ def _strategies_payload() -> StrategyListResponse:
 
 def _strategies_etag() -> str:
     blob = json.dumps(REBALANCING_STRATEGIES, sort_keys=True).encode("utf-8")
-    return hashlib.md5(blob).hexdigest()
+    # Note: MD5 used for cache ETag only (non-cryptographic purpose)
+    return hashlib.md5(blob, usedforsecurity=False).hexdigest()
 
 # Endpoints
 @router.get("/strategies/list")

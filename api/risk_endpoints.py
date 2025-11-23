@@ -1178,8 +1178,8 @@ async def get_risk_dashboard(
         # Add normalized metadata for frontend traceability
         import hashlib
         taxonomy_version = "v2"  # Current taxonomy version
-        # Simple hash based on groups used for consistency checking
-        groups_hash = hashlib.md5(",".join(sorted(exposure_by_group.keys())).encode()).hexdigest()[:8]
+        # Simple hash based on groups used for consistency checking (non-cryptographic)
+        groups_hash = hashlib.md5(",".join(sorted(exposure_by_group.keys())).encode(), usedforsecurity=False).hexdigest()[:8]
 
         dashboard_data["meta"] = {
             "user_id": user,
