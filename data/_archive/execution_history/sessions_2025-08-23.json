@@ -1,0 +1,426 @@
+[
+  {
+    "id": "1a989744-8ce2-48fe-9030-ba04c91111b5",
+    "timestamp": "2025-08-23T08:20:42.309314+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 1,
+    "successful_orders": 1,
+    "failed_orders": 0,
+    "total_volume_usd": 50.0,
+    "total_fees": 0.05,
+    "avg_slippage_bps": 11.306328226264949,
+    "avg_execution_time_ms": 39.0,
+    "orders": [
+      {
+        "id": "a28cfa16-a3a5-4c21-a681-a6572801e180",
+        "symbol": "BTC/USDT",
+        "action": "buy",
+        "quantity": 0.001,
+        "usd_amount": 50.0,
+        "timestamp": "2025-08-23T08:20:41.755007+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.00043143341260031833,
+        "filled_usd": 50.0,
+        "avg_price": 115892.73927265388,
+        "fees": 0.05,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 115761.85511964746,
+          "slippage_bps": 11.306328226264949,
+          "slippage_usd": 0.05646779678686187,
+          "latency_ms": 39,
+          "market_conditions": {
+            "volatility": 0.22440242867444163,
+            "liquidity": 1.0,
+            "trend": "sideways",
+            "volume_multiplier": 1.1122012143372209,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 1,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:20:41.755007+00:00"
+    }
+  },
+  {
+    "id": "8b66d6cf-7021-4a04-a1aa-6bafd730a756",
+    "timestamp": "2025-08-23T08:20:56.620334+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 2,
+    "successful_orders": 2,
+    "failed_orders": 0,
+    "total_volume_usd": 154.1709052524606,
+    "total_fees": 0.15417090525246063,
+    "avg_slippage_bps": 14.102045490251186,
+    "avg_execution_time_ms": 57.0,
+    "orders": [
+      {
+        "id": "bc0ff46c-500c-4d68-9909-5508631d66ca",
+        "symbol": "ETH/USDT",
+        "action": "sell",
+        "quantity": 0.02,
+        "usd_amount": 80.0,
+        "timestamp": "2025-08-23T08:20:55.462100+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.02,
+        "filled_usd": 94.17090525246061,
+        "avg_price": 4708.545262623031,
+        "fees": 0.09417090525246062,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 4715.1772509893935,
+          "slippage_bps": 14.065194187494924,
+          "slippage_usd": 0.13263976732726235,
+          "latency_ms": 47,
+          "market_conditions": {
+            "volatility": 0.8513414448724601,
+            "liquidity": 1.0,
+            "trend": "bull",
+            "volume_multiplier": 1.4256707224362302,
+            "active_hours": true
+          }
+        }
+      },
+      {
+        "id": "810c0c77-358b-4f36-8a2a-215ba96fed99",
+        "symbol": "BNB/USDT",
+        "action": "buy",
+        "quantity": 0.1,
+        "usd_amount": 60.0,
+        "timestamp": "2025-08-23T08:20:56.035054+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.06742669445158628,
+        "filled_usd": 60.0,
+        "avg_price": 889.855278951591,
+        "fees": 0.06,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 888.5988981404721,
+          "slippage_bps": 14.138896793007445,
+          "slippage_usd": 0.084713605066149,
+          "latency_ms": 67,
+          "market_conditions": {
+            "volatility": 0.4057960603770715,
+            "liquidity": 1.0,
+            "trend": "bull",
+            "volume_multiplier": 1.2028980301885357,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 2,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:20:55.462100+00:00"
+    }
+  },
+  {
+    "id": "eb37a35e-fd7d-4552-8c61-f29a9a766294",
+    "timestamp": "2025-08-23T08:39:23.962005+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 2,
+    "successful_orders": 2,
+    "failed_orders": 0,
+    "total_volume_usd": 144.11323813479106,
+    "total_fees": 0.14411323813479104,
+    "avg_slippage_bps": 12.674143503031146,
+    "avg_execution_time_ms": 59.0,
+    "orders": [
+      {
+        "id": "b7bf4a9e-5065-4ac5-8212-4895cc27c78e",
+        "symbol": "BTC/USDT",
+        "action": "buy",
+        "quantity": 0.001,
+        "usd_amount": 50.0,
+        "timestamp": "2025-08-23T08:39:22.480989+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.0004318656453226427,
+        "filled_usd": 50.0,
+        "avg_price": 115776.74802691351,
+        "fees": 0.05,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 115644.80166428967,
+          "slippage_bps": 11.409623322878794,
+          "slippage_usd": 0.056983101042519024,
+          "latency_ms": 64,
+          "market_conditions": {
+            "volatility": 0.23102060014087789,
+            "liquidity": 1.0,
+            "trend": "sideways",
+            "volume_multiplier": 1.115510300070439,
+            "active_hours": true
+          }
+        }
+      },
+      {
+        "id": "97d5fc3d-91a3-44c0-82f1-7c96fba7e140",
+        "symbol": "ETH/USDT",
+        "action": "sell",
+        "quantity": 0.02,
+        "usd_amount": 80.0,
+        "timestamp": "2025-08-23T08:39:23.390455+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.02,
+        "filled_usd": 94.11323813479105,
+        "avg_price": 4705.661906739552,
+        "fees": 0.09411323813479106,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 4712.230125831726,
+          "slippage_bps": 13.9386636831835,
+          "slippage_usd": 0.13136438184346844,
+          "latency_ms": 54,
+          "market_conditions": {
+            "volatility": 0.8391847755625788,
+            "liquidity": 1.0,
+            "trend": "bull",
+            "volume_multiplier": 1.4195923877812895,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 2,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:39:22.480989+00:00"
+    }
+  },
+  {
+    "id": "a8618511-e594-43bc-9eaa-0823e986753c",
+    "timestamp": "2025-08-23T08:39:25.652496+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 2,
+    "successful_orders": 2,
+    "failed_orders": 0,
+    "total_volume_usd": 144.02375803986791,
+    "total_fees": 0.1440237580398679,
+    "avg_slippage_bps": 12.674143503031146,
+    "avg_execution_time_ms": 73.5,
+    "orders": [
+      {
+        "id": "a2aa8aaa-cb94-4d10-b8ba-405f4adcc744",
+        "symbol": "BTC/USDT",
+        "action": "buy",
+        "quantity": 0.001,
+        "usd_amount": 50.0,
+        "timestamp": "2025-08-23T08:39:24.484042+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.00043191693729433065,
+        "filled_usd": 50.0,
+        "avg_price": 115762.99904610455,
+        "fees": 0.05,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 115631.06835267197,
+          "slippage_bps": 11.409623322878794,
+          "slippage_usd": 0.056983101042519024,
+          "latency_ms": 80,
+          "market_conditions": {
+            "volatility": 0.23102060014087789,
+            "liquidity": 1.0,
+            "trend": "sideways",
+            "volume_multiplier": 1.115510300070439,
+            "active_hours": true
+          }
+        }
+      },
+      {
+        "id": "c61c93a6-bebc-4f93-80ed-244c73f8580f",
+        "symbol": "ETH/USDT",
+        "action": "sell",
+        "quantity": 0.02,
+        "usd_amount": 80.0,
+        "timestamp": "2025-08-23T08:39:25.069307+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.02,
+        "filled_usd": 94.0237580398679,
+        "avg_price": 4701.187901993395,
+        "fees": 0.0940237580398679,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 4707.749876216308,
+          "slippage_bps": 13.9386636831835,
+          "slippage_usd": 0.13123948445826272,
+          "latency_ms": 67,
+          "market_conditions": {
+            "volatility": 0.8391847755625788,
+            "liquidity": 1.0,
+            "trend": "bull",
+            "volume_multiplier": 1.4195923877812895,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 2,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:39:24.484042+00:00"
+    }
+  },
+  {
+    "id": "0686a3bb-31f6-45fc-b493-a955c1f3e609",
+    "timestamp": "2025-08-23T08:39:27.689441+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 2,
+    "successful_orders": 2,
+    "failed_orders": 0,
+    "total_volume_usd": 144.02208280430102,
+    "total_fees": 0.144022082804301,
+    "avg_slippage_bps": 12.674143503031146,
+    "avg_execution_time_ms": 77.0,
+    "orders": [
+      {
+        "id": "f831a543-178c-431a-aebf-3e06fb1d568b",
+        "symbol": "BTC/USDT",
+        "action": "buy",
+        "quantity": 0.001,
+        "usd_amount": 50.0,
+        "timestamp": "2025-08-23T08:39:26.505050+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.00043175452022053984,
+        "filled_usd": 50.0,
+        "avg_price": 115806.54667948825,
+        "fees": 0.05,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 115674.5663564718,
+          "slippage_bps": 11.409623322878794,
+          "slippage_usd": 0.056983101042519024,
+          "latency_ms": 37,
+          "market_conditions": {
+            "volatility": 0.23102060014087789,
+            "liquidity": 1.0,
+            "trend": "sideways",
+            "volume_multiplier": 1.115510300070439,
+            "active_hours": true
+          }
+        }
+      },
+      {
+        "id": "22f6b1f4-f4b3-4248-ba98-c39ea78ef4b3",
+        "symbol": "ETH/USDT",
+        "action": "sell",
+        "quantity": 0.02,
+        "usd_amount": 80.0,
+        "timestamp": "2025-08-23T08:39:27.057046+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.02,
+        "filled_usd": 94.02208280430102,
+        "avg_price": 4701.104140215051,
+        "fees": 0.09402208280430102,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 4707.665997522274,
+          "slippage_bps": 13.9386636831835,
+          "slippage_usd": 0.13123714614445703,
+          "latency_ms": 117,
+          "market_conditions": {
+            "volatility": 0.8391847755625788,
+            "liquidity": 1.0,
+            "trend": "bull",
+            "volume_multiplier": 1.4195923877812895,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 2,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:39:26.505050+00:00"
+    }
+  },
+  {
+    "id": "5ead5457-7c18-4bb4-8fc7-112955a7e8df",
+    "timestamp": "2025-08-23T08:39:34.398264+00:00",
+    "exchange": "enhanced_simulator",
+    "total_orders": 1,
+    "successful_orders": 1,
+    "failed_orders": 0,
+    "total_volume_usd": 45.0,
+    "total_fees": 0.045,
+    "avg_slippage_bps": 11.409053126810683,
+    "avg_execution_time_ms": 91.0,
+    "orders": [
+      {
+        "id": "0cbcfa73-fc0d-4c35-a5b1-2db8e90c59a1",
+        "symbol": "BTC/USDT",
+        "action": "buy",
+        "quantity": 0.001,
+        "usd_amount": 45.0,
+        "timestamp": "2025-08-23T08:39:33.786553+00:00",
+        "exchange": "enhanced_simulator",
+        "safety_validated": true,
+        "safety_score": 100.0,
+        "status": "success",
+        "filled_quantity": 0.0003882522851037047,
+        "filled_usd": 45.0,
+        "avg_price": 115904.01840901002,
+        "fees": 0.045,
+        "error_message": null,
+        "exchange_data": {
+          "simulated": true,
+          "market_price": 115771.93359491225,
+          "slippage_bps": 11.409053126810683,
+          "slippage_usd": 0.05128223090095929,
+          "latency_ms": 91,
+          "market_conditions": {
+            "volatility": 0.23102060014087789,
+            "liquidity": 1.0,
+            "trend": "sideways",
+            "volume_multiplier": 1.115510300070439,
+            "active_hours": true
+          }
+        }
+      }
+    ],
+    "metadata": {
+      "total_orders_requested": 1,
+      "execution_type": "dashboard",
+      "timestamp_started": "2025-08-23T08:39:33.786553+00:00"
+    }
+  }
+]
