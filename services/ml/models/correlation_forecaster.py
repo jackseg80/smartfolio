@@ -19,6 +19,9 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 import warnings
 warnings.filterwarnings('ignore')
 
+# Security: Use safe loader for PyTorch models
+from services.ml.safe_loader import safe_torch_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -548,9 +551,10 @@ class CorrelationForecaster:
             models_loaded = 0
             for horizon in self.config['prediction_horizons']:
                 model_file = self.model_dir / f"correlation_model_{horizon}d.pth"
-                
+
                 if model_file.exists():
-                    checkpoint = torch.load(model_file, map_location=self.device, weights_only=False)
+                    # Load checkpoint with security validation
+                    checkpoint = safe_torch_load(model_file, map_location=self.device)
                     
                     model = MultiAssetTransformer(
                         n_assets=self.config['n_assets'],

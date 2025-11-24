@@ -14,6 +14,9 @@ from enum import Enum
 import pickle
 import hashlib
 
+# Security: Use safe loader for ML models
+from services.ml.safe_loader import safe_pickle_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -238,9 +241,8 @@ class ModelRegistry:
             if not manifest.file_path or not Path(manifest.file_path).exists():
                 raise FileNotFoundError(f"Model file not found: {manifest.file_path}")
 
-            # Charger le modèle
-            with open(manifest.file_path, 'rb') as f:
-                model = pickle.load(f)
+            # Charger le modèle avec validation de sécurité
+            model = safe_pickle_load(manifest.file_path)
 
             logger.info(f"Loaded model {name} version {version}")
             return model

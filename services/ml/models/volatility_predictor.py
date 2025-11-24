@@ -19,6 +19,9 @@ warnings.filterwarnings('ignore')
 from ..feature_engineering import CryptoFeatureEngineer
 from ..data_pipeline import MLDataPipeline
 
+# Security: Use safe loader for PyTorch models
+from services.ml.safe_loader import safe_torch_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -425,8 +428,8 @@ class VolatilityPredictor:
                     logger.info(f"Early stopping at epoch {epoch}")
                     break
             
-            # Load best model
-            model.load_state_dict(torch.load(self.model_dir / f'{symbol}_volatility_best.pth', weights_only=False))
+            # Load best model with security validation
+            model.load_state_dict(safe_torch_load(self.model_dir / f'{symbol}_volatility_best.pth', map_location=self.device))
             self.models[symbol] = model
             
             # Training metadata
@@ -559,8 +562,9 @@ class VolatilityPredictor:
                 dropout=self.dropout,
                 output_horizons=len(self.horizons)
             ).to(self.device)
-            
-            model.load_state_dict(torch.load(model_path, map_location=self.device, weights_only=False))
+
+            # Load model with security validation
+            model.load_state_dict(safe_torch_load(model_path, map_location=self.device))
             
             # Store in memory
             self.models[symbol] = model

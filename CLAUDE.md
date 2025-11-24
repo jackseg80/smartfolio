@@ -192,6 +192,32 @@ return paginated_response(items, total=100, page=1, page_size=50)
 # → {"ok": true, "data": [...], "meta": {"pagination": {...}}, ...}
 ```
 
+### Safe ML Model Loading (Sécurité - Nov 2025)
+```python
+# ✅ TOUJOURS utiliser safe_loader pour ML models
+from services.ml.safe_loader import safe_pickle_load, safe_torch_load
+
+# Pickle models (scikit-learn, etc.)
+model = safe_pickle_load("cache/ml_pipeline/models/my_model.pkl")
+
+# PyTorch models (auto-detect weights_only mode)
+checkpoint = safe_torch_load("cache/ml_pipeline/models/regime.pth", map_location='cpu')
+
+# ❌ NE JAMAIS: Chargement direct sans validation
+import pickle
+with open(path, 'rb') as f:
+    model = pickle.load(f)  # Path traversal risk!
+
+import torch
+model = torch.load(path, weights_only=False)  # Security risk!
+```
+
+**Sécurité:**
+- Path traversal protection (uniquement `cache/ml_pipeline/`)
+- PyTorch `weights_only=True` par défaut (fallback si custom layers)
+- Logging audit trail complet
+- Voir [`docs/SECURITY.md`](docs/SECURITY.md) pour détails
+
 ### Frontend Data Loading
 ```javascript
 // TOUJOURS utiliser loadBalanceData

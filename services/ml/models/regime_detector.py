@@ -23,6 +23,9 @@ warnings.filterwarnings('ignore')
 from ..feature_engineering import CryptoFeatureEngineer
 from ..data_pipeline import MLDataPipeline
 
+# Security: Use safe loader for PyTorch models
+from services.ml.safe_loader import safe_torch_load
+
 logger = logging.getLogger(__name__)
 
 
@@ -825,8 +828,8 @@ class RegimeDetector:
                     logger.info(f"Early stopping at epoch {epoch}")
                     break
 
-            # Load best model
-            self.neural_model.load_state_dict(torch.load(self.model_dir / 'regime_neural_best.pth', weights_only=False))
+            # Load best model with security validation
+            self.neural_model.load_state_dict(safe_torch_load(self.model_dir / 'regime_neural_best.pth', map_location=self.device))
 
             # Temperature calibration on validation set
             # Find optimal temperature that maximizes log-likelihood on validation data
@@ -1181,8 +1184,9 @@ class RegimeDetector:
                 dropout=self.dropout
             ).to(self.device)
             
+            # Load model with security validation
             self.neural_model.load_state_dict(
-                torch.load(model_files['neural'], map_location=self.device, weights_only=False)
+                safe_torch_load(model_files['neural'], map_location=self.device)
             )
             
             logger.info("Regime detection model loaded successfully")
