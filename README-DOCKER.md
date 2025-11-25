@@ -188,7 +188,9 @@ ls -R data/users/
 
 ### Étape 2.2b : Transférer Cache Prix Historiques (CRITIQUE ⚠️)
 
-**Problème :** Le cache de prix historiques (`data/price_history/`) contient **127 fichiers JSON** (3000+ jours d'historique BTC, ETH, etc.). Sans ce cache, les **métriques de risque seront incorrectes** :
+**Problème :** Le cache de prix historiques (`data/price_history/`) contient **127 fichiers JSON** (3000+ jours d'historique BTC, ETH, etc.).
+
+**⚠️ IMPORTANT :** Même si le scheduler Docker est actif (RUN_SCHEDULER=1), il télécharge automatiquement **SEULEMENT 365 jours max** (limitation APIs Binance/Kraken/CoinGecko). Votre cache Windows contient **3022 jours** (depuis 2017) que les APIs ne peuvent plus fournir. Sans ce cache complet, les **métriques de risque seront incorrectes** :
 
 | Métrique | Avec Cache (Windows) | Sans Cache (Linux) | Impact |
 |----------|---------------------|-------------------|--------|
@@ -577,62 +579,56 @@ docker-compose -f docker-compose.prod.yml restart
 
 ## Maintenance & Automatisation
 
-### Mise à Jour Quotidienne Cache Prix (RECOMMANDÉ ✅)
+### Scheduler Docker : Mises à Jour Automatiques (✅ ACTIF PAR DÉFAUT)
 
-**Problème :** Le cache prix historiques vieillit (BTC à J-1, ETH à J-1, etc.). Sans mise à jour, les métriques Risk Dashboard deviennent obsolètes.
+**⚠️ IMPORTANT :** Si vous utilisez `docker-compose.prod.yml` (ou `docker-compose.yml` avec `RUN_SCHEDULER=1` dans `.env`), le **scheduler est DÉJÀ actif** et fait toutes les mises à jour automatiquement :
 
-**Solution :** Tâche cron pour télécharger **uniquement les 7 derniers jours** (rapide, 2-5 min).
+| Job Automatique | Fréquence | Commande | Fichier Source |
+|----------------|-----------|----------|----------------|
+| **OHLCV Hourly** | Toutes les heures à :05 | `scripts/update_price_history.py` | [api/scheduler.py:496-503](api/scheduler.py) |
+| **OHLCV Daily** | Tous les jours à 03:10 | `scripts/update_price_history.py` | [api/scheduler.py:487-494](api/scheduler.py) |
+| **P&L Intraday** | Toutes les 15 min | `services/portfolio.py` | [api/scheduler.py:469-476](api/scheduler.py) |
+| **P&L EOD** | Daily à 23:59 | `services/portfolio.py` | [api/scheduler.py:478-485](api/scheduler.py) |
+| **API Warmers** | Toutes les 10 min | Cache warmup | [api/scheduler.py:514-521](api/scheduler.py) |
+| **Crypto-Toolbox** | 2x/jour (08:00, 20:00) | Binance/Kraken indicators | [api/scheduler.py:523-530](api/scheduler.py) |
+| **ML Training** | Dimanche 03:00 | Weekly retraining | [api/scheduler.py:532-539](api/scheduler.py) |
 
-#### Installation Cron Job
+**Aucune configuration cron manuelle nécessaire !**
 
-```bash
-# Sur NUC Ubuntu
-crontab -e
-
-# Ajouter cette ligne (mise à jour tous les jours à 2h du matin)
-0 2 * * * cd ~/smartfolio && docker exec smartfolio-api python scripts/download_historical_data.py --days 7 --from-portfolio >> ~/smartfolio/logs/price_update.log 2>&1
-```
-
-**Explication :**
-- `0 2 * * *` : Tous les jours à 2h00 (quand APIs peu chargées)
-- `--days 7` : Seulement 7 derniers jours (rapide, évite rate limits)
-- `--from-portfolio` : Uniquement assets de votre portfolio (pas tous les 127 assets)
-- `>> logs/price_update.log` : Log des succès/échecs
-
-#### Vérifier Cron Actif
+#### Vérifier Scheduler Actif
 
 ```bash
-# Lister tâches cron
-crontab -l
+# Test 1 : Vérifier scheduler status (HTTP)
+curl -s http://localhost:8000/api/scheduler/health | jq '{
+  enabled: .data.enabled,
+  jobs_count: .data.jobs_count,
+  next_runs: .data.next_runs | keys
+}'
 
-# Voir logs mise à jour
-tail -f ~/smartfolio/logs/price_update.log
+# Attendu :
+# {
+#   "enabled": true,
+#   "jobs_count": 8,
+#   "next_runs": ["ohlcv_hourly", "ohlcv_daily", "pnl_intraday", ...]
+# }
 
-# Tester manuellement (sans attendre 2h du matin)
-cd ~/smartfolio
-docker exec smartfolio-api python scripts/download_historical_data.py --days 7 --from-portfolio
+# Test 2 : Voir logs scheduler
+docker logs smartfolio-api | grep -i "APScheduler" | tail -10
+
+# Test 3 : Voir dernier run OHLCV
+docker logs smartfolio-api | grep "ohlcv" | tail -5
 ```
 
-**Résultat attendu :**
+#### Limites du Scheduler Automatique
 
-```text
-✅ Téléchargé 7 points pour BTC
-✅ Téléchargé 7 points pour ETH
-✅ Téléchargé 7 points pour SOL
-...
-✅ Mis à jour 25/25 symboles
-```
+**⚠️ CRITIQUE :** Le scheduler télécharge automatiquement les prix MAIS avec **limite API de 365 jours max**. Votre cache Windows contient **3022 jours** (depuis 2017) que les APIs ne fournissent plus.
 
-#### Alternative : Mise à Jour Hebdomadaire Complète
+**C'est pourquoi le transfert initial du cache (Étape 2.2b) est obligatoire !**
 
-Si vous voulez **tous les 127 assets** (pas juste portfolio), utilisez cette tâche hebdomadaire :
+- **Scheduler hourly/daily :** ✅ Garde le cache à jour (nouveaux prix chaque jour)
+- **Transfert SCP initial :** ✅ Fournit l'historique complet (3000+ jours)
 
-```bash
-# Cron tous les lundis à 3h du matin (plus long, 15-30 min)
-0 3 * * 1 cd ~/smartfolio && docker exec smartfolio-api python scripts/download_historical_data.py --days 30 --all >> ~/smartfolio/logs/price_update_weekly.log 2>&1
-```
-
-**Note :** `--days 30` (pas 3000) car on fusionne avec cache existant, pas besoin de tout re-télécharger.
+---
 
 ### Backup Automatique Data (OPTIONNEL)
 
