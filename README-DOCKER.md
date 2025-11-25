@@ -325,14 +325,14 @@ docker-compose -f docker-compose.prod.yml logs -f
 ### Étape 4.1 : Test API local (sur NUC)
 
 ```bash
-# Sur NUC
-curl http://localhost:8080/docs
+# Sur NUC (docker-compose.prod.yml utilise port 8000)
+curl http://localhost:8000/docs
 # Doit retourner HTML (Swagger UI)
 
-curl http://localhost:8080/balances/current?user_id=demo
+curl http://localhost:8000/balances/current?user_id=demo
 # Doit retourner JSON avec balances
 
-curl http://localhost:8080/api/ml/sentiment/symbol/BTC
+curl http://localhost:8000/api/ml/sentiment/symbol/BTC
 # Doit retourner JSON avec sentiment ML
 ```
 
@@ -371,8 +371,10 @@ Si "unhealthy", voir [Troubleshooting](#troubleshooting).
 **CRITIQUE :** Vérifiez que les métriques sur Ubuntu **correspondent** à Windows. Des divergences indiquent un cache prix manquant/incomplet.
 
 ```bash
-# Sur NUC - Tester API Risk Dashboard
-curl -s "http://localhost:8080/api/risk/dashboard?user_id=jack" | jq '{
+# Sur NUC - Tester API Risk Dashboard (⚠️ Header X-User requis depuis Nov 2025)
+curl -s "http://localhost:8000/api/risk/dashboard" \
+  -H "X-User: jack" \
+  | jq '{
   risk_score: .data.risk_score,
   effective_assets: .data.effective_assets,
   long_term_days: .data.long_term_window.days,
@@ -453,8 +455,8 @@ docker ps
 
 # Les 2 conteneurs doivent être présents (smartfolio-api, smartfolio-redis)
 
-# Tester API
-curl http://localhost:8080/docs
+# Tester API (port 8000)
+curl http://localhost:8000/docs
 ```
 
 ✅ **Si succès = Migration terminée !**
@@ -896,14 +898,14 @@ docker stop smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true  # Dev
 docker rm smartfolio-api smartfolio-redis 2>/dev/null || true
 docker rm smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true
 
-# Étape 3 : Supprimer TOUTES les images SmartFolio
-docker images | grep smartfolio | awk '{print $3}' | xargs -r docker rmi -f
+# Étape 3 : Supprimer TOUTES les images SmartFolio (format machine-readable)
+docker rmi -f $(docker images --filter=reference='*smartfolio*' -q) 2>/dev/null || true
 
 # Étape 4 : Supprimer volumes (⚠️ perte cache Redis)
-docker volume ls | grep smartfolio | awk '{print $2}' | xargs -r docker volume rm
+docker volume rm $(docker volume ls --filter name=smartfolio -q) 2>/dev/null || true
 
 # Étape 5 : Supprimer réseaux
-docker network ls | grep smartfolio | awk '{print $1}' | xargs -r docker network rm
+docker network rm $(docker network ls --filter name=smartfolio -q) 2>/dev/null || true
 
 # Étape 6 : Vérifier nettoyage complet
 docker ps -a | grep smartfolio    # Doit être vide
@@ -929,9 +931,9 @@ docker volume ls | grep smartfolio # Doit être vide
 cd ~/smartfolio && \
 docker stop smartfolio-api smartfolio-redis smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true && \
 docker rm smartfolio-api smartfolio-redis smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true && \
-docker images | grep smartfolio | awk '{print $3}' | xargs -r docker rmi -f && \
-docker volume ls | grep smartfolio | awk '{print $2}' | xargs -r docker volume rm && \
-docker network ls | grep smartfolio | awk '{print $1}' | xargs -r docker network rm && \
+docker rmi -f $(docker images --filter=reference='*smartfolio*' -q) 2>/dev/null || true && \
+docker volume rm $(docker volume ls --filter name=smartfolio -q) 2>/dev/null || true && \
+docker network rm $(docker network ls --filter name=smartfolio -q) 2>/dev/null || true && \
 echo "✅ Nettoyage terminé - Rebuild..." && \
 ./deploy.sh --force
 ```
