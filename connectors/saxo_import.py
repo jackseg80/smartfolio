@@ -273,9 +273,21 @@ class SaxoImportConnector:
                 logger.debug(f"Skipping status row: {instrument_raw}")
                 return None
 
-            # Skip rows with invalid/zero quantity
-            if quantity <= 0:
+            # Determine if this is a cash position
+            is_cash_position = (
+                asset_class_raw.lower() in ['cash', 'money market', 'fx cash'] or
+                instrument_raw.lower().startswith('cash') or
+                'cash' in instrument_raw.lower()
+            )
+
+            # Skip rows with invalid/zero quantity (EXCEPT cash positions)
+            if quantity <= 0 and not is_cash_position:
                 logger.debug(f"Skipping row with zero/negative quantity: {instrument_raw}")
+                return None
+
+            # For cash positions, market_value must be > 0
+            if is_cash_position and market_value <= 0:
+                logger.debug(f"Skipping cash position with zero/negative value: {instrument_raw}")
                 return None
 
             # Must have at least ONE identifier (symbol preferred, then instrument, then ISIN)

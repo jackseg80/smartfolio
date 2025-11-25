@@ -362,11 +362,11 @@ async def export_saxo_lists(
         from services.export_formatter import ExportFormatter
         from fastapi.responses import PlainTextResponse
 
-        # 11 secteurs GICS standard
+        # 11 secteurs GICS standard + Cash
         GICS_SECTORS = [
             'Technology', 'Healthcare', 'Financials', 'Consumer Discretionary',
             'Communication Services', 'Industrials', 'Consumer Staples',
-            'Energy', 'Utilities', 'Real Estate', 'Materials'
+            'Energy', 'Utilities', 'Real Estate', 'Materials', 'Cash'
         ]
 
         # Sector mapping (from specialized_analytics.py)
@@ -394,8 +394,11 @@ async def export_saxo_lists(
             'BA': 'Industrials', 'CAT': 'Industrials', 'GE': 'Industrials', 'MMM': 'Industrials',
         }
 
-        def get_sector_from_symbol(symbol: str) -> str:
+        def get_sector_from_symbol(symbol: str, asset_class: str = '') -> str:
             """Extract ticker and map to GICS sector."""
+            # Cash positions get their own sector
+            if asset_class.upper() in ['CASH', 'MONEY MARKET', 'FX CASH']:
+                return 'Cash'
             ticker = symbol.split(':')[0] if ':' in symbol else symbol
             return SECTOR_MAP.get(ticker, 'Unknown')
 
@@ -419,7 +422,8 @@ async def export_saxo_lists(
             currency = pos.get('currency', 'USD')
 
             # Get sector from mapping (extract ticker and map)
-            sector = get_sector_from_symbol(symbol)
+            # Pass asset_class to correctly identify cash positions
+            sector = get_sector_from_symbol(symbol, asset_class)
 
             entry_price = float(pos.get('avg_price', 0)) or float(pos.get('entry_price', 0))
 
