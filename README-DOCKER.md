@@ -461,6 +461,141 @@ curl http://localhost:8080/docs
 
 ---
 
+## 🚀 Déploiement Automatisé (deploy.sh)
+
+### Vue d'Ensemble
+
+Le script `deploy.sh` automatise **TOUTES les étapes** de déploiement production sur NUC :
+
+| Étape | Action | Durée | Vérifications |
+|-------|--------|-------|---------------|
+| **1/5** | Check local changes | 2s | Backup auto si modifs locales |
+| **2/5** | Pull depuis GitHub | 5s | Affiche dernier commit |
+| **3/5** | Vérifier cache prix | 2s | Warn si < 100 fichiers JSON |
+| **4/5** | Rebuild & restart Docker | 30-60s | Stop old + build new images |
+| **5/5** | Health check | 10s | API + scheduler status |
+
+**✅ Déploiement complet en ~1 minute !**
+
+### Usage
+
+```bash
+# Sur NUC Ubuntu
+cd ~/smartfolio
+
+# Déploiement standard (rebuild complet)
+./deploy.sh
+
+# Déploiement rapide (restart seulement, sans rebuild)
+./deploy.sh --skip-build
+
+# Déploiement forcé (écrase changements locaux sans demander)
+./deploy.sh --force
+
+# Aide
+./deploy.sh --help
+```
+
+### Options
+
+| Option | Description | Cas d'Usage |
+|--------|-------------|-------------|
+| `--skip-build` | Restart sans rebuild images | Changements Python/config seulement (pas Dockerfile) |
+| `--force` | Reset git automatique | CI/CD, scripts automatisés |
+| *(aucune option)* | Rebuild complet | Après modifications Dockerfile, requirements.txt |
+
+### Exemple Sortie Typique
+
+```bash
+$ ./deploy.sh
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 SmartFolio Production Deployment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 Step 1/5: Checking for local changes...
+✅ No local changes
+
+📥 Step 2/5: Pulling latest version from GitHub...
+✅ Latest version pulled (fc4f88c - docs(docker): clarify scheduler...)
+
+💰 Step 3/5: Verifying price cache...
+✅ Price cache OK: 127 files
+
+🐳 Step 4/5: Rebuilding and restarting Docker...
+✅ Docker containers started
+
+🏥 Step 5/5: Waiting for services to be healthy...
+✅ Container smartfolio-api: running
+   Testing API endpoint... ✅
+   Testing scheduler... ✅ Enabled
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Deployment Complete!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 Quick Access:
+   • Dashboard:  http://192.168.1.200:8000/dashboard.html
+   • API Docs:   http://192.168.1.200:8000/docs
+   • Risk:       http://192.168.1.200:8000/risk-dashboard.html
+```
+
+### Sécurité : Backup Automatique
+
+Si des changements locaux existent, le script :
+1. **Demande confirmation** (sauf si `--force`)
+2. **Backup automatique** : `/tmp/smartfolio_backup_YYYYMMDD_HHMMSS.patch`
+3. **Reset vers origin/main**
+
+Restaurer un backup si nécessaire :
+```bash
+# Voir les backups disponibles
+ls -lah /tmp/smartfolio_backup_*.patch
+
+# Restaurer (exemple)
+cd ~/smartfolio
+git apply /tmp/smartfolio_backup_20251125_103045.patch
+```
+
+### Workflow Recommandé : Dev → Prod
+
+```bash
+# Sur Windows (Machine Dev)
+git add .
+git commit -m "feat: nouvelle fonctionnalité"
+git push origin main
+
+# Sur NUC Ubuntu (Machine Prod) - UNE SEULE COMMANDE !
+./deploy.sh
+```
+
+✅ **C'est tout !** Le script gère :
+- ✅ Git pull
+- ✅ Vérification cache prix
+- ✅ Docker rebuild
+- ✅ Health checks
+- ✅ Nettoyage containers orphelins
+
+### Quand Utiliser `--skip-build` ?
+
+**Rebuild complet (défaut)** :
+- ✅ Modifications `Dockerfile` ou `Dockerfile.prod`
+- ✅ Modifications `requirements.txt` (nouvelles dépendances)
+- ✅ Modifications `docker-compose.prod.yml`
+- ⏱️ Durée : 30-60s
+
+**Restart seulement (`--skip-build`)** :
+- ✅ Modifications Python (`.py` files)
+- ✅ Modifications config (`.env`, `.json`)
+- ✅ Modifications static (HTML, JS, CSS)
+- ⏱️ Durée : 5-10s (6x plus rapide)
+
+```bash
+# Exemple : Modifs Python seulement
+./deploy.sh --skip-build  # Restart en 5s au lieu de 60s
+```
+
+---
+
 ## Workflow Dev Windows → Prod NUC
 
 ### Après modifications sur Windows
@@ -727,16 +862,95 @@ exit               # Sortir
 
 ### Nettoyage Docker
 
+#### Nettoyage Partiel (Recommandé)
+
 ```bash
-# Supprimer images inutilisées (libérer espace)
+# Supprimer images inutilisées (libérer espace disque)
 docker image prune -a
 
-# Supprimer volumes orphelins
+# Supprimer volumes orphelins (garde volumes actifs)
 docker volume prune
 
-# Nettoyage complet (⚠️ supprime TOUT ce qui n'est pas actif)
-docker system prune -a --volumes
+# Supprimer containers arrêtés
+docker container prune
+
+# Supprimer réseaux inutilisés
+docker network prune
 ```
+
+#### Nettoyage Complet : Fresh Start (⚠️ DESTRUCTIF)
+
+**Scénario :** Repartir sur une base propre (ancien compose, containers orphelins, versions multiples)
+
+**⚠️ ATTENTION :** Arrêtez et sauvegardez données critiques AVANT (cache prix, data users)
+
+```bash
+# Sur NUC Ubuntu
+cd ~/smartfolio
+
+# Étape 1 : Stopper TOUS les containers SmartFolio (prod + dev)
+docker stop smartfolio-api smartfolio-redis 2>/dev/null || true      # Prod
+docker stop smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true  # Dev
+
+# Étape 2 : Supprimer TOUS les containers SmartFolio
+docker rm smartfolio-api smartfolio-redis 2>/dev/null || true
+docker rm smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true
+
+# Étape 3 : Supprimer TOUTES les images SmartFolio
+docker images | grep smartfolio | awk '{print $3}' | xargs -r docker rmi -f
+
+# Étape 4 : Supprimer volumes (⚠️ perte cache Redis)
+docker volume ls | grep smartfolio | awk '{print $2}' | xargs -r docker volume rm
+
+# Étape 5 : Supprimer réseaux
+docker network ls | grep smartfolio | awk '{print $1}' | xargs -r docker network rm
+
+# Étape 6 : Vérifier nettoyage complet
+docker ps -a | grep smartfolio    # Doit être vide
+docker images | grep smartfolio   # Doit être vide
+docker volume ls | grep smartfolio # Doit être vide
+
+# Étape 7 : Rebuild propre depuis zéro
+./deploy.sh --force
+```
+
+**Résultat :**
+- ✅ Containers : Supprimés
+- ✅ Images : Supprimées (rebuild depuis Dockerfile)
+- ✅ Volumes : Supprimés (Redis vide)
+- ✅ Réseaux : Supprimés (recréés auto)
+- ⚠️ Cache prix : **PRÉSERVÉ** (data/price_history/ sur host)
+- ⚠️ Data users : **PRÉSERVÉE** (data/users/ sur host)
+
+**💡 Commande One-Liner (Pour Copy-Paste) :**
+
+```bash
+# Nettoyage complet + rebuild (1 seule commande)
+cd ~/smartfolio && \
+docker stop smartfolio-api smartfolio-redis smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true && \
+docker rm smartfolio-api smartfolio-redis smartfolio_api_1 smartfolio_redis_1 2>/dev/null || true && \
+docker images | grep smartfolio | awk '{print $3}' | xargs -r docker rmi -f && \
+docker volume ls | grep smartfolio | awk '{print $2}' | xargs -r docker volume rm && \
+docker network ls | grep smartfolio | awk '{print $1}' | xargs -r docker network rm && \
+echo "✅ Nettoyage terminé - Rebuild..." && \
+./deploy.sh --force
+```
+
+**Temps total :** ~2 minutes (nettoyage 30s + rebuild 90s)
+
+#### Libérer Espace Disque Global (⚠️ Tous Projets Docker)
+
+Si vous voulez nettoyer **TOUT Docker** (pas juste SmartFolio) :
+
+```bash
+# Nettoyage agressif (supprime TOUT ce qui n'est pas actif)
+docker system prune -a --volumes
+
+# Afficher espace récupéré
+docker system df
+```
+
+**⚠️ Avertissement :** Supprime images/volumes/containers de **TOUS vos projets Docker** (pas juste SmartFolio).
 
 ### Monitoring ressources
 
