@@ -808,7 +808,7 @@ async def export_patrimoine_lists(
 ):
     """
     Export patrimoine items list in multiple formats.
-    Alias for /banks/export-lists for frontend compatibility.
+    Includes all categories: liquidités, biens, passifs, assurances.
 
     Args:
         user: ID utilisateur (from authenticated context)
@@ -817,5 +817,61 @@ async def export_patrimoine_lists(
     Returns:
         Exported data in requested format with Content-Type header
     """
-    # Delegate to export_bank_lists
-    return await export_bank_lists(user=user, format=format)
+    try:
+        from services.export_formatter import ExportFormatter
+        from services.wealth.patrimoine_service import list_items, get_summary
+        from fastapi.responses import PlainTextResponse
+
+        # Récupérer tous les items patrimoine
+        all_items = list_items(user)
+        summary = get_summary(user)
+
+        # Grouper par catégorie
+        items_by_category = {
+            "liquidity": [],
+            "tangible": [],
+            "liability": [],
+            "insurance": []
+        }
+
+        for item in all_items:
+            category = item.category
+            items_by_category[category].append({
+                "id": item.id,
+                "name": item.name,
+                "type": item.type,
+                "value": item.value,
+                "currency": item.currency,
+                "value_usd": item.value_usd,
+                "acquisition_date": item.acquisition_date,
+                "notes": item.notes
+            })
+
+        # Structure finale
+        export_data = {
+            "items_by_category": items_by_category,
+            "summary": {
+                "net_worth": summary["net_worth"],
+                "total_assets": summary["total_assets"],
+                "total_liabilities": summary["total_liabilities"],
+                "breakdown": summary["breakdown"],
+                "counts": summary["counts"]
+            }
+        }
+
+        # Formater selon le format demandé
+        formatter = ExportFormatter('patrimoine')
+
+        if format == 'json':
+            content = formatter.to_json(export_data)
+            return PlainTextResponse(content, media_type="application/json")
+        elif format == 'csv':
+            content = formatter.to_csv(export_data)
+            return PlainTextResponse(content, media_type="text/csv")
+        elif format == 'markdown':
+            content = formatter.to_markdown(export_data)
+            return PlainTextResponse(content, media_type="text/markdown")
+
+    except Exception as e:
+        logger.exception("Error exporting patrimoine lists")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
