@@ -22,7 +22,7 @@ from api.utils.formatters import success_response, error_response
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["Portfolio"])
+router = APIRouter(prefix="/api", tags=["Portfolio"])
 
 # Shared instances
 portfolio_analytics = PortfolioAnalytics()
