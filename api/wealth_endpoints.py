@@ -799,3 +799,23 @@ async def export_bank_lists(
     except Exception as e:
         logger.exception("Error exporting bank lists")
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+
+
+@router.get("/patrimoine/export-lists")
+async def export_patrimoine_lists(
+    user: str = Depends(get_active_user),
+    format: str = Query("json", regex="^(json|csv|markdown)$")
+):
+    """
+    Export patrimoine items list in multiple formats.
+    Alias for /banks/export-lists for frontend compatibility.
+
+    Args:
+        user: ID utilisateur (from authenticated context)
+        format: Format de sortie (json, csv, markdown)
+
+    Returns:
+        Exported data in requested format with Content-Type header
+    """
+    # Delegate to export_bank_lists
+    return await export_bank_lists(user=user, format=format)
