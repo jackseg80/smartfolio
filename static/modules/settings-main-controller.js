@@ -1228,7 +1228,7 @@ async function runFullSystemTest() {
 
   // Test portfolio analytics
   try {
-    const metricsData = await globalConfig.apiRequest('/portfolio/metrics', {
+    const metricsData = await globalConfig.apiRequest('/api/portfolio/metrics', {
       params: { source: globalSettings.data_source }
     });
     // Accept ok:true even with zero balances (endpoint is working)
