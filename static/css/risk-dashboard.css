@@ -804,6 +804,44 @@
   border: 1px solid var(--danger);
 }
 
+/* ✅ NEW (Nov 2025): Error state for loading timeouts */
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  background: var(--warning-bg, #fff3cd);
+  border: 1px solid var(--warning, #ffc107);
+  border-radius: 8px;
+  color: var(--theme-text);
+}
+
+.error-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.retry-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.retry-btn:hover {
+  background: var(--brand-primary-hover, #0056b3);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.retry-btn:active {
+  transform: translateY(0);
+}
+
 .metric-interpretation {
   font-size: 0.8rem;
   color: var(--theme-text-muted);

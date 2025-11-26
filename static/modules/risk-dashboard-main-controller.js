@@ -3640,10 +3640,10 @@ dans les 10 000 scénarios.`;
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/alerts/${currentAlert.id}/apply`, {
+        // ✅ Use globalConfig.apiRequest() to automatically add X-User header
+        const result = await globalConfig.apiRequest(`/api/alerts/${currentAlert.id}/apply`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'Idempotency-Key': `apply-${currentAlert.id}-${Date.now()}`
           },
           body: JSON.stringify({
@@ -3651,17 +3651,13 @@ dans les 10 000 scénarios.`;
           })
         });
 
-        if (response.ok) {
-          showToast(`${formatActionType(action.type)} applied successfully`, 'success');
-          currentAlert.applied_at = new Date().toISOString();
-          currentAlert.applied_by = 'user';
-          closeAlertModal();
+        showToast(`${formatActionType(action.type)} applied successfully`, 'success');
+        currentAlert.applied_at = new Date().toISOString();
+        currentAlert.applied_by = 'user';
+        closeAlertModal();
 
-          // Refresh alerts
-          refreshAlertsHistory();
-        } else {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        // Refresh alerts
+        refreshAlertsHistory();
       } catch (error) {
         debugLogger.error('Failed to apply action:', error);
         showToast('Failed to apply action', 'error');
@@ -3713,25 +3709,23 @@ dans les 10 000 scénarios.`;
 
     async function checkForNewS3Alerts() {
       try {
-        const apiBaseUrl = globalConfig.get('api_base_url');
-        const response = await fetch(`${apiBaseUrl}/api/alerts/active?severity_filter=S3`);
+        // ✅ Use globalConfig.apiRequest() to automatically add X-User header
+        const currentAlerts = await globalConfig.apiRequest('/api/alerts/active', {
+          params: { severity_filter: 'S3' }
+        });
 
-        if (response.ok) {
-          const currentAlerts = await response.json();
+        // Find new S3 alerts
+        const newAlerts = currentAlerts.filter(alert =>
+          alert.severity === 'S3' &&
+          !lastKnownAlerts.some(old => old.id === alert.id)
+        );
 
-          // Find new S3 alerts
-          const newAlerts = currentAlerts.filter(alert =>
-            alert.severity === 'S3' &&
-            !lastKnownAlerts.some(old => old.id === alert.id)
-          );
+        // Show toast for each new S3 alert
+        newAlerts.forEach(alert => {
+          showS3AlertToast(alert);
+        });
 
-          // Show toast for each new S3 alert
-          newAlerts.forEach(alert => {
-            showS3AlertToast(alert);
-          });
-
-          lastKnownAlerts = currentAlerts;
-        }
+        lastKnownAlerts = currentAlerts;
       } catch (error) {
         debugLogger.error('Failed to check for new S3 alerts:', error);
       }
@@ -3995,6 +3989,61 @@ dans les 10 000 scénarios.`;
       }
     }
 
+    /**
+     * Monitor loading states and show error message if they take too long
+     * ✅ NEW (Nov 2025): Prevent infinite loading states
+     */
+    function initLoadingTimeoutMonitor() {
+      const TIMEOUT_MS = 15000; // 15 seconds
+      const loadingElements = [
+        { id: 'risk-dashboard-content', name: 'Risk Metrics' },
+        { id: 'cycles-content', name: 'Cycle Analysis' },
+        { id: 'targets-content', name: 'Strategic Targets' },
+        { id: 'alerts-history-content', name: 'Alerts History' }
+      ];
+
+      loadingElements.forEach(({ id, name }) => {
+        const container = document.getElementById(id);
+        if (!container) return;
+
+        // Create a MutationObserver to detect when loading div appears
+        const observer = new MutationObserver((mutations) => {
+          const loadingDiv = container.querySelector('.loading');
+
+          if (loadingDiv && !loadingDiv.dataset.timeoutSet) {
+            // Mark as monitored
+            loadingDiv.dataset.timeoutSet = 'true';
+
+            // Set timeout to show error if still loading after 15s
+            setTimeout(() => {
+              const stillLoading = container.querySelector('.loading');
+              if (stillLoading) {
+                debugLogger.warn(`⏱️ Loading timeout for ${name} (${TIMEOUT_MS}ms)`);
+                stillLoading.innerHTML = `
+                  <div class="error-state">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-title">Loading Timeout</div>
+                    <div class="error-message">
+                      ${name} is taking longer than expected to load.
+                    </div>
+                    <button class="retry-btn" onclick="refreshDashboard(true)">
+                      🔄 Retry
+                    </button>
+                  </div>
+                `;
+                stillLoading.classList.add('error');
+              }
+            }, TIMEOUT_MS);
+          }
+        });
+
+        // Observe container for changes
+        observer.observe(container, { childList: true, subtree: true });
+      });
+
+      debugLogger.debug('✅ Loading timeout monitor initialized (15s timeout)');
+    }
+
     // Initialize on DOM ready
     document.addEventListener('DOMContentLoaded', function () {
       debugLogger.debug('Risk Dashboard CCS MVP initializing...');
@@ -4006,6 +4055,9 @@ dans les 10 000 scénarios.`;
       // Initialize persistent cache system
       initPersistentCache();
       debugLogger.debug('Persistent cache system initialized');
+
+      // ✅ Initialize loading state timeout monitor
+      initLoadingTimeoutMonitor();
 
       // Listen for data source changes and clear cache
       window.addEventListener('dataSourceChanged', (event) => {
