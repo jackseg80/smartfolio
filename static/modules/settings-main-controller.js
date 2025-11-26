@@ -1232,12 +1232,16 @@ async function runFullSystemTest() {
       params: { source: globalSettings.data_source }
     });
     // Accept ok:true even with zero balances (endpoint is working)
-    results.push(`📈 Analytics: ${metricsData.ok ? '✅ OK' : '❌ Erreur'}`);
-    if (!metricsData.ok && metricsData.error) {
-      results.push(`   └─ ${metricsData.error}`);
+    if (metricsData.ok) {
+      results.push(`📈 Analytics: ✅ OK`);
+    } else {
+      results.push(`📈 Analytics: ❌ Erreur${metricsData.error ? ': ' + metricsData.error : ''}`);
+      if (metricsData.details) {
+        results.push(`   └─ Détails: ${JSON.stringify(metricsData.details)}`);
+      }
     }
   } catch (e) {
-    results.push(`📈 Analytics: ❌ ${e.message}`);
+    results.push(`📈 Analytics: ❌ Exception: ${e.message}`);
   }
 
   // Test taxonomie
