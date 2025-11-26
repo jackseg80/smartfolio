@@ -1339,7 +1339,7 @@
         // Acknowledge Alert Function
         async function acknowledgeAlert(alertId, buttonElement) {
             if (!alertId) {
-                console.error('No alert ID provided');
+                debugLogger.error('acknowledgeAlert: No alert ID provided');
                 return;
             }
 
@@ -2427,15 +2427,15 @@
                 regimes.forEach(r => {
                     regimeCount[r] = (regimeCount[r] || 0) + 1;
                 });
-                console.log('=== REGIME TIMELINE DEBUG ===');
-                console.log(`Timeframe: ${lookback_days} days (${lookback_days/365} years)`);
-                console.log('Regime distribution in data:', regimeCount);
+                debugLogger.debug('=== REGIME TIMELINE DEBUG ===');
+                debugLogger.debug(`Timeframe: ${lookback_days} days (${lookback_days/365} years)`);
+                debugLogger.debug('Regime distribution in data:', regimeCount);
                 if (historyData.regime_id_mapping) {
-                    console.log('Regime ID → Name mapping:', historyData.regime_id_mapping);
+                    debugLogger.debug('Regime ID → Name mapping:', historyData.regime_id_mapping);
                 }
-                console.log('Sample regimes (first 10):', regimes.slice(0, 10));
-                console.log('Sample regime IDs (first 10):', historyData.regime_ids?.slice(0, 10));
-                console.log('Sample colors (first 10):', regimeColors.slice(0, 10));
+                debugLogger.debug('Sample regimes (first 10):', regimes.slice(0, 10));
+                debugLogger.debug('Sample regime IDs (first 10):', historyData.regime_ids?.slice(0, 10));
+                debugLogger.debug('Sample colors (first 10):', regimeColors.slice(0, 10));
 
                 // Prepare annotations for key events
                 const annotations = [];
@@ -2479,7 +2479,7 @@
                 }
 
                 // Debug: Log events for troubleshooting
-                console.log(`Found ${historyData.events?.length || 0} events, created ${annotations.length} annotations`);
+                debugLogger.debug(`Found ${historyData.events?.length || 0} events, created ${annotations.length} annotations`);
 
                 // Destroy previous chart if exists
                 if (regimeTimelineChartInstance) {
@@ -3844,7 +3844,7 @@
                             (b.market_value_usd || 0) - (a.market_value_usd || 0)
                         );
                         filteredPositions = sortedPositions.slice(1); // Remove largest (summary)
-                        console.log(`Saxo summary detected for ${key}: removed summary line, keeping ${filteredPositions.length} detail lots`);
+                        debugLogger.info(`Saxo summary detected for ${key}: removed summary line, keeping ${filteredPositions.length} detail lots`);
                     }
 
                     // Consolidate remaining positions
@@ -4021,12 +4021,9 @@
                     try {
                         // Load available sources to resolve file_key
                         if (!window.availableSources) {
-                            const response = await fetch('/api/users/sources', {
-                                headers: { 'X-User': activeUser }
-                            });
-                            if (response.ok) {
-                                const data = await response.json();
-                                window.availableSources = data.sources || [];
+                            const response = await safeFetch(globalConfig.getApiUrl('/api/users/sources'));
+                            if (response?.ok) {
+                                window.availableSources = response.data?.sources || [];
                             }
                         }
 
@@ -4410,17 +4407,13 @@
                     debugLogger.debug(`💵 Including cash in recommendations: $${window.portfolioCash}`);
                 }
 
-                const response = await fetch(recsUrl, {
-                    headers: {
-                        'X-User': activeUser
-                    }
-                });
+                const response = await safeFetch(globalConfig.getApiUrl(recsUrl));
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (!response?.ok) {
+                    throw new Error(`HTTP ${response.status || 'unknown'}: ${response.error || 'unknown error'}`);
                 }
 
-                const data = await response.json();
+                const data = response.data || response;
 
                 debugLogger.info('Recommendations loaded:', data);
 
@@ -4734,14 +4727,10 @@
                         recsUrl += `&cash_amount=${window.portfolioCash}`;
                     }
 
-                    const response = await fetch(recsUrl, {
-                    headers: {
-                        'X-User': activeUser
-                    }
-                });
-                    if (!response.ok) throw new Error(`Failed to fetch ${tf.id} recommendations`);
+                    const response = await safeFetch(globalConfig.getApiUrl(recsUrl));
+                    if (!response?.ok) throw new Error(`Failed to fetch ${tf.id} recommendations`);
 
-                    const data = await response.json();
+                    const data = response.data || response;
                     const recs = data.recommendations || [];
                     const summary = data.summary || {};
                     const marketContext = data.market_context || {};
