@@ -11,14 +11,15 @@
     <script type="module" src="components/tooltips.js"></script>
     <script type="module">
         import { initDeepLinks } from './components/deep-links.js';
-        // Anchors for dashboard.html: #overview #crypto #bourse #banque #divers #fx
+        // Anchors for dashboard.html: #global #crypto #bourse #banque #overview #market-regime #risk-alerts
         initDeepLinks({
-            'overview': 'Overview',
-            'crypto': 'Crypto Portfolio',
-            'bourse': 'Stocks & ETF',
-            'banque': 'Bank Accounts',
-            'divers': 'Other Assets',
-            'fx': 'Currencies & FX'
+            'global': 'Global Overview',
+            'crypto': 'Crypto',
+            'bourse': 'Stock Market',
+            'banque': 'Wealth',
+            'overview': 'Global Insight',
+            'market-regime': 'Market Regime',
+            'risk-alerts': 'Risk & Alerts'
         });
     </script>
 
@@ -28,7 +29,7 @@
     <script src="global-config.js"></script>
     <script src="appearance.js"></script>
     <script type="module" src="modules/dashboard-main-controller.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <style>
         * {
@@ -433,6 +434,50 @@
             border-left-color: var(--danger);
         }
 
+        /* Empty states */
+        .empty-state {
+            display: none;
+            text-align: center;
+            color: var(--theme-text-muted);
+            font-size: 0.85rem;
+            margin-top: 12px;
+        }
+
+        .empty-state a {
+            color: var(--theme-accent);
+            text-decoration: underline;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--theme-border);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Accessibility - screen reader only */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
         @media (max-width: 768px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -447,6 +492,11 @@
                 font-size: 0.7em;
                 padding: 4px 6px;
             }
+
+            /* Force single column for span 2 cards */
+            #overview {
+                grid-column: span 1 !important;
+            }
         }
     </style>
 
@@ -454,7 +504,7 @@
 </head>
 
 <body>
-    <div class="wrap">
+    <main class="wrap" role="main">
         <!-- LEVEL 1: WEALTH -->
         <div class="dashboard-grid" id="grid-niveau-1">
             <!-- Global Overview ENHANCED -->
@@ -496,7 +546,7 @@
                     <div style="display:flex;gap:8px;align-items:center;">
                         <span id="portfolio-source-display"
                             style="font-size:11px;color:var(--theme-text-muted);padding:2px 6px;background:var(--theme-bg);border-radius:4px;border:1px solid var(--theme-border);">--</span>
-                        <span class="status-badge status-active" id="portfolio-status">Loading</span>
+                        <span class="status-badge status-active" id="portfolio-status" role="status" aria-live="polite">Loading</span>
                     </div>
                 </div>
 
@@ -516,12 +566,12 @@
                 </div>
 
                 <div class="portfolio-chart" id="portfolio-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="portfolioChartCanvas"></canvas>
+                    <canvas id="portfolioChartCanvas" width="400" height="200" aria-label="Crypto portfolio distribution chart"></canvas>
                 </div>
 
                 <!-- Export Button -->
-                <button id="crypto-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button id="crypto-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export crypto portfolio lists">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -529,10 +579,9 @@
                     Export Lists
                 </button>
 
-                <div id="crypto-empty-state"
-                    style="display:none;text-align:center;color:var(--theme-text-muted);font-size:0.85rem;margin-top:12px;">
+                <div id="crypto-empty-state" class="empty-state">
                     No crypto data.<br>
-                    <a href="settings.html#sources" style="color:var(--theme-accent);">Configure a source in Settings</a>
+                    <a href="settings.html#sources">Configure a source in Settings</a>
                 </div>
             </div>
 
@@ -541,7 +590,7 @@
                 data-tooltip="Overview of your stocks and ETF portfolio via Saxo Bank in read-only mode."
                 data-source="API /api/saxo/positions (legacy)">
                 <div class="card-header">
-                    <a href="saxo-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;">
+                    <a href="saxo-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;" aria-label="Navigate to Stock Market dashboard">
                         <span class="card-icon">🏦</span>Stock Market
                     </a>
                 </div>
@@ -562,12 +611,12 @@
                 </div>
 
                 <div class="portfolio-chart" id="saxo-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="saxoChartCanvas"></canvas>
+                    <canvas id="saxoChartCanvas" width="400" height="200" aria-label="Stock market portfolio distribution chart"></canvas>
                 </div>
 
                 <!-- Export Button -->
-                <button id="saxo-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button id="saxo-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export stock market portfolio lists">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -575,11 +624,9 @@
                     Export Lists
                 </button>
 
-                <div id="saxo-empty-state"
-                    style="display:none;text-align:center;color:var(--theme-text-muted);font-size:0.85rem;margin-top:12px;">
+                <div id="saxo-empty-state" class="empty-state">
                     No Saxo positions.<br>
-                    <a href="settings.html#sources" style="color:var(--theme-accent);">Import a file in
-                        Settings</a>
+                    <a href="settings.html#sources">Import a file in Settings</a>
                 </div>
             </div>
 
@@ -588,7 +635,7 @@
                 data-tooltip="Overview of your wealth: cash, real estate, liabilities and insurance."
                 data-source="API /api/wealth/patrimoine/summary">
                 <div class="card-header">
-                    <a href="wealth-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;">
+                    <a href="wealth-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;" aria-label="Navigate to Wealth dashboard">
                         <span class="card-icon">💼</span>Wealth
                     </a>
                 </div>
@@ -609,12 +656,12 @@
                 </div>
 
                 <div class="portfolio-chart" id="patrimoine-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="patrimoineChartCanvas"></canvas>
+                    <canvas id="patrimoineChartCanvas" width="400" height="200" aria-label="Wealth portfolio distribution chart"></canvas>
                 </div>
 
                 <!-- Export Button -->
-                <button id="patrimoine-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <button id="patrimoine-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export wealth portfolio lists">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
                         <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -622,10 +669,9 @@
                     Export Lists
                 </button>
 
-                <div id="patrimoine-empty-state"
-                    style="display:none;text-align:center;color:var(--theme-text-muted);font-size:0.85rem;margin-top:12px;">
+                <div id="patrimoine-empty-state" class="empty-state">
                     No wealth assets.<br>
-                    <a href="wealth-dashboard.html" style="color:var(--theme-accent);">Add one now</a>
+                    <a href="wealth-dashboard.html">Add one now</a>
                 </div>
             </div>
         </div>
@@ -736,7 +782,10 @@
                     <span class="metric-value" id="risk-level" style="color: var(--warning);">--</span>
                 </div>
                 <div id="alerts-container" style="max-height: 180px; overflow-y: auto;">
-                    <div class="loading" style="padding: 12px; text-align: center;">Loading alerts...</div>
+                    <div class="loading" style="padding: 12px; text-align: center;">
+                        <div class="spinner" aria-hidden="true"></div>
+                        Loading alerts...
+                    </div>
                 </div>
                 <div
                     style="margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--theme-border); font-size: 0.85em; color: var(--theme-text-muted);">
@@ -777,7 +826,10 @@
                     <div class="card-title"><span class="card-icon">📋</span>Activity</div>
                 </div>
                 <div class="recent-activity" id="recent-activity">
-                    <div class="loading">Loading recent activity...</div>
+                    <div class="loading">
+                        <div class="spinner" aria-hidden="true"></div>
+                        Loading recent activity...
+                    </div>
                 </div>
             </div>
 
@@ -830,10 +882,7 @@
             </div>
 
         </div>
-    </div>
-
-
-    <!-- ✅ Scores sync removed: store auto-hydrates and subscribes automatically -->
+    </main>
 
 </body>
 
