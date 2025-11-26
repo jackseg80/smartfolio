@@ -1231,14 +1231,14 @@ async function runFullSystemTest() {
     const metricsData = await globalConfig.apiRequest('/api/portfolio/metrics', {
       params: { source: globalSettings.data_source }
     });
-    // Accept ok:true even with zero balances (endpoint is working)
-    if (metricsData.ok) {
+    // Accept both formats: {ok: true, data: ...} or direct data {total_value: ...}
+    const hasData = metricsData.ok || metricsData.total_value !== undefined;
+    if (hasData) {
       results.push(`📈 Analytics: ✅ OK`);
+    } else if (metricsData.error) {
+      results.push(`📈 Analytics: ❌ Erreur: ${metricsData.error}`);
     } else {
-      results.push(`📈 Analytics: ❌ Erreur${metricsData.error ? ': ' + metricsData.error : ''}`);
-      if (metricsData.details) {
-        results.push(`   └─ Détails: ${JSON.stringify(metricsData.details)}`);
-      }
+      results.push(`📈 Analytics: ❌ Format inattendu`);
     }
   } catch (e) {
     results.push(`📈 Analytics: ❌ Exception: ${e.message}`);
