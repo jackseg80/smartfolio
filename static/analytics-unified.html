@@ -4,13 +4,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Unified Analytics Dashboard - Analyse ML temps réel, métriques de risque, performance, cycles de marché et intelligence décisionnelle pour votre portefeuille SmartFolio">
   <title>Unified Analytics - SmartFolio</title>
+
+  <!-- Preconnect to CDNs for better performance -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
   <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
   <link rel="stylesheet" href="components/governance-panel.css">
   <link rel="stylesheet" href="components/decision-index-panel.css?v=20251015fixed">
   <!-- IMPORTANT: analytics-unified-theme.css EN DERNIER pour surcharger le DI Panel -->
-  <link rel="stylesheet" href="analytics-unified-theme.css?v=20251022v7">
+  <link rel="stylesheet" href="analytics-unified-theme.css?v=20251126v8">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
@@ -75,10 +81,13 @@
 </head>
 
 <body>
-  <div id="backend-fallback-banner"
-    style="display:none; background: color-mix(in oklab, var(--warning) 20%, transparent); border: 1px solid var(--warning); color: var(--theme-text); padding: .6rem; margin: .5rem auto; max-width: 95vw; border-radius: 6px;">
+  <!-- Skip link for keyboard navigation -->
+  <a href="#analytics-tabs" class="skip-link">Skip to main content</a>
+
+  <div id="backend-fallback-banner">
     ⚠ Backend unavailable — prudent mode (reduced cap).
   </div>
+
   <div class="wrap">
     <!-- Governance Panel -->
     <div id="governance-container"></div>
@@ -86,20 +95,20 @@
     <div id="unified-root"></div>
 
     <!-- Tabs connectés directement aux panels -->
-    <div class="tabs" id="analytics-tabs">
-      <button class="tab-btn active" data-target="#tab-risk">Risk</button>
-      <button class="tab-btn" data-target="#tab-performance">Performance</button>
-      <button class="tab-btn" data-target="#tab-cycles">Cycles</button>
-      <button class="tab-btn" data-target="#tab-monitoring">Monitoring</button>
-      <button class="tab-btn" data-target="#tab-intelligence-ml">🤖 Intelligence ML</button>
-      <button class="btn-refresh" id="manual-refresh-onchain" title="Force refresh of on-chain indicators">🔄 Refresh</button>
+    <div class="tabs" id="analytics-tabs" role="tablist" aria-label="Analytics sections">
+      <button class="tab-btn active" data-target="#tab-risk" role="tab" aria-selected="true" aria-controls="tab-risk" id="tab-btn-risk">Risk</button>
+      <button class="tab-btn" data-target="#tab-performance" role="tab" aria-selected="false" aria-controls="tab-performance" id="tab-btn-performance">Performance</button>
+      <button class="tab-btn" data-target="#tab-cycles" role="tab" aria-selected="false" aria-controls="tab-cycles" id="tab-btn-cycles">Cycles</button>
+      <button class="tab-btn" data-target="#tab-monitoring" role="tab" aria-selected="false" aria-controls="tab-monitoring" id="tab-btn-monitoring">Monitoring</button>
+      <button class="tab-btn" data-target="#tab-intelligence-ml" role="tab" aria-selected="false" aria-controls="tab-intelligence-ml" id="tab-btn-intelligence-ml">🤖 Intelligence ML</button>
+      <button class="btn-refresh" id="manual-refresh-onchain" title="Force refresh of on-chain indicators" aria-label="Refresh on-chain indicators">🔄 Refresh</button>
     </div>
 
     <!-- Tab Panels -->
-    <section class="tab-panel active" id="tab-risk">
+    <section class="tab-panel active" id="tab-risk" role="tabpanel" aria-labelledby="tab-btn-risk">
     <div class="panel-card">
       <h3>🛡️ Risk Dashboard</h3>
-      <div class="metrics-grid-250">
+      <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="risk-var">
           <h4>VaR Portfolio</h4>
           <div class="metric-value" id="risk-var-value">--</div>
@@ -146,10 +155,9 @@
       </div>
       <div class="info-section">
         <h4>Alertes Risque</h4>
-        <div class="info-section-content">
-          <div class="info-list-item">• Concentration du portefeuille dans les limites acceptables</div>
-          <div class="info-list-item">• Risque de corrélation modéré pour les conditions actuelles</div>
-          <div class="info-list-item">• Aucune alerte d'exposition significative</div>
+        <div class="info-section-content" id="risk-alerts-container" aria-live="polite">
+          <!-- Alerts populated dynamically by analytics-unified.js -->
+          <div class="info-list-item">• Chargement des alertes...</div>
         </div>
       </div>
       <div class="actions-row">
@@ -162,10 +170,10 @@
       </div>
       </div>
     </section>
-    <section class="tab-panel" id="tab-performance">
+    <section class="tab-panel" id="tab-performance" role="tabpanel" aria-labelledby="tab-btn-performance">
     <div class="panel-card">
       <h3>📊 Performance Monitor</h3>
-      <div class="metrics-grid-250">
+      <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="perf-cache-size">
           <h4>Taille Cache Mémoire</h4>
           <div class="metric-value">--</div>
@@ -202,10 +210,10 @@
       </div>
       </div>
     </section>
-    <section class="tab-panel" id="tab-cycles">
+    <section class="tab-panel" id="tab-cycles" role="tabpanel" aria-labelledby="tab-btn-cycles">
     <div class="panel-card">
       <h3>🔄 Cycle Analysis</h3>
-      <div class="metrics-grid-250">
+      <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="cycle-phase">
           <h4>Phase Actuelle</h4>
           <div class="metric-value">--</div>
@@ -229,13 +237,13 @@
       </div>
       <div class="info-section">
         <h4>Market Cycle Indicators</h4>
-        <div class="info-section-content" style="text-align: center; padding: 1rem;">
+        <div class="info-section-content" id="cycle-indicators-container" style="text-align: center; padding: 1rem;" aria-live="polite">
           📊 Indicateurs disponibles via l'API ML<br>
           <small class="text-subtle">Fear & Greed, RSI, MVRV Ratio</small>
-          <!-- TODO: Connecter aux endpoints ML réels:
-               - Fear & Greed: /api/ml/sentiment/fear-greed
-               - RSI: À implémenter via technical indicators
-               - MVRV: À implémenter via on-chain metrics
+          <!-- Available endpoints:
+               - Fear & Greed: /api/ml/sentiment/fear-greed ✓
+               - RSI: Available via /api/bourse/analysis (technical indicators)
+               - MVRV: To be implemented via on-chain metrics module
           -->
         </div>
       </div>
@@ -246,10 +254,10 @@
       </div>
       </div>
     </section>
-    <section class="tab-panel" id="tab-monitoring">
+    <section class="tab-panel" id="tab-monitoring" role="tabpanel" aria-labelledby="tab-btn-monitoring">
     <div class="panel-card">
       <h3>📈 Advanced Analytics</h3>
-      <div class="metrics-grid-250">
+      <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="monitor-total-return">
           <h4>Rendement Total</h4>
           <div class="metric-value">--%</div>
@@ -284,7 +292,7 @@
     </section>
 
     <!-- Intelligence ML Tab Panel -->
-    <section class="tab-panel" id="tab-intelligence-ml">
+    <section class="tab-panel" id="tab-intelligence-ml" role="tabpanel" aria-labelledby="tab-btn-intelligence-ml">
     <div class="panel-card">
       <h3>🤖 Intelligence ML - Vue Analyse Complète</h3>
       <p>
@@ -294,7 +302,7 @@
       <!-- Stats ML Globales -->
       <div class="ml-stats-section">
         <h4>📊 Statistiques ML Globales</h4>
-        <div class="metrics-grid-200">
+        <div class="metrics-grid-200" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
             <h5>Modèles Actifs</h5>
             <div class="metric-value" id="ml-active-models">--/4</div>
@@ -316,7 +324,7 @@
       <!-- Vue Modèles Détaillée -->
       <div class="ml-models-section">
         <h4>🧠 Santé des Modèles</h4>
-        <div class="metrics-grid-250">
+        <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
             <h5>🌊 Volatility LSTM</h5>
             <div class="metric-value" id="ml-vol-model-status">⚪ Unknown</div>
@@ -343,8 +351,8 @@
       <!-- Prédictions Temps Réel -->
       <div class="ml-predictions-section">
         <h4>🔮 Prédictions Temps Réel</h4>
-        <div id="ml-predictions-container">
-          <div class="prediction-grid metrics-grid-250">
+        <div id="ml-predictions-container" aria-live="polite">
+          <div class="prediction-grid metrics-grid-250" aria-atomic="false">
             <!-- Volatilité -->
             <div class="metric-card" data-metric="ml-volatility-btc">
               <h5>BTC Volatilité 24h</h5>

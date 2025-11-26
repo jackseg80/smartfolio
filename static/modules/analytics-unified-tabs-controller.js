@@ -301,6 +301,25 @@ function showMLError(message) {
   `;
 }
 
+// ARIA accessibility management for tabs
+function updateTabsAria(activeButton) {
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabButtons.forEach(btn => {
+    const isActive = btn === activeButton;
+    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    btn.classList.toggle('active', isActive);
+  });
+
+  tabPanels.forEach(panel => {
+    const isActive = panel.id === activeButton.getAttribute('aria-controls');
+    panel.classList.toggle('active', isActive);
+    // Update hidden state for screen readers
+    panel.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+  });
+}
+
 // Auto-initialisation quand l'onglet devient actif
 document.addEventListener('DOMContentLoaded', () => {
   // Observer les changements d'onglets - intégration avec le système existant
@@ -310,6 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
     button.addEventListener('click', () => {
       const targetId = button.dataset.target;
 
+      // Update ARIA attributes
+      updateTabsAria(button);
+
       // Si c'est l'onglet Intelligence ML
       if (targetId === '#tab-intelligence-ml') {
         setTimeout(() => {
@@ -317,6 +339,33 @@ document.addEventListener('DOMContentLoaded', () => {
             initializeMLTab();
           }
         }, 100); // Petit délai pour que l'onglet soit visible
+      }
+    });
+
+    // Keyboard navigation support (Arrow keys)
+    button.addEventListener('keydown', (e) => {
+      const buttons = Array.from(tabButtons);
+      const currentIndex = buttons.indexOf(button);
+      let newIndex;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        newIndex = (currentIndex + 1) % buttons.length;
+        buttons[newIndex].focus();
+        buttons[newIndex].click();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        newIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+        buttons[newIndex].focus();
+        buttons[newIndex].click();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        buttons[0].focus();
+        buttons[0].click();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        buttons[buttons.length - 1].focus();
+        buttons[buttons.length - 1].click();
       }
     });
   });
@@ -348,4 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnClearCache) btnClearCache.addEventListener('click', clearMLCache);
   if (btnLogs) btnLogs.addEventListener('click', downloadMLLogs);
   if (btnDebug) btnDebug.addEventListener('click', showMLDebug);
+
+  // Initialize ARIA attributes on page load
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab) {
+    updateTabsAria(activeTab);
+  }
 });

@@ -5,6 +5,9 @@
 
 console.debug('🔄 Analytics Unified - Initialisation');
 
+// Import risk alerts loader
+import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
+
 // Configuration
 const API_BASE = globalConfig?.get('api_base_url') || 'http://localhost:8000';
 
@@ -178,6 +181,9 @@ async function loadTabData(tabId) {
   async function loadRiskData() {
   console.debug("Analytics Unified: Loading Risk Dashboard data...");
 
+  // Start real-time risk alerts polling (unified alert system)
+  startRiskAlertsPolling();
+
   const riskData = await fetchWithCache('risk-dashboard', async () => {
     const minUsd = globalConfig?.get('min_usd_threshold') || 10;
     const url = `${API_BASE}/api/risk/dashboard?min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
@@ -199,8 +205,7 @@ async function loadTabData(tabId) {
   updateMetric('risk-volatility', formatPercent(metrics.volatility_annualized), '30-day annualized');
   updateMetric('risk-score', `${metrics.risk_score || '--'}/100`, getRiskLevel(metrics.risk_score));
 
-  // Alerts
-  updateRiskAlerts(metrics, riskData.portfolio_summary);
+  // Note: Risk alerts now loaded dynamically via startRiskAlertsPolling()
 
   // Diversification metrics
   const corr = riskData.correlation_metrics || {};

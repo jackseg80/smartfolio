@@ -10,6 +10,40 @@
  */
 
 /* ═══════════════════════════════════════════════════════════
+   UTILITY COMPONENTS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 10000;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Backend fallback banner */
+#backend-fallback-banner {
+  display: none;
+  background: color-mix(in oklab, var(--warning) 20%, transparent);
+  border: 1px solid var(--warning);
+  color: var(--theme-text);
+  padding: 0.6rem;
+  margin: 0.5rem auto;
+  max-width: 95vw;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════
    PAGE CONTAINER
    ═══════════════════════════════════════════════════════════ */
 
