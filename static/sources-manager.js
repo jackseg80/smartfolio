@@ -311,14 +311,22 @@ function createSourcesList(moduleName, module) {
       const isSelected = isSourceCurrentlySelected(moduleName, sourceValue, module.detected_files);
 
       sources.push(`
-        <label class="source-option">
-          <input type="radio" name="source-select-${moduleName}" value="${sourceValue}"
-                 data-file="${file.name}" data-module="${moduleName}"
-                 onchange="selectActiveSource('${moduleName}', '${sourceValue}', '${file.name}')"
-                 ${isSelected ? 'checked' : ''}>
-          <span class="source-details">
-            📄 <strong>${file.name}</strong> <small>(${sizeStr} • ${dateStr}) ${legacyBadge}</small>
-          </span>
+        <label class="source-option" style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+            <input type="radio" name="source-select-${moduleName}" value="${sourceValue}"
+                   data-file="${file.name}" data-module="${moduleName}"
+                   onchange="selectActiveSource('${moduleName}', '${sourceValue}', '${file.name}')"
+                   ${isSelected ? 'checked' : ''}>
+            <span class="source-details">
+              📄 <strong>${file.name}</strong> <small>(${sizeStr} • ${dateStr}) ${legacyBadge}</small>
+            </span>
+          </div>
+          <button class="btn danger btn-sm" style="padding: 6px 10px; font-size: 13px; margin-left: 8px;"
+                  onclick="event.preventDefault(); event.stopPropagation(); deleteFile('${moduleName}', '${file.name}')"
+                  title="Supprimer ce fichier"
+                  aria-label="Supprimer le fichier ${file.name}">
+            🗑️
+          </button>
         </label>
       `);
     });
@@ -368,13 +376,6 @@ function getSelectedSource(moduleName) {
 function createModuleActions(module) {
   const actions = [];
 
-  // Bouton Scanner (toujours disponible)
-  actions.push(`
-    <button class="btn info btn-sm" onclick="scanModule('${module.name}')">
-      🔍 Scanner
-    </button>
-  `);
-
   // Bouton Upload (pour modules supportant les fichiers)
   // Nouveau système: Upload sauvegarde directement dans data/, plus besoin d'import séparé!
   const modulesWithUpload = ['cointracking', 'saxobank', 'banks'];
@@ -382,15 +383,6 @@ function createModuleActions(module) {
     actions.push(`
       <button class="btn primary btn-sm" onclick="showUploadDialog('${module.name}')">
         📁 Uploader
-      </button>
-    `);
-  }
-
-  // Bouton Refresh API (si API disponible)
-  if (module.modes.includes('api')) {
-    actions.push(`
-      <button class="btn primary btn-sm" onclick="refreshModuleApi('${module.name}')">
-        🔄 Rafraîchir API
       </button>
     `);
   }
@@ -468,33 +460,6 @@ function formatRelativeTime(date) {
 }
 
 // Actions des modules
-
-/**
- * Scanner un module pour voir les fichiers détectés
- */
-async function scanModule(moduleName) {
-  try {
-    (window.debugLogger?.debug || console.log)(`[Sources] Scanning module: ${moduleName}`);
-
-    const response = await safeFetch(`${SOURCES_CONFIG.apiBase}/scan`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const scanData = await response.json();
-    const moduleData = scanData.modules[moduleName];
-
-    if (moduleData) {
-      showScanResults(moduleName, moduleData);
-    } else {
-      showNotification(`Aucun fichier détecté pour ${getModuleName(moduleName)}`, 'info');
-    }
-
-  } catch (error) {
-    debugLogger.error(`[Sources] Error scanning ${moduleName}:`, error);
-    showNotification(`Erreur lors du scan de ${getModuleName(moduleName)}`, 'error');
-  }
-}
 
 /**
  * Importer la source sélectionnée (fichier ou API)
@@ -678,25 +643,6 @@ async function scanAllSources() {
     debugLogger.error('[Sources] Error scanning all sources:', error);
     showNotification('Erreur lors du scan global', 'error');
   }
-}
-
-/**
- * Affiche les résultats de scan pour un module
- */
-function showScanResults(moduleName, moduleData) {
-  const filesCount = moduleData.files_detected.length;
-  const isLegacy = moduleData.is_legacy ? ' (legacy)' : '';
-
-  let message = `${getModuleName(moduleName)}: ${filesCount} fichier(s) détecté(s)${isLegacy}`;
-
-  if (moduleData.estimated_records) {
-    message += ` (~${moduleData.estimated_records} enregistrements)`;
-  }
-
-  showNotification(message, 'info');
-
-  // Log détaillé dans console
-  (window.debugLogger?.debug || console.log)(`[Sources] Scan results for ${moduleName}:`, moduleData);
 }
 
 /**
@@ -988,35 +934,85 @@ async function testActiveSource(moduleName) {
 
     const currentUser = getCurrentUser();
 
-    // Changer temporairement l'utilisateur actif pour le test
-    const originalUser = localStorage.getItem('activeUser');
-    localStorage.setItem('activeUser', currentUser);
-
     // Afficher feedback immédiat
     showTemporaryFeedback('🧪 Test de la source en cours...', 'info');
 
-    // Utiliser la fonction testConnection existante de global-config.js
-    if (window.globalConfig && typeof window.globalConfig.testConnection === 'function') {
-      const results = await window.globalConfig.testConnection();
+    // Déterminer l'endpoint selon le module
+    let testEndpoint;
+    let expectedFormat;
 
-      // Restaurer l'utilisateur original
-      if (originalUser) {
-        localStorage.setItem('activeUser', originalUser);
+    // Récupérer le fichier sélectionné depuis les radio buttons du module spécifique
+    const selectedRadio = document.querySelector(`input[name="source-select-${moduleName}"]:checked`);
+    const selectedFile = selectedRadio?.dataset?.file || null;
+
+    if (moduleName === 'cointracking') {
+      // Pour CoinTracking, tester avec le paramètre source
+      const userConfig = JSON.parse(localStorage.getItem('userConfig') || '{}');
+      const config = userConfig[currentUser] || {};
+      const dataSource = config.data_source || 'cointracking';
+      testEndpoint = `/balances/current?source=${dataSource}`;
+      expectedFormat = 'items'; // Format: { items: [...] }
+    } else if (moduleName === 'saxobank') {
+      // Pour Saxo Bank, utiliser l'endpoint dédié avec le fichier sélectionné
+      testEndpoint = '/api/saxo/positions';
+      if (selectedFile) {
+        testEndpoint += `?file_key=${encodeURIComponent(selectedFile)}`;
       }
-
-      // Formater et afficher les résultats
-      const status = results.balances === 'Vide' ? 'error' : 'success';
-      const message = `📊 Test terminé:
-Backend: ${results.backend}
-Données: ${results.balances}
-Source: ${results.source}`;
-
-      showExtendedFeedback(message, status);
-      (window.debugLogger?.debug || console.log)('[Sources] Test results:', results);
-
+      expectedFormat = 'positions'; // Format: { positions: [...] }
+    } else if (moduleName === 'banks') {
+      // Pour Banks, utiliser l'endpoint dédié
+      testEndpoint = '/api/wealth/banks/accounts';
+      expectedFormat = 'accounts'; // Format: liste directe
     } else {
-      throw new Error('testConnection() non disponible');
+      throw new Error(`Module ${moduleName} non supporté pour les tests`);
     }
+
+    // Effectuer le test
+    const apiBase = window.globalConfig?.get('api_base_url') || 'http://127.0.0.1:8080';
+    const response = await fetch(`${apiBase}${testEndpoint}`, {
+      headers: {
+        'X-User': currentUser
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Analyser les résultats selon le format
+    let dataCount = 0;
+    let dataLabel = 'enregistrements';
+
+    if (expectedFormat === 'items' && data.items) {
+      dataCount = data.items.length;
+      dataLabel = 'assets';
+    } else if (expectedFormat === 'positions' && data.positions) {
+      dataCount = data.positions.length;
+      dataLabel = 'positions';
+    } else if (expectedFormat === 'accounts') {
+      // Banks retourne directement une liste, pas un objet avec clé
+      dataCount = Array.isArray(data) ? data.length : 0;
+      dataLabel = 'comptes';
+    }
+
+    // Formater et afficher les résultats
+    const status = dataCount > 0 ? 'success' : 'warning';
+    const sourceInfo = selectedFile || data.source_used || data.file_key || moduleName;
+    const message = `📊 Test ${getModuleName(moduleName)} terminé:
+Backend: ✅ OK
+Données: ${dataCount > 0 ? `✅ ${dataCount} ${dataLabel}` : '⚠️ Aucune donnée'}
+Source: ${sourceInfo}`;
+
+    showExtendedFeedback(message, status);
+    (window.debugLogger?.debug || console.log)('[Sources] Test results:', {
+      module: moduleName,
+      selectedFile,
+      dataCount,
+      endpoint: testEndpoint,
+      data
+    });
 
   } catch (error) {
     debugLogger.error(`[Sources] Error testing ${moduleName}:`, error);
@@ -1072,6 +1068,55 @@ function showExtendedFeedback(message, type = 'info') {
 function getCurrentUser() {
   const userSelector = document.getElementById('user-selector');
   return userSelector ? userSelector.value : 'demo';
+}
+
+/**
+ * Supprimer un fichier d'un module
+ */
+async function deleteFile(moduleName, fileName) {
+  // Demander confirmation
+  const confirm = window.confirm(
+    `Voulez-vous vraiment supprimer le fichier "${fileName}" ?\n\n` +
+    `⚠️ Cette action est irréversible !`
+  );
+
+  if (!confirm) {
+    return;
+  }
+
+  try {
+    (window.debugLogger?.debug || console.log)(`[Sources] Deleting file: ${fileName} from ${moduleName}`);
+
+    const response = await safeFetch(`${SOURCES_CONFIG.apiBase}/delete-file`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        module: moduleName,
+        filename: fileName
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.success) {
+      showNotification(result.message, 'success');
+
+      // Rafraîchir les données après suppression
+      setTimeout(() => refreshSourcesStatus(), 500);
+    } else {
+      showNotification(`Erreur: ${result.error || result.message}`, 'error');
+    }
+
+  } catch (error) {
+    debugLogger.error(`[Sources] Error deleting ${fileName}:`, error);
+    showNotification(`Erreur lors de la suppression de ${fileName}`, 'error');
+  }
 }
 
 // Fonctions d'upload
@@ -1364,12 +1409,9 @@ function getModuleAllowedExtensions(moduleName) {
 // Export des fonctions principales pour l'usage dans settings.html
 window.initSourcesManager = initSourcesManager;
 window.refreshSourcesStatus = refreshSourcesStatus;
-window.scanAllSources = scanAllSources;
-window.scanModule = scanModule;
-window.importModule = importModule;
-window.refreshModuleApi = refreshModuleApi;
 window.selectActiveSource = selectActiveSource;
 window.isSourceCurrentlySelected = isSourceCurrentlySelected;
 window.testActiveSource = testActiveSource;
 window.showUploadDialog = showUploadDialog;
 window.forceCloseUploadDialog = forceCloseUploadDialog;
+window.deleteFile = deleteFile;
