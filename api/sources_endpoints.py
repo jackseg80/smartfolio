@@ -448,6 +448,17 @@ class UploadResponse(BaseModel):
     uploaded_files: List[str] = []
     error: Optional[str] = None
 
+class DeleteFileRequest(BaseModel):
+    """Requête de suppression de fichier"""
+    module: str = Field(..., description="Nom du module (cointracking, saxobank)")
+    filename: str = Field(..., description="Nom du fichier à supprimer")
+
+class DeleteFileResponse(BaseModel):
+    """Réponse de suppression de fichier"""
+    success: bool
+    message: str
+    error: Optional[str] = None
+
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_files(
@@ -562,4 +573,77 @@ async def upload_files(
             success=False,
             message="Erreur lors de l'upload",
             error="UPLOAD_ERROR"
+        )
+
+
+@router.post("/delete-file", response_model=DeleteFileResponse)
+async def delete_file(
+    request: DeleteFileRequest,
+    user: str = Depends(get_active_user),
+    user_fs: UserScopedFS = Depends(get_user_fs),
+    config_migrator: ConfigMigrator = Depends(get_config_migrator)
+) -> DeleteFileResponse:
+    """
+    Supprime un fichier d'un module spécifique.
+    """
+    try:
+        logger.info(f"Deleting file '{request.filename}' from module '{request.module}' (user: {user})")
+
+        # Validation du module
+        valid_modules = ["cointracking", "saxobank", "banks"]
+        if request.module not in valid_modules:
+            return DeleteFileResponse(
+                success=False,
+                message=f"Module '{request.module}' non supporté",
+                error="INVALID_MODULE"
+            )
+
+        # Construire le chemin du fichier dans data/
+        file_path = user_fs.get_path(f"{request.module}/data/{request.filename}")
+
+        # Vérifier que le fichier existe
+        if not os.path.exists(file_path):
+            return DeleteFileResponse(
+                success=False,
+                message=f"Fichier '{request.filename}' introuvable",
+                error="FILE_NOT_FOUND"
+            )
+
+        # Vérifier que le chemin est bien dans le répertoire data/ (sécurité)
+        data_dir = user_fs.get_path(f"{request.module}/data")
+        real_file_path = os.path.realpath(file_path)
+        real_data_dir = os.path.realpath(data_dir)
+
+        if not real_file_path.startswith(real_data_dir):
+            logger.error(f"Security violation: attempted to delete file outside data dir: {real_file_path}")
+            return DeleteFileResponse(
+                success=False,
+                message="Opération non autorisée",
+                error="SECURITY_VIOLATION"
+            )
+
+        # Supprimer le fichier
+        try:
+            os.remove(file_path)
+            logger.info(f"File deleted successfully: {file_path}")
+
+            return DeleteFileResponse(
+                success=True,
+                message=f"Fichier '{request.filename}' supprimé avec succès"
+            )
+
+        except OSError as e:
+            logger.error(f"Failed to delete file {file_path}: {e}")
+            return DeleteFileResponse(
+                success=False,
+                message=f"Erreur lors de la suppression: {str(e)}",
+                error="DELETE_FAILED"
+            )
+
+    except Exception as e:
+        logger.error(f"Delete failed for '{request.filename}' in module '{request.module}': {e}")
+        return DeleteFileResponse(
+            success=False,
+            message="Erreur lors de la suppression",
+            error="DELETE_ERROR"
         )
