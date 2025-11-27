@@ -56,3 +56,16 @@ async def get_configured_data_source():
     except Exception as e:
         logger.error(f"Error getting data source config: {e}")
         return success_response({"data_source": "stub"})  # Safe fallback
+
+@router.get("/api-base-url")
+async def get_api_base_url():
+    """
+    Get the API base URL from environment variable
+    This is a global server setting (not user-specific)
+    """
+    try:
+        api_base_url = os.getenv("API_BASE_URL", "http://localhost:8080")
+        return success_response({"api_base_url": api_base_url})
+    except Exception as e:
+        logger.error(f"Error getting API base URL: {e}")
+        return success_response({"api_base_url": "http://localhost:8080"})  # Safe fallback

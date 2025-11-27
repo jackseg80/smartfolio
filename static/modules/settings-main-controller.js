@@ -182,11 +182,12 @@ async function initQuickSettings() {
     await selectTheme(e.target.value);
     // selectTheme() already calls debouncedSaveSettings()
   });
-  document.getElementById('quick_api_base_url').addEventListener('change', (e) => {
-    if (!window.userSettings) window.userSettings = getDefaultSettings();
-    window.userSettings.api_base_url = e.target.value;
-    window.debouncedSaveSettings();
-  });
+  // API Base URL is now read-only (loaded from .env via backend)
+  // document.getElementById('quick_api_base_url').addEventListener('change', (e) => {
+  //   if (!window.userSettings) window.userSettings = getDefaultSettings();
+  //   window.userSettings.api_base_url = e.target.value;
+  //   window.debouncedSaveSettings();
+  // });
 
   // Actions - Boutons supprimés (sauvegarde automatique active)
   // Les paramètres sont sauvegardés via window.debouncedSaveSettings() (système unique)
@@ -196,7 +197,7 @@ async function initQuickSettings() {
 function getDefaultSettings() {
   return {
     data_source: "csv",
-    api_base_url: "http://localhost:8000",
+    api_base_url: window.location.origin, // Will be overridden by backend value
     display_currency: "USD",
     min_usd_threshold: 1.0,
     csv_glob: "csv/*.csv",
@@ -215,9 +216,28 @@ function getDefaultSettings() {
   };
 }
 
+// Charger l'API Base URL depuis le backend (.env)
+async function loadApiBaseUrl() {
+  try {
+    const response = await fetch('/api/config/api-base-url');
+    if (response.ok) {
+      const data = await response.json();
+      const apiBaseUrl = data.data?.api_base_url || data.api_base_url;
+      debugLogger.info(`✓ API Base URL loaded from backend: ${apiBaseUrl}`);
+      return apiBaseUrl;
+    }
+  } catch (error) {
+    debugLogger.warn('Failed to load API Base URL from backend, using default');
+  }
+  return window.location.origin; // Fallback
+}
+
 // Charger les settings depuis l'API utilisateur ET localStorage
 async function loadSettings() {
-  // D'abord, charger depuis localStorage (globalConfig) comme fallback immédiat
+  // D'abord, charger l'API Base URL depuis le backend (config globale)
+  const apiBaseUrl = await loadApiBaseUrl();
+
+  // Ensuite, charger depuis localStorage (globalConfig) comme fallback immédiat
   const localSettings = window.globalConfig ? window.globalConfig.getAll() : {};
 
   try {
@@ -226,16 +246,16 @@ async function loadSettings() {
     });
     if (response.ok) {
       const backendSettings = await response.json();
-      // Fusionner: localStorage a priorité sur les valeurs récentes non sync
-      window.userSettings = { ...getDefaultSettings(), ...backendSettings, ...localSettings };
+      // Fusionner: API Base URL (backend global) a priorité sur tout
+      window.userSettings = { ...getDefaultSettings(), ...backendSettings, ...localSettings, api_base_url: apiBaseUrl };
       debugLogger.info('✓ Settings loaded from backend + localStorage');
     } else {
       debugLogger.warn('Failed to load user settings from backend, using localStorage');
-      window.userSettings = { ...getDefaultSettings(), ...localSettings };
+      window.userSettings = { ...getDefaultSettings(), ...localSettings, api_base_url: apiBaseUrl };
     }
   } catch (error) {
     debugLogger.error('Error loading user settings from backend:', error);
-    window.userSettings = { ...getDefaultSettings(), ...localSettings };
+    window.userSettings = { ...getDefaultSettings(), ...localSettings, api_base_url: apiBaseUrl };
   }
 
   // Synchroniser globalConfig avec les settings chargés
@@ -392,17 +412,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // === INTERFACE TAB ===
-  const apiBaseUrl = document.getElementById('api_base_url');
-  if (apiBaseUrl) {
-    apiBaseUrl.addEventListener('change', (e) => {
-      if (!window.userSettings) window.userSettings = getDefaultSettings();
-      window.userSettings.api_base_url = e.target.value;
-      if (window.globalConfig) window.globalConfig.set('api_base_url', e.target.value);
-      const quickApiUrl = document.getElementById('quick_api_base_url');
-      if (quickApiUrl) quickApiUrl.value = e.target.value;
-      window.debouncedSaveSettings();
-    });
-  }
+  // API Base URL is now read-only (loaded from .env via backend)
+  // const apiBaseUrl = document.getElementById('api_base_url');
+  // if (apiBaseUrl) {
+  //   apiBaseUrl.addEventListener('change', (e) => {
+  //     if (!window.userSettings) window.userSettings = getDefaultSettings();
+  //     window.userSettings.api_base_url = e.target.value;
+  //     if (window.globalConfig) window.globalConfig.set('api_base_url', e.target.value);
+  //     const quickApiUrl = document.getElementById('quick_api_base_url');
+  //     if (quickApiUrl) quickApiUrl.value = e.target.value;
+  //     window.debouncedSaveSettings();
+  //   });
+  // }
 
   const refreshInterval = document.getElementById('refresh_interval');
   if (refreshInterval) {
@@ -770,8 +791,9 @@ async function saveAllSettings() {
   saveSecretIfProvided('fred_api_key', 'fred_api_key');
   saveSecretIfProvided('debug_token', 'debug_token');
 
-  window.userSettings.api_base_url = document.getElementById('api_base_url').value;
-  if (window.globalConfig) window.globalConfig.set('api_base_url', window.userSettings.api_base_url);
+  // API Base URL is read-only (loaded from .env), not saved by user
+  // window.userSettings.api_base_url = document.getElementById('api_base_url').value;
+  // if (window.globalConfig) window.globalConfig.set('api_base_url', window.userSettings.api_base_url);
   window.userSettings.refresh_interval = parseInt(document.getElementById('refresh_interval').value);
   if (window.globalConfig) window.globalConfig.set('refresh_interval', window.userSettings.refresh_interval);
 
