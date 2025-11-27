@@ -1210,10 +1210,10 @@ export async function renderCyclesContentUncached() {
       <div class="risk-card">
         <h3>📊 CCS Market Score</h3>
         <div style="text-align: center; margin: var(--space-lg) 0;">
-          <div style="font-size: 3rem; font-weight: 700; color: ${interpretation.color};">
+          <div style="font-size: 4rem; font-weight: 800; color: ${interpretation.color}; text-shadow: 0 2px 8px ${interpretation.color}40; line-height: 1;">
             ${Math.round(ccsData.score)}
           </div>
-          <div style="font-size: 1rem; color: var(--theme-text-muted);">
+          <div style="font-size: 1.1rem; font-weight: 600; color: ${interpretation.color}; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
             ${interpretation.label}
           </div>
         </div>
@@ -1232,13 +1232,13 @@ export async function renderCyclesContentUncached() {
       <div class="risk-card">
         <h3>🔄 Position dans le Cycle</h3>
         <div style="text-align: center; margin: var(--space-lg) 0;">
-          <div style="font-size: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 0.5rem;">
             ${cycleData.phase?.emoji || '⚫'}
           </div>
-          <div style="font-size: 1rem; font-weight: 600; color: ${cycleData.phase?.color || '#6b7280'};">
-            ${cycleData.phase?.phase?.replace('_', ' ').toUpperCase() || 'UNKNOWN'}
+          <div style="font-size: 1.2rem; font-weight: 700; color: ${cycleData.phase?.color || '#6b7280'}; text-transform: uppercase; letter-spacing: 0.05em;">
+            ${cycleData.phase?.phase?.replace('_', ' ') || 'UNKNOWN'}
           </div>
-          <div style="font-size: 0.875rem; color: var(--theme-text-muted);">
+          <div style="font-size: 0.95rem; color: var(--theme-text-muted); margin-top: 0.75rem;">
             Mois ${Math.round(cycleData.months)} post-halving
           </div>
           <div style="font-size: 0.8rem; color: var(--theme-text-muted); margin-top: 0.5rem;">
@@ -1248,11 +1248,11 @@ export async function renderCyclesContentUncached() {
 
         <div class="metric-row">
           <span class="metric-label">Cycle Score:</span>
-          <span class="metric-value">${Math.round(cycleData.score)}/100</span>
+          <span class="metric-value" style="font-size: 1.1rem; font-weight: 700;">${Math.round(cycleData.score)}/100</span>
         </div>
         <div class="metric-row">
           <span class="metric-label">Confidence:</span>
-          <span class="metric-value">${Math.round(cycleData.confidence * 100)}%</span>
+          <span class="metric-value" style="font-size: 1.1rem; font-weight: 700;">${Math.round(cycleData.confidence * 100)}%</span>
         </div>
       </div>
 
