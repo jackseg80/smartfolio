@@ -215,26 +215,31 @@ export async function renderTargetsContent() {
           </div>
         ` : ''}
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-sm); margin: var(--space-lg) 0;">
-          <button class="refresh-btn" onclick="applyStrategy('macro')" ${buttonDisabled} title="${buttonTitle}" style="background: #6b7280; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            📊 Macro Only<br>
-            <small>${macroProposal.strategy}</small>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); margin: var(--space-lg) 0;">
+          <button class="refresh-btn" onclick="applyStrategy('macro')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; font-weight: 600; padding: 1rem; border: 2px solid #4b5563; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📊</div>
+            <div style="font-size: 0.95rem;">Macro Only</div>
+            <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${macroProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('ccs')" ${buttonDisabled} title="${buttonTitle}" style="background: #3b82f6; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            📈 CCS Based<br>
-            <small>${ccsProposal.strategy}</small>
+          <button class="refresh-btn" onclick="applyStrategy('ccs')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; padding: 1rem; border: 2px solid #2563eb; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📈</div>
+            <div style="font-size: 0.95rem;">CCS Based</div>
+            <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${ccsProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('cycle')" ${buttonDisabled} title="${buttonTitle}" style="background: #f59e0b; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            🔄 Cycle Adjusted<br>
-            <small>${cycleProposal.strategy}</small>
+          <button class="refresh-btn" onclick="applyStrategy('cycle')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; padding: 1rem; border: 2px solid #d97706; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔄</div>
+            <div style="font-size: 0.95rem;">Cycle Adjusted</div>
+            <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${cycleProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('blend')" ${buttonDisabled} title="${buttonTitle}" style="background: #10b981; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            ⚖️ Blended Strategy<br>
-            <small>${blendedProposal.strategy}</small>
+          <button class="refresh-btn" onclick="applyStrategy('blend')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; padding: 1rem; border: 2px solid #059669; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚖️</div>
+            <div style="font-size: 0.95rem;">Blended Strategy</div>
+            <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${blendedProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('smart')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white; font-weight: bold; border: 2px solid #8b5cf6; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
-            🧠 SMART<br>
-            <small style="font-size: 0.75rem;">${smartProposal.strategy}</small>
+          <button class="refresh-btn" onclick="applyStrategy('smart')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white; font-weight: 700; padding: 1rem; border: 3px solid #8b5cf6; border-radius: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div style="font-size: 1.75rem; margin-bottom: 0.25rem;">🧠</div>
+            <div style="font-size: 1rem;">SMART</div>
+            <small style="opacity: 0.95; margin-top: 0.25rem; display: block; font-size: 0.75rem;">${smartProposal.strategy}</small>
           </button>
         </div>
       </div>

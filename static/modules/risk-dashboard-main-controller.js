@@ -1032,15 +1032,16 @@ function createAlertItem(alert) {
 
 function formatAlertType(alertType) {
   const typeMap = {
-    'VOL_Q90_CROSS': 'High Volatility',
-    'REGIME_FLIP': 'Regime Change',
-    'CORR_HIGH': 'High Correlation',
-    'CONTRADICTION_SPIKE': 'ML Contradiction',
-    'DECISION_DROP': 'Low Confidence',
-    'EXEC_COST_SPIKE': 'High Exec Cost'
+    'VOL_Q90_CROSS': { icon: '📊', label: 'High Volatility' },
+    'REGIME_FLIP': { icon: '🔄', label: 'Regime Change' },
+    'CORR_HIGH': { icon: '🔗', label: 'High Correlation' },
+    'CONTRADICTION_SPIKE': { icon: '⚠️', label: 'ML Contradiction' },
+    'DECISION_DROP': { icon: '📉', label: 'Low Confidence' },
+    'EXEC_COST_SPIKE': { icon: '💸', label: 'High Exec Cost' }
   };
 
-  return typeMap[alertType] || alertType;
+  const mapped = typeMap[alertType] || { icon: '🔔', label: alertType };
+  return `<span style="display: inline-flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">${mapped.icon}</span><span>${mapped.label}</span></span>`;
 }
 
 function formatAlertMessage(alert) {
@@ -1334,10 +1335,20 @@ function createAlertsHistoryRow(alert) {
     };
   };
 
+  const getSeverityBadge = (severity) => {
+    const severityConfig = {
+      'S1': { icon: 'ℹ️', label: 'Info', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+      'S2': { icon: '⚠️', label: 'Warning', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+      'S3': { icon: '🚨', label: 'Critical', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
+    };
+    const config = severityConfig[severity] || severityConfig['S1'];
+    return `<span style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 6px; background: ${config.bg}; color: ${config.color}; font-weight: 600; font-size: 0.9rem;"><span style="font-size: 1.1rem;">${config.icon}</span><span>${severity}</span></span>`;
+  };
+
   return `
         <tr>
           <td>
-            <span class="alert-severity-badge ${alert.severity}">${alert.severity}</span>
+            ${getSeverityBadge(alert.severity)}
           </td>
           <td>
             <div class="alert-type-label">${formatAlertType(alert.alert_type)}</div>
@@ -2393,51 +2404,6 @@ function renderRiskDashboard(data) {
             <div class="metric-interpretation">
               💡 ${getScoreInterpretation(m.risk_score)}
             </div>
-
-            <!-- Comparaison des Versions (V2 Autoritaire) -->
-            ${m.risk_version_info ? `
-            <div style="margin: 8px 0; padding: 8px; background: rgba(158, 206, 106, 0.1); border-radius: 6px; border-left: 3px solid #9ece6a;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <span style="font-size: 0.8em; font-weight: 600; color: #9ece6a;">
-                  📊 Comparaison des Versions
-                </span>
-                <span style="font-size: 0.7em; color: var(--text-tertiary); font-style: italic;">
-                  (Actif: ${m.risk_version_info.active_version})
-                </span>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em;">
-                <!-- V2 à gauche (prioritaire) -->
-                <div>
-                  <div style="color: var(--text-secondary); margin-bottom: 2px;">
-                    ${m.risk_version_info.active_version === 'v2' ? '✓ ' : ''}V2 Risk Score:
-                  </div>
-                  <div style="font-weight: 600; color: ${m.risk_version_info.active_version === 'v2' ? '#9ece6a' : 'var(--text-primary)'};">
-                    ${m.risk_version_info.risk_score_v2 != null ? safeFixed(m.risk_version_info.risk_score_v2, 1) : 'N/A'}/100
-                  </div>
-                  <div style="font-size: 0.75em; color: var(--text-tertiary); margin-top: 2px;">
-                    Sharpe: ${m.risk_version_info.sharpe_v2 != null ? safeFixed(m.risk_version_info.sharpe_v2, 2) : 'N/A'}
-                  </div>
-                </div>
-                <!-- Legacy à droite (comparaison) -->
-                <div style="opacity: ${m.risk_version_info.active_version === 'v2' ? 0.7 : 1};">
-                  <div style="color: var(--text-secondary); margin-bottom: 2px;">
-                    ${m.risk_version_info.active_version === 'legacy' ? '✓ ' : ''}Legacy Risk Score:
-                  </div>
-                  <div style="font-weight: 600; color: ${m.risk_version_info.active_version === 'legacy' ? '#9ece6a' : 'var(--text-secondary)'};">
-                    ${m.risk_version_info.risk_score_legacy != null ? safeFixed(m.risk_version_info.risk_score_legacy, 1) : 'N/A'}/100
-                  </div>
-                  <div style="font-size: 0.75em; color: var(--text-tertiary); margin-top: 2px;">
-                    Sharpe: ${m.risk_version_info.sharpe_legacy != null ? safeFixed(m.risk_version_info.sharpe_legacy, 2) : 'N/A'}
-                  </div>
-                </div>
-              </div>
-              <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(158, 206, 106, 0.2);">
-                <div style="font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-                  ℹ️ ${m.risk_version_info.active_version === 'v2' ? 'V2 actif' : 'Legacy actif'}: V2 utilise Dual-Window Blend pour meilleure stabilité
-                </div>
-              </div>
-            </div>
-            ` : ''}
 
             <!-- Dual Window Badges -->
             ${m.dual_window?.enabled ? `
