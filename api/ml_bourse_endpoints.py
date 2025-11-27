@@ -16,8 +16,12 @@ from datetime import datetime, timedelta
 import logging
 import json
 import math
+import os
 
 from api.deps import get_active_user
+
+# Read API base URL from environment or use default
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080")
 from services.ml.bourse.stocks_adapter import StocksMLAdapter
 from services.ml.bourse.recommendations_orchestrator import RecommendationsOrchestrator
 
@@ -687,7 +691,7 @@ async def get_portfolio_recommendations(
         # Get user positions from Saxo
         import httpx
         async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout to 30 seconds
-            positions_url = "http://localhost:8080/api/saxo/positions"
+            positions_url = f"{API_BASE_URL}/api/saxo/positions"
             if file_key:
                 positions_url += f"?file_key={file_key}"
             pos_response = await client.get(
@@ -711,7 +715,7 @@ async def get_portfolio_recommendations(
 
         # Get current market regime
         async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout to 30 seconds
-            regime_url = f"http://localhost:8080/api/ml/bourse/regime?benchmark={benchmark}&lookback_days={max(lookback_days, 365)}"
+            regime_url = f"{API_BASE_URL}/api/ml/bourse/regime?benchmark={benchmark}&lookback_days={max(lookback_days, 365)}"
             regime_response = await client.get(regime_url)
             regime_response.raise_for_status()
             regime_data = regime_response.json()
@@ -794,7 +798,7 @@ async def get_market_opportunities(
         # 1. Get user positions from Saxo
         import httpx
         async with httpx.AsyncClient(timeout=30.0) as client:
-            positions_url = "http://localhost:8080/api/saxo/positions"
+            positions_url = f"{API_BASE_URL}/api/saxo/positions"
             if file_key:
                 positions_url += f"?file_key={file_key}"
             pos_response = await client.get(
