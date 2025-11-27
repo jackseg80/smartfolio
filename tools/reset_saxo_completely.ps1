@@ -17,7 +17,8 @@ foreach ($file in $files_to_remove) {
     if (Test-Path $file) {
         Remove-Item $file -Force
         Write-Host "  ✅ Supprimé: $file" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "  ⏭️  Absent: $file" -ForegroundColor Gray
     }
 }
@@ -38,10 +39,12 @@ foreach ($folder in $folders_to_clean) {
         if ($count -gt 0) {
             Remove-Item "$folder\*" -Force -Recurse -ErrorAction SilentlyContinue
             Write-Host "  ✅ Vidé: $folder ($count fichiers)" -ForegroundColor Green
-        } else {
+        }
+        else {
             Write-Host "  ✓ Déjà vide: $folder" -ForegroundColor Gray
         }
-    } else {
+    }
+    else {
         # Créer le dossier s'il n'existe pas
         New-Item -ItemType Directory -Path $folder -Force | Out-Null
         Write-Host "  ✨ Créé: $folder" -ForegroundColor Cyan
@@ -105,16 +108,17 @@ Write-Host ""
 Write-Host "🔌 5. Test de connectivité API..." -ForegroundColor Yellow
 
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:8080/api/saxo/portfolios" -Method GET -Headers @{"X-User"="jack"} -UseBasicParsing -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://localhost:8080/api/saxo/portfolios" -Method GET -Headers @{"X-User" = "jack" } -UseBasicParsing -ErrorAction Stop
     Write-Host "  ✅ API Saxo accessible (HTTP $($response.StatusCode))" -ForegroundColor Green
 
     $json = $response.Content | ConvertFrom-Json
     $count = if ($json.portfolios) { $json.portfolios.Count } else { 0 }
     Write-Host "  📊 Portfolios trouvés: $count" -ForegroundColor $(if ($count -eq 0) { "Yellow" } else { "Green" })
 
-} catch {
+}
+catch {
     Write-Host "  ⚠️  API non accessible - Le serveur tourne-t-il ?" -ForegroundColor Red
-    Write-Host "     Lancez: python -m uvicorn api.main:app --reload --port 8000" -ForegroundColor Gray
+    Write-Host "     Lancez: python -m uvicorn api.main:app --reload --port 8080" -ForegroundColor Gray
 }
 
 Write-Host ""

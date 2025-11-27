@@ -114,7 +114,7 @@ resource "aws_security_group" "ecs_sg" {
 
   ingress {
     from_port       = 8000
-    to_port         = 8000
+    to_port         = 8080
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }
@@ -177,8 +177,8 @@ resource "aws_ecs_task_definition" "crypto_rebal_task" {
 
       portMappings = [
         {
-          containerPort = 8000
-          hostPort      = 8000
+          containerPort = 8080
+          hostPort      = 8080
         }
       ]
 
@@ -203,7 +203,7 @@ resource "aws_ecs_task_definition" "crypto_rebal_task" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -234,7 +234,7 @@ resource "aws_lb" "crypto_rebal_alb" {
 
 resource "aws_lb_target_group" "crypto_rebal_tg" {
   name        = "crypto-rebal-tg"
-  port        = 8000
+  port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.crypto_rebal_vpc.id
   target_type = "ip"
@@ -282,7 +282,7 @@ resource "aws_ecs_service" "crypto_rebal_service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.crypto_rebal_tg.arn
     container_name   = "crypto-rebal-api"
-    container_port   = 8000
+    container_port   = 8080
   }
 
   depends_on = [aws_lb_listener.crypto_rebal_listener]

@@ -325,14 +325,14 @@ docker-compose -f docker-compose.prod.yml logs -f
 ### Étape 4.1 : Test API local (sur NUC)
 
 ```bash
-# Sur NUC (docker-compose.prod.yml utilise port 8000)
-curl http://localhost:8000/docs
+# Sur NUC (docker-compose.prod.yml utilise port 8080)
+curl http://localhost:8080/docs
 # Doit retourner HTML (Swagger UI)
 
-curl http://localhost:8000/balances/current?user_id=demo
+curl http://localhost:8080/balances/current?user_id=demo
 # Doit retourner JSON avec balances
 
-curl http://localhost:8000/api/ml/sentiment/symbol/BTC
+curl http://localhost:8080/api/ml/sentiment/symbol/BTC
 # Doit retourner JSON avec sentiment ML
 ```
 
@@ -372,7 +372,7 @@ Si "unhealthy", voir [Troubleshooting](#troubleshooting).
 
 ```bash
 # Sur NUC - Tester API Risk Dashboard (⚠️ Header X-User requis depuis Nov 2025)
-curl -s "http://localhost:8000/api/risk/dashboard" \
+curl -s "http://localhost:8080/api/risk/dashboard" \
   -H "X-User: jack" \
   | jq '{
   risk_score: .data.risk_score,
@@ -455,8 +455,8 @@ docker ps
 
 # Les 2 conteneurs doivent être présents (smartfolio-api, smartfolio-redis)
 
-# Tester API (port 8000)
-curl http://localhost:8000/docs
+# Tester API (port 8080)
+curl http://localhost:8080/docs
 ```
 
 ✅ **Si succès = Migration terminée !**
@@ -536,19 +536,21 @@ $ ./deploy.sh
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📊 Quick Access:
-   • Dashboard:  http://192.168.1.200:8000/dashboard.html
-   • API Docs:   http://192.168.1.200:8000/docs
-   • Risk:       http://192.168.1.200:8000/risk-dashboard.html
+   • Dashboard:  http://192.168.1.200:8080/dashboard.html
+   • API Docs:   http://192.168.1.200:8080/docs
+   • Risk:       http://192.168.1.200:8080/risk-dashboard.html
 ```
 
 ### Sécurité : Backup Automatique
 
 Si des changements locaux existent, le script :
+
 1. **Demande confirmation** (sauf si `--force`)
 2. **Backup automatique** : `/tmp/smartfolio_backup_YYYYMMDD_HHMMSS.patch`
 3. **Reset vers origin/main**
 
 Restaurer un backup si nécessaire :
+
 ```bash
 # Voir les backups disponibles
 ls -lah /tmp/smartfolio_backup_*.patch
@@ -571,6 +573,7 @@ git push origin main
 ```
 
 ✅ **C'est tout !** Le script gère :
+
 - ✅ Git pull
 - ✅ Vérification cache prix
 - ✅ Docker rebuild
@@ -580,12 +583,14 @@ git push origin main
 ### Quand Utiliser `--skip-build` ?
 
 **Rebuild complet (défaut)** :
+
 - ✅ Modifications `Dockerfile` ou `Dockerfile.prod`
 - ✅ Modifications `requirements.txt` (nouvelles dépendances)
 - ✅ Modifications `docker-compose.prod.yml`
 - ⏱️ Durée : 30-60s
 
 **Restart seulement (`--skip-build`)** :
+
 - ✅ Modifications Python (`.py` files)
 - ✅ Modifications config (`.env`, `.json`)
 - ✅ Modifications static (HTML, JS, CSS)
@@ -736,7 +741,7 @@ docker-compose -f docker-compose.prod.yml restart
 
 ```bash
 # Test 1 : Vérifier scheduler status (HTTP)
-curl -s http://localhost:8000/api/scheduler/health | jq '{
+curl -s http://localhost:8080/api/scheduler/health | jq '{
   enabled: .data.enabled,
   jobs_count: .data.jobs_count,
   next_runs: .data.next_runs | keys
@@ -796,6 +801,7 @@ mkdir -p ~/backups
 ```
 
 **Explication :**
+
 - Vérifie si `smartfolio-api` est "unhealthy"
 - Si oui, redémarre automatiquement le container
 - Log dans `healthcheck.log`
@@ -917,6 +923,7 @@ docker volume ls | grep smartfolio # Doit être vide
 ```
 
 **Résultat :**
+
 - ✅ Containers : Supprimés
 - ✅ Images : Supprimées (rebuild depuis Dockerfile)
 - ✅ Volumes : Supprimés (Redis vide)
@@ -973,12 +980,14 @@ docker stats
 ### Problème : Conteneur "unhealthy"
 
 **Symptômes :**
+
 ```bash
 docker ps
 # STATUS: Up 5 minutes (unhealthy)
 ```
 
 **Solution :**
+
 ```bash
 # Voir logs détaillés
 docker-compose -f docker-compose.prod.yml logs smartfolio
@@ -992,11 +1001,13 @@ docker-compose -f docker-compose.prod.yml logs smartfolio
 ### Problème : Redis connection refused
 
 **Symptômes :**
+
 ```
 ConnectionError: Error 111 connecting to redis:6379. Connection refused.
 ```
 
 **Solution :**
+
 ```bash
 # Vérifier Redis actif
 docker ps | grep redis
@@ -1011,11 +1022,13 @@ docker inspect smartfolio-redis | grep Health -A 10
 ### Problème : Port 8080 déjà utilisé
 
 **Symptômes :**
+
 ```
 Error starting userland proxy: listen tcp 0.0.0.0:8080: bind: address already in use
 ```
 
 **Solution :**
+
 ```bash
 # Trouver processus utilisant port 8080
 sudo lsof -i :8080
@@ -1034,11 +1047,13 @@ docker-compose -f docker-compose.prod.yml up -d
 ### Problème : Données utilisateurs introuvables
 
 **Symptômes :**
+
 ```
 FileNotFoundError: data/users/demo/secrets.json
 ```
 
 **Solution :**
+
 ```bash
 # Vérifier ownership volumes
 ls -la data/users/
@@ -1053,11 +1068,13 @@ docker inspect smartfolio-api | grep -A 20 Mounts
 ### Problème : Image build échoue
 
 **Symptômes :**
+
 ```
 ERROR: failed to solve: process "/bin/sh -c pip install -r requirements.txt" did not complete successfully
 ```
 
 **Solution :**
+
 ```bash
 # Vérifier requirements.txt existe
 cat requirements.txt
@@ -1072,6 +1089,7 @@ ping pypi.org
 ### Problème : Logs "disk full"
 
 **Solution :**
+
 ```bash
 # Vérifier espace disque
 df -h

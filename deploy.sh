@@ -126,7 +126,7 @@ fi
 
 # Check API health
 echo -n "   Testing API endpoint... "
-if curl -sf http://localhost:8000/docs > /dev/null 2>&1; then
+if curl -sf http://localhost:8080/docs > /dev/null 2>&1; then
     echo -e "${GREEN}✅${NC}"
 else
     echo -e "${RED}❌ Failed${NC}"
@@ -136,7 +136,7 @@ fi
 
 # Check scheduler
 echo -n "   Testing scheduler... "
-SCHEDULER_STATUS=$(curl -sf http://localhost:8000/api/scheduler/health 2>/dev/null | grep -o '"enabled":[^,]*' | cut -d':' -f2)
+SCHEDULER_STATUS=$(curl -sf http://localhost:8080/api/scheduler/health 2>/dev/null | grep -o '"enabled":[^,]*' | cut -d':' -f2)
 if [ "$SCHEDULER_STATUS" == "true" ]; then
     echo -e "${GREEN}✅ Enabled${NC}"
 else
@@ -150,9 +150,9 @@ echo -e "${GREEN}✅ Deployment Complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "${YELLOW}📊 Quick Access:${NC}"
-echo "   • Dashboard:  http://$(hostname -I | awk '{print $1}'):8000/dashboard.html"
-echo "   • API Docs:   http://$(hostname -I | awk '{print $1}'):8000/docs"
-echo "   • Risk:       http://$(hostname -I | awk '{print $1}'):8000/risk-dashboard.html"
+echo "   • Dashboard:  http://$(hostname -I | awk '{print $1}'):8080/dashboard.html"
+echo "   • API Docs:   http://$(hostname -I | awk '{print $1}'):8080/docs"
+echo "   • Risk:       http://$(hostname -I | awk '{print $1}'):8080/risk-dashboard.html"
 echo ""
 echo -e "${YELLOW}🔍 Useful Commands:${NC}"
 echo "   • View logs:        docker-compose -f docker-compose.prod.yml logs -f"

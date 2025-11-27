@@ -54,10 +54,10 @@ if errorlevel 1 (
 REM Vérifier si le serveur est démarré
 echo.
 echo 🌐 Vérification serveur local...
-python -c "import requests; requests.get('http://localhost:8000/docs', timeout=3)" >nul 2>&1
+python -c "import requests; requests.get('http://localhost:8080/docs', timeout=3)" >nul 2>&1
 if errorlevel 1 (
-    echo ⚠️  Serveur local non accessible sur http://localhost:8000
-    echo    Démarrez le serveur avec: uvicorn api.main:app --reload --port 8000
+    echo ⚠️  Serveur local non accessible sur http://localhost:8080
+    echo    Démarrez le serveur avec: uvicorn api.main:app --reload --port 8080
     echo    Les tests manuels seront ignorés
     set SERVER_DOWN=1
     goto :skip_manual_tests

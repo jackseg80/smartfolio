@@ -21,17 +21,17 @@ function detectDefaultApiBase() {
 // Ajoutez/retirez des entrées ici pour les rendre disponibles partout
 window.DATA_SOURCES = {
   stub_conservative: { label: 'Démo Conservative', icon: '🛡️', kind: 'stub' },
-  stub_balanced:     { label: 'Démo Équilibrée',  icon: '⚖️', kind: 'stub' },
-  stub_shitcoins:    { label: 'Démo Risquée',      icon: '🎲', kind: 'stub' },
-  cointracking:      { label: 'CoinTracking CSV',  icon: '📄', kind: 'csv' },
-  cointracking_api:  { label: 'CoinTracking API',  icon: '🌐', kind: 'api' }
+  stub_balanced: { label: 'Démo Équilibrée', icon: '⚖️', kind: 'stub' },
+  stub_shitcoins: { label: 'Démo Risquée', icon: '🎲', kind: 'stub' },
+  cointracking: { label: 'CoinTracking CSV', icon: '📄', kind: 'csv' },
+  cointracking_api: { label: 'CoinTracking API', icon: '🌐', kind: 'api' }
 };
 
 /**
  * Récupère l'utilisateur actuel depuis le système de navigation
  * @returns {string} ID de l'utilisateur actuel
  */
-window.getCurrentUser = function() {
+window.getCurrentUser = function () {
   // Récupérer depuis localStorage (géré par nav.js)
   const activeUser = localStorage.getItem('activeUser');
   if (activeUser) {
@@ -58,7 +58,7 @@ window.DATA_SOURCE_ORDER = [
 ];
 
 // Helpers d'accès
-window.getDataSourceKeys = function() {
+window.getDataSourceKeys = function () {
   const keys = Array.isArray(window.DATA_SOURCE_ORDER) && window.DATA_SOURCE_ORDER.length
     ? window.DATA_SOURCE_ORDER.slice()
     : Object.keys(window.DATA_SOURCES);
@@ -66,13 +66,13 @@ window.getDataSourceKeys = function() {
   return keys.filter(k => !!window.DATA_SOURCES[k]);
 };
 
-window.getDataSourceLabel = function(key) {
+window.getDataSourceLabel = function (key) {
   const meta = window.DATA_SOURCES[key];
   if (!meta) return key;
   return `${meta.icon || ''} ${meta.label || key}`.trim();
 };
 
-window.isValidDataSource = function(key) {
+window.isValidDataSource = function (key) {
   return !!window.DATA_SOURCES[key];
 };
 
@@ -156,13 +156,13 @@ class GlobalConfig {
     const oldValue = this.settings[key];
     this.settings[key] = value;
     this.save();
-    
+
     // Émettre un événement si la valeur a changé
     if (oldValue !== value) {
       this.emitConfigChange(key, value, oldValue);
     }
   }
-  
+
   /**
    * Émet un événement de changement de configuration
    */
@@ -171,7 +171,7 @@ class GlobalConfig {
       detail: { key, newValue, oldValue }
     });
     window.dispatchEvent(event);
-    
+
     // Événement spécifique pour les changements de source de données
     if (key === 'data_source') {
       const dataSourceEvent = new CustomEvent('dataSourceChanged', {
@@ -203,7 +203,7 @@ class GlobalConfig {
         }
       }
     }
-    
+
     // Événement spécifique pour les changements de thème
     if (key === 'theme') {
       const themeEvent = new CustomEvent('themeChanged', {
@@ -459,10 +459,10 @@ class GlobalConfig {
   applyTheme() {
     const effectiveTheme = this.getEffectiveTheme();
     document.documentElement.setAttribute('data-theme', effectiveTheme);
-    
+
     // Sauvegarder le thème effectif pour les CSS qui en ont besoin
     document.documentElement.style.setProperty('--effective-theme', effectiveTheme);
-    
+
     console.debug(`🎨 Thème appliqué: ${this.settings.theme} (effectif: ${effectiveTheme})`);
   }
 
@@ -472,7 +472,7 @@ class GlobalConfig {
   setDebugMode(enabled) {
     this.set('debug_mode', enabled);
     console.debug(`🛠️ Mode debug ${enabled ? 'activé' : 'désactivé'}`);
-    
+
     // Émettre un événement spécifique pour le mode debug
     const event = new CustomEvent('debugModeChanged', {
       detail: { enabled }
@@ -489,7 +489,7 @@ class GlobalConfig {
     if (urlParams.get('debug') === 'true') {
       return true;
     }
-    
+
     // Ensuite la configuration sauvegardée
     return this.get('debug_mode') === true;
   }
@@ -590,7 +590,7 @@ const balanceCache = {
 /**
  * Fonction centralisée pour charger les données de balance selon la source configurée
  */
-window.loadBalanceData = async function(forceRefresh = false) {
+window.loadBalanceData = async function (forceRefresh = false) {
   const dataSource = globalConfig.get('data_source');
   const apiBaseUrl = globalConfig.get('api_base_url');
   const currentUser = localStorage.getItem('activeUser') || 'demo';
@@ -665,14 +665,14 @@ window.loadBalanceData = async function(forceRefresh = false) {
   } catch (error) {
     debugLogger.error(`❌ Error loading balance data via API (source: ${dataSource}):`, error);
     (window.debugLogger?.debug || console.log)('🔄 Trying fallback: direct CSV file loading...');
-    
+
     // Fallback: try to load CSV files directly
     try {
       const csvFiles = [
         'data/raw/CoinTracking - Current Balance.csv',
         'data/raw/CoinTracking - Balance by Exchange - 26.08.2025.csv'
       ];
-      
+
       for (const csvFile of csvFiles) {
         try {
           (window.debugLogger?.debug || console.log)(`📄 Attempting to load: ${csvFile}`);
@@ -691,7 +691,7 @@ window.loadBalanceData = async function(forceRefresh = false) {
           (window.debugLogger?.debug || console.log)(`⚠️ Could not load ${csvFile}:`, fileError.message);
         }
       }
-      
+
       // Si aucun fichier CSV accessible et API échoué
       debugLogger.error('📊 No CSV files accessible and API failed.');
 
@@ -717,14 +717,14 @@ window.loadBalanceData = async function(forceRefresh = false) {
       } catch (stubError) {
         debugLogger.error('❌ Stub data via API also failed:', stubError);
       }
-      
+
       // Dernière option: retourner erreur - pas de données mockées
       return {
         success: false,
         error: `All data sources failed. Configure valid data source in settings: API=${error.message}`,
         source: 'none'
       };
-      
+
     } catch (fallbackError) {
       debugLogger.error('❌ Fallback also failed:', fallbackError);
       return {
@@ -739,7 +739,7 @@ window.loadBalanceData = async function(forceRefresh = false) {
 /**
  * Fonction pour parser les données CSV de balance (commune à toutes les pages)
  */
-window.parseCSVBalances = function(csvText) {
+window.parseCSVBalances = function (csvText) {
   const cleanedText = csvText.replace(/^\ufeff/, '');
   const lines = cleanedText.split('\n');
   const balances = [];
@@ -755,7 +755,7 @@ window.parseCSVBalances = function(csvText) {
         const ticker = columns[0];
         const amount = parseFloat(columns[3]);
         const valueUSD = parseFloat(columns[4]);
-        
+
         if (ticker && !isNaN(amount) && !isNaN(valueUSD) && valueUSD >= minThreshold) {
           balances.push({
             symbol: ticker.toUpperCase(),
@@ -775,14 +775,14 @@ window.parseCSVBalances = function(csvText) {
 /**
  * Fonction pour parser une ligne CSV (gère les guillemets et points-virgules)
  */
-window.parseCSVLine = function(line) {
+window.parseCSVLine = function (line) {
   const result = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
-    
+
     if (char === '"') {
       inQuotes = !inQuotes;
     } else if (char === ';' && !inQuotes) {
@@ -792,7 +792,7 @@ window.parseCSVLine = function(line) {
       current += char;
     }
   }
-  
+
   result.push(current);
   return result.map(item => item.replace(/^"|"$/g, ''));
 };
@@ -817,8 +817,8 @@ if (window.matchMedia) {
       globalConfig.applyTheme();
       // Émettre un événement pour que les pages se mettent à jour
       window.dispatchEvent(new CustomEvent('themeChanged', {
-        detail: { 
-          newTheme: 'auto', 
+        detail: {
+          newTheme: 'auto',
           oldTheme: 'auto',
           effectiveTheme: globalConfig.getEffectiveTheme()
         }
@@ -833,7 +833,7 @@ globalConfig.applyTheme();
 console.debug('🚀 Configuration globale chargée:', globalConfig.getAll());
 
 // ====== Currency conversion helper (USD -> display currency) ======
-window.currencyManager = (function(){
+window.currencyManager = (function () {
   // Fallback rates (synchronized with backend, updated Oct 2025)
   const FALLBACK_RATES = {
     USD: 1.0,
@@ -859,7 +859,7 @@ window.currencyManager = (function(){
     try {
       const apiUrl = (typeof globalConfig !== 'undefined' && globalConfig.getApiUrl)
         ? globalConfig.getApiUrl('/api/fx/rates?base=USD')
-        : 'http://localhost:8000/api/fx/rates?base=USD';
+        : 'http://localhost:8080/api/fx/rates?base=USD';
 
       const res = await fetch(apiUrl, {
         method: 'GET',
@@ -915,7 +915,7 @@ window.currencyManager = (function(){
     if (rate && rate > 0) {
       try {
         window.dispatchEvent(new CustomEvent('currencyRateUpdated', { detail: { currency: cur, rate } }));
-      } catch (_) {}
+      } catch (_) { }
       return rate;
     }
 
@@ -952,7 +952,7 @@ window.currencyManager = (function(){
         if (c && c !== 'USD') ensureRate(c);
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 
   return { ensureRate, getRateSync };
 })();

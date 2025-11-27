@@ -5,7 +5,7 @@
 
 // Configuration des endpoints API
 const AI_CONFIG = {
-    baseUrl: globalConfig?.get('api_base_url') || 'http://localhost:8000',
+    baseUrl: globalConfig?.get('api_base_url') || 'http://localhost:8080',
     endpoints: {
         volatilityPredictor: '/api/ai/volatility/predict',
         marketRegime: '/api/ai/regime/current',
@@ -37,11 +37,11 @@ class HttpClient {
 
         try {
             const response = await fetch(url, defaultOptions);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
-            
+
             return await response.json();
         } catch (error) {
             debugLogger.error(`Request failed for ${url}:`, error);
@@ -77,7 +77,7 @@ class VolatilityPredictorService {
      */
     async predict(symbols, horizon = 24) {
         const cacheKey = `${symbols.join(',')}_${horizon}`;
-        
+
         // Vérifier le cache
         if (this.cache.has(cacheKey)) {
             const cached = this.cache.get(cacheKey);
@@ -399,7 +399,7 @@ class AIServiceManager {
         this.sentimentService = new SentimentAnalysisService();
         this.rebalancingService = new AutoRebalancingService();
         this.healthService = new AIHealthService();
-        
+
         this.isInitialized = false;
         this.healthCheckInterval = null;
     }
@@ -409,7 +409,7 @@ class AIServiceManager {
      */
     async initialize() {
         (window.debugLogger?.debug || console.log)('🤖 Initializing AI Services...');
-        
+
         try {
             // Vérifier la santé des services
             const health = await this.healthService.checkHealth();
@@ -423,7 +423,7 @@ class AIServiceManager {
 
             this.isInitialized = true;
             (window.debugLogger?.info || console.log)('✅ AI Services initialized successfully');
-            
+
             return { success: true, health };
         } catch (error) {
             debugLogger.error('❌ AI Services initialization failed:', error);
@@ -441,8 +441,8 @@ class AIServiceManager {
                 if (health.status !== 'healthy') {
                     (window.debugLogger?.warn || console.warn)('⚠️  AI Services health issue detected:', health);
                     // Émettre un événement pour l'UI
-                    window.dispatchEvent(new CustomEvent('aiHealthWarning', { 
-                        detail: health 
+                    window.dispatchEvent(new CustomEvent('aiHealthWarning', {
+                        detail: health
                     }));
                 }
             } catch (error) {
@@ -493,7 +493,7 @@ window.aiServiceManager = new AIServiceManager();
 
 // Auto-initialisation
 document.addEventListener('DOMContentLoaded', async () => {
-    if (window.location.pathname.includes('ai-dashboard') || 
+    if (window.location.pathname.includes('ai-dashboard') ||
         window.location.search.includes('ai=true')) {
         await window.aiServiceManager.initialize();
     }

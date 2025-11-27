@@ -41,7 +41,7 @@ COPY . .
 ENV CRYPTO_TOOLBOX_NEW=1
 ENV PYTHONUNBUFFERED=1
 
-EXPOSE 8000
+EXPOSE 8080
 
 # Use single worker for Playwright compatibility
-CMD ["uvicorn","api.main:app","--host","0.0.0.0","--port","8000","--workers","1"]
+CMD ["uvicorn","api.main:app","--host","0.0.0.0","--port","8080","--workers","1"]

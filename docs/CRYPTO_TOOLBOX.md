@@ -13,11 +13,13 @@ This module scrapes cryptocurrency market indicators from [crypto-toolbox.vercel
 ## Architecture
 
 ### Technology Stack
+
 - **FastAPI** (async REST API)
 - **Playwright** (browser automation, async_api)
 - **Chromium** (headless browser)
 
 ### Design Principles
+
 - **Single browser instance**: Shared across all requests (launched at startup)
 - **Concurrency control**: Semaphore(2) limits simultaneous scrapes
 - **Cache-first**: 2-hour TTL with Redis persistence (fallback to memory cache)
@@ -32,9 +34,11 @@ This module scrapes cryptocurrency market indicators from [crypto-toolbox.vercel
 Get crypto-toolbox indicators (cached or fresh).
 
 **Query Parameters**:
+
 - `force` (bool, optional): Force refresh bypassing cache (default: `false`)
 
 **Response** (200 OK):
+
 ```json
 {
     "success": true,
@@ -61,6 +65,7 @@ Get crypto-toolbox indicators (cached or fresh).
 ```
 
 **Error Response** (502 Bad Gateway):
+
 ```json
 {
     "detail": "Upstream scraping error: timeout"
@@ -82,6 +87,7 @@ Force refresh data (bypass cache).
 Health check endpoint.
 
 **Response** (200 OK):
+
 ```json
 {
     "status": "healthy",
@@ -99,6 +105,7 @@ Health check endpoint.
 Clear cache (admin/debug).
 
 **Response** (200 OK):
+
 ```json
 {
     "message": "Cache cleared successfully"
@@ -110,16 +117,19 @@ Clear cache (admin/debug).
 ## Configuration
 
 ### Environment Variables
+
 - `CRYPTO_TOOLBOX_URL` (optional): Target URL (default: `https://crypto-toolbox.vercel.app/signaux`)
 - `CRYPTO_TOOLBOX_CACHE_TTL` (optional): Cache TTL in seconds (default: `1800`)
 
 ### Cache Settings
+
 - **TTL**: 2 hours (7200 seconds)
 - **Strategy**: Redis-first (persists across restarts), fallback to in-memory
 - **Lock**: asyncio.Lock prevents thundering herd
 - **Performance**: ~75% fewer scrapes compared to 30-min TTL
 
 ### Concurrency
+
 - **Browser**: 1 shared instance (re-launched if crashed)
 - **Pages**: Max 2 concurrent (Semaphore)
 - **Workers**: **Single-worker Uvicorn only** (Playwright state is not multi-process safe)
@@ -129,6 +139,7 @@ Clear cache (admin/debug).
 ## Dependencies
 
 ### Python Packages
+
 ```txt
 playwright==1.46.0
 fastapi>=0.104.0
@@ -136,13 +147,16 @@ uvicorn>=0.24.0
 ```
 
 ### System Requirements
+
 **Chromium browser** must be installed:
+
 ```bash
 # After pip install playwright
 playwright install chromium
 ```
 
 **Docker**: Use Playwright official image or install deps:
+
 ```dockerfile
 RUN playwright install chromium --with-deps
 ```
@@ -152,6 +166,7 @@ RUN playwright install chromium --with-deps
 ## Lifecycle Management
 
 ### Startup Sequence
+
 1. **FastAPI app starts** (`api/main.py`)
 2. **ML models initialize** (3s delay, background task)
 3. **Governance Engine** initialized
@@ -162,6 +177,7 @@ RUN playwright install chromium --with-deps
    - Memory footprint: ~200 MB (Chromium process)
 
 **Order of initialization** (in `api/startup.py`):
+
 ```python
 models_count = await initialize_ml_models()           # 1st
 governance_ok = await initialize_governance_engine()  # 2nd
@@ -170,11 +186,13 @@ playwright_ok = await initialize_playwright_browser() # 4th (optional)
 ```
 
 **Memory impact**:
+
 - Baseline (FastAPI + ML): ~300-400 MB
 - With Playwright browser: ~500-600 MB
 - Per request overhead: ~1-2 MB (page context)
 
 ### Shutdown Sequence
+
 1. **FastAPI shutdown event** triggered (SIGTERM/SIGINT)
 2. **Alert Engine** scheduler stopped gracefully
 3. **Playwright browser** closed (if initialized)
@@ -184,6 +202,7 @@ playwright_ok = await initialize_playwright_browser() # 4th (optional)
 4. **Cleanup complete** (logs confirmation)
 
 ### Recovery & Resilience
+
 - **Browser crash**: Auto re-launch on next request
   - `_ensure_browser()` checks `browser.is_connected()`
   - New browser spawned if disconnected
@@ -200,19 +219,24 @@ playwright_ok = await initialize_playwright_browser() # 4th (optional)
 ## Special Cases
 
 ### BMO (par Prof. Chaîne)
+
 This indicator has **multiple sub-indicators** with different thresholds:
+
 - Each sub-indicator gets a separate entry
 - Format: `"BMO (par Prof. Chaîne) (Label)"`
 - Example: `"BMO (par Prof. Chaîne) (Short-Term)"`
 
 ### Threshold Operators
+
 Supported comparison operators:
+
 - `>=` : Greater than or equal
 - `<=` : Less than or equal
 - `>` : Greater than
 - `<` : Less than
 
 ### Parsing Edge Cases
+
 - Comma decimal separators → normalized to periods
 - Newlines in raw values → stripped
 - Missing thresholds → skipped (not included in response)
@@ -222,17 +246,20 @@ Supported comparison operators:
 ## Memory & Performance
 
 ### Memory Footprint
+
 - **Browser process**: ~150-200 MB (Chromium headless)
 - **Cache**: ~10-50 KB (JSON in-memory)
 - **Total**: ~200 MB per worker
 
 ### Latency
+
 - **Cache hit (Redis)**: <5 ms
 - **Cache hit (memory)**: <2 ms
 - **Cache miss (scrape)**: 12-15 seconds (optimized from 20-24s)
 - **Timeout**: 15 seconds (page load)
 
 ### Scaling
+
 - **Vertical**: Single worker, handles ~50 req/s (mostly cached)
 - **Horizontal**: Multiple containers (1 worker each) behind load balancer
 - ⚠️ **Do NOT use `--workers > 1`** with Playwright (shared browser state issue)
@@ -242,6 +269,7 @@ Supported comparison operators:
 ## Development
 
 ### Local Testing
+
 ```bash
 # Start dev server
 uvicorn api.main:app --port 8080
@@ -257,6 +285,7 @@ curl http://localhost:8080/api/crypto-toolbox/health
 ```
 
 ### Debug Logs
+
 ```python
 import logging
 logging.getLogger("api.crypto_toolbox_endpoints").setLevel(logging.DEBUG)
@@ -267,6 +296,7 @@ logging.getLogger("api.crypto_toolbox_endpoints").setLevel(logging.DEBUG)
 ## Production Deployment
 
 ### Docker
+
 ```dockerfile
 FROM python:3.11-slim
 WORKDIR /app
@@ -277,13 +307,14 @@ RUN pip install -r requirements.txt
 RUN playwright install chromium --with-deps
 
 COPY . .
-EXPOSE 8000
+EXPOSE 8080
 
 # Single worker (Playwright requirement)
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
 ### systemd (Linux)
+
 ```ini
 [Unit]
 Description=Crypto Rebal API
@@ -303,6 +334,7 @@ WantedBy=multi-user.target
 ## Migration Status
 
 ### Current State
+
 - ✅ Router skeleton created (`api/crypto_toolbox_endpoints.py`)
 - ✅ Contract documented (JSON schema, invariants)
 - ✅ Lifecycle hooks integrated (`api/startup.py`)
@@ -323,6 +355,7 @@ WantedBy=multi-user.target
 ### Parsing Parity
 
 **Validated** against `crypto_toolbox_api.py`:
+
 - ✅ Regex patterns identical
 - ✅ BMO multi-indicator logic identical
 - ✅ Numeric extraction identical
@@ -332,6 +365,7 @@ WantedBy=multi-user.target
 **See**: `docs/CRYPTO_TOOLBOX_PARITY.md` for detailed checklist
 
 ### Rollback Strategy
+
 - **Before Commit 4**: No impact (router not included)
 - **Commit 4-7**: Feature flag `CRYPTO_TOOLBOX_NEW=0` reverts to Flask
 - **After Commit 8**: Revert commit to restore Flask proxy
@@ -343,7 +377,7 @@ WantedBy=multi-user.target
 - **Original Flask implementation**: `crypto_toolbox_api.py` (to be removed in Commit 8)
 - **Proxy endpoint**: `api/main.py:432-447` (to be removed in Commit 8)
 - **Parity validation**: `docs/CRYPTO_TOOLBOX_PARITY.md`
-- **Target site**: https://crypto-toolbox.vercel.app/signaux
+- **Target site**: <https://crypto-toolbox.vercel.app/signaux>
 
 ---
 
@@ -377,6 +411,7 @@ curl http://localhost:8080/api/crypto-toolbox | jq '.total_count'
 ### Startup Logs
 
 **Default (FastAPI native)**:
+
 ```
 🎭 Crypto-Toolbox: Using FastAPI native scraper (CRYPTO_TOOLBOX_NEW=1)
 🎭 Initializing Playwright browser...
@@ -384,6 +419,7 @@ curl http://localhost:8080/api/crypto-toolbox | jq '.total_count'
 ```
 
 **Fallback (Flask proxy)**:
+
 ```
 📡 Crypto-Toolbox: Using Flask proxy (CRYPTO_TOOLBOX_NEW=0, legacy mode)
 ```
@@ -395,6 +431,7 @@ curl http://localhost:8080/api/crypto-toolbox | jq '.total_count'
 ### Local Development
 
 **Windows (PowerShell)**:
+
 ```powershell
 # Legacy mode (default)
 .\start_dev.ps1
@@ -407,6 +444,7 @@ $env:CRYPTO_TOOLBOX_NEW=1; .\start_dev.ps1
 ```
 
 **Linux/Mac (Bash)**:
+
 ```bash
 # Legacy mode (default)
 ./start_dev.sh
@@ -421,11 +459,13 @@ CRYPTO_TOOLBOX_NEW=1 ./start_dev.sh
 ### Docker Deployment
 
 **Build image** (includes Playwright + Chromium):
+
 ```bash
 docker build -t crypto-rebal .
 ```
 
 **Run container** (FastAPI mode by default):
+
 ```bash
 # Default (CRYPTO_TOOLBOX_NEW=1)
 docker run -p 8080:8080 crypto-rebal
@@ -460,12 +500,15 @@ python -c "from playwright.async_api import async_playwright; print('OK')"
 ### Prerequisites
 
 Before testing, ensure you have:
+
 1. **Flask server** running on port 8001 (for baseline)
+
    ```bash
    python crypto_toolbox_api.py
    ```
 
 2. **Playwright installed** (for FastAPI mode)
+
    ```bash
    pip install playwright
    playwright install chromium
@@ -487,6 +530,7 @@ jq '.total_count, .critical_count' test_flask_baseline.json
 ### Step 2: Test FastAPI Implementation
 
 **Start server in FastAPI mode**:
+
 ```bash
 # Windows
 .\start_dev.ps1 -CryptoToolboxMode 1
@@ -496,6 +540,7 @@ jq '.total_count, .critical_count' test_flask_baseline.json
 ```
 
 **Capture output** (in another terminal):
+
 ```bash
 # Force fresh scrape (bypass cache)
 curl -s "http://localhost:8080/api/crypto-toolbox?force=true" > test_fastapi_new.json
@@ -507,11 +552,13 @@ jq '.total_count, .critical_count' test_fastapi_new.json
 ### Step 3: Run Comparison
 
 **Automated comparison**:
+
 ```bash
 python scripts/compare_crypto_toolbox.py test_flask_baseline.json test_fastapi_new.json
 ```
 
 **Expected output**:
+
 ```
 COUNTS COMPARISON
 Total count   - Flask: 15 | FastAPI: 15 | Match: ✅
@@ -532,18 +579,21 @@ SUMMARY
 ### Step 4: Performance Validation
 
 **Cache miss** (first request):
+
 ```bash
 time curl -s "http://localhost:8080/api/crypto-toolbox?force=true" > /dev/null
 # Expected: <5 seconds
 ```
 
 **Cache hit** (within 30 minutes):
+
 ```bash
 time curl -s "http://localhost:8080/api/crypto-toolbox" > /dev/null
 # Expected: <50ms
 ```
 
 **Stability test** (10 consecutive requests):
+
 ```bash
 for i in {1..10}; do
   curl -s "http://localhost:8080/api/crypto-toolbox?force=true" | jq '.success'
@@ -591,4 +641,3 @@ Before proceeding to Commit 7, verify:
 
 **Last updated**: 2025-10-02
 **Status**: Phase 8 - Migration Complete (Flask Removed)
-

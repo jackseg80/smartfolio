@@ -159,8 +159,8 @@ async function loadStockRegimeHistory() {
             const config = await window.fetchUserConfig();
             endpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
         } else {
-            // Fallback: assume localhost:8000
-            endpoint = `http://localhost:8000/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
+            // Fallback: assume localhost:8080
+            endpoint = `http://localhost:8080/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
         }
         debugLogger.debug('Fetching from:', endpoint);
 
@@ -255,7 +255,7 @@ function renderStockRegimeHistoryChart(data) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             return context.parsed.y.toFixed(1) + '% probability';
                         }
                     }
@@ -270,7 +270,7 @@ function renderStockRegimeHistoryChart(data) {
                         text: 'Probability %'
                     },
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return value + '%';
                         }
                     }

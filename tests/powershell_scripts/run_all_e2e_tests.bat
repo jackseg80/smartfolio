@@ -6,10 +6,10 @@ echo.
 
 :: Vérifier que le serveur fonctionne
 echo 🚀 Checking test server...
-curl -s http://localhost:8000/api/phase3/status >nul 2>&1
+curl -s http://localhost:8080/api/phase3/status >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ Test server not running on localhost:8000
-    echo Please start the server with: uvicorn api.main:app --port 8000
+    echo ❌ Test server not running on localhost:8080
+    echo Please start the server with: uvicorn api.main:app --port 8080
     pause
     exit /b 1
 )

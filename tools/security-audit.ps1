@@ -13,7 +13,8 @@ Write-Host "`n1. Scanning for exposed secrets..." -ForegroundColor Yellow
 if (Test-Path ".env") {
     Write-Host "❌ .env file found in repository root!" -ForegroundColor Red
     $errors++
-} else {
+}
+else {
     Write-Host "✅ No .env file in repository" -ForegroundColor Green
 }
 
@@ -22,7 +23,8 @@ if (Test-Path ".env.example") {
     if ($envExample -match "[A-Za-z0-9]{20,}") {
         Write-Host "⚠️ .env.example might contain actual secrets" -ForegroundColor Yellow
         $warnings++
-    } else {
+    }
+    else {
         Write-Host "✅ .env.example appears clean" -ForegroundColor Green
     }
 }
@@ -34,11 +36,13 @@ if (Test-Path ".pre-commit-config.yaml") {
     $precommit = Get-Content ".pre-commit-config.yaml" -Raw
     if ($precommit -match "gitleaks" -and $precommit -match "detect-secrets") {
         Write-Host "✅ Pre-commit hooks configured with secret scanning" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "⚠️ Pre-commit hooks missing secret scanning" -ForegroundColor Yellow
         $warnings++
     }
-} else {
+}
+else {
     Write-Host "❌ No pre-commit configuration found" -ForegroundColor Red
     $errors++
 }
@@ -50,11 +54,13 @@ if (Test-Path ".eslintrc.json") {
     $eslint = Get-Content ".eslintrc.json" -Raw | ConvertFrom-Json
     if ($eslint.rules."no-console" -and $eslint.rules."no-eval") {
         Write-Host "✅ ESLint configured with security rules" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "⚠️ ESLint missing security rules" -ForegroundColor Yellow
         $warnings++
     }
-} else {
+}
+else {
     Write-Host "❌ No ESLint configuration found" -ForegroundColor Red
     $errors++
 }
@@ -74,10 +80,12 @@ if (Test-Path "static") {
 
 if ($consoleLogCount -eq 0) {
     Write-Host "✅ No console.log found in frontend files" -ForegroundColor Green
-} elseif ($consoleLogCount -lt 10) {
+}
+elseif ($consoleLogCount -lt 10) {
     Write-Host "⚠️ $consoleLogCount console.log found (acceptable for legacy files)" -ForegroundColor Yellow
     $warnings++
-} else {
+}
+else {
     Write-Host "❌ $consoleLogCount console.log found (too many)" -ForegroundColor Red
     $errors++
 }
@@ -89,11 +97,13 @@ if (Test-Path "static/debug-logger.js") {
     $debugLogger = Get-Content "static/debug-logger.js" -Raw
     if ($debugLogger -match "debugEnabled" -and $debugLogger -match "localhost") {
         Write-Host "✅ Debug logger properly configured" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "⚠️ Debug logger may need review" -ForegroundColor Yellow
         $warnings++
     }
-} else {
+}
+else {
     Write-Host "❌ Debug logger not found" -ForegroundColor Red
     $errors++
 }
@@ -102,7 +112,7 @@ if (Test-Path "static/debug-logger.js") {
 Write-Host "`n6. Testing security headers (requires running server)..." -ForegroundColor Yellow
 
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:8000/" -Method HEAD -TimeoutSec 5 -ErrorAction Stop
+    $response = Invoke-WebRequest -Uri "http://localhost:8080/" -Method HEAD -TimeoutSec 5 -ErrorAction Stop
 
     $securityHeaders = @("x-content-type-options", "x-frame-options", "content-security-policy")
     $missingHeaders = @()
@@ -115,12 +125,14 @@ try {
 
     if ($missingHeaders.Count -eq 0) {
         Write-Host "✅ All critical security headers present" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "❌ Missing security headers: $($missingHeaders -join ', ')" -ForegroundColor Red
         $errors++
     }
-} catch {
-    Write-Host "⚠️ Cannot test headers - server not running on localhost:8000" -ForegroundColor Yellow
+}
+catch {
+    Write-Host "⚠️ Cannot test headers - server not running on localhost:8080" -ForegroundColor Yellow
     $warnings++
 }
 
@@ -129,7 +141,8 @@ Write-Host "`n7. Checking security test coverage..." -ForegroundColor Yellow
 
 if (Test-Path "tests/test_security_headers.py") {
     Write-Host "✅ Security headers test file exists" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "❌ No security test file found" -ForegroundColor Red
     $errors++
 }
@@ -154,11 +167,13 @@ try {
 
     if ($secretCount -eq 0) {
         Write-Host "✅ No obvious secret patterns found" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "⚠️ $secretCount files with potential secrets" -ForegroundColor Yellow
         $warnings++
     }
-} catch {
+}
+catch {
     Write-Host "⚠️ Error scanning for secrets: $($_.Exception.Message)" -ForegroundColor Yellow
     $warnings++
 }
@@ -171,10 +186,12 @@ Write-Host "="*50 -ForegroundColor Green
 if ($errors -eq 0 -and $warnings -eq 0) {
     Write-Host "🎉 Perfect security score! No issues found." -ForegroundColor Green
     exit 0
-} elseif ($errors -eq 0) {
+}
+elseif ($errors -eq 0) {
     Write-Host "✅ Good security posture. $warnings warning(s) to review." -ForegroundColor Yellow
     exit 0
-} else {
+}
+else {
     Write-Host "❌ Security issues found: $errors error(s), $warnings warning(s)" -ForegroundColor Red
     Write-Host "Please address critical issues before deploying." -ForegroundColor Red
     exit 1

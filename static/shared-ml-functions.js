@@ -7,10 +7,10 @@
 function getMLApiBase() {
     try {
         return (typeof globalConfig !== 'undefined' && globalConfig?.get)
-            ? globalConfig.get('api_base_url') || 'http://localhost:8000'
-            : 'http://localhost:8000';
+            ? globalConfig.get('api_base_url') || 'http://localhost:8080'
+            : 'http://localhost:8080';
     } catch (error) {
-        return 'http://localhost:8000';
+        return 'http://localhost:8080';
     }
 }
 
@@ -34,13 +34,13 @@ export function showError(message, container = null) {
         margin: 1rem 0;
     `;
     errorDiv.textContent = message;
-    
+
     if (container) {
         container.appendChild(errorDiv);
     } else {
         document.body.appendChild(errorDiv);
     }
-    
+
     setTimeout(() => errorDiv.remove(), 5000);
 }
 
@@ -56,13 +56,13 @@ export function showSuccess(message, container = null) {
         margin: 1rem 0;
     `;
     successDiv.textContent = message;
-    
+
     if (container) {
         container.appendChild(successDiv);
     } else {
         document.body.appendChild(successDiv);
     }
-    
+
     setTimeout(() => successDiv.remove(), 5000);
 }
 
@@ -166,9 +166,9 @@ export function formatCurrency(value, currency, decimals = 2) {
     }
 }
 
-export function formatDate(date, options = { 
-    year: 'numeric', 
-    month: 'short', 
+export function formatDate(date, options = {
+    year: 'numeric',
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
@@ -180,12 +180,12 @@ export function formatDate(date, options = {
 export function setupActionButton(buttonId, actionFn, loadingText = 'Traitement...') {
     const btn = document.getElementById(buttonId);
     if (!btn) return;
-    
+
     btn.addEventListener('click', async (e) => {
         const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = loadingText;
-        
+
         try {
             await actionFn(e);
             showSuccess('Opération terminée avec succès');
@@ -202,16 +202,16 @@ export function setupActionButton(buttonId, actionFn, loadingText = 'Traitement.
 export function updateStatusCard(cardId, data) {
     const card = document.getElementById(cardId);
     if (!card || !data) return;
-    
+
     const statusElement = card.querySelector('.status-indicator');
     const valueElements = card.querySelectorAll('[data-value]');
-    
+
     // Mise à jour du statut
     if (statusElement) {
         const isActive = data.active || data.loaded || data.status === 'active';
         statusElement.className = `status-indicator ${isActive ? 'active' : 'inactive'}`;
     }
-    
+
     // Mise à jour des valeurs
     valueElements.forEach(el => {
         const key = el.getAttribute('data-value');
@@ -295,7 +295,7 @@ export async function getUnifiedMLStatus() {
                             sentiment: { loaded: 1, available: true }
                         }
                     };
-                    (window.debugLogger?.debug || console.log)(`✅ Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence*100).toFixed(1)}% confidence`);
+                    (window.debugLogger?.debug || console.log)(`✅ Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence * 100).toFixed(1)}% confidence`);
                     mlUnifiedCache = { data: result, timestamp: Date.now() };
                     return result;
                 }
@@ -363,7 +363,7 @@ export async function getUnifiedMLStatus() {
                 sentiment: { loaded: 1, available: true }
             }
         };
-        (window.debugLogger?.debug || console.log)(`✅ Stable fallback: ${result.totalLoaded}/4 models, ${(result.confidence*100).toFixed(1)}% confidence`);
+        (window.debugLogger?.debug || console.log)(`✅ Stable fallback: ${result.totalLoaded}/4 models, ${(result.confidence * 100).toFixed(1)}% confidence`);
 
     } catch (error) {
         debugLogger.error('❌ All ML status sources failed:', error);
