@@ -156,12 +156,16 @@ class StocksMLAdapter:
         except Exception as e:
             logger.error(f"Error predicting volatility for {symbol}: {e}")
             # Fallback to historical volatility
-            return await self._fallback_historical_volatility(symbol, ohlcv_data)
+            return await self._fallback_historical_volatility(
+                symbol, ohlcv_data, lookback_days, confidence_level
+            )
 
     async def _fallback_historical_volatility(
         self,
         symbol: str,
-        ohlcv_data: pd.DataFrame
+        ohlcv_data: pd.DataFrame,
+        lookback_days: int = 365,
+        confidence_level: float = 0.95
     ) -> Dict[str, Any]:
         """Fallback to simple historical volatility if ML model fails."""
         returns = self.data_source.calculate_returns(ohlcv_data)
@@ -187,6 +191,8 @@ class StocksMLAdapter:
                 }
             },
             'model_type': 'historical_fallback',
+            'lookback_days': lookback_days,
+            'confidence_level': confidence_level,
             'note': 'Using historical volatility (ML model unavailable)'
         }
 
