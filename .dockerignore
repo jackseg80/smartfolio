@@ -58,7 +58,7 @@ Dockerfile
 ehthumbs.db
 Thumbs.db
 
-# Environment files
+# Environment files (never include in image)
 .env
-.env.local
-.env.production
+.env.*
+*.env
