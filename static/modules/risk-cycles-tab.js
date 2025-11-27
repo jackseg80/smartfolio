@@ -946,6 +946,30 @@ export async function loadOnChainIndicators() {
       `).join('')}
     `, { accentLeft: 'var(--info)' }) : '';
 
+    // Extract timestamp from metadata
+    const metadata = indicators?._metadata || {};
+    const lastUpdated = metadata.last_updated || metadata.fetched_at || indicators?.scraped_at;
+    let timestampHtml = '';
+    if (lastUpdated) {
+      try {
+        const updateDate = new Date(lastUpdated);
+        const formattedDate = updateDate.toLocaleDateString('fr-FR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        const formattedTime = updateDate.toLocaleTimeString('fr-FR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        timestampHtml = `<div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .5rem;">
+          ⏱️ Dernière MAJ: ${formattedDate} à ${formattedTime}
+        </div>`;
+      } catch (e) {
+        debugLogger.warn('Failed to parse timestamp:', e);
+      }
+    }
+
     // Final HTML assembly
     container.innerHTML = `
       <!-- Composite Score Summary -->
@@ -957,6 +981,7 @@ export async function loadOnChainIndicators() {
         <div style="font-size:.85rem; color: var(--theme-text-muted); margin-top: .5rem;">
           ${composite.contributors?.length || 0} indicateurs • Confiance: ${Math.round((composite.confidence || 0) * 100)}%
         </div>
+        ${timestampHtml}
       `, { pad: true })}
 
       <!-- Categories Breakdown -->
