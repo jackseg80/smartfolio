@@ -57,6 +57,10 @@ services:
       # Redis connection (use service name as hostname)
       REDIS_URL: redis://redis:6379/0
 
+      # API Base URL for internal HTTP calls (backend calling itself)
+      # In Docker, use localhost:PORT since it's the same container
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8080}
+
       # Feature flags
       RUN_SCHEDULER: ${RUN_SCHEDULER:-1}
       CRYPTO_TOOLBOX_NEW: 1
