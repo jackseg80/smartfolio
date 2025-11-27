@@ -830,6 +830,39 @@ if (window.matchMedia) {
 // Appliquer le thème au chargement
 globalConfig.applyTheme();
 
+// ====== Load API_BASE_URL from backend (Docker-friendly) ======
+(async function initApiBaseUrl() {
+  try {
+    // Try to fetch API_BASE_URL from backend config endpoint
+    // Use relative URL to avoid chicken-and-egg problem
+    const response = await fetch('/api/config/api-base-url', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      if (result?.ok && result?.data?.api_base_url) {
+        const backendApiUrl = result.data.api_base_url;
+
+        // If backend URL differs from stored config, update it
+        const currentApiUrl = globalConfig.get('api_base_url');
+        if (currentApiUrl !== backendApiUrl) {
+          console.debug(`🔧 Updating API_BASE_URL from backend: ${currentApiUrl} → ${backendApiUrl}`);
+          globalConfig.set('api_base_url', backendApiUrl);
+        }
+
+        console.debug('✅ API_BASE_URL loaded from backend:', backendApiUrl);
+      }
+    } else {
+      console.debug('⚠️ Could not fetch API_BASE_URL from backend, using detected value');
+    }
+  } catch (error) {
+    console.debug('⚠️ Error loading API_BASE_URL from backend (non-critical):', error.message);
+    // Fallback to detected value already set in config
+  }
+})();
+
 console.debug('🚀 Configuration globale chargée:', globalConfig.getAll());
 
 // ====== Currency conversion helper (USD -> display currency) ======
