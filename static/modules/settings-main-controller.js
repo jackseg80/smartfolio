@@ -182,12 +182,12 @@ async function initQuickSettings() {
     await selectTheme(e.target.value);
     // selectTheme() already calls debouncedSaveSettings()
   });
-  // API Base URL: Default from .env, but user can override
-  document.getElementById('quick_api_base_url').addEventListener('change', (e) => {
-    if (!window.userSettings) window.userSettings = getDefaultSettings();
-    window.userSettings.api_base_url = e.target.value;
-    window.debouncedSaveSettings();
-  });
+  // API Base URL is now read-only (loaded from .env via backend)
+  // document.getElementById('quick_api_base_url').addEventListener('change', (e) => {
+  //   if (!window.userSettings) window.userSettings = getDefaultSettings();
+  //   window.userSettings.api_base_url = e.target.value;
+  //   window.debouncedSaveSettings();
+  // });
 
   // Actions - Boutons supprimés (sauvegarde automatique active)
   // Les paramètres sont sauvegardés via window.debouncedSaveSettings() (système unique)
@@ -246,26 +246,16 @@ async function loadSettings() {
     });
     if (response.ok) {
       const backendSettings = await response.json();
-      // Fusionner: User override a priorité sur backend .env
-      window.userSettings = { ...getDefaultSettings(), ...backendSettings, ...localSettings };
-      // Si pas d'override utilisateur, utiliser valeur backend .env comme défaut
-      if (!window.userSettings.api_base_url || window.userSettings.api_base_url === window.location.origin) {
-        window.userSettings.api_base_url = apiBaseUrl;
-      }
+      // Fusionner: API Base URL (backend global) a priorité sur tout
+      window.userSettings = { ...getDefaultSettings(), ...backendSettings, ...localSettings, api_base_url: apiBaseUrl };
       debugLogger.info('✓ Settings loaded from backend + localStorage');
     } else {
       debugLogger.warn('Failed to load user settings from backend, using localStorage');
-      window.userSettings = { ...getDefaultSettings(), ...localSettings };
-      if (!window.userSettings.api_base_url || window.userSettings.api_base_url === window.location.origin) {
-        window.userSettings.api_base_url = apiBaseUrl;
-      }
+      window.userSettings = { ...getDefaultSettings(), ...localSettings, api_base_url: apiBaseUrl };
     }
   } catch (error) {
     debugLogger.error('Error loading user settings from backend:', error);
-    window.userSettings = { ...getDefaultSettings(), ...localSettings };
-    if (!window.userSettings.api_base_url || window.userSettings.api_base_url === window.location.origin) {
-      window.userSettings.api_base_url = apiBaseUrl;
-    }
+    window.userSettings = { ...getDefaultSettings(), ...localSettings, api_base_url: apiBaseUrl };
   }
 
   // Synchroniser globalConfig avec les settings chargés
@@ -422,18 +412,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // === INTERFACE TAB ===
-  // API Base URL: Default from .env, but user can override
-  const apiBaseUrl = document.getElementById('api_base_url');
-  if (apiBaseUrl) {
-    apiBaseUrl.addEventListener('change', (e) => {
-      if (!window.userSettings) window.userSettings = getDefaultSettings();
-      window.userSettings.api_base_url = e.target.value;
-      if (window.globalConfig) window.globalConfig.set('api_base_url', e.target.value);
-      const quickApiUrl = document.getElementById('quick_api_base_url');
-      if (quickApiUrl) quickApiUrl.value = e.target.value;
-      window.debouncedSaveSettings();
-    });
-  }
+  // API Base URL is now read-only (loaded from .env via backend)
+  // const apiBaseUrl = document.getElementById('api_base_url');
+  // if (apiBaseUrl) {
+  //   apiBaseUrl.addEventListener('change', (e) => {
+  //     if (!window.userSettings) window.userSettings = getDefaultSettings();
+  //     window.userSettings.api_base_url = e.target.value;
+  //     if (window.globalConfig) window.globalConfig.set('api_base_url', e.target.value);
+  //     const quickApiUrl = document.getElementById('quick_api_base_url');
+  //     if (quickApiUrl) quickApiUrl.value = e.target.value;
+  //     window.debouncedSaveSettings();
+  //   });
+  // }
 
   const refreshInterval = document.getElementById('refresh_interval');
   if (refreshInterval) {
@@ -801,9 +791,9 @@ async function saveAllSettings() {
   saveSecretIfProvided('fred_api_key', 'fred_api_key');
   saveSecretIfProvided('debug_token', 'debug_token');
 
-  // API Base URL: Default from .env, but user can override and save
-  window.userSettings.api_base_url = document.getElementById('api_base_url').value;
-  if (window.globalConfig) window.globalConfig.set('api_base_url', window.userSettings.api_base_url);
+  // API Base URL is read-only (loaded from .env), not saved by user
+  // window.userSettings.api_base_url = document.getElementById('api_base_url').value;
+  // if (window.globalConfig) window.globalConfig.set('api_base_url', window.userSettings.api_base_url);
   window.userSettings.refresh_interval = parseInt(document.getElementById('refresh_interval').value);
   if (window.globalConfig) window.globalConfig.set('refresh_interval', window.userSettings.refresh_interval);
 
@@ -1389,8 +1379,9 @@ document.addEventListener('DOMContentLoaded', () => {
   applyThemeImmediately();
 
   loadSettings().then(() => {
-    // Tenter de récupérer le DEBUG_TOKEN depuis le serveur
-    autoDetectDebugToken();
+    // Auto-détection DEBUG_TOKEN désactivée (génère des 403 en console)
+    // Utilisateurs doivent saisir manuellement le token si nécessaire
+    // autoDetectDebugToken();
   });
   // Auto-détection des clés désactivée pour respecter le choix utilisateur
   // Utilisez le bouton "Sync depuis .env" manuellement si besoin
