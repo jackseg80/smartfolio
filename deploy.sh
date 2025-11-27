@@ -90,7 +90,7 @@ if [ -z "$SERVER_IP" ]; then
 fi
 
 # Check if API_BASE_URL needs updating
-CURRENT_API_URL=$(grep "^API_BASE_URL=" .env 2>/dev/null | cut -d'=' -f2)
+CURRENT_API_URL=$(grep "^API_BASE_URL=" .env 2>/dev/null | cut -d'=' -f2 || true)
 EXPECTED_API_URL="http://${SERVER_IP}:8080"
 
 if [ "$CURRENT_API_URL" != "$EXPECTED_API_URL" ]; then
@@ -99,7 +99,7 @@ if [ "$CURRENT_API_URL" != "$EXPECTED_API_URL" ]; then
     echo "   Expected: $EXPECTED_API_URL"
 
     # Update .env file
-    if grep -q "^API_BASE_URL=" .env; then
+    if grep -q "^API_BASE_URL=" .env 2>/dev/null || false; then
         sed -i "s|^API_BASE_URL=.*|API_BASE_URL=${EXPECTED_API_URL}|" .env
     else
         echo "API_BASE_URL=${EXPECTED_API_URL}" >> .env
