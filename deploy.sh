@@ -78,9 +78,41 @@ git fetch origin main
 git pull origin main
 echo -e "${GREEN}✅ Latest version pulled ($(git log -1 --format='%h - %s'))${NC}"
 
-# Step 3: Verify price cache exists
+# Step 3: Verify and update .env for production
 echo ""
-echo -e "${YELLOW}💰 Step 3/5: Verifying price cache...${NC}"
+echo -e "${YELLOW}🔧 Step 3/6: Checking .env configuration...${NC}"
+
+# Detect server IP
+SERVER_IP=$(hostname -I | awk '{print $1}')
+if [ -z "$SERVER_IP" ]; then
+    echo -e "${RED}❌ Error: Could not detect server IP${NC}"
+    exit 1
+fi
+
+# Check if API_BASE_URL needs updating
+CURRENT_API_URL=$(grep "^API_BASE_URL=" .env 2>/dev/null | cut -d'=' -f2)
+EXPECTED_API_URL="http://${SERVER_IP}:8080"
+
+if [ "$CURRENT_API_URL" != "$EXPECTED_API_URL" ]; then
+    echo -e "${YELLOW}⚠️  API_BASE_URL mismatch:${NC}"
+    echo "   Current:  $CURRENT_API_URL"
+    echo "   Expected: $EXPECTED_API_URL"
+
+    # Update .env file
+    if grep -q "^API_BASE_URL=" .env; then
+        sed -i "s|^API_BASE_URL=.*|API_BASE_URL=${EXPECTED_API_URL}|" .env
+    else
+        echo "API_BASE_URL=${EXPECTED_API_URL}" >> .env
+    fi
+
+    echo -e "${GREEN}✅ Updated API_BASE_URL to: $EXPECTED_API_URL${NC}"
+else
+    echo -e "${GREEN}✅ API_BASE_URL already correct: $CURRENT_API_URL${NC}"
+fi
+
+# Step 4: Verify price cache exists
+echo ""
+echo -e "${YELLOW}💰 Step 4/6: Verifying price cache...${NC}"
 CACHE_COUNT=$(find data/price_history -name "*.json" 2>/dev/null | wc -l)
 if [ "$CACHE_COUNT" -lt 100 ]; then
     echo -e "${RED}⚠️  Warning: Only $CACHE_COUNT price cache files found (expected ~127)${NC}"
@@ -89,13 +121,13 @@ else
     echo -e "${GREEN}✅ Price cache OK: $CACHE_COUNT files${NC}"
 fi
 
-# Step 4: Docker rebuild or restart
+# Step 5: Docker rebuild or restart
 echo ""
 if [ $SKIP_BUILD -eq 1 ]; then
-    echo -e "${YELLOW}🔄 Step 4/5: Restarting Docker (skip build)...${NC}"
+    echo -e "${YELLOW}🔄 Step 5/6: Restarting Docker (skip build)...${NC}"
     docker-compose -f docker-compose.prod.yml restart
 else
-    echo -e "${YELLOW}🐳 Step 4/5: Rebuilding and restarting Docker...${NC}"
+    echo -e "${YELLOW}🐳 Step 5/6: Rebuilding and restarting Docker...${NC}"
 
     # Stop old containers
     docker-compose -f docker-compose.prod.yml down
@@ -110,9 +142,9 @@ fi
 
 echo -e "${GREEN}✅ Docker containers started${NC}"
 
-# Step 5: Health check
+# Step 6: Health check
 echo ""
-echo -e "${YELLOW}🏥 Step 5/5: Waiting for services to be healthy...${NC}"
+echo -e "${YELLOW}🏥 Step 6/6: Waiting for services to be healthy...${NC}"
 sleep 10
 
 # Check Docker containers
