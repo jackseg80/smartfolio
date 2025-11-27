@@ -59,7 +59,7 @@ services:
 
       # API Base URL for internal HTTP calls (backend calling itself)
       # In Docker, use localhost:PORT since it's the same container
-      API_BASE_URL: ${API_BASE_URL:-http://localhost:8080}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8000}
 
       # Feature flags
       RUN_SCHEDULER: ${RUN_SCHEDULER:-1}
@@ -99,7 +99,7 @@ services:
       - smartfolio-net
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8000}/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
