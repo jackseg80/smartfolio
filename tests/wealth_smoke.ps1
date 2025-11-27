@@ -1,5 +1,5 @@
 param(
-    [string]$BaseUrl = "http://127.0.0.1:8000"
+    [string]$BaseUrl = "http://127.0.0.1:8080"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -38,7 +38,8 @@ try {
     Write-Host "Modules disponibles: $($modules -join ', ')"
     if (-not ($modules -contains 'crypto')) { $warnings += 'Module crypto absent de la liste.' }
     if (-not ($modules -contains 'saxo')) { $warnings += 'Module saxo absent de la liste.' }
-} catch {
+}
+catch {
     $failures += "Impossible d'obtenir /api/wealth/modules : $_"
 }
 
@@ -47,7 +48,8 @@ try {
     $count = ($cryptoPositions | Measure-Object).Count
     Write-Host "Positions crypto: $count"
     if ($count -eq 0) { $warnings += 'Aucune position crypto retournée.' }
-} catch {
+}
+catch {
     $failures += "Erreur sur /api/wealth/crypto/positions : $_"
 }
 
@@ -55,7 +57,8 @@ try {
     $saxoPositions = Invoke-WealthRequest -Path '/api/wealth/saxo/positions'
     $count = ($saxoPositions | Measure-Object).Count
     Write-Host "Positions saxo (wealth): $count"
-} catch {
+}
+catch {
     $failures += "Erreur sur /api/wealth/saxo/positions : $_"
 }
 
@@ -67,7 +70,8 @@ try {
     if ($wealthCount -ne $legacyCount) {
         $warnings += "Divergence saxo legacy vs wealth ($legacyCount vs $wealthCount)"
     }
-} catch {
+}
+catch {
     $warnings += "Legacy /api/saxo/positions indisponible : $_"
 }
 
@@ -75,7 +79,8 @@ try {
     $preview = Invoke-WealthRequest -Method 'POST' -Path '/api/wealth/saxo/rebalance/preview' -Body @{}
     $count = ($preview | Measure-Object).Count
     Write-Host "Preview rebalance saxo: $count propositions"
-} catch {
+}
+catch {
     $warnings += "Prévisualisation rebalance saxo non disponible : $_"
 }
 
@@ -84,7 +89,8 @@ try {
     $priceCount = ($prices | Measure-Object).Count
     Write-Host "Points de prix (BTC/ETH): $priceCount"
     if ($priceCount -eq 0) { $warnings += 'Aucun prix renvoyé pour BTC/ETH.' }
-} catch {
+}
+catch {
     $warnings += "Impossible d'obtenir les prix crypto : $_"
 }
 

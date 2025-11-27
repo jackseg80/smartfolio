@@ -21,9 +21,9 @@ export const DEFAULT_CCS_WEIGHTS = {
  */
 export async function fetchSignals() {
   console.debug('🔍 Fetching REAL market signals...');
-  
+
   const signals = {};
-  
+
   try {
     // 1. Fear & Greed Index (Alternative.me API)
     try {
@@ -31,7 +31,7 @@ export async function fetchSignals() {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
-      
+
       if (fearGreedResponse.ok) {
         const fearGreedData = await fearGreedResponse.json();
         const fearGreedValue = parseInt(fearGreedData.data[0].value);
@@ -57,7 +57,7 @@ export async function fetchSignals() {
 
     // 2. BTC Dominance (CoinGecko via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8000';
+      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
       const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/global`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -101,7 +101,7 @@ export async function fetchSignals() {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
-      
+
       if (fundingResponse.ok) {
         const fundingData = await fundingResponse.json();
         const fundingRate = parseFloat(fundingData.lastFundingRate); // Already in decimal (e.g., 0.0001 = 0.01%)
@@ -127,7 +127,7 @@ export async function fetchSignals() {
 
     // 4. ETH/BTC Ratio (CoinGecko via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8000';
+      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
       const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/simple/price?ids=bitcoin,ethereum&vs_currencies=usd`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -176,7 +176,7 @@ export async function fetchSignals() {
 
     // 5. Volatility (calculated from recent BTC price changes via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8000';
+      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
       const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=7&interval=daily`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -196,7 +196,7 @@ export async function fetchSignals() {
         // Calculate 7-day volatility
         const returns = [];
         for (let i = 1; i < prices.length; i++) {
-          returns.push((prices[i] - prices[i-1]) / prices[i-1]);
+          returns.push((prices[i] - prices[i - 1]) / prices[i - 1]);
         }
 
         const volatility = Math.sqrt(returns.reduce((sum, ret) => sum + ret * ret, 0) / returns.length) * Math.sqrt(365); // Annualized volatility as decimal
@@ -225,7 +225,7 @@ export async function fetchSignals() {
     // 6. Trend (7-day price momentum)
     try {
       // Use backend proxy to avoid CORS and rate limiting
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8000';
+      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
       const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/bitcoin?market_data=true`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -288,17 +288,17 @@ function normalizeSignal(key, rawValue) {
     case 'fear_greed':
       // Already 0-100, just clamp
       return Math.max(0, Math.min(100, rawValue));
-      
+
     case 'btc_dominance':
       // 40-70% dominance → 0-100 scale (higher dominance = lower CCS)
       const domNorm = Math.max(0, Math.min(100, (70 - rawValue) / (70 - 40) * 100));
       return domNorm;
-      
+
     case 'funding_rate':
       // Negative funding (shorts pay longs) = bullish = higher CCS
       const fundNorm = Math.max(0, Math.min(100, 50 - (rawValue * 2000))); // -1% = 100, +1% = 0
       return fundNorm;
-      
+
     case 'eth_btc_ratio':
       // Higher ETH/BTC = alt season = higher CCS
       // Handle edge case where rawValue might be 0 or very small
@@ -308,17 +308,17 @@ function normalizeSignal(key, rawValue) {
       }
       const ethNorm = Math.max(0, Math.min(100, (rawValue - 0.025) / (0.06 - 0.025) * 100)); // Adjusted range: 0.025-0.06
       return ethNorm;
-      
+
     case 'volatility':
       // Lower volatility = more mature market = potentially higher CCS
       const volNorm = Math.max(0, Math.min(100, 100 - (rawValue * 100)));
       return volNorm;
-      
+
     case 'trend':
       // Positive trend = higher CCS
       const trendNorm = Math.max(0, Math.min(100, 50 + (rawValue * 250))); // -10% = 25, +10% = 75
       return trendNorm;
-      
+
     default:
       return 50; // Neutral
   }
@@ -331,25 +331,25 @@ export function computeCCS(signals, weights = DEFAULT_CCS_WEIGHTS) {
   if (!signals || typeof signals !== 'object') {
     throw new Error('Invalid signals object');
   }
-  
+
   if (!weights || typeof weights !== 'object') {
     throw new Error('Invalid weights object');
   }
-  
+
   let weightedSum = 0;
   let totalWeight = 0;
   const normalizedSignals = {};
-  
+
   // Process each signal
   for (const [key, signal] of Object.entries(signals)) {
     if (key === 'model_version') continue;
-    
+
     const weight = weights[key];
     if (!weight || !signal || typeof signal.value !== 'number') {
       (window.debugLogger?.warn || console.warn)(`Skipping invalid signal: ${key}`);
       continue;
     }
-    
+
     // Normalize signal
     const normalized = normalizeSignal(key, signal.value);
     normalizedSignals[key] = {
@@ -357,20 +357,20 @@ export function computeCCS(signals, weights = DEFAULT_CCS_WEIGHTS) {
       normalized,
       weight
     };
-    
+
     // Add to weighted sum
     weightedSum += normalized * weight;
     totalWeight += weight;
   }
-  
+
   // Calculate final CCS score (0-100)
   const ccsScore = totalWeight > 0 ? weightedSum / totalWeight : 50;
-  
+
   // Validation
   if (isNaN(ccsScore) || ccsScore < 0 || ccsScore > 100) {
     throw new Error(`Invalid CCS score: ${ccsScore}`);
   }
-  
+
   return {
     score: Math.round(ccsScore * 100) / 100, // Round to 2 decimals
     signals: normalizedSignals,
@@ -391,14 +391,14 @@ export async function fetchAndComputeCCS(weights = DEFAULT_CCS_WEIGHTS) {
       () => fetchSignals(),
       'signals'
     );
-    
+
     // Compute CCS
     const ccs = computeCCS(signals, weights);
-    
+
     console.debug(`CCS computed: ${ccs.score} (model: ${ccs.model_version})`);
-    
+
     return ccs;
-    
+
   } catch (error) {
     debugLogger.error('Failed to fetch and compute CCS:', error);
     throw error;
@@ -412,21 +412,21 @@ export function validateCCS(ccs) {
   if (!ccs || typeof ccs !== 'object') {
     return false;
   }
-  
+
   const { score, signals, model_version } = ccs;
-  
+
   if (typeof score !== 'number' || score < 0 || score > 100) {
     return false;
   }
-  
+
   if (!signals || typeof signals !== 'object') {
     return false;
   }
-  
+
   if (!model_version || typeof model_version !== 'string') {
     return false;
   }
-  
+
   return true;
 }
 

@@ -16,8 +16,10 @@
 
     <!-- Chart.js for Bitcoin Regime charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
         // Register Chart.js plugins (required for btc-regime-chart.js)
@@ -515,8 +517,7 @@
                     <div class="stat-value" id="active-models">4</div>
                     <div class="stat-label">Modèles Actifs</div>
                 </div>
-                <div class="stat-card"
-                    data-tooltip="Niveau de confiance des signaux ML générés par le Decision Engine."
+                <div class="stat-card" data-tooltip="Niveau de confiance des signaux ML générés par le Decision Engine."
                     data-source="Governance Engine ML Signals">
                     <div class="stat-value" id="ml-confidence">78.3%</div>
                     <div class="stat-label">ML Signals Confidence</div>
@@ -548,7 +549,8 @@
                 <!-- Vue d'ensemble -->
                 <div id="overview-tab" class="tab-content active">
                     <!-- Section Alertes Phase 3 -->
-                    <div class="ml-card" style="margin-bottom: 2rem; border: 2px solid var(--brand-primary); background: linear-gradient(135deg, var(--theme-surface) 0%, color-mix(in oklab, var(--brand-primary) 5%, var(--theme-surface)) 100%);">
+                    <div class="ml-card"
+                        style="margin-bottom: 2rem; border: 2px solid var(--brand-primary); background: linear-gradient(135deg, var(--theme-surface) 0%, color-mix(in oklab, var(--brand-primary) 5%, var(--theme-surface)) 100%);">
                         <div class="card-header">
                             <div class="card-title">
                                 <span class="card-icon">🚨</span>
@@ -621,9 +623,11 @@
 
                 <!-- Administration Pipeline ML -->
                 <div id="administration-tab" class="tab-content">
-                    <div class="admin-mini-toolbar" style="display:flex; justify-content:flex-end; align-items:center; gap:.5rem; margin:0 0 .5rem 0;">
+                    <div class="admin-mini-toolbar"
+                        style="display:flex; justify-content:flex-end; align-items:center; gap:.5rem; margin:0 0 .5rem 0;">
                         <span id="admin-mini-status" class="text-muted" style="font-size:.85rem;">Admin: OFF</span>
-                        <button id="admin-mini-key-btn" class="btn secondary" style="padding:4px 8px; font-size:.85rem;" title="Configurer clé admin (dev)">🔐</button>
+                        <button id="admin-mini-key-btn" class="btn secondary" style="padding:4px 8px; font-size:.85rem;"
+                            title="Configurer clé admin (dev)">🔐</button>
                     </div>
 
                     <div class="ml-cards-grid">
@@ -766,7 +770,8 @@
                             </div>
                         </div>
                         <div class="card-content">
-                            <div class="status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div class="status-grid"
+                                style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                                 <div class="status-item">
                                     <span class="status-label">Current Regime</span>
                                     <span class="status-value" id="stock-regime-name">Loading...</span>
@@ -785,12 +790,16 @@
                                 </div>
                             </div>
 
-                            <div style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
+                            <div
+                                style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
                                 <strong>ℹ️ Stock Market Detection:</strong>
-                                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                                    <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
+                                <ul
+                                    style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
+                                    <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes
+                                    </li>
                                     <li><strong>States:</strong> Bull, Bear, Sideways, Distribution</li>
-                                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -20%, 60 days)</li>
+                                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -20%, 60
+                                        days)</li>
                                 </ul>
                             </div>
                         </div>
@@ -806,14 +815,16 @@
                             <div class="card-title">
                                 <span class="card-icon">₿</span>
                                 Bitcoin Regime Detection (Hybrid System)
-                                <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
+                                <small
+                                    style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
                                     Rule-Based + HMM Fusion
                                 </small>
                             </div>
                         </div>
 
                         <!-- Current Regime Summary Cards -->
-                        <div class="btc-regime-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="btc-regime-summary"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                             <!-- Current Regime -->
                             <div class="metric-card">
                                 <h5>Current Regime</h5>
@@ -842,13 +853,15 @@
                             <!-- Rule Reason (conditional) -->
                             <div class="metric-card" id="btc-regime-reason-card" style="display: none;">
                                 <h5>Rule Trigger</h5>
-                                <div class="metric-value" style="font-size: 0.85rem;" id="btc-current-regime-reason">--</div>
+                                <div class="metric-value" style="font-size: 0.85rem;" id="btc-current-regime-reason">--
+                                </div>
                                 <small>Detection Criteria</small>
                             </div>
                         </div>
 
                         <!-- Timeframe Selector -->
-                        <div class="btc-regime-timeframe-selector" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <div class="btc-regime-timeframe-selector"
+                            style="display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; flex-wrap: wrap;">
                             <button data-days="365" class="timeframe-btn active">1 Year</button>
                             <button data-days="730" class="timeframe-btn">2 Years</button>
                             <button data-days="1825" class="timeframe-btn">5 Years</button>
@@ -856,50 +869,70 @@
                         </div>
 
                         <!-- Loading/Error Messages -->
-                        <div id="btc-regime-loading-message" style="display: none; text-align: center; padding: 2rem; color: var(--theme-text-muted);">
+                        <div id="btc-regime-loading-message"
+                            style="display: none; text-align: center; padding: 2rem; color: var(--theme-text-muted);">
                             ⏳ Loading Bitcoin regime data...
                         </div>
-                        <div id="btc-regime-error-message" style="display: none; text-align: center; padding: 2rem; color: var(--danger);">
+                        <div id="btc-regime-error-message"
+                            style="display: none; text-align: center; padding: 2rem; color: var(--danger);">
                             <!-- Error message will be inserted here -->
                         </div>
 
                         <!-- Timeline Chart -->
-                        <div id="btc-regime-chart-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem; min-height: 550px;">
+                        <div id="btc-regime-chart-container"
+                            style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem; min-height: 550px;">
                             <canvas id="btc-regime-timeline-chart" style="height: 500px; width: 100%;"></canvas>
                         </div>
 
                         <!-- Regime Probabilities Chart -->
-                        <div class="btc-regime-probabilities-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border);">
+                        <div class="btc-regime-probabilities-container"
+                            style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border);">
                             <canvas id="btc-regime-probabilities-chart" style="max-height: 300px;"></canvas>
                         </div>
 
                         <!-- Regime Legend -->
-                        <div class="btc-regime-legend" style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
+                        <div class="btc-regime-legend"
+                            style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
                             <div class="legend-item">
-                                <span class="regime-chip bear" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear Market</span>
-                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD ≤ -50%, 30d+</small>
+                                <span class="regime-chip bear"
+                                    style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear
+                                    Market</span>
+                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD ≤
+                                    -50%, 30d+</small>
                             </div>
                             <div class="legend-item">
-                                <span class="regime-chip correction" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
-                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD 10-50% or Vol >60%</small>
+                                <span class="regime-chip correction"
+                                    style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
+                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD
+                                    10-50% or Vol >60%</small>
                             </div>
                             <div class="legend-item">
-                                <span class="regime-chip bull" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull Market</span>
-                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD > -20%, Vol <60%</small>
+                                <span class="regime-chip bull"
+                                    style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull
+                                    Market</span>
+                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD >
+                                    -20%, Vol <60%< /small>
                             </div>
                             <div class="legend-item">
-                                <span class="regime-chip expansion" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
-                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery +30%/mo</small>
+                                <span class="regime-chip expansion"
+                                    style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
+                                <small
+                                    style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery
+                                    +30%/mo</small>
                             </div>
                         </div>
 
                         <!-- Info Footer -->
-                        <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm);">
+                        <div
+                            style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm);">
                             <strong>ℹ️ About Hybrid Detection:</strong>
                             <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                                <li><strong>Rule-Based (≥85% confidence):</strong> Clear cases using drawdown, duration, and trend thresholds</li>
-                                <li><strong>HMM (nuanced):</strong> Statistical model for corrections and consolidations</li>
-                                <li><strong>Crypto-Adjusted:</strong> Thresholds adapted for Bitcoin volatility (3x higher than stocks)</li>
+                                <li><strong>Rule-Based (≥85% confidence):</strong> Clear cases using drawdown, duration,
+                                    and trend thresholds</li>
+                                <li><strong>HMM (nuanced):</strong> Statistical model for corrections and consolidations
+                                </li>
+                                <li><strong>Crypto-Adjusted:</strong> Thresholds adapted for Bitcoin volatility (3x
+                                    higher than stocks)</li>
                                 <li><strong>Events:</strong> Mt.Gox, FTX, COVID crashes annotated for context</li>
                             </ul>
                         </div>
@@ -911,14 +944,16 @@
                             <div class="card-title">
                                 <span class="card-icon">⟠</span>
                                 Ethereum Regime Detection (Hybrid System)
-                                <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
+                                <small
+                                    style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
                                     Rule-Based + HMM Fusion
                                 </small>
                             </div>
                         </div>
 
                         <!-- Current Regime Summary Cards -->
-                        <div class="eth-regime-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div class="eth-regime-summary"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                             <!-- Current Regime -->
                             <div class="metric-card">
                                 <h5>Current Regime</h5>
@@ -947,18 +982,23 @@
                             <!-- Rule Reason (conditional) -->
                             <div class="metric-card" id="eth-regime-reason-card" style="display: none;">
                                 <h5>Rule Trigger</h5>
-                                <div class="metric-value" style="font-size: 0.85rem;" id="eth-current-regime-reason">--</div>
+                                <div class="metric-value" style="font-size: 0.85rem;" id="eth-current-regime-reason">--
+                                </div>
                                 <small>Detection Criteria</small>
                             </div>
                         </div>
 
                         <!-- Info Note -->
-                        <div style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
+                        <div
+                            style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
                             <strong>ℹ️ About Ethereum Detection:</strong>
                             <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                                <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as Bitcoin</li>
-                                <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -50% (30d+), Bull > -20% (vol <60%), Expansion +30%/mo</li>
-                                <li><strong>Lightweight View:</strong> Summary only (full charts available in Bitcoin section)</li>
+                                <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as
+                                    Bitcoin</li>
+                                <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -50% (30d+), Bull > -20% (vol
+                                    <60%), Expansion +30%/mo</li>
+                                <li><strong>Lightweight View:</strong> Summary only (full charts available in Bitcoin
+                                    section)</li>
                             </ul>
                         </div>
                     </div>
@@ -976,51 +1016,76 @@
                                 <table style="width: 100%; border-collapse: collapse;">
                                     <thead>
                                         <tr style="background: var(--theme-surface-elevated); text-align: left;">
-                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset</th>
-                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current Regime</th>
-                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Confidence</th>
-                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Detection Method</th>
-                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear Threshold</th>
+                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset
+                                            </th>
+                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current
+                                                Regime</th>
+                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">
+                                                Confidence</th>
+                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">
+                                                Detection Method</th>
+                                            <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear
+                                                Threshold</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">📈 Stock Market</td>
+                                            <td
+                                                style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">
+                                                📈 Stock Market</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
                                                 <span id="comparison-stock-regime" class="regime-chip">--</span>
                                             </td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-confidence">--</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM Only</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -20%, 60d</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
+                                                id="comparison-stock-confidence">--</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM
+                                                Only</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
+                                                -20%, 60d</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">₿ Bitcoin</td>
+                                            <td
+                                                style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">
+                                                ₿ Bitcoin</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
                                                 <span id="comparison-btc-regime" class="regime-chip">--</span>
                                             </td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-confidence">--</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-method">--</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -50%, 30d</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
+                                                id="comparison-btc-confidence">--</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
+                                                id="comparison-btc-method">--</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
+                                                -50%, 30d</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">⟠ Ethereum</td>
+                                            <td
+                                                style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">
+                                                ⟠ Ethereum</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
                                                 <span id="comparison-eth-regime" class="regime-chip">--</span>
                                             </td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-confidence">--</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-method">--</td>
-                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -50%, 30d</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
+                                                id="comparison-eth-confidence">--</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
+                                                id="comparison-eth-method">--</td>
+                                            <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
+                                                -50%, 30d</td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div
+                                style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
                                 <strong>📌 Key Differences:</strong>
-                                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                                    <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional thresholds</li>
-                                    <li><strong>Bitcoin & Ethereum:</strong> Hybrid Rule-Based + HMM, crypto-adjusted thresholds (3x higher volatility)</li>
-                                    <li><strong>Why Different?</strong> Crypto volatility (60-100% annual) vs Stocks (15-25%) requires distinct detection logic</li>
+                                <ul
+                                    style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
+                                    <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional
+                                        thresholds</li>
+                                    <li><strong>Bitcoin & Ethereum:</strong> Hybrid Rule-Based + HMM, crypto-adjusted
+                                        thresholds (3x higher volatility)</li>
+                                    <li><strong>Why Different?</strong> Crypto volatility (60-100% annual) vs Stocks
+                                        (15-25%) requires distinct detection logic</li>
                                 </ul>
                             </div>
                         </div>
@@ -1038,7 +1103,7 @@
         // Variables globales
         let cardManager;
         let globalStatus = {};
-        
+
         // Cache des statistiques pour éviter les remises à zéro
         let cachedStats = {
             activeModels: 4,
@@ -1419,7 +1484,7 @@
                 // 4. Mettre à jour le cache et l'affichage avec les vraies données Governance
                 cachedStats.activeModels = activeModelCount;
                 cachedStats.lastUpdate = Date.now();
-                
+
                 // Affichage avec priorité aux données Governance Engine
                 document.getElementById('active-models').textContent = activeModelCount;
                 document.getElementById('ml-confidence').textContent = governanceConfidence.toFixed(1) + '%';
@@ -1442,13 +1507,13 @@
                 if (window.globalConfig) {
                     return Promise.resolve({
                         data_source: window.globalConfig.get('data_source') || 'stub',
-                        api_base_url: window.globalConfig.get('api_base_url') || 'http://127.0.0.1:8000'
+                        api_base_url: window.globalConfig.get('api_base_url') || 'http://127.0.0.1:8080'
                     });
                 }
-                return Promise.resolve({ data_source: 'stub', api_base_url: 'http://127.0.0.1:8000' });
+                return Promise.resolve({ data_source: 'stub', api_base_url: 'http://127.0.0.1:8080' });
             } catch (error) {
                 debugLogger.warn('GlobalConfig non disponible, utilisation des valeurs par défaut');
-                return Promise.resolve({ data_source: 'stub', api_base_url: 'http://127.0.0.1:8000' });
+                return Promise.resolve({ data_source: 'stub', api_base_url: 'http://127.0.0.1:8080' });
             }
         }
 
@@ -1739,7 +1804,7 @@
                 // 2. Extraire les données depuis le Governance Engine si disponibles
                 if (governanceData && governanceData.signals) {
                     const signals = governanceData.signals;
-                    
+
                     // Volatilité - Extraire BTC, ETH, SOL depuis les signaux
                     if (signals.volatility && Object.keys(signals.volatility).length > 0) {
                         btcVol = signals.volatility.BTC || null;
@@ -1747,7 +1812,7 @@
                         solVol = signals.volatility.SOL || null;
                         debugLogger.debug('✅ Volatilités depuis Governance:', { BTC: btcVol, ETH: ethVol, SOL: solVol });
                     }
-                    
+
                     // Régime - Extraire bull/bear/neutral
                     if (signals.regime && Object.keys(signals.regime).length > 0) {
                         const regimeData = signals.regime;
@@ -1763,14 +1828,14 @@
                         }
                         debugLogger.debug('✅ Régime depuis Governance:', marketRegime, regimeConfidence + '%');
                     }
-                    
+
                     // Corrélation
                     if (signals.correlation) {
                         avgCorrelation = signals.correlation.avg_correlation || null;
                         systematicRisk = signals.correlation.systemic_risk || null;
                         debugLogger.debug('✅ Corrélation depuis Governance:', { avg: avgCorrelation, risk: systematicRisk });
                     }
-                    
+
                     // ML Sentiment (anciennement Fear & Greed)
                     if (signals.sentiment) {
                         fearGreed = signals.sentiment.fear_greed || null;
@@ -2352,7 +2417,7 @@
 
         const PIPELINE_API_BASE = ((window.globalConfig && window.globalConfig.get('api_base_url'))
             || (window.location && window.location.origin)
-            || 'http://127.0.0.1:8000') + '/api/ml';
+            || 'http://127.0.0.1:8080') + '/api/ml';
 
         // Système de logs pour l'administration
         function addAdminLog(message, type = 'info') {
@@ -2486,7 +2551,7 @@
                 }
 
                 await refreshPipelineStatus();
-                
+
                 // Mettre à jour les statistiques du bandeau supérieur
                 await updateGlobalStats();
 
@@ -2523,7 +2588,7 @@
                     addAdminLog('✅ Preload exécuté (régime inclus par défaut)');
                 }
                 await refreshPipelineStatus();
-                
+
                 // Mettre à jour les statistiques du bandeau supérieur  
                 await updateGlobalStats();
 
@@ -2663,12 +2728,12 @@
         };
 
         // ========== FONCTIONS ALERTES PHASE 3 ==========
-        
+
         async function checkAlertsSystemStatus() {
             try {
                 debugLogger.debug('🔄 Vérification du système d\'alertes Phase 3...');
                 const config = await fetchUserConfig();
-                
+
                 // 1. Vérifier les alertes actives
                 let activeAlertsCount = 0;
                 try {
@@ -2683,7 +2748,7 @@
                     document.getElementById('active-alerts-count').textContent = 'Erreur';
                     debugLogger.warn('⚠️ Impossible de récupérer les alertes actives');
                 }
-                
+
                 // 2. Vérifier le statut AlertEngine
                 try {
                     const healthResponse = await fetch(`${config.api_base_url}/api/alerts/health`);
@@ -2698,16 +2763,16 @@
                     document.getElementById('alert-engine-status').textContent = 'Erreur';
                     debugLogger.warn('⚠️ Impossible de vérifier AlertEngine');
                 }
-                
+
                 // 3. Vérifier Advanced Risk Engine (toujours configuré mais pas intégré)
                 document.getElementById('risk-engine-status').textContent = 'Configuré (non intégré)';
-                
+
                 // 4. ML Alert Predictor reste désactivé volontairement
                 document.getElementById('ml-predictor-status').textContent = 'Désactivé (config)';
-                
+
                 debugLogger.debug('✅ Vérification système d\'alertes terminée');
                 showSuccess('✅ Statut alertes mis à jour');
-                
+
             } catch (error) {
                 debugLogger.error('❌ Erreur lors de la vérification du système d\'alertes:', error);
                 showError('❌ Erreur lors de la vérification du système d\'alertes');
@@ -2716,7 +2781,7 @@
 
         // Auto-actualisation toutes les 30 secondes
         setInterval(refreshAllStatus, 30000);
-        
+
         // Vérifier les alertes à l'initialisation
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(checkAlertsSystemStatus, 2000);

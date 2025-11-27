@@ -5,11 +5,13 @@
 ## 🚀 Démarrage Rapide
 
 ### Prérequis
+
 - Python 3.8+
 - FastAPI server démarré : `uvicorn api.main:app --port 8080`
 - Dépendances installées : `pip install -r requirements.txt`
 
 ### Test Automatisé Complet
+
 ```bash
 # Windows
 test_phase1_alerting.bat
@@ -21,6 +23,7 @@ chmod +x test_phase1_alerting.sh && ./test_phase1_alerting.sh
 ## 🧪 Tests par Composant
 
 ### 1. Tests Unitaires
+
 ```bash
 # AlertEngine core
 python -m pytest tests/unit/test_alert_engine.py -v
@@ -31,6 +34,7 @@ python -m pytest tests/unit/test_alert_engine.py::TestAlertEngine::test_escalati
 ```
 
 **Couvre**:
+
 - ✅ Initialisation AlertEngine avec config file
 - ✅ Hot-reload automatique configuration
 - ✅ Évaluation alertes avec signaux ML
@@ -38,6 +42,7 @@ python -m pytest tests/unit/test_alert_engine.py::TestAlertEngine::test_escalati
 - ✅ Collecte métriques observabilité
 
 ### 2. Tests d'Intégration API
+
 ```bash
 # Tous les endpoints alertes
 python -m pytest tests/integration/test_alerts_api.py -v
@@ -48,6 +53,7 @@ python -m pytest tests/integration/test_alerts_api.py::TestAlertsAPI::test_confi
 ```
 
 **Couvre**:
+
 - ✅ GET `/api/alerts/active` avec filtres
 - ✅ POST `/api/alerts/acknowledge/{alert_id}`
 - ✅ POST `/api/alerts/snooze/{alert_id}` avec validation
@@ -56,6 +62,7 @@ python -m pytest tests/integration/test_alerts_api.py::TestAlertsAPI::test_confi
 - ✅ POST `/api/alerts/config/reload` avec RBAC
 
 ### 3. Tests Manuels Interactifs
+
 ```bash
 # Test workflow complet
 python tests/manual/test_alerting_workflows.py
@@ -65,8 +72,9 @@ python tests/manual/test_config_hot_reload.py
 ```
 
 **Scenarios**:
+
 - 🔍 Health checks API + composants
-- 🛡️ Endpoints gouvernance avec RBAC 
+- 🛡️ Endpoints gouvernance avec RBAC
 - 📊 Métriques au format Prometheus
 - 🔥 Hot-reload configuration temps réel
 - 📋 Validation structure config JSON
@@ -74,6 +82,7 @@ python tests/manual/test_config_hot_reload.py
 ## 🎯 Scenarios de Test Manuels
 
 ### Scenario 1: Cycle Complet d'Alerte
+
 ```bash
 # 1. Démarrer serveur
 uvicorn api.main:app --port 8080
@@ -92,6 +101,7 @@ curl http://localhost:8080/api/alerts/metrics/prometheus
 ```
 
 ### Scenario 2: Test Hot-Reload Config
+
 ```bash
 # 1. Vérifier config actuelle
 curl http://localhost:8080/api/alerts/config/current
@@ -107,6 +117,7 @@ curl http://localhost:8080/api/alerts/config/current
 ```
 
 ### Scenario 3: Test Freeze avec TTL
+
 ```bash
 # 1. Vérifier état gouvernance
 curl http://localhost:8080/api/governance/state
@@ -129,16 +140,19 @@ curl http://localhost:8080/api/governance/state
 ### ✅ Critères de Succès
 
 **Tests Unitaires**:
+
 - Configuration hot-reload fonctionne
 - Escalade S2→S3 se déclenche correctement  
 - Métriques sont collectées
 
 **Tests API**:
+
 - Tous les endpoints répondent (200 ou RBAC 401/403)
 - Format Prometheus valide
 - Pagination historique fonctionne
 
 **Tests Manuels**:
+
 - Health check retourne "healthy"
 - Config reload détecte les modifications
 - TTL auto-unfreeze s'affiche dans governance state
@@ -146,26 +160,30 @@ curl http://localhost:8080/api/governance/state
 ### ⚠️ Échecs Normaux
 
 **RBAC Protection** (401/403):
+
 - `/api/alerts/config/reload` - Nécessite rôle "approver"
 - `/api/alerts/metrics` - Nécessite rôle "viewer"  
 - `/api/governance/freeze` - Nécessite rôle "approver"
 
 **Hot-reload**:
+
 - Peut échouer si fichier config verrouillé
 - Délai ~60s pour auto-detection
 
 ## 🔧 Debug Common Issues
 
 ### Server Non Accessible
+
 ```bash
 # Vérifier port
-netstat -an | findstr 8000
+netstat -an | findstr 8080
 
 # Redémarrer serveur
 uvicorn api.main:app --port 8080 --log-level debug
 ```
 
 ### Config Hot-Reload Échec
+
 ```bash
 # Vérifier permissions fichier
 ls -la config/alerts_rules.json
@@ -175,6 +193,7 @@ python -m json.tool config/alerts_rules.json
 ```
 
 ### Tests Unitaires Échouent
+
 ```bash
 # Installer dépendances test
 pip install pytest pytest-asyncio
@@ -186,12 +205,14 @@ python -m pytest tests/unit/test_alert_engine.py -v -s --tb=short
 ## 📈 Métriques de Performance
 
 ### Objectifs Phase 1
+
 - **Latence P95**: < 100ms pour endpoints alertes
 - **Hot-reload**: < 2s après modification fichier  
 - **Storage**: Redis primary + file fallback opérationnel
 - **Anti-bruit**: Rate limiting + dedup + hystérésis actifs
 
 ### Observabilité
+
 ```bash
 # Métriques JSON détaillées
 curl http://localhost:8080/api/alerts/metrics | jq .
@@ -206,8 +227,9 @@ curl http://localhost:8080/api/alerts/health | jq .components
 ## 🎉 Validation Finale
 
 **Le système Phase 1 est prêt si**:
+
 - ✅ Script `test_phase1_alerting.bat` passe entièrement
-- ✅ Health check retourne "healthy" 
+- ✅ Health check retourne "healthy"
 - ✅ Config hot-reload fonctionne
 - ✅ Métriques Prometheus valides
 - ✅ RBAC bloque accès non autorisés (401/403)

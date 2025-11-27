@@ -104,7 +104,7 @@ const checkAdminRole = () => {
   try {
     // MODE DEV : Forcer admin si localhost ou dev
     const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ||
-      location.hostname.includes('dev') || location.port === '8000';
+      location.hostname.includes('dev') || location.port === '8080';
 
     if (isDev) {
       console.debug('🔧 Dev mode detected - Admin role forced');

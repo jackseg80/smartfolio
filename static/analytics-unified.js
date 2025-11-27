@@ -9,7 +9,7 @@ console.debug('🔄 Analytics Unified - Initialisation');
 import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
 
 // Configuration
-const API_BASE = globalConfig?.get('api_base_url') || 'http://localhost:8000';
+const API_BASE = globalConfig?.get('api_base_url') || 'http://localhost:8080';
 
 // Cache simple pour éviter les requêtes multiples
 const cache = new Map();
@@ -18,11 +18,11 @@ const CACHE_DURATION = 60000; // 1 minute
 async function fetchWithCache(key, fetchFn) {
     const now = Date.now();
     const cached = cache.get(key);
-    
+
     if (cached && (now - cached.timestamp) < CACHE_DURATION) {
         return cached.data;
     }
-    
+
     try {
         const data = await fetchFn();
         cache.set(key, { data, timestamp: now });
@@ -34,13 +34,13 @@ async function fetchWithCache(key, fetchFn) {
 }
 
 // Tab switching functionality
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     setupTabSwitching();
     loadInitialData();
     // Keep metrics in sync with risk-dashboard scores written to localStorage
     window.addEventListener('storage', (e) => {
         if (e.key && e.key.startsWith('risk_score_')) {
-            try { refreshScoresFromLocalStorage(); } catch (_) {}
+            try { refreshScoresFromLocalStorage(); } catch (_) { }
         }
     });
     // Also listen to unified riskStore (populated by analytics-unified.html)
@@ -70,7 +70,7 @@ function getScoresFromLocalStorage() {
                 if (typeof s?.scores?.ccs === 'number') ccs = s.scores.ccs;
                 else if (typeof s?.ccs?.score === 'number') ccs = s.ccs.score;
             }
-        } catch (_) {}
+        } catch (_) { }
 
         const timestamp = localStorage.getItem('risk_score_timestamp');
         return {
@@ -100,13 +100,13 @@ function attachRiskStoreListener() {
     const tryAttach = () => {
         if (window.riskStore && typeof window.riskStore.subscribe === 'function') {
             // Initial pull
-            try { refreshScoresFromLocalStorage(); } catch (_) {}
+            try { refreshScoresFromLocalStorage(); } catch (_) { }
             try {
                 window.riskStore.subscribe(() => {
-                    try { refreshScoresFromLocalStorage(); } catch (_) {}
+                    try { refreshScoresFromLocalStorage(); } catch (_) { }
                 });
                 console.debug('Analytics Unified: subscribed to riskStore updates');
-            } catch (_) {}
+            } catch (_) { }
             return true;
         }
         return false;
@@ -125,18 +125,18 @@ function attachRiskStoreListener() {
 function setupTabSwitching() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
-    
+
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const targetId = button.dataset.target;
-            
+
             // Update active states
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabPanels.forEach(panel => panel.classList.remove('active'));
-            
+
             button.classList.add('active');
             document.querySelector(targetId).classList.add('active');
-            
+
             // Load data for active tab
             loadTabData(targetId);
         });
@@ -150,7 +150,7 @@ async function loadInitialData() {
 
 async function loadTabData(tabId) {
     const tab = tabId.replace('#tab-', '');
-    
+
     try {
         switch (tab) {
             case 'risk':
@@ -178,144 +178,144 @@ async function loadTabData(tabId) {
     }
 }
 
-  async function loadRiskData() {
-  console.debug("Analytics Unified: Loading Risk Dashboard data...");
+async function loadRiskData() {
+    console.debug("Analytics Unified: Loading Risk Dashboard data...");
 
-  // Start real-time risk alerts polling (unified alert system)
-  startRiskAlertsPolling();
+    // Start real-time risk alerts polling (unified alert system)
+    startRiskAlertsPolling();
 
-  const riskData = await fetchWithCache('risk-dashboard', async () => {
-    const minUsd = globalConfig?.get('min_usd_threshold') || 10;
-    const url = `${API_BASE}/api/risk/dashboard?min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  });
+    const riskData = await fetchWithCache('risk-dashboard', async () => {
+        const minUsd = globalConfig?.get('min_usd_threshold') || 10;
+        const url = `${API_BASE}/api/risk/dashboard?min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+    });
 
-  if (!(riskData?.success && riskData?.risk_metrics)) {
-    showRiskError();
-    return;
-  }
-
-  const metrics = riskData.risk_metrics;
-
-  // Core risk metrics
-  updateMetric('risk-var', formatPercent(Math.abs(metrics.var_95_1d)), '95% confidence level');
-  updateMetric('risk-drawdown', formatPercent(Math.abs(metrics.max_drawdown)), 'Current cycle');
-  updateMetric('risk-volatility', formatPercent(metrics.volatility_annualized), '30-day annualized');
-  updateMetric('risk-score', `${metrics.risk_score || '--'}/100`, getRiskLevel(metrics.risk_score));
-
-  // Note: Risk alerts now loaded dynamically via startRiskAlertsPolling()
-
-  // Diversification metrics
-  const corr = riskData.correlation_metrics || {};
-  if (typeof corr.diversification_ratio === 'number') {
-    updateMetric('risk-kpi-diversification', (corr.diversification_ratio).toFixed(2), 'Corrélation de portefeuille');
-  } else {
-    updateMetric('risk-kpi-diversification', '--', 'Indisponible');
-  }
-  if (typeof corr.effective_assets === 'number') {
-    updateMetric('risk-kpi-effective-assets', Math.round(corr.effective_assets), 'Actifs non-redondants');
-  } else {
-    updateMetric('risk-kpi-effective-assets', '--', 'Indisponible');
-  }
-
-  // Scores depuis le Risk Dashboard (source de vérité)
-  const ls = getScoresFromLocalStorage();
-  if (ls.onchain != null) {
-    updateMetric('risk-kpi-onchain', Math.round(ls.onchain), 'Fondamentaux on-chain');
-  } else {
-    updateMetric('risk-kpi-onchain', '--', 'Fondamentaux on-chain (bientôt)');
-  }
-  if (ls.blended != null) {
-    updateMetric('risk-kpi-blended', Math.round(ls.blended), 'CCS × Cycle (synthèse)');
-  } else {
-    updateMetric('risk-kpi-blended', '--', 'Synthèse indisponible (ouvrez le Risk Dashboard)');
-  }
-
-  // Timestamp (si dispo) au bas du panneau
-  try {
-    const ts = ls.timestamp ? new Date(Number(ls.timestamp)).toLocaleTimeString() : null;
-    const panel = document.querySelector('#tab-risk .panel-card');
-    if (ts && panel) {
-      let info = panel.querySelector('.scores-updated-at');
-      if (!info) {
-        info = document.createElement('div');
-        info.className = 'scores-updated-at';
-        info.style.cssText = 'text-align:center; font-size:12px; color: var(--theme-text-muted); margin-top:.25rem;';
-        panel.appendChild(info);
-      }
-      info.textContent = `Mis à jour: ${ts}`;
+    if (!(riskData?.success && riskData?.risk_metrics)) {
+        showRiskError();
+        return;
     }
-  } catch {}
-}async function loadPerformanceData() {
-      console.debug('💾 Loading Performance Monitor data...');
-      
-      // Performance Monitor is about SYSTEM performance, not financial performance
-      let cacheStats = null, memoryStats = null;
-      try {
-          cacheStats = await fetchWithCache('cache-stats', async () => {
-              const response = await fetch(`${API_BASE}/api/performance/cache/stats`);
-              if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              return await response.json();
-          });
-      } catch (e) { (window.debugLogger?.warn || console.warn)('cache-stats failed', e); }
-      try {
-          memoryStats = await fetchWithCache('memory-stats', async () => {
-              const response = await fetch(`${API_BASE}/api/performance/system/memory`);
-              if (!response.ok) throw new Error(`HTTP ${response.status}`);
-              return await response.json();
-          });
-      } catch (e) { (window.debugLogger?.warn || console.warn)('memory-stats failed', e); }
-      
-      if (cacheStats?.success) {
-          const cache = cacheStats.cache_stats;
-          const memory = memoryStats?.memory_usage || {};
-      
-          // Update Performance metrics with real system data
-          updateMetric('perf-cache-size', cache?.memory_cache_size ?? '--', 'Memory cache entries');
-          updateMetric('perf-disk-cache', `${(cache?.disk_cache_size_mb ?? '--')} MB`, 'Disk cache usage');
-          if (memoryStats?.success) {
-              updateMetric('perf-memory', `${(memory.rss_mb || 0).toFixed(0)} MB`, 'Process memory');
-              const sysUsedPct = (memory.total_system_mb && memory.available_system_mb)
+
+    const metrics = riskData.risk_metrics;
+
+    // Core risk metrics
+    updateMetric('risk-var', formatPercent(Math.abs(metrics.var_95_1d)), '95% confidence level');
+    updateMetric('risk-drawdown', formatPercent(Math.abs(metrics.max_drawdown)), 'Current cycle');
+    updateMetric('risk-volatility', formatPercent(metrics.volatility_annualized), '30-day annualized');
+    updateMetric('risk-score', `${metrics.risk_score || '--'}/100`, getRiskLevel(metrics.risk_score));
+
+    // Note: Risk alerts now loaded dynamically via startRiskAlertsPolling()
+
+    // Diversification metrics
+    const corr = riskData.correlation_metrics || {};
+    if (typeof corr.diversification_ratio === 'number') {
+        updateMetric('risk-kpi-diversification', (corr.diversification_ratio).toFixed(2), 'Corrélation de portefeuille');
+    } else {
+        updateMetric('risk-kpi-diversification', '--', 'Indisponible');
+    }
+    if (typeof corr.effective_assets === 'number') {
+        updateMetric('risk-kpi-effective-assets', Math.round(corr.effective_assets), 'Actifs non-redondants');
+    } else {
+        updateMetric('risk-kpi-effective-assets', '--', 'Indisponible');
+    }
+
+    // Scores depuis le Risk Dashboard (source de vérité)
+    const ls = getScoresFromLocalStorage();
+    if (ls.onchain != null) {
+        updateMetric('risk-kpi-onchain', Math.round(ls.onchain), 'Fondamentaux on-chain');
+    } else {
+        updateMetric('risk-kpi-onchain', '--', 'Fondamentaux on-chain (bientôt)');
+    }
+    if (ls.blended != null) {
+        updateMetric('risk-kpi-blended', Math.round(ls.blended), 'CCS × Cycle (synthèse)');
+    } else {
+        updateMetric('risk-kpi-blended', '--', 'Synthèse indisponible (ouvrez le Risk Dashboard)');
+    }
+
+    // Timestamp (si dispo) au bas du panneau
+    try {
+        const ts = ls.timestamp ? new Date(Number(ls.timestamp)).toLocaleTimeString() : null;
+        const panel = document.querySelector('#tab-risk .panel-card');
+        if (ts && panel) {
+            let info = panel.querySelector('.scores-updated-at');
+            if (!info) {
+                info = document.createElement('div');
+                info.className = 'scores-updated-at';
+                info.style.cssText = 'text-align:center; font-size:12px; color: var(--theme-text-muted); margin-top:.25rem;';
+                panel.appendChild(info);
+            }
+            info.textContent = `Mis à jour: ${ts}`;
+        }
+    } catch { }
+} async function loadPerformanceData() {
+    console.debug('💾 Loading Performance Monitor data...');
+
+    // Performance Monitor is about SYSTEM performance, not financial performance
+    let cacheStats = null, memoryStats = null;
+    try {
+        cacheStats = await fetchWithCache('cache-stats', async () => {
+            const response = await fetch(`${API_BASE}/api/performance/cache/stats`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        });
+    } catch (e) { (window.debugLogger?.warn || console.warn)('cache-stats failed', e); }
+    try {
+        memoryStats = await fetchWithCache('memory-stats', async () => {
+            const response = await fetch(`${API_BASE}/api/performance/system/memory`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        });
+    } catch (e) { (window.debugLogger?.warn || console.warn)('memory-stats failed', e); }
+
+    if (cacheStats?.success) {
+        const cache = cacheStats.cache_stats;
+        const memory = memoryStats?.memory_usage || {};
+
+        // Update Performance metrics with real system data
+        updateMetric('perf-cache-size', cache?.memory_cache_size ?? '--', 'Memory cache entries');
+        updateMetric('perf-disk-cache', `${(cache?.disk_cache_size_mb ?? '--')} MB`, 'Disk cache usage');
+        if (memoryStats?.success) {
+            updateMetric('perf-memory', `${(memory.rss_mb || 0).toFixed(0)} MB`, 'Process memory');
+            const sysUsedPct = (memory.total_system_mb && memory.available_system_mb)
                 ? (((memory.total_system_mb - memory.available_system_mb) / memory.total_system_mb) * 100)
                 : null;
-              updateMetric('perf-system-memory', sysUsedPct != null ? `${sysUsedPct.toFixed(1)}%` : 'N/A', 'System memory usage');
-          } else {
-              updateMetric('perf-memory', 'N/A', 'psutil non dispo');
-              updateMetric('perf-system-memory', 'N/A', 'psutil non dispo');
-          }
-      
-          // Update performance breakdown
-          updatePerformanceBreakdown(cache, memory);
-      
-      } else {
-          showPerformanceError();
-      }
-  }
+            updateMetric('perf-system-memory', sysUsedPct != null ? `${sysUsedPct.toFixed(1)}%` : 'N/A', 'System memory usage');
+        } else {
+            updateMetric('perf-memory', 'N/A', 'psutil non dispo');
+            updateMetric('perf-system-memory', 'N/A', 'psutil non dispo');
+        }
+
+        // Update performance breakdown
+        updatePerformanceBreakdown(cache, memory);
+
+    } else {
+        showPerformanceError();
+    }
+}
 
 async function loadCycleData() {
     console.debug('🔄 Loading Cycle Analysis data...');
-    
+
     // Import cycle analysis functions (they should be available globally or imported)
     try {
         const cycleModule = await import('./modules/cycle-navigator.js');
         const cycleData = await cycleModule.estimateCyclePosition();
-        
+
         if (cycleData && cycleData.phase) {
             const phase = cycleData.phase;
             const months = Math.round(cycleData.months || 0);
             const confidence = Math.round((cycleData.confidence || 0) * 100);
-            
+
             // Update Cycle metrics with real data
             updateMetric('cycle-phase', phase.phase.replace('_', ' ').toUpperCase(), `${phase.emoji} Current phase`);
             updateMetric('cycle-progress', `${months} months`, 'Post-halving progress');
             updateMetric('cycle-score', Math.round(cycleData.score || 50), 'Cycle position score');
             updateMetric('cycle-confidence', `${confidence}%`, 'Model certainty');
-            
+
             // Update cycle indicators
             updateCycleIndicators(cycleData, phase);
-            
+
         } else {
             showCycleError();
         }
@@ -325,35 +325,35 @@ async function loadCycleData() {
     }
 }
 
-  async function loadMonitoringData() {
-      console.debug('📈 Loading Advanced Analytics data...');
-      try {
-          const url = `${API_BASE}/analytics/advanced/metrics?days=365`;
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const data = await response.json();
+async function loadMonitoringData() {
+    console.debug('📈 Loading Advanced Analytics data...');
+    try {
+        const url = `${API_BASE}/analytics/advanced/metrics?days=365`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
 
-          // Update 4 KPIs
-          updateMetric('monitor-total-return', `${(data.total_return_pct).toFixed(1)}%`, 'Sur la période');
-          updateMetric('monitor-sharpe', (data.sharpe_ratio).toFixed(2), 'Risque ajusté');
-          updateMetric('monitor-volatility', `${(data.volatility_pct).toFixed(1)}%`, 'Risque de marché');
-          updateMetric('monitor-drawdown', `${Math.abs(data.max_drawdown_pct).toFixed(1)}%`, 'Pire baisse');
+        // Update 4 KPIs
+        updateMetric('monitor-total-return', `${(data.total_return_pct).toFixed(1)}%`, 'Sur la période');
+        updateMetric('monitor-sharpe', (data.sharpe_ratio).toFixed(2), 'Risque ajusté');
+        updateMetric('monitor-volatility', `${(data.volatility_pct).toFixed(1)}%`, 'Risque de marché');
+        updateMetric('monitor-drawdown', `${Math.abs(data.max_drawdown_pct).toFixed(1)}%`, 'Pire baisse');
 
-          // Breakdown panel
-          const breakdown = document.getElementById('advanced-metrics-breakdown');
-          if (breakdown) {
-              breakdown.innerHTML = `
+        // Breakdown panel
+        const breakdown = document.getElementById('advanced-metrics-breakdown');
+        if (breakdown) {
+            breakdown.innerHTML = `
                   <div style="display:flex; justify-content:space-between;"><span>Volatility:</span><span>${data.volatility_pct.toFixed(1)}%</span></div>
                   <div style="display:flex; justify-content:space-between;"><span>Sortino:</span><span>${data.sortino_ratio.toFixed(2)}</span></div>
                   <div style="display:flex; justify-content:space-between;"><span>Omega:</span><span>${data.omega_ratio.toFixed(2)}</span></div>
                   <div style="display:flex; justify-content:space-between;"><span>Positive Months:</span><span>${data.positive_months_pct.toFixed(1)}%</span></div>
               `;
-          }
-      } catch (error) {
-          debugLogger.error('Advanced analytics loading failed:', error);
-          showMonitoringError();
-      }
-  }
+        }
+    } catch (error) {
+        debugLogger.error('Advanced analytics loading failed:', error);
+        showMonitoringError();
+    }
+}
 
 // Utility functions
 function updateMetric(id, value, subtitle) {
@@ -382,31 +382,31 @@ function updateMetric(id, value, subtitle) {
     if (subtitleEl) subtitleEl.textContent = subtitle;
 }
 
-  function getMetricIndex(id) {
-      const indices = {
-          'risk-var': 1,
-          'risk-drawdown': 2, 
-          'risk-volatility': 3,
-          'risk-score': 4,
-          'risk-kpi-diversification': 1,
-          'risk-kpi-effective-assets': 2,
-          'risk-kpi-blended': 3,
-          'risk-kpi-onchain': 4,
-          'perf-cache-size': 1,
-          'perf-disk-cache': 2,
-          'perf-memory': 3,
-          'perf-system-memory': 4,
-          'cycle-phase': 1,
-          'cycle-progress': 2,
-          'cycle-score': 3,
-          'cycle-confidence': 4,
-          'monitor-total-return': 1,
-          'monitor-sharpe': 2,
-          'monitor-volatility': 3,
-          'monitor-drawdown': 4
-      };
-      return indices[id] || 1;
-  }
+function getMetricIndex(id) {
+    const indices = {
+        'risk-var': 1,
+        'risk-drawdown': 2,
+        'risk-volatility': 3,
+        'risk-score': 4,
+        'risk-kpi-diversification': 1,
+        'risk-kpi-effective-assets': 2,
+        'risk-kpi-blended': 3,
+        'risk-kpi-onchain': 4,
+        'perf-cache-size': 1,
+        'perf-disk-cache': 2,
+        'perf-memory': 3,
+        'perf-system-memory': 4,
+        'cycle-phase': 1,
+        'cycle-progress': 2,
+        'cycle-score': 3,
+        'cycle-confidence': 4,
+        'monitor-total-return': 1,
+        'monitor-sharpe': 2,
+        'monitor-volatility': 3,
+        'monitor-drawdown': 4
+    };
+    return indices[id] || 1;
+}
 
 function formatPercent(value) {
     if (value == null || isNaN(value)) return 'N/A';
@@ -423,27 +423,27 @@ function getRiskLevel(score) {
 function updateRiskAlerts(metrics, portfolio) {
     const alertsContainer = document.querySelector('#tab-risk .panel-card div:nth-child(3)');
     if (!alertsContainer) return;
-    
+
     const alerts = [];
-    
+
     if (metrics.var_95_1d && Math.abs(metrics.var_95_1d) > 0.08) {
         alerts.push('⚠️ High VaR detected - consider risk reduction');
     } else {
         alerts.push('✅ VaR within acceptable limits');
     }
-    
+
     if (metrics.max_drawdown && Math.abs(metrics.max_drawdown) > 0.6) {
         alerts.push('⚠️ High maximum drawdown - diversification recommended');
     } else {
         alerts.push('✅ Drawdown risk manageable');
     }
-    
+
     if (portfolio?.concentration_risk > 0.5) {
         alerts.push('⚠️ Portfolio concentration risk elevated');
     } else {
         alerts.push('✅ Portfolio concentration within limits');
     }
-    
+
     alertsContainer.innerHTML = `
         <h4>Risk Alerts</h4>
         ${alerts.map(alert => `<div style="color: var(--theme-text-muted);">• ${alert}</div>`).join('')}
@@ -453,7 +453,7 @@ function updateRiskAlerts(metrics, portfolio) {
 function updatePerformanceBreakdown(cache, memory) {
     const breakdownContainer = document.querySelector('#tab-performance .panel-card div:nth-child(3)');
     if (!breakdownContainer) return;
-    
+
     const memEntries = Number(cache?.memory_cache_size);
     const diskFiles = Number(cache?.disk_cache_files);
     const hitRate = (Number.isFinite(memEntries) && Number.isFinite(diskFiles) && (memEntries + diskFiles) > 0)
@@ -477,7 +477,7 @@ function updatePerformanceBreakdown(cache, memory) {
 function updateCycleIndicators(cycleData, phase) {
     const indicatorsContainer = document.querySelector('#tab-cycles .panel-card div:nth-child(3)');
     if (!indicatorsContainer) return;
-    
+
     indicatorsContainer.innerHTML = `
         <h4>Market Cycle Indicators</h4>
         <div style="display: grid; gap: 0.5rem;">
@@ -488,7 +488,7 @@ function updateCycleIndicators(cycleData, phase) {
     `;
 }
 
-  // No longer needed; advanced metrics are filled inline above
+// No longer needed; advanced metrics are filled inline above
 
 // Error state functions
 function showErrorState(tabId) {
@@ -507,7 +507,7 @@ function showRiskError() {
 }
 
 function showPerformanceError() {
-    showErrorState('#tab-performance'); 
+    showErrorState('#tab-performance');
 }
 
 function showCycleError() {

@@ -89,7 +89,7 @@ async function loadTaxonomyData() {
   }
 
   try {
-    const apiBase = (window.globalConfig?.get && window.globalConfig.get('api_base_url')) || 'http://localhost:8000';
+    const apiBase = (window.globalConfig?.get && window.globalConfig.get('api_base_url')) || 'http://localhost:8080';
     const response = await fetch(`${apiBase}/taxonomy`);
 
     if (!response.ok) {
@@ -133,7 +133,7 @@ export function loadTaxonomyDataSync() {
   }
 
   try {
-    const apiBase = (window.globalConfig?.get && window.globalConfig.get('api_base_url')) || 'http://localhost:8000';
+    const apiBase = (window.globalConfig?.get && window.globalConfig.get('api_base_url')) || 'http://localhost:8080';
 
     // XMLHttpRequest synchrone (deprecated mais nécessaire ici)
     const xhr = new XMLHttpRequest();

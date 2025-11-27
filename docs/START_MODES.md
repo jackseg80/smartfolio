@@ -11,11 +11,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 ### Mode 1: Dev Standard (Défaut)
 
 **Commande:**
+
 ```powershell
 .\start_dev.ps1
 ```
 
 **Configuration:**
+
 - ✅ **FastAPI** + Playwright (crypto-toolbox natif)
 - ✅ **ML Models** (lazy loading)
 - ✅ **Governance Engine**
@@ -24,11 +26,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 - ❌ **Hot Reload** (désactivé pour Playwright sur Windows)
 
 **Quand utiliser:**
+
 - Développement quotidien
 - Test des pages frontend
 - Debug des endpoints API
 
 **Tâches manuelles:**
+
 ```powershell
 # P&L snapshots
 .venv\Scripts\python.exe scripts\pnl_snapshot.py
@@ -42,11 +46,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 ### Mode 2: Dev avec Scheduler
 
 **Commande:**
+
 ```powershell
 .\start_dev.ps1 -EnableScheduler
 ```
 
 **Configuration:**
+
 - ✅ **FastAPI** + Playwright
 - ✅ **ML Models**
 - ✅ **Governance Engine**
@@ -59,11 +65,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 - ❌ **Hot Reload** (désactivé pour éviter double exécution)
 
 **Quand utiliser:**
+
 - Test du système complet avec tâches automatiques
 - Validation des snapshots P&L en conditions réelles
 - Monitoring de la fraîcheur des données
 
 **Tâches automatiques:**
+
 - ✅ Tout se fait automatiquement selon les horaires
 - Vérifier statut: `http://localhost:8080/api/scheduler/health`
 
@@ -72,11 +80,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 ### Mode 3: Flask Legacy avec Hot Reload
 
 **Commande:**
+
 ```powershell
 .\start_dev.ps1 -CryptoToolboxMode 0 -Reload
 ```
 
 **Configuration:**
+
 - ✅ **FastAPI** (proxy Flask pour crypto-toolbox)
 - ✅ **ML Models**
 - ✅ **Governance Engine**
@@ -86,9 +96,11 @@ Ce document explique les différents modes de démarrage de l'application via `s
 - ✅ **Hot Reload** (activé)
 
 **Prérequis:**
+
 - Serveur Flask lancé sur `http://localhost:8001`
 
 **Quand utiliser:**
+
 - Fallback si problème Playwright
 - Test avec ancienne config
 - Hot reload nécessaire pour itération rapide
@@ -98,15 +110,18 @@ Ce document explique les différents modes de démarrage de l'application via `s
 ### Mode 4: Production-like
 
 **Commande:**
+
 ```powershell
 .\start_dev.ps1 -EnableScheduler -Port 8080
 ```
 
 **Configuration:**
+
 - ✅ Tout activé (FastAPI, Playwright, Scheduler)
 - ❌ Hot reload (mode production)
 
 **Quand utiliser:**
+
 - Test avant déploiement production
 - Validation du comportement complet
 - Benchmarks de performance
@@ -139,7 +154,7 @@ Options:
   -CryptoToolboxMode <int>   # 0=Flask proxy, 1=Playwright (défaut: 1)
   -EnableScheduler           # Active le scheduler (switch, défaut: false)
   -Reload                    # Active hot reload (switch, défaut: false)
-  -Port <int>                # Port du serveur (défaut: 8000)
+  -Port <int>                # Port du serveur (défaut: 8080)
   -Workers <int>             # Nombre de workers (défaut: 1)
 ```
 
@@ -152,7 +167,7 @@ Options:
   --crypto-toolbox-mode <int>  # 0=Flask proxy, 1=Playwright (défaut: 1)
   --enable-scheduler           # Active le scheduler (flag)
   --reload                     # Active hot reload (flag)
-  --port <int>                 # Port du serveur (défaut: 8000)
+  --port <int>                 # Port du serveur (défaut: 8080)
   --workers <int>              # Nombre de workers (défaut: 1)
 ```
 
@@ -163,6 +178,7 @@ Options:
 ### Vérifier le mode actif
 
 **Logs au démarrage:**
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🚀 Starting Crypto Rebal Development Server
@@ -188,6 +204,7 @@ curl http://localhost:8080/api/scheduler/health
 ```
 
 **Réponse scheduler activé:**
+
 ```json
 {
   "ok": true,
@@ -206,6 +223,7 @@ curl http://localhost:8080/api/scheduler/health
 ```
 
 **Réponse scheduler désactivé:**
+
 ```json
 {
   "ok": false,
@@ -222,28 +240,34 @@ curl http://localhost:8080/api/scheduler/health
 ### Hot Reload
 
 **Incompatible avec:**
+
 - ✅ Scheduler activé (double exécution des jobs)
 - ✅ Playwright sur Windows (subprocess asyncio issue)
 
 **Compatible avec:**
+
 - ✅ Flask legacy mode (CryptoToolboxMode 0)
 
 ### Playwright
 
 **Requis pour:**
+
 - Crypto-Toolbox scraping natif
 - Mode production
 
 **Alternatives:**
+
 - Flask legacy proxy (`-CryptoToolboxMode 0`)
 - API CoinTracking directe
 
 ### Scheduler
 
 **Incompatible avec:**
+
 - Hot reload (risque de double exécution)
 
 **Nécessite:**
+
 - Mode normal (pas de `--reload`)
 
 ---
@@ -350,4 +374,3 @@ SNAPSHOT_SOURCE=cointracking_api
 
 **Dernière mise à jour:** Oct 2025
 **Maintainer:** FastAPI Team
-

@@ -1,17 +1,17 @@
 ### Balances
-GET http://127.0.0.1:8000/balances/current?source=cointracking&min_usd=1
+GET http://127.0.0.1:8080/balances/current?source=cointracking&min_usd=1
 
 ### Groups
-GET http://127.0.0.1:8000/portfolio/groups?source=cointracking&min_usd=1
+GET http://127.0.0.1:8080/portfolio/groups?source=cointracking&min_usd=1
 
 ### Taxonomy
-GET http://127.0.0.1:8000/taxonomy
+GET http://127.0.0.1:8080/taxonomy
 
 ### Unknown aliases
-GET http://127.0.0.1:8000/taxonomy/unknown_aliases?source=cointracking&min_usd=50
+GET http://127.0.0.1:8080/taxonomy/unknown_aliases?source=cointracking&min_usd=50
 
 ### Plan
-POST http://127.0.0.1:8000/rebalance/plan?source=cointracking&min_usd=1
+POST http://127.0.0.1:8080/rebalance/plan?source=cointracking&min_usd=1
 Content-Type: application/json
 
 {

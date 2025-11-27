@@ -147,10 +147,10 @@ class IntelligentCache {
     entry.accessCount++;
     entry.lastAccess = Date.now();
     this.updateAccessPattern(key);
-    
+
     this.performanceMetrics.hits++;
     this.performanceMetrics.totalRequests++;
-    
+
     return entry.value;
   }
 
@@ -169,12 +169,12 @@ class IntelligentCache {
     if (pattern.lastAccess > 0) {
       const interval = now - pattern.lastAccess;
       pattern.intervals.push(interval);
-      
+
       // Keep only last 10 intervals for rolling average
       if (pattern.intervals.length > 10) {
         pattern.intervals.shift();
       }
-      
+
       pattern.avgInterval = pattern.intervals.reduce((a, b) => a + b, 0) / pattern.intervals.length;
     }
 
@@ -189,7 +189,7 @@ class IntelligentCache {
   has(key) {
     const entry = this.cache.get(key);
     if (!entry) return false;
-    
+
     const age = Date.now() - entry.timestamp;
     return age <= entry.ttl;
   }
@@ -198,8 +198,8 @@ class IntelligentCache {
    * Get cache statistics
    */
   getStats() {
-    const hitRate = this.performanceMetrics.totalRequests > 0 
-      ? (this.performanceMetrics.hits / this.performanceMetrics.totalRequests) * 100 
+    const hitRate = this.performanceMetrics.totalRequests > 0
+      ? (this.performanceMetrics.hits / this.performanceMetrics.totalRequests) * 100
       : 0;
 
     return {
@@ -300,7 +300,7 @@ export const INDICATOR_CATEGORIES = {
       'bmo': { weight: 0.10, invert: false } // BMO indicator
     }
   },
-  
+
   // Indicateurs Cycle/Techniques (30% du score) - Signaux de timing
   cycle_technical: {
     weight: 0.30,
@@ -321,7 +321,7 @@ export const INDICATOR_CATEGORIES = {
       'ahr999': { weight: 0.15, invert: true } // Ahr999 index
     }
   },
-  
+
   // Indicateurs de Sentiment (10% du score) - Psychologie de marché
   sentiment: {
     weight: 0.10,
@@ -343,7 +343,7 @@ export const INDICATOR_CATEGORIES = {
  */
 export function classifyIndicator(indicatorName) {
   const name = indicatorName.toLowerCase().trim();
-  
+
   // Patterns spéciaux pour indicateurs de Crypto-Toolbox
   const specialMappings = {
     'pi cycle': { category: 'cycle_technical', key: 'pi_cycle' },
@@ -384,13 +384,13 @@ export function classifyIndicator(indicatorName) {
     'ahr999': { category: 'cycle_technical', key: 'ahr999' },
     'cbbi*': { category: 'cycle_technical', key: 'cbbi' }
   };
-  
+
   // Recherche par correspondance exacte d'abord
   for (const [pattern, mapping] of Object.entries(specialMappings)) {
     if (name.includes(pattern)) {
       const category = INDICATOR_CATEGORIES[mapping.category];
       const config = category.indicators[mapping.key];
-      
+
       if (config) {
         return {
           category: mapping.category,
@@ -402,7 +402,7 @@ export function classifyIndicator(indicatorName) {
       }
     }
   }
-  
+
   // Recherche générique dans chaque catégorie
   for (const [categoryKey, category] of Object.entries(INDICATOR_CATEGORIES)) {
     for (const [indicatorKey, config] of Object.entries(category.indicators)) {
@@ -418,7 +418,7 @@ export function classifyIndicator(indicatorName) {
       }
     }
   }
-  
+
   // Par défaut, classer comme sentiment avec poids faible
   console.debug(`⚠️ Unknown indicator classification: ${indicatorName}`);
   return {
@@ -449,9 +449,9 @@ export const INDICATORS_CONFIG = {
     weight: 0.25,
     api_available: true
   },
-  
+
   nvt: {
-    name: "NVT Ratio", 
+    name: "NVT Ratio",
     description: "Network Value to Transactions",
     thresholds: {
       extreme_high: 150,  // Très surévalué
@@ -653,27 +653,27 @@ async function performanceMonitoredFetch(url, options = {}) {
       // Further reduced timeout for faster failure detection and better UX
       signal: AbortSignal.timeout(3000) // 3 second timeout (was 5s)
     });
-    
+
     const endTime = performance.now();
     const responseTime = endTime - startTime;
-    
+
     // Update performance metrics
     const stats = intelligentCache.performanceMetrics;
-    stats.avgResponseTime = stats.avgResponseTime === 0 
-      ? responseTime 
+    stats.avgResponseTime = stats.avgResponseTime === 0
+      ? responseTime
       : (stats.avgResponseTime + responseTime) / 2;
-    
+
     (window.debugLogger?.debug || console.log)(`📡 API response time: ${Math.round(responseTime)}ms`);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
-    
+
     return response;
   } catch (error) {
     const endTime = performance.now();
     const responseTime = endTime - startTime;
-    
+
     if (error.name === 'TimeoutError') {
       (window.debugLogger?.warn || console.warn)('⏰ API request timed out after 10s');
     } else if (error.name === 'AbortError') {
@@ -681,7 +681,7 @@ async function performanceMonitoredFetch(url, options = {}) {
     } else {
       (window.debugLogger?.warn || console.warn)(`🌐 Network error (${Math.round(responseTime)}ms):`, error.message);
     }
-    
+
     throw error;
   }
 }
@@ -708,11 +708,11 @@ async function fetchFearGreedIndex() {
         timestamp: new Date(data.data[0].timestamp * 1000),
         source: 'Alternative.me'
       };
-      
+
       // Store in intelligent cache
       intelligentCache.set('fear_greed', result);
       (window.debugLogger?.debug || console.log)('💾 Fear & Greed cached with adaptive TTL');
-      
+
       return result;
     }
     throw new Error('Invalid response format');
@@ -784,7 +784,7 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
 
       // If between TTL_BG and TTL_SHOW, revalidate in background
       if (age > TTL_BG_MS) {
-        revalidateInBackground().catch(() => {});
+        revalidateInBackground().catch(() => { });
       }
 
       return cached;
@@ -797,7 +797,7 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
         cache_age_minutes: Math.round(age / 1000 / 60)
       });
 
-      revalidateInBackground().catch(() => {});
+      revalidateInBackground().catch(() => { });
       return cached;
     }
 
@@ -838,259 +838,259 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
 
   _ongoingFetch = (async () => {
     try {
-    
-  // Appel via le proxy FastAPI (8000) qui relaie vers Flask (8001)
-  const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://127.0.0.1:8000';
-  const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/crypto-toolbox`;
-  let response;
-  try {
-    response = await performanceMonitoredFetch(proxyUrl);
-  } catch (err) {
-    (window.debugLogger?.debug || console.log)(`🌐 Proxy ${proxyUrl} failed (${err?.message || err}). Trying fallback...`);
 
-    // Try only 2 fallbacks: primary FastAPI proxy, then direct Flask
-    const fallbacks = [
-      'http://localhost:8000/api/crypto-toolbox',  // FastAPI proxy (most common)
-      'http://localhost:8001/api/crypto-toolbox'   // Direct Flask (if available)
-    ];
-
-    let lastError = err;
-    let attemptedUrls = [proxyUrl];
-
-    for (const url of fallbacks) {
+      // Appel via le proxy FastAPI (8080) qui relaie vers Flask (8001)
+      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://127.0.0.1:8080';
+      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/crypto-toolbox`;
+      let response;
       try {
-        response = await performanceMonitoredFetch(url);
-        (window.debugLogger?.debug || console.log)(`✅ Fallback succeeded at ${url}`);
-        break;
-      } catch (e) {
-        lastError = e;
-        attemptedUrls.push(url);
-        // Use debug instead of warn to reduce noise
-        (window.debugLogger?.debug || console.log)(`🌐 Fallback ${url} failed: ${e?.message || e}`);
-      }
-    }
+        response = await performanceMonitoredFetch(proxyUrl);
+      } catch (err) {
+        (window.debugLogger?.debug || console.log)(`🌐 Proxy ${proxyUrl} failed (${err?.message || err}). Trying fallback...`);
 
-    if (!response) {
-      // Single warning message instead of multiple
-      if (_logLimiter.limit('crypto_toolbox_unavailable')) {
-        (window.debugLogger?.warn || console.warn)(
-          `⚠️ Crypto-Toolbox service unavailable (tried ${attemptedUrls.length} endpoints). Using cached data or graceful degradation.`
-        );
-      }
-      throw lastError || new Error('All endpoints failed');
-    }
-  }
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        (window.debugLogger?.warn || console.warn)('⚠️ Crypto-Toolbox service not available (optional feature)');
-        return null; // Service optionnel non disponible
-      }
-      throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
-    }
-    
-  const apiData = await response.json();
-  (window.debugLogger?.debug || console.log)(`📊 API response:`, apiData);
+        // Try only 2 fallbacks: primary FastAPI proxy, then direct Flask
+        const fallbacks = [
+          'http://localhost:8000/api/crypto-toolbox',  // FastAPI proxy (most common)
+          'http://localhost:8001/api/crypto-toolbox'   // Direct Flask (if available)
+        ];
 
-  // ✅ Detect stale/invalid data from backend
-  if (apiData.scraping_failed) {
-    const reason = apiData.failure_reason || 'Unknown error';
-    const ageMin = Math.round((apiData.cache_age_seconds || 0) / 60);
-    if (_logLimiter.limit('backend_scraping_failed', 60000)) { // Log once per minute
-      (window.debugLogger?.warn || console.warn)(
-        `⚠️ Backend scraping failed: ${reason} - Using stale cache (${ageMin} min old)`
-      );
-    }
-    // Still continue with cached data - better than nothing
-  }
+        let lastError = err;
+        let attemptedUrls = [proxyUrl];
 
-  // Tolérance aux différentes formes de payload
-  if (apiData.success === false) {
-    throw new Error(`API returned error: ${apiData.error || apiData.message || 'unknown error'}`);
-  }
-  
-  // Accepter plusieurs clés possibles: indicators | data | items | payload
-  let raw = apiData.indicators || apiData.data || apiData.items || apiData.payload || null;
-  if (raw && !Array.isArray(raw) && typeof raw === 'object') {
-    // Certains backends renvoient un dict { key: indicator }
-    raw = Object.values(raw);
-  }
-  if (!Array.isArray(raw)) {
-    (window.debugLogger?.warn || console.warn)('⚠️ No indicator list array in response; attempting single-item normalization');
-    raw = [];
-  }
-  
-  // Convertir TOUS les indicateurs API en format pour le nouveau système
-  const indicators = {};
-  const pickName = (x) => x?.name || x?.indicator || x?.title || x?.key || 'unknown';
-  const pickNumeric = (x) => {
-    const cands = [x.value_numeric, x.numeric_value, x.value_percent, x.percent, x.score, x.value];
-    for (const v of cands) {
-      if (typeof v === 'number' && !Number.isNaN(v)) return v;
-      if (typeof v === 'string') {
-        // extraire nombre d’une chaîne comme "75.39%" ou "75,4"
-        const m = v.match(/[\d.,]+/);
-        if (m) return parseFloat(m[0].replace(',', '.'));
-      }
-    }
-    return undefined;
-  };
-  const pickBool = (x, ...keys) => keys.map(k => x[k]).find(v => typeof v === 'boolean');
-  const pick = (x, ...keys) => keys.map(k => x[k]).find(v => v != null);
-  
-  raw.forEach(entry => {
-    const originalName = pickName(entry);
-    const cleanKey = String(originalName).toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const num = pickNumeric(entry);
-    if (num == null || Number.isNaN(num)) {
-      (window.debugLogger?.warn || console.warn)(`⚠️ Skipped indicator without numeric value: ${originalName}`);
-      return;
-    }
-    const inCritical = pickBool(entry, 'in_critical_zone', 'critical', 'is_critical') || false;
-    const thresholdNumeric = pick(entry, 'threshold_numeric');
-    const threshold = pick(entry, 'threshold');
-    const rawThreshold = pick(entry, 'raw_threshold');
-    const thresholdOp = pick(entry, 'threshold_operator', 'operator');
-    const scrapedAt = pick(apiData, 'scraped_at', 'timestamp', 'fetched_at') || pick(entry, 'scraped_at', 'timestamp', 'fetched_at');
-    const rawValue = pick(entry, 'raw_value') || (typeof entry.value === 'string' ? entry.value : undefined);
-    
-    indicators[cleanKey] = {
-      name: originalName,
-      value_numeric: num,
-      value: entry.value ?? rawValue ?? `${num}%`,
-      raw_value: rawValue,
-      threshold_numeric: thresholdNumeric,
-      threshold: threshold,
-      raw_threshold: rawThreshold,
-      in_critical_zone: inCritical,
-      threshold_operator: thresholdOp,
-      scraped_at: scrapedAt,
-      source: entry.source || 'crypto-toolbox'
-    };
-    (window.debugLogger?.debug || console.log)(`✅ Processed: ${originalName} = ${num}% ${inCritical ? '🚨' : ''}`);
-  });
-  
-  (window.debugLogger?.debug || console.log)(`📊 Converted ${Object.keys(indicators).length} indicators from API`);
+        for (const url of fallbacks) {
+          try {
+            response = await performanceMonitoredFetch(url);
+            (window.debugLogger?.debug || console.log)(`✅ Fallback succeeded at ${url}`);
+            break;
+          } catch (e) {
+            lastError = e;
+            attemptedUrls.push(url);
+            // Use debug instead of warn to reduce noise
+            (window.debugLogger?.debug || console.log)(`🌐 Fallback ${url} failed: ${e?.message || e}`);
+          }
+        }
 
-  if (Object.keys(indicators).length > 0) {
-    // ✅ Frontend validation: Check for suspicious data (all zeros)
-    const indicatorValues = Object.values(indicators);
-    const nonZeroCount = indicatorValues.filter(ind => (ind.value_numeric || 0) !== 0).length;
-    const zeroPercentage = 100 - (nonZeroCount / indicatorValues.length * 100);
-
-    if (zeroPercentage > 80) {
-      // Critical: >80% zeros - likely scraping failure
-      if (_logLimiter.limit('invalid_indicators_critical', 120000)) { // Log once per 2 minutes
-        (window.debugLogger?.error || console.error)(
-          `❌ CRITICAL: ${zeroPercentage.toFixed(1)}% of indicators are zero - data likely invalid!`
-        );
-      }
-      // Show user-visible warning
-      if (window.showToast) {
-        window.showToast(
-          `⚠️ On-chain data quality issue detected (${zeroPercentage.toFixed(0)}% zeros) - using fallback`,
-          'warning',
-          { duration: 10000 }
-        );
-      }
-    } else if (zeroPercentage > 50) {
-      // Warning: 50-80% zeros - suspicious
-      if (_logLimiter.limit('invalid_indicators_warning', 120000)) {
-        (window.debugLogger?.warn || console.warn)(
-          `⚠️ WARNING: ${zeroPercentage.toFixed(1)}% of indicators are zero - data quality may be degraded`
-        );
-      }
-    } else {
-      // Data looks good
-      (window.debugLogger?.debug || console.log)(
-        `✅ Data quality check passed: ${nonZeroCount}/${indicatorValues.length} indicators have valid values`
-      );
-    }
-
-    // Prepare SWR cache payload
-    const cachePayload = {
-      indicators,
-      count: Object.keys(indicators).length,
-      fetched_at: new Date().toISOString(),
-      source: 'network',
-      data_quality: {
-        zero_percentage: zeroPercentage,
-        valid_count: nonZeroCount,
-        total_count: indicatorValues.length
-      }
-    };
-
-    // Write to SWR cache
-    writeOnchainCache(cachePayload);
-
-    // Also update legacy cache for compatibility
-    const CACHE_24H = 24 * 60 * 60 * 1000;
-    intelligentCache.set('cryptotoolbox_indicators', indicators, CACHE_24H);
-
-    // Reset circuit breaker on success
-    _circuitBreakerState.failures = 0;
-    _circuitBreakerState.isOpen = false;
-
-    (window.debugLogger?.debug || console.log)(`✅ SWR: Network fetch successful`, {
-      served_from: 'network',
-      indicators_count: Object.keys(indicators).length,
-      response_time_ms: '~661ms' // approximation from logs
-    });
-
-    return cachePayload;
-  }
-
-  throw new Error('No valid indicators found in API response');
-
-  } catch (error) {
-    debugLogger.error('❌ Crypto-Toolbox API fetch failed:', error.message);
-
-    // Enhanced graceful degradation for all types of API failures
-    if (_logLimiter.limit('api_failure')) {
-      (window.debugLogger?.warn || console.warn)('🌐 Crypto-Toolbox API failure:', error.message);
-    }
-
-    // Update circuit breaker state for persistent failures
-    if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('timed out')) {
-      _circuitBreakerState.failures++;
-      _circuitBreakerState.lastFailure = Date.now();
-      if (_circuitBreakerState.failures >= _circuitBreakerState.FAILURE_THRESHOLD) {
-        _circuitBreakerState.isOpen = true;
-        if (_logLimiter.limit('circuit_breaker_open')) {
-          console.debug('🚨 Circuit breaker OPENED due to repeated failures');
+        if (!response) {
+          // Single warning message instead of multiple
+          if (_logLimiter.limit('crypto_toolbox_unavailable')) {
+            (window.debugLogger?.warn || console.warn)(
+              `⚠️ Crypto-Toolbox service unavailable (tried ${attemptedUrls.length} endpoints). Using cached data or graceful degradation.`
+            );
+          }
+          throw lastError || new Error('All endpoints failed');
         }
       }
-    }
 
-    // SWR Graceful Degradation: Always try to return cache instead of failing completely
-    const staleCache = readOnchainCache();
-    if (staleCache && !force) {
-      const age = Date.now() - (staleCache.saved_at || 0);
-      debugLogger.info(`🔄 Using stale cache due to API failure (age: ${Math.round(age / 1000 / 60)}min)`, {
-        served_from: 'stale_cache_fallback',
-        cache_age_minutes: Math.round(age / 1000 / 60),
-        reason: 'api_failure',
-        error_type: error.name || 'unknown',
-        circuit_breaker_failures: _circuitBreakerState.failures
+      if (!response.ok) {
+        if (response.status === 404) {
+          (window.debugLogger?.warn || console.warn)('⚠️ Crypto-Toolbox service not available (optional feature)');
+          return null; // Service optionnel non disponible
+        }
+        throw new Error(`Backend API error: ${response.status} ${response.statusText}`);
+      }
+
+      const apiData = await response.json();
+      (window.debugLogger?.debug || console.log)(`📊 API response:`, apiData);
+
+      // ✅ Detect stale/invalid data from backend
+      if (apiData.scraping_failed) {
+        const reason = apiData.failure_reason || 'Unknown error';
+        const ageMin = Math.round((apiData.cache_age_seconds || 0) / 60);
+        if (_logLimiter.limit('backend_scraping_failed', 60000)) { // Log once per minute
+          (window.debugLogger?.warn || console.warn)(
+            `⚠️ Backend scraping failed: ${reason} - Using stale cache (${ageMin} min old)`
+          );
+        }
+        // Still continue with cached data - better than nothing
+      }
+
+      // Tolérance aux différentes formes de payload
+      if (apiData.success === false) {
+        throw new Error(`API returned error: ${apiData.error || apiData.message || 'unknown error'}`);
+      }
+
+      // Accepter plusieurs clés possibles: indicators | data | items | payload
+      let raw = apiData.indicators || apiData.data || apiData.items || apiData.payload || null;
+      if (raw && !Array.isArray(raw) && typeof raw === 'object') {
+        // Certains backends renvoient un dict { key: indicator }
+        raw = Object.values(raw);
+      }
+      if (!Array.isArray(raw)) {
+        (window.debugLogger?.warn || console.warn)('⚠️ No indicator list array in response; attempting single-item normalization');
+        raw = [];
+      }
+
+      // Convertir TOUS les indicateurs API en format pour le nouveau système
+      const indicators = {};
+      const pickName = (x) => x?.name || x?.indicator || x?.title || x?.key || 'unknown';
+      const pickNumeric = (x) => {
+        const cands = [x.value_numeric, x.numeric_value, x.value_percent, x.percent, x.score, x.value];
+        for (const v of cands) {
+          if (typeof v === 'number' && !Number.isNaN(v)) return v;
+          if (typeof v === 'string') {
+            // extraire nombre d’une chaîne comme "75.39%" ou "75,4"
+            const m = v.match(/[\d.,]+/);
+            if (m) return parseFloat(m[0].replace(',', '.'));
+          }
+        }
+        return undefined;
+      };
+      const pickBool = (x, ...keys) => keys.map(k => x[k]).find(v => typeof v === 'boolean');
+      const pick = (x, ...keys) => keys.map(k => x[k]).find(v => v != null);
+
+      raw.forEach(entry => {
+        const originalName = pickName(entry);
+        const cleanKey = String(originalName).toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const num = pickNumeric(entry);
+        if (num == null || Number.isNaN(num)) {
+          (window.debugLogger?.warn || console.warn)(`⚠️ Skipped indicator without numeric value: ${originalName}`);
+          return;
+        }
+        const inCritical = pickBool(entry, 'in_critical_zone', 'critical', 'is_critical') || false;
+        const thresholdNumeric = pick(entry, 'threshold_numeric');
+        const threshold = pick(entry, 'threshold');
+        const rawThreshold = pick(entry, 'raw_threshold');
+        const thresholdOp = pick(entry, 'threshold_operator', 'operator');
+        const scrapedAt = pick(apiData, 'scraped_at', 'timestamp', 'fetched_at') || pick(entry, 'scraped_at', 'timestamp', 'fetched_at');
+        const rawValue = pick(entry, 'raw_value') || (typeof entry.value === 'string' ? entry.value : undefined);
+
+        indicators[cleanKey] = {
+          name: originalName,
+          value_numeric: num,
+          value: entry.value ?? rawValue ?? `${num}%`,
+          raw_value: rawValue,
+          threshold_numeric: thresholdNumeric,
+          threshold: threshold,
+          raw_threshold: rawThreshold,
+          in_critical_zone: inCritical,
+          threshold_operator: thresholdOp,
+          scraped_at: scrapedAt,
+          source: entry.source || 'crypto-toolbox'
+        };
+        (window.debugLogger?.debug || console.log)(`✅ Processed: ${originalName} = ${num}% ${inCritical ? '🚨' : ''}`);
       });
-      return staleCache;
-    }
 
-    // Last resort: return minimal empty state instead of throwing
-    if (_logLimiter.limit('empty_fallback')) {
-      (window.debugLogger?.warn || console.warn)('🔄 No cache available, returning empty state for graceful degradation');
+      (window.debugLogger?.debug || console.log)(`📊 Converted ${Object.keys(indicators).length} indicators from API`);
+
+      if (Object.keys(indicators).length > 0) {
+        // ✅ Frontend validation: Check for suspicious data (all zeros)
+        const indicatorValues = Object.values(indicators);
+        const nonZeroCount = indicatorValues.filter(ind => (ind.value_numeric || 0) !== 0).length;
+        const zeroPercentage = 100 - (nonZeroCount / indicatorValues.length * 100);
+
+        if (zeroPercentage > 80) {
+          // Critical: >80% zeros - likely scraping failure
+          if (_logLimiter.limit('invalid_indicators_critical', 120000)) { // Log once per 2 minutes
+            (window.debugLogger?.error || console.error)(
+              `❌ CRITICAL: ${zeroPercentage.toFixed(1)}% of indicators are zero - data likely invalid!`
+            );
+          }
+          // Show user-visible warning
+          if (window.showToast) {
+            window.showToast(
+              `⚠️ On-chain data quality issue detected (${zeroPercentage.toFixed(0)}% zeros) - using fallback`,
+              'warning',
+              { duration: 10000 }
+            );
+          }
+        } else if (zeroPercentage > 50) {
+          // Warning: 50-80% zeros - suspicious
+          if (_logLimiter.limit('invalid_indicators_warning', 120000)) {
+            (window.debugLogger?.warn || console.warn)(
+              `⚠️ WARNING: ${zeroPercentage.toFixed(1)}% of indicators are zero - data quality may be degraded`
+            );
+          }
+        } else {
+          // Data looks good
+          (window.debugLogger?.debug || console.log)(
+            `✅ Data quality check passed: ${nonZeroCount}/${indicatorValues.length} indicators have valid values`
+          );
+        }
+
+        // Prepare SWR cache payload
+        const cachePayload = {
+          indicators,
+          count: Object.keys(indicators).length,
+          fetched_at: new Date().toISOString(),
+          source: 'network',
+          data_quality: {
+            zero_percentage: zeroPercentage,
+            valid_count: nonZeroCount,
+            total_count: indicatorValues.length
+          }
+        };
+
+        // Write to SWR cache
+        writeOnchainCache(cachePayload);
+
+        // Also update legacy cache for compatibility
+        const CACHE_24H = 24 * 60 * 60 * 1000;
+        intelligentCache.set('cryptotoolbox_indicators', indicators, CACHE_24H);
+
+        // Reset circuit breaker on success
+        _circuitBreakerState.failures = 0;
+        _circuitBreakerState.isOpen = false;
+
+        (window.debugLogger?.debug || console.log)(`✅ SWR: Network fetch successful`, {
+          served_from: 'network',
+          indicators_count: Object.keys(indicators).length,
+          response_time_ms: '~661ms' // approximation from logs
+        });
+
+        return cachePayload;
+      }
+
+      throw new Error('No valid indicators found in API response');
+
+    } catch (error) {
+      debugLogger.error('❌ Crypto-Toolbox API fetch failed:', error.message);
+
+      // Enhanced graceful degradation for all types of API failures
+      if (_logLimiter.limit('api_failure')) {
+        (window.debugLogger?.warn || console.warn)('🌐 Crypto-Toolbox API failure:', error.message);
+      }
+
+      // Update circuit breaker state for persistent failures
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('timed out')) {
+        _circuitBreakerState.failures++;
+        _circuitBreakerState.lastFailure = Date.now();
+        if (_circuitBreakerState.failures >= _circuitBreakerState.FAILURE_THRESHOLD) {
+          _circuitBreakerState.isOpen = true;
+          if (_logLimiter.limit('circuit_breaker_open')) {
+            console.debug('🚨 Circuit breaker OPENED due to repeated failures');
+          }
+        }
+      }
+
+      // SWR Graceful Degradation: Always try to return cache instead of failing completely
+      const staleCache = readOnchainCache();
+      if (staleCache && !force) {
+        const age = Date.now() - (staleCache.saved_at || 0);
+        debugLogger.info(`🔄 Using stale cache due to API failure (age: ${Math.round(age / 1000 / 60)}min)`, {
+          served_from: 'stale_cache_fallback',
+          cache_age_minutes: Math.round(age / 1000 / 60),
+          reason: 'api_failure',
+          error_type: error.name || 'unknown',
+          circuit_breaker_failures: _circuitBreakerState.failures
+        });
+        return staleCache;
+      }
+
+      // Last resort: return minimal empty state instead of throwing
+      if (_logLimiter.limit('empty_fallback')) {
+        (window.debugLogger?.warn || console.warn)('🔄 No cache available, returning empty state for graceful degradation');
+      }
+      return {
+        indicators: {},
+        count: 0,
+        fetched_at: new Date().toISOString(),
+        source: 'fallback_empty',
+        error: error.message,
+        graceful_degradation: true
+      };
+    } finally {
+      _ongoingFetch = null; // Clear deduplication lock
     }
-    return {
-      indicators: {},
-      count: 0,
-      fetched_at: new Date().toISOString(),
-      source: 'fallback_empty',
-      error: error.message,
-      graceful_degradation: true
-    };
-  } finally {
-    _ongoingFetch = null; // Clear deduplication lock
-  }
   })();
 
   return _ongoingFetch;
@@ -1101,52 +1101,52 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
  */
 function parseCryptoToolboxHTML(html) {
   const indicators = {};
-  
+
   try {
     // Créer un parser DOM
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    
+
     // Stratégie 1: Parser comme ton code Python - table tbody tr
     const tables = doc.querySelectorAll('table');
     (window.debugLogger?.debug || console.log)(`🔍 Found ${tables.length} tables to parse`);
-    
+
     tables.forEach((table, tableIndex) => {
       // Chercher tbody tr comme dans ton code Python
       const rows = table.querySelectorAll('tbody tr');
       (window.debugLogger?.debug || console.log)(`🔍 Table ${tableIndex + 1}: Found ${rows.length} tbody rows`);
-      
+
       if (rows.length === 0) {
         // Fallback: chercher tr directement
         const fallbackRows = table.querySelectorAll('tr');
         console.debug(`🔍 Table ${tableIndex + 1}: Fallback found ${fallbackRows.length} tr rows`);
-        
+
         fallbackRows.forEach(row => parseTableRow(row, tableIndex, indicators));
       } else {
         rows.forEach(row => parseTableRow(row, tableIndex, indicators));
       }
     });
-    
+
     function parseTableRow(row, tableIndex, indicators) {
       const cells = row.querySelectorAll('td');
       if (cells.length < 3) {
         console.debug(`🔍 Row skipped: only ${cells.length} cells`);
         return; // Ignorer les lignes avec moins de 3 colonnes
       }
-      
+
       const name = cells[0]?.textContent?.trim();
       const valueText = cells[1]?.textContent?.trim();
       const thresholdText = cells[2]?.textContent?.trim();
-      
+
       console.debug(`🔍 Raw row data: "${name}" | "${valueText}" | "${thresholdText}"`);
-      
+
       // Vérifier que c'est une ligne de données valide
       if (name && valueText && !name.toLowerCase().includes('indicateur')) {
         // Extraire la valeur numérique (pourcentage ou nombre)
         const valueMatch = valueText.match(/[\d.,]+/);
         if (valueMatch) {
           const numericValue = parseFloat(valueMatch[0].replace(',', '.'));
-          
+
           // Mapper les noms français vers nos clés standards
           const mappedKey = mapCryptoToolboxIndicatorName(name);
           if (mappedKey) {
@@ -1159,7 +1159,7 @@ function parseCryptoToolboxHTML(html) {
               raw_value: valueText,
               raw_threshold: thresholdText
             };
-            
+
             console.debug(`✅ Mapped: ${name} → ${mappedKey} (${numericValue})`);
           } else {
             (window.debugLogger?.warn || console.warn)(`⚠️ Unmapped indicator: "${name}"`);
@@ -1169,18 +1169,18 @@ function parseCryptoToolboxHTML(html) {
         }
       }
     }
-    
+
     // Stratégie 2: Patterns regex en fallback
     if (Object.keys(indicators).length === 0) {
       console.debug('🔄 No table data found, trying regex patterns...');
-      
+
       const patterns = [
         { name: 'mvrv', regex: /MVRV.*?([0-9.]+)%/gi, french: 'MVRV Z-Score' },
         { name: 'puell_multiple', regex: /Puell.*?([0-9.]+)%/gi, french: 'Puell Multiple' },
         { name: 'nupl', regex: /NUPL.*?([0-9.]+)%/gi, french: 'NUPL' },
         { name: 'rsi', regex: /RSI.*?([0-9.]+)%/gi, french: 'RSI Bitcoin' }
       ];
-      
+
       patterns.forEach(pattern => {
         const match = pattern.regex.exec(html);
         if (match && match[1]) {
@@ -1194,11 +1194,11 @@ function parseCryptoToolboxHTML(html) {
         }
       });
     }
-    
+
   } catch (error) {
     debugLogger.error('❌ Crypto-Toolbox HTML parsing failed:', error.message);
   }
-  
+
   return indicators;
 }
 
@@ -1207,7 +1207,7 @@ function parseCryptoToolboxHTML(html) {
  */
 function mapCryptoToolboxIndicatorName(frenchName) {
   const name = frenchName.toLowerCase().trim();
-  
+
   // Mapping des noms français vers clés standards (basé sur ton code Python)
   const mappings = {
     // Indicateurs de données principaux
@@ -1216,7 +1216,7 @@ function mapCryptoToolboxIndicatorName(frenchName) {
     'puell multiple': 'puell_multiple',
     'puell': 'puell_multiple',
     'nupl': 'nupl',
-    'rupl/nupl': 'nupl', 
+    'rupl/nupl': 'nupl',
     'rsi mensuel': 'rsi',
     'rsi bitcoin': 'rsi',
     'rsi': 'rsi',
@@ -1225,10 +1225,10 @@ function mapCryptoToolboxIndicatorName(frenchName) {
     'coin days destroyed (ma 90j)': 'cdd',
     'coin days destroyed': 'cdd',
     'bmo (par prof. chaîne) (ema 7j)': 'bmo_7',
-    'bmo (par prof. chaîne) (ema 30j)': 'bmo_30', 
+    'bmo (par prof. chaîne) (ema 30j)': 'bmo_30',
     'bmo (par prof. chaîne) (ema 90j)': 'bmo_90',
     'bmo': 'bmo',
-    
+
     // Autres indicateurs techniques
     'cbbi*': 'cbbi',
     'pi cycle': 'pi_cycle',
@@ -1240,51 +1240,51 @@ function mapCryptoToolboxIndicatorName(frenchName) {
     'cointime mvrv-z score (ema 14j)': 'mvrv_cointime',
     'mayer mutiple': 'mayer_multiple',
     'mayer multiple': 'mayer_multiple',
-    
+
     // Indicateurs sentiment
     'fear & greed (moyenne 7 jours)': 'fear_greed_7d',
     'fear & greed': 'fear_greed',
     'fear and greed': 'fear_greed',
-    
+
     // Dominance et altcoins
     'dominance btc': 'btc_dominance',
     'altcoin season index': 'altseason',
     'altcoin': 'altseason',
-    
+
     // Indicateurs Google trends
     'google trend "crypto"': 'google_crypto',
-    'google trend "buy crypto"': 'google_buy_crypto', 
+    'google trend "buy crypto"': 'google_buy_crypto',
     'google trend "bitcoin"': 'google_bitcoin',
     'google trend "ethereum"': 'google_ethereum',
-    
+
     // Indicateurs apps
     'coinbase app rank (us)': 'coinbase_rank_us',
     'binance app rank (fr)': 'binance_rank_fr',
     'binance app rank (uk)': 'binance_rank_uk',
     'crypto.com app rank (us)': 'crypto_com_rank_us',
     'phantom app rank (us)': 'phantom_rank_us',
-    
+
     // Indicateurs temporels
     'jours depuis halving': 'days_since_halving',
     'days since ath': 'days_since_ath',
     'cycle time': 'cycle_time',
-    
+
     // Autres
     'nombre de connectés jvc': 'jvc_users'
   };
-  
+
   // Recherche exacte
   if (mappings[name]) {
     return mappings[name];
   }
-  
+
   // Recherche par inclusion
   for (const [french, key] of Object.entries(mappings)) {
     if (name.includes(french) || french.includes(name)) {
       return key;
     }
   }
-  
+
   (window.debugLogger?.warn || console.warn)(`⚠️ Unknown indicator name: "${frenchName}"`);
   return null;
 }
@@ -1296,7 +1296,7 @@ function mapCryptoToolboxIndicatorName(frenchName) {
 function convertCryptoToolboxPercentToScore(percent, isContrarian = false) {
   // Les pourcentages Crypto-Toolbox représentent la position dans le cycle
   // 0% = creux de marché, 100% = pic de marché
-  
+
   if (isContrarian) {
     // Pour les indicateurs contrarian (Fear & Greed), inverser
     return Math.round(100 - percent);
@@ -1359,49 +1359,49 @@ function getSimulatedIndicators(dataSource) {
       baseIndicators.fear_greed.value_numeric = 30; // Fear
       baseIndicators.fear_greed.value = 30;
       baseIndicators.fear_greed.raw_value = 30;
-      
+
       baseIndicators.mvrv.value_numeric = 1.5; // Undervalued
       baseIndicators.mvrv.value = 1.5;
       baseIndicators.mvrv.raw_value = 1.5;
-      
+
       baseIndicators.nvt.value_numeric = 50; // Normal
       baseIndicators.nvt.value = 50;
       baseIndicators.nvt.raw_value = 50;
       break;
-      
+
     case 'stub_balanced':
       // Balanced: Moderate signals
       baseIndicators.fear_greed.value_numeric = 55; // Neutral-Greed
       baseIndicators.fear_greed.value = 55;
       baseIndicators.fear_greed.raw_value = 55;
-      
+
       baseIndicators.mvrv.value_numeric = 2.2; // Fairly valued
       baseIndicators.mvrv.value = 2.2;
       baseIndicators.mvrv.raw_value = 2.2;
-      
+
       baseIndicators.nvt.value_numeric = 75; // Slightly elevated
       baseIndicators.nvt.value = 75;
       baseIndicators.nvt.raw_value = 75;
       break;
-      
+
     case 'stub_shitcoins':
       // Risky: High risk signals
       baseIndicators.fear_greed.value_numeric = 85; // Extreme Greed - CRITICAL ZONE
       baseIndicators.fear_greed.value = 85;
       baseIndicators.fear_greed.raw_value = 85;
       baseIndicators.fear_greed.in_critical_zone = true;
-      
+
       baseIndicators.mvrv.value_numeric = 3.5; // Overvalued - CRITICAL ZONE
       baseIndicators.mvrv.value = 3.5;
       baseIndicators.mvrv.raw_value = 3.5;
       baseIndicators.mvrv.in_critical_zone = true;
-      
+
       baseIndicators.nvt.value_numeric = 120; // Overvalued - CRITICAL ZONE
       baseIndicators.nvt.value = 120;
       baseIndicators.nvt.raw_value = 120;
       baseIndicators.nvt.in_critical_zone = true;
       break;
-      
+
     default:
       // Default to balanced
       return getSimulatedIndicators('stub_balanced');
@@ -1444,7 +1444,7 @@ export async function fetchAllIndicators({ force = false } = {}) {
     const cryptoToolboxResult = await fetchCryptoToolboxIndicators({ force });
     const cryptoToolboxData = cryptoToolboxResult?.indicators || cryptoToolboxResult;
     console.debug('🔍 CryptoToolbox result:', cryptoToolboxData);
-    
+
     const toolboxAvailable = !!(cryptoToolboxData && Object.keys(cryptoToolboxData).filter(k => !k.startsWith('_')).length > 0);
     if (toolboxAvailable) {
       // Process all indicators from the backend
@@ -1452,7 +1452,7 @@ export async function fetchAllIndicators({ force = false } = {}) {
         if (key.startsWith('_') || !data || typeof data !== 'object') {
           return; // Skip metadata
         }
-        
+
         // Use the backend data directly without double conversion
         indicators[key] = {
           name: data.name,
@@ -1468,22 +1468,22 @@ export async function fetchAllIndicators({ force = false } = {}) {
           scraped_at: data.scraped_at,
           timestamp: new Date()
         };
-        
+
         console.debug(`✅ ${data.name} loaded: ${data.value_numeric}% ${data.in_critical_zone ? '🚨' : ''}`);
       });
-      
+
       console.debug(`✅ Total ${Object.keys(indicators).length} indicators loaded from Crypto-Toolbox`);
-      
+
     } else {
       errors.push('Crypto-Toolbox: Backend unavailable - no indicators loaded');
       if (_logLimiter.limit('backend_unavailable')) {
         (window.debugLogger?.warn || console.warn)('⚠️ Crypto-Toolbox backend failed, no indicators loaded');
       }
     }
-    
+
     // 2. Add Fear & Greed from Alternative.me only if toolbox data is present (no silent fallback)
-    const fearGreedExists = Object.keys(indicators).some(key => 
-      indicators[key].name?.toLowerCase().includes('fear') && 
+    const fearGreedExists = Object.keys(indicators).some(key =>
+      indicators[key].name?.toLowerCase().includes('fear') &&
       indicators[key].name?.toLowerCase().includes('greed')
     );
     if (toolboxAvailable && !fearGreedExists) {
@@ -1504,14 +1504,14 @@ export async function fetchAllIndicators({ force = false } = {}) {
         errors.push('Fear & Greed fallback API also unavailable');
       }
     }
-    
+
     const successCount = Object.keys(indicators).filter(k => k !== '_metadata').length;
     console.debug(`✅ Real indicators loaded: ${successCount} total indicators`);
-    
+
     if (errors.length > 0) {
       (window.debugLogger?.warn || console.warn)('⚠️ Some fallback indicators unavailable:', errors);
     }
-    
+
     // Log indicator summary by source
     const sourceStats = {};
     Object.values(indicators).forEach(ind => {
@@ -1519,9 +1519,9 @@ export async function fetchAllIndicators({ force = false } = {}) {
         sourceStats[ind.source] = (sourceStats[ind.source] || 0) + 1;
       }
     });
-    
+
     console.debug('📊 Indicators by source:', sourceStats);
-    
+
     return {
       ...indicators,
       _metadata: {
@@ -1532,7 +1532,7 @@ export async function fetchAllIndicators({ force = false } = {}) {
         last_updated: new Date().toISOString()
       }
     };
-    
+
   } catch (error) {
     (window.debugLogger?.warn || console.warn)('❌ Error fetching real indicators, fallback to simulated:', error.message);
 
@@ -1556,12 +1556,12 @@ export async function fetchAllIndicators({ force = false } = {}) {
 function normalizeAndInvertScore(rawValue, classification) {
   // Normaliser sur 0-100 (les valeurs Crypto-Toolbox sont déjà en %)
   let normalizedScore = Math.max(0, Math.min(100, rawValue));
-  
+
   // Inverser si nécessaire (pour les indicateurs bearish quand élevés)
   if (classification.invert) {
     normalizedScore = 100 - normalizedScore;
   }
-  
+
   return normalizedScore;
 }
 
@@ -1580,10 +1580,10 @@ export function enhanceCycleScore(sigmoidScore, onchainWeight = 0.3) {
       // Récupérer les indicateurs
       const indicators = await fetchAllIndicators();
       const composite = calculateCompositeScoreV2(indicators, true); // V2 with dynamic weighting
-      
+
       // Blend des scores
       const enhancedScore = sigmoidScore * (1 - onchainWeight) + composite.score * onchainWeight;
-      
+
       resolve({
         original_sigmoid: sigmoidScore,
         onchain_composite: composite.score,
@@ -1593,7 +1593,7 @@ export function enhanceCycleScore(sigmoidScore, onchainWeight = 0.3) {
         indicators_used: Object.keys(indicators),
         contributors: composite.contributors
       });
-      
+
     } catch (error) {
       debugLogger.error('Error enhancing cycle score:', error);
       resolve({
@@ -1612,10 +1612,10 @@ export function enhanceCycleScore(sigmoidScore, onchainWeight = 0.3) {
 export function analyzeDivergence(sigmoidScore, indicators) {
   const composite = calculateCompositeScoreV2(indicators, true); // V2 with dynamic weighting
   const divergence = Math.abs(sigmoidScore - composite.score);
-  
+
   let signal = 'neutral';
   let message = '';
-  
+
   if (divergence > 30) {
     if (composite.score > sigmoidScore) {
       signal = 'onchain_bullish';
@@ -1631,7 +1631,7 @@ export function analyzeDivergence(sigmoidScore, indicators) {
     signal = 'convergence';
     message = 'Bonne convergence entre modèle et indicateurs';
   }
-  
+
   return {
     divergence_magnitude: divergence,
     signal,
@@ -1648,7 +1648,7 @@ export function analyzeDivergence(sigmoidScore, indicators) {
 export function generateRecommendations(enhancedData) {
   const recommendations = [];
   const { enhanced_score, contributors, confidence } = enhancedData;
-  
+
   // Recommandations basées sur le score enhancé (IMPORTANT: score positif - plus haut = meilleur)
   if (enhanced_score > 80) {
     recommendations.push({
@@ -1686,11 +1686,11 @@ export function generateRecommendations(enhancedData) {
       action: 'Considérer l\'augmentation progressive de l\'allocation Bitcoin/ETH'
     });
   }
-  
+
   // Recommandations spécifiques aux indicateurs
   if (contributors.length > 0) {
     const topContributor = contributors[0];
-    
+
     if (topContributor.name === 'Fear & Greed Index' && topContributor.score > 80) {
       recommendations.push({
         type: 'contrarian',
@@ -1699,7 +1699,7 @@ export function generateRecommendations(enhancedData) {
         action: 'Prudence recommandée, pic potentiel proche'
       });
     }
-    
+
     if (topContributor.name === 'MVRV Ratio' && topContributor.score > 85) {
       recommendations.push({
         type: 'technical',
@@ -1709,7 +1709,7 @@ export function generateRecommendations(enhancedData) {
       });
     }
   }
-  
+
   // Recommandations basées sur la confiance
   if (confidence < 0.4) {
     recommendations.push({
@@ -1719,7 +1719,7 @@ export function generateRecommendations(enhancedData) {
       action: 'Intégrer plus de sources de données on-chain'
     });
   }
-  
+
   return recommendations;
 }
 

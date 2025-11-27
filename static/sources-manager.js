@@ -1059,7 +1059,7 @@ function showExtendedFeedback(message, type = 'info') {
       feedback.style.opacity = '0';
       setTimeout(() => feedback.remove(), 300);
     }
-  }, 8000);
+  }, 8080);
 }
 
 /**

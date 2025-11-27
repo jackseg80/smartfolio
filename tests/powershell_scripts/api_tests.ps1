@@ -1,13 +1,13 @@
 ﻿# tests/api_tests.ps1
 # Tests robustes de l’API Crypto Rebal Starter
-# Lancer l'API ainsi : uvicorn api.main:app --reload --port 8000
+# Lancer l'API ainsi : uvicorn api.main:app --reload --port 8080
 
 $ErrorActionPreference = "Stop"
 
 # --- Paramètres ---
 $base = ${env:API_BASE}
-if ([string]::IsNullOrWhiteSpace($base)) { $base = "http://127.0.0.1:8000" }
-$qs   = "source=cointracking_api&min_usd=1&pricing=local"
+if ([string]::IsNullOrWhiteSpace($base)) { $base = "http://127.0.0.1:8080" }
+$qs = "source=cointracking_api&min_usd=1&pricing=local"
 
 # Payload commun
 $body = @{
@@ -15,23 +15,25 @@ $body = @{
     BTC = 35; ETH = 25; Stablecoins = 10; SOL = 10; "L1/L0 majors" = 10; Others = 10
   }
   primary_symbols   = @{
-    BTC = @("BTC","TBTC","WBTC")
-    ETH = @("ETH","WSTETH","STETH","RETH","WETH")
-    SOL = @("SOL","JUPSOL","JITOSOL")
+    BTC = @("BTC", "TBTC", "WBTC")
+    ETH = @("ETH", "WSTETH", "STETH", "RETH", "WETH")
+    SOL = @("SOL", "JUPSOL", "JITOSOL")
   }
   sub_allocation    = "proportional"
   min_trade_usd     = 25
 } | ConvertTo-Json -Depth 6
 
 function Try-InvokeJson {
-  param([string]$Url,[string]$Method="GET",[string]$ContentType="application/json",[string]$BodyJson=$null)
+  param([string]$Url, [string]$Method = "GET", [string]$ContentType = "application/json", [string]$BodyJson = $null)
   try {
     if ($Method -eq "GET") {
       return Invoke-RestMethod -Uri $Url -Method GET
-    } else {
+    }
+    else {
       return Invoke-RestMethod -Uri $Url -Method $Method -ContentType $ContentType -Body $BodyJson
     }
-  } catch {
+  }
+  catch {
     # On remonte l'objet d'erreur pour tests conditionnels (ex: 404)
     return $_
   }
@@ -50,7 +52,8 @@ if ($groupsRes -is [System.Management.Automation.ErrorRecord]) {
   if ($status -eq 404) {
     Write-Host "Route /portfolio/groups introuvable → fallback /balances/current" -ForegroundColor Yellow
     $useBalancesFallback = $true
-  } else {
+  }
+  else {
     throw $groupsRes
   }
 }
@@ -58,14 +61,15 @@ if ($useBalancesFallback) {
   $cur = Try-InvokeJson "$base/balances/current?$qs"
   if ($cur -is [System.Management.Automation.ErrorRecord]) { throw $cur }
   "{0}  {1}  {2}" -f ($cur.source_used),
-                    ($cur.items.Count),
-                    ("{0:N2}" -f ( ($cur.items | Measure-Object value_usd -Sum).Sum ))
-} else {
+  ($cur.items.Count),
+  ("{0:N2}" -f ( ($cur.items | Measure-Object value_usd -Sum).Sum ))
+}
+else {
   "{0}  total=${1:N2}" -f ($groupsRes.source_used),
-                         ($groupsRes.total_usd)
+  ($groupsRes.total_usd)
   # Affiche top 5 alias
   ($groupsRes.alias_summary | Sort-Object -Property total_usd -Descending | Select-Object -First 5) |
-    ForEach-Object { "{0}  {1:N2}$" -f $_.alias, $_.total_usd }
+  ForEach-Object { "{0}  {1:N2}$" -f $_.alias, $_.total_usd }
 }
 
 # --- /rebalance/plan ---
@@ -83,8 +87,8 @@ $unknown = $plan.unknown_aliases
 "Unknown aliases : {0}" -f ($(if ($unknown) { ($unknown -join ", ") } else { "" }))
 
 # Affiche un extrait des 10 premières actions
-$plan.actions | Select-Object -First 10 group,alias,symbol,action,usd,est_quantity,price_used |
-  Format-Table -AutoSize
+$plan.actions | Select-Object -First 10 group, alias, symbol, action, usd, est_quantity, price_used |
+Format-Table -AutoSize
 
 # --- /rebalance/plan.csv ---
 Write-Host "`n== /rebalance/plan.csv ==" -ForegroundColor Cyan
