@@ -30,8 +30,13 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# Safe directory for ML models (all models must be within this directory)
-SAFE_MODEL_DIR = Path("cache/ml_pipeline")
+# Safe directories for ML models (all models must be within these directories)
+# - cache/ml_pipeline: Crypto ML models (primary safe directory)
+# - models/stocks: Stock market ML models (trained by SmartFolio)
+SAFE_MODEL_DIRS = [
+    Path("cache/ml_pipeline"),
+    Path("models/stocks"),
+]
 
 
 class UnsafeModelPathError(ValueError):
@@ -39,37 +44,49 @@ class UnsafeModelPathError(ValueError):
     pass
 
 
+def _is_safe_path(file_path: Path) -> bool:
+    """Check if a path is within any of the safe directories"""
+    abs_path = file_path.resolve()
+    for safe_dir in SAFE_MODEL_DIRS:
+        try:
+            abs_path.relative_to(safe_dir.resolve())
+            return True
+        except ValueError:
+            continue
+    return False
+
+
 def safe_pickle_load(file_path: str | Path) -> Any:
     """
     Safely load pickled ML model with path validation
 
-    Security: Only loads from SAFE_MODEL_DIR to prevent arbitrary code execution
+    Security: Only loads from SAFE_MODEL_DIRS to prevent arbitrary code execution
     from untrusted pickle files.
 
     Args:
-        file_path: Path to pickle file (must be within SAFE_MODEL_DIR)
+        file_path: Path to pickle file (must be within SAFE_MODEL_DIRS)
 
     Returns:
         Unpickled model object
 
     Raises:
-        UnsafeModelPathError: If path is outside SAFE_MODEL_DIR
+        UnsafeModelPathError: If path is outside SAFE_MODEL_DIRS
         FileNotFoundError: If model file doesn't exist
 
     Example:
         >>> model = safe_pickle_load("cache/ml_pipeline/models/regime/model.pkl")
+        >>> model = safe_pickle_load("models/stocks/volatility/SPY_scaler.pkl")
     """
     abs_path = Path(file_path).resolve()
-    safe_dir = SAFE_MODEL_DIR.resolve()
 
     # Path traversal protection
-    try:
-        abs_path.relative_to(safe_dir)
-    except ValueError:
+    if not _is_safe_path(Path(file_path)):
+        safe_dirs_str = ", ".join(str(d) for d in SAFE_MODEL_DIRS)
         raise UnsafeModelPathError(
-            f"Unsafe model path (outside {safe_dir}): {file_path}\n"
+            f"Unsafe model path (outside safe directories): {file_path}\n"
             f"Resolved to: {abs_path}\n"
-            f"All ML models must be within the safe directory."
+            f"Safe directories: {safe_dirs_str}\n"
+            f"All ML models must be within these directories."
         )
 
     if not abs_path.exists():
@@ -96,12 +113,12 @@ def safe_torch_load(
     Safely load PyTorch model with path validation
 
     Security:
-    - Path traversal protection (validates path within SAFE_MODEL_DIR)
+    - Path traversal protection (validates path within SAFE_MODEL_DIRS)
     - Attempts weights_only=True first (PyTorch 2.0+ security best practice)
     - Falls back to weights_only=False if needed for custom layers
 
     Args:
-        file_path: Path to PyTorch .pth/.pt file (must be within SAFE_MODEL_DIR)
+        file_path: Path to PyTorch .pth/.pt file (must be within SAFE_MODEL_DIRS)
         map_location: Device to map tensors to (default: 'cpu')
         weights_only: If True, only load weights (safer). If None, auto-detect.
 
@@ -109,11 +126,12 @@ def safe_torch_load(
         PyTorch model or state dict
 
     Raises:
-        UnsafeModelPathError: If path is outside SAFE_MODEL_DIR
+        UnsafeModelPathError: If path is outside SAFE_MODEL_DIRS
         FileNotFoundError: If model file doesn't exist
 
     Example:
         >>> checkpoint = safe_torch_load("cache/ml_pipeline/models/regime_neural.pth")
+        >>> checkpoint = safe_torch_load("models/stocks/regime/regime_neural_best.pth")
         >>> model.load_state_dict(checkpoint)
     """
     # Import torch here to avoid dependency if not needed
@@ -123,16 +141,15 @@ def safe_torch_load(
         raise ImportError("PyTorch not installed. Install with: pip install torch")
 
     abs_path = Path(file_path).resolve()
-    safe_dir = SAFE_MODEL_DIR.resolve()
 
     # Path traversal protection
-    try:
-        abs_path.relative_to(safe_dir)
-    except ValueError:
+    if not _is_safe_path(Path(file_path)):
+        safe_dirs_str = ", ".join(str(d) for d in SAFE_MODEL_DIRS)
         raise UnsafeModelPathError(
-            f"Unsafe model path (outside {safe_dir}): {file_path}\n"
+            f"Unsafe model path (outside safe directories): {file_path}\n"
             f"Resolved to: {abs_path}\n"
-            f"All ML models must be within the safe directory."
+            f"Safe directories: {safe_dirs_str}\n"
+            f"All ML models must be within these directories."
         )
 
     if not abs_path.exists():
@@ -172,17 +189,16 @@ def validate_model_path(file_path: str | Path) -> Path:
         Validated absolute Path object
 
     Raises:
-        UnsafeModelPathError: If path is outside SAFE_MODEL_DIR
+        UnsafeModelPathError: If path is outside SAFE_MODEL_DIRS
     """
     abs_path = Path(file_path).resolve()
-    safe_dir = SAFE_MODEL_DIR.resolve()
 
-    try:
-        abs_path.relative_to(safe_dir)
-    except ValueError:
+    if not _is_safe_path(Path(file_path)):
+        safe_dirs_str = ", ".join(str(d) for d in SAFE_MODEL_DIRS)
         raise UnsafeModelPathError(
-            f"Unsafe model path (outside {safe_dir}): {file_path}\n"
-            f"Resolved to: {abs_path}"
+            f"Unsafe model path (outside safe directories): {file_path}\n"
+            f"Resolved to: {abs_path}\n"
+            f"Safe directories: {safe_dirs_str}"
         )
 
     return abs_path
@@ -194,5 +210,5 @@ __all__ = [
     'safe_torch_load',
     'validate_model_path',
     'UnsafeModelPathError',
-    'SAFE_MODEL_DIR',
+    'SAFE_MODEL_DIRS',
 ]
