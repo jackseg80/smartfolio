@@ -11,24 +11,39 @@ import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
 // Configuration
 const API_BASE = globalConfig?.get('api_base_url') || 'http://localhost:8080';
 
-// Cache simple pour éviter les requêtes multiples
+// 🆕 Cache TTL adaptatif selon CLAUDE.md (Oct 2025 optimization)
+const CACHE_TTL = {
+    'risk-dashboard': 30 * 60 * 1000,     // 30 min (Risk Metrics VaR - historique daily)
+    'cache-stats': 15 * 60 * 1000,        // 15 min (Performance cache stats)
+    'memory-stats': 15 * 60 * 1000,       // 15 min (Memory usage)
+    'cycle-analysis': 24 * 60 * 60 * 1000 // 24h (Cycle Score - évolution 0.1%/jour)
+};
+
+// Cache intelligent avec TTL adaptatif
 const cache = new Map();
-const CACHE_DURATION = 60000; // 1 minute
 
 async function fetchWithCache(key, fetchFn) {
     const now = Date.now();
     const cached = cache.get(key);
+    const ttl = CACHE_TTL[key] || 60000; // Fallback 1 min si clé inconnue
 
-    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+    if (cached && (now - cached.timestamp) < ttl) {
+        console.debug(`✅ Cache hit: ${key} (age: ${Math.round((now - cached.timestamp) / 1000)}s / TTL: ${ttl / 1000}s)`);
         return cached.data;
     }
 
     try {
+        console.debug(`🔄 Cache miss: ${key} - fetching fresh data...`);
         const data = await fetchFn();
         cache.set(key, { data, timestamp: now });
         return data;
     } catch (error) {
         (window.debugLogger?.warn || console.warn)(`Failed to fetch ${key}:`, error);
+        // Retourner données cachées même expirées si erreur réseau (stale-while-revalidate)
+        if (cached) {
+            console.debug(`⚠️ Using stale cache for ${key} due to fetch error`);
+            return cached.data;
+        }
         return null;
     }
 }
@@ -184,10 +199,15 @@ async function loadRiskData() {
     // Start real-time risk alerts polling (unified alert system)
     startRiskAlertsPolling();
 
+    // 🆕 FIX Nov 2025: Multi-tenant support avec X-User header
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+
     const riskData = await fetchWithCache('risk-dashboard', async () => {
         const minUsd = globalConfig?.get('min_usd_threshold') || 10;
         const url = `${API_BASE}/api/risk/dashboard?min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: { 'X-User': activeUser }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
     });
@@ -251,18 +271,25 @@ async function loadRiskData() {
 } async function loadPerformanceData() {
     console.debug('💾 Loading Performance Monitor data...');
 
+    // 🆕 FIX Nov 2025: Multi-tenant support
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+
     // Performance Monitor is about SYSTEM performance, not financial performance
     let cacheStats = null, memoryStats = null;
     try {
         cacheStats = await fetchWithCache('cache-stats', async () => {
-            const response = await fetch(`${API_BASE}/api/performance/cache/stats`);
+            const response = await fetch(`${API_BASE}/api/performance/cache/stats`, {
+                headers: { 'X-User': activeUser }
+            });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         });
     } catch (e) { (window.debugLogger?.warn || console.warn)('cache-stats failed', e); }
     try {
         memoryStats = await fetchWithCache('memory-stats', async () => {
-            const response = await fetch(`${API_BASE}/api/performance/system/memory`);
+            const response = await fetch(`${API_BASE}/api/performance/system/memory`, {
+                headers: { 'X-User': activeUser }
+            });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
         });
@@ -327,9 +354,15 @@ async function loadCycleData() {
 
 async function loadMonitoringData() {
     console.debug('📈 Loading Advanced Analytics data...');
+
+    // 🆕 FIX Nov 2025: Multi-tenant support
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+
     try {
         const url = `${API_BASE}/analytics/advanced/metrics?days=365`;
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: { 'X-User': activeUser }
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
@@ -378,7 +411,12 @@ function updateMetric(id, value, subtitle) {
     const valueEl = container.querySelector('.metric-value');
     const subtitleEl = container.querySelector('small');
 
-    if (valueEl) valueEl.textContent = value;
+    if (valueEl) {
+        // 🆕 Retirer skeleton loader et aria-busy quand données arrivent
+        valueEl.classList.remove('skeleton');
+        valueEl.removeAttribute('aria-busy');
+        valueEl.textContent = value;
+    }
     if (subtitleEl) subtitleEl.textContent = subtitle;
 }
 
@@ -420,35 +458,7 @@ function getRiskLevel(score) {
     return 'High risk';
 }
 
-function updateRiskAlerts(metrics, portfolio) {
-    const alertsContainer = document.querySelector('#tab-risk .panel-card div:nth-child(3)');
-    if (!alertsContainer) return;
-
-    const alerts = [];
-
-    if (metrics.var_95_1d && Math.abs(metrics.var_95_1d) > 0.08) {
-        alerts.push('⚠️ High VaR detected - consider risk reduction');
-    } else {
-        alerts.push('✅ VaR within acceptable limits');
-    }
-
-    if (metrics.max_drawdown && Math.abs(metrics.max_drawdown) > 0.6) {
-        alerts.push('⚠️ High maximum drawdown - diversification recommended');
-    } else {
-        alerts.push('✅ Drawdown risk manageable');
-    }
-
-    if (portfolio?.concentration_risk > 0.5) {
-        alerts.push('⚠️ Portfolio concentration risk elevated');
-    } else {
-        alerts.push('✅ Portfolio concentration within limits');
-    }
-
-    alertsContainer.innerHTML = `
-        <h4>Risk Alerts</h4>
-        ${alerts.map(alert => `<div style="color: var(--theme-text-muted);">• ${alert}</div>`).join('')}
-    `;
-}
+// Note: updateRiskAlerts() removed - now handled by risk-alerts-loader.js (unified alert system)
 
 function updatePerformanceBreakdown(cache, memory) {
     const breakdownContainer = document.querySelector('#tab-performance .panel-card div:nth-child(3)');
@@ -518,14 +528,62 @@ function showMonitoringError() {
     showErrorState('#tab-monitoring');
 }
 
-// Auto-refresh every 5 minutes
-setInterval(() => {
-    const activeTab = document.querySelector('.tab-panel.active');
-    if (activeTab) {
-        cache.clear(); // Clear cache to force refresh
-        loadTabData(`#${activeTab.id}`);
+// 🆕 Smart polling avec Page Visibility API - Nov 2025 optimization
+let pollInterval = null;
+
+function startSmartPolling() {
+    // Ne pas démarrer si page cachée
+    if (document.hidden) {
+        console.debug('⏸️ Page hidden - polling paused');
+        return;
     }
-}, 5 * 60 * 1000);
+
+    // Clear existing interval si présent
+    if (pollInterval) {
+        clearInterval(pollInterval);
+    }
+
+    // Auto-refresh intelligent toutes les 5 minutes
+    pollInterval = setInterval(() => {
+        // Double-check que la page est toujours visible
+        if (document.hidden) {
+            console.debug('⏸️ Skip refresh - page hidden');
+            return;
+        }
+
+        const activeTab = document.querySelector('.tab-panel.active');
+        if (activeTab) {
+            console.debug(`🔄 Auto-refresh: ${activeTab.id}`);
+            // Note: on ne clear PAS le cache - on laisse fetchWithCache gérer le TTL
+            loadTabData(`#${activeTab.id}`);
+        }
+    }, 5 * 60 * 1000);
+
+    console.debug('▶️ Smart polling started (5 min interval)');
+}
+
+// Pause/Resume polling selon visibilité de la page
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        console.debug('👁️ Page hidden - pausing polling');
+        if (pollInterval) {
+            clearInterval(pollInterval);
+            pollInterval = null;
+        }
+    } else {
+        console.debug('👁️ Page visible - resuming polling + immediate refresh');
+        // Refresh immédiat au retour sur la page
+        const activeTab = document.querySelector('.tab-panel.active');
+        if (activeTab) {
+            loadTabData(`#${activeTab.id}`);
+        }
+        // Redémarrer le polling
+        startSmartPolling();
+    }
+});
+
+// Démarrer le polling au chargement
+startSmartPolling();
 
 console.debug('✅ Analytics Unified - Initialization complete');
 

@@ -2,6 +2,10 @@
 
 let mlTabInitialized = false;
 
+// 🆕 Smart polling ML avec Page Visibility - Nov 2025 optimization
+let mlPollInterval = null;
+let mlPipelineInterval = null;
+
 // Initialisation quand l'onglet ML est sélectionné
 function initializeMLTab() {
   debugLogger.debug('🤖 Initializing Intelligence ML tab...');
@@ -11,9 +15,16 @@ function initializeMLTab() {
     loadMLPredictions();
     loadMLPipelineStatus();
 
-    // Refresh périodique des prédictions
-    setInterval(loadMLPredictions, 60000); // 1 minute
-    setInterval(loadMLPipelineStatus, 120000); // 2 minutes
+    // 🆕 Smart refresh périodique (seulement si page visible)
+    if (!document.hidden) {
+      mlPollInterval = setInterval(() => {
+        if (!document.hidden) loadMLPredictions();
+      }, 60000); // 1 minute
+
+      mlPipelineInterval = setInterval(() => {
+        if (!document.hidden) loadMLPipelineStatus();
+      }, 120000); // 2 minutes
+    }
 
     mlTabInitialized = true;
     debugLogger.debug('✅ Intelligence ML tab initialized');
@@ -21,6 +32,36 @@ function initializeMLTab() {
   } catch (error) {
     debugLogger.error('❌ ML tab initialization failed:', error);
     showMLError('Initialization failed: ' + error.message);
+  }
+}
+
+// 🆕 Pause/Resume ML polling selon visibilité
+function handleMLPollingVisibility() {
+  if (document.hidden) {
+    // Pause ML polling
+    if (mlPollInterval) {
+      clearInterval(mlPollInterval);
+      mlPollInterval = null;
+    }
+    if (mlPipelineInterval) {
+      clearInterval(mlPipelineInterval);
+      mlPipelineInterval = null;
+    }
+    debugLogger.debug('⏸️ ML polling paused (page hidden)');
+  } else if (mlTabInitialized) {
+    // Resume ML polling si tab ML déjà initialisé
+    loadMLPredictions(); // Refresh immédiat
+    loadMLPipelineStatus();
+
+    mlPollInterval = setInterval(() => {
+      if (!document.hidden) loadMLPredictions();
+    }, 60000);
+
+    mlPipelineInterval = setInterval(() => {
+      if (!document.hidden) loadMLPipelineStatus();
+    }, 120000);
+
+    debugLogger.debug('▶️ ML polling resumed');
   }
 }
 
@@ -403,4 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (activeTab) {
     updateTabsAria(activeTab);
   }
+
+  // 🆕 Hook ML polling visibility management
+  document.addEventListener('visibilitychange', handleMLPollingVisibility);
 });
