@@ -11,36 +11,83 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 
-  <link rel="stylesheet" href="shared-theme.css">
-  <link rel="stylesheet" href="theme-compat.css">
-  <link rel="stylesheet" href="components/governance-panel.css">
-  <link rel="stylesheet" href="components/decision-index-panel.css?v=20251015fixed">
-  <!-- IMPORTANT: analytics-unified-theme.css EN DERNIER pour surcharger le DI Panel -->
-  <link rel="stylesheet" href="analytics-unified-theme.css?v=20251126v8">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <!-- Critical CSS inline pour éviter FOUC - Optimisation Nov 2025 -->
+  <style>
+    /* Critical layout styles - inline pour First Paint rapide */
+    body { margin: 0; background: #0e1620; color: #c0caf5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .wrap { max-width: 95vw; margin: 0 auto; padding: 1.5rem; }
+    .panel-card {
+      background: rgba(14, 22, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-value { min-height: 2.5rem; font-size: 2rem; font-weight: 800; }
+    /* Skeleton loader pour meilleure perception performance */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 100%);
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s ease-in-out infinite;
+      border-radius: 8px;
+      color: transparent !important;
+      user-select: none;
+    }
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    /* Theme loading inline pour éviter flash */
+    [data-theme="light"] body { background: #f8fafc; color: #1e293b; }
+  </style>
   <script>
-    // ✅ Enregistrement datalabels (idempotent)
-    if (window.Chart && window.ChartDataLabels && !window.__di_dl_registered__) {
-      window.Chart.register(window.ChartDataLabels);
-      // ✅ Désactiver globalement, puis réactiver seulement sur barre empilée
-      window.Chart.defaults.set('plugins.datalabels', { display: false });
-      window.__di_dl_registered__ = true;
-      console.debug('✅ chartjs-plugin-datalabels registered (global display: false)');
-    }
-
-    // ✅ Enregistrement annotation plugin pour Bitcoin regime events
-    if (window.Chart && window.ChartAnnotation && !window.__di_annotation_registered__) {
-      window.Chart.register(window.ChartAnnotation);
-      window.__di_annotation_registered__ = true;
-      console.debug('✅ chartjs-plugin-annotation registered');
-    }
+    // ⚡ Critical theme loading - DOIT être synchrone pour éviter FOUC
+    (function() {
+      const theme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
   </script>
-  <script src="debug-logger.js"></script>
-  <script src="global-config.js"></script>
-  <script src="appearance.js"></script>
+
+  <!-- Full CSS loaded with preload for better performance -->
+  <link rel="preload" href="shared-theme.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="theme-compat.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="components/governance-panel.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="components/decision-index-panel.css?v=20251015fixed" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <!-- IMPORTANT: analytics-unified-theme.css EN DERNIER pour surcharger le DI Panel -->
+  <link rel="preload" href="analytics-unified-theme.css?v=20251126v9" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="theme-compat.css">
+    <link rel="stylesheet" href="components/governance-panel.css">
+    <link rel="stylesheet" href="components/decision-index-panel.css?v=20251015fixed">
+    <link rel="stylesheet" href="analytics-unified-theme.css?v=20251126v9">
+  </noscript>
+
+  <!-- Chart.js + plugins - defer pour ne pas bloquer le rendering -->
+  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script defer>
+    // ✅ Enregistrement datalabels (idempotent) - s'exécute après chargement
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.Chart && window.ChartDataLabels && !window.__di_dl_registered__) {
+        window.Chart.register(window.ChartDataLabels);
+        window.Chart.defaults.set('plugins.datalabels', { display: false });
+        window.__di_dl_registered__ = true;
+        console.debug('✅ chartjs-plugin-datalabels registered (global display: false)');
+      }
+
+      if (window.Chart && window.ChartAnnotation && !window.__di_annotation_registered__) {
+        window.Chart.register(window.ChartAnnotation);
+        window.__di_annotation_registered__ = true;
+        console.debug('✅ chartjs-plugin-annotation registered');
+      }
+    });
+  </script>
+  <script defer src="debug-logger.js"></script>
+  <script defer src="global-config.js"></script>
+  <script defer src="appearance.js"></script>
   <script type="module" src="components/nav.js"></script>
   <script type="module" src="analytics-unified.js"></script>
   <script type="module">
@@ -111,22 +158,22 @@
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="risk-var">
           <h4>VaR Portfolio</h4>
-          <div class="metric-value" id="risk-var-value">--</div>
+          <div class="metric-value skeleton" id="risk-var-value" aria-busy="true">Loading</div>
           <small>Niveau de confiance 95%</small>
         </div>
         <div class="metric-card" data-metric="risk-drawdown">
           <h4>Drawdown Maximum</h4>
-          <div class="metric-value" id="risk-drawdown-value">--</div>
+          <div class="metric-value skeleton" id="risk-drawdown-value" aria-busy="true">Loading</div>
           <small>Cycle actuel</small>
         </div>
         <div class="metric-card" data-metric="risk-volatility">
           <h4>Volatilité</h4>
-          <div class="metric-value" id="risk-volatility-value">--</div>
+          <div class="metric-value skeleton" id="risk-volatility-value" aria-busy="true">Loading</div>
           <small>Annualisée 30 jours</small>
         </div>
         <div class="metric-card" data-metric="risk-score">
           <h4>Score de Risque</h4>
-          <div class="metric-value" id="risk-score-value">--/100</div>
+          <div class="metric-value skeleton" id="risk-score-value" aria-busy="true">Loading</div>
           <small>Inconnu</small>
         </div>
       </div>
