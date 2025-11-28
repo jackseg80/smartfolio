@@ -4,6 +4,7 @@ Advanced Markowitz optimization with crypto-specific features
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.concurrency import run_in_threadpool
 from typing import Dict, List, Optional, Any
 import pandas as pd
 import numpy as np
@@ -355,16 +356,18 @@ async def optimize_portfolio(
         n_assets = len(price_df.columns)
         
         if objective == OptimizationObjective.MULTI_PERIOD:
-            # Use multi-period optimization
-            result = optimizer.optimize_multi_period(
+            # Use multi-period optimization (async wrapper to avoid blocking)
+            result = await run_in_threadpool(
+                optimizer.optimize_multi_period,
                 price_history=price_df,
                 constraints=constraints,
                 current_weights=filtered_current_weights
             )
         elif n_assets > 200:
-            # Use performance-optimized version for large portfolios
+            # Use performance-optimized version for large portfolios (async wrapper to avoid blocking)
             logger.info(f"Using large portfolio optimization for {n_assets} assets")
-            result = optimizer.optimize_large_portfolio(
+            result = await run_in_threadpool(
+                optimizer.optimize_large_portfolio,
                 price_history=price_df,
                 constraints=constraints,
                 objective=objective,
@@ -372,8 +375,9 @@ async def optimize_portfolio(
                 max_assets=min(200, n_assets)  # Cap at 200 for optimization
             )
         else:
-            # Use standard optimization
-            result = optimizer.optimize_portfolio(
+            # Use standard optimization (async wrapper to avoid blocking)
+            result = await run_in_threadpool(
+                optimizer.optimize_portfolio,
                 expected_returns=expected_returns,
                 cov_matrix=cov_matrix,
                 constraints=constraints,
@@ -994,8 +998,9 @@ async def optimize_portfolio_advanced(
             }
 
         elif request.objective == "black_litterman":
-            # Black-Litterman optimization
-            result = optimizer.optimize_black_litterman(
+            # Black-Litterman optimization (async wrapper to avoid blocking)
+            result = await run_in_threadpool(
+                optimizer.optimize_black_litterman,
                 price_history=price_df,
                 market_views=request.market_views,
                 view_confidence=request.view_confidence,
@@ -1016,7 +1021,9 @@ async def optimize_portfolio_advanced(
             except ValueError:
                 objective = OptimizationObjective.MAX_SHARPE
 
-            result = optimizer.optimize_portfolio(
+            # Standard optimization (async wrapper to avoid blocking)
+            result = await run_in_threadpool(
+                optimizer.optimize_portfolio,
                 expected_returns=expected_returns,
                 cov_matrix=cov_matrix,
                 constraints=constraints,

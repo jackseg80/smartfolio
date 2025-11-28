@@ -21,6 +21,7 @@ from typing import Dict, List, Optional, Tuple, Union
 from urllib.error import URLError
 import httpx
 import re
+import aiofiles
 
 # Réutiliser la configuration existante
 from services.pricing import SYMBOL_ALIAS, FIAT_STABLE_FIXED
@@ -124,11 +125,11 @@ class PriceHistory:
             logger.warning(f"Erreur chargement last_update: {e}")
             self._last_update = {}
             
-    def _save_last_update(self):
-        """Sauvegarder les timestamps de dernière mise à jour"""
+    async def _save_last_update(self):
+        """Sauvegarder les timestamps de dernière mise à jour (async I/O)"""
         try:
-            with open(LAST_UPDATE_FILE, 'w', encoding='utf-8') as f:
-                json.dump(self._last_update, f, indent=2)
+            async with aiofiles.open(LAST_UPDATE_FILE, 'w', encoding='utf-8') as f:
+                await f.write(json.dumps(self._last_update, indent=2))
         except Exception as e:
             logger.error(f"Erreur sauvegarde last_update: {e}")
             
@@ -217,9 +218,8 @@ class PriceHistory:
                     close_price = float(kline[4])
                     batch.append((ts, close_price))
 
-                # Ajouter et avancer la fenêtre
+                # Accumuler sans tri (optimisation O(N) au lieu de O(N log N) par itération)
                 history.extend(batch)
-                history = sorted(list({ts: (ts, px) for ts, px in history}.values()))
 
                 # Prochaine page: fixer end_time_ms au début du batch récupéré - 1ms
                 first_ts_ms = int(data[0][0])
@@ -233,8 +233,8 @@ class PriceHistory:
                 if len(batch) == 0:
                     break
 
-            # Ne garder que les `days` plus récents
-            history = sorted(history)[-days:]
+            # Déduplication et tri UNE SEULE FOIS après la boucle (optimisation)
+            history = sorted(list({ts: (ts, px) for ts, px in history}.values()))[-days:]
             logger.info(f"✅ Téléchargé {len(history)} points pour {symbol} (>1000)")
             return history
 
@@ -444,18 +444,18 @@ class PriceHistory:
             logger.error(f"❌ Échec téléchargement {resolved_symbol}")
             return False
             
-        # Sauvegarder l'historique
+        # Sauvegarder l'historique (async I/O)
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(history, f)
-                
+            async with aiofiles.open(file_path, 'w', encoding='utf-8') as f:
+                await f.write(json.dumps(history))
+
             # Mettre à jour le timestamp
             self._last_update[resolved_symbol] = int(time.time())
-            self._save_last_update()
-            
+            await self._save_last_update()
+
             logger.info(f"✅ Sauvegardé {len(history)} points pour {resolved_symbol}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Erreur sauvegarde {resolved_symbol}: {e}")
             return False
@@ -568,11 +568,11 @@ class PriceHistory:
 
                 combined = sorted(merged.values())
 
-                # Sauvegarder
-                with open(file_path, 'w', encoding='utf-8') as f:
-                    json.dump(combined, f)
+                # Sauvegarder (async I/O)
+                async with aiofiles.open(file_path, 'w', encoding='utf-8') as f:
+                    await f.write(json.dumps(combined))
                 self._last_update[resolved] = int(time.time())
-                self._save_last_update()
+                await self._save_last_update()
                 return True
             except Exception as e:
                 logger.error(f"Erreur MAJ {sym}: {e}")
