@@ -206,6 +206,70 @@ async def get_active_alerts(
         logger.error(f"Error getting active alerts: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+@router.get("/list")
+async def list_alerts(
+    severity: Optional[str] = Query(None, description="Comma-separated severity levels (e.g., 'medium,high,critical')"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of alerts to return"),
+    engine: AlertEngine = Depends(get_alert_engine),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    List active alerts with multi-severity filtering and limit
+
+    Compatible with frontend risk-alerts-loader.js expectations.
+    """
+    try:
+        alerts = engine.get_active_alerts()
+
+        # Exclude snoozed alerts
+        now = datetime.now()
+        alerts = [
+            alert for alert in alerts
+            if not alert.snooze_until or alert.snooze_until <= now
+        ]
+
+        # Filter by severity (supports comma-separated list)
+        if severity:
+            severity_list = [s.strip().lower() for s in severity.split(',')]
+            alerts = [
+                alert for alert in alerts
+                if alert.severity.value.lower() in severity_list
+            ]
+
+        # Sort by severity and creation time (most severe + recent first)
+        severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3, 'info': 4}
+        alerts.sort(
+            key=lambda a: (
+                severity_order.get(a.severity.value.lower(), 99),
+                -a.created_at.timestamp()
+            )
+        )
+
+        # Limit results
+        alerts = alerts[:limit]
+
+        # Convert to response format
+        response_alerts = []
+        for alert in alerts:
+            response_alerts.append({
+                "id": alert.id,
+                "alert_type": alert.alert_type.value,
+                "severity": alert.severity.value,
+                "created_at": alert.created_at.isoformat(),
+                "data": alert.data,
+                "acknowledged_at": alert.acknowledged_at.isoformat() if alert.acknowledged_at else None,
+                "acknowledged_by": alert.acknowledged_by,
+                "snooze_until": alert.snooze_until.isoformat() if alert.snooze_until else None,
+                "suggested_action": alert.suggested_action,
+                "escalation_count": alert.escalation_count
+            })
+
+        return {"ok": True, "alerts": response_alerts, "count": len(response_alerts)}
+
+    except Exception as e:
+        logger.error(f"Error listing alerts: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @router.get("/formatted")
 async def get_formatted_alerts(
     include_snoozed: bool = Query(default=False, description="Inclure alertes snoozées"),

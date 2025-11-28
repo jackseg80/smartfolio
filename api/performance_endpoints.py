@@ -4,6 +4,7 @@ Cache management, optimization metrics, and system performance monitoring
 """
 
 from fastapi import APIRouter, HTTPException, Query, Depends, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from typing import Dict, List, Optional
 import logging
@@ -114,7 +115,8 @@ async def benchmark_optimization_methods(
         cov_matrix, _ = optimizer.calculate_risk_model(prices)
         expected_returns = optimizer.calculate_expected_returns(prices, method="historical")
         
-        result_standard = optimizer.optimize_portfolio(
+        result_standard = await run_in_threadpool(
+            optimizer.optimize_portfolio,
             expected_returns=expected_returns,
             cov_matrix=cov_matrix,
             constraints=constraints
@@ -138,7 +140,8 @@ async def benchmark_optimization_methods(
     if n_assets > 200:
         start_time = time.time()
         try:
-            result_large = optimizer.optimize_large_portfolio(
+            result_large = await run_in_threadpool(
+                optimizer.optimize_large_portfolio,
                 price_history=prices,
                 constraints=constraints,
                 max_assets=200
