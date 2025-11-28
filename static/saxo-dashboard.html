@@ -531,23 +531,23 @@
                         </div>
                     </div>
 
-                    <!-- Asset Allocation -->
+                    <!-- Asset Allocation & Currency Exposure -->
                     <div class="dashboard-card">
                         <div class="card-header">
-                            <h3 class="card-title">Asset Allocation</h3>
+                            <h3 class="card-title">Asset Allocation & Currency Exposure</h3>
                         </div>
-                        <div id="assetAllocation">
+                        <div id="assetAllocationCurrency">
                             <div class="loading">Loading...</div>
                         </div>
                     </div>
 
-                    <!-- Currency Exposure -->
+                    <!-- Asset Allocation Chart -->
                     <div class="dashboard-card">
                         <div class="card-header">
-                            <h3 class="card-title" title="Based on original currency of each position. USD values converted using estimated exchange rates.">Currency Exposure</h3>
+                            <h3 class="card-title">Allocation Breakdown</h3>
                         </div>
-                        <div id="currencyExposure">
-                            <div class="loading">Loading...</div>
+                        <div style="padding: 1.5rem; display: flex; justify-content: center; align-items: center;">
+                            <canvas id="allocationChart" style="max-width: 350px; max-height: 350px;"></canvas>
                         </div>
                     </div>
                 </div>
@@ -752,7 +752,7 @@
                             <h3 class="card-title">Investment Horizon</h3>
                             <p style="margin: 0; font-size: 0.875rem; color: var(--theme-text-muted);">Select your timeframe for optimized recommendations</p>
                         </div>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <button class="timeframe-btn" data-timeframe="short">
                                 <div style="font-weight: 600;">1-2 Weeks</div>
                                 <div style="font-size: 0.75rem; opacity: 0.8;">Trading</div>
@@ -765,12 +765,22 @@
                                 <div style="font-weight: 600;">3-6 Months</div>
                                 <div style="font-size: 0.75rem; opacity: 0.8;">Strategic</div>
                             </button>
+
+                            <!-- Vertical separator -->
+                            <div style="border-left: 1px solid var(--theme-border); height: 2rem; margin: 0 0.5rem;"></div>
+
+                            <!-- Scan button -->
+                            <button id="btnScanRecommendations" class="btn primary small" style="padding: 0.5rem 1rem;">
+                                🔍 Scan
+                            </button>
                         </div>
                     </div>
 
                     <!-- Summary Stats -->
                     <div id="recSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; padding: 1rem; border-top: 1px solid var(--theme-border);">
-                        <div class="loading">Loading summary...</div>
+                        <div style="text-align: center; color: var(--theme-text-muted); padding: 1rem;">
+                            📊 Click "Scan" to analyze your portfolio and get recommendations
+                        </div>
                     </div>
                 </div>
 
@@ -809,7 +819,11 @@
                         </div>
                     </div>
                     <div id="recommendationsTable">
-                        <div class="loading">Loading recommendations...</div>
+                        <div style="padding: 3rem; text-align: center; color: var(--theme-text-muted);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">Ready to Analyze</div>
+                            <div style="font-size: 0.875rem;">Click the "Scan" button above to get personalized recommendations for your portfolio</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -975,7 +989,6 @@
                 switch (tabId) {
                     case 'overview':
                         loadOverviewData(currentPortfolioData);
-                        loadCurrencyDetails(); // Also load currency exposure in overview
                         break;
                     case 'positions':
                         loadAllPositions();
@@ -1021,7 +1034,6 @@
                 switch (tabName) {
                     case 'overview':
                         loadOverviewData(currentPortfolioData);
-                        loadCurrencyDetails(); // Also load currency exposure in overview
                         break;
                     case 'positions':
                         loadAllPositions();
@@ -3604,9 +3616,10 @@
                 Object.assign(allocationWithCash, assetAllocation);
             }
 
+            // Combined Asset Allocation & Currency Exposure
             const allocationHtml = Object.keys(allocationWithCash).length > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                    <h3 style="margin: 0;">Asset Allocation</h3>
+                    <h3 style="margin: 0;">Asset Classes</h3>
                     <button onclick="editCashAmount()" style="padding: 0.4rem 0.75rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 0.35rem;">
                         Edit Cash
                     </button>
@@ -3626,8 +3639,27 @@
                         `;
                     }).join('')}
                 </div>
+                <div style="border-top: 1px solid var(--theme-border); margin: 1.5rem 0 1rem 0; padding-top: 1rem;">
+                    <h3 style="margin: 0 0 1rem 0;">Currencies</h3>
+                    <div class="currency-grid">
+                        ${Object.entries(currencyExposure)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([currency, percentage]) => `
+                            <div class="currency-item">
+                                <div class="currency-percentage">${percentage.toFixed(1)}%</div>
+                                <div class="currency-code">${currency}</div>
+                                <div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-top: 0.25rem;">
+                                    $${(totalValue * percentage / 100).toLocaleString()}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
             ` : '<div class="no-data">Aucune donnée d\'allocation disponible</div>';
-            document.getElementById('assetAllocation').innerHTML = allocationHtml;
+            document.getElementById('assetAllocationCurrency').innerHTML = allocationHtml;
+
+            // Create allocation chart
+            renderAllocationChart(allocationWithCash);
 
             // Top Holdings
             const topHoldings = summary.top_holdings || data?.positions?.slice(0, 10) || [];
@@ -4111,26 +4143,75 @@
             `;
             document.getElementById('holdingsByValue').innerHTML = holdingsByValueHtml;
         }
+        // Allocation Chart
+        let allocationChartInstance = null;
 
-        function loadCurrencyDetails() {
-            if (!currentPortfolioData) return;
+        function renderAllocationChart(allocationData) {
+            const canvas = document.getElementById('allocationChart');
+            if (!canvas) return;
 
-            const currencyHtml = `
-                <div class="currency-grid">
-                    ${Object.entries(currentPortfolioData.summary.currency_exposure)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([currency, percentage]) => `
-                            <div class="currency-item">
-                                <div class="currency-percentage">${percentage.toFixed(1)}%</div>
-                                <div class="currency-code">${currency}</div>
-                                <div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-top: 0.25rem;">
-                                    $${(currentPortfolioData.summary.total_value_usd * percentage / 100).toLocaleString()}
-                                </div>
-                            </div>
-                        `).join('')}
-                </div>
-            `;
-            document.getElementById('currencyExposure').innerHTML = currencyHtml;
+            const ctx = canvas.getContext('2d');
+
+            // Destroy previous chart instance if exists
+            if (allocationChartInstance) {
+                allocationChartInstance.destroy();
+            }
+
+            // Prepare data
+            const labels = Object.keys(allocationData);
+            const data = Object.values(allocationData);
+
+            // Color palette
+            const colors = {
+                'ETF': '#3b82f6',      // Blue
+                'Stock': '#8b5cf6',    // Purple
+                'Cash': '#10b981',     // Green
+                'Bond': '#f59e0b',     // Orange
+                'Other': '#6b7280'     // Gray
+            };
+
+            const backgroundColors = labels.map(label => colors[label] || '#94a3b8');
+
+            // Create chart
+            allocationChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 12,
+                                    family: "'Inter', sans-serif"
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return `${label}: ${value.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function showError(message) {
@@ -4482,7 +4563,7 @@
         let recommendationsLoaded = false;
 
         /**
-         * Load recommendations tab
+         * Load recommendations tab (setup only, no auto-scan)
          */
         async function loadRecommendationsTab() {
             if (recommendationsLoaded) {
@@ -4490,13 +4571,10 @@
                 return;
             }
 
-            debugLogger.info('Loading Recommendations tab for the first time...');
+            debugLogger.info('Setting up Recommendations tab...');
 
-            // Setup event listeners
+            // Setup event listeners only (no auto-load)
             setupRecommendationsListeners();
-
-            // Load recommendations
-            await loadRecommendations(currentTimeframe);
 
             recommendationsLoaded = true;
         }
@@ -4505,6 +4583,14 @@
          * Setup event listeners for recommendations tab
          */
         function setupRecommendationsListeners() {
+            // Scan button
+            const scanBtn = document.getElementById('btnScanRecommendations');
+            if (scanBtn) {
+                scanBtn.addEventListener('click', async () => {
+                    await loadRecommendations(currentTimeframe);
+                });
+            }
+
             // Timeframe buttons - only select buttons within recommendations tab
             const recButtons = document.querySelectorAll('#recommendations .timeframe-btn');
             recButtons.forEach(btn => {
@@ -4515,9 +4601,8 @@
                     recButtons.forEach(b => b.classList.remove('active'));
                     e.currentTarget.classList.add('active');
 
-                    // Reload recommendations
+                    // Update current timeframe (but don't reload automatically)
                     currentTimeframe = timeframe;
-                    await loadRecommendations(timeframe);
                 });
             });
 
@@ -4551,12 +4636,20 @@
          */
         async function loadRecommendations(timeframe = 'medium') {
             const tableContainer = document.getElementById('recommendationsTable');
+            const scanBtn = document.getElementById('btnScanRecommendations');
             const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const originalText = scanBtn ? scanBtn.textContent : '';
 
             try {
                 debugLogger.info(`Fetching ${timeframe} recommendations for user ${activeUser}...`);
 
-                tableContainer.innerHTML = '<div class="loading">Loading recommendations...</div>';
+                // Update button state
+                if (scanBtn) {
+                    scanBtn.disabled = true;
+                    scanBtn.textContent = '🔍 Scanning...';
+                }
+
+                tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
 
                 // Build URL with parameters
                 let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=90`;
@@ -4599,6 +4692,12 @@
                         <p>${error.message}</p>
                     </div>
                 `;
+            } finally {
+                // Restore button state
+                if (scanBtn) {
+                    scanBtn.disabled = false;
+                    scanBtn.textContent = originalText || '🔍 Scan';
+                }
             }
         }
 
@@ -4702,7 +4801,6 @@
                                 <th onclick="sortRecommendationsTable('value')" style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted); cursor: pointer; user-select: none;">
                                     Value <span id="sortRecValue">↕️</span>
                                 </th>
-                                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Details</th>
                             </tr>
                         </thead>
                         <tbody id="recommendationsTableBody">
@@ -4776,11 +4874,6 @@
                         <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${rec.sector}</td>
                         <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${rec.weight_pct}%</td>
                         <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${formatCurrency(rec.current_value)}</td>
-                        <td style="padding: 0.75rem; text-align: center;">
-                            <button onclick="event.stopPropagation(); showRecommendationModal('${rec.symbol}')" style="padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; font-size: 0.875rem;">
-                                👁️ View
-                            </button>
-                        </td>
                     </tr>
                 `;
             });
