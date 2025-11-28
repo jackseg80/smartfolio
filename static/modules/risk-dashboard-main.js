@@ -155,27 +155,11 @@ export async function initDashboard() {
   debugLogger.debug('🚀 Initializing Risk Dashboard...');
 
   try {
-    // Setup event listeners
-    document.getElementById('refresh-btn')?.addEventListener('click', () => refreshDashboard(false));
-    document.getElementById('force-refresh-btn')?.addEventListener('click', () => refreshDashboard(true));
-    document.getElementById('auto-refresh-btn')?.addEventListener('click', toggleAutoRefresh);
+    // NOTE: refresh-btn, force-refresh-btn, and options-menu are handled by
+    // risk-dashboard-main-controller.js via event delegation to avoid conflicts
+    // This orchestrator focuses on tab management only
 
-    // Setup refresh menu toggle
-    const refreshMenuBtn = document.getElementById('refresh-menu-btn');
-    const refreshMenu = document.getElementById('refresh-menu');
-    if (refreshMenuBtn && refreshMenu) {
-      refreshMenuBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        refreshMenu.classList.toggle('show');
-      });
-
-      // Close menu when clicking outside
-      document.addEventListener('click', () => {
-        refreshMenu.classList.remove('show');
-      });
-    }
-
-    // Setup tab switching
+    // Setup tab switching (core responsibility of this orchestrator)
     document.querySelectorAll('.tab-button').forEach(btn => {
       btn.addEventListener('click', () => {
         const tabName = btn.dataset.tab;
@@ -183,14 +167,8 @@ export async function initDashboard() {
       });
     });
 
-    // Setup keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      // Ctrl+R or F5: Refresh dashboard
-      if ((e.ctrlKey && e.key === 'r') || e.key === 'F5') {
-        e.preventDefault();
-        refreshDashboard(false);
-      }
-    });
+    // NOTE: Keyboard shortcuts (Ctrl+R, F5) are handled by risk-dashboard-main-controller.js
+    // to ensure consistent refresh behavior across all tabs
 
     // Listen for data source changes
     window.addEventListener('dataSourceChanged', (event) => {

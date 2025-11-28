@@ -2299,3 +2299,22 @@
     flex-direction: column;
   }
 }
+
+/* ===== Utility Classes ===== */
+.hidden {
+  display: none !important;
+}
+
+/* Mobile tabs scroll */
+@media (max-width: 480px) {
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .tab-button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}

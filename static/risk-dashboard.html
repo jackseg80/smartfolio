@@ -11,9 +11,9 @@
   <link rel="stylesheet" href="theme-compat.css">
 
   <!-- Scripts partagés existants -->
-  <script src="debug-logger.js"></script>
-  <script src="global-config.js"></script>
-  <script src="appearance.js"></script>
+  <script src="debug-logger.js" defer></script>
+  <script src="global-config.js" defer></script>
+  <script src="appearance.js" defer></script>
   <script src="lazy-loader.js"></script>
 
   <!-- Core modules ESM -->
@@ -49,7 +49,7 @@
 </head>
 
 <body>
-  <div id="backend-fallback-banner">
+  <div id="backend-fallback-banner" class="hidden">
     ⚠ Backend indisponible — mode prudent (cap réduit).
   </div>
 
@@ -165,7 +165,7 @@
                 <div class="loading">Loading alerts history...</div>
               </div>
 
-              <div class="alerts-pagination" id="alerts-pagination" style="display: none;">
+              <div class="alerts-pagination hidden" id="alerts-pagination">
                 <button id="alerts-prev-btn" data-action="alerts-prev" disabled>Previous</button>
                 <span id="alerts-page-info">Page 1 of 1</span>
                 <button id="alerts-next-btn" data-action="alerts-next" disabled>Next</button>
@@ -198,14 +198,14 @@
   </div>
 
   <!-- PHASE 2A: Alert Detail Modal -->
-  <div class="modal-overlay" id="alert-modal">
+  <div class="modal-overlay" id="alert-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal">
       <div class="modal-header">
         <h2 class="modal-title" id="modal-title">
           <span class="modal-severity-badge" id="modal-severity-badge">S3</span>
           <span id="modal-alert-type">VOL_Q90_CROSS</span>
         </h2>
-        <button class="modal-close" data-action="close-alert-modal">&times;</button>
+        <button class="modal-close" data-action="close-alert-modal" aria-label="Close modal">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -256,8 +256,7 @@
           30m</button>
         <button class="modal-action modal-action-primary" data-action="acknowledge-alert"
           id="ack-btn">Acknowledge</button>
-        <button class="modal-action modal-action-danger" data-action="apply-action" id="apply-btn"
-          style="display:none;">Apply Action</button>
+        <button class="modal-action modal-action-danger hidden" data-action="apply-action" id="apply-btn">Apply Action</button>
       </div>
     </div>
   </div>
