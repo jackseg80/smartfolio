@@ -11,9 +11,9 @@
   <link rel="stylesheet" href="theme-compat.css">
 
   <!-- Scripts partagés existants -->
-  <script src="debug-logger.js" defer></script>
-  <script src="global-config.js" defer></script>
-  <script src="appearance.js" defer></script>
+  <script src="debug-logger.js"></script>
+  <script src="global-config.js"></script>
+  <script src="appearance.js"></script> <!-- Critical: must load before first paint to avoid theme flash -->
   <script src="lazy-loader.js"></script>
 
   <!-- Core modules ESM -->
