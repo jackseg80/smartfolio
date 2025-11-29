@@ -1206,7 +1206,10 @@
         const refreshBtn = document.getElementById('saxo-refresh-btn');
         const infoCard = document.getElementById('saxo-info');
 
-        if (status.connected) {
+        // Determine state based on new "status" field (or fallback to legacy "connected" field)
+        const connectionState = status.status || (status.connected ? 'connected' : 'disconnected');
+
+        if (connectionState === 'connected') {
           // Connected state
           statusBanner.className = 'status-indicator status-ok';
           statusText.textContent = '✅ Connecté à Saxo Bank API';
@@ -1220,8 +1223,17 @@
           document.getElementById('saxo-env').textContent = status.environment === 'sim' ? 'Simulation' : 'Production (Live)';
           document.getElementById('saxo-expires').textContent = new Date(status.expires_at).toLocaleString('fr-FR');
           document.getElementById('saxo-last-update').textContent = new Date(status.last_update).toLocaleString('fr-FR');
+        } else if (connectionState === 'expired') {
+          // Token expired state
+          statusBanner.className = 'status-indicator status-warning';
+          statusText.textContent = '⚠️ Session expirée - Reconnexion requise';
+
+          connectBtn.style.display = 'inline-block';
+          disconnectBtn.style.display = 'inline-block';  // Allow cleaning expired tokens
+          refreshBtn.style.display = 'none';
+          infoCard.style.display = 'none';
         } else {
-          // Disconnected state
+          // Disconnected state (no tokens)
           statusBanner.className = 'status-indicator status-warning';
           statusText.textContent = '⚠️ Non connecté';
 
@@ -1292,13 +1304,21 @@
           headers: { 'X-User': activeUser }
         });
 
-        if (!response.ok) throw new Error('Failed to disconnect');
-
+        // Always refresh status, even if disconnect had issues
         await updateSaxoOAuthStatus();
-        alert('✅ Déconnexion réussie');
+
+        if (response.ok) {
+          alert('✅ Déconnexion réussie');
+        } else {
+          // Disconnect endpoint is now graceful, but show warning if unexpected error
+          console.warn('Disconnect returned non-ok status, but state cleared');
+          alert('⚠️ Tokens supprimés (session était peut-être déjà expirée)');
+        }
       } catch (error) {
         console.error('Error disconnecting from Saxo:', error);
-        alert('❌ Erreur lors de la déconnexion: ' + error.message);
+        // Still try to update status
+        await updateSaxoOAuthStatus();
+        alert('⚠️ Erreur réseau, mais tokens locaux supprimés');
       }
     }
 

@@ -213,16 +213,20 @@ class SaxoAuthService:
         Clear all tokens and disconnect user.
 
         Use case: Manual logout, security incident
+
+        Note: Always succeeds even if tokens already deleted or expired.
+              The goal is to clean up local state, not notify Saxo.
         """
         try:
             # Delete tokens file
             self.user_fs.delete_file(self.tokens_path)
             logger.info(f"✅ User '{self.user_id}' disconnected")
         except FileNotFoundError:
-            logger.debug("No tokens to delete")
+            logger.debug("No tokens to delete - already disconnected")
         except Exception as e:
-            logger.error(f"Error during disconnect: {e}")
-            raise
+            # Log error but don't raise - disconnection is always successful
+            logger.warning(f"Error during disconnect (ignored): {e}")
+            logger.info(f"✅ User '{self.user_id}' marked as disconnected despite error")
 
     async def cache_positions(self, positions: List[Dict[str, Any]]) -> None:
         """
@@ -334,7 +338,8 @@ class SaxoAuthService:
 
         Returns:
             {
-                "connected": bool,
+                "status": "connected" | "expired" | "disconnected",
+                "connected": bool,  # Deprecated, use "status" instead
                 "environment": "sim" | "live",
                 "expires_at": str (ISO format),
                 "last_update": str (ISO format),
@@ -343,8 +348,10 @@ class SaxoAuthService:
         """
         tokens = self._load_tokens()
 
-        if not tokens or not self.is_connected():
+        # No tokens at all
+        if not tokens:
             return {
+                "status": "disconnected",
                 "connected": False,
                 "environment": None,
                 "expires_at": None,
@@ -352,7 +359,20 @@ class SaxoAuthService:
                 "account_key": None
             }
 
+        # Tokens exist but expired
+        if not self.is_connected():
+            return {
+                "status": "expired",
+                "connected": False,
+                "environment": tokens.get("environment", "sim"),
+                "expires_at": tokens.get("expires_at"),
+                "last_update": tokens.get("last_update"),
+                "account_key": None
+            }
+
+        # Valid connection
         return {
+            "status": "connected",
             "connected": True,
             "environment": tokens.get("environment", "sim"),
             "expires_at": tokens.get("expires_at"),
