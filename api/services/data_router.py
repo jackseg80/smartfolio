@@ -62,7 +62,9 @@ class UserDataRouter:
         logger.info(f"🔧 UserDataRouter for user '{self.user_id}': data_source='{self.data_source}', selected_csv='{self.selected_csv}'")
         self.api_credentials = {
             "api_key": self.settings.get("cointracking_api_key", ""),
-            "api_secret": self.settings.get("cointracking_api_secret", "")
+            "api_secret": self.settings.get("cointracking_api_secret", ""),
+            "saxo_client_id": self.settings.get("saxo_client_id", ""),
+            "saxo_client_secret": self.settings.get("saxo_client_secret", "")
         }
         logger.info(f"🔑 DEBUG: api_credentials loaded, len_key={len(self.api_credentials.get('api_key', ''))}, len_secret={len(self.api_credentials.get('api_secret', ''))}")
 
@@ -210,6 +212,13 @@ class UserDataRouter:
             logger.info(f"👤 User preference: API explicitly configured for user {self.user_id}")
             return "cointracking_api"
 
+        # Saxo API check (similar to CoinTracking)
+        if self.data_source == "saxobank_api" and self._saxo_api_ready():
+            self._effective_read = "api"
+            self._effective_path = None
+            logger.info(f"👤 User preference: Saxo API explicitly configured for user {self.user_id}")
+            return "saxobank_api"
+
         # --- Sources snapshots et imports (priorité haute) ---
         mode, path = resolve_effective_path(self.user_fs, "cointracking")
         logger.info(f"🔍 Sources resolver returned: mode={mode}, path={path} for user {self.user_id}")
@@ -252,5 +261,20 @@ class UserDataRouter:
             return bool(key and secret)
         except Exception as e:
             logger.debug(f"API credentials check failed for user {self.user_id}: {e}")
+            return False
+
+    def _saxo_api_ready(self) -> bool:
+        """Vérifie si l'utilisateur est connecté à Saxo API (OAuth2)"""
+        try:
+            from services.saxo_auth_service import SaxoAuthService
+
+            auth_service = SaxoAuthService(self.user_id, self.project_root)
+            is_connected = auth_service.is_connected()
+
+            logger.debug(f"Saxo API ready for user {self.user_id}: {is_connected}")
+            return is_connected
+
+        except Exception as e:
+            logger.debug(f"Saxo API check failed for user {self.user_id}: {e}")
             return False
 
