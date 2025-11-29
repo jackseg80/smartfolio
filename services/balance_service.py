@@ -102,6 +102,12 @@ class BalanceService:
             if api_result:
                 return api_result
 
+        # --- Saxo API Mode ---
+        if effective_source == "saxobank_api" and source in ("saxobank_api", "auto"):
+            saxo_result = await self._try_saxo_api_mode(data_router, user_id)
+            if saxo_result:
+                return saxo_result
+
         # --- CSV Mode ---
         if effective_source == "cointracking" and source in ("cointracking", "csv", "local", "auto"):
             csv_result = await self._try_csv_mode(data_router, user_id)
@@ -413,6 +419,154 @@ class BalanceService:
             logger.error(f"CSV parsing error (fallback): {e}")
 
         return {"source_used": "cointracking", "items": items}
+
+    async def _try_saxo_api_mode(
+        self,
+        data_router,
+        user_id: str
+    ) -> Dict[str, Any] | None:
+        """
+        Try to load balances from SaxoBank API.
+
+        Returns:
+            Balance data dict if successful, None otherwise
+        """
+        try:
+            from services.saxo_auth_service import SaxoAuthService
+            from connectors.saxo_api import SaxoOAuthClient
+            from services.instruments_registry import instruments_registry
+            from services.fx_service import convert
+
+            auth_service = SaxoAuthService(user_id, str(self.base_dir))
+
+            # Check if connected
+            if not auth_service.is_connected():
+                logger.warning(f"User {user_id} not connected to Saxo API")
+                return None
+
+            # Get valid access token (auto-refresh if needed)
+            access_token = await auth_service.get_valid_access_token()
+            if not access_token:
+                logger.warning(f"Saxo API token refresh failed for user {user_id} - user must reconnect")
+                # Try cache fallback
+                cached = await auth_service.get_cached_positions(max_age_hours=24)
+                if cached:
+                    logger.info(f"✅ Using cached Saxo positions for user {user_id}")
+                    return {"source_used": "saxobank_api_cached", "items": cached}
+                return None
+
+            # Get account key
+            account_key = auth_service.get_account_key()
+            if not account_key:
+                logger.error("No account_key found in Saxo tokens")
+                return None
+
+            # Fetch data from Saxo
+            oauth_client = SaxoOAuthClient()
+            logger.info(f"📊 Fetching Saxo positions for user {user_id}...")
+
+            positions = await oauth_client.get_positions(access_token, account_key)
+            balances = await oauth_client.get_balances(access_token, account_key)
+
+            # Normalize data
+            items = self._normalize_saxo_data(positions, balances)
+
+            # Cache for offline fallback
+            await auth_service.cache_positions(items)
+
+            logger.info(f"✅ Saxo API mode successful for user {user_id}: {len(items)} items")
+            return {"source_used": "saxobank_api", "items": items}
+
+        except Exception as e:
+            logger.error(f"Saxo API error for user {user_id}: {e}")
+
+            # Try cache fallback
+            try:
+                from services.saxo_auth_service import SaxoAuthService
+                auth_service = SaxoAuthService(user_id, str(self.base_dir))
+                cached = await auth_service.get_cached_positions(max_age_hours=24)
+                if cached:
+                    logger.info(f"✅ Using cached Saxo positions after error for user {user_id}")
+                    return {"source_used": "saxobank_api_cached", "items": cached}
+            except Exception as cache_error:
+                logger.error(f"Cache fallback also failed: {cache_error}")
+
+            return None
+
+    def _normalize_saxo_data(
+        self,
+        positions: List[Dict[str, Any]],
+        balances: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Normalize Saxo API data to SmartFolio format.
+
+        Key Decision: Use ISIN/Symbol as primary key (not NetPositionId)
+        to preserve P&L tracking when switching between CSV and API modes.
+
+        Args:
+            positions: List from /port/v1/positions
+            balances: Dict from /port/v1/balances
+
+        Returns:
+            List of normalized items compatible with existing portfolio logic
+        """
+        from services.instruments_registry import instruments_registry
+        from services.fx_service import convert
+
+        items = []
+
+        for pos in positions:
+            try:
+                # Primary key: ISIN (preferred) or Symbol
+                isin = pos.get("Isin")
+                display_format = pos.get("DisplayAndFormat", {})
+                symbol_raw = display_format.get("Symbol", "")
+                description = display_format.get("Description", "")
+
+                lookup_key = isin or symbol_raw
+
+                # Enrichment via instruments_registry (same as CSV mode)
+                enriched = instruments_registry.resolve(
+                    lookup_key=lookup_key,
+                    fallback_symbol=symbol_raw,
+                    user_id=None  # Global registry
+                )
+
+                # Symbol cleanup (remove exchange suffix if present)
+                # Ex: "AAPL:xnas" → "AAPL"
+                symbol = enriched.get("symbol", symbol_raw.split(":")[0])
+
+                # Amount and value
+                amount = pos.get("Amount", 0.0)
+                market_value = pos.get("MarketValue", 0.0)
+                currency = pos.get("MarketValueCurrency", "EUR")  # Saxo accounts usually EUR
+
+                # Convert to USD
+                market_value_usd = convert(market_value, currency, "USD")
+
+                item = {
+                    "symbol": symbol,
+                    "alias": symbol,
+                    "amount": amount,
+                    "value_usd": market_value_usd,
+                    "location": "Saxo Bank",
+                    # Additional fields for compatibility
+                    "isin": isin,
+                    "instrument": description or symbol,
+                    "asset_class": pos.get("AssetType", "Stock"),
+                    "position_id": pos.get("NetPositionId"),  # Info only, not primary key
+                    "source": "saxobank_api"
+                }
+
+                items.append(item)
+
+            except Exception as e:
+                logger.error(f"Error normalizing Saxo position: {e}")
+                continue
+
+        logger.info(f"📊 Normalized {len(items)} Saxo positions")
+        return items
 
 
 # ============================================================================
