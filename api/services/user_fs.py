@@ -209,3 +209,37 @@ class UserScopedFS:
     def get_user_root(self) -> str:
         """Retourne le répertoire racine de l'utilisateur."""
         return str(self.user_root)
+
+    def get_absolute_path(self, relative_path: str = "") -> str:
+        """
+        Alias de get_path() pour compatibilité.
+
+        Args:
+            relative_path: Chemin relatif au répertoire utilisateur
+
+        Returns:
+            str: Chemin absolu validé
+        """
+        return self.get_path(relative_path)
+
+    def delete_file(self, relative_path: str) -> None:
+        """
+        Supprime un fichier dans le scope utilisateur.
+
+        Args:
+            relative_path: Chemin relatif du fichier à supprimer
+
+        Raises:
+            FileNotFoundError: Si le fichier n'existe pas
+            ValueError: Si path traversal détecté ou si le chemin est un répertoire
+        """
+        file_path = self._validate_path(relative_path)
+
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {relative_path}")
+
+        if not file_path.is_file():
+            raise ValueError(f"Path is not a file: {relative_path}")
+
+        file_path.unlink()
+        logger.debug(f"Deleted file: {relative_path}")

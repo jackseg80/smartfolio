@@ -4998,3 +4998,43 @@ Fichiers modifiés (6):
 ✅ Bugs fixés: Redirection + conflit noms fonctions
 L'intégration OAuth2 SaxoBank est TERMINÉE et TESTÉE avec succès! 🚀 Avez-vous des positions de test dans votre compte Saxo Sim? On peut maintenant tester la récupération des données via l'API si vous voulez! 📈
 commit
+
+🎯 Prochaines Étapes
+D'après votre fichier prompt_claude.txt, voici les options disponibles:
+Option A: Tester l'intégration Sim (RECOMMANDÉ) ✅
+Valider que tout fonctionne avec vos données de test:
+Connecter votre compte Saxo Sim:
+Aller dans Settings → Section Saxo
+Cliquer "Se connecter à Saxo"
+Autoriser l'accès
+Tester la récupération de données:
+Ouvrir saxo-dashboard.html
+Vérifier que vos positions s'affichent
+Tester les recommandations
+Vérifier le statut:
+// Dans la console browser
+fetch('/api/saxo/auth/status', {
+    headers: {'X-User': 'demo'}
+}).then(r => r.json()).then(console.log);
+Option B: Compléter l'UX (Optionnel)
+Améliorer l'expérience utilisateur:
+✅ Ajouter bouton "Refresh API" dans saxo-dashboard.html
+✅ Ajouter sélection source "API" dans sources-manager.js
+Option C: Migration Sim → Live (Quand prêt)
+Utiliser vos vraies données Saxo:
+Créer une app Live dans le portail Saxo Developer
+Modifier .env:
+SAXO_ENVIRONMENT=live
+SAXO_LIVE_CLIENT_ID=votre_live_app_key
+SAXO_LIVE_CLIENT_SECRET=votre_live_secret
+Redémarrer le serveur
+Se reconnecter via Settings
+Option D: Autre chose?
+Que voulez-vous améliorer dans SmartFolio?
+Patrimoine (wealth-dashboard)
+Alertes ML
+Market Opportunities
+Autre module
+💡 Ma Recommandation
+Commencez par Option A (tester Sim) pour valider que l'OAuth2 fonctionne correctement avant de passer à Live. Quelle option vous intéresse? 🚀
+
