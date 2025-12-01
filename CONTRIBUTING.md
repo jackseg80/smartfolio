@@ -42,6 +42,24 @@ Exemples :
 - docs: update README with CoinTracking API usage
 
 ======================================================================
+2.5. Hooks pre-commit (recommandé)
+======================================================================
+Le projet utilise des hooks pour éviter les erreurs fréquentes :
+
+Installation :
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Ce que bloque le hook :
+- Inversions de Risk Score (100 - risk) → voir docs/RISK_SEMANTICS.md
+- Messages de commit non conformes (doit suivre Conventional Commits)
+- Commits contenant "WIP" (Work In Progress)
+
+Pour plus de détails : voir GUIDE_IA.md Section 4 - Hooks pre-commit
+
+======================================================================
 3. Règles de développement
 ======================================================================
 - Toujours commencer par un Plan (3–5 commits maximum).
@@ -56,7 +74,7 @@ Exemples :
 ======================================================================
 A ne jamais casser :
 - Somme des actions en USD = 0 (achats = ventes).
-- Pas d’action avec |usd| < min_trade_usd.
+- Pas d'action avec |usd| < min_trade_usd.
 - Valeur des stablecoins forcée à 1.0.
 - Champs obligatoires à remplir :
   - price_used
@@ -64,10 +82,44 @@ A ne jamais casser :
   - meta.source_used
 
 ======================================================================
+4.5. Normes & Conventions de Scoring
+======================================================================
+⚠️ RÈGLE CRITIQUE — Sémantique Risk :
+
+> **⚠️ Règle Canonique — Sémantique Risk**
+>
+> Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
+>
+> **Convention** : Plus haut = plus robuste (risque perçu plus faible).
+>
+> **Conséquence** : Dans le Decision Index (DI), Risk contribue **positivement** :
+> ```
+> DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
+> ```
+>
+> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+>
+> **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
+>
+> 📖 Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+
+Toute Pull Request inversant Risk doit être REFUSÉE.
+
+Modules concernés :
+  - static/core/unified-insights-v2.js (production)
+  - static/modules/simulation-engine.js (simulateur)
+  - static/components/decision-index-panel.js (visualisation)
+
+Voir aussi :
+  - docs/index.md — Sémantique de Risk
+  - docs/architecture.md — Pilier Risk
+  - docs/UNIFIED_INSIGHTS_V2.md — Architecture détaillée
+
+======================================================================
 5. Tests locaux
 ======================================================================
 Lancer l’API :
-uvicorn main:app --reload --port 8080
+uvicorn main:app --port 8080
 
 Points de contrôle rapides :
 - GET /healthz           → doit retourner {"ok": true}
@@ -91,4 +143,3 @@ Interface utilisateur :
 
 ======================================================================
 Merci d’appliquer ces règles pour garantir un projet clair, stable et pro.
-

@@ -64,7 +64,40 @@ source .venv/bin/activate
 # With scheduler: ./start_dev.sh --enable-scheduler
 ```
 
-**Web Access:**
+### Production Deployment (Docker)
+
+This is the recommended method for running the application in a stable, production-like environment.
+
+1.  **Prerequisites:**
+    *   Docker and Docker Compose installed.
+    *   An `.env` file created from `.env.example` with the necessary API keys.
+
+2.  **Automated Deployment (Recommended):**
+    The `deploy.sh` script automates pulling the latest code, rebuilding the Docker image, and launching the services.
+
+    ```bash
+    ./deploy.sh
+    ```
+    To restart without rebuilding the image:
+    ```bash
+    ./deploy.sh --skip-build
+    ```
+
+3.  **Manual Launch:**
+    You can also use `docker-compose` commands directly:
+
+    ```bash
+    # Build and start services in the background
+    docker-compose up -d --build
+
+    # Stop services
+    docker-compose down
+
+    # View logs
+    docker-compose logs -f
+    ```
+
+### Web Access
 - **Settings**: http://localhost:8080/static/settings.html (initial configuration)
 - **Dashboard**: http://localhost:8080/static/dashboard.html
 - **API Docs**: http://localhost:8080/docs
@@ -129,14 +162,14 @@ data/
 - ✅ **HTTP headers**: CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
 - ✅ **Automated tests**: header & security validation
 
-📖 Complete details: [SECURITY.md](SECURITY.md)
+📖 Complete details: [SECURITY.md](docs/SECURITY.md)
 
 ## 📚 Documentation
 
 ### Essentials
 - **[CLAUDE.md](CLAUDE.md)** - Guide for AI agents (critical rules, patterns, quick checks)
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed architecture
-- **[Quick Start](docs/quickstart.md)** - Step-by-step startup guide
+- **[Docker Deployment Guide](docs/DOCKER_DEPLOYMENT.md)** - Production deployment guide
 - **[API Reference](docs/API_REFERENCE.md)** - Endpoints and schemas
 - **[User Guide](docs/user-guide.md)** - Complete user guide
 
@@ -149,7 +182,7 @@ data/
 - **Simulator**: [SIMULATION_ENGINE.md](docs/SIMULATION_ENGINE.md) - Complete pipeline
 - **Sources System**: [SOURCES_SYSTEM.md](docs/SOURCES_SYSTEM.md) - Unified multi-source
 - **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 5 adaptive methods
-- **P&L Today**: [P&L_TODAY_USAGE.md](docs/P&L_TODAY_USAGE.md) - Real-time tracking
+- **P&L Today**: [P&L Today](docs/PNL_TODAY.md) - Real-time tracking
 - **Redis**: [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Cache & streaming
 - **Logging**: [LOGGING.md](docs/LOGGING.md) - Rotating logs (5MB x3, AI-optimized)
 

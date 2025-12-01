@@ -1,431 +1,312 @@
 # 🐳 SmartFolio - Docker Deployment Guide
 
-Guide de déploiement Docker pour SmartFolio en production (Ubuntu 24.04.2 LTS).
+Guide de déploiement et de maintenance de SmartFolio en production avec Docker.
+Ce document est la source de vérité pour le déploiement.
 
-## 📋 Prérequis
+**Public cible :** Développeurs, Administrateurs système.
+**Environnement cible :** Serveur Linux (ex: Ubuntu 24.04) avec Docker.
 
-- Docker Engine 24.0+
-- Docker Compose v2.20+
-- Ubuntu 24.04.2 LTS (ou compatible)
-- Minimum 4GB RAM, 20GB disque
-- Port 8080 disponible
+---
+
+## 📋 Table des Matières
+
+1. [Architecture Cible](#architecture-cible)
+2. [Déploiement Rapide (TL;DR)](#-déploiement-rapide-tldr)
+3. [Installation & Configuration](#-installation--configuration)
+4. [Déploiement Automatisé (deploy.sh)](#-déploiement-automatisé-deploysh)
+5. [Commandes Manuelles](#-commandes-manuelles)
+6. [Workflow de Mise à Jour](#-workflow-de-mise-à-jour)
+7. [Maintenance et Dépannage](#-maintenance-et-dépannage)
+8. [Backup & Restore](#-backup--restore)
+
+---
+
+## Architecture Cible
+
+L'application est conçue pour tourner dans un environnement conteneurisé géré par Docker Compose.
+
+```
+┌─────────────────────────────────────────┐
+│            Serveur Linux (Hôte)         │
+│                                         │
+│  ┌───────────────────────────────────┐  │
+│  │     Docker Compose Stack          │  │
+│  │                                   │  │
+│  │  ┌─────────────┐  ┌────────────┐ │  │
+│  │  │   Redis     │  │ SmartFolio │ │  │
+│  │  │   (Cache)   │←→│    API     │ │  │
+│  │  └─────────────┘  └────────────┘ │  │
+│  │         ↓               ↓         │  │
+│  │  ┌──────────────────────────┐    │  │
+│  │  │   Volume Nommé           │    │  │
+│  │  │   redis_data             │    │  │
+│  │  └──────────────────────────┘    │  │
+│  │         ↓               ↓         │  │
+│  │  ┌──────────┐    ┌──────────┐   │  │
+│  │  │ ./data/  │    │ ./logs/  │   │  │
+│  │  │ (Bind)   │    │ (Bind)   │   │  │
+│  │  └──────────┘    └──────────┘   │  │
+│  └───────────────────────────────────┘  │
+│                 ↑                        │
+│          Port 8080 (LAN)                 │
+└─────────────────────────────────────────┘
+```
+**Composants clés :**
+- **`docker-compose.yml`**: Fichier principal décrivant la stack de services (API, Redis).
+- **`Dockerfile.prod`**: Instructions pour construire l'image Docker de production.
+- **`.env`**: Fichier de configuration pour les secrets et variables d'environnement.
+- **Volumes**:
+    - `redis_data` (volume nommé) : Pour la persistance des données Redis.
+    - `./data` et `./logs` (bind mounts) : Pour que les données et logs soient directement accessibles sur le serveur hôte.
 
 ---
 
 ## 🚀 Déploiement Rapide (TL;DR)
 
+Sur le serveur de production :
 ```bash
-# 1. Cloner le projet
+# 1. Cloner le projet (si pas déjà fait)
 git clone https://github.com/your-org/smartfolio.git
 cd smartfolio
 
-# 2. Créer .env depuis template
-cp .env.docker .env
-# Éditer .env et changer DEBUG_TOKEN, ADMIN_KEY
+# 2. Créer le fichier .env
+cp .env.example .env
+# Éditer .env et configurer les clés API et tokens.
 
-# 3. Lancer
-docker-compose -f docker-compose.prod.yml up -d
+# 3. Lancer le déploiement automatisé
+./deploy.sh
 
-# 4. Vérifier
-docker-compose -f docker-compose.prod.yml logs -f
+# 4. Vérifier l'état
+docker ps
 curl http://localhost:8080/docs
 ```
 
 ---
 
-## 📁 Structure Fichiers
+## 🔧 Installation & Configuration
 
+### Prérequis Serveur
+- Docker Engine 24.0+
+- Docker Compose v2.20+
+- Git
+- Serveur Linux (Ubuntu 24.04.2 LTS recommandé)
+- Minimum 4GB RAM, 20GB disque
+- Port 8080 (ou celui configuré) disponible.
+
+### Configuration Initiale
+
+1.  **Cloner le projet**
+    ```bash
+    git clone <votre-repo-url> /opt/smartfolio
+    cd /opt/smartfolio
+    ```
+
+2.  **Créer le fichier `.env`**
+    Copiez le template et modifiez-le.
+    ```bash
+    cp .env.example .env
+    nano .env
+    ```
+
+3.  **Variables Critiques à Modifier dans `.env`**
+    ```ini
+    # Mettre false en production pour la sécurité et performance
+    DEBUG=false
+    ENVIRONMENT=production
+
+    # CHANGEZ CES VALEURS ! Utilisez des chaînes longues et aléatoires.
+    DEBUG_TOKEN=your-prod-token-xyz123
+    ADMIN_KEY=your-admin-key-abc456
+
+    # Clés API pour les services externes
+    COINGECKO_API_KEY=your_key_here
+    COINTRACKING_API_KEY=your_key_here
+    FRED_API_KEY=your_key_here
+    ```
+    **Générer des tokens sécurisés :**
+    ```bash
+    # Génère une chaîne de 64 caractères hexadécimaux
+    openssl rand -hex 32
+    ```
+
+4.  **Transférer l'historique des données (TRÈS IMPORTANT)**
+    Le cache de prix (`data/price_history/`) est crucial pour le calcul des métriques de risque. Les APIs publiques ne fournissent qu'un historique limité (ex: 365 jours). Vous devez transférer le cache complet depuis votre machine de développement.
+
+    **Sur votre machine de dev (Windows/Linux/Mac) :**
+    ```bash
+    # Remplacez <user> et <ip_serveur>
+    scp -r data/price_history/*.json <user>@<ip_serveur>:/opt/smartfolio/data/price_history/
+    ```
+    **Vérification sur le serveur :**
+    ```bash
+    # Doit retourner un nombre élevé de fichiers (ex: 127)
+    ls /opt/smartfolio/data/price_history/ | wc -l
+    ```
+    Sans cette étape, les métriques de risque seront incorrectes.
+
+---
+
+## 🚀 Déploiement Automatisé (deploy.sh)
+
+Le script `deploy.sh` est la méthode **recommandée** pour tous les déploiements et mises à jour en production. Il automatise le processus pour être rapide, sûr et répétable.
+
+### Usage
+```bash
+# Déploiement standard (rebuild complet de l'image)
+./deploy.sh
+
+# Déploiement rapide (redémarre les conteneurs sans reconstruire l'image)
+./deploy.sh --skip-build
+
+# Déploiement forcé (écrase les changements locaux sur le serveur sans demander)
+./deploy.sh --force
+
+# Afficher l'aide
+./deploy.sh --help
 ```
-smartfolio/
-├── docker-compose.prod.yml    # Config Docker Compose production
-├── Dockerfile.prod            # Image Docker production
-├── .env.docker                # Template variables d'environnement
-├── .env                       # Fichier .env réel (gitignored, créer depuis .env.docker)
-├── .dockerignore              # Exclusions build Docker
-├── data/                      # Données utilisateurs (volume persistant)
-├── logs/                      # Logs application (volume persistant)
-└── docs/
-    └── DOCKER_DEPLOYMENT.md   # Ce fichier
+
+### Processus du script
+Le script exécute les étapes suivantes :
+1.  **Vérification des changements locaux** : Si des modifications existent sur le serveur, il propose de les sauvegarder dans un patch avant de les écraser.
+2.  **Pull depuis GitHub** : Récupère la dernière version du code.
+3.  **Vérification du cache de prix** : Vous alerte si le cache semble incomplet.
+4.  **Reconstruction & Redémarrage Docker** : Reconstruit l'image de l'API et relance la stack.
+5.  **Health Check** : Attend que les services soient opérationnels et confirme leur état.
+
+---
+
+## ⚙️ Commandes Manuelles
+
+Utilisez ces commandes pour une gestion plus fine ou pour le débogage.
+
+### Lancement et Arrêt
+```bash
+# Construire les images et démarrer les services en arrière-plan
+docker compose up -d --build
+
+# Démarrer les services sans reconstruire
+docker compose up -d
+
+# Arrêter les services
+docker compose down
+
+# Arrêter et supprimer les volumes (ATTENTION: perte de données Redis)
+docker compose down -v
+```
+
+### Consultation des logs
+```bash
+# Voir les logs de tous les services en temps réel
+docker compose logs -f
+
+# Voir les logs d'un service spécifique (ex: l'API)
+docker compose logs -f smartfolio
+
+# Afficher les 100 dernières lignes et quitter
+docker compose logs --tail=100 smartfolio
+```
+
+### Exécuter des commandes dans un conteneur
+```bash
+# Ouvrir un shell bash dans le conteneur de l'API
+docker compose exec smartfolio bash
+
+# Lancer les tests unitaires à l'intérieur du conteneur
+docker compose exec smartfolio python -m pytest tests/unit
+
+# Se connecter à l'interface de commande de Redis
+docker compose exec redis redis-cli
 ```
 
 ---
 
-## ⚙️ Configuration
+## 🔄 Workflow de Mise à Jour
 
-### 1. Créer le Fichier .env
+Le workflow de développement et de mise en production est simple :
 
-```bash
-# Sur serveur production
-cp .env.docker .env
-nano .env
-```
+1.  **Sur votre machine de développement :**
+    Faites vos modifications, commitez et pushez sur la branche `main`.
+    ```bash
+    git add .
+    git commit -m "feat: ma nouvelle fonctionnalité"
+    git push origin main
+    ```
 
-### 2. Variables Critiques à Modifier
+2.  **Sur le serveur de production :**
+    Exécutez simplement le script de déploiement.
+    ```bash
+    # Se connecter au serveur
+    ssh <user>@<ip_serveur>
+    cd /opt/smartfolio
 
-```bash
-# .env
-PORT=8080                      # Port d'écoute (LAN accessible)
-DEBUG=false                    # IMPORTANT: false en production!
-ENVIRONMENT=production         # Indique environnement prod
-LOG_LEVEL=INFO                 # INFO ou WARNING en prod
+    # Lancer le script
+    ./deploy.sh
+    ```
 
-# Sécurité - CHANGEZ CES VALEURS!
-DEBUG_TOKEN=your-prod-token-xyz123       # Token fort (32+ caractères)
-ADMIN_KEY=your-admin-key-abc456          # Clé admin forte
+Le script s'occupe de tout.
 
-# API Base URL (interne au container)
-API_BASE_URL=http://localhost:8080       # NE PAS CHANGER
-
-# Redis (utilise service Docker 'redis')
-REDIS_URL=redis://redis:6379/0           # NE PAS CHANGER
-```
-
-### 3. Variables Optionnelles
-
-```bash
-# Rate limiting
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_REQUESTS_PER_MINUTE=120       # Ajuster selon charge
-
-# CORS (si frontend externe)
-CORS_ORIGINS=https://smartfolio.example.com,https://app.example.com
-
-# Feature flags
-RISK_SCORE_V2_ENABLED=true
-RUN_SCHEDULER=1
-```
+**Quand utiliser `--skip-build` ?**
+- **Rebuild complet (défaut)** : Obligatoire si vous modifiez `Dockerfile.prod` ou `requirements.txt`.
+- **Restart rapide (`--skip-build`)** : Suffisant si vous ne modifiez que du code Python (`.py`), des fichiers statiques (HTML/JS) ou de la configuration (`.json`). Le redémarrage ne prend que quelques secondes.
 
 ---
 
-## 🏗️ Construction et Lancement
+## 🔧 Maintenance et Dépannage
 
-### Première Installation
+### Le service ne démarre pas ou est "unhealthy"
+1.  **Consultez les logs** : C'est la première source d'information.
+    ```bash
+    docker compose logs smartfolio
+    ```
+2.  **Vérifiez la configuration `.env`** : Une clé API manquante ou un token malformé peut empêcher le démarrage.
+3.  **Vérifiez qu'un autre service n'utilise pas le port** :
+    ```bash
+    sudo lsof -i :8080
+    ```
 
+### Nettoyage de Docker
+Pour libérer de l'espace disque, vous pouvez nettoyer les ressources Docker non utilisées.
 ```bash
-# 1. Construire l'image (peut prendre 5-10 min)
-docker-compose -f docker-compose.prod.yml build
+# Supprimer les conteneurs arrêtés, les réseaux inutilisés et les images pendantes
+docker system prune
 
-# 2. Lancer les services
-docker-compose -f docker-compose.prod.yml up -d
-
-# 3. Vérifier santé
-docker-compose -f docker-compose.prod.yml ps
-docker-compose -f docker-compose.prod.yml logs smartfolio | tail -20
-```
-
-### Commandes Utiles
-
-```bash
-# Voir logs en temps réel
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Logs filtrés (erreurs uniquement)
-docker-compose -f docker-compose.prod.yml logs smartfolio | grep ERROR
-
-# Redémarrer service
-docker-compose -f docker-compose.prod.yml restart smartfolio
-
-# Arrêter tout
-docker-compose -f docker-compose.prod.yml down
-
-# Arrêter ET supprimer volumes (⚠️ perte données!)
-docker-compose -f docker-compose.prod.yml down -v
-```
-
----
-
-## 🔄 Mise à Jour du Code
-
-```bash
-# 1. Pull dernières modifications
-git pull origin main
-
-# 2. Rebuild image (force rebuild)
-docker-compose -f docker-compose.prod.yml build --no-cache
-
-# 3. Restart avec nouvelle image
-docker-compose -f docker-compose.prod.yml up -d --force-recreate
-
-# 4. Cleanup images anciennes
-docker image prune -f
-```
-
----
-
-## 🩺 Health Checks
-
-### Automatiques (Docker)
-
-- **Redis**: `redis-cli ping` toutes les 10s
-- **SmartFolio API**: `curl http://localhost:8080/docs` toutes les 30s
-- Start period: 60s (temps d'init Playwright)
-
-### Manuels
-
-```bash
-# Status global
-docker-compose -f docker-compose.prod.yml ps
-
-# Health smartfolio
-docker exec smartfolio-api curl -f http://localhost:8080/health || echo "❌ Failed"
-
-# Health redis
-docker exec smartfolio-redis redis-cli ping
-
-# Métriques système
-docker stats smartfolio-api smartfolio-redis
-```
-
----
-
-## 📊 Monitoring et Logs
-
-### Logs Docker
-
-```bash
-# Logs combinés (tous services)
-docker-compose -f docker-compose.prod.yml logs -f
-
-# Logs smartfolio uniquement
-docker-compose -f docker-compose.prod.yml logs -f smartfolio
-
-# Logs redis uniquement
-docker-compose -f docker-compose.prod.yml logs -f redis
-
-# Dernières 100 lignes
-docker-compose -f docker-compose.prod.yml logs --tail=100 smartfolio
-```
-
-### Logs Application (dans container)
-
-```bash
-# Via volume monté (accessible depuis host)
-tail -f logs/app.log
-
-# Depuis host
-docker exec smartfolio-api tail -f /app/logs/app.log
-
-# Recherche erreurs
-docker exec smartfolio-api grep ERROR /app/logs/app.log | tail -20
-```
-
-### Rotation Automatique
-
-- **Logs Docker**: max 10MB × 3 fichiers = 30MB total
-- **Logs App**: max 5MB × 3 backups = 15MB total (rotation Python)
-
----
-
-## 🔧 Dépannage
-
-### Service ne démarre pas
-
-```bash
-# 1. Vérifier logs
-docker-compose -f docker-compose.prod.yml logs smartfolio
-
-# 2. Vérifier healthcheck
-docker inspect smartfolio-api | grep -A 20 Health
-
-# 3. Tester manuellement dans container
-docker exec -it smartfolio-api bash
-curl http://localhost:8080/docs
-```
-
-### Erreur "Port déjà utilisé"
-
-```bash
-# Trouver processus sur port 8080
-sudo lsof -i :8080
-# ou
-sudo netstat -tulpn | grep 8080
-
-# Tuer processus
-sudo kill -9 <PID>
-```
-
-### Redis connection failed
-
-```bash
-# Vérifier Redis
-docker exec smartfolio-redis redis-cli ping  # Doit répondre PONG
-
-# Restart Redis
-docker-compose -f docker-compose.prod.yml restart redis
-
-# Logs Redis
-docker-compose -f docker-compose.prod.yml logs redis
-```
-
-### Pas d'accès depuis LAN
-
-```bash
-# 1. Vérifier firewall Ubuntu
-sudo ufw status
-sudo ufw allow 8080/tcp
-
-# 2. Vérifier binding container
-docker-compose -f docker-compose.prod.yml ps
-# Port doit être: 0.0.0.0:8080->8080/tcp
-
-# 3. Tester depuis host
-curl http://localhost:8080/docs
-
-# 4. Tester depuis autre machine LAN
-curl http://<IP_SERVER>:8080/docs
-```
-
----
-
-## 🔐 Sécurité Production
-
-### Checklist
-
-- [ ] `DEBUG=false` dans .env
-- [ ] `DEBUG_TOKEN` changé (32+ caractères aléatoires)
-- [ ] `ADMIN_KEY` changé (32+ caractères aléatoires)
-- [ ] Firewall activé (`ufw enable`)
-- [ ] Port 8080 ouvert uniquement sur LAN (pas Internet)
-- [ ] Redis pas exposé publiquement (réseau interne Docker uniquement)
-- [ ] .env gitignored (ne jamais commit)
-- [ ] Logs rotation activée
-- [ ] Backups réguliers `data/` et `redis_data`
-
-### Génération Tokens Sécurisés
-
-```bash
-# Token fort (32 caractères)
-openssl rand -hex 32
-
-# Ou avec Python
-python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+# Nettoyage plus agressif (supprime aussi les volumes non utilisés)
+docker system prune --volumes
 ```
 
 ---
 
 ## 💾 Backup & Restore
 
-### Backup
+### Stratégie de Backup
+Il est crucial de sauvegarder régulièrement :
+1.  Le répertoire `data/` qui contient toutes les données utilisateurs, configurations et l'historique des prix.
+2.  Le volume `redis_data` qui contient le cache de session.
+3.  Le fichier `.env` qui contient vos secrets.
 
+### Exemple de script de backup
 ```bash
-# Script backup complet
 #!/bin/bash
 BACKUP_DIR="/backup/smartfolio/$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
-# Backup data/
-cp -r data/ "$BACKUP_DIR/data"
+# 1. Sauvegarder le répertoire data/
+cp -r /opt/smartfolio/data/ "$BACKUP_DIR/data"
 
-# Backup Redis (dump.rdb)
-docker exec smartfolio-redis redis-cli BGSAVE
-sleep 5
+# 2. Sauvegarder les données Redis
+docker compose exec redis redis-cli BGSAVE
+sleep 5 # Laisser le temps à Redis de sauvegarder sur le disque
 docker cp smartfolio-redis:/data/dump.rdb "$BACKUP_DIR/redis_dump.rdb"
 
-# Backup .env (sécurisé)
-cp .env "$BACKUP_DIR/.env.backup"
+# 3. Sauvegarder le fichier .env
+cp /opt/smartfolio/.env "$BACKUP_DIR/.env.backup"
 
-# Compress
-tar -czf "$BACKUP_DIR.tar.gz" "$BACKUP_DIR"
+# 4. Compresser l'archive
+tar -czf "$BACKUP_DIR.tar.gz" -C "/backup/smartfolio" "$(basename $BACKUP_DIR)"
 rm -rf "$BACKUP_DIR"
 
 echo "✅ Backup créé: $BACKUP_DIR.tar.gz"
 ```
 
-### Restore
-
-```bash
-# 1. Arrêter services
-docker-compose -f docker-compose.prod.yml down
-
-# 2. Extraire backup
-tar -xzf backup_20250127_120000.tar.gz
-
-# 3. Restore data/
-rm -rf data/
-cp -r backup_20250127_120000/data/ ./data/
-
-# 4. Restore Redis
-docker-compose -f docker-compose.prod.yml up -d redis
-sleep 10
-docker cp backup_20250127_120000/redis_dump.rdb smartfolio-redis:/data/dump.rdb
-docker-compose -f docker-compose.prod.yml restart redis
-
-# 5. Restore .env
-cp backup_20250127_120000/.env.backup .env
-
-# 6. Relancer tout
-docker-compose -f docker-compose.prod.yml up -d
-```
-
----
-
-## 📈 Performance Tuning
-
-### Limites Ressources (Optionnel)
-
-Décommenter dans `docker-compose.prod.yml` :
-
-```yaml
-deploy:
-  resources:
-    limits:
-      cpus: '2.0'      # Max 2 cores
-      memory: 4G       # Max 4GB RAM
-    reservations:
-      cpus: '0.5'      # Min 0.5 core
-      memory: 512M     # Min 512MB RAM
-```
-
-### Redis Tuning
-
-Ajuster `maxmemory` selon RAM disponible :
-
-```yaml
-# docker-compose.prod.yml (ligne 17)
-command: >
-  redis-server
-  --maxmemory 1gb          # Ajuster selon RAM serveur
-  --maxmemory-policy allkeys-lru
-```
-
----
-
-## 🌐 Accès depuis Internet (Optionnel)
-
-### Avec Reverse Proxy (Nginx)
-
-```nginx
-# /etc/nginx/sites-available/smartfolio
-server {
-    listen 80;
-    server_name smartfolio.example.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-### SSL avec Certbot
-
-```bash
-sudo certbot --nginx -d smartfolio.example.com
-```
-
----
-
-## 📞 Support
-
-- **Documentation**: `docs/ARCHITECTURE.md`, `CLAUDE.md`
-- **Issues**: GitHub Issues
-- **Logs**: `logs/app.log` (application), `docker-compose logs` (containers)
-
----
-
-**Dernière mise à jour**: 2025-01-27
-**Version Docker Compose**: 3.8
-**SmartFolio Version**: 2.0+
+### Restauration
+La restauration implique de stopper les services, de remplacer les données par celles du backup, et de redémarrer. Assurez-vous de bien comprendre le processus avant de le tenter.
