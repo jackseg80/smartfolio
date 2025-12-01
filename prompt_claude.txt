@@ -5038,3 +5038,101 @@ Autre module
 💡 Ma Recommandation
 Commencez par Option A (tester Sim) pour valider que l'OAuth2 fonctionne correctement avant de passer à Live. Quelle option vous intéresse? 🚀
 
+Parfait! J'ai analysé l'architecture. Voici mon analyse et plan:
+📋 État Actuel
+saxo-dashboard.html:
+Charge depuis /api/saxo/portfolios?file_key={csv} (ligne 3469)
+Format CSV uniquement
+WealthContextBar:
+Dropdown "Bourse" affiche uniquement CSV Saxo (ligne 249-266)
+Pas d'option API
+🎯 Plan d'Intégration API Saxo
+Update Todos
+
+Backend: Créer endpoint /api/saxo/positions pour récupérer depuis API
+
+Backend: Ajouter source 'saxobank_api' dans /api/users/sources
+
+Frontend: Modifier WealthContextBar pour afficher option API Saxo
+
+Frontend: Modifier saxo-dashboard.html pour charger depuis API si sélectionné
+
+Tester flux complet CSV → API → CSV
+Phase 1: Backend - Endpoint API Saxo
+Créer /api/saxo/positions qui:
+Vérifie si user connecté (token valide)
+Appelle l'API Saxo pour récupérer positions
+Normalise format compatible avec CSV
+Cache résultats (Redis ou localStorage)
+Phase 2: Backend - Sources System
+Modifier /api/users/sources pour retourner:
+{
+  "type": "api",
+  "module": "saxobank",
+  "key": "saxobank_api",
+  "label": "Saxo Bank API (Live)",
+  "connected": true
+}
+Phase 3: Frontend - WealthContextBar
+Modifier buildBourseOptions() (ligne 249):
+// Ajouter filtrage des API Saxo
+const saxoAPIs = sources
+  .filter(s => s.type === 'api' && s.module === 'saxobank')
+  .sort((a, b) => a.label.localeCompare(b.label));
+
+if (saxoAPIs.length > 0) {
+  html += '<option disabled>──── API ────</option>';
+  saxoAPIs.forEach(s => {
+    const value = `api:${s.key}`;
+    html += `<option value="${value}">${s.label}</option>`;
+  });
+}
+Phase 4: Frontend - saxo-dashboard.html
+Modifier chargement données (ligne 3469):
+// Détecter source sélectionnée
+const bourseContext = window.wealthContextBar.getContext().bourse;
+const isAPI = bourseContext && bourseContext.startsWith('api:');
+
+if (isAPI) {
+  // Charger depuis API
+  const { data } = await safeFetch('/api/saxo/positions');
+  portfolio = data;
+} else {
+  // Charger depuis CSV (code actuel)
+  const { data } = await safeFetch(`/api/saxo/portfolios?file_key=${fileKey}`);
+  portfolio = data.portfolios[0];
+}
+
+ok, regarde si ca correspond au plan initial de @prompt_claude.txt
+Grep "Phase|TODO|Prochaine|suite|next" (in d:\Python\smartfolio\prompt_claude.txt)
+537 lines of output
+Grep "3️⃣ Tâches UX|Bouton.*Refresh.*API|sources-manager" (in d:\Python\smartfolio\prompt_claude.txt)
+457 lines of output
+Excellent! J'ai analysé le plan original dans prompt_claude.txt. Voici ce que je constate:
+✅ Mon plan CORRESPOND au plan original non complété!
+Tâches Originales Restantes (Ligne 4983-4986):
+3️⃣ Tâches UX optionnelles (si vous voulez)
+Reste à compléter (non bloquant):
+- Bouton "Refresh API" dans saxo-dashboard.html
+- Sélection source "API" dans sources-manager.js
+Comparaison avec Mon Plan:
+Plan Original	Mon Plan	Status
+Endpoint API positions	✅ Phase 1: /api/saxo/positions	Ajouté (manquait)
+Sources System	✅ Phase 2: saxobank_api dans sources	Ajouté (manquait)
+Sélection source API	✅ Phase 3: WealthContextBar (au lieu de sources-manager)	Modernisé
+Refresh API button	✅ Phase 4: saxo-dashboard.html	Identique
+Différences Clés:
+1. WealthContextBar vs sources-manager.js:
+Plan original: Modifier sources-manager.js (lignes 1819, 3480, 3502)
+Mon plan: Modifier WealthContextBar.js (plus moderne, déjà utilisé pour Crypto + Bourse)
+Raison: WealthContextBar est le système actuel utilisé dans tout SmartFolio (voir ligne 70277 de ma lecture)
+2. Endpoint /api/saxo/positions:
+Plan original: Implicite dans saxo_api.py mais pas endpoint REST explicite
+Mon plan: Créer endpoint REST dédié pour frontend
+Raison: Séparation claire backend/frontend
+💡 Recommandation
+Mon plan est une ÉVOLUTION du plan original qui:
+✅ Complète les tâches UX restantes
+✅ Modernise avec WealthContextBar (déjà en place)
+✅ Ajoute endpoint REST manquant pour API
+

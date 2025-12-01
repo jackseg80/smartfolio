@@ -35,7 +35,7 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo ""
 
 # Check if we're in the right directory
-if [ ! -f "docker-compose.prod.yml" ]; then
+if [ ! -f "docker-compose.yml" ]; then
     echo -e "${RED}❌ Error: docker-compose.prod.yml not found${NC}"
     echo "   Please run this script from the smartfolio root directory"
     exit 1
@@ -125,19 +125,19 @@ fi
 echo ""
 if [ $SKIP_BUILD -eq 1 ]; then
     echo -e "${YELLOW}🔄 Step 5/6: Restarting Docker (skip build)...${NC}"
-    docker-compose -f docker-compose.prod.yml restart
+    docker-compose restart
 else
     echo -e "${YELLOW}🐳 Step 5/6: Rebuilding and restarting Docker...${NC}"
 
     # Stop old containers
-    docker-compose -f docker-compose.prod.yml down
+    docker-compose down
 
     # Clean orphaned containers from non-prod compose
     docker stop smartfolio_api_1 2>/dev/null || true
     docker rm smartfolio_api_1 2>/dev/null || true
 
     # Build and start
-    docker-compose -f docker-compose.prod.yml up -d --build
+    docker-compose up -d --build
 fi
 
 echo -e "${GREEN}✅ Docker containers started${NC}"
@@ -152,7 +152,7 @@ if docker ps | grep -q "smartfolio-api"; then
     echo -e "${GREEN}✅ Container smartfolio-api: running${NC}"
 else
     echo -e "${RED}❌ Container smartfolio-api: not found${NC}"
-    docker-compose -f docker-compose.prod.yml logs --tail 50
+    docker-compose logs --tail 50
     exit 1
 fi
 
@@ -163,7 +163,7 @@ if curl -sf http://localhost:8080/docs > /dev/null 2>&1; then
 else
     echo -e "${RED}❌ Failed${NC}"
     echo -e "${YELLOW}   API may still be starting up. Check logs with:${NC}"
-    echo -e "   docker-compose -f docker-compose.prod.yml logs -f"
+    echo -e "   docker-compose logs -f"
 fi
 
 # Check scheduler
@@ -187,8 +187,8 @@ echo "   • API Docs:   http://$(hostname -I | awk '{print $1}'):8080/docs"
 echo "   • Risk:       http://$(hostname -I | awk '{print $1}'):8080/risk-dashboard.html"
 echo ""
 echo -e "${YELLOW}🔍 Useful Commands:${NC}"
-echo "   • View logs:        docker-compose -f docker-compose.prod.yml logs -f"
-echo "   • Check status:     docker-compose -f docker-compose.prod.yml ps"
+echo "   • View logs:        docker-compose logs -f"
+echo "   • Check status:     docker-compose ps"
 echo "   • Restart:          ./deploy.sh --skip-build"
 echo "   • Full redeploy:    ./deploy.sh --force"
 echo ""
