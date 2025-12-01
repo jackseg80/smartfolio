@@ -2,22 +2,39 @@
 
 Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 6 canonical pages optimized for real-time decision making.
 
-**[🇫🇷 Version française](README.fr.md)**
-
 ## 🎯 Main Features
 
-- **Decision Engine** with intelligent governance (AI/manual approvals, freeze semantics)
-- **Dynamic Rebalancing** based on market cycle, regime, wallet concentration
-- **Phase Engine**: proactive phase detection (ETH expansion, altseason, risk-off) with automatic tilts
-- **Advanced ML**: LSTM, Transformers, sentiment analysis, real-time signals
-- **Risk management v2**: VaR/CVaR, stress testing, circuit breakers, dual-window metrics
-- **P&L Today**: real-time Profit & Loss calculation with anchor points (midnight/session)
-- **Pipeline Simulator**: complete test Decision → Risk Budget → Targets → Governance → Execution
-- **Multi-tenant**: complete data isolation per user and source
+The platform is built around **3 Specialized Modules** powered by a shared AI Core.
 
-## 🚀 Quick Start
+### 🚀 Crypto (Core Module)
+
+- **Decision Engine**: Automated governance with "Freeze Semantics" to prevent panic selling.
+- **Phase Engine**: Proactive detection of market regimes (Bitcoin Season vs Altseason) with auto-tilts.
+- **Allocation Engine V2**: Top-down hierarchical rebalancing (Macro → Sectors → Coins).
+- **Smart Execution**: Dynamic thresholds and "Incumbency Protection" to minimize churn.
+
+### 📈 Stock Market (Saxo Module)
+
+- **Market Opportunities**: AI Scanner that detects portfolio gaps and suggests Stocks/ETFs.
+- **Intelligent Stop Loss**: 6 adaptive methods (Trailing, Volatility-based) to protect gains.
+- **Risk Analytics**: Specific beta and correlation analysis against S&P 500.
+
+### 🏛️ Wealth (Patrimoine & Banking)
+
+- **P&L Today**: Real-time performance tracking with "Anchor Points" (Midnight/Session).
+- **Unified View**: Cross-asset aggregation (Crypto + Stocks + Bank) in your reference currency.
+- **Structure Analysis**: Monitoring of liquidity ratios (Stable/Cash vs Risky Assets).
+
+### 🧠 Shared Intelligence (Cross-Module)
+
+- **Advanced ML**: LSTM & Transformers for volatility and trend prediction.
+- **Risk Score V2**: Unified "Robustness Score" (0-100) across all asset classes.
+- **Multi-Tenant**: Complete isolation of data and configurations per user.
+
+## Quick Start
 
 ### Prerequisites
+
 - Python 3.10+
 - pip, virtualenv
 - (Optional) Redis for advanced caching and real-time streaming
@@ -25,6 +42,7 @@ Intelligent cross-asset wealth management platform (Crypto, Stock Market, Bankin
 ### Installation
 
 **Windows (PowerShell):**
+
 ```powershell
 py -m venv .venv
 .\\.venv\\Scripts\\Activate
@@ -34,6 +52,7 @@ copy .env.example .env
 ```
 
 **Linux/macOS:**
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -43,6 +62,7 @@ cp .env.example .env
 ```
 
 **Playwright (optional, for crypto-toolbox scraping):**
+
 ```bash
 pip install playwright
 playwright install chromium
@@ -51,6 +71,7 @@ playwright install chromium
 ### Launch
 
 **Windows:**
+
 ```powershell
 .\\.venv\\Scripts\\Activate
 .\\start_dev.ps1
@@ -58,6 +79,7 @@ playwright install chromium
 ```
 
 **Linux/macOS:**
+
 ```bash
 source .venv/bin/activate
 ./start_dev.sh
@@ -68,22 +90,24 @@ source .venv/bin/activate
 
 This is the recommended method for running the application in a stable, production-like environment.
 
-1.  **Prerequisites:**
-    *   Docker and Docker Compose installed.
-    *   An `.env` file created from `.env.example` with the necessary API keys.
+1. **Prerequisites:**
+    - Docker and Docker Compose installed.
+    - An `.env` file created from `.env.example` with the necessary API keys.
 
-2.  **Automated Deployment (Recommended):**
+2. **Automated Deployment (Recommended):**
     The `deploy.sh` script automates pulling the latest code, rebuilding the Docker image, and launching the services.
 
     ```bash
     ./deploy.sh
     ```
+
     To restart without rebuilding the image:
+
     ```bash
     ./deploy.sh --skip-build
     ```
 
-3.  **Manual Launch:**
+3. **Manual Launch:**
     You can also use `docker-compose` commands directly:
 
     ```bash
@@ -98,11 +122,12 @@ This is the recommended method for running the application in a stable, producti
     ```
 
 ### Web Access
-- **Settings**: http://localhost:8080/static/settings.html (initial configuration)
-- **Dashboard**: http://localhost:8080/static/dashboard.html
-- **API Docs**: http://localhost:8080/docs
 
-## 📊 Main Pages
+- **Settings**: <http://localhost:8080/static/settings.html> (initial configuration)
+- **Dashboard**: <http://localhost:8080/static/dashboard.html>
+- **API Docs**: <http://localhost:8080/docs>
+
+## Main Pages
 
 | Page | Description | URL |
 |------|-------------|-----|
@@ -114,9 +139,10 @@ This is the recommended method for running the application in a stable, producti
 | **Simulations** | Complete pipeline simulator | `/static/simulations.html` |
 | **Saxo Dashboard** | Stock Market (stocks, ETFs, funds) with intelligent stop-loss | `/static/saxo-dashboard.html` |
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (FastAPI)
+
 ```
 api/
 ├── main.py                          # Main app + routers
@@ -132,6 +158,7 @@ services/
 ```
 
 ### Frontend (Vanilla JS + ES6 Modules)
+
 ```
 static/
 ├── *.html                           # Main pages
@@ -146,6 +173,7 @@ static/
 ```
 
 ### Data
+
 ```
 data/
 └── users/{user_id}/
@@ -164,9 +192,10 @@ data/
 
 📖 Complete details: [SECURITY.md](docs/SECURITY.md)
 
-## 📚 Documentation
+## Documentation
 
 ### Essentials
+
 - **[CLAUDE.md](CLAUDE.md)** - Guide for AI agents (critical rules, patterns, quick checks)
 - **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Detailed architecture
 - **[Docker Deployment Guide](docs/DOCKER_DEPLOYMENT.md)** - Production deployment guide
@@ -174,6 +203,7 @@ data/
 - **[User Guide](docs/user-guide.md)** - Complete user guide
 
 ### Features & Systems
+
 - **Allocation**: [ALLOCATION_ENGINE_V2.md](docs/ALLOCATION_ENGINE_V2.md) - Topdown hierarchical, floors, incumbency
 - **Decision Index**: [DECISION_INDEX_V2.md](docs/DECISION_INDEX_V2.md) - Dual scoring (DI vs Regime)
 - **Risk Management**: [RISK_SEMANTICS.md](docs/RISK_SEMANTICS.md), [RISK_SCORE_V2_IMPLEMENTATION.md](docs/RISK_SCORE_V2_IMPLEMENTATION.md)
@@ -181,12 +211,14 @@ data/
 - **Phase Engine**: [PHASE_ENGINE.md](docs/PHASE_ENGINE.md) - Market phase detection
 - **Simulator**: [SIMULATION_ENGINE.md](docs/SIMULATION_ENGINE.md) - Complete pipeline
 - **Sources System**: [SOURCES_SYSTEM.md](docs/SOURCES_SYSTEM.md) - Unified multi-source
+- **Market Opportunities**: [MARKET_OPPORTUNITIES_SYSTEM.md](docs/MARKET_OPPORTUNITIES_SYSTEM.md) - Scoring 3-pillars, gap detection
 - **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 5 adaptive methods
 - **P&L Today**: [P&L Today](docs/PNL_TODAY.md) - Real-time tracking
 - **Redis**: [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Cache & streaming
 - **Logging**: [LOGGING.md](docs/LOGGING.md) - Rotating logs (5MB x3, AI-optimized)
 
 ### Development
+
 - **[Developer Guide](docs/developer.md)** - Setup, tests, workflow
 - **[Testing Guide](docs/TESTING_GUIDE.md)** - Unit/Integration/E2E tests
 - **[Runbooks](docs/runbooks.md)** - Operational procedures
@@ -194,23 +226,28 @@ data/
 - **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
 
 ### Complete Index
+
 📖 **[Documentation Index](docs/index.md)** - Complete list of available docs
 
-## 🔧 Configuration
+## Configuration
 
 ### Multi-Users
+
 6 configured users: `demo`, `jack`, `donato`, `elda`, `roberto`, `clea`
+
 - **Complete isolation**: separate data, config, API keys
 - **Dynamic selector**: navigation bar (independent from Admin menu)
 - **Dynamic sources**: auto display of CSV + API according to config
 
 ### Data Sources
+
 1. **Local CSV**: upload via Settings → Sources (automatic versioning)
 2. **CoinTracking API**: if keys configured (real-time)
 3. **Saxo API**: import stock market positions
 4. **Banks**: manual bank accounts
 
 ### Recommended API Keys
+
 ```env
 # .env
 COINGECKO_API_KEY=your_key_here        # Crypto prices (3 min cache)
@@ -219,7 +256,7 @@ FRED_API_KEY=your_key_here             # Macro data
 REDIS_URL=redis://localhost:6379/0     # Advanced cache (optional)
 ```
 
-## 📊 Main Endpoints
+## Main Endpoints
 
 ```bash
 # Health & Config
@@ -251,9 +288,9 @@ POST /api/sources/upload                         # Upload file
 GET  /api/sources/test                           # Test source
 ```
 
-📖 Complete API: http://localhost:8080/docs (Swagger UI)
+📖 Complete API: <http://localhost:8080/docs> (Swagger UI)
 
-## 🧪 Tests
+## Tests
 
 ```bash
 # Activate environment
@@ -273,9 +310,10 @@ pytest tests/e2e -v
 pytest --cov=services --cov=api --cov-report=html
 ```
 
-## 🎯 Critical Rules (Developers)
+## Critical Rules (Developers)
 
 ### 1. Multi-Tenant REQUIRED
+
 ```python
 # Backend: ALWAYS use dependency injection
 from api.deps import get_active_user
@@ -291,36 +329,39 @@ const balanceResult = await window.loadBalanceData(true);
 ```
 
 ### 2. Risk Score = Positive (0-100)
+
 - **Convention**: Higher = more robust
 - **❌ FORBIDDEN**: Never invert with `100 - scoreRisk`
 
 ### 3. Decision Index vs Regime
+
 - **Decision Index**: Technical allocation quality (65/45 fixed)
 - **Regime Score**: Market state (0-100 variable)
 - **Phase**: Based ONLY on Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
 
 📖 Details: [CLAUDE.md](CLAUDE.md)
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Recommended workflow:**
+
 1. Fork the project
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit changes (`git commit -m 'feat: add amazing feature'`)
 4. Push branch (`git push origin feature/amazing-feature`)
 5. Open Pull Request
 
-## 📝 Changelog
+## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history.
 
-## 📄 License
+## License
 
 This project is a starter/template for personal or educational use.
 
-## 🆘 Support
+## Support
 
 - **Documentation**: [docs/index.md](docs/index.md)
 - **Issues**: For bugs and feature requests
