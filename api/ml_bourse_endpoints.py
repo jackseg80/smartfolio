@@ -688,19 +688,30 @@ async def get_portfolio_recommendations(
                 detail=f"Invalid timeframe '{timeframe}'. Must be: short, medium, or long"
             )
 
-        # Get user positions from Saxo
+        # Get user positions from Saxo (API or CSV)
         import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout to 30 seconds
-            positions_url = f"{API_BASE_URL}/api/saxo/positions"
-            if file_key:
-                positions_url += f"?file_key={file_key}"
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            if source == "saxobank_api":
+                # API mode: use api-positions endpoint
+                positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
+            else:
+                # CSV mode: use positions endpoint
+                positions_url = f"{API_BASE_URL}/api/saxo/positions"
+                if file_key:
+                    positions_url += f"?file_key={file_key}"
+
             pos_response = await client.get(
                 positions_url,
                 headers={"X-User": user}
             )
             pos_response.raise_for_status()
             positions_data = pos_response.json()
-            positions = positions_data.get("positions", [])
+
+            # Handle nested response structure from API
+            if source == "saxobank_api":
+                positions = positions_data.get("data", {}).get("positions", [])
+            else:
+                positions = positions_data.get("positions", [])
 
         if not positions:
             return {
