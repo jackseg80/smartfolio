@@ -2445,11 +2445,23 @@ async function refreshSaxoTile() {
             try {
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
                 const bourseSource = window.wealthContextBar?.getContext()?.bourse;
-                let apiUrl = `/api/saxo/positions?user_id=${activeUser}`;
+                let apiUrl;
 
-                if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
+                // Check if API mode (api:saxobank_api)
+                if (bourseSource && bourseSource.startsWith('api:')) {
+                    // API mode: use api-positions endpoint
+                    apiUrl = `/api/saxo/api-positions`;
+                    debugLogger.debug(`[Saxo Tile Chart] Using API mode: ${bourseSource}`);
+                }
+                // Check if CSV mode (saxo:file_key)
+                else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
                     const key = bourseSource.substring(5);
-                    apiUrl += `&file_key=${key}`;
+                    apiUrl = `/api/saxo/positions?user_id=${activeUser}&file_key=${key}`;
+                    debugLogger.debug(`[Saxo Tile Chart] Using CSV mode with file_key: ${key}`);
+                }
+                // Default: latest CSV
+                else {
+                    apiUrl = `/api/saxo/positions?user_id=${activeUser}`;
                 }
 
                 const positionsResponse = await fetch(apiUrl, {
