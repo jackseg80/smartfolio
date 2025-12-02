@@ -39,7 +39,8 @@ class RiskDashboardResponse(BaseModel):
 @router.get("/dashboard", response_model=RiskDashboardResponse)
 async def bourse_risk_dashboard(
     user_id: str = Depends(get_active_user),
-    file_key: Optional[str] = Query(None, description="Specific Saxo file to use"),
+    file_key: Optional[str] = Query(None, description="Specific Saxo file to use (CSV mode)"),
+    source: Optional[str] = Query(None, description="Data source (API mode): saxobank_api"),
     min_usd: float = Query(1.0, ge=0.0, description="Minimum position value in USD"),
     lookback_days: int = Query(252, ge=30, le=730, description="Days of price history for metrics"),
     risk_free_rate: float = Query(0.03, ge=0.0, le=0.20, description="Annual risk-free rate"),
@@ -53,7 +54,8 @@ async def bourse_risk_dashboard(
 
     Args:
         user_id: ID utilisateur (isolation multi-tenant)
-        file_key: Clé du fichier Saxo spécifique (optionnel)
+        file_key: Clé du fichier Saxo spécifique (CSV mode)
+        source: Data source pour API mode (saxobank_api)
         min_usd: Valeur minimum position USD à inclure
         lookback_days: Jours d'historique prix pour calculs
         risk_free_rate: Taux sans risque annuel pour Sharpe/Sortino
@@ -63,40 +65,64 @@ async def bourse_risk_dashboard(
     Returns:
         RiskDashboardResponse avec score + métriques complètes
 
-    Example:
-        GET /api/risk/bourse/dashboard?user_id=jack&file_key=portfolio.csv&min_usd=100&lookback_days=252&cash_amount=5000
+    Examples:
+        CSV: GET /api/risk/bourse/dashboard?user_id=jack&file_key=portfolio.csv
+        API: GET /api/risk/bourse/dashboard?user_id=jack&source=saxobank_api
     """
     try:
-        logger.info(f"[risk-bourse] Computing risk dashboard for user {user_id}")
+        logger.info(f"[risk-bourse] Computing risk dashboard for user {user_id} (source={source}, file_key={file_key})")
 
-        # 1) Récupérer positions Saxo via l'adaptateur
-        # Importer ici pour éviter circulaire
-        from adapters.saxo_adapter import list_portfolios_overview, get_portfolio_detail
+        # 1) Récupérer positions depuis API ou CSV
+        if source == "saxobank_api":
+            # API mode: charger depuis l'endpoint API
+            from services.saxo_auth_service import SaxoAuthService
+            auth_service = SaxoAuthService(user_id)
 
-        # Lister les portfolios de l'utilisateur
-        portfolios = list_portfolios_overview(user_id=user_id, file_key=file_key)
+            # Charger positions cachées si disponibles
+            positions = await auth_service.get_cached_positions(max_age_hours=1)
 
-        if not portfolios:
-            return RiskDashboardResponse(
-                ok=True,
-                coverage=0.0,
-                positions_count=0,
-                total_value_usd=0.0,
-                risk={
-                    "score": 0,
-                    "level": "N/A",
-                    "metrics": {},
-                    "message": "No Saxo portfolios found for this user"
-                },
-                asof=datetime.utcnow().isoformat(),
-                user_id=user_id
-            )
+            if not positions:
+                logger.warning(f"[risk-bourse] No cached API positions for user {user_id}")
+                return RiskDashboardResponse(
+                    ok=True,
+                    coverage=0.0,
+                    positions_count=0,
+                    total_value_usd=0.0,
+                    risk={
+                        "score": 0,
+                        "level": "N/A",
+                        "metrics": {},
+                        "message": "No API positions available (try refreshing saxo-dashboard first)"
+                    },
+                    asof=datetime.utcnow().isoformat(),
+                    user_id=user_id
+                )
 
-        # Prendre le premier portfolio (ou filtrer selon besoin)
-        portfolio_id = portfolios[0].get("portfolio_id")
-        portfolio_data = get_portfolio_detail(portfolio_id=portfolio_id, user_id=user_id, file_key=file_key)
+        else:
+            # CSV mode: utiliser l'adaptateur
+            from adapters.saxo_adapter import list_portfolios_overview, get_portfolio_detail
 
-        positions = portfolio_data.get("positions", [])
+            portfolios = list_portfolios_overview(user_id=user_id, file_key=file_key)
+
+            if not portfolios:
+                return RiskDashboardResponse(
+                    ok=True,
+                    coverage=0.0,
+                    positions_count=0,
+                    total_value_usd=0.0,
+                    risk={
+                        "score": 0,
+                        "level": "N/A",
+                        "metrics": {},
+                        "message": "No Saxo portfolios found for this user"
+                    },
+                    asof=datetime.utcnow().isoformat(),
+                    user_id=user_id
+                )
+
+            portfolio_id = portfolios[0].get("portfolio_id")
+            portfolio_data = get_portfolio_detail(portfolio_id=portfolio_id, user_id=user_id, file_key=file_key)
+            positions = portfolio_data.get("positions", [])
 
         if not positions:
             return RiskDashboardResponse(
