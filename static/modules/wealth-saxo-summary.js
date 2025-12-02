@@ -37,11 +37,18 @@ export async function fetchSaxoSummary() {
     }
 
     try {
-        // ✅ FIX: Get Bourse source from WealthContextBar to load correct CSV
+        // ✅ FIX: Get Bourse source from WealthContextBar to load correct CSV or API
         let apiUrl = '/api/saxo/positions';
         const bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
-        if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
+        // Check if API mode (api:saxobank_api)
+        if (bourseSource && bourseSource.startsWith('api:')) {
+            // API mode: use api-account-summary endpoint
+            apiUrl = '/api/saxo/api-account-summary';
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] Using API mode: ${bourseSource}`);
+        }
+        // Check if CSV mode (saxo:file_key)
+        else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
             // Extract file_key from source (same logic as saxo-dashboard.html)
             const key = bourseSource.substring(5); // Remove 'saxo:' prefix
 
