@@ -158,8 +158,9 @@ class WealthContextBar {
 
   buildAccountOptions(sources) {
     // Trier : API d'abord (alphabétique), puis CSV (alphabétique)
+    // Filtrer uniquement les APIs CoinTracking (pas Saxo!)
     const apis = sources
-      .filter(s => s.type === 'api')
+      .filter(s => s.type === 'api' && s.module === 'cointracking')
       .sort((a, b) => a.label.localeCompare(b.label));
 
     const csvs = sources
