@@ -7,6 +7,7 @@ import { safeFetch } from './http.js';
 let _cachedSummary = null;
 let _cacheTimestamp = 0;
 let _cachedForUser = null; // Track which user the cache is for
+let _cachedForSource = null; // Track which source the cache is for (CRITICAL!)
 const CACHE_TTL = 30000; // 30 secondes
 
 /**
@@ -17,29 +18,32 @@ export async function fetchSaxoSummary() {
     const now = Date.now();
     const activeUser = localStorage.getItem('activeUser') || 'demo';
 
-    (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, cached for: ${_cachedForUser || 'none'}`);
+    // Get current source FIRST (before checking cache)
+    const bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
-    // Invalider le cache si l'utilisateur a changé
-    if (_cachedForUser && _cachedForUser !== activeUser) {
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] User changed from ${_cachedForUser} to ${activeUser}, invalidating cache`);
+    (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, source: ${bourseSource}, cached for: ${_cachedForUser || 'none'}/${_cachedForSource || 'none'}`);
+
+    // Invalider le cache si l'utilisateur OU la source a changé
+    if (_cachedForUser && (_cachedForUser !== activeUser || _cachedForSource !== bourseSource)) {
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] User or source changed (${_cachedForUser}/${_cachedForSource} → ${activeUser}/${bourseSource}), invalidating cache`);
         _cachedSummary = null;
         _cacheTimestamp = 0;
         _cachedForUser = null;
+        _cachedForSource = null;
         // ✅ CRITICAL: Also invalidate availableSources cache
         window.availableSources = null;
         window._availableSourcesUser = null;
     }
 
-    // Retourner le cache si valide pour cet utilisateur
-    if (_cachedSummary && _cachedForUser === activeUser && (now - _cacheTimestamp) < CACHE_TTL) {
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Returning cached data for ${activeUser}`);
+    // Retourner le cache si valide pour cet utilisateur ET cette source
+    if (_cachedSummary && _cachedForUser === activeUser && _cachedForSource === bourseSource && (now - _cacheTimestamp) < CACHE_TTL) {
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Returning cached data for ${activeUser}/${bourseSource}`);
         return _cachedSummary;
     }
 
     try {
-        // ✅ FIX: Get Bourse source from WealthContextBar to load correct CSV or API
+        // bourseSource already defined at top of function (line 22)
         let apiUrl = '/api/saxo/positions';
-        const bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
         // Check if API mode (api:saxobank_api)
         if (bourseSource && bourseSource.startsWith('api:')) {
@@ -108,6 +112,8 @@ export async function fetchSaxoSummary() {
             _cachedSummary = emptySummary;
             _cacheTimestamp = now;
             _cachedForUser = activeUser;
+        _cachedForSource = bourseSource;
+            _cachedForSource = bourseSource;
             return emptySummary;
         }
 
@@ -124,6 +130,8 @@ export async function fetchSaxoSummary() {
             _cachedSummary = summary;
             _cacheTimestamp = now;
             _cachedForUser = activeUser;
+        _cachedForSource = bourseSource;
+            _cachedForSource = bourseSource;
             return summary;
         }
 
@@ -199,6 +207,7 @@ export async function fetchSaxoSummary() {
         _cachedSummary = summary;
         _cacheTimestamp = now;
         _cachedForUser = activeUser;
+        _cachedForSource = bourseSource;
         return summary;
 
     } catch (error) {
@@ -216,6 +225,7 @@ export async function fetchSaxoSummary() {
         _cachedSummary = errorSummary;
         _cacheTimestamp = now;
         _cachedForUser = activeUser;
+        _cachedForSource = bourseSource;
         return errorSummary;
     }
 }
