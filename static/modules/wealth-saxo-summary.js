@@ -43,8 +43,8 @@ export async function fetchSaxoSummary() {
 
         // Check if API mode (api:saxobank_api)
         if (bourseSource && bourseSource.startsWith('api:')) {
-            // API mode: use api-account-summary endpoint
-            apiUrl = '/api/saxo/api-account-summary';
+            // API mode: use api-positions endpoint (returns positions array)
+            apiUrl = '/api/saxo/api-positions';
             (window.debugLogger?.debug || console.log)(`[Saxo Summary] Using API mode: ${bourseSource}`);
         }
         // Check if CSV mode (saxo:file_key)
