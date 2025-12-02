@@ -2,6 +2,8 @@
 
 Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 6 canonical pages optimized for real-time decision making.
 
+Designed to simplify the management of large crypto portfolios (>200 assets) via a smart 11-group taxonomy, and currently specialized for CoinTracking (API & CSV) data sources.
+
 ## 🎯 Main Features
 
 The platform is built around **3 Specialized Modules** powered by a shared AI Core.
@@ -12,6 +14,8 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 - **Phase Engine**: Proactive detection of market regimes (Bitcoin Season vs Altseason) with auto-tilts.
 - **Allocation Engine V2**: Top-down hierarchical rebalancing (Macro → Sectors → Coins).
 - **Smart Execution**: Dynamic thresholds and "Incumbency Protection" to minimize churn.
+- **Smart Taxonomy**: Automatically groups hundreds of tokens into 11 Canonical Groups (BTC, ETH, SOL, AI, DeFi...) to drastically reduce cognitive load for large wallets.
+- **CoinTracking Native**: Deep integration with CoinTracking (API & CSV) to handle complex transaction histories and real-time balances accurately.
 
 ### 📈 Stock Market (Saxo Module)
 

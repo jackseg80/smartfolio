@@ -62,7 +62,7 @@ temp_*.json
 rebalance-actions.csv
 risk*.txt
 test*.json
-promp_claude.txt
+prompt_claude.txt
 
 # Cleanup scripts & audits (temporary)
 scripts/cleanup_*.ps1

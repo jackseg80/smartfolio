@@ -240,7 +240,26 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
                 "key": "cointracking_api",
                 "label": "🌐 CoinTracking API",
                 "type": "api",
+                "module": "cointracking",
                 "file_path": None
+            })
+
+        # API SaxoBank: seulement si l'utilisateur est connecté via OAuth2
+        from services.saxo_auth_service import SaxoAuthService
+
+        saxo_auth = SaxoAuthService(user)
+        if saxo_auth.is_connected():
+            connection_status = saxo_auth.get_connection_status()
+            env_label = "Live" if connection_status.get("environment") == "live" else "Simulation"
+
+            sources.append({
+                "key": "saxobank_api",
+                "label": f"🌐 Saxo Bank API ({env_label})",
+                "type": "api",
+                "module": "saxobank",
+                "file_path": None,
+                "connected": True,
+                "environment": connection_status.get("environment")
             })
 
         # Compter le nombre de fichiers par module
