@@ -89,7 +89,7 @@ export async function fetchSaxoSummary() {
         const { ok, data } = await safeFetch(
             finalUrl,
             {
-                timeout: 8000,
+                timeout: 30000,  // 30s for API calls (Live mode can be slow)
                 headers: {
                     'X-User': activeUser  // ✅ CRITICAL: Always pass user
                 }
