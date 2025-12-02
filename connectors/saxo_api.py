@@ -241,11 +241,13 @@ class SaxoOAuthClient:
             }]
         """
         url = f"{self.api_base}/port/v1/positions"
-        params = {"AccountKey": account_key}
+        # Use ClientKey for Live, AccountKey for Sim
+        param_name = "ClientKey" if self.environment == "live" else "AccountKey"
+        params = {param_name: account_key}
         headers = {"Authorization": f"Bearer {access_token}"}
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"📊 Fetching positions for account {account_key[:8]}...")
+            logger.info(f"📊 Fetching positions for account {account_key[:8]} using {param_name}...")
             response = await client.get(url, params=params, headers=headers)
             response.raise_for_status()
 
@@ -278,11 +280,13 @@ class SaxoOAuthClient:
             }
         """
         url = f"{self.api_base}/port/v1/balances"
-        params = {"AccountKey": account_key}
+        # Use ClientKey for Live, AccountKey for Sim
+        param_name = "ClientKey" if self.environment == "live" else "AccountKey"
+        params = {param_name: account_key}
         headers = {"Authorization": f"Bearer {access_token}"}
 
         async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"💰 Fetching balances for account {account_key[:8]}...")
+            logger.info(f"💰 Fetching balances for account {account_key[:8]} using {param_name}...")
             response = await client.get(url, params=params, headers=headers)
             response.raise_for_status()
 
@@ -347,6 +351,60 @@ class SaxoOAuthClient:
             transactions = data.get("Data", [])
             logger.info(f"✅ Retrieved {len(transactions)} transactions")
             return transactions
+
+    async def get_instrument_details(
+        self,
+        access_token: str,
+        uic: int,
+        asset_type: str = "Stock"
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Resolve UIC to instrument details (Symbol, Name, ISIN).
+
+        Endpoint: GET /ref/v1/instruments/details/{Uic}/{AssetType}
+
+        Args:
+            access_token: Valid Bearer token
+            uic: Unique Instrument Code
+            asset_type: Asset type (Stock, Etf, Bond, etc.)
+
+        Returns:
+            {
+                "Symbol": "AAPL:xnas",
+                "Description": "Apple Inc.",
+                "Isin": "US0378331005",
+                "Currency": "USD",
+                "AssetType": "Stock",
+                ...
+            }
+
+        Returns None if instrument not found or API error.
+
+        Note: This endpoint is critical for Live mode where positions
+              only contain UICs without symbols.
+        """
+        url = f"{self.api_base}/ref/v1/instruments/details/{uic}/{asset_type}"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                logger.debug(f"🔍 Resolving UIC {uic} ({asset_type})...")
+                response = await client.get(url, headers=headers)
+                response.raise_for_status()
+
+                data = response.json()
+                logger.debug(f"✅ Resolved UIC {uic} → {data.get('Symbol', 'N/A')}")
+                return data
+
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    logger.warning(f"⚠️ Instrument not found: UIC {uic} ({asset_type})")
+                else:
+                    logger.warning(f"⚠️ Failed to resolve UIC {uic}: {e}")
+                return None
+            except Exception as e:
+                logger.warning(f"⚠️ Error resolving UIC {uic}: {e}")
+                return None
 
 
 # Helper functions for PKCE state management

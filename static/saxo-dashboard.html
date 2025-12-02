@@ -1062,9 +1062,14 @@
                 document.getElementById('riskMetrics').innerHTML = '<div class="loading">…</div>';
                 document.getElementById('riskStructure').innerHTML = '<div class="loading">…</div>';
 
-                // Build URL with file_key and cash if available
+                // Build URL with file_key (CSV) or source (API)
                 let riskUrl = `/api/risk/bourse/dashboard?user_id=${activeUser}`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'api') {
+                    // API mode: use source parameter
+                    riskUrl += `&source=saxobank_api`;
+                    debugLogger.debug(`🔍 Loading risk from API source: saxobank_api`);
+                } else if (currentFileKey) {
+                    // CSV mode: use file_key
                     riskUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
                     debugLogger.debug(`🔍 Loading risk with file_key: ${currentFileKey}`);
                 }
@@ -3394,6 +3399,83 @@
             }
         }
 
+        // Calculate summary metrics from normalized positions
+        function calculateSummaryMetrics(positions, totalValue) {
+            // Group positions by symbol to aggregate lots
+            const symbolGroups = {};
+            positions.forEach(pos => {
+                const symbol = pos.symbol;
+                if (!symbolGroups[symbol]) {
+                    symbolGroups[symbol] = {
+                        symbol: symbol,
+                        name: pos.name || symbol,
+                        asset_class: pos.asset_class || pos.asset_type || 'Unknown',
+                        currency: pos.currency || 'USD',
+                        isin: pos.isin || '',
+                        total_quantity: 0,
+                        total_value: 0
+                    };
+                }
+                const value = pos.market_value_usd || pos.market_value || 0;
+                symbolGroups[symbol].total_quantity += pos.quantity || 0;
+                symbolGroups[symbol].total_value += value;
+            });
+
+            // Convert to array and calculate weights
+            const aggregatedPositions = Object.values(symbolGroups).map(group => ({
+                symbol: group.symbol,
+                name: group.name,
+                instrument: group.name,
+                asset_class: group.asset_class,
+                currency: group.currency,
+                isin: group.isin,
+                quantity: group.total_quantity,
+                market_value: group.total_value,
+                weight: totalValue > 0 ? (group.total_value / totalValue) * 100 : 0
+            }));
+
+            // Sort by value descending
+            aggregatedPositions.sort((a, b) => b.market_value - a.market_value);
+
+            const totalPositions = aggregatedPositions.length;
+
+            // Calculate asset allocation (by asset_class)
+            const assetTotals = {};
+            aggregatedPositions.forEach(pos => {
+                const assetClass = pos.asset_class;
+                assetTotals[assetClass] = (assetTotals[assetClass] || 0) + pos.market_value;
+            });
+
+            const assetAllocation = {};
+            Object.entries(assetTotals).forEach(([assetClass, value]) => {
+                assetAllocation[assetClass] = totalValue > 0 ? (value / totalValue) * 100 : 0;
+            });
+
+            // Calculate currency exposure
+            const currencyTotals = {};
+            aggregatedPositions.forEach(pos => {
+                const currency = pos.currency;
+                currencyTotals[currency] = (currencyTotals[currency] || 0) + pos.market_value;
+            });
+
+            const currencyExposure = {};
+            Object.entries(currencyTotals).forEach(([currency, value]) => {
+                currencyExposure[currency] = totalValue > 0 ? (value / totalValue) * 100 : 0;
+            });
+
+            // Top 10 holdings (aggregated by symbol)
+            const topHoldings = aggregatedPositions.slice(0, 10);
+
+            return {
+                total_value_usd: totalValue,
+                total_positions: totalPositions,     // Unique symbols
+                positions_count: positions.length,    // Total lots
+                asset_allocation: assetAllocation,
+                currency_exposure: currencyExposure,
+                top_holdings: topHoldings
+            };
+        }
+
         // Load current Saxo data from active source (via WealthContextBar)
         // OPTIMIZATIONS:
         // 1. localStorage cache (5 min TTL) → instant reload (~500ms gain)
@@ -3415,7 +3497,9 @@
                 document.getElementById('dashboardContent').style.display = 'none';
 
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
-                const cacheKey = `saxo_portfolio_${activeUser}_${currentFileKey || 'default'}`;
+                // Include source type in cache key to avoid mixing API and CSV data
+                const sourcePrefix = window.saxoSourceType === 'api' ? 'api' : (currentFileKey || 'default');
+                const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
                 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
                 // Check cache first (skip if force refresh)
@@ -3465,53 +3549,134 @@
                     }
                 }
 
-                // Build URLs
-                let portfoliosUrl = '/api/saxo/portfolios';
-                if (currentFileKey) {
-                    portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
-                    debugLogger.debug(`🔍 Loading portfolio with file_key: ${currentFileKey}`);
-                }
+                let portfolioData;
 
-                // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
-                const [listResult, cashResult] = await Promise.all([
-                    safeFetch(globalConfig.getApiUrl(portfoliosUrl), {
+                // Load from API or CSV based on source type
+                if (window.saxoSourceType === 'api') {
+                    debugLogger.debug('🌐 Loading Saxo data from API...');
+
+                    // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
+                    const [apiResult, cashResult] = await Promise.all([
+                        safeFetch(globalConfig.getApiUrl('/api/saxo/api-positions'), {
+                            headers: { 'X-User': activeUser }
+                        }),
+                        loadPortfolioCash() // Run in parallel
+                    ]);
+
+                    const { ok: apiOk, data: apiData } = apiResult;
+
+                    if (!apiOk || !apiData) {
+                        debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
+                        showNoDataState('❌ Erreur lors du chargement depuis l\'API Saxo');
+                        return;
+                    }
+
+                    // Extract nested data from API response (safeFetch wraps success_response twice)
+                    const innerData = apiData.data || apiData;
+
+                    // Transform API response to match CSV structure
+                    const positions = innerData.positions || [];
+
+                    // Normalize positions to add USD fields
+                    const normalizedPositions = positions.map(pos => ({
+                        ...pos,
+                        market_value_usd: pos.market_value || 0,  // API uses market_value, frontend expects market_value_usd
+                        total_value_usd: pos.market_value || 0    // Add total_value_usd for compatibility
+                    }));
+
+                    // Calculate total portfolio value
+                    const totalValue = innerData.total_value || normalizedPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0);
+
+                    // Calculate summary metrics from positions
+                    const summary = calculateSummaryMetrics(normalizedPositions, totalValue);
+
+                    portfolioData = {
+                        portfolio_id: 'saxo_api',
+                        name: `Saxo Bank API (${innerData.source})`,
+                        positions: normalizedPositions,
+                        source: innerData.source || 'api',
+                        timestamp: innerData.timestamp || new Date().toISOString(),
+                        summary: summary
+                    };
+
+                    // Extract cash balance from API
+                    if (innerData.cash_balance !== undefined) {
+                        window.portfolioCash = innerData.cash_balance;
+                        debugLogger.debug(`💰 Cash balance from API: ${innerData.cash_balance} ${innerData.currency || 'EUR'}`);
+                    } else {
+                        // Fallback: calculate from total_value - positions
+                        window.portfolioCash = Math.max(0, totalValue - normalizedPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0));
+                    }
+
+                    // Show warning if using cached API data
+                    if (innerData.warning) {
+                        debugLogger.warn(`⚠️ API Cache Fallback: ${innerData.warning}`);
+                    }
+
+                    debugLogger.debug(`✅ Loaded ${portfolioData.positions.length} positions from API (Total: ${totalValue.toLocaleString()} ${innerData.currency || 'EUR'})`);
+
+                    // Show info message for empty Sim accounts
+                    if (normalizedPositions.length === 0 && innerData.source === 'api') {
+                        const envLabel = window.availableSources?.find(s => s.key === 'saxobank_api')?.environment || 'sim';
+                        if (envLabel === 'sim') {
+                            debugLogger.info('ℹ️ Compte Saxo Simulation vide - Utilisez le portail Saxo pour ajouter des positions de test');
+                        }
+                    }
+
+                } else {
+                    // Load from CSV (existing logic)
+                    debugLogger.debug('📄 Loading Saxo data from CSV...');
+
+                    // Build URLs
+                    let portfoliosUrl = '/api/saxo/portfolios';
+                    if (currentFileKey) {
+                        portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
+                        debugLogger.debug(`🔍 Loading portfolio with file_key: ${currentFileKey}`);
+                    }
+
+                    // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
+                    const [listResult, cashResult] = await Promise.all([
+                        safeFetch(globalConfig.getApiUrl(portfoliosUrl), {
+                            headers: { 'X-User': activeUser }
+                        }),
+                        loadPortfolioCash() // Run in parallel
+                    ]);
+
+                    const { ok: listOk, data: listData } = listResult;
+
+                    if (!listOk || !listData?.portfolios || listData.portfolios.length === 0) {
+                        debugLogger.warn('Aucun portfolio Saxo disponible.');
+                        showNoDataState('📂 Aucune donnée Saxo disponible');
+                        return;
+                    }
+
+                    // Get first portfolio
+                    const portfolio = listData.portfolios[0];
+                    const portfolioId = portfolio.portfolio_id;
+
+                    if (!portfolioId) {
+                        debugLogger.warn('Portfolio ID manquant.');
+                        showNoDataState('❌ Erreur: Portfolio ID manquant');
+                        return;
+                    }
+
+                    // Load full portfolio details
+                    let detailUrl = `/api/saxo/portfolios/${portfolioId}`;
+                    if (currentFileKey) {
+                        detailUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
+                    }
+
+                    const { ok: detailOk, data: csvData } = await safeFetch(globalConfig.getApiUrl(detailUrl), {
                         headers: { 'X-User': activeUser }
-                    }),
-                    loadPortfolioCash() // Run in parallel
-                ]);
+                    });
 
-                const { ok: listOk, data: listData } = listResult;
+                    if (!detailOk || !csvData) {
+                        debugLogger.warn('Erreur lors du chargement du portfolio.');
+                        showNoDataState('❌ Erreur lors du chargement du portfolio');
+                        return;
+                    }
 
-                if (!listOk || !listData?.portfolios || listData.portfolios.length === 0) {
-                    debugLogger.warn('Aucun portfolio Saxo disponible.');
-                    showNoDataState('📂 Aucune donnée Saxo disponible');
-                    return;
-                }
-
-                // Get first portfolio
-                const portfolio = listData.portfolios[0];
-                const portfolioId = portfolio.portfolio_id;
-
-                if (!portfolioId) {
-                    debugLogger.warn('Portfolio ID manquant.');
-                    showNoDataState('❌ Erreur: Portfolio ID manquant');
-                    return;
-                }
-
-                // Load full portfolio details
-                let detailUrl = `/api/saxo/portfolios/${portfolioId}`;
-                if (currentFileKey) {
-                    detailUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
-                }
-
-                const { ok: detailOk, data: portfolioData } = await safeFetch(globalConfig.getApiUrl(detailUrl), {
-                    headers: { 'X-User': activeUser }
-                });
-
-                if (!detailOk || !portfolioData) {
-                    debugLogger.warn('Erreur lors du chargement du portfolio.');
-                    showNoDataState('❌ Erreur lors du chargement du portfolio');
-                    return;
+                    portfolioData = csvData;
                 }
 
                 // Store portfolio data
@@ -4028,8 +4193,8 @@
                                     <td><strong>$${position.market_value_usd.toLocaleString()}</strong></td>
                                     <td>${position.currency}</td>
                                     <td>
-                                        <span class="asset-class-badge asset-class-${position.asset_class.toLowerCase()}">
-                                            ${position.asset_class}
+                                        <span class="asset-class-badge asset-class-${(position.asset_class || position.asset_type || 'unknown').toLowerCase()}">
+                                            ${position.asset_class || position.asset_type || 'Unknown'}
                                         </span>
                                     </td>
                                     <td>${weight.toFixed(1)}%</td>
@@ -4238,6 +4403,19 @@
             // Initialize wealth context integration
             initWealthContextIntegration();
 
+            // Initialize saxoSourceType from localStorage
+            const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+            if (bourseSource && bourseSource.startsWith('api:')) {
+                window.saxoSourceType = 'api';
+                debugLogger.debug(`🌐 Initial source type: API (${bourseSource})`);
+            } else if (bourseSource && bourseSource.startsWith('saxo:')) {
+                window.saxoSourceType = 'csv';
+                debugLogger.debug(`📄 Initial source type: CSV (${bourseSource})`);
+            } else {
+                window.saxoSourceType = 'api'; // Default to API
+                debugLogger.debug('🌐 Initial source type: API (default)');
+            }
+
             // Debounce timer for source changes
             let sourceChangeTimeout = null;
 
@@ -4256,8 +4434,16 @@
                     // Resolve file_key from source (same logic as wealth-saxo-summary.js)
                     const bourseSource = window.wealthContextBar?.getContext()?.bourse;
                     currentFileKey = null; // Reset
+                    window.saxoSourceType = null; // Reset source type
 
-                    if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
+                    // Detect API source (starts with 'api:')
+                    if (bourseSource && bourseSource.startsWith('api:')) {
+                        window.saxoSourceType = 'api';
+                        debugLogger.debug(`🌐 API source detected: ${bourseSource}`);
+                    }
+                    // Detect CSV source (starts with 'saxo:')
+                    else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
+                        window.saxoSourceType = 'csv';
                         const key = bourseSource.substring(5); // Remove 'saxo:' prefix
                         const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -4651,9 +4837,14 @@
 
                 tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
 
-                // Build URL with parameters
+                // Build URL with parameters (file_key for CSV, source for API)
                 let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=90`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'api') {
+                    // API mode: use source parameter
+                    recsUrl += `&source=saxobank_api`;
+                    debugLogger.debug(`🔍 Loading recommendations from API source: saxobank_api`);
+                } else if (currentFileKey) {
+                    // CSV mode: use file_key
                     recsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
                     debugLogger.debug(`🔍 Loading recommendations with file_key: ${currentFileKey}`);
                 }

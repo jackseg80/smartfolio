@@ -247,15 +247,30 @@ class WealthContextBar {
   }
 
   buildBourseOptions(sources) {
-    // Filtrer uniquement les CSV Saxo (module saxobank)
+    // Filtrer les sources Saxo par type
     const saxoCSVs = sources
       .filter(s => s.type === 'csv' && s.module === 'saxobank')
       .sort((a, b) => a.label.localeCompare(b.label));
 
+    const saxoAPIs = sources
+      .filter(s => s.type === 'api' && s.module === 'saxobank')
+      .sort((a, b) => a.label.localeCompare(b.label));
+
     let html = '<option value="all">Tous</option>';
 
+    // Section API (en premier pour visibilité)
+    if (saxoAPIs.length > 0) {
+      html += '<option disabled>──── API ────</option>';
+      saxoAPIs.forEach(s => {
+        const value = `api:${s.key}`;
+        const envIndicator = s.environment === 'live' ? '🔴' : '🟢';
+        html += `<option value="${value}" data-type="api">${envIndicator} ${s.label}</option>`;
+      });
+    }
+
+    // Section CSV
     if (saxoCSVs.length > 0) {
-      html += '<option disabled>──── CSV Saxo ────</option>';
+      html += '<option disabled>──── CSV ────</option>';
       saxoCSVs.forEach(s => {
         const value = `saxo:${s.key}`;
         html += `<option value="${value}" data-type="saxo">${s.label}</option>`;
@@ -548,14 +563,14 @@ class WealthContextBar {
       return;
     }
 
-    // Parse la valeur : saxo:key (ex: saxo:saxo_latest)
+    // Parse la valeur : saxo:key (ex: saxo:saxo_latest) ou api:key (ex: api:saxobank_api)
     const parts = selectedValue.split(':');
-    if (parts.length !== 2 || parts[0] !== 'saxo') {
+    if (parts.length !== 2 || (parts[0] !== 'saxo' && parts[0] !== 'api')) {
       debugLogger.warn(`WealthContextBar: Invalid bourse value format: ${selectedValue}`);
       return;
     }
 
-    const [, key] = parts;
+    const [_sourceType, key] = parts; // sourceType validated above but not used (key is unique)
 
     // Charger les sources disponibles si pas déjà chargé
     if (!window.availableSources) {
