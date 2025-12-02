@@ -80,8 +80,14 @@ export async function fetchSaxoSummary() {
 
         (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching from: ${apiUrl} for user: ${activeUser}`);
 
+        // ⚠️ IMPORTANT: Don't use globalConfig.getApiUrl() for Saxo API endpoints
+        // It adds incompatible params (source, pricing, min_usd) that cause 400 errors
+        const finalUrl = apiUrl.includes('/api/saxo/api-')
+            ? apiUrl  // Direct URL for Saxo API (no globalConfig params)
+            : (window.globalConfig?.getApiUrl(apiUrl) || apiUrl);  // Use globalConfig for CSV endpoints
+
         const { ok, data } = await safeFetch(
-            window.globalConfig?.getApiUrl(apiUrl) || apiUrl,
+            finalUrl,
             {
                 timeout: 8000,
                 headers: {
