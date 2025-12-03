@@ -184,3 +184,54 @@ async def update_api_keys(payload: APIKeysRequest, debug_token: Optional[str] = 
                 os.environ[env_key] = val
 
     return {"success": True, "updated": updated}
+
+
+@router.get("/secrets-status")
+async def debug_secrets_status(user: str = Depends(get_active_user)):
+    """
+    Debug endpoint: Vérifie quelles clés API sont chargées depuis secrets.json
+
+    Retourne le statut de chaque clé (présente/vide) sans exposer les valeurs.
+    """
+    if not DEBUG:
+        raise HTTPException(status_code=404, detail="Debug endpoint not available in production")
+
+    from services.user_secrets import get_user_secrets
+
+    secrets = get_user_secrets(user)
+
+    def mask_key(key: str) -> str:
+        """Masque une clé API pour affichage sécurisé"""
+        if not key:
+            return "[EMPTY]"
+        if len(key) < 8:
+            return "[TOO_SHORT]"
+        return f"{key[:8]}...{key[-4:]}" if len(key) > 12 else f"{key[:8]}..."
+
+    return {
+        "user_id": user,
+        "secrets_loaded": True,
+        "dev_mode": secrets.get("dev_mode", {}).get("enabled", False),
+        "keys_status": {
+            "coingecko": {
+                "present": bool(secrets.get("coingecko", {}).get("api_key")),
+                "masked": mask_key(secrets.get("coingecko", {}).get("api_key", ""))
+            },
+            "cointracking": {
+                "api_key_present": bool(secrets.get("cointracking", {}).get("api_key")),
+                "api_secret_present": bool(secrets.get("cointracking", {}).get("api_secret")),
+                "masked_key": mask_key(secrets.get("cointracking", {}).get("api_key", ""))
+            },
+            "fred": {
+                "present": bool(secrets.get("fred", {}).get("api_key")),
+                "masked": mask_key(secrets.get("fred", {}).get("api_key", ""))
+            },
+            "binance": {
+                "configured": bool(secrets.get("binance", {}).get("api_key"))
+            },
+            "kraken": {
+                "configured": bool(secrets.get("kraken", {}).get("api_key"))
+            }
+        },
+        "note": "All keys loaded from secrets.json (config.json no longer used for API keys)"
+    }
