@@ -108,18 +108,18 @@ def _add_csp_headers(response: Response, request: Request) -> None:
     font_src = _join(font_src_list)
     media_src = _join(media_src_list)
 
-    # Relax CSP for docs/redoc and static HTML files
+    # Relax CSP for docs/redoc and HTML files
     path = request.url.path
     is_docs = path in ("/docs", "/redoc", "/openapi.json")
-    is_static_html = str(path).startswith("/static/") and path.endswith(".html")
+    is_html = path.endswith(".html")  # Any .html file (including root-level dashboards)
     is_static = str(path).startswith("/static/")
 
     # Allow inline scripts for:
     # - Dev mode: docs + all static files
-    # - Production: docs + static HTML pages (dashboards need inline scripts)
+    # - Production: docs + all HTML pages (dashboards served from /static mount with html=True)
     allow_inline = (
         (settings.is_debug_enabled() and (is_docs or is_static)) or
-        (is_docs or is_static_html)  # Always allow for docs + static HTML
+        (is_docs or is_html)  # Always allow for docs + any HTML page
     )
 
     if allow_inline and getattr(sec, 'csp_allow_inline_dev', True):
