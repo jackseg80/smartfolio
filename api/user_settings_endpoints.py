@@ -43,8 +43,10 @@ async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, A
     """
     Récupère les settings de l'utilisateur actuel.
 
+    Fusionne config.json (UI settings) + secrets.json (API keys)
+
     Returns:
-        Dict[str, Any]: Settings de l'utilisateur
+        Dict[str, Any]: Settings de l'utilisateur (UI + clés API masquées)
 
     Raises:
         HTTPException: 404 si les settings n'existent pas
@@ -54,20 +56,30 @@ async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, A
         project_root = str(Path(__file__).parent.parent)
         user_fs = UserScopedFS(project_root, user)
 
+        # Load UI settings from config.json
         if not user_fs.exists("config.json"):
-            logger.warning(f"No settings found for user {user}, returning defaults")
-            # Retourner les settings par défaut
-            default_settings = UserSettings()
-            return default_settings.dict()
+            logger.warning(f"No config.json found for user {user}, using defaults")
+            config_settings = {}
+        else:
+            config_settings = user_fs.read_json("config.json")
+            logger.debug(f"Loaded config.json for user {user}: {len(config_settings)} keys")
 
-        settings = user_fs.read_json("config.json")
-        logger.debug(f"Loaded settings for user {user}: {len(settings)} keys")
+        # Load API keys from secrets.json (modern system)
+        from services.user_secrets import get_user_secrets
+        secrets = get_user_secrets(user)
 
-        # Fusionner avec les defaults pour assurer la compatibilité
+        # Fusionner: defaults + config.json + secrets.json (API keys)
         default_settings = UserSettings()
         merged_settings = default_settings.dict()
-        merged_settings.update(settings)
+        merged_settings.update(config_settings)
 
+        # Add API keys from secrets.json
+        merged_settings["cointracking_api_key"] = secrets.get("cointracking", {}).get("api_key", "")
+        merged_settings["cointracking_api_secret"] = secrets.get("cointracking", {}).get("api_secret", "")
+        merged_settings["coingecko_api_key"] = secrets.get("coingecko", {}).get("api_key", "")
+        merged_settings["fred_api_key"] = secrets.get("fred", {}).get("api_key", "")
+
+        logger.debug(f"Settings loaded for user {user}: config.json + secrets.json merged")
         return merged_settings
 
     except Exception as e:
@@ -84,6 +96,10 @@ async def save_user_settings(
 ) -> Dict[str, str]:
     """
     Sauvegarde les settings de l'utilisateur actuel.
+
+    Sépare automatiquement :
+    - Clés API → secrets.json
+    - UI settings → config.json
 
     Args:
         settings: Nouveau settings à sauvegarder
@@ -110,8 +126,39 @@ async def save_user_settings(
         project_root = str(Path(__file__).parent.parent)
         user_fs = UserScopedFS(project_root, user)
 
-        # ✅ FIX: Merger avec l'ancien config au lieu d'écraser
-        # Charger l'ancien config s'il existe
+        # Convertir en dict
+        new_settings = validated_settings.dict()
+
+        # Séparer les clés API des autres settings
+        api_keys = {
+            "cointracking_api_key": new_settings.pop("cointracking_api_key", ""),
+            "cointracking_api_secret": new_settings.pop("cointracking_api_secret", ""),
+            "coingecko_api_key": new_settings.pop("coingecko_api_key", ""),
+            "fred_api_key": new_settings.pop("fred_api_key", "")
+        }
+
+        # 1. Sauvegarder les clés API dans secrets.json
+        from services.user_secrets import get_user_secrets
+        try:
+            secrets = get_user_secrets(user)
+
+            # Update only if values changed
+            if api_keys["coingecko_api_key"]:
+                secrets.setdefault("coingecko", {})["api_key"] = api_keys["coingecko_api_key"]
+            if api_keys["cointracking_api_key"]:
+                secrets.setdefault("cointracking", {})["api_key"] = api_keys["cointracking_api_key"]
+            if api_keys["cointracking_api_secret"]:
+                secrets.setdefault("cointracking", {})["api_secret"] = api_keys["cointracking_api_secret"]
+            if api_keys["fred_api_key"]:
+                secrets.setdefault("fred", {})["api_key"] = api_keys["fred_api_key"]
+
+            # Save secrets.json
+            user_fs.write_json("secrets.json", secrets)
+            logger.debug(f"API keys saved to secrets.json for user {user}")
+        except Exception as e:
+            logger.warning(f"Failed to save API keys to secrets.json: {e}")
+
+        # 2. Merger UI settings avec config.json existant
         old_config = {}
         try:
             old_config = user_fs.read_json("config.json")
@@ -119,20 +166,16 @@ async def save_user_settings(
         except (FileNotFoundError, ValueError):
             logger.debug("No existing config found, creating new one")
 
-        # Convertir les nouveaux settings en dict
-        new_settings = validated_settings.dict()
-
-        # Merger (les nouveaux settings écrasent les anciens)
         merged_settings = {**old_config, **new_settings}
 
-        # Sauvegarder
+        # Sauvegarder config.json (SANS les clés API)
         user_fs.write_json("config.json", merged_settings)
 
-        logger.info(f"✅ Settings saved for user {user}: {len(merged_settings)} keys, csv_selected_file='{merged_settings.get('csv_selected_file')}'")
+        logger.info(f"✅ Settings saved for user {user}: config.json + secrets.json")
 
         return {
             "status": "success",
-            "message": f"Settings saved for user {user}",
+            "message": f"Settings saved (config.json + secrets.json)",
             "user": user
         }
 
