@@ -8,7 +8,49 @@ let _cachedSummary = null;
 let _cacheTimestamp = 0;
 let _cachedForUser = null; // Track which user the cache is for
 let _cachedForSource = null; // Track which source the cache is for (CRITICAL!)
-const CACHE_TTL = 30000; // 30 secondes
+const CACHE_TTL = 300000; // 5 minutes (optimized for cross-page sharing)
+
+// LocalStorage keys for cross-page caching
+const CACHE_KEY_PREFIX = 'saxo_summary_';
+
+/**
+ * Load cache from localStorage (cross-page persistent cache)
+ */
+function loadCacheFromStorage(activeUser, bourseSource) {
+    try {
+        const cacheKey = `${CACHE_KEY_PREFIX}${activeUser}_${bourseSource}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (!cached) return null;
+
+        const { summary, timestamp } = JSON.parse(cached);
+        const age = Date.now() - timestamp;
+
+        if (age < CACHE_TTL) {
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Loaded from localStorage (age: ${Math.round(age/1000)}s)`);
+            return { summary, timestamp };
+        } else {
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ❌ localStorage cache expired (age: ${Math.round(age/1000)}s)`);
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
+    } catch (err) {
+        (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to load from localStorage:', err);
+        return null;
+    }
+}
+
+/**
+ * Save cache to localStorage (cross-page persistent cache)
+ */
+function saveCacheToStorage(activeUser, bourseSource, summary, timestamp) {
+    try {
+        const cacheKey = `${CACHE_KEY_PREFIX}${activeUser}_${bourseSource}`;
+        localStorage.setItem(cacheKey, JSON.stringify({ summary, timestamp }));
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] 💾 Saved to localStorage: ${cacheKey}`);
+    } catch (err) {
+        (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to save to localStorage:', err);
+    }
+}
 
 /**
  * Récupère un résumé des positions Saxo depuis l'API legacy
@@ -19,27 +61,51 @@ export async function fetchSaxoSummary() {
     const activeUser = localStorage.getItem('activeUser') || 'demo';
 
     // Get current source FIRST (before checking cache)
-    const bourseSource = window.wealthContextBar?.getContext()?.bourse;
+    // ✅ FALLBACK: If wealthContextBar not ready, use localStorage directly
+    let bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
-    (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, source: ${bourseSource}, cached for: ${_cachedForUser || 'none'}/${_cachedForSource || 'none'}`);
+    if (!bourseSource) {
+        // Fallback to localStorage (wealthContextBar may not be ready yet)
+        bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+        (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ wealthContextBar not ready, using localStorage fallback: ${bourseSource}`);
+    }
+
+    (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, source: ${bourseSource}`);
 
     // Invalider le cache si l'utilisateur OU la source a changé
     if (_cachedForUser && (_cachedForUser !== activeUser || _cachedForSource !== bourseSource)) {
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] User or source changed (${_cachedForUser}/${_cachedForSource} → ${activeUser}/${bourseSource}), invalidating cache`);
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] User or source changed, invalidating all caches`);
         _cachedSummary = null;
         _cacheTimestamp = 0;
         _cachedForUser = null;
         _cachedForSource = null;
-        // ✅ CRITICAL: Also invalidate availableSources cache
+        // ✅ CRITICAL: Also invalidate localStorage and availableSources cache
+        try {
+            const oldCacheKey = `${CACHE_KEY_PREFIX}${_cachedForUser}_${_cachedForSource}`;
+            localStorage.removeItem(oldCacheKey);
+        } catch (e) { /* ignore */ }
         window.availableSources = null;
         window._availableSourcesUser = null;
     }
 
-    // Retourner le cache si valide pour cet utilisateur ET cette source
+    // 1️⃣ Check memory cache first (fastest)
     if (_cachedSummary && _cachedForUser === activeUser && _cachedForSource === bourseSource && (now - _cacheTimestamp) < CACHE_TTL) {
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Returning cached data for ${activeUser}/${bourseSource}`);
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] ⚡ Returning memory cache (age: ${Math.round((now - _cacheTimestamp)/1000)}s)`);
         return _cachedSummary;
     }
+
+    // 2️⃣ Try localStorage cache (cross-page sharing)
+    const cachedFromStorage = loadCacheFromStorage(activeUser, bourseSource);
+    if (cachedFromStorage) {
+        _cachedSummary = cachedFromStorage.summary;
+        _cacheTimestamp = cachedFromStorage.timestamp;
+        _cachedForUser = activeUser;
+        _cachedForSource = bourseSource;
+        return _cachedSummary;
+    }
+
+    // 3️⃣ No cache available, fetch from API
+    (window.debugLogger?.debug || console.log)(`[Saxo Summary] 🌐 No cache, fetching from API...`);
 
     try {
         // bourseSource already defined at top of function (line 22)
@@ -100,25 +166,60 @@ export async function fetchSaxoSummary() {
             }
         );
 
+        // ✅ CRITICAL DEBUG: Log the exact structure of the API response
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] API response:`, {
+            ok,
+            hasData: !!data,
+            hasDataData: !!data?.data,
+            dataDataKeys: data?.data ? Object.keys(data.data) : [],
+            positionsPath1: Array.isArray(data?.data?.positions) ? `data.data.positions[${data.data.positions.length}]` : 'not found',
+            positionsPath2: Array.isArray(data?.positions) ? `data.positions[${data.positions.length}]` : 'not found',
+            totalValuePath: typeof data?.data?.total_value === 'number' ? data.data.total_value : 'not found',
+            cashBalancePath: typeof data?.data?.cash_balance === 'number' ? data.data.cash_balance : 'not found'
+        });
+
         if (!ok || !data) {
-            (window.debugLogger?.warn || console.warn)('[Saxo Summary] API returned error, using empty state');
+            // Différencier les types d'erreur pour un meilleur message utilisateur
+            let errorMessage = 'API Saxo temporairement indisponible';
+            let errorDetail = data?.error || 'unknown error';
+
+            // Cas spécifique: utilisateur non connecté (401)
+            if (data?.error && (data.error.includes('Not connected') || data.error.includes('tokens expired'))) {
+                errorMessage = 'Non connecté à Saxo API';
+                errorDetail = 'Veuillez vous connecter dans Paramètres > Sources > SaxoBank API';
+                (window.debugLogger?.warn || console.warn)(`[Saxo Summary] User not connected to Saxo API: ${data.error}`);
+            } else {
+                (window.debugLogger?.warn || console.warn)(`[Saxo Summary] API returned error: ${errorDetail}`);
+            }
+
             const emptySummary = {
                 total_value: 0,
                 positions_count: 0,
-                asof: 'API indisponible',
+                asof: errorMessage,
                 isEmpty: true,
-                error: 'API Saxo temporairement indisponible'
+                error: errorDetail,
+                needsConnection: data?.error && (data.error.includes('Not connected') || data.error.includes('tokens expired'))
             };
             _cachedSummary = emptySummary;
             _cacheTimestamp = now;
             _cachedForUser = activeUser;
-        _cachedForSource = bourseSource;
             _cachedForSource = bourseSource;
+            saveCacheToStorage(activeUser, bourseSource, emptySummary, now);
             return emptySummary;
         }
 
-        const positions = Array.isArray(data.positions) ? data.positions :
+        // ✅ FIXED: safeFetch wraps backend response, so we need data.data.positions
+        const positions = Array.isArray(data.data?.positions) ? data.data.positions :
+                         Array.isArray(data.positions) ? data.positions :
                          Array.isArray(data) ? data : [];
+
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Positions extracted:`, {
+            count: positions.length,
+            source: Array.isArray(data.data?.positions) ? 'data.data.positions' :
+                    Array.isArray(data.positions) ? 'data.positions' :
+                    Array.isArray(data) ? 'data (array)' : 'unknown',
+            firstPosition: positions[0] ? {symbol: positions[0].symbol || positions[0].asset_name, value: positions[0].market_value_usd || positions[0].value} : null
+        });
 
         if (positions.length === 0) {
             const summary = {
@@ -130,45 +231,58 @@ export async function fetchSaxoSummary() {
             _cachedSummary = summary;
             _cacheTimestamp = now;
             _cachedForUser = activeUser;
-        _cachedForSource = bourseSource;
             _cachedForSource = bourseSource;
+            saveCacheToStorage(activeUser, bourseSource, summary, now);
             return summary;
         }
 
-        // Calculer la valeur totale des positions
-        let totalValue = positions.reduce((sum, pos) => {
-            const value = Number(pos.market_value_usd || pos.market_value || pos.value || 0);
-            return sum + value;
-        }, 0);
+        // ✅ CRITICAL: Always use backend total_value if available (includes cash + positions)
+        let totalValue = 0;
+        let cashBalance = 0;
 
-        // Récupérer et ajouter le cash/liquidités
-        try {
-            // Construire l'URL avec user_id (obligatoire) + file_key (optionnel)
-            let cashUrl = `/api/saxo/cash?user_id=${encodeURIComponent(activeUser)}`;
-            const bourseSource = window.wealthContextBar?.getContext()?.bourse;
+        // Check if backend already calculated total_value (API mode)
+        if (typeof data.data?.total_value === 'number') {
+            // Backend provides total_value - use it directly (includes positions + cash)
+            totalValue = data.data.total_value;
+            cashBalance = data.data?.cash_balance || 0;
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Using backend values: total=$${totalValue.toFixed(2)}, cash=$${cashBalance.toFixed(2)}`);
+        } else {
+            // CSV mode: calculate manually from positions
+            totalValue = positions.reduce((sum, pos) => {
+                const value = Number(pos.market_value_usd || pos.market_value || pos.value || 0);
+                return sum + value;
+            }, 0);
 
-            if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
-                const key = bourseSource.substring(5);
-                const source = window.availableSources?.find(s => s.key === key);
-                if (source?.file_path) {
-                    const fileKey = source.file_path.split(/[/\\]/).pop();
-                    cashUrl += `&file_key=${encodeURIComponent(fileKey)}`;
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] Manual calculation - positions total: $${totalValue.toFixed(2)}`);
+
+            // Add cash/liquidities
+            try {
+                // Construct URL with user_id (required) + file_key (optional)
+                let cashUrl = `/api/saxo/cash?user_id=${encodeURIComponent(activeUser)}`;
+
+                if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
+                    const key = bourseSource.substring(5);
+                    const source = window.availableSources?.find(s => s.key === key);
+                    if (source?.file_path) {
+                        const fileKey = source.file_path.split(/[/\\]/).pop();
+                        cashUrl += `&file_key=${encodeURIComponent(fileKey)}`;
+                    }
                 }
-            }
 
-            const cashResponse = await safeFetch(cashUrl, {
-                timeout: 3000,
-                headers: { 'X-User': activeUser }
-            });
+                const cashResponse = await safeFetch(cashUrl, {
+                    timeout: 3000,
+                    headers: { 'X-User': activeUser }
+                });
 
-            if (cashResponse?.ok && cashResponse.data?.cash_amount) {
-                const cashAmount = Number(cashResponse.data.cash_amount || 0);
-                totalValue += cashAmount;
-                (window.debugLogger?.debug || console.log)(`[Saxo Summary] Added cash: $${cashAmount}, new total: $${totalValue}`);
+                if (cashResponse?.ok && cashResponse.data?.cash_amount) {
+                    cashBalance = Number(cashResponse.data.cash_amount || 0);
+                    totalValue += cashBalance;
+                    (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Added cash: $${cashBalance}, new total: $${totalValue}`);
+                }
+            } catch (cashError) {
+                // Non-blocking: continue without cash if endpoint fails
+                (window.debugLogger?.debug || console.log)('[Saxo Summary] Cash fetch failed (non-blocking):', cashError.message);
             }
-        } catch (cashError) {
-            // Non-bloquant : on continue sans le cash si l'endpoint n'existe pas ou échoue
-            (window.debugLogger?.debug || console.log)('[Saxo Summary] Cash fetch failed (non-blocking):', cashError.message);
         }
 
         // Trouver la date la plus récente (asof)
@@ -208,6 +322,8 @@ export async function fetchSaxoSummary() {
         _cacheTimestamp = now;
         _cachedForUser = activeUser;
         _cachedForSource = bourseSource;
+        saveCacheToStorage(activeUser, bourseSource, summary, now);
+
         return summary;
 
     } catch (error) {
@@ -217,7 +333,7 @@ export async function fetchSaxoSummary() {
             total_value: 0,
             positions_count: 0,
             asof: 'Erreur',
-            error: error.message,
+            error: error?.message || String(error) || 'unknown error',
             isEmpty: true
         };
 
@@ -226,18 +342,53 @@ export async function fetchSaxoSummary() {
         _cacheTimestamp = now;
         _cachedForUser = activeUser;
         _cachedForSource = bourseSource;
+        saveCacheToStorage(activeUser, bourseSource, errorSummary, now);
         return errorSummary;
     }
 }
 
 /**
- * Force le rechargement du cache (utilisé après upload)
+ * Force le rechargement du cache (utilisé après upload ou changement de source)
+ * @param {boolean} clearAll - Si true, efface TOUS les caches Saxo (tous users)
  */
-export function invalidateSaxoCache() {
+export function invalidateSaxoCache(clearAll = false) {
     _cachedSummary = null;
     _cacheTimestamp = 0;
     _cachedForUser = null;
+    _cachedForSource = null;
+
+    // ✅ CRITICAL: Also clear localStorage caches for saxo
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(CACHE_KEY_PREFIX)) {
+                if (clearAll) {
+                    // Clear ALL Saxo caches (all users/sources)
+                    keysToRemove.push(key);
+                } else {
+                    // Clear only current user's cache
+                    const activeUser = localStorage.getItem('activeUser') || 'demo';
+                    if (key.includes(activeUser)) {
+                        keysToRemove.push(key);
+                    }
+                }
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Cleared ${keysToRemove.length} localStorage cache entries (clearAll=${clearAll})`);
+    } catch (err) {
+        (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to clear localStorage:', err);
+    }
+
+    // ✅ CRITICAL: Also invalidate availableSources cache
+    window.availableSources = null;
+    window._availableSourcesUser = null;
+    (window.debugLogger?.debug || console.log)('[Saxo Summary] All caches invalidated');
 }
+
+// ✅ EXPOSE globally for debug console access
+window.invalidateSaxoCache = invalidateSaxoCache;
 
 /**
  * Formate une valeur monétaire pour l'affichage

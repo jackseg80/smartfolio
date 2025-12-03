@@ -69,6 +69,8 @@ $redisHost = "localhost"
 
 if ($redisRunning) {
     Write-Host "✅ Redis is running on localhost" -ForegroundColor Green
+    $env:REDIS_URL = "redis://localhost:6379/0"
+    Write-Host "   Using REDIS_URL=$env:REDIS_URL" -ForegroundColor Gray
 }
 else {
     # Try WSL2 Redis
@@ -95,9 +97,9 @@ else {
                 if ($redisRunning) {
                     Write-Host "✅ Redis started on WSL2" -ForegroundColor Green
                     $redisHost = $wslIP
-                    # Use localhost Redis in WSL2 (Redis now binds to 127.0.0.1 in WSL2)
-                    $env:DB_REDIS_URL = "redis://localhost:6379/0"
-                    Write-Host "   Using DB_REDIS_URL=$env:DB_REDIS_URL (WSL2 localhost)" -ForegroundColor Gray
+                    # Set REDIS_URL to WSL2 IP (accessible from Windows)
+                    $env:REDIS_URL = "redis://$wslIP:6379/0"
+                    Write-Host "   Using REDIS_URL=$env:REDIS_URL (WSL2 IP)" -ForegroundColor Gray
                 }
                 else {
                     Write-Host "⚠️  Redis not accessible - server will run in degraded mode" -ForegroundColor Yellow

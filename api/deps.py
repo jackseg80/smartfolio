@@ -121,26 +121,38 @@ def get_redis_client() -> Optional[any]:
     # Return existing client if available
     if _redis_client is not None:
         try:
-            # Test connection
+            # Test connection (with timeout already configured on client)
             _redis_client.ping()
             return _redis_client
         except Exception as e:
-            logger.warning(f"Redis client lost connection: {e}")
+            logger.debug(f"Redis client lost connection: {e}")
             _redis_client = None
 
     # Try to create new client
     try:
         from redis import Redis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-        _redis_client = Redis.from_url(redis_url, decode_responses=False)
 
-        # Test connection
+        # Skip if REDIS_URL is empty
+        if not redis_url or redis_url.strip() == "":
+            logger.debug("Redis disabled (REDIS_URL is empty)")
+            return None
+
+        # Create client with fast timeout (0.5s) to avoid blocking
+        _redis_client = Redis.from_url(
+            redis_url,
+            decode_responses=False,
+            socket_connect_timeout=0.5,  # Fast connection timeout
+            socket_timeout=0.5             # Fast operation timeout
+        )
+
+        # Test connection (will timeout quickly if unavailable)
         _redis_client.ping()
         logger.info(f"Redis client connected: {redis_url}")
         return _redis_client
 
     except Exception as e:
-        logger.warning(f"Redis not available: {e}")
+        logger.debug(f"Redis not available: {e}")
         return None
 
 

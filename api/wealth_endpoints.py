@@ -546,7 +546,8 @@ async def global_summary(
     user: str = Depends(get_active_user),
     source: str = Query("auto", description="Crypto source resolver"),
     min_usd_threshold: float = Query(1.0, description="Minimum USD value to filter dust assets"),
-    bourse_file_key: Optional[str] = Query(None, description="Bourse file key for specific CSV selection")
+    bourse_file_key: Optional[str] = Query(None, description="Bourse file key for specific CSV selection"),
+    bourse_source: Optional[str] = Query(None, description="Bourse source (api:saxobank_api or saxo:file_key)")
 ) -> dict:
     """
     Agrégation globale de tous les modules wealth (crypto + saxo + patrimoine).
@@ -599,35 +600,70 @@ async def global_summary(
     except Exception as e:
         logger.error(f"[wealth][global] ❌ crypto failed for user={user}: {e}", exc_info=True)
 
-    # 2) Saxo (with file_key support + cash)
+    # 2) Saxo (with API and file_key support + cash)
     try:
         logger.info(f"[wealth][global] 🔍 Checking Saxo availability for user={user}")
         saxo_available = await _module_available("saxo", user)
         logger.info(f"[wealth][global] 📊 Saxo available: {saxo_available}")
 
         if saxo_available:
-            logger.info(f"[wealth][global] 📂 Loading Saxo positions with file_key={bourse_file_key}")
-            saxo_positions = await saxo_adapter.list_positions(user_id=user, file_key=bourse_file_key)
-            logger.info(f"[wealth][global] 📋 Got {len(saxo_positions)} Saxo positions")
-            breakdown["saxo"] = sum((p.market_value or 0.0) for p in saxo_positions)
+            logger.info(f"[wealth][global] 📌 Bourse source param: {bourse_source}, file_key param: {bourse_file_key}")
+            # ✅ Check if API mode (bourse_source starts with 'api:')
+            if bourse_source and bourse_source.startswith('api:'):
+                logger.info(f"[wealth][global] 🌐 Loading Saxo via API mode: {bourse_source}")
+                # ✅ OPTIMIZED: Use cached data directly (FAST, no HTTP call, instant response)
+                try:
+                    from services.saxo_auth_service import SaxoAuthService
 
-            # Add cash/liquidities if available
-            try:
-                import json
-                cash_key = bourse_file_key or "default"
-                cash_dir = Path(f"data/users/{user}/saxobank/cash")
-                cash_file = cash_dir / f"{cash_key}_cash.json"
+                    auth_service = SaxoAuthService(user)
 
-                if cash_file.exists():
-                    with open(cash_file, 'r', encoding='utf-8') as f:
-                        cash_data = json.load(f)
-                        cash_amount = float(cash_data.get("cash_amount", 0.0))
-                        breakdown["saxo"] += cash_amount
-                        logger.info(f"[wealth][global] 💵 Added cash ${cash_amount:.2f} to Saxo total")
-            except Exception as cash_error:
-                logger.debug(f"[wealth][global] Cash file not found or error (non-blocking): {cash_error}")
+                    # Check if user is connected
+                    if not auth_service.is_connected():
+                        logger.warning(f"[wealth][global] ⚠️ User {user} not connected to Saxo API")
+                        breakdown["saxo"] = 0.0
+                    else:
+                        # ✅ CRITICAL: Use cached data (FAST, no API call, includes cash+total)
+                        cached_data = await auth_service.get_cached_positions(max_age_hours=24)
 
-            logger.info(f"[wealth][global] ✅ saxo={breakdown['saxo']:.2f} USD for user={user} file_key={bourse_file_key}")
+                        if cached_data and cached_data.get("total_value", 0) > 0:
+                            # ✅ Use pre-calculated total_value from cache (includes positions + cash)
+                            total_value = cached_data.get("total_value", 0.0)
+                            cash_balance = cached_data.get("cash_balance", 0.0)
+                            positions_count = len(cached_data.get("positions", []))
+
+                            breakdown["saxo"] = total_value
+                            logger.info(f"[wealth][global] ✅ Saxo (cached): {positions_count} positions, total=${total_value:.2f} USD (cash=${cash_balance:.2f})")
+                        else:
+                            logger.warning(f"[wealth][global] ⚠️ No cached Saxo data available for user {user}")
+                            breakdown["saxo"] = 0.0
+
+                except Exception as api_error:
+                    logger.error(f"[wealth][global] ❌ Saxo cache read failed: {api_error}", exc_info=True)
+                    breakdown["saxo"] = 0.0
+            else:
+                # CSV mode: use file_key
+                logger.info(f"[wealth][global] 📂 Loading Saxo positions with file_key={bourse_file_key}")
+                saxo_positions = await saxo_adapter.list_positions(user_id=user, file_key=bourse_file_key)
+                logger.info(f"[wealth][global] 📋 Got {len(saxo_positions)} Saxo positions")
+                breakdown["saxo"] = sum((p.market_value or 0.0) for p in saxo_positions)
+
+                # Add cash/liquidities if available
+                try:
+                    import json
+                    cash_key = bourse_file_key or "default"
+                    cash_dir = Path(f"data/users/{user}/saxobank/cash")
+                    cash_file = cash_dir / f"{cash_key}_cash.json"
+
+                    if cash_file.exists():
+                        with open(cash_file, 'r', encoding='utf-8') as f:
+                            cash_data = json.load(f)
+                            cash_amount = float(cash_data.get("cash_amount", 0.0))
+                            breakdown["saxo"] += cash_amount
+                            logger.info(f"[wealth][global] 💵 Added cash ${cash_amount:.2f} to Saxo total")
+                except Exception as cash_error:
+                    logger.debug(f"[wealth][global] Cash file not found or error (non-blocking): {cash_error}")
+
+                logger.info(f"[wealth][global] ✅ saxo={breakdown['saxo']:.2f} USD for user={user} file_key={bourse_file_key}")
         else:
             logger.warning(f"[wealth][global] ⚠️ Saxo module not available for user={user}")
     except Exception as e:
