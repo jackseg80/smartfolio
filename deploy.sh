@@ -112,7 +112,7 @@ fi
 
 # Step 4: Verify price cache exists
 echo ""
-echo -e "${YELLOW}💰 Step 4/6: Verifying price cache...${NC}"
+echo -e "${YELLOW}💰 Step 4/7: Verifying price cache...${NC}"
 CACHE_COUNT=$(find data/price_history -name "*.json" 2>/dev/null | wc -l)
 if [ "$CACHE_COUNT" -lt 100 ]; then
     echo -e "${RED}⚠️  Warning: Only $CACHE_COUNT price cache files found (expected ~127)${NC}"
@@ -121,13 +121,53 @@ else
     echo -e "${GREEN}✅ Price cache OK: $CACHE_COUNT files${NC}"
 fi
 
-# Step 5: Docker rebuild or restart
+# Step 5: Verify Saxo credentials in .env
+echo ""
+echo -e "${YELLOW}🔑 Step 5/7: Verifying Saxo credentials...${NC}"
+
+# Check if .env exists
+if [ ! -f ".env" ]; then
+    echo -e "${RED}❌ Error: .env file not found${NC}"
+    echo -e "${YELLOW}   Copy .env.production.example to .env and fill in your credentials:${NC}"
+    echo -e "   cp .env.production.example .env"
+    echo -e "   nano .env  # Edit and add your Saxo credentials"
+    exit 1
+fi
+
+# Check Saxo variables
+SAXO_ENV=$(grep "^SAXO_ENVIRONMENT=" .env 2>/dev/null | cut -d'=' -f2 || echo "")
+SAXO_LIVE_ID=$(grep "^SAXO_LIVE_CLIENT_ID=" .env 2>/dev/null | cut -d'=' -f2 || echo "")
+SAXO_LIVE_SECRET=$(grep "^SAXO_LIVE_CLIENT_SECRET=" .env 2>/dev/null | cut -d'=' -f2 || echo "")
+
+if [ -z "$SAXO_ENV" ]; then
+    echo -e "${RED}⚠️  Warning: SAXO_ENVIRONMENT not set in .env${NC}"
+    echo -e "${YELLOW}   Add: SAXO_ENVIRONMENT=sim (or live for production)${NC}"
+fi
+
+if [ "$SAXO_ENV" = "live" ]; then
+    if [ -z "$SAXO_LIVE_ID" ] || [ "$SAXO_LIVE_ID" = "your_live_client_id_here" ]; then
+        echo -e "${RED}❌ Error: SAXO_LIVE_CLIENT_ID not configured for live environment${NC}"
+        echo -e "${YELLOW}   Edit .env and add your real Saxo Live credentials${NC}"
+        exit 1
+    fi
+    if [ -z "$SAXO_LIVE_SECRET" ] || [ "$SAXO_LIVE_SECRET" = "your_live_client_secret_here" ]; then
+        echo -e "${RED}❌ Error: SAXO_LIVE_CLIENT_SECRET not configured for live environment${NC}"
+        echo -e "${YELLOW}   Edit .env and add your real Saxo Live credentials${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Saxo credentials: LIVE mode (real trading!)${NC}"
+    echo -e "${YELLOW}   ⚠️  WARNING: Using real Saxo account - trades will be executed!${NC}"
+else
+    echo -e "${GREEN}✅ Saxo credentials: SIM mode (safe testing)${NC}"
+fi
+
+# Step 6: Docker rebuild or restart
 echo ""
 if [ $SKIP_BUILD -eq 1 ]; then
-    echo -e "${YELLOW}🔄 Step 5/6: Restarting Docker (skip build)...${NC}"
+    echo -e "${YELLOW}🔄 Step 6/7: Restarting Docker (skip build)...${NC}"
     docker-compose restart
 else
-    echo -e "${YELLOW}🐳 Step 5/6: Rebuilding and restarting Docker...${NC}"
+    echo -e "${YELLOW}🐳 Step 6/7: Rebuilding and restarting Docker...${NC}"
 
     # Stop old containers
     docker-compose down
@@ -142,9 +182,9 @@ fi
 
 echo -e "${GREEN}✅ Docker containers started${NC}"
 
-# Step 6: Health check
+# Step 7: Health check
 echo ""
-echo -e "${YELLOW}🏥 Step 6/6: Waiting for services to be healthy...${NC}"
+echo -e "${YELLOW}🏥 Step 7/7: Waiting for services to be healthy...${NC}"
 sleep 10
 
 # Check Docker containers
