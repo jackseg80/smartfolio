@@ -10,7 +10,6 @@ from logging.handlers import RotatingFileHandler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from api.middleware import RateLimitMiddleware
 from api.middlewares import (
     add_security_headers_middleware,
@@ -262,23 +261,27 @@ app.add_middleware(
 )
 
 # Middleware de sécurité
-if not DEBUG:
-    # HTTPS redirect en production seulement
-    app.add_middleware(HTTPSRedirectMiddleware)
+# Note: HTTPSRedirectMiddleware désactivé pour LAN HTTP (Docker production)
+# if not DEBUG:
+#     app.add_middleware(HTTPSRedirectMiddleware)
 
 # TrustedHost config selon l'environnement
-if DEBUG:
+# Lecture depuis ALLOWED_HOSTS (env var) pour flexibilité production
+ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS", "")
+if ALLOWED_HOSTS_ENV:
+    # Si ALLOWED_HOSTS défini, utiliser la liste (comma-separated)
+    allowed_hosts = [h.strip() for h in ALLOWED_HOSTS_ENV.split(",") if h.strip()]
+    logger.info(f"🔒 TrustedHostMiddleware: custom allowed_hosts={allowed_hosts}")
+elif DEBUG:
     # En développement, plus permissif pour les tests
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"],  # Permet tous les hosts en dev
-    )
+    allowed_hosts = ["*"]
+    logger.info("🔒 TrustedHostMiddleware: dev mode (allow all hosts)")
 else:
-    # En production, strict
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["localhost", "127.0.0.1", "*.localhost"],
-    )
+    # En production sans ALLOWED_HOSTS: fallback permissif pour Docker/LAN
+    allowed_hosts = ["*"]
+    logger.warning("⚠️  TrustedHostMiddleware: production sans ALLOWED_HOSTS défini, utilise '*' (permissif)")
+
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # Compression GZip pour améliorer les performances
 app.add_middleware(GZipMiddleware, minimum_size=1000)
