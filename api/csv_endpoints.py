@@ -102,19 +102,19 @@ class CSVDownloadResponse(BaseModel):
 
 
 def get_cointracking_credentials_for_user(user: str) -> tuple[str, str]:
-    """Récupère les credentials CoinTracking depuis l'environnement"""
-    # Utiliser d'abord les clés du profil utilisateur
+    """Récupère les credentials CoinTracking depuis secrets.json"""
+    # Use modern user_secrets system (reads secrets.json)
     try:
-        project_root = str(Path(__file__).parent.parent)
-        user_fs = UserScopedFS(project_root, user)
-        settings = user_fs.read_json("config.json")
-        api_key = settings.get("cointracking_api_key")
-        api_secret = settings.get("cointracking_api_secret")
-    except Exception:
+        from services.user_secrets import get_user_secrets
+        secrets = get_user_secrets(user)
+        api_key = secrets.get("cointracking", {}).get("api_key")
+        api_secret = secrets.get("cointracking", {}).get("api_secret")
+    except Exception as e:
+        logger.warning(f"Failed to load CoinTracking credentials from secrets.json: {e}")
         api_key = None
         api_secret = None
 
-    # Fallback éventuel vers env (dev only)
+    # Fallback to env (dev only)
     if not api_key:
         api_key = os.getenv("CT_API_KEY") or os.getenv("COINTRACKING_API_KEY")
     if not api_secret:
@@ -123,7 +123,7 @@ def get_cointracking_credentials_for_user(user: str) -> tuple[str, str]:
     if not api_key or not api_secret:
         raise HTTPException(
             status_code=400,
-            detail="Clés API CoinTracking non configurées pour cet utilisateur"
+            detail=f"Clés API CoinTracking non configurées pour l'utilisateur {user} (vérifier data/users/{user}/secrets.json)"
         )
 
     return api_key, api_secret
