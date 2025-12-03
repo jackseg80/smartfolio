@@ -108,19 +108,27 @@ def _add_csp_headers(response: Response, request: Request) -> None:
     font_src = _join(font_src_list)
     media_src = _join(media_src_list)
 
-    # Development: relax CSP for docs/redoc and static files
+    # Relax CSP for docs/redoc and static HTML files
     path = request.url.path
     is_docs = path in ("/docs", "/redoc", "/openapi.json")
+    is_static_html = str(path).startswith("/static/") and path.endswith(".html")
     is_static = str(path).startswith("/static/")
 
-    if settings.is_debug_enabled() and (is_docs or is_static):
-        if getattr(sec, 'csp_allow_inline_dev', True):
-            if "'unsafe-inline'" not in script_src:
-                script_src = (script_src + " 'unsafe-inline'").strip()
-            if "'unsafe-eval'" not in script_src:
-                script_src = (script_src + " 'unsafe-eval'").strip()
-            if "'unsafe-inline'" not in style_src:
-                style_src = (style_src + " 'unsafe-inline'").strip()
+    # Allow inline scripts for:
+    # - Dev mode: docs + all static files
+    # - Production: docs + static HTML pages (dashboards need inline scripts)
+    allow_inline = (
+        (settings.is_debug_enabled() and (is_docs or is_static)) or
+        (is_docs or is_static_html)  # Always allow for docs + static HTML
+    )
+
+    if allow_inline and getattr(sec, 'csp_allow_inline_dev', True):
+        if "'unsafe-inline'" not in script_src:
+            script_src = (script_src + " 'unsafe-inline'").strip()
+        if "'unsafe-eval'" not in script_src:
+            script_src = (script_src + " 'unsafe-eval'").strip()
+        if "'unsafe-inline'" not in style_src:
+            style_src = (style_src + " 'unsafe-inline'").strip()
 
     # Frame ancestors
     frame_ancestors = _join(getattr(sec, 'csp_frame_ancestors', ["'self'"]))
