@@ -87,6 +87,14 @@ services:
       # CORS (dev only)
       CORS_ORIGINS: ${CORS_ORIGINS:-}
 
+      # SaxoBank OAuth2 credentials (read from .env)
+      SAXO_SIM_CLIENT_ID: ${SAXO_SIM_CLIENT_ID}
+      SAXO_SIM_CLIENT_SECRET: ${SAXO_SIM_CLIENT_SECRET}
+      SAXO_LIVE_CLIENT_ID: ${SAXO_LIVE_CLIENT_ID}
+      SAXO_LIVE_CLIENT_SECRET: ${SAXO_LIVE_CLIENT_SECRET}
+      SAXO_ENVIRONMENT: ${SAXO_ENVIRONMENT:-sim}
+      SAXO_REDIRECT_URI: ${SAXO_REDIRECT_URI}
+
     volumes:
       # Only mount data and logs directories (not entire project)
       # This prevents issues with venv/, __pycache__, etc.
