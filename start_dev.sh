@@ -62,6 +62,8 @@ echo "🔍 Checking Redis..."
 REDIS_RUNNING=0
 if command -v redis-cli &> /dev/null && redis-cli ping &> /dev/null; then
     echo "✅ Redis is running on localhost"
+    export REDIS_URL="redis://localhost:6379/0"
+    echo "   Using REDIS_URL=$REDIS_URL"
     REDIS_RUNNING=1
 else
     # Try to start Redis service (systemd)
@@ -71,6 +73,8 @@ else
             sleep 1
             if redis-cli ping &> /dev/null; then
                 echo "✅ Redis started successfully"
+                export REDIS_URL="redis://localhost:6379/0"
+                echo "   Using REDIS_URL=$REDIS_URL"
                 REDIS_RUNNING=1
             fi
         fi
@@ -81,6 +85,8 @@ else
             sleep 1
             if redis-cli ping &> /dev/null; then
                 echo "✅ Redis started successfully"
+                export REDIS_URL="redis://localhost:6379/0"
+                echo "   Using REDIS_URL=$REDIS_URL"
                 REDIS_RUNNING=1
             fi
         fi
