@@ -493,15 +493,19 @@ async def get_saxo_api_positions(
 
         # Try cached data first if requested
         if use_cache:
-            cached = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
-            if cached:
+            cached_data = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
+            if cached_data:
+                positions = cached_data.get("positions", [])
                 logger.info(f"📦 Returning cached positions for user '{user}'")
                 return success_response({
-                    "positions": cached,
+                    "positions": positions,
+                    "cash_balance": cached_data.get("cash_balance", 0.0),
+                    "total_value": cached_data.get("total_value", 0.0),
+                    "currency": "USD",
                     "source": "cache",
                     "timestamp": datetime.now().isoformat()
                 }, meta={
-                    "count": len(cached),
+                    "count": len(positions),
                     "source": "cache"
                 })
 
@@ -548,41 +552,76 @@ async def get_saxo_api_positions(
 
             # Extract cash balance
             cash_balance = balances_data.get("CashBalance", 0.0)
-            total_value = balances_data.get("TotalValue", 0.0)
+            total_value_api = balances_data.get("TotalValue", 0.0)
             currency = balances_data.get("Currency", "EUR")
 
-            # Cache for offline fallback
-            await auth_service.cache_positions(positions_normalized)
+            # ✅ CRITICAL: Convert EUR → USD for frontend consistency
+            # Frontend expects USD everywhere, Saxo returns EUR
+            EUR_TO_USD_RATE = 1.16  # TODO: Use dynamic rate from FX service
 
-            logger.info(f"✅ Retrieved {len(positions_normalized)} positions + cash ({cash_balance} {currency}) from Saxo API for user '{user}'")
+            # Convert positions market_value to USD
+            for pos in positions_normalized:
+                if pos.get("market_value"):
+                    pos["market_value"] = pos["market_value"] * EUR_TO_USD_RATE
+                if pos.get("current_price"):
+                    pos["current_price"] = pos["current_price"] * EUR_TO_USD_RATE
+                if pos.get("avg_price"):
+                    pos["avg_price"] = pos["avg_price"] * EUR_TO_USD_RATE
+                if pos.get("pnl"):
+                    pos["pnl"] = pos["pnl"] * EUR_TO_USD_RATE
+
+            # ✅ CRITICAL: ALWAYS use Saxo API TotalValue (already includes positions + cash)
+            # The API knows best - don't recalculate!
+            total_value_eur = total_value_api
+            cash_balance_eur = cash_balance
+            total_value_usd = total_value_eur * EUR_TO_USD_RATE
+            cash_balance_usd = cash_balance_eur * EUR_TO_USD_RATE
+
+            # Log manual calculation for debug only (now in USD)
+            positions_total_usd = sum(p.get("market_value", 0.0) for p in positions_normalized)
+            total_value_calculated_usd = positions_total_usd + cash_balance_usd
+
+            if abs(total_value_usd - total_value_calculated_usd) > 1.0:
+                logger.warning(f"⚠️ Manual calculation mismatch: API=${total_value_usd:.2f} vs Calculated=${total_value_calculated_usd:.2f} USD")
+
+            logger.info(f"✅ Saxo API: {len(positions_normalized)} positions, cash={cash_balance_eur:.2f} EUR (${cash_balance_usd:.2f} USD), total={total_value_eur:.2f} EUR (${total_value_usd:.2f} USD)")
+
+            # Cache for offline fallback (including cash_balance and total_value)
+            await auth_service.cache_positions(positions_normalized, cash_balance_usd, total_value_usd)
 
             return success_response({
                 "positions": positions_normalized,
-                "cash_balance": cash_balance,
-                "total_value": total_value,
-                "currency": currency,
+                "cash_balance": cash_balance_usd,  # USD for frontend
+                "total_value": total_value_usd,    # USD for frontend
+                "currency": "USD",  # Converted to USD
                 "source": "api",
                 "timestamp": datetime.now().isoformat()
             }, meta={
                 "count": len(positions_normalized),
-                "environment": oauth_client.environment
+                "environment": oauth_client.environment,
+                "original_currency": currency,  # Keep EUR for reference
+                "eur_to_usd_rate": EUR_TO_USD_RATE
             })
 
         except Exception as api_error:
             # API call failed → try cache fallback
             logger.warning(f"⚠️ Saxo API call failed: {api_error}")
 
-            cached = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
+            cached_data = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
 
-            if cached:
+            if cached_data:
+                positions = cached_data.get("positions", [])
                 logger.info(f"📦 Returning cached positions (API failed) for user '{user}'")
                 return success_response({
-                    "positions": cached,
+                    "positions": positions,
+                    "cash_balance": cached_data.get("cash_balance", 0.0),
+                    "total_value": cached_data.get("total_value", 0.0),
+                    "currency": "USD",
                     "source": "cache_fallback",
                     "timestamp": datetime.now().isoformat(),
                     "warning": f"API unavailable - using cached data: {str(api_error)}"
                 }, meta={
-                    "count": len(cached),
+                    "count": len(positions),
                     "source": "cache_fallback"
                 })
 
@@ -826,6 +865,19 @@ def _normalize_positions(
                 isin = pos.get("Isin", "")
                 currency = pos.get("Currency", "EUR")
 
+            # ✅ Build tags for frontend compatibility (dashboard chart grouping)
+            tags = []
+            if asset_type:
+                tags.append(f"asset_class:{asset_type}")
+
+            # Try to get sector from UIC metadata
+            sector = None
+            if uic_metadata and uic in uic_metadata:
+                sector = uic_metadata[uic].get("gics_sector") or uic_metadata[uic].get("sector")
+
+            if sector:
+                tags.append(f"sector:{sector}")
+
             normalized.append({
                 "symbol": symbol,
                 "name": name,
@@ -838,7 +890,9 @@ def _normalize_positions(
                 "asset_class": asset_type,
                 "isin": isin,
                 "currency": currency,
-                "uic": uic  # Preserve UIC for debugging (None for Sim positions)
+                "uic": uic,  # Preserve UIC for debugging (None for Sim positions)
+                "tags": tags,  # ✅ CRITICAL: Add tags for frontend chart grouping
+                "sector": sector  # ✅ Add sector for filtering/grouping
             })
 
         except Exception as e:

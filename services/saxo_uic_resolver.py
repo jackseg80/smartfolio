@@ -131,11 +131,15 @@ class SaxoUICResolver:
         symbol_raw = instrument_data.get("Symbol", "")
         symbol = symbol_raw.split(":")[0] if ":" in symbol_raw else symbol_raw
 
+        # ✅ Extract GICS sector if available
+        gics_sector = instrument_data.get("Gics", {}).get("SectorName", "") if isinstance(instrument_data.get("Gics"), dict) else ""
+
         resolved = {
             "symbol": symbol or f"UIC-{uic}",
             "name": instrument_data.get("Description", f"Instrument {uic}"),
             "isin": instrument_data.get("Isin", ""),
-            "currency": instrument_data.get("Currency", "")
+            "currency": instrument_data.get("Currency", ""),
+            "gics_sector": gics_sector  # ✅ Add GICS sector for chart grouping
         }
 
         # Cache result

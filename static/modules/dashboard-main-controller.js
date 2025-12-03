@@ -1870,8 +1870,8 @@ async function updatePortfolioChart(balancesData) {
 }
 
 // Créer ou mettre à jour le graphique Saxo (Bourse)
-async function updateSaxoChart(positions) {
-    log.debug('updateSaxoChart - positions:', positions);
+async function updateSaxoChart(positions, cashBalance = 0) {
+    log.debug('updateSaxoChart - positions:', positions, 'cash:', cashBalance);
 
     if (!positions || positions.length === 0) {
         const container = document.getElementById('saxo-chart');
@@ -1911,13 +1911,18 @@ async function updateSaxoChart(positions) {
         grouped[assetClass].count += 1;
     });
 
+    // ✅ Add cash as a separate category if present
+    if (cashBalance > 0) {
+        grouped['CASH'] = { label: 'Cash', value: cashBalance, count: 1 };
+    }
+
     // Convertir en tableau et trier
     const sortedData = Object.values(grouped).sort((a, b) => b.value - a.value);
     const labels = sortedData.map(item => item.label);
     const values = sortedData.map(item => item.value);
     const total = values.reduce((sum, v) => sum + v, 0);
 
-    log.debug('Saxo chart data:', { labels, values, total: total.toFixed(2) });
+    log.debug('Saxo chart data:', { labels, values, total: total.toFixed(2), cash: cashBalance });
 
     if (total === 0) {
         document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune valeur</div>';
@@ -2399,7 +2404,9 @@ async function refreshSaxoTile() {
     try {
         // Dynamic import to access module functions
         const { fetchSaxoSummary, formatCurrency, getMetricColor } = await import('../modules/wealth-saxo-summary.js');
+        debugLogger.debug('[Saxo Tile] Module imported successfully, calling fetchSaxoSummary...');
         const summary = await fetchSaxoSummary();
+        debugLogger.debug('[Saxo Tile] fetchSaxoSummary returned:', {isEmpty: summary.isEmpty, error: summary.error, total_value: summary.total_value, positions_count: summary.positions_count});
 
         if (summary.isEmpty || summary.error) {
             // Empty state or error - hide all normal elements
@@ -2412,7 +2419,30 @@ async function refreshSaxoTile() {
             const exportBtn = document.getElementById('saxo-export-btn');
             if (exportBtn) exportBtn.style.display = 'none';
 
-            if (emptyStateEl) emptyStateEl.style.display = 'block';
+            // Personnaliser le message selon le type d'erreur
+            if (emptyStateEl) {
+                emptyStateEl.style.display = 'block';
+
+                if (summary.needsConnection) {
+                    // Utilisateur non connecté à Saxo API
+                    emptyStateEl.innerHTML = `
+                        <span style="color: var(--warning);">⚠️ Non connecté à Saxo API</span><br>
+                        <a href="settings.html#sources">Se connecter dans Paramètres > Sources</a>
+                    `;
+                } else if (summary.error && summary.error !== 'unknown error') {
+                    // Erreur API spécifique
+                    emptyStateEl.innerHTML = `
+                        <span style="color: var(--danger);">❌ ${summary.asof || 'Erreur API'}</span><br>
+                        <a href="settings.html#sources">Vérifier la configuration</a>
+                    `;
+                } else {
+                    // Aucune donnée (état vide normal)
+                    emptyStateEl.innerHTML = `
+                        No Saxo positions.<br>
+                        <a href="settings.html#sources">Import a file in Settings</a>
+                    `;
+                }
+            }
 
             debugLogger.warn('[Saxo Tile] Empty state or error:', summary.error || 'No positions');
         } else {
@@ -2449,9 +2479,9 @@ async function refreshSaxoTile() {
 
                 // Check if API mode (api:saxobank_api)
                 if (bourseSource && bourseSource.startsWith('api:')) {
-                    // API mode: use api-positions endpoint
-                    apiUrl = `/api/saxo/api-positions`;
-                    debugLogger.debug(`[Saxo Tile Chart] Using API mode: ${bourseSource}`);
+                    // API mode: use api-positions endpoint with cache (FAST, no live API call)
+                    apiUrl = `/api/saxo/api-positions?use_cache=true&max_cache_age_hours=24`;
+                    debugLogger.debug(`[Saxo Tile Chart] Using API mode (cached): ${bourseSource}`);
                 }
                 // Check if CSV mode (saxo:file_key)
                 else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
@@ -2470,8 +2500,11 @@ async function refreshSaxoTile() {
 
                 if (positionsResponse.ok) {
                     const positionsData = await positionsResponse.json();
-                    const positions = positionsData.positions || [];
-                    await updateSaxoChart(positions);
+                    // ✅ Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
+                    const positions = positionsData.data?.positions || positionsData.positions || [];
+                    const cashBalance = positionsData.data?.cash_balance || 0;
+                    debugLogger.debug(`[Saxo Tile Chart] Extracted ${positions.length} positions + cash=$${cashBalance} for chart`);
+                    await updateSaxoChart(positions, cashBalance);
                 }
             } catch (chartError) {
                 debugLogger.warn('[Saxo Tile] Could not update chart:', chartError);
@@ -2624,35 +2657,56 @@ async function refreshGlobalTile() {
             }
         }
 
-        // ✅ FIX: Get Bourse source from WealthContextBar and extract file_key
+        // ✅ FIX: Get Bourse source from WealthContextBar (handles both CSV and API modes)
         let bourseFileKey = null;
+        let bourseSourceParam = null;
         const bourseSource = window.wealthContextBar?.getContext()?.bourse;
-        if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
-            const key = bourseSource.substring(5); // Remove 'saxo:' prefix
 
-            // Resolve file_key from source (same logic as wealth-saxo-summary.js)
-            if (!window.availableSources) {
-                const sourcesResponse = await fetch('/api/users/sources', {
-                    headers: { 'X-User': activeUser }
-                });
-                if (sourcesResponse.ok) {
-                    const data = await sourcesResponse.json();
-                    window.availableSources = data.sources || [];
+        if (bourseSource && bourseSource !== 'all') {
+            if (bourseSource.startsWith('api:')) {
+                // API mode: pass source parameter directly
+                bourseSourceParam = bourseSource;
+                debugLogger.debug(`[Global Tile] Using Bourse API mode: ${bourseSource}`);
+            } else if (bourseSource.startsWith('saxo:')) {
+                // CSV mode: extract file_key
+                const key = bourseSource.substring(5); // Remove 'saxo:' prefix
+
+                // Resolve file_key from source (same logic as wealth-saxo-summary.js)
+                if (!window.availableSources) {
+                    const sourcesResponse = await fetch('/api/users/sources', {
+                        headers: { 'X-User': activeUser }
+                    });
+                    if (sourcesResponse.ok) {
+                        const data = await sourcesResponse.json();
+                        window.availableSources = data.sources || [];
+                    }
+                }
+
+                const source = window.availableSources?.find(s => s.key === key);
+                if (source?.file_path) {
+                    bourseFileKey = source.file_path.split(/[/\\]/).pop();
+                    debugLogger.debug(`[Global Tile] Using Bourse file_key: ${bourseFileKey}`);
                 }
             }
-
-            const source = window.availableSources?.find(s => s.key === key);
-            if (source?.file_path) {
-                bourseFileKey = source.file_path.split(/[/\\]/).pop();
-                debugLogger.debug(`[Global Tile] Using Bourse file_key: ${bourseFileKey}`);
-            }
         }
 
-        // Build API URL with bourse_file_key if available
+        // Build API URL with bourse_source or bourse_file_key
         let apiUrl = `${window.location.origin}/api/wealth/global/summary?source=${currentSource}&min_usd_threshold=${minThreshold}`;
-        if (bourseFileKey) {
+        if (bourseSourceParam) {
+            apiUrl += `&bourse_source=${encodeURIComponent(bourseSourceParam)}`;
+        } else if (bourseFileKey) {
             apiUrl += `&bourse_file_key=${encodeURIComponent(bourseFileKey)}`;
         }
+
+        // ✅ CRITICAL DEBUG: Log API call details
+        console.error(`🔥 GLOBAL API CALL DEBUG:`, {
+            url: apiUrl,
+            user: activeUser,
+            currentSource,
+            bourseSource,
+            bourseSourceParam,
+            bourseFileKey
+        });
 
         const response = await fetch(apiUrl, {
             headers: { 'X-User': activeUser }
@@ -2773,6 +2827,17 @@ async function refreshGlobalTile() {
             statusEl.textContent = 'OK';
             statusEl.className = 'status-badge status-active';
         }
+
+        // ✅ CRITICAL DEBUG: Log breakdown details to diagnose missing Bourse card
+        console.error(`🔥 GLOBAL BREAKDOWN DEBUG:`, {
+            crypto: data.breakdown?.crypto,
+            saxo: data.breakdown?.saxo,
+            patrimoine: data.breakdown?.patrimoine,
+            total: data.total_value_usd,
+            cryptoPct: data.breakdown?.crypto ? ((data.breakdown.crypto / data.total_value_usd) * 100).toFixed(1) : 'N/A',
+            saxoPct: data.breakdown?.saxo ? ((data.breakdown.saxo / data.total_value_usd) * 100).toFixed(1) : 'N/A',
+            patrimoinePct: data.breakdown?.patrimoine ? ((data.breakdown.patrimoine / data.total_value_usd) * 100).toFixed(1) : 'N/A'
+        });
 
         debugLogger.debug('✅ Global tile updated:', data);
 

@@ -228,12 +228,14 @@ class SaxoAuthService:
             logger.warning(f"Error during disconnect (ignored): {e}")
             logger.info(f"✅ User '{self.user_id}' marked as disconnected despite error")
 
-    async def cache_positions(self, positions: List[Dict[str, Any]]) -> None:
+    async def cache_positions(self, positions: List[Dict[str, Any]], cash_balance: float = 0.0, total_value: float = 0.0) -> None:
         """
         Cache positions data for offline fallback.
 
         Args:
             positions: List of normalized position dicts
+            cash_balance: Cash balance in USD (optional)
+            total_value: Total portfolio value in USD (optional)
 
         Storage:
             data/users/{user_id}/saxobank/api_cache/positions_YYYYMMDD_HHMMSS.json
@@ -247,15 +249,17 @@ class SaxoAuthService:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             cache_filename = f"{self.cache_dir}/positions_{timestamp}.json"
 
-            # Save
+            # Save (including cash_balance and total_value for Global Overview)
             cache_data = {
                 "timestamp": datetime.now().isoformat(),
                 "positions": positions,
-                "count": len(positions)
+                "count": len(positions),
+                "cash_balance": cash_balance,  # ✅ NEW: store cash for fast access
+                "total_value": total_value      # ✅ NEW: store total for fast access
             }
 
             self.user_fs.write_json(cache_filename, cache_data)
-            logger.info(f"✅ Cached {len(positions)} positions for user '{self.user_id}'")
+            logger.info(f"✅ Cached {len(positions)} positions for user '{self.user_id}' (total=${total_value:.2f}, cash=${cash_balance:.2f})")
 
             # Cleanup old cache files (keep last 5)
             self._cleanup_old_caches()
@@ -267,7 +271,7 @@ class SaxoAuthService:
     async def get_cached_positions(
         self,
         max_age_hours: int = 24
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> Optional[Dict[str, Any]]:
         """
         Retrieve cached positions if available and fresh enough.
 
@@ -275,7 +279,7 @@ class SaxoAuthService:
             max_age_hours: Maximum age of cache in hours (default: 24)
 
         Returns:
-            List of positions or None if no valid cache found
+            Dict with positions, cash_balance, total_value or None if no valid cache found
         """
         try:
             cache_dir_path = Path(self.user_fs.get_absolute_path(self.cache_dir))
@@ -306,8 +310,15 @@ class SaxoAuthService:
                 return None
 
             positions = cache_data.get("positions", [])
-            logger.info(f"✅ Retrieved {len(positions)} positions from cache (age: {age_hours:.1f}h)")
-            return positions
+            cash_balance = cache_data.get("cash_balance", 0.0)
+            total_value = cache_data.get("total_value", 0.0)
+
+            logger.info(f"✅ Retrieved {len(positions)} positions from cache (age: {age_hours:.1f}h, total=${total_value:.2f})")
+            return {
+                "positions": positions,
+                "cash_balance": cash_balance,
+                "total_value": total_value
+            }
 
         except Exception as e:
             logger.error(f"Error retrieving cached positions: {e}")
