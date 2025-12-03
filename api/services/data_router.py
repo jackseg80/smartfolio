@@ -37,12 +37,11 @@ class UserDataRouter:
         logger.debug(f"UserDataRouter for '{user_id}' (data_source: {self.data_source})")
 
     def _load_user_settings(self):
-        """Charge les settings utilisateur depuis config.json"""
+        """Charge les settings utilisateur depuis config.json (UI) et secrets.json (API keys)"""
+        # Load UI settings from config.json
         try:
             self.settings = self.user_fs.read_json("config.json")
-            logger.info(f"🔧 DEBUG: Loaded settings for user {self.user_id}, keys = {list(self.settings.keys())[:10]}")
-            logger.info(f"🔑 DEBUG: 'cointracking_api_key' in settings = {'cointracking_api_key' in self.settings}")
-            logger.info(f"🔑 DEBUG: 'cointracking_api_secret' in settings = {'cointracking_api_secret' in self.settings}")
+            logger.debug(f"Loaded UI settings for user {self.user_id}")
         except (FileNotFoundError, ValueError):
             # Settings par défaut si pas de fichier
             self.settings = {
@@ -54,19 +53,25 @@ class UserDataRouter:
             }
             logger.debug(f"Using default settings for user {self.user_id}")
 
+        # Load API credentials from secrets.json (modern system)
+        from services.user_secrets import get_user_secrets
+        secrets = get_user_secrets(self.user_id)
+
         # Propriétés d'accès rapide
         self.data_source = self.settings.get("data_source", "csv")
         self.csv_glob = self.settings.get("csv_glob", "csv/*.csv")
         # Fichier CSV sélectionné explicitement (nom de fichier)
         self.selected_csv = self.settings.get("csv_selected_file")
-        logger.info(f"🔧 UserDataRouter for user '{self.user_id}': data_source='{self.data_source}', selected_csv='{self.selected_csv}'")
+        logger.info(f"UserDataRouter for user '{self.user_id}': data_source='{self.data_source}', selected_csv='{self.selected_csv}'")
+
+        # Use secrets.json for API credentials
         self.api_credentials = {
-            "api_key": self.settings.get("cointracking_api_key", ""),
-            "api_secret": self.settings.get("cointracking_api_secret", ""),
-            "saxo_client_id": self.settings.get("saxo_client_id", ""),
+            "api_key": secrets.get("cointracking", {}).get("api_key", ""),
+            "api_secret": secrets.get("cointracking", {}).get("api_secret", ""),
+            "saxo_client_id": self.settings.get("saxo_client_id", ""),  # Saxo still in config for now
             "saxo_client_secret": self.settings.get("saxo_client_secret", "")
         }
-        logger.info(f"🔑 DEBUG: api_credentials loaded, len_key={len(self.api_credentials.get('api_key', ''))}, len_secret={len(self.api_credentials.get('api_secret', ''))}")
+        logger.info(f"API credentials loaded from secrets.json: key_len={len(self.api_credentials.get('api_key', ''))}, secret_len={len(self.api_credentials.get('api_secret', ''))}")
 
     def get_csv_files(self, file_type: str = "balance") -> List[str]:
         """

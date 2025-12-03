@@ -212,8 +212,10 @@ def resolve_secret_ref(ref: str, user_fs: UserScopedFS) -> Optional[str]:
     """
     Résout une référence de secret vers sa valeur réelle.
 
-    Recherche d'abord dans config/config.json de l'utilisateur,
-    puis dans les variables d'environnement (fallback).
+    Recherche dans cet ordre:
+    1. secrets.json utilisateur (MODERNE - recommandé)
+    2. Variables d'environnement (fallback)
+    3. config.json utilisateur (LEGACY - déprécié, pour compatibilité)
 
     Args:
         ref: Référence du secret (ex: "cointracking_api_key")
@@ -222,21 +224,45 @@ def resolve_secret_ref(ref: str, user_fs: UserScopedFS) -> Optional[str]:
     Returns:
         Optional[str]: Valeur du secret ou None si non trouvé
     """
-    # 1. Essayer config.json utilisateur
+    # 1. Essayer secrets.json utilisateur (modern system)
     try:
-        config = user_fs.read_json("config.json")
-        value = config.get(ref)
-        if value:
-            logger.debug(f"Resolved secret ref {ref} from user config")
-            return str(value)
-    except Exception:
-        pass
+        from services.user_secrets import get_user_secrets
+        # Extract user_id from user_fs
+        user_id = user_fs.user_id if hasattr(user_fs, 'user_id') else "demo"
+        secrets = get_user_secrets(user_id)
+
+        # Map old config keys to new secrets structure
+        key_mapping = {
+            "cointracking_api_key": ("cointracking", "api_key"),
+            "cointracking_api_secret": ("cointracking", "api_secret"),
+            "coingecko_api_key": ("coingecko", "api_key"),
+            "fred_api_key": ("fred", "api_key"),
+        }
+
+        if ref in key_mapping:
+            section, key = key_mapping[ref]
+            value = secrets.get(section, {}).get(key)
+            if value:
+                logger.debug(f"Resolved secret ref {ref} from secrets.json")
+                return str(value)
+    except Exception as e:
+        logger.debug(f"Failed to resolve {ref} from secrets.json: {e}")
 
     # 2. Fallback variables d'environnement
     env_value = os.getenv(ref) or os.getenv(ref.upper())
     if env_value:
         logger.debug(f"Resolved secret ref {ref} from environment")
         return env_value
+
+    # 3. Legacy fallback - config.json (deprecated)
+    try:
+        config = user_fs.read_json("config.json")
+        value = config.get(ref)
+        if value:
+            logger.warning(f"Resolved secret ref {ref} from config.json (DEPRECATED - use secrets.json)")
+            return str(value)
+    except Exception:
+        pass
 
     logger.warning(f"Could not resolve secret reference: {ref}")
     return None

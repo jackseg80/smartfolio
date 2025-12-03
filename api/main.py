@@ -591,14 +591,10 @@ async def rebalance_plan_csv(
 @app.get("/proxy/fred/bitcoin")
 async def proxy_fred_bitcoin(start_date: str = "2014-01-01", limit: int = None, user: str = Depends(get_active_user)):
     """Proxy pour récupérer les données Bitcoin historiques via FRED API (user-scoped)"""
-    from api.services.user_fs import UserScopedFS
-    from pathlib import Path
-
-    # Lire la clé FRED depuis les user settings
-    project_root = str(Path(__file__).parent.parent)
-    user_fs = UserScopedFS(project_root, user)
-    settings = user_fs.read_json("config.json") if user_fs.exists("config.json") else {}
-    fred_api_key = settings.get("fred_api_key") or os.getenv("FRED_API_KEY")
+    # Lire la clé FRED depuis secrets.json (modern system)
+    from services.user_secrets import get_user_secrets
+    secrets = get_user_secrets(user)
+    fred_api_key = secrets.get("fred", {}).get("api_key") or os.getenv("FRED_API_KEY")
 
     if not fred_api_key:
         raise HTTPException(status_code=503, detail="FRED API key not configured")
