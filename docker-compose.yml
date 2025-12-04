@@ -66,9 +66,11 @@ services:
       CRYPTO_TOOLBOX_NEW: 1
       RISK_SCORE_V2_ENABLED: ${RISK_SCORE_V2_ENABLED:-true}
 
-      # Rate limiting
+      # Rate limiting - Token Bucket System
       RATE_LIMIT_ENABLED: ${RATE_LIMIT_ENABLED:-true}
-      RATE_LIMIT_REQUESTS_PER_MINUTE: ${RATE_LIMIT_REQUESTS_PER_MINUTE:-60}
+      # Token bucket configuration (mapped to SecurityConfig via SECURITY_ prefix)
+      SECURITY_RATE_LIMIT_REFILL_RATE: ${SECURITY_RATE_LIMIT_REFILL_RATE:-20.0}
+      SECURITY_RATE_LIMIT_BURST_SIZE: ${SECURITY_RATE_LIMIT_BURST_SIZE:-50}
 
       # Logging
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
