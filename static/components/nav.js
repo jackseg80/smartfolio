@@ -364,6 +364,8 @@ const initUnifiedNav = () => {
 
     function initWebSocketConnection() {
       try {
+        // Skip WebSocket in production if not available (prevents console errors)
+        // WebSocket is optional - fallback polling works perfectly
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/api/realtime/ws?client_id=nav_badge`;
 
