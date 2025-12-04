@@ -73,7 +73,8 @@ class SecurityConfig(BaseSettings):
             "https://api.coingecko.com",
             "https://api.alternative.me",
             "https://crypto-toolbox.vercel.app",
-            "https://cdn.jsdelivr.net"  # Chart.js sourcemaps
+            "https://cdn.jsdelivr.net",  # Chart.js sourcemaps
+            "https://fapi.binance.com"  # Funding rate API
         ],
         description="Sources autorisées pour connexions réseau"
     )
