@@ -147,6 +147,7 @@ async def saxo_login(
 
 @router.get("/callback")
 async def saxo_callback(
+    request: Request,
     code: str = Query(..., description="Authorization code from Saxo"),
     state: str = Query(..., description="State for CSRF protection")
 ):
@@ -167,6 +168,12 @@ async def saxo_callback(
         Success: /settings.html?status=connected
         Error: /settings.html?status=error&message=...
     """
+    # Build absolute URL for redirect (fixes localhost issue in production)
+    # Use the Host header that the client used (e.g., 192.168.1.200:8080)
+    host = request.headers.get("host", "localhost:8080")
+    scheme = request.url.scheme  # http or https
+    base_url = f"{scheme}://{host}"
+
     try:
         # Retrieve PKCE verifier
         pkce_data = retrieve_pkce_verifier(state)
@@ -174,7 +181,7 @@ async def saxo_callback(
         if not pkce_data:
             logger.error(f"Invalid or expired state: {state[:8]}...")
             return RedirectResponse(
-                url="/settings.html?status=error&message=Invalid+or+expired+state"
+                url=f"{base_url}/static/settings.html?status=error&message=Invalid+or+expired+state"
             )
 
         code_verifier = pkce_data["code_verifier"]
@@ -190,14 +197,14 @@ async def saxo_callback(
 
         logger.info(f"✅ OAuth callback successful for user '{user_id}'")
 
-        # Redirect to settings page with success
-        return RedirectResponse(url="/static/settings.html?status=connected")
+        # Redirect to settings page with success (absolute URL)
+        return RedirectResponse(url=f"{base_url}/static/settings.html?status=connected")
 
     except Exception as e:
         logger.error(f"OAuth callback error: {e}")
         error_msg = str(e).replace(" ", "+")
         return RedirectResponse(
-            url=f"/static/settings.html?status=error&message={error_msg}"
+            url=f"{base_url}/static/settings.html?status=error&message={error_msg}"
         )
 
 
