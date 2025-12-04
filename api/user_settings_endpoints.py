@@ -272,10 +272,10 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
             })
 
         # API CoinTracking: seulement si l'utilisateur a des clés API
-        user_settings = data_router.settings
+        # Note: API keys sont dans data_router.api_credentials (secrets.json), pas dans settings (config.json)
         has_ct_credentials = (
-            user_settings.get("cointracking_api_key") and
-            user_settings.get("cointracking_api_secret")
+            data_router.api_credentials.get("api_key") and
+            data_router.api_credentials.get("api_secret")
         )
 
         if has_ct_credentials:
