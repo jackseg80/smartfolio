@@ -846,39 +846,14 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
       try {
         response = await performanceMonitoredFetch(proxyUrl);
       } catch (err) {
-        (window.debugLogger?.debug || console.log)(`🌐 Proxy ${proxyUrl} failed (${err?.message || err}). Trying fallback...`);
-
-        // Try only 2 fallbacks: primary FastAPI proxy, then direct Flask
-        const fallbacks = [
-          'http://localhost:8000/api/crypto-toolbox',  // FastAPI proxy (most common)
-          'http://localhost:8001/api/crypto-toolbox'   // Direct Flask (if available)
-        ];
-
-        let lastError = err;
-        let attemptedUrls = [proxyUrl];
-
-        for (const url of fallbacks) {
-          try {
-            response = await performanceMonitoredFetch(url);
-            (window.debugLogger?.debug || console.log)(`✅ Fallback succeeded at ${url}`);
-            break;
-          } catch (e) {
-            lastError = e;
-            attemptedUrls.push(url);
-            // Use debug instead of warn to reduce noise
-            (window.debugLogger?.debug || console.log)(`🌐 Fallback ${url} failed: ${e?.message || e}`);
-          }
+        // Crypto-Toolbox service unavailable - use cached data or graceful degradation
+        // No fallbacks to localhost (causes CSP violations in production)
+        if (_logLimiter.limit('crypto_toolbox_unavailable')) {
+          (window.debugLogger?.warn || console.warn)(
+            `⚠️ Crypto-Toolbox service unavailable at ${proxyUrl}. Using cached data or graceful degradation.`
+          );
         }
-
-        if (!response) {
-          // Single warning message instead of multiple
-          if (_logLimiter.limit('crypto_toolbox_unavailable')) {
-            (window.debugLogger?.warn || console.warn)(
-              `⚠️ Crypto-Toolbox service unavailable (tried ${attemptedUrls.length} endpoints). Using cached data or graceful degradation.`
-            );
-          }
-          throw lastError || new Error('All endpoints failed');
-        }
+        throw err;
       }
 
       if (!response.ok) {
