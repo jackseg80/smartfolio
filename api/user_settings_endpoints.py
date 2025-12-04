@@ -312,7 +312,7 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
         return {
             "user": user,
             "sources": sources,
-            "current_source": user_settings.get("data_source", "csv"),
+            "current_source": data_router.settings.get("data_source", "csv"),
             "total_csv_files": len(csv_files) if csv_files else 0,
             "cointracking_files": cointracking_count,
             "saxo_files": saxo_count
