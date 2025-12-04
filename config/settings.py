@@ -72,7 +72,8 @@ class SecurityConfig(BaseSettings):
             "https://api.stlouisfed.org",
             "https://api.coingecko.com",
             "https://api.alternative.me",
-            "https://crypto-toolbox.vercel.app"
+            "https://crypto-toolbox.vercel.app",
+            "https://cdn.jsdelivr.net"  # Chart.js sourcemaps
         ],
         description="Sources autorisées pour connexions réseau"
     )
