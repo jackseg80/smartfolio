@@ -154,6 +154,13 @@ export function toggleAutoRefresh() {
 export async function initDashboard() {
   debugLogger.debug('🚀 Initializing Risk Dashboard...');
 
+  // ✅ NEW: Auto-calculate scores if auto_calc=true (for iframe refresh from dashboard.html)
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoCalc = urlParams.get('auto_calc') === 'true';
+  if (autoCalc) {
+    debugLogger.debug('🤖 Auto-calc mode detected, will trigger refresh after init...');
+  }
+
   try {
     // NOTE: refresh-btn, force-refresh-btn, and options-menu are handled by
     // risk-dashboard-main-controller.js via event delegation to avoid conflicts
@@ -182,6 +189,20 @@ export async function initDashboard() {
     await switchTab('risk');
 
     debugLogger.debug('✅ Risk Dashboard initialized successfully');
+
+    // ✅ NEW: Trigger auto-refresh if auto_calc=true
+    if (autoCalc) {
+      debugLogger.debug('🔄 Triggering automatic scores calculation...');
+      setTimeout(async () => {
+        try {
+          // Force full refresh to recalculate all scores
+          await refreshDashboard(true);
+          debugLogger.debug('✅ Auto-calc completed, scores persisted to localStorage');
+        } catch (error) {
+          debugLogger.error('❌ Auto-calc failed:', error);
+        }
+      }, 1000); // Wait 1s for full initialization
+    }
   } catch (error) {
     debugLogger.error('❌ Failed to initialize dashboard:', error);
   }
