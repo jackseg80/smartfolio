@@ -3574,6 +3574,13 @@
                     // Extract nested data from API response (safeFetch wraps success_response twice)
                     const innerData = apiData.data || apiData;
 
+                    // 🔍 DEBUG: Log API response structure
+                    console.log('🔍 DEBUG API Response:', {
+                        total_value: innerData.total_value,
+                        cash_balance: innerData.cash_balance,
+                        positions_count: innerData.positions?.length
+                    });
+
                     // Transform API response to match CSV structure
                     const positions = innerData.positions || [];
 
@@ -3585,7 +3592,9 @@
                     }));
 
                     // Calculate total portfolio value
+                    // ⚠️ CRITICAL: innerData.total_value from API already includes cash!
                     const totalValue = innerData.total_value || normalizedPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0);
+                    const totalValueIncludesCash = !!innerData.total_value; // Flag: true if from API (includes cash)
 
                     // Calculate summary metrics from positions
                     const summary = calculateSummaryMetrics(normalizedPositions, totalValue);
@@ -3596,7 +3605,8 @@
                         positions: normalizedPositions,
                         source: innerData.source || 'api',
                         timestamp: innerData.timestamp || new Date().toISOString(),
-                        summary: summary
+                        summary: summary,
+                        totalValueIncludesCash: totalValueIncludesCash  // Flag for correct cash handling
                     };
 
                     // Extract cash balance from API
@@ -3736,7 +3746,11 @@
 
             // Get saved cash value for this portfolio
             const savedCash = window.portfolioCash || 0;
-            const totalWithCash = totalValue + savedCash;
+
+            // ⚠️ CRITICAL: If total_value comes from API, it already includes cash!
+            // Only add cash if totalValue was calculated from positions (CSV mode)
+            const totalValueIncludesCash = data?.totalValueIncludesCash || false;
+            const totalWithCash = totalValueIncludesCash ? totalValue : (totalValue + savedCash);
 
             // Portfolio Summary
             const summaryHtml = `
@@ -3762,23 +3776,34 @@
             // Asset Allocation (include cash as an asset class)
             const allocationWithCash = {};
 
-            // Recalculate percentages with cash included
-            if (totalWithCash > 0) {
-                // Add existing asset classes with recalculated percentages
-                Object.entries(assetAllocation).forEach(([assetClass, percentage]) => {
-                    const originalValue = (percentage / 100) * totalValue;
-                    const newPercentage = (originalValue / totalWithCash) * 100;
-                    allocationWithCash[assetClass] = newPercentage;
-                });
-
-                // Add cash as an asset class
-                if (savedCash > 0) {
+            // Handle cash allocation based on source
+            if (totalValueIncludesCash) {
+                // API mode: totalValue already includes cash, percentages are already correct
+                // Just copy existing allocations and add cash as separate class
+                Object.assign(allocationWithCash, assetAllocation);
+                if (savedCash > 0 && totalWithCash > 0) {
                     const cashPercentage = (savedCash / totalWithCash) * 100;
                     allocationWithCash['Cash'] = cashPercentage;
                 }
             } else {
-                // No cash, use original allocation
-                Object.assign(allocationWithCash, assetAllocation);
+                // CSV mode: totalValue is positions only, need to recalculate with cash
+                if (totalWithCash > 0) {
+                    // Add existing asset classes with recalculated percentages
+                    Object.entries(assetAllocation).forEach(([assetClass, percentage]) => {
+                        const originalValue = (percentage / 100) * totalValue;
+                        const newPercentage = (originalValue / totalWithCash) * 100;
+                        allocationWithCash[assetClass] = newPercentage;
+                    });
+
+                    // Add cash as an asset class
+                    if (savedCash > 0) {
+                        const cashPercentage = (savedCash / totalWithCash) * 100;
+                        allocationWithCash['Cash'] = cashPercentage;
+                    }
+                } else {
+                    // No cash, use original allocation
+                    Object.assign(allocationWithCash, assetAllocation);
+                }
             }
 
             // Combined Asset Allocation & Currency Exposure
