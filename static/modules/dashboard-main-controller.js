@@ -334,7 +334,54 @@ function updateGlobalInsightMeta() {
         const ml = store.get('governance.ml_signals');
         const state = (typeof store.snapshot === 'function' ? store.snapshot() : store.getState?.()) || window.realDataStore || {};
 
-        // Format timestamp
+        // ✅ NEW: Get scores calculation timestamp
+        const scoresTimestamp = state._hydration_timestamp || null;
+        const scoresAge = scoresTimestamp ? Date.now() - scoresTimestamp : null;
+
+        // Format scores age with freshness indicator
+        let scoresStatus = '';
+        let scoresColor = 'inherit';
+        let needsRefresh = false;
+        if (scoresAge !== null) {
+            const ageHours = scoresAge / (60 * 60 * 1000);
+            const ageMinutes = scoresAge / (60 * 1000);
+
+            if (ageHours >= 6) {
+                scoresStatus = '⚠️ Scores >6h';
+                scoresColor = 'var(--danger)';
+                needsRefresh = true;
+            } else if (ageHours >= 4) {
+                const hours = Math.floor(ageHours);
+                scoresStatus = `⏱️ Scores ${hours}h`;
+                scoresColor = 'var(--warning)';
+                needsRefresh = true;
+            } else if (ageMinutes >= 60) {
+                const hours = Math.floor(ageHours);
+                scoresStatus = `✅ Scores ${hours}h`;
+                scoresColor = 'var(--success)';
+            } else {
+                scoresStatus = '✅ Fresh';
+                scoresColor = 'var(--success)';
+            }
+        } else {
+            scoresStatus = '❓ Unknown';
+            scoresColor = 'var(--theme-text-muted)';
+            needsRefresh = true;
+        }
+
+        // Update refresh button state
+        const refreshBtn = document.getElementById('refresh-scores-btn');
+        if (refreshBtn) {
+            if (needsRefresh) {
+                refreshBtn.style.color = 'var(--warning)';
+                refreshBtn.style.animation = 'pulse 2s infinite';
+            } else {
+                refreshBtn.style.color = 'inherit';
+                refreshBtn.style.animation = 'none';
+            }
+        }
+
+        // Format ML signals timestamp
         const ts = ml?.timestamp ? new Date(ml.timestamp) : null;
         const timeStr = ts ? ts.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
 
@@ -345,7 +392,10 @@ function updateGlobalInsightMeta() {
         const engineCap = selectEngineCapPercent(state);
         const effectiveCap = selectCapPercent(state);
 
-        const badges = [`Updated: ${timeStr}`];
+        const badges = [
+            `<span style="color: ${scoresColor}; font-weight: 600;">${scoresStatus}</span>`,
+            `ML: ${timeStr}`
+        ];
         if (contradiction !== null) badges.push(`Contrad: ${contradiction}%`);
         if (policyCap != null) {
             let capLabel = `Cap: ${policyCap}%`;
@@ -359,15 +409,25 @@ function updateGlobalInsightMeta() {
             badges.push('Cap: —');
         }
 
-        metaEl.textContent = badges.join(' • ');
+        metaEl.innerHTML = badges.join(' • ');
+
+        // Add tooltip with detailed info
+        if (scoresTimestamp) {
+            const calcTime = new Date(scoresTimestamp).toLocaleString('fr-FR');
+            const ageHours = Math.round((scoresAge / (60 * 60 * 1000)) * 10) / 10;
+            const refreshAction = needsRefresh ? '⚠️ REFRESH RECOMMENDED' : 'ℹ️ Scores are fresh';
+            metaEl.title = `Scores calculés: ${calcTime} (il y a ${ageHours}h)\nML signals: ${ts ? ts.toLocaleString('fr-FR') : 'N/A'}\n\n${refreshAction}\nCliquez sur le bouton 🔄 pour recalculer`;
+        }
 
         console.debug('🏷️ Global Insight meta updated:', {
-            timestamp: timeStr,
+            scoresStatus,
+            scoresAge: scoresAge ? `${Math.round(scoresAge / 60000)}min` : null,
+            needsRefresh,
+            mlTimestamp: timeStr,
             contradiction,
             policyCap,
             engineCap,
-            effectiveCap,
-            text: metaEl.textContent
+            effectiveCap
         });
 
     } catch (error) {
@@ -392,6 +452,81 @@ document.addEventListener('DOMContentLoaded', () => {
         console.debug(`🔄 User changed from ${oldUser} to ${newUser}, clearing store...`);
         store.clearAndRehydrate();
     });
+
+    // ✅ NEW: Refresh scores button click handler
+    const refreshScoresBtn = document.getElementById('refresh-scores-btn');
+    if (refreshScoresBtn) {
+        refreshScoresBtn.addEventListener('click', async () => {
+            console.debug('🔄 Manual scores refresh requested...');
+
+            // Visual feedback: spinning animation
+            refreshScoresBtn.style.animation = 'spin 1s linear infinite';
+            refreshScoresBtn.disabled = true;
+
+            try {
+                // Open risk-dashboard in background iframe to trigger calculation
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = 'risk-dashboard.html?auto_calc=true';
+                document.body.appendChild(iframe);
+
+                // Wait for scores to be calculated (listen for storage event)
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Timeout waiting for scores'));
+                    }, 30000); // 30s timeout
+
+                    // Listen for store persistence
+                    const storageListener = (e) => {
+                        if (e.key && e.key.startsWith('risk-dashboard-state:')) {
+                            clearTimeout(timeout);
+                            window.removeEventListener('storage', storageListener);
+                            resolve();
+                        }
+                    };
+                    window.addEventListener('storage', storageListener);
+
+                    // Also check periodically
+                    const checkInterval = setInterval(() => {
+                        const state = store.getState?.() || {};
+                        if (state.scores?.onchain != null || state.scores?.risk != null) {
+                            clearTimeout(timeout);
+                            clearInterval(checkInterval);
+                            window.removeEventListener('storage', storageListener);
+                            resolve();
+                        }
+                    }, 1000);
+                });
+
+                // Clean up iframe
+                document.body.removeChild(iframe);
+
+                // Reload store and refresh display
+                store.hydrate();
+                await refreshGI();
+                updateGlobalInsightMeta();
+
+                console.debug('✅ Scores refreshed successfully');
+
+                // Show success toast
+                if (window.debugLogger?.success) {
+                    window.debugLogger.success('✅ Scores recalculés avec succès');
+                }
+            } catch (error) {
+                console.error('❌ Failed to refresh scores:', error);
+                if (window.debugLogger?.error) {
+                    window.debugLogger.error('❌ Échec du recalcul des scores. Ouvrez Risk Dashboard manuellement.');
+                }
+
+                // Fallback: open risk-dashboard in new tab
+                window.open('risk-dashboard.html', '_blank');
+            } finally {
+                // Reset button state
+                refreshScoresBtn.style.animation = 'none';
+                refreshScoresBtn.disabled = false;
+            }
+        });
+    }
 
     // Smart initial load - wait for data to be ready
     setTimeout(waitForStoreReady, 800); // Give time for analytics-unified to start loading

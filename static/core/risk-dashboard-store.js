@@ -190,8 +190,9 @@ const storeActions = {
           return;
         }
 
-        // Only restore if not too old (1 hour max)
-        if (Date.now() - timestamp < 60 * 60 * 1000) {
+        // ✅ OPTIMIZED TTL: 6h (balance between performance and freshness for crypto)
+        const TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
+        if (Date.now() - timestamp < TTL_MS) {
           setState(prevState => ({
             ...prevState,
             ccs: { ...prevState.ccs, ...ccs },
@@ -206,10 +207,11 @@ const storeActions = {
             onchain: scores?.onchain,
             risk: scores?.risk,
             blended: scores?.blended,
-            timestamp: new Date(timestamp).toLocaleString()
+            timestamp: new Date(timestamp).toLocaleString(),
+            age_hours: Math.round((Date.now() - timestamp) / (60 * 60 * 1000) * 10) / 10
           });
         } else {
-          console.debug('⚠️ Persisted state too old, skipping hydration');
+          console.debug('⚠️ Persisted state too old (>6h), skipping hydration');
         }
       } else {
         console.debug('📭 No persisted state found for user:', userId);
