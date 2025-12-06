@@ -115,7 +115,6 @@ async def saxo_login(
     Frontend Action:
         Open authorization_url in popup window
     """
-    try:
         oauth_client = SaxoOAuthClient(user_id=user)
 
         # Generate PKCE
@@ -187,7 +186,6 @@ async def saxo_callback(
         code_verifier = pkce_data["code_verifier"]
         user_id = pkce_data["user_id"]
 
-        # Exchange code for tokens
         oauth_client = SaxoOAuthClient(user_id=user_id)
         tokens = await oauth_client.exchange_code_for_tokens(code, code_verifier)
 
