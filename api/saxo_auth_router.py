@@ -115,6 +115,7 @@ async def saxo_login(
     Frontend Action:
         Open authorization_url in popup window
     """
+    try:
         oauth_client = SaxoOAuthClient(user_id=user)
 
         # Generate PKCE
