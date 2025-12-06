@@ -116,7 +116,7 @@ class SaxoUICResolver:
         # Cache miss → fetch from API
         logger.debug(f"🔄 Cache MISS for UIC {uic} ({asset_type}) - Fetching from API")
 
-        oauth_client = SaxoOAuthClient()
+        oauth_client = SaxoOAuthClient(user_id=self.user_id)
         instrument_data = await oauth_client.get_instrument_details(
             access_token=access_token,
             uic=uic,

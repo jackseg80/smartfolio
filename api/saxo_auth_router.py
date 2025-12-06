@@ -116,7 +116,7 @@ async def saxo_login(
         Open authorization_url in popup window
     """
     try:
-        oauth_client = SaxoOAuthClient()
+        oauth_client = SaxoOAuthClient(user_id=user)
 
         # Generate PKCE
         pkce_pair = oauth_client.generate_pkce_pair()
@@ -188,7 +188,7 @@ async def saxo_callback(
         user_id = pkce_data["user_id"]
 
         # Exchange code for tokens
-        oauth_client = SaxoOAuthClient()
+        oauth_client = SaxoOAuthClient(user_id=user_id)
         tokens = await oauth_client.exchange_code_for_tokens(code, code_verifier)
 
         # Save tokens
@@ -537,7 +537,7 @@ async def get_saxo_api_positions(
             )
 
         # Fetch positions from API
-        oauth_client = SaxoOAuthClient()
+        oauth_client = SaxoOAuthClient(user_id=user)
 
         try:
             # Fetch positions and balances in parallel
@@ -757,7 +757,7 @@ async def _get_account_key(
 
     # Fetch from API
     try:
-        oauth_client = SaxoOAuthClient()
+        oauth_client = SaxoOAuthClient(user_id=user_id)
         url = f"{oauth_client.api_base}/port/v1/accounts/me"
         headers = {"Authorization": f"Bearer {access_token}"}
 

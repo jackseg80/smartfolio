@@ -120,3 +120,55 @@ def get_coingecko_api_key(user_id: str = None) -> str:
     # Utiliser UserSecretsManager pour récupérer la clé utilisateur
     secrets = user_secrets_manager.get_user_secrets(user_id)
     return secrets.get("coingecko", {}).get("api_key", "")
+
+def get_saxo_credentials(user_id: str = None, environment: str = None) -> Dict[str, str]:
+    """
+    Récupère les credentials SaxoBank pour un utilisateur.
+
+    Args:
+        user_id: ID de l'utilisateur. Si None, utilise fallback .env
+        environment: 'sim' ou 'live'. Si None, utilise la config de l'utilisateur ou .env
+
+    Returns:
+        Dict avec client_id, client_secret, redirect_uri, environment
+    """
+    # Fallback sur .env si pas de user_id (rétrocompatibilité)
+    if user_id is None:
+        env = environment or os.getenv("SAXO_ENVIRONMENT", "sim").lower()
+        if env == "live":
+            return {
+                "client_id": os.getenv("SAXO_LIVE_CLIENT_ID", ""),
+                "client_secret": os.getenv("SAXO_LIVE_CLIENT_SECRET", ""),
+                "redirect_uri": os.getenv("SAXO_REDIRECT_URI", "http://localhost:8080/api/saxo/callback"),
+                "environment": "live"
+            }
+        else:
+            return {
+                "client_id": os.getenv("SAXO_SIM_CLIENT_ID", ""),
+                "client_secret": os.getenv("SAXO_SIM_CLIENT_SECRET", ""),
+                "redirect_uri": os.getenv("SAXO_REDIRECT_URI", "http://localhost:8080/api/saxo/callback"),
+                "environment": "sim"
+            }
+
+    # Utiliser UserSecretsManager pour récupérer les credentials utilisateur
+    secrets = user_secrets_manager.get_user_secrets(user_id)
+    saxo_config = secrets.get("saxo", {})
+
+    # Déterminer l'environnement
+    env = environment or saxo_config.get("environment", "sim").lower()
+
+    # Sélectionner les bonnes credentials
+    if env == "live":
+        return {
+            "client_id": saxo_config.get("live_client_id", ""),
+            "client_secret": saxo_config.get("live_client_secret", ""),
+            "redirect_uri": saxo_config.get("redirect_uri", "http://localhost:8080/api/saxo/callback"),
+            "environment": "live"
+        }
+    else:
+        return {
+            "client_id": saxo_config.get("sim_client_id", ""),
+            "client_secret": saxo_config.get("sim_client_secret", ""),
+            "redirect_uri": saxo_config.get("redirect_uri", "http://localhost:8080/api/saxo/callback"),
+            "environment": "sim"
+        }

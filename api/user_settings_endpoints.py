@@ -11,6 +11,7 @@ import logging
 
 from api.deps import get_active_user
 from api.services.user_fs import UserScopedFS
+from services.user_secrets import user_secrets_manager
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -65,8 +66,7 @@ async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, A
             logger.debug(f"Loaded config.json for user {user}: {len(config_settings)} keys")
 
         # Load API keys from secrets.json (modern system)
-        from services.user_secrets import get_user_secrets
-        secrets = get_user_secrets(user)
+        secrets = user_secrets_manager.get_user_secrets(user)
 
         # Fusionner: defaults + config.json + secrets.json (API keys)
         default_settings = UserSettings()
@@ -138,23 +138,22 @@ async def save_user_settings(
         }
 
         # 1. Sauvegarder les clés API dans secrets.json
-        from services.user_secrets import get_user_secrets
         try:
-            secrets = get_user_secrets(user)
+            secrets = user_secrets_manager.get_user_secrets(user)
 
-            # Update only if values changed
-            if api_keys["coingecko_api_key"]:
-                secrets.setdefault("coingecko", {})["api_key"] = api_keys["coingecko_api_key"]
-            if api_keys["cointracking_api_key"]:
-                secrets.setdefault("cointracking", {})["api_key"] = api_keys["cointracking_api_key"]
-            if api_keys["cointracking_api_secret"]:
-                secrets.setdefault("cointracking", {})["api_secret"] = api_keys["cointracking_api_secret"]
-            if api_keys["fred_api_key"]:
-                secrets.setdefault("fred", {})["api_key"] = api_keys["fred_api_key"]
+            # Mettre à jour les secrets, y compris les chaînes vides pour permettre la suppression.
+            secrets.setdefault("coingecko", {})["api_key"] = api_keys["coingecko_api_key"]
+            secrets.setdefault("cointracking", {})["api_key"] = api_keys["cointracking_api_key"]
+            secrets.setdefault("cointracking", {})["api_secret"] = api_keys["cointracking_api_secret"]
+            secrets.setdefault("fred", {})["api_key"] = api_keys["fred_api_key"]
 
             # Save secrets.json
             user_fs.write_json("secrets.json", secrets)
             logger.debug(f"API keys saved to secrets.json for user {user}")
+
+            # Vider le cache pour cet utilisateur pour forcer un rechargement
+            user_secrets_manager.clear_cache(user)
+            logger.debug(f"Secrets cache cleared for user {user}")
         except Exception as e:
             logger.warning(f"Failed to save API keys to secrets.json: {e}")
 

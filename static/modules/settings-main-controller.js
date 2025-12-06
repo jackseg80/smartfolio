@@ -247,7 +247,7 @@ async function loadSettings() {
     if (response.ok) {
       const backendSettings = await response.json();
       // Fusionner: API Base URL (backend global) a priorité sur tout
-      window.userSettings = { ...getDefaultSettings(), ...backendSettings, ...localSettings, api_base_url: apiBaseUrl };
+      window.userSettings = { ...getDefaultSettings(), ...localSettings, ...backendSettings, api_base_url: apiBaseUrl };
       debugLogger.info('✓ Settings loaded from backend + localStorage');
     } else {
       debugLogger.warn('Failed to load user settings from backend, using localStorage');

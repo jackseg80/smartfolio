@@ -42,7 +42,7 @@ class SaxoAuthService:
         """
         self.user_id = user_id
         self.user_fs = UserScopedFS(project_root, user_id)
-        self.oauth_client = SaxoOAuthClient()
+        self.oauth_client = SaxoOAuthClient(user_id=user_id)  # Pass user_id for secrets.json
 
         # Paths relative to user's saxobank directory
         self.tokens_path = "saxobank/tokens.json"

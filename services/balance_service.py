@@ -462,7 +462,7 @@ class BalanceService:
                 return None
 
             # Fetch data from Saxo
-            oauth_client = SaxoOAuthClient()
+            oauth_client = SaxoOAuthClient(user_id=user_id)
             logger.info(f"📊 Fetching Saxo positions for user {user_id}...")
 
             positions = await oauth_client.get_positions(access_token, account_key)

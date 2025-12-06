@@ -20,6 +20,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from dotenv import load_dotenv
+from services.user_secrets import get_saxo_credentials
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -42,34 +43,40 @@ class SaxoOAuthClient:
     Set via: SAXO_ENVIRONMENT=sim or SAXO_ENVIRONMENT=live
     """
 
-    def __init__(self):
-        """Initialize client with environment-specific configuration."""
-        self.environment = os.getenv("SAXO_ENVIRONMENT", "sim").lower()
+    def __init__(self, user_id: str = None):
+        """
+        Initialize client with environment-specific configuration.
+
+        Args:
+            user_id: User ID for multi-tenant secrets. If None, fallback to .env
+        """
+        # Get credentials from secrets.json (or fallback to .env if user_id=None)
+        creds = get_saxo_credentials(user_id=user_id)
+
+        self.environment = creds["environment"]
+        self.client_id = creds["client_id"]
+        self.client_secret = creds["client_secret"]
 
         if self.environment == "live":
             # Production configuration
             self.auth_url = "https://live.logonvalidation.net/authorize"
             self.token_url = "https://live.logonvalidation.net/token"
             self.api_base = "https://gateway.saxobank.com/openapi"
-            self.client_id = os.getenv("SAXO_LIVE_CLIENT_ID", "")
-            self.client_secret = os.getenv("SAXO_LIVE_CLIENT_SECRET", "")
-            logger.info("🔴 SaxoOAuthClient initialized in LIVE mode")
+            logger.info(f"🔴 SaxoOAuthClient initialized in LIVE mode (user={user_id or 'env'})")
         else:
             # Simulation configuration (default)
             self.auth_url = "https://sim.logonvalidation.net/authorize"
             self.token_url = "https://sim.logonvalidation.net/token"
             self.api_base = "https://gateway.saxobank.com/sim/openapi"
-            self.client_id = os.getenv("SAXO_SIM_CLIENT_ID", "")
-            self.client_secret = os.getenv("SAXO_SIM_CLIENT_SECRET", "")
-            logger.info("🟢 SaxoOAuthClient initialized in SIMULATION mode")
+            logger.info(f"🟢 SaxoOAuthClient initialized in SIMULATION mode (user={user_id or 'env'})")
 
-        # Get redirect URIs from env (supports multiple)
-        redirect_uris_str = os.getenv("SAXO_REDIRECT_URI", "http://localhost:8080/api/saxo/callback")
+        # Get redirect URIs from credentials (supports multiple comma-separated)
+        redirect_uris_str = creds["redirect_uri"]
         self.redirect_uris = [uri.strip() for uri in redirect_uris_str.split(",")]
         self.redirect_uri = self.redirect_uris[0]  # Use first as default
 
         if not self.client_id or not self.client_secret:
-            logger.warning(f"⚠️ Saxo {self.environment.upper()} credentials not configured in .env")
+            logger.warning(f"⚠️ Saxo {self.environment.upper()} credentials not configured for user {user_id or 'env'}")
 
     def generate_pkce_pair(self) -> Dict[str, str]:
         """
