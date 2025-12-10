@@ -84,8 +84,8 @@ echo ""
 # 5. Log File Check
 echo "5️⃣  Checking Recent Errors in Logs..."
 if [ -f "logs/app.log" ]; then
-    ERROR_COUNT=$(grep -c "ERROR" logs/app.log 2>/dev/null || echo "0")
-    CRITICAL_COUNT=$(grep -c "CRITICAL" logs/app.log 2>/dev/null || echo "0")
+    ERROR_COUNT=$(grep "ERROR" logs/app.log 2>/dev/null | wc -l)
+    CRITICAL_COUNT=$(grep "CRITICAL" logs/app.log 2>/dev/null | wc -l)
 
     if [ "$CRITICAL_COUNT" -gt 0 ]; then
         echo -e "${RED}❌ Found $CRITICAL_COUNT CRITICAL errors${NC}"
