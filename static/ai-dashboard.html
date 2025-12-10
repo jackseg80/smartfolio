@@ -1893,7 +1893,7 @@
                         </div>
                         <div class="status-item">
                             <span class="status-label">Risque Systémique</span>
-                            <span class="status-value">${systematicRisk !== null ? (systematicRisk.charAt(0).toUpperCase() + systematicRisk.slice(1)) : 'N/A'}</span>
+                            <span class="status-value">${systematicRisk !== null ? (typeof systematicRisk === 'number' ? (systematicRisk * 100).toFixed(0) + '%' : systematicRisk.charAt(0).toUpperCase() + systematicRisk.slice(1)) : 'N/A'}</span>
                         </div>
                         <div class="status-item">
                             <span class="status-label">ML Sentiment</span>
