@@ -4,7 +4,13 @@
 
 set -e
 
-API_URL="${API_URL:-http://localhost:8080}"
+# Detect server IP automatically (production uses LAN IP, not localhost)
+SERVER_IP=$(hostname -I | awk '{print $1}')
+if [ -z "$SERVER_IP" ]; then
+    SERVER_IP="localhost"
+fi
+
+API_URL="${API_URL:-http://${SERVER_IP}:8080}"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -13,6 +19,7 @@ NC='\033[0m' # No Color
 echo "=========================================="
 echo "🏥 SmartFolio Production Health Check"
 echo "=========================================="
+echo "API URL: $API_URL"
 echo ""
 
 # 1. API Health Check
@@ -62,19 +69,30 @@ else
 fi
 echo ""
 
-# 4. Price Freshness
+# 4. Price Freshness (using wealth API endpoint)
 echo "4️⃣  Checking Price Data Freshness..."
-PRICE_RESPONSE=$(curl -sf "$API_URL/balances/current?user_id=demo&source=cointracking")
+PRICE_RESPONSE=$(curl -sf "$API_URL/api/wealth/global/summary?source=cointracking_api" -H "X-User: jack")
 if [ -n "$PRICE_RESPONSE" ]; then
-    echo -e "${GREEN}✅ Price data is available${NC}"
+    TOTAL_VALUE=$(echo "$PRICE_RESPONSE" | jq -r '.total_value_usd // 0')
 
-    # Show sample of last updated times
-    echo "$PRICE_RESPONSE" | jq -r '.items[:3] | .[] | "   - \(.symbol): \(.price_usd) USD (updated: \(.last_updated // "N/A"))"'
+    if [ "$TOTAL_VALUE" != "0" ] && [ "$TOTAL_VALUE" != "null" ]; then
+        echo -e "${GREEN}✅ Price data is available${NC}"
 
-    # Check for stale prices (older than 1 hour)
-    STALE_COUNT=$(echo "$PRICE_RESPONSE" | jq '[.items[] | select(.last_updated != null and (now - (.last_updated | fromdateiso8601) > 3600))] | length')
-    if [ "$STALE_COUNT" -gt 0 ]; then
-        echo -e "${YELLOW}⚠️  Found $STALE_COUNT assets with stale prices (>1h old)${NC}"
+        # Show wealth breakdown
+        CRYPTO_TOTAL=$(echo "$PRICE_RESPONSE" | jq -r '.breakdown.crypto // 0')
+        SAXO_TOTAL=$(echo "$PRICE_RESPONSE" | jq -r '.breakdown.saxo // 0')
+        PATRIMOINE_TOTAL=$(echo "$PRICE_RESPONSE" | jq -r '.breakdown.patrimoine // 0')
+        PNL_TODAY=$(echo "$PRICE_RESPONSE" | jq -r '.pnl_today // 0')
+        PNL_PCT=$(echo "$PRICE_RESPONSE" | jq -r '.pnl_today_pct // 0')
+
+        echo "   - Crypto: \$$(printf '%.2f' $CRYPTO_TOTAL) USD"
+        echo "   - Saxo: \$$(printf '%.2f' $SAXO_TOTAL) USD"
+        echo "   - Patrimoine: \$$(printf '%.2f' $PATRIMOINE_TOTAL) USD"
+        echo "   - Grand Total: \$$(printf '%.2f' $TOTAL_VALUE) USD"
+        echo "   - P&L Today: \$$(printf '%.2f' $PNL_TODAY) ($(printf '%.2f' $PNL_PCT)%)"
+    else
+        echo -e "${YELLOW}⚠️  API returned zero or null value${NC}"
+        echo "$PRICE_RESPONSE" | jq '.'
     fi
 else
     echo -e "${RED}❌ Failed to fetch price data${NC}"
