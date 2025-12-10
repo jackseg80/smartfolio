@@ -176,7 +176,8 @@ const initUnifiedNav = () => {
       .app-header .user-switcher { display: flex; align-items: center; margin-right: 1rem; }
       .app-header .user-switcher label { margin: 0; }
       .app-header .user-switcher select { min-width: 120px; }
-      @media (max-width: 1024px) { .app-header nav { display: flex; flex-wrap: wrap; gap: .25rem; } .app-header .nav-inner { gap: .5rem; } }
+      .app-header .nav-separator { width: 1px; height: 24px; background: var(--theme-border); margin: 0 0.75rem; opacity: 0.6; align-self: center; list-style: none; }
+      @media (max-width: 1024px) { .app-header nav { display: flex; flex-wrap: wrap; gap: .25rem; } .app-header .nav-inner { gap: .5rem; } .app-header .nav-separator { display: none; } }
       @media (max-width: 720px) { .app-header nav a { padding: .4rem .6rem; font-size: 14px; } .app-header .notification-badge { padding: .3rem .5rem; font-size: .75em; } }
     `;
     document.head.appendChild(style);
@@ -210,13 +211,29 @@ const initUnifiedNav = () => {
         <div class="brand">SmartFolio</div>
         <nav class="main-nav" aria-label="Navigation principale">
           <ul class="menu">
+            <!-- MODULE CRYPTO -->
             <li><a href="dashboard.html" data-route="dashboard.html">Portfolio</a></li>
             <li><a href="risk-dashboard.html" data-route="risk-dashboard.html">Risk</a></li>
             <li><a href="analytics-unified.html" data-route="analytics-unified.html">Analytics</a></li>
             <li><a href="rebalance.html" data-route="rebalance.html">Rebalance</a></li>
             <li><a href="execution.html" data-route="execution.html">Execution</a></li>
+
+            <!-- SEPARATEUR -->
+            <li class="nav-separator" aria-hidden="true"></li>
+
+            <!-- MODULE BOURSE -->
             <li><a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Bourse</a></li>
+
+            <!-- SEPARATEUR -->
+            <li class="nav-separator" aria-hidden="true"></li>
+
+            <!-- MODULE PATRIMOINE -->
             <li><a href="wealth-dashboard.html" data-route="wealth-dashboard.html">Patrimoine</a></li>
+
+            <!-- SEPARATEUR -->
+            <li class="nav-separator" aria-hidden="true"></li>
+
+            <!-- OUTILS -->
             <li class="has-submenu">
               <a href="settings.html" data-route="settings.html">Outils</a>
               <div class="submenu">
