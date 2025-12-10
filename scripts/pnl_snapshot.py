@@ -65,8 +65,8 @@ async def create_snapshot(
     logger.info(f"   Min USD: {min_usd}")
 
     try:
-        # Build API URL
-        url = f"{base_url}/portfolio/snapshot"
+        # Build API URL (note: endpoint has /api prefix)
+        url = f"{base_url}/api/portfolio/snapshot"
         params = {
             "source": source,
             "min_usd": min_usd

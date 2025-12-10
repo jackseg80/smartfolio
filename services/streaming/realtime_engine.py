@@ -596,11 +596,13 @@ class RealtimeEngine:
 # Factory function pour créer le moteur
 def create_realtime_engine(config: Dict[str, Any] = None) -> RealtimeEngine:
     """Factory pour créer une instance du moteur de streaming"""
-    redis_url = "redis://localhost:6379"
-    
+    import os
+    # Use REDIS_URL from environment (supports Docker 'redis:6379')
+    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+
     if config:
         redis_url = config.get("redis_url", redis_url)
-    
+
     return RealtimeEngine(redis_url=redis_url)
 
 
