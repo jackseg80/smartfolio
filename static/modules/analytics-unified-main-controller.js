@@ -1149,7 +1149,19 @@ async function loadUnifiedData(force = false) {
     updateRiskMetrics();
 
     // Mark backend as healthy after successful data load
-    store.set('ui.apiStatus.backend', 'healthy');
+    // Nov 2025: Mark as healthy even if optional APIs (crypto-toolbox) timed out
+    // Only critical failure should prevent healthy status
+    const hasMinimalData = store.get('scores.cycle') != null ||
+                          store.get('governance.current_state') != null ||
+                          store.get('scores.risk') != null;
+
+    if (hasMinimalData) {
+      store.set('ui.apiStatus.backend', 'healthy');
+      debugLogger.debug('✅ Backend marked healthy (minimal data available)');
+    } else {
+      store.set('ui.apiStatus.backend', 'degraded');
+      debugLogger.warn('⚠️ Backend degraded (minimal data missing)');
+    }
 
   } catch (e) {
     debugLogger.error('Unified loader fatal:', e);
@@ -1433,12 +1445,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Simple fallback banner toggle
+  // Nov 2025: Only show banner for critical failures (error), not degraded state
   setInterval(() => {
     try {
       const status = store.get('ui.apiStatus.backend');
       const banner = document.getElementById('backend-fallback-banner');
       if (!banner) return;
-      banner.style.display = (status && status !== 'healthy') ? 'block' : 'none';
+      // Only show banner for 'error' status (not 'degraded' or 'unknown')
+      // 'degraded' means optional APIs failed but core functionality works
+      banner.style.display = (status === 'error') ? 'block' : 'none';
     } catch { }
   }, 2000);
 });

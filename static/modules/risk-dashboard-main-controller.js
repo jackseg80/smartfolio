@@ -1789,12 +1789,15 @@ function updateMarketRegime(blendedScore, onchainScore, riskScore) {
 
 // ====== Dynamic Weighting Functions ======
 // Fallback banner toggle (backend status)
+// Nov 2025: Only show banner for critical failures (error), not degraded state
 setInterval(() => {
   try {
     const status = store.get('ui.apiStatus.backend');
     const banner = document.getElementById('backend-fallback-banner');
     if (!banner) return;
-    banner.style.display = (status && status !== 'healthy') ? 'block' : 'none';
+    // Only show banner for 'error' status (not 'degraded' or 'unknown')
+    // 'degraded' means optional APIs failed but core functionality works
+    banner.style.display = (status === 'error') ? 'block' : 'none';
   } catch { }
 }, 2000);
 
