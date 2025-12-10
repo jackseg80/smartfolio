@@ -185,9 +185,11 @@ class WebSocketManager:
 
 class RedisStreamManager:
     """Gestionnaire de Redis Streams pour processing d'événements haute performance"""
-    
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
-        self.redis_url = redis_url
+
+    def __init__(self, redis_url: str = None):
+        import os
+        # Use REDIS_URL from environment (supports Docker 'redis:6379')
+        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
         self.redis_client: Optional[redis.Redis] = None
         self.stream_consumers: Dict[str, Callable] = {}
         self.running = False
@@ -368,8 +370,11 @@ class RedisStreamManager:
 
 class RealtimeEngine:
     """Moteur principal de streaming temps réel - Phase 3B"""
-    
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
+
+    def __init__(self, redis_url: str = None):
+        import os
+        # Use REDIS_URL from environment (supports Docker 'redis:6379')
+        redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
         self.websocket_manager = WebSocketManager()
         self.redis_manager = RedisStreamManager(redis_url)
         self.running = False
