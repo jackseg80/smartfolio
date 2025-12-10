@@ -2852,6 +2852,13 @@ async function refreshGlobalTile() {
         const data = await response.json();
         const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
 
+        // 🔥 DEBUG: Log P&L data from API
+        console.error('🔥 P&L DATA FROM API:', {
+            pnl_today: data.pnl_today,
+            pnl_today_pct: data.pnl_today_pct,
+            has_pnl: data.pnl_today !== undefined
+        });
+
         // Update total value
         if (totalValueEl) totalValueEl.textContent = formatCurrency(data.total_value_usd);
 
@@ -2884,8 +2891,8 @@ async function refreshGlobalTile() {
         if (pnlTodayEl && data.pnl_today !== undefined) {
             const pnlValue = data.pnl_today;
             const pnlColor = pnlValue >= 0 ? 'var(--success)' : 'var(--danger)';
-            const pnlSign = pnlValue >= 0 ? '+' : '';
-            const pnlPct = data.pnl_today_pct !== undefined ? ` (${pnlSign}${data.pnl_today_pct.toFixed(1)}%)` : '';
+            const pnlSign = pnlValue >= 0 ? '+' : '-';
+            const pnlPct = data.pnl_today_pct !== undefined ? ` (${pnlValue >= 0 ? '+' : ''}${data.pnl_today_pct.toFixed(1)}%)` : '';
 
             pnlTodayEl.textContent = `${pnlSign}${formatCurrency(Math.abs(pnlValue))}${pnlPct}`;
             pnlTodayEl.style.color = pnlColor;
