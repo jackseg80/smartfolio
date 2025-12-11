@@ -73,7 +73,8 @@ def check_file_exists(base_path: Path, ref_path: str) -> bool:
     try:
         full_path = full_path.resolve()
         return full_path.exists()
-    except Exception:
+    except Exception as e:
+        print(f"Warning: Failed to resolve path {full_path}: {e}")
         return False
 
 def prioritize_doc(filepath: Path) -> str:

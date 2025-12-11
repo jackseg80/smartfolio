@@ -40,9 +40,9 @@ class CrossBrowserTest:
                 "driver_class": webdriver.Chrome,
                 "options": chrome_options
             })
-        except Exception:
-            print("Chrome WebDriver not available")
-        
+        except Exception as e:
+            print(f"Chrome WebDriver not available: {e}")
+
         # Firefox
         try:
             firefox_options = FirefoxOptions()
@@ -52,9 +52,9 @@ class CrossBrowserTest:
                 "driver_class": webdriver.Firefox,
                 "options": firefox_options
             })
-        except Exception:
-            print("Firefox WebDriver not available")
-        
+        except Exception as e:
+            print(f"Firefox WebDriver not available: {e}")
+
         # Edge (si disponible)
         try:
             edge_options = EdgeOptions()
@@ -64,8 +64,8 @@ class CrossBrowserTest:
                 "driver_class": webdriver.Edge,
                 "options": edge_options
             })
-        except Exception:
-            print("Edge WebDriver not available")
+        except Exception as e:
+            print(f"Edge WebDriver not available: {e}")
         
         return configs
     

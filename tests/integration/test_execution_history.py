@@ -378,9 +378,9 @@ class ExecutionHistoryTester:
                         else:
                             self.log_result("Données sessions", False, "Structure invalide")
                             return False
-                            
-                    except Exception:
-                        self.log_result("Lecture données sessions", False, "Erreur parsing JSON")
+
+                    except Exception as e:
+                        self.log_result("Lecture données sessions", False, f"Erreur parsing JSON: {e}")
                         return False
                 
                 return storage_exists and has_session_files

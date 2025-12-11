@@ -399,8 +399,8 @@ class AdvancedMonitoringTester:
                                       f"Entrées: {len(metrics_data) if data_valid else 0}")
                         
                         return storage_exists and has_metric_files and data_valid
-                    except Exception:
-                        self.log_result("Lecture données métriques", False, "Erreur parsing JSON")
+                    except Exception as e:
+                        self.log_result("Lecture données métriques", False, f"Erreur parsing JSON: {e}")
                         return False
                 
                 return storage_exists

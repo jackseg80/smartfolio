@@ -31,7 +31,8 @@ def read(path):
     """Lit un fichier avec gestion d'erreurs"""
     try:
         return open(path, encoding="utf-8", errors="replace").read()
-    except Exception:
+    except Exception as e:
+        print(f"Warning: Failed to read {path}: {e}")
         return ""
 
 

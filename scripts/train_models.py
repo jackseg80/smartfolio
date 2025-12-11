@@ -210,7 +210,8 @@ def generate_real_market_data(
             if btc_hist:
                 btc_prices = np.array([px for ts, px in sorted(btc_hist, key=lambda x: x[0])], dtype=float)
                 btc_returns_ref = np.diff(btc_prices) / btc_prices[:-1]
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate BTC returns reference: {e}")
             btc_returns_ref = None
 
     for symbol in symbols:
@@ -268,7 +269,8 @@ def generate_real_market_data(
             price_pos = (pos / denom) if denom > 0 else 0.5
             try:
                 trend_strength = np.corrcoef(np.arange(sequence_length), prices[end_idx-sequence_length+1:end_idx+1])[0, 1]
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to calculate trend strength: {e}")
                 trend_strength = 0.0
             volume_trend = 1.0  # placeholder (no volume in cache)
             momentum = r_1d - (np.mean(window_returns[-5:]) if len(window_returns) >= 5 else 0)
@@ -315,7 +317,8 @@ def generate_real_market_data(
                         logits = logits / max(1e-6, float(temp_T))
                         proba = torch.softmax(logits, dim=1).cpu().numpy()[0]
                     proba_reg = proba.tolist()
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to calculate regime probabilities: {e}")
                     proba_reg = None
 
             # Volatility sequence features (30,12 [+2 si BTC]): 7 de base + 4 canaux régime (proba/ou one-hot) + 1 prev_realized_vol [+ corr/beta BTC]

@@ -48,7 +48,8 @@ def check_console_logs():
             content = js_file.read_text(encoding='utf-8')
             matches = len(re.findall(r'console\.log\(', content))
             count += matches
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Failed to read {js_file}: {e}")
             pass
 
     return count
@@ -74,7 +75,8 @@ def check_secrets_in_code():
                     if re.search(pattern, content):
                         suspicious_files.append(file_path.name)
                         break
-            except Exception:
+            except Exception as e:
+                print(f"Warning: Failed to scan {file_path}: {e}")
                 pass
 
     return suspicious_files
@@ -93,7 +95,8 @@ def check_config_files():
             checks['eslint'] = (
                 'no-console' in rules and 'no-eval' in rules
             )
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Failed to parse .eslintrc.json: {e}")
             checks['eslint'] = False
     else:
         checks['eslint'] = False
@@ -107,7 +110,8 @@ def check_config_files():
             checks['precommit'] = (
                 'gitleaks' in content and 'detect-secrets' in content
             )
-        except Exception:
+        except Exception as e:
+            print(f"Warning: Failed to parse .pre-commit-config.yaml: {e}")
             checks['precommit'] = False
     else:
         checks['precommit'] = False
