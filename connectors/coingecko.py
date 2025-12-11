@@ -5,6 +5,7 @@ import json
 import os
 import time
 import logging
+import threading
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any
 from urllib.parse import urlencode
@@ -349,12 +350,13 @@ class CoinGeckoConnector:
         self.close()
 
 
-# Instance globale réutilisable
+# Instance globale réutilisable (thread-safe)
 _global_connector: Optional[CoinGeckoConnector] = None
+_connector_lock = threading.Lock()
 
 def get_connector(user_id: str = None, api_key: str = None) -> CoinGeckoConnector:
     """
-    Retourne l'instance globale du connecteur CoinGecko.
+    Retourne l'instance globale du connecteur CoinGecko (thread-safe).
 
     Args:
         user_id: ID utilisateur pour récupérer la clé API depuis secrets.json
@@ -369,14 +371,17 @@ def get_connector(user_id: str = None, api_key: str = None) -> CoinGeckoConnecto
     if api_key:
         return CoinGeckoConnector(api_key=api_key)
 
-    # Lazy init avec user_id ou fallback .env
+    # Double-checked locking pattern pour performance + thread-safety
     if _global_connector is None:
-        if user_id:
-            from services.user_secrets import get_coingecko_api_key
-            api_key = get_coingecko_api_key(user_id)
-        else:
-            api_key = os.getenv("COINGECKO_API_KEY", "")
+        with _connector_lock:
+            # Check again inside lock (another thread might have initialized)
+            if _global_connector is None:
+                if user_id:
+                    from services.user_secrets import get_coingecko_api_key
+                    api_key = get_coingecko_api_key(user_id)
+                else:
+                    api_key = os.getenv("COINGECKO_API_KEY", "")
 
-        _global_connector = CoinGeckoConnector(api_key=api_key)
+                _global_connector = CoinGeckoConnector(api_key=api_key)
 
     return _global_connector

@@ -840,8 +840,8 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
     try {
 
       // Appel via le proxy FastAPI (8080) qui relaie vers Flask (8001)
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://127.0.0.1:8080';
-      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/crypto-toolbox`;
+      const apiBase = window.getApiBase();
+      const proxyUrl = `${apiBase}/api/crypto-toolbox`;
       let response;
       try {
         response = await performanceMonitoredFetch(proxyUrl);

@@ -4,6 +4,7 @@ Learns from human corrections and feedback to improve ML decision quality over t
 """
 import asyncio
 import logging
+import threading
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -696,13 +697,16 @@ def create_feedback_learning_engine(config: Dict[str, Any] = None) -> FeedbackLe
 
 # Singleton global
 _global_learning_engine: Optional[FeedbackLearningEngine] = None
+_learning_lock = threading.Lock()
 
 async def get_feedback_learning_engine(config: Dict[str, Any] = None) -> FeedbackLearningEngine:
     """Récupère l'instance globale du moteur d'apprentissage"""
     global _global_learning_engine
-    
+
     if _global_learning_engine is None:
-        _global_learning_engine = create_feedback_learning_engine(config)
-        await _global_learning_engine.start()
-    
+        with _learning_lock:
+            if _global_learning_engine is None:
+                _global_learning_engine = create_feedback_learning_engine(config)
+                await _global_learning_engine.start()
+
     return _global_learning_engine

@@ -4,6 +4,7 @@ Provides interpretability for ML-based risk decisions using SHAP, LIME, and cust
 """
 import asyncio
 import logging
+import threading
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -683,13 +684,16 @@ def create_explainable_ai_engine(config: Dict[str, Any] = None) -> ExplainableAI
 
 # Singleton global
 _global_xai_engine: Optional[ExplainableAIEngine] = None
+_xai_lock = threading.Lock()
 
 async def get_explainable_ai_engine(config: Dict[str, Any] = None) -> ExplainableAIEngine:
     """Récupère l'instance globale du moteur XAI"""
     global _global_xai_engine
-    
+
     if _global_xai_engine is None:
-        _global_xai_engine = create_explainable_ai_engine(config)
-        await _global_xai_engine.initialize()
-    
+        with _xai_lock:
+            if _global_xai_engine is None:
+                _global_xai_engine = create_explainable_ai_engine(config)
+                await _global_xai_engine.initialize()
+
     return _global_xai_engine

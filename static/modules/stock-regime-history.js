@@ -153,15 +153,9 @@ async function loadStockRegimeHistory() {
     chartContainer.style.display = 'none';
 
     try {
-        // Use window.fetchUserConfig if available, otherwise construct endpoint
-        let endpoint;
-        if (window.fetchUserConfig) {
-            const config = await window.fetchUserConfig();
-            endpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
-        } else {
-            // Fallback: assume localhost:8080
-            endpoint = `http://localhost:8080/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
-        }
+        // Construct endpoint using centralized API base
+        const apiBase = window.getApiBase();
+        const endpoint = `${apiBase}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
         debugLogger.debug('Fetching from:', endpoint);
 
         const response = await fetch(endpoint);

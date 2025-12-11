@@ -516,6 +516,16 @@ window.updateGlobalSetting = (key, value) => globalConfig.set(key, value);
 window.getApiUrl = (endpoint, params) => globalConfig.getApiUrl(endpoint, params);
 window.apiRequest = (endpoint, options) => globalConfig.apiRequest(endpoint, options);
 
+/**
+ * Get API base URL with smart fallback
+ * Replaces duplicate patterns like: globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080'
+ * @returns {string} The API base URL (without trailing slash)
+ */
+window.getApiBase = () => {
+  const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
+  return apiBase.replace(/\/$/, ''); // Remove trailing slash
+};
+
 // Fonctions de gestion du cache balance
 window.clearBalanceCache = (user = null) => balanceCache.clear(user);
 window.refreshBalanceData = () => window.loadBalanceData(true); // Force refresh
@@ -988,4 +998,33 @@ window.currencyManager = (function () {
   } catch (_) { }
 
   return { ensureRate, getRateSync };
+})();
+
+/**
+ * Safe DebugLogger Wrapper
+ * Ensures debugLogger is always available with console fallback
+ * Prevents crashes when debug-logger.js is not loaded
+ */
+(function initSafeDebugLogger() {
+  // If debugLogger already exists, nothing to do
+  if (window.debugLogger) return;
+
+  // Create fallback debugLogger that forwards to console
+  window.debugLogger = {
+    error: (...args) => console.error(...args),
+    warn: (...args) => console.warn(...args),
+    info: (...args) => console.info(...args),
+    log: (...args) => console.log(...args),
+    debug: (...args) => console.debug(...args),
+
+    // Mock methods that might be called
+    isDebugEnabled: () => false,
+    setDebugMode: () => {},
+    applyConsoleOverride: () => {},
+    applyFetchTracer: () => {},
+    captureConsoleErrors: () => {},
+    init: () => {}
+  };
+
+  console.debug('🔧 Safe debugLogger fallback initialized');
 })();

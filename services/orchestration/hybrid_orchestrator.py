@@ -4,6 +4,7 @@ Orchestrates Advanced Risk, Real-time Streaming, and Hybrid Intelligence systems
 """
 import asyncio
 import logging
+import threading
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
@@ -552,15 +553,18 @@ class HybridOrchestrator:
 
 # Factory and singleton management
 _global_hybrid_orchestrator: Optional[HybridOrchestrator] = None
+_orchestrator_lock = threading.Lock()
 
 async def get_hybrid_orchestrator(config: Dict[str, Any] = None) -> HybridOrchestrator:
     """Récupérer l'instance globale de l'orchestrateur hybride"""
     global _global_hybrid_orchestrator
-    
+
     if _global_hybrid_orchestrator is None:
-        _global_hybrid_orchestrator = HybridOrchestrator(config)
-        await _global_hybrid_orchestrator.initialize()
-    
+        with _orchestrator_lock:
+            if _global_hybrid_orchestrator is None:
+                _global_hybrid_orchestrator = HybridOrchestrator(config)
+                await _global_hybrid_orchestrator.initialize()
+
     return _global_hybrid_orchestrator
 
 def create_hybrid_orchestrator(config: Dict[str, Any] = None) -> HybridOrchestrator:

@@ -3,16 +3,7 @@
  * Centralise les appels API, utilitaires UI et fonctions communes
  */
 
-// Configuration API - safe access
-function getMLApiBase() {
-    try {
-        return (typeof globalConfig !== 'undefined' && globalConfig?.get)
-            ? globalConfig.get('api_base_url') || 'http://localhost:8080'
-            : 'http://localhost:8080';
-    } catch (error) {
-        return 'http://localhost:8080';
-    }
-}
+// Configuration API - uses centralized window.getApiBase() from global-config.js
 
 // Utilitaires UI communes
 export function showLoading(elementId, message = 'Chargement...') {
@@ -69,7 +60,7 @@ export function showSuccess(message, container = null) {
 // API Calls communes
 export async function fetchMLStatus(endpoint) {
     try {
-        const apiBase = getMLApiBase();
+        const apiBase = window.getApiBase();
         const response = await fetch(`${apiBase}/api/ml/${endpoint}`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
@@ -81,7 +72,7 @@ export async function fetchMLStatus(endpoint) {
 
 export async function postMLAction(endpoint, data = {}) {
     try {
-        const apiBase = getMLApiBase();
+        const apiBase = window.getApiBase();
         const response = await fetch(`${apiBase}/api/ml/${endpoint}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -274,7 +265,7 @@ export async function getUnifiedMLStatus() {
     try {
         // PRIORITY 1: Governance Engine (exactly like AI Dashboard)
         try {
-            const apiBase = getMLApiBase();
+            const apiBase = window.getApiBase();
             const govResponse = await fetch(`${apiBase}/execution/governance/signals`);
             if (govResponse.ok) {
                 const govData = await govResponse.json();
@@ -306,7 +297,7 @@ export async function getUnifiedMLStatus() {
 
         // PRIORITY 2: ML Status API (exactly like AI Dashboard fallback)
         try {
-            const apiBase = getMLApiBase();
+            const apiBase = window.getApiBase();
             const mlResponse = await fetch(`${apiBase}/api/ml/status`);
             if (mlResponse.ok) {
                 const mlData = await mlResponse.json();

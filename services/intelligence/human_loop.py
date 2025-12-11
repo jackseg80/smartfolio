@@ -4,6 +4,7 @@ Provides human oversight and intervention capabilities for critical ML decisions
 """
 import asyncio
 import logging
+import threading
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Callable, Union, Tuple
@@ -600,13 +601,16 @@ def create_human_loop_engine(config: Dict[str, Any] = None) -> HumanInTheLoopEng
 
 # Singleton global
 _global_human_loop_engine: Optional[HumanInTheLoopEngine] = None
+_loop_lock = threading.Lock()
 
 async def get_human_loop_engine(config: Dict[str, Any] = None) -> HumanInTheLoopEngine:
     """Récupère l'instance globale du moteur Human-in-the-loop"""
     global _global_human_loop_engine
-    
+
     if _global_human_loop_engine is None:
-        _global_human_loop_engine = create_human_loop_engine(config)
-        await _global_human_loop_engine.start()
-    
+        with _loop_lock:
+            if _global_human_loop_engine is None:
+                _global_human_loop_engine = create_human_loop_engine(config)
+                await _global_human_loop_engine.start()
+
     return _global_human_loop_engine

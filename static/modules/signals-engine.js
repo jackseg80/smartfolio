@@ -57,8 +57,8 @@ export async function fetchSignals() {
 
     // 2. BTC Dominance (CoinGecko via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
-      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/global`;
+      const apiBase = window.getApiBase();
+      const proxyUrl = `${apiBase}/api/coingecko-proxy/global`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
       const dominanceResponse = await fetch(proxyUrl, {
@@ -127,8 +127,8 @@ export async function fetchSignals() {
 
     // 4. ETH/BTC Ratio (CoinGecko via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
-      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/simple/price?ids=bitcoin,ethereum&vs_currencies=usd`;
+      const apiBase = window.getApiBase();
+      const proxyUrl = `${apiBase}/api/coingecko-proxy/simple/price?ids=bitcoin,ethereum&vs_currencies=usd`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
       const pricesResponse = await fetch(proxyUrl, {
@@ -176,8 +176,8 @@ export async function fetchSignals() {
 
     // 5. Volatility (calculated from recent BTC price changes via proxy)
     try {
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
-      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=7&interval=daily`;
+      const apiBase = window.getApiBase();
+      const proxyUrl = `${apiBase}/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=7&interval=daily`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
       const volatilityResponse = await fetch(proxyUrl, {
@@ -225,8 +225,8 @@ export async function fetchSignals() {
     // 6. Trend (7-day price momentum)
     try {
       // Use backend proxy to avoid CORS and rate limiting
-      const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
-      const proxyUrl = `${apiBase.replace(/\/$/, '')}/api/coingecko-proxy/bitcoin?market_data=true`;
+      const apiBase = window.getApiBase();
+      const proxyUrl = `${apiBase}/api/coingecko-proxy/bitcoin?market_data=true`;
       const activeUser = localStorage.getItem('activeUser') || 'demo';
 
       const trendResponse = await fetch(proxyUrl, {

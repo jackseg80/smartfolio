@@ -9,7 +9,7 @@ console.debug('🔄 Analytics Unified - Initialisation');
 import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
 
 // Configuration
-const API_BASE = globalConfig?.get('api_base_url') || 'http://localhost:8080';
+const API_BASE = window.getApiBase();
 
 // 🆕 Cache TTL adaptatif selon CLAUDE.md (Oct 2025 optimization)
 const CACHE_TTL = {

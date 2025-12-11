@@ -167,17 +167,36 @@ class DebugLogger {
     }
 
     /**
-     * Rend console.debug silencieux hors debug, non-destructif
+     * Rend console.debug/log/info silencieux hors debug, non-destructif
+     * En production (debug OFF): masque console.log, console.info, console.debug
+     * Garde toujours: console.error, console.warn
      */
     applyConsoleOverride() {
         try {
             if (!this._consolePatched) {
+                // Sauvegarder les méthodes originales
                 console.__origDebug = console.__origDebug || console.debug?.bind(console) || console.log.bind(console);
+                console.__origLog = console.__origLog || console.log?.bind(console);
+                console.__origInfo = console.__origInfo || console.info?.bind(console);
                 this._consolePatched = true;
             }
+
+            // console.debug - toujours silencieux hors debug
             console.debug = (...args) => {
                 if (!this.debugEnabled) return; // no-op
                 try { console.__origDebug(`[debug]`, ...args); } catch { /* ignore */ }
+            };
+
+            // console.log - silencieux hors debug (nouveau)
+            console.log = (...args) => {
+                if (!this.debugEnabled) return; // no-op
+                try { console.__origLog(...args); } catch { /* ignore */ }
+            };
+
+            // console.info - silencieux hors debug (nouveau)
+            console.info = (...args) => {
+                if (!this.debugEnabled) return; // no-op
+                try { console.__origInfo(`[info]`, ...args); } catch { /* ignore */ }
             };
         } catch (_) {}
     }

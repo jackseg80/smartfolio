@@ -5,6 +5,7 @@ Système de validation et contrôle qualité pour prédictions ML
 
 import numpy as np
 import logging
+import threading
 from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from dataclasses import dataclass
@@ -383,13 +384,16 @@ class MLGatingSystem:
 
 # Instance globale du système de gating
 _global_gating_system: Optional[MLGatingSystem] = None
+_gating_lock = threading.Lock()
 
 
 def get_gating_system() -> MLGatingSystem:
     """Obtenir l'instance globale du système de gating"""
     global _global_gating_system
     if _global_gating_system is None:
-        _global_gating_system = MLGatingSystem()
+        with _gating_lock:
+            if _global_gating_system is None:
+                _global_gating_system = MLGatingSystem()
     return _global_gating_system
 
 

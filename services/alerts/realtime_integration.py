@@ -4,6 +4,7 @@ Connects AlertEngine with streaming system for real-time alert broadcasting
 """
 import asyncio
 import logging
+import threading
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 from dataclasses import asdict
@@ -322,15 +323,18 @@ class RealtimeAlertBroadcaster:
 
 # Singleton pour l'application
 _global_broadcaster: Optional[RealtimeAlertBroadcaster] = None
+_broadcaster_lock = threading.Lock()
 
 async def get_alert_broadcaster(enabled: bool = True) -> RealtimeAlertBroadcaster:
     """Factory pour récupérer le broadcaster global"""
     global _global_broadcaster
-    
+
     if _global_broadcaster is None:
-        _global_broadcaster = RealtimeAlertBroadcaster()
-        await _global_broadcaster.initialize(enabled)
-    
+        with _broadcaster_lock:
+            if _global_broadcaster is None:
+                _global_broadcaster = RealtimeAlertBroadcaster()
+                await _global_broadcaster.initialize(enabled)
+
     return _global_broadcaster
 
 

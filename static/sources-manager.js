@@ -968,7 +968,7 @@ async function testActiveSource(moduleName) {
     }
 
     // Effectuer le test
-    const apiBase = window.globalConfig?.get('api_base_url') || 'http://127.0.0.1:8080';
+    const apiBase = window.getApiBase();
     const response = await fetch(`${apiBase}${testEndpoint}`, {
       headers: {
         'X-User': currentUser

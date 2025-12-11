@@ -6,6 +6,7 @@ Versioning, chargement, et métadonnées des modèles
 import os
 import json
 import logging
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
@@ -343,21 +344,26 @@ class ModelRegistry:
         logger.info(f"Deprecated model {name}:{version}")
 
 
-# === INSTANCE GLOBALE ===
+# === INSTANCE GLOBALE (thread-safe) ===
 
 _global_model_registry: Optional[ModelRegistry] = None
+_registry_lock = threading.Lock()
 
 
 def get_model_registry() -> ModelRegistry:
-    """Obtenir l'instance globale du model registry"""
+    """Obtenir l'instance globale du model registry (thread-safe)"""
     global _global_model_registry
+    # Double-checked locking
     if _global_model_registry is None:
-        _global_model_registry = ModelRegistry()
+        with _registry_lock:
+            if _global_model_registry is None:
+                _global_model_registry = ModelRegistry()
     return _global_model_registry
 
 
 def initialize_model_registry(base_path: str = "models") -> ModelRegistry:
-    """Initialiser le model registry avec un chemin spécifique"""
+    """Initialiser le model registry avec un chemin spécifique (thread-safe)"""
     global _global_model_registry
-    _global_model_registry = ModelRegistry(base_path)
+    with _registry_lock:
+        _global_model_registry = ModelRegistry(base_path)
     return _global_model_registry
