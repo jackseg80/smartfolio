@@ -3,7 +3,6 @@
  * Utilisé par dashboard.html et settings.html pour éviter la duplication
  */
 import { safeFetch } from './http.js';
-import { formatCurrency } from '../shared-ml-functions.js';
 
 let _cachedSummary = null;
 let _cacheTimestamp = 0;
@@ -391,7 +390,24 @@ export function invalidateSaxoCache(clearAll = false) {
 // ✅ EXPOSE globally for debug console access
 window.invalidateSaxoCache = invalidateSaxoCache;
 
-// formatCurrency now imported from shared-ml-functions.js (centralized, multi-currency support)
+/**
+ * Formate une valeur monétaire pour l'affichage (wrapper simple pour USD)
+ * Note: Kept local for backward compatibility with dashboard-main-controller.js
+ * @param {number} value - Valeur en USD
+ * @returns {string} - Valeur formatée (ex: "$1,234.56")
+ */
+export function formatCurrency(value) {
+    if (!Number.isFinite(value) || value === 0) {
+        return '$0';
+    }
+
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: value >= 1000 ? 0 : 2
+    }).format(value);
+}
 
 /**
  * Détermine la couleur pour les métriques selon la valeur

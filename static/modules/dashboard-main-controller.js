@@ -3,7 +3,7 @@ import { getUnifiedState, deriveRecommendations } from '../core/unified-insights
 import { store } from '../core/risk-dashboard-store.js';
 import { UNIFIED_ASSET_GROUPS, getAssetGroup, groupAssetsByClassification } from '../shared-asset-groups.js';
 import { selectCapPercent, selectPolicyCapPercent, selectEngineCapPercent } from '../selectors/governance.js';
-// Note: fetchSaxoSummary imported dynamically in refreshSaxoTile() to avoid scope issues
+// Note: fetchSaxoSummary, formatCurrency imported dynamically in refreshSaxoTile() to avoid scope issues
 
 // ✅ Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
 const colorForScore = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' : 'var(--danger)';
