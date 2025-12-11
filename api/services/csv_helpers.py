@@ -53,7 +53,8 @@ async def load_csv_balances(csv_file_path: str) -> List[Dict[str, Any]]:
             f.seek(0)
             try:
                 dialect = csv.Sniffer().sniff(sample, delimiters=",;")
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to auto-detect CSV dialect for {csv_file_path}, using comma: {e}")
                 # Fallback to comma delimiter
                 class _Dialect:
                     delimiter = ","

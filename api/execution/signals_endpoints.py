@@ -56,7 +56,8 @@ async def update_ml_signals(request: UpdateSignalsRequest):
             try:
                 # Attach blended score directly to signals model
                 setattr(signals, 'blended_score', float(request.blended_score))
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Failed to attach blended_score to signals model: {e}")
                 # Graceful fallback if assignment fails
                 pass
 

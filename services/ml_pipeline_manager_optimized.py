@@ -300,7 +300,8 @@ class OptimizedMLPipelineManager:
             size_bytes = model_path.stat().st_size
             # Estimer la taille en mémoire (généralement 2-3x la taille du fichier)
             return (size_bytes * 2.5) / (1024 * 1024)  # MB
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to estimate model size for {model_path}: {e}")
             return 50.0  # Estimation par défaut
     
     async def load_volatility_model_async(self, symbol: str) -> bool:

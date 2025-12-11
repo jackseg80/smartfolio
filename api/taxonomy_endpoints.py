@@ -2,12 +2,17 @@
 from __future__ import annotations
 import os
 import json
+import logging
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, Body, HTTPException, Query
 from api.utils import success_response, error_response
+
+logger = logging.getLogger(__name__)
+
 try:
     import taxonomy  # DEFAULT_GROUPS, GROUP_ALIASES (mapping par défaut .py)
-except Exception:
+except Exception as e:
+    logger.warning(f"Failed to import taxonomy module, using fallback: {e}")
     # Fallback si pas dispo (évite crash)
     class _T:
         DEFAULT_GROUPS = ["BTC", "ETH", "Stablecoins", "SOL", "L1/L0 majors", "Others"]
@@ -43,7 +48,8 @@ def _load_disk_aliases() -> Dict[str, str]:
             data = json.load(f) or {}
             if isinstance(data, dict):
                 return {str(k).upper(): str(v) for k,v in data.items()}
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to load disk aliases from {ALIASES_JSON}: {e}")
         pass
     return {}
 
@@ -57,7 +63,8 @@ def _all_groups() -> list[str]:
     try:
         from services.taxonomy import DEFAULT_GROUPS_ORDER
         return list(DEFAULT_GROUPS_ORDER)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to import DEFAULT_GROUPS_ORDER, using fallback: {e}")
         # Fallback avec tous les nouveaux groupes
         return ["BTC","ETH","Stablecoins","SOL","L1/L0 majors","L2/Scaling","DeFi","AI/Data","Gaming/NFT","Memecoins","Others"]
 
@@ -65,7 +72,8 @@ def _base_aliases() -> Dict[str, str]:
     try:
         from services.taxonomy import DEFAULT_ALIASES
         return {str(k).upper(): str(v) for k, v in DEFAULT_ALIASES.items()}
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to import DEFAULT_ALIASES, using empty dict: {e}")
         return {}
 
 def _merged_aliases() -> Dict[str, str]:

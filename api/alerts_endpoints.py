@@ -136,7 +136,8 @@ def ensure_test_endpoints_enabled(request: Request):
     try:
         client_host = (request.client.host if request and request.client else None)
         host_header = (request.headers.get('host', '') or '').split(':')[0].lower()
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to get client host/header for alerts access check: {e}")
         client_host, host_header = None, ''
 
     if client_host in ('127.0.0.1', '::1') or host_header in ('localhost', '127.0.0.1', '::1'):

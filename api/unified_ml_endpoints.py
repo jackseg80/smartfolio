@@ -437,11 +437,13 @@ async def alias_correlation_matrix(window_days: int = Query(30)):
                     continue
                 try:
                     vals.append(abs(float(v)))
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"Failed to parse correlation value for {a}-{b}: {e}")
                     pass
         if vals:
             avg_corr = sum(vals) / len(vals)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to calculate average correlation: {e}")
         avg_corr = None
 
     return {

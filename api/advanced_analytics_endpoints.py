@@ -212,7 +212,8 @@ async def get_timeseries_data(
                                 timestamps = [pd.Timestamp.fromtimestamp(p[0]) for p in prices]
                                 values = [p[1] for p in prices]
                                 price_data[symbol] = pd.Series(values, index=timestamps)
-                        except Exception:
+                        except Exception as e:
+                            logger.warning(f"Failed to get price history for {symbol}: {e}")
                             continue
                 
                 if len(price_data) >= 2:

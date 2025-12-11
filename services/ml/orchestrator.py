@@ -97,7 +97,8 @@ class MLOrchestrator:
                         if data.get('data_source') in ['stub', 'cointracking', 'cointracking_api']:
                             logger.info(f"Using data source from config API: {data['data_source']}")
                             return data['data_source']
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Config API not available, using fallback: {e}")
                 # Config API not available, continue with fallback logic
                 pass
             

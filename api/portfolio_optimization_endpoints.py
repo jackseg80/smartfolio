@@ -173,7 +173,8 @@ async def optimize_portfolio(
                                 if holding.get('value_usd', 0) >= min_usd:
                                     items.append(holding)
                     balances_response = {"source_used": "cointracking_csv_fallback", "items": items}
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"CSV fallback failed: {e}, using stub data")
                     # Final fallback to stub
                     balances_response = {
                         "source_used": "stub_fallback", 
@@ -195,7 +196,8 @@ async def optimize_portfolio(
                             if holding.get('value_usd', 0) >= min_usd:
                                 items.append(holding)
                 balances_response = {"source_used": "cointracking", "items": items}
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Default CSV balances failed: {e}, using stub data")
                 # Fallback to stub data
                 balances_response = {
                     "source_used": "stub", 
@@ -549,7 +551,8 @@ async def analyze_portfolio(
                 cutoff = sorted_vals[target_assets - 1]
                 # Nudge down slightly to include borderline assets
                 suggested_min_usd = max(min_usd, round(cutoff * 0.95, 2))
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Failed to calculate suggested min_usd cutoff: {e}")
             pass
 
         # Suggest min_history_days based on coverage

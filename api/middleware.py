@@ -121,7 +121,8 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                     "cause": str(exc.cause) if exc.cause else None,
                     "exception_type": type(exc).__name__
                 }
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to add debug info to error response (degraded mode): {e}")
             pass  # Ignorer les erreurs de configuration en mode dégradé
         
         return JSONResponse(
@@ -165,7 +166,8 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
                     "original_error": str(exc),
                     "exception_type": type(exc).__name__
                 }
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to check debug settings, using degraded mode: {e}")
             # En mode dégradé, toujours inclure quelques détails
             error_response["debug"] = {
                 "original_error": str(exc),

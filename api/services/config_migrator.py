@@ -261,7 +261,8 @@ def resolve_secret_ref(ref: str, user_fs: UserScopedFS) -> Optional[str]:
         if value:
             logger.warning(f"Resolved secret ref {ref} from config.json (DEPRECATED - use secrets.json)")
             return str(value)
-    except Exception:
+    except Exception as e:
+        logger.debug(f"Failed to resolve {ref} from legacy config.json: {e}")
         pass
 
     logger.warning(f"Could not resolve secret reference: {ref}")

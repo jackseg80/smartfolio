@@ -192,7 +192,8 @@ def _calculate_risk_score_v2(
             weights = sorted([(float(h.get('value_usd', 0.0))/total) for h in balances if float(h.get('value_usd', 0.0)) > 0], reverse=True)
         top5 = sum(weights[:5]) if weights else 0.0
         hhi = sum(w*w for w in weights)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to calculate concentration metrics (top5/HHI): {e}")
         top5 = 0.0
         hhi = 0.0
     d_conc = 0.0

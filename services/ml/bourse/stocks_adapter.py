@@ -332,7 +332,8 @@ class StocksMLAdapter:
                         benchmark=benchmark,
                         lookback_days=lookback_days
                     )
-                except Exception:
+                except Exception as e:
+                    logger.warning(f"Failed to fetch benchmark data for {benchmark}: {e}")
                     benchmark_data = pd.DataFrame()
             return await self._fallback_regime_detection(benchmark, benchmark_data)
 

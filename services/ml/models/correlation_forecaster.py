@@ -695,8 +695,9 @@ class CorrelationForecaster:
             correlations = outputs['correlations']
             magnitude = torch.abs(correlations).mean().item()
             return min(magnitude, 1.0)
-            
-        except Exception:
+
+        except Exception as e:
+            logger.warning(f"Failed to calculate confidence score: {e}")
             return 0.5  # Default confidence
     
     def analyze_correlation_changes(self, 
