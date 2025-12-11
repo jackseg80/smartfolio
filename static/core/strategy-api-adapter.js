@@ -5,6 +5,7 @@
 import { store } from './risk-dashboard-store.js';
 import { calculateHierarchicalAllocation } from './allocation-engine.js';
 import { GROUP_ORDER, getAssetGroup } from '../shared-asset-groups.js';
+import { fetchWithTimeout } from '../components/utils.js';
 
 // Configuration de migration avec feature flags
 const MIGRATION_CONFIG = {
@@ -26,31 +27,24 @@ const MIGRATION_CONFIG = {
 // Cache simple pour éviter appels répétés
 let _strategyCache = { timestamp: 0, data: null, template: null };
 
-// Helper fetch avec timeout
-async function fetchWithTimeout(url, options = {}) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), MIGRATION_CONFIG.api_timeout_ms);
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-      }
-    });
-    clearTimeout(timeout);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    clearTimeout(timeout);
-    throw error;
+// fetchWithTimeout now imported from components/utils.js (centralized)
+
+// Local wrapper to auto-parse JSON and check response.ok
+async function fetchJSON(url, options = {}) {
+  const response = await fetchWithTimeout(url, {
+    timeoutMs: MIGRATION_CONFIG.api_timeout_ms,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    },
+    ...options
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
   }
+
+  return await response.json();
 }
 
 // Obtenir l'URL de base API
@@ -101,7 +95,7 @@ async function getStrategyFromAPI(templateId = 'balanced', customWeights = null)
   
   debugLog('Calling strategy API:', url, requestBody);
   
-  const result = await fetchWithTimeout(url, {
+  const result = await fetchJSON(url, {
     method: 'POST',
     body: JSON.stringify(requestBody)
   });
@@ -301,7 +295,7 @@ export async function getAvailableStrategyTemplates() {
     const baseUrl = getApiBaseUrl().replace(/\/$/, '');
     const url = `${baseUrl}/api/strategy/templates`;
     
-    const templates = await fetchWithTimeout(url);
+    const templates = await fetchJSON(url);
     debugLog('Available templates:', Object.keys(templates));
     return templates;
     
@@ -325,7 +319,7 @@ export async function compareStrategyTemplates(templateIds = ['conservative', 'b
     const baseUrl = getApiBaseUrl().replace(/\/$/, '');
     const url = `${baseUrl}/api/strategy/compare`;
     
-    const comparison = await fetchWithTimeout(url, {
+    const comparison = await fetchJSON(url, {
       method: 'POST',
       body: JSON.stringify(templateIds)
     });

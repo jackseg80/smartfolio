@@ -674,9 +674,9 @@ EOF
 
 ### Architecture & Design
 - Architecture: `docs/ARCHITECTURE.md`
-- Code Quality: `AUDIT_REPORT_2025-10-19.md` (audit complet)
-- Refactoring Plans: `GOD_SERVICES_REFACTORING_PLAN.md`
-- Code Consolidation: `DUPLICATE_CODE_CONSOLIDATION.md`
+- Code Quality: `docs/audit/AUDIT_REPORT_2025-10-19.md` (audit complet)
+- Refactoring Plans: `docs/_archive/GOD_SERVICES_REFACTORING_PLAN.md`
+- Code Consolidation: `docs/_archive/DUPLICATE_CODE_CONSOLIDATION.md`
 
 ### Features & Systems
 - **Allocation**: `docs/ALLOCATION_ENGINE_V2.md` (topdown hierarchical, floors, incumbency)
