@@ -24,6 +24,7 @@ from api.utils import success_response, error_response
 from api.services.user_fs import UserScopedFS
 from connectors.saxo_api import SaxoOAuthClient, generate_state
 from services.saxo_auth_service import SaxoAuthService
+from services import fx_service
 
 logger = logging.getLogger(__name__)
 
@@ -567,7 +568,8 @@ async def get_saxo_api_positions(
 
             # ✅ CRITICAL: Convert EUR → USD for frontend consistency
             # Frontend expects USD everywhere, Saxo returns EUR
-            EUR_TO_USD_RATE = 1.16  # TODO: Use dynamic rate from FX service
+            # Use dynamic FX rate from service (4h cache + live API fallback)
+            EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")
 
             # Convert positions market_value to USD
             for pos in positions_normalized:
