@@ -243,6 +243,61 @@
             color: var(--brand-primary);
         }
 
+        /* Tooltip styles for risk metrics explanations */
+        .metric-with-tooltip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--info);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: help;
+            position: relative;
+        }
+
+        .tooltip-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 8px);
+            transform: translateX(-50%);
+            background: var(--theme-surface);
+            color: var(--theme-text);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--theme-border);
+            white-space: normal;
+            width: 320px;
+            max-width: 90vw;
+            font-size: 0.8rem;
+            font-weight: normal;
+            line-height: 1.4;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .tooltip-icon:hover::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 2px);
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: var(--theme-border);
+            z-index: 1001;
+        }
+
         .currency-code {
             font-size: 0.75rem;
             color: var(--theme-text-muted);
@@ -1103,12 +1158,21 @@
 
                 const riskColor = getRiskColor(level);
 
+                // Helper to create metric with tooltip (defined before use)
+                const metricWithTooltip = (label, tooltip) => `
+                    <span class="metric-with-tooltip">
+                        <strong>${label}</strong>
+                        <span class="tooltip-icon" data-tooltip="${tooltip}">i</span>
+                    </span>`;
+
                 // Risk Summary with enhanced UI
                 document.getElementById('riskSummary').innerHTML = `
                   <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
                     <div style="flex:1;min-width:200px;">
                       <div class="metric-large" style="color:${riskColor}">${score.toFixed(0)}<span style="font-size:1rem;color:var(--theme-text-muted);">/100</span></div>
-                      <div class="metric-label">Risk Score (higher = safer)</div>
+                      <div class="metric-label">
+                        ${metricWithTooltip('Risk Score (higher = safer)', 'Score de risque global (0-100) : synthèse de toutes les métriques de risque. 80-100 = Très sûr. 60-80 = Modéré. 40-60 = Risqué. <40 = Très risqué. Plus le score est élevé, plus votre portefeuille est stable et diversifié.')}
+                      </div>
                     </div>
                     <div style="flex:1;min-width:200px;">
                       <div style="font-weight:600;font-size:1.25rem;color:${riskColor};margin-bottom:0.5rem;">${level}</div>
@@ -1116,7 +1180,7 @@
                         ${positions_count || 0} positions • $${(total_value_usd || 0).toLocaleString()}
                       </div>
                       <div style="margin-top:0.5rem;color:var(--theme-text-muted);font-size:0.875rem;">
-                        Coverage: ${(coverage*100).toFixed(0)}%
+                        ${metricWithTooltip('Coverage: ' + (coverage*100).toFixed(0) + '%', 'Couverture des données : pourcentage de positions pour lesquelles l\'historique de prix est disponible. 100% = toutes les positions ont des données. <80% = certaines positions manquent d\'historique (calculs moins fiables).')}
                       </div>
                     </div>
                   </div>`;
@@ -1131,27 +1195,27 @@
                   <table class="positions-table">
                     <tbody>
                       <tr>
-                        <td><strong>VaR (95%, 1d)</strong></td>
+                        <td>${metricWithTooltip('VaR (95%, 1d)', 'Value at Risk : perte maximale potentielle sur 1 jour avec 95% de confiance. Exemple : -2% signifie que vous avez 5% de chances de perdre plus de 2% en une journée. Plus la valeur est faible (en %), mieux c\'est.')}</td>
                         <td style="color:var(--danger)">${formatPct(m.var_95_1d)}%</td>
                       </tr>
                       <tr>
-                        <td><strong>Volatility (30d)</strong></td>
+                        <td>${metricWithTooltip('Volatility (30d)', 'Volatilité sur 30 jours : mesure les fluctuations de prix récentes (annualisées). Une volatilité élevée (>30%) indique un portefeuille très variable, une faible volatilité (<15%) indique un portefeuille stable.')}</td>
                         <td>${formatPct(m.volatility_30d)}%</td>
                       </tr>
                       <tr>
-                        <td><strong>Volatility (252d)</strong></td>
+                        <td>${metricWithTooltip('Volatility (252d)', 'Volatilité sur 1 an (252 jours de trading) : mesure la stabilité long terme du portefeuille. Sert de référence pour évaluer si la volatilité récente (30j) est inhabituelle.')}</td>
                         <td>${formatPct(m.volatility_252d)}%</td>
                       </tr>
                       <tr>
-                        <td><strong>Max Drawdown</strong></td>
+                        <td>${metricWithTooltip('Max Drawdown', 'Drawdown maximum : plus grosse perte depuis le plus haut historique sur 252 jours (1 an de trading). Exemple : -15% signifie que votre portefeuille a perdu 15% depuis son pic sur l\'année écoulée. Indique votre capacité à supporter les baisses prolongées.')}</td>
                         <td style="color:var(--danger)">${formatPct(m.max_drawdown)}%</td>
                       </tr>
                       <tr>
-                        <td><strong>Sharpe Ratio</strong></td>
+                        <td>${metricWithTooltip('Sharpe Ratio', 'Ratio de Sharpe : rendement ajusté du risque. >1 = bon, >2 = excellent, <1 = faible. Mesure si les gains compensent la volatilité. Un Sharpe de 1.5 signifie 1.5 unité de rendement par unité de risque pris.')}</td>
                         <td style="color:${(m.sharpe_ratio??0) > 1 ? 'var(--success)' : 'var(--theme-text)'}">${(m.sharpe_ratio??0).toFixed(2)}</td>
                       </tr>
                       <tr>
-                        <td><strong>Sortino Ratio</strong></td>
+                        <td>${metricWithTooltip('Sortino Ratio', 'Ratio de Sortino : similaire au Sharpe mais ne pénalise que la volatilité à la baisse (pertes). >1.5 = bon, >2 = excellent. Plus pertinent que le Sharpe car seules les baisses comptent comme risque.')}</td>
                         <td>${(m.sortino_ratio??0).toFixed(2)}</td>
                       </tr>
                     </tbody>
@@ -1162,23 +1226,23 @@
                   <table class="positions-table">
                     <tbody>
                       <tr>
-                        <td><strong>Beta (Portfolio)</strong></td>
+                        <td>${metricWithTooltip('Beta (Portfolio)', 'Beta du portefeuille : mesure la sensibilité aux mouvements du marché (S&P 500). Beta = 1 : suit le marché. Beta > 1 : plus volatil que le marché. Beta < 1 : moins volatil. Exemple : Beta 1.2 = si marché +10%, vous faites +12%.')}</td>
                         <td>${(m.beta_portfolio??1.0).toFixed(2)}</td>
                       </tr>
                       <tr>
-                        <td><strong>Calmar Ratio</strong></td>
+                        <td>${metricWithTooltip('Calmar Ratio', 'Ratio de Calmar : rendement annuel divisé par le drawdown max. >3 = excellent, 1-3 = bon, <1 = faible. Mesure si les gains justifient les pires baisses subies. Un Calmar de 2 signifie que vous gagnez 2% par an pour chaque 1% de drawdown max.')}</td>
                         <td>${(m.calmar_ratio??0).toFixed(2)}</td>
                       </tr>
                       <tr>
-                        <td><strong>Volatility (90d)</strong></td>
+                        <td>${metricWithTooltip('Volatility (90d)', 'Volatilité sur 90 jours (3 mois) : compromis entre court terme (30j) et long terme (252j). Utile pour détecter les changements de régime de marché (passage de calme à volatil).')}</td>
                         <td>${formatPct(m.volatility_90d)}%</td>
                       </tr>
                       <tr>
-                        <td><strong>VaR Method</strong></td>
+                        <td>${metricWithTooltip('VaR Method', 'Méthode de calcul de la VaR. Historical = basé sur l\'historique réel des prix (plus fiable). Parametric = suppose distribution normale (moins fiable si marchés extrêmes). Monte Carlo = simulations aléatoires.')}</td>
                         <td style="text-transform:capitalize;">${m.var_method || 'historical'}</td>
                       </tr>
                       <tr>
-                        <td><strong>Drawdown Days</strong></td>
+                        <td>${metricWithTooltip('Drawdown Days', 'Nombre de jours depuis le plus haut historique. 0 jours = nouveau sommet ! >100 jours = période difficile prolongée. Indique si vous êtes en phase de récupération ou si vous battez des records.')}</td>
                         <td>${m.drawdown_days ?? 'N/A'}</td>
                       </tr>
                     </tbody>
