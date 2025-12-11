@@ -557,6 +557,10 @@ async def get_saxo_api_positions(
             positions_normalized = _normalize_positions(positions_raw, uic_metadata)
 
             # Extract cash balance
+            # DEBUG: Log all balance fields to identify correct cash field
+            logger.info(f"🔍 Saxo API balances_data keys: {list(balances_data.keys())}")
+            logger.info(f"🔍 Saxo API full balances: {balances_data}")
+
             cash_balance = balances_data.get("CashBalance", 0.0)
             total_value_api = balances_data.get("TotalValue", 0.0)
             currency = balances_data.get("Currency", "EUR")

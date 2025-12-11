@@ -3918,8 +3918,8 @@
         async function editCashAmount() {
             const currentCash = window.portfolioCash || 0;
 
-            // Saved currency preference (default EUR)
-            const savedCurrency = localStorage.getItem('saxoCashCurrency') || 'EUR';
+            // Saved currency preference (default USD since portfolioCash is always in USD from API)
+            const savedCurrency = localStorage.getItem('saxoCashCurrency') || 'USD';
 
             // Pre-load exchange rates (non-blocking)
             const ratesPromise = Promise.all([
