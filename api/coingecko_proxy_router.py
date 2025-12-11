@@ -9,7 +9,7 @@ Features:
 - Rate limit handling
 - Multi-tenant: uses user's CoinGecko API key from secrets.json
 """
-from fastapi import APIRouter, HTTPException, Query, Header
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Dict, Any, Optional
 import httpx
 import logging
@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 
 from services.user_secrets import get_coingecko_api_key
+from api.deps import get_required_user
 
 logger = logging.getLogger("crypto-rebalancer")
 
@@ -194,7 +195,7 @@ async def get_bitcoin_data(
     developer_data: bool = Query(False, description="Include developer data"),
     sparkline: bool = Query(False, description="Include sparkline data"),
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
-    x_user: Optional[str] = Header(None, alias="X-User")
+    user: str = Depends(get_required_user)
 ):
     """
     Proxy endpoint for CoinGecko Bitcoin data (multi-tenant).
@@ -208,13 +209,11 @@ async def get_bitcoin_data(
         GET /api/coingecko-proxy/bitcoin?market_data=true
 
     Headers:
-        X-User: Optional user ID (defaults to "demo")
+        X-User: Required user ID
 
     Returns:
         Bitcoin market data from CoinGecko API (or cached data)
     """
-    # Get user (fallback to demo if not provided)
-    user = x_user or "demo"
 
     # Build cache key from parameters (include user for multi-tenant cache)
     cache_key = f"bitcoin_{user}_{localization}_{tickers}_{market_data}_{community_data}_{developer_data}_{sparkline}"
@@ -238,7 +237,7 @@ async def get_bitcoin_data(
 @router.get("/global")
 async def get_global_data(
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
-    x_user: Optional[str] = Header(None, alias="X-User")
+    user: str = Depends(get_required_user)
 ):
     """
     Proxy endpoint for CoinGecko global cryptocurrency market data (multi-tenant).
@@ -248,12 +247,11 @@ async def get_global_data(
         GET /api/coingecko-proxy/global
 
     Headers:
-        X-User: Optional user ID (defaults to "demo")
+        X-User: Required user ID
 
     Returns:
         Global market data from CoinGecko API (or cached data)
     """
-    user = x_user or "demo"
     cache_key = f"global_{user}"
     url = "https://api.coingecko.com/api/v3/global"
 
@@ -267,7 +265,7 @@ async def get_simple_price(
     ids: str = Query(..., description="Comma-separated coin IDs (e.g., bitcoin,ethereum)"),
     vs_currencies: str = Query("usd", description="Comma-separated fiat currencies"),
     cache_ttl: int = Query(180, description="Cache TTL in seconds (default 3min for prices)", ge=60, le=7200),
-    x_user: Optional[str] = Header(None, alias="X-User")
+    user: str = Depends(get_required_user)
 ):
     """
     Proxy endpoint for CoinGecko simple price endpoint (multi-tenant).
@@ -277,12 +275,11 @@ async def get_simple_price(
         GET /api/coingecko-proxy/simple/price?ids=bitcoin,ethereum&vs_currencies=usd
 
     Headers:
-        X-User: Optional user ID (defaults to "demo")
+        X-User: Required user ID
 
     Returns:
         Simple price data from CoinGecko API (or cached data)
     """
-    user = x_user or "demo"
     cache_key = f"simple_price_{user}_{ids}_{vs_currencies}"
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {
@@ -302,7 +299,7 @@ async def get_market_chart(
     days: int = Query(7, description="Number of days", ge=1, le=365),
     interval: str = Query("daily", description="Data interval"),
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
-    x_user: Optional[str] = Header(None, alias="X-User")
+    user: str = Depends(get_required_user)
 ):
     """
     Proxy endpoint for CoinGecko market chart endpoint (multi-tenant).
@@ -312,12 +309,11 @@ async def get_market_chart(
         GET /api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=7&interval=daily
 
     Headers:
-        X-User: Optional user ID (defaults to "demo")
+        X-User: Required user ID
 
     Returns:
         Market chart data from CoinGecko API (or cached data)
     """
-    user = x_user or "demo"
     cache_key = f"market_chart_{user}_{coin_id}_{vs_currency}_{days}_{interval}"
     url = f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart"
     params = {

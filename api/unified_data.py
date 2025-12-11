@@ -14,7 +14,17 @@ async def get_unified_filtered_balances(source: str = "cointracking", min_usd: f
 
     NOTE: Le paramètre pricing est ignoré pour l'instant car resolve_current_balances
     ne le supporte pas, mais on le garde pour compatibilité future.
+
+    Args:
+        user_id: ID utilisateur - DEPRECATED default "demo", utiliser Depends(get_active_user) dans endpoints
+
+    DEPRECATED: Le default "demo" sur user_id sera supprimé dans une future version.
+    Tous les endpoints doivent explicitement passer user_id via Depends(get_active_user).
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    if user_id == "demo":
+        logger.warning("get_unified_filtered_balances called with default user_id='demo' - should pass explicit user_id")
     # Import local pour éviter les imports circulaires
     from services.balance_service import balance_service
     from api.services.utils import to_rows

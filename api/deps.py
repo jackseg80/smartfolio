@@ -22,9 +22,68 @@ logger = logging.getLogger(__name__)
 # Redis client singleton
 _redis_client = None
 
+def get_required_user(x_user: str = Header(..., alias="X-User")) -> str:
+    """
+    Dépendance FastAPI qui FORCE le header X-User (pas de fallback).
+
+    Usage: Pour endpoints critiques nécessitant isolation multi-tenant stricte.
+
+    Args:
+        x_user: Header X-User REQUIS
+
+    Returns:
+        str: ID utilisateur validé
+
+    Raises:
+        HTTPException: 422 si header manquant, 403 si utilisateur inconnu
+
+    Example:
+        @router.get("/endpoint")
+        async def endpoint(user: str = Depends(get_required_user)):
+            # user est garanti non-None, pas de fallback
+    """
+    try:
+        # Validation et normalisation
+        normalized_user = validate_user_id(x_user)
+
+        # Mode développement : bypass de l'autorisation si DEV_OPEN_API=1
+        dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
+        if dev_mode:
+            logger.info(f"DEV MODE: Bypassing authorization for user: {normalized_user}")
+            return normalized_user
+
+        # Vérification autorisation normale
+        if not is_allowed_user(normalized_user):
+            logger.warning(f"Unknown user attempted access (required): {x_user}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Unknown user: {x_user}"
+            )
+
+        # Log pour audit
+        logger.info(f"Active user (required): {normalized_user}")
+        return normalized_user
+
+    except ValueError as e:
+        logger.warning(f"Invalid user ID format: {x_user} - {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {e}"
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error in get_required_user: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+
 def get_active_user(x_user: Optional[str] = Header(None)) -> str:
     """
     Dépendance FastAPI pour récupérer l'utilisateur actuel.
+
+    DEPRECATED: Utiliser get_required_user() pour nouveaux endpoints critiques.
+    Cette fonction garde un fallback "demo" pour compatibilité avec endpoints existants.
 
     Args:
         x_user: Header X-User optionnel
@@ -38,7 +97,7 @@ def get_active_user(x_user: Optional[str] = Header(None)) -> str:
     # Fallback vers utilisateur par défaut si pas de header
     if not x_user:
         default_user = get_default_user()
-        logger.debug(f"No X-User header, using default: {default_user}")
+        logger.warning(f"DEPRECATED fallback: No X-User header, using default '{default_user}'. Use get_required_user() for strict isolation.")
         return default_user
 
     try:

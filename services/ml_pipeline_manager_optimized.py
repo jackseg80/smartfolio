@@ -18,6 +18,9 @@ from collections import OrderedDict
 import gc
 import sys
 
+# Safe model loading (path traversal protection)
+from services.ml.safe_loader import safe_pickle_load, safe_torch_load
+
 logger = logging.getLogger(__name__)
 
 # ML Model Definitions (importées depuis le script d'entraînement)
@@ -336,18 +339,16 @@ class OptimizedMLPipelineManager:
             # Estimer la taille pour la gestion mémoire
             model_size_mb = self._estimate_model_size(model_path)
             
-            # Charger les métadonnées
-            with open(metadata_path, 'rb') as f:
-                metadata = pickle.load(f)
-            
+            # Charger les métadonnées (safe loading)
+            metadata = safe_pickle_load(metadata_path)
+
             # Charger le scaler avec joblib pour compatibilité
             try:
                 import joblib
                 scaler = joblib.load(scaler_path)
             except Exception as e:
-                logger.warning(f"Joblib failed for {symbol}, trying pickle: {e}")
-                with open(scaler_path, 'rb') as f:
-                    scaler = pickle.load(f)
+                logger.warning(f"Joblib failed for {symbol}, trying safe pickle: {e}")
+                scaler = safe_pickle_load(scaler_path)
             
             # Charger le modèle PyTorch avec compatibilité maximum
             try:
@@ -430,18 +431,16 @@ class OptimizedMLPipelineManager:
             # Estimer la taille pour la gestion mémoire
             model_size_mb = self._estimate_model_size(model_path)
             
-            # Charger les métadonnées
-            with open(metadata_path, 'rb') as f:
-                metadata = pickle.load(f)
-            
+            # Charger les métadonnées (safe loading)
+            metadata = safe_pickle_load(metadata_path)
+
             # Charger le scaler avec joblib pour compatibilité
             try:
                 import joblib
                 scaler = joblib.load(scaler_path)
             except Exception as e:
-                logger.warning(f"Joblib failed for {symbol}, trying pickle: {e}")
-                with open(scaler_path, 'rb') as f:
-                    scaler = pickle.load(f)
+                logger.warning(f"Joblib failed for {symbol}, trying safe pickle: {e}")
+                scaler = safe_pickle_load(scaler_path)
             
             # Charger le modèle PyTorch avec compatibilité maximum
             try:
@@ -520,30 +519,27 @@ class OptimizedMLPipelineManager:
             # Estimer la taille
             model_size_mb = self._estimate_model_size(model_path)
             
-            # Charger tous les composants avec gestion d'erreur robuste
+            # Charger tous les composants avec gestion d'erreur robuste (safe loading)
             try:
-                with open(metadata_path, 'rb') as f:
-                    metadata = pickle.load(f)
+                metadata = safe_pickle_load(metadata_path)
             except Exception as e:
                 logger.warning(f"Failed to load metadata, using fallback: {e}")
                 metadata = {"model_type": "regime_classifier", "version": "2.0.0", "accuracy": 0.78}
-            
+
             try:
                 import joblib
                 scaler = joblib.load(scaler_path)
             except Exception as e:
                 logger.warning(f"Failed to load scaler with joblib: {e}")
                 try:
-                    with open(scaler_path, 'rb') as f:
-                        scaler = pickle.load(f)
+                    scaler = safe_pickle_load(scaler_path)
                 except Exception as e2:
-                    logger.warning(f"Failed to load scaler with pickle: {e2}")
+                    logger.warning(f"Failed to load scaler with safe pickle: {e2}")
                     from sklearn.preprocessing import StandardScaler
                     scaler = StandardScaler()
-            
+
             try:
-                with open(features_path, 'rb') as f:
-                    features = pickle.load(f)
+                features = safe_pickle_load(features_path)
             except Exception as e:
                 logger.warning(f"Failed to load features, using fallback: {e}")
                 features = ["price_change_1d", "price_change_7d", "volatility_7d", "volatility_30d", "rsi"]
@@ -621,17 +617,14 @@ class OptimizedMLPipelineManager:
                 
                 # La gestion mémoire sera faite automatiquement par put()
                 
-                # Charger le modèle avec les mêmes techniques que les modèles de volatilité
+                # Charger le modèle avec les mêmes techniques que les modèles de volatilité (safe loading)
                 try:
-                    # Charger les métadonnées
-                    with open(metadata_path, 'rb') as f:
-                        metadata = pickle.load(f)
-                    
-                    with open(scaler_path, 'rb') as f:
-                        scaler = pickle.load(f)
-                        
-                    with open(features_path, 'rb') as f:
-                        features = pickle.load(f)
+                    # Charger les métadonnées (safe loading)
+                    metadata = safe_pickle_load(metadata_path)
+
+                    scaler = safe_pickle_load(scaler_path)
+
+                    features = safe_pickle_load(features_path)
                     
                     # Charger le modèle avec compatibilité PyTorch
                     try:

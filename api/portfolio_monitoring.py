@@ -57,13 +57,13 @@ def save_json_file(file_path: Path, data: Any):
     except Exception as e:
         logger.error(f"Error saving {file_path}: {e}")
 
-async def get_real_portfolio_data(source: str = "cointracking", user_id: str = "demo") -> Dict[str, Any]:
+async def get_real_portfolio_data(user_id: str, source: str = "cointracking") -> Dict[str, Any]:
     """
     Récupérer les vraies données de portefeuille via les services
 
     Args:
         source: Source de données (cointracking, cointracking_api, etc.)
-        user_id: ID utilisateur pour isolation multi-tenant
+        user_id: ID utilisateur pour isolation multi-tenant (requis)
 
     Returns:
         Dict avec métriques de portfolio réelles

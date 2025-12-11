@@ -99,7 +99,8 @@ async def get_advanced_metrics(
             # Récupérer les balances actuelles
             balances_response = await get_current_balances(source="cointracking")
             if not balances_response.get("items"):
-                raise Exception("No portfolio data available")
+                logger.error("No portfolio data available for centralized calculation")
+                raise HTTPException(status_code=404, detail="No portfolio data available")
             
             balances = balances_response["items"]
             
@@ -118,7 +119,8 @@ async def get_advanced_metrics(
                         logger.warning(f"Failed to get price data for {symbol}: {e}")
             
             if len(price_data) < 2:
-                raise Exception("Insufficient price data for centralized calculation")
+                logger.error(f"Insufficient price data: only {len(price_data)} assets have price history")
+                raise HTTPException(status_code=503, detail="Insufficient price data for centralized calculation")
             
             # Créer DataFrame des prix
             price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
@@ -239,9 +241,11 @@ async def get_timeseries_data(
                     
                     logger.info(f"✅ Generated centralized timeseries: {len(portfolio_returns)} points")
                 else:
-                    raise Exception("Insufficient centralized data")
+                    logger.error("Insufficient centralized data for timeseries generation")
+                    raise HTTPException(status_code=503, detail="Insufficient centralized data")
             else:
-                raise Exception("No portfolio data")
+                logger.error("No portfolio data available for timeseries")
+                raise HTTPException(status_code=404, detail="No portfolio data")
                 
         except Exception as e:
             logger.warning(f"Centralized timeseries failed: {e}, using mock fallback")
@@ -416,7 +420,8 @@ async def _generate_real_performance_data(days: int) -> Dict[str, Any]:
         # Récupérer les données avec la même logique que les métriques
         balances_response = await get_current_balances(source="cointracking")
         if not balances_response.get("items"):
-            raise Exception("No portfolio data available for timeseries")
+            logger.error("No portfolio data available for drawdown timeseries")
+            raise HTTPException(status_code=404, detail="No portfolio data available for timeseries")
         
         balances = balances_response["items"]
         
@@ -435,7 +440,8 @@ async def _generate_real_performance_data(days: int) -> Dict[str, Any]:
                     logger.warning(f"Failed to get price data for {symbol}: {e}")
         
         if len(price_data) < 2:
-            raise Exception("Insufficient price data for centralized timeseries")
+            logger.error(f"Insufficient price data for timeseries: only {len(price_data)} assets")
+            raise HTTPException(status_code=503, detail="Insufficient price data for centralized timeseries")
         
         # Créer DataFrame des prix
         price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()

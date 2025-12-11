@@ -17,6 +17,9 @@ import pickle
 import json
 from pathlib import Path
 
+# Safe model loading (path traversal protection)
+from services.ml.safe_loader import safe_pickle_load
+
 logger = logging.getLogger(__name__)
 
 class MarketRegime(Enum):
@@ -410,30 +413,27 @@ class CryptoMLPredictor:
             return False
     
     def load_models(self) -> bool:
-        """Load trained models from disk"""
-        
+        """Load trained models from disk (using safe_pickle_load for security)"""
+
         try:
-            # Load regime model
+            # Load regime model (safe loading with path validation)
             regime_path = self.models_path / 'regime_model.pkl'
             if regime_path.exists():
-                with open(regime_path, 'rb') as f:
-                    self.regime_model = pickle.load(f)
-                    
-            # Load return models
+                self.regime_model = safe_pickle_load(regime_path)
+
+            # Load return models (safe loading with path validation)
             return_path = self.models_path / 'return_models.pkl'
             if return_path.exists():
-                with open(return_path, 'rb') as f:
-                    self.return_models = pickle.load(f)
-                    
-            # Load scaler
+                self.return_models = safe_pickle_load(return_path)
+
+            # Load scaler (safe loading with path validation)
             scaler_path = self.models_path / 'feature_scaler.pkl'
             if scaler_path.exists():
-                with open(scaler_path, 'rb') as f:
-                    self.feature_scaler = pickle.load(f)
-                    
-            logger.info("Models loaded successfully")
+                self.feature_scaler = safe_pickle_load(scaler_path)
+
+            logger.info("Models loaded successfully (safe mode)")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to load models: {e}")
             return False
