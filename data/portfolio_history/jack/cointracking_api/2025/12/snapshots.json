@@ -42,5 +42,27 @@
     "valuation_currency": "USD",
     "price_source": "cointracking_api",
     "pricing_timestamp": "2025-12-12T18:30:06.237008+01:00"
+  },
+  {
+    "date": "2025-12-12T18:45:38.827077+01:00",
+    "user_id": "jack",
+    "source": "cointracking_api",
+    "total_value_usd": 331900.69821075996,
+    "asset_count": 190,
+    "group_count": 6,
+    "diversity_score": 3,
+    "top_holding_symbol": "BTC",
+    "top_holding_percentage": 0.406344850583679,
+    "group_distribution": {
+      "Others": 52601.01121785002,
+      "L1/L0 majors": 29173.304092749997,
+      "BTC": 146345.20843114,
+      "ETH": 70144.95195521999,
+      "Stablecoins": 32000.754707300002,
+      "SOL": 1635.4678065
+    },
+    "valuation_currency": "USD",
+    "price_source": "cointracking_api",
+    "pricing_timestamp": "2025-12-12T18:45:38.827077+01:00"
   }
 ]
