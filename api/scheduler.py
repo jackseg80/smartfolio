@@ -147,29 +147,36 @@ async def job_ohlcv_daily():
 
         # Import and run the existing script
         import sys
-        import subprocess
         from pathlib import Path
 
         script_path = Path(__file__).parent.parent / "scripts" / "update_price_history.py"
 
-        # Run as subprocess to avoid import side-effects
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            capture_output=True,
-            text=True,
+        # PERFORMANCE FIX (Dec 2025): Non-blocking subprocess with asyncio
+        # Prevents event loop freeze during 5-minute script execution
+        process = await asyncio.create_subprocess_exec(
+            sys.executable, str(script_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        # Wait for completion with timeout
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
             timeout=300  # 5 min max
         )
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
+        stdout_text = stdout.decode('utf-8') if stdout else ""
+        stderr_text = stderr.decode('utf-8') if stderr else ""
 
-        if result.returncode == 0:
+        if process.returncode == 0:
             logger.info(f"✅ [{job_id}] OHLCV daily update completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         else:
-            logger.error(f"❌ [{job_id}] OHLCV daily update failed:\n{result.stderr}")
-            await _update_job_status(job_id, "failed", duration_ms, result.stderr[:200])
+            logger.error(f"❌ [{job_id}] OHLCV daily update failed:\n{stderr_text}")
+            await _update_job_status(job_id, "failed", duration_ms, stderr_text[:200])
 
-    except subprocess.TimeoutExpired:
+    except asyncio.TimeoutError:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
         logger.error(f"❌ [{job_id}] OHLCV daily update timeout (>5min)")
         await _update_job_status(job_id, "timeout", duration_ms, "Timeout after 5 minutes")
@@ -189,29 +196,36 @@ async def job_ohlcv_hourly():
         logger.info(f"🔄 [{job_id}] Starting OHLCV hourly update...")
 
         import sys
-        import subprocess
         from pathlib import Path
 
         script_path = Path(__file__).parent.parent / "scripts" / "update_price_history.py"
 
-        # Run update_price_history.py (incremental by default)
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            capture_output=True,
-            text=True,
+        # PERFORMANCE FIX (Dec 2025): Non-blocking subprocess with asyncio
+        # Prevents event loop freeze during 2-minute script execution
+        process = await asyncio.create_subprocess_exec(
+            sys.executable, str(script_path),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        # Wait for completion with timeout
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(),
             timeout=120  # 2 min max for update
         )
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
+        stdout_text = stdout.decode('utf-8') if stdout else ""
+        stderr_text = stderr.decode('utf-8') if stderr else ""
 
-        if result.returncode == 0:
+        if process.returncode == 0:
             logger.info(f"✅ [{job_id}] OHLCV hourly update completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         else:
-            logger.error(f"❌ [{job_id}] OHLCV hourly update failed:\n{result.stderr}")
-            await _update_job_status(job_id, "failed", duration_ms, result.stderr[:200])
+            logger.error(f"❌ [{job_id}] OHLCV hourly update failed:\n{stderr_text}")
+            await _update_job_status(job_id, "failed", duration_ms, stderr_text[:200])
 
-    except subprocess.TimeoutExpired:
+    except asyncio.TimeoutError:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
         logger.error(f"❌ [{job_id}] OHLCV hourly update timeout (>2min)")
         await _update_job_status(job_id, "timeout", duration_ms, "Timeout after 2 minutes")

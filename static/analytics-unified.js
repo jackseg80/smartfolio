@@ -7,6 +7,8 @@ console.debug('🔄 Analytics Unified - Initialisation');
 
 // Import risk alerts loader
 import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
+// PERFORMANCE FIX (Dec 2025): Throttle utilities to prevent event spam
+import { throttle } from './utils/debounce.js';
 
 // Configuration
 const API_BASE = window.getApiBase();
@@ -52,12 +54,17 @@ async function fetchWithCache(key, fetchFn) {
 document.addEventListener('DOMContentLoaded', function () {
     setupTabSwitching();
     loadInitialData();
-    // Keep metrics in sync with risk-dashboard scores written to localStorage
-    window.addEventListener('storage', (e) => {
+
+    // PERFORMANCE FIX (Dec 2025): Throttle storage events to prevent spam
+    // Storage events can fire rapidly during batch updates - throttle to 500ms
+    const throttledStorageHandler = throttle((e) => {
         if (e.key && e.key.startsWith('risk_score_')) {
             try { refreshScoresFromLocalStorage(); } catch (_) { }
         }
-    });
+    }, 500);
+
+    window.addEventListener('storage', throttledStorageHandler);
+
     // Also listen to unified riskStore (populated by analytics-unified.html)
     attachRiskStoreListener();
 });

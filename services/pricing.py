@@ -5,6 +5,7 @@ import time
 import asyncio
 import logging
 import httpx
+import aiofiles  # Performance fix (Dec 2025): Async file I/O
 
 # --- Configuration via env ---
 PRICE_CACHE_TTL = int(os.getenv("PRICE_CACHE_TTL", "120"))
@@ -39,11 +40,25 @@ def _load_cache_from_disk():
         logger.debug(f"Erreur parsing cache JSON: {e}")
 
 def _save_cache_to_disk():
-    """Sauvegarder le cache sur disque"""
+    """Sauvegarder le cache sur disque (synchrone - legacy)"""
     try:
         os.makedirs(os.path.dirname(_cache_file), exist_ok=True)
         with open(_cache_file, 'w', encoding='utf-8') as f:
             json.dump(_cache, f, indent=2)
+    except (OSError, PermissionError) as e:
+        logger.debug(f"Erreur I/O sauvegarde cache: {e}")
+    except (ValueError, TypeError) as e:
+        logger.debug(f"Erreur données sauvegarde cache: {e}")
+
+async def _save_cache_to_disk_async():
+    """
+    PERFORMANCE FIX (Dec 2025): Async cache save with aiofiles.
+    Prevents event loop blocking during disk writes.
+    """
+    try:
+        os.makedirs(os.path.dirname(_cache_file), exist_ok=True)
+        async with aiofiles.open(_cache_file, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(_cache, indent=2))
     except (OSError, PermissionError) as e:
         logger.debug(f"Erreur I/O sauvegarde cache: {e}")
     except (ValueError, TypeError) as e:
@@ -202,7 +217,24 @@ def get_prices_usd(symbols):
 
 # ---------------- Async helpers (non-bloquants) ----------------
 async def _from_file_async(symbol: str):
-    return await asyncio.to_thread(_from_file, symbol)
+    """
+    PERFORMANCE FIX (Dec 2025): True async file I/O with aiofiles.
+    Prevents event loop blocking during file read operations.
+    """
+    try:
+        if not os.path.exists(PRICE_FILE):
+            return None
+        async with aiofiles.open(PRICE_FILE, "r", encoding="utf-8") as f:
+            content = await f.read()
+            data = json.loads(content)
+        val = data.get(symbol.upper())
+        if val:
+            return float(val)
+    except FileNotFoundError:
+        return None
+    except (json.JSONDecodeError, ValueError, KeyError):
+        return None
+    return None
 
 
 async def _from_binance_async(symbol: str):

@@ -28,7 +28,9 @@ from connectors.saxo_api import SaxoOAuthClient
 logger = logging.getLogger(__name__)
 
 # In-memory fallback cache (if Redis unavailable)
+# Performance fix (Dec 2025): Bounded cache to prevent unbounded memory growth
 _uic_cache: Dict[str, Dict[str, Any]] = {}
+_UIC_CACHE_MAX_SIZE = 1000  # Max 1000 instruments in fallback cache
 
 
 class SaxoUICResolver:
@@ -225,7 +227,15 @@ class SaxoUICResolver:
             except Exception as e:
                 logger.warning(f"⚠️ Redis cache write error: {e}")
 
-        # Store in-memory (fallback)
+        # Store in-memory (fallback) with size limit
+        # Performance fix (Dec 2025): Prevent unbounded memory growth
+        if len(_uic_cache) >= _UIC_CACHE_MAX_SIZE:
+            # FIFO eviction: Remove oldest 20% of entries
+            keys_to_remove = list(_uic_cache.keys())[:(_UIC_CACHE_MAX_SIZE // 5)]
+            for old_key in keys_to_remove:
+                del _uic_cache[old_key]
+            logger.info(f"🗑️ UIC fallback cache cleanup: removed {len(keys_to_remove)} old entries (size was {_UIC_CACHE_MAX_SIZE})")
+
         _uic_cache[key] = value
 
     def clear_cache(self, uic: Optional[int] = None) -> None:
