@@ -102,6 +102,14 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
             window="7d"
         )
 
+        perf_metrics_30d = portfolio_analytics.calculate_performance_metrics(
+            current_data=metrics,
+            user_id=user_id,
+            source=source,
+            anchor="prev_snapshot",
+            window="30d"
+        )
+
         # 4. Construire structure par asset avec allocations
         total_value = metrics["total_value_usd"]
         assets_by_group = {}
@@ -113,10 +121,14 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
             if group not in assets_by_group:
                 assets_by_group[group] = {
                     "current_allocation": 0.0,
-                    "target_allocation": 0.0,  # TODO: Récupérer depuis config user
+                    # NOTE: target_allocation requires user-configurable targets (future feature)
+                    # For now, using current allocation as target (no deviation)
+                    "target_allocation": 0.0,
                     "deviation": 0.0,
                     "value_usd": 0.0,
-                    "change_24h": 0.0  # TODO: Calculer depuis historique prix
+                    # NOTE: change_24h per group requires per-asset historical prices (future feature)
+                    # Global change_24h is available at portfolio level
+                    "change_24h": 0.0
                 }
 
             assets_by_group[group]["value_usd"] += value
@@ -124,14 +136,15 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
         # Calculer allocations en %
         for group, data in assets_by_group.items():
             data["current_allocation"] = (data["value_usd"] / total_value * 100) if total_value > 0 else 0
-            # Pour l'instant, target = current (pas de système de targets configurables)
-            # TODO: Récupérer targets depuis Strategy API ou config user
+            # NOTE: For now, target = current (no deviation)
+            # User-configurable targets would require a Strategy API or user config feature
             data["target_allocation"] = data["current_allocation"]
-            data["deviation"] = data["current_allocation"] - data["target_allocation"]
+            data["deviation"] = 0.0  # No deviation when target = current
 
         # 5. Métriques de performance globales
         change_24h = perf_metrics.get("percentage_change", 0.0) if perf_metrics.get("performance_available") else 0.0
         change_7d = perf_metrics_7d.get("percentage_change", 0.0) if perf_metrics_7d.get("performance_available") else 0.0
+        change_30d = perf_metrics_30d.get("percentage_change", 0.0) if perf_metrics_30d.get("performance_available") else 0.0
 
         # 6. Retourner structure compatible
         return {
@@ -141,11 +154,13 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
             "last_update": datetime.now(timezone.utc).isoformat(),
             "assets": assets_by_group,
             "performance_metrics": {
-                "sharpe_ratio": 0.0,  # TODO: Calculer depuis risk_manager
-                "max_drawdown": 0.0,  # TODO: Calculer depuis historique
-                "volatility": 0.0,    # TODO: Calculer depuis historique
+                # NOTE: Advanced risk metrics (sharpe, volatility, max_drawdown) are available via /api/risk/dashboard
+                # They require historical price data and complex calculations handled by RiskManager
+                "sharpe_ratio": None,  # Available in /api/risk/dashboard
+                "max_drawdown": None,  # Available in /api/risk/dashboard
+                "volatility": None,    # Available in /api/risk/dashboard (annualized)
                 "total_return_7d": change_7d,
-                "total_return_30d": 0.0  # TODO: Calculer
+                "total_return_30d": change_30d
             },
             "metadata": {
                 "source": source,
