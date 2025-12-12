@@ -17,6 +17,7 @@ import logging
 import math
 import statistics
 from dataclasses import dataclass
+from functools import cached_property
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +75,20 @@ class CorrelationMetrics:
 
 class PortfolioMetricsService:
     """Service centralisé pour tous les calculs de métriques de portfolio"""
-    
+
     def __init__(self):
         self.risk_free_rate = 0.02  # 2% annuel
+
+    @cached_property
+    def taxonomy(self):
+        """
+        Cached taxonomy instance to avoid N+1 file reads.
+
+        PERFORMANCE FIX: Prevents loading taxonomy.json on every portfolio calculation.
+        Singleton pattern in Taxonomy.load() + cached_property = loaded once per instance.
+        """
+        from services.taxonomy import Taxonomy
+        return Taxonomy.load()
         
     def calculate_portfolio_metrics(
         self, 
@@ -135,9 +147,7 @@ class PortfolioMetricsService:
         diversification_ratio = 1.0  # Default neutral
 
         if balances:
-            # Calculate memecoins %
-            from services.taxonomy import Taxonomy
-            taxonomy = Taxonomy.load()
+            # Calculate memecoins % (using cached taxonomy)
             total_value = sum(float(b.get('value_usd', 0)) for b in balances)
 
             if total_value > 0:
@@ -145,7 +155,7 @@ class PortfolioMetricsService:
                 memes_value = sum(
                     float(b.get('value_usd', 0))
                     for b in balances
-                    if taxonomy.group_for_alias(str(b.get('symbol', '')).upper()) == 'Memecoins'
+                    if self.taxonomy.group_for_alias(str(b.get('symbol', '')).upper()) == 'Memecoins'
                 )
                 memecoins_pct = memes_value / total_value
 
@@ -171,10 +181,10 @@ class PortfolioMetricsService:
                 # This ensures all groups appear in API response, even if portfolio has 0% in some
                 exposure_by_group = {group: 0.0 for group in GROUP_RISK_LEVELS.keys()}
 
-                # Add actual exposures
+                # Add actual exposures (using cached taxonomy)
                 for b in balances:
                     symbol = str(b.get('symbol', '')).upper()
-                    group = taxonomy.group_for_alias(symbol)
+                    group = self.taxonomy.group_for_alias(symbol)
                     weight = float(b.get('value_usd', 0)) / total_value
                     exposure_by_group[group] = exposure_by_group.get(group, 0.0) + weight
 
@@ -444,29 +454,40 @@ class PortfolioMetricsService:
             sum(weights.values()),
         )
         
+        # VECTORIZED portfolio returns calculation (performance fix)
         returns_data = price_data.sort_index().pct_change(fill_method=None)
         weight_series = pd.Series(weights, dtype=float)
-        weighted_points = []
-        
-        for timestamp, row in returns_data.iterrows():
-            valid_returns = row.dropna()
-            if valid_returns.empty:
-                continue
-            available_weights = weight_series.reindex(valid_returns.index).dropna()
-            weight_sum = available_weights.sum()
-            if available_weights.empty or weight_sum <= 0:
-                continue
-            normalized_weights = available_weights / weight_sum
-            weighted_return = float((valid_returns.reindex(normalized_weights.index) * normalized_weights).sum())
-            weighted_points.append((timestamp, weighted_return))
-        
-        if not weighted_points:
+
+        # Align weights with returns columns
+        aligned_weights = weight_series.reindex(returns_data.columns, fill_value=0.0)
+
+        # Vectorized calculation: for each row, multiply returns by weights and sum
+        # Handle NaN by setting them to 0 (no contribution from missing data)
+        returns_filled = returns_data.fillna(0.0)
+
+        # Calculate row-wise sum of available weights (for normalization)
+        # Mask: 1 where data exists, 0 where NaN
+        data_mask = returns_data.notna().astype(float)
+        available_weights = data_mask.multiply(aligned_weights, axis=1)
+        weight_sums = available_weights.sum(axis=1)
+
+        # Normalize weights by available data per row
+        # Avoid division by zero
+        normalized_weights = available_weights.div(weight_sums.replace(0, np.nan), axis=0)
+
+        # Multiply returns by normalized weights and sum across columns
+        weighted_returns = (returns_filled * normalized_weights).sum(axis=1)
+
+        # Filter out rows with no valid data (weight_sum was 0)
+        portfolio_returns = weighted_returns[weight_sums > 0]
+
+        if portfolio_returns.empty:
             logger.warning("Portfolio returns calculation produced no valid points; price coverage too sparse")
             return pd.Series(dtype=float)
-        
+
         return pd.Series(
-            data=[value for _, value in weighted_points],
-            index=[ts for ts, _ in weighted_points],
+            data=portfolio_returns.values,
+            index=portfolio_returns.index,
         )
     
     def _calculate_total_return(self, returns: pd.Series) -> float:

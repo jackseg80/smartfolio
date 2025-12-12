@@ -276,17 +276,28 @@ async def get_portfolio_risk_metrics(
 ):
     """
     Calcule les métriques de risque complètes du portfolio
-    
+
     Inclut:
     - VaR/CVaR à 95% et 99%
     - Ratios Sharpe, Sortino, Calmar
     - Maximum Drawdown et Ulcer Index
     - Skewness et Kurtosis
     - Niveau de risque global
+
+    Cache: 30 minutes TTL (per CACHE_TTL_OPTIMIZATION.md)
     """
     try:
+        # PERFORMANCE FIX: Check cache first (30 min TTL)
+        cache_key = f"risk_metrics:{user}:{price_history_days}"
+        CACHE_TTL = 1800  # 30 minutes per CACHE_TTL_OPTIMIZATION.md
+
+        cached = cache_get(_risk_cache, cache_key, CACHE_TTL)
+        if cached is not None:
+            logger.debug(f"Cache HIT for {cache_key}")
+            return cached
+
         start_time = datetime.now()
-        
+
         # Import des balances via le système unifié (même source que /balances/current)
         from api.unified_data import get_unified_filtered_balances
         
@@ -333,12 +344,18 @@ async def get_portfolio_risk_metrics(
         
         end_time = datetime.now()
         calculation_time = f"{(end_time - start_time).total_seconds():.2f}s"
-        
-        return RiskMetricsResponse(
+
+        response = RiskMetricsResponse(
             success=True,
             risk_metrics=metrics_dict,
             calculation_time=calculation_time
         )
+
+        # PERFORMANCE FIX: Cache the result for 30 minutes
+        cache_set(_risk_cache, cache_key, response)
+        logger.debug(f"Cache SET for {cache_key}")
+
+        return response
         
     except Exception as e:
         logger.error(f"Erreur calcul métriques risque: {e}")

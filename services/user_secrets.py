@@ -1,10 +1,13 @@
 """
 Service pour la gestion robuste des secrets utilisateur avec fallbacks
+
+SECURITY FIX (Dec 2025): Added TTL to secrets cache to prevent stale credentials
 """
 
 import json
 import os
 import logging
+import time
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -16,7 +19,8 @@ class UserSecretsManager:
     def __init__(self):
         self.config_dir = Path("config")
         self.data_dir = Path("data/users")
-        self._cache = {}
+        self._cache = {}  # {user_id: (secrets, timestamp)}
+        self._cache_ttl = 3600  # 1 hour TTL for security (credentials may rotate)
 
     def get_user_secrets(self, user_id: str = "demo") -> Dict[str, Any]:
         """
@@ -24,9 +28,18 @@ class UserSecretsManager:
         1. data/users/{user_id}/secrets.json
         2. config/secrets_example.json avec dev_mode
         3. Secrets vides avec dev_mode activé
+
+        SECURITY: Cache expires after 1 hour to prevent stale credentials
         """
+        # Check cache with TTL validation
         if user_id in self._cache:
-            return self._cache[user_id]
+            secrets, timestamp = self._cache[user_id]
+            if time.time() - timestamp < self._cache_ttl:
+                logger.debug(f"Cache HIT for user {user_id} secrets (age: {int(time.time() - timestamp)}s)")
+                return secrets
+            else:
+                logger.info(f"Cache EXPIRED for user {user_id} secrets, reloading")
+                del self._cache[user_id]
 
         # Chemin principal des secrets utilisateur
         user_secrets_path = self.data_dir / user_id / "secrets.json"
@@ -66,8 +79,9 @@ class UserSecretsManager:
             }
             logger.warning(f"Using empty secrets for user {user_id} (dev mode fallback)")
 
-        # Cache et retour
-        self._cache[user_id] = secrets
+        # Cache with timestamp (TTL enforcement)
+        self._cache[user_id] = (secrets, time.time())
+        logger.debug(f"Cache SET for user {user_id} secrets")
         return secrets
 
     def get_exchange_config(self, user_id: str = "demo", exchange: str = None) -> Dict[str, Any]:

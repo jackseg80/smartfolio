@@ -153,36 +153,38 @@ class MLDataPipeline:
                 logger.warning("Could not identify symbol column in CSV")
                 return ['BTC', 'ETH', 'SOL', 'ADA']
             
-            # Extract assets
-            portfolio_assets = []
-            
-            for _, row in df.iterrows():
+            # Extract assets - VECTORIZED (performance fix)
+            # Clean and normalize symbols first
+            df_clean = df.copy()
+            df_clean['symbol_clean'] = (
+                df_clean[symbol_col]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+                .str.replace(' ', '', regex=False)
+                .str.replace('-', '', regex=False)
+            )
+
+            # Filter invalid symbols
+            df_clean = df_clean[
+                (df_clean['symbol_clean'].notna()) &
+                (df_clean['symbol_clean'] != '') &
+                (~df_clean['symbol_clean'].isin(['NAN', 'NONE'])) &
+                (df_clean['symbol_clean'].str.len() >= 2) &
+                (df_clean['symbol_clean'].str.len() <= 10) &
+                (df_clean['symbol_clean'].str.isalpha())
+            ]
+
+            # Filter by value threshold if value column exists
+            if value_col is not None:
                 try:
-                    symbol = str(row[symbol_col]).strip().upper()
-                    
-                    # Skip empty or invalid symbols
-                    if not symbol or symbol in ['NAN', 'NONE', '']:
-                        continue
-                    
-                    # Check value threshold if value column exists
-                    if value_col is not None:
-                        try:
-                            value = float(row[value_col])
-                            if value < min_usd:
-                                continue
-                        except (ValueError, TypeError):
-                            # If we can't parse value, include the asset anyway
-                            pass
-                    
-                    # Clean symbol and add if valid
-                    symbol = symbol.replace(' ', '').replace('-', '')
-                    if len(symbol) >= 2 and len(symbol) <= 10 and symbol.isalpha():
-                        if symbol not in portfolio_assets:
-                            portfolio_assets.append(symbol)
-                
+                    df_clean[value_col] = pd.to_numeric(df_clean[value_col], errors='coerce')
+                    df_clean = df_clean[df_clean[value_col] >= min_usd]
                 except Exception as e:
-                    logger.debug(f"Skipping row due to error: {e}")
-                    continue
+                    logger.debug(f"Could not filter by value: {e}")
+
+            # Get unique symbols
+            portfolio_assets = df_clean['symbol_clean'].unique().tolist()
             
             if not portfolio_assets:
                 logger.warning("No valid assets found in CSV, using fallback")
