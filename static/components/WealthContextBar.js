@@ -1083,8 +1083,9 @@ class WealthContextBar {
     // Try to connect to existing stores and data sources
     this.setupRealDataIntegration(badgeContainer, renderBadges);
 
+    // PERFORMANCE FIX (Dec 2025): Store interval ID for cleanup
     // Auto-refresh every 30 seconds with real data
-    setInterval(() => {
+    this._badgeRefreshInterval = setInterval(() => {
       this.refreshBadgeWithRealData(badgeContainer, renderBadges);
     }, 30000);
   }
@@ -1273,6 +1274,44 @@ class WealthContextBar {
     });
 
     (window.debugLogger?.debug || console.log)('🔗 Real data event listeners setup for badge updates');
+  }
+
+  /**
+   * PERFORMANCE FIX (Dec 2025): Cleanup method to prevent memory leaks
+   * Clears all intervals and abort controllers
+   */
+  destroy() {
+    // Clear badge refresh interval
+    if (this._badgeRefreshInterval) {
+      clearInterval(this._badgeRefreshInterval);
+      this._badgeRefreshInterval = null;
+    }
+
+    // Clear debounce timers
+    if (this.accountChangeDebounceTimer) {
+      clearTimeout(this.accountChangeDebounceTimer);
+      this.accountChangeDebounceTimer = null;
+    }
+    if (this.bourseChangeDebounceTimer) {
+      clearTimeout(this.bourseChangeDebounceTimer);
+      this.bourseChangeDebounceTimer = null;
+    }
+
+    // Abort pending fetch requests
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
+    if (this.bourseAbortController) {
+      this.bourseAbortController.abort();
+      this.bourseAbortController = null;
+    }
+    if (this.settingsPutController) {
+      this.settingsPutController.abort();
+      this.settingsPutController = null;
+    }
+
+    (window.debugLogger?.debug || console.log)('✅ WealthContextBar cleaned up');
   }
 }
 
