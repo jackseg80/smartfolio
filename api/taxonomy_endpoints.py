@@ -47,7 +47,10 @@ def _load_disk_aliases() -> Dict[str, str]:
         with open(ALIASES_JSON, "r", encoding="utf-8") as f:
             data = json.load(f) or {}
             if isinstance(data, dict):
-                return {str(k).upper(): str(v) for k,v in data.items()}
+                # Extraire seulement la clé "aliases" (ignore "groups_order" et autres métadonnées)
+                aliases_dict = data.get("aliases", data)  # Fallback sur data si pas de clé "aliases"
+                if isinstance(aliases_dict, dict):
+                    return {str(k).upper(): str(v) for k,v in aliases_dict.items()}
     except Exception as e:
         logger.warning(f"Failed to load disk aliases from {ALIASES_JSON}: {e}")
         pass
@@ -55,8 +58,28 @@ def _load_disk_aliases() -> Dict[str, str]:
 
 def _save_disk_aliases(aliases: Dict[str, str]) -> None:
     tmp = {k.upper(): v for k, v in aliases.items()}
+
+    # Préserver la structure complète du fichier (groups_order + aliases)
+    existing_data = {}
+    if os.path.exists(ALIASES_JSON):
+        try:
+            with open(ALIASES_JSON, "r", encoding="utf-8") as f:
+                existing_data = json.load(f) or {}
+        except Exception:
+            pass
+
+    # Mettre à jour seulement la clé "aliases", préserver le reste
+    if isinstance(existing_data, dict) and "aliases" in existing_data:
+        existing_data["aliases"] = tmp
+    else:
+        # Fallback: créer nouvelle structure
+        existing_data = {
+            "groups_order": _all_groups(),
+            "aliases": tmp
+        }
+
     with open(ALIASES_JSON, "w", encoding="utf-8") as f:
-        json.dump(tmp, f, ensure_ascii=False, indent=2)
+        json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
 def _all_groups() -> list[str]:
     # source autoritaire = services.taxonomy.DEFAULT_GROUPS_ORDER
