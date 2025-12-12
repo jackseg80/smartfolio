@@ -322,22 +322,23 @@ async def job_api_warmers():
 
         base_url = os.getenv("API_BASE_URL", "http://localhost:8080")
 
+        # PERFORMANCE FIX: Parallelize API warmup calls instead of sequential
+        async def warm_endpoint(client: httpx.AsyncClient, endpoint: str):
+            """Warm a single endpoint"""
+            try:
+                url = f"{base_url}{endpoint}"
+                response = await client.get(url)
+
+                if response.status_code == 200:
+                    logger.debug(f"   ✅ Warmed: {endpoint}")
+                else:
+                    logger.warning(f"   ⚠️ Warm failed ({response.status_code}): {endpoint}")
+            except Exception as e:
+                logger.warning(f"   ❌ Warm error: {endpoint} - {e}")
+
         async with httpx.AsyncClient(timeout=10.0) as client:
-            for endpoint in endpoints:
-                try:
-                    url = f"{base_url}{endpoint}"
-                    response = await client.get(url)
-
-                    if response.status_code == 200:
-                        logger.debug(f"   ✅ Warmed: {endpoint}")
-                    else:
-                        logger.warning(f"   ⚠️ Warm failed ({response.status_code}): {endpoint}")
-
-                except Exception as e:
-                    logger.warning(f"   ❌ Warm error: {endpoint} - {e}")
-
-                # Small delay between requests
-                await asyncio.sleep(0.5)
+            # Execute all warmup calls in parallel
+            await asyncio.gather(*[warm_endpoint(client, ep) for ep in endpoints])
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
         logger.info(f"✅ [{job_id}] API warmers completed in {duration_ms:.0f}ms")

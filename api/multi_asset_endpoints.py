@@ -42,10 +42,16 @@ async def get_asset_classes():
 async def get_assets(
     asset_class: Optional[str] = Query(None, description="Filter by asset class"),
     region: Optional[str] = Query(None, description="Filter by region"),
-    sector: Optional[str] = Query(None, description="Filter by sector")
+    sector: Optional[str] = Query(None, description="Filter by sector"),
+    limit: int = Query(50, ge=1, le=500, description="Maximum number of assets to return"),
+    offset: int = Query(0, ge=0, description="Number of assets to skip")
 ):
-    """Get available assets, optionally filtered by class, region, or sector"""
-    
+    """
+    Get available assets, optionally filtered by class, region, or sector.
+
+    PERFORMANCE FIX: Added pagination (limit/offset) to prevent loading all assets.
+    """
+
     assets = list(multi_asset_manager.assets.values())
     
     # Apply filters
@@ -61,7 +67,11 @@ async def get_assets(
     
     if sector:
         assets = [a for a in assets if a.sector and sector.lower() in a.sector.lower()]
-    
+
+    # Apply pagination
+    total_count = len(assets)
+    assets = assets[offset:offset + limit]
+
     # Convert to response format
     asset_data = []
     for asset in assets:
@@ -81,6 +91,10 @@ async def get_assets(
     return {
         "success": True,
         "count": len(asset_data),
+        "total_count": total_count,
+        "offset": offset,
+        "limit": limit,
+        "has_more": (offset + limit) < total_count,
         "assets": asset_data,
         "filters_applied": {
             "asset_class": asset_class,

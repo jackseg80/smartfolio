@@ -51,28 +51,52 @@ def _ensure_module(module: str) -> None:
 # ===== Patrimoine CRUD Endpoints (NEW - Oct 2025) =====
 
 
-@router.get("/patrimoine/items", response_model=list)
+@router.get("/patrimoine/items")
 async def list_patrimoine_items(
     user: str = Depends(get_active_user),
     category: Optional[str] = Query(None, regex="^(liquidity|tangible|liability|insurance)$"),
-    type: Optional[str] = Query(None, description="Item type filter")
+    type: Optional[str] = Query(None, description="Item type filter"),
+    limit: int = Query(50, ge=1, le=500, description="Maximum number of items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip")
 ):
     """
-    List all patrimoine items for user with optional filters.
+    List patrimoine items for user with optional filters and pagination.
+
+    PERFORMANCE FIX: Added pagination (limit/offset) to prevent loading all items.
 
     Args:
         user: Active user ID (injected via Depends)
         category: Optional category filter
         type: Optional type filter
+        limit: Max items per page (default 50)
+        offset: Pagination offset (default 0)
 
     Returns:
-        List of PatrimoineItemOutput with USD conversions
+        Paginated response with items and metadata
     """
     from services.wealth.patrimoine_service import list_items
 
     items = list_items(user, category=category, type=type)
-    logger.info(f"[wealth][patrimoine] listed {len(items)} items for user={user}")
-    return items
+
+    # Apply pagination
+    total_count = len(items)
+    paginated_items = items[offset:offset + limit]
+
+    logger.info(f"[wealth][patrimoine] listed {len(paginated_items)}/{total_count} items for user={user}")
+
+    return {
+        "success": True,
+        "count": len(paginated_items),
+        "total_count": total_count,
+        "offset": offset,
+        "limit": limit,
+        "has_more": (offset + limit) < total_count,
+        "items": paginated_items,
+        "filters_applied": {
+            "category": category,
+            "type": type
+        }
+    }
 
 
 @router.get("/patrimoine/items/{item_id}")

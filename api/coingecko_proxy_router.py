@@ -49,6 +49,7 @@ router = APIRouter(prefix="/api/coingecko-proxy", tags=["coingecko-proxy"])
 # Simple in-memory cache
 # Format: {cache_key: {"data": {...}, "timestamp": datetime, "ttl": int}}
 _cache: Dict[str, Dict[str, Any]] = {}
+_cache_writes = 0  # Counter for periodic cleanup
 
 def get_cached_data(cache_key: str, ttl_seconds: int = 300) -> Optional[Dict[str, Any]]:
     """
@@ -75,6 +76,31 @@ def get_cached_data(cache_key: str, ttl_seconds: int = 300) -> Optional[Dict[str
     logger.debug(f"Cache hit for {cache_key} (age: {age:.1f}s)")
     return cached["data"]
 
+def cleanup_expired_cache() -> int:
+    """
+    Proactively remove expired entries from cache.
+
+    PERFORMANCE FIX (Dec 2025): Prevents memory leak from never-accessed expired entries.
+
+    Returns:
+        Number of entries removed
+    """
+    now = datetime.now()
+    expired_keys = []
+
+    for cache_key, cached in _cache.items():
+        age = (now - cached["timestamp"]).total_seconds()
+        if age > cached["ttl"]:
+            expired_keys.append(cache_key)
+
+    for key in expired_keys:
+        del _cache[key]
+
+    if expired_keys:
+        logger.info(f"Cleaned up {len(expired_keys)} expired cache entries")
+
+    return len(expired_keys)
+
 def set_cached_data(cache_key: str, data: Dict[str, Any], ttl_seconds: int = 300):
     """
     Store data in cache with timestamp.
@@ -84,12 +110,19 @@ def set_cached_data(cache_key: str, data: Dict[str, Any], ttl_seconds: int = 300
         data: Data to cache
         ttl_seconds: Time-to-live in seconds
     """
+    global _cache_writes
+
     _cache[cache_key] = {
         "data": data,
         "timestamp": datetime.now(),
         "ttl": ttl_seconds
     }
     logger.debug(f"Cached data for {cache_key} (ttl: {ttl_seconds}s)")
+
+    # PERFORMANCE FIX: Periodic cleanup every 10 writes to prevent memory leak
+    _cache_writes += 1
+    if _cache_writes % 10 == 0:
+        cleanup_expired_cache()
 
 async def _fetch_with_cache_and_fallback(
     url: str,
@@ -333,24 +366,45 @@ async def get_cache_stats():
     Get cache statistics (useful for debugging).
 
     Returns:
-        Cache size, keys, and ages
+        Cache size, keys, ages, and expired count
     """
     now = datetime.now()
-    stats = {
-        "cache_size": len(_cache),
-        "entries": []
-    }
+    expired_count = 0
+    entries = []
 
     for key, value in _cache.items():
         age = (now - value["timestamp"]).total_seconds()
-        stats["entries"].append({
+        is_expired = age > value["ttl"]
+        if is_expired:
+            expired_count += 1
+
+        entries.append({
             "key": key,
             "age_seconds": age,
             "ttl_seconds": value["ttl"],
-            "expired": age > value["ttl"]
+            "expired": is_expired
         })
 
-    return stats
+    return {
+        "cache_size": len(_cache),
+        "expired_count": expired_count,
+        "cache_writes": _cache_writes,
+        "entries": entries
+    }
+
+@router.post("/cache/cleanup")
+async def trigger_cache_cleanup():
+    """
+    Manually trigger cleanup of expired cache entries.
+
+    Returns:
+        Number of entries removed
+    """
+    removed = cleanup_expired_cache()
+    return {
+        "removed": removed,
+        "cache_size": len(_cache)
+    }
 
 @router.delete("/cache/clear")
 async def clear_cache():
