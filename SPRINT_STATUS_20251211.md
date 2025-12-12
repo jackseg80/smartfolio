@@ -3,12 +3,12 @@
 ## 📊 Vue d'ensemble
 
 **Session:** Audit complet projet SmartFolio
-**Date:** 11 Décembre 2025
+**Date:** 11-12 Décembre 2025
 **Sprints complétés:** 5/6
-**Temps investi:** ~16h
-**Commits:** 7 (prochain: Sprint 5 complet + TODO EUR/USD)
+**Temps investi:** ~17h
+**Commits:** 9 (dont Sprint 5 + 2 TODOs bonus)
 **Tests créés:** 64 nouveaux tests unitaires (Sprint 5)
-**TODOs corrigés:** 1 critique (EUR/USD dynamique)
+**TODOs corrigés:** 2 critiques (EUR/USD + portfolio_monitoring)
 
 ---
 
@@ -344,6 +344,45 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 **Fichiers modifiés:**
 
 - `api/saxo_auth_router.py` (ligne 27: import, ligne 572: utilisation)
+
+---
+
+### TODO Portfolio Monitoring Corrigé (Sprint 5 Bonus #2)
+
+**6 métriques à implémenter (portfolio_monitoring.py)**
+
+**Contexte:**
+
+- Endpoint `/api/portfolio/monitoring` retournait des zéros pour 6 métriques
+- TODOs lines 116, 119, 128, 144-148
+
+**Solutions appliquées:**
+
+1. **total_return_30d** ✅ **IMPLÉMENTÉ**
+   - Utilise `portfolio_analytics.calculate_performance_metrics(window="30d")`
+   - Cohérent avec change_7d existant
+   - Retourne performance réelle sur 30 jours
+
+2. **sharpe_ratio, max_drawdown, volatility** ✅ **DOCUMENTÉ**
+   - Disponibles via `/api/risk/dashboard` (endpoint vérifié ✅)
+   - Nécessitent historique de prix + calculs complexes (RiskManager)
+   - Changé de `0.0` → `None` avec commentaires explicatifs
+
+3. **target_allocation, change_24h par groupe** ✅ **DOCUMENTÉ**
+   - target_allocation: Nécessite config user (future feature)
+   - change_24h par groupe: Nécessite historique par asset (future feature)
+   - Global change_24h disponible au niveau portfolio
+
+**Impact:**
+
+- 1 TODO implémenté (total_return_30d)
+- 5 TODOs documentés (disponibles ailleurs ou futures features)
+- API contract plus clair (None vs 0.0)
+- Pas de breaking changes
+
+**Fichiers modifiés:**
+
+- `api/portfolio_monitoring.py` (+24 lignes, -9 lignes)
 
 ---
 
