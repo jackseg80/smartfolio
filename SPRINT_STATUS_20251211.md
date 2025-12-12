@@ -6,9 +6,10 @@
 **Date:** 11-12 Décembre 2025
 **Sprints complétés:** 5/6
 **Temps investi:** ~17h
-**Commits:** 9 (dont Sprint 5 + 2 TODOs bonus)
-**Tests créés:** 64 nouveaux tests unitaires (Sprint 5)
-**TODOs corrigés:** 2 critiques (EUR/USD + portfolio_monitoring)
+**Commits:** 10 (Sprint 5 + 2 TODOs bonus + .gitignore)
+**Tests créés:** 64 nouveaux tests unitaires (100% passent)
+**TODOs corrigés:** 2 critiques
+**Quick wins:** 1 (.gitignore cleanup)
 
 ---
 
@@ -383,6 +384,29 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 **Fichiers modifiés:**
 
 - `api/portfolio_monitoring.py` (+24 lignes, -9 lignes)
+
+---
+
+### Quick Win - .gitignore Cleanup (Sprint 5 Bonus #3)
+
+**Amélioration patterns test artifacts**
+
+**Améliorations:**
+
+- ✅ Pattern générique `*_results.json` (catch-all futurs test results)
+- ✅ Pattern `.coverage.*` (parallel test coverage)
+- ✅ Patterns pytest: `pytest_report.json`, `junit_*.xml`
+- ✅ Commentaires clarifiés (Phase 3 E2E, generic patterns)
+
+**Impact:**
+
+- Évite commits accidentels de test artifacts
+- Git status plus propre
+- Couvre Sprint 5 artifacts (test_opportunity_scanner, test_governance_freeze_semantics)
+
+**Fichiers modifiés:**
+
+- `.gitignore` (+11 lignes, -2 lignes)
 
 ---
 
