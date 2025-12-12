@@ -151,9 +151,18 @@ analyze_*.py  # Temporary analysis scripts
 coverage.xml
 coverage.json
 htmlcov/
+.coverage.*
 
 # Security scan results (generated)
 security_code.json
 
-# Phase 3 test results (generated)
+# Test results artifacts (generated files)
+# Phase 3 E2E test results
 phase3_*.json
+phase3_*_results.json
+# Generic test results pattern (prevents committing any test result files)
+*_results.json
+*_test_results.json
+# Pytest reports
+pytest_report.json
+junit_*.xml
