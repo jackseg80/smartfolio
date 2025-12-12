@@ -1,0 +1,17 @@
+[
+  {
+    "date": "2025-11-01T20:15:02.261207+01:00",
+    "user_id": "demo",
+    "source": "cointracking_api",
+    "total_value_usd": 0,
+    "asset_count": 0,
+    "group_count": 0,
+    "diversity_score": 0,
+    "top_holding_symbol": "N/A",
+    "top_holding_percentage": 0,
+    "group_distribution": {},
+    "valuation_currency": "USD",
+    "price_source": "cointracking_api",
+    "pricing_timestamp": "2025-11-01T20:15:02.261207+01:00"
+  }
+]

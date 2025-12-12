@@ -1,0 +1,46 @@
+[
+  {
+    "date": "2025-10-12T22:45:32.718304+02:00",
+    "user_id": "demo",
+    "source": "cointracking",
+    "total_value_usd": 422633.64,
+    "asset_count": 183,
+    "group_count": 6,
+    "diversity_score": 5,
+    "top_holding_symbol": "BTC",
+    "top_holding_percentage": 0.39547358321973614,
+    "group_distribution": {
+      "BTC": 181494.94,
+      "ETH": 101407.48,
+      "Stablecoins": 27616.24,
+      "L1/L0 majors": 35850.67999999999,
+      "Others": 73992.65999999999,
+      "SOL": 2271.64
+    },
+    "valuation_currency": "USD",
+    "price_source": "cointracking",
+    "pricing_timestamp": "2025-10-12T22:45:32.718304+02:00"
+  },
+  {
+    "date": "2025-10-28T20:02:56.989702+01:00",
+    "user_id": "demo",
+    "source": "cointracking",
+    "total_value_usd": 422633.64,
+    "asset_count": 183,
+    "group_count": 6,
+    "diversity_score": 5,
+    "top_holding_symbol": "BTC",
+    "top_holding_percentage": 0.39547358321973614,
+    "group_distribution": {
+      "BTC": 181494.94,
+      "ETH": 101407.48,
+      "Stablecoins": 27616.24,
+      "L1/L0 majors": 35850.67999999999,
+      "Others": 73992.65999999999,
+      "SOL": 2271.64
+    },
+    "valuation_currency": "USD",
+    "price_source": "cointracking",
+    "pricing_timestamp": "2025-10-28T20:02:56.989702+01:00"
+  }
+]

@@ -12,6 +12,9 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import logging
 
+# PERFORMANCE FIX (Dec 2025): Use partitioned storage for O(1) access
+from services.portfolio_history_storage import PartitionedPortfolioStorage
+
 logger = logging.getLogger(__name__)
 
 # Timezone de référence pour tous les calculs temporels
@@ -132,6 +135,9 @@ class PortfolioAnalytics:
     """Service d'analyse de portfolio avec calculs de performance"""
 
     def __init__(self):
+        # PERFORMANCE FIX (Dec 2025): Use partitioned storage instead of monolithic file
+        self.storage = PartitionedPortfolioStorage(retention_days=365)
+        # Legacy file path (kept for backward compatibility)
         self.historical_data_file = os.path.join("data", "portfolio_history.json")
 
     def calculate_portfolio_metrics(self, balances_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -331,7 +337,11 @@ class PortfolioAnalytics:
     
     def save_portfolio_snapshot(self, balances_data: Dict[str, Any], user_id: str = "demo", source: str = "cointracking") -> bool:
         """
-        Sauvegarde un snapshot du portfolio pour suivi historique
+        Sauvegarde un snapshot du portfolio pour suivi historique.
+
+        PERFORMANCE FIX (Dec 2025): Uses partitioned storage for O(1) write.
+        Previous version: O(n) - load ALL snapshots, filter, write ALL.
+        New version: O(1) - save only to current month partition.
 
         Args:
             balances_data: Données de balance actuelles
@@ -363,53 +373,24 @@ class PortfolioAnalytics:
                 "pricing_timestamp": now.isoformat()
             }
 
-            # Charger toutes les données existantes
-            try:
-                if os.path.exists(self.historical_data_file):
-                    with open(self.historical_data_file, 'r', encoding='utf-8') as f:
-                        all_historical_data = json.load(f)
-                else:
-                    all_historical_data = []
-            except FileNotFoundError as e:
-                logger.error(f"Fichier historique non trouvé: {e}")
-                all_historical_data = []
-            except PermissionError as e:
-                logger.error(f"Permission refusée pour lire l'historique: {e}")
-                all_historical_data = []
-            except (json.JSONDecodeError, ValueError) as e:
-                logger.error(f"Erreur parsing JSON historique: {e}")
-                all_historical_data = []
+            # PERFORMANCE FIX: Use partitioned storage (O(1) write)
+            # Saves to: data/portfolio_history/{user_id}/{source}/{YYYY}/{MM}/snapshots.json
+            success = self.storage.save_snapshot(snapshot, user_id, source)
 
-            # Ajouter ou mettre à jour snapshot (upsert journalier)
-            _upsert_daily_snapshot(all_historical_data, snapshot, user_id, source)
+            if success:
+                logger.info(
+                    f"Portfolio snapshot saved ({metrics['total_value_usd']:.2f} USD) "
+                    f"for user={user_id}, source={source} to partitioned storage"
+                )
+            else:
+                logger.error(
+                    f"Failed to save portfolio snapshot for user={user_id}, source={source}"
+                )
 
-            # Garder seulement les 365 derniers jours par (user_id, source)
-            # Group by (user_id, source) and keep last 365 for each
-            from collections import defaultdict
-            grouped = defaultdict(list)
-            for entry in all_historical_data:
-                key = (entry.get('user_id', 'demo'), entry.get('source', 'cointracking'))
-                grouped[key].append(entry)
+            return success
 
-            # Keep last 365 per group
-            filtered_data = []
-            for key, entries in grouped.items():
-                # Sort by date
-                sorted_entries = sorted(entries, key=lambda x: x.get('date', ''))
-                # Keep last 365
-                filtered_data.extend(sorted_entries[-365:])
-
-            # Sauvegarder avec écriture atomique (anti-corruption)
-            _atomic_json_dump(filtered_data, self.historical_data_file)
-
-            logger.info(f"Portfolio snapshot sauvé ({metrics['total_value_usd']:.2f} USD) for user={user_id}, source={source}")
-            return True
-
-        except (OSError, PermissionError) as e:
-            logger.error(f"Erreur I/O sauvegarde snapshot: {e}")
-            return False
-        except (json.JSONDecodeError, ValueError, TypeError) as e:
-            logger.error(f"Erreur données sauvegarde snapshot: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error saving snapshot: {e}", exc_info=True)
             return False
     
     def get_portfolio_trend(self, days: int = 30) -> Dict[str, Any]:
@@ -552,9 +533,28 @@ class PortfolioAnalytics:
         return recommendations[:3]  # Limiter à 3 recommandations
     
     def _load_historical_data(self, user_id: str = "demo", source: str = "cointracking") -> List[Dict[str, Any]]:
-        """Charge les données historiques du portfolio filtrées par user et source"""
+        """
+        Charge les données historiques du portfolio filtrées par user et source.
+
+        PERFORMANCE FIX (Dec 2025): Uses partitioned storage for O(1) access.
+        Falls back to legacy file if partitioned data not available.
+        """
         try:
+            # Try partitioned storage first (O(1) access)
+            snapshots = self.storage.load_snapshots(user_id, source, days=None)
+
+            if snapshots:
+                logger.info(
+                    f"Loaded {len(snapshots)} historical entries from partitioned storage "
+                    f"(user={user_id}, source={source})"
+                )
+                return snapshots
+
+            # Fallback to legacy file (O(n) scan - slow)
             if os.path.exists(self.historical_data_file):
+                logger.warning(
+                    f"Partitioned storage empty, falling back to legacy file (user={user_id}, source={source})"
+                )
                 with open(self.historical_data_file, 'r', encoding='utf-8') as f:
                     all_data = json.load(f)
                     # Filter by user_id and source
@@ -562,14 +562,20 @@ class PortfolioAnalytics:
                         entry for entry in all_data
                         if entry.get('user_id') == user_id and entry.get('source') == source
                     ]
-                    logger.info(f"Loaded {len(filtered)} historical entries for user={user_id}, source={source} (total={len(all_data)})")
+                    logger.info(
+                        f"Loaded {len(filtered)} historical entries from legacy file "
+                        f"(user={user_id}, source={source}, total={len(all_data)})"
+                    )
                     return filtered
+
         except FileNotFoundError as e:
             logger.error(f"Fichier données historiques non trouvé: {e}")
         except PermissionError as e:
             logger.error(f"Permission refusée pour lire les données historiques: {e}")
         except (json.JSONDecodeError, ValueError) as e:
             logger.error(f"Erreur parsing données historiques: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error loading historical data: {e}", exc_info=True)
 
         return []
     

@@ -1,0 +1,46 @@
+[
+  {
+    "date": "2025-12-11T23:59:01.999443+01:00",
+    "user_id": "jack",
+    "source": "cointracking_api",
+    "total_value_usd": 341641.67759175,
+    "asset_count": 190,
+    "group_count": 6,
+    "diversity_score": 3,
+    "top_holding_symbol": "BTC",
+    "top_holding_percentage": 0.4039891336812793,
+    "group_distribution": {
+      "Others": 54254.57925292999,
+      "L1/L0 majors": 29876.44205858,
+      "BTC": 149927.03432961,
+      "ETH": 73930.24185227,
+      "Stablecoins": 31970.229135430003,
+      "SOL": 1683.15096293
+    },
+    "valuation_currency": "USD",
+    "price_source": "cointracking_api",
+    "pricing_timestamp": "2025-12-11T23:59:01.999443+01:00"
+  },
+  {
+    "date": "2025-12-12T18:30:06.237008+01:00",
+    "user_id": "jack",
+    "source": "cointracking_api",
+    "total_value_usd": 332479.88694015,
+    "asset_count": 190,
+    "group_count": 6,
+    "diversity_score": 3,
+    "top_holding_symbol": "BTC",
+    "top_holding_percentage": 0.4071690541167053,
+    "group_distribution": {
+      "Others": 52716.46771921001,
+      "L1/L0 majors": 29150.95973852,
+      "BTC": 146817.16287447998,
+      "ETH": 70186.58274695001,
+      "Stablecoins": 31959.366466760002,
+      "SOL": 1649.34739423
+    },
+    "valuation_currency": "USD",
+    "price_source": "cointracking_api",
+    "pricing_timestamp": "2025-12-12T18:30:06.237008+01:00"
+  }
+]

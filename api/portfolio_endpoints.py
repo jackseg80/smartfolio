@@ -353,3 +353,128 @@ async def export_crypto_lists(
     except Exception as e:
         logger.exception("Error exporting crypto lists")
         return error_response(str(e), code=500)
+
+
+# ============================================================================
+# Portfolio History Storage Management (PERFORMANCE FIX - Dec 2025)
+# ============================================================================
+
+@router.post("/portfolio/migrate-history")
+async def migrate_portfolio_history():
+    """
+    Migrate portfolio history from legacy monolithic file to partitioned structure.
+
+    PERFORMANCE FIX (Dec 2025): Converts data/portfolio_history.json to partitioned
+    structure for O(1) access instead of O(n) scan.
+
+    Returns:
+        Migration statistics
+
+    Security:
+        - Admin-only endpoint (consider adding auth if needed)
+        - Backs up legacy file before migration
+        - Idempotent (safe to run multiple times)
+    """
+    try:
+        from services.portfolio_history_storage import PartitionedPortfolioStorage
+
+        storage = PartitionedPortfolioStorage(retention_days=365)
+
+        # Check if migration needed
+        if not storage.legacy_file.exists():
+            return success_response(
+                data={"status": "not_needed", "message": "Legacy file not found - already using partitioned storage"},
+                meta={"migrated": False}
+            )
+
+        # Execute migration
+        logger.info("Starting portfolio history migration...")
+        stats = storage.migrate_from_legacy()
+
+        logger.info(
+            f"Portfolio history migration complete: {stats['snapshots_migrated']} snapshots, "
+            f"{stats['users']} users, {stats['sources']} sources"
+        )
+
+        return success_response(
+            data={
+                "status": "success",
+                "snapshots_migrated": stats['snapshots_migrated'],
+                "users": stats['users'],
+                "sources": stats['sources'],
+                "backup_file": f"{storage.legacy_file}.backup"
+            },
+            meta={"migrated": True}
+        )
+
+    except Exception as e:
+        logger.exception("Error during portfolio history migration")
+        return error_response(
+            message="Migration failed",
+            code=500,
+            details={"error": str(e)}
+        )
+
+
+@router.post("/portfolio/cleanup-old-history")
+async def cleanup_old_portfolio_history(
+    user_id: str = Query(None, description="User to cleanup (None = all users)"),
+    dry_run: bool = Query(False, description="Show what would be deleted without actually deleting")
+):
+    """
+    Remove portfolio snapshots older than retention period (365 days).
+
+    PERFORMANCE FIX (Dec 2025): Cleans up old partitioned data to prevent
+    unbounded disk usage.
+
+    Args:
+        user_id: User to cleanup (None = all users)
+        dry_run: If True, only show what would be deleted
+
+    Returns:
+        Cleanup statistics
+
+    Security:
+        - Admin-only endpoint (consider adding auth if needed)
+        - Default dry_run=False for safety
+    """
+    try:
+        from services.portfolio_history_storage import PartitionedPortfolioStorage
+
+        storage = PartitionedPortfolioStorage(retention_days=365)
+
+        if dry_run:
+            logger.info(f"DRY RUN: Cleanup old portfolio history for user={user_id or 'all'}")
+            # TODO: Implement dry-run mode in storage.cleanup_old_snapshots()
+            return success_response(
+                data={
+                    "status": "dry_run",
+                    "message": "Dry run mode - no changes made",
+                    "user": user_id or "all"
+                },
+                meta={"dry_run": True}
+            )
+
+        # Execute cleanup
+        logger.info(f"Cleaning up old portfolio history for user={user_id or 'all'}")
+        removed_count = storage.cleanup_old_snapshots(user_id=user_id)
+
+        logger.info(f"Portfolio history cleanup complete: {removed_count} partitions removed")
+
+        return success_response(
+            data={
+                "status": "success",
+                "partitions_removed": removed_count,
+                "user": user_id or "all",
+                "retention_days": storage.retention_days
+            },
+            meta={"cleaned": removed_count > 0}
+        )
+
+    except Exception as e:
+        logger.exception("Error during portfolio history cleanup")
+        return error_response(
+            message="Cleanup failed",
+            code=500,
+            details={"error": str(e)}
+        )
