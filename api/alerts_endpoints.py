@@ -211,11 +211,12 @@ async def get_active_alerts(
 async def list_alerts(
     severity: Optional[str] = Query(None, description="Comma-separated severity levels (e.g., 'medium,high,critical')"),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of alerts to return"),
+    offset: int = Query(0, ge=0, description="Number of alerts to skip for pagination"),
     engine: AlertEngine = Depends(get_alert_engine),
     current_user: User = Depends(get_current_user)
 ):
     """
-    List active alerts with multi-severity filtering and limit
+    List active alerts with multi-severity filtering and pagination (PERFORMANCE FIX Dec 2025)
 
     Compatible with frontend risk-alerts-loader.js expectations.
     """
@@ -246,8 +247,9 @@ async def list_alerts(
             )
         )
 
-        # Limit results
-        alerts = alerts[:limit]
+        # PERFORMANCE FIX (Dec 2025): Apply pagination with offset
+        total_count = len(alerts)
+        alerts = alerts[offset:offset + limit]
 
         # Convert to response format
         response_alerts = []
@@ -265,7 +267,15 @@ async def list_alerts(
                 "escalation_count": alert.escalation_count
             })
 
-        return {"ok": True, "alerts": response_alerts, "count": len(response_alerts)}
+        return {
+            "ok": True,
+            "alerts": response_alerts,
+            "count": len(response_alerts),
+            "total_count": total_count,
+            "offset": offset,
+            "limit": limit,
+            "has_more": (offset + limit) < total_count
+        }
 
     except Exception as e:
         logger.error(f"Error listing alerts: {e}")

@@ -106,23 +106,36 @@ class StopLossBacktestV2(StopLossBacktest):
                 if holding_data.empty:
                     continue
 
+                # PERFORMANCE FIX (Dec 2025): Replace iterrows() with vectorized operations
                 # Check for stop/target
                 exit_reason = "holding_expired"
                 exit_price = holding_data.iloc[-1]['close']
                 exit_actual_date = holding_data.index[-1]
 
-                for date, row in holding_data.iterrows():
-                    if row['low'] <= stop_loss_price:
+                # Vectorized: find first stop loss or target hit
+                stop_hits = holding_data[holding_data['low'] <= stop_loss_price]
+                target_hits = holding_data[holding_data['high'] >= target_price]
+
+                if not stop_hits.empty and not target_hits.empty:
+                    # Both hit - take the earlier one
+                    stop_date = stop_hits.index[0]
+                    target_date = target_hits.index[0]
+                    if stop_date <= target_date:
                         exit_reason = "stop_loss"
                         exit_price = stop_loss_price
-                        exit_actual_date = date
-                        break
-
-                    if row['high'] >= target_price:
+                        exit_actual_date = stop_date
+                    else:
                         exit_reason = "target_reached"
                         exit_price = target_price
-                        exit_actual_date = date
-                        break
+                        exit_actual_date = target_date
+                elif not stop_hits.empty:
+                    exit_reason = "stop_loss"
+                    exit_price = stop_loss_price
+                    exit_actual_date = stop_hits.index[0]
+                elif not target_hits.empty:
+                    exit_reason = "target_reached"
+                    exit_price = target_price
+                    exit_actual_date = target_hits.index[0]
 
                 # Calculate P&L
                 pnl_pct = (exit_price - entry_price) / entry_price
