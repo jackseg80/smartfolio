@@ -84,14 +84,17 @@ async def list_patrimoine_items(
 
     logger.info(f"[wealth][patrimoine] listed {len(paginated_items)}/{total_count} items for user={user}")
 
+    # Convert Pydantic models to dicts for proper JSON serialization
+    items_as_dicts = [item.model_dump() for item in paginated_items]
+
     return {
         "success": True,
-        "count": len(paginated_items),
+        "count": len(items_as_dicts),
         "total_count": total_count,
         "offset": offset,
         "limit": limit,
         "has_more": (offset + limit) < total_count,
-        "items": paginated_items,
+        "items": items_as_dicts,
         "filters_applied": {
             "category": category,
             "type": type

@@ -324,6 +324,10 @@ const initUnifiedNav = () => {
     });
 
     // Dropdown Admin (seulement si visible pour utilisateur RBAC)
+    // PERFORMANCE FIX (Dec 2025): Store event handlers for cleanup
+    let dropdownClickHandler = null;
+    let dropdownKeyHandler = null;
+
     const toggle = header.querySelector('#admin-toggle');
     const dropdown = header.querySelector('#admin-dropdown');
     if (toggle && dropdown && hasAdminRole) {
@@ -336,13 +340,18 @@ const initUnifiedNav = () => {
         const isOpen = dropdown.classList.toggle('open');
         toggle.setAttribute('aria-expanded', String(isOpen));
       });
-      document.addEventListener('click', (e) => {
+
+      // Named handlers for cleanup
+      dropdownClickHandler = (e) => {
         if (!dropdown.classList.contains('open')) return;
         if (!dropdown.contains(e.target) && e.target !== toggle) closeDropdown();
-      });
-      window.addEventListener('keydown', (e) => {
+      };
+      dropdownKeyHandler = (e) => {
         if (e.key === 'Escape') closeDropdown();
-      });
+      };
+
+      document.addEventListener('click', dropdownClickHandler);
+      window.addEventListener('keydown', dropdownKeyHandler);
     }
 
     // ===== Human-in-the-loop Badge Management =====
@@ -573,12 +582,24 @@ const initUnifiedNav = () => {
     loadWealthContextBar();
 
     // Cleanup on page unload
+    // PERFORMANCE FIX (Dec 2025): Clean up event listeners to prevent memory leaks
     window.addEventListener('beforeunload', () => {
       if (websocketConnection) {
         websocketConnection.close();
       }
       if (fallbackInterval) {
         clearInterval(fallbackInterval);
+      }
+      // Clean up dropdown event listeners
+      if (dropdownClickHandler) {
+        document.removeEventListener('click', dropdownClickHandler);
+      }
+      if (dropdownKeyHandler) {
+        window.removeEventListener('keydown', dropdownKeyHandler);
+      }
+      // Clean up WealthContextBar
+      if (window.wealthContextBar && typeof window.wealthContextBar.destroy === 'function') {
+        window.wealthContextBar.destroy();
       }
     });
 

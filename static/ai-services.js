@@ -402,6 +402,8 @@ class AIServiceManager {
 
         this.isInitialized = false;
         this.healthCheckInterval = null;
+        // PERFORMANCE FIX (Dec 2025): Store regime monitoring interval for cleanup
+        this.regimeMonitoringInterval = null;
     }
 
     /**
@@ -416,7 +418,8 @@ class AIServiceManager {
             (window.debugLogger?.debug || console.log)('Health check:', health);
 
             // Démarrer la surveillance des régimes de marché
-            this.regimeService.startRealTimeMonitoring();
+            // PERFORMANCE FIX (Dec 2025): Store interval ID for cleanup
+            this.regimeMonitoringInterval = this.regimeService.startRealTimeMonitoring();
 
             // Démarrer les vérifications de santé périodiques
             this.startHealthMonitoring();
@@ -453,12 +456,25 @@ class AIServiceManager {
 
     /**
      * Arrêter la surveillance
+     * PERFORMANCE FIX (Dec 2025): Clean up all monitoring intervals
      */
     stopHealthMonitoring() {
         if (this.healthCheckInterval) {
             clearInterval(this.healthCheckInterval);
             this.healthCheckInterval = null;
         }
+        if (this.regimeMonitoringInterval) {
+            clearInterval(this.regimeMonitoringInterval);
+            this.regimeMonitoringInterval = null;
+        }
+    }
+
+    /**
+     * PERFORMANCE FIX (Dec 2025): Complete shutdown method
+     * Alias for stopHealthMonitoring() for clarity
+     */
+    shutdown() {
+        this.stopHealthMonitoring();
     }
 
     /**

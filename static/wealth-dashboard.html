@@ -791,10 +791,39 @@
                 updateNetWorthDashboard(summary);
 
                 // Load all items
-                const itemsRes = await fetch('/api/wealth/patrimoine/items', {
+                // Fetch all items by setting a high limit. TODO: Implement pagination.
+                const itemsRes = await fetch('/api/wealth/patrimoine/items?limit=500', {
                     headers: { 'X-User': activeUser }
                 });
-                allItems = await itemsRes.json();
+
+                // Check HTTP status
+                if (!itemsRes.ok) {
+                    console.error(`Failed to load patrimoine items: HTTP ${itemsRes.status}`);
+                    allItems = [];
+                    renderLiquidityTables();
+                    renderTangibleTables();
+                    renderLiabilityTables();
+                    renderInsuranceTables();
+                    return;
+                }
+
+                const data = await itemsRes.json();
+                console.log('Patrimoine items response:', data);
+
+                // Handle different response formats
+                if (Array.isArray(data)) {
+                    // Direct array response
+                    allItems = data;
+                } else if (data.items && Array.isArray(data.items)) {
+                    // Wrapped response with items property
+                    allItems = data.items;
+                } else {
+                    // Fallback: empty array
+                    console.warn('Unexpected patrimoine items response format:', data);
+                    allItems = [];
+                }
+
+                console.log(`Loaded ${allItems.length} patrimoine items`);
 
                 // Render tables
                 renderLiquidityTables();
@@ -804,6 +833,7 @@
 
             } catch (error) {
                 console.error('Error loading patrimoine data:', error);
+                allItems = [];
             }
         }
 

@@ -10,6 +10,36 @@ import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
 // PERFORMANCE FIX (Dec 2025): Throttle utilities to prevent event spam
 import { throttle } from './utils/debounce.js';
 
+// PERFORMANCE FIX (Dec 2025): DOM selector cache to prevent repeated traversals
+const domCache = new Map();
+
+/**
+ * Get a DOM element from cache or query and cache it
+ * @param {string} selector - CSS selector
+ * @param {Element} parent - Parent element (optional, defaults to document)
+ * @returns {Element|null}
+ */
+function getCachedElement(selector, parent = document) {
+    const cacheKey = parent === document ? selector : `${parent.id || 'parent'}_${selector}`;
+
+    if (!domCache.has(cacheKey)) {
+        const element = parent.querySelector(selector);
+        if (element) {
+            domCache.set(cacheKey, element);
+        }
+        return element;
+    }
+
+    return domCache.get(cacheKey);
+}
+
+/**
+ * Clear DOM cache (call when DOM structure changes significantly)
+ */
+function clearDomCache() {
+    domCache.clear();
+}
+
 // Configuration
 const API_BASE = window.getApiBase();
 
@@ -395,28 +425,61 @@ async function loadMonitoringData() {
     }
 }
 
+// PERFORMANCE FIX (Dec 2025): Preload metric containers at initialization
+const metricContainersCache = new Map();
+
+/**
+ * Initialize metric containers cache
+ * Call this once after DOM is loaded to cache all metric containers
+ */
+function initMetricContainersCache() {
+    const tabs = document.querySelectorAll('[id^="tab-"]');
+    tabs.forEach(panel => {
+        // Cache containers with data-metric attribute
+        const metricsWithAttr = panel.querySelectorAll('[data-metric]');
+        metricsWithAttr.forEach(container => {
+            const metricId = container.getAttribute('data-metric');
+            metricContainersCache.set(metricId, {
+                container,
+                valueEl: container.querySelector('.metric-value'),
+                subtitleEl: container.querySelector('small')
+            });
+        });
+
+        // Cache positional metric cards as fallback
+        const cards = panel.querySelectorAll('.metric-card');
+        cards.forEach((card, idx) => {
+            const fallbackKey = `${panel.id}_card_${idx}`;
+            if (!card.hasAttribute('data-metric')) { // Don't override explicit mappings
+                metricContainersCache.set(fallbackKey, {
+                    container: card,
+                    valueEl: card.querySelector('.metric-value'),
+                    subtitleEl: card.querySelector('small')
+                });
+            }
+        });
+    });
+    console.debug(`✅ Cached ${metricContainersCache.size} metric containers`);
+}
+
 // Utility functions
 function updateMetric(id, value, subtitle) {
-    const tabPrefix = id.split('-')[0];
-    const tabMap = { risk: 'risk', perf: 'performance', cycle: 'cycles', monitor: 'monitoring' };
-    const panelId = tabMap[tabPrefix] || tabPrefix;
-    const panel = document.querySelector(`#tab-${panelId}`);
-    if (!panel) return;
+    // PERFORMANCE FIX (Dec 2025): Use cached metric containers instead of querySelector
+    let cached = metricContainersCache.get(id);
 
-    // Prefer explicit data-metric mapping when available
-    let container = panel.querySelector(`[data-metric="${id}"]`);
-
-    // Fallback to positional mapping if no data-metric hook
-    if (!container) {
-        const cards = panel.querySelectorAll('.metric-card');
-        const idx = getMetricIndex(id) - 1; // zero-based
-        if (cards[idx]) container = cards[idx];
+    // Fallback: try positional mapping if not found
+    if (!cached) {
+        const tabPrefix = id.split('-')[0];
+        const tabMap = { risk: 'risk', perf: 'performance', cycle: 'cycles', monitor: 'monitoring' };
+        const panelId = tabMap[tabPrefix] || tabPrefix;
+        const idx = getMetricIndex(id) - 1;
+        const fallbackKey = `tab-${panelId}_card_${idx}`;
+        cached = metricContainersCache.get(fallbackKey);
     }
 
-    if (!container) return;
+    if (!cached) return;
 
-    const valueEl = container.querySelector('.metric-value');
-    const subtitleEl = container.querySelector('small');
+    const { valueEl, subtitleEl } = cached;
 
     if (valueEl) {
         // 🆕 Retirer skeleton loader et aria-busy quand données arrivent
