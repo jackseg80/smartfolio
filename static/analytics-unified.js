@@ -83,6 +83,13 @@ async function fetchWithCache(key, fetchFn) {
 // Tab switching functionality
 document.addEventListener('DOMContentLoaded', function () {
     setupTabSwitching();
+
+    // PERFORMANCE FIX (Dec 2025): Initialize metric containers cache before loading data
+    // This prevents repeated DOM queries during metric updates
+    setTimeout(() => {
+        initMetricContainersCache();
+    }, 100); // Small delay to ensure DOM is fully rendered
+
     loadInitialData();
 
     // PERFORMANCE FIX (Dec 2025): Throttle storage events to prevent spam

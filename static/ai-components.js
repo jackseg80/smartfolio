@@ -436,38 +436,35 @@ class CorrelationMatrix extends AIComponent {
 
         const matrix = data.correlation_matrix;
         const symbols = this.symbols;
-        
-        let html = '<table class="correlation-table">';
-        
-        // En-tête
-        html += '<thead><tr><th></th>';
-        symbols.forEach(symbol => {
-            html += `<th>${symbol}</th>`;
-        });
-        html += '</tr></thead><tbody>';
-        
-        // Lignes de données
-        symbols.forEach((rowSymbol, i) => {
-            html += `<tr><td class="row-header">${rowSymbol}</td>`;
-            symbols.forEach((colSymbol, j) => {
-                const correlation = matrix[rowSymbol] && matrix[rowSymbol][colSymbol] !== undefined ? 
-                    matrix[rowSymbol][colSymbol] : 0;
-                
+
+        // PERFORMANCE FIX (Dec 2025): Use array operations and join() instead of string concatenation
+        // This reduces DOM manipulation and improves performance for large matrices
+
+        // Build HTML parts in arrays for efficient joining
+        const headerCells = symbols.map(symbol => `<th>${symbol}</th>`);
+        const headerRow = `<thead><tr><th></th>${headerCells.join('')}</tr></thead>`;
+
+        // Build data rows using map() for better performance
+        const dataRows = symbols.map(rowSymbol => {
+            const cells = symbols.map(colSymbol => {
+                const correlation = matrix[rowSymbol]?.[colSymbol] ?? 0;
                 const intensity = Math.abs(correlation);
-                const color = correlation > 0 ? 
-                    `rgba(16, 185, 129, ${intensity})` : 
+                const color = correlation > 0 ?
+                    `rgba(16, 185, 129, ${intensity})` :
                     `rgba(239, 68, 68, ${intensity})`;
-                
-                html += `<td class="correlation-cell" style="background-color: ${color}" 
-                            title="${rowSymbol} - ${colSymbol}: ${this.formatNumber(correlation, 2)}">
-                            ${this.formatNumber(correlation, 2)}
+                const formattedValue = this.formatNumber(correlation, 2);
+
+                return `<td class="correlation-cell" style="background-color: ${color}"
+                            title="${rowSymbol} - ${colSymbol}: ${formattedValue}">
+                            ${formattedValue}
                          </td>`;
-            });
-            html += '</tr>';
-        });
-        
-        html += '</tbody></table>';
-        heatmap.innerHTML = html;
+            }).join('');
+
+            return `<tr><td class="row-header">${rowSymbol}</td>${cells}</tr>`;
+        }).join('');
+
+        // Single innerHTML assignment (triggers one reflow instead of many)
+        heatmap.innerHTML = `<table class="correlation-table">${headerRow}<tbody>${dataRows}</tbody></table>`;
     }
 
     refresh() {
