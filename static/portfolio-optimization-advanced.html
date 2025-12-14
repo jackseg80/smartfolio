@@ -565,6 +565,23 @@
     function validateParameters(algorithm) {
       const errors = [];
 
+      // Validation inputs communs
+      const lookback = parseInt(document.getElementById('lookback').value);
+      if (isNaN(lookback) || lookback < 30 || lookback > 2000) {
+        errors.push("Historique doit être entre 30 et 2000 jours");
+      }
+
+      const minUsd = parseFloat(document.getElementById('minusd').value);
+      if (isNaN(minUsd) || minUsd < 0 || minUsd > 100000) {
+        errors.push("Montant minimum doit être entre 0 et 100,000 USD");
+      }
+
+      const riskFreeRate = parseFloat(document.getElementById('risk-free-rate').value);
+      if (isNaN(riskFreeRate) || riskFreeRate < 0 || riskFreeRate > 10) {
+        errors.push("Taux sans risque doit être entre 0% et 10%");
+      }
+
+      // Validation spécifique Black-Litterman
       if (algorithm === 'black_litterman') {
         try {
           const views = JSON.parse(document.getElementById('market-views').value);
@@ -655,9 +672,15 @@
         const params = new URLSearchParams(baseParams);
         const url = `${API_BASE}/api/portfolio/optimization/optimize-advanced?${params.toString()}`;
 
+        // Multi-tenant: utiliser le user actif
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+
         const response = await fetch(url, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User': activeUser
+          },
           body: JSON.stringify(requestBody)
         });
 
@@ -681,7 +704,7 @@
         setStatus('✅ Optimisation terminée avec succès');
 
       } catch (error) {
-        debugLogger.error('Optimization error:', error);
+        (window.debugLogger || console).error('Optimization error:', error);
         setStatus('❌ Erreur d\'optimisation');
         showError(`Erreur: ${error.message}`);
       }
@@ -712,6 +735,13 @@
     }
 
     function renderWeightsChart(weights) {
+      // Check Chart.js disponible
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded - cannot render chart');
+        showError('Bibliothèque Chart.js non chargée');
+        return;
+      }
+
       const entries = Object.entries(weights || {})
         .filter(([_, w]) => w > 0.001) // Filtrer les poids négligeables
         .sort((a, b) => b[1] - a[1]);
@@ -872,6 +902,13 @@
     }
 
     function renderFrontierChart(frontierData) {
+      // Check Chart.js disponible
+      if (typeof Chart === 'undefined') {
+        console.error('Chart.js not loaded - cannot render chart');
+        showError('Bibliothèque Chart.js non chargée');
+        return;
+      }
+
       const ctx = document.getElementById('frontierChart');
 
       if (frontierChart) frontierChart.destroy();
@@ -942,9 +979,14 @@
           const params = new URLSearchParams(baseParams);
           const url = `${API_BASE}/api/portfolio/optimization/optimize-advanced?${params.toString()}`;
 
+          const activeUser = localStorage.getItem('activeUser') || 'demo';
+
           const response = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User': activeUser
+            },
             body: JSON.stringify(requestBody)
           });
 
@@ -955,7 +997,7 @@
             }
           }
         } catch (e) {
-          debugLogger.warn(`Failed to optimize ${algo}:`, e);
+          (window.debugLogger || console).warn(`Failed to optimize ${algo}:`, e);
         }
       }
 
