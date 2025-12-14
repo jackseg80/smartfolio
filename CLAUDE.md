@@ -86,11 +86,17 @@ const balanceResult = await window.loadBalanceData(true);
 dashboard.html          # Vue globale + P&L Today
 analytics-unified.html  # ML temps réel + Decision Index
 risk-dashboard.html     # Risk management + Governance
-rebalance.html         # Plans de rééquilibrage
+rebalance.html         # Plans rééquilibrage (2 onglets: Rebalancing tactique + Optimization mathématique)
 execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
 wealth-dashboard.html   # Patrimoine unifié (liquidités, biens, passifs, assurances)
 ```
+
+**Note rebalance.html:** 2 onglets avec objectifs distincts
+
+- **Rebalancing** (tactique): Stratégies prédéfinies (CCS, Conservative, etc.) + Allocation Engine V2
+- **Optimization** (mathématique): 6 algorithmes Markowitz (Max Sharpe, Black-Litterman, Risk Parity, etc.)
+- Voir `docs/PORTFOLIO_OPTIMIZATION_GUIDE.md` pour guide complet
 
 ### API Namespaces
 ```
@@ -680,6 +686,7 @@ EOF
 
 ### Features & Systems
 - **Allocation**: `docs/ALLOCATION_ENGINE_V2.md` (topdown hierarchical, floors, incumbency)
+- **Optimization**: `docs/PORTFOLIO_OPTIMIZATION_GUIDE.md` (6 algorithmes Markowitz, workflows, best practices)
 - **Decision Index**: `docs/DECISION_INDEX_V2.md` (système dual scoring, DI vs Régime)
 - **Risk**: `docs/RISK_SEMANTICS.md`, `docs/RISK_SCORE_V2_IMPLEMENTATION.md`
 - **Structure**: `docs/STRUCTURE_MODULATION_V2.md` (garde-fou allocation, deltaCap)
