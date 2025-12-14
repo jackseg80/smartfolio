@@ -16,8 +16,8 @@
             if (container && !container.querySelector('iframe')) {
               const here = window.location;
               const url = (here.origin && here.pathname.includes('/static/'))
-                ? here.origin.replace(/\/$/, '') + '/static/portfolio-optimization.html?nav=off'
-                : 'portfolio-optimization.html?nav=off';
+                ? here.origin.replace(/\/$/, '') + '/static/portfolio-optimization-advanced.html?nav=off'
+                : 'portfolio-optimization-advanced.html?nav=off';
               const openBtn = document.getElementById('openOptimizationNewTab');
               if (openBtn) {
                 openBtn.onclick = () => window.open(url, '_blank', 'noopener');
