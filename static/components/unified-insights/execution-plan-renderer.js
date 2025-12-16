@@ -14,9 +14,9 @@ import * as governanceSelectors from '../../selectors/governance.js';
 export async function renderAllocationBlock(u, options = {}) {
   try {
     // SOURCE CANONIQUE UNIQUE: Utiliser targets_by_group (même source que plan d'exécution)
-    (window.debugLogger?.warn || console.warn)('🔥 UNIFIED SOURCE: Using u.targets_by_group as canonical source');
+    (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: Using u.targets_by_group as canonical source');
     let allocation = u.targets_by_group;
-    (window.debugLogger?.warn || console.warn)('🔥 UNIFIED SOURCE: targets_by_group result:', allocation);
+    (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: targets_by_group result:', allocation);
 
     // PATCH C - Moteur unique : utiliser groupAssetsByClassification comme Rebalance (DÉSACTIVÉ pour test)
     let allocation_backup = null;

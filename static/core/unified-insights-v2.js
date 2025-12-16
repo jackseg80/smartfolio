@@ -1,7 +1,7 @@
 // Unified Insights V2 - Migration vers Strategy API (PR-C)
 // Nouvelle version qui utilise l'API Strategy tout en gardant la compatibilité
 // Remplace progressivement unified-insights.js
-(window.debugLogger?.warn || console.warn)('🔄 UNIFIED-INSIGHTS-V2.JS LOADED - FORCE CACHE RELOAD TIMESTAMP:', new Date().toISOString());
+(window.debugLogger?.debug || console.debug)('🔄 UNIFIED-INSIGHTS-V2.JS LOADED - FORCE CACHE RELOAD TIMESTAMP:', new Date().toISOString());
 
 import { store } from './risk-dashboard-store.js';
 import { getRegimeDisplayData, getMarketRegime } from '../modules/market-regimes.js';

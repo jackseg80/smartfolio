@@ -768,7 +768,7 @@ async function loadUnifiedData(force = false) {
           blended: store.get('scores.blended')
         });
       } else {
-        debugLogger.warn('⚠️ No cross-page cache - will use slower API calls');
+        debugLogger.debug('📊 No cross-page cache - will use slower API calls');
       }
     }
 
@@ -1160,7 +1160,7 @@ async function loadUnifiedData(force = false) {
       debugLogger.debug('✅ Backend marked healthy (minimal data available)');
     } else {
       store.set('ui.apiStatus.backend', 'degraded');
-      debugLogger.warn('⚠️ Backend degraded (minimal data missing)');
+      debugLogger.debug('📊 Backend loading (minimal data pending)');
     }
 
   } catch (e) {

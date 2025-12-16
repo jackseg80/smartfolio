@@ -318,19 +318,25 @@ window.switchTab = function (tabName) {
   store.set('ui.activeTab', tabName);
 
   // Render content based on active tab
+  // Use requestAnimationFrame to ensure DOM is ready after CSS changes
   switch (tabName) {
     case 'risk':
       // Risk content is already rendered by refreshDashboard
       break;
     case 'cycles':
       // Always render cycles content when tab is activated
-      renderCyclesContent();
+      requestAnimationFrame(() => renderCyclesContent());
       break;
     case 'targets':
-      renderTargetsContent().catch(err => debugLogger.error('Failed to render targets:', err));
+      requestAnimationFrame(() => {
+        renderTargetsContent().catch(err => debugLogger.error('Failed to render targets:', err));
+      });
       break;
     case 'alerts':
-      initializeAlertsTab();
+      // Wait for DOM to be ready (tab-pane display:block applied)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => initializeAlertsTab());
+      });
       break;
   }
 
