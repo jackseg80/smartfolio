@@ -11,7 +11,7 @@ class DebugLogger {
         this.debugEnabled = this.isDebugEnabled();
         this._consolePatched = false;
         this._fetchPatched = false;
-        
+
         // Niveaux de log
         this.LEVELS = {
             ERROR: 0,   // Toujours affiché
@@ -19,10 +19,15 @@ class DebugLogger {
             INFO: 2,    // Affiché si debug activé
             DEBUG: 3    // Affiché si debug activé
         };
-        
+
+        // Toast integration (lazy loaded)
+        this._toastEnabled = true; // Afficher les toasts par défaut
+        this._toastInstance = null;
+        this._loadToast();
+
         // Note: Can't use debugLogger.debug here since debugLogger isn't created yet
         if (this.debugEnabled) {
-            console.log(`🔧 DebugLogger initialized - Debug mode: ${this.debugEnabled ? 'ON' : 'OFF'}`);
+            console.log(`🔧 DebugLogger initialized - Debug mode: ${this.debugEnabled ? 'ON' : 'OFF'}, Toasts: ${this._toastEnabled ? 'ON' : 'OFF'}`);
         }
 
         // Synchroniser avec globalConfig si présent
@@ -36,6 +41,65 @@ class DebugLogger {
         // Appliquer les hooks (console.debug, fetch tracer)
         this.applyConsoleOverride();
         this.applyFetchTracer();
+    }
+
+    /**
+     * Charge le système Toast de manière asynchrone
+     */
+    async _loadToast() {
+        try {
+            // Attendre que Toast soit disponible (chargé par module ou global)
+            if (window.Toast) {
+                this._toastInstance = window.Toast;
+            } else {
+                // Essayer d'importer dynamiquement
+                const module = await import('./components/toast.js');
+                this._toastInstance = module.Toast;
+            }
+        } catch (error) {
+            // Toast pas disponible, on continue sans
+            this._toastEnabled = false;
+            if (this.debugEnabled) {
+                console.log('ℹ️ Toast system not available, using console only');
+            }
+        }
+    }
+
+    /**
+     * Active/désactive les toasts visuels
+     */
+    setToastEnabled(enabled) {
+        this._toastEnabled = enabled;
+        localStorage.setItem('debug_toast_enabled', enabled.toString());
+    }
+
+    /**
+     * Affiche un toast si disponible
+     */
+    _showToast(type, message) {
+        if (!this._toastEnabled || !this._toastInstance) return;
+
+        try {
+            // Nettoyer le message des emojis pour le toast (déjà dans l'icône)
+            const cleanMessage = message.replace(/^[⚠️❌ℹ️🔍]+\s*/, '');
+
+            // Limiter la longueur du message
+            const shortMessage = cleanMessage.length > 150
+                ? cleanMessage.substring(0, 147) + '...'
+                : cleanMessage;
+
+            // Afficher selon le type
+            if (type === 'error') {
+                this._toastInstance.error(shortMessage, { duration: 8000 });
+            } else if (type === 'warn') {
+                this._toastInstance.warning(shortMessage, { duration: 6000 });
+            }
+        } catch (e) {
+            // Toast failed, silent fallback
+            if (this.debugEnabled) {
+                console.log('Toast display failed:', e);
+            }
+        }
     }
     
     /**
@@ -83,17 +147,25 @@ class DebugLogger {
     }
     
     /**
-     * Log de niveau ERROR (toujours affiché)
+     * Log de niveau ERROR (toujours affiché + toast)
      */
     error(message, ...args) {
         console.error(`❌ ${message}`, ...args);
+        // Vérifier que this existe et que _showToast est défini avant d'appeler
+        if (this && typeof this._showToast === 'function') {
+            this._showToast('error', message);
+        }
     }
-    
+
     /**
-     * Log de niveau WARN (toujours affiché)
+     * Log de niveau WARN (toujours affiché + toast)
      */
     warn(message, ...args) {
         console.warn(`⚠️ ${message}`, ...args);
+        // Vérifier que this existe et que _showToast est défini avant d'appeler
+        if (this && typeof this._showToast === 'function') {
+            this._showToast('warn', message);
+        }
     }
 
     /**

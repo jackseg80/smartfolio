@@ -638,9 +638,7 @@
   margin-left: var(--ai-spacing-sm);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+/* @keyframes spin removed - defined in shared-theme.css */
 
 .error {
   color: var(--ai-danger);

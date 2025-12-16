@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Components Demo - SmartFolio</title>
+
+  <!-- Design Tokens & Theme -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="shared-theme.css">
+
+  <style>
+    body {
+      padding: var(--space-8);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .demo-section {
+      margin-bottom: var(--space-12);
+    }
+
+    .demo-section__title {
+      font-size: var(--font-size-2xl);
+      margin-bottom: var(--space-4);
+      color: var(--theme-text);
+      border-bottom: 2px solid var(--theme-border);
+      padding-bottom: var(--space-2);
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-6);
+    }
+
+    .card {
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card h3 {
+      margin-bottom: var(--space-4);
+      color: var(--theme-text);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-3) var(--space-4);
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--theme-surface-elevated);
+      color: var(--theme-text);
+      border-color: var(--theme-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--theme-surface-hover);
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-warning {
+      background: var(--warning);
+      color: white;
+    }
+
+    .btn-info {
+      background: var(--info);
+      color: white;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: var(--space-6);
+      right: var(--space-6);
+      padding: var(--space-3) var(--space-4);
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+    }
+
+    code {
+      background: var(--theme-surface-elevated);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-family-mono);
+      font-size: 0.85em;
+    }
+
+    pre {
+      background: var(--theme-surface-elevated);
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      overflow-x: auto;
+      margin-top: var(--space-3);
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle" onclick="toggleTheme()">
+    🌓 Toggle Theme
+  </button>
+
+  <h1 style="margin-bottom: var(--space-8);">SmartFolio UI Components Demo</h1>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       UIModal Demos
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="demo-section">
+    <h2 class="demo-section__title">🪟 UIModal Component</h2>
+
+    <div class="demo-grid">
+      <div class="card">
+        <h3>Basic Modal</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Simple modal avec titre et contenu
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showBasicModal()">
+            Show Basic Modal
+          </button>
+        </div>
+        <pre><code>UIModal.show({
+  title: 'Basic Modal',
+  content: '&lt;p&gt;Hello!&lt;/p&gt;'
+});</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Sizes</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Tailles: small, medium, large, fullscreen
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="showModal('small')">Small</button>
+          <button class="btn btn-secondary" onclick="showModal('medium')">Medium</button>
+          <button class="btn btn-secondary" onclick="showModal('large')">Large</button>
+          <button class="btn btn-secondary" onclick="showModal('fullscreen')">Fullscreen</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Confirmation</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Modal avec Promise pour confirmation
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-danger" onclick="confirmDelete()">
+            Delete Item
+          </button>
+        </div>
+        <pre><code>const confirmed = await UIModal.confirm(
+  'Delete?',
+  'This is irreversible.'
+);
+if (confirmed) { /* delete */ }</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Alert</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Modal d'alerte simple
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="showAlert()">
+            Show Alert
+          </button>
+        </div>
+        <pre><code>await UIModal.alert(
+  'Success',
+  'Data saved!'
+);</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Form Modal</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Modal avec formulaire interactif
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showFormModal()">
+            Show Form
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>No Footer</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Modal sans footer
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="showNoFooterModal()">
+            Show Modal
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Toast Demos
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="demo-section">
+    <h2 class="demo-section__title">🍞 Toast Notifications</h2>
+
+    <div class="demo-grid">
+      <div class="card">
+        <h3>Toast Types</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          5 types: success, error, warning, info, loading
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-success" onclick="Toast.success('Operation completed!')">
+            Success Toast
+          </button>
+          <button class="btn btn-danger" onclick="Toast.error('Connection failed')">
+            Error Toast
+          </button>
+          <button class="btn btn-warning" onclick="Toast.warning('Unsaved changes')">
+            Warning Toast
+          </button>
+          <button class="btn btn-info" onclick="Toast.info('New version available')">
+            Info Toast
+          </button>
+          <button class="btn btn-secondary" onclick="showLoadingToast()">
+            Loading Toast
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Custom Duration</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Contrôler la durée d'affichage
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="Toast.success('Quick!', { duration: 2000 })">
+            2s Toast
+          </button>
+          <button class="btn btn-primary" onclick="Toast.info('Long message...', { duration: 10000 })">
+            10s Toast
+          </button>
+        </div>
+        <pre><code>Toast.success('Message', {
+  duration: 5000
+});</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Custom Title</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Personnaliser le titre
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-success" onclick="Toast.success('All data synced', { title: 'Sync Complete' })">
+            Custom Title
+          </button>
+          <button class="btn btn-error" onclick="Toast.error('Network timeout', { title: 'Connection Error' })">
+            Error Title
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Stacking</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Afficher plusieurs toasts (max 5)
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="stackToasts()">
+            Show 5 Toasts
+          </button>
+          <button class="btn btn-secondary" onclick="Toast.closeAll()">
+            Close All
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Promise Pattern</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Afficher loading puis success/error
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="simulateAsyncOperation()">
+            Async Operation
+          </button>
+        </div>
+        <pre><code>const dismiss = Toast.loading('Processing...');
+await asyncOp();
+dismiss();
+Toast.success('Done!');</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>Long Message</h3>
+        <p style="margin-bottom: var(--space-4); color: var(--theme-text-muted);">
+          Gestion des messages longs
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-info" onclick="showLongToast()">
+            Show Long Toast
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script type="module">
+    import { UIModal } from './components/ui-modal.js';
+    import { Toast } from './components/toast.js';
+
+    // Make available globally for onclick handlers
+    window.UIModal = UIModal;
+    window.Toast = Toast;
+
+    // Modal Demos
+    window.showBasicModal = () => {
+      UIModal.show({
+        title: 'Basic Modal Example',
+        content: `
+          <p>This is a basic modal with default settings.</p>
+          <ul>
+            <li>✅ ARIA compliant</li>
+            <li>✅ Focus trap</li>
+            <li>✅ Escape to close</li>
+            <li>✅ Backdrop click to close</li>
+          </ul>
+        `
+      });
+    };
+
+    window.showModal = (size) => {
+      UIModal.show({
+        title: `${size.charAt(0).toUpperCase() + size.slice(1)} Modal`,
+        content: `<p>This is a <strong>${size}</strong> modal.</p>`,
+        size: size
+      });
+    };
+
+    window.confirmDelete = async () => {
+      const confirmed = await UIModal.confirm(
+        'Confirmer la suppression',
+        'Cette action est irréversible. Voulez-vous vraiment supprimer cet élément ?'
+      );
+
+      if (confirmed) {
+        Toast.success('Élément supprimé avec succès');
+      } else {
+        Toast.info('Suppression annulée');
+      }
+    };
+
+    window.showAlert = async () => {
+      await UIModal.alert('Opération réussie', 'Les données ont été exportées avec succès.');
+      Toast.success('Modal closed');
+    };
+
+    window.showFormModal = () => {
+      const formContent = document.createElement('div');
+      formContent.innerHTML = `
+        <form id="demo-form" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div>
+            <label for="name" style="display: block; margin-bottom: 0.5rem;">Nom</label>
+            <input type="text" id="name" style="width: 100%; padding: 0.5rem; border: 1px solid var(--theme-border); border-radius: var(--radius-md);">
+          </div>
+          <div>
+            <label for="email" style="display: block; margin-bottom: 0.5rem;">Email</label>
+            <input type="email" id="email" style="width: 100%; padding: 0.5rem; border: 1px solid var(--theme-border); border-radius: var(--radius-md);">
+          </div>
+        </form>
+      `;
+
+      UIModal.show({
+        title: 'Form Modal',
+        content: formContent,
+        confirmText: 'Submit',
+        onConfirm: () => {
+          const name = document.getElementById('name').value;
+          const email = document.getElementById('email').value;
+          Toast.success(`Form submitted: ${name} (${email})`);
+        }
+      });
+    };
+
+    window.showNoFooterModal = () => {
+      UIModal.show({
+        title: 'Modal Without Footer',
+        content: '<p>This modal has no footer buttons.</p><p>Close with [X] or Escape key.</p>',
+        showFooter: false
+      });
+    };
+
+    // Toast Demos
+    window.showLoadingToast = () => {
+      const dismiss = Toast.loading('Processing your request...');
+      setTimeout(() => {
+        dismiss();
+        Toast.success('Request completed!');
+      }, 3000);
+    };
+
+    window.stackToasts = () => {
+      Toast.success('First toast');
+      setTimeout(() => Toast.info('Second toast'), 200);
+      setTimeout(() => Toast.warning('Third toast'), 400);
+      setTimeout(() => Toast.error('Fourth toast'), 600);
+      setTimeout(() => Toast.success('Fifth toast'), 800);
+    };
+
+    window.simulateAsyncOperation = async () => {
+      const dismiss = Toast.loading('Uploading file...');
+
+      // Simulate async operation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      dismiss();
+
+      // Random success/error
+      if (Math.random() > 0.3) {
+        Toast.success('File uploaded successfully', { title: 'Upload Complete' });
+      } else {
+        Toast.error('Upload failed. Please try again.', { title: 'Upload Error' });
+      }
+    };
+
+    window.showLongToast = () => {
+      Toast.info(
+        'This is a very long message to demonstrate how the toast component handles text wrapping. The toast should expand to accommodate the content while maintaining proper styling and readability.',
+        { title: 'Long Message Example', duration: 8000 }
+      );
+    };
+
+    // Theme Toggle
+    window.toggleTheme = () => {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      Toast.success(`Theme switched to ${newTheme} mode`);
+    };
+
+    // Initialize theme
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Show welcome toast
+    setTimeout(() => {
+      Toast.info('Try clicking the buttons to test the UI components!', {
+        title: 'Welcome to UI Demo',
+        duration: 6000
+      });
+    }, 500);
+  </script>
+
+</body>
+</html>

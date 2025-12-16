@@ -1117,19 +1117,20 @@
 /* ===== Tooltip (léger, autonome) ===== */
 .tooltip {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-tooltip, 9999);
   min-width: 260px;
   max-width: 360px;
   pointer-events: none;
-  background: #0e1528;
-  color: #e9f0ff;
-  border: 1px solid #243355;
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  background: var(--theme-surface-elevated);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg, 10px);
+  box-shadow: var(--shadow-xl);
   padding: 10px 12px;
   opacity: 0;
   transform: translateY(6px);
-  transition: opacity .12s ease, transform .12s ease;
+  transition: opacity var(--duration-fast, .12s) var(--ease-smooth, ease),
+              transform var(--duration-fast, .12s) var(--ease-smooth, ease);
 }
 
 .tooltip.show {
@@ -1140,12 +1141,12 @@
 .tooltip .tip-title {
   font-weight: 700;
   margin-bottom: 6px;
-  color: #d7e6ff
+  color: var(--theme-text)
 }
 
 .tooltip .tip-body {
   white-space: pre-line;
-  color: #c6d6f3;
+  color: var(--theme-text-muted);
   font-size: 13px
 }
 

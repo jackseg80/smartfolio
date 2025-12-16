@@ -5,7 +5,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rebalancing - SmartFolio</title>
-  <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
   <link rel="stylesheet" href="css/rebalance.css">
   <link rel="stylesheet" href="components/governance-panel.css">
@@ -38,6 +39,7 @@
 
 
   <script src="debug-logger.js"></script>
+    <script src="components/toast.js" type="module"></script>
   <script src="input-validator.js"></script>
   <script src="performance-optimizer.js"></script>
   <script src="appearance.js"></script>
@@ -72,8 +74,8 @@
         <span style="cursor:pointer" onclick="toggleStrategiesSection()">🎯 Predefined Strategies</span>
         <span style="display:flex; align-items:center; gap:8px">
           <span class="small muted">View:</span>
-          <button class="btn small secondary" id="btnViewDetailed">Detailed</button>
-          <button class="btn small" id="btnViewCompact"
+          <button class="btn btn-sm btn-secondary" id="btnViewDetailed">Detailed</button>
+          <button class="btn btn-sm" id="btnViewCompact"
             style="background: var(--theme-surface-elevated);">Compact</button>
           <span id="strategies-toggle" style="cursor:pointer; transition: transform .3s; margin-left:8px"
             onclick="toggleStrategiesSection()">▼</span>
@@ -88,13 +90,13 @@
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--theme-border);">
           <div class="row" style="gap: 8px; flex-wrap: wrap;">
             <!-- Boutons d'action stratégies -->
-            <button id="apply-strategy-btn" class="btn small" style="background: var(--success);" disabled>
+            <button id="apply-strategy-btn" class="btn btn-sm" style="background: var(--success);" disabled>
               ✅ Appliquer la Stratégie
             </button>
-            <button id="reset-strategy-btn" class="btn small secondary">
+            <button id="reset-strategy-btn" class="btn btn-sm btn-secondary">
               🔄 Reset Manuel
             </button>
-            <button id="refresh-dynamic-btn" class="btn small" style="background: var(--warning);"
+            <button id="refresh-dynamic-btn" class="btn btn-sm" style="background: var(--warning);"
               onclick="window.refreshDynamicStrategy()">
               🎯 Sync CCS
             </button>
@@ -103,9 +105,9 @@
             <div style="border-left: 1px solid var(--theme-border); height: 32px; margin: 0 4px;"></div>
 
             <!-- Boutons d'export -->
-            <button id="btnCsv" class="btn secondary small" disabled>Télécharger CSV</button>
-            <button id="btnJson" class="btn secondary small" disabled>Export JSON</button>
-            <button id="btnCopyJson" class="btn secondary small" disabled>📋 Copier JSON</button>
+            <button id="btnCsv" class="btn btn-sm btn-secondary" disabled>Télécharger CSV</button>
+            <button id="btnJson" class="btn btn-sm btn-secondary" disabled>Export JSON</button>
+            <button id="btnCopyJson" class="btn btn-sm btn-secondary" disabled>📋 Copier JSON</button>
 
             <!-- Spacer -->
             <div style="flex-grow: 1;"></div>
@@ -234,10 +236,10 @@
               <option value="Memecoins">Memecoins</option>
               <option value="Others" selected>Others</option>
             </select>
-            <button id="btnBulkAdd" class="btn ghost">Ajouter tout</button>
+            <button id="btnBulkAdd" class="btn btn-ghost">Ajouter tout</button>
           </div>
           <div id="alias-manager-button" style="display: none;">
-            <button class="btn secondary small" onclick="openAliasManager()"
+            <button class="btn btn-sm btn-secondary" onclick="openAliasManager()"
               title="Ouvrir l'interface de gestion des aliases">
               🏷️ Alias Manager
             </button>
@@ -252,7 +254,7 @@
     <div class="card">
       <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem;">
         <h3 style="margin:0;">Optimization</h3>
-        <button id="openOptimizationNewTab" class="btn secondary small" style="margin-left:auto;">Open in new
+        <button id="openOptimizationNewTab" class="btn btn-sm btn-secondary" style="margin-left:auto;">Open in new
           tab</button>
       </div>
       <div id="optimization-container"></div>

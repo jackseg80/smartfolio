@@ -97,30 +97,8 @@ button {
   cursor: pointer
 }
 
-.btn {
-  background: var(--brand-primary);
-  color: white;
-  font-weight: 700;
-  border: 0
-}
-
-.btn.secondary {
-  background: var(--theme-surface-elevated);
-  color: var(--theme-text);
-  border: 1px solid var(--theme-border)
-}
-
-.btn.ghost {
-  background: transparent;
-  border: 1px dashed var(--theme-border);
-  color: var(--theme-text-muted)
-}
-
-.btn.small {
-  padding: 6px 8px;
-  font-size: 12px;
-  border-radius: 8px
-}
+/* Styles de boutons supprimés - utiliser shared-theme.css à la place */
+/* Classes standardisées : .btn, .btn-sm, .btn-secondary, .btn-ghost, etc. */
 
 .card {
   background: var(--theme-surface);

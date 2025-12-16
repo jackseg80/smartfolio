@@ -71,6 +71,13 @@
   --glass-hover-bg: rgba(0, 0, 0, 0.04);
   --glass-hover-border: rgba(0, 0, 0, 0.12);
   --glass-blur: 10px;
+
+  /* Variantes de couleurs standardisées (manquantes) */
+  --theme-surface-hover: rgba(0, 0, 0, 0.04);
+  --success-light: #8bd17c;
+  --warning-light: #f0c96b;
+  --danger-light: #ff9aa4;
+  --info-light: #9bbcff;
 }
 
 /* Mode clair (défaut) */
@@ -136,6 +143,9 @@
   --glass-hover-bg: rgba(255, 255, 255, 0.08);
   --glass-hover-border: rgba(255, 255, 255, 0.18);
   --glass-blur: 10px;
+
+  /* Variantes de couleurs pour dark mode */
+  --theme-surface-hover: rgba(255, 255, 255, 0.06);
 }
 
 /* ========== STYLES DE BASE ========== */
@@ -347,7 +357,7 @@ body {
 
 .btn-accent {
   background: var(--brand-accent);
-  color: #0f172a;
+  color: var(--color-neutral-900, #0f172a);
 }
 
 .btn-accent:hover:not(:disabled) {
@@ -361,7 +371,7 @@ body {
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #047857;
+  background: var(--color-success-600, #047857);
   transform: translateY(-1px);
 }
 
@@ -371,7 +381,7 @@ body {
 }
 
 .btn-warning:hover:not(:disabled) {
-  background: #b45309;
+  background: var(--color-warning-600, #b45309);
   transform: translateY(-1px);
 }
 
@@ -381,7 +391,7 @@ body {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: #b91c1c;
+  background: var(--color-danger-600, #b91c1c);
   transform: translateY(-1px);
 }
 
