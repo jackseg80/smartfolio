@@ -3701,10 +3701,29 @@ function startAlertMonitoring() {
 
 async function checkForNewS3Alerts() {
   try {
-    // ✅ Use apiRequestWithRetry with silent fail for polling
-    const currentAlerts = await globalConfig.apiRequestWithRetry('/api/alerts/active', {
-      params: { severity_filter: 'S3' }
-    }, true); // silentFail = true pour éviter spam console
+    // ✅ Use apiRequestWithRetry with silent fail for polling (fallback to apiRequest if not available)
+    let currentAlerts;
+
+    if (typeof globalConfig.apiRequestWithRetry === 'function') {
+      // New version with retry logic
+      currentAlerts = await globalConfig.apiRequestWithRetry('/api/alerts/active', {
+        params: { severity_filter: 'S3' }
+      }, true); // silentFail = true pour éviter spam console
+    } else {
+      // Fallback to standard apiRequest for older versions
+      try {
+        const response = await globalConfig.apiRequest('/api/alerts/active', {
+          params: { severity_filter: 'S3' }
+        });
+        currentAlerts = response?.data || response;
+      } catch (err) {
+        // Silent fail on network errors
+        if (err.message?.includes('Failed to fetch') || err.message?.includes('Network')) {
+          return;
+        }
+        throw err;
+      }
+    }
 
     // Si la requête a échoué silencieusement (offline), ne rien faire
     if (!currentAlerts) {
