@@ -279,6 +279,53 @@
       font-size: 1rem;
     }
 
+    /* Tooltips */
+    .tooltip-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      line-height: 16px;
+      text-align: center;
+      border-radius: 50%;
+      background: var(--theme-text-muted);
+      color: var(--theme-surface);
+      font-size: 11px;
+      font-weight: bold;
+      cursor: help;
+      margin-left: 4px;
+      position: relative;
+    }
+
+    .tooltip-icon:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--theme-surface-elevated);
+      color: var(--theme-text);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--theme-border);
+      font-size: 12px;
+      font-weight: normal;
+      white-space: normal;
+      width: 220px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .tooltip-icon:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 115%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--theme-surface-elevated);
+      z-index: 1001;
+    }
+
     @media (max-width: 768px) {
       .controls {
         grid-template-columns: 1fr;
@@ -318,7 +365,10 @@
           </select>
         </div>
         <div>
-          <label for="lookback">Historique (jours)</label>
+          <label for="lookback">
+            Historique (jours)
+            <span class="tooltip-icon" data-tooltip="Période historique pour calculer rendements et volatilité. Court (90j) = réactif aux tendances, Long (730j) = plus stable">ℹ</span>
+          </label>
           <input id="lookback" type="number" min="30" max="2000" value="365" />
           <div class="help-text">Plus long = plus stable, plus court = plus réactif</div>
         </div>
@@ -327,7 +377,10 @@
           <input id="minusd" type="number" min="0" max="100000" step="10" value="100" />
         </div>
         <div>
-          <label for="risk-free-rate">Taux sans risque (%)</label>
+          <label for="risk-free-rate">
+            Taux sans risque (%)
+            <span class="tooltip-icon" data-tooltip="Taux de rendement d'un actif sans risque (ex: obligations d'État). Utilisé dans le calcul du ratio de Sharpe = (Rendement - Taux sans risque) / Volatilité">ℹ</span>
+          </label>
           <input id="risk-free-rate" type="number" min="0" max="10" step="0.1" value="2.0" />
           <div class="help-text">Utilisé pour le calcul du Sharpe ratio</div>
         </div>
@@ -397,7 +450,10 @@
           <h4>Paramètres</h4>
           <div class="controls">
             <div>
-              <label for="target-vol-rp">Volatilité cible (%)</label>
+              <label for="target-vol-rp">
+                Volatilité cible (%)
+                <span class="tooltip-icon" data-tooltip="Risk Parity égalise la contribution au risque de chaque asset (pas les poids). Définir une volatilité cible permet de contrôler le risque total du portfolio">ℹ</span>
+              </label>
               <input id="target-vol-rp" type="number" min="5" max="50" step="1" value="15" />
               <div class="help-text">Laissez vide pour optimisation libre</div>
             </div>
@@ -436,12 +492,18 @@
           <h4>Paramètres de Risque</h4>
           <div class="controls">
             <div>
-              <label for="confidence-level">Niveau de confiance (%)</label>
+              <label for="confidence-level">
+                Niveau de confiance (%)
+                <span class="tooltip-icon" data-tooltip="CVaR (Conditional Value at Risk) mesure la perte moyenne dans les pires scénarios. 95% = optimise pour limiter les pertes dans les 5% pires cas">ℹ</span>
+              </label>
               <input id="confidence-level" type="number" min="90" max="99" value="95" />
               <div class="help-text">95% = optimise pour les 5% pires scénarios</div>
             </div>
             <div>
-              <label for="cvar-weight">Poids CVaR vs Sharpe</label>
+              <label for="cvar-weight">
+                Poids CVaR vs Sharpe
+                <span class="tooltip-icon" data-tooltip="Balance entre minimisation risque extrême (CVaR) et maximisation rendement/risque (Sharpe). 1.0 = 100% focus protection, 0.0 = 100% focus performance">ℹ</span>
+              </label>
               <input id="cvar-weight" type="number" min="0" max="1" step="0.1" value="0.7" />
               <div class="help-text">1.0 = 100% CVaR, 0.0 = 100% Sharpe</div>
             </div>
@@ -747,9 +809,9 @@
       document.getElementById('results-container').style.display = 'grid';
       document.getElementById('frontier-container').style.display = 'none';
 
-      // Graphique des poids
-      renderWeightsChart(result.weights);
-      renderWeightsTable(result.weights);
+      // Graphique des poids (avec comparaison si current_weights disponible)
+      renderWeightsChart(result.weights, result.current_weights);
+      renderWeightsTable(result.weights, result.current_weights);
 
       // KPIs
       renderKPIs(result, algorithm);
@@ -766,7 +828,7 @@
       renderFrontierChart(result.efficient_frontier);
     }
 
-    function renderWeightsChart(weights) {
+    function renderWeightsChart(weights, currentWeights) {
       // Check Chart.js disponible
       if (typeof Chart === 'undefined') {
         console.error('Chart.js not loaded - cannot render chart');
@@ -774,64 +836,160 @@
         return;
       }
 
-      const entries = Object.entries(weights || {})
-        .filter(([_, w]) => w > 0.001) // Filtrer les poids négligeables
-        .sort((a, b) => b[1] - a[1]);
-
       const ctx = document.getElementById('weightsChart');
-      const labels = entries.map(e => e[0]);
-      const data = entries.map(e => e[1] * 100);
-      const colors = labels.map((_, i) => `hsl(${(i * 137.5) % 360} 70% 55%)`);
-
       if (weightsChart) weightsChart.destroy();
-      weightsChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels,
-          datasets: [{
-            data,
-            backgroundColor: colors,
-            borderWidth: 2,
-            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-surface')
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'bottom',
-              labels: {
-                usePointStyle: true,
-                padding: 15
+
+      // Si current_weights disponible, afficher bar chart comparatif
+      if (currentWeights && Object.keys(currentWeights).length > 0) {
+        // Créer union de tous les assets (optimal + current)
+        const allAssets = new Set([
+          ...Object.keys(weights || {}),
+          ...Object.keys(currentWeights || {})
+        ]);
+
+        const labels = Array.from(allAssets).sort((a, b) => {
+          const aWeight = (weights[a] || 0) + (currentWeights[a] || 0);
+          const bWeight = (weights[b] || 0) + (currentWeights[b] || 0);
+          return bWeight - aWeight;
+        }).filter(asset => {
+          return (weights[asset] || 0) > 0.001 || (currentWeights[asset] || 0) > 0.001;
+        });
+
+        const optimalData = labels.map(asset => (weights[asset] || 0) * 100);
+        const currentData = labels.map(asset => (currentWeights[asset] || 0) * 100);
+
+        weightsChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Allocation Actuelle',
+                data: currentData,
+                backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+              },
+              {
+                label: 'Allocation Optimale',
+                data: optimalData,
+                backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: 'Poids (%)' },
+                grid: { color: 'var(--theme-border)' }
+              },
+              x: {
+                grid: { display: false }
               }
             },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `${context.label}: ${context.parsed.toFixed(1)}%`;
+            plugins: {
+              legend: { display: true, position: 'top' },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                  }
                 }
               }
             }
           }
-        }
-      });
+        });
+      } else {
+        // Sinon, afficher doughnut chart classique
+        const entries = Object.entries(weights || {})
+          .filter(([_, w]) => w > 0.001)
+          .sort((a, b) => b[1] - a[1]);
+
+        const labels = entries.map(e => e[0]);
+        const data = entries.map(e => e[1] * 100);
+        const colors = labels.map((_, i) => `hsl(${(i * 137.5) % 360} 70% 55%)`);
+
+        weightsChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data,
+              backgroundColor: colors,
+              borderWidth: 2,
+              borderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-surface')
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  usePointStyle: true,
+                  padding: 15
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return `${context.label}: ${context.parsed.toFixed(1)}%`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
     }
 
-    function renderWeightsTable(weights) {
-      const entries = Object.entries(weights || {})
-        .filter(([_, w]) => w > 0.001)
-        .sort((a, b) => b[1] - a[1]);
+    function renderWeightsTable(weights, currentWeights) {
+      // Union de tous les assets
+      const allAssets = new Set([
+        ...Object.keys(weights || {}),
+        ...Object.keys(currentWeights || {})
+      ]);
+
+      const entries = Array.from(allAssets)
+        .filter(asset => (weights[asset] || 0) > 0.001 || (currentWeights[asset] || 0) > 0.001)
+        .map(asset => ({
+          symbol: asset,
+          optimal: weights[asset] || 0,
+          current: currentWeights?.[asset] || 0,
+          delta: (weights[asset] || 0) - (currentWeights?.[asset] || 0)
+        }))
+        .sort((a, b) => b.optimal - a.optimal);
 
       const table = document.getElementById('weightsTable');
-      const rows = entries.map(([symbol, weight]) =>
-        `<tr><td>${symbol}</td><td>${formatPct(weight)}</td></tr>`
-      ).join('');
+      const hasCurrent = currentWeights && Object.keys(currentWeights).length > 0;
+
+      const headers = hasCurrent
+        ? '<tr><th>Asset</th><th>Actuel</th><th>Optimal</th><th>Delta</th></tr>'
+        : '<tr><th>Asset</th><th>Allocation</th></tr>';
+
+      const rows = entries.map(entry => {
+        if (hasCurrent) {
+          const deltaClass = entry.delta > 0 ? 'pos' : entry.delta < 0 ? 'neg' : '';
+          const deltaSign = entry.delta > 0 ? '+' : '';
+          return `<tr>
+            <td>${entry.symbol}</td>
+            <td>${formatPct(entry.current)}</td>
+            <td>${formatPct(entry.optimal)}</td>
+            <td style="color: var(--${deltaClass})">${deltaSign}${formatPct(entry.delta)}</td>
+          </tr>`;
+        } else {
+          return `<tr><td>${entry.symbol}</td><td>${formatPct(entry.optimal)}</td></tr>`;
+        }
+      }).join('');
 
       table.innerHTML = `
-        <thead>
-          <tr><th>Asset</th><th>Allocation</th></tr>
-        </thead>
+        <thead>${headers}</thead>
         <tbody>${rows}</tbody>
       `;
     }
@@ -1277,6 +1435,24 @@
       const inputs = document.querySelectorAll('input, select, textarea');
       inputs.forEach(input => {
         input.addEventListener('change', saveParameters);
+      });
+
+      // Validation JSON temps réel
+      const jsonTextareas = ['market-views', 'view-confidence'];
+      jsonTextareas.forEach(id => {
+        const textarea = document.getElementById(id);
+        if (textarea) {
+          textarea.addEventListener('input', (e) => {
+            try {
+              JSON.parse(e.target.value);
+              e.target.style.borderColor = 'var(--pos)';
+              e.target.style.borderWidth = '2px';
+            } catch {
+              e.target.style.borderColor = 'var(--danger)';
+              e.target.style.borderWidth = '2px';
+            }
+          });
+        }
       });
 
       // Auto-run demo
