@@ -292,6 +292,51 @@ class GlobalConfig {
   }
 
   /**
+   * Effectue une requête API avec retry automatique et gestion réseau
+   * Utilise le networkStateManager si disponible
+   * @param {string} endpoint - Endpoint API
+   * @param {object} options - Options (params, method, headers, etc.)
+   * @param {boolean} silentFail - Si true, retourne null au lieu de throw en cas d'erreur réseau
+   * @returns {Promise<any>} Résultat de l'API ou null si silentFail
+   */
+  async apiRequestWithRetry(endpoint, options = {}, silentFail = false) {
+    // Utiliser le network state manager si disponible
+    if (window.networkStateManager) {
+      try {
+        return await window.networkStateManager.apiRequestWithRetry(this, endpoint, options);
+      } catch (error) {
+        if (silentFail) {
+          const isNetworkError =
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('ERR_NETWORK_IO_SUSPENDED') ||
+            error.message.includes('Network offline');
+
+          if (isNetworkError) {
+            return null; // Retourne null silencieusement pour erreurs réseau
+          }
+        }
+        throw error;
+      }
+    }
+
+    // Fallback: utiliser apiRequest standard
+    try {
+      return await this.apiRequest(endpoint, options);
+    } catch (error) {
+      if (silentFail) {
+        const isNetworkError =
+          error.message.includes('Failed to fetch') ||
+          error.message.includes('ERR_NETWORK_IO_SUSPENDED');
+
+        if (isNetworkError) {
+          return null;
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Teste la connexion avec la configuration actuelle
    */
   async testConnection() {

@@ -1796,7 +1796,7 @@ function updateMarketRegime(blendedScore, onchainScore, riskScore) {
 // ====== Dynamic Weighting Functions ======
 // Fallback banner toggle (backend status)
 // Nov 2025: Only show banner for critical failures (error), not degraded state
-setInterval(() => {
+function updateBackendBanner() {
   try {
     const status = store.get('ui.apiStatus.backend');
     const banner = document.getElementById('backend-fallback-banner');
@@ -1805,7 +1805,14 @@ setInterval(() => {
     // 'degraded' means optional APIs failed but core functionality works
     banner.style.display = (status === 'error') ? 'block' : 'none';
   } catch { }
-}, 2000);
+}
+
+// Utiliser managed interval si disponible, sinon fallback setInterval
+if (window.networkStateManager) {
+  window.networkStateManager.createManagedInterval(updateBackendBanner, 2000, 'Backend Banner Toggle');
+} else {
+  setInterval(updateBackendBanner, 2000);
+}
 
 // Dynamic weighting is now always enabled (V2 production mode)
 // Legacy functions removed: toggleDynamicWeighting, initializeDynamicWeightingToggle
@@ -3666,11 +3673,27 @@ let lastKnownAlerts = [];
 
 function startAlertMonitoring() {
   if (alertPollingInterval) {
-    clearInterval(alertPollingInterval);
+    // Nettoyer l'ancien intervalle (géré ou non)
+    if (window.networkStateManager && typeof alertPollingInterval === 'string') {
+      window.networkStateManager.clearManagedInterval(alertPollingInterval);
+    } else {
+      clearInterval(alertPollingInterval);
+    }
   }
 
   // Check for new S3 alerts every 30 seconds
-  alertPollingInterval = setInterval(checkForNewS3Alerts, 30000);
+  // Utiliser managed interval si disponible
+  if (window.networkStateManager) {
+    alertPollingInterval = window.networkStateManager.createManagedInterval(
+      checkForNewS3Alerts,
+      30000,
+      'S3 Alerts Polling'
+    );
+    debugLogger.info('✅ S3 Alert monitoring started with managed interval');
+  } else {
+    alertPollingInterval = setInterval(checkForNewS3Alerts, 30000);
+    debugLogger.warn('⚠️ S3 Alert monitoring started with standard interval (network manager not available)');
+  }
 
   // Initial check
   checkForNewS3Alerts();
@@ -3678,10 +3701,15 @@ function startAlertMonitoring() {
 
 async function checkForNewS3Alerts() {
   try {
-    // ✅ Use globalConfig.apiRequest() to automatically add X-User header
-    const currentAlerts = await globalConfig.apiRequest('/api/alerts/active', {
+    // ✅ Use apiRequestWithRetry with silent fail for polling
+    const currentAlerts = await globalConfig.apiRequestWithRetry('/api/alerts/active', {
       params: { severity_filter: 'S3' }
-    });
+    }, true); // silentFail = true pour éviter spam console
+
+    // Si la requête a échoué silencieusement (offline), ne rien faire
+    if (!currentAlerts) {
+      return;
+    }
 
     // Find new S3 alerts
     const newAlerts = currentAlerts.filter(alert =>
@@ -3696,6 +3724,7 @@ async function checkForNewS3Alerts() {
 
     lastKnownAlerts = currentAlerts;
   } catch (error) {
+    // Erreur non-réseau (ex: 500, parsing JSON)
     debugLogger.error('Failed to check for new S3 alerts:', error);
   }
 }
