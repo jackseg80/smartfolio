@@ -1018,15 +1018,22 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
       throw new Error('No valid indicators found in API response');
 
     } catch (error) {
-      debugLogger.error('❌ Crypto-Toolbox API fetch failed:', error.message);
+      // AbortError is normal (user changed tabs, navigation, etc.) - don't log as error
+      const isAbortError = error.name === 'AbortError' || error.message.includes('aborted');
 
-      // Enhanced graceful degradation for all types of API failures
-      if (_logLimiter.limit('api_failure')) {
+      if (isAbortError) {
+        debugLogger.debug('🔄 Crypto-Toolbox API request aborted (normal):', error.message);
+      } else {
+        debugLogger.error('❌ Crypto-Toolbox API fetch failed:', error.message);
+      }
+
+      // Enhanced graceful degradation for all types of API failures (except abort)
+      if (!isAbortError && _logLimiter.limit('api_failure')) {
         (window.debugLogger?.warn || console.warn)('🌐 Crypto-Toolbox API failure:', error.message);
       }
 
-      // Update circuit breaker state for persistent failures
-      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('timed out')) {
+      // Update circuit breaker state for persistent failures (not for aborts)
+      if (!isAbortError && (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED') || error.message.includes('timed out'))) {
         _circuitBreakerState.failures++;
         _circuitBreakerState.lastFailure = Date.now();
         if (_circuitBreakerState.failures >= _circuitBreakerState.FAILURE_THRESHOLD) {

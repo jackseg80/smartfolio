@@ -124,8 +124,9 @@ class NetworkStateManager {
     for (const [id, info] of this.managedIntervals) {
       if (!info.intervalId) {
         // Exécuter immédiatement puis reprendre l'intervalle
-        info.callback().catch(err => {
-          console.warn(`Interval ${id} failed on resume:`, err);
+        // Wrapper dans Promise.resolve pour gérer callbacks sync ET async
+        Promise.resolve(info.callback()).catch(err => {
+          console.warn(`Interval ${id} (${info.name || 'unknown'}) failed on resume:`, err);
         });
 
         info.intervalId = setInterval(info.callback, info.delay);
