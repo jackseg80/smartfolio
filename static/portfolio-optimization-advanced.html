@@ -25,7 +25,19 @@
   <script type="module" src="components/tooltips.js"></script>
 
   <style>
-    .wrap { max-width: 95vw; margin: 0 auto; padding: var(--space-lg); }
+    .wrap {
+      max-width: none;
+      margin: 0 auto;
+      padding: var(--space-lg);
+      width: 100%;
+    }
+
+    /* Adaptive padding pour grands écrans */
+    @media (min-width: 2000px) {
+      .wrap {
+        padding: var(--space-xl);
+      }
+    }
 
     .card {
       background: var(--theme-surface);
