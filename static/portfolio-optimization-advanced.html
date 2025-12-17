@@ -806,6 +806,20 @@
 
     // Affichage des résultats d'optimisation
     function displayOptimizationResults(result, algorithm) {
+      // Validation robuste des résultats
+      if (!result || !result.weights || typeof result.weights !== 'object') {
+        (window.debugLogger || console).error('Invalid optimization result: missing or invalid weights', result);
+        showError('Résultat d\'optimisation invalide : données de poids manquantes');
+        return;
+      }
+
+      // Vérifier que weights n'est pas vide
+      if (Object.keys(result.weights).length === 0) {
+        (window.debugLogger || console).warn('Optimization result has empty weights');
+        showError('L\'optimisation n\'a produit aucun poids (portfolio vide)');
+        return;
+      }
+
       document.getElementById('results-container').style.display = 'grid';
       document.getElementById('frontier-container').style.display = 'none';
 
@@ -829,6 +843,12 @@
     }
 
     function renderWeightsChart(weights, currentWeights) {
+      // Validation robuste
+      if (!weights || typeof weights !== 'object') {
+        (window.debugLogger || console).warn('renderWeightsChart: weights is invalid', weights);
+        return;
+      }
+
       // Check Chart.js disponible
       if (typeof Chart === 'undefined') {
         console.error('Chart.js not loaded - cannot render chart');
@@ -950,6 +970,12 @@
     }
 
     function renderWeightsTable(weights, currentWeights) {
+      // Validation robuste
+      if (!weights || typeof weights !== 'object') {
+        (window.debugLogger || console).warn('renderWeightsTable: weights is invalid', weights);
+        return;
+      }
+
       // Union de tous les assets
       const allAssets = new Set([
         ...Object.keys(weights || {}),
@@ -957,7 +983,7 @@
       ]);
 
       const entries = Array.from(allAssets)
-        .filter(asset => (weights[asset] || 0) > 0.001 || (currentWeights[asset] || 0) > 0.001)
+        .filter(asset => (weights[asset] || 0) > 0.001 || (currentWeights?.[asset] || 0) > 0.001)
         .map(asset => ({
           symbol: asset,
           optimal: weights[asset] || 0,

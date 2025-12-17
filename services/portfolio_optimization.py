@@ -317,11 +317,20 @@ class PortfolioOptimizer:
         else:
             sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_volatility
         
-        # Risk contributions
+        # Risk contributions (with NaN protection)
         risk_contributions = {}
         for i, asset in enumerate(assets):
             marginal_risk = np.dot(cov_matrix.values[i], optimal_weights)
-            risk_contributions[asset] = optimal_weights[i] * marginal_risk / portfolio_variance
+            # Avoid division by zero/near-zero variance
+            if portfolio_variance > 1e-12:
+                risk_contrib = optimal_weights[i] * marginal_risk / portfolio_variance
+            else:
+                # Fallback: proportional to weight
+                risk_contrib = optimal_weights[i]
+            # Clean NaN/Inf
+            if not np.isfinite(risk_contrib):
+                risk_contrib = 0.0
+            risk_contributions[asset] = risk_contrib
         
         # Sector exposures
         sector_exposures = {}
@@ -338,27 +347,46 @@ class PortfolioOptimizer:
         diversification_ratio = self._calculate_diversification_ratio(
             optimal_weights, cov_matrix.values
         )
-        
+
+        # Clean all NaN/Inf values before returning (JSON serialization safety)
+        def clean_value(val):
+            """Replace NaN/Inf with safe defaults"""
+            if isinstance(val, (int, float)) and not np.isfinite(val):
+                return 0.0
+            return val
+
+        cleaned_weights = {k: clean_value(v) for k, v in weights_dict.items()}
+        cleaned_risk_contributions = {k: clean_value(v) for k, v in risk_contributions.items()}
+        cleaned_sector_exposures = {k: clean_value(v) for k, v in sector_exposures.items()}
+
         return OptimizationResult(
-            weights=weights_dict,
-            expected_return=portfolio_return,
-            volatility=portfolio_volatility,
-            sharpe_ratio=sharpe_ratio,
+            weights=cleaned_weights,
+            expected_return=clean_value(portfolio_return),
+            volatility=clean_value(portfolio_volatility),
+            sharpe_ratio=clean_value(sharpe_ratio),
             max_drawdown=0.0,  # Would need historical simulation
-            diversification_ratio=diversification_ratio,
-            optimization_score=sharpe_ratio * diversification_ratio,
+            diversification_ratio=clean_value(diversification_ratio),
+            optimization_score=clean_value(sharpe_ratio * diversification_ratio),
             constraints_satisfied=constraints_satisfied,
-            risk_contributions=risk_contributions,
-            sector_exposures=sector_exposures
+            risk_contributions=cleaned_risk_contributions,
+            sector_exposures=cleaned_sector_exposures
         )
     
     def _calculate_diversification_ratio(self, weights: np.ndarray, cov_matrix: np.ndarray) -> float:
-        """Calculate diversification ratio"""
-        individual_vols = np.sqrt(np.diag(cov_matrix))
+        """Calculate diversification ratio (with NaN protection)"""
+        # Protect against negative variances (from ill-conditioned covariance matrices)
+        diag_cov = np.maximum(np.diag(cov_matrix), 0)
+        individual_vols = np.sqrt(diag_cov)
         weighted_vol = np.dot(weights, individual_vols)
-        portfolio_vol = np.sqrt(np.dot(weights, np.dot(cov_matrix, weights)))
-        
-        return weighted_vol / portfolio_vol if portfolio_vol > 0 else 0.0
+
+        portfolio_variance = np.dot(weights, np.dot(cov_matrix, weights))
+        portfolio_vol = np.sqrt(max(portfolio_variance, 0))
+
+        # Avoid division by zero and check for NaN
+        if portfolio_vol > 1e-12 and np.isfinite(weighted_vol) and np.isfinite(portfolio_vol):
+            ratio = weighted_vol / portfolio_vol
+            return ratio if np.isfinite(ratio) else 1.0
+        return 1.0  # Fallback to 1.0 (no diversification benefit)
     
     def _calculate_risk_contributions(self, weights: np.ndarray, cov_matrix: np.ndarray, assets: List[str] = None) -> Dict[str, float]:
         """Calculate risk contributions for each asset"""
@@ -777,6 +805,18 @@ class PortfolioOptimizer:
         # Covariance matrix
         cov_matrix = returns.cov().values * 252  # Annualized
 
+        # Validate covariance matrix condition (detect ill-conditioned matrices)
+        try:
+            condition_number = np.linalg.cond(cov_matrix)
+            if condition_number > 1e10:
+                logger.warning(f"Covariance matrix is ill-conditioned (cond={condition_number:.2e}), Black-Litterman may be unstable")
+                # Add regularization to improve conditioning
+                regularization = 1e-5 * np.eye(len(cov_matrix))
+                cov_matrix = cov_matrix + regularization
+                logger.info("Applied regularization to covariance matrix")
+        except np.linalg.LinAlgError:
+            logger.warning("Cannot compute condition number, proceeding with caution")
+
         # Implied equilibrium returns (reverse optimization)
         pi = risk_aversion * cov_matrix @ w_market
 
@@ -810,16 +850,48 @@ class PortfolioOptimizer:
         # Tau parameter (uncertainty of prior)
         tau = 0.05
 
-        # Black-Litterman formula
-        M1 = np.linalg.inv(tau * cov_matrix)
-        M2 = P.T @ np.linalg.inv(omega) @ P
-        M3 = M1 @ pi + P.T @ np.linalg.inv(omega) @ Q
+        # Black-Litterman formula with robust matrix inversion
+        try:
+            # Try standard inverse first
+            M1 = np.linalg.inv(tau * cov_matrix)
+        except np.linalg.LinAlgError:
+            # Fallback to pseudo-inverse for singular/ill-conditioned matrices
+            logger.warning("Covariance matrix is singular, using pseudo-inverse (pinv)")
+            M1 = np.linalg.pinv(tau * cov_matrix)
+
+        try:
+            omega_inv = np.linalg.inv(omega)
+        except np.linalg.LinAlgError:
+            logger.warning("Omega matrix is singular, using pseudo-inverse (pinv)")
+            omega_inv = np.linalg.pinv(omega)
+
+        M2 = P.T @ omega_inv @ P
+        M3 = M1 @ pi + P.T @ omega_inv @ Q
 
         # New expected returns
-        mu_bl = np.linalg.inv(M1 + M2) @ M3
+        try:
+            mu_bl = np.linalg.inv(M1 + M2) @ M3
+        except np.linalg.LinAlgError:
+            logger.warning("M1+M2 matrix is singular, using pseudo-inverse (pinv)")
+            mu_bl = np.linalg.pinv(M1 + M2) @ M3
 
         # New covariance matrix
-        sigma_bl = np.linalg.inv(M1 + M2)
+        try:
+            sigma_bl = np.linalg.inv(M1 + M2)
+        except np.linalg.LinAlgError:
+            logger.warning("Cannot invert M1+M2 for sigma_bl, using regularized version")
+            # Add small regularization term to diagonal
+            regularization = 1e-6 * np.eye(len(M1 + M2))
+            sigma_bl = np.linalg.inv(M1 + M2 + regularization)
+
+        # Validate BL results before optimization (check for NaN/Inf)
+        if not np.all(np.isfinite(mu_bl)):
+            logger.error("Black-Litterman produced NaN/Inf in expected returns, aborting")
+            raise ValueError("Black-Litterman optimization failed: invalid expected returns (NaN/Inf)")
+
+        if not np.all(np.isfinite(sigma_bl)):
+            logger.error("Black-Litterman produced NaN/Inf in covariance matrix, aborting")
+            raise ValueError("Black-Litterman optimization failed: invalid covariance matrix (NaN/Inf)")
 
         # Convert to pandas for optimization
         expected_returns = pd.Series(mu_bl, index=assets)

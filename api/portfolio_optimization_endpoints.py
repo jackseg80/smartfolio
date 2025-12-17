@@ -1002,14 +1002,29 @@ async def optimize_portfolio_advanced(
 
         elif request.objective == "black_litterman":
             # Black-Litterman optimization (async wrapper to avoid blocking)
-            result = await run_in_threadpool(
-                optimizer.optimize_black_litterman,
-                price_history=price_df,
-                market_views=request.market_views,
-                view_confidence=request.view_confidence,
-                constraints=constraints,
-                current_weights=filtered_current_weights
-            )
+            try:
+                result = await run_in_threadpool(
+                    optimizer.optimize_black_litterman,
+                    price_history=price_df,
+                    market_views=request.market_views,
+                    view_confidence=request.view_confidence,
+                    constraints=constraints,
+                    current_weights=filtered_current_weights
+                )
+            except ValueError as e:
+                # Black-Litterman can fail with ill-conditioned matrices
+                logger.warning(f"Black-Litterman failed: {e}, falling back to Max Sharpe")
+                # Fallback to standard Max Sharpe
+                expected_returns = optimizer.calculate_expected_returns(price_df)
+                cov_matrix, _ = optimizer.calculate_risk_model(price_df)
+                result = await run_in_threadpool(
+                    optimizer.optimize_portfolio,
+                    expected_returns=expected_returns,
+                    cov_matrix=cov_matrix,
+                    constraints=constraints,
+                    objective=OptimizationObjective.MAX_SHARPE,
+                    current_weights=filtered_current_weights
+                )
 
         else:
             # Standard optimization with advanced objectives
@@ -1059,6 +1074,14 @@ async def optimize_portfolio_advanced(
                         "priority": "high" if abs(weight_diff) > 0.05 else "medium"
                     })
 
+        # Helper function for JSON-safe rounding
+        def safe_round(value, decimals=4):
+            """Round with NaN/Inf protection"""
+            import math
+            if isinstance(value, (int, float)) and math.isfinite(value):
+                return round(value, decimals)
+            return 0.0
+
         # Add VaR and CVaR estimates
         portfolio_variance = np.dot(
             list(result.weights.values()),
@@ -1067,25 +1090,25 @@ async def optimize_portfolio_advanced(
                 list(result.weights.values())
             )
         )
-        portfolio_volatility = np.sqrt(portfolio_variance)
+        portfolio_volatility = np.sqrt(max(portfolio_variance, 0))
 
         # Simple VaR/CVaR estimates (assuming normal distribution)
-        var_95 = -1.645 * portfolio_volatility
-        cvar_95 = -2.06 * portfolio_volatility
-        max_drawdown = -2.5 * portfolio_volatility  # Rough estimate
+        var_95 = -1.645 * portfolio_volatility if portfolio_volatility > 0 else 0.0
+        cvar_95 = -2.06 * portfolio_volatility if portfolio_volatility > 0 else 0.0
+        max_drawdown = -2.5 * portfolio_volatility if portfolio_volatility > 0 else 0.0
 
-        # Enhanced result
+        # Enhanced result (with JSON-safe rounding)
         enhanced_result = OptimizationResponse(
             success=True,
-            weights={k: round(v, 4) for k, v in result.weights.items()},
-            expected_return=round(result.expected_return, 4),
-            volatility=round(result.volatility, 4),
-            sharpe_ratio=round(result.sharpe_ratio, 4),
-            diversification_ratio=round(result.diversification_ratio, 4),
-            optimization_score=round(result.optimization_score, 4),
+            weights={k: safe_round(v) for k, v in result.weights.items()},
+            expected_return=safe_round(result.expected_return),
+            volatility=safe_round(result.volatility),
+            sharpe_ratio=safe_round(result.sharpe_ratio),
+            diversification_ratio=safe_round(result.diversification_ratio),
+            optimization_score=safe_round(result.optimization_score),
             constraints_satisfied=result.constraints_satisfied,
-            risk_contributions={k: round(v, 4) for k, v in result.risk_contributions.items()},
-            sector_exposures={k: round(v, 4) for k, v in result.sector_exposures.items()},
+            risk_contributions={k: safe_round(v) for k, v in result.risk_contributions.items()},
+            sector_exposures={k: safe_round(v) for k, v in result.sector_exposures.items()},
             rebalancing_trades=rebalancing_trades,
             optimization_details={
                 "objective_used": request.objective,
@@ -1094,10 +1117,10 @@ async def optimize_portfolio_advanced(
                 "assets_optimized": len(result.weights),
                 "assets_excluded": len(missing_symbols),
                 "excluded_symbols": missing_symbols,
-                "var_95": round(var_95, 4),
-                "cvar_95": round(cvar_95, 4),
-                "max_drawdown": round(max_drawdown, 4),
-                "risk_free_rate": round(risk_free_rate, 4)
+                "var_95": safe_round(var_95),
+                "cvar_95": safe_round(cvar_95),
+                "max_drawdown": safe_round(max_drawdown),
+                "risk_free_rate": safe_round(risk_free_rate)
             }
         )
 
