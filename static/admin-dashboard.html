@@ -1244,6 +1244,21 @@
             loadUsersTab,
             loadTabContent
         };
+
+        // Export functions to global scope for onclick handlers
+        window.showCreateUserModal = showCreateUserModal;
+        window.submitCreateUser = submitCreateUser;
+        window.editUser = editUser;
+        window.submitEditUser = submitEditUser;
+        window.deleteUser = deleteUser;
+        window.submitDeleteUser = submitDeleteUser;
+        window.closeModal = closeModal;
+        window.loadLogsContent = loadLogsContent;
+        window.changeLogsFile = changeLogsFile;
+        window.changeLogsLevel = changeLogsLevel;
+        window.changeLogsSearch = changeLogsSearch;
+        window.prevLogsPage = prevLogsPage;
+        window.nextLogsPage = nextLogsPage;
     </script>
 </body>
 </html>
