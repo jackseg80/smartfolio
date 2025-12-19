@@ -158,6 +158,83 @@ def get_active_user_info(current_user: str = None) -> dict:
     return user_info
 
 
+def require_admin_role(x_user: str = Header(..., alias="X-User")) -> str:
+    """
+    Dépendance FastAPI qui FORCE le rôle admin pour l'utilisateur.
+
+    Usage: Pour endpoints admin uniquement (user management, logs, cache, ML, API keys).
+
+    Args:
+        x_user: Header X-User REQUIS
+
+    Returns:
+        str: ID utilisateur validé avec rôle admin
+
+    Raises:
+        HTTPException: 403 si utilisateur n'a pas le rôle admin
+
+    Example:
+        @router.get("/admin/users")
+        async def list_users(user: str = Depends(require_admin_role)):
+            # user est garanti avoir le rôle "admin"
+    """
+    # Valider l'utilisateur d'abord
+    try:
+        normalized_user = validate_user_id(x_user)
+
+        # Mode développement : bypass de l'autorisation si DEV_OPEN_API=1
+        dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
+        if dev_mode:
+            logger.info(f"DEV MODE: Bypassing admin role check for user: {normalized_user}")
+            return normalized_user
+
+        # Vérification autorisation normale
+        if not is_allowed_user(normalized_user):
+            logger.warning(f"Unknown user attempted admin access: {x_user}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Unknown user: {x_user}"
+            )
+
+        # Récupérer les infos utilisateur pour vérifier le rôle
+        user_info = get_user_info(normalized_user)
+        if not user_info:
+            logger.warning(f"User info not found for admin access: {normalized_user}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User info not found: {normalized_user}"
+            )
+
+        # Vérifier le rôle admin
+        user_roles = user_info.get("roles", [])
+        if "admin" not in user_roles:
+            logger.warning(f"User {normalized_user} attempted admin access without admin role (roles: {user_roles})")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin role required for this operation"
+            )
+
+        # Log pour audit
+        logger.info(f"Admin access granted for user: {normalized_user}")
+        return normalized_user
+
+    except ValueError as e:
+        logger.warning(f"Invalid user ID format in admin endpoint: {x_user} - {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {e}"
+        )
+    except HTTPException:
+        # Re-raise HTTPException as-is
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in require_admin_role: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+
 def get_redis_client() -> Optional[any]:
     """
     Dépendance FastAPI pour obtenir le client Redis.

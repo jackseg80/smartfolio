@@ -90,6 +90,7 @@ rebalance.html         # Plans rééquilibrage (2 onglets: Rebalancing tactique 
 execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
 wealth-dashboard.html   # Patrimoine unifié (liquidités, biens, passifs, assurances)
+admin-dashboard.html    # Admin Dashboard (RBAC: user management, logs, cache, ML, API keys)
 ```
 
 **Note rebalance.html:** 2 onglets avec objectifs distincts
@@ -109,18 +110,22 @@ wealth-dashboard.html   # Patrimoine unifié (liquidités, biens, passifs, assur
 /api/wealth/*               # Cross-asset wealth (crypto, saxo, banks)
 /api/sources/*              # Sources System v2
 /execution/governance/*     # Decision Engine
+/admin/*                    # Admin Dashboard (RBAC protected: user mgmt, logs, cache, ML, API keys)
 ```
 
 ### Fichiers Clés
 ```
 api/main.py                      # FastAPI app + routers
+api/admin_router.py              # Admin Dashboard router (RBAC protected)
+api/deps.py                      # Dependencies (require_admin_role, get_active_user)
 api/services/sources_resolver.py # Résolution données
 services/portfolio.py            # P&L tracking
 services/execution/governance.py # Decision Engine
 services/ml/orchestrator.py     # ML orchestration
 static/global-config.js          # Config frontend
-static/components/nav.js         # Navigation
+static/components/nav.js         # Navigation (menu Admin lignes 268-280)
 static/core/unified-insights-v2.js # Phase Engine
+config/users.json                # User registry avec rôles RBAC
 ```
 
 ---
@@ -673,6 +678,76 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```
+
+---
+
+## 🔧 Admin Dashboard (Dec 2025)
+
+**Système d'administration centralisé** avec RBAC pour gérer users, logs, cache, ML models et API keys.
+
+### Accès
+
+**URL:** `admin-dashboard.html`
+**RBAC:** Rôle `admin` requis (user "jack" par défaut)
+
+**Menu Navigation:** Admin ▾ (en haut à droite)
+
+- 📊 Dashboard
+- 👥 User Management
+- 📝 Logs Viewer
+- ⚡ Cache Management
+- 🤖 ML Models
+- 🔑 API Keys
+
+### Protection Endpoints
+
+```python
+# Backend: TOUJOURS utiliser require_admin_role pour /admin/*
+from api.deps import require_admin_role
+
+@router.get("/admin/users")
+async def list_users(user: str = Depends(require_admin_role)):
+    # user est garanti avoir le rôle "admin"
+```
+
+```javascript
+// Frontend: TOUJOURS passer header X-User
+const activeUser = localStorage.getItem('activeUser') || 'demo';
+const response = await fetch('/admin/users', {
+    headers: { 'X-User': activeUser }
+});
+```
+
+### RBAC Rôles (config/users.json)
+
+- **admin:** Accès complet (user mgmt, logs, cache, ML, API keys)
+- **governance_admin:** Execution & gouvernance management
+- **ml_admin:** ML model training & deployment
+- **viewer:** Lecture seule (pas d'accès admin)
+
+### Endpoints API (Phase 1)
+
+```bash
+GET  /admin/health        # Health check admin
+GET  /admin/status        # Stats système
+GET  /admin/users         # Liste users + rôles
+GET  /admin/logs/list     # Liste log files
+DELETE /admin/cache/clear # Clear cache
+```
+
+**Phase 2+:** User CRUD, Logs viewer complet, Cache mgmt, ML training, API keys
+
+### Test RBAC
+
+```powershell
+# Admin (jack) - OK
+curl "http://localhost:8080/admin/health" -H "X-User: jack"
+
+# Viewer (demo) - 403 Forbidden
+curl "http://localhost:8080/admin/health" -H "X-User: demo"
+```
+
+**Docs complètes:** `docs/ADMIN_DASHBOARD.md`
 
 ---
 

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - SmartFolio</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="theme-compat.css">
+    <style>
+        /* Admin Dashboard Styles */
+        .admin-container {
+            max-width: none;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--theme-border);
+        }
+
+        .admin-header h1 {
+            margin: 0 0 0.5rem 0;
+            color: var(--theme-text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .admin-header .subtitle {
+            color: var(--theme-text-muted);
+            font-size: 0.9em;
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--theme-border);
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--theme-text-muted);
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--theme-text);
+            background: var(--theme-bg);
+        }
+
+        .tab-btn.active {
+            color: var(--brand-primary);
+            border-bottom-color: var(--brand-primary);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .stat-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9em;
+            color: var(--theme-text-muted);
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--theme-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--theme-text-muted);
+        }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .data-table thead {
+            background: var(--theme-bg);
+        }
+
+        .data-table th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--theme-text);
+            border-bottom: 1px solid var(--theme-border);
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--theme-border);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--theme-bg);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8em;
+            font-weight: 500;
+            margin-right: 0.25rem;
+        }
+
+        .badge.admin {
+            background: var(--brand-danger);
+            color: white;
+        }
+
+        .badge.ml_admin {
+            background: var(--brand-primary);
+            color: white;
+        }
+
+        .badge.governance_admin {
+            background: var(--brand-warning);
+            color: white;
+        }
+
+        .badge.viewer {
+            background: var(--theme-border);
+            color: var(--theme-text);
+        }
+
+        .status-active {
+            color: var(--brand-success);
+        }
+
+        .status-inactive {
+            color: var(--theme-text-muted);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-primary {
+            background: var(--brand-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: color-mix(in oklab, var(--brand-primary) 80%, black);
+        }
+
+        .btn-secondary {
+            background: var(--theme-border);
+            color: var(--theme-text);
+        }
+
+        .btn-secondary:hover {
+            background: var(--theme-bg);
+        }
+
+        .btn-danger {
+            background: var(--brand-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: color-mix(in oklab, var(--brand-danger) 80%, black);
+        }
+
+        .btn-small {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85em;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--theme-text-muted);
+        }
+
+        .loading::after {
+            content: '...';
+            animation: ellipsis 1.5s infinite;
+        }
+
+        @keyframes ellipsis {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Error State */
+        .error-message {
+            background: color-mix(in oklab, var(--brand-danger) 10%, transparent);
+            border-left: 3px solid var(--brand-danger);
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            color: var(--brand-danger);
+            margin: 1rem 0;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters select,
+        .filters input {
+            padding: 0.5rem;
+            border: 1px solid var(--theme-border);
+            border-radius: var(--radius-sm);
+            background: var(--theme-bg);
+            color: var(--theme-text);
+        }
+
+        .filters input[type="text"] {
+            min-width: 250px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filters input[type="text"] {
+                min-width: auto;
+                width: 100%;
+            }
+
+            .data-table {
+                font-size: 0.85em;
+            }
+
+            .tab-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9em;
+            }
+        }
+
+        @media (min-width: 2000px) {
+            .admin-container {
+                padding: 3rem 4rem;
+            }
+        }
+
+        /* Placeholder Content */
+        .placeholder {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--theme-text-muted);
+        }
+
+        .placeholder h3 {
+            margin-bottom: 0.5rem;
+            color: var(--theme-text);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation will be injected here -->
+    <div id="navigation-container"></div>
+
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <h1>
+                <span>🔧</span>
+                Admin Dashboard
+            </h1>
+            <p class="subtitle">Gestion système - User management, Logs, Cache, ML models, API keys</p>
+        </div>
+
+        <!-- System Stats Overview -->
+        <div class="stats-grid" id="system-stats">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value">-</div>
+                <div class="stat-label">Registered users</div>
+            </div>
+            <div class="stat-card">
+                <h3>Admin Users</h3>
+                <div class="stat-value">-</div>
+                <div class="stat-label">With admin role</div>
+            </div>
+            <div class="stat-card">
+                <h3>Cache Types</h3>
+                <div class="stat-value">4</div>
+                <div class="stat-label">Active caches</div>
+            </div>
+            <div class="stat-card">
+                <h3>ML Models</h3>
+                <div class="stat-value">-</div>
+                <div class="stat-label">Deployed models</div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="overview">📊 Overview</button>
+            <button class="tab-btn" data-tab="users">👥 User Management</button>
+            <button class="tab-btn" data-tab="logs">📝 Logs Viewer</button>
+            <button class="tab-btn" data-tab="cache">⚡ Cache Management</button>
+            <button class="tab-btn" data-tab="ml">🤖 ML Models</button>
+            <button class="tab-btn" data-tab="apikeys">🔑 API Keys</button>
+        </div>
+
+        <!-- Tab: Overview -->
+        <div class="tab-content active" id="tab-overview">
+            <h2>System Overview</h2>
+            <div class="placeholder">
+                <h3>Bienvenue dans le dashboard admin</h3>
+                <p>Sélectionnez un module dans les onglets ci-dessus pour gérer le système.</p>
+            </div>
+        </div>
+
+        <!-- Tab: User Management -->
+        <div class="tab-content" id="tab-users">
+            <h2>User Management</h2>
+            <div class="loading">Loading users</div>
+        </div>
+
+        <!-- Tab: Logs Viewer -->
+        <div class="tab-content" id="tab-logs">
+            <h2>Logs Viewer</h2>
+            <div class="placeholder">
+                <h3>📝 Logs Viewer</h3>
+                <p>Phase 2 - À implémenter</p>
+            </div>
+        </div>
+
+        <!-- Tab: Cache Management -->
+        <div class="tab-content" id="tab-cache">
+            <h2>Cache Management</h2>
+            <div class="placeholder">
+                <h3>⚡ Cache Management</h3>
+                <p>Phase 3 - À implémenter</p>
+            </div>
+        </div>
+
+        <!-- Tab: ML Models -->
+        <div class="tab-content" id="tab-ml">
+            <h2>ML Models</h2>
+            <div class="placeholder">
+                <h3>🤖 ML Models</h3>
+                <p>Phase 3 - À implémenter</p>
+            </div>
+        </div>
+
+        <!-- Tab: API Keys -->
+        <div class="tab-content" id="tab-apikeys">
+            <h2>API Keys Management</h2>
+            <div class="placeholder">
+                <h3>🔑 API Keys</h3>
+                <p>Phase 4 - À implémenter</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import './components/nav.js';
+
+        // Tabs functionality
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+
+                // Remove active class from all
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked
+                btn.classList.add('active');
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+
+                // Update URL hash
+                window.location.hash = tabId;
+
+                // Load tab content if needed
+                loadTabContent(tabId);
+            });
+        });
+
+        // Check URL hash on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const btn = document.querySelector(`[data-tab="${hash}"]`);
+                if (btn) {
+                    btn.click();
+                } else {
+                    loadTabContent('overview');
+                }
+            } else {
+                loadTabContent('overview');
+            }
+        });
+
+        // Load tab content
+        async function loadTabContent(tabId) {
+            console.log(`Loading tab: ${tabId}`);
+
+            switch (tabId) {
+                case 'overview':
+                    await loadSystemStats();
+                    break;
+                case 'users':
+                    await loadUsersTab();
+                    break;
+                case 'logs':
+                    // Phase 2
+                    break;
+                case 'cache':
+                    // Phase 3
+                    break;
+                case 'ml':
+                    // Phase 3
+                    break;
+                case 'apikeys':
+                    // Phase 4
+                    break;
+            }
+        }
+
+        // Load system stats
+        async function loadSystemStats() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/status', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        showError(`Access denied. Admin role required. Current user: "${activeUser}". Please switch to an admin user (e.g., "jack") using the user selector.`);
+                        return;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('System status:', data);
+
+                // Update stats cards
+                if (data.ok && data.data) {
+                    const stats = data.data;
+                    updateStatCard(0, stats.system?.total_users || 0);
+                    updateStatCard(1, stats.system?.admin_users || 0);
+                    updateStatCard(3, stats.ml?.models_count || 0);
+                }
+
+            } catch (error) {
+                console.error('Failed to load system stats:', error);
+                showError(`Failed to load stats: ${error.message}`);
+            }
+        }
+
+        // Update stat card
+        function updateStatCard(index, value) {
+            const cards = document.querySelectorAll('.stat-card .stat-value');
+            if (cards[index]) {
+                cards[index].textContent = value;
+            }
+        }
+
+        // Load users tab
+        async function loadUsersTab() {
+            const container = document.getElementById('tab-users');
+            container.innerHTML = '<div class="loading">Loading users</div>';
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/users', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        container.innerHTML = `<div class="error-message">Access denied. Admin role required.<br><br>Current user: <strong>"${activeUser}"</strong><br><br>Please switch to an admin user (e.g., "jack") using the user selector in the top right corner.</div>`;
+                        return;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('Users data:', result);
+
+                if (!result.ok || !result.data) {
+                    throw new Error('Invalid response format');
+                }
+
+                const users = result.data;
+
+                // Build users table
+                let html = '<h2>User Management</h2>';
+                html += '<table class="data-table">';
+                html += '<thead><tr>';
+                html += '<th>User ID</th>';
+                html += '<th>Label</th>';
+                html += '<th>Roles</th>';
+                html += '<th>Status</th>';
+                html += '<th>Created</th>';
+                html += '</tr></thead>';
+                html += '<tbody>';
+
+                users.forEach(user => {
+                    html += '<tr>';
+                    html += `<td><strong>${user.id}</strong></td>`;
+                    html += `<td>${user.label}</td>`;
+                    html += '<td>';
+                    (user.roles || []).forEach(role => {
+                        html += `<span class="badge ${role}">${role}</span>`;
+                    });
+                    html += '</td>';
+                    html += `<td><span class="status-${user.status}">${user.status || 'active'}</span></td>`;
+                    html += `<td>${formatDate(user.created_at)}</td>`;
+                    html += '</tr>';
+                });
+
+                html += '</tbody></table>';
+
+                container.innerHTML = html;
+
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                container.innerHTML = `<div class="error-message">Failed to load users: ${error.message}</div>`;
+            }
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        // Show error
+        function showError(message) {
+            const container = document.querySelector('.admin-container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        // Listen for user changes and reload current tab
+        window.addEventListener('activeUserChanged', (event) => {
+            console.log('User changed, reloading admin dashboard...', event.detail);
+
+            // Get current active tab
+            const activeTab = document.querySelector('.tab-btn.active');
+            if (activeTab) {
+                const tabId = activeTab.dataset.tab;
+                // Small delay to ensure localStorage is updated
+                setTimeout(() => {
+                    loadTabContent(tabId);
+                }, 100);
+            }
+        });
+
+        // Export for debugging
+        window.adminDashboard = {
+            loadSystemStats,
+            loadUsersTab,
+            loadTabContent
+        };
+    </script>
+</body>
+</html>

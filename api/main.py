@@ -147,6 +147,7 @@ from api.advanced_risk_endpoints import router as advanced_risk_router
 from api.realtime_endpoints import router as realtime_router
 from api.intelligence_endpoints import router as intelligence_router
 from api.user_settings_endpoints import router as user_settings_router
+from api.admin_router import router as admin_router
 from api.wealth_endpoints import router as wealth_router
 from api.sources_endpoints import router as sources_router
 from api.fx_endpoints import router as fx_router
@@ -741,6 +742,7 @@ app.include_router(advanced_risk_router)
 app.include_router(realtime_router)
 app.include_router(intelligence_router)
 app.include_router(user_settings_router)
+app.include_router(admin_router)  # Admin dashboard (RBAC protected)
 app.include_router(sources_router)
 app.include_router(wealth_router)
 app.include_router(fx_router)

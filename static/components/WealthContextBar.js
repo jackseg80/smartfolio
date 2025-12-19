@@ -448,7 +448,7 @@ class WealthContextBar {
             key.includes('ccs') ||
             key.includes('cycle')) {
           localStorage.removeItem(key);
-          debugLogger.debug(`🧹 Cleared cache: ${key}`);
+          (window.debugLogger?.debug || console.log)(`🧹 Cleared cache: ${key}`);
         }
       });
 
