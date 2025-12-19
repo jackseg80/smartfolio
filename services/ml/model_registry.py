@@ -272,14 +272,9 @@ class ModelRegistry:
         for name, versions in self.models.items():
             for version, manifest in versions.items():
                 if model_type is None or manifest.model_type == model_type:
-                    result.append({
-                        "name": name,
-                        "version": version,
-                        "model_type": manifest.model_type,
-                        "status": manifest.status,
-                        "created_at": manifest.created_at,
-                        "file_size": manifest.file_size
-                    })
+                    # Use to_dict() to properly serialize datetime objects
+                    model_dict = manifest.to_dict()
+                    result.append(model_dict)
 
         return sorted(result, key=lambda x: x['created_at'], reverse=True)
 
