@@ -163,9 +163,24 @@
       <div id="precision-metrics"></div>
     </div>
 
+    <!-- Graphique Historique Bitcoin avec Halvings -->
+    <div class="card">
+      <h2>📈 Bitcoin Historical Price & Cycle Score</h2>
+      <p style="color: var(--theme-text-muted); font-size: 0.9em; margin-bottom: 1rem;">
+        Prix historique de Bitcoin (échelle log) avec le score de cycle calculé.
+        Les lignes verticales indiquent les halvings.
+      </p>
+      <div class="chart-container" style="height: 500px;">
+        <canvas id="bitcoin-cycle-chart"></canvas>
+      </div>
+      <div id="bitcoin-chart-status" style="text-align: center; margin-top: 0.5rem; color: var(--theme-text-muted); font-size: 0.85em;">
+        Chargement du graphique...
+      </div>
+    </div>
+
     <!-- Graphique de Validation -->
     <div class="card">
-      <h2>📈 Validation Visuelle - Prédictions vs Réalité</h2>
+      <h2>📊 Validation Visuelle - Prédictions vs Réalité</h2>
       <div class="chart-container">
         <canvas id="validation-chart"></canvas>
       </div>
@@ -204,10 +219,65 @@
     </div>
   </div>
 
+  <script src="debug-logger.js"></script>
   <script type="module">
     // Variables globales pour les modules
     let cycleScoreFromMonths, getCycleParams, calibrateCycleParams, getCurrentCycleMonths;
     let moduleLoaded = false;
+
+    // Import Bitcoin cycle chart functions
+    import { createBitcoinCycleChart, fetchBitcoinHistoricalData } from './modules/risk-cycles-tab.js';
+
+    // Bitcoin halvings data (needed for chart)
+    window.BITCOIN_HALVINGS = [
+      { date: '2012-11-28', block: 210000, reward: 25, estimated: false },
+      { date: '2016-07-09', block: 420000, reward: 12.5, estimated: false },
+      { date: '2020-05-11', block: 630000, reward: 6.25, estimated: false },
+      { date: '2024-04-20', block: 840000, reward: 3.125, estimated: false },
+      { date: '2028-04-01', block: 1050000, reward: 1.5625, estimated: true }
+    ];
+
+    // Initialize Bitcoin cycle chart
+    async function initBitcoinCycleChart() {
+      const statusEl = document.getElementById('bitcoin-chart-status');
+      try {
+        // Import store if available
+        try {
+          const { store } = await import('./core/risk-dashboard-store.js');
+          window.store = store;
+        } catch (e) {
+          // Fallback: create minimal store
+          window.store = {
+            snapshot: () => ({ cycle: { months: 0, ccs_star: 50 } })
+          };
+        }
+
+        // Provide cache helpers
+        window.getCachedData = (key) => {
+          try {
+            const cached = localStorage.getItem(`cache_${key}`);
+            return cached ? JSON.parse(cached) : null;
+          } catch { return null; }
+        };
+        window.setCachedData = (key, data) => {
+          try {
+            localStorage.setItem(`cache_${key}`, JSON.stringify(data));
+          } catch { }
+        };
+
+        await createBitcoinCycleChart('bitcoin-cycle-chart', true);
+        if (statusEl) {
+          statusEl.textContent = '✅ Graphique chargé avec succès';
+          statusEl.style.color = 'var(--success)';
+        }
+      } catch (error) {
+        console.error('Failed to create Bitcoin cycle chart:', error);
+        if (statusEl) {
+          statusEl.textContent = `❌ Erreur: ${error.message}`;
+          statusEl.style.color = 'var(--danger)';
+        }
+      }
+    }
 
     // Données historiques des cycles Bitcoin
     const HISTORICAL_CYCLES = [
@@ -836,6 +906,9 @@ Rapport généré le ${new Date().toLocaleString('fr-FR')}
     document.addEventListener('DOMContentLoaded', async () => {
       // Charger les modules d'abord
       await loadModules();
+
+      // Initialiser le graphique Bitcoin historique
+      initBitcoinCycleChart();
 
       // Puis lancer l'analyse si les modules sont chargés
       if (moduleLoaded) {

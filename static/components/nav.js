@@ -237,6 +237,7 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="settings.html" data-route="settings.html">Outils</a>
               <div class="submenu">
+                <a href="cycle-analysis.html" data-route="cycle-analysis.html">📈 Cycle Analysis</a>
                 <a href="ai-dashboard.html" data-route="ai-dashboard.html">🤖 AI Dashboard</a>
                 <a href="monitoring.html" data-route="monitoring.html">📊 Monitoring</a>
                 <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>

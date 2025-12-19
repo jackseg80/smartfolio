@@ -707,12 +707,15 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     window.bitcoinCycleChart = new Chart(canvas, config);
     debugLogger.debug('✅ Bitcoin cycle chart created successfully');
 
-    // 🔗 Charger et afficher les indicateurs on-chain après un délai
-    setTimeout(() => {
-      loadOnChainIndicators().catch(err => {
-        debugLogger.error('Failed to load on-chain indicators:', err);
-      });
-    }, 1000);
+    // 🔗 Charger et afficher les indicateurs on-chain après un délai (si container existe)
+    const onchainContainer = document.getElementById('onchain-indicators-content');
+    if (onchainContainer) {
+      setTimeout(() => {
+        loadOnChainIndicators().catch(err => {
+          debugLogger.error('Failed to load on-chain indicators:', err);
+        });
+      }, 1000);
+    }
 
     // Cache the chart configuration for future use
     try {

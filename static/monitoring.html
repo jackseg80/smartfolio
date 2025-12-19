@@ -122,18 +122,34 @@
 <body>
     <div class="wrap">
         <div class="page-header">
-            <h1>🔍 Monitoring - KPIs Vitaux</h1>
-            <button id="refresh-btn" class="refresh-btn" onclick="refreshAllMetrics()">
-                🔄 Refresh
+            <h1>🔍 Monitoring</h1>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--theme-border); padding-bottom: 8px;">
+            <button class="tab-btn active" data-target="kpis-tab" style="background: var(--brand-primary); color: white; border: none; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                KPIs Système
+            </button>
+            <button class="tab-btn" data-target="alerts-tab" style="background: var(--theme-surface); color: var(--theme-text); border: 1px solid var(--theme-border); padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                Alerts History
             </button>
         </div>
 
-        <!-- Alert Banner -->
-        <div id="alert-banner" class="alert-banner">
-            <strong>⚠️ Alerte Système:</strong> <span id="alert-message"></span>
-        </div>
+        <!-- Tab Content: KPIs -->
+        <div id="kpis-tab" class="tab-content active">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin: 0;">KPIs Vitaux</h2>
+                <button id="refresh-btn" class="refresh-btn" onclick="refreshAllMetrics()">
+                    🔄 Refresh
+                </button>
+            </div>
 
-        <!-- KPIs Grid -->
+            <!-- Alert Banner -->
+            <div id="alert-banner" class="alert-banner">
+                <strong>⚠️ Alerte Système:</strong> <span id="alert-message"></span>
+            </div>
+
+            <!-- KPIs Grid -->
         <div class="monitoring-grid">
             <!-- KPI 1: p95 Latence API -->
             <div class="kpi-card">
@@ -196,13 +212,100 @@
             </div>
         </div>
 
-        <div class="last-update">
-            Dernière mise à jour: <span id="global-timestamp">--</span> |
-            Auto-refresh: <span id="auto-refresh-status">Actif (30s)</span>
+            <div class="last-update">
+                Dernière mise à jour: <span id="global-timestamp">--</span> |
+                Auto-refresh: <span id="auto-refresh-status">Actif (30s)</span>
+            </div>
+        </div>
+
+        <!-- Tab Content: Alerts History -->
+        <div id="alerts-tab" class="tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin: 0;">Alerts History</h2>
+                <button id="refresh-alerts-btn" class="refresh-btn" onclick="window.refreshAlerts?.()">
+                    🔄 Refresh Alerts
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; padding: 12px; background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md);">
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Severity</label>
+                    <select id="alerts-severity-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
+                        <option value="">All Severities</option>
+                        <option value="S1">S1 - Info</option>
+                        <option value="S2">S2 - Warning</option>
+                        <option value="S3">S3 - Critical</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Type</label>
+                    <select id="alerts-type-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
+                        <option value="">All Types</option>
+                        <option value="VOL_Q90_CROSS">High Volatility</option>
+                        <option value="REGIME_FLIP">Regime Change</option>
+                        <option value="CONTRADICTION_SPIKE">ML Contradiction</option>
+                        <option value="DECISION_DROP">Low Confidence</option>
+                        <option value="EXEC_COST_SPIKE">High Exec Cost</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Period</label>
+                    <select id="alerts-period-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Alerts Table -->
+            <div id="alerts-history-content" style="overflow: auto; max-height: 600px; border: 1px solid var(--theme-border); border-radius: var(--radius-md);">
+                <div style="padding: 40px; text-align: center; color: var(--theme-text-muted);">
+                    Loading alerts history...
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="alerts-pagination" style="display: none; margin-top: 16px; text-align: center; padding: 12px;">
+                <button id="alerts-prev-btn" class="refresh-btn" disabled>← Previous</button>
+                <span id="alerts-page-info" style="margin: 0 16px; color: var(--theme-text);">Page 1 of 1</span>
+                <button id="alerts-next-btn" class="refresh-btn" disabled>Next →</button>
+            </div>
         </div>
     </div>
 
     <script type="module">
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.dataset.target;
+
+                // Update buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'var(--theme-surface)';
+                    b.style.color = 'var(--theme-text)';
+                    b.style.border = '1px solid var(--theme-border)';
+                });
+                btn.classList.add('active');
+                btn.style.background = 'var(--brand-primary)';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById(target).style.display = 'block';
+
+                // Load alerts if switching to alerts tab
+                if (target === 'alerts-tab' && window.refreshAlerts) {
+                    window.refreshAlerts();
+                }
+            });
+        });
+
         // Configuration
         const API_BASE = globalConfig?.get('api_base_url') || window.location.origin;
         let refreshInterval;
@@ -474,6 +577,179 @@
         // Cleanup
         window.addEventListener('beforeunload', () => {
             if (refreshInterval) clearInterval(refreshInterval);
+        });
+
+        // ==================== ALERTS HISTORY ====================
+        let alertsHistoryData = [];
+        let currentAlertsPage = 1;
+        let totalAlertsPages = 1;
+        const alertsPerPage = 20;
+
+        async function fetchAlertsHistory(filters = {}) {
+            try {
+                const params = new URLSearchParams();
+                params.append('limit', '100');
+                params.append('offset', '0');
+                params.append('include_snoozed', 'true');
+
+                if (filters.severity) params.append('severity_filter', filters.severity);
+                if (filters.type) params.append('type_filter', filters.type);
+
+                const alerts = await globalConfig.apiRequest('/api/alerts/active', {
+                    params: Object.fromEntries(params)
+                });
+
+                return alerts || [];
+            } catch (error) {
+                console.error('Failed to load alerts history:', error);
+                return [];
+            }
+        }
+
+        function filterAlertsByPeriod(alerts, days) {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - days);
+            return alerts.filter(alert => new Date(alert.created_at) >= cutoffDate);
+        }
+
+        function formatAlertClientSide(alert) {
+            const templates = {
+                'VOL_Q90_CROSS': {
+                    'S1': { action: 'Surveillance volatilité', impact_base: 0.5 },
+                    'S2': { action: 'Réduction exposition (mode Slow)', impact_base: 2.0 },
+                    'S3': { action: 'Arrêt immédiat trading (Freeze)', impact_base: 8.0 }
+                },
+                'EXEC_COST_SPIKE': {
+                    'S1': { action: 'Surveillance coûts exécution', impact_base: 0.2 },
+                    'S2': { action: 'Ralentissement trading (mode Slow)', impact_base: 1.5 },
+                    'S3': { action: 'Arrêt trading (mode Freeze)', impact_base: 4.0 }
+                },
+                'DECISION_DROP': {
+                    'S1': { action: 'Monitoring confiance décision', impact_base: 0.4 },
+                    'S2': { action: 'Mode prudent allocation', impact_base: 2.2 },
+                    'S3': { action: 'Mode ultra-conservateur (Freeze)', impact_base: 9.0 }
+                }
+            };
+
+            const template = templates[alert.alert_type]?.[alert.severity] ||
+                { action: `Alerte ${alert.alert_type}`, impact_base: 1.0 };
+
+            const impact_euro = 100000 * template.impact_base / 100;
+
+            return {
+                action: template.action,
+                impact: impact_euro >= 1 ? `€${Math.round(impact_euro).toLocaleString()}` : `€${impact_euro.toFixed(2)}`
+            };
+        }
+
+        function renderAlertsTable(alerts) {
+            const container = document.getElementById('alerts-history-content');
+
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--theme-text-muted);">No alerts found for the selected filters.</div>';
+                document.getElementById('alerts-pagination').style.display = 'none';
+                return;
+            }
+
+            // Pagination
+            totalAlertsPages = Math.ceil(alerts.length / alertsPerPage);
+            const startIdx = (currentAlertsPage - 1) * alertsPerPage;
+            const endIdx = startIdx + alertsPerPage;
+            const pageAlerts = alerts.slice(startIdx, endIdx);
+
+            // Build table
+            let html = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: var(--theme-surface-elevated); border-bottom: 2px solid var(--theme-border);">
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Time</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Severity</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Type</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Action</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Impact</th>
+                            <th style="padding: 12px; text-align: left; font-weight: 600;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            pageAlerts.forEach(alert => {
+                const formatted = formatAlertClientSide(alert);
+                const time = new Date(alert.created_at).toLocaleString();
+                const severityColor = alert.severity === 'S3' ? 'var(--danger)' :
+                                     alert.severity === 'S2' ? 'var(--warning)' : 'var(--info)';
+                const status = alert.acknowledged_at ? '✅ Acknowledged' :
+                              (alert.snooze_until && new Date(alert.snooze_until) > new Date()) ? '⏸️ Snoozed' : '🚨 Active';
+
+                html += `
+                    <tr style="border-bottom: 1px solid var(--theme-border);">
+                        <td style="padding: 12px;">${time}</td>
+                        <td style="padding: 12px; color: ${severityColor}; font-weight: 600;">${alert.severity}</td>
+                        <td style="padding: 12px;">${alert.alert_type}</td>
+                        <td style="padding: 12px;">${formatted.action}</td>
+                        <td style="padding: 12px; font-weight: 600;">${formatted.impact}</td>
+                        <td style="padding: 12px;">${status}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            // Update pagination
+            document.getElementById('alerts-page-info').textContent = `Page ${currentAlertsPage} of ${totalAlertsPages}`;
+            document.getElementById('alerts-prev-btn').disabled = currentAlertsPage === 1;
+            document.getElementById('alerts-next-btn').disabled = currentAlertsPage === totalAlertsPages;
+            document.getElementById('alerts-pagination').style.display = totalAlertsPages > 1 ? 'block' : 'none';
+        }
+
+        window.refreshAlerts = async function() {
+            const severity = document.getElementById('alerts-severity-filter').value;
+            const type = document.getElementById('alerts-type-filter').value;
+            const period = parseInt(document.getElementById('alerts-period-filter').value);
+
+            const refreshBtn = document.getElementById('refresh-alerts-btn');
+            if (refreshBtn) {
+                refreshBtn.disabled = true;
+                refreshBtn.textContent = '⏳ Loading...';
+            }
+
+            try {
+                let alerts = await fetchAlertsHistory({ severity, type });
+                alerts = filterAlertsByPeriod(alerts, period);
+                alertsHistoryData = alerts;
+                currentAlertsPage = 1;
+                renderAlertsTable(alerts);
+            } catch (error) {
+                console.error('Error refreshing alerts:', error);
+            } finally {
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = '🔄 Refresh Alerts';
+                }
+            }
+        };
+
+        // Pagination handlers
+        document.getElementById('alerts-prev-btn').addEventListener('click', () => {
+            if (currentAlertsPage > 1) {
+                currentAlertsPage--;
+                renderAlertsTable(alertsHistoryData);
+            }
+        });
+
+        document.getElementById('alerts-next-btn').addEventListener('click', () => {
+            if (currentAlertsPage < totalAlertsPages) {
+                currentAlertsPage++;
+                renderAlertsTable(alertsHistoryData);
+            }
+        });
+
+        // Filter change handlers
+        ['alerts-severity-filter', 'alerts-type-filter', 'alerts-period-filter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                window.refreshAlerts();
+            });
         });
     </script>
 </body>

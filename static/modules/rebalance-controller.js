@@ -375,9 +375,25 @@
                 'Memecoins': 0.0,
                 'Others': 0.0
               }
+            },
+            'blend': {
+              name: 'Blended Score',
+              icon: '🎨',
+              description: 'Allocation basée sur le score composite (CCS + Cycle + On-Chain + Risk)',
+              risk_level: 'variable',
+              _isTemplate: true,
+              _mode: 'blend'
+            },
+            'smart': {
+              name: 'Smart Regime',
+              icon: '🧠',
+              description: 'Allocation intelligente basée sur les régimes de marché avec analyse on-chain avancée',
+              risk_level: 'variable',
+              _isTemplate: true,
+              _mode: 'smart'
             }
           };
-          // Garder 6 stratégies max: on retire la plus "niche"
+          // Garder 7 stratégies max: on retire la plus "niche"
           try { delete availableStrategies['defi_focused']; } catch (e) { }
         }
 
@@ -452,6 +468,41 @@
           };
         }
 
+        // Calculer les stratégies blend et smart en utilisant targets-coordinator
+        try {
+          const { proposeTargets } = await import('./targets-coordinator.js');
+
+          // Stratégie Blend
+          if (availableStrategies['blend']) {
+            try {
+              const blendResult = proposeTargets('blend');
+              if (blendResult && blendResult.targets) {
+                availableStrategies['blend'].allocations = blendResult.targets;
+                availableStrategies['blend'].description = `Allocation Blended - ${blendResult.strategy}`;
+                debugLogger.debug('Added Blend strategy:', blendResult);
+              }
+            } catch (e) {
+              debugLogger.warn('Blend strategy calculation failed:', e);
+            }
+          }
+
+          // Stratégie Smart
+          if (availableStrategies['smart']) {
+            try {
+              const smartResult = proposeTargets('smart');
+              if (smartResult && smartResult.targets) {
+                availableStrategies['smart'].allocations = smartResult.targets;
+                availableStrategies['smart'].description = `Smart Regime - ${smartResult.strategy}`;
+                debugLogger.debug('Added Smart strategy:', smartResult);
+              }
+            } catch (e) {
+              debugLogger.warn('Smart strategy calculation failed:', e);
+            }
+          }
+        } catch (importError) {
+          debugLogger.warn('Failed to import targets-coordinator for blend/smart strategies:', importError);
+        }
+
         // Réorganiser l'ordre des stratégies pour mettre les dynamiques en premier
         const orderedStrategies = {};
 
@@ -470,9 +521,17 @@
           orderedStrategies['ccs-dynamic-error'] = availableStrategies['ccs-dynamic-error'];
         }
 
+        // Ajouter blend et smart en 3e et 4e position
+        if (availableStrategies['blend']) {
+          orderedStrategies['blend'] = availableStrategies['blend'];
+        }
+        if (availableStrategies['smart']) {
+          orderedStrategies['smart'] = availableStrategies['smart'];
+        }
+
         // Ajouter ensuite les stratégies prédéfinies classiques
         Object.entries(availableStrategies).forEach(([id, strategy]) => {
-          if (!id.includes('unified') && !id.includes('ccs') && !id.includes('dynamic') && !id.includes('error') && !id.includes('placeholder')) {
+          if (!id.includes('unified') && !id.includes('ccs') && !id.includes('dynamic') && !id.includes('error') && !id.includes('placeholder') && id !== 'blend' && id !== 'smart') {
             orderedStrategies[id] = strategy;
           }
         });

@@ -85,17 +85,25 @@ const balanceResult = await window.loadBalanceData(true);
 ```
 dashboard.html          # Vue globale + P&L Today
 analytics-unified.html  # ML temps réel + Decision Index
-risk-dashboard.html     # Risk management + Governance
-rebalance.html         # Plans rééquilibrage (2 onglets: Rebalancing tactique + Optimization mathématique)
+risk-dashboard.html     # Risk metrics + quick links (simplifié Dec 2025)
+cycle-analysis.html     # Bitcoin cycle analysis + graphique historique (Dec 2025)
+rebalance.html         # Plans rééquilibrage (2 onglets: Rebalancing + Optimization) + stratégies Blend/Smart
 execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
 wealth-dashboard.html   # Patrimoine unifié (liquidités, biens, passifs, assurances)
+monitoring.html        # KPIs système + Alerts History (2 onglets, Dec 2025)
 admin-dashboard.html    # Admin Dashboard (RBAC: user management, logs, cache, ML, API keys)
 ```
 
+**Refactoring Dec 2025** - Simplification risk-dashboard.html :
+- **risk-dashboard.html** : Vue unique (Risk Overview) + 3 quick links vers pages dédiées
+- **cycle-analysis.html** : Graphique Bitcoin historique (FRED/Binance/CoinGecko) + validation modèle
+- **rebalance.html** : Stratégies prédéfinies (CCS, Conservative, Blend, Smart) + Optimization (6 algos Markowitz)
+- **monitoring.html** : 2 onglets (KPIs Système + Alerts History avec filtres/pagination)
+
 **Note rebalance.html:** 2 onglets avec objectifs distincts
 
-- **Rebalancing** (tactique): Stratégies prédéfinies (CCS, Conservative, etc.) + Allocation Engine V2
+- **Rebalancing** (tactique): Stratégies prédéfinies (CCS, Conservative, Blend, Smart) + Allocation Engine V2
 - **Optimization** (mathématique): 6 algorithmes Markowitz (Max Sharpe, Black-Litterman, Risk Parity, etc.)
 - Voir `docs/PORTFOLIO_OPTIMIZATION_GUIDE.md` pour guide complet
 

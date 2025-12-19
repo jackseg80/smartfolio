@@ -1,90 +1,17 @@
 /**
- * Risk Dashboard - Main Orchestrator
- * Manages tab switching, global refresh, and initialization
+ * Risk Dashboard - Main Orchestrator (Simplified)
+ * Single-view dashboard - tabs removed, content moved to dedicated pages:
+ * - Cycle Analysis → cycle-analysis.html
+ * - Strategic Targets → rebalance.html
+ * - Alerts History → monitoring.html
  */
 
-import { showLoading, showError } from './risk-utils.js';
-
 // Global state
-let currentTab = 'risk';
 let autoRefreshInterval = null;
 let isRefreshing = false;
 
 /**
- * Switch between dashboard tabs with lazy loading
- * @param {string} tabName - Tab to switch to ('risk', 'cycles', 'targets', 'alerts')
- * @param {boolean} forceReload - Force reload even if content exists
- */
-export async function switchTab(tabName, forceReload = false) {
-  debugLogger.debug(`🔄 Switching to tab: ${tabName} (forceReload: ${forceReload})`);
-
-  // Update tab buttons (classes + ARIA attributes)
-  document.querySelectorAll('.tab-button').forEach(btn => {
-    const isActive = btn.dataset.tab === tabName;
-    btn.classList.toggle('active', isActive);
-    // Update ARIA attributes for accessibility
-    btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
-  });
-
-  // Update tab panes
-  document.querySelectorAll('.tab-pane').forEach(pane => {
-    pane.classList.toggle('active', pane.id === `${tabName}-tab`);
-  });
-
-  currentTab = tabName;
-
-  // Lazy-load tab content
-  try {
-    const container = document.getElementById(`${tabName}-tab`);
-    if (!container) {
-      debugLogger.error(`Container for tab ${tabName} not found`);
-      return;
-    }
-
-    // ✅ SPECIAL: Skip 'risk' tab - handled by legacy controller (risk-dashboard-main-controller.js)
-    // The legacy controller has all advanced features: GRI, Phase 3A, Structure Modulation V2, etc.
-    if (tabName === 'risk') {
-      debugLogger.debug('⏸️ Risk tab handled by legacy controller (preserves GRI, Phase 3A)');
-      return;
-    }
-
-    // Check if tab already has content (skip check if forceReload)
-    const hasContent = !forceReload && container.children.length > 1; // More than just loading div
-
-    if (!hasContent) {
-      showLoading(container, `Loading ${tabName} data...`);
-
-      switch (tabName) {
-        case 'cycles':
-          const { renderCyclesContent } = await import('./risk-cycles-tab.js');
-          await renderCyclesContent();
-          break;
-
-        case 'targets':
-          const { renderTargetsContent } = await import('./risk-targets-tab.js');
-          await renderTargetsContent();
-          break;
-
-        case 'alerts':
-          const { renderAlertsTab } = await import('./alerts-tab.js');
-          await renderAlertsTab(container);
-          break;
-
-        default:
-          showError(container, `Unknown tab: ${tabName}`);
-      }
-    }
-  } catch (error) {
-    debugLogger.error(`Failed to load tab ${tabName}:`, error);
-    const container = document.getElementById(`${tabName}-tab`);
-    if (container) {
-      showError(container, `Failed to load ${tabName} content`, error.message);
-    }
-  }
-}
-
-/**
- * Refresh all dashboard data
+ * Refresh dashboard data
  * @param {boolean} forceRefresh - Force refresh, bypass cache
  */
 export async function refreshDashboard(forceRefresh = false) {
@@ -97,15 +24,14 @@ export async function refreshDashboard(forceRefresh = false) {
   const refreshBtn = document.getElementById('refresh-btn');
   if (refreshBtn) {
     refreshBtn.disabled = true;
-    refreshBtn.textContent = '🔄 Refreshing...';
   }
 
   try {
     debugLogger.debug(`🔄 Refreshing dashboard (force: ${forceRefresh})`);
 
-    // Refresh current tab with forceReload flag
-    // This will bypass the hasContent check and force re-render
-    await switchTab(currentTab, forceRefresh);
+    // Risk content is handled by legacy controller (risk-dashboard-main-controller.js)
+    // Dispatch event to trigger refresh
+    window.dispatchEvent(new CustomEvent('riskDashboardRefresh', { detail: { force: forceRefresh } }));
 
     // Update timestamp
     const timestamp = document.getElementById('last-update');
@@ -120,7 +46,6 @@ export async function refreshDashboard(forceRefresh = false) {
     isRefreshing = false;
     if (refreshBtn) {
       refreshBtn.disabled = false;
-      refreshBtn.textContent = '🔄 Refresh';
     }
   }
 }
@@ -149,12 +74,12 @@ export function toggleAutoRefresh() {
 }
 
 /**
- * Initialize the dashboard
+ * Initialize the dashboard (simplified - single view)
  */
 export async function initDashboard() {
-  debugLogger.debug('🚀 Initializing Risk Dashboard...');
+  debugLogger.debug('🚀 Initializing Risk Dashboard (simplified view)...');
 
-  // ✅ NEW: Auto-calculate scores if auto_calc=true (for iframe refresh from dashboard.html)
+  // Auto-calculate scores if auto_calc=true (for iframe refresh from dashboard.html)
   const urlParams = new URLSearchParams(window.location.search);
   const autoCalc = urlParams.get('auto_calc') === 'true';
   if (autoCalc) {
@@ -162,46 +87,29 @@ export async function initDashboard() {
   }
 
   try {
-    // NOTE: refresh-btn, force-refresh-btn, and options-menu are handled by
-    // risk-dashboard-main-controller.js via event delegation to avoid conflicts
-    // This orchestrator focuses on tab management only
-
-    // Setup tab switching (core responsibility of this orchestrator)
-    document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabName = btn.dataset.tab;
-        if (tabName) switchTab(tabName);
-      });
-    });
-
-    // NOTE: Keyboard shortcuts (Ctrl+R, F5) are handled by risk-dashboard-main-controller.js
-    // to ensure consistent refresh behavior across all tabs
+    // NOTE: All risk content is handled by risk-dashboard-main-controller.js
+    // This orchestrator only handles initialization and refresh coordination
 
     // Listen for data source changes
     window.addEventListener('dataSourceChanged', (event) => {
       debugLogger.debug(`🔄 Data source changed: ${event.detail.oldSource} → ${event.detail.newSource}`);
       // Let the legacy controller handle it to preserve advanced sections (GRI, Phase 3A, VaR, etc.)
-      // The legacy controller (risk-dashboard-main-controller.js) has its own listener at line 194-203
-      debugLogger.debug('⏸️ Modular system defers to legacy controller for source changes');
+      debugLogger.debug('⏸️ Defers to legacy controller for source changes');
     });
-
-    // Initialize first tab
-    await switchTab('risk');
 
     debugLogger.debug('✅ Risk Dashboard initialized successfully');
 
-    // ✅ NEW: Trigger auto-refresh if auto_calc=true
+    // Trigger auto-refresh if auto_calc=true
     if (autoCalc) {
       debugLogger.debug('🔄 Triggering automatic scores calculation...');
       setTimeout(async () => {
         try {
-          // Force full refresh to recalculate all scores
           await refreshDashboard(true);
           debugLogger.debug('✅ Auto-calc completed, scores persisted to localStorage');
         } catch (error) {
           debugLogger.error('❌ Auto-calc failed:', error);
         }
-      }, 1000); // Wait 1s for full initialization
+      }, 1000);
     }
   } catch (error) {
     debugLogger.error('❌ Failed to initialize dashboard:', error);
@@ -215,12 +123,8 @@ if (document.readyState === 'loading') {
   initDashboard();
 }
 
-// Make switchTab available globally for onclick handlers
-window.switchTab = switchTab;
-
 // Export main functions
 export default {
-  switchTab,
   refreshDashboard,
   toggleAutoRefresh,
   initDashboard

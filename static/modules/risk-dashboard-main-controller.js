@@ -1977,8 +1977,8 @@ async function refreshDashboard(forceRefresh = false) {
         updateTimestamp(riskData.timestamp, riskData.calculation_time);
       }
 
-      // Load advanced components after main dashboard is rendered
-      await loadAdvancedRiskComponents();
+      // Advanced components are loaded inline in this controller
+      // (GRI, Phase 3A, Structure Modulation, etc.)
 
       // If CCS data loaded successfully, compute blended CCS
       if (ccsData) {
