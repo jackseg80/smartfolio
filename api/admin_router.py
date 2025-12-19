@@ -5,13 +5,16 @@ Gestion utilisateurs, logs, cache, ML models, API keys.
 PROTECTION RBAC: Tous les endpoints nécessitent le rôle "admin"
 """
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Body
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
 import logging
 
 from api.deps import require_admin_role
 from api.utils import success_response, error_response
 from api.config.users import get_all_users, clear_users_cache
+from services.user_management import get_user_management_service
+from services.log_reader import get_log_reader
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,29 @@ router = APIRouter(
         404: {"description": "Resource not found"}
     }
 )
+
+
+# ============================================================================
+# Pydantic Models
+# ============================================================================
+
+class CreateUserRequest(BaseModel):
+    """Request model pour création utilisateur"""
+    user_id: str = Field(..., min_length=1, max_length=50, description="User ID (alphanumeric + underscore)")
+    label: str = Field(..., min_length=1, max_length=100, description="Display label")
+    roles: List[str] = Field(default=["viewer"], description="User roles")
+
+
+class UpdateUserRequest(BaseModel):
+    """Request model pour mise à jour utilisateur"""
+    label: Optional[str] = Field(None, min_length=1, max_length=100)
+    roles: Optional[List[str]] = None
+    status: Optional[str] = Field(None, pattern="^(active|inactive)$")
+
+
+class AssignRolesRequest(BaseModel):
+    """Request model pour assignation rôles"""
+    roles: List[str] = Field(..., min_items=1, description="Roles to assign")
 
 
 # ============================================================================
@@ -84,7 +110,7 @@ async def admin_status(user: str = Depends(require_admin_role)):
 
 
 # ============================================================================
-# User Management (Placeholder - Phase 2)
+# User Management - CRUD Operations (Phase 2)
 # ============================================================================
 
 @router.get("/users")
@@ -115,8 +141,224 @@ async def list_users(user: str = Depends(require_admin_role)):
         )
 
 
+@router.post("/users")
+async def create_user(
+    request: CreateUserRequest,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Créer un nouvel utilisateur avec structure de dossiers complète.
+
+    Args:
+        request: Données utilisateur (user_id, label, roles)
+
+    Returns:
+        dict: Utilisateur créé
+    """
+    try:
+        service = get_user_management_service()
+
+        new_user = service.create_user(
+            user_id=request.user_id,
+            label=request.label,
+            roles=request.roles,
+            admin_user=user
+        )
+
+        return success_response(
+            new_user,
+            meta={"message": f"User '{request.user_id}' created successfully"}
+        )
+
+    except ValueError as e:
+        logger.warning(f"Invalid user creation request: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error creating user: {e}")
+        return error_response(
+            f"Failed to create user: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.put("/users/{user_id}")
+async def update_user(
+    user_id: str,
+    request: UpdateUserRequest,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Mettre à jour un utilisateur existant.
+
+    Args:
+        user_id: ID utilisateur à modifier
+        request: Données à mettre à jour (label, roles, status)
+
+    Returns:
+        dict: Utilisateur modifié
+    """
+    try:
+        service = get_user_management_service()
+
+        # Construire dict des champs à mettre à jour
+        update_data = {}
+        if request.label is not None:
+            update_data["label"] = request.label
+        if request.roles is not None:
+            update_data["roles"] = request.roles
+        if request.status is not None:
+            update_data["status"] = request.status
+
+        if not update_data:
+            return error_response(
+                "No fields to update",
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        updated_user = service.update_user(
+            user_id=user_id,
+            data=update_data,
+            admin_user=user
+        )
+
+        return success_response(
+            updated_user,
+            meta={"message": f"User '{user_id}' updated successfully"}
+        )
+
+    except ValueError as e:
+        logger.warning(f"Invalid user update request: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error updating user: {e}")
+        return error_response(
+            f"Failed to update user: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Supprimer un utilisateur (soft delete).
+
+    Processus:
+    1. Marquer status = "inactive" dans config
+    2. Renommer dossier: data/users/{user_id} → data/users/{user_id}_deleted_{timestamp}
+
+    Args:
+        user_id: ID utilisateur à supprimer
+
+    Returns:
+        dict: Confirmation suppression
+    """
+    try:
+        service = get_user_management_service()
+
+        result = service.delete_user(
+            user_id=user_id,
+            admin_user=user
+        )
+
+        return success_response(
+            result,
+            meta={"message": f"User '{user_id}' deleted successfully (soft delete)"}
+        )
+
+    except ValueError as e:
+        logger.warning(f"Invalid user deletion request: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
+        return error_response(
+            f"Failed to delete user: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/users/{user_id}/roles")
+async def assign_roles(
+    user_id: str,
+    request: AssignRolesRequest,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Assigner des rôles à un utilisateur (remplace les rôles existants).
+
+    Args:
+        user_id: ID utilisateur
+        request: Liste de rôles à assigner
+
+    Returns:
+        dict: Utilisateur avec rôles mis à jour
+    """
+    try:
+        service = get_user_management_service()
+
+        updated_user = service.assign_roles(
+            user_id=user_id,
+            roles=request.roles,
+            admin_user=user
+        )
+
+        return success_response(
+            updated_user,
+            meta={"message": f"Roles assigned to user '{user_id}'"}
+        )
+
+    except ValueError as e:
+        logger.warning(f"Invalid role assignment request: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error assigning roles: {e}")
+        return error_response(
+            f"Failed to assign roles: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/roles")
+async def list_roles(user: str = Depends(require_admin_role)):
+    """
+    Liste tous les rôles disponibles.
+
+    Returns:
+        dict: {role_name: role_description}
+    """
+    try:
+        service = get_user_management_service()
+        roles = service.get_all_roles()
+
+        return success_response(
+            roles,
+            meta={"total": len(roles)}
+        )
+
+    except Exception as e:
+        logger.error(f"Error listing roles: {e}")
+        return error_response(
+            f"Failed to list roles: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 # ============================================================================
-# Logs Viewer (Placeholder - Phase 2)
+# Logs Viewer (Phase 2)
 # ============================================================================
 
 @router.get("/logs/list")
@@ -125,27 +367,11 @@ async def list_log_files(user: str = Depends(require_admin_role)):
     Liste les fichiers de logs disponibles.
 
     Returns:
-        dict: Liste des fichiers logs
+        dict: Liste des fichiers logs avec métadonnées
     """
-    import os
-    from pathlib import Path
-
     try:
-        logs_dir = Path("logs")
-        if not logs_dir.exists():
-            return success_response([])
-
-        log_files = []
-        for f in logs_dir.glob("*.log*"):
-            stat = f.stat()
-            log_files.append({
-                "name": f.name,
-                "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                "modified": stat.st_mtime
-            })
-
-        # Trier par nom (app.log en premier)
-        log_files.sort(key=lambda x: x["name"])
+        log_reader = get_log_reader()
+        log_files = log_reader.list_log_files()
 
         return success_response(
             log_files,
@@ -156,6 +382,110 @@ async def list_log_files(user: str = Depends(require_admin_role)):
         logger.error(f"Error listing log files: {e}")
         return error_response(
             f"Failed to list log files: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/logs/read")
+async def read_logs(
+    filename: str = Query("app.log", description="Log file name"),
+    offset: int = Query(0, ge=0, description="Offset for pagination"),
+    limit: int = Query(100, ge=1, le=1000, description="Max number of lines"),
+    level: Optional[str] = Query(None, description="Filter by level (INFO, WARNING, ERROR)"),
+    search: Optional[str] = Query(None, description="Search text in messages"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    user: str = Depends(require_admin_role)
+):
+    """
+    Lit les logs avec filtres et pagination.
+
+    Args:
+        filename: Nom du fichier log
+        offset: Ligne de départ
+        limit: Nombre de lignes max
+        level: Filtre par niveau
+        search: Recherche texte
+        start_date: Date début
+        end_date: Date fin
+
+    Returns:
+        dict: Logs filtrés et paginés
+    """
+    try:
+        log_reader = get_log_reader()
+
+        result = log_reader.read_logs(
+            filename=filename,
+            offset=offset,
+            limit=limit,
+            level=level,
+            search=search,
+            start_date=start_date,
+            end_date=end_date
+        )
+
+        return success_response(
+            result["logs"],
+            meta={
+                "total": result["total"],
+                "offset": result["offset"],
+                "limit": result["limit"],
+                "has_more": result["has_more"],
+                "filename": filename,
+                "filters": {
+                    "level": level,
+                    "search": search,
+                    "start_date": start_date,
+                    "end_date": end_date
+                }
+            }
+        )
+
+    except FileNotFoundError as e:
+        logger.warning(f"Log file not found: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error reading logs: {e}")
+        return error_response(
+            f"Failed to read logs: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/logs/stats")
+async def get_log_stats(
+    filename: str = Query("app.log", description="Log file name"),
+    user: str = Depends(require_admin_role)
+):
+    """
+    Calcule des statistiques sur les logs.
+
+    Args:
+        filename: Nom du fichier log
+
+    Returns:
+        dict: Statistiques (total, by_level, top_modules, recent_errors)
+    """
+    try:
+        log_reader = get_log_reader()
+        stats = log_reader.get_log_stats(filename=filename)
+
+        return success_response(stats)
+
+    except FileNotFoundError as e:
+        logger.warning(f"Log file not found: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        logger.error(f"Error getting log stats: {e}")
+        return error_response(
+            f"Failed to get log stats: {str(e)}",
             code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
