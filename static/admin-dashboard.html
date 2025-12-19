@@ -546,19 +546,139 @@
         <!-- Tab: Cache Management -->
         <div class="tab-content" id="tab-cache">
             <h2>Cache Management</h2>
-            <div class="placeholder">
-                <h3>⚡ Cache Management</h3>
-                <p>Phase 3 - À implémenter</p>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="cache-total-caches">-</div>
+                    <div class="stat-label">Total Caches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cache-total-entries">-</div>
+                    <div class="stat-label">Total Entries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cache-valid-entries">-</div>
+                    <div class="stat-label">Valid Entries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="cache-expired-entries">-</div>
+                    <div class="stat-label">Expired Entries</div>
+                </div>
             </div>
+
+            <!-- Actions -->
+            <div class="actions-bar">
+                <button class="btn btn-primary" onclick="refreshCacheStats()">🔄 Refresh Stats</button>
+                <button class="btn btn-secondary" onclick="clearExpiredEntries()">🧹 Clear Expired</button>
+                <button class="btn btn-danger" onclick="clearAllCaches()">🗑️ Clear All Caches</button>
+            </div>
+
+            <!-- Caches Table -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Cache Name</th>
+                            <th>Total Entries</th>
+                            <th>Valid Entries</th>
+                            <th>Expired Entries</th>
+                            <th>TTL (seconds)</th>
+                            <th>Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cache-table-body">
+                        <tr>
+                            <td colspan="7" class="loading">Loading cache stats...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="cache-messages" class="messages-container"></div>
         </div>
 
         <!-- Tab: ML Models -->
         <div class="tab-content" id="tab-ml">
             <h2>ML Models</h2>
-            <div class="placeholder">
-                <h3>🤖 ML Models</h3>
-                <p>Phase 3 - À implémenter</p>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="ml-total-models">-</div>
+                    <div class="stat-label">Total Models</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ml-deployed-models">-</div>
+                    <div class="stat-label">Deployed Models</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ml-active-jobs">-</div>
+                    <div class="stat-label">Active Training Jobs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ml-completed-jobs">-</div>
+                    <div class="stat-label">Completed Jobs</div>
+                </div>
             </div>
+
+            <!-- Actions -->
+            <div class="actions-bar">
+                <button class="btn btn-primary" onclick="refreshMLModels()">🔄 Refresh Models</button>
+                <button class="btn btn-secondary" onclick="loadTrainingJobs()">📋 View Training Jobs</button>
+            </div>
+
+            <!-- Models Table -->
+            <div class="table-container">
+                <h3>Available ML Models</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Model Name</th>
+                            <th>Type</th>
+                            <th>Version</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                            <th>Training Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ml-models-table-body">
+                        <tr>
+                            <td colspan="7" class="loading">Loading ML models...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Training Jobs Table -->
+            <div class="table-container" id="ml-jobs-container" style="display: none;">
+                <h3>Training Jobs</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Model Name</th>
+                            <th>Status</th>
+                            <th>Triggered By</th>
+                            <th>Created At</th>
+                            <th>Completed At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ml-jobs-table-body">
+                        <tr>
+                            <td colspan="7" class="loading">Loading jobs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn btn-secondary" onclick="hideTrainingJobs()" style="margin-top: 1rem;">Close Jobs View</button>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="ml-messages" class="messages-container"></div>
         </div>
 
         <!-- Tab: API Keys -->
@@ -725,10 +845,10 @@
                     await loadLogsTab();
                     break;
                 case 'cache':
-                    // Phase 3
+                    await loadCacheTab();
                     break;
                 case 'ml':
-                    // Phase 3
+                    await loadMLTab();
                     break;
                 case 'apikeys':
                     // Phase 4
@@ -1245,7 +1365,432 @@
             loadTabContent
         };
 
+        // ====================================================================
+        // Cache Management
+        // ====================================================================
+
+        // Load cache tab
+        async function loadCacheTab() {
+            console.log('Loading cache tab');
+            await refreshCacheStats();
+        }
+
+        // Refresh cache stats
+        async function refreshCacheStats() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/cache/stats', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch cache stats');
+                }
+
+                const result = await response.json();
+                const data = result.data;
+
+                // Update stats cards
+                document.getElementById('cache-total-caches').textContent = data.total_caches || 0;
+                document.getElementById('cache-total-entries').textContent = data.total_entries || 0;
+
+                // Calculate valid and expired entries from caches
+                let totalValid = 0;
+                let totalExpired = 0;
+                Object.values(data.caches || {}).forEach(cache => {
+                    totalValid += cache.valid_entries || 0;
+                    totalExpired += cache.expired_entries || 0;
+                });
+
+                document.getElementById('cache-valid-entries').textContent = totalValid;
+                document.getElementById('cache-expired-entries').textContent = totalExpired;
+
+                // Update caches table
+                const tbody = document.getElementById('cache-table-body');
+                if (Object.keys(data.caches || {}).length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="no-data">No caches registered</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = Object.entries(data.caches).map(([name, cache]) => `
+                    <tr>
+                        <td><strong>${name}</strong><br><small style="color: var(--text-muted)">${cache.description || ''}</small></td>
+                        <td>${cache.entries || 0}</td>
+                        <td><span class="badge" style="background: var(--color-success-muted); color: var(--color-success)">${cache.valid_entries || 0}</span></td>
+                        <td>${cache.expired_entries > 0 ? `<span class="badge" style="background: var(--color-warning-muted); color: var(--color-warning)">${cache.expired_entries}</span>` : '0'}</td>
+                        <td>${cache.ttl || '-'}</td>
+                        <td><span class="badge">${cache.type || 'unknown'}</span></td>
+                        <td>
+                            ${cache.type !== 'function_scope' ? `<button class="btn btn-small btn-danger" onclick="clearCacheIndividual('${name}')">Clear</button>` : '<span style="color: var(--text-muted)">N/A</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+
+                console.log('✅ Cache stats refreshed');
+
+            } catch (error) {
+                console.error('Error loading cache stats:', error);
+                document.getElementById('cache-table-body').innerHTML = `
+                    <tr><td colspan="7" class="error">Error loading cache stats: ${error.message}</td></tr>
+                `;
+            }
+        }
+
+        // Clear individual cache
+        async function clearCacheIndividual(cacheName) {
+            if (!confirm(`Clear cache "${cacheName}"?\n\nAll ${cacheName} entries will be deleted.`)) {
+                return;
+            }
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch(`/admin/cache/clear?cache_name=${encodeURIComponent(cacheName)}`, {
+                    method: 'DELETE',
+                    headers: { 'X-User': activeUser }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to clear cache');
+                }
+
+                showCacheMessage(`✅ Cache "${cacheName}" cleared successfully (${result.data.cleared_entries} entries)`, false);
+                await refreshCacheStats();
+
+            } catch (error) {
+                console.error('Error clearing cache:', error);
+                showCacheMessage(`❌ Error clearing cache: ${error.message}`, true);
+            }
+        }
+
+        // Clear all caches
+        async function clearAllCaches() {
+            if (!confirm('Clear ALL caches?\n\nThis will delete all cached data from all caches. This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/cache/clear?cache_name=all', {
+                    method: 'DELETE',
+                    headers: { 'X-User': activeUser }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to clear caches');
+                }
+
+                showCacheMessage(`✅ All caches cleared successfully (${result.data.total_cleared} total entries from ${result.data.caches_cleared} caches)`, false);
+                await refreshCacheStats();
+
+            } catch (error) {
+                console.error('Error clearing all caches:', error);
+                showCacheMessage(`❌ Error clearing caches: ${error.message}`, true);
+            }
+        }
+
+        // Clear expired entries
+        async function clearExpiredEntries() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/cache/clear-expired', {
+                    method: 'POST',
+                    headers: { 'X-User': activeUser }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to clear expired entries');
+                }
+
+                showCacheMessage(`✅ Expired entries cleared (${result.data.total_cleared} entries from ${result.data.caches_processed} caches)`, false);
+                await refreshCacheStats();
+
+            } catch (error) {
+                console.error('Error clearing expired entries:', error);
+                showCacheMessage(`❌ Error clearing expired entries: ${error.message}`, true);
+            }
+        }
+
+        // Show cache message
+        function showCacheMessage(message, isError = false) {
+            const container = document.getElementById('cache-messages');
+            const div = document.createElement('div');
+            div.className = isError ? 'error-message' : 'success-message';
+            div.textContent = message;
+            container.appendChild(div);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                div.remove();
+            }, 5000);
+        }
+
+        // ====================================================================
+        // ML Models Management
+        // ====================================================================
+
+        // Load ML models tab
+        async function loadMLTab() {
+            console.log('Loading ML models tab');
+            await refreshMLModels();
+            await updateMLJobStats();
+        }
+
+        // Refresh ML models
+        async function refreshMLModels() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/ml/models', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch ML models');
+                }
+
+                const result = await response.json();
+                const models = result.data || [];
+
+                // Update stats
+                document.getElementById('ml-total-models').textContent = models.length;
+                const deployedModels = models.filter(m => m.status === 'DEPLOYED' || m.status === 'deployed').length;
+                document.getElementById('ml-deployed-models').textContent = deployedModels;
+
+                // Update models table
+                const tbody = document.getElementById('ml-models-table-body');
+                if (models.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="no-data">No ML models registered</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = models.map(model => {
+                    const statusBadge = getStatusBadge(model.status);
+                    const trainingStatus = model.has_active_job
+                        ? `<span class="badge" style="background: var(--color-warning-muted); color: var(--color-warning)">${model.active_job_status || 'training'}</span>`
+                        : '<span style="color: var(--text-muted)">-</span>';
+
+                    return `
+                        <tr>
+                            <td><strong>${model.name}</strong></td>
+                            <td><span class="badge">${model.model_type || 'unknown'}</span></td>
+                            <td>${model.version || 'N/A'}</td>
+                            <td>${statusBadge}</td>
+                            <td>${model.updated_at ? new Date(model.updated_at).toLocaleString() : 'N/A'}</td>
+                            <td>${trainingStatus}</td>
+                            <td>
+                                ${!model.has_active_job ?
+                                    `<button class="btn btn-small btn-primary" onclick="triggerTraining('${model.name}', '${model.model_type || 'unknown'}')">Retrain</button>` :
+                                    '<span style="color: var(--text-muted)">Training...</span>'
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                console.log('✅ ML models refreshed');
+
+            } catch (error) {
+                console.error('Error loading ML models:', error);
+                document.getElementById('ml-models-table-body').innerHTML = `
+                    <tr><td colspan="7" class="error">Error loading ML models: ${error.message}</td></tr>
+                `;
+            }
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            const statusMap = {
+                'DEPLOYED': { color: 'var(--color-success)', bg: 'var(--color-success-muted)', text: 'DEPLOYED' },
+                'deployed': { color: 'var(--color-success)', bg: 'var(--color-success-muted)', text: 'DEPLOYED' },
+                'TRAINED': { color: 'var(--color-info)', bg: 'var(--color-info-muted)', text: 'TRAINED' },
+                'trained': { color: 'var(--color-info)', bg: 'var(--color-info-muted)', text: 'TRAINED' },
+                'TRAINING': { color: 'var(--color-warning)', bg: 'var(--color-warning-muted)', text: 'TRAINING' },
+                'training': { color: 'var(--color-warning)', bg: 'var(--color-warning-muted)', text: 'TRAINING' },
+                'FAILED': { color: 'var(--color-error)', bg: 'var(--color-error-muted)', text: 'FAILED' },
+                'failed': { color: 'var(--color-error)', bg: 'var(--color-error-muted)', text: 'FAILED' }
+            };
+
+            const style = statusMap[status] || { color: 'var(--text-muted)', bg: '#eee', text: status };
+            return `<span class="badge" style="background: ${style.bg}; color: ${style.color}">${style.text}</span>`;
+        }
+
+        // Trigger model training
+        async function triggerTraining(modelName, modelType) {
+            if (!confirm(`Trigger retraining for model "${modelName}"?\n\nThis will start a background training job.`)) {
+                return;
+            }
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch(`/admin/ml/train/${encodeURIComponent(modelName)}?model_type=${encodeURIComponent(modelType)}`, {
+                    method: 'POST',
+                    headers: { 'X-User': activeUser }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to trigger training');
+                }
+
+                showMLMessage(`✅ Training started for "${modelName}" (Job ID: ${result.data.job_id})`, false);
+                await refreshMLModels();
+                await updateMLJobStats();
+
+            } catch (error) {
+                console.error('Error triggering training:', error);
+                showMLMessage(`❌ Error triggering training: ${error.message}`, true);
+            }
+        }
+
+        // Load training jobs
+        async function loadTrainingJobs() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/ml/jobs', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch training jobs');
+                }
+
+                const result = await response.json();
+                const jobs = result.data || [];
+
+                // Show jobs container
+                document.getElementById('ml-jobs-container').style.display = 'block';
+
+                // Update jobs table
+                const tbody = document.getElementById('ml-jobs-table-body');
+                if (jobs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="no-data">No training jobs</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = jobs.map(job => {
+                    const statusBadge = getJobStatusBadge(job.status);
+                    return `
+                        <tr>
+                            <td><code style="font-size: 0.85em;">${job.job_id}</code></td>
+                            <td><strong>${job.model_name}</strong></td>
+                            <td>${statusBadge}</td>
+                            <td>${job.triggered_by}</td>
+                            <td>${new Date(job.created_at).toLocaleString()}</td>
+                            <td>${job.completed_at ? new Date(job.completed_at).toLocaleString() : '-'}</td>
+                            <td>
+                                ${job.status === 'running' || job.status === 'pending' ?
+                                    `<button class="btn btn-small btn-danger" onclick="cancelJob('${job.job_id}')">Cancel</button>` :
+                                    '<span style="color: var(--text-muted)">-</span>'
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                console.log('✅ Training jobs loaded');
+
+            } catch (error) {
+                console.error('Error loading training jobs:', error);
+                showMLMessage(`❌ Error loading jobs: ${error.message}`, true);
+            }
+        }
+
+        // Get job status badge
+        function getJobStatusBadge(status) {
+            const statusMap = {
+                'pending': { color: 'var(--text-muted)', bg: '#eee', text: 'PENDING' },
+                'running': { color: 'var(--color-warning)', bg: 'var(--color-warning-muted)', text: 'RUNNING' },
+                'completed': { color: 'var(--color-success)', bg: 'var(--color-success-muted)', text: 'COMPLETED' },
+                'failed': { color: 'var(--color-error)', bg: 'var(--color-error-muted)', text: 'FAILED' },
+                'cancelled': { color: 'var(--text-muted)', bg: '#ddd', text: 'CANCELLED' }
+            };
+
+            const style = statusMap[status] || { color: 'var(--text-muted)', bg: '#eee', text: status };
+            return `<span class="badge" style="background: ${style.bg}; color: ${style.color}">${style.text}</span>`;
+        }
+
+        // Hide training jobs
+        function hideTrainingJobs() {
+            document.getElementById('ml-jobs-container').style.display = 'none';
+        }
+
+        // Cancel training job
+        async function cancelJob(jobId) {
+            if (!confirm(`Cancel training job "${jobId}"?`)) {
+                return;
+            }
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch(`/admin/ml/jobs/${encodeURIComponent(jobId)}`, {
+                    method: 'DELETE',
+                    headers: { 'X-User': activeUser }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to cancel job');
+                }
+
+                showMLMessage(`✅ Job "${jobId}" cancelled`, false);
+                await loadTrainingJobs();
+                await updateMLJobStats();
+
+            } catch (error) {
+                console.error('Error cancelling job:', error);
+                showMLMessage(`❌ Error cancelling job: ${error.message}`, true);
+            }
+        }
+
+        // Update ML job stats
+        async function updateMLJobStats() {
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const response = await fetch('/admin/ml/jobs', {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) return;
+
+                const result = await response.json();
+                const jobs = result.data || [];
+
+                const activeJobs = jobs.filter(j => j.status === 'running' || j.status === 'pending').length;
+                const completedJobs = jobs.filter(j => j.status === 'completed').length;
+
+                document.getElementById('ml-active-jobs').textContent = activeJobs;
+                document.getElementById('ml-completed-jobs').textContent = completedJobs;
+
+            } catch (error) {
+                console.error('Error updating ML job stats:', error);
+            }
+        }
+
+        // Show ML message
+        function showMLMessage(message, isError = false) {
+            const container = document.getElementById('ml-messages');
+            const div = document.createElement('div');
+            div.className = isError ? 'error-message' : 'success-message';
+            div.textContent = message;
+            container.appendChild(div);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                div.remove();
+            }, 5000);
+        }
+
+        // ====================================================================
         // Export functions to global scope for onclick handlers
+        // ====================================================================
+
         window.showCreateUserModal = showCreateUserModal;
         window.submitCreateUser = submitCreateUser;
         window.editUser = editUser;
@@ -1259,6 +1804,15 @@
         window.changeLogsSearch = changeLogsSearch;
         window.prevLogsPage = prevLogsPage;
         window.nextLogsPage = nextLogsPage;
+        window.refreshCacheStats = refreshCacheStats;
+        window.clearCacheIndividual = clearCacheIndividual;
+        window.clearAllCaches = clearAllCaches;
+        window.clearExpiredEntries = clearExpiredEntries;
+        window.refreshMLModels = refreshMLModels;
+        window.triggerTraining = triggerTraining;
+        window.loadTrainingJobs = loadTrainingJobs;
+        window.hideTrainingJobs = hideTrainingJobs;
+        window.cancelJob = cancelJob;
     </script>
 </body>
 </html>

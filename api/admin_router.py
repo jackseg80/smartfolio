@@ -15,6 +15,8 @@ from api.utils import success_response, error_response
 from api.config.users import get_all_users, clear_users_cache
 from services.user_management import get_user_management_service
 from services.log_reader import get_log_reader
+from services.cache_manager import cache_manager
+from services.ml.training_executor import training_executor, JobStatus
 
 logger = logging.getLogger(__name__)
 
@@ -491,63 +493,67 @@ async def get_log_stats(
 
 
 # ============================================================================
-# Cache Management (Placeholder - Phase 3)
+# Cache Management (Phase 3)
 # ============================================================================
 
 @router.get("/cache/stats")
-async def get_cache_stats(user: str = Depends(require_admin_role)):
+async def get_cache_stats(
+    cache_name: Optional[str] = Query(None, description="Cache name (optional, returns all if not specified)"),
+    user: str = Depends(require_admin_role)
+):
     """
-    Statistiques de tous les caches système.
+    Statistiques de tous les caches système ou d'un cache spécifique.
+
+    Args:
+        cache_name: Nom du cache (optionnel)
 
     Returns:
         dict: Stats par type de cache
     """
-    # TODO: Implémenter cache manager unifié
-    return success_response({
-        "in_memory": {
-            "keys": 0,
-            "size_mb": 0,
-            "hit_rate": 0.0
-        },
-        "coingecko": {
-            "keys": 0,
-            "ttl_seconds": 900,
-            "hit_rate": 0.0
-        },
-        "redis": {
-            "connected": False,
-            "memory_mb": 0
-        }
-    })
+    try:
+        stats = cache_manager.get_cache_stats(cache_name)
+        logger.info(f"✅ Cache stats retrieved by {user}" + (f" for {cache_name}" if cache_name else ""))
+        return success_response(stats)
+
+    except Exception as e:
+        logger.error(f"Error getting cache stats: {e}")
+        return error_response(
+            f"Failed to get cache stats: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @router.delete("/cache/clear")
 async def clear_cache(
-    cache_type: str = Query("all", description="Cache type (all, in_memory, coingecko, redis)"),
+    cache_name: str = Query("all", description="Cache name to clear (all, or specific cache name)"),
     user: str = Depends(require_admin_role)
 ):
     """
-    Clear cache par type ou tous les caches.
+    Clear cache par nom ou tous les caches.
 
     Args:
-        cache_type: Type de cache à clear
+        cache_name: Nom du cache à clear (all pour tous les caches)
 
     Returns:
-        dict: Confirmation clear
+        dict: Confirmation clear avec nombre d'entrées supprimées
     """
     try:
-        cleared = []
-
-        if cache_type in ["all", "users"]:
+        # Clear users cache si demandé
+        if cache_name in ["all", "users"]:
             clear_users_cache()
-            cleared.append("users")
+            logger.info(f"✅ Users cache cleared by {user}")
 
-        # TODO: Implémenter clear autres caches
+        # Clear cache via CacheManager
+        result = cache_manager.clear_cache(cache_name, admin_user=user)
 
-        return success_response({
-            "cleared_caches": cleared,
-            "cache_type": cache_type
-        })
+        if not result.get("ok", False):
+            return error_response(
+                result.get("error", "Unknown error"),
+                details=result,
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        return success_response(result)
 
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
@@ -557,8 +563,59 @@ async def clear_cache(
         )
 
 
+@router.get("/cache/list")
+async def list_caches(user: str = Depends(require_admin_role)):
+    """
+    Liste tous les caches disponibles.
+
+    Returns:
+        dict: Liste des noms de caches disponibles
+    """
+    try:
+        available_caches = cache_manager.get_available_caches()
+        logger.info(f"✅ Cache list retrieved by {user}")
+        return success_response({
+            "caches": available_caches,
+            "count": len(available_caches)
+        })
+
+    except Exception as e:
+        logger.error(f"Error listing caches: {e}")
+        return error_response(
+            f"Failed to list caches: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/cache/clear-expired")
+async def clear_expired_entries(
+    cache_name: Optional[str] = Query(None, description="Cache name (optional, clears all if not specified)"),
+    user: str = Depends(require_admin_role)
+):
+    """
+    Clear expired entries from cache(s).
+
+    Args:
+        cache_name: Nom du cache (optionnel, tous si non spécifié)
+
+    Returns:
+        dict: Nombre d'entrées expirées supprimées
+    """
+    try:
+        result = cache_manager.clear_expired(cache_name)
+        logger.info(f"✅ Expired entries cleared by {user}" + (f" from {cache_name}" if cache_name else " from all caches"))
+        return success_response(result)
+
+    except Exception as e:
+        logger.error(f"Error clearing expired entries: {e}")
+        return error_response(
+            f"Failed to clear expired entries: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 # ============================================================================
-# ML Models (Placeholder - Phase 3)
+# ML Models (Phase 3)
 # ============================================================================
 
 @router.get("/ml/models")
@@ -567,18 +624,167 @@ async def list_ml_models(user: str = Depends(require_admin_role)):
     Liste tous les modèles ML avec versions et statut.
 
     Returns:
-        dict: Liste des modèles ML
+        dict: Liste des modèles ML avec statut training jobs
     """
-    # TODO: Implémenter via ModelRegistry
-    return success_response([
-        {
-            "name": "volatility_forecaster",
-            "version": "v2.1",
-            "status": "DEPLOYED",
-            "accuracy": 0.89,
-            "last_trained": "2025-01-15T10:30:00Z"
-        }
-    ])
+    try:
+        models = training_executor.list_available_models()
+        logger.info(f"✅ ML models listed by {user}")
+        return success_response(models)
+
+    except Exception as e:
+        logger.error(f"Error listing ML models: {e}")
+        return error_response(
+            f"Failed to list ML models: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/ml/train/{model_name}")
+async def trigger_model_training(
+    model_name: str,
+    model_type: str = Query("unknown", description="Model type"),
+    user: str = Depends(require_admin_role)
+):
+    """
+    Trigger manual model retraining.
+
+    Args:
+        model_name: Name of model to retrain
+        model_type: Type of model (optional)
+
+    Returns:
+        dict: Training job info
+    """
+    try:
+        result = training_executor.trigger_training(
+            model_name=model_name,
+            model_type=model_type,
+            admin_user=user
+        )
+
+        if not result.get("ok", False):
+            return error_response(
+                result.get("error", "Unknown error"),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        logger.info(f"✅ Training triggered for {model_name} by {user}")
+        return success_response(result)
+
+    except Exception as e:
+        logger.error(f"Error triggering training for {model_name}: {e}")
+        return error_response(
+            f"Failed to trigger training: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/ml/jobs")
+async def list_training_jobs(
+    status_filter: Optional[str] = Query(None, description="Filter by job status"),
+    limit: int = Query(50, ge=1, le=200),
+    user: str = Depends(require_admin_role)
+):
+    """
+    Liste tous les training jobs.
+
+    Args:
+        status_filter: Filter by status (optional)
+        limit: Max jobs to return
+
+    Returns:
+        dict: List of training jobs
+    """
+    try:
+        # Parse status filter if provided
+        status_enum = None
+        if status_filter:
+            try:
+                status_enum = JobStatus(status_filter.lower())
+            except ValueError:
+                return error_response(
+                    f"Invalid status filter: {status_filter}. Valid: {[s.value for s in JobStatus]}",
+                    code=status.HTTP_400_BAD_REQUEST
+                )
+
+        jobs = training_executor.list_jobs(status_filter=status_enum, limit=limit)
+        logger.info(f"✅ Training jobs listed by {user}")
+        return success_response(jobs)
+
+    except Exception as e:
+        logger.error(f"Error listing training jobs: {e}")
+        return error_response(
+            f"Failed to list training jobs: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/ml/jobs/{job_id}")
+async def get_job_status(
+    job_id: str,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Get training job status.
+
+    Args:
+        job_id: Job ID
+
+    Returns:
+        dict: Job status and details
+    """
+    try:
+        job = training_executor.get_job_status(job_id)
+
+        if not job:
+            return error_response(
+                f"Job not found: {job_id}",
+                code=status.HTTP_404_NOT_FOUND
+            )
+
+        logger.info(f"✅ Job status retrieved for {job_id} by {user}")
+        return success_response(job)
+
+    except Exception as e:
+        logger.error(f"Error getting job status {job_id}: {e}")
+        return error_response(
+            f"Failed to get job status: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.delete("/ml/jobs/{job_id}")
+async def cancel_training_job(
+    job_id: str,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Cancel a training job.
+
+    Args:
+        job_id: Job ID
+
+    Returns:
+        dict: Cancellation result
+    """
+    try:
+        result = training_executor.cancel_job(job_id)
+
+        if not result.get("ok", False):
+            return error_response(
+                result.get("error", "Unknown error"),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        logger.info(f"✅ Job {job_id} cancelled by {user}")
+        return success_response(result)
+
+    except Exception as e:
+        logger.error(f"Error cancelling job {job_id}: {e}")
+        return error_response(
+            f"Failed to cancel job: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # ============================================================================
