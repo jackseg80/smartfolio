@@ -263,6 +263,33 @@ class TrainingExecutor:
                 "training_time_seconds": 5
             }
 
+            # Update ModelRegistry after training
+            try:
+                from services.ml.model_registry import ModelStatus
+
+                # Get model manifest (assuming version v1.0 for simplicity)
+                manifest = self.model_registry.get_model_manifest(job.model_name, "v1.0")
+
+                # Update metrics in registry
+                self.model_registry.update_metrics(
+                    job.model_name,
+                    "v1.0",
+                    validation_metrics=metrics,
+                    test_metrics=metrics
+                )
+
+                # Update status to TRAINED (will update updated_at automatically)
+                self.model_registry.update_status(
+                    job.model_name,
+                    "v1.0",
+                    ModelStatus.TRAINED
+                )
+
+                logger.info(f"✅ ModelRegistry updated for {job.model_name}")
+
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to update ModelRegistry: {e}")
+
             with self._jobs_lock:
                 job.status = JobStatus.COMPLETED
                 job.completed_at = datetime.utcnow()
