@@ -397,10 +397,12 @@ async def read_logs(
     search: Optional[str] = Query(None, description="Search text in messages"),
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
+    sort_by: str = Query("timestamp", description="Sort by column (timestamp, level, module)"),
+    sort_order: str = Query("desc", description="Sort order (asc, desc)"),
     user: str = Depends(require_admin_role)
 ):
     """
-    Lit les logs avec filtres et pagination.
+    Lit les logs avec filtres, tri et pagination.
 
     Args:
         filename: Nom du fichier log
@@ -410,9 +412,11 @@ async def read_logs(
         search: Recherche texte
         start_date: Date début
         end_date: Date fin
+        sort_by: Colonne de tri
+        sort_order: Ordre de tri
 
     Returns:
-        dict: Logs filtrés et paginés
+        dict: Logs filtrés, triés et paginés
     """
     try:
         log_reader = get_log_reader()
@@ -424,7 +428,9 @@ async def read_logs(
             level=level,
             search=search,
             start_date=start_date,
-            end_date=end_date
+            end_date=end_date,
+            sort_by=sort_by,
+            sort_order=sort_order
         )
 
         return success_response(

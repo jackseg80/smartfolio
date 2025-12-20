@@ -1045,52 +1045,17 @@
         let currentLogsSortBy = 'timestamp'; // Default sort by timestamp
         let currentLogsSortOrder = 'desc'; // Default: newest first
 
-        function sortLogs(logs, sortBy, sortOrder) {
-            const sorted = [...logs];
-            sorted.sort((a, b) => {
-                let aVal, bVal;
-
-                if (sortBy === 'timestamp') {
-                    // Parse timestamp for proper date comparison
-                    // Format: "2025-12-20 14:32:09,413" (comma separator for ms)
-                    // Replace comma with dot for proper ISO parsing
-                    const aTimestamp = a.timestamp ? a.timestamp.replace(',', '.') : '';
-                    const bTimestamp = b.timestamp ? b.timestamp.replace(',', '.') : '';
-
-                    aVal = new Date(aTimestamp).getTime();
-                    bVal = new Date(bTimestamp).getTime();
-
-                    // Handle invalid dates (NaN)
-                    if (isNaN(aVal)) aVal = 0;
-                    if (isNaN(bVal)) bVal = 0;
-                } else if (sortBy === 'level') {
-                    // Sort by level severity: ERROR > WARNING > INFO > DEBUG
-                    const levelOrder = { 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1 };
-                    aVal = levelOrder[a.level] || 0;
-                    bVal = levelOrder[b.level] || 0;
-                } else {
-                    aVal = a[sortBy] || '';
-                    bVal = b[sortBy] || '';
-                }
-
-                if (sortOrder === 'asc') {
-                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-                } else {
-                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
-                }
-            });
-            return sorted;
-        }
-
         function toggleLogsSort(sortBy) {
             if (currentLogsSortBy === sortBy) {
                 // Toggle order if same column
                 currentLogsSortOrder = currentLogsSortOrder === 'asc' ? 'desc' : 'asc';
             } else {
-                // New column: default to desc for timestamp, asc for level
+                // New column: default to desc for timestamp, desc for level
                 currentLogsSortBy = sortBy;
-                currentLogsSortOrder = sortBy === 'timestamp' ? 'desc' : 'desc';
+                currentLogsSortOrder = 'desc';
             }
+            // Reset to page 0 to see the first/last message based on new sort
+            currentLogsPage = 0;
             loadLogsContent();
         }
 
@@ -1142,7 +1107,9 @@
                 const params = new URLSearchParams({
                     filename: currentLogsFile,
                     offset: offset.toString(),
-                    limit: logsPageSize.toString()
+                    limit: logsPageSize.toString(),
+                    sort_by: currentLogsSortBy,
+                    sort_order: currentLogsSortOrder
                 });
                 if (currentLogsLevel) params.append('level', currentLogsLevel);
                 if (currentLogsSearch) params.append('search', currentLogsSearch);
@@ -1166,12 +1133,10 @@
                     throw new Error('Invalid response format');
                 }
 
-                let logs = result.data;
+                const logs = result.data;
                 const meta = result.meta;
 
-                // Sort logs
-                logs = sortLogs(logs, currentLogsSortBy, currentLogsSortOrder);
-
+                // Logs are already sorted by backend
                 // Build logs table
                 let html = '<table class="data-table">';
                 html += '<thead><tr>';

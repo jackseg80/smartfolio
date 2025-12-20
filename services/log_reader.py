@@ -87,10 +87,12 @@ class LogReader:
         level: Optional[str] = None,
         search: Optional[str] = None,
         start_date: Optional[str] = None,
-        end_date: Optional[str] = None
+        end_date: Optional[str] = None,
+        sort_by: str = "timestamp",
+        sort_order: str = "desc"
     ) -> Dict[str, Any]:
         """
-        Lit les logs avec filtres et pagination.
+        Lit les logs avec filtres, tri et pagination.
 
         Args:
             filename: Nom du fichier log
@@ -100,6 +102,8 @@ class LogReader:
             search: Recherche texte dans message
             start_date: Date début (YYYY-MM-DD)
             end_date: Date fin (YYYY-MM-DD)
+            sort_by: Colonne de tri (timestamp, level, module)
+            sort_order: Ordre de tri (asc, desc)
 
         Returns:
             dict: {logs: List[LogEntry], total: int, has_more: bool}
@@ -153,6 +157,33 @@ class LogReader:
             # Ajouter line_num pour référence
             log_entry["line_num"] = line_num
             parsed_logs.append(log_entry)
+
+        # Tri sur tous les logs
+        if sort_by in ["timestamp", "level", "module"]:
+            reverse = (sort_order == "desc")
+
+            if sort_by == "timestamp":
+                # Tri par timestamp (parsing datetime pour comparaison correcte)
+                def timestamp_key(log):
+                    try:
+                        # Format: "2025-12-20 14:32:09,413" -> parse as datetime
+                        ts_str = log["timestamp"].replace(',', '.')
+                        return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
+                    except Exception:
+                        return datetime.min
+                parsed_logs.sort(key=timestamp_key, reverse=reverse)
+
+            elif sort_by == "level":
+                # Tri par niveau de gravité: ERROR > WARNING > INFO > DEBUG
+                level_order = {"ERROR": 4, "WARNING": 3, "INFO": 2, "DEBUG": 1}
+                parsed_logs.sort(
+                    key=lambda log: level_order.get(log["level"], 0),
+                    reverse=reverse
+                )
+
+            elif sort_by == "module":
+                # Tri alphabétique par module
+                parsed_logs.sort(key=lambda log: log["module"], reverse=reverse)
 
         # Pagination
         total = len(parsed_logs)
