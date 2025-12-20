@@ -28,6 +28,8 @@ htmlcov/
 *.onnx
 *.joblib
 models/stocks/
+# ML model registry (runtime data, updated by training)
+models/registry.json
 
 # Cache directories (all cache types)
 cache/
@@ -89,6 +91,8 @@ data/execution_history/sessions_*.json
 data/*_backup_*.json
 data/alerts.json
 data/portfolio_history.json
+# Portfolio snapshots (user-specific, time-series data)
+data/portfolio_history/**/*.json
 data/prices.json
 data/pricing_cache.json
 data/rebalance_history.json
