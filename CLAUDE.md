@@ -733,8 +733,9 @@ const response = await fetch('/admin/users', {
 - **ml_admin:** ML model training & deployment
 - **viewer:** Lecture seule (pas d'accès admin)
 
-### Endpoints API (Phase 1)
+### Endpoints API
 
+**Phase 1 - Infrastructure (8 endpoints):**
 ```bash
 GET  /admin/health        # Health check admin
 GET  /admin/status        # Stats système
@@ -743,7 +744,60 @@ GET  /admin/logs/list     # Liste log files
 DELETE /admin/cache/clear # Clear cache
 ```
 
-**Phase 2+:** User CRUD, Logs viewer complet, Cache mgmt, ML training, API keys
+**Phase 2 - User Management + Logs (11 endpoints):**
+```bash
+# User CRUD
+POST   /admin/users                    # Create user
+PUT    /admin/users/{user_id}          # Update user
+DELETE /admin/users/{user_id}          # Delete user (soft)
+POST   /admin/users/{user_id}/roles    # Assign roles
+GET    /admin/users/roles              # List available roles
+
+# Logs
+GET /admin/logs/read      # Read logs with filters
+GET /admin/logs/stats     # Log statistics
+```
+
+**Phase 3 - Cache + ML Models (9 endpoints):**
+```bash
+# Cache Management
+GET    /admin/cache/stats              # Stats all caches
+GET    /admin/cache/list               # List available caches
+DELETE /admin/cache/clear              # Clear cache(s)
+POST   /admin/cache/clear-expired      # Clear expired only
+
+# ML Models & Training
+GET    /admin/ml/models                # List ML models
+POST   /admin/ml/train/{model_name}    # Trigger real training
+GET    /admin/ml/jobs                  # List training jobs
+GET    /admin/ml/jobs/{job_id}         # Job status
+DELETE /admin/ml/jobs/{job_id}         # Cancel job
+```
+
+**Total:** 28 endpoints API
+
+### ML Training RÉEL (Phase 3.5 - Dec 2025)
+
+**✅ REAL PyTorch Training** - Plus de mock !
+
+**Regime Models** (btc_regime_detector, btc_regime_hmm, stock_regime_detector):
+- Données: 730 jours (2 ans) de vraies données BTC
+- Epochs: 100, Patience: 15
+- Durée: **2-5 min** (GPU) / 10-20 min (CPU)
+- Fichiers: `models/regime/*.pth` sauvegardés
+- Metrics: accuracy, precision, recall, f1_score
+
+**Volatility Models** (volatility_forecaster):
+- Assets: BTC, ETH, SOL
+- Données: 365 jours (1 an)
+- Durée: **3-7 min** (GPU)
+- Metrics: mse, mae, r2
+
+**Après training:**
+- ✅ Last Updated = datetime actuel (mis à jour automatiquement)
+- ✅ ModelRegistry sauvegardé dans `models/registry.json`
+- ✅ Status passe à TRAINED
+- ✅ Metrics réels enregistrés
 
 ### Test RBAC
 
@@ -753,9 +807,19 @@ curl "http://localhost:8080/admin/health" -H "X-User: jack"
 
 # Viewer (demo) - 403 Forbidden
 curl "http://localhost:8080/admin/health" -H "X-User: demo"
+
+# Trigger real training
+curl -X POST "http://localhost:8080/admin/ml/train/btc_regime_detector?model_type=regime" -H "X-User: jack"
 ```
 
 **Docs complètes:** `docs/ADMIN_DASHBOARD.md`
+
+**Bugs corrigés (Dec 2025):**
+1. ✅ Datetime serialization (ModelRegistry.list_models)
+2. ✅ best_model_state non initialisé (volatility training)
+3. ✅ best_val_loss.item() sur float
+4. ✅ get_model_manifest() inexistant (Last Updated figé)
+5. ✅ Registry.json création + 4 modèles initiaux
 
 ---
 
