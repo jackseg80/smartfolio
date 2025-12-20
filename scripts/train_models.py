@@ -859,7 +859,7 @@ def train_volatility_model(data, symbol="BTC", epochs: int = 200, patience: int 
         "train_samples": len(X_train),
         "val_samples": len(X_val),
         "test_samples": len(X_test),
-        "best_val_mse": float(best_val_loss.item()),
+        "best_val_mse": float(best_val_loss.item() if isinstance(best_val_loss, torch.Tensor) else best_val_loss),
         "early_stopped": no_improve >= patience,
         "seed": 42,
         "amp": device.type == 'cuda',
