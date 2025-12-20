@@ -99,11 +99,14 @@
     <div class="dashboard-layout">
       <!-- Main Content avec Onglets -->
       <div class="main-content">
-        <!-- Quick Links to Related Pages -->
+        <!-- Tabs -->
+        <div class="tabs" role="tablist">
+          <button class="tab-button active" data-tab="risk" role="tab" aria-selected="true" aria-controls="risk-tab">Risk Overview</button>
+          <button class="tab-button" data-tab="cycles" role="tab" aria-selected="false" aria-controls="cycles-tab">Market Cycles</button>
+        </div>
+
+        <!-- Quick Links to Other Pages -->
         <div class="quick-links" style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
-          <a href="cycle-analysis.html" class="quick-link-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text); text-decoration: none; font-size: 14px; transition: all 0.2s;">
-            <span>📈</span> Cycle Analysis
-          </a>
           <a href="rebalance.html" class="quick-link-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text); text-decoration: none; font-size: 14px; transition: all 0.2s;">
             <span>🎯</span> Strategic Targets
           </a>
@@ -112,13 +115,23 @@
           </a>
         </div>
 
-        <!-- Risk Overview Content (no tabs needed - single view) -->
-        <div id="risk-tab" role="main">
-          <div id="risk-overview-badge-container" class="badge-container"></div>
+        <div class="tab-content">
+          <!-- Risk Overview Tab -->
+          <div class="tab-pane active" id="risk-tab" role="tabpanel" aria-labelledby="risk-overview">
+            <div id="risk-overview-badge-container" class="badge-container"></div>
 
-          <!-- Persistent Controls (do not get replaced by dynamic render) -->
-          <div id="risk-dashboard-content">
-            <div class="loading">Loading risk metrics...</div>
+            <!-- Persistent Controls (do not get replaced by dynamic render) -->
+            <div id="risk-dashboard-content">
+              <div class="loading">Loading risk metrics...</div>
+            </div>
+          </div>
+
+          <!-- Market Cycles Tab -->
+          <div class="tab-pane" id="cycles-tab" role="tabpanel" aria-labelledby="cycles">
+            <div id="cycles-badge-container" class="badge-container"></div>
+            <div id="cycles-content">
+              <div class="loading">Loading cycle analysis...</div>
+            </div>
           </div>
         </div>
       </div>

@@ -96,7 +96,7 @@ admin-dashboard.html    # Admin Dashboard (RBAC: user management, logs, cache, M
 ```
 
 **Refactoring Dec 2025** - Simplification risk-dashboard.html :
-- **risk-dashboard.html** : Vue unique (Risk Overview) + 3 quick links vers pages dédiées
+- **risk-dashboard.html** : 2 onglets (Risk Overview + Market Cycles avec scores) + 2 quick links
 - **cycle-analysis.html** : Graphique Bitcoin historique (FRED/Binance/CoinGecko) + validation modèle
 - **rebalance.html** : Stratégies prédéfinies (CCS, Conservative, Blend, Smart) + Optimization (6 algos Markowitz)
 - **monitoring.html** : 2 onglets (KPIs Système + Alerts History avec filtres/pagination)
