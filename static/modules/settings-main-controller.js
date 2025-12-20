@@ -265,6 +265,8 @@ async function loadSettings() {
         window.globalConfig.settings[key] = window.userSettings[key];
       }
     });
+    // Réappliquer le thème après synchronisation pour que le thème visuel corresponde aux boutons radio
+    window.globalConfig.applyTheme();
   }
 
   // Mettre à jour l'interface
@@ -350,8 +352,16 @@ function updateUI() {
   document.querySelector(`.radio-option input[value="${globalSettings.pricing}"]`).parentElement.classList.add('selected');
 
   // Thème
-  document.getElementById(`theme_${globalSettings.theme}`).checked = true;
-  document.querySelector(`.radio-option input[value="${globalSettings.theme}"]`).parentElement.classList.add('selected');
+  const themeInput = document.getElementById(`theme_${globalSettings.theme}`);
+  if (themeInput) {
+    themeInput.checked = true;
+    const themeRadio = document.querySelector(`.radio-option input[name="theme"][value="${globalSettings.theme}"]`);
+    if (themeRadio && themeRadio.parentElement) {
+      themeRadio.parentElement.classList.add('selected');
+    }
+  } else {
+    debugLogger.warn(`⚠️ updateUI: Theme radio not found for value: ${globalSettings.theme}`);
+  }
 
   // Autres champs
   document.getElementById('display_currency').value = globalSettings.display_currency;

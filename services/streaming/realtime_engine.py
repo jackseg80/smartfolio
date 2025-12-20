@@ -188,8 +188,10 @@ class RedisStreamManager:
 
     def __init__(self, redis_url: str = None):
         import os
-        # Use REDIS_URL from environment (supports Docker 'redis:6379')
-        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
+        # Use REDIS_URL from environment, disable if empty
+        env_url = os.getenv("REDIS_URL", "")
+        # Only use Redis if explicitly configured (not empty string)
+        self.redis_url = redis_url or (env_url if env_url and env_url.strip() else None)
         self.redis_client: Optional[redis.Redis] = None
         self.stream_consumers: Dict[str, Callable] = {}
         self.running = False
@@ -206,9 +208,14 @@ class RedisStreamManager:
     async def initialize(self):
         """Initialiser la connexion Redis et créer les streams"""
         if not REDIS_AVAILABLE:
-            log.warning("Redis not available, RedisStreamManager running in fallback mode")
+            log.warning("Redis library not available, RedisStreamManager running in fallback mode")
             return False
-            
+
+        # Check if Redis URL is configured
+        if not self.redis_url:
+            log.info("Redis URL not configured (empty or None), RedisStreamManager disabled - using in-memory fallback")
+            return False
+
         try:
             self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
             await self.redis_client.ping()
@@ -373,8 +380,10 @@ class RealtimeEngine:
 
     def __init__(self, redis_url: str = None):
         import os
-        # Use REDIS_URL from environment (supports Docker 'redis:6379')
-        redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
+        # Use REDIS_URL from environment, disable if empty
+        env_url = os.getenv("REDIS_URL", "")
+        # Only use Redis if explicitly configured (not empty string)
+        redis_url = redis_url or (env_url if env_url and env_url.strip() else None)
         self.websocket_manager = WebSocketManager()
         self.redis_manager = RedisStreamManager(redis_url)
         self.running = False
@@ -602,8 +611,10 @@ class RealtimeEngine:
 def create_realtime_engine(config: Dict[str, Any] = None) -> RealtimeEngine:
     """Factory pour créer une instance du moteur de streaming"""
     import os
-    # Use REDIS_URL from environment (supports Docker 'redis:6379')
-    redis_url = os.getenv("REDIS_URL", "redis://localhost:6379")
+    # Use REDIS_URL from environment, disable if empty
+    env_url = os.getenv("REDIS_URL", "")
+    # Only use Redis if explicitly configured (not empty string)
+    redis_url = env_url if env_url and env_url.strip() else None
 
     if config:
         redis_url = config.get("redis_url", redis_url)

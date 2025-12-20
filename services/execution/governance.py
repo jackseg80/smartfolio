@@ -1729,21 +1729,43 @@ class GovernanceEngine:
                     }
                     
                     # Get decision explanation from XAI
+                    # Extract numeric features from decision context for XAI analysis
+                    xai_features = {}
+                    if self.current_state.raw_signals:
+                        signals = self.current_state.raw_signals
+                        if isinstance(signals, dict):
+                            xai_features = {k: float(v) if isinstance(v, (int, float)) else 0.0
+                                          for k, v in signals.items()
+                                          if isinstance(v, (int, float, bool))}
+
+                    # Use governance mode as prediction (numeric mapping)
+                    mode_to_prediction = {
+                        "s3_alert_freeze": 0.9,
+                        "error_freeze": 0.8,
+                        "full_freeze": 1.0,
+                        "prudent_mode": 0.6,
+                        "normal": 0.3
+                    }
+                    prediction_value = mode_to_prediction.get(self.current_state.governance_mode, 0.5)
+
                     explanation = await self.explainable_ai.explain_decision(
-                        decision_type="allocation_plan",
-                        decision_context=decision_context,
-                        model_predictions=self.current_state.raw_signals
+                        model_name="allocation_plan",
+                        prediction=prediction_value,
+                        features=xai_features,
+                        model_data={"context": decision_context, "signals": self.current_state.raw_signals}
                     )
                     
                     # Store explanation in plan notes for transparency
-                    if explanation and explanation.explanation_text:
-                        proposed_plan.notes += f"\n\nAI Explanation: {explanation.explanation_text}"
-                        
+                    if explanation:
+                        # Use summary for concise notes, detailed_explanation available in explanation object
+                        proposed_plan.notes += f"\n\nAI Explanation: {explanation.summary}"
+
                         # Add confidence and feature contributions to context
                         ai_context = {
-                            "confidence": explanation.confidence_score,
+                            "confidence": explanation.confidence,
+                            "confidence_level": explanation.confidence_level.value if hasattr(explanation.confidence_level, 'value') else str(explanation.confidence_level),
                             "key_factors": [f.feature_name for f in explanation.feature_contributions[:3]],
-                            "explanation_method": explanation.method_used
+                            "explanation_type": explanation.explanation_type.value if hasattr(explanation.explanation_type, 'value') else str(explanation.explanation_type)
                         }
                         proposed_plan.context = {**proposed_plan.context, "ai_explanation": ai_context} if hasattr(proposed_plan, 'context') and proposed_plan.context else {"ai_explanation": ai_context}
                     

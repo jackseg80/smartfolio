@@ -278,6 +278,62 @@
             min-width: 250px;
         }
 
+        /* Sortable Table Headers */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th {
+            background: var(--theme-surface);
+            border-bottom: 2px solid var(--theme-border);
+            padding: 0.75rem;
+            text-align: left;
+            color: var(--theme-text);
+            font-weight: 600;
+        }
+
+        .data-table th.sortable {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            padding-right: 2rem;
+            transition: background var(--transition-fast);
+        }
+
+        .data-table th.sortable:hover {
+            background: var(--theme-bg);
+        }
+
+        .data-table th.sortable::after {
+            content: '⇅';
+            position: absolute;
+            right: 0.5rem;
+            color: var(--theme-text-muted);
+            font-size: 0.9em;
+        }
+
+        .data-table th.sortable.sort-asc::after {
+            content: '▲';
+            color: var(--brand-primary);
+        }
+
+        .data-table th.sortable.sort-desc::after {
+            content: '▼';
+            color: var(--brand-primary);
+        }
+
+        .data-table td {
+            border-bottom: 1px solid var(--theme-border);
+            padding: 0.75rem;
+            color: var(--theme-text);
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--theme-bg);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .admin-container {
@@ -473,6 +529,10 @@
             margin: 1rem 0;
         }
     </style>
+
+    <!-- Global Config & Theme Support -->
+    <script src="global-config.js"></script>
+    <script src="appearance.js"></script>
 </head>
 <body>
     <!-- Navigation will be injected here -->
@@ -982,6 +1042,57 @@
         let currentLogsFile = 'app.log';
         let currentLogsLevel = '';
         let currentLogsSearch = '';
+        let currentLogsSortBy = 'timestamp'; // Default sort by timestamp
+        let currentLogsSortOrder = 'desc'; // Default: newest first
+
+        function sortLogs(logs, sortBy, sortOrder) {
+            const sorted = [...logs];
+            sorted.sort((a, b) => {
+                let aVal, bVal;
+
+                if (sortBy === 'timestamp') {
+                    // Parse timestamp for proper date comparison
+                    // Format: "2025-12-20 14:32:09,413" (comma separator for ms)
+                    // Replace comma with dot for proper ISO parsing
+                    const aTimestamp = a.timestamp ? a.timestamp.replace(',', '.') : '';
+                    const bTimestamp = b.timestamp ? b.timestamp.replace(',', '.') : '';
+
+                    aVal = new Date(aTimestamp).getTime();
+                    bVal = new Date(bTimestamp).getTime();
+
+                    // Handle invalid dates (NaN)
+                    if (isNaN(aVal)) aVal = 0;
+                    if (isNaN(bVal)) bVal = 0;
+                } else if (sortBy === 'level') {
+                    // Sort by level severity: ERROR > WARNING > INFO > DEBUG
+                    const levelOrder = { 'ERROR': 4, 'WARNING': 3, 'INFO': 2, 'DEBUG': 1 };
+                    aVal = levelOrder[a.level] || 0;
+                    bVal = levelOrder[b.level] || 0;
+                } else {
+                    aVal = a[sortBy] || '';
+                    bVal = b[sortBy] || '';
+                }
+
+                if (sortOrder === 'asc') {
+                    return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                } else {
+                    return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                }
+            });
+            return sorted;
+        }
+
+        function toggleLogsSort(sortBy) {
+            if (currentLogsSortBy === sortBy) {
+                // Toggle order if same column
+                currentLogsSortOrder = currentLogsSortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New column: default to desc for timestamp, asc for level
+                currentLogsSortBy = sortBy;
+                currentLogsSortOrder = sortBy === 'timestamp' ? 'desc' : 'desc';
+            }
+            loadLogsContent();
+        }
 
         async function loadLogsTab() {
             const container = document.getElementById('tab-logs');
@@ -1055,14 +1166,29 @@
                     throw new Error('Invalid response format');
                 }
 
-                const logs = result.data;
+                let logs = result.data;
                 const meta = result.meta;
+
+                // Sort logs
+                logs = sortLogs(logs, currentLogsSortBy, currentLogsSortOrder);
 
                 // Build logs table
                 let html = '<table class="data-table">';
                 html += '<thead><tr>';
-                html += '<th>Timestamp</th>';
-                html += '<th>Level</th>';
+
+                // Timestamp header (sortable)
+                const timestampClass = currentLogsSortBy === 'timestamp'
+                    ? `sortable sort-${currentLogsSortOrder}`
+                    : 'sortable';
+                html += `<th class="${timestampClass}" data-sort="timestamp">Timestamp</th>`;
+
+                // Level header (sortable)
+                const levelClass = currentLogsSortBy === 'level'
+                    ? `sortable sort-${currentLogsSortOrder}`
+                    : 'sortable';
+                html += `<th class="${levelClass}" data-sort="level">Level</th>`;
+
+                // Non-sortable headers
                 html += '<th>Module</th>';
                 html += '<th>Message</th>';
                 html += '</tr></thead>';
@@ -1099,6 +1225,14 @@
                 html += '</div>';
 
                 contentDiv.innerHTML = html;
+
+                // Add event listeners to sortable headers
+                contentDiv.querySelectorAll('th[data-sort]').forEach(th => {
+                    th.addEventListener('click', function() {
+                        const sortBy = this.getAttribute('data-sort');
+                        toggleLogsSort(sortBy);
+                    });
+                });
 
             } catch (error) {
                 console.error('Failed to load logs content:', error);
