@@ -470,6 +470,35 @@ class TrainingExecutor:
             try:
                 from services.ml.model_registry import ModelStatus
 
+                # Check if model exists in registry, if not create it
+                try:
+                    # Try to get the model
+                    self.model_registry.get_model(job.model_name, "v1.0")
+                except (ValueError, KeyError):
+                    # Model doesn't exist, register it first
+                    logger.info(f"📝 Registering new model {job.model_name}:v1.0 in registry")
+
+                    # Determine model file path based on type
+                    from pathlib import Path
+                    models_dir = Path("models")
+
+                    if job.model_type == "regime":
+                        model_file = models_dir / "regime" / "regime_model.pth"
+                    elif job.model_type == "volatility":
+                        # For volatility, we have multiple assets - use generic path
+                        model_file = models_dir / "volatility" / "volatility_model.pth"
+                    else:
+                        model_file = None
+
+                    self.model_registry.register_model(
+                        name=job.model_name,
+                        version="v1.0",
+                        model_type=job.model_type,
+                        file_path=str(model_file) if model_file and model_file.exists() else None,
+                        description=f"Auto-registered after training job {job_id}",
+                        status=ModelStatus.TRAINED
+                    )
+
                 # Update metrics in registry (will also update updated_at)
                 self.model_registry.update_metrics(
                     job.model_name,

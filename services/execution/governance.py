@@ -1760,15 +1760,13 @@ class GovernanceEngine:
                         # Use summary for concise notes, detailed_explanation available in explanation object
                         proposed_plan.notes += f"\n\nAI Explanation: {explanation.summary}"
 
-                        # Add confidence and feature contributions to context
-                        ai_context = {
-                            "confidence": explanation.confidence,
-                            "confidence_level": explanation.confidence_level.value if hasattr(explanation.confidence_level, 'value') else str(explanation.confidence_level),
-                            "key_factors": [f.feature_name for f in explanation.feature_contributions[:3]],
-                            "explanation_type": explanation.explanation_type.value if hasattr(explanation.explanation_type, 'value') else str(explanation.explanation_type)
-                        }
-                        proposed_plan.context = {**proposed_plan.context, "ai_explanation": ai_context} if hasattr(proposed_plan, 'context') and proposed_plan.context else {"ai_explanation": ai_context}
-                    
+                        # Log detailed explanation metadata for debugging
+                        logger.debug(
+                            f"Phase 3C XAI: confidence={explanation.confidence:.2f} "
+                            f"({explanation.confidence_level.value if hasattr(explanation.confidence_level, 'value') else str(explanation.confidence_level)}), "
+                            f"key_factors={[f.feature_name for f in explanation.feature_contributions[:3]]}"
+                        )
+
                     logger.info(f"Phase 3C XAI explanation added to plan {proposed_plan.plan_id}")
                     
                 except Exception as e:

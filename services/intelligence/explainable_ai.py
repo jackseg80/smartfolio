@@ -315,12 +315,16 @@ class ExplainableAIEngine:
         
         return counterfactuals
     
-    def _calculate_confidence(self, 
+    def _calculate_confidence(self,
                             prediction: Union[float, int, str],
                             features: Dict[str, float],
                             model_data: Dict[str, Any] = None) -> float:
         """Calcule un score de confiance pour la prédiction"""
-        
+
+        # Handle empty features dict
+        if not features:
+            return 0.5  # Default medium confidence when no features available
+
         # Facteurs de confiance basés sur la qualité des données
         data_completeness = len([v for v in features.values() if v is not None]) / len(features)
         
