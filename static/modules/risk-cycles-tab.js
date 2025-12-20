@@ -1259,13 +1259,11 @@ export async function renderCyclesContentUncached() {
     </div>
   `;
 
-  // Do NOT force-create the chart here. Let IntersectionObserver
-  // load the component when it scrolls into view to avoid upfront cost.
-  setTimeout(() => {
-    const lazyElement = document.querySelector('[data-lazy-load="component"][data-lazy-component="BitcoinCycleChart"]');
-    if (lazyElement && window.lazyLoader?.intersectionObserver) {
-      try { window.lazyLoader.intersectionObserver.observe(lazyElement); } catch (_) { }
-    }
+  // Bitcoin chart moved to cycle-analysis.html - no lazy loading needed
+
+  // Load on-chain indicators after DOM is ready
+  setTimeout(async () => {
+    await loadOnChainIndicators();
   }, 100);
 }
 
