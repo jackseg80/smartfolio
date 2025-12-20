@@ -650,8 +650,8 @@ async function performanceMonitoredFetch(url, options = {}) {
   try {
     const response = await fetch(url, {
       ...options,
-      // Further reduced timeout for faster failure detection and better UX
-      signal: AbortSignal.timeout(3000) // 3 second timeout (was 5s)
+      // Increased timeout for scraping endpoints (crypto-toolbox can take 2-3s)
+      signal: AbortSignal.timeout(15000) // 15 second timeout
     });
 
     const endTime = performance.now();
@@ -675,7 +675,7 @@ async function performanceMonitoredFetch(url, options = {}) {
     const responseTime = endTime - startTime;
 
     if (error.name === 'TimeoutError') {
-      (window.debugLogger?.warn || console.warn)('⏰ API request timed out after 10s');
+      (window.debugLogger?.warn || console.warn)('⏰ API request timed out after 15s');
     } else if (error.name === 'AbortError') {
       (window.debugLogger?.warn || console.warn)('🚫 API request was aborted');
     } else {
