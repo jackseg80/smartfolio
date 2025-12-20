@@ -728,7 +728,9 @@ def train_volatility_model(data, symbol="BTC", epochs: int = 200, patience: int 
     # Entraînement avec early stopping
     best_val_loss = float('inf')
     no_improve = 0
-    
+    # Initialiser pour garantir un état valide même sans amélioration
+    best_model_state = model.state_dict().copy()
+
     for epoch in range(epochs):
         # Training
         model.train()
