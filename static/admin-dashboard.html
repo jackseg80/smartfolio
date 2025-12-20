@@ -1714,7 +1714,7 @@
                             <td><span class="badge">${model.model_type || 'unknown'}</span></td>
                             <td>${model.version || 'N/A'}</td>
                             <td>${statusBadge}</td>
-                            <td>${model.updated_at ? new Date(model.updated_at).toLocaleString() : 'N/A'}</td>
+                            <td>${model.updated_at ? new Date(model.updated_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'}</td>
                             <td>${trainingStatus}</td>
                             <td>
                                 ${!model.has_active_job ?
@@ -1815,8 +1815,8 @@
                             <td><strong>${job.model_name}</strong></td>
                             <td>${statusBadge}</td>
                             <td>${job.triggered_by}</td>
-                            <td>${new Date(job.created_at).toLocaleString()}</td>
-                            <td>${job.completed_at ? new Date(job.completed_at).toLocaleString() : '-'}</td>
+                            <td>${new Date(job.created_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+                            <td>${job.completed_at ? new Date(job.completed_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}</td>
                             <td>
                                 ${job.status === 'running' || job.status === 'pending' ?
                                     `<button class="btn btn-small btn-danger" onclick="cancelJob('${job.job_id}')">Cancel</button>` :

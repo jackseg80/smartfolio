@@ -470,13 +470,17 @@ class TrainingExecutor:
             try:
                 from services.ml.model_registry import ModelStatus
 
+                # Get existing version or use v1.0 as default
+                model_version = self.model_registry.get_latest_version(job.model_name) or "v1.0"
+
                 # Check if model exists in registry, if not create it
                 try:
-                    # Try to get the model
-                    self.model_registry.get_model(job.model_name, "v1.0")
+                    # Try to get the model with existing version
+                    self.model_registry.get_manifest(job.model_name, model_version)
+                    logger.info(f"📝 Updating existing model {job.model_name}:{model_version} in registry")
                 except (ValueError, KeyError):
                     # Model doesn't exist, register it first
-                    logger.info(f"📝 Registering new model {job.model_name}:v1.0 in registry")
+                    logger.info(f"📝 Registering new model {job.model_name}:{model_version} in registry")
 
                     # Determine model file path based on type
                     from pathlib import Path
@@ -492,7 +496,7 @@ class TrainingExecutor:
 
                     self.model_registry.register_model(
                         name=job.model_name,
-                        version="v1.0",
+                        version=model_version,
                         model_type=job.model_type,
                         file_path=str(model_file) if model_file and model_file.exists() else None,
                         description=f"Auto-registered after training job {job_id}",
@@ -502,7 +506,7 @@ class TrainingExecutor:
                 # Update metrics in registry (will also update updated_at)
                 self.model_registry.update_metrics(
                     job.model_name,
-                    "v1.0",
+                    model_version,
                     validation_metrics=metrics,
                     test_metrics=metrics
                 )
@@ -510,7 +514,7 @@ class TrainingExecutor:
                 # Update status to TRAINED (will update updated_at automatically)
                 self.model_registry.update_status(
                     job.model_name,
-                    "v1.0",
+                    model_version,
                     ModelStatus.TRAINED
                 )
 
