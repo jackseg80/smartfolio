@@ -363,10 +363,7 @@ class TrainingExecutor:
             try:
                 from services.ml.model_registry import ModelStatus
 
-                # Get model manifest (assuming version v1.0 for simplicity)
-                manifest = self.model_registry.get_model_manifest(job.model_name, "v1.0")
-
-                # Update metrics in registry
+                # Update metrics in registry (will also update updated_at)
                 self.model_registry.update_metrics(
                     job.model_name,
                     "v1.0",
@@ -384,7 +381,9 @@ class TrainingExecutor:
                 logger.info(f"✅ ModelRegistry updated for {job.model_name}")
 
             except Exception as e:
-                logger.warning(f"⚠️ Failed to update ModelRegistry: {e}")
+                logger.error(f"❌ Failed to update ModelRegistry: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
 
             with self._jobs_lock:
                 job.status = JobStatus.COMPLETED
