@@ -2,10 +2,10 @@
 
 ## 📋 Résumé Exécutif
 
-**Projet:** Admin Dashboard SmartFolio avec ML Training RÉEL
-**Durée:** Session complète Phase 1 → Phase 3.5
-**Status:** ✅ **87.5% Terminé** (7/8 phases)
-**Derniers commits:** `f1c4691`, `d50ce85`, `8d4d141`, `095f51d`, `ef816b3`
+**Projet:** Admin Dashboard SmartFolio avec ML Training RÉEL + Metrics Parsing
+**Durée:** Session complète Phase 1 → Phase 3.6
+**Status:** ✅ **90% Terminé** (7.5/8 phases)
+**Derniers commits:** `79541c4`, `f1c4691`, `d50ce85`, `8d4d141`, `095f51d`, `ef816b3`
 
 ---
 
@@ -112,6 +112,61 @@
 
 ---
 
+### ✅ Phase 3.6 - Real Metrics Parsing (100%)
+
+**Commit:** `79541c4` (20 déc 2025)
+
+**Changement majeur:** Remplacement des **metrics hardcodés** par **parsing réel des fichiers metadata.pkl**
+
+**Problème initial:**
+
+- Phase 3.5 utilisait des metrics hardcodés (accuracy=0.87, mse=0.0015, etc.)
+- Metrics affichés dans Admin Dashboard ne correspondaient pas aux vraies valeurs
+- Pas de traçabilité des performances réelles des modèles entraînés
+
+**Implementation:**
+
+- `services/ml/training_executor.py::_load_model_metadata()`
+  - Charge metadata depuis `models/regime/regime_metadata.pkl`
+  - Charge metadata depuis `models/volatility/{symbol}_metadata.pkl`
+  - Gestion erreurs (fichiers manquants, corruption)
+
+- Mise à jour `_run_real_training()` pour parser metrics réels:
+  - **Regime models:** accuracy, best_val_accuracy, train/test/val samples, features, trained_at
+  - **Volatility models:** test_mse, best_val_mse, r2_score (moyenne BTC/ETH/SOL)
+  - Fallback automatique si metadata inexistante
+
+**Metrics réels parsés:**
+
+```python
+# Regime (BTC)
+accuracy: 0.8100
+best_val_accuracy: 0.7782
+train_samples: 1623
+test_samples: 542
+features: 10
+
+# Volatility (BTC/ETH/SOL)
+BTC: test_mse=0.010295, r2=0.5614, samples=1776
+ETH: test_mse=0.036622, r2=0.4339, samples=213
+SOL: test_mse=0.037188, r2=0.3746, samples=213
+```
+
+**Bénéfices:**
+
+- ✅ Admin Dashboard affiche **vrais metrics** (plus de hardcode)
+- ✅ Metrics mis à jour **automatiquement** après chaque training
+- ✅ Traçabilité complète (trained_at, samples, etc.)
+- ✅ Fallback robuste si fichiers manquants
+
+**Tests:**
+
+- Parsing regime metadata: ✅ OK (10 features, 1623 samples)
+- Parsing volatility metadata: ✅ OK (3 modèles BTC/ETH/SOL)
+- Error handling: ✅ OK (fallback values si metadata manquante)
+
+---
+
 ## 🐛 Bugs Corrigés
 
 | # | Bug | Fichier | Commit | Description |
@@ -130,14 +185,15 @@
 
 ### Code
 - **Fichiers créés:** 5 services (cache_manager, training_executor, user_management, log_reader, + RBAC)
-- **Lignes de code:** 4500+ lignes (backend + frontend)
+- **Lignes de code:** 4600+ lignes (backend + frontend)
 - **Endpoints API:** 28 endpoints
 - **Onglets frontend:** 4/6 opérationnels (Overview, Users, Logs, Cache, ML Models)
 
 ### Commits
-- **Total commits:** 11 commits
+- **Total commits:** 12 commits
 - **Dates:** 19-20 décembre 2025
 - **Derniers commits:**
+  - `79541c4` - feat(ml): parse real metrics from trained model metadata
   - `f1c4691` - docs(admin): update CLAUDE.md
   - `d50ce85` - fix(ml): remove get_model_manifest()
   - `8d4d141` - fix(ml): handle float vs tensor in .item()
@@ -268,26 +324,30 @@ ADMIN_DASHBOARD_SESSION_RESUME.md  # Ce fichier
 6. **ML Training RÉEL** - PyTorch training sur GPU/CPU avec vraies données
 7. **ModelRegistry** - Mise à jour automatique après training (Last Updated fonctionne ✅)
 8. **Training Jobs** - Tracking complet (pending → running → completed)
+9. **Real Metrics Parsing** - Metrics parsés depuis metadata.pkl (accuracy 0.81, r2 0.56, etc.) ✅
 
 ### ⚠️ Limitations connues
 1. **Phase 4 manquante** - API Keys Management pas implémenté
 2. **Tests** - Pas de tests unitaires/intégration automatisés
-3. **Metrics réels** - Hardcodés dans `_run_real_training()` au lieu de parsés depuis metadata fichiers
 
 ### 🎯 Prochaines Étapes Recommandées
 
 **Option 1: Terminer Phase 4 (API Keys)**
+
 - Temps estimé: 2-3h
 - Valeur ajoutée: Admin peut gérer clés API de tous les users
 
-**Option 2: Améliorer Phase 3.5 (Metrics parsing)**
-- Parser les vrais metrics depuis fichiers sauvegardés
-- Au lieu de hardcoder accuracy=0.87, lire depuis `models/regime/regime_metadata.pkl`
+**Option 2: Tests automatisés**
 
-**Option 3: Tests automatisés**
 - Tests unitaires services (user_management, cache_manager)
 - Tests intégration RBAC
 - Tests end-to-end ML training
+
+**Option 3: Polish UI**
+
+- Améliorer affichage metrics dans ML Models tab
+- Ajouter graphiques de progression training
+- Export metrics en CSV/JSON
 
 ---
 
