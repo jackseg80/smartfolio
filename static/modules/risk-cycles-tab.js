@@ -1081,7 +1081,8 @@ export async function renderCyclesContent(forceRefresh = false) {
           console.debug('⚡ Using cached cycle content (first paint)');
           container.innerHTML = cachedContent.htmlContent;
           // Recreate chart from cache
-          setTimeout(() => recreateCachedChart(), 100);
+          // Chart moved to cycle-analysis.html - no recreation needed
+          // setTimeout(() => recreateCachedChart(), 100);
         } else {
           console.debug('⚡ Cached content available but DOM already rendered, skipping DOM replace');
         }
@@ -1150,62 +1151,9 @@ export async function renderCyclesContentUncached() {
       </div>
     </div>
 
-    <!-- Bitcoin Cycle Chart (Lazy-loaded) -->
-    <div class="risk-card" style="margin-bottom: 2rem;"
-         data-lazy-load="component"
-         data-lazy-component="BitcoinCycleChart">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-        <h3 style="margin: 0;">📈 Graphique des Cycles Bitcoin</h3>
-        <div style="display: flex; gap: 0.5rem;">
-          <button onclick="toggleSection('bitcoin-cycle')" style="background: none; border: 1px solid var(--theme-border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--theme-text); font-size: 0.8rem;" title="Réduire/Agrandir">
-            <span id="bitcoin-cycle-arrow">▼</span>
-          </button>
-        </div>
-      </div>
-      <div id="bitcoin-cycle-content">
-        <!-- Label de source injecté dynamiquement -->
-        <div id="btc-source-label" style="margin-left:auto;color:var(--theme-text-muted);font-size:12px;"></div>
-        <div style="height: 520px; position: relative; margin: 1rem 0;">
-          <div class="chart-lazy-placeholder" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: var(--theme-bg-secondary); color: var(--theme-text-muted); border: 1px dashed var(--theme-border); border-radius: 8px;">
-            <div style="text-align: center;">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
-              <div>Graphique se charge au scroll...</div>
-            </div>
-          </div>
-          <canvas id="bitcoin-cycle-chart" style="width: 100%; height: 100%; display: none;"></canvas>
-        </div>
-      </div>
-      <div style="font-size: 0.85rem; color: var(--theme-text-muted); text-align: center; margin-top: 1rem;">
-        <div><strong>Légende:</strong></div>
-        <div style="margin-top: 0.5rem;">
-          <span style="color: #8b5cf6; font-weight: 600;">— — —</span> Halvings Bitcoin
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          <span style="color: #ef4444; font-weight: 600;">——</span> Position actuelle
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          <span style="color: #f7931a; font-weight: 600;">——</span> Prix Bitcoin
-          &nbsp;&nbsp;|&nbsp;&nbsp;
-          <span style="color: #10b981; font-weight: 600;">——</span> Score de cycle
-        </div>
-        ${localStorage.getItem('enable_dynamic_weighting') === 'true' ? `
-        <div style="margin-top: 6px; font-size: 0.8rem;">
-          <span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;">
-            <span style="display:inline-block;width:14px;height:4px;background:#f59e0b;border-radius:2px;"></span> Accumulation
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;">
-            <span style="display:inline-block;width:14px;height:4px;background:#10b981;border-radius:2px;"></span> Bull build
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;">
-            <span style="display:inline-block;width:14px;height:4px;background:#8b5cf6;border-radius:2px;"></span> Peak/Euphoria
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;margin-right:12px;">
-            <span style="display:inline-block;width:14px;height:4px;background:#dc2626;border-radius:2px;"></span> Bear
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;">
-            <span style="display:inline-block;width:14px;height:4px;background:#6b7280;border-radius:2px;"></span> Pre‑Accumulation
-          </span>
-        </div>
-        ` : ''}
-      </div>
+    <!-- Note: Le graphique Bitcoin historique a été déplacé vers cycle-analysis.html -->
+    <div class="info-banner" style="margin-bottom: 2rem; padding: 12px 16px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text); font-size: 14px;">
+      📈 <strong>Graphique Bitcoin historique</strong> disponible dans <a href="cycle-analysis.html" style="color: var(--brand-primary); text-decoration: underline;">Cycle Analysis</a>
     </div>
 
     <div class="risk-grid">
@@ -1322,62 +1270,12 @@ export async function renderCyclesContentUncached() {
 }
 
 /**
- * Recreate cached chart - called when using cached HTML content
+ * Deprecated: Bitcoin chart moved to cycle-analysis.html
+ * Kept for backwards compatibility but does nothing
  */
 export async function recreateCachedChart() {
-  const cachedChart = window.getCachedData('CYCLE_CHART');
-  const canvas = document.getElementById('bitcoin-cycle-chart');
-
-  if (!canvas) {
-    debugLogger.warn('Chart canvas not found for cache recreation');
-    return;
-  }
-
-  const isNearViewport = (el, margin = 150) => {
-    try {
-      const r = el.getBoundingClientRect();
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      return r.top < vh + margin && r.bottom > -margin;
-    } catch (_) { return false; }
-  };
-
-  if (cachedChart?.chartConfig) {
-    console.debug('⚡ Recreating chart from cache');
-    try {
-      // Only recreate if in or near viewport and Chart.js is ready
-      if (!isNearViewport(canvas)) {
-        debugLogger.debug('⏸️ Chart not in viewport yet; deferring recreation to lazy loader');
-        return;
-      }
-
-      if (!window.Chart) {
-        debugLogger.debug('📊 Chart.js not loaded yet; lazy loader will handle when visible');
-        return;
-      }
-
-      // Destroy existing chart if any
-      if (window.bitcoinCycleChart) {
-        window.bitcoinCycleChart.destroy();
-      }
-
-      // Recreate from cached config
-      window.bitcoinCycleChart = new Chart(canvas, cachedChart.chartConfig);
-      console.debug('✅ Chart recreated from cache');
-
-    } catch (error) {
-      debugLogger.warn('Failed to recreate cached chart, falling back to fresh render:', error);
-      if (window.Chart) {
-        await createBitcoinCycleChart('bitcoin-cycle-chart');
-      }
-    }
-  } else {
-    console.debug('🔄 No cached chart config; will let lazy loader create when visible.');
-    // Ensure element is being observed
-    const lazyElement = document.querySelector('[data-lazy-load="component"][data-lazy-component="BitcoinCycleChart"]');
-    if (lazyElement && window.lazyLoader?.intersectionObserver) {
-      try { window.lazyLoader.intersectionObserver.observe(lazyElement); } catch (_) { }
-    }
-  }
+  // Chart moved to cycle-analysis.html - function deprecated
+  debugLogger.debug('📈 Bitcoin chart now in cycle-analysis.html');
 }
 
 // ====== Cycle Cache Utilities ======
