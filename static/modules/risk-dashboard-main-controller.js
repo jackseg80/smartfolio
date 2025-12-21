@@ -3161,11 +3161,19 @@ function showToast(message, type = 'info', options = {}) {
   } = options;
 
   const toastId = `toast-${++toastIdCounter}`;
-  const toastContainer = document.getElementById('toast-container');
+  let toastContainer = document.getElementById('toast-container');
 
   if (!toastContainer) {
-    debugLogger.error('Toast container not found');
-    return;
+    // Try to get container from Toast.js module (may not be loaded yet)
+    if (window.Toast && typeof window.Toast.getContainer === 'function') {
+      toastContainer = window.Toast.getContainer();
+    }
+  }
+
+  if (!toastContainer) {
+    // Container still not available - fail silently to avoid spam
+    // This can happen during page load before Toast.js module is ready
+    return toastId; // Return ID to prevent errors in calling code
   }
 
   // Map type to severity for styling

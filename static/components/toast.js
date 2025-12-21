@@ -194,6 +194,7 @@ export class Toast {
     if (!Toast.container) {
       Toast.injectStyles();
       Toast.container = document.createElement('div');
+      Toast.container.id = 'toast-container'; // Backward compatibility with legacy code
       Toast.container.className = 'toast-container';
       Toast.container.setAttribute('aria-live', 'polite');
       Toast.container.setAttribute('aria-label', 'Notifications');

@@ -387,6 +387,18 @@ const initUnifiedNav = () => {
     }
 
     function initWebSocketConnection() {
+      // Start fallback polling immediately - will be cleared if WebSocket succeeds
+      if (!fallbackInterval) {
+        fallbackInterval = setInterval(fallbackBadgeUpdate, 30000);
+      }
+
+      // Check if WebSocket should be disabled (via localStorage flag or environment detection)
+      const wsDisabled = localStorage.getItem('DISABLE_WEBSOCKET') === 'true';
+      if (wsDisabled) {
+        console.debug('WebSocket disabled, using polling only');
+        return;
+      }
+
       try {
         // Skip WebSocket in production if not available (prevents console errors)
         // WebSocket is optional - fallback polling works perfectly
