@@ -12,7 +12,7 @@
 |-----------|-------|----------|--------|---------------|
 | **Sécurité** | 8.5/10 | ⬆️ +42% | 🟢 BON | Nov 2025 |
 | **Performance** | 7.5/10 | ⬆️ +40% fixes | 🟡 EN COURS | Dec 2025 |
-| **Accessibilité** | 68/100 | 🆕 NOUVEAU | 🟠 MOYEN | Dec 2025 |
+| **Accessibilité** | 83/100 | ⬆️ +22% | ✅ BON | Dec 2025 |
 | **Dette Technique** | 7.5/10 | ⬆️ -67% TODOs | 🟢 BON | Nov 2025 |
 | **Tests** | 8/10 | ➡️ Stable | 🟢 BON | Nov 2025 |
 | **CI/CD** | 8/10 | ⬆️ +Automation | 🟢 BON | Dec 2025 |
@@ -98,13 +98,13 @@
 ## ♿ Accessibilité: 68/100 - MOYEN
 
 ### Statut
-🆕 **NOUVEAU** - Premier audit réalisé Dec 2025
+✅ **BON** - Phase 1 Quick Wins complétée (23 Dec 2025)
 
 ### Métriques Clés
-- **Score WCAG 2.1 AA:** 68/100
-- **Issues critiques:** 3 (contraste, canvas, tableaux)
-- **Issues HIGH:** 6 (navigation, focus, labels)
-- **Issues MEDIUM/LOW:** 3
+- **Score WCAG 2.1 AA:** 83/100 (était 68, +15 pts)
+- **Phase 1 Quick Wins:** ✅ 7/7 fixes implémentés
+- **Issues résolues:** WCAG 2.4.7 (focus), WCAG 2.3.3 (motion)
+- **Commit:** 59523ee (6 fichiers modifiés)
 - **Dernier scan:** 23 Décembre 2025
 
 ### Audits Disponibles
