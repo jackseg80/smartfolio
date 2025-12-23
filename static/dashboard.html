@@ -519,7 +519,7 @@
                 data-tooltip="Global overview of your wealth (Crypto + Stock Market + Banks) with total P&L Today"
                 data-source="API /api/wealth/global/summary">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">🌐</span>Global Overview</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">🌐</span>Global Overview</div>
                 </div>
 
                 <!-- Total Global + P&L Today header -->
@@ -549,7 +549,7 @@
                 data-tooltip="Overview of your crypto portfolio with performance metrics"
                 data-source="API /balances/current + prices CoinGecko/CoinGlass">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">₿</span>Crypto</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">₿</span>Crypto</div>
                     <div style="display:flex;gap:8px;align-items:center;">
                         <span id="portfolio-source-display"
                             style="font-size:11px;color:var(--theme-text-muted);padding:2px 6px;background:var(--theme-bg);border-radius:4px;border:1px solid var(--theme-border);">--</span>
@@ -573,7 +573,11 @@
                 </div>
 
                 <div class="portfolio-chart" id="portfolio-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="portfolioChartCanvas" width="400" height="200" aria-label="Crypto portfolio distribution chart"></canvas>
+                    <div id="crypto-chart-desc" class="sr-only">Graphique circulaire du portefeuille crypto. Description chargée dynamiquement.</div>
+                    <canvas id="portfolioChartCanvas" width="400" height="200"
+                        aria-label="Graphique circulaire du portefeuille crypto"
+                        aria-describedby="crypto-chart-desc"
+                        role="img"></canvas>
                 </div>
 
                 <!-- Export Button -->
@@ -598,7 +602,7 @@
                 data-source="API /api/saxo/positions (legacy)">
                 <div class="card-header">
                     <a href="saxo-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;" aria-label="Navigate to Stock Market dashboard">
-                        <span class="card-icon">🏦</span>Stock Market
+                        <span class="card-icon" aria-hidden="true">🏦</span>Stock Market
                     </a>
                 </div>
 
@@ -618,7 +622,11 @@
                 </div>
 
                 <div class="portfolio-chart" id="saxo-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="saxoChartCanvas" width="400" height="200" aria-label="Stock market portfolio distribution chart"></canvas>
+                    <div id="saxo-chart-desc" class="sr-only">Graphique circulaire du portefeuille actions. Description chargée dynamiquement.</div>
+                    <canvas id="saxoChartCanvas" width="400" height="200"
+                        aria-label="Graphique circulaire du portefeuille actions"
+                        aria-describedby="saxo-chart-desc"
+                        role="img"></canvas>
                 </div>
 
                 <!-- Export Button -->
@@ -643,7 +651,7 @@
                 data-source="API /api/wealth/patrimoine/summary">
                 <div class="card-header">
                     <a href="wealth-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;" aria-label="Navigate to Wealth dashboard">
-                        <span class="card-icon">💼</span>Wealth
+                        <span class="card-icon" aria-hidden="true">💼</span>Wealth
                     </a>
                 </div>
 
@@ -663,7 +671,11 @@
                 </div>
 
                 <div class="portfolio-chart" id="patrimoine-chart" style="height: 140px; margin-top: 12px;">
-                    <canvas id="patrimoineChartCanvas" width="400" height="200" aria-label="Wealth portfolio distribution chart"></canvas>
+                    <div id="wealth-chart-desc" class="sr-only">Graphique circulaire du patrimoine. Description chargée dynamiquement.</div>
+                    <canvas id="patrimoineChartCanvas" width="400" height="200"
+                        aria-label="Graphique circulaire du patrimoine"
+                        aria-describedby="wealth-chart-desc"
+                        role="img"></canvas>
                 </div>
 
                 <!-- Export Button -->
@@ -691,7 +703,7 @@
                 data-source="Unified scores from Risk Dashboard + Phase Engine">
                 <div class="card-header">
                     <a href="analytics-unified.html" class="card-title" style="text-decoration: none; color: inherit;">
-                        <span class="card-icon">🧭</span> Global Insight
+                        <span class="card-icon" aria-hidden="true">🧭</span> Global Insight
                     </a>
                     <button class="icon-btn" id="refresh-scores-btn" title="Refresh scores (recalculate from Risk Dashboard)" aria-label="Refresh scores" style="font-size: 0.9rem;">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -740,7 +752,7 @@
                 <div class="card-header">
                     <a href="ai-dashboard.html#regimes" class="card-title"
                         style="text-decoration: none; color: inherit;">
-                        <span class="card-icon">📈</span> Market Regime
+                        <span class="card-icon" aria-hidden="true">📈</span> Market Regime
                     </a>
                 </div>
                 <div id="regime-content">
@@ -786,7 +798,7 @@
                 data-source="Risk Dashboard + Governance Alerts">
                 <div class="card-header">
                     <a href="risk-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;">
-                        <span class="card-icon">🚨</span> Risk & Alerts
+                        <span class="card-icon" aria-hidden="true">🚨</span> Risk & Alerts
                     </a>
                 </div>
                 <div class="metric">
@@ -814,7 +826,7 @@
                 data-tooltip="Status of automatic trade executions with performance history and processed volumes."
                 data-source="API /execution/status + internal logs">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">🎯</span>Execution</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">🎯</span>Execution</div>
                 </div>
                 <div class="metric">
                     <span class="metric-label">Last Execution</span>
@@ -835,7 +847,7 @@
                 data-tooltip="History of recent trading operations, rebalancing and system events."
                 data-source="API /execution/history + system logs">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">📋</span>Activity</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">📋</span>Activity</div>
                 </div>
                 <div class="recent-activity" id="recent-activity">
                     <div class="loading">
@@ -850,7 +862,7 @@
                 data-tooltip="System status: exchange connections, APIs, data freshness and security."
                 data-source="Internal monitoring + API tests + connectivity">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">⚡</span>System Status</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">⚡</span>System Status</div>
                 </div>
                 <div class="metric">
                     <span class="metric-label">API Status</span>
@@ -871,7 +883,7 @@
                 data-tooltip="Quick access to advanced tools: Analytics, AI Dashboard, Optimization and Performance."
                 data-source="Internal links and advanced tools">
                 <div class="card-header">
-                    <div class="card-title"><span class="card-icon">🔧</span>Tools & Analytics</div>
+                    <div class="card-title"><span class="card-icon" aria-hidden="true">🔧</span>Tools & Analytics</div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
                     <a href="analytics-unified.html"
