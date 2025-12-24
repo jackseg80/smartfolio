@@ -24,11 +24,64 @@ class BourseDataFetcher:
     with multi-currency and multi-exchange support
     """
 
+    # MIC (Market Identifier Code) to exchange hint mapping
+    # Used to convert Saxo CSV format (e.g., "GOOGL:xnas") to exchange hints
+    MIC_TO_EXCHANGE_HINT = {
+        'xnas': 'NASDAQ',       # NASDAQ (US)
+        'xnys': 'NYSE',         # New York Stock Exchange (US)
+        'xase': 'NYSEAMERICAN', # NYSE American (US)
+        'arcx': 'NYSE',         # NYSE Arca (US)
+        'bats': 'BATS',         # BATS (US)
+        'xvtx': 'VX',           # SIX Swiss (VIRT-X legacy)
+        'xswx': 'VX',           # SIX Swiss Exchange
+        'xetr': 'XETR',         # Deutsche Börse XETRA (Germany)
+        'xfra': 'FSE',          # Frankfurt Stock Exchange (Germany)
+        'xpar': 'PAR',          # Euronext Paris (France)
+        'xams': 'AMS',          # Euronext Amsterdam (Netherlands)
+        'xmil': 'MIL',          # Borsa Italiana Milano (Italy)
+        'xbru': 'BRU',          # Euronext Brussels (Belgium)
+        'xlis': 'LIS',          # Euronext Lisbon (Portugal)
+        'xlon': 'LSE',          # London Stock Exchange (UK)
+        'xwar': 'WSE',          # Warsaw Stock Exchange (Poland)
+        'xmad': 'BME',          # Bolsa de Madrid (Spain)
+        'xsto': 'STO',          # Nasdaq Stockholm (Sweden)
+        'xcse': 'CSE',          # Nasdaq Copenhagen (Denmark)
+        'xhel': 'HEL',          # Nasdaq Helsinki (Finland)
+        'xosl': 'OSE',          # Oslo Børs (Norway)
+        'xtse': 'TSE',          # Toronto Stock Exchange (Canada)
+        'xtsx': 'TSX',          # TSX Venture Exchange (Canada)
+    }
+
     def __init__(self, cache_dir: str = "data/cache/bourse"):
         self.cache_dir = cache_dir
         os.makedirs(cache_dir, exist_ok=True)
         self.cache = {}  # In-memory cache
         self.currency_detector = CurrencyExchangeDetector()
+
+    def _mic_to_exchange_hint(self, mic_code: str) -> str:
+        """
+        Convert MIC (Market Identifier Code) to exchange hint compatible with CurrencyExchangeDetector
+
+        Args:
+            mic_code: MIC code (e.g., "xnas", "xvtx", "xetr")
+
+        Returns:
+            Exchange hint string (e.g., "NASDAQ", "VX", "XETR")
+
+        Examples:
+            >>> _mic_to_exchange_hint("xnas") → "NASDAQ"
+            >>> _mic_to_exchange_hint("xvtx") → "VX"
+            >>> _mic_to_exchange_hint("xetr") → "XETR"
+        """
+        mic_lower = mic_code.lower()
+        hint = self.MIC_TO_EXCHANGE_HINT.get(mic_lower)
+
+        if hint:
+            logger.debug(f"MIC '{mic_code}' → exchange hint '{hint}'")
+            return hint
+        else:
+            logger.warning(f"Unknown MIC code '{mic_code}', assuming US exchange")
+            return "NASDAQ"  # Safe fallback for unknown MIC codes
 
     async def fetch_historical_prices(
         self,
@@ -43,7 +96,7 @@ class BourseDataFetcher:
         Fetch historical OHLCV data for a ticker with multi-currency support
 
         Args:
-            ticker: Stock ticker symbol (base, without exchange suffix)
+            ticker: Stock ticker symbol (can include MIC code like "GOOGL:xnas")
             start_date: Start date for historical data
             end_date: End date for historical data
             source: Data source ("saxo", "yahoo", "manual")
@@ -55,16 +108,30 @@ class BourseDataFetcher:
 
         Note:
             The ticker will be automatically converted to the correct yfinance symbol
-            using CurrencyExchangeDetector (e.g., "ROG" → "ROG.SW" for Swiss stocks)
+            using CurrencyExchangeDetector (e.g., "ROG:xvtx" → "ROG.SW" for Swiss stocks)
         """
         if end_date is None:
             end_date = datetime.now()
         if start_date is None:
             start_date = end_date - timedelta(days=365)  # Default 1 year
 
-        # Detect correct exchange and currency
+        # Extract base symbol and MIC code if present (Saxo format: "GOOGL:xnas")
+        base_symbol = ticker
+        mic_code = None
+        if ':' in ticker:
+            parts = ticker.split(':', 1)
+            base_symbol = parts[0].strip()
+            mic_code = parts[1].strip().lower()  # MIC codes are lowercase (xnas, xvtx, etc.)
+            logger.debug(f"Extracted from '{ticker}': symbol='{base_symbol}', MIC='{mic_code}'")
+
+        # Convert MIC code to exchange hint if needed
+        if mic_code and not exchange_hint:
+            exchange_hint = self._mic_to_exchange_hint(mic_code)
+            logger.debug(f"Converted MIC '{mic_code}' → exchange_hint '{exchange_hint}'")
+
+        # Detect correct exchange and currency using BASE symbol (without MIC suffix)
         yf_symbol, native_currency, exchange_name = self.currency_detector.detect_currency_and_exchange(
-            symbol=ticker,
+            symbol=base_symbol,
             isin=isin,
             exchange_hint=exchange_hint
         )
@@ -124,12 +191,16 @@ class BourseDataFetcher:
         """
         Fetch data from Yahoo Finance API
 
+        Args:
+            ticker: Yahoo Finance symbol (e.g., "NVDA", "SLHN.SW")
+                   Should already be converted by CurrencyExchangeDetector
+
         Note: This is a simplified implementation. In production, use yfinance library.
         """
         try:
             import yfinance as yf
 
-            # Normalize ticker for yfinance (remove exchange suffix if present)
+            # Safety net: remove any remaining MIC suffix (should not happen after upstream fix)
             # Example: "NVDA:xnas" → "NVDA", "SLHN.SW:xvtx" → "SLHN.SW"
             normalized_ticker = ticker.split(':')[0] if ':' in ticker else ticker
 

@@ -20,6 +20,13 @@ class CurrencyExchangeDetector:
     - Mapping ISIN → Bourse appropriée
     """
 
+    # Special symbol transformations for Yahoo Finance compatibility
+    # Used for symbols that have different formats in Saxo CSV vs Yahoo Finance
+    SYMBOL_TRANSFORMATIONS = {
+        'BRKb': 'BRK-B',  # Berkshire Hathaway Class B
+        # Add more special cases as needed
+    }
+
     # Mapping symboles → devise/bourse
     # Format: symbol → (exchange_suffix, native_currency, exchange_name)
     SYMBOL_EXCHANGE_MAP = {
@@ -99,12 +106,21 @@ class CurrencyExchangeDetector:
 
     # ETFs - Handle special cases
     ETF_MAP = {
+        # Global equity ETFs
         'IWDA': ('.AS', 'EUR', 'Euronext Amsterdam'),  # iShares Core MSCI World
-        'ITEK': ('.PA', 'EUR', 'Euronext Paris'),  # HAN-GINS Tech Megatrend
+        'EIMI': ('.SW', 'CHF', 'SIX Swiss'),  # iShares Core MSCI Emerging Markets IMI
+        'CSPX': ('.AS', 'EUR', 'Euronext Amsterdam'),  # iShares Core S&P 500
         'WORLD': ('.SW', 'CHF', 'SIX Swiss'),  # UBS MSCI World
         'ACWI': ('', 'USD', 'NASDAQ'),  # iShares MSCI ACWI (US listing)
-        'AGGS': ('.SW', 'CHF', 'SIX Swiss'),  # iShares Core Global Aggregate Bond
+
+        # Sector/thematic ETFs
+        'ITEK': ('.PA', 'EUR', 'Euronext Paris'),  # HAN-GINS Tech Megatrend
         'BTEC': ('.SW', 'USD', 'SIX Swiss'),  # iShares NASDAQ Biotechnology
+
+        # Fixed income
+        'AGGS': ('.SW', 'CHF', 'SIX Swiss'),  # iShares Core Global Aggregate Bond
+
+        # Commodities
         'XGDU': ('.MI', 'EUR', 'Borsa Italiana'),  # Xtrackers Gold ETC
     }
 
@@ -123,14 +139,20 @@ class CurrencyExchangeDetector:
         Détecte la devise native et la bourse appropriée pour un symbole.
 
         Args:
-            symbol: Symbole de l'asset (ex: "ROG", "AAPL", "IFX")
+            symbol: Symbole de l'asset (ex: "ROG", "AAPL", "IFX", "BRKb")
             isin: Code ISIN optionnel (ex: "CH0012032048" pour Roche)
             exchange_hint: Hint de bourse depuis CSV Saxo (ex: "VX", "FSE", "NASDAQ")
 
         Returns:
             Tuple (yfinance_symbol, native_currency, exchange_name)
-            Ex: ("ROG.SW", "CHF", "SIX Swiss")
+            Ex: ("ROG.SW", "CHF", "SIX Swiss"), ("BRK-B", "USD", "NYSE")
         """
+        # 0. Apply special transformations for Yahoo Finance compatibility (e.g., BRKb → BRK-B)
+        transformed_symbol = self.SYMBOL_TRANSFORMATIONS.get(symbol, symbol)
+        if transformed_symbol != symbol:
+            logger.debug(f"🔄 Symbol transformation: {symbol} → {transformed_symbol}")
+            symbol = transformed_symbol
+
         # 1. Check direct mapping first
         if symbol in self.full_map:
             suffix, currency, exchange = self.full_map[symbol]

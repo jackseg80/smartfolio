@@ -32,10 +32,10 @@ logger = logging.getLogger(__name__)
 
 # Safe directories for ML models (all models must be within these directories)
 # - cache/ml_pipeline: Crypto ML models (primary safe directory)
-# - models/stocks: Stock market ML models (trained by SmartFolio)
+# - models: All trained ML models (stocks, volatility, regime, etc.)
 SAFE_MODEL_DIRS = [
     Path("cache/ml_pipeline"),
-    Path("models/stocks"),
+    Path("models"),
 ]
 
 
@@ -63,6 +63,8 @@ def safe_pickle_load(file_path: str | Path) -> Any:
     Security: Only loads from SAFE_MODEL_DIRS to prevent arbitrary code execution
     from untrusted pickle files.
 
+    Supports both standard pickle and joblib formats (auto-detection).
+
     Args:
         file_path: Path to pickle file (must be within SAFE_MODEL_DIRS)
 
@@ -75,7 +77,8 @@ def safe_pickle_load(file_path: str | Path) -> Any:
 
     Example:
         >>> model = safe_pickle_load("cache/ml_pipeline/models/regime/model.pkl")
-        >>> model = safe_pickle_load("models/stocks/volatility/SPY_scaler.pkl")
+        >>> model = safe_pickle_load("models/volatility/BTC_scaler.pkl")
+        >>> model = safe_pickle_load("models/stocks/SPY_scaler.pkl")
     """
     abs_path = Path(file_path).resolve()
 
@@ -94,6 +97,19 @@ def safe_pickle_load(file_path: str | Path) -> Any:
 
     logger.info(f"Loading pickle model from validated path: {abs_path}")
 
+    # Try joblib first (scikit-learn optimized format), then fallback to pickle
+    try:
+        import joblib
+        model = joblib.load(abs_path)
+        logger.debug(f"Successfully loaded joblib model: {abs_path}")
+        return model
+    except ImportError:
+        logger.debug("joblib not installed, using standard pickle")
+    except Exception as e:
+        # If joblib fails, try standard pickle
+        logger.debug(f"joblib.load failed ({e}), trying standard pickle")
+
+    # Fallback to standard pickle
     try:
         with open(abs_path, 'rb') as f:
             model = pickle.load(f)
@@ -131,7 +147,8 @@ def safe_torch_load(
 
     Example:
         >>> checkpoint = safe_torch_load("cache/ml_pipeline/models/regime_neural.pth")
-        >>> checkpoint = safe_torch_load("models/stocks/regime/regime_neural_best.pth")
+        >>> checkpoint = safe_torch_load("models/volatility/ETH_model.pth")
+        >>> checkpoint = safe_torch_load("models/regime/regime_neural_best.pth")
         >>> model.load_state_dict(checkpoint)
     """
     # Import torch here to avoid dependency if not needed
