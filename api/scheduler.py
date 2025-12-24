@@ -166,8 +166,8 @@ async def job_ohlcv_daily():
         )
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        stdout_text = stdout.decode('utf-8') if stdout else ""
-        stderr_text = stderr.decode('utf-8') if stderr else ""
+        stdout_text = stdout.decode('utf-8', errors='replace') if stdout else ""
+        stderr_text = stderr.decode('utf-8', errors='replace') if stderr else ""
 
         if process.returncode == 0:
             logger.info(f"✅ [{job_id}] OHLCV daily update completed in {duration_ms:.0f}ms")
@@ -215,8 +215,8 @@ async def job_ohlcv_hourly():
         )
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        stdout_text = stdout.decode('utf-8') if stdout else ""
-        stderr_text = stderr.decode('utf-8') if stderr else ""
+        stdout_text = stdout.decode('utf-8', errors='replace') if stdout else ""
+        stderr_text = stderr.decode('utf-8', errors='replace') if stderr else ""
 
         if process.returncode == 0:
             logger.info(f"✅ [{job_id}] OHLCV hourly update completed in {duration_ms:.0f}ms")
