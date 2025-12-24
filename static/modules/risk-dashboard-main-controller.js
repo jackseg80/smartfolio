@@ -327,6 +327,16 @@ window.switchTab = function (tabName) {
       // Always render cycles content when tab is activated
       requestAnimationFrame(() => renderCyclesContent());
       break;
+    case 'advanced':
+      // Load Phase 3A Advanced Risk components
+      requestAnimationFrame(() => {
+        if (typeof window.loadAdvancedRiskComponents === 'function') {
+          window.loadAdvancedRiskComponents().catch(err =>
+            debugLogger.error('Failed to load advanced risk components:', err)
+          );
+        }
+      });
+      break;
     case 'targets':
       requestAnimationFrame(() => {
         renderTargetsContent().catch(err => debugLogger.error('Failed to render targets:', err));
