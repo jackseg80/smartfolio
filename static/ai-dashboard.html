@@ -1228,21 +1228,24 @@
 
                 // 2. Statut régime via API réelle optimisée
                 try {
-                    const cacheStatsResponse = await fetch(`${config.api_base_url}/api/ml/cache/stats`);
-                    if (cacheStatsResponse.ok) {
-                        const cacheData = await cacheStatsResponse.json();
-                        const regimeLoadingStatus = cacheData.cache_stats?.loading_status?.regime;
+                    // Vérifier si les modèles de régime existent et sont entraînés
+                    const mlStatusResponse = await fetch(`${config.api_base_url}/api/ml/status`);
+                    if (mlStatusResponse.ok) {
+                        const mlStatus = await mlStatusResponse.json();
+                        const regimeModels = mlStatus.pipeline_status?.regime_models;
 
-                        if (regimeLoadingStatus === 'loaded') {
+                        if (regimeModels?.model_loaded) {
                             regimeStatus = 'Chargé';
                             regimeSource = '78% précision (chargé en mémoire)';
-                        } else if (regimeLoadingStatus === 'failed') {
+                        } else if (regimeModels?.model_exists) {
                             regimeStatus = 'Entraîné';
-                            regimeSource = 'Modèle disponible, erreur de chargement';
+                            regimeSource = 'Modèle entraîné, lazy loading';
                         } else {
-                            regimeStatus = 'Disponible';
-                            regimeSource = 'Modèle entraîné, pas encore chargé';
+                            regimeStatus = 'Non disponible';
+                            regimeSource = 'Aucun modèle entraîné';
                         }
+
+                        debugLogger.debug('✅ Statut régime:', regimeStatus, '- Exists:', regimeModels?.model_exists, 'Loaded:', regimeModels?.model_loaded);
                     }
 
                     // Obtenir le régime actuel via endpoint predict
@@ -1270,9 +1273,9 @@
                     });
                     if (correlationResponse.ok) {
                         const correlationData = await correlationResponse.json();
-                        if (correlationData.success && correlationData.correlation_matrix) {
+                        if (correlationData.success && correlationData.correlation_matrix?.correlations) {
                             correlationStatus = 'Temps réel';
-                            const assets = Object.keys(correlationData.correlation_matrix);
+                            const assets = Object.keys(correlationData.correlation_matrix.correlations);
                             correlationMetric = `${assets.length} Assets`;
                             correlationSource = `Matrice ${assets.length}x${assets.length}`;
                             debugLogger.debug('✅ Matrice corrélation chargée:', assets.length, 'assets');
@@ -1681,6 +1684,47 @@
                 let regimeStatus = 'Simulé', regimeMetric = 'Bull', regimeSource = '75% confiance';
                 let correlationStatus = 'Simulé', correlationMetric = '15 Assets', correlationSource = 'Pearson';
                 let sentimentStatus = 'ML Sentiment', sentimentMetric = '--/100', sentimentSource = 'En attente';
+
+                // Charger statut régime
+                try {
+                    const mlStatusResponse = await fetch(`${config.api_base_url}/api/ml/status`);
+                    if (mlStatusResponse.ok) {
+                        const mlStatus = await mlStatusResponse.json();
+                        const regimeModels = mlStatus.pipeline_status?.regime_models;
+
+                        if (regimeModels?.model_loaded) {
+                            regimeStatus = 'Chargé';
+                            regimeSource = '78% précision (chargé en mémoire)';
+                        } else if (regimeModels?.model_exists) {
+                            regimeStatus = 'Entraîné';
+                            regimeSource = 'Modèle entraîné, lazy loading';
+                        } else {
+                            regimeStatus = 'Non disponible';
+                            regimeSource = 'Aucun modèle entraîné';
+                        }
+                    }
+                } catch (e) {
+                    debugLogger.warn('⚠️ API régime non disponible');
+                }
+
+                // Charger statut corrélations
+                try {
+                    const activeUser = localStorage.getItem('activeUser') || 'demo';
+                    const correlationResponse = await fetch(`${config.api_base_url}/api/risk/correlation?source=${config.data_source}`, {
+                        headers: { 'X-User': activeUser }
+                    });
+                    if (correlationResponse.ok) {
+                        const correlationData = await correlationResponse.json();
+                        if (correlationData.success && correlationData.correlation_matrix?.correlations) {
+                            correlationStatus = 'Temps réel';
+                            const assets = Object.keys(correlationData.correlation_matrix.correlations);
+                            correlationMetric = `${assets.length} Assets`;
+                            correlationSource = `Matrice ${assets.length}x${assets.length}`;
+                        }
+                    }
+                } catch (e) {
+                    debugLogger.warn('⚠️ API corrélations non disponible');
+                }
 
                 // Charger ML Sentiment
                 try {
