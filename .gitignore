@@ -21,15 +21,23 @@ htmlcov/
 .claude/settings.local.json
 
 # ML Models & Cache (too large, auto-generated)
-# All ML model formats
+# All ML model formats (binary files)
 *.pth
 *.pkl
 *.h5
 *.onnx
 *.joblib
-models/stocks/
-# ML model registry (runtime data, updated by training)
-models/registry.json
+
+# Ignore stocks models but keep structure
+models/stocks/**/*.pth
+models/stocks/**/*.pkl
+models/stocks/**/*.json
+!models/stocks/**/.gitkeep
+
+# ML Model Registry - COMMIT THIS
+# registry.json is the catalog of trained models (metadata only, ~10KB)
+# Needed for production deployment to track available models
+!models/registry.json
 
 # Cache directories (all cache types)
 cache/

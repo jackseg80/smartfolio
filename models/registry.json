@@ -1,0 +1,322 @@
+{
+  "btc_regime_detector": {
+    "v1.0": {
+      "name": "btc_regime_detector",
+      "version": "v1.0",
+      "model_type": "regime",
+      "status": "trained",
+      "created_at": "2024-10-21T16:47:00+00:00",
+      "updated_at": "2025-12-20T14:38:42.463844",
+      "file_path": "models/regime/regime_neural_best.pth",
+      "file_size": 0,
+      "file_hash": null,
+      "training_config": {
+        "model": "neural",
+        "features": [
+          "price",
+          "volume",
+          "volatility"
+        ]
+      },
+      "features_used": [
+        "btc_price",
+        "btc_volume",
+        "mvrv_ratio",
+        "puell_multiple",
+        "volatility_7d"
+      ],
+      "training_data_period": {
+        "start_date": "2020-01-01",
+        "end_date": "2024-10-21"
+      },
+      "hyperparameters": {
+        "learning_rate": 0.001,
+        "hidden_size": 64,
+        "num_layers": 2
+      },
+      "validation_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7966728280961183,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:38:28.130587",
+        "training_time_seconds": 24.923741817474365
+      },
+      "test_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7966728280961183,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:38:28.130587",
+        "training_time_seconds": 24.923741817474365
+      },
+      "target_assets": [
+        "BTC"
+      ],
+      "prediction_horizon": "7d",
+      "tags": [
+        "regime",
+        "bitcoin",
+        "cycle"
+      ],
+      "description": "Bitcoin market regime detector using neural network and on-chain metrics",
+      "author": "SmartFolio ML Team"
+    }
+  },
+  "btc_regime_hmm": {
+    "v1.0": {
+      "name": "btc_regime_hmm",
+      "version": "v1.0",
+      "model_type": "regime",
+      "status": "trained",
+      "created_at": "2024-10-21T16:47:00+00:00",
+      "updated_at": "2025-12-20T14:39:51.193596",
+      "file_path": "models/regime/btc_regime_hmm.pkl",
+      "file_size": 0,
+      "file_hash": null,
+      "training_config": {
+        "model": "hmm",
+        "n_states": 4
+      },
+      "features_used": [
+        "btc_price",
+        "btc_volume",
+        "volatility"
+      ],
+      "training_data_period": {
+        "start_date": "2020-01-01",
+        "end_date": "2024-10-21"
+      },
+      "hyperparameters": {
+        "n_components": 4,
+        "covariance_type": "full"
+      },
+      "validation_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7763401109057301,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:39:30.323747",
+        "training_time_seconds": 55.83587646484375
+      },
+      "test_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7763401109057301,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:39:30.323747",
+        "training_time_seconds": 55.83587646484375
+      },
+      "target_assets": [
+        "BTC"
+      ],
+      "prediction_horizon": "7d",
+      "tags": [
+        "regime",
+        "bitcoin",
+        "hmm"
+      ],
+      "description": "Bitcoin market regime detector using Hidden Markov Model",
+      "author": "SmartFolio ML Team"
+    }
+  },
+  "stock_regime_detector": {
+    "v1.0": {
+      "name": "stock_regime_detector",
+      "version": "v1.0",
+      "model_type": "regime",
+      "status": "trained",
+      "created_at": "2024-10-21T16:47:00+00:00",
+      "updated_at": "2025-12-20T14:39:55.076536",
+      "file_path": "models/stocks/regime/regime_neural_best.pth",
+      "file_size": 0,
+      "file_hash": null,
+      "training_config": {
+        "model": "neural",
+        "features": [
+          "price",
+          "volume",
+          "technical_indicators"
+        ]
+      },
+      "features_used": [
+        "close",
+        "volume",
+        "rsi",
+        "macd",
+        "bollinger_bands"
+      ],
+      "training_data_period": {
+        "start_date": "2020-01-01",
+        "end_date": "2024-10-21"
+      },
+      "hyperparameters": {
+        "learning_rate": 0.001,
+        "hidden_size": 64,
+        "num_layers": 2
+      },
+      "validation_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7763401109057301,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:39:30.323747",
+        "training_time_seconds": 57.854504346847534
+      },
+      "test_metrics": {
+        "accuracy": 0.7859778597785978,
+        "best_val_accuracy": 0.7763401109057301,
+        "data_source": "synthetic",
+        "train_samples": 1623,
+        "test_samples": 542,
+        "val_samples": 541,
+        "feature_count": 10,
+        "trained_at": "2025-12-20T14:39:30.323747",
+        "training_time_seconds": 57.854504346847534
+      },
+      "target_assets": [
+        "AAPL",
+        "MSFT",
+        "NVDA",
+        "SPY"
+      ],
+      "prediction_horizon": "7d",
+      "tags": [
+        "regime",
+        "stocks",
+        "equities"
+      ],
+      "description": "Stock market regime detector using neural network and technical indicators",
+      "author": "SmartFolio ML Team"
+    }
+  },
+  "volatility_forecaster": {
+    "v2.1": {
+      "name": "volatility_forecaster",
+      "version": "v2.1",
+      "model_type": "volatility",
+      "status": "trained",
+      "created_at": "2024-09-15T08:53:00+00:00",
+      "updated_at": "2025-12-20T22:29:12.387031",
+      "file_path": "models/volatility/volatility_model_v2.1.pkl",
+      "file_size": 0,
+      "file_hash": null,
+      "training_config": {
+        "model": "garch",
+        "window_size": 30
+      },
+      "features_used": [
+        "returns",
+        "volume",
+        "realized_volatility"
+      ],
+      "training_data_period": {
+        "start_date": "2020-01-01",
+        "end_date": "2024-09-15"
+      },
+      "hyperparameters": {
+        "p": 1,
+        "q": 1,
+        "distribution": "normal"
+      },
+      "validation_metrics": {
+        "test_mse": 0.028034913043181103,
+        "best_val_mse": 0.01829646434634924,
+        "r2": 0.45665979385375977,
+        "data_source": "real_crypto_365d",
+        "assets": "BTC,ETH,SOL",
+        "models_trained": 3,
+        "per_asset": [
+          {
+            "symbol": "BTC",
+            "test_mse": 0.010295458137989044,
+            "best_val_mse": 0.011113825254142284,
+            "r2": 0.5614332556724548,
+            "train_samples": 1776,
+            "test_samples": 592
+          },
+          {
+            "symbol": "ETH",
+            "test_mse": 0.0366215705871582,
+            "best_val_mse": 0.019075343385338783,
+            "r2": 0.43393653631210327,
+            "train_samples": 213,
+            "test_samples": 71
+          },
+          {
+            "symbol": "SOL",
+            "test_mse": 0.03718771040439606,
+            "best_val_mse": 0.02470022439956665,
+            "r2": 0.3746095895767212,
+            "train_samples": 213,
+            "test_samples": 71
+          }
+        ],
+        "training_time_seconds": 7.646095514297485
+      },
+      "test_metrics": {
+        "test_mse": 0.028034913043181103,
+        "best_val_mse": 0.01829646434634924,
+        "r2": 0.45665979385375977,
+        "data_source": "real_crypto_365d",
+        "assets": "BTC,ETH,SOL",
+        "models_trained": 3,
+        "per_asset": [
+          {
+            "symbol": "BTC",
+            "test_mse": 0.010295458137989044,
+            "best_val_mse": 0.011113825254142284,
+            "r2": 0.5614332556724548,
+            "train_samples": 1776,
+            "test_samples": 592
+          },
+          {
+            "symbol": "ETH",
+            "test_mse": 0.0366215705871582,
+            "best_val_mse": 0.019075343385338783,
+            "r2": 0.43393653631210327,
+            "train_samples": 213,
+            "test_samples": 71
+          },
+          {
+            "symbol": "SOL",
+            "test_mse": 0.03718771040439606,
+            "best_val_mse": 0.02470022439956665,
+            "r2": 0.3746095895767212,
+            "train_samples": 213,
+            "test_samples": 71
+          }
+        ],
+        "training_time_seconds": 7.646095514297485
+      },
+      "target_assets": [
+        "BTC",
+        "ETH",
+        "SOL"
+      ],
+      "prediction_horizon": "30d",
+      "tags": [
+        "volatility",
+        "garch",
+        "risk"
+      ],
+      "description": "Crypto volatility forecaster using GARCH model",
+      "author": "SmartFolio ML Team"
+    }
+  }
+}
