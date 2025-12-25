@@ -1,6 +1,6 @@
 # SmartFolio
 
-Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 6 canonical pages optimized for real-time decision making.
+Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 10+ specialized pages optimized for real-time decision making.
 
 Designed to simplify the management of large crypto portfolios (>200 assets) via a smart 11-group taxonomy, and currently specialized for CoinTracking (API & CSV) data sources.
 
@@ -33,6 +33,7 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 
 - **Advanced ML**: LSTM & Transformers for volatility and trend prediction.
 - **Risk Score V2**: Unified "Robustness Score" (0-100) across all asset classes.
+- **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Calcul: `50 + (sentiment_ml × 50)` où sentiment ∈ [-1, 1].
 - **Multi-Tenant**: Complete isolation of data and configurations per user.
 
 ## Quick Start
@@ -138,9 +139,13 @@ This is the recommended method for running the application in a stable, producti
 | **Dashboard** | Global portfolio view + P&L Today | `/static/dashboard.html` |
 | **Analytics** | Real-time ML + Decision Index | `/static/analytics-unified.html` |
 | **Risk** | Risk management + Governance + Alerts | `/static/risk-dashboard.html` |
+| **Cycle Analysis** | Bitcoin cycle analysis + historical charts | `/static/cycle-analysis.html` |
 | **Rebalance** | Dynamic rebalancing plans | `/static/rebalance.html` |
 | **Execution** | Real-time execution with validation | `/static/execution.html` |
 | **Simulations** | Complete pipeline simulator | `/static/simulations.html` |
+| **Wealth Dashboard** | Unified wealth (liquidities, assets, liabilities) | `/static/wealth-dashboard.html` |
+| **Monitoring** | System KPIs + Alerts History | `/static/monitoring.html` |
+| **Admin Dashboard** | User management, logs, cache, ML models (RBAC) | `/static/admin-dashboard.html` |
 | **Saxo Dashboard** | Stock Market (stocks, ETFs, funds) with intelligent stop-loss | `/static/saxo-dashboard.html` |
 
 ## Architecture
@@ -216,7 +221,7 @@ data/
 - **Simulator**: [SIMULATION_ENGINE.md](docs/SIMULATION_ENGINE.md) - Complete pipeline
 - **Sources System**: [SOURCES_SYSTEM.md](docs/SOURCES_SYSTEM.md) - Unified multi-source
 - **Market Opportunities**: [MARKET_OPPORTUNITIES_SYSTEM.md](docs/MARKET_OPPORTUNITIES_SYSTEM.md) - Scoring 3-pillars, gap detection
-- **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 5 adaptive methods
+- **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 6 adaptive methods (Trailing Stop NEW Oct 2025)
 - **P&L Today**: [P&L Today](docs/PNL_TODAY.md) - Real-time tracking
 - **Redis**: [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Cache & streaming
 - **Logging**: [LOGGING.md](docs/LOGGING.md) - Rotating logs (5MB x3, AI-optimized)
@@ -373,6 +378,6 @@ This project is a starter/template for personal or educational use.
 
 ---
 
-**Status**: ✅ Production Stable (Oct 2025)
+**Status**: ✅ Production Stable (Dec 2025)
 **Version**: 3.0
 **Stack**: Python 3.10+ • FastAPI • Vanilla JS (ES6) • Redis (optional)

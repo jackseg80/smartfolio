@@ -1,7 +1,7 @@
 # CLAUDE.md — Guide Agent SmartFolio
 
 > Version condensée pour agents IA. Source canonique: `AGENTS.md`
-> Dernière mise à jour: Oct 2025
+> Dernière mise à jour: Dec 2025
 
 ## 🎯 Règles Critiques
 
@@ -141,8 +141,10 @@ config/users.json                # User registry avec rôles RBAC
 ## 💾 Système de Données
 
 ### Sources Unifiées (Système data/)
-1. **`data/`** - Dossier unique avec versioning automatique
-2. **API externe** (cointracking_api)
+1. **`data/`** - Dossier unique avec versioning automatique (CSV Crypto/Saxo)
+2. **CoinTracking API** - API externe temps réel (si clés configurées)
+3. **Saxo API** - Import positions stock market
+4. **Banks/Patrimoine** - Comptes manuels (liquidités, biens, passifs)
 
 **Principe**: Upload direct → disponible immédiatement
 - Versioning automatique: `YYYYMMDD_HHMMSS_{filename}.csv`
@@ -158,6 +160,8 @@ data/users/{user_id}/
     api_cache/    # Cache API
   saxobank/
     data/         # Tous les CSV (versionnés automatiquement)
+  wealth/
+    patrimoine.json  # Patrimoine unifié (liquidités, biens, passifs, assurances)
   config/
     sources.json  # Configuration modules sources
 ```
@@ -396,7 +400,8 @@ Select-String -Path "logs\app.log" -Pattern "ERROR|WARNING" | Select-Object -Las
 
 2. **NIVEAU 2 (Optimisations Tactiques):** Phase Engine
    - Détecte: ETH expansion, large-cap altseason, full altseason, risk-off
-   - **Active par défaut** (`'apply'` mode)
+   - **Shadow mode par défaut** (simulation sans impact allocation)
+   - Mode `'apply'` disponible pour production (tilts actifs)
    - Persistence: buffers localStorage (TTL 7 jours, 14 samples max)
    - Fallback intelligent: utilise DI + breadth si données partielles
 
@@ -464,7 +469,7 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 
 **Frontend** ([saxo-dashboard.html](static/saxo-dashboard.html)):
 
-- Tableau comparatif des 5 méthodes dans modal de recommendation
+- Tableau comparatif des 6 méthodes dans modal de recommendation
 - Badge R/R avec icônes (✅ ≥2.0, ⚠️ ≥1.5, ❌ <1.5)
 - Alerte automatique si R/R < 1.5 (trade non recommandé)
 - Colonne R/R triable dans tableau principal (tri par défaut)

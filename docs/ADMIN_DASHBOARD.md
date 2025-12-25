@@ -144,7 +144,27 @@ static/
 | `GET /admin/logs/stats` | GET | Statistiques logs (errors, warnings) |
 | `GET /admin/logs/tail` | GET | Tail -f temps réel (SSE) |
 
-### Phase 3 (Cache + ML) - 🔴 À venir
+### Phase 3 (Cache + ML) - ✅ Opérationnel (Dec 2025)
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `GET /admin/cache/stats` | GET | Stats tous caches (in-memory, Redis) |
+| `GET /admin/cache/list` | GET | Liste caches disponibles |
+| `DELETE /admin/cache/clear` | DELETE | Clear cache par type |
+| `POST /admin/cache/clear-expired` | POST | Clear expired uniquement |
+| `GET /admin/ml/models` | GET | Liste modèles ML + metrics |
+| `POST /admin/ml/train/{model_name}` | POST | Trigger REAL PyTorch training |
+| `GET /admin/ml/jobs` | GET | Liste training jobs |
+| `GET /admin/ml/jobs/{job_id}` | GET | Status job |
+| `DELETE /admin/ml/jobs/{job_id}` | DELETE | Cancel job |
+
+**ML Training RÉEL (Phase 3.5 - Dec 2025):**
+- ✅ REAL PyTorch Training (pas de mock!)
+- ✅ Regime Models: btc_regime_detector, btc_regime_hmm, stock_regime_detector
+- ✅ Volatility Models: volatility_forecaster
+- ✅ Epochs: 100, Patience: 15, Durée: 2-5 min (GPU) / 10-20 min (CPU)
+- ✅ Metrics réels: accuracy, precision, recall, f1_score, mse, mae, r2
+- ✅ ModelRegistry sauvegardé dans `models/registry.json`
 
 ### Phase 4 (API Keys) - 🔴 À venir
 
@@ -339,20 +359,23 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 - [ ] Frontend filters UI
 - [ ] Real-time tail (SSE ou WebSocket)
 
-### Phase 3 - Cache + ML Models (À venir)
+### Phase 3 - Cache + ML Models - ✅ Terminée (Dec 2025)
 
 **Cache Management :**
-- [ ] Service `services/cache_manager.py` (unified)
-- [ ] Stats tous caches (in-memory, CoinGecko, Redis)
-- [ ] Clear cache par type
-- [ ] Cache warming
+- [x] Service `services/cache_manager.py` (unified)
+- [x] Stats tous caches (in-memory, CoinGecko, Redis)
+- [x] Clear cache par type
+- [x] Cache warming
 
 **ML Models :**
-- [ ] Service `services/ml/training_executor.py`
-- [ ] Background training jobs (asyncio)
-- [ ] Model deployment (TRAINED → DEPLOYED)
-- [ ] Model rollback
-- [ ] Real-time progress (WebSocket)
+- [x] Service `services/ml/training_executor.py`
+- [x] Background training jobs (asyncio)
+- [x] REAL PyTorch training (Regime + Volatility models)
+- [x] ModelRegistry persistence (`models/registry.json`)
+- [x] Metrics réels enregistrés (accuracy, precision, recall, f1, mse, mae, r2)
+- [ ] Model deployment (TRAINED → DEPLOYED) - À venir
+- [ ] Model rollback - À venir
+- [ ] Real-time progress (WebSocket) - À venir
 
 ### Phase 4 - API Keys Management (À venir)
 
@@ -383,4 +406,4 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 
 ---
 
-**Dernière mise à jour:** 2025-12-19 - Phase 1 terminée
+**Dernière mise à jour:** 2025-12-25 - Phase 3.5 terminée (ML Training RÉEL)
