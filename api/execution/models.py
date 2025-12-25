@@ -105,7 +105,7 @@ class MarketSignals(BaseModel):
     """Signaux de marché agrégés"""
     volatility: Dict[str, float] = Field(default_factory=dict, description="Volatilité par asset")
     regime: Dict[str, float] = Field(default_factory=dict, description="Probabilités de régime")
-    correlation: Dict[str, float] = Field(default_factory=dict, description="Corrélations clés")
+    correlation: Dict[str, Any] = Field(default_factory=dict, description="Corrélations clés (avg_correlation: float, systemic_risk: str)")
     sentiment: Dict[str, float] = Field(default_factory=dict, description="Sentiment indicators")
 
 

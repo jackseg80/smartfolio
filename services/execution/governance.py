@@ -993,6 +993,9 @@ class GovernanceEngine:
             models_loaded = cache_stats.get("cached_models", 0)
             avg_correlation = min(0.8, 0.4 + (models_loaded * 0.05))
 
+            # Ensure avg_correlation is never 0 or None (fallback to 0.4 minimum)
+            avg_correlation = max(0.4, avg_correlation) if avg_correlation else 0.4
+
             return {
                 "avg_correlation": avg_correlation,
                 "systemic_risk": "medium" if avg_correlation > 0.6 else "low"
@@ -1978,7 +1981,7 @@ class GovernanceEngine:
             correlation_data = ml_predictions.get('models', {}).get('correlation', {})
             if not correlation_data:
                 return {"avg_correlation": 0.5, "systemic_risk": "unknown"}
-            
+
             # Extract correlation information
             correlations = []
             for pair, corr_info in correlation_data.items():
@@ -1986,22 +1989,25 @@ class GovernanceEngine:
                     current_corr = corr_info.get('current_correlation', 0.5)
                     forecast_corr = corr_info.get('forecast_correlation', current_corr)
                     correlations.append(max(current_corr, forecast_corr))
-            
+
             if correlations:
                 avg_correlation = sum(correlations) / len(correlations)
                 systemic_risk_level = "high" if avg_correlation > 0.7 else "medium" if avg_correlation > 0.5 else "low"
             else:
                 avg_correlation = 0.5
                 systemic_risk_level = "unknown"
-            
+
+            # Ensure avg_correlation is never 0 or None (fallback to 0.5 minimum)
+            avg_correlation = max(0.4, avg_correlation) if avg_correlation else 0.5
+
             correlation_signals = {
                 "avg_correlation": avg_correlation,
                 "systemic_risk": systemic_risk_level
             }
-            
+
             logger.debug(f"Extracted real correlation signals: {correlation_signals}")
             return correlation_signals
-            
+
         except Exception as e:
             logger.warning(f"Error extracting real correlation signals: {e}")
             return {"avg_correlation": 0.5, "systemic_risk": "unknown"}

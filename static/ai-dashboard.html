@@ -1863,8 +1863,9 @@
 
                     // Corrélation
                     if (signals.correlation) {
-                        avgCorrelation = signals.correlation.avg_correlation || null;
-                        systematicRisk = signals.correlation.systemic_risk || null;
+                        // Fix: Use ?? instead of || to handle 0.0 correctly (0.0 is falsy in JS)
+                        avgCorrelation = signals.correlation.avg_correlation ?? null;
+                        systematicRisk = signals.correlation.systemic_risk ?? null;
                         debugLogger.debug('✅ Corrélation depuis Governance:', { avg: avgCorrelation, risk: systematicRisk });
                     }
 
