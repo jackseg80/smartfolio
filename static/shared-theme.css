@@ -863,7 +863,7 @@ header {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   border-bottom: 1px solid var(--theme-border);
-  z-index: 10;
+  z-index: 50; /* Must be above flyout-panel (z-index: 25) */
 }
 
 header .wrap {
