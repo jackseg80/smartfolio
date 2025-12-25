@@ -206,7 +206,7 @@ function getDefaultSettings() {
     coingecko_api_key: "",
     fred_api_key: "",
     debug_token: "",
-    pricing: "local",
+    pricing: "auto", // 🔧 FIX: Changed default from 'local' to 'auto' for consistency
     refresh_interval: 5,
     enable_coingecko_classification: true,
     enable_portfolio_snapshots: true,
@@ -726,8 +726,14 @@ async function selectPricing(pricing) {
   if (window.globalConfig) window.globalConfig.set('pricing', pricing);
   document.getElementById(`pricing_${pricing}`).checked = true;
   document.querySelector(`.radio-option input[value="${pricing}"]`).parentElement.classList.add('selected');
-  // Auto-save backend
-  if (window.debouncedSaveSettings) window.debouncedSaveSettings();
+  // 🔧 FIX: Save immediately (not debounced) to ensure pricing mode persists
+  try {
+    await saveSettings();
+    showNotification('✓ Mode pricing sauvegardé', 'success', 1500);
+  } catch (err) {
+    debugLogger.error('Failed to save pricing mode:', err);
+    showNotification('✗ Erreur sauvegarde', 'error', 2500);
+  }
 }
 
 // Sélection de thème (optimized - no blocking API calls)

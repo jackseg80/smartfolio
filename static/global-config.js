@@ -78,7 +78,7 @@ window.isValidDataSource = function (key) {
 
 const DEFAULT_SETTINGS = {
   data_source: 'stub_balanced',
-  pricing: 'local',
+  pricing: 'auto', // 🔧 FIX: Changed default from 'local' to 'auto' (real-time prices recommended)
   display_currency: 'USD',
   min_usd_threshold: 1.00,
   coingecko_api_key: '',

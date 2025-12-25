@@ -31,7 +31,7 @@ class UserSettings(BaseModel):
     cointracking_api_secret: str = ""
     coingecko_api_key: str = ""
     fred_api_key: str = ""
-    pricing: str = "local"
+    pricing: str = "auto"  # 🔧 FIX: Changed default from "local" to "auto" (real-time prices)
     refresh_interval: int = 5
     enable_coingecko_classification: bool = True
     enable_portfolio_snapshots: bool = True
