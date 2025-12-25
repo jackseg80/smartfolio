@@ -143,6 +143,7 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
 
         # 5. Métriques de performance globales
         change_24h = perf_metrics.get("percentage_change", 0.0) if perf_metrics.get("performance_available") else 0.0
+        change_24h_usd = perf_metrics.get("absolute_change_usd", 0.0) if perf_metrics.get("performance_available") else 0.0
         change_7d = perf_metrics_7d.get("percentage_change", 0.0) if perf_metrics_7d.get("performance_available") else 0.0
         change_30d = perf_metrics_30d.get("percentage_change", 0.0) if perf_metrics_30d.get("performance_available") else 0.0
 
@@ -150,9 +151,17 @@ async def get_real_portfolio_data(user_id: str, source: str = "cointracking") ->
         return {
             "total_value": total_value,
             "change_24h": change_24h,
+            "change_24h_usd": change_24h_usd,
             "change_7d": change_7d,
             "last_update": datetime.now(timezone.utc).isoformat(),
             "assets": assets_by_group,
+            "performance": {
+                # Structure pour compatibilité avec dashboard frontend (ligne 1318 dashboard-main-controller.js)
+                "performance_available": perf_metrics.get("performance_available", False),
+                "absolute_change_usd": change_24h_usd,
+                "percentage_change": change_24h,
+                "current_value_usd": total_value
+            },
             "performance_metrics": {
                 # NOTE: Advanced risk metrics (sharpe, volatility, max_drawdown) are available via /api/risk/dashboard
                 # They require historical price data and complex calculations handled by RiskManager
@@ -185,6 +194,12 @@ def _get_empty_portfolio_data() -> Dict[str, Any]:
         "change_7d": 0.0,
         "last_update": datetime.now(timezone.utc).isoformat(),
         "assets": {},
+        "performance": {
+            "performance_available": False,
+            "absolute_change_usd": 0.0,
+            "percentage_change": 0.0,
+            "current_value_usd": 0.0
+        },
         "performance_metrics": {
             "sharpe_ratio": 0.0,
             "max_drawdown": 0.0,
@@ -212,6 +227,7 @@ def get_mock_portfolio_data():
     return {
         "total_value": 433032.21,
         "change_24h": 2.34,
+        "change_24h_usd": 10132.45,  # Mock: +2.34% sur 433k = ~10k
         "change_7d": -5.67,
         "last_update": now.isoformat(),
         "assets": {
@@ -236,6 +252,12 @@ def get_mock_portfolio_data():
                 "value_usd": 115777.70,
                 "change_24h": 1.9
             }
+        },
+        "performance": {
+            "performance_available": True,
+            "absolute_change_usd": 10132.45,
+            "percentage_change": 2.34,
+            "current_value_usd": 433032.21
         },
         "performance_metrics": {
             "sharpe_ratio": 1.42,

@@ -1040,13 +1040,19 @@ async function loadRealCSVPortfolioData() {
 
         if (pnlResponse.ok) {
             const pnlData = await pnlResponse.json();
-            // Fix: API returns pnlData.data.performance (success_response format)
+            // Fix: API returns pnlData.data.performance (success_response format) OR pnlData.performance (direct format)
             const performanceData = pnlData.data?.performance || pnlData.performance;
-            if (pnlData.ok && performanceData && performanceData.performance_available) {
+            if (performanceData && performanceData.performance_available) {
                 performance = performanceData;
                 debugLogger.debug('✅ [PNL] P&L loaded from API:', {
                     pnl: performance.absolute_change_usd,
                     pnlPct: performance.percentage_change
+                });
+            } else {
+                debugLogger.warn('⚠️ [PNL] Performance data not available:', {
+                    hasPerformanceData: !!performanceData,
+                    performanceAvailable: performanceData?.performance_available,
+                    fullResponse: pnlData
                 });
             }
         }
