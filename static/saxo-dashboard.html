@@ -3071,8 +3071,22 @@
                 document.getElementById('dashboardContent').style.display = 'none';
 
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // ✅ FIX: Read bourseSource dynamically (don't trust window.saxoSourceType which may be stale)
+                let bourseSource = window.wealthContextBar?.getContext()?.bourse;
+                if (!bourseSource) {
+                    bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+                    debugLogger.debug(`⚠️ wealthContextBar not ready, using localStorage fallback: ${bourseSource}`);
+                }
+
+                // Determine source type from bourseSource
+                const isApiSource = bourseSource && bourseSource.startsWith('api:');
+                const isCsvSource = bourseSource && bourseSource.startsWith('saxo:');
+
+                debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
+
                 // Include source type in cache key to avoid mixing API and CSV data
-                const sourcePrefix = window.saxoSourceType === 'api' ? 'api' : (currentFileKey || 'default');
+                const sourcePrefix = isApiSource ? 'api' : (currentFileKey || 'default');
                 const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
                 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -3126,12 +3140,12 @@
                 let portfolioData;
 
                 // Load from API or CSV based on source type
-                if (window.saxoSourceType === 'api') {
+                if (isApiSource) {
                     debugLogger.debug('🌐 Loading Saxo data from API...');
 
                     // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
                     const [apiResult, cashResult] = await Promise.all([
-                        safeFetch(globalConfig.getApiUrl('/api/saxo/api-positions'), {
+                        safeFetch(`${window.getApiBase()}/api/saxo/api-positions`, {
                             headers: { 'X-User': activeUser }
                         }),
                         loadPortfolioCash() // Run in parallel
@@ -3211,19 +3225,48 @@
                     // Load from CSV (existing logic)
                     debugLogger.debug('📄 Loading Saxo data from CSV...');
 
+                    // Extract file_key from bourseSource if available
+                    let fileKey = currentFileKey; // Use global currentFileKey as fallback
+                    if (isCsvSource) {
+                        const key = bourseSource.substring(5); // Remove 'saxo:' prefix
+
+                        // Try to resolve file_key from availableSources
+                        if (!window.availableSources) {
+                            try {
+                                const response = await safeFetch(`${window.getApiBase()}/api/users/sources`, {
+                                    headers: { 'X-User': activeUser }
+                                });
+                                if (response?.ok) {
+                                    window.availableSources = response.data?.sources || [];
+                                }
+                            } catch (err) {
+                                debugLogger.warn('Failed to load availableSources:', err);
+                            }
+                        }
+
+                        // Find matching source and extract filename
+                        const source = window.availableSources?.find(s => s.key === key);
+                        if (source?.file_path) {
+                            fileKey = source.file_path.split(/[/\\]/).pop();
+                            debugLogger.debug(`📄 Resolved file_key from bourseSource: ${fileKey}`);
+                        } else {
+                            debugLogger.warn(`⚠️ Could not resolve file_key for source: ${key}`);
+                        }
+                    }
+
                     // Build URLs
                     let portfoliosUrl = '/api/saxo/portfolios';
-                    if (currentFileKey) {
-                        portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
-                        debugLogger.debug(`🔍 Loading portfolio with file_key: ${currentFileKey}`);
+                    if (fileKey) {
+                        portfoliosUrl += `?file_key=${encodeURIComponent(fileKey)}`;
+                        debugLogger.debug(`🔍 Loading portfolio with file_key: ${fileKey}`);
                     }
 
                     // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
                     const [listResult, cashResult] = await Promise.all([
-                        safeFetch(globalConfig.getApiUrl(portfoliosUrl), {
+                        safeFetch(`${window.getApiBase()}${portfoliosUrl}`, {
                             headers: { 'X-User': activeUser }
                         }),
-                        loadPortfolioCash() // Run in parallel
+                        loadPortfolioCash(fileKey) // Run in parallel (pass fileKey)
                     ]);
 
                     const { ok: listOk, data: listData } = listResult;
@@ -3246,11 +3289,11 @@
 
                     // Load full portfolio details
                     let detailUrl = `/api/saxo/portfolios/${portfolioId}`;
-                    if (currentFileKey) {
-                        detailUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
+                    if (fileKey) {
+                        detailUrl += `?file_key=${encodeURIComponent(fileKey)}`;
                     }
 
-                    const { ok: detailOk, data: csvData } = await safeFetch(globalConfig.getApiUrl(detailUrl), {
+                    const { ok: detailOk, data: csvData } = await safeFetch(`${window.getApiBase()}${detailUrl}`, {
                         headers: { 'X-User': activeUser }
                     });
 
@@ -3465,17 +3508,18 @@
         // ==================== CASH / LIQUIDITIES MANAGEMENT ====================
 
         // Load saved cash amount for current portfolio
-        async function loadPortfolioCash() {
+        async function loadPortfolioCash(fileKey = null) {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
 
             try {
-                // Build URL with file_key
+                // Build URL with file_key (use parameter if provided, fallback to global)
+                const key = fileKey || currentFileKey;
                 let url = `/api/saxo/cash?user_id=${activeUser}`;
-                if (currentFileKey) {
-                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                if (key) {
+                    url += `&file_key=${encodeURIComponent(key)}`;
                 }
 
-                const response = await safeFetch(globalConfig.getApiUrl(url));
+                const response = await safeFetch(`${window.getApiBase()}${url}`);
                 if (response?.ok && response?.data) {
                     window.portfolioCash = Number(response.data.cash_amount || 0);
                     debugLogger.debug(`💵 Loaded cash amount: $${window.portfolioCash}`);
