@@ -362,6 +362,18 @@
                 padding: 0.5rem 1rem;
                 font-size: 0.9em;
             }
+
+            /* Model metrics grid responsive */
+            #model-info-metrics-cards {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+            /* Tablet: 2 colonnes */
+            #model-info-metrics-cards {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
         }
 
         @media (min-width: 2000px) {
@@ -913,9 +925,8 @@
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
                             📊 Performance Metrics
                         </h4>
-                        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div id="model-info-metrics-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
                             <!-- Metrics cards will be injected here -->
-                            <div id="model-info-metrics-cards"></div>
                         </div>
                     </div>
 
