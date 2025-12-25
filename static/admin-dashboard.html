@@ -847,6 +847,287 @@
         </div>
     </div>
 
+    <!-- Model Info Modal (Phase 1A) -->
+    <div id="modelInfoModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>ℹ️ Model Information - <span id="model-info-name"></span></h3>
+                <button class="modal-close" onclick="closeModal('modelInfoModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="model-info-loading" style="text-align: center; padding: 2rem;">
+                    <div class="loading">Loading model information</div>
+                </div>
+
+                <!-- Error State -->
+                <div id="model-info-error" style="display: none;" class="error-message"></div>
+
+                <!-- Content -->
+                <div id="model-info-content" style="display: none;">
+                    <!-- Section 1: Basic Info -->
+                    <div style="margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
+                            📋 Basic Information
+                        </h4>
+                        <div class="info-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">Model Type:</label>
+                                <div id="model-info-type">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">Version:</label>
+                                <div id="model-info-version">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">Status:</label>
+                                <div id="model-info-status">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">File Size:</label>
+                                <div id="model-info-size">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">Created:</label>
+                                <div id="model-info-created">-</div>
+                            </div>
+                            <div class="info-item">
+                                <label style="font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em;">Last Updated:</label>
+                                <div id="model-info-updated">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Training Configuration -->
+                    <div style="margin-bottom: 2rem;" id="model-info-training-section">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
+                            ⚙️ Training Configuration
+                        </h4>
+                        <div id="model-info-hyperparams" style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.9em;">
+                            <!-- Hyperparameters will be injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Performance Metrics -->
+                    <div style="margin-bottom: 2rem;" id="model-info-metrics-section">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
+                            📊 Performance Metrics
+                        </h4>
+                        <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                            <!-- Metrics cards will be injected here -->
+                            <div id="model-info-metrics-cards"></div>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Features Used -->
+                    <div style="margin-bottom: 2rem;" id="model-info-features-section">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
+                            🔧 Features Used
+                        </h4>
+                        <div id="model-info-features" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <!-- Feature badges will be injected here -->
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Training Data -->
+                    <div style="margin-bottom: 1rem;" id="model-info-data-section">
+                        <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
+                            📅 Training Data Period
+                        </h4>
+                        <div id="model-info-data-period">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('modelInfoModal')">Close</button>
+                <button class="btn btn-primary" onclick="showVersionHistory()">📊 View History</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Version History Modal (Phase 1B) -->
+    <div id="versionHistoryModal" class="modal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>📊 Version History - <span id="version-history-name"></span></h3>
+                <button class="modal-close" onclick="closeModal('versionHistoryModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="version-history-loading" style="text-align: center; padding: 2rem;">
+                    <div class="loading">Loading version history</div>
+                </div>
+
+                <!-- Error State -->
+                <div id="version-history-error" style="display: none;" class="error-message"></div>
+
+                <!-- Content -->
+                <div id="version-history-content" style="display: none;">
+                    <div style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
+                        <strong>Latest Version:</strong> <span id="version-history-latest">-</span><br>
+                        <strong>Total Versions:</strong> <span id="version-history-total">-</span>
+                    </div>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Version</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Type</th>
+                                <th>File Size</th>
+                                <th>Metrics</th>
+                            </tr>
+                        </thead>
+                        <tbody id="version-history-table-body">
+                            <!-- Rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('versionHistoryModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configure & Train Modal (Phase 2) -->
+    <div id="configureTrainModal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3>⚙️ Configure & Train - <span id="config-train-name"></span></h3>
+                <button class="modal-close" onclick="closeModal('configureTrainModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading State -->
+                <div id="config-train-loading" style="text-align: center; padding: 2rem;">
+                    <div class="loading">Loading default parameters</div>
+                </div>
+
+                <!-- Error State -->
+                <div id="config-train-error" style="display: none;" class="error-message"></div>
+
+                <!-- Config Form -->
+                <div id="config-train-form" style="display: none;">
+                    <!-- Preset Selection -->
+                    <div style="margin-bottom: 2rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                            📋 Preset Configuration:
+                        </label>
+                        <select id="preset-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                            <option value="quick">Quick Test (90d, 20 epochs) - ~1-2 min</option>
+                            <option value="standard">Standard (365d, 50 epochs) - ~3-5 min</option>
+                            <option value="full" selected>Full Training (730d, 100 epochs) - ~5-10 min</option>
+                            <option value="deep">Deep Research (1095d, 200 epochs) - ~15-30 min</option>
+                            <option value="custom">Custom (Manual Configuration)</option>
+                        </select>
+                        <small style="display: block; margin-top: 0.5rem; color: var(--theme-text-muted);">
+                            Choose a preset or select Custom to configure manually
+                        </small>
+                    </div>
+
+                    <!-- Data Configuration -->
+                    <fieldset style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
+                        <legend style="font-weight: 600; padding: 0 0.5rem;">📅 Data Configuration</legend>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Historical Data (days):</label>
+                            <input type="number" id="config-days" min="90" max="1825" value="730"
+                                   style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
+                            <small style="color: var(--theme-text-muted);">Range: 90-1825 days (~3 months to 5 years)</small>
+                        </div>
+
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Train/Val Split:</label>
+                            <select id="config-split" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                                <option value="0.7">70/30 (Train/Val)</option>
+                                <option value="0.8" selected>80/20 (Train/Val) - Recommended</option>
+                                <option value="0.9">90/10 (Train/Val)</option>
+                            </select>
+                        </div>
+                    </fieldset>
+
+                    <!-- Hyperparameters -->
+                    <fieldset style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
+                        <legend style="font-weight: 600; padding: 0 0.5rem;">🔧 Hyperparameters</legend>
+
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <div>
+                                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Epochs:</label>
+                                <input type="number" id="config-epochs" min="10" max="500" value="100"
+                                       style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
+                                <small style="color: var(--theme-text-muted);">10-500</small>
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Patience:</label>
+                                <input type="number" id="config-patience" min="5" max="50" value="15"
+                                       style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
+                                <small style="color: var(--theme-text-muted);">5-50</small>
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Batch Size:</label>
+                                <select id="config-batch" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                                    <option value="8">8</option>
+                                    <option value="16">16</option>
+                                    <option value="32" selected>32 - Recommended</option>
+                                    <option value="64">64</option>
+                                    <option value="128">128</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Learning Rate:</label>
+                                <select id="config-lr" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                                    <option value="0.0001">0.0001</option>
+                                    <option value="0.0005">0.0005</option>
+                                    <option value="0.001" selected>0.001 - Recommended</option>
+                                    <option value="0.005">0.005</option>
+                                    <option value="0.01">0.01</option>
+                                </select>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Volatility-specific (shown only for volatility models) -->
+                    <fieldset id="volatility-params" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
+                        <legend style="font-weight: 600; padding: 0 0.5rem;">📊 Volatility-Specific</legend>
+
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Hidden Size:</label>
+                            <select id="config-hidden" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                                <option value="32">32</option>
+                                <option value="64" selected>64 - Recommended</option>
+                                <option value="128">128</option>
+                                <option value="256">256</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Min R² Threshold:</label>
+                            <input type="number" id="config-min-r2" min="0" max="1" step="0.1" value="0.5"
+                                   style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
+                            <small style="color: var(--theme-text-muted);">0.0-1.0 (minimum acceptable R²)</small>
+                        </div>
+                    </fieldset>
+
+                    <!-- Time Estimate -->
+                    <div id="time-estimate" style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-success);">
+                        <strong>⏱️ Estimated Training Time:</strong>
+                        <p id="time-estimate-text" style="margin: 0.5rem 0 0 0; color: var(--theme-text-muted);"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('configureTrainModal')">Cancel</button>
+                <button id="start-training-btn" class="btn btn-primary" onclick="submitTraining()" style="display: none;">
+                    🚀 Start Training
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script type="module">
         import './components/nav.js';
@@ -1681,10 +1962,15 @@
                             <td>${statusBadge}</td>
                             <td>${model.updated_at ? new Date(model.updated_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'}</td>
                             <td>${trainingStatus}</td>
-                            <td>
+                            <td style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+                                <button class="btn btn-small btn-secondary" onclick="showModelInfo('${model.name}')" title="View detailed information">
+                                    ℹ️
+                                </button>
                                 ${!model.has_active_job ?
-                                    `<button class="btn btn-small btn-primary" onclick="triggerTraining('${model.name}', '${model.model_type || 'unknown'}')">Retrain</button>` :
-                                    '<span style="color: var(--text-muted)">Training...</span>'
+                                    `<button class="btn btn-small btn-primary" onclick="showConfigureTrainModal('${model.name}', '${model.model_type || "unknown"}')" title="Configure & Retrain model">
+                                        ⚙️ Train
+                                    </button>` :
+                                    '<span style="color: var(--text-muted); font-size: 0.85em;">Training...</span>'
                                 }
                             </td>
                         </tr>
@@ -1887,6 +2173,474 @@
         }
 
         // ====================================================================
+        // ML Models Info & History Modals (Phase 1 - Dec 2025)
+        // ====================================================================
+
+        let currentModelName = null; // Global pour partager entre modals
+
+        async function showModelInfo(modelName) {
+            currentModelName = modelName;
+
+            // Open modal
+            document.getElementById('modelInfoModal').classList.add('show');
+            document.getElementById('model-info-name').textContent = modelName;
+
+            // Show loading
+            document.getElementById('model-info-loading').style.display = 'block';
+            document.getElementById('model-info-error').style.display = 'none';
+            document.getElementById('model-info-content').style.display = 'none';
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // Fetch model manifest from EXISTING endpoint
+                const response = await fetch(`/api/ml/registry/models/${modelName}`, {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch model info: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const manifest = result.manifest || result.data?.manifest;
+
+                if (!manifest) {
+                    throw new Error('No manifest data returned');
+                }
+
+                // Populate modal
+                populateModelInfo(manifest);
+
+                // Hide loading, show content
+                document.getElementById('model-info-loading').style.display = 'none';
+                document.getElementById('model-info-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading model info:', error);
+
+                // Show error
+                document.getElementById('model-info-loading').style.display = 'none';
+                document.getElementById('model-info-error').style.display = 'block';
+                document.getElementById('model-info-error').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function populateModelInfo(manifest) {
+            // Basic info
+            document.getElementById('model-info-type').textContent = manifest.model_type || 'unknown';
+            document.getElementById('model-info-version').textContent = manifest.version || 'N/A';
+
+            // Status badge
+            const statusEl = document.getElementById('model-info-status');
+            statusEl.innerHTML = getStatusBadge(manifest.status || 'unknown');
+
+            // File size
+            const sizeEl = document.getElementById('model-info-size');
+            if (manifest.file_size) {
+                const sizeMB = (manifest.file_size / (1024 * 1024)).toFixed(2);
+                sizeEl.textContent = `${sizeMB} MB`;
+            } else {
+                sizeEl.textContent = 'N/A';
+            }
+
+            // Dates
+            document.getElementById('model-info-created').textContent =
+                manifest.created_at ? new Date(manifest.created_at).toLocaleString('fr-FR') : 'N/A';
+            document.getElementById('model-info-updated').textContent =
+                manifest.updated_at ? new Date(manifest.updated_at).toLocaleString('fr-FR') : 'N/A';
+
+            // Training configuration
+            if (manifest.hyperparameters || manifest.training_config) {
+                const hyperparams = manifest.hyperparameters || manifest.training_config || {};
+                let html = '<div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">';
+
+                Object.entries(hyperparams).forEach(([key, value]) => {
+                    html += `
+                        <div style="display: flex; justify-content: space-between; padding: 0.25rem 0;">
+                            <span style="color: var(--theme-text-muted);">${key}:</span>
+                            <strong>${JSON.stringify(value)}</strong>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                document.getElementById('model-info-hyperparams').innerHTML = html;
+                document.getElementById('model-info-training-section').style.display = 'block';
+            } else {
+                document.getElementById('model-info-training-section').style.display = 'none';
+            }
+
+            // Performance metrics
+            const valMetrics = manifest.validation_metrics || {};
+            const testMetrics = manifest.test_metrics || {};
+            const allMetrics = { ...valMetrics, ...testMetrics };
+
+            if (Object.keys(allMetrics).length > 0) {
+                let metricsHtml = '';
+
+                Object.entries(allMetrics).forEach(([key, value]) => {
+                    const displayValue = typeof value === 'number' ? value.toFixed(4) : value;
+                    metricsHtml += `
+                        <div class="metric-card" style="background: var(--theme-surface); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
+                            <div style="font-size: 0.8em; color: var(--theme-text-muted); margin-bottom: 0.25rem;">${key}</div>
+                            <div style="font-size: 1.5em; font-weight: 700; color: var(--theme-text);">${displayValue}</div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('model-info-metrics-cards').innerHTML = metricsHtml;
+                document.getElementById('model-info-metrics-section').style.display = 'block';
+            } else {
+                document.getElementById('model-info-metrics-section').style.display = 'none';
+            }
+
+            // Features used
+            if (manifest.features_used && manifest.features_used.length > 0) {
+                let featuresHtml = '';
+                manifest.features_used.forEach(feature => {
+                    featuresHtml += `
+                        <span class="badge" style="background: var(--brand-primary); color: white; padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.85em;">
+                            ${feature}
+                        </span>
+                    `;
+                });
+                document.getElementById('model-info-features').innerHTML = featuresHtml;
+                document.getElementById('model-info-features-section').style.display = 'block';
+            } else {
+                document.getElementById('model-info-features-section').style.display = 'none';
+            }
+
+            // Training data period
+            if (manifest.training_data_period) {
+                const period = manifest.training_data_period;
+                document.getElementById('model-info-data-period').innerHTML = `
+                    <div style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-sm);">
+                        <strong>Start:</strong> ${period.start_date || 'N/A'}<br>
+                        <strong>End:</strong> ${period.end_date || 'N/A'}
+                    </div>
+                `;
+                document.getElementById('model-info-data-section').style.display = 'block';
+            } else {
+                document.getElementById('model-info-data-section').style.display = 'none';
+            }
+        }
+
+        async function showVersionHistory(modelName) {
+            // Use currentModelName if no parameter provided (fixes onclick from modal footer)
+            const targetModel = modelName || currentModelName;
+
+            if (!targetModel) {
+                console.error('No model name provided to showVersionHistory');
+                return;
+            }
+
+            // Close model info modal if open
+            closeModal('modelInfoModal');
+
+            currentModelName = targetModel;
+
+            // Open modal
+            document.getElementById('versionHistoryModal').classList.add('show');
+            document.getElementById('version-history-name').textContent = targetModel;
+
+            // Show loading
+            document.getElementById('version-history-loading').style.display = 'block';
+            document.getElementById('version-history-error').style.display = 'none';
+            document.getElementById('version-history-content').style.display = 'none';
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // Fetch version history from EXISTING endpoint
+                const response = await fetch(`/api/ml/registry/models/${targetModel}/versions`, {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch version history: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (!result.success || !result.versions) {
+                    throw new Error('No version data returned');
+                }
+
+                // Populate modal
+                populateVersionHistory(result);
+
+                // Hide loading, show content
+                document.getElementById('version-history-loading').style.display = 'none';
+                document.getElementById('version-history-content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading version history:', error);
+
+                // Show error
+                document.getElementById('version-history-loading').style.display = 'none';
+                document.getElementById('version-history-error').style.display = 'block';
+                document.getElementById('version-history-error').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function populateVersionHistory(data) {
+            // Summary
+            document.getElementById('version-history-latest').textContent = data.latest_version || 'N/A';
+            document.getElementById('version-history-total').textContent = data.total_versions || 0;
+
+            // Table
+            const tbody = document.getElementById('version-history-table-body');
+
+            if (data.versions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--theme-text-muted);">No version history available</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.versions.map(version => {
+                const sizeMB = version.file_size ? (version.file_size / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A';
+                const createdDate = version.created_at ? new Date(version.created_at).toLocaleString('fr-FR') : 'N/A';
+
+                // Format metrics
+                let metricsHtml = '-';
+                if (version.validation_metrics && Object.keys(version.validation_metrics).length > 0) {
+                    const metrics = version.validation_metrics;
+                    const entries = Object.entries(metrics).slice(0, 3); // Show first 3 metrics
+                    metricsHtml = entries.map(([k, v]) => {
+                        const val = typeof v === 'number' ? v.toFixed(3) : v;
+                        return `<small style="display: block;">${k}: <strong>${val}</strong></small>`;
+                    }).join('');
+                }
+
+                return `
+                    <tr>
+                        <td><strong>${version.version}</strong></td>
+                        <td>${getStatusBadge(version.status)}</td>
+                        <td style="font-size: 0.85em;">${createdDate}</td>
+                        <td><span class="badge">${version.model_type || 'unknown'}</span></td>
+                        <td style="font-size: 0.85em;">${sizeMB}</td>
+                        <td style="font-size: 0.85em;">${metricsHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ====================================================================
+        // Configure & Train Modal (Phase 2)
+        // ====================================================================
+
+        let currentTrainingModel = {name: null, type: null};  // Store current model info
+
+        // Preset configurations
+        const TRAINING_PRESETS = {
+            quick: { days: 90, epochs: 20, patience: 10, description: '~1-2 min' },
+            standard: { days: 365, epochs: 50, patience: 12, description: '~3-5 min' },
+            full: { days: 730, epochs: 100, patience: 15, description: '~5-10 min' },
+            deep: { days: 1095, epochs: 200, patience: 20, description: '~15-30 min' }
+        };
+
+        async function showConfigureTrainModal(modelName, modelType) {
+            currentTrainingModel = {name: modelName, type: modelType};
+
+            // Open modal
+            document.getElementById('configureTrainModal').classList.add('show');
+            document.getElementById('config-train-name').textContent = modelName;
+
+            // Show loading
+            document.getElementById('config-train-loading').style.display = 'block';
+            document.getElementById('config-train-error').style.display = 'none';
+            document.getElementById('config-train-form').style.display = 'none';
+            document.getElementById('start-training-btn').style.display = 'none';
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // Fetch default parameters from NEW endpoint
+                const response = await fetch(`/admin/ml/models/${modelName}/default-params`, {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch default params: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const defaultConfig = result.data?.config || result.config;
+
+                if (!defaultConfig) {
+                    throw new Error('No config data returned');
+                }
+
+                // Populate form with default values
+                populateConfigForm(defaultConfig, modelType);
+
+                // Show/hide volatility-specific params
+                document.getElementById('volatility-params').style.display =
+                    (modelType === 'volatility') ? 'block' : 'none';
+
+                // Setup preset selector listener
+                setupPresetSelector();
+
+                // Update time estimate initially
+                updateTimeEstimate();
+
+                // Hide loading, show form
+                document.getElementById('config-train-loading').style.display = 'none';
+                document.getElementById('config-train-form').style.display = 'block';
+                document.getElementById('start-training-btn').style.display = 'inline-block';
+
+            } catch (error) {
+                console.error('Error loading config form:', error);
+
+                // Show error
+                document.getElementById('config-train-loading').style.display = 'none';
+                document.getElementById('config-train-error').style.display = 'block';
+                document.getElementById('config-train-error').textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function populateConfigForm(config, modelType) {
+            // Data config
+            document.getElementById('config-days').value = config.days || 730;
+            document.getElementById('config-split').value = config.train_val_split || 0.8;
+
+            // Hyperparameters
+            document.getElementById('config-epochs').value = config.epochs || 100;
+            document.getElementById('config-patience').value = config.patience || 15;
+            document.getElementById('config-batch').value = config.batch_size || 32;
+            document.getElementById('config-lr').value = config.learning_rate || 0.001;
+
+            // Volatility-specific
+            if (modelType === 'volatility') {
+                document.getElementById('config-hidden').value = config.hidden_size || 64;
+                document.getElementById('config-min-r2').value = config.min_r2 || 0.5;
+            }
+        }
+
+        function setupPresetSelector() {
+            const presetSelect = document.getElementById('preset-select');
+            presetSelect.addEventListener('change', (e) => {
+                const presetName = e.target.value;
+
+                if (presetName === 'custom') {
+                    // Enable all inputs for custom configuration
+                    return;
+                }
+
+                const preset = TRAINING_PRESETS[presetName];
+                if (preset) {
+                    // Apply preset values
+                    document.getElementById('config-days').value = preset.days;
+                    document.getElementById('config-epochs').value = preset.epochs;
+                    document.getElementById('config-patience').value = preset.patience;
+
+                    // Update time estimate
+                    updateTimeEstimate();
+                }
+            });
+
+            // Also update estimate when inputs change
+            const inputs = ['config-days', 'config-epochs'];
+            inputs.forEach(id => {
+                document.getElementById(id).addEventListener('input', updateTimeEstimate);
+            });
+        }
+
+        function updateTimeEstimate() {
+            const days = parseInt(document.getElementById('config-days').value) || 730;
+            const epochs = parseInt(document.getElementById('config-epochs').value) || 100;
+
+            // Simple time estimation formula (very rough)
+            const baseTime = (days / 365) * (epochs / 100);  // Relative to standard (365d, 100 epochs = 5 min)
+            const estimatedMinutes = baseTime * 5;
+
+            let timeText = '';
+            if (estimatedMinutes < 3) {
+                timeText = `GPU (RTX 4080): ~1-2 minutes<br>CPU: ~2-5 minutes`;
+            } else if (estimatedMinutes < 8) {
+                timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.5)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 2)}-${Math.round(estimatedMinutes * 3)} minutes`;
+            } else if (estimatedMinutes < 20) {
+                timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.2)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 2)}-${Math.round(estimatedMinutes * 2.5)} minutes`;
+            } else {
+                timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.5)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 3)}-${Math.round(estimatedMinutes * 4)} minutes<br><em style="color: var(--theme-warning);">⚠️ Long training - consider using a preset with fewer epochs</em>`;
+            }
+
+            document.getElementById('time-estimate-text').innerHTML = timeText;
+        }
+
+        async function submitTraining() {
+            const modelName = currentTrainingModel.name;
+            const modelType = currentTrainingModel.type;
+
+            if (!modelName || !modelType) {
+                alert('Error: Model information missing');
+                return;
+            }
+
+            // Gather config from form
+            const config = {
+                days: parseInt(document.getElementById('config-days').value),
+                train_val_split: parseFloat(document.getElementById('config-split').value),
+                epochs: parseInt(document.getElementById('config-epochs').value),
+                patience: parseInt(document.getElementById('config-patience').value),
+                batch_size: parseInt(document.getElementById('config-batch').value),
+                learning_rate: parseFloat(document.getElementById('config-lr').value)
+            };
+
+            // Add volatility-specific params if applicable
+            if (modelType === 'volatility') {
+                config.hidden_size = parseInt(document.getElementById('config-hidden').value);
+                config.min_r2 = parseFloat(document.getElementById('config-min-r2').value);
+                config.symbols = ['BTC', 'ETH', 'SOL'];  // Could be made configurable
+            }
+
+            // Disable button and show loading
+            const btn = document.getElementById('start-training-btn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Starting...';
+
+            try {
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // POST to train endpoint with config body
+                const response = await fetch(`/admin/ml/train/${modelName}?model_type=${modelType}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': activeUser
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Training failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                // Show success message
+                alert(`✅ Training started successfully!\n\nJob ID: ${result.data?.job_id || result.job_id}\nModel: ${modelName}\nConfig: Custom (${config.days}d, ${config.epochs} epochs)`);
+
+                // Close modal
+                closeModal('configureTrainModal');
+
+                // Reload ML models table
+                if (typeof loadMLTab === 'function') {
+                    loadMLTab();
+                }
+
+            } catch (error) {
+                console.error('Error starting training:', error);
+                alert(`❌ Training failed: ${error.message}`);
+
+                // Re-enable button
+                btn.disabled = false;
+                btn.textContent = '🚀 Start Training';
+            }
+        }
+
+        // ====================================================================
         // Export functions to global scope for onclick handlers
         // ====================================================================
 
@@ -1912,6 +2666,10 @@
         window.loadTrainingJobs = loadTrainingJobs;
         window.hideTrainingJobs = hideTrainingJobs;
         window.cancelJob = cancelJob;
+        window.showModelInfo = showModelInfo;
+        window.showVersionHistory = showVersionHistory;
+        window.showConfigureTrainModal = showConfigureTrainModal;  // NEW (Phase 2)
+        window.submitTraining = submitTraining;  // NEW (Phase 2)
     </script>
 </body>
 </html>

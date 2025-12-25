@@ -53,6 +53,26 @@ class AssignRolesRequest(BaseModel):
     roles: List[str] = Field(..., min_items=1, description="Roles to assign")
 
 
+class TrainingConfig(BaseModel):
+    """Configuration pour training ML models (Phase 2)"""
+    # Data configuration
+    days: int = Field(730, ge=90, le=1825, description="Historique données (jours): 90-1825")
+    train_val_split: float = Field(0.8, ge=0.6, le=0.9, description="Train/Val split: 0.6-0.9")
+
+    # Common hyperparameters
+    epochs: int = Field(100, ge=10, le=500, description="Nombre epochs: 10-500")
+    patience: int = Field(15, ge=5, le=50, description="Early stopping patience: 5-50")
+    batch_size: int = Field(32, ge=8, le=256, description="Batch size: 8-256")
+    learning_rate: float = Field(0.001, ge=0.0001, le=0.1, description="Learning rate: 0.0001-0.1")
+
+    # Volatility-specific params
+    hidden_size: Optional[int] = Field(64, ge=32, le=256, description="Hidden layer size (volatility): 32-256")
+    min_r2: Optional[float] = Field(0.5, ge=0.0, le=1.0, description="Min R² threshold (volatility): 0.0-1.0")
+
+    # Model-specific override
+    symbols: Optional[List[str]] = Field(None, description="Symbols for volatility models (ex: ['BTC', 'ETH', 'SOL'])")
+
+
 # ============================================================================
 # Health & Status
 # ============================================================================
@@ -645,26 +665,114 @@ async def list_ml_models(user: str = Depends(require_admin_role)):
         )
 
 
+@router.get("/ml/models/{model_name}/default-params")
+async def get_model_default_params(
+    model_name: str,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Retourne les paramètres par défaut pour un modèle donné.
+
+    Utilise le model_type détecté dans le registry pour retourner
+    les bons paramètres (regime vs volatility).
+
+    Args:
+        model_name: Name of model
+
+    Returns:
+        dict: Default TrainingConfig pour ce modèle
+    """
+    try:
+        from services.ml.model_registry import ModelRegistry
+
+        registry = ModelRegistry()
+        manifest = registry.get_manifest(model_name)
+
+        # Déterminer le type de modèle
+        if manifest:
+            model_type = manifest.model_type
+        else:
+            # Fallback: deviner depuis le nom
+            if "regime" in model_name.lower():
+                model_type = "regime"
+            elif "volatility" in model_name.lower():
+                model_type = "volatility"
+            else:
+                model_type = "unknown"
+
+        # Retourner les defaults selon le type
+        if model_type == "regime":
+            config = TrainingConfig(
+                days=730,           # 2 years
+                epochs=100,
+                patience=15,
+                batch_size=32,
+                learning_rate=0.001,
+                train_val_split=0.8,
+                hidden_size=None,   # Not used for regime
+                min_r2=None,        # Not used for regime
+                symbols=None        # Not used for regime
+            )
+        elif model_type == "volatility":
+            config = TrainingConfig(
+                days=365,           # 1 year
+                epochs=100,
+                patience=15,
+                batch_size=32,
+                learning_rate=0.001,
+                train_val_split=0.8,
+                hidden_size=64,
+                min_r2=0.5,
+                symbols=['BTC', 'ETH', 'SOL']
+            )
+        else:
+            # Generic defaults
+            config = TrainingConfig()
+
+        logger.info(f"✅ Default params returned for {model_name} (type: {model_type})")
+        return success_response({
+            "model_name": model_name,
+            "model_type": model_type,
+            "config": config.dict()
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting default params for {model_name}: {e}")
+        return error_response(
+            f"Failed to get default params: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
 @router.post("/ml/train/{model_name}")
 async def trigger_model_training(
     model_name: str,
     model_type: str = Query("unknown", description="Model type"),
+    config: Optional[TrainingConfig] = Body(None, description="Training configuration (optional)"),
     user: str = Depends(require_admin_role)
 ):
     """
     Trigger manual model retraining.
 
+    Phase 2 (Dec 2025): Accepte maintenant un body TrainingConfig optionnel
+    pour personnaliser les paramètres de training.
+
     Args:
         model_name: Name of model to retrain
-        model_type: Type of model (optional)
+        model_type: Type of model (regime, volatility, etc.)
+        config: Training configuration (optional, uses defaults if None)
 
     Returns:
         dict: Training job info
     """
     try:
+        # Convert config to dict if provided
+        config_dict = config.dict() if config else None
+
         result = training_executor.trigger_training(
             model_name=model_name,
             model_type=model_type,
+            config=config_dict,  # ← NEW: Pass config to executor
             admin_user=user
         )
 
@@ -674,7 +782,7 @@ async def trigger_model_training(
                 code=status.HTTP_400_BAD_REQUEST
             )
 
-        logger.info(f"✅ Training triggered for {model_name} by {user}")
+        logger.info(f"✅ Training triggered for {model_name} by {user} (custom_config={config is not None})")
         return success_response(result)
 
     except Exception as e:

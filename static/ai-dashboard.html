@@ -545,7 +545,7 @@
                     <button class="tab-btn" data-tab="models">🤖 Modèles</button>
                     <button class="tab-btn" data-tab="predictions">🔮 Prédictions</button>
                     <button class="tab-btn" data-tab="regimes">📈 Régimes de Marché</button>
-                    <button class="tab-btn" data-tab="administration">🔧 Administration</button>
+                    <button class="tab-btn" data-tab="administration">⚙️ État des Modèles</button>
                 </div>
 
                 <!-- Vue d'ensemble -->
@@ -623,8 +623,23 @@
                     </div>
                 </div>
 
-                <!-- Administration Pipeline ML -->
+                <!-- État des Modèles ML -->
                 <div id="administration-tab" class="tab-content">
+                    <!-- Notice Admin Dashboard -->
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+                            <div>
+                                <strong style="display: block; margin-bottom: 0.25rem;">⚙️ Configuration Avancée</strong>
+                                <span style="color: var(--theme-text-muted); font-size: 0.9em;">
+                                    Pour training de modèles, gestion cache, et configuration avancée, utilisez le Admin Dashboard.
+                                </span>
+                            </div>
+                            <a href="admin-dashboard.html#ml" class="btn btn-primary" style="white-space: nowrap;">
+                                🚀 Ouvrir Admin Dashboard
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="admin-mini-toolbar"
                         style="display:flex; justify-content:flex-end; align-items:center; gap:.5rem; margin:0 0 .5rem 0;">
                         <span id="admin-mini-status" class="text-muted" style="font-size:.85rem;">Admin: OFF</span>
@@ -708,32 +723,6 @@
                             <div class="card-actions">
                                 <button id="admin-load-regime" class="btn primary">⚡ Charger Modèle</button>
                                 <button id="admin-regime-status" class="btn secondary">📊 Détails</button>
-                            </div>
-                        </div>
-
-                        <!-- Performance & Cache -->
-                        <div class="ml-card">
-                            <div class="card-header">
-                                <div class="card-title">
-                                    <span class="card-icon" aria-hidden="true">📊</span>
-                                    Performance & Cache
-                                </div>
-                            </div>
-                            <div class="card-content">
-                                <div class="status-grid-2x2">
-                                    <div class="status-item">
-                                        <span class="status-label">Entrées Cache</span>
-                                        <span class="status-value" id="admin-cache-entries">-</span>
-                                    </div>
-                                    <div class="status-item">
-                                        <span class="status-label">Dernière MAJ</span>
-                                        <span class="status-value" id="admin-last-update">-</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-actions">
-                                <button id="admin-performance" class="btn primary">📈 Performance</button>
-                                <button id="admin-clear-cache" class="btn secondary">🧹 Vider Cache</button>
                             </div>
                         </div>
                     </div>
@@ -1661,11 +1650,8 @@
             // Détails Régime
             document.getElementById('admin-regime-status')?.addEventListener('click', getRegimeStatus);
 
-            // Performance
-            document.getElementById('admin-performance')?.addEventListener('click', getPerformanceSummary);
-
-            // Vider Cache
-            document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLCache);
+            // NOTE: Performance & Cache management moved to Admin Dashboard (Phase 3)
+            // Old buttons admin-performance and admin-clear-cache removed from UI
 
             // Vider Logs
             document.getElementById('admin-clear-logs')?.addEventListener('click', clearAdminLogs);
@@ -2546,11 +2532,7 @@
                 document.getElementById('admin-regime-available').textContent = 'Oui';
                 document.getElementById('admin-regime-loaded').textContent = regimeLoaded ? 'Oui' : 'Non';
 
-                // Mettre à jour le cache entries
-                document.getElementById('admin-cache-entries').textContent = loadedModels;
-
-                // Dernière mise à jour
-                document.getElementById('admin-last-update').textContent = new Date().toLocaleTimeString();
+                // NOTE: Cache entries display removed (moved to Admin Dashboard)
 
                 addAdminLog(`✅ Statut actualisé: ${loadedModels}/${totalModels} modèles en mémoire`);
                 addAdminLog(`📊 Cache: ${volLoadedCount}/${volTotalCount} volatilité + ${regimeLoaded ? '1' : '0'} régime`);
@@ -2566,7 +2548,7 @@
                 document.getElementById('admin-vol-loaded').textContent = '0';
                 document.getElementById('admin-regime-available').textContent = 'Oui';
                 document.getElementById('admin-regime-loaded').textContent = 'Non';
-                document.getElementById('admin-cache-entries').textContent = '0';
+                // NOTE: admin-cache-entries removed (moved to Admin Dashboard)
             }
         }
 
@@ -2719,8 +2701,7 @@
                     addAdminLog(`⚡ Temps moyen de chargement: ${(stats.average_load_time * 1000).toFixed(0)}ms`);
                     addAdminLog(`💾 Utilisation mémoire: ${stats.memory_usage_percent.toFixed(1)}%`);
 
-                    // Mettre à jour affichage cache
-                    document.getElementById('admin-cache-entries').textContent = stats.cached_models;
+                    // NOTE: Cache display removed (moved to Admin Dashboard)
                 } else {
                     addAdminLog('⚠️ Statistiques de performance non disponibles');
                 }
@@ -2746,7 +2727,7 @@
                 } else {
                     addAdminLog('⚠️ Optimisation du cache effectuée');
                 }
-                document.getElementById('admin-cache-entries').textContent = '0';
+                // NOTE: Cache display removed (moved to Admin Dashboard)
                 showSuccess('Cache ML optimisé');
 
             } catch (error) {

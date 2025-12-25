@@ -52,6 +52,7 @@ class TrainingJob:
     triggered_by: str = "system"
     error_message: Optional[str] = None
     metrics: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None  # NEW: Training config (Phase 2)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -108,14 +109,19 @@ class TrainingExecutor:
         self,
         model_name: str,
         model_type: str = "unknown",
+        config: Optional[Dict[str, Any]] = None,  # NEW: Training config (Phase 2)
         admin_user: str = "system"
     ) -> Dict[str, Any]:
         """
         Trigger model training job.
 
+        Phase 2 (Dec 2025): Accepte maintenant un dict config optionnel
+        pour personnaliser les paramètres de training.
+
         Args:
             model_name: Name of model to train
             model_type: Type of model (volatility, sentiment, risk, etc.)
+            config: Training configuration dict (optional, uses defaults if None)
             admin_user: User who triggered the training
 
         Returns:
@@ -132,14 +138,15 @@ class TrainingExecutor:
                 model_type=model_type,
                 status=JobStatus.PENDING,
                 created_at=datetime.utcnow(),
-                triggered_by=admin_user
+                triggered_by=admin_user,
+                config=config  # NEW: Store config in job
             )
 
             # Store job
             with self._jobs_lock:
                 self._jobs[job_id] = job
 
-            logger.info(f"✅ Training job created: {job_id} for model {model_name} by {admin_user}")
+            logger.info(f"✅ Training job created: {job_id} for model {model_name} by {admin_user} (custom_config={config is not None})")
 
             # Start training in background
             thread = threading.Thread(target=self._run_training_job, args=(job_id,))
@@ -151,7 +158,8 @@ class TrainingExecutor:
                 "job_id": job_id,
                 "model_name": model_name,
                 "status": job.status.value,
-                "created_at": job.created_at.isoformat()
+                "created_at": job.created_at.isoformat(),
+                "has_custom_config": config is not None  # NEW: Indicate if custom config used
             }
 
         except Exception as e:
@@ -286,13 +294,22 @@ class TrainingExecutor:
             logger.error(f"❌ Failed to load metadata: {e}")
             return None
 
-    def _run_real_training(self, model_name: str, model_type: str) -> Dict[str, Any]:
+    def _run_real_training(
+        self,
+        model_name: str,
+        model_type: str,
+        config: Optional[Dict[str, Any]] = None  # NEW: Training config (Phase 2)
+    ) -> Dict[str, Any]:
         """
         Run real training using scripts/train_models.py
+
+        Phase 2 (Dec 2025): Accepte maintenant un dict config optionnel
+        pour personnaliser les paramètres de training.
 
         Args:
             model_name: Name of model (btc_regime_detector, volatility_forecaster, etc.)
             model_type: Type of model (regime, volatility, sentiment, etc.)
+            config: Training configuration dict (optional, uses defaults if None)
 
         Returns:
             Dict with training metrics
@@ -309,21 +326,28 @@ class TrainingExecutor:
 
             from train_models import save_models
 
-            logger.info(f"📚 Training {model_type} model: {model_name}")
+            logger.info(f"📚 Training {model_type} model: {model_name} (custom_config={config is not None})")
 
             # Determine training parameters based on model type
             if model_type == "regime" or "regime" in model_name.lower():
                 # Train regime detection model
                 logger.info("Training regime detection model with real BTC data...")
 
+                # Extract params from config or use defaults
+                days = config.get("days", 730) if config else 730
+                epochs = config.get("epochs", 100) if config else 100
+                patience = config.get("patience", 15) if config else 15
+
+                logger.info(f"📊 Regime training params: days={days}, epochs={epochs}, patience={patience}")
+
                 save_models(
                     symbols=[],  # No volatility models
                     train_regime=True,
                     samples=5000,  # Reasonable sample size
                     real_data=True,  # Use real market data
-                    days=730,  # 2 years of data
-                    epochs_regime=100,  # Reduced from 200 for faster training
-                    patience_regime=15,
+                    days=days,  # From config or default
+                    epochs_regime=epochs,  # From config or default
+                    patience_regime=patience,  # From config or default
                     epochs_vol=0,
                     patience_vol=0,
                     hidden_vol=0,
@@ -362,20 +386,28 @@ class TrainingExecutor:
                 # Train volatility forecaster
                 logger.info("Training volatility model for BTC/ETH/SOL...")
 
-                symbols = ['BTC', 'ETH', 'SOL']
+                # Extract params from config or use defaults
+                days = config.get("days", 365) if config else 365
+                epochs = config.get("epochs", 100) if config else 100
+                patience = config.get("patience", 15) if config else 15
+                hidden_size = config.get("hidden_size", 64) if config else 64
+                min_r2 = config.get("min_r2", 0.5) if config else 0.5
+                symbols = config.get("symbols", ['BTC', 'ETH', 'SOL']) if config else ['BTC', 'ETH', 'SOL']
+
+                logger.info(f"📊 Volatility training params: days={days}, epochs={epochs}, patience={patience}, hidden_size={hidden_size}, min_r2={min_r2}, symbols={symbols}")
 
                 save_models(
-                    symbols=symbols,  # Major assets
+                    symbols=symbols,  # From config or default
                     train_regime=False,
                     samples=0,
                     real_data=True,
-                    days=365,  # 1 year of data
+                    days=days,  # From config or default
                     epochs_regime=0,
                     patience_regime=0,
-                    epochs_vol=100,  # Reduced from 200
-                    patience_vol=15,
-                    hidden_vol=64,  # Hidden size
-                    min_r2=0.5  # Minimum R² threshold
+                    epochs_vol=epochs,  # From config or default
+                    patience_vol=patience,  # From config or default
+                    hidden_vol=hidden_size,  # From config or default
+                    min_r2=min_r2  # From config or default
                 )
 
                 # Load and aggregate metrics from all trained volatility models
@@ -461,7 +493,11 @@ class TrainingExecutor:
 
             # REAL TRAINING: Call actual training script
             start_time = time.time()
-            metrics = self._run_real_training(job.model_name, job.model_type)
+            metrics = self._run_real_training(
+                job.model_name,
+                job.model_type,
+                config=job.config  # NEW: Pass config from job (Phase 2)
+            )
             training_time = time.time() - start_time
 
             metrics["training_time_seconds"] = training_time
