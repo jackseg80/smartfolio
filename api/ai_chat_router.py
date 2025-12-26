@@ -44,10 +44,18 @@ class ChatResponse(BaseModel):
 SYSTEM_PROMPT = """Tu es un assistant financier expert spécialisé dans l'analyse de portefeuille d'actions.
 Tu analyses les données de portefeuille fournies et donnes des conseils pertinents.
 
+Capacités d'analyse:
+- Portfolio global (positions, secteurs, devises, P&L)
+- Market Opportunities (gaps sectoriels, suggestions d'investissement, ventes recommandées)
+- Stop Loss recommandés (6 méthodes, R/R ratio)
+- Métriques de risque (Sharpe, Sortino, VaR, Max Drawdown, concentration)
+- Allocation d'actifs et diversification
+
 Règles:
 - Réponds toujours en français
-- Sois concis et précis
+- Sois concis et précis (maximum 250 mots par réponse)
 - Utilise des chiffres et pourcentages quand pertinent
+- **CRITIQUE:** Quand tu analyses les Market Opportunities, commente spécifiquement les recommandations du système (scores, gaps sectoriels, suggestions de vente)
 - Ne recommande jamais d'acheter ou vendre spécifiquement (pas de conseil financier personnalisé)
 - Tu peux analyser les risques, la diversification, les tendances
 - Mentionne les limites de ton analyse si nécessaire
@@ -243,12 +251,21 @@ def _format_context(context: Dict[str, Any]) -> str:
             weight = pos.get("weight", 0)
             pnl_pct = pos.get("pnl_pct", 0)
             sector = pos.get("sector", "")
+            stop_loss = pos.get("stop_loss")
 
             sign = "+" if pnl_pct >= 0 else ""
             name_part = f" ({name[:30]})" if name else ""
             sector_part = f" | {sector}" if sector and sector != "Unknown" else ""
 
-            lines.append(f"  {i}. {symbol}{name_part}: ${value:,.0f} ({weight:.1f}%) | P&L: {sign}{pnl_pct:.1f}%{sector_part}")
+            # Add stop loss info if available
+            sl_part = ""
+            if stop_loss:
+                sl_recommended = stop_loss.get("recommended", 0)
+                sl_method = stop_loss.get("method", "")
+                rr_ratio = stop_loss.get("risk_reward", 0)
+                sl_part = f" | SL: ${sl_recommended:,.2f} ({sl_method}, R/R: {rr_ratio:.2f})"
+
+            lines.append(f"  {i}. {symbol}{name_part}: ${value:,.0f} ({weight:.1f}%) | P&L: {sign}{pnl_pct:.1f}%{sector_part}{sl_part}")
 
     lines.append("")
 
@@ -287,6 +304,70 @@ def _format_context(context: Dict[str, Any]) -> str:
     if "volatility" in context:
         lines.append(f"📊 Volatilité: {context['volatility']:.2%}")
 
+    # Detailed risk metrics
+    if "risk_metrics_detailed" in context:
+        rm = context["risk_metrics_detailed"]
+        lines.append("")
+        lines.append("📊 Métriques de risque détaillées:")
+        if rm.get("sharpe_ratio") is not None:
+            lines.append(f"  - Sharpe Ratio: {rm['sharpe_ratio']:.2f}")
+        if rm.get("sortino_ratio") is not None:
+            lines.append(f"  - Sortino Ratio: {rm['sortino_ratio']:.2f}")
+        if rm.get("max_drawdown") is not None:
+            lines.append(f"  - Max Drawdown: {rm['max_drawdown']:.2%}")
+        if rm.get("var_95") is not None:
+            lines.append(f"  - VaR 95%: ${rm['var_95']:,.2f}")
+        if rm.get("concentration_top3") is not None:
+            lines.append(f"  - Concentration Top 3: {rm['concentration_top3']:.1f}%")
+        if rm.get("concentration_hhi") is not None:
+            lines.append(f"  - HHI: {rm['concentration_hhi']:.0f}")
+
+    # Market Opportunities
+    if "market_opportunities" in context:
+        opps = context["market_opportunities"]
+        lines.append("")
+        lines.append(f"🎯 Market Opportunities (Horizon: {opps.get('horizon', 'medium')}):")
+
+        # Gaps
+        if opps.get("gaps"):
+            lines.append("")
+            lines.append("  📉 Secteurs sous-représentés (Gaps):")
+            for gap in opps["gaps"][:5]:  # Top 5 gaps
+                sector = gap.get("sector", "?")
+                current = gap.get("current", 0)
+                target = gap.get("target", 0)
+                gap_pct = gap.get("gap_pct", 0)
+                lines.append(f"    • {sector}: {current:.1f}% actuel vs {target:.1f}% cible → GAP: {gap_pct:+.1f}%")
+
+        # Top opportunities
+        if opps.get("top_opportunities"):
+            lines.append("")
+            lines.append("  💡 Top 10 opportunités recommandées:")
+            for i, opp in enumerate(opps["top_opportunities"][:10], 1):
+                symbol = opp.get("symbol", "?")
+                name = opp.get("name", "")
+                opp_type = opp.get("type", "")
+                score = opp.get("score", 0)
+                amount = opp.get("amount", 0)
+                sector = opp.get("sector", "")
+
+                name_part = f" ({name[:25]})" if name else ""
+                type_badge = f" [{opp_type}]" if opp_type else ""
+                sector_part = f" | {sector}" if sector else ""
+
+                lines.append(f"    {i}. {symbol}{name_part}{type_badge}: Score {score}/100 | ${amount:,.0f}{sector_part}")
+
+        # Suggested sales
+        if opps.get("suggested_sales"):
+            lines.append("")
+            lines.append("  🔻 Ventes suggérées (rééquilibrage):")
+            for sale in opps["suggested_sales"][:5]:  # Top 5 sales
+                symbol = sale.get("symbol", "?")
+                current = sale.get("current_weight", 0)
+                reduction = sale.get("suggested_reduction", 0)
+                reason = sale.get("reason", "")
+                lines.append(f"    • {symbol}: {current:.1f}% → réduire de {reduction:.1f}% ({reason})")
+
     return "\n".join(lines)
 
 
@@ -296,6 +377,11 @@ QUICK_QUESTIONS = [
         "id": "analysis",
         "label": "Analyse générale",
         "prompt": "Analyse mon portefeuille de manière générale. Quels sont les points forts et les points faibles?"
+    },
+    {
+        "id": "opportunities",
+        "label": "Market Opportunities",
+        "prompt": "Analyse les opportunités de marché recommandées. Quelles sont les meilleures suggestions d'investissement? Que penses-tu des gaps sectoriels détectés?"
     },
     {
         "id": "risk",

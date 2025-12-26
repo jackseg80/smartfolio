@@ -5661,6 +5661,7 @@
         let opportunitiesLoaded = false;
         let currentHorizon = 'medium';
         let lastOpportunitiesData = null;
+        window.lastOpportunitiesData = null; // Expose globally for AI chat context
 
         /**
          * Setup event listeners for opportunities tab
@@ -5744,6 +5745,7 @@
 
                 const data = response.data || response;
                 lastOpportunitiesData = data;
+                window.lastOpportunitiesData = data; // Update global for AI chat
 
                 debugLogger.info('Market opportunities loaded:', data);
 
@@ -6468,17 +6470,30 @@
             context.total_pnl_pct = summary.total_pnl_pct || 0;
         }
 
-        // Positions (top 15 with details)
+        // Positions (top 15 with details including stop loss if available)
         if (data.positions && Array.isArray(data.positions)) {
-            context.positions = data.positions.slice(0, 15).map(p => ({
-                symbol: p.Symbol || p.symbol || '?',
-                name: p.Name || p.name || '',
-                value: p.MarketValue || p.value || 0,
-                weight: p.Weight || p.weight || 0,
-                pnl: p.PnL || p.pnl || 0,
-                pnl_pct: p.PnLPercent || p.pnl_pct || 0,
-                sector: p.Sector || p.sector || 'Unknown'
-            }));
+            context.positions = data.positions.slice(0, 15).map(p => {
+                const pos = {
+                    symbol: p.Symbol || p.symbol || '?',
+                    name: p.Name || p.name || '',
+                    value: p.MarketValue || p.value || 0,
+                    weight: p.Weight || p.weight || 0,
+                    pnl: p.PnL || p.pnl || 0,
+                    pnl_pct: p.PnLPercent || p.pnl_pct || 0,
+                    sector: p.Sector || p.sector || 'Unknown'
+                };
+
+                // Add stop loss if available
+                if (p.StopLoss || p.RecommendedStopLoss) {
+                    pos.stop_loss = {
+                        recommended: p.RecommendedStopLoss || p.StopLoss,
+                        method: p.StopLossMethod || 'Fixed Variable',
+                        risk_reward: p.RiskReward || 0
+                    };
+                }
+
+                return pos;
+            });
         }
 
         // Sector allocation
@@ -6500,6 +6515,52 @@
         if (data.risk_metrics) {
             context.risk_score = data.risk_metrics.score || 0;
             context.volatility = data.risk_metrics.volatility || 0;
+        }
+
+        // ========== MARKET OPPORTUNITIES ==========
+        if (window.lastOpportunitiesData) {
+            const oppsData = window.lastOpportunitiesData;
+            context.market_opportunities = {
+                horizon: window.currentHorizon || 'medium',
+                gaps: (oppsData.gaps || []).map(gap => ({
+                    sector: gap.sector,
+                    current: gap.current_pct,
+                    target: gap.target_pct,
+                    gap_pct: gap.gap_pct
+                })),
+                top_opportunities: (oppsData.opportunities || []).slice(0, 10).map(opp => ({
+                    symbol: opp.symbol,
+                    name: opp.name,
+                    type: opp.type,
+                    score: opp.score,
+                    amount: opp.amount_usd,
+                    sector: opp.sector
+                })),
+                suggested_sales: (oppsData.suggested_sales || []).map(sale => ({
+                    symbol: sale.symbol,
+                    current_weight: sale.current_weight_pct,
+                    suggested_reduction: sale.sell_pct,
+                    reason: sale.reason
+                }))
+            };
+        }
+
+        // ========== SECTOR ROTATION (from Specialized Analytics tab) ==========
+        // This data would need to be captured when the tab loads
+        // For now, we'll check if it's available in the DOM or global state
+
+        // ========== CONCENTRATION & RISK METRICS ==========
+        // Check if risk dashboard data is available
+        if (window.riskDashboardData) {
+            const riskData = window.riskDashboardData;
+            context.risk_metrics_detailed = {
+                sharpe_ratio: riskData.sharpe_ratio,
+                sortino_ratio: riskData.sortino_ratio,
+                max_drawdown: riskData.max_drawdown,
+                var_95: riskData.var_95,
+                concentration_top3: riskData.concentration_top3,
+                concentration_hhi: riskData.hhi
+            };
         }
 
         return context;
