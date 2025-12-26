@@ -6212,8 +6212,8 @@
     </script>
 
     <!-- AI Chat Modal -->
-    <div id="aiChatModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 600px; height: 80vh; display: flex; flex-direction: column;">
+    <div id="aiChatModal" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+        <div id="aiChatModalContent" class="modal-content" style="max-width: 600px; height: 80vh; display: flex; flex-direction: column; background: var(--theme-surface); border-radius: var(--radius-lg); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); overflow: hidden; transform: scale(0.95); transition: transform 0.2s ease-out;">
             <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid var(--theme-border); background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <h3 style="margin: 0; color: white; display: flex; align-items: center; gap: 0.5rem;">
                     🤖 Assistant IA - Analyse Portfolio
@@ -6271,7 +6271,22 @@
     // Open the AI Chat modal
     async function openAIChatModal() {
         const modal = document.getElementById('aiChatModal');
+        const modalContent = document.getElementById('aiChatModalContent');
         modal.style.display = 'flex';
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+
+        // Animate in
+        requestAnimationFrame(() => {
+            modal.style.opacity = '0';
+            modalContent.style.transform = 'scale(0.9)';
+            requestAnimationFrame(() => {
+                modal.style.transition = 'opacity 0.2s ease-out';
+                modal.style.opacity = '1';
+                modalContent.style.transform = 'scale(1)';
+            });
+        });
 
         // Check AI status
         await checkAIStatus();
@@ -6285,7 +6300,18 @@
 
     // Close the AI Chat modal
     function closeAIChatModal() {
-        document.getElementById('aiChatModal').style.display = 'none';
+        const modal = document.getElementById('aiChatModal');
+        const modalContent = document.getElementById('aiChatModalContent');
+
+        // Animate out
+        modal.style.opacity = '0';
+        modalContent.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            modal.style.display = 'none';
+            modalContent.style.transform = 'scale(0.95)'; // Reset for next open
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }, 200);
     }
 
     // Close modal on overlay click
@@ -6368,6 +6394,7 @@
 
             // Build portfolio context
             const context = buildPortfolioContext();
+            console.log('📤 AI Chat context:', context);
 
             const response = await fetch('/api/ai/chat', {
                 method: 'POST',
@@ -6411,36 +6438,68 @@
 
     // Build portfolio context from current data
     function buildPortfolioContext() {
-        const context = {};
+        const context = {
+            page: 'Saxo Dashboard - Portfolio Bourse',
+            timestamp: new Date().toISOString()
+        };
 
-        // Try to get data from global state
-        if (window.currentSaxoData) {
-            const data = window.currentSaxoData;
+        // Get data from global state (currentPortfolioData is set by loadCurrentSaxoData)
+        if (!currentPortfolioData) {
+            context.error = 'Aucune donnée de portefeuille chargée';
+            return context;
+        }
 
-            if (data.summary) {
-                context.total_value = data.summary.total_value || 0;
-                context.total_pnl = data.summary.total_pnl || 0;
-                context.total_pnl_pct = data.summary.total_pnl_pct || 0;
-            }
+        const data = currentPortfolioData;
+        const summary = data.summary || {};
+        const savedCash = window.portfolioCash || 0;
 
-            if (data.positions && Array.isArray(data.positions)) {
-                context.positions = data.positions.slice(0, 15).map(p => ({
-                    symbol: p.symbol || p.Symbol || '?',
-                    name: p.name || p.Name || '',
-                    value: p.value || p.Value || 0,
-                    weight: p.weight || p.Weight || 0,
-                    pnl: p.pnl || p.PnL || 0,
-                    pnl_pct: p.pnl_pct || p.PnLPercent || 0
-                }));
-            }
+        // Portfolio summary
+        const totalValue = Number(summary.total_value_usd || 0);
+        const totalValueIncludesCash = data.totalValueIncludesCash || false;
+        const totalWithCash = totalValueIncludesCash ? totalValue : (totalValue + savedCash);
 
-            if (data.sectors) {
-                context.sectors = data.sectors;
-            }
+        context.total_value = totalWithCash;
+        context.total_positions = summary.total_positions || data.positions?.length || 0;
+        context.cash = savedCash;
 
-            if (data.risk_score !== undefined) {
-                context.risk_score = data.risk_score;
-            }
+        // P&L information
+        if (summary.total_pnl_usd !== undefined) {
+            context.total_pnl = summary.total_pnl_usd;
+            context.total_pnl_pct = summary.total_pnl_pct || 0;
+        }
+
+        // Positions (top 15 with details)
+        if (data.positions && Array.isArray(data.positions)) {
+            context.positions = data.positions.slice(0, 15).map(p => ({
+                symbol: p.Symbol || p.symbol || '?',
+                name: p.Name || p.name || '',
+                value: p.MarketValue || p.value || 0,
+                weight: p.Weight || p.weight || 0,
+                pnl: p.PnL || p.pnl || 0,
+                pnl_pct: p.PnLPercent || p.pnl_pct || 0,
+                sector: p.Sector || p.sector || 'Unknown'
+            }));
+        }
+
+        // Sector allocation
+        if (summary.sector_allocation) {
+            context.sectors = summary.sector_allocation;
+        }
+
+        // Asset allocation
+        if (summary.asset_allocation) {
+            context.asset_allocation = summary.asset_allocation;
+        }
+
+        // Currency exposure
+        if (summary.currency_exposure) {
+            context.currencies = summary.currency_exposure;
+        }
+
+        // Risk metrics if available
+        if (data.risk_metrics) {
+            context.risk_score = data.risk_metrics.score || 0;
+            context.volatility = data.risk_metrics.volatility || 0;
         }
 
         return context;

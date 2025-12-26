@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/ai", tags=["AI Chat"])
 
 # Groq API configuration
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.1-70b-versatile"  # Best quality, free tier
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Latest 70B model (Dec 2024), free tier
 
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
@@ -87,15 +87,15 @@ async def chat_with_ai(
         )
 
     # Build messages with system prompt and context
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-
-    # Add portfolio context if provided
+    # IMPORTANT: Combine system prompt and context in ONE system message
+    # (Groq/OpenAI don't accept multiple consecutive system messages)
+    system_content = SYSTEM_PROMPT
     if request.context:
         context_str = _format_context(request.context)
-        messages.append({
-            "role": "system",
-            "content": f"Contexte du portefeuille:\n{context_str}"
-        })
+        system_content += f"\n\nContexte du portefeuille:\n{context_str}"
+        logger.debug(f"AI context for user {user}: {len(context_str)} chars, {len(request.context)} fields")
+
+    messages = [{"role": "system", "content": system_content}]
 
     # Add conversation history
     for msg in request.messages:
@@ -158,11 +158,23 @@ async def chat_with_ai(
             error="Request timeout. Please try again."
         )
     except httpx.HTTPStatusError as e:
-        logger.error(f"Groq API error for user {user}: {e.response.status_code}")
+        # Log detailed error for debugging
+        error_detail = ""
+        try:
+            error_detail = e.response.json()
+            logger.error(f"Groq API error for user {user}: {e.response.status_code} - {error_detail}")
+        except Exception:
+            logger.error(f"Groq API error for user {user}: {e.response.status_code} - {e.response.text}")
+
+        # User-friendly error message
+        error_msg = f"API error: {e.response.status_code}"
+        if error_detail:
+            error_msg += f" - {error_detail.get('error', {}).get('message', '')}"
+
         return ChatResponse(
             ok=False,
             message="",
-            error=f"API error: {e.response.status_code}"
+            error=error_msg
         )
     except Exception as e:
         logger.error(f"AI chat error for user {user}: {e}")
@@ -191,33 +203,89 @@ def _format_context(context: Dict[str, Any]) -> str:
     """Format portfolio context for AI consumption"""
     lines = []
 
-    if "total_value" in context:
-        lines.append(f"Valeur totale: {context['total_value']:,.2f} €")
+    # Page info
+    if "page" in context:
+        lines.append(f"Page: {context['page']}")
+        lines.append("")
 
+    # Error handling
+    if "error" in context:
+        lines.append(f"⚠️ {context['error']}")
+        return "\n".join(lines)
+
+    # Portfolio summary
+    if "total_value" in context:
+        lines.append(f"💰 Valeur totale portefeuille: ${context['total_value']:,.2f}")
+
+    if "total_positions" in context:
+        lines.append(f"📊 Nombre de positions: {context['total_positions']}")
+
+    if "cash" in context and context.get("cash", 0) > 0:
+        lines.append(f"💵 Liquidités: ${context['cash']:,.2f}")
+
+    # P&L
     if "total_pnl" in context:
         pnl = context["total_pnl"]
         pnl_pct = context.get("total_pnl_pct", 0)
         sign = "+" if pnl >= 0 else ""
-        lines.append(f"P&L total: {sign}{pnl:,.2f} € ({sign}{pnl_pct:.1f}%)")
+        emoji = "📈" if pnl >= 0 else "📉"
+        lines.append(f"{emoji} P&L total: {sign}${pnl:,.2f} ({sign}{pnl_pct:.1f}%)")
 
-    if "positions" in context:
-        lines.append(f"\nPositions ({len(context['positions'])} au total):")
-        for pos in context["positions"][:10]:  # Top 10 only
+    lines.append("")
+
+    # Top positions
+    if "positions" in context and context["positions"]:
+        lines.append(f"🏆 Top {min(len(context['positions']), 10)} positions:")
+        for i, pos in enumerate(context["positions"][:10], 1):
             symbol = pos.get("symbol", "?")
+            name = pos.get("name", "")
             value = pos.get("value", 0)
             weight = pos.get("weight", 0)
-            pnl = pos.get("pnl", 0)
             pnl_pct = pos.get("pnl_pct", 0)
-            sign = "+" if pnl >= 0 else ""
-            lines.append(f"  - {symbol}: {value:,.0f}€ ({weight:.1f}%) | P&L: {sign}{pnl_pct:.1f}%")
+            sector = pos.get("sector", "")
 
-    if "sectors" in context:
-        lines.append(f"\nRépartition sectorielle:")
-        for sector, weight in context["sectors"].items():
-            lines.append(f"  - {sector}: {weight:.1f}%")
+            sign = "+" if pnl_pct >= 0 else ""
+            name_part = f" ({name[:30]})" if name else ""
+            sector_part = f" | {sector}" if sector and sector != "Unknown" else ""
 
+            lines.append(f"  {i}. {symbol}{name_part}: ${value:,.0f} ({weight:.1f}%) | P&L: {sign}{pnl_pct:.1f}%{sector_part}")
+
+    lines.append("")
+
+    # Sector allocation
+    if "sectors" in context and context["sectors"]:
+        lines.append("📊 Répartition sectorielle:")
+        # Sort by weight descending
+        sorted_sectors = sorted(context["sectors"].items(), key=lambda x: x[1], reverse=True)
+        for sector, weight in sorted_sectors:
+            if isinstance(weight, (int, float)) and weight > 0:
+                lines.append(f"  - {sector}: {weight:.1f}%")
+
+    # Asset allocation
+    if "asset_allocation" in context and context["asset_allocation"]:
+        lines.append("")
+        lines.append("🎯 Allocation par classe d'actifs:")
+        sorted_assets = sorted(context["asset_allocation"].items(), key=lambda x: x[1], reverse=True)
+        for asset, weight in sorted_assets:
+            if isinstance(weight, (int, float)) and weight > 0:
+                lines.append(f"  - {asset}: {weight:.1f}%")
+
+    # Currency exposure
+    if "currencies" in context and context["currencies"]:
+        lines.append("")
+        lines.append("💱 Exposition devises:")
+        sorted_currencies = sorted(context["currencies"].items(), key=lambda x: x[1], reverse=True)
+        for currency, weight in sorted_currencies[:5]:  # Top 5 currencies
+            if isinstance(weight, (int, float)) and weight > 0:
+                lines.append(f"  - {currency}: {weight:.1f}%")
+
+    # Risk metrics
     if "risk_score" in context:
-        lines.append(f"\nScore de risque: {context['risk_score']}/100")
+        lines.append("")
+        lines.append(f"⚠️ Score de risque: {context['risk_score']}/100")
+
+    if "volatility" in context:
+        lines.append(f"📊 Volatilité: {context['volatility']:.2%}")
 
     return "\n".join(lines)
 
