@@ -179,10 +179,12 @@ ETF_SECTOR_MAPPING = {
     "ACWI": "Diversified",      # iShares MSCI ACWI ETF
     "WORLD": "Diversified",     # UBS MSCI World UCITS ETF
     "VT": "Diversified",        # Vanguard Total World Stock ETF
+    "CSPX": "Diversified",      # iShares Core S&P 500 UCITS ETF (European)
 
     # Sector-Specific ETFs
     "ITEK": "Technology",       # HAN-GINS Tech Megatrend Equal Weight UCITS ETF
     "BTEC": "Healthcare",       # iShares NASDAQ US Biotechnology UCITS ETF
+    "SMH": "Technology",        # iShares MSCI Global Semiconductors ETF (LSE)
     "XLK": "Technology",        # SPDR Technology Select Sector
     "XLV": "Healthcare",        # SPDR Healthcare Select Sector
     "XLF": "Financials",        # SPDR Financials Select Sector
@@ -199,6 +201,7 @@ ETF_SECTOR_MAPPING = {
     "VGK": "Europe",            # Vanguard FTSE Europe ETF
     "VPL": "Asia Pacific",      # Vanguard FTSE Pacific ETF
     "VWO": "Emerging Markets",  # Vanguard FTSE Emerging Markets ETF
+    "EIMI": "Emerging Markets", # iShares Core MSCI EM IMI UCITS ETF (Swiss)
     "EWJ": "Japan",             # iShares MSCI Japan ETF
     "FEZ": "Europe",            # SPDR Euro Stoxx 50 ETF
     "EWU": "Europe",            # iShares MSCI United Kingdom ETF
