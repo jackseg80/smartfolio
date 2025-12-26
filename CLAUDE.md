@@ -480,6 +480,41 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 - [`docs/STOP_LOSS_BACKTEST_RESULTS.md`](docs/STOP_LOSS_BACKTEST_RESULTS.md) - Backtest validation
 - [`docs/STOP_LOSS_SYSTEM.md`](docs/STOP_LOSS_SYSTEM.md) - Architecture système
 
+### AI Chat Assistant - Groq Integration (Dec 2025)
+
+**Assistant IA pour analyse de portefeuille** intégré dans saxo-dashboard ([ai_chat_router.py](api/ai_chat_router.py)):
+
+**Status:** ✅ **Production Ready** - Groq API (gratuit) avec Llama 3.1 70B
+
+**Composants :**
+
+1. **Backend Router** - `/api/ai/chat`, `/api/ai/status`, `/api/ai/quick-questions`
+2. **Frontend Modal** - Bouton "Ask AI" + chat interface dans saxo-dashboard.html
+3. **Configuration** - Clé API Groq dans Settings > API Keys (stockage sécurisé)
+
+**Features :**
+
+- ✅ Questions rapides prédéfinies (5 types: analyse, risque, concentration, secteurs, performance)
+- ✅ Contexte portfolio automatique (positions, P&L, secteurs, risk score)
+- ✅ Formatage markdown basique (gras, italique, code)
+- ✅ Historique de conversation dans le modal
+- ✅ Gratuit avec limites généreuses (14k tokens/min, 30 req/min)
+- ✅ Ultra rapide (~500 tokens/seconde)
+
+**Setup :**
+
+1. Obtenir clé gratuite sur <https://console.groq.com/keys>
+2. Ajouter dans Settings > API Keys > Groq API Key (`gsk_...`)
+3. Cliquer "Ask AI" dans saxo-dashboard
+
+**Fix Bug Persistence (Dec 2025) :**
+
+- Correction WealthContextBar.js qui effaçait `groq_api_key` lors de navigation
+- Ajout `groq_api_key` dans liste des clés préservées (ligne 423)
+- Chargement prioritaire settings backend pour éviter perte de clés
+
+**Détails complets :** [`docs/AI_CHAT_GROQ.md`](docs/AI_CHAT_GROQ.md)
+
 ### Market Opportunities System - Global Edition (Oct 2025)
 
 **Identifie opportunités d'investissement mondiales** en dehors du portefeuille actuel ([opportunity_scanner.py](services/ml/bourse/opportunity_scanner.py), [sector_analyzer.py](services/ml/bourse/sector_analyzer.py)):

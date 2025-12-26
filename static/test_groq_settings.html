@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Groq Settings</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #ddd; }
+        button { padding: 10px 20px; margin: 10px 5px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        pre { background: #2d2d2d; padding: 15px; border-radius: 5px; overflow: auto; }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+        input { padding: 8px; width: 400px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🤖 Test Groq API Key Settings</h1>
+
+    <div>
+        <h2>1. Vérifier settings actuels</h2>
+        <button onclick="checkSettings()">GET /api/users/settings</button>
+        <pre id="current-settings"></pre>
+    </div>
+
+    <div>
+        <h2>2. Tester sauvegarde</h2>
+        <input type="text" id="test-key" placeholder="Entrez une clé de test (ex: gsk_test123)">
+        <button onclick="saveTestKey()">PUT /api/users/settings (avec groq_api_key)</button>
+        <pre id="save-result"></pre>
+    </div>
+
+    <div>
+        <h2>3. Vérifier secrets.json côté serveur</h2>
+        <button onclick="checkSecretsFile()">Vérifier fichier secrets.json</button>
+        <pre id="secrets-file"></pre>
+    </div>
+
+    <div>
+        <h2>4. Vérifier cache secrets</h2>
+        <button onclick="checkCache()">Clear cache + reload</button>
+        <pre id="cache-result"></pre>
+    </div>
+
+    <script>
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        document.body.insertAdjacentHTML('afterbegin', `<p>User actif: <strong>${activeUser}</strong></p>`);
+
+        async function checkSettings() {
+            const el = document.getElementById('current-settings');
+            el.textContent = 'Chargement...';
+
+            try {
+                const response = await fetch('/api/users/settings', {
+                    headers: { 'X-User': activeUser }
+                });
+                const data = await response.json();
+
+                el.innerHTML = `<span class="success">✅ Status: ${response.status}</span>\n\n` +
+                               JSON.stringify(data, null, 2);
+
+                // Highlight groq_api_key
+                const groqKey = data.groq_api_key || '(vide)';
+                el.innerHTML += `\n\n<span class="success">groq_api_key: ${groqKey}</span>`;
+            } catch (error) {
+                el.innerHTML = `<span class="error">❌ Erreur: ${error.message}</span>`;
+            }
+        }
+
+        async function saveTestKey() {
+            const el = document.getElementById('save-result');
+            const testKey = document.getElementById('test-key').value.trim();
+
+            if (!testKey) {
+                el.innerHTML = '<span class="error">❌ Entrez une clé de test</span>';
+                return;
+            }
+
+            el.textContent = 'Sauvegarde...';
+
+            try {
+                // 1. Charger settings actuels
+                const getResponse = await fetch('/api/users/settings', {
+                    headers: { 'X-User': activeUser }
+                });
+                const currentSettings = await getResponse.json();
+
+                // 2. Modifier groq_api_key
+                currentSettings.groq_api_key = testKey;
+
+                // 3. Sauvegarder
+                const putResponse = await fetch('/api/users/settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': activeUser
+                    },
+                    body: JSON.stringify(currentSettings)
+                });
+
+                const result = await putResponse.json();
+
+                el.innerHTML = `<span class="success">✅ Sauvegardé!</span>\n\n` +
+                               `Status: ${putResponse.status}\n` +
+                               JSON.stringify(result, null, 2);
+
+                // 4. Vérifier immédiatement
+                setTimeout(async () => {
+                    const checkResponse = await fetch('/api/users/settings', {
+                        headers: { 'X-User': activeUser }
+                    });
+                    const checkData = await checkResponse.json();
+
+                    el.innerHTML += `\n\n<span class="success">Vérification immédiate:</span>\n` +
+                                   `groq_api_key = ${checkData.groq_api_key || '(vide)'}`;
+                }, 500);
+
+            } catch (error) {
+                el.innerHTML = `<span class="error">❌ Erreur: ${error.message}</span>`;
+            }
+        }
+
+        async function checkSecretsFile() {
+            const el = document.getElementById('secrets-file');
+            el.textContent = 'Chargement...';
+
+            try {
+                const response = await fetch('/api/users/settings', {
+                    headers: { 'X-User': activeUser }
+                });
+                const data = await response.json();
+
+                el.innerHTML = `<span class="success">Settings retournés par l'API:</span>\n\n` +
+                               `groq_api_key: ${data.groq_api_key || '(vide)'}\n` +
+                               `fred_api_key: ${data.fred_api_key || '(vide)'}\n` +
+                               `coingecko_api_key: ${data.coingecko_api_key || '(vide)'}\n\n` +
+                               `Fichier devrait être à: data/users/${activeUser}/secrets.json`;
+            } catch (error) {
+                el.innerHTML = `<span class="error">❌ Erreur: ${error.message}</span>`;
+            }
+        }
+
+        async function checkCache() {
+            const el = document.getElementById('cache-result');
+            el.textContent = 'Test cache...';
+
+            try {
+                // Charger 1x
+                const r1 = await fetch('/api/users/settings', {
+                    headers: { 'X-User': activeUser }
+                });
+                const d1 = await r1.json();
+
+                // Charger 2x (devrait venir du cache)
+                const r2 = await fetch('/api/users/settings', {
+                    headers: { 'X-User': activeUser }
+                });
+                const d2 = await r2.json();
+
+                el.innerHTML = `<span class="success">Lecture 1: groq_api_key = ${d1.groq_api_key || '(vide)'}</span>\n` +
+                               `<span class="success">Lecture 2: groq_api_key = ${d2.groq_api_key || '(vide)'}</span>\n\n` +
+                               `Cache secrets TTL: 1 heure (3600s)`;
+            } catch (error) {
+                el.innerHTML = `<span class="error">❌ Erreur: ${error.message}</span>`;
+            }
+        }
+
+        // Auto-check au chargement
+        window.onload = () => {
+            checkSettings();
+        };
+    </script>
+</body>
+</html>

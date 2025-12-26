@@ -383,31 +383,54 @@ class WealthContextBar {
       return;
     }
 
-    // Initialiser userSettings si nécessaire
+    // Initialiser userSettings si nécessaire - AVEC les clés API du backend
     if (!window.userSettings) {
-      window.userSettings = {
-        data_source: 'csv',
-        csv_selected_file: null
-      };
-    }
-
-    // Préserver les clés API (critique!)
-    try {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
-      const response = await fetch('/api/users/settings', {
-        headers: { 'X-User': activeUser }
-      });
-      if (response.ok) {
-        const currentSettings = await response.json();
-        const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'debug_token'];
-        apiKeys.forEach(k => {
-          if (currentSettings[k]) {
-            window.userSettings[k] = currentSettings[k];
-          }
+      // Charger d'abord les settings depuis le backend pour ne pas perdre les clés API
+      try {
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const response = await fetch('/api/users/settings', {
+          headers: { 'X-User': activeUser }
         });
+        if (response.ok) {
+          const backendSettings = await response.json();
+          // Initialiser avec les settings backend (contient toutes les clés API)
+          window.userSettings = backendSettings;
+          console.debug('WealthContextBar: userSettings initialized from backend (includes all API keys)');
+        } else {
+          // Fallback si erreur backend
+          window.userSettings = {
+            data_source: 'csv',
+            csv_selected_file: null
+          };
+          console.warn('WealthContextBar: userSettings initialized with defaults (backend unavailable)');
+        }
+      } catch (e) {
+        debugLogger.warn('Could not load settings from backend:', e);
+        window.userSettings = {
+          data_source: 'csv',
+          csv_selected_file: null
+        };
       }
-    } catch (e) {
-      debugLogger.warn('Could not reload settings to preserve API keys:', e);
+    } else {
+      // Si window.userSettings existe déjà, recharger quand même les clés API pour les préserver
+      try {
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const response = await fetch('/api/users/settings', {
+          headers: { 'X-User': activeUser }
+        });
+        if (response.ok) {
+          const currentSettings = await response.json();
+          const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'debug_token'];
+          apiKeys.forEach(k => {
+            if (currentSettings[k]) {
+              window.userSettings[k] = currentSettings[k];
+            }
+          });
+          console.debug('WealthContextBar: API keys preserved from backend');
+        }
+      } catch (e) {
+        debugLogger.warn('Could not reload settings to preserve API keys:', e);
+      }
     }
 
     // Déterminer l'ancienne et nouvelle source

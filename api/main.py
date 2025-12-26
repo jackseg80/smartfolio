@@ -157,6 +157,7 @@ from api.coingecko_proxy_router import router as coingecko_proxy_router
 from api.pricing_router import router as pricing_router
 from api.rebalancing_strategy_router import router as rebalancing_strategy_router
 from api.config_router import router as config_router
+from api.ai_chat_router import router as ai_chat_router
 ## NOTE: market_endpoints est désactivé tant que le client prix n'est pas réimplémenté
 from api.market_endpoints import router as market_router
 from api.exceptions import (
@@ -751,6 +752,7 @@ app.include_router(health_router)
 app.include_router(coingecko_proxy_router)  # CoinGecko CORS proxy with caching
 app.include_router(pricing_router)
 app.include_router(config_router)
+app.include_router(ai_chat_router)  # AI Chat with Groq (free tier)
 # Phase 3 Unified Orchestration
 from api.unified_phase3_endpoints import router as unified_phase3_router
 app.include_router(unified_phase3_router)
