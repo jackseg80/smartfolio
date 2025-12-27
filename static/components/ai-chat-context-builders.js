@@ -11,6 +11,7 @@ export async function buildDashboardContext() {
         page: 'Dashboard - Global Portfolio View'
     };
     const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
     try {
         // 1. Load crypto balance data
@@ -80,22 +81,19 @@ export async function buildDashboardContext() {
             console.warn('[AI Chat] Failed to load wealth data:', err);
         }
 
-        // 4. Load Risk Score
-        try {
-            const riskResponse = await fetch('/api/risk/dashboard', {
-                headers: { 'X-User': activeUser }
-            });
-            if (riskResponse.ok) {
-                const riskData = await riskResponse.json();
-                context.risk_score = riskData.risk_metrics?.risk_score || 0;
-            }
-        } catch (err) {
-            console.warn('[AI Chat] Failed to load risk score:', err);
+        // 4. Load Risk Score (from unified store, not API)
+        // Note: API returns structural risk score (78.9), but dashboard displays
+        // the blended risk score (71) from the unified store
+        if (window.riskStore) {
+            const storeState = window.riskStore.getState();
+            context.risk_score = storeState.scores?.risk || 0;
+        } else {
+            console.warn('[AI Chat] Risk store not available, risk score will be missing');
         }
 
         // 5. Load Decision Index & Analytics
         try {
-            const govResponse = await fetch('/execution/governance/state', {
+            const govResponse = await fetch(`/execution/governance/state?source=${activeSource}`, {
                 headers: { 'X-User': activeUser }
             });
             if (govResponse.ok) {
@@ -152,61 +150,77 @@ export async function buildRiskDashboardContext() {
 
     try {
         const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
-        // Debug: Log user
-        console.log('[AI Chat] Building Risk Dashboard context for user:', activeUser);
+        // PRIORITY: Use riskStore (same data source as frontend UI)
+        if (window.riskStore) {
+            const storeState = window.riskStore.getState();
 
-        // Fetch risk dashboard data
-        const response = await fetch('/api/risk/dashboard', {
-            headers: { 'X-User': activeUser }
-        });
+            // Risk score (blended, same as UI displays)
+            context.risk_score = storeState.scores?.risk || 0;
 
-        // Debug: Log response status
-        console.log('[AI Chat] Risk dashboard API response status:', response.status);
-
-        if (response.ok) {
-            const data = await response.json();
-
-            // Debug: Log data structure
-            console.log('[AI Chat] Risk dashboard data received:', {
-                has_risk_score: data.risk_score !== undefined,
-                has_risk_metrics: !!data.risk_metrics,
-                has_portfolio_summary: !!data.portfolio_summary,
-                keys: Object.keys(data)
-            });
-
-            // Risk score (check both locations)
-            if (data.risk_score !== undefined) {
-                context.risk_score = data.risk_score;
-            } else if (data.risk_metrics?.risk_score !== undefined) {
-                context.risk_score = data.risk_metrics.risk_score;
+            // Portfolio summary from store (correct property: portfolioSummary, not portfolio)
+            if (storeState.portfolioSummary) {
+                context.portfolio_value = storeState.portfolioSummary.total_value || 0;
+                context.num_assets = storeState.portfolioSummary.num_assets || 0;
             }
 
-            // Risk metrics (check both data.metrics and data.risk_metrics)
-            const metrics = data.metrics || data.risk_metrics;
-            if (metrics) {
-                context.var_95 = metrics.var_95_1d || metrics.var_95;
+            // Risk metrics from store (correct property: riskMetrics, not metrics)
+            if (storeState.riskMetrics) {
+                const metrics = storeState.riskMetrics;
+
+                // VaR is in decimal format in store, convert to USD
+                const portfolioValue = storeState.portfolioSummary?.total_value || 0;
+                const varDecimal = metrics.var_95_1d || metrics.var_95 || 0;
+                context.var_95 = varDecimal * portfolioValue;
+
                 context.max_drawdown = metrics.max_drawdown;
                 context.sharpe_ratio = metrics.sharpe_ratio;
                 context.sortino_ratio = metrics.sortino_ratio;
                 context.hhi = metrics.hhi || metrics.concentration_hhi;
                 context.volatility = metrics.volatility_annualized || metrics.volatility;
             }
-
-            // Portfolio summary
-            if (data.portfolio_summary) {
-                context.portfolio_value = data.portfolio_summary.total_value;
-                context.num_assets = data.portfolio_summary.num_assets;
-            }
-
-            // Debug: Log extracted context
-            console.log('[AI Chat] Risk context extracted:', {
-                risk_score: context.risk_score,
-                has_metrics: !!(context.var_95 || context.max_drawdown)
-            });
         } else {
-            console.error('[AI Chat] Risk dashboard API error:', response.status, response.statusText);
-            context.error = `API error: ${response.status}`;
+            // FALLBACK: Use API if store not available
+            console.warn('[AI Chat] Risk store not available, using API fallback');
+
+            const response = await fetch(`/api/risk/dashboard?source=${activeSource}`, {
+                headers: { 'X-User': activeUser }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+
+                // Risk score from API
+                if (data.risk_score !== undefined) {
+                    context.risk_score = data.risk_score;
+                } else if (data.risk_metrics?.risk_score !== undefined) {
+                    context.risk_score = data.risk_metrics.risk_score;
+                }
+
+                // Portfolio summary
+                const portfolioValue = data.portfolio_summary?.total_value || 0;
+                if (data.portfolio_summary) {
+                    context.portfolio_value = portfolioValue;
+                    context.num_assets = data.portfolio_summary.num_assets;
+                }
+
+                // Risk metrics
+                const metrics = data.metrics || data.risk_metrics;
+                if (metrics) {
+                    const varDecimal = metrics.var_95_1d || metrics.var_95 || 0;
+                    context.var_95 = varDecimal * portfolioValue;
+
+                    context.max_drawdown = metrics.max_drawdown;
+                    context.sharpe_ratio = metrics.sharpe_ratio;
+                    context.sortino_ratio = metrics.sortino_ratio;
+                    context.hhi = metrics.hhi || metrics.concentration_hhi;
+                    context.volatility = metrics.volatility_annualized || metrics.volatility;
+                }
+            } else {
+                console.error('[AI Chat] Risk dashboard API error:', response.status, response.statusText);
+                context.error = `API error: ${response.status}`;
+            }
         }
 
         // Active alerts
@@ -217,22 +231,50 @@ export async function buildRiskDashboardContext() {
 
             if (alertsResponse.ok) {
                 const alertsData = await alertsResponse.json();
-                if (alertsData.ok && alertsData.alerts) {
-                    context.alerts = alertsData.alerts.map(alert => ({
+                // API returns List[AlertResponse] directly (not wrapped in {ok, alerts})
+                if (Array.isArray(alertsData)) {
+                    context.alerts = alertsData.map(alert => ({
                         severity: alert.severity,
-                        message: alert.message
+                        type: alert.alert_type,
+                        message: alert.data?.current_value ?
+                            `${alert.alert_type}: ${alert.data.current_value}` :
+                            alert.alert_type,
+                        created_at: alert.created_at
                     }));
-                    console.log('[AI Chat] Loaded', context.alerts.length, 'active alerts');
                 }
             }
         } catch (err) {
             console.warn('[AI Chat] Failed to load alerts:', err);
         }
 
-        // Market cycles (if available in global state)
-        if (window.lastCyclesData) {
-            context.cycles = window.lastCyclesData;
-            console.log('[AI Chat] Using cached cycles data');
+        // Market cycles - Load from governance state
+        try {
+            const govResponse = await fetch(`/execution/governance/state?source=${activeSource}`, {
+                headers: { 'X-User': activeUser }
+            });
+
+            if (govResponse.ok) {
+                const govData = await govResponse.json();
+
+                // Cycle score from components
+                const cycleScore = govData.scores?.components?.trend_regime || 0;
+                context.cycle_score = cycleScore;
+
+                // Calculate market phase
+                if (cycleScore < 70) {
+                    context.market_phase = 'bearish';
+                } else if (cycleScore < 90) {
+                    context.market_phase = 'moderate';
+                } else {
+                    context.market_phase = 'bullish';
+                }
+
+                // Dominance phase (btc/eth/large/alt)
+                context.dominance_phase = govData.phase?.phase_now || 'unknown';
+                context.phase_confidence = govData.phase?.confidence || 0;
+            }
+        } catch (err) {
+            console.warn('[AI Chat] Failed to load cycles from governance:', err);
         }
 
     } catch (error) {
@@ -252,41 +294,78 @@ export async function buildAnalyticsContext() {
     };
 
     try {
-        // Get unified state
-        const unifiedState = window.getUnifiedState ? window.getUnifiedState() : {};
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
-        // Decision Index
-        if (unifiedState.decision_index !== undefined) {
-            context.decision_index = unifiedState.decision_index;
+        // 1. Load Decision Index & Phase from Governance
+        try {
+            const govResponse = await fetch(`/execution/governance/state?source=${activeSource}`, {
+                headers: { 'X-User': activeUser }
+            });
+            if (govResponse.ok) {
+                const govData = await govResponse.json();
+                context.decision_index = govData.scores?.decision || 0;
+                context.dominance_phase = govData.phase?.phase_now || 'unknown';  // btc/eth/large/alt
+                context.regime_components = govData.scores?.components || {};
+
+                // Calculate market phase from cycle score (allocation-engine.js logic)
+                const cycleScore = govData.scores?.components?.trend_regime || 0;
+                context.cycle_score = cycleScore;
+                if (cycleScore < 70) {
+                    context.market_phase = 'bearish';
+                } else if (cycleScore < 90) {
+                    context.market_phase = 'moderate';
+                } else {
+                    context.market_phase = 'bullish';
+                }
+            }
+        } catch (err) {
+            console.warn('[AI Chat] Failed to load governance state:', err);
         }
 
-        // ML Sentiment
-        if (unifiedState.ml_sentiment !== undefined) {
-            context.ml_sentiment = unifiedState.ml_sentiment;
+        // 2. Load ML Sentiment
+        try {
+            const sentimentResponse = await fetch('/api/ml/sentiment/unified', {
+                headers: { 'X-User': activeUser }
+            });
+            if (sentimentResponse.ok) {
+                const sentimentData = await sentimentResponse.json();
+                const rawScore = sentimentData.aggregated_sentiment?.score || 0;
+                // Convert from [-1, 1] to [0, 100] scale: 50 + (score × 50)
+                context.ml_sentiment = 50 + (rawScore * 50);
+                context.ml_sentiment_label = sentimentData.aggregated_sentiment?.label || 'unknown';
+            }
+        } catch (err) {
+            console.warn('[AI Chat] Failed to load ML sentiment:', err);
         }
 
-        // Market phase
-        if (unifiedState.phase) {
-            context.phase = unifiedState.phase;
+        // 3. Load Market Regime
+        try {
+            const regimeResponse = await fetch('/api/ml/regime/current', {
+                headers: { 'X-User': activeUser }
+            });
+            if (regimeResponse.ok) {
+                const regimeData = await regimeResponse.json();
+                context.regime = regimeData.regime_prediction?.regime_name || 'unknown';
+                context.regime_confidence = regimeData.regime_prediction?.confidence || 0;
+            }
+        } catch (err) {
+            console.warn('[AI Chat] Failed to load regime:', err);
         }
 
-        // Regime scores
-        if (unifiedState.regime) {
-            context.regime = {
-                ccs: unifiedState.regime.ccs_score,
-                onchain: unifiedState.regime.onchain_score,
-                risk: unifiedState.regime.risk_score,
-                total: unifiedState.regime.total_score
-            };
+        // 4. Load Risk Score (from unified store, not API)
+        if (window.riskStore) {
+            const storeState = window.riskStore.getState();
+            context.risk_score = storeState.scores?.risk || 0;
         }
 
-        // Volatility forecasts (if available)
+        // 5. Volatility forecasts (if available in global cache)
         if (window.lastVolatilityForecasts) {
             context.volatility_forecasts = window.lastVolatilityForecasts;
         }
 
     } catch (error) {
-        console.error('Error building analytics context:', error);
+        console.error('[AI Chat] Error building analytics context:', error);
         context.error = 'Failed to load analytics data';
     }
 
@@ -361,9 +440,14 @@ export async function buildSaxoContext() {
         }
 
         // Risk metrics
+        // Use store for risk_score (blended), window.riskDashboardData for other metrics
+        if (window.riskStore) {
+            const storeState = window.riskStore.getState();
+            context.risk_score = storeState.scores?.risk || 0;
+        }
+
         if (window.riskDashboardData) {
             const risk = window.riskDashboardData;
-            context.risk_score = risk.risk_score;
             context.volatility = risk.volatility;
 
             if (risk.metrics) {
@@ -416,28 +500,27 @@ export async function buildWealthContext() {
         if (response.ok) {
             const data = await response.json();
 
-            if (data.ok) {
-                // Net worth
-                context.net_worth = data.net_worth || 0;
-                context.total_assets = data.total_assets || 0;
+            // Parse response (API returns data directly, no wrapper)
+            context.net_worth = data.net_worth || 0;
+            context.total_assets = data.total_assets || 0;
+            context.total_liabilities = data.total_liabilities || 0;
 
-                // Assets breakdown
-                if (data.assets) {
-                    context.assets = data.assets;
-                }
+            // Assets breakdown
+            if (data.breakdown) {
+                context.liquidity = data.breakdown.liquidity || 0;
+                context.tangible = data.breakdown.tangible || 0;
+                context.insurance = data.breakdown.insurance || 0;
+                context.liabilities = data.breakdown.liability || 0;
+            }
 
-                // Liabilities
-                if (data.liabilities) {
-                    context.liabilities = data.liabilities;
-                }
-
-                // Liquidity
-                context.liquidity = data.liquidity || 0;
+            // Counts
+            if (data.counts) {
+                context.counts = data.counts;
             }
         }
 
     } catch (error) {
-        console.error('Error building wealth context:', error);
+        console.error('[AI Chat] Error building wealth context:', error);
         context.error = 'Failed to load wealth data';
     }
 
