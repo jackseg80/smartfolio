@@ -540,6 +540,87 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
     return lines
 
 
+def _format_dashboard_context(context: Dict[str, Any]) -> list:
+    """Format global dashboard context (crypto + bourse + patrimoine)"""
+    lines = []
+
+    # Crypto portfolio
+    if "crypto" in context:
+        crypto = context["crypto"]
+        lines.append("💰 Portefeuille Crypto:")
+        lines.append(f"  - Valeur totale: ${crypto.get('total_value', 0):,.2f}")
+        lines.append(f"  - Nombre de positions: {crypto.get('positions_count', 0)}")
+
+        if crypto.get("top_positions"):
+            lines.append("  - Top 5 positions:")
+            for pos in crypto["top_positions"][:5]:
+                symbol = pos.get("symbol", "?")
+                value = pos.get("value", 0)
+                weight = pos.get("weight", 0)
+                pnl = pos.get("pnl_pct", 0)
+                sign = "+" if pnl >= 0 else ""
+                lines.append(f"    • {symbol}: ${value:,.0f} ({weight:.1f}%) | P&L: {sign}{pnl:.1f}%")
+        lines.append("")
+
+    # Bourse/Saxo portfolio
+    if "bourse" in context:
+        bourse = context["bourse"]
+        lines.append("📈 Portefeuille Bourse:")
+        lines.append(f"  - Valeur totale: ${bourse.get('total_value', 0):,.2f}")
+        lines.append(f"  - Nombre de positions: {bourse.get('positions_count', 0)}")
+
+        if bourse.get("top_positions"):
+            lines.append("  - Top 5 positions:")
+            for pos in bourse["top_positions"][:5]:
+                symbol = pos.get("symbol", "?")
+                value = pos.get("value", 0)
+                weight = pos.get("weight", 0)
+                lines.append(f"    • {symbol}: ${value:,.0f} ({weight:.1f}%)")
+        lines.append("")
+
+    # Patrimoine
+    if "patrimoine" in context:
+        patri = context["patrimoine"]
+        lines.append("🏦 Patrimoine:")
+        lines.append(f"  - Net Worth: ${patri.get('net_worth', 0):,.2f}")
+        lines.append(f"  - Liquidités: ${patri.get('liquidity', 0):,.2f}")
+        lines.append(f"  - Actifs tangibles: ${patri.get('tangible', 0):,.2f}")
+        if patri.get('liabilities', 0) > 0:
+            lines.append(f"  - Passifs: ${patri.get('liabilities', 0):,.2f}")
+        lines.append("")
+
+    # Market analytics
+    if "decision_index" in context or "ml_sentiment" in context or "regime" in context:
+        lines.append("📊 Analyse de Marché:")
+
+        if "decision_index" in context:
+            di = context["decision_index"]
+            lines.append(f"  - Decision Index: {di:.1f}/100")
+
+        if "ml_sentiment" in context:
+            sentiment = context["ml_sentiment"]
+            # Convert to 0-100 scale for display
+            sentiment_pct = (sentiment + 1) * 50
+            sentiment_label = "Fear" if sentiment_pct < 40 else "Neutral" if sentiment_pct < 60 else "Greed"
+            lines.append(f"  - ML Sentiment: {sentiment_pct:.0f}/100 ({sentiment_label})")
+
+        if "regime" in context:
+            lines.append(f"  - Régime marché: {context['regime']}")
+
+        if "phase" in context:
+            lines.append(f"  - Phase actuelle: {context['phase']}")
+
+        lines.append("")
+
+    # Risk score
+    if "risk_score" in context:
+        risk = context["risk_score"]
+        lines.append(f"⚠️ Score de Risque: {risk:.1f}/100")
+        lines.append("")
+
+    return lines
+
+
 def _format_portfolio_context(context: Dict[str, Any]) -> list:
     """Format generic portfolio context (crypto/stocks)"""
     lines = []
@@ -712,8 +793,14 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
         lines.append(f"⚠️ {context['error']}")
         return "\n".join(lines)
 
-    # Route to appropriate formatter based on page type
+    # Route to appropriate formatter based on page type and context structure
     page = context.get("page", "").lower()
+
+    # Check for hierarchical dashboard context (crypto + bourse + patrimoine)
+    has_hierarchical_context = (
+        "crypto" in context and
+        ("bourse" in context or "patrimoine" in context or "decision_index" in context)
+    )
 
     if "risk" in page:
         # Risk Dashboard
@@ -724,8 +811,12 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
     elif "wealth" in page or "patrimoine" in page:
         # Wealth Dashboard
         lines.extend(_format_wealth_context(context))
+    elif has_hierarchical_context:
+        # Global Dashboard with hierarchical structure
+        # Detected by context structure rather than page name
+        lines.extend(_format_dashboard_context(context))
     else:
-        # Generic portfolio (dashboard, saxo-dashboard, etc.)
+        # Generic portfolio (saxo-dashboard, etc.)
         lines.extend(_format_portfolio_context(context))
 
     # Add documentation knowledge if requested
