@@ -507,6 +507,8 @@
         }
     </style>
 
+    <!-- AI Chat Styles -->
+    <link rel="stylesheet" href="/static/components/ai-chat.css">
 
 </head>
 
@@ -907,6 +909,14 @@
 
         </div>
     </main>
+
+    <!-- AI Chat Components -->
+    <script type="module">
+        import { initAIChat } from '/static/components/ai-chat-init.js';
+
+        // Initialize AI Chat for dashboard page
+        initAIChat('dashboard');
+    </script>
 
 </body>
 

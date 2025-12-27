@@ -515,6 +515,59 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 
 **Détails complets :** [`docs/AI_CHAT_GROQ.md`](docs/AI_CHAT_GROQ.md)
 
+### Global AI Chat System - Multi-Provider (Dec 2025)
+
+**Extension du système AI Chat** disponible sur toutes les pages ([docs/AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md)):
+
+**Status:** ✅ **100% Production Ready** - Backend + Frontend + Intégrations complètes
+
+**Architecture:**
+
+- **Backend:** Multi-provider (Groq gratuit + Claude API premium) avec context formatters par page
+- **Frontend:** Composant réutilisable + context builders + bouton flottant (FAB)
+- **Knowledge Base:** Documentation SmartFolio injectée automatiquement (~1500 tokens)
+
+**Features:**
+
+- ✅ Contexte dynamique par page (dashboard → crypto, risk → scores, saxo → opportunités)
+- ✅ Multi-provider: Groq (Llama 3.3 70B gratuit) + Claude (Sonnet 3.5 premium)
+- ✅ Documentation intégrée (Decision Index, régimes, scores expliqués)
+- ✅ Questions rapides spécifiques par page
+- ✅ Raccourci clavier Ctrl+K
+- ✅ Sélecteur de provider dans le modal
+
+**Endpoints:**
+
+```bash
+POST /api/ai/chat                       # Chat avec context multi-provider
+GET  /api/ai/providers                  # Liste providers configurés
+GET  /api/ai/quick-questions/{page}     # Questions rapides par page
+```
+
+**Context Builders par page:**
+
+- `dashboard` → Crypto portfolio, P&L, allocation, régime
+- `risk-dashboard` → Risk score, VaR, Max Drawdown, alertes, cycles
+- `analytics-unified` → Decision Index, ML Sentiment, phase, régimes
+- `saxo-dashboard` → Positions, stop loss, Market Opportunities
+- `wealth-dashboard` → Net worth, actifs, passifs, liquidités
+
+**Configuration:**
+
+- **Groq (Gratuit):** Settings > API Keys > Groq API Key (`gsk_...`)
+- **Claude (Premium):** Settings > API Keys > Claude API Key (`sk-ant-...`)
+
+**Utilisation:**
+
+1. Bouton flottant ✨ (en bas à droite) ou Ctrl+K
+2. Sélectionner provider (Groq/Claude)
+3. Poser questions contextuelles
+4. L'IA voit automatiquement les données de la page
+
+**Token Budget:** ~3000-3500 tokens/requête (doc + context + conversation)
+
+**Détails complets :** [`docs/AI_CHAT_GLOBAL.md`](docs/AI_CHAT_GLOBAL.md)
+
 ### Market Opportunities System - Global Edition (Oct 2025)
 
 **Identifie opportunités d'investissement mondiales** en dehors du portefeuille actuel ([opportunity_scanner.py](services/ml/bourse/opportunity_scanner.py), [sector_analyzer.py](services/ml/bourse/sector_analyzer.py)):

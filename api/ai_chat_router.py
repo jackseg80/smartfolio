@@ -1,10 +1,10 @@
 """
-AI Chat Router - Groq Integration
+AI Chat Router - Multi-Provider Support (Groq + Claude API)
 Provides AI-powered analysis and chat for portfolio insights
 
-Groq API is free tier with generous limits:
-- 14,000 tokens/min for Llama 3.1 70B
-- 30 requests/min
+Providers:
+- Groq (Free): 14,000 tokens/min, 30 req/min, Llama 3.3 70B
+- Claude API (Paid): Claude 3.5 Sonnet, vision capable, smarter analysis
 """
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
@@ -15,14 +15,37 @@ import httpx
 
 from api.deps import get_active_user
 from services.user_secrets import user_secrets_manager
+from api.services.ai_knowledge_base import get_knowledge_context
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ai", tags=["AI Chat"])
 
-# Groq API configuration
-GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"  # Latest 70B model (Dec 2024), free tier
+# Provider configurations
+PROVIDERS = {
+    "groq": {
+        "name": "Groq (Llama 3.3 70B)",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "model": "llama-3.3-70b-versatile",
+        "key_field": "groq_api_key",
+        "max_tokens_default": 1024,
+        "free": True,
+        "vision": False
+    },
+    "claude": {
+        "name": "Claude (Sonnet 3.5)",
+        "url": "https://api.anthropic.com/v1/messages",
+        "model": "claude-3-5-sonnet-20241022",
+        "key_field": "claude_api_key",
+        "max_tokens_default": 2048,
+        "free": False,
+        "vision": True
+    }
+}
+
+# Legacy constants for backward compatibility
+GROQ_API_URL = PROVIDERS["groq"]["url"]
+GROQ_MODEL = PROVIDERS["groq"]["model"]
 
 class ChatMessage(BaseModel):
     role: str  # "user" or "assistant"
@@ -31,6 +54,8 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[ChatMessage]
     context: Optional[Dict[str, Any]] = None  # Portfolio context
+    provider: str = "groq"  # "groq" or "claude"
+    include_docs: bool = True  # Include documentation knowledge
     max_tokens: int = 1024
     temperature: float = 0.7
 
@@ -64,9 +89,20 @@ Si on te fournit un contexte de portefeuille, utilise-le pour personnaliser tes 
 
 
 def _get_groq_api_key(user_id: str) -> Optional[str]:
-    """Get Groq API key from user secrets"""
+    """Get Groq API key from user secrets (backward compatibility)"""
+    return _get_provider_api_key(user_id, "groq")
+
+
+def _get_provider_api_key(user_id: str, provider: str) -> Optional[str]:
+    """Get API key for specified provider from user secrets"""
     secrets = user_secrets_manager.get_user_secrets(user_id)
-    return secrets.get("groq", {}).get("api_key", "")
+
+    if provider == "groq":
+        return secrets.get("groq", {}).get("api_key", "")
+    elif provider == "claude":
+        return secrets.get("claude", {}).get("api_key", "")
+
+    return None
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -77,31 +113,57 @@ async def chat_with_ai(
     """
     Chat with AI assistant for portfolio analysis.
 
-    Uses Groq API (free tier) with Llama 3.1 70B.
+    Supports multiple providers:
+    - Groq (free tier) with Llama 3.3 70B
+    - Claude API (paid) with Sonnet 3.5
 
     Request body:
     - messages: List of chat messages (role + content)
     - context: Optional portfolio context (positions, metrics, etc.)
+    - provider: "groq" or "claude" (default: groq)
+    - include_docs: Include documentation knowledge (default: true)
     - max_tokens: Max response length (default 1024)
     - temperature: Creativity (0.0-1.0, default 0.7)
     """
-    # Get API key
-    api_key = _get_groq_api_key(user)
-    if not api_key:
+    # Validate provider
+    if request.provider not in PROVIDERS:
         return ChatResponse(
             ok=False,
             message="",
-            error="Groq API key not configured. Add it in Settings > API Keys > Groq."
+            error=f"Invalid provider '{request.provider}'. Available: {list(PROVIDERS.keys())}"
         )
 
+    # Get API key for selected provider
+    api_key = _get_provider_api_key(user, request.provider)
+    if not api_key:
+        provider_name = PROVIDERS[request.provider]["name"]
+        return ChatResponse(
+            ok=False,
+            message="",
+            error=f"{provider_name} API key not configured. Add it in Settings > API Keys."
+        )
+
+    # Route to appropriate provider
+    if request.provider == "groq":
+        return await _call_groq(user, api_key, request)
+    elif request.provider == "claude":
+        return await _call_claude(user, api_key, request)
+
+    return ChatResponse(
+        ok=False,
+        message="",
+        error=f"Provider {request.provider} not implemented"
+    )
+
+
+async def _call_groq(user: str, api_key: str, request: ChatRequest) -> ChatResponse:
+    """Call Groq API (OpenAI-compatible)"""
     # Build messages with system prompt and context
-    # IMPORTANT: Combine system prompt and context in ONE system message
-    # (Groq/OpenAI don't accept multiple consecutive system messages)
     system_content = SYSTEM_PROMPT
     if request.context:
-        context_str = _format_context(request.context)
+        context_str = _format_context(request.context, include_docs=request.include_docs)
         system_content += f"\n\nContexte du portefeuille:\n{context_str}"
-        logger.debug(f"AI context for user {user}: {len(context_str)} chars, {len(request.context)} fields")
+        logger.debug(f"Groq context for user {user}: {len(context_str)} chars")
 
     messages = [{"role": "system", "content": system_content}]
 
@@ -146,7 +208,7 @@ async def chat_with_ai(
             ai_message = data["choices"][0]["message"]["content"]
             usage = data.get("usage", {})
 
-            logger.info(f"AI chat for user {user}: {usage.get('total_tokens', 0)} tokens used")
+            logger.info(f"Groq chat for user {user}: {usage.get('total_tokens', 0)} tokens used")
 
             return ChatResponse(
                 ok=True,
@@ -166,7 +228,6 @@ async def chat_with_ai(
             error="Request timeout. Please try again."
         )
     except httpx.HTTPStatusError as e:
-        # Log detailed error for debugging
         error_detail = ""
         try:
             error_detail = e.response.json()
@@ -174,8 +235,7 @@ async def chat_with_ai(
         except Exception:
             logger.error(f"Groq API error for user {user}: {e.response.status_code} - {e.response.text}")
 
-        # User-friendly error message
-        error_msg = f"API error: {e.response.status_code}"
+        error_msg = f"Groq API error: {e.response.status_code}"
         if error_detail:
             error_msg += f" - {error_detail.get('error', {}).get('message', '')}"
 
@@ -185,7 +245,108 @@ async def chat_with_ai(
             error=error_msg
         )
     except Exception as e:
-        logger.error(f"AI chat error for user {user}: {e}")
+        logger.error(f"Groq error for user {user}: {e}")
+        return ChatResponse(
+            ok=False,
+            message="",
+            error=f"Error: {str(e)}"
+        )
+
+
+async def _call_claude(user: str, api_key: str, request: ChatRequest) -> ChatResponse:
+    """Call Claude API (Anthropic Messages API)"""
+    # Build system prompt with context
+    system_content = SYSTEM_PROMPT
+    if request.context:
+        context_str = _format_context(request.context, include_docs=request.include_docs)
+        system_content += f"\n\nContexte du portefeuille:\n{context_str}"
+        logger.debug(f"Claude context for user {user}: {len(context_str)} chars")
+
+    # Claude API uses different message format
+    messages = []
+    for msg in request.messages:
+        messages.append({
+            "role": "user" if msg.role == "user" else "assistant",
+            "content": msg.content
+        })
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                PROVIDERS["claude"]["url"],
+                headers={
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": PROVIDERS["claude"]["model"],
+                    "system": system_content,  # System prompt separate in Claude API
+                    "messages": messages,
+                    "max_tokens": request.max_tokens,
+                    "temperature": request.temperature
+                }
+            )
+
+            if response.status_code == 401:
+                return ChatResponse(
+                    ok=False,
+                    message="",
+                    error="Invalid Claude API key. Please check your settings."
+                )
+
+            if response.status_code == 429:
+                return ChatResponse(
+                    ok=False,
+                    message="",
+                    error="Rate limit exceeded. Please wait a moment and try again."
+                )
+
+            response.raise_for_status()
+            data = response.json()
+
+            # Extract response (Claude format)
+            ai_message = data["content"][0]["text"]
+            usage = data.get("usage", {})
+
+            logger.info(f"Claude chat for user {user}: {usage.get('input_tokens', 0) + usage.get('output_tokens', 0)} tokens used")
+
+            return ChatResponse(
+                ok=True,
+                message=ai_message,
+                usage={
+                    "prompt_tokens": usage.get("input_tokens", 0),
+                    "completion_tokens": usage.get("output_tokens", 0),
+                    "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+                }
+            )
+
+    except httpx.TimeoutException:
+        logger.error(f"Claude API timeout for user {user}")
+        return ChatResponse(
+            ok=False,
+            message="",
+            error="Request timeout. Please try again."
+        )
+    except httpx.HTTPStatusError as e:
+        error_detail = ""
+        try:
+            error_detail = e.response.json()
+            logger.error(f"Claude API error for user {user}: {e.response.status_code} - {error_detail}")
+        except Exception:
+            logger.error(f"Claude API error for user {user}: {e.response.status_code} - {e.response.text}")
+
+        error_msg = f"Claude API error: {e.response.status_code}"
+        if error_detail:
+            error_msg += f" - {error_detail.get('error', {}).get('message', '')}"
+
+        return ChatResponse(
+            ok=False,
+            message="",
+            error=error_msg
+        )
+    except Exception as e:
+        logger.error(f"Claude error for user {user}: {e}")
         return ChatResponse(
             ok=False,
             message="",
@@ -195,31 +356,193 @@ async def chat_with_ai(
 
 @router.get("/status")
 async def get_ai_status(user: str = Depends(get_active_user)) -> Dict[str, Any]:
-    """Check if AI chat is configured and available"""
-    api_key = _get_groq_api_key(user)
+    """Check if AI chat is configured and available (backward compatibility)"""
+    groq_key = _get_provider_api_key(user, "groq")
+    claude_key = _get_provider_api_key(user, "claude")
+
+    # Determine default provider (prefer configured one)
+    default_provider = "groq" if groq_key else ("claude" if claude_key else "groq")
 
     return {
         "ok": True,
-        "configured": bool(api_key),
-        "provider": "Groq",
-        "model": GROQ_MODEL,
-        "features": ["portfolio_analysis", "risk_assessment", "market_insights"]
+        "configured": bool(groq_key) or bool(claude_key),
+        "provider": default_provider.capitalize(),
+        "model": PROVIDERS[default_provider]["model"],
+        "features": ["portfolio_analysis", "risk_assessment", "market_insights", "multi_provider"]
     }
 
 
-def _format_context(context: Dict[str, Any]) -> str:
-    """Format portfolio context for AI consumption"""
+@router.get("/providers")
+async def get_providers(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+    """List available AI providers and their configuration status"""
+    providers_status = []
+
+    for provider_id, config in PROVIDERS.items():
+        api_key = _get_provider_api_key(user, provider_id)
+        providers_status.append({
+            "id": provider_id,
+            "name": config["name"],
+            "model": config["model"],
+            "configured": bool(api_key),
+            "free": config["free"],
+            "vision": config["vision"],
+            "max_tokens_default": config["max_tokens_default"]
+        })
+
+    return {
+        "ok": True,
+        "providers": providers_status
+    }
+
+
+def _format_risk_context(context: Dict[str, Any]) -> list:
+    """Format risk dashboard specific context"""
     lines = []
 
-    # Page info
-    if "page" in context:
-        lines.append(f"Page: {context['page']}")
-        lines.append("")
+    # Risk metrics
+    if "risk_score" in context:
+        lines.append(f"⚠️ Score de risque: {context['risk_score']}/100 (higher = more robust)")
 
-    # Error handling
-    if "error" in context:
-        lines.append(f"⚠️ {context['error']}")
-        return "\n".join(lines)
+    if "var_95" in context:
+        lines.append(f"📊 VaR 95%: ${context['var_95']:,.2f} (max expected loss)")
+
+    if "max_drawdown" in context:
+        lines.append(f"📉 Max Drawdown: {context['max_drawdown']:.2%}")
+
+    if "sharpe_ratio" in context:
+        lines.append(f"📈 Sharpe Ratio: {context['sharpe_ratio']:.2f}")
+
+    if "sortino_ratio" in context:
+        lines.append(f"📈 Sortino Ratio: {context['sortino_ratio']:.2f}")
+
+    if "hhi" in context:
+        hhi = context["hhi"]
+        concentration_level = "high" if hhi > 2500 else ("moderate" if hhi > 1500 else "low")
+        lines.append(f"🎯 HHI (concentration): {hhi:.0f} ({concentration_level})")
+
+    # Active alerts
+    if "alerts" in context and context["alerts"]:
+        lines.append("")
+        lines.append(f"🚨 Alertes actives ({len(context['alerts'])}):")
+        for alert in context["alerts"][:5]:  # Top 5 alerts
+            severity = alert.get("severity", "info")
+            message = alert.get("message", "")
+            lines.append(f"  - [{severity.upper()}] {message}")
+
+    # Market cycles
+    if "cycles" in context:
+        lines.append("")
+        lines.append("🔄 Cycles de marché:")
+        cycles = context["cycles"]
+        for asset, cycle_data in cycles.items():
+            phase = cycle_data.get("phase", "unknown")
+            score = cycle_data.get("score", 0)
+            lines.append(f"  - {asset}: {phase} (score: {score})")
+
+    return lines
+
+
+def _format_analytics_context(context: Dict[str, Any]) -> list:
+    """Format analytics/unified dashboard specific context"""
+    lines = []
+
+    # Decision Index
+    if "decision_index" in context:
+        di = context["decision_index"]
+        di_status = "VALID (65)" if di == 65 else "INVALID (45)"
+        lines.append(f"📊 Decision Index: {di_status}")
+
+    # ML Sentiment
+    if "ml_sentiment" in context:
+        ml_sent = context["ml_sentiment"]
+        if ml_sent < 25:
+            sentiment_label = "Extreme Fear"
+        elif ml_sent < 45:
+            sentiment_label = "Fear"
+        elif ml_sent < 55:
+            sentiment_label = "Neutral"
+        elif ml_sent < 75:
+            sentiment_label = "Greed"
+        else:
+            sentiment_label = "Extreme Greed"
+
+        lines.append(f"🧠 ML Sentiment: {ml_sent}/100 ({sentiment_label})")
+
+    # Market phase
+    if "phase" in context:
+        phase = context["phase"]
+        lines.append(f"📈 Phase: {phase}")
+
+    # Regime scores
+    if "regime" in context:
+        regime = context["regime"]
+        lines.append("")
+        lines.append("🎯 Régime Score (composantes):")
+
+        if "ccs" in regime:
+            lines.append(f"  - CCS (Cycle): {regime['ccs']:.1f}/100")
+
+        if "onchain" in regime:
+            lines.append(f"  - On-Chain: {regime['onchain']:.1f}/100")
+
+        if "risk" in regime:
+            lines.append(f"  - Risk: {regime['risk']:.1f}/100")
+
+        if "total" in regime:
+            lines.append(f"  - **Total Regime Score**: {regime['total']:.1f}/100")
+
+    # Volatility forecasts
+    if "volatility_forecasts" in context:
+        lines.append("")
+        lines.append("📊 Prévisions volatilité:")
+        for asset, forecast in context["volatility_forecasts"].items():
+            lines.append(f"  - {asset}: {forecast:.2%}")
+
+    return lines
+
+
+def _format_wealth_context(context: Dict[str, Any]) -> list:
+    """Format wealth dashboard specific context"""
+    lines = []
+
+    # Net worth
+    if "net_worth" in context:
+        lines.append(f"💰 Patrimoine net: ${context['net_worth']:,.2f}")
+
+    # Asset breakdown
+    if "assets" in context:
+        lines.append("")
+        lines.append("🏠 Actifs:")
+        for asset_type, value in context["assets"].items():
+            lines.append(f"  - {asset_type}: ${value:,.2f}")
+
+    # Liabilities
+    if "liabilities" in context:
+        total_liabilities = sum(context["liabilities"].values())
+        lines.append("")
+        lines.append(f"📊 Passifs totaux: ${total_liabilities:,.2f}")
+        for liability_type, value in context["liabilities"].items():
+            lines.append(f"  - {liability_type}: ${value:,.2f}")
+
+    # Liquidity
+    if "liquidity" in context:
+        lines.append("")
+        lines.append(f"💵 Liquidités: ${context['liquidity']:,.2f}")
+
+    # Debt ratio
+    if "net_worth" in context and "liabilities" in context:
+        total_assets = context.get("total_assets", 0)
+        total_liabilities = sum(context["liabilities"].values())
+        if total_assets > 0:
+            debt_ratio = (total_liabilities / total_assets) * 100
+            lines.append(f"📊 Ratio d'endettement: {debt_ratio:.1f}%")
+
+    return lines
+
+
+def _format_portfolio_context(context: Dict[str, Any]) -> list:
+    """Format generic portfolio context (crypto/stocks)"""
+    lines = []
 
     # Portfolio summary
     if "total_value" in context:
@@ -272,7 +595,6 @@ def _format_context(context: Dict[str, Any]) -> str:
     # Sector allocation
     if "sectors" in context and context["sectors"]:
         lines.append("📊 Répartition sectorielle:")
-        # Sort by weight descending
         sorted_sectors = sorted(context["sectors"].items(), key=lambda x: x[1], reverse=True)
         for sector, weight in sorted_sectors:
             if isinstance(weight, (int, float)) and weight > 0:
@@ -368,47 +690,183 @@ def _format_context(context: Dict[str, Any]) -> str:
                 reason = sale.get("reason", "")
                 lines.append(f"    • {symbol}: {current:.1f}% → réduire de {reduction:.1f}% ({reason})")
 
+    return lines
+
+
+def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
+    """Format portfolio context for AI consumption
+
+    Args:
+        context: Portfolio context data
+        include_docs: If True, will append documentation knowledge (added by knowledge base)
+    """
+    lines = []
+
+    # Page info
+    if "page" in context:
+        lines.append(f"Page: {context['page']}")
+        lines.append("")
+
+    # Error handling
+    if "error" in context:
+        lines.append(f"⚠️ {context['error']}")
+        return "\n".join(lines)
+
+    # Route to appropriate formatter based on page type
+    page = context.get("page", "").lower()
+
+    if "risk" in page:
+        # Risk Dashboard
+        lines.extend(_format_risk_context(context))
+    elif "analytics" in page or "unified" in page:
+        # Analytics Unified
+        lines.extend(_format_analytics_context(context))
+    elif "wealth" in page or "patrimoine" in page:
+        # Wealth Dashboard
+        lines.extend(_format_wealth_context(context))
+    else:
+        # Generic portfolio (dashboard, saxo-dashboard, etc.)
+        lines.extend(_format_portfolio_context(context))
+
+    # Add documentation knowledge if requested
+    if include_docs:
+        page = context.get("page", "")
+        # Extract page identifier from full page name (e.g., "Risk Dashboard" → "risk-dashboard")
+        page_id = page.lower().replace(" ", "-").split("-")[0:2]
+        page_id = "-".join(page_id) if page_id else ""
+
+        knowledge = get_knowledge_context(page_id)
+        lines.append("\n" + knowledge)
+
     return "\n".join(lines)
 
 
-# Predefined questions for quick access
-QUICK_QUESTIONS = [
-    {
-        "id": "analysis",
-        "label": "Analyse générale",
-        "prompt": "Analyse mon portefeuille de manière générale. Quels sont les points forts et les points faibles?"
-    },
-    {
-        "id": "opportunities",
-        "label": "Market Opportunities",
-        "prompt": "Analyse les opportunités de marché recommandées. Quelles sont les meilleures suggestions d'investissement? Que penses-tu des gaps sectoriels détectés?"
-    },
-    {
-        "id": "risk",
-        "label": "Évaluation risque",
-        "prompt": "Évalue le niveau de risque de mon portefeuille. Est-il bien diversifié?"
-    },
-    {
-        "id": "concentration",
-        "label": "Concentration",
-        "prompt": "Y a-t-il des problèmes de concentration dans mon portefeuille? Quelles positions sont trop importantes?"
-    },
-    {
-        "id": "sectors",
-        "label": "Secteurs",
-        "prompt": "Comment est répartie mon exposition sectorielle? Y a-t-il des secteurs surreprésentés ou sous-représentés?"
-    },
-    {
-        "id": "performance",
-        "label": "Performance",
-        "prompt": "Analyse la performance de mes positions. Lesquelles performent bien et lesquelles sous-performent?"
-    }
+# Predefined questions for quick access - Page-specific
+PAGE_QUICK_QUESTIONS = {
+    "saxo-dashboard": [
+        {"id": "analysis", "label": "Analyse générale", "prompt": "Analyse mon portefeuille de manière générale. Quels sont les points forts et les points faibles?"},
+        {"id": "opportunities", "label": "Market Opportunities", "prompt": "Analyse les opportunités de marché recommandées. Quelles sont les meilleures suggestions d'investissement? Que penses-tu des gaps sectoriels détectés?"},
+        {"id": "risk", "label": "Évaluation risque", "prompt": "Évalue le niveau de risque de mon portefeuille. Est-il bien diversifié?"},
+        {"id": "concentration", "label": "Concentration", "prompt": "Y a-t-il des problèmes de concentration dans mon portefeuille? Quelles positions sont trop importantes?"},
+        {"id": "sectors", "label": "Secteurs", "prompt": "Comment est répartie mon exposition sectorielle? Y a-t-il des secteurs surreprésentés ou sous-représentés?"},
+        {"id": "performance", "label": "Performance", "prompt": "Analyse la performance de mes positions. Lesquelles performent bien et lesquelles sous-performent?"}
+    ],
+    "dashboard": [
+        {"id": "summary", "label": "Résumé portefeuille", "prompt": "Fais-moi un résumé complet de mon portefeuille crypto et bourse."},
+        {"id": "pnl", "label": "P&L Today", "prompt": "Analyse mon P&L du jour. Quelles sont les principales variations?"},
+        {"id": "allocation", "label": "Allocation globale", "prompt": "Comment est répartie mon allocation entre crypto, actions et liquidités?"},
+        {"id": "regime", "label": "Régime marché", "prompt": "Explique-moi le régime de marché actuel et ce que ça implique pour mon portefeuille."}
+    ],
+    "risk-dashboard": [
+        {"id": "risk_score", "label": "Score de risque", "prompt": "Explique-moi mon score de risque actuel. Qu'est-ce que ça signifie?"},
+        {"id": "var", "label": "VaR & Max Drawdown", "prompt": "Analyse mes métriques de risque (VaR, Max Drawdown). Sont-elles préoccupantes?"},
+        {"id": "alerts", "label": "Alertes actives", "prompt": "Analyse les alertes actives. Que dois-je faire en priorité?"},
+        {"id": "cycles", "label": "Cycles de marché", "prompt": "Explique-moi les cycles de marché actuels (BTC, ETH, SPY)."}
+    ],
+    "analytics-unified": [
+        {"id": "decision_index", "label": "Decision Index", "prompt": "Explique-moi le Decision Index. Que signifie le score actuel?"},
+        {"id": "ml_sentiment", "label": "ML Sentiment", "prompt": "Analyse le sentiment ML actuel. Est-ce le moment d'être prudent ou agressif?"},
+        {"id": "phase", "label": "Phase Engine", "prompt": "Quelle est la phase de marché actuelle? Que recommandes-tu?"},
+        {"id": "regime", "label": "Régimes", "prompt": "Explique-moi les différents régimes détectés (CCS, On-Chain, Risk)."}
+    ],
+    "wealth-dashboard": [
+        {"id": "net_worth", "label": "Patrimoine net", "prompt": "Analyse mon patrimoine global. Quelle est ma situation financière?"},
+        {"id": "diversification", "label": "Diversification", "prompt": "Mon patrimoine est-il bien diversifié entre liquidités, actifs et investissements?"},
+        {"id": "liabilities", "label": "Passifs", "prompt": "Analyse mes passifs. Ai-je une exposition excessive?"}
+    ]
+}
+
+# Generic questions for unknown pages
+GENERIC_QUICK_QUESTIONS = [
+    {"id": "help", "label": "Comment m'aider?", "prompt": "Que peux-tu m'aider à analyser sur cette page?"},
+    {"id": "summary", "label": "Résumé", "prompt": "Fais-moi un résumé des informations affichées sur cette page."}
 ]
+
+# Backward compatibility - default to Saxo questions
+QUICK_QUESTIONS = PAGE_QUICK_QUESTIONS["saxo-dashboard"]
+
 
 @router.get("/quick-questions")
 async def get_quick_questions() -> Dict[str, Any]:
-    """Get predefined quick questions for the chat UI"""
+    """Get predefined quick questions for the chat UI (backward compatibility)"""
     return {
         "ok": True,
         "questions": QUICK_QUESTIONS
     }
+
+
+@router.get("/quick-questions/{page}")
+async def get_page_quick_questions(page: str) -> Dict[str, Any]:
+    """Get page-specific quick questions"""
+    questions = PAGE_QUICK_QUESTIONS.get(page, GENERIC_QUICK_QUESTIONS)
+
+    return {
+        "ok": True,
+        "page": page,
+        "questions": questions
+    }
+
+
+@router.post("/refresh-knowledge")
+async def refresh_knowledge_cache(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+    """
+    Force refresh of knowledge base cache
+
+    Clears cached documentation and forces reload from markdown files.
+    Useful after updating CLAUDE.md or other docs.
+
+    Returns:
+        Success message with stats
+    """
+    from api.services.ai_knowledge_base import clear_cache
+
+    try:
+        # Clear cache
+        cleared_count = clear_cache()
+
+        logger.info(f"Knowledge cache refreshed by user '{user}' - {cleared_count} entries cleared")
+
+        return {
+            "ok": True,
+            "message": "Knowledge base cache cleared successfully",
+            "entries_cleared": cleared_count,
+            "note": "Next AI chat request will reload from markdown files"
+        }
+
+    except Exception as e:
+        logger.error(f"Error refreshing knowledge cache: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to refresh knowledge cache: {str(e)}"
+        )
+
+
+@router.get("/knowledge-stats")
+async def get_knowledge_cache_stats(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+    """
+    Get knowledge base cache statistics
+
+    Returns cache stats including:
+    - Number of cached pages
+    - TTL configuration
+    - Age and remaining time for each entry
+
+    Returns:
+        Cache statistics
+    """
+    from api.services.ai_knowledge_base import get_cache_stats
+
+    try:
+        stats = get_cache_stats()
+
+        return {
+            "ok": True,
+            "stats": stats
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting knowledge cache stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get knowledge stats: {str(e)}"
+        )

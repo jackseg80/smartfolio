@@ -1,0 +1,48 @@
+<!-- AI Chat Modal Template -->
+<div id="aiChatModal" style="display: none;">
+    <div class="ai-chat-modal-container">
+        <!-- Header -->
+        <div class="ai-chat-header">
+            <div>
+                <h3>Assistant IA SmartFolio</h3>
+                <div class="ai-chat-provider-selector">
+                    <label>Provider:</label>
+                    <select id="aiProviderSelector">
+                        <option value="groq">Groq (Llama 3.3 70B) - Gratuit</option>
+                        <option value="claude">Claude (Sonnet 3.5) - Premium</option>
+                    </select>
+                </div>
+            </div>
+            <button class="ai-chat-close" onclick="window.aiChat?.close()">×</button>
+        </div>
+
+        <!-- Quick Questions -->
+        <div id="aiChatQuickQuestions" class="ai-chat-quick-questions">
+            <!-- Populated dynamically -->
+        </div>
+
+        <!-- Messages -->
+        <div id="aiChatMessages" class="ai-chat-messages">
+            <!-- Messages will appear here -->
+        </div>
+
+        <!-- Input -->
+        <div class="ai-chat-input-section">
+            <div class="ai-chat-input-wrapper">
+                <textarea
+                    id="aiChatInput"
+                    placeholder="Posez une question sur votre portefeuille..."
+                    rows="1"
+                    onkeydown="if(event.key==='Enter' && !event.shiftKey) { event.preventDefault(); document.getElementById('aiChatSendButton').click(); }"
+                ></textarea>
+                <button
+                    id="aiChatSendButton"
+                    class="ai-chat-send-button"
+                    onclick="window.aiChat?.sendMessage(document.getElementById('aiChatInput').value)"
+                >
+                    Envoyer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
