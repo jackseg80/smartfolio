@@ -430,14 +430,21 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
             lines.append(f"  - [{severity.upper()}] {message}")
 
     # Market cycles
-    if "cycles" in context:
+    if "cycle_score" in context:
         lines.append("")
-        lines.append("🔄 Cycles de marché:")
-        cycles = context["cycles"]
-        for asset, cycle_data in cycles.items():
-            phase = cycle_data.get("phase", "unknown")
-            score = cycle_data.get("score", 0)
-            lines.append(f"  - {asset}: {phase} (score: {score})")
+        lines.append("🔄 Analyse des cycles:")
+        lines.append(f"  - Cycle Score: {context['cycle_score']:.1f}/100")
+
+        if "market_phase" in context:
+            phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(context["market_phase"], "❓")
+            lines.append(f"  - Phase de marché: {phase_emoji} {context['market_phase'].capitalize()}")
+
+        if "dominance_phase" in context:
+            dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(context["dominance_phase"], "❓")
+            lines.append(f"  - Dominance: {dom_emoji} {context['dominance_phase'].upper()}")
+
+        if "phase_confidence" in context:
+            lines.append(f"  - Confiance: {context['phase_confidence']:.1%}")
 
     return lines
 
@@ -451,11 +458,15 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
         di = context["decision_index"]
         di_status = "VALID (65)" if di == 65 else "INVALID (45)"
         lines.append(f"📊 Decision Index: {di_status}")
+        lines.append("")
 
     # ML Sentiment
     if "ml_sentiment" in context:
         ml_sent = context["ml_sentiment"]
-        if ml_sent < 25:
+        # Use label if provided, otherwise calculate
+        if "ml_sentiment_label" in context:
+            sentiment_label = context["ml_sentiment_label"]
+        elif ml_sent < 25:
             sentiment_label = "Extreme Fear"
         elif ml_sent < 45:
             sentiment_label = "Fear"
@@ -468,28 +479,46 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
 
         lines.append(f"🧠 ML Sentiment: {ml_sent}/100 ({sentiment_label})")
 
-    # Market phase
-    if "phase" in context:
-        phase = context["phase"]
-        lines.append(f"📈 Phase: {phase}")
-
-    # Regime scores
+    # Market regime (string)
     if "regime" in context:
-        regime = context["regime"]
+        regime_name = context["regime"]
+        confidence = context.get("regime_confidence", 0)
+        lines.append(f"🎯 Régime marché: {regime_name} (confiance: {confidence:.0%})")
+
+    # Market phase (bearish/moderate/bullish)
+    if "market_phase" in context:
+        phase = context["market_phase"]
+        phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(phase, "❓")
+        lines.append(f"📈 Phase de marché: {phase_emoji} {phase.capitalize()}")
+
+    # Cycle score
+    if "cycle_score" in context:
+        lines.append(f"🔄 Cycle Score: {context['cycle_score']:.1f}/100")
+
+    # Dominance phase (btc/eth/large/alt)
+    if "dominance_phase" in context:
+        dom = context["dominance_phase"]
+        dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(dom, "❓")
+        lines.append(f"🏆 Dominance: {dom_emoji} {dom.upper()}")
         lines.append("")
-        lines.append("🎯 Régime Score (composantes):")
 
-        if "ccs" in regime:
-            lines.append(f"  - CCS (Cycle): {regime['ccs']:.1f}/100")
+    # Regime components (dict with cycle/onchain/risk)
+    if "regime_components" in context:
+        components = context["regime_components"]
+        lines.append("🎯 Scores Régime (composantes):")
 
-        if "onchain" in regime:
-            lines.append(f"  - On-Chain: {regime['onchain']:.1f}/100")
+        if "cycle" in components:
+            lines.append(f"  - CCS (Cycle): {components['cycle']:.1f}/100")
 
-        if "risk" in regime:
-            lines.append(f"  - Risk: {regime['risk']:.1f}/100")
+        if "onchain" in components:
+            lines.append(f"  - On-Chain: {components['onchain']:.1f}/100")
 
-        if "total" in regime:
-            lines.append(f"  - **Total Regime Score**: {regime['total']:.1f}/100")
+        if "risk" in components:
+            lines.append(f"  - Risk: {components['risk']:.1f}/100")
+
+    # Risk score
+    if "risk_score" in context:
+        lines.append(f"  - **Risk Score Global**: {context['risk_score']:.1f}/100")
 
     # Volatility forecasts
     if "volatility_forecasts" in context:
@@ -508,34 +537,131 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
     # Net worth
     if "net_worth" in context:
         lines.append(f"💰 Patrimoine net: ${context['net_worth']:,.2f}")
+        lines.append("")
+
+    # Total assets and liabilities
+    if "total_assets" in context:
+        lines.append(f"📊 Total Actifs: ${context['total_assets']:,.2f}")
+
+    if "total_liabilities" in context and context["total_liabilities"] > 0:
+        lines.append(f"📊 Total Passifs: ${context['total_liabilities']:,.2f}")
+        lines.append("")
 
     # Asset breakdown
-    if "assets" in context:
-        lines.append("")
-        lines.append("🏠 Actifs:")
-        for asset_type, value in context["assets"].items():
-            lines.append(f"  - {asset_type}: ${value:,.2f}")
-
-    # Liabilities
-    if "liabilities" in context:
-        total_liabilities = sum(context["liabilities"].values())
-        lines.append("")
-        lines.append(f"📊 Passifs totaux: ${total_liabilities:,.2f}")
-        for liability_type, value in context["liabilities"].items():
-            lines.append(f"  - {liability_type}: ${value:,.2f}")
-
-    # Liquidity
+    lines.append("🏠 Répartition Actifs:")
     if "liquidity" in context:
+        lines.append(f"  - Liquidités: ${context['liquidity']:,.2f}")
+
+    if "tangible" in context:
+        lines.append(f"  - Biens tangibles: ${context['tangible']:,.2f}")
+
+    if "insurance" in context and context["insurance"] > 0:
+        lines.append(f"  - Assurances: ${context['insurance']:,.2f}")
+
+    # Liabilities (from breakdown, not dict)
+    if "liabilities" in context and context["liabilities"] > 0:
         lines.append("")
-        lines.append(f"💵 Liquidités: ${context['liquidity']:,.2f}")
+        lines.append(f"💳 Passifs: ${context['liabilities']:,.2f}")
+
+    # Item counts
+    if "counts" in context:
+        counts = context["counts"]
+        lines.append("")
+        lines.append("📋 Nombre d'items:")
+        lines.append(f"  - Liquidités: {counts.get('liquidity', 0)}")
+        lines.append(f"  - Biens tangibles: {counts.get('tangible', 0)}")
+        lines.append(f"  - Passifs: {counts.get('liability', 0)}")
+        if counts.get('insurance', 0) > 0:
+            lines.append(f"  - Assurances: {counts.get('insurance', 0)}")
 
     # Debt ratio
-    if "net_worth" in context and "liabilities" in context:
-        total_assets = context.get("total_assets", 0)
-        total_liabilities = sum(context["liabilities"].values())
-        if total_assets > 0:
-            debt_ratio = (total_liabilities / total_assets) * 100
-            lines.append(f"📊 Ratio d'endettement: {debt_ratio:.1f}%")
+    total_assets = context.get("total_assets", 0)
+    total_liabilities = context.get("total_liabilities", 0)
+    if total_assets > 0 and total_liabilities > 0:
+        debt_ratio = (total_liabilities / total_assets) * 100
+        lines.append("")
+        lines.append(f"📊 Ratio d'endettement: {debt_ratio:.1f}%")
+
+    return lines
+
+
+def _format_dashboard_context(context: Dict[str, Any]) -> list:
+    """Format global dashboard context (crypto + bourse + patrimoine)"""
+    lines = []
+
+    # Crypto portfolio
+    if "crypto" in context:
+        crypto = context["crypto"]
+        lines.append("💰 Portefeuille Crypto:")
+        lines.append(f"  - Valeur totale: ${crypto.get('total_value', 0):,.2f}")
+        lines.append(f"  - Nombre de positions: {crypto.get('positions_count', 0)}")
+
+        if crypto.get("top_positions"):
+            lines.append("  - Top 5 positions:")
+            for pos in crypto["top_positions"][:5]:
+                symbol = pos.get("symbol", "?")
+                value = pos.get("value", 0)
+                weight = pos.get("weight", 0)
+                pnl = pos.get("pnl_pct", 0)
+                sign = "+" if pnl >= 0 else ""
+                lines.append(f"    • {symbol}: ${value:,.0f} ({weight:.1f}%) | P&L: {sign}{pnl:.1f}%")
+        lines.append("")
+
+    # Bourse/Saxo portfolio
+    if "bourse" in context:
+        bourse = context["bourse"]
+        lines.append("📈 Portefeuille Bourse:")
+        lines.append(f"  - Valeur totale: ${bourse.get('total_value', 0):,.2f}")
+        lines.append(f"  - Nombre de positions: {bourse.get('positions_count', 0)}")
+
+        if bourse.get("top_positions"):
+            lines.append("  - Top 5 positions:")
+            for pos in bourse["top_positions"][:5]:
+                symbol = pos.get("symbol", "?")
+                value = pos.get("value", 0)
+                weight = pos.get("weight", 0)
+                lines.append(f"    • {symbol}: ${value:,.0f} ({weight:.1f}%)")
+        lines.append("")
+
+    # Patrimoine
+    if "patrimoine" in context:
+        patri = context["patrimoine"]
+        lines.append("🏦 Patrimoine:")
+        lines.append(f"  - Net Worth: ${patri.get('net_worth', 0):,.2f}")
+        lines.append(f"  - Liquidités: ${patri.get('liquidity', 0):,.2f}")
+        lines.append(f"  - Actifs tangibles: ${patri.get('tangible', 0):,.2f}")
+        if patri.get('liabilities', 0) > 0:
+            lines.append(f"  - Passifs: ${patri.get('liabilities', 0):,.2f}")
+        lines.append("")
+
+    # Market analytics
+    if "decision_index" in context or "ml_sentiment" in context or "regime" in context:
+        lines.append("📊 Analyse de Marché:")
+
+        if "decision_index" in context:
+            di = context["decision_index"]
+            lines.append(f"  - Decision Index: {di:.1f}/100")
+
+        if "ml_sentiment" in context:
+            sentiment = context["ml_sentiment"]
+            # Convert to 0-100 scale for display
+            sentiment_pct = (sentiment + 1) * 50
+            sentiment_label = "Fear" if sentiment_pct < 40 else "Neutral" if sentiment_pct < 60 else "Greed"
+            lines.append(f"  - ML Sentiment: {sentiment_pct:.0f}/100 ({sentiment_label})")
+
+        if "regime" in context:
+            lines.append(f"  - Régime marché: {context['regime']}")
+
+        if "phase" in context:
+            lines.append(f"  - Phase actuelle: {context['phase']}")
+
+        lines.append("")
+
+    # Risk score
+    if "risk_score" in context:
+        risk = context["risk_score"]
+        lines.append(f"⚠️ Score de Risque: {risk:.1f}/100")
+        lines.append("")
 
     return lines
 
@@ -712,8 +838,14 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
         lines.append(f"⚠️ {context['error']}")
         return "\n".join(lines)
 
-    # Route to appropriate formatter based on page type
+    # Route to appropriate formatter based on page type and context structure
     page = context.get("page", "").lower()
+
+    # Check for hierarchical dashboard context (crypto + bourse + patrimoine)
+    has_hierarchical_context = (
+        "crypto" in context and
+        ("bourse" in context or "patrimoine" in context or "decision_index" in context)
+    )
 
     if "risk" in page:
         # Risk Dashboard
@@ -724,8 +856,12 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
     elif "wealth" in page or "patrimoine" in page:
         # Wealth Dashboard
         lines.extend(_format_wealth_context(context))
+    elif has_hierarchical_context:
+        # Global Dashboard with hierarchical structure
+        # Detected by context structure rather than page name
+        lines.extend(_format_dashboard_context(context))
     else:
-        # Generic portfolio (dashboard, saxo-dashboard, etc.)
+        # Generic portfolio (saxo-dashboard, etc.)
         lines.extend(_format_portfolio_context(context))
 
     # Add documentation knowledge if requested
