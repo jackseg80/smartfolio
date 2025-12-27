@@ -468,87 +468,110 @@
         data-source="Stockage local sécurisé + validation API">
         <h3>🔑 Clés API</h3>
 
-        <div class="form-group">
-          <label>CoinGecko API Key</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="coingecko_api_key" placeholder="Optionnel - pour plus de requêtes"
-              style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('coingecko_api_key')"
-              style="min-width: 60px;">👁️</button>
-            <span id="coingecko_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+        <!-- ========== DATA SOURCES CRYPTO ========== -->
+        <div style="margin-top: 24px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📊 Sources de Données Crypto</h4>
+
+          <!-- CoinTracking API Keys (groupées ensemble) -->
+          <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 600px;">
+            <div style="margin-bottom: 12px;">
+              <strong style="color: var(--brand-primary);">📈 CoinTracking API</strong>
+              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(API Key + Secret requis ensemble)</span>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>CoinTracking API Key</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="cointracking_api_key" placeholder="Obligatoire pour source API" style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="cointracking_key_status" class="status-indicator status-warning"
+                  style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API CoinTracking pour accès temps réel à vos balances.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>CoinTracking API Secret</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="cointracking_api_secret" placeholder="Obligatoire pour source API"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_secret')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="cointracking_secret_status" class="status-indicator status-warning"
+                  style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé secrète CoinTracking (générée avec la clé API).</div>
+            </div>
           </div>
-          <div class="help">Clé Demo API CoinGecko pour la classification automatique et données de marché.</div>
         </div>
 
-        <div class="form-group">
-          <label>CoinTracking API Key</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="cointracking_api_key" placeholder="Obligatoire pour source API" style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_key')"
-              style="min-width: 60px;">👁️</button>
-            <span id="cointracking_key_status" class="status-indicator status-warning"
-              style="font-size: 10px;">Vide</span>
+        <!-- ========== MARKET DATA ========== -->
+        <div style="margin-top: 32px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📉 Données de Marché</h4>
+
+          <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 600px;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>CoinGecko API Key</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="coingecko_api_key" placeholder="Optionnel - pour plus de requêtes"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('coingecko_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="coingecko_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé Demo API CoinGecko pour classification automatique et prix crypto temps réel.</div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>FRED API Key (Federal Reserve Economic Data)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="fred_api_key" placeholder="Clé pour données Bitcoin historiques"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('fred_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="fred_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API gratuite FRED pour historique Bitcoin complet depuis 2014 (vs 365j CoinGecko).</div>
+            </div>
           </div>
-          <div class="help">Clé API CoinTracking pour accès temps réel à vos balances.</div>
         </div>
 
-        <div class="form-group">
-          <label>CoinTracking API Secret</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="cointracking_api_secret" placeholder="Obligatoire pour source API"
-              style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_secret')"
-              style="min-width: 60px;">👁️</button>
-            <span id="cointracking_secret_status" class="status-indicator status-warning"
-              style="font-size: 10px;">Vide</span>
-          </div>
-          <div class="help">Clé secrète CoinTracking (générée avec la clé API).</div>
-        </div>
+        <!-- ========== AI CHAT ASSISTANTS ========== -->
+        <div style="margin-top: 32px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">🤖 Assistants IA (Choisissez-en un)</h4>
 
-        <div class="form-group">
-          <label>FRED API Key (Federal Reserve Economic Data)</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="fred_api_key" placeholder="Clé pour données Bitcoin historiques"
-              style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('fred_api_key')"
-              style="min-width: 60px;">👁️</button>
-            <span id="fred_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
-          </div>
-          <div class="help">Clé API gratuite FRED pour historique Bitcoin complet depuis 2014 (vs 365j CoinGecko).</div>
-        </div>
+          <!-- AI Chat Keys (groupées ensemble comme alternatives) -->
+          <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 600px;">
+            <div style="margin-bottom: 12px;">
+              <strong style="color: var(--brand-primary);">💬 AI Chat Assistants</strong>
+              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Groq gratuit OU Claude premium)</span>
+            </div>
 
-        <div class="form-group">
-          <label>🤖 Groq API Key (AI Chat - Gratuit)</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="groq_api_key" placeholder="gsk_... (obtenez votre clé sur console.groq.com)"
-              style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('groq_api_key')"
-              style="min-width: 60px;">👁️</button>
-            <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
-          </div>
-          <div class="help">Clé API gratuite Groq pour le chat IA (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé gratuite →</a></div>
-        </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>🤖 Groq API Key (Gratuit - Recommandé)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="groq_api_key" placeholder="gsk_... (obtenez votre clé sur console.groq.com)"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('groq_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API gratuite Groq pour le chat IA (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé gratuite →</a></div>
+            </div>
 
-        <div class="form-group">
-          <label>🧠 Claude API Key (AI Chat - Premium)</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="claude_api_key" placeholder="sk-ant-... (obtenez votre clé sur console.anthropic.com)"
-              style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('claude_api_key')"
-              style="min-width: 60px;">👁️</button>
-            <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>🧠 Claude API Key (Premium - Plus intelligent)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="claude_api_key" placeholder="sk-ant-... (obtenez votre clé sur console.anthropic.com)"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('claude_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API Claude (payant) pour le chat IA premium (Sonnet 3.5, plus intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+            </div>
           </div>
-          <div class="help">Clé API Claude (payant) pour le chat IA premium (Sonnet 3.5, plus intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
-        </div>
-
-        <div class="form-group">
-          <label>Debug Token (requis pour sync .env)</label>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="password" id="debug_token" placeholder="Token sécurisé pour accès debug" style="flex: 1;">
-            <button class="btn small secondary" onclick="toggleApiKeyVisibility('debug_token')"
-              style="min-width: 60px;">👁️</button>
-          </div>
-          <div class="help">Token requis pour certains endpoints de debug</div>
         </div>
 
         <!-- SaxoBank OAuth Section -->
