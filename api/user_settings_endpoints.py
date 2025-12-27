@@ -31,6 +31,7 @@ class UserSettings(BaseModel):
     cointracking_api_secret: str = ""
     coingecko_api_key: str = ""
     fred_api_key: str = ""
+    groq_api_key: str = ""  # Groq API for AI chat (free tier)
     pricing: str = "auto"  # 🔧 FIX: Changed default from "local" to "auto" (real-time prices)
     refresh_interval: int = 5
     enable_coingecko_classification: bool = True
@@ -77,6 +78,7 @@ async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, A
         merged_settings["cointracking_api_key"] = secrets.get("cointracking", {}).get("api_key", "")
         merged_settings["cointracking_api_secret"] = secrets.get("cointracking", {}).get("api_secret", "")
         merged_settings["coingecko_api_key"] = secrets.get("coingecko", {}).get("api_key", "")
+        merged_settings["groq_api_key"] = secrets.get("groq", {}).get("api_key", "")
         merged_settings["fred_api_key"] = secrets.get("fred", {}).get("api_key", "")
 
         logger.debug(f"Settings loaded for user {user}: config.json + secrets.json merged")
@@ -134,7 +136,8 @@ async def save_user_settings(
             "cointracking_api_key": new_settings.pop("cointracking_api_key", ""),
             "cointracking_api_secret": new_settings.pop("cointracking_api_secret", ""),
             "coingecko_api_key": new_settings.pop("coingecko_api_key", ""),
-            "fred_api_key": new_settings.pop("fred_api_key", "")
+            "fred_api_key": new_settings.pop("fred_api_key", ""),
+            "groq_api_key": new_settings.pop("groq_api_key", "")
         }
 
         # 1. Sauvegarder les clés API dans secrets.json
@@ -146,6 +149,7 @@ async def save_user_settings(
             secrets.setdefault("cointracking", {})["api_key"] = api_keys["cointracking_api_key"]
             secrets.setdefault("cointracking", {})["api_secret"] = api_keys["cointracking_api_secret"]
             secrets.setdefault("fred", {})["api_key"] = api_keys["fred_api_key"]
+            secrets.setdefault("groq", {})["api_key"] = api_keys["groq_api_key"]
 
             # Save secrets.json
             user_fs.write_json("secrets.json", secrets)

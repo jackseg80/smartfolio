@@ -31,6 +31,11 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 
 ### 🧠 Shared Intelligence (Cross-Module)
 
+- **AI Chat Assistant**: Global AI assistant with context awareness (Groq free / Claude premium)
+  - 🎯 Context-aware: Automatically sees current page data (portfolio, risk, opportunities)
+  - 📚 Knowledge base: Dynamically synced with documentation (Decision Index, Risk Score, etc.)
+  - ✨ Floating button (Ctrl+K) available on all pages
+  - 🔄 Auto-refresh: Knowledge base reloads from .md files (5-min cache TTL)
 - **Advanced ML**: LSTM & Transformers for volatility and trend prediction.
 - **Risk Score V2**: Unified "Robustness Score" (0-100) across all asset classes.
 - **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Calcul: `50 + (sentiment_ml × 50)` où sentiment ∈ [-1, 1].
@@ -213,6 +218,7 @@ data/
 
 ### Features & Systems
 
+- **AI Chat Assistant**: [AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md) - Global AI assistant (Groq/Claude), context-aware, dynamic knowledge base
 - **Allocation**: [ALLOCATION_ENGINE_V2.md](docs/ALLOCATION_ENGINE_V2.md) - Topdown hierarchical, floors, incumbency
 - **Decision Index**: [DECISION_INDEX_V2.md](docs/DECISION_INDEX_V2.md) - Dual scoring (DI vs Regime)
 - **Risk Management**: [RISK_SEMANTICS.md](docs/RISK_SEMANTICS.md), [RISK_SCORE_V2_IMPLEMENTATION.md](docs/RISK_SCORE_V2_IMPLEMENTATION.md)
@@ -295,6 +301,13 @@ GET  /execution/monitoring/live                  # Real-time monitoring
 GET  /api/sources/list                           # Available sources
 POST /api/sources/upload                         # Upload file
 GET  /api/sources/test                           # Test source
+
+# AI Chat Assistant
+POST /api/ai/chat                                # Chat with AI (context-aware)
+GET  /api/ai/providers                           # List configured providers
+GET  /api/ai/quick-questions/{page}              # Get quick questions for page
+POST /api/ai/refresh-knowledge                   # Force reload docs from .md files
+GET  /api/ai/knowledge-stats                     # Cache statistics
 ```
 
 📖 Complete API: <http://localhost:8080/docs> (Swagger UI)

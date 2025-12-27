@@ -126,6 +126,9 @@
   <script type="module" src="modules/market-regimes.js"></script>
   <script type="module" src="modules/targets-coordinator.js"></script>
   <script type="module" src="core/risk-data-orchestrator.js?v=20251022fix"></script>
+
+  <!-- AI Chat Styles -->
+  <link rel="stylesheet" href="/static/components/ai-chat.css">
 </head>
 
 <body>
@@ -489,6 +492,14 @@
     <span slot="title">🎯 Risk Dashboard</span>
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
+
+  <!-- AI Chat Components -->
+  <script type="module">
+    import { initAIChat } from '/static/components/ai-chat-init.js';
+
+    // Initialize AI Chat for analytics unified page
+    initAIChat('analytics-unified');
+  </script>
 
 </body>
 

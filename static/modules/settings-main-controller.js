@@ -205,6 +205,7 @@ function getDefaultSettings() {
     cointracking_api_secret: "",
     coingecko_api_key: "",
     fred_api_key: "",
+    groq_api_key: "",
     debug_token: "",
     pricing: "auto", // 🔧 FIX: Changed default from 'local' to 'auto' for consistency
     refresh_interval: 5,
@@ -246,8 +247,16 @@ async function loadSettings() {
     });
     if (response.ok) {
       const backendSettings = await response.json();
+
+      // 🔍 DEBUG: Vérifier groq_api_key
+      console.log('🔍 [loadSettings] localSettings.groq_api_key:', localSettings.groq_api_key || '(undefined)');
+      console.log('🔍 [loadSettings] backendSettings.groq_api_key:', backendSettings.groq_api_key || '(undefined)');
+
       // Fusionner: API Base URL (backend global) a priorité sur tout
       window.userSettings = { ...getDefaultSettings(), ...localSettings, ...backendSettings, api_base_url: apiBaseUrl };
+
+      console.log('🔍 [loadSettings] APRÈS fusion, groq_api_key:', window.userSettings.groq_api_key || '(undefined)');
+
       debugLogger.info('✓ Settings loaded from backend + localStorage');
     } else {
       debugLogger.warn('Failed to load user settings from backend, using localStorage');
@@ -279,6 +288,13 @@ async function loadSettings() {
 
 // Sauvegarder les settings via l'API utilisateur ET localStorage
 async function saveSettings() {
+  // 🔍 DEBUG: Vérifier groq_api_key avant sauvegarde
+  if (window.userSettings && window.userSettings.groq_api_key) {
+    console.log('🔍 [saveSettings] groq_api_key présent:', window.userSettings.groq_api_key.substring(0, 10) + '...');
+  } else {
+    console.warn('⚠️ [saveSettings] groq_api_key MANQUANT ou VIDE!');
+  }
+
   // 1. Sauvegarder dans localStorage immédiatement (pour ne jamais perdre de données)
   if (window.globalConfig && window.userSettings) {
     Object.keys(window.userSettings).forEach(key => {
@@ -375,6 +391,16 @@ function updateUI() {
   document.getElementById('cointracking_api_key').value = globalSettings.cointracking_api_key ? maskApiKey(globalSettings.cointracking_api_key) : '';
   document.getElementById('cointracking_api_secret').value = globalSettings.cointracking_api_secret ? maskApiKey(globalSettings.cointracking_api_secret) : '';
   document.getElementById('fred_api_key').value = globalSettings.fred_api_key ? maskApiKey(globalSettings.fred_api_key) : '';
+
+  // 🔍 DEBUG groq_api_key - Log what we're displaying
+  const groqMasked = globalSettings.groq_api_key ? maskApiKey(globalSettings.groq_api_key) : '';
+  const groqField = document.getElementById('groq_api_key');
+  console.log('🔍 [updateUI] groq_api_key:');
+  console.log('  - Raw value:', globalSettings.groq_api_key ? globalSettings.groq_api_key.substring(0, 10) + '...' : '(undefined)');
+  console.log('  - Masked value:', groqMasked || '(vide)');
+  console.log('  - Field type:', groqField ? groqField.type : '(field not found)');
+  groqField.value = groqMasked;
+
   document.getElementById('debug_token').value = globalSettings.debug_token ? maskApiKey(globalSettings.debug_token) : '';
 
   // Mettre à jour les statuts des clés
@@ -382,6 +408,7 @@ function updateUI() {
   updateApiKeyStatus('cointracking_key', !!globalSettings.cointracking_api_key);
   updateApiKeyStatus('cointracking_secret', !!globalSettings.cointracking_api_secret);
   updateApiKeyStatus('fred', !!globalSettings.fred_api_key);
+  updateApiKeyStatus('groq', !!globalSettings.groq_api_key);
 
   document.getElementById('api_base_url').value = globalSettings.api_base_url;
   document.getElementById('refresh_interval').value = globalSettings.refresh_interval;
@@ -593,7 +620,7 @@ async function selectDataSource(source) {
     if (response.ok) {
       const currentSettings = await response.json();
       // Fusionner TOUTES les clés API depuis le serveur (plus sûr)
-      const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'debug_token'];
+      const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'debug_token'];
       apiKeys.forEach(key => {
         if (currentSettings[key]) {
           window.userSettings[key] = currentSettings[key];
@@ -783,12 +810,23 @@ async function saveAllSettings() {
     const masked = current ? maskApiKey(current) : '';
     const incoming = (field.value || '').trim();
 
+    // 🔍 DEBUG pour groq_api_key
+    if (settingKey === 'groq_api_key') {
+      console.log('🔍 [saveSecretIfProvided] groq_api_key:');
+      console.log('  - current:', current ? current.substring(0, 10) + '...' : '(vide)');
+      console.log('  - masked:', masked ? masked.substring(0, 10) + '...' : '(vide)');
+      console.log('  - incoming:', incoming ? incoming.substring(0, 10) + '...' : '(vide)');
+      console.log('  - field.type:', field.type);
+      console.log('  - incoming === masked:', incoming === masked);
+    }
+
     // Si le champ est vide, effacer la clé (userSettings + globalConfig)
     if (!incoming) {
       window.userSettings[settingKey] = '';
       if (window.globalConfig) {
         window.globalConfig.set(settingKey, '');
       }
+      if (settingKey === 'groq_api_key') console.warn('⚠️ [saveSecretIfProvided] groq_api_key EFFACÉE (champ vide)');
       return;
     }
 
@@ -798,6 +836,9 @@ async function saveAllSettings() {
       if (window.globalConfig) {
         window.globalConfig.set(settingKey, incoming);
       }
+      if (settingKey === 'groq_api_key') console.log('✅ [saveSecretIfProvided] groq_api_key SAUVEGARDÉE');
+    } else {
+      if (settingKey === 'groq_api_key') console.log('ℹ️ [saveSecretIfProvided] groq_api_key IGNORÉE (masque détecté, garde la valeur existante)');
     }
   }
 
@@ -805,6 +846,7 @@ async function saveAllSettings() {
   saveSecretIfProvided('cointracking_api_key', 'cointracking_api_key');
   saveSecretIfProvided('cointracking_api_secret', 'cointracking_api_secret');
   saveSecretIfProvided('fred_api_key', 'fred_api_key');
+  saveSecretIfProvided('groq_api_key', 'groq_api_key');
   saveSecretIfProvided('debug_token', 'debug_token');
 
   // API Base URL is read-only (loaded from .env), not saved by user
@@ -825,8 +867,12 @@ async function saveAllSettings() {
   updateApiKeyStatus('cointracking_key', !!window.userSettings.cointracking_api_key);
   updateApiKeyStatus('cointracking_secret', !!window.userSettings.cointracking_api_secret);
   updateApiKeyStatus('fred', !!window.userSettings.fred_api_key);
+  updateApiKeyStatus('groq', !!window.userSettings.groq_api_key);
 
   await saveSettings();
+
+  // Masquer immédiatement les clés après sauvegarde (pour que l'utilisateur sache qu'elles sont sauvegardées)
+  updateUI();
 
   // Notification
   showNotification('⚙️ Configuration sauvegardée !', 'success');

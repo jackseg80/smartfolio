@@ -394,6 +394,9 @@
             color: var(--theme-text-muted);
         }
     </style>
+
+    <!-- AI Chat Styles -->
+    <link rel="stylesheet" href="/static/components/ai-chat.css">
 </head>
 
 <body>
@@ -1337,6 +1340,15 @@
             }
         });
     </script>
+
+    <!-- AI Chat Components -->
+    <script type="module">
+        import { initAIChat } from '/static/components/ai-chat-init.js';
+
+        // Initialize AI Chat for wealth dashboard page
+        initAIChat('wealth-dashboard');
+    </script>
+
 </body>
 
 </html>

@@ -48,6 +48,9 @@
 
   <!-- Risk Dashboard Orchestrator -->
   <script type="module" src="modules/risk-dashboard-main.js"></script>
+
+  <!-- AI Chat Styles -->
+  <link rel="stylesheet" href="/static/components/ai-chat.css">
 </head>
 
 <body>
@@ -611,6 +614,14 @@
     <span slot="title">🎯 Risk Dashboard</span>
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
+
+  <!-- AI Chat Components -->
+  <script type="module">
+    import { initAIChat } from '/static/components/ai-chat-init.js';
+
+    // Initialize AI Chat for risk dashboard page
+    initAIChat('risk-dashboard');
+  </script>
 
 </body>
 

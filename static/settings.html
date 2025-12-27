@@ -518,6 +518,30 @@
         </div>
 
         <div class="form-group">
+          <label>🤖 Groq API Key (AI Chat - Gratuit)</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="password" id="groq_api_key" placeholder="gsk_... (obtenez votre clé sur console.groq.com)"
+              style="flex: 1;">
+            <button class="btn small secondary" onclick="toggleApiKeyVisibility('groq_api_key')"
+              style="min-width: 60px;">👁️</button>
+            <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+          </div>
+          <div class="help">Clé API gratuite Groq pour le chat IA (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé gratuite →</a></div>
+        </div>
+
+        <div class="form-group">
+          <label>🧠 Claude API Key (AI Chat - Premium)</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="password" id="claude_api_key" placeholder="sk-ant-... (obtenez votre clé sur console.anthropic.com)"
+              style="flex: 1;">
+            <button class="btn small secondary" onclick="toggleApiKeyVisibility('claude_api_key')"
+              style="min-width: 60px;">👁️</button>
+            <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+          </div>
+          <div class="help">Clé API Claude (payant) pour le chat IA premium (Sonnet 3.5, plus intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+        </div>
+
+        <div class="form-group">
           <label>Debug Token (requis pour sync .env)</label>
           <div style="display: flex; gap: 8px; align-items: center;">
             <input type="password" id="debug_token" placeholder="Token sécurisé pour accès debug" style="flex: 1;">
