@@ -1291,7 +1291,7 @@ async function testApiKeys() {
     results.push(`📊 CoinTracking API: ⚪ Clés manquantes`);
   }
 
-  // Test AI Chat Providers (Groq + Claude)
+  // Test AI Chat Providers (Groq + Claude + Grok + OpenAI)
   try {
     const response = await fetch(`${globalSettings.api_base_url}/api/ai/providers`, {
       headers: { 'X-User': getActiveUser() }
@@ -1317,6 +1317,26 @@ async function testApiKeys() {
           results.push(`🧠 Claude AI: ✅ OK (${claude.model})`);
         } else {
           results.push(`🧠 Claude AI: ⚪ Pas de clé configurée`);
+        }
+      }
+
+      // Grok
+      const grok = providers.find(p => p.id === 'grok');
+      if (grok) {
+        if (grok.configured) {
+          results.push(`🚀 Grok AI: ✅ OK (${grok.model})`);
+        } else {
+          results.push(`🚀 Grok AI: ⚪ Pas de clé configurée`);
+        }
+      }
+
+      // OpenAI
+      const openai = providers.find(p => p.id === 'openai');
+      if (openai) {
+        if (openai.configured) {
+          results.push(`🤖 OpenAI: ✅ OK (${openai.model})`);
+        } else {
+          results.push(`🤖 OpenAI: ⚪ Pas de clé configurée`);
         }
       }
     } else {
