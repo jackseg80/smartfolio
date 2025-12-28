@@ -255,6 +255,11 @@ class SaxoImportConnector:
             avg_price_raw = self._to_float(row.get('Entry Price', 0))
             avg_price = avg_price_raw if avg_price_raw > 0 else None
 
+            # Extract P&L data from CSV (added Dec 2025)
+            pnl_pct = self._to_float(row.get('+/- (%)', 0))  # P&L percentage
+            pnl_value = self._to_float(row.get('+/- Value', 0))  # P&L value in account base currency
+            pnl_net_eur = self._to_float(row.get('+/- Nette (EUR)', 0))  # P&L net in EUR
+
             # Skip summary rows (e.g., "Actions (95)")
             if instrument_raw and ('(' in instrument_raw and ')' in instrument_raw and instrument_raw.split('(')[0].strip().lower() in ['actions', 'obligations', 'etf', 'etfs']):
                 logger.debug(f"Skipping summary row: {instrument_raw}")
@@ -342,6 +347,9 @@ class SaxoImportConnector:
                 "exchange": enriched.get("exchange"),
                 "isin": enriched_isin,
                 "avg_price": avg_price,  # Average entry price for trailing stop
+                "pnl_pct": pnl_pct,  # P&L percentage (added Dec 2025)
+                "pnl_value": pnl_value,  # P&L value in account base currency (added Dec 2025)
+                "pnl_net_eur": pnl_net_eur,  # P&L net in EUR (added Dec 2025)
                 "source": "saxo_bank",
                 "import_timestamp": datetime.now().isoformat()
             }

@@ -3136,16 +3136,6 @@
                                 loadOverviewData(currentPortfolioData);
                                 refreshActiveTab();
 
-                                // Add export button
-                                const overviewSection = document.getElementById('overview');
-                                if (overviewSection && !overviewSection.querySelector('.export-btn')) {
-                                    import('./modules/export-button.js').then(({ renderExportButton }) => {
-                                        renderExportButton(overviewSection, 'saxo', {
-                                            endpoint: '/api/saxo/export-lists',
-                                            filename: 'saxo-portfolio'
-                                        });
-                                    }).catch(err => debugLogger.warn('Failed to load export button:', err));
-                                }
 
                                 debugLogger.debug('✅ Portfolio loaded from cache');
                                 return;
@@ -3818,6 +3808,8 @@
                                 <th onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol">↕️</span></th>
                                 <th onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity">↕️</span></th>
                                 <th onclick="sortPositionsTable('market_value')" style="cursor: pointer; user-select: none;">Market Value <span id="sortIcon-market_value">▼</span></th>
+                                <th onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value">↕️</span></th>
+                                <th onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct">↕️</span></th>
                                 <th onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency">↕️</span></th>
                                 <th onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class">↕️</span></th>
                                 <th onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight">↕️</span></th>
@@ -3837,11 +3829,13 @@
                             `<span style="display: inline-block; margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.4rem; background: #ef4444; color: white; border-radius: 3px; font-weight: 600;" title="${lotsCount} lots détectés - Considérer consolidation pour réduire frais">⚠️ ${lotsCount} lots</span>` : '';
 
                         return `
-                                <tr 
+                                <tr
                                     data-instrument="${displayName.replace(/"/g, '&quot;')}"
                                     data-symbol="${symbol}"
                                     data-quantity="${position.quantity}"
                                     data-market_value="${position.market_value_usd}"
+                                    data-pnl_value="${position.pnl_value || 0}"
+                                    data-pnl_pct="${position.pnl_pct || 0}"
                                     data-currency="${position.currency}"
                                     data-asset_class="${position.asset_class}"
                                     data-weight="${weight}"
@@ -3853,6 +3847,12 @@
                                     <td><code style="font-size: 0.85rem;">${symbol}</code></td>
                                     <td>${position.quantity.toLocaleString()}</td>
                                     <td><strong>$${position.market_value_usd.toLocaleString()}</strong></td>
+                                    <td style="color: ${(position.pnl_value || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                                        ${(position.pnl_value || 0) >= 0 ? '+' : ''}${(position.pnl_value || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                    </td>
+                                    <td style="color: ${(position.pnl_pct || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
+                                        ${(position.pnl_pct || 0) >= 0 ? '+' : ''}${(position.pnl_pct || 0).toFixed(2)}%
+                                    </td>
                                     <td>${position.currency}</td>
                                     <td>
                                         <span class="asset-class-badge asset-class-${(position.asset_class || position.asset_type || 'unknown').toLowerCase()}">

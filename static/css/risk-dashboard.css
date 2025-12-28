@@ -2319,3 +2319,104 @@
     white-space: nowrap;
   }
 }
+
+/* ===== ML Card Styles (for Market Regimes) ===== */
+.ml-card {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-lg);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--theme-text);
+}
+
+.card-icon {
+  font-size: 1.25rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.card-content {
+  margin-bottom: var(--space-md);
+}
+
+.btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.btn.primary {
+  background: var(--brand-primary);
+  color: white;
+}
+
+.btn.primary:hover {
+  background: var(--brand-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn.secondary {
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  border: 1px solid var(--theme-border);
+}
+
+.btn.secondary:hover {
+  background: var(--theme-bg);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.status-grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.status-label {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.status-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--theme-text);
+}

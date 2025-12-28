@@ -267,6 +267,9 @@ def ingest_file(file_path: str, portfolio_name: Optional[str] = None) -> Dict[st
             'asset_class': _normalize_asset_class(pos.get('asset_class') or ''),
             'position_id': str(pos.get('position_id') or symbol),
             'avg_price': pos.get('avg_price'),  # Keep avg_price for trailing stop calculation
+            'pnl_pct': pos.get('pnl_pct', 0),  # P&L percentage (added Dec 2025)
+            'pnl_value': pos.get('pnl_value', 0),  # P&L value in account base currency (added Dec 2025)
+            'pnl_net_eur': pos.get('pnl_net_eur', 0),  # P&L net in EUR (added Dec 2025)
         })
 
     summary = connector.get_portfolio_summary(normalized_positions)
@@ -474,6 +477,13 @@ async def list_positions(user_id: Optional[str] = None, file_key: Optional[str] 
         weight = (market_value_usd or 0.0) / total if total else None
         tags = [f"asset_class:{position.get('asset_class')}"]
 
+        # ✅ P&L: Use pnl_value from CSV (in account base currency, typically EUR)
+        # Convert to USD for consistency (added Dec 2025)
+        pnl_value_local = float(position.get("pnl_value") or 0.0)
+        account_base_currency = position.get("account_base_currency", "EUR")
+        # Simple conversion: if EUR, multiply by ~1.1; if USD already, use as-is
+        pnl_usd = pnl_value_local * 1.1 if account_base_currency == "EUR" else pnl_value_local
+
         positions.append(
             PositionModel(
                 instrument_id=symbol,
@@ -481,7 +491,7 @@ async def list_positions(user_id: Optional[str] = None, file_key: Optional[str] 
                 avg_price=position.get("avg_price"),  # ✅ FIX: Use actual avg_price for trailing stop
                 currency="USD",  # ✅ FIX: Always USD since market_value is now in USD
                 market_value=market_value_usd,  # ✅ FIX: Use USD value
-                pnl=None,
+                pnl=pnl_usd,  # ✅ P&L in USD (added Dec 2025)
                 weight=weight,
                 tags=tags,
             )

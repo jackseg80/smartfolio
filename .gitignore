@@ -74,6 +74,7 @@ rebalance-actions.csv
 risk*.txt
 test*.json
 prompt_claude.txt
+NEXT_SESSION.md
 
 # Cleanup scripts & audits (temporary)
 scripts/cleanup_*.ps1
