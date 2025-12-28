@@ -1330,12 +1330,22 @@
           document.getElementById('saxo-expires').textContent = new Date(status.expires_at).toLocaleString('fr-FR');
           document.getElementById('saxo-last-update').textContent = new Date(status.last_update).toLocaleString('fr-FR');
         } else if (connectionState === 'expired') {
-          // Token expired state
+          // Token expired state - Auto-disconnect silencieusement
+          try {
+            await fetch('/api/saxo/auth/disconnect', {
+              method: 'POST',
+              headers: { 'X-User': activeUser }
+            });
+          } catch (err) {
+            console.warn('Auto-disconnect failed (non-critical):', err);
+          }
+
+          // Afficher comme déconnecté
           statusBanner.className = 'status-indicator status-warning';
-          statusText.textContent = '⚠️ Session expirée - Reconnexion requise';
+          statusText.textContent = '⚠️ Session expirée - Veuillez vous reconnecter';
 
           connectBtn.style.display = 'inline-block';
-          disconnectBtn.style.display = 'inline-block';  // Allow cleaning expired tokens
+          disconnectBtn.style.display = 'none';  // Déjà déconnecté
           refreshBtn.style.display = 'none';
           infoCard.style.display = 'none';
         } else {
