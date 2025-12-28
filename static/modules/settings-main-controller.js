@@ -1364,70 +1364,214 @@ async function testApiKeys() {
   `;
 }
 
-// Test complet du système
+// Test complet du système (Enhanced Dec 2025)
 async function runFullSystemTest() {
   const testDiv = document.getElementById('full-system-test');
-  testDiv.innerHTML = '<div class="test-result">🚀 Test complet en cours...</div>';
+  testDiv.innerHTML = '<div class="test-result">🚀 Test complet en cours... (peut prendre 10-15 secondes)</div>';
 
+  const startTime = performance.now();
   let results = [];
   const globalSettings = window.userSettings || getDefaultSettings();
 
-  // Test backend
+  // === CORE SYSTEM ===
+  results.push('<strong>🔧 Système Principal</strong>');
+
+  // Backend Health
   try {
-    const healthResponse = await fetch(`${globalSettings.api_base_url}/healthz`, { headers: { 'X-User': getActiveUser() } });
-    results.push(`🏥 Backend: ${healthResponse.ok ? '✅ OK' : '❌ Erreur'}`);
+    const healthResponse = await fetch(`${globalSettings.api_base_url}/health`, { headers: { 'X-User': getActiveUser() } });
+    if (healthResponse.ok) {
+      const data = await healthResponse.json();
+      results.push(`&nbsp;&nbsp;🏥 Backend: ✅ OK (${data.version || 'v1.0'})`);
+    } else {
+      results.push(`&nbsp;&nbsp;🏥 Backend: ❌ Erreur HTTP ${healthResponse.status}`);
+    }
   } catch (e) {
-    results.push(`🏥 Backend: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp;🏥 Backend: ❌ ${e.message}`);
   }
 
-  // Test source de données
+  // Redis
+  try {
+    const healthResponse = await fetch(`${globalSettings.api_base_url}/health`, { headers: { 'X-User': getActiveUser() } });
+    const data = await healthResponse.json();
+    const redisOk = data.redis === 'connected' || data.redis?.status === 'ok';
+    results.push(`&nbsp;&nbsp;🔴 Redis: ${redisOk ? '✅ Connecté' : '⚠️ Non accessible (non critique)'}`);
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;🔴 Redis: ❌ ${e.message}`);
+  }
+
+  // === DATA SOURCES ===
+  results.push('<br><strong>📊 Sources de Données</strong>');
+
+  // Balance Data
   try {
     const balanceResult = await window.loadBalanceData(true);
     const balanceData = balanceResult.csvText
       ? { items: parseCSVBalancesAuto(balanceResult.csvText) }
       : (balanceResult.data || { items: [] });
-    results.push(`📊 Balances: ${balanceData.items?.length > 0 ? '✅ OK (' + balanceData.items.length + ' assets)' : '❌ Vide'}`);
+    results.push(`&nbsp;&nbsp;💰 Balances: ${balanceData.items?.length > 0 ? '✅ ' + balanceData.items.length + ' assets' : '⚠️ Aucun asset'}`);
   } catch (e) {
-    results.push(`📊 Balances: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp;💰 Balances: ❌ ${e.message}`);
   }
 
-  // Test portfolio analytics
+  // Sources System v2
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/api/sources/list`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const modules = data.modules || [];
+      const activeCount = modules.filter(m => m.enabled).length;
+      results.push(`&nbsp;&nbsp;📁 Sources System: ✅ ${activeCount}/${modules.length} modules actifs`);
+    } else {
+      results.push(`&nbsp;&nbsp;📁 Sources System: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;📁 Sources System: ❌ ${e.message}`);
+  }
+
+  // === ANALYTICS & PORTFOLIO ===
+  results.push('<br><strong>📈 Analytics & Portfolio</strong>');
+
+  // Portfolio Metrics
   try {
     const metricsData = await globalConfig.apiRequest('/api/portfolio/metrics', {
       params: { source: globalSettings.data_source }
     });
-    // Accept both formats: {ok: true, data: ...} or direct data {total_value: ...}
     const hasData = metricsData.ok || metricsData.total_value !== undefined;
     if (hasData) {
-      results.push(`📈 Analytics: ✅ OK`);
-    } else if (metricsData.error) {
-      results.push(`📈 Analytics: ❌ Erreur: ${metricsData.error}`);
+      const totalValue = metricsData.data?.total_value || metricsData.total_value || 0;
+      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ✅ OK ($${totalValue.toLocaleString()})`);
     } else {
-      results.push(`📈 Analytics: ❌ Format inattendu`);
+      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ Pas de données`);
     }
   } catch (e) {
-    results.push(`📈 Analytics: ❌ Exception: ${e.message}`);
+    results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ ${e.message}`);
   }
 
-  // Test taxonomie
+  // Taxonomy
   try {
     const taxData = await globalConfig.apiRequest('/taxonomy/suggestions');
-    results.push(`🏷️ Taxonomie: ${taxData ? '✅ OK' : '❌ Erreur'}`);
+    results.push(`&nbsp;&nbsp;🏷️ Taxonomie: ${taxData ? '✅ OK' : '❌ Erreur'}`);
   } catch (e) {
-    results.push(`🏷️ Taxonomie: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp;🏷️ Taxonomie: ❌ ${e.message}`);
   }
+
+  // === RISK & ML ===
+  results.push('<br><strong>🛡️ Risk & Machine Learning</strong>');
+
+  // Risk API
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/api/risk/dashboard`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const riskScore = data.data?.risk_score || data.risk_score || 0;
+      results.push(`&nbsp;&nbsp;🛡️ Risk API: ✅ OK (Score: ${riskScore})`);
+    } else {
+      results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ ${e.message}`);
+  }
+
+  // ML Models (admin only)
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/admin/ml/models`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const models = data.data?.models || [];
+      const trainedCount = models.filter(m => m.status === 'TRAINED').length;
+      results.push(`&nbsp;&nbsp;🤖 ML Models: ✅ ${trainedCount}/${models.length} modèles entraînés`);
+    } else {
+      results.push(`&nbsp;&nbsp;🤖 ML Models: ⚠️ Accès non autorisé (admin requis)`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;🤖 ML Models: ❌ ${e.message}`);
+  }
+
+  // === ALERTS & GOVERNANCE ===
+  results.push('<br><strong>🔔 Alerts & Governance</strong>');
+
+  // Alerts
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/api/alerts/list`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const alerts = data.data?.alerts || data.alerts || [];
+      results.push(`&nbsp;&nbsp;🔔 Alerts System: ✅ ${alerts.length} alerte(s) active(s)`);
+    } else {
+      results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ ${e.message}`);
+  }
+
+  // Governance
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/execution/governance/state`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const mode = data.mode || 'unknown';
+      const currentState = data.current_state || 'IDLE';
+      const isActive = currentState !== 'IDLE';
+      const icon = isActive ? '⚙️' : '✅';
+      results.push(`&nbsp;&nbsp;⚙️ Governance: ${icon} Mode=${mode}, State=${currentState}`);
+    } else {
+      results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ ${e.message}`);
+  }
+
+  // === INTEGRATIONS ===
+  results.push('<br><strong>🔗 Intégrations</strong>');
+
+  // Saxo
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/api/saxo/portfolios`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const portfolios = data.data?.portfolios || data.portfolios || [];
+      results.push(`&nbsp;&nbsp;📊 Saxo: ${portfolios.length > 0 ? '✅ ' + portfolios.length + ' portfolio(s)' : '⚠️ Aucun portfolio'}`);
+    } else {
+      results.push(`&nbsp;&nbsp;📊 Saxo: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;📊 Saxo: ❌ ${e.message}`);
+  }
+
+  // Wealth/Patrimoine
+  try {
+    const response = await fetch(`${globalSettings.api_base_url}/api/wealth/patrimoine/summary`, { headers: { 'X-User': getActiveUser() } });
+    if (response.ok) {
+      const data = await response.json();
+      const netWorth = data.data?.net_worth || data.net_worth || 0;
+      results.push(`&nbsp;&nbsp;💰 Wealth: ✅ Net Worth $${netWorth.toLocaleString()}`);
+    } else {
+      results.push(`&nbsp;&nbsp;💰 Wealth: ❌ Erreur`);
+    }
+  } catch (e) {
+    results.push(`&nbsp;&nbsp;💰 Wealth: ❌ ${e.message}`);
+  }
+
+  const endTime = performance.now();
+  const duration = ((endTime - startTime) / 1000).toFixed(1);
 
   testDiv.innerHTML = `
   <div class="test-result">
-    <strong>🧪 Résultats du test complet:</strong><br>
+    <strong>🧪 Résultats du Test Complet du Système</strong><br>
+    <div style="margin-top: 12px;">
       ${results.join('<br>')}
-      <br><br>
-        <strong>Configuration testée:</strong><br>
-          Source: ${globalSettings.data_source}<br>
-            Pricing: ${globalSettings.pricing}<br>
-              API: ${globalSettings.api_base_url}
-            </div>
-            `;
+    </div>
+    <br>
+    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--theme-border);">
+      <strong>📋 Configuration Testée</strong><br>
+      &nbsp;&nbsp;User: ${getActiveUser()}<br>
+      &nbsp;&nbsp;Source: ${globalSettings.data_source}<br>
+      &nbsp;&nbsp;Pricing: ${globalSettings.pricing}<br>
+      &nbsp;&nbsp;API: ${globalSettings.api_base_url}<br>
+      &nbsp;&nbsp;⏱️ Durée: ${duration}s
+    </div>
+  </div>
+  `;
 }
 
 // Utilitaires
@@ -1460,12 +1604,7 @@ async function importSettings() {
   input.click();
 }
 
-function clearCache() {
-  if (confirm('Vider tout le cache local ?')) {
-    localStorage.removeItem('lastPortfolioSnapshot');
-    showNotification('🗑️ Cache vidé !', 'success');
-  }
-}
+// Legacy clearCache() function removed - replaced by clearLocalCache() (Dec 2025)
 
 function resetAllData() {
   if (confirm('⚠️ ATTENTION: Supprimer TOUTES les données et configurations ?')) {
@@ -1516,6 +1655,33 @@ function applyThemeImmediately() {
   console.debug('Theme applied, current theme:', document.documentElement.getAttribute('data-theme'));
 }
 
+// Vérifier le rôle admin et afficher conditionnellement la section Admin Quick Access
+async function checkAdminRole() {
+  const adminSection = document.getElementById('admin-quick-access');
+  if (!adminSection) return;
+
+  try {
+    // Vérifier si l'utilisateur a le rôle admin via l'endpoint admin
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/users`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      // Si l'endpoint répond OK, l'utilisateur a le rôle admin
+      adminSection.style.display = 'block';
+      console.debug('✅ Admin role detected, showing Admin Quick Access');
+    } else {
+      // Pas de rôle admin
+      adminSection.style.display = 'none';
+      console.debug('ℹ️ No admin role, hiding Admin Quick Access');
+    }
+  } catch (e) {
+    // En cas d'erreur, cacher la section par sécurité
+    adminSection.style.display = 'none';
+    console.debug('ℹ️ Error checking admin role, hiding Admin Quick Access:', e.message);
+  }
+}
+
 // Ajouter le header partagé et initialiser
 document.addEventListener('DOMContentLoaded', () => {
   // Appliquer le thème immédiatement
@@ -1525,6 +1691,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-détection DEBUG_TOKEN désactivée (génère des 403 en console)
     // Utilisateurs doivent saisir manuellement le token si nécessaire
     // autoDetectDebugToken();
+
+    // Vérifier le rôle admin pour afficher conditionnellement la section Admin Quick Access
+    checkAdminRole();
   });
   // Auto-détection des clés désactivée pour respecter le choix utilisateur
   // Utilisez le bouton "Sync depuis .env" manuellement si besoin
@@ -1961,6 +2130,442 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(refreshSaxoStatus, 1000); // Slight delay to ensure modules are loaded
 });
 
+// ========== ADVANCED TAB - NEW FUNCTIONS (Dec 2025) ==========
+
+// === Cache Management ===
+function clearLocalCache() {
+  if (confirm('Vider tout le cache local (localStorage) ?')) {
+    const keysToRemove = [];
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('cache:') || key.includes('risk_score') || key.includes('balance_') || key.includes('ml_')) {
+        keysToRemove.push(key);
+      }
+    });
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    showNotification(`🗑️ ${keysToRemove.length} clés de cache supprimées !`, 'success');
+    updateCacheStatsDisplay();
+  }
+}
+
+async function clearBackendCache() {
+  if (confirm('Vider le cache backend (Redis) ? Cette action peut impacter les performances temporairement.')) {
+    try {
+      const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/cache/clear`, {
+        method: 'DELETE',
+        headers: { 'X-User': getActiveUser() }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        showNotification(`✅ Cache backend vidé : ${data.cleared_count || 'multiple'} entrées`, 'success');
+      } else {
+        const error = await response.json();
+        showNotification(`❌ Erreur: ${error.error || 'Accès refusé'}`, 'error');
+      }
+    } catch (e) {
+      showNotification(`❌ Erreur: ${e.message}`, 'error');
+    }
+  }
+}
+
+async function showCacheStats() {
+  const displayDiv = document.getElementById('cache-stats-display');
+  displayDiv.innerHTML = '🔄 Chargement...';
+
+  try {
+    // Local storage stats
+    const localKeys = Object.keys(localStorage).filter(k =>
+      k.startsWith('cache:') || k.includes('risk_score') || k.includes('balance_') || k.includes('ml_')
+    );
+    const localSize = new Blob(localKeys.map(k => localStorage.getItem(k) || '')).size;
+
+    // Backend cache stats
+    let backendStats = null;
+    try {
+      const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/cache/stats`, {
+        headers: { 'X-User': getActiveUser() }
+      });
+      if (response.ok) {
+        backendStats = await response.json();
+      }
+    } catch (e) {
+      console.debug('Backend cache stats not available:', e.message);
+    }
+
+    let html = `
+      <strong>📊 Statistiques Cache</strong><br>
+      <div style="margin-top: 8px;">
+        <strong>Local (localStorage):</strong><br>
+        - ${localKeys.length} clés<br>
+        - ~${(localSize / 1024).toFixed(1)} KB<br>
+    `;
+
+    if (backendStats && backendStats.data) {
+      const stats = backendStats.data;
+      html += `
+        <br><strong>Backend (Redis):</strong><br>
+        - ${stats.total_keys || 0} clés<br>
+        - ${stats.memory_used || 'N/A'}<br>
+      `;
+    } else {
+      html += `<br><strong>Backend:</strong> Non accessible (admin requis)<br>`;
+    }
+
+    html += `</div>`;
+    displayDiv.innerHTML = html;
+
+  } catch (e) {
+    displayDiv.innerHTML = `❌ Erreur: ${e.message}`;
+  }
+}
+
+function updateCacheStatsDisplay() {
+  const displayDiv = document.getElementById('cache-stats-display');
+  if (displayDiv && displayDiv.innerHTML) {
+    showCacheStats(); // Auto-refresh after clear
+  }
+}
+
+// === Logs & Diagnostics ===
+async function viewRecentLogs() {
+  const logsDiv = document.getElementById('logs-display');
+  logsDiv.style.display = 'block';
+  logsDiv.innerHTML = '🔄 Chargement des logs...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/logs/read?limit=100&sort_order=desc`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const logs = data.data || [];
+
+      if (logs.length === 0) {
+        logsDiv.innerHTML = '<em style="color: var(--theme-text-muted);">Aucun log récent</em>';
+      } else {
+        logsDiv.innerHTML = logs.map(logEntry => {
+          // Les logs sont des objets: {timestamp, level, module, message, line_num}
+          const timestamp = logEntry.timestamp || '';
+          const level = logEntry.level || '';
+          const module = logEntry.module || '';
+          const message = logEntry.message || '';
+
+          // Reconstruct log line
+          const line = `${timestamp} ${level} ${module}: ${message}`;
+
+          // Colorize log levels
+          let color = 'var(--theme-text)';
+          if (level === 'ERROR') {
+            color = 'var(--danger)';
+          } else if (level === 'WARNING') {
+            color = 'var(--warning)';
+          } else if (level === 'INFO') {
+            color = 'var(--brand-primary)';
+          }
+
+          return `<span style="color: ${color};">${line}</span>`;
+        }).join('<br>');
+      }
+    } else {
+      const error = await response.json();
+      logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${error.error || 'Accès refusé (admin requis)'}</span>`;
+    }
+  } catch (e) {
+    logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${e.message}</span>`;
+  }
+}
+
+async function downloadLogs() {
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/logs/read?limit=1000&sort_order=desc`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const logs = data.data || [];
+
+      // Reconstruct log lines from structured data
+      const logLines = logs.map(logEntry => {
+        const timestamp = logEntry.timestamp || '';
+        const level = logEntry.level || '';
+        const module = logEntry.module || '';
+        const message = logEntry.message || '';
+        return `${timestamp} ${level} ${module}: ${message}`;
+      });
+
+      const blob = new Blob([logLines.join('\n')], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `smartfolio-logs-${new Date().toISOString().split('T')[0]}.log`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showNotification('📥 Logs téléchargés', 'success');
+    } else {
+      showNotification('❌ Erreur: Accès refusé (admin requis)', 'error');
+    }
+  } catch (e) {
+    showNotification(`❌ Erreur: ${e.message}`, 'error');
+  }
+}
+
+async function pingBackend() {
+  const resultsDiv = document.getElementById('ping-results');
+  resultsDiv.innerHTML = '🏓 Test en cours...';
+
+  const pings = [];
+  const apiBaseUrl = (window.userSettings || getDefaultSettings()).api_base_url;
+
+  try {
+    // Faire 3 pings pour avoir une moyenne
+    for (let i = 0; i < 3; i++) {
+      const start = performance.now();
+      const response = await fetch(`${apiBaseUrl}/health`, {
+        headers: { 'X-User': getActiveUser() }
+      });
+      const end = performance.now();
+
+      if (response.ok) {
+        pings.push(end - start);
+      }
+    }
+
+    if (pings.length === 3) {
+      const avg = (pings.reduce((a, b) => a + b, 0) / pings.length).toFixed(1);
+      const min = Math.min(...pings).toFixed(1);
+      const max = Math.max(...pings).toFixed(1);
+
+      let statusColor = 'var(--success)';
+      let statusIcon = '✅';
+      if (avg > 500) {
+        statusColor = 'var(--danger)';
+        statusIcon = '❌';
+      } else if (avg > 200) {
+        statusColor = 'var(--warning)';
+        statusIcon = '⚠️';
+      }
+
+      resultsDiv.innerHTML = `
+        <span style="color: ${statusColor};">
+          ${statusIcon} Latence: <strong>${avg} ms</strong> (min: ${min} ms, max: ${max} ms)
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Échec du ping</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${e.message}</span>`;
+  }
+}
+
+// === Individual Component Tests ===
+async function testRedis() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '🔴 Test Redis...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/health`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+    const data = await response.json();
+
+    // Check if Redis info is in health response
+    const redisOk = data.redis === 'connected' || data.redis?.status === 'ok';
+
+    resultsDiv.innerHTML = redisOk
+      ? '<span style="color: var(--success);">✅ Redis: Connecté</span>'
+      : '<span style="color: var(--warning);">⚠️ Redis: Non accessible (non critique)</span>';
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Redis: ${e.message}</span>`;
+  }
+}
+
+async function testMLModels() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '🤖 Test ML Models...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/ml/models`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const models = data.data?.models || [];
+      const trainedCount = models.filter(m => m.status === 'TRAINED').length;
+
+      resultsDiv.innerHTML = `
+        <span style="color: var(--success);">
+          ✅ ML Models: ${trainedCount}/${models.length} modèles entraînés
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ ML Models: Accès refusé (admin requis)</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ ML Models: ${e.message}</span>`;
+  }
+}
+
+async function testRiskAPI() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '🛡️ Test Risk API...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/risk/dashboard`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const hasData = data.data || data.risk_score !== undefined;
+
+      resultsDiv.innerHTML = hasData
+        ? '<span style="color: var(--success);">✅ Risk API: Données disponibles</span>'
+        : '<span style="color: var(--warning);">⚠️ Risk API: Aucune donnée</span>';
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Risk API: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Risk API: ${e.message}</span>`;
+  }
+}
+
+async function testAlerts() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '🔔 Test Alerts...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/alerts/list`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const alerts = data.data?.alerts || data.alerts || [];
+
+      resultsDiv.innerHTML = `
+        <span style="color: var(--success);">
+          ✅ Alerts: ${alerts.length} alerte(s) active(s)
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Alerts: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Alerts: ${e.message}</span>`;
+  }
+}
+
+async function testSaxo() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '📊 Test Saxo...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/saxo/portfolios`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const portfolios = data.data?.portfolios || data.portfolios || [];
+
+      resultsDiv.innerHTML = portfolios.length > 0
+        ? `<span style="color: var(--success);">✅ Saxo: ${portfolios.length} portfolio(s)</span>`
+        : '<span style="color: var(--warning);">⚠️ Saxo: Aucun portfolio importé</span>';
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Saxo: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Saxo: ${e.message}</span>`;
+  }
+}
+
+async function testWealth() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '💰 Test Wealth...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/wealth/patrimoine/summary`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const netWorth = data.data?.net_worth || data.net_worth || 0;
+
+      resultsDiv.innerHTML = `
+        <span style="color: var(--success);">
+          ✅ Wealth: Net Worth $${netWorth.toLocaleString()}
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Wealth: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Wealth: ${e.message}</span>`;
+  }
+}
+
+async function testSources() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '📁 Test Sources...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/sources/list`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const modules = data.modules || [];
+      const activeCount = modules.filter(m => m.enabled).length;
+
+      resultsDiv.innerHTML = `
+        <span style="color: var(--success);">
+          ✅ Sources: ${activeCount}/${modules.length} modules actifs
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Sources: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Sources: ${e.message}</span>`;
+  }
+}
+
+async function testGovernance() {
+  const resultsDiv = document.getElementById('detailed-test-results');
+  resultsDiv.innerHTML = '⚙️ Test Governance...';
+
+  try {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/execution/governance/state`, {
+      headers: { 'X-User': getActiveUser() }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const mode = data.mode || 'unknown';
+      const currentState = data.current_state || 'IDLE';
+
+      const isActive = currentState !== 'IDLE';
+      const statusIcon = isActive ? '⚙️' : '✅';
+      const statusColor = isActive ? 'var(--warning)' : 'var(--success)';
+
+      resultsDiv.innerHTML = `
+        <span style="color: ${statusColor};">
+          ${statusIcon} Governance: Mode=${mode}, State=${currentState}
+        </span>
+      `;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Governance: Erreur</span>';
+    }
+  } catch (e) {
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Governance: ${e.message}</span>`;
+  }
+}
+
 // Make functions globally available
 window.getActiveUser = getActiveUser;
 window.buildQuickSourceDropdown = buildQuickSourceDropdown;
@@ -1987,8 +2592,8 @@ window.runFullSystemTest = runFullSystemTest;
 window.resetToDefaults = resetToDefaults;
 window.exportSettings = exportSettings;
 window.importSettings = importSettings;
-window.clearCache = clearCache;
 window.resetAllData = resetAllData;
+window.checkAdminRole = checkAdminRole;
 window.showNotification = showNotification;
 window.downloadCSVFiles = downloadCSVFiles;
 window.getSelectedFiles = getSelectedFiles;
@@ -2004,3 +2609,19 @@ window.loadSaxoIntegrationStatus = loadSaxoIntegrationStatus;
 window.updateSaxoStatus = updateSaxoStatus;
 window.handleSaxoUpload = handleSaxoUpload;
 window.refreshSaxoStatus = refreshSaxoStatus;
+
+// Advanced Tab - NEW FUNCTIONS (Dec 2025)
+window.clearLocalCache = clearLocalCache;
+window.clearBackendCache = clearBackendCache;
+window.showCacheStats = showCacheStats;
+window.viewRecentLogs = viewRecentLogs;
+window.downloadLogs = downloadLogs;
+window.pingBackend = pingBackend;
+window.testRedis = testRedis;
+window.testMLModels = testMLModels;
+window.testRiskAPI = testRiskAPI;
+window.testAlerts = testAlerts;
+window.testSaxo = testSaxo;
+window.testWealth = testWealth;
+window.testSources = testSources;
+window.testGovernance = testGovernance;

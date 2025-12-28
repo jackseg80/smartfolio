@@ -1235,24 +1235,89 @@
 
     <!-- Advanced Tab -->
     <section class="tab-panel" id="tab-advanced">
-      <div class="card"
-        data-tooltip="Outils avancés pour maintenance, cache, et opérations système critiques (utiliser avec précaution)."
-        data-source="Fonctions système internes">
-        <h3>🔧 Actions Avancées</h3>
 
+      <!-- Configuration & Données -->
+      <div class="card"
+        data-tooltip="Sauvegarde et restauration de la configuration utilisateur."
+        data-source="Fonctions système internes">
+        <h3>💾 Configuration & Données</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
           <button class="btn secondary" onclick="exportSettings()">📤 Exporter Config</button>
           <button class="btn secondary" onclick="importSettings()">📥 Importer Config</button>
-          <button class="btn secondary" onclick="clearCache()">🗑️ Vider Cache</button>
           <button class="btn danger" onclick="resetAllData()">⚠️ Reset Complet</button>
         </div>
-
-        <div class="test-section" style="margin-top: 16px;">
-          <h4>🧪 Test Complet du Système</h4>
-          <button class="btn" onclick="runFullSystemTest()">🚀 Lancer Test Complet</button>
-          <div id="full-system-test"></div>
-        </div>
       </div>
+
+      <!-- Gestion du Cache -->
+      <div class="card"
+        data-tooltip="Gestion avancée du cache local et backend pour optimiser les performances."
+        data-source="Redis + LocalStorage">
+        <h3>🗄️ Gestion du Cache</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+          <button class="btn secondary" onclick="clearLocalCache()">🗑️ Vider Cache Local</button>
+          <button class="btn secondary" onclick="clearBackendCache()">🔄 Vider Cache Backend</button>
+          <button class="btn secondary" onclick="showCacheStats()">📊 Statistiques Cache</button>
+        </div>
+        <div id="cache-stats-display" style="font-size: 13px; color: var(--theme-text-muted);"></div>
+      </div>
+
+      <!-- Logs & Diagnostics -->
+      <div class="card"
+        data-tooltip="Visualisation des logs système et diagnostics réseau."
+        data-source="Logs backend + API health checks">
+        <h3>📋 Logs & Diagnostics</h3>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
+          <button class="btn secondary" onclick="viewRecentLogs()">👁️ Voir Logs Récents</button>
+          <button class="btn secondary" onclick="downloadLogs()">📥 Télécharger Logs</button>
+          <button class="btn secondary" onclick="pingBackend()">🏓 Test Latence</button>
+        </div>
+        <div id="logs-display" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; background: var(--theme-surface-elevated); padding: 8px; border-radius: 6px; display: none;"></div>
+        <div id="ping-results" style="margin-top: 8px; font-size: 13px;"></div>
+      </div>
+
+      <!-- Diagnostics Détaillés -->
+      <div class="card"
+        data-tooltip="Tests individuels par composant pour diagnostic précis."
+        data-source="Tests API granulaires">
+        <h3>🔍 Diagnostics Détaillés</h3>
+        <div class="test-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 12px;">
+          <button class="btn small secondary" onclick="testRedis()">🔴 Redis</button>
+          <button class="btn small secondary" onclick="testMLModels()">🤖 ML Models</button>
+          <button class="btn small secondary" onclick="testRiskAPI()">🛡️ Risk API</button>
+          <button class="btn small secondary" onclick="testAlerts()">🔔 Alerts</button>
+          <button class="btn small secondary" onclick="testSaxo()">📊 Saxo</button>
+          <button class="btn small secondary" onclick="testWealth()">💰 Wealth</button>
+          <button class="btn small secondary" onclick="testSources()">📁 Sources</button>
+          <button class="btn small secondary" onclick="testGovernance()">⚙️ Governance</button>
+        </div>
+        <div id="detailed-test-results" class="test-result" style="margin-top: 12px;"></div>
+      </div>
+
+      <!-- Test Complet du Système -->
+      <div class="card"
+        data-tooltip="Test global de tous les composants critiques du système."
+        data-source="Tests API complets">
+        <h3>🧪 Test Complet du Système</h3>
+        <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
+          Lance une batterie complète de tests couvrant tous les composants : Backend, Redis, ML, Risk, Alerts, Saxo, Wealth, Sources, Governance, et plus.
+        </p>
+        <button class="btn" onclick="runFullSystemTest()">🚀 Lancer Test Complet</button>
+        <div id="full-system-test"></div>
+      </div>
+
+      <!-- Admin Quick Access (conditional) -->
+      <div class="card" id="admin-quick-access" style="display: none;"
+        data-tooltip="Accès rapide au dashboard admin (réservé aux administrateurs)."
+        data-source="RBAC - Rôle admin requis">
+        <h3>👑 Administration</h3>
+        <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
+          Accès rapide aux fonctions d'administration système.
+        </p>
+        <button class="btn" onclick="location.href='admin-dashboard.html'">
+          🎛️ Ouvrir Admin Dashboard
+        </button>
+      </div>
+
     </section>
 
   </div>
