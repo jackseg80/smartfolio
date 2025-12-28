@@ -10,94 +10,42 @@ const loadWealthContextBar = async () => {
   }
 };
 
-// Initialisation du sélecteur d'utilisateur
-const initUserSwitcher = async () => {
+// Affichage de l'utilisateur connecté (read-only)
+const initUserDisplay = async () => {
   try {
-    // Charger la liste des utilisateurs depuis config/users.json
-    const usersResponse = await fetch('/config/users.json', { cache: 'no-store' });
-    if (!usersResponse.ok) {
-      (window.debugLogger?.warn || console.warn)('Could not load users config');
-      return;
+    // Récupérer les infos utilisateur depuis localStorage (set par login)
+    const userInfoStr = localStorage.getItem('userInfo');
+    const activeUser = localStorage.getItem('activeUser');
+
+    let displayName = 'Utilisateur';
+
+    if (userInfoStr) {
+      try {
+        const userInfo = JSON.parse(userInfoStr);
+        displayName = userInfo.label || userInfo.id || 'Utilisateur';
+      } catch (err) {
+        console.debug('Could not parse userInfo:', err);
+        displayName = activeUser || 'Utilisateur';
+      }
+    } else if (activeUser) {
+      displayName = activeUser;
     }
 
-    const usersConfig = await usersResponse.json();
-    const users = usersConfig.users || [];
-    const defaultUser = usersConfig.default || 'demo';
+    // Afficher le nom dans l'élément
+    const displayElement = document.getElementById('current-user-display');
+    if (displayElement) {
+      displayElement.textContent = displayName;
+    }
 
-    // Récupérer l'utilisateur actuel depuis localStorage
-    const currentUser = localStorage.getItem('activeUser') || defaultUser;
-
-    // Remplir le sélecteur
-    const selector = document.getElementById('user-selector');
-    if (!selector) return;
-
-    selector.innerHTML = '';
-    users.forEach(user => {
-      const option = document.createElement('option');
-      option.value = user.id;
-      option.textContent = user.label;  // Plus de mode affiché
-      if (user.id === currentUser) {
-        option.selected = true;
-      }
-      selector.appendChild(option);
-    });
-
-    // Ajouter l'event listener pour le changement d'utilisateur
-    selector.addEventListener('change', (e) => {
-      const newUser = e.target.value;
-      if (newUser !== currentUser) {
-        switchUser(newUser);
-      }
-    });
-
-    console.debug(`User switcher initialized, current user: ${currentUser}`);
+    console.debug(`Current user displayed: ${displayName}`);
 
   } catch (error) {
-    debugLogger.error('Failed to initialize user switcher:', error);
+    console.error('Failed to display current user:', error);
   }
 };
 
 // ✅ Define global getCurrentUser for safeFetch and other modules
 window.getCurrentUser = () => localStorage.getItem('activeUser') || 'demo';
-
-// Fonction pour changer d'utilisateur
-const switchUser = (newUserId) => {
-  try {
-    const oldUser = localStorage.getItem('activeUser');
-    localStorage.setItem('activeUser', newUserId);
-
-    (window.debugLogger?.debug || console.log)(`Switching from user '${oldUser}' to '${newUserId}'`);
-
-    // Émettre un événement pour informer les autres composants
-    const event = new CustomEvent('activeUserChanged', {
-      detail: { oldUser, newUser: newUserId }
-    });
-    window.dispatchEvent(event);
-
-    // Purger les caches pour éviter les données croisées
-    if (window.clearCache) {
-      window.clearCache();
-    }
-
-    // Vider les caches localStorage liés aux données
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('risk_score') || key.startsWith('cache:') || key.startsWith('portfolio_'))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-
-    // Recharger la page pour appliquer les changements
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-
-  } catch (error) {
-    debugLogger.error('Error switching user:', error);
-  }
-};
 
 // Vérification des rôles RBAC pour menu Admin
 const checkAdminRole = () => {
@@ -258,12 +206,17 @@ const initUnifiedNav = () => {
         </div>
         
         <div class="spacer"></div>
-        <!-- User Switcher (independent from Admin) -->
-        <div class="user-switcher">
-          <label style="font-size: 0.85em; color: var(--theme-text-muted); margin-right: 0.5rem;">Utilisateur:</label>
-          <select id="user-selector" style="padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-bg); color: var(--theme-text); font-size: 0.9em;">
-            <option value="demo">Chargement...</option>
-          </select>
+        <!-- User Info & Logout -->
+        <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
+          <div class="current-user" style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.85em; color: var(--theme-text-muted);">👤</span>
+            <span id="current-user-display" style="font-size: 0.9em; font-weight: 500; color: var(--theme-text);">
+              Chargement...
+            </span>
+          </div>
+          <button id="logout-btn" class="logout-btn" title="Déconnexion" style="padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-bg-secondary); color: var(--theme-text); font-size: 0.85em; cursor: pointer; transition: all 0.2s;">
+            🚪 Logout
+          </button>
         </div>
 
         ${hasAdminRole ? `
@@ -350,6 +303,43 @@ const initUnifiedNav = () => {
 
       document.addEventListener('click', dropdownClickHandler);
       window.addEventListener('keydown', dropdownKeyHandler);
+    }
+
+    // Logout Button Handler
+    const logoutBtn = header.querySelector('#logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+          return;
+        }
+
+        try {
+          // Import auth guard dynamically
+          const authGuard = await import('./core/auth-guard.js');
+          await authGuard.logout(true);
+        } catch (err) {
+          console.error('Logout error:', err);
+          // Fallback logout
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('activeUser');
+          localStorage.removeItem('userInfo');
+          window.location.href = '/static/login.html';
+        }
+      });
+
+      // Hover effect
+      logoutBtn.addEventListener('mouseenter', () => {
+        logoutBtn.style.background = 'var(--theme-danger, #ef4444)';
+        logoutBtn.style.color = 'white';
+        logoutBtn.style.borderColor = 'var(--theme-danger, #ef4444)';
+      });
+      logoutBtn.addEventListener('mouseleave', () => {
+        logoutBtn.style.background = 'var(--theme-bg-secondary)';
+        logoutBtn.style.color = 'var(--theme-text)';
+        logoutBtn.style.borderColor = 'var(--theme-border)';
+      });
     }
 
     // ===== Human-in-the-loop Badge Management =====
@@ -481,8 +471,8 @@ const initUnifiedNav = () => {
     fallbackBadgeUpdate(); // Initial check
     initWebSocketConnection();
 
-    // Initialize user switcher (always available)
-    initUserSwitcher();
+    // Initialize user display (read-only from JWT)
+    initUserDisplay();
 
     // Load WealthContextBar after nav is initialized
     loadWealthContextBar();

@@ -10,44 +10,64 @@
     {
       "id": "demo",
       "label": "Démo",
-      "roles": ["viewer"],
+      "roles": [
+        "viewer"
+      ],
       "status": "active",
-      "created_at": "2024-01-01T00:00:00Z"
+      "created_at": "2024-01-01T00:00:00Z",
+      "password_hash": "$2b$12$hPnhq/CCHGEYmVxtz37EHusQsjA1JezNMB15ee5m.r1b0fzZ0/iZW"
     },
     {
       "id": "jack",
       "label": "Jack",
-      "roles": ["admin", "ml_admin", "governance_admin"],
+      "roles": [
+        "admin",
+        "ml_admin",
+        "governance_admin"
+      ],
       "status": "active",
-      "created_at": "2024-01-15T10:30:00Z"
+      "created_at": "2024-01-15T10:30:00Z",
+      "password_hash": "$2b$12$qoLbAsPpzYRVrKUm8jvngenD6ZfNmZNB1zEflxODfoVaPZ38JCIsq"
     },
     {
       "id": "donato",
       "label": "Donato",
-      "roles": ["viewer"],
+      "roles": [
+        "viewer"
+      ],
       "status": "active",
-      "created_at": "2024-02-01T00:00:00Z"
+      "created_at": "2024-02-01T00:00:00Z",
+      "password_hash": "$2b$12$00Kb/Rq8oQ9uILfBikPql.a5rIjc9H0wscFXoVjKMhtqLj6.7WEaq"
     },
     {
       "id": "elda",
       "label": "Elda",
-      "roles": ["viewer"],
+      "roles": [
+        "viewer"
+      ],
       "status": "active",
-      "created_at": "2024-02-01T00:00:00Z"
+      "created_at": "2024-02-01T00:00:00Z",
+      "password_hash": "$2b$12$uDxCLmFyFCBD2f25q1n1T.G.21GivHCQtkz65cOyU//iitxaLqH5G"
     },
     {
       "id": "roberto",
       "label": "Roberto",
-      "roles": ["viewer"],
+      "roles": [
+        "viewer"
+      ],
       "status": "active",
-      "created_at": "2024-02-01T00:00:00Z"
+      "created_at": "2024-02-01T00:00:00Z",
+      "password_hash": "$2b$12$G11GgujMOnvxiTtv1IOqLOt615ZZYZT0z4J78HCObENdI8x8u.yAm"
     },
     {
       "id": "clea",
       "label": "Cléa",
-      "roles": ["viewer"],
+      "roles": [
+        "viewer"
+      ],
       "status": "active",
-      "created_at": "2024-02-01T00:00:00Z"
+      "created_at": "2024-02-01T00:00:00Z",
+      "password_hash": "$2b$12$R3c/5/.se19.VMhI.26M9u3nqL7.62Uhw53gbQ4F8a.Qc69V5UWde"
     }
   ]
 }

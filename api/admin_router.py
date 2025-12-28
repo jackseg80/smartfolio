@@ -48,6 +48,11 @@ class UpdateUserRequest(BaseModel):
     status: Optional[str] = Field(None, pattern="^(active|inactive)$")
 
 
+class ResetPasswordRequest(BaseModel):
+    """Request model pour reset password (admin uniquement)"""
+    new_password: str = Field(..., min_length=8, description="Nouveau password (min 8 caractères)")
+
+
 class AssignRolesRequest(BaseModel):
     """Request model pour assignation rôles"""
     roles: List[str] = Field(..., min_items=1, description="Roles to assign")
@@ -350,6 +355,77 @@ async def assign_roles(
         logger.error(f"Error assigning roles: {e}")
         return error_response(
             f"Failed to assign roles: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/users/{user_id}/reset-password")
+async def reset_user_password(
+    user_id: str,
+    request: ResetPasswordRequest,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Reset le password d'un utilisateur (admin uniquement).
+
+    Args:
+        user_id: ID utilisateur dont le password sera reset
+        request: Nouveau password
+
+    Returns:
+        dict: Confirmation du reset
+    """
+    try:
+        import json
+        from pathlib import Path
+        from api.auth_router import get_password_hash
+        from api.config.users import get_user_info
+
+        # Vérifier que l'utilisateur existe
+        target_user_info = get_user_info(user_id)
+        if not target_user_info:
+            raise ValueError(f"User '{user_id}' not found")
+
+        # Hasher le nouveau password
+        new_hash = get_password_hash(request.new_password)
+
+        # Mettre à jour users.json
+        users_path = Path(__file__).parent.parent / "config" / "users.json"
+        with open(users_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+
+        # Trouver et mettre à jour l'utilisateur
+        updated = False
+        for u in config.get("users", []):
+            if u.get("id") == user_id:
+                u["password_hash"] = new_hash
+                updated = True
+                break
+
+        if not updated:
+            raise ValueError(f"User '{user_id}' not found in config")
+
+        # Sauvegarder
+        with open(users_path, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+
+        logger.info(f"Password reset by admin '{user}' for user '{user_id}'")
+
+        return success_response(
+            {"user_id": user_id, "updated_by": user},
+            meta={"message": f"Password reset successfully for user '{user_id}'"}
+        )
+
+    except ValueError as e:
+        logger.warning(f"Invalid password reset request: {e}")
+        return error_response(
+            str(e),
+            code=status.HTTP_400_BAD_REQUEST
+        )
+    except Exception as e:
+        logger.error(f"Error resetting password: {e}")
+        return error_response(
+            f"Failed to reset password: {str(e)}",
             code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 

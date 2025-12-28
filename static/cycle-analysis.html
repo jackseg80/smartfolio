@@ -13,6 +13,11 @@
 
   <!-- Navigation unifiée (conditionnelle) -->
   <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
     if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
       import('./components/nav.js');
     }

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFolio - Login</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* Login page specific styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 48px;
+            width: 100%;
+            max-width: 420px;
+            margin: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+
+        .login-header p {
+            margin: 0;
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .form-group input {
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .login-button {
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .login-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            padding: 12px 16px;
+            background-color: #fed7d7;
+            border: 1px solid #fc8181;
+            border-radius: 8px;
+            color: #c53030;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .version-info {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: #a0aec0;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid white;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .button-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h1>SmartFolio</h1>
+            <p>Portfolio Intelligence Platform</p>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+
+        <form id="login-form" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    autofocus
+                    autocomplete="username"
+                    placeholder="Enter your username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <button type="submit" id="login-button" class="login-button">
+                <span class="button-content">
+                    <span id="button-text">Sign In</span>
+                </span>
+            </button>
+        </form>
+
+        <div class="version-info">
+            SmartFolio v2.0 &bull; Secure Authentication
+        </div>
+    </div>
+
+    <script type="module">
+        // Configuration
+        const API_BASE = window.location.origin;
+
+        // Elements
+        const loginForm = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginButton = document.getElementById('login-button');
+        const buttonText = document.getElementById('button-text');
+        const errorMessage = document.getElementById('error-message');
+
+        // Check if already logged in
+        (async function checkExistingAuth() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                try {
+                    // Verify token is still valid
+                    const response = await fetch(`${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.ok && data.data?.valid) {
+                            // Token is valid, redirect to dashboard
+                            console.log('Already authenticated, redirecting...');
+                            window.location.href = '/static/dashboard.html';
+                            return;
+                        }
+                    }
+                    // Token invalid, clear it
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('activeUser');
+                } catch (err) {
+                    console.debug('Token verification failed:', err);
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('activeUser');
+                }
+            }
+        })();
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        // Set loading state
+        function setLoading(loading) {
+            loginButton.disabled = loading;
+            usernameInput.disabled = loading;
+            passwordInput.disabled = loading;
+
+            if (loading) {
+                buttonText.innerHTML = 'Signing in<span class="spinner"></span>';
+            } else {
+                buttonText.textContent = 'Sign In';
+            }
+        }
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                // Create FormData for application/x-www-form-urlencoded
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Handle error response
+                    const errorMsg = data.error || data.detail || 'Login failed';
+                    showError(errorMsg);
+                    setLoading(false);
+                    return;
+                }
+
+                if (data.ok && data.data?.token) {
+                    // Store token and user info
+                    localStorage.setItem('authToken', data.data.token);
+                    localStorage.setItem('activeUser', data.data.user.id);
+                    localStorage.setItem('userInfo', JSON.stringify(data.data.user));
+
+                    console.log('Login successful:', data.data.user);
+
+                    // Redirect to dashboard
+                    window.location.href = '/static/dashboard.html';
+                } else {
+                    showError('Invalid response from server');
+                    setLoading(false);
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Network error. Please check your connection and try again.');
+                setLoading(false);
+            }
+        });
+
+        // Allow Enter key to submit form
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !loginButton.disabled) {
+                loginForm.requestSubmit();
+            }
+        });
+    </script>
+</body>
+</html>

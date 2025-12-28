@@ -148,6 +148,7 @@ from api.realtime_endpoints import router as realtime_router
 from api.intelligence_endpoints import router as intelligence_router
 from api.user_settings_endpoints import router as user_settings_router
 from api.admin_router import router as admin_router
+from api.auth_router import router as auth_router
 from api.wealth_endpoints import router as wealth_router
 from api.sources_endpoints import router as sources_router
 from api.fx_endpoints import router as fx_router
@@ -670,6 +671,7 @@ async def proxy_fred_bitcoin(start_date: str = "2014-01-01", limit: int = None, 
         }
 
 # inclure les routes taxonomie, execution, monitoring et analytics
+app.include_router(auth_router)  # Authentication (login/logout JWT)
 app.include_router(taxonomy_router)
 # Execution routers - modular structure (Phase 2.1)
 app.include_router(validation_router)

@@ -27,7 +27,37 @@ const balanceResult = await window.loadBalanceData(true);
 
 **Isolation:** `data/users/{user_id}/{source}/` (chaque user = dossier séparé)
 
-### 2. Risk Score = Positif (0-100)
+### 2. Authentication JWT (Dec 2025) 🔐
+```javascript
+// Frontend: Authentification requise sur toutes les pages
+import { checkAuth, getAuthHeaders } from './core/auth-guard.js';
+await checkAuth();  // Redirect vers login si pas authentifié
+
+// Toutes les requêtes doivent inclure le JWT token
+const response = await fetch('/api/endpoint', {
+    headers: getAuthHeaders()  // Ajoute Authorization: Bearer {token}
+});
+```
+
+```python
+# Backend: Endpoints protégés avec JWT
+from api.deps import get_current_user_jwt
+
+@router.get("/endpoint")
+async def endpoint(user: str = Depends(get_current_user_jwt)):
+    # user est garanti authentifié via JWT
+```
+
+**Sécurité:**
+- ✅ Login requis : `http://localhost:8080/static/login.html`
+- ✅ Tokens JWT expiration 7 jours
+- ✅ Pas de user switcher : logout → login avec autre compte
+- ✅ User display read-only (depuis JWT payload)
+- ❌ **INTERDIT:** Changer d'user sans re-login
+
+**Docs complètes:** [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md)
+
+### 3. Risk Score = Positif (0-100)
 - **Convention:** Plus haut = plus robuste
 - **❌ INTERDIT:** Ne jamais inverser avec `100 - scoreRisk`
 - **⚠️ ATTENTION:** Le Decision Index N'EST PAS une somme pondérée (voir règle #3)

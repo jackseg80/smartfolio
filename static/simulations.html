@@ -27,6 +27,11 @@
   <script src="appearance.js"></script>
   <script type="module" src="components/nav.js"></script>
   <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
     import { initDeepLinks } from './components/deep-links.js';
     // Anchors for simulations.html: #controls #results #inspector
     initDeepLinks({

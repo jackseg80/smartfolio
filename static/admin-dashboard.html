@@ -597,8 +597,17 @@
         <!-- Tab: Overview -->
         <div class="tab-content active" id="tab-overview">
             <h2>System Overview</h2>
+
+            <!-- Quick Actions (accessible à tous) -->
+            <div style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
+                <button class="btn btn-primary" onclick="showChangeMyPasswordModal()" style="margin-right: 0.5rem;">
+                    🔐 Change My Password
+                </button>
+            </div>
+
             <div class="placeholder">
-                <h3>Bienvenue dans le dashboard admin</h3>
+                <h3>Bienvenue dans le dashboard</h3>
                 <p>Sélectionnez un module dans les onglets ci-dessus pour gérer le système.</p>
             </div>
         </div>
@@ -855,6 +864,66 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('deleteUserModal')">Cancel</button>
                 <button class="btn btn-danger" onclick="submitDeleteUser()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change My Password Modal (accessible à tous) -->
+    <div id="changeMyPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔐 Change My Password</h3>
+                <button class="modal-close" onclick="closeModal('changeMyPasswordModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="changeMyPasswordForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Current Password *</label>
+                        <input type="password" id="currentPassword" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">New Password *</label>
+                        <input type="password" id="newPassword" required minlength="8" autocomplete="new-password">
+                        <div class="help-text">Minimum 8 characters</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm New Password *</label>
+                        <input type="password" id="confirmPassword" required minlength="8" autocomplete="new-password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('changeMyPasswordModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitChangeMyPassword()">Change Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset User Password Modal (admin uniquement) -->
+    <div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🔑 Reset User Password</h3>
+                <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Reset password for user: <strong id="resetPasswordUserIdText"></strong></p>
+                <form id="resetPasswordForm">
+                    <input type="hidden" id="resetPasswordUserId">
+                    <div class="form-group">
+                        <label for="resetNewPassword">New Password *</label>
+                        <input type="password" id="resetNewPassword" required minlength="8" autocomplete="new-password">
+                        <div class="help-text">Minimum 8 characters. User will need to use this password to login.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resetConfirmPassword">Confirm Password *</label>
+                        <input type="password" id="resetConfirmPassword" required minlength="8" autocomplete="new-password">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('resetPasswordModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitResetPassword()">Reset Password</button>
             </div>
         </div>
     </div>
@@ -1141,6 +1210,11 @@
 
     <!-- Scripts -->
     <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
         import './components/nav.js';
 
         // Tabs functionality
@@ -1306,6 +1380,7 @@
                     html += `<td>${formatDate(user.created_at)}</td>`;
                     html += '<td>';
                     html += `<button class="btn btn-secondary btn-small" onclick='editUser(${JSON.stringify(user)})'>✏️ Edit</button> `;
+                    html += `<button class="btn btn-primary btn-small" onclick="showResetPasswordModal('${user.id}')" title="Reset user password">🔑 Reset Password</button> `;
                     html += `<button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}')">🗑️ Delete</button>`;
                     html += '</td>';
                     html += '</tr>';
@@ -1726,6 +1801,147 @@
                 showError(`Failed to delete user: ${error.message}`);
             }
         }
+
+        // ====================================================================
+        // Password Management
+        // ====================================================================
+
+        // Show Change My Password modal
+        function showChangeMyPasswordModal() {
+            // Reset form
+            document.getElementById('changeMyPasswordForm').reset();
+            // Show modal
+            document.getElementById('changeMyPasswordModal').classList.add('show');
+        }
+
+        // Submit Change My Password
+        async function submitChangeMyPassword() {
+            try {
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+
+                // Validation
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    showError('All fields are required');
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+                    showError('New password must be at least 8 characters');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showError('New passwords do not match');
+                    return;
+                }
+
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // Create FormData
+                const formData = new URLSearchParams();
+                formData.append('current_password', currentPassword);
+                formData.append('new_password', newPassword);
+
+                const response = await fetch('/auth/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-User': activeUser
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || result.detail || 'Failed to change password');
+                }
+
+                closeModal('changeMyPasswordModal');
+                showSuccess('Password changed successfully! Please login again with your new password.');
+
+                // Logout after 2 seconds
+                setTimeout(() => {
+                    window.location.href = '/static/login.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('Failed to change password:', error);
+                showError(`Failed to change password: ${error.message}`);
+            }
+        }
+
+        // Show Reset Password modal (admin only)
+        function showResetPasswordModal(userId) {
+            // Fill modal
+            document.getElementById('resetPasswordUserId').value = userId;
+            document.getElementById('resetPasswordUserIdText').textContent = userId;
+
+            // Reset form
+            document.getElementById('resetPasswordForm').reset();
+
+            // Show modal
+            document.getElementById('resetPasswordModal').classList.add('show');
+        }
+
+        // Submit Reset Password (admin only)
+        async function submitResetPassword() {
+            try {
+                const userId = document.getElementById('resetPasswordUserId').value;
+                const newPassword = document.getElementById('resetNewPassword').value;
+                const confirmPassword = document.getElementById('resetConfirmPassword').value;
+
+                // Validation
+                if (!newPassword || !confirmPassword) {
+                    showError('All fields are required');
+                    return;
+                }
+
+                if (newPassword.length < 8) {
+                    showError('New password must be at least 8 characters');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    showError('Passwords do not match');
+                    return;
+                }
+
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                const response = await fetch(`/admin/users/${userId}/reset-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-User': activeUser
+                    },
+                    body: JSON.stringify({
+                        new_password: newPassword
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.ok) {
+                    throw new Error(result.error || 'Failed to reset password');
+                }
+
+                closeModal('resetPasswordModal');
+                showSuccess(`Password reset successfully for user "${userId}"`);
+
+            } catch (error) {
+                console.error('Failed to reset password:', error);
+                showError(`Failed to reset password: ${error.message}`);
+            }
+        }
+
+        // Make functions globally accessible
+        window.showChangeMyPasswordModal = showChangeMyPasswordModal;
+        window.submitChangeMyPassword = submitChangeMyPassword;
+        window.showResetPasswordModal = showResetPasswordModal;
+        window.submitResetPassword = submitResetPassword;
 
         // Close modal on background click
         window.addEventListener('click', (event) => {

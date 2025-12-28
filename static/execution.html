@@ -11,6 +11,11 @@
   <link rel="stylesheet" href="components/governance-panel.css">
   <script type="module" src="components/nav.js"></script>
   <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
     import { initDeepLinks } from './components/deep-links.js';
     import { wealthContextBar } from './components/WealthContextBar.js';
 

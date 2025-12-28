@@ -21,6 +21,11 @@
   <script type="module" src="modules/targets-coordinator.js"></script>
   <script type="module" src="core/risk-data-orchestrator.js?v=20251022fix"></script>
   <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
     import { initDeepLinks } from './components/deep-links.js';
     import { wealthContextBar } from './components/WealthContextBar.js';
 

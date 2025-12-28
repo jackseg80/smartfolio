@@ -22,6 +22,11 @@
   <!-- AI Chat Component (Global System) -->
   <link rel="stylesheet" href="/static/components/ai-chat.css">
   <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
     import { initAIChat } from '/static/components/ai-chat-init.js';
     initAIChat('settings');
   </script>

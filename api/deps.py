@@ -1,6 +1,6 @@
 """
 Dépendances FastAPI réutilisables.
-Gestion des utilisateurs avec header X-User.
+Gestion des utilisateurs avec header X-User (legacy) ou JWT token (nouveau).
 Redis client pour caching et persistence.
 Common dependency factories for endpoints.
 """
@@ -18,6 +18,34 @@ from api.config.users import (
 )
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# JWT Token Validation (imported from auth_router)
+# ============================================================================
+
+def decode_access_token(token: str) -> Optional[dict]:
+    """
+    Décode et valide un JWT token.
+
+    Args:
+        token: JWT token à décoder
+
+    Returns:
+        dict: Payload du token si valide, None sinon
+    """
+    try:
+        from jose import jwt, JWTError
+        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production-please")
+        ALGORITHM = "HS256"
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError as e:
+        logger.debug(f"JWT decode error: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected JWT decode error: {e}")
+        return None
 
 # Redis client singleton
 _redis_client = None
@@ -233,6 +261,143 @@ def require_admin_role(x_user: str = Header(..., alias="X-User")) -> str:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+def get_current_user_jwt(authorization: Optional[str] = Header(None, alias="Authorization")) -> str:
+    """
+    Dépendance FastAPI qui extrait et valide le JWT token.
+
+    Usage: Pour nouveaux endpoints nécessitant authentification JWT.
+
+    Args:
+        authorization: Header Authorization avec format "Bearer <token>"
+
+    Returns:
+        str: ID utilisateur extrait du token JWT
+
+    Raises:
+        HTTPException: 401 si token manquant/invalide/expiré
+
+    Example:
+        @router.get("/endpoint")
+        async def endpoint(user: str = Depends(get_current_user_jwt)):
+            # user est garanti authentifié via JWT
+    """
+    # Mode développement : bypass si DEV_SKIP_AUTH=1
+    dev_skip_auth = os.getenv("DEV_SKIP_AUTH", "0") == "1"
+    if dev_skip_auth:
+        default_user = get_default_user()
+        logger.info(f"DEV MODE: Bypassing JWT auth, using default user: {default_user}")
+        return default_user
+
+    # Vérifier présence du header
+    if not authorization:
+        logger.warning("Missing Authorization header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authentication token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    # Extraire le token du header "Bearer <token>"
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        logger.warning(f"Invalid Authorization header format: {authorization[:20]}...")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token format",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    token = parts[1]
+
+    # Décoder et valider le token
+    payload = decode_access_token(token)
+    if not payload:
+        logger.warning("Invalid or expired JWT token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    # Extraire l'user_id du payload
+    user_id = payload.get("sub")
+    if not user_id:
+        logger.error("JWT payload missing 'sub' claim")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    # Vérifier que l'utilisateur existe toujours
+    if not is_allowed_user(user_id):
+        logger.warning(f"JWT token for unknown/deleted user: {user_id}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    # Vérifier le status
+    user_info = get_user_info(user_id)
+    if user_info and user_info.get("status") != "active":
+        logger.warning(f"JWT token for inactive user: {user_id}")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive"
+        )
+
+    # Log pour audit
+    logger.debug(f"JWT authenticated user: {user_id}")
+    return user_id
+
+
+def require_admin_role_jwt(authorization: str = Header(..., alias="Authorization")) -> str:
+    """
+    Dépendance FastAPI qui FORCE le rôle admin via JWT token.
+
+    Usage: Pour endpoints admin avec authentification JWT.
+
+    Args:
+        authorization: Header Authorization avec format "Bearer <token>"
+
+    Returns:
+        str: ID utilisateur validé avec rôle admin
+
+    Raises:
+        HTTPException: 401 si token invalide, 403 si pas admin
+
+    Example:
+        @router.get("/admin/users")
+        async def list_users(user: str = Depends(require_admin_role_jwt)):
+            # user est garanti avoir le rôle "admin" via JWT
+    """
+    # Valider le JWT d'abord
+    user_id = get_current_user_jwt(authorization)
+
+    # Récupérer les infos utilisateur pour vérifier le rôle
+    user_info = get_user_info(user_id)
+    if not user_info:
+        logger.warning(f"User info not found for admin access: {user_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User info not found: {user_id}"
+        )
+
+    # Vérifier le rôle admin
+    user_roles = user_info.get("roles", [])
+    if "admin" not in user_roles:
+        logger.warning(f"User {user_id} attempted admin access without admin role (roles: {user_roles})")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required for this operation"
+        )
+
+    # Log pour audit
+    logger.info(f"Admin access granted via JWT for user: {user_id}")
+    return user_id
 
 
 def get_redis_client() -> Optional[any]:

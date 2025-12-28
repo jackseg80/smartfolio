@@ -8,6 +8,10 @@ python-multipart>=0.0.6  # Required for FastAPI Form data
 # Configuration & Environment
 python-dotenv>=1.0.1
 
+# Authentication & Security
+bcrypt>=4.0.0  # Password hashing (direct bcrypt, no passlib wrapper)
+python-jose[cryptography]>=3.3.0  # JWT token generation/validation
+
 # HTTP Clients & Networking
 httpx>=0.24.0
 aiohttp>=3.9.0

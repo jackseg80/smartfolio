@@ -39,6 +39,11 @@
 
     <!-- Bitcoin Regime Chart Module -->
     <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    // =================================
+
         import { initializeBTCRegimeChart } from './modules/btc-regime-chart.js';
 
         // Expose globally for tab switching
