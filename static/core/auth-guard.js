@@ -174,21 +174,8 @@ export async function checkAuth(options = {}) {
         return null;
     }
 
-    // Mode DEV bypass (si DEV_SKIP_AUTH=1 dans .env)
-    if (!skipDevMode) {
-        try {
-            const configResponse = await fetch('/config/settings.json');
-            if (configResponse.ok) {
-                const config = await configResponse.json();
-                if (config.dev_skip_auth === true) {
-                    console.log('DEV MODE: Skipping auth check');
-                    return { id: 'demo', label: 'Demo', roles: ['viewer'] };
-                }
-            }
-        } catch (err) {
-            console.debug('Config check error:', err);
-        }
-    }
+    // NOTE: DEV_SKIP_AUTH est géré uniquement backend (api/deps.py)
+    // Le frontend ne doit PAS vérifier ce mode pour des raisons de sécurité
 
     // Vérifier présence du token
     const token = getAuthToken();
