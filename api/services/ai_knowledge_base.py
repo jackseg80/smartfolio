@@ -21,6 +21,31 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 CACHE_TTL_SECONDS = 300  # 5 minutes (configurable)
 _knowledge_cache: Dict[str, tuple[str, float]] = {}  # {key: (content, timestamp)}
 
+# Page-specific documentation files (dynamically loaded)
+# These docs are read at runtime and their updates are automatically reflected
+PAGE_DOC_FILES: Dict[str, list] = {
+    "risk-dashboard": [
+        "docs/RISK_SEMANTICS.md",
+        "docs/DECISION_INDEX_V2.md"
+    ],
+    "analytics-unified": [
+        "docs/DECISION_INDEX_V2.md",
+        "docs/ALLOCATION_ENGINE_V2.md"
+    ],
+    "saxo-dashboard": [
+        "docs/STOP_LOSS_SYSTEM.md",
+        "docs/MARKET_OPPORTUNITIES_SYSTEM.md"
+    ],
+    "dashboard": [
+        "docs/ALLOCATION_ENGINE_V2.md"
+    ],
+    "wealth-dashboard": [
+        "docs/PATRIMOINE_MODULE.md"
+    ]
+}
+
+MAX_DOC_CHARS = 800  # Max chars per doc file (token budget control)
+
 
 def _read_markdown_file(file_path: Path) -> Optional[str]:
     """
@@ -65,6 +90,42 @@ def _extract_section(content: str, section_name: str) -> Optional[str]:
     match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
     if match:
         return match.group(1).strip()
+
+    return None
+
+
+def _extract_doc_summary(file_path: Path, max_chars: int = MAX_DOC_CHARS) -> Optional[str]:
+    """
+    Extract condensed summary from a documentation file.
+
+    Reads first sections up to max_chars limit. This allows dynamic
+    loading of doc updates without code changes.
+
+    Args:
+        file_path: Path to markdown documentation file
+        max_chars: Maximum characters to extract (default: MAX_DOC_CHARS)
+
+    Returns:
+        Condensed doc summary or None if file not found
+    """
+    content = _read_markdown_file(file_path)
+    if not content:
+        return None
+
+    lines = content.split('\n')
+    summary_lines = []
+    current_chars = 0
+
+    for line in lines[:80]:  # First 80 lines max
+        if current_chars + len(line) > max_chars:
+            break
+        summary_lines.append(line)
+        current_chars += len(line) + 1
+
+    if summary_lines:
+        result = '\n'.join(summary_lines)
+        logger.debug(f"Extracted {len(result)} chars from {file_path.name}")
+        return result
 
     return None
 
@@ -277,6 +338,21 @@ Focus on:
 - Insurance coverage: Life, property, health
 
 Balance sheet analysis - assets vs liabilities.
+""",
+
+    "settings": """
+## SETTINGS PAGE SPECIFICS
+
+Focus on:
+- Configuration review: User settings, preferences, active source
+- API Keys status: Which providers configured (CoinTracking, CoinGecko, FRED, AI providers)
+- Saxo OAuth: Connection status, expiration, environment (sim/live)
+- AI Providers: Groq (free), Claude (premium), OpenAI, Grok
+- Data sources: cointracking (CSV), cointracking_api (API), saxobank
+- Features: CoinGecko classification, snapshots, performance tracking
+
+NEVER expose actual API key values - only report if configured (true/false).
+Recommend missing critical keys: CoinTracking API for real-time, Groq for free AI chat.
 """
 }
 
@@ -313,7 +389,17 @@ def get_knowledge_context(page: str = "", use_cache: bool = True) -> str:
     logger.info(f"Building fresh knowledge base for page '{page}'")
     knowledge = _build_core_knowledge()
 
-    # Add page-specific knowledge if available
+    # Add dynamic page-specific documentation from docs/*.md files
+    if page in PAGE_DOC_FILES:
+        for doc_path in PAGE_DOC_FILES[page]:
+            doc_file = PROJECT_ROOT / doc_path
+            doc_summary = _extract_doc_summary(doc_file)
+            if doc_summary:
+                doc_name = doc_path.split('/')[-1].replace('.md', '').replace('_', ' ')
+                knowledge += f"\n\n## {doc_name}\n{doc_summary}"
+                logger.debug(f"Added doc summary: {doc_path} ({len(doc_summary)} chars)")
+
+    # Add static page-specific knowledge if available
     if page and page in PAGE_KNOWLEDGE:
         knowledge += "\n\n" + PAGE_KNOWLEDGE[page]
 

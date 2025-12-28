@@ -18,6 +18,14 @@
   <script src="global-config.js"></script>
   <script src="appearance.js"></script>
   <script type="module" src="sources-manager.js"></script>
+
+  <!-- AI Chat Component (Global System) -->
+  <link rel="stylesheet" href="/static/components/ai-chat.css">
+  <script type="module">
+    import { initAIChat } from '/static/components/ai-chat-init.js';
+    initAIChat('settings');
+  </script>
+
   <style>
     * {
       box-sizing: border-box

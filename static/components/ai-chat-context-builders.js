@@ -374,6 +374,7 @@ export async function buildAnalyticsContext() {
 
 /**
  * Saxo Dashboard - Stock portfolio (existing implementation adapted)
+ * Uses actual property names from saxo-dashboard.html data structure
  */
 export async function buildSaxoContext() {
     const context = {
@@ -382,94 +383,117 @@ export async function buildSaxoContext() {
     };
 
     try {
-        // Get current portfolio data (from global state)
-        const portfolioData = window.currentPortfolioData;
+        // Get current portfolio data (from global state set by saxo-dashboard.html)
+        const data = window.currentPortfolioData;
 
-        if (!portfolioData) {
-            context.error = 'No portfolio data loaded';
+        if (!data) {
+            context.error = 'Aucune donnée de portefeuille chargée';
             return context;
         }
 
-        // Portfolio summary
-        const totalValue = portfolioData.totalValue || 0;
-        const cash = window.portfolioCash || 0;
+        const summary = data.summary || {};
+        const savedCash = window.portfolioCash || 0;
 
-        context.total_value = totalValue + cash;
-        context.total_positions = portfolioData.positions ? portfolioData.positions.length : 0;
-        context.cash = cash;
+        // Portfolio summary (use actual property names from saxo-dashboard.html)
+        const totalValue = Number(summary.total_value_usd || 0);
+        const totalValueIncludesCash = data.totalValueIncludesCash || false;
+        const totalWithCash = totalValueIncludesCash ? totalValue : (totalValue + savedCash);
 
-        // P&L
-        if (portfolioData.totalPnL !== undefined) {
-            context.total_pnl = portfolioData.totalPnL;
-            context.total_pnl_pct = portfolioData.totalPnLPct || 0;
+        context.total_value = totalWithCash;
+        context.total_positions = summary.total_positions || data.positions?.length || 0;
+        context.cash = savedCash;
+
+        // P&L information
+        if (summary.total_pnl_usd !== undefined) {
+            context.total_pnl = summary.total_pnl_usd;
+            context.total_pnl_pct = summary.total_pnl_pct || 0;
         }
 
-        // Top 15 positions with stop loss info
-        if (portfolioData.positions) {
-            context.positions = portfolioData.positions
-                .slice(0, 15)
-                .map(pos => ({
-                    symbol: pos.symbol,
-                    name: pos.name || '',
-                    value: pos.marketValue || 0,
-                    weight: pos.weight || 0,
-                    pnl: pos.pnl || 0,
-                    pnl_pct: pos.pnlPct || 0,
-                    sector: pos.sector || 'Unknown',
-                    stop_loss: pos.stopLoss ? {
-                        recommended: pos.stopLoss.recommended,
-                        method: pos.stopLoss.method,
-                        risk_reward: pos.stopLoss.riskReward
-                    } : null
-                }));
+        // Top 15 positions with details including stop loss if available
+        if (data.positions && Array.isArray(data.positions)) {
+            context.positions = data.positions.slice(0, 15).map(p => {
+                const pos = {
+                    symbol: p.Symbol || p.symbol || '?',
+                    name: p.Name || p.name || '',
+                    value: p.MarketValue || p.market_value_usd || p.value || 0,
+                    weight: p.Weight || p.weight || 0,
+                    pnl: p.PnL || p.pnl || 0,
+                    pnl_pct: p.PnLPercent || p.pnl_pct || 0,
+                    sector: p.Sector || p.sector || 'Unknown'
+                };
+
+                // Add stop loss if available
+                if (p.StopLoss || p.RecommendedStopLoss) {
+                    pos.stop_loss = {
+                        recommended: p.RecommendedStopLoss || p.StopLoss,
+                        method: p.StopLossMethod || 'Fixed Variable',
+                        risk_reward: p.RiskReward || 0
+                    };
+                }
+
+                return pos;
+            });
         }
 
         // Sector allocation
-        if (portfolioData.sectorAllocation) {
-            context.sectors = portfolioData.sectorAllocation;
+        if (summary.sector_allocation) {
+            context.sectors = summary.sector_allocation;
         }
 
         // Asset allocation
-        if (portfolioData.assetAllocation) {
-            context.asset_allocation = portfolioData.assetAllocation;
+        if (summary.asset_allocation) {
+            context.asset_allocation = summary.asset_allocation;
         }
 
         // Currency exposure
-        if (portfolioData.currencyExposure) {
-            context.currencies = portfolioData.currencyExposure;
+        if (summary.currency_exposure) {
+            context.currencies = summary.currency_exposure;
         }
 
-        // Risk metrics
-        // Use store for risk_score (blended), window.riskDashboardData for other metrics
-        if (window.riskStore) {
-            const storeState = window.riskStore.getState();
-            context.risk_score = storeState.scores?.risk || 0;
-        }
-
-        if (window.riskDashboardData) {
-            const risk = window.riskDashboardData;
-            context.volatility = risk.volatility;
-
-            if (risk.metrics) {
-                context.risk_metrics_detailed = {
-                    sharpe_ratio: risk.metrics.sharpe_ratio,
-                    sortino_ratio: risk.metrics.sortino_ratio,
-                    max_drawdown: risk.metrics.max_drawdown,
-                    var_95: risk.metrics.var_95,
-                    concentration_top3: risk.metrics.concentration_top3,
-                    concentration_hhi: risk.metrics.hhi
-                };
-            }
+        // Risk metrics if available
+        if (data.risk_metrics) {
+            context.risk_score = data.risk_metrics.score || 0;
+            context.volatility = data.risk_metrics.volatility || 0;
         }
 
         // Market Opportunities
         if (window.lastOpportunitiesData) {
-            const opps = window.lastOpportunitiesData;
+            const oppsData = window.lastOpportunitiesData;
             context.market_opportunities = {
                 horizon: window.currentHorizon || 'medium',
-                gaps: opps.gaps || [],
-                top_opportunities: (opps.opportunities || []).slice(0, 10),
-                suggested_sales: opps.suggested_sales || []
+                gaps: (oppsData.gaps || []).map(gap => ({
+                    sector: gap.sector,
+                    current: gap.current_pct,
+                    target: gap.target_pct,
+                    gap_pct: gap.gap_pct
+                })),
+                top_opportunities: (oppsData.opportunities || []).slice(0, 10).map(opp => ({
+                    symbol: opp.symbol,
+                    name: opp.name,
+                    type: opp.type,
+                    score: opp.score,
+                    amount: opp.amount_usd,
+                    sector: opp.sector
+                })),
+                suggested_sales: (oppsData.suggested_sales || []).map(sale => ({
+                    symbol: sale.symbol,
+                    current_weight: sale.current_weight_pct,
+                    suggested_reduction: sale.sell_pct,
+                    reason: sale.reason
+                }))
+            };
+        }
+
+        // Risk metrics from riskDashboardData
+        if (window.riskDashboardData) {
+            const riskData = window.riskDashboardData;
+            context.risk_metrics_detailed = {
+                sharpe_ratio: riskData.sharpe_ratio,
+                sortino_ratio: riskData.sortino_ratio,
+                max_drawdown: riskData.max_drawdown,
+                var_95: riskData.var_95,
+                concentration_top3: riskData.concentration_top3,
+                concentration_hhi: riskData.hhi
             };
         }
 
@@ -528,6 +552,77 @@ export async function buildWealthContext() {
 }
 
 /**
+ * Settings - Configuration and API keys status
+ */
+export async function buildSettingsContext() {
+    const context = {
+        page: 'Settings - Configuration'
+    };
+
+    try {
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+        // Get user configuration from localStorage
+        context.user_id = activeUser;
+        context.active_source = localStorage.getItem('activeSource') || 'cointracking';
+        context.pricing_mode = localStorage.getItem('pricingMode') || 'local';
+        context.display_currency = localStorage.getItem('displayCurrency') || 'USD';
+        context.theme = localStorage.getItem('theme') || 'auto';
+        context.min_usd_threshold = parseFloat(localStorage.getItem('minUsdThreshold') || '1.0');
+
+        // Check which API keys are configured (without exposing values)
+        const apiKeys = {
+            cointracking_api: !!localStorage.getItem('cointracking_api_key'),
+            cointracking_secret: !!localStorage.getItem('cointracking_api_secret'),
+            coingecko: !!localStorage.getItem('coingecko_api_key'),
+            fred: !!localStorage.getItem('fred_api_key'),
+            groq: !!localStorage.getItem('groq_api_key'),
+            claude: !!localStorage.getItem('claude_api_key'),
+            grok: !!localStorage.getItem('grok_api_key'),
+            openai: !!localStorage.getItem('openai_api_key')
+        };
+        context.configured_apis = Object.entries(apiKeys)
+            .filter(([_, configured]) => configured)
+            .map(([name, _]) => name);
+
+        // Check Saxo OAuth status
+        try {
+            const saxoResponse = await fetch('/api/saxo/auth/status', {
+                headers: { 'X-User': activeUser }
+            });
+            if (saxoResponse.ok) {
+                const saxoData = await saxoResponse.json();
+                const status = saxoData.data;
+                context.saxo_oauth = {
+                    connected: status.status === 'connected',
+                    environment: status.environment || 'unknown',
+                    expires_at: status.expires_at || null
+                };
+            }
+        } catch (err) {
+            console.warn('[AI Chat] Failed to load Saxo OAuth status:', err);
+        }
+
+        // Get enabled features
+        context.features = {
+            coingecko_classification: localStorage.getItem('enable_coingecko_classification') !== 'false',
+            portfolio_snapshots: localStorage.getItem('enable_portfolio_snapshots') !== 'false',
+            performance_tracking: localStorage.getItem('enable_performance_tracking') !== 'false'
+        };
+
+        // Get AI provider preference
+        context.ai_provider = localStorage.getItem('aiProvider') || 'groq';
+        context.ai_include_docs = localStorage.getItem('aiIncludeDocs') !== 'false';
+
+    } catch (error) {
+        console.error('[AI Chat] Error building settings context:', error);
+        context.error = 'Failed to load settings data';
+    }
+
+    return context;
+}
+
+/**
  * Generic fallback context builder
  */
 export async function buildGenericContext() {
@@ -547,6 +642,7 @@ export const contextBuilders = {
     'analytics-unified': buildAnalyticsContext,
     'saxo-dashboard': buildSaxoContext,
     'wealth-dashboard': buildWealthContext,
+    'settings': buildSettingsContext,
     'generic': buildGenericContext
 };
 

@@ -1041,6 +1041,12 @@ PAGE_QUICK_QUESTIONS = {
         {"id": "net_worth", "label": "Patrimoine net", "prompt": "Analyse mon patrimoine global. Quelle est ma situation financière?"},
         {"id": "diversification", "label": "Diversification", "prompt": "Mon patrimoine est-il bien diversifié entre liquidités, actifs et investissements?"},
         {"id": "liabilities", "label": "Passifs", "prompt": "Analyse mes passifs. Ai-je une exposition excessive?"}
+    ],
+    "settings": [
+        {"id": "config", "label": "Configuration actuelle", "prompt": "Quelle est ma configuration actuelle? Quels sont mes paramètres?"},
+        {"id": "api_keys", "label": "Clés API", "prompt": "Quelles clés API sont configurées? Lesquelles manquent?"},
+        {"id": "saxo_oauth", "label": "Saxo OAuth", "prompt": "Quel est le statut de ma connexion Saxo Bank? Est-elle valide?"},
+        {"id": "recommendations", "label": "Recommandations", "prompt": "Que me recommandes-tu de configurer pour optimiser l'application?"}
     ]
 }
 
