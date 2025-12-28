@@ -207,6 +207,8 @@ function getDefaultSettings() {
     fred_api_key: "",
     groq_api_key: "",
     claude_api_key: "",
+    grok_api_key: "",
+    openai_api_key: "",
     pricing: "auto", // 🔧 FIX: Changed default from 'local' to 'auto' for consistency
     refresh_interval: 5,
     enable_coingecko_classification: true,
@@ -407,6 +409,18 @@ function updateUI() {
     claudeField.value = globalSettings.claude_api_key ? maskApiKey(globalSettings.claude_api_key) : '';
   }
 
+  // Grok API Key
+  const grokField = document.getElementById('grok_api_key');
+  if (grokField) {
+    grokField.value = globalSettings.grok_api_key ? maskApiKey(globalSettings.grok_api_key) : '';
+  }
+
+  // OpenAI API Key
+  const openaiField = document.getElementById('openai_api_key');
+  if (openaiField) {
+    openaiField.value = globalSettings.openai_api_key ? maskApiKey(globalSettings.openai_api_key) : '';
+  }
+
   // Mettre à jour les statuts des clés
   updateApiKeyStatus('coingecko', !!globalSettings.coingecko_api_key);
   updateApiKeyStatus('cointracking_key', !!globalSettings.cointracking_api_key);
@@ -414,6 +428,8 @@ function updateUI() {
   updateApiKeyStatus('fred', !!globalSettings.fred_api_key);
   updateApiKeyStatus('groq', !!globalSettings.groq_api_key);
   updateApiKeyStatus('claude', !!globalSettings.claude_api_key);
+  updateApiKeyStatus('grok', !!globalSettings.grok_api_key);
+  updateApiKeyStatus('openai', !!globalSettings.openai_api_key);
 
   document.getElementById('api_base_url').value = globalSettings.api_base_url;
   document.getElementById('refresh_interval').value = globalSettings.refresh_interval;
@@ -625,7 +641,7 @@ async function selectDataSource(source) {
     if (response.ok) {
       const currentSettings = await response.json();
       // Fusionner TOUTES les clés API depuis le serveur (plus sûr)
-      const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'claude_api_key'];
+      const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'claude_api_key', 'grok_api_key', 'openai_api_key'];
       apiKeys.forEach(key => {
         if (currentSettings[key]) {
           window.userSettings[key] = currentSettings[key];
@@ -853,6 +869,8 @@ async function saveAllSettings() {
   saveSecretIfProvided('fred_api_key', 'fred_api_key');
   saveSecretIfProvided('groq_api_key', 'groq_api_key');
   saveSecretIfProvided('claude_api_key', 'claude_api_key');
+  saveSecretIfProvided('grok_api_key', 'grok_api_key');
+  saveSecretIfProvided('openai_api_key', 'openai_api_key');
 
   // API Base URL is read-only (loaded from .env), not saved by user
   // window.userSettings.api_base_url = document.getElementById('api_base_url').value;
@@ -874,6 +892,8 @@ async function saveAllSettings() {
   updateApiKeyStatus('fred', !!window.userSettings.fred_api_key);
   updateApiKeyStatus('groq', !!window.userSettings.groq_api_key);
   updateApiKeyStatus('claude', !!window.userSettings.claude_api_key);
+  updateApiKeyStatus('grok', !!window.userSettings.grok_api_key);
+  updateApiKeyStatus('openai', !!window.userSettings.openai_api_key);
 
   await saveSettings();
 

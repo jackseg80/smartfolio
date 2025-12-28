@@ -1,10 +1,12 @@
 """
-AI Chat Router - Multi-Provider Support (Groq + Claude API)
+AI Chat Router - Multi-Provider Support (4 Providers)
 Provides AI-powered analysis and chat for portfolio insights
 
 Providers:
 - Groq (Free): 14,000 tokens/min, 30 req/min, Llama 3.3 70B
-- Claude API (Paid): Claude 3.5 Sonnet, vision capable, smarter analysis
+- Claude API (Premium): Claude 3.5 Sonnet, vision capable, smarter analysis
+- Grok (Premium): xAI Grok Beta, fast and capable
+- OpenAI (Premium): GPT-4o, vision capable, industry standard
 """
 from __future__ import annotations
 from typing import Dict, Any, List, Optional
@@ -37,6 +39,24 @@ PROVIDERS = {
         "url": "https://api.anthropic.com/v1/messages",
         "model": "claude-3-5-sonnet-20241022",
         "key_field": "claude_api_key",
+        "max_tokens_default": 2048,
+        "free": False,
+        "vision": True
+    },
+    "grok": {
+        "name": "Grok (xAI Beta)",
+        "url": "https://api.x.ai/v1/chat/completions",
+        "model": "grok-beta",
+        "key_field": "grok_api_key",
+        "max_tokens_default": 2048,
+        "free": False,
+        "vision": False
+    },
+    "openai": {
+        "name": "OpenAI (GPT-4o)",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "model": "gpt-4o",
+        "key_field": "openai_api_key",
         "max_tokens_default": 2048,
         "free": False,
         "vision": True
@@ -101,6 +121,10 @@ def _get_provider_api_key(user_id: str, provider: str) -> Optional[str]:
         return secrets.get("groq", {}).get("api_key", "")
     elif provider == "claude":
         return secrets.get("claude", {}).get("api_key", "")
+    elif provider == "grok":
+        return secrets.get("grok", {}).get("api_key", "")
+    elif provider == "openai":
+        return secrets.get("openai", {}).get("api_key", "")
 
     return None
 
@@ -115,12 +139,14 @@ async def chat_with_ai(
 
     Supports multiple providers:
     - Groq (free tier) with Llama 3.3 70B
-    - Claude API (paid) with Sonnet 3.5
+    - Claude API (premium) with Sonnet 3.5
+    - Grok (premium) with xAI Grok Beta
+    - OpenAI (premium) with GPT-4o
 
     Request body:
     - messages: List of chat messages (role + content)
     - context: Optional portfolio context (positions, metrics, etc.)
-    - provider: "groq" or "claude" (default: groq)
+    - provider: "groq", "claude", "grok", or "openai" (default: groq)
     - include_docs: Include documentation knowledge (default: true)
     - max_tokens: Max response length (default 1024)
     - temperature: Creativity (0.0-1.0, default 0.7)
@@ -148,6 +174,10 @@ async def chat_with_ai(
         return await _call_groq(user, api_key, request)
     elif request.provider == "claude":
         return await _call_claude(user, api_key, request)
+    elif request.provider == "grok":
+        return await _call_openai_compatible(user, api_key, request, "grok")
+    elif request.provider == "openai":
+        return await _call_openai_compatible(user, api_key, request, "openai")
 
     return ChatResponse(
         ok=False,
@@ -246,6 +276,108 @@ async def _call_groq(user: str, api_key: str, request: ChatRequest) -> ChatRespo
         )
     except Exception as e:
         logger.error(f"Groq error for user {user}: {e}")
+        return ChatResponse(
+            ok=False,
+            message="",
+            error=f"Error: {str(e)}"
+        )
+
+
+async def _call_openai_compatible(user: str, api_key: str, request: ChatRequest, provider_id: str) -> ChatResponse:
+    """Call OpenAI-compatible API (Grok, OpenAI, etc.)"""
+    provider_config = PROVIDERS[provider_id]
+    provider_name = provider_config["name"]
+    api_url = provider_config["url"]
+    model = provider_config["model"]
+
+    # Build messages with system prompt and context
+    system_content = SYSTEM_PROMPT
+    if request.context:
+        context_str = _format_context(request.context, include_docs=request.include_docs)
+        system_content += f"\n\nContexte du portefeuille:\n{context_str}"
+        logger.debug(f"{provider_name} context for user {user}: {len(context_str)} chars")
+
+    messages = [{"role": "system", "content": system_content}]
+
+    # Add conversation history
+    for msg in request.messages:
+        messages.append({"role": msg.role, "content": msg.content})
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                api_url,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": request.max_tokens,
+                    "temperature": request.temperature
+                }
+            )
+
+            if response.status_code == 401:
+                return ChatResponse(
+                    ok=False,
+                    message="",
+                    error=f"Invalid {provider_name} API key. Please check your settings."
+                )
+
+            if response.status_code == 429:
+                return ChatResponse(
+                    ok=False,
+                    message="",
+                    error="Rate limit exceeded. Please wait a moment and try again."
+                )
+
+            response.raise_for_status()
+            data = response.json()
+
+            # Extract response (OpenAI format)
+            ai_message = data["choices"][0]["message"]["content"]
+            usage = data.get("usage", {})
+
+            logger.info(f"{provider_name} chat for user {user}: {usage.get('total_tokens', 0)} tokens used")
+
+            return ChatResponse(
+                ok=True,
+                message=ai_message,
+                usage={
+                    "prompt_tokens": usage.get("prompt_tokens", 0),
+                    "completion_tokens": usage.get("completion_tokens", 0),
+                    "total_tokens": usage.get("total_tokens", 0)
+                }
+            )
+
+    except httpx.TimeoutException:
+        logger.error(f"{provider_name} API timeout for user {user}")
+        return ChatResponse(
+            ok=False,
+            message="",
+            error="Request timeout. Please try again."
+        )
+    except httpx.HTTPStatusError as e:
+        error_detail = ""
+        try:
+            error_detail = e.response.json()
+            logger.error(f"{provider_name} API error for user {user}: {e.response.status_code} - {error_detail}")
+        except Exception:
+            logger.error(f"{provider_name} API error for user {user}: {e.response.status_code} - {e.response.text}")
+
+        error_msg = f"{provider_name} API error: {e.response.status_code}"
+        if error_detail:
+            error_msg += f" - {error_detail.get('error', {}).get('message', '')}"
+
+        return ChatResponse(
+            ok=False,
+            message="",
+            error=error_msg
+        )
+    except Exception as e:
+        logger.error(f"{provider_name} error for user {user}: {e}")
         return ChatResponse(
             ok=False,
             message="",

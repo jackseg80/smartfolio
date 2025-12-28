@@ -545,7 +545,7 @@
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px; max-width: 600px;">
             <div style="margin-bottom: 12px;">
               <strong style="color: var(--brand-primary);">💬 AI Chat Assistants</strong>
-              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Groq gratuit OU Claude premium)</span>
+              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Choisissez-en un ou plusieurs)</span>
             </div>
 
             <div class="form-group" style="margin-bottom: 12px;">
@@ -560,7 +560,7 @@
               <div class="help">Clé API gratuite Groq pour le chat IA (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé gratuite →</a></div>
             </div>
 
-            <div class="form-group" style="margin-bottom: 0;">
+            <div class="form-group" style="margin-bottom: 12px;">
               <label>🧠 Claude API Key (Premium - Plus intelligent)</label>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="password" id="claude_api_key" placeholder="sk-ant-... (obtenez votre clé sur console.anthropic.com)"
@@ -570,6 +570,30 @@
                 <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
               </div>
               <div class="help">Clé API Claude (payant) pour le chat IA premium (Sonnet 3.5, plus intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>🚀 Grok API Key (xAI - Premium)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="grok_api_key" placeholder="xai-... (obtenez votre clé sur console.x.ai)"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('grok_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="grok_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API Grok (xAI) pour le chat IA (Grok Beta). <a href="https://console.x.ai" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label>🤖 OpenAI API Key (Premium - GPT)</label>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="password" id="openai_api_key" placeholder="sk-... (obtenez votre clé sur platform.openai.com)"
+                  style="flex: 1;">
+                <button class="btn small secondary" onclick="toggleApiKeyVisibility('openai_api_key')"
+                  style="min-width: 60px;">👁️</button>
+                <span id="openai_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+              </div>
+              <div class="help">Clé API OpenAI (payant) pour le chat IA (GPT-4o). <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
             </div>
           </div>
         </div>

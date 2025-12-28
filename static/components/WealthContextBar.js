@@ -420,7 +420,7 @@ class WealthContextBar {
         });
         if (response.ok) {
           const currentSettings = await response.json();
-          const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'debug_token'];
+          const apiKeys = ['coingecko_api_key', 'cointracking_api_key', 'cointracking_api_secret', 'fred_api_key', 'groq_api_key', 'claude_api_key', 'grok_api_key', 'openai_api_key', 'debug_token'];
           apiKeys.forEach(k => {
             if (currentSettings[k]) {
               window.userSettings[k] = currentSettings[k];
