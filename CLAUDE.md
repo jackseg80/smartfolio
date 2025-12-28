@@ -480,58 +480,25 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 - [`docs/STOP_LOSS_BACKTEST_RESULTS.md`](docs/STOP_LOSS_BACKTEST_RESULTS.md) - Backtest validation
 - [`docs/STOP_LOSS_SYSTEM.md`](docs/STOP_LOSS_SYSTEM.md) - Architecture système
 
-### AI Chat Assistant - Groq Integration (Dec 2025)
-
-**Assistant IA pour analyse de portefeuille** intégré dans saxo-dashboard ([ai_chat_router.py](api/ai_chat_router.py)):
-
-**Status:** ✅ **Production Ready** - Groq API (gratuit) avec Llama 3.1 70B
-
-**Composants :**
-
-1. **Backend Router** - `/api/ai/chat`, `/api/ai/status`, `/api/ai/quick-questions`
-2. **Frontend Modal** - Bouton "Ask AI" + chat interface dans saxo-dashboard.html
-3. **Configuration** - Clé API Groq dans Settings > API Keys (stockage sécurisé)
-
-**Features :**
-
-- ✅ Questions rapides prédéfinies (5 types: analyse, risque, concentration, secteurs, performance)
-- ✅ Contexte portfolio automatique (positions, P&L, secteurs, risk score)
-- ✅ Formatage markdown basique (gras, italique, code)
-- ✅ Historique de conversation dans le modal
-- ✅ Gratuit avec limites généreuses (14k tokens/min, 30 req/min)
-- ✅ Ultra rapide (~500 tokens/seconde)
-
-**Setup :**
-
-1. Obtenir clé gratuite sur <https://console.groq.com/keys>
-2. Ajouter dans Settings > API Keys > Groq API Key (`gsk_...`)
-3. Cliquer "Ask AI" dans saxo-dashboard
-
-**Fix Bug Persistence (Dec 2025) :**
-
-- Correction WealthContextBar.js qui effaçait `groq_api_key` lors de navigation
-- Ajout `groq_api_key` dans liste des clés préservées (ligne 423)
-- Chargement prioritaire settings backend pour éviter perte de clés
-
-**Détails complets :** [`docs/AI_CHAT_GROQ.md`](docs/AI_CHAT_GROQ.md)
-
 ### Global AI Chat System - Multi-Provider (Dec 2025)
 
-**Extension du système AI Chat** disponible sur toutes les pages ([docs/AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md)):
+**Système d'assistant IA unifié** disponible sur toutes les pages ([docs/AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md)):
 
-**Status:** ✅ **100% Production Ready** - Backend + Frontend + Intégrations complètes
+**Status:** ✅ **100% Production Ready** - Unification complète + Knowledge Base dynamique
 
 **Architecture:**
 
-- **Backend:** Multi-provider (Groq gratuit + Claude API premium) avec context formatters par page
+- **Backend:** Multi-provider (Groq gratuit + Claude/OpenAI/Grok premium) avec context formatters par page
 - **Frontend:** Composant réutilisable + context builders + bouton flottant (FAB)
-- **Knowledge Base:** Documentation SmartFolio injectée automatiquement (~1500 tokens)
+- **Knowledge Base Dynamique:** Documentation SmartFolio + docs/*.md chargées automatiquement (cache 5 min)
 
 **Features:**
 
-- ✅ Contexte dynamique par page (dashboard → crypto, risk → scores, saxo → opportunités)
-- ✅ Multi-provider: Groq (Llama 3.3 70B gratuit) + Claude (Sonnet 3.5 premium)
-- ✅ Documentation intégrée (Decision Index, régimes, scores expliqués)
+- ✅ **6 pages intégrées** : dashboard, risk-dashboard, analytics-unified, saxo-dashboard, wealth-dashboard, **settings**
+- ✅ **Unification complète** : saxo-dashboard migré du système inline vers le système global
+- ✅ **Docs dynamiques** : PAGE_DOC_FILES charge les docs/*.md pertinentes par page (mise à jour auto)
+- ✅ Multi-provider: Groq (Llama 3.3 70B gratuit) + Claude (Sonnet 3.5 premium) + OpenAI + Grok
+- ✅ Contexte dynamique par page (données temps réel de la page courante)
 - ✅ Questions rapides spécifiques par page
 - ✅ Raccourci clavier Ctrl+K
 - ✅ Sélecteur de provider dans le modal
@@ -542,6 +509,7 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 POST /api/ai/chat                       # Chat avec context multi-provider
 GET  /api/ai/providers                  # Liste providers configurés
 GET  /api/ai/quick-questions/{page}     # Questions rapides par page
+POST /api/ai/refresh-knowledge          # Force refresh docs cache
 ```
 
 **Context Builders par page:**
@@ -551,11 +519,25 @@ GET  /api/ai/quick-questions/{page}     # Questions rapides par page
 - `analytics-unified` → Decision Index, ML Sentiment, phase, régimes
 - `saxo-dashboard` → Positions, stop loss, Market Opportunities
 - `wealth-dashboard` → Net worth, actifs, passifs, liquidités
+- `settings` → Configuration utilisateur, API keys (status only), Saxo OAuth, features
+
+**Knowledge Base Dynamique (PAGE_DOC_FILES):**
+
+Mapping page → docs/*.md chargées automatiquement:
+- `risk-dashboard` → RISK_SEMANTICS.md, DECISION_INDEX_V2.md
+- `analytics-unified` → DECISION_INDEX_V2.md, ALLOCATION_ENGINE_V2.md
+- `saxo-dashboard` → STOP_LOSS_SYSTEM.md, MARKET_OPPORTUNITIES_SYSTEM.md
+- `dashboard` → ALLOCATION_ENGINE_V2.md
+- `wealth-dashboard` → PATRIMOINE_MODULE.md
+
+Les docs sont lues au runtime (cache 5 min TTL) → mises à jour automatiques.
 
 **Configuration:**
 
 - **Groq (Gratuit):** Settings > API Keys > Groq API Key (`gsk_...`)
 - **Claude (Premium):** Settings > API Keys > Claude API Key (`sk-ant-...`)
+- **OpenAI (Premium):** Settings > API Keys > OpenAI API Key (`sk-...`)
+- **Grok (Premium):** Settings > API Keys > Grok API Key (`xai-...`)
 
 **Utilisation:**
 

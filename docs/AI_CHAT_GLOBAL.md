@@ -1,14 +1,35 @@
 # Global AI Chat System - Documentation Complète
 
-> **Status:** ✅ 100% implémenté (Dec 2025)
-> **Dernière mise à jour:** Dec 27, 2025
+> **Status:** ✅ 100% implémenté + Unifié (Dec 2025)
+> **Dernière mise à jour:** Dec 28, 2025
 
 ## Vue d'ensemble
 
-Système d'assistant IA global disponible sur toutes les pages SmartFolio avec :
+Système d'assistant IA **unifié et global** disponible sur toutes les pages SmartFolio avec :
 - **Contexte dynamique** : L'IA voit automatiquement les données de la page courante
-- **Documentation intégrée** : Connaissance des concepts SmartFolio (Decision Index, régimes, etc.)
-- **Multi-provider** : Groq (gratuit) + Claude API (premium)
+- **Documentation dynamique** : Knowledge Base chargée depuis docs/*.md (mises à jour auto)
+- **Multi-provider** : Groq (gratuit) + Claude/OpenAI/Grok (premium)
+- **Unification complète** : saxo-dashboard migré du système inline vers le système global
+
+## Nouveautés (Dec 28, 2025)
+
+### ✅ Unification saxo-dashboard
+
+- Suppression de ~415 lignes de code inline AI Chat
+- Migration vers le système global (FAB + composants réutilisables)
+- Fix context builder avec noms de propriétés corrects
+
+### ✅ Knowledge Base Dynamique
+
+- `PAGE_DOC_FILES` mapping : docs/*.md chargées automatiquement par page
+- Cache 5 min TTL : mises à jour docs reflétées automatiquement
+- 5 pages avec docs dynamiques (risk, analytics, saxo, dashboard, wealth)
+
+### ✅ Settings Page Integration
+
+- Nouveau context builder `buildSettingsContext()`
+- 4 quick questions : config, API keys, Saxo OAuth, recommendations
+- Sécurité : API key values jamais exposées (status boolean only)
 
 ---
 
@@ -206,6 +227,7 @@ buildSaxoContext() {
 ```
 
 ### Wealth Dashboard
+
 ```javascript
 buildWealthContext() {
   return {
@@ -218,26 +240,93 @@ buildWealthContext() {
 }
 ```
 
+### Settings (NEW - Dec 28, 2025)
+
+```javascript
+buildSettingsContext() {
+  return {
+    page: 'Settings - Configuration',
+    user_id: 'demo',
+    active_source: 'cointracking',
+    configured_apis: ['groq', 'coingecko', 'fred'],  // API keys configured (boolean only)
+    saxo_oauth: {
+      connected: true,
+      environment: 'sim',
+      expires_at: '2025-01-15T10:30:00Z'
+    },
+    features: {
+      coingecko_classification: true,
+      portfolio_snapshots: true
+    },
+    ai_provider: 'groq'
+  };
+}
+```
+
+**Note sécurité:** Les valeurs des clés API ne sont **jamais** exposées, seulement le statut configuré (true/false).
+
 ---
 
 ## Knowledge Base
 
-Documentation SmartFolio condensée (~1500 tokens) injectée automatiquement.
+Documentation SmartFolio condensée (~1500-2000 tokens) injectée automatiquement.
 
-**Concepts inclus:**
+### Architecture Dynamique (PAGE_DOC_FILES)
+
+**Nouveau système (Dec 28, 2025):** Les docs/*.md pertinentes sont chargées **automatiquement** au runtime.
+
+```python
+PAGE_DOC_FILES = {
+    "risk-dashboard": [
+        "docs/RISK_SEMANTICS.md",
+        "docs/DECISION_INDEX_V2.md"
+    ],
+    "analytics-unified": [
+        "docs/DECISION_INDEX_V2.md",
+        "docs/ALLOCATION_ENGINE_V2.md"
+    ],
+    "saxo-dashboard": [
+        "docs/STOP_LOSS_SYSTEM.md",
+        "docs/MARKET_OPPORTUNITIES_SYSTEM.md"
+    ],
+    "dashboard": [
+        "docs/ALLOCATION_ENGINE_V2.md"
+    ],
+    "wealth-dashboard": [
+        "docs/PATRIMOINE_MODULE.md"
+    ]
+}
+```
+
+**Fonctionnement:**
+
+- Cache TTL: 5 minutes
+- Extraction: 800 chars max par doc (premiers 80 lignes)
+- Mise à jour: **Automatique** après expiration cache
+- Force refresh: `POST /api/ai/refresh-knowledge`
+
+**Avantages:**
+
+- ✅ Docs toujours à jour (5 min max de latence)
+- ✅ Pas besoin de redéployer l'app pour mettre à jour la knowledge base
+- ✅ Token budget contrôlé (800 chars/doc)
+
+### Concepts Core (CLAUDE.md)
+
 - Decision Index (65/45 binaire)
 - Risk Score (0-100, higher = robust)
 - Regime Score vs Decision Index
 - Market Phases (bearish/moderate/bullish)
 - Allocation Engine V2 (topdown hierarchical)
-- Stop Loss System (6 méthodes)
-- Market Opportunities (88 blue-chips, 45+ ETFs)
+- Multi-tenant pattern
 
-**Subsets par page:**
-- `risk-dashboard` → Focus Risk Score, VaR, Max Drawdown
+### Subsets Statiques par Page
+
+- `risk-dashboard` → Focus Risk Score, VaR, Max Drawdown, HHI
 - `analytics-unified` → Focus Decision Index, ML Sentiment, Phase
-- `saxo-dashboard` → Focus Stop Loss, Market Opportunities
+- `saxo-dashboard` → Focus Stop Loss (6 methods), Market Opportunities
 - `wealth-dashboard` → Focus Net worth, assets vs liabilities
+- `settings` → Focus API keys, Saxo OAuth, configuration recommendations
 
 ---
 
@@ -365,9 +454,17 @@ L'utilisateur peut :
 - "Performance"
 
 ### Wealth Dashboard
+
 - "Patrimoine net"
 - "Diversification"
 - "Passifs"
+
+### Settings (NEW - Dec 28, 2025)
+
+- "Configuration actuelle"
+- "Clés API"
+- "Saxo OAuth"
+- "Recommandations"
 
 ---
 
@@ -375,10 +472,11 @@ L'utilisateur peut :
 
 | Élément | Tokens estimés |
 |---------|----------------|
-| Documentation condensée | ~1500 |
+| Documentation condensée (CLAUDE.md) | ~1000 |
+| Docs dynamiques (PAGE_DOC_FILES) | ~800-1600 |
 | Contexte page | ~1000-1500 |
 | Conversation (5 messages) | ~500 |
-| **Total par requête** | **~3000-3500** |
+| **Total par requête** | **~3500-4500** |
 
 Groq free tier: **14k tokens/min** → OK pour usage normal
 
