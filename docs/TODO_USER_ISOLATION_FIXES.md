@@ -330,7 +330,7 @@ curl -H "X-User: jack" "localhost:8080/analytics/performance/summary?days_back=3
 | localStorage isolé (settings) | 0/11 (0%)  | 11/11 (100%) ✅     | 11/11 (100%)  |
 | localStorage isolé (AI keys)  | 0/6 (0%)   | 6/6 (100%) ✅       | 6/6 (100%)    |
 | Storage backend isolé         | 0/1 (0%)   | 1/1 (100%) ✅       | 1/1 (100%)    |
-| Endpoints avec X-User requis  | 0%         | 11/~50 (22%) ⚠️     | 80%+          |
+| Endpoints avec X-User requis  | 11/~50     | **38/~50 (76%)** ✅ | 80%+          |
 
 ---
 
