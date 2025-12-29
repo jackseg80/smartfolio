@@ -437,11 +437,15 @@ function renderLeftColumn(data) {
   const gradient = getGradientForScore(score);
   const levelText = getLevelText(score);
   const m = data.meta || {};
+  const s = data.scores || {};
 
   // Calculer contributions
-  const contributions = calculateRelativeContributions(data.weights || {}, data.scores || {});
-  const scoresAndContributions = renderScoresAndContributions(data.scores || {}, contributions);
+  const contributions = calculateRelativeContributions(data.weights || {}, s);
+  const scoresAndContributions = renderScoresAndContributions(s, contributions);
   const metadata = renderMetadata(m);
+
+  // Recommandation en bas de la colonne gauche
+  const recommendation = renderRecommendation(score, m, s);
 
   return `
     <div class="di-left-col">
@@ -479,6 +483,7 @@ function renderLeftColumn(data) {
 
       ${scoresAndContributions}
       ${metadata}
+      ${recommendation}
     </div>
   `;
 }
@@ -509,15 +514,140 @@ function renderCompactPillarBar(label, icon, value, subtext, confidence, color) 
 }
 
 /**
- * Génère la colonne droite avec recommandation + piliers
+ * Génère le SVG Allocation Ring (donut chart)
+ * @param {Object} allocation - { btc: %, eth: %, stables: %, alts: % }
+ */
+function renderAllocationRing(allocation) {
+  if (!allocation || typeof allocation !== 'object') {
+    return '<div class="alloc-ring-placeholder">Allocation non disponible</div>';
+  }
+
+  const btc = allocation.btc || 0;
+  const eth = allocation.eth || 0;
+  const stables = allocation.stables || 0;
+  const alts = allocation.alts || 0;
+  const total = btc + eth + stables + alts;
+
+  if (total === 0) {
+    return '<div class="alloc-ring-placeholder">Pas de données</div>';
+  }
+
+  // Normaliser à 100%
+  const normalize = (v) => (v / total) * 100;
+  const segments = [
+    { name: 'BTC', pct: normalize(btc), color: '#f7931a' },
+    { name: 'ETH', pct: normalize(eth), color: '#627eea' },
+    { name: 'Stables', pct: normalize(stables), color: '#26a17b' },
+    { name: 'Alts', pct: normalize(alts), color: '#8b5cf6' }
+  ].filter(s => s.pct > 0);
+
+  // SVG donut avec stroke-dasharray
+  const radius = 32;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  const arcs = segments.map(seg => {
+    const dashLen = (seg.pct / 100) * circumference;
+    const dashGap = circumference - dashLen;
+    const arc = `
+      <circle
+        cx="50" cy="50" r="${radius}"
+        fill="none"
+        stroke="${seg.color}"
+        stroke-width="12"
+        stroke-dasharray="${dashLen} ${dashGap}"
+        stroke-dashoffset="${-offset}"
+        style="transition: stroke-dashoffset 0.5s ease;"
+      />
+    `;
+    offset += dashLen;
+    return arc;
+  }).join('');
+
+  const legend = segments.map(seg =>
+    `<span class="alloc-leg" style="--c:${seg.color}">
+      <span class="alloc-dot"></span>${seg.name} ${seg.pct.toFixed(0)}%
+    </span>`
+  ).join('');
+
+  return `
+    <div class="alloc-ring-container">
+      <div class="alloc-ring-title">ALLOCATION</div>
+      <div class="alloc-ring-wrapper">
+        <svg viewBox="0 0 100 100" class="alloc-ring-svg">
+          <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(148,163,184,0.1)" stroke-width="12"/>
+          ${arcs}
+        </svg>
+      </div>
+      <div class="alloc-legend">${legend}</div>
+    </div>
+  `;
+}
+
+/**
+ * Génère la Quick Context Bar (Régime, Phase, Vol, Cycle position)
+ */
+function renderQuickContextBar(meta) {
+  const regime = meta.phase || meta.regime || 'Neutral';
+  const regimeEmoji = meta.regime_emoji || '📊';
+
+  // Phase d'allocation (depuis cycle score)
+  const cyclePhase = meta.cycle_phase || 'Unknown';
+
+  // Volatilité (depuis VaR ou estimation)
+  const vol = meta.risk_var95
+    ? `${(Math.abs(meta.risk_var95) * 100).toFixed(1)}%`
+    : (meta.volatility ? `${meta.volatility.toFixed(1)}%` : '--');
+
+  // Position dans le cycle
+  const months = meta.cycle_months;
+  const cyclePos = months ? `${Math.round(months)}/18` : '--';
+
+  // Couleur du régime
+  const regimeColor = {
+    'accumulation': '#3b82f6',
+    'expansion': '#10b981',
+    'euphorie': '#f59e0b',
+    'euphoria': '#f59e0b',
+    'neutral': '#6b7280',
+    'bearish': '#ef4444',
+    'risk_off': '#ef4444'
+  }[regime.toLowerCase()] || '#6b7280';
+
+  return `
+    <div class="di-context-bar">
+      <div class="ctx-item">
+        <span class="ctx-label">Régime</span>
+        <span class="ctx-value" style="color: ${regimeColor};">${regimeEmoji} ${regime}</span>
+      </div>
+      <div class="ctx-divider"></div>
+      <div class="ctx-item">
+        <span class="ctx-label">Phase</span>
+        <span class="ctx-value">${cyclePhase}</span>
+      </div>
+      <div class="ctx-divider"></div>
+      <div class="ctx-item">
+        <span class="ctx-label">Vol</span>
+        <span class="ctx-value">${vol}</span>
+      </div>
+      <div class="ctx-divider"></div>
+      <div class="ctx-item">
+        <span class="ctx-label">Cycle</span>
+        <span class="ctx-value">${cyclePos} mois</span>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Génère la colonne droite avec allocation + piliers
  */
 function renderRightColumn(data) {
-  const score = Math.round(data.di);
   const s = data.scores || {};
   const m = data.meta || {};
 
-  // Recommandation en haut (avec scores pour contexte)
-  const recommendation = renderRecommendation(score, m, s);
+  // Allocation Ring (si données disponibles)
+  const allocationRing = data.allocation ? renderAllocationRing(data.allocation) : '';
 
   // Préparer les données pour chaque pilier
   const cycleConf = m.cycle_confidence ? Math.round(m.cycle_confidence * 100) : null;
@@ -557,9 +687,12 @@ function renderRightColumn(data) {
   const sentimentColor = typeof sentimentFG === 'number' ?
     (sentimentFG >= 70 ? '#ef4444' : sentimentFG >= 30 ? '#f59e0b' : '#10b981') : '#6b7280';
 
+  // Quick Context Bar
+  const contextBar = renderQuickContextBar(m);
+
   return `
     <div class="di-right-col">
-      ${recommendation}
+      ${allocationRing}
 
       <div class="pillars-container">
         ${cycleBar}
@@ -581,6 +714,8 @@ function renderRightColumn(data) {
           <span class="footer-value">${m.source || 'N/A'}</span>
         </div>
       </div>
+
+      ${contextBar}
     </div>
   `;
 }
@@ -1269,6 +1404,118 @@ function injectStyles() {
 
     .footer-value.offline {
       color: #ef4444;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ALLOCATION RING (Donut Chart)
+       ═══════════════════════════════════════════════════════════ */
+
+    .alloc-ring-container {
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 8px;
+      padding: 0.75rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      margin-bottom: 0.75rem;
+    }
+
+    .alloc-ring-title {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(148, 163, 184, 0.6);
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .alloc-ring-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .alloc-ring-svg {
+      width: 80px;
+      height: 80px;
+      transform: rotate(-90deg);
+    }
+
+    .alloc-legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem 0.75rem;
+    }
+
+    .alloc-leg {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.65rem;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    .alloc-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c, #6b7280);
+    }
+
+    .alloc-ring-placeholder {
+      text-align: center;
+      padding: 1rem;
+      color: rgba(148, 163, 184, 0.5);
+      font-size: 0.75rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       QUICK CONTEXT BAR
+       ═══════════════════════════════════════════════════════════ */
+
+    .di-context-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      padding: 0.625rem 0.875rem;
+      margin-top: 0.75rem;
+    }
+
+    .ctx-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.125rem;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ctx-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(148, 163, 184, 0.6);
+    }
+
+    .ctx-value {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: rgba(226, 232, 240, 0.95);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .ctx-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(148, 163, 184, 0.15);
+      flex-shrink: 0;
     }
 
     /* Popup d'aide compact */

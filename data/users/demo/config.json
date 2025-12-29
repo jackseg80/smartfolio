@@ -1,9 +1,9 @@
 {
-  "data_source": "cointracking_api",
+  "data_source": "cointracking",
   "api_base_url": "http://localhost:8080",
   "display_currency": "USD",
   "min_usd_threshold": 1.0,
-  "csv_glob": "csv/*.csv",
+  "csv_glob": "",
   "csv_selected_file": null,
   "pricing": "auto",
   "refresh_interval": 5,

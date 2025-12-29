@@ -757,6 +757,7 @@ canvas {
 
 /* ═══════════════════════════════════════════════════════════
    DECISION INDEX PANEL - Harmonisation FORCÉE avec Analytics Unified
+   Supporte v5 (.di-panel-v5) et v7.1 (.di-panel-gaming)
    ═══════════════════════════════════════════════════════════ */
 
 /* Surcharge du DI Panel pour s'intégrer au design glassmorphism */
@@ -765,9 +766,13 @@ canvas {
 }
 
 /* FORCER le même fond que les panel-card - Spécificité maximale */
+/* Support v5 ET v7.1 (gaming) */
 .wrap .panel-card #new-di-panel .di-panel-v5,
+.wrap .panel-card #new-di-panel .di-panel-gaming,
 #new-di-panel > .di-panel-v5,
-.di-panel-v5 {
+#new-di-panel > .di-panel-gaming,
+.di-panel-v5,
+.di-panel-gaming {
   /* Fond sombre mais avec glassmorphism - VALEURS FIXES */
   background: rgba(14, 22, 32, 0.85) !important;
   background: linear-gradient(135deg, rgba(14, 22, 32, 0.9) 0%, rgba(20, 30, 45, 0.85) 100%) !important;
@@ -782,7 +787,9 @@ canvas {
 }
 
 .wrap .panel-card #new-di-panel .di-panel-v5:hover,
-#new-di-panel > .di-panel-v5:hover {
+.wrap .panel-card #new-di-panel .di-panel-gaming:hover,
+#new-di-panel > .di-panel-v5:hover,
+#new-di-panel > .di-panel-gaming:hover {
   border-color: rgba(122, 162, 247, 0.4) !important;
   box-shadow:
     0 12px 40px rgba(122, 162, 247, 0.2),
@@ -798,7 +805,10 @@ canvas {
 
 /* Harmoniser les pillar cards avec metric-card - VALEURS FIXES */
 #new-di-panel .di-panel-v5 .pillar-card,
-.di-panel-v5 .pillar-card {
+#new-di-panel .di-panel-gaming .pillar-card,
+#new-di-panel .di-panel-gaming .pillar-bar-compact,
+.di-panel-v5 .pillar-card,
+.di-panel-gaming .pillar-bar-compact {
   background: rgba(20, 30, 45, 0.6) !important;
   background: linear-gradient(135deg, rgba(20, 30, 45, 0.7) 0%, rgba(30, 40, 55, 0.5) 100%) !important;
   backdrop-filter: blur(14px) !important;
@@ -811,7 +821,9 @@ canvas {
 }
 
 #new-di-panel .di-panel-v5 .pillar-card::before,
-.di-panel-v5 .pillar-card::before {
+#new-di-panel .di-panel-gaming .pillar-bar-compact::before,
+.di-panel-v5 .pillar-card::before,
+.di-panel-gaming .pillar-bar-compact::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -822,7 +834,9 @@ canvas {
 }
 
 #new-di-panel .di-panel-v5 .pillar-card:hover,
-.di-panel-v5 .pillar-card:hover {
+#new-di-panel .di-panel-gaming .pillar-bar-compact:hover,
+.di-panel-v5 .pillar-card:hover,
+.di-panel-gaming .pillar-bar-compact:hover {
   transform: translateY(-4px);
   box-shadow:
     0 8px 24px rgba(122, 162, 247, 0.25),
@@ -831,13 +845,17 @@ canvas {
 }
 
 #new-di-panel .di-panel-v5 .pillar-card:hover::before,
-.di-panel-v5 .pillar-card:hover::before {
+#new-di-panel .di-panel-gaming .pillar-bar-compact:hover::before,
+.di-panel-v5 .pillar-card:hover::before,
+.di-panel-gaming .pillar-bar-compact:hover::before {
   opacity: 1;
 }
 
 /* Assurer que le contenu reste au-dessus de l'overlay */
 #new-di-panel .di-panel-v5 .pillar-card > *,
-.di-panel-v5 .pillar-card > * {
+#new-di-panel .di-panel-gaming .pillar-bar-compact > *,
+.di-panel-v5 .pillar-card > *,
+.di-panel-gaming .pillar-bar-compact > * {
   position: relative;
   z-index: 1;
 }
@@ -846,9 +864,15 @@ canvas {
 #new-di-panel .di-panel-v5 .di-score-container,
 #new-di-panel .di-panel-v5 .trend-grid,
 #new-di-panel .di-panel-v5 .rg-row,
+#new-di-panel .di-panel-gaming .scores-contrib-annotated,
+#new-di-panel .di-panel-gaming .di-metadata,
+#new-di-panel .di-panel-gaming .di-recommendation,
 .di-panel-v5 .di-score-container,
 .di-panel-v5 .trend-grid,
-.di-panel-v5 .rg-row {
+.di-panel-v5 .rg-row,
+.di-panel-gaming .scores-contrib-annotated,
+.di-panel-gaming .di-metadata,
+.di-panel-gaming .di-recommendation {
   background: rgba(20, 30, 45, 0.5) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   backdrop-filter: blur(12px) !important;
@@ -879,25 +903,41 @@ canvas {
   margin-top: 1rem;
 }
 
-/* Section d'informations/alertes */
+/* ═══════════════════════════════════════════════════════════
+   INFO SECTIONS - Glass Léger (Dec 2025)
+   Harmonisé avec le reste de la page
+   ═══════════════════════════════════════════════════════════ */
+
 .info-section {
   margin-top: 2rem;
-  padding: 1rem;
-  background: var(--theme-bg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
+  padding: 1.25rem;
+  background: rgba(30, 41, 59, 0.4);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.info-section:hover {
+  background: rgba(30, 41, 59, 0.5);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .info-section h4 {
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.75rem;
   color: var(--theme-text);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .info-section-content {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.625rem;
   color: var(--theme-text-muted);
 }
 
@@ -905,11 +945,47 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0.375rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item span:first-child {
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+.info-item span:last-child {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--theme-text);
 }
 
 .info-list-item {
   color: var(--theme-text-muted);
   line-height: 1.6;
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+}
+
+/* Couleurs sémantiques pour les valeurs */
+.text-positive {
+  color: #34d399 !important;
+}
+
+.text-negative {
+  color: #f87171 !important;
+}
+
+.text-warning {
+  color: #fbbf24 !important;
+}
+
+.text-subtle {
+  color: rgba(148, 163, 184, 0.6) !important;
 }
 
 /* Actions/liens standardisés */

@@ -352,6 +352,47 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
       });
     }
 
+    // Calculer l'allocation macro pour le Ring Chart
+    let allocationData = null;
+    try {
+      const walletBalances = store.get('wallet.balances') || [];
+      const walletTotal = store.get('wallet.total') || 0;
+
+      if (walletBalances.length > 0 && walletTotal > 0) {
+        const { getAssetGroup } = await import('../shared-asset-groups.js');
+
+        // Calculer les totaux par catégorie macro
+        let btcTotal = 0, ethTotal = 0, stablesTotal = 0, altsTotal = 0;
+
+        for (const item of walletBalances) {
+          const value = parseFloat(item.value_usd) || 0;
+          const symbol = (item.symbol || '').toUpperCase();
+          const group = getAssetGroup(symbol);
+
+          if (symbol === 'BTC' || symbol === 'BITCOIN' || symbol === 'WBTC') {
+            btcTotal += value;
+          } else if (symbol === 'ETH' || symbol === 'ETHEREUM' || symbol === 'WETH' || symbol === 'STETH') {
+            ethTotal += value;
+          } else if (group === 'Stablecoins' || ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'USDD', 'FDUSD', 'EUR', 'CHF', 'USD'].includes(symbol)) {
+            stablesTotal += value;
+          } else {
+            altsTotal += value;
+          }
+        }
+
+        allocationData = {
+          btc: (btcTotal / walletTotal) * 100,
+          eth: (ethTotal / walletTotal) * 100,
+          stables: (stablesTotal / walletTotal) * 100,
+          alts: (altsTotal / walletTotal) * 100
+        };
+
+        console.debug('📊 Allocation Ring data:', allocationData);
+      }
+    } catch (allocErr) {
+      console.warn('⚠️ Failed to compute allocation for ring:', allocErr.message);
+    }
+
     const panelData = {
       di: blendedScore,
       scores: { cycle: cycleScore, onchain: onchainScore, risk: riskScore },
@@ -387,7 +428,8 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         sentiment_interpretation: u.signals?.sentiment?.interpretation
       },
       history: diHistory.map(h => h.di),                                       // ✅ di history (array de scores)
-      regimeHistory: (s?.regime?.history || s?.regime_history || [])           // ✅ regime history (2 clés possibles)
+      regimeHistory: (s?.regime?.history || s?.regime_history || []),          // ✅ regime history (2 clés possibles)
+      allocation: allocationData                                                // ✅ allocation ring data (BTC/ETH/Stables/Alts)
     };
 
     // Créer conteneur pour le Decision Index Panel (inclut maintenant les tuiles)

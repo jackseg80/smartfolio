@@ -1,6 +1,10 @@
 /**
  * Decision Index Panel v5 - Split View avec Glassmorphism Optimisé
  *
+ * ⚠️ DEPRECATED (Dec 2025): Ce fichier est conservé pour compatibilité avec simulations.html
+ * Le panneau DI utilise maintenant les styles inline v7.1 (.di-panel-gaming) dans decision-index-panel.js
+ * Les overrides de style sont dans analytics-unified-theme.css (supporte v5 et v7.1)
+ *
  * Performance:
  * - backdrop-filter léger (10px max)
  * - Animations GPU-accelerated (transform, opacity)
