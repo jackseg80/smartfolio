@@ -290,6 +290,9 @@ async function loadSettings() {
 
 // Sauvegarder les settings via l'API utilisateur ET localStorage
 async function saveSettings() {
+  // 🔒 FIX: Capturer l'utilisateur actuel au début pour éviter race condition
+  const currentUser = getActiveUser();
+
   // 🔍 DEBUG: Vérifier groq_api_key avant sauvegarde
   if (window.userSettings && window.userSettings.groq_api_key) {
     console.log('🔍 [saveSettings] groq_api_key présent:', window.userSettings.groq_api_key.substring(0, 10) + '...');
@@ -304,8 +307,8 @@ async function saveSettings() {
         window.globalConfig.settings[key] = window.userSettings[key];
       }
     });
-    window.globalConfig.save(); // Force immediate save to localStorage
-    debugLogger.debug('✓ Settings saved to localStorage');
+    window.globalConfig.save(); // Force immediate save to localStorage (user-isolated)
+    debugLogger.debug(`✓ Settings saved to localStorage for user: ${currentUser}`);
   }
 
   // 2. Sauvegarder vers le backend (pour sync multi-device)
@@ -314,13 +317,13 @@ async function saveSettings() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-User': getActiveUser()
+        'X-User': currentUser  // 🔒 FIX: Utiliser la valeur capturée au début
       },
       body: JSON.stringify(window.userSettings)
     });
 
     if (response.ok) {
-      debugLogger.info('✓ Settings saved to backend');
+      debugLogger.info(`✓ Settings saved to backend for user: ${currentUser}`);
     } else {
       const error = await response.json();
       debugLogger.error('Failed to save user settings to backend:', error);

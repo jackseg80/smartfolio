@@ -111,11 +111,20 @@ class GlobalConfig {
   }
 
   /**
-   * Charge la configuration depuis localStorage
+   * Récupère la clé localStorage isolée par utilisateur
+   */
+  getStorageKey() {
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    return `smartfolio_settings_${activeUser}`;
+  }
+
+  /**
+   * Charge la configuration depuis localStorage (isolée par utilisateur)
    */
   load() {
     try {
-      const saved = localStorage.getItem('smartfolio_settings');
+      const storageKey = this.getStorageKey();
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         this.settings = { ...DEFAULT_SETTINGS, ...parsed };
@@ -123,6 +132,7 @@ class GlobalConfig {
         if (!this.settings.api_base_url) {
           this.settings.api_base_url = detectDefaultApiBase();
         }
+        console.debug(`✅ Settings loaded from localStorage for user: ${storageKey}`);
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Erreur chargement configuration:', error);
@@ -131,15 +141,28 @@ class GlobalConfig {
   }
 
   /**
-   * Sauvegarde la configuration dans localStorage
+   * Sauvegarde la configuration dans localStorage (isolée par utilisateur)
    */
   save() {
     try {
-      localStorage.setItem('smartfolio_settings', JSON.stringify(this.settings));
-      console.debug('Configuration sauvegardée');
+      const storageKey = this.getStorageKey();
+      localStorage.setItem(storageKey, JSON.stringify(this.settings));
+      console.debug(`✅ Settings saved to localStorage for user: ${storageKey}`);
     } catch (error) {
       debugLogger.error('Erreur sauvegarde configuration:', error);
     }
+  }
+
+  /**
+   * Bascule vers un nouvel utilisateur (vide le cache actuel et recharge)
+   */
+  switchUser(newUserId) {
+    console.debug(`🔄 Switching user context: ${this.getStorageKey()} → smartfolio_settings_${newUserId}`);
+    // Vider le cache actuel
+    this.settings = { ...DEFAULT_SETTINGS };
+    // activeUser sera changé par l'appelant avant d'appeler cette méthode
+    // On recharge depuis le nouveau localStorage
+    this.load();
   }
 
   /**
@@ -229,11 +252,13 @@ class GlobalConfig {
   }
 
   /**
-   * Remet la configuration par défaut
+   * Remet la configuration par défaut (isolée par utilisateur)
    */
   reset() {
+    const storageKey = this.getStorageKey();
     this.settings = { ...DEFAULT_SETTINGS };
-    localStorage.removeItem('smartfolio_settings');
+    localStorage.removeItem(storageKey);
+    console.debug(`🔄 Settings reset for user: ${storageKey}`);
   }
 
   /**
@@ -852,9 +877,11 @@ window.parseCSVLine = function (line) {
   return result.map(item => item.replace(/^"|"$/g, ''));
 };
 
-// Événements pour synchronisation cross-tab
+// Événements pour synchronisation cross-tab (avec isolation par utilisateur)
 window.addEventListener('storage', (e) => {
-  if (e.key === 'smartfolio_settings') {
+  const currentStorageKey = globalConfig.getStorageKey();
+  if (e.key === currentStorageKey || e.key?.startsWith('smartfolio_settings_')) {
+    console.debug(`🔄 Storage changed for key: ${e.key}, reloading settings`);
     globalConfig.load();
     // Déclencher événement personnalisé pour les pages qui écoutent
     window.dispatchEvent(new CustomEvent('configChanged', {

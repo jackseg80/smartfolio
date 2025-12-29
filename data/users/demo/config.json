@@ -4,7 +4,7 @@
   "display_currency": "USD",
   "min_usd_threshold": 1.0,
   "csv_glob": "",
-  "csv_selected_file": null,
+  "csv_selected_file": "20251229_105628_20251013_185242_Low_Risk_Contra.csv",
   "pricing": "auto",
   "refresh_interval": 5,
   "enable_coingecko_classification": true,

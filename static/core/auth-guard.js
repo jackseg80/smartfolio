@@ -126,7 +126,10 @@ export async function logout(showMessage = false) {
         }
     }
 
-    // Clear localStorage
+    // 🔒 FIX: Capture currentUser avant de vider localStorage
+    const currentUser = getCurrentUser();
+
+    // Clear localStorage (auth only)
     localStorage.removeItem('authToken');
     localStorage.removeItem('activeUser');
     localStorage.removeItem('userInfo');
@@ -136,15 +139,19 @@ export async function logout(showMessage = false) {
         window.clearCache();
     }
 
-    // Clear data caches
+    // Clear data caches (NOT user settings - they're isolated by user)
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
+        // 🔒 FIX: Ne PAS supprimer smartfolio_settings_* (isolées par user)
+        // Chaque user garde ses propres settings
         if (key && (key.startsWith('risk_score') || key.startsWith('cache:') || key.startsWith('portfolio_'))) {
             keysToRemove.push(key);
         }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    console.debug(`✅ Logged out user: ${currentUser} (settings preserved for future login)`);
 
     console.log('User logged out');
 
