@@ -13,12 +13,15 @@ from pydantic import BaseModel
 from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
 from services.ml.orchestrator import get_orchestrator, get_ml_predictions
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
+from api.deps import get_active_user
 from shared.error_handlers import handle_api_errors, handle_service_errors
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ml", tags=["Machine Learning"])
 
 # Cache pour les endpoints ML unifiés
+# NOTE: Cache global (modèles, prédictions, sentiment) - données publiques
+# EXCEPTION: alias_correlation_matrix() utilise portfolio user-specific (isolé via user_id)
 _unified_ml_cache = {}
 
 # Modèles Pydantic pour les requêtes/réponses
@@ -412,7 +415,10 @@ async def alias_regime_current():
 
 @router.get("/correlation/matrix/current")
 @handle_api_errors(fallback={"assets": [], "correlations": {}, "market_metrics": {}})
-async def alias_correlation_matrix(window_days: int = Query(30)):
+async def alias_correlation_matrix(
+    user: str = Depends(get_active_user),
+    window_days: int = Query(30)
+):
     """Alias routed to risk correlation endpoint logic.
 
     REFACTORED: Using @handle_api_errors decorator (Phase 2)
@@ -420,7 +426,7 @@ async def alias_correlation_matrix(window_days: int = Query(30)):
     # Reuse risk engine directly to avoid HTTP loopback
     from api.unified_data import get_unified_filtered_balances
     from services.risk_management import risk_manager
-    balances_response = await get_unified_filtered_balances(source="cointracking", min_usd=1.0)
+    balances_response = await get_unified_filtered_balances(source="cointracking", min_usd=1.0, user_id=user)
     balances = balances_response.get('items', [])
     corr_matrix = await risk_manager.calculate_correlation_matrix(holdings=balances, lookback_days=window_days)
 

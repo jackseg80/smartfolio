@@ -205,14 +205,19 @@ class RebalanceSession:
 
 class HistoryManager:
     """Gestionnaire de l'historique des rebalancement"""
-    
-    def __init__(self, storage_path: str = "data/rebalance_history.json"):
+
+    def __init__(self, user_id: str = "demo", storage_path: Optional[str] = None):
+        # Isolation multi-tenant: chaque user a son propre fichier d'historique
+        if storage_path is None:
+            storage_path = f"data/users/{user_id}/rebalance_history.json"
+
+        self.user_id = user_id
         self.storage_path = Path(storage_path)
         self.sessions: Dict[str, RebalanceSession] = {}
-        
+
         # Créer le répertoire si nécessaire
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Charger l'historique existant
         self._load_history()
     
@@ -338,7 +343,10 @@ class HistoryManager:
         
         self.sessions[session.id] = session
         logger.info(f"Created rebalance session {session.id}")
-        
+
+        # Sauvegarder immédiatement pour persistence (multi-tenant isolation)
+        self._save_history()
+
         return session
     
     def add_portfolio_snapshot(self, session_id: str, snapshot: PortfolioSnapshot, 
@@ -351,8 +359,12 @@ class HistoryManager:
             self.sessions[session_id].portfolio_before = snapshot
         else:
             self.sessions[session_id].portfolio_after = snapshot
-        
+
         logger.debug(f"Added {'before' if is_before else 'after'} snapshot to session {session_id}")
+
+        # Sauvegarder immédiatement pour persistence
+        self._save_history()
+
         return True
     
     def add_rebalance_actions(self, session_id: str, actions: List[Dict[str, Any]]) -> bool:
@@ -377,8 +389,12 @@ class HistoryManager:
         
         # Calculer le volume total planifié
         session.total_planned_volume = sum(abs(a.planned_usd) for a in session.actions)
-        
+
         logger.info(f"Added {len(actions)} actions to session {session_id}")
+
+        # Sauvegarder immédiatement pour persistence
+        self._save_history()
+
         return True
     
     def update_execution_results(self, session_id: str, order_results: List[Dict[str, Any]]) -> bool:
@@ -407,8 +423,12 @@ class HistoryManager:
         
         # Mettre à jour les métriques de la session
         session.update_execution_metrics()
-        
+
         logger.info(f"Updated execution results for session {session_id}")
+
+        # Sauvegarder immédiatement pour persistence
+        self._save_history()
+
         return True
     
     def complete_session(self, session_id: str, status: SessionStatus = SessionStatus.COMPLETED,
@@ -517,5 +537,20 @@ class HistoryManager:
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
 
-# Instance globale du gestionnaire d'historique
-history_manager = HistoryManager()
+# Factory function pour créer des instances isolées par user
+def get_history_manager(user_id: str = "demo") -> HistoryManager:
+    """
+    Obtenir une instance de HistoryManager isolée par utilisateur.
+
+    Args:
+        user_id: Identifiant de l'utilisateur
+
+    Returns:
+        HistoryManager: Instance isolée pour cet utilisateur
+    """
+    return HistoryManager(user_id=user_id)
+
+
+# DEPRECATED: Instance globale maintenue pour rétrocompatibilité
+# Utiliser get_history_manager(user_id) à la place
+history_manager = HistoryManager(user_id="demo")

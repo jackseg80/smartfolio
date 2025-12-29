@@ -4,9 +4,10 @@ API Endpoints pour l'analytics et l'historique
 Ces endpoints gèrent l'historique des rebalancement et les analyses
 de performance pour optimiser les stratégies.
 
-⚠️ TODO (User Isolation): HistoryManager utilise un storage global (data/rebalance_history.json)
-   qui n'isole PAS par user_id. Cache keys incluent maintenant user pour éviter cross-contamination,
-   mais storage backend reste partagé. Refactor nécessaire pour isolation complète.
+✅ User Isolation: HistoryManager isolé par user_id (Dec 2025)
+   - Chaque user a son propre fichier: data/users/{user_id}/rebalance_history.json
+   - Factory function get_history_manager(user_id) utilisée dans tous les endpoints
+   - Cache keys incluent user pour éviter cross-contamination
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body, Depends
@@ -15,7 +16,7 @@ from typing import Dict, List, Any, Optional, Tuple
 import logging
 from datetime import datetime
 
-from services.analytics.history_manager import history_manager, SessionStatus, PortfolioSnapshot
+from services.analytics.history_manager import get_history_manager, SessionStatus, PortfolioSnapshot
 from services.analytics.performance_tracker import performance_tracker
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
 from api.deps import get_active_user
@@ -67,15 +68,19 @@ class ExecutionResultRequest(BaseModel):
     order_results: List[Dict[str, Any]] = Field(..., description="Résultats des ordres")
 
 @router.post("/sessions")
-async def create_rebalance_session(request: SessionCreateRequest):
+async def create_rebalance_session(
+    request: SessionCreateRequest,
+    user: str = Depends(get_active_user)
+):
     """
     Créer une nouvelle session de rebalancement
-    
+
     Initialise une session pour tracker l'historique et les performances
     d'un rebalancement.
     """
     try:
-        session = history_manager.create_session(
+        history_mgr = get_history_manager(user)
+        session = history_mgr.create_session(
             target_allocations=request.target_allocations,
             source=request.source,
             pricing_mode=request.pricing_mode,
@@ -98,15 +103,19 @@ async def create_rebalance_session(request: SessionCreateRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/sessions/{session_id}")
-async def get_session(session_id: str):
+async def get_session(
+    session_id: str,
+    user: str = Depends(get_active_user)
+):
     """
     Obtenir les détails d'une session de rebalancement
-    
+
     Retourne toutes les informations d'une session incluant
     les snapshots de portfolio et résultats d'exécution.
     """
     try:
-        session = history_manager.get_session(session_id)
+        history_mgr = get_history_manager(user)
+        session = history_mgr.get_session(session_id)
         
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -147,11 +156,15 @@ async def get_session(session_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/sessions/{session_id}/portfolio-snapshot")
-async def add_portfolio_snapshot(session_id: str, request: PortfolioSnapshotRequest,
-                                is_before: bool = Query(default=True, description="Snapshot avant rebalancement")):
+async def add_portfolio_snapshot(
+    session_id: str,
+    request: PortfolioSnapshotRequest,
+    user: str = Depends(get_active_user),
+    is_before: bool = Query(default=True, description="Snapshot avant rebalancement")
+):
     """
     Ajouter un snapshot de portfolio à une session
-    
+
     Capture l'état du portfolio avant ou après le rebalancement
     pour analyser l'impact.
     """
@@ -168,8 +181,9 @@ async def add_portfolio_snapshot(session_id: str, request: PortfolioSnapshotRequ
             volatility_score=request.volatility_score,
             diversification_score=request.diversification_score
         )
-        
-        success = history_manager.add_portfolio_snapshot(session_id, snapshot, is_before)
+
+        history_mgr = get_history_manager(user)
+        success = history_mgr.add_portfolio_snapshot(session_id, snapshot, is_before)
         
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -186,14 +200,19 @@ async def add_portfolio_snapshot(session_id: str, request: PortfolioSnapshotRequ
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/sessions/{session_id}/actions")
-async def add_rebalance_actions(session_id: str, actions: List[Dict[str, Any]] = Body(..., description="Actions de rebalancement")):
+async def add_rebalance_actions(
+    session_id: str,
+    user: str = Depends(get_active_user),
+    actions: List[Dict[str, Any]] = Body(..., description="Actions de rebalancement")
+):
     """
     Ajouter les actions de rebalancement à une session
-    
+
     Enregistre les actions planifiées pour une session donnée.
     """
     try:
-        success = history_manager.add_rebalance_actions(session_id, actions)
+        history_mgr = get_history_manager(user)
+        success = history_mgr.add_rebalance_actions(session_id, actions)
         
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -210,15 +229,20 @@ async def add_rebalance_actions(session_id: str, actions: List[Dict[str, Any]] =
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/sessions/{session_id}/execution-results")
-async def update_execution_results(session_id: str, request: ExecutionResultRequest):
+async def update_execution_results(
+    session_id: str,
+    request: ExecutionResultRequest,
+    user: str = Depends(get_active_user)
+):
     """
     Mettre à jour les résultats d'exécution d'une session
-    
+
     Met à jour les résultats réels d'exécution des ordres
     pour calculer les métriques de performance.
     """
     try:
-        success = history_manager.update_execution_results(session_id, request.order_results)
+        history_mgr = get_history_manager(user)
+        success = history_mgr.update_execution_results(session_id, request.order_results)
         
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -235,12 +259,15 @@ async def update_execution_results(session_id: str, request: ExecutionResultRequ
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/sessions/{session_id}/complete")
-async def complete_session(session_id: str, 
-                          status: str = Body(default="completed", description="Statut final"),
-                          error_message: Optional[str] = Body(default=None, description="Message d'erreur")):
+async def complete_session(
+    session_id: str,
+    user: str = Depends(get_active_user),
+    status: str = Body(default="completed", description="Statut final"),
+    error_message: Optional[str] = Body(default=None, description="Message d'erreur")
+):
     """
     Marquer une session comme terminée
-    
+
     Finalise une session et déclenche la sauvegarde de l'historique.
     """
     try:
@@ -249,8 +276,9 @@ async def complete_session(session_id: str,
             session_status = SessionStatus(status)
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
-        
-        success = history_manager.complete_session(session_id, session_status, error_message)
+
+        history_mgr = get_history_manager(user)
+        success = history_mgr.complete_session(session_id, session_status, error_message)
         
         if not success:
             raise HTTPException(status_code=404, detail="Session not found")
@@ -270,15 +298,17 @@ async def complete_session(session_id: str,
 async def get_sessions(
     limit: int = Query(default=50, le=100, description="Nombre maximum de sessions"),
     days_back: Optional[int] = Query(default=None, description="Nombre de jours en arrière"),
-    status: Optional[str] = Query(default=None, description="Filtrer par statut")
+    status: Optional[str] = Query(default=None, description="Filtrer par statut"),
+    user: str = Depends(get_active_user)
 ):
     """
     Obtenir la liste des sessions de rebalancement
-    
+
     Retourne les sessions récentes avec possibilité de filtrage.
     """
     try:
-        sessions = history_manager.get_recent_sessions(limit=limit, days_back=days_back)
+        history_mgr = get_history_manager(user)
+        sessions = history_mgr.get_recent_sessions(limit=limit, days_back=days_back)
         
         # Filtrer par statut si demandé
         if status:
@@ -341,12 +371,13 @@ async def get_performance_summary(
         return cached_result
     
     try:
-        summary = history_manager.get_performance_summary(days_back=days_back)
-        
+        history_mgr = get_history_manager(user)
+        summary = history_mgr.get_performance_summary(days_back=days_back)
+
         # Mettre en cache le résultat
         cache_set(_analytics_cache, cache_key, summary)
         cache_clear_expired(_analytics_cache, 300)
-        
+
         return summary
         
     except Exception as e:
@@ -375,11 +406,12 @@ async def get_detailed_performance_analysis(
     
     try:
         # Obtenir les sessions pour la période
-        sessions = history_manager.get_recent_sessions(days_back=days_back)
-        
+        history_mgr = get_history_manager(user)
+        sessions = history_mgr.get_recent_sessions(days_back=days_back)
+
         if not sessions:
             return {"error": "No sessions found for the specified period"}
-        
+
         # Analyser l'impact des rebalancement
         analysis = performance_tracker.analyze_rebalancing_impact(sessions)
         
@@ -445,17 +477,19 @@ async def calculate_portfolio_performance(
 @router.get("/reports/comprehensive")
 async def generate_comprehensive_report(
     days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse"),
-    include_portfolio_history: bool = Query(default=False, description="Inclure l'historique portfolio")
+    include_portfolio_history: bool = Query(default=False, description="Inclure l'historique portfolio"),
+    user: str = Depends(get_active_user)
 ):
     """
     Générer un rapport de performance complet
-    
+
     Rapport détaillé incluant toutes les métriques, analyses de stratégies,
     et recommandations d'optimisation.
     """
     try:
         # Obtenir les sessions
-        sessions = history_manager.get_recent_sessions(days_back=days_back)
+        history_mgr = get_history_manager(user)
+        sessions = history_mgr.get_recent_sessions(days_back=days_back)
         
         # Générer le rapport avec historique portfolio si demandé
         portfolio_history = None
@@ -480,15 +514,19 @@ async def generate_comprehensive_report(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/optimization/recommendations")
-async def get_optimization_recommendations(days_back: int = Query(default=30)):
+async def get_optimization_recommendations(
+    days_back: int = Query(default=30),
+    user: str = Depends(get_active_user)
+):
     """
     Obtenir des recommandations d'optimisation
-    
+
     Analyse les performances récentes et suggère des améliorations
     pour les stratégies de rebalancement.
     """
     try:
-        sessions = history_manager.get_recent_sessions(days_back=days_back)
+        history_mgr = get_history_manager(user)
+        sessions = history_mgr.get_recent_sessions(days_back=days_back)
         completed_sessions = [s for s in sessions if s.status == SessionStatus.COMPLETED]
         
         if not completed_sessions:

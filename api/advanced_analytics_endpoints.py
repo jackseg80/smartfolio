@@ -3,7 +3,7 @@ API Endpoints pour les Analytics Avancés
 Métriques de performance sophistiquées et analyse de drawdown
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional, Tuple
 import logging
@@ -12,6 +12,7 @@ import math
 import statistics
 import pandas as pd
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
+from api.deps import get_active_user
 from connectors.cointracking_api import get_current_balances
 from services.price_history import get_cached_history
 
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics/advanced", tags=["advanced-analytics"])
 
 # Cache pour les analytics avancés (vidé pour forcer l'utilisation du service centralisé)
+# NOTE: Si cache réintroduit, TOUJOURS inclure user_id dans les clés: f"{metric}:{user}:{params}"
 _advanced_cache = {}
 
 class DrawdownPeriod(BaseModel):
@@ -77,6 +79,7 @@ class TimeSeriesData(BaseModel):
 
 @router.get("/metrics", response_model=AdvancedMetrics)
 async def get_advanced_metrics(
+    user: str = Depends(get_active_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     benchmark: Optional[str] = Query(None, description="Symbol de benchmark (BTC, ETH, etc.)")
 ):
@@ -84,7 +87,7 @@ async def get_advanced_metrics(
     Calculer les métriques de performance avancées
     """
     # CACHE DÉSACTIVÉ pour forcer l'utilisation des vraies données!
-    logger.info(f"🚫 Cache désactivé - calcul en direct des métriques pour {days} jours")
+    logger.info(f"🚫 Cache désactivé - calcul en direct des métriques pour user={user}, {days} jours")
     
     try:
         # ⚡ NOUVEAU: Utiliser le service centralisé de métriques pour garantir la cohérence avec Risk Dashboard
@@ -94,10 +97,10 @@ async def get_advanced_metrics(
             from services.price_history import get_cached_history
             import pandas as pd
             
-            logger.info(f"🎯 STARTING centralized metrics service for Advanced Analytics - {days} days")
-            
-            # Récupérer les balances actuelles
-            balances_response = await get_current_balances(source="cointracking")
+            logger.info(f"🎯 STARTING centralized metrics service for Advanced Analytics - user={user}, {days} days")
+
+            # Récupérer les balances actuelles (isolées par user)
+            balances_response = await get_current_balances(source="cointracking", user_id=user)
             if not balances_response.get("items"):
                 logger.error("No portfolio data available for centralized calculation")
                 raise HTTPException(status_code=404, detail="No portfolio data available")
@@ -179,6 +182,7 @@ async def get_advanced_metrics(
 
 @router.get("/timeseries", response_model=TimeSeriesData)
 async def get_timeseries_data(
+    user: str = Depends(get_active_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     granularity: str = Query("daily", description="Granularité: daily, weekly, monthly")
 ):
@@ -186,7 +190,7 @@ async def get_timeseries_data(
     Récupérer les données de série temporelle pour les graphiques
     """
     # CACHE DÉSACTIVÉ pour forcer les vraies données temporelles!
-    logger.info(f"🚫 Cache timeseries désactivé - calcul en direct pour {days} jours")
+    logger.info(f"🚫 Cache timeseries désactivé - calcul en direct pour user={user}, {days} jours")
     
     try:
         # Utiliser la même logique centralisée que les métriques pour la cohérence
@@ -195,9 +199,9 @@ async def get_timeseries_data(
             from connectors.cointracking_api import get_current_balances
             from services.price_history import get_cached_history
             import pandas as pd
-            
-            # Récupérer les données avec la même logique
-            balances_response = await get_current_balances(source="cointracking")
+
+            # Récupérer les données avec la même logique (isolées par user)
+            balances_response = await get_current_balances(source="cointracking", user_id=user)
             if balances_response.get("items"):
                 balances = balances_response["items"]
                 
@@ -274,6 +278,7 @@ async def get_timeseries_data(
 
 @router.get("/drawdown-analysis")
 async def analyze_drawdowns(
+    user: str = Depends(get_active_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     min_duration: int = Query(5, description="Durée minimum en jours")
 ):
@@ -281,7 +286,7 @@ async def analyze_drawdowns(
     Analyser les périodes de drawdown en détail
     """
     try:
-        # Utiliser les données mock pour l'analyse des drawdowns
+        # Utiliser les données mock pour l'analyse des drawdowns (TODO: utiliser portfolio user)
         real_data = _generate_mock_performance_data(days)
         drawdown_periods = _analyze_drawdown_periods(real_data, min_duration)
         
@@ -311,6 +316,7 @@ async def analyze_drawdowns(
 
 @router.get("/strategy-comparison")
 async def compare_strategies(
+    user: str = Depends(get_active_user),
     strategies: List[str] = Query(["rebalancing", "buy_hold", "momentum"], description="Stratégies à comparer"),
     days: int = Query(365, description="Période d'analyse")
 ):
@@ -319,7 +325,7 @@ async def compare_strategies(
     """
     try:
         comparison = {}
-        
+
         for strategy in strategies:
             mock_data = _generate_mock_performance_data(days, strategy_bias=strategy)
             metrics = _calculate_advanced_metrics(mock_data)
@@ -362,6 +368,7 @@ async def compare_strategies(
 
 @router.get("/risk-metrics")
 async def get_risk_metrics(
+    user: str = Depends(get_active_user),
     days: int = Query(365, description="Période d'analyse"),
     confidence_level: float = Query(0.95, description="Niveau de confiance pour VaR")
 ):
@@ -369,7 +376,7 @@ async def get_risk_metrics(
     Calculer les métriques de risque avancées
     """
     try:
-        # Utiliser les données mock pour les métriques de risque
+        # Utiliser les données mock pour les métriques de risque (TODO: utiliser portfolio user)
         real_data = _generate_mock_performance_data(days)
         returns = real_data["daily_returns"]
         drawdowns = real_data["drawdowns"]
@@ -407,7 +414,7 @@ async def get_risk_metrics(
         logger.error(f"Error calculating risk metrics: {str(e)}")
         raise HTTPException(status_code=500, detail="Error calculating risk metrics")
 
-async def _generate_real_performance_data(days: int) -> Dict[str, Any]:
+async def _generate_real_performance_data(days: int, user_id: str = "demo") -> Dict[str, Any]:
     """Générer des données de performance réelles en utilisant le service centralisé (PLUS D'APPELS API)"""
     try:
         # 🎯 UTILISATION DIRECTE DU SERVICE CENTRALISÉ - Plus d'appels HTTP récursifs!
@@ -415,11 +422,11 @@ async def _generate_real_performance_data(days: int) -> Dict[str, Any]:
         from connectors.cointracking_api import get_current_balances
         from services.price_history import get_cached_history
         import pandas as pd
-        
-        logger.info(f"🚀 GENERATING TIMESERIES DATA using centralized service - {days} days (no HTTP calls)")
-        
-        # Récupérer les données avec la même logique que les métriques
-        balances_response = await get_current_balances(source="cointracking")
+
+        logger.info(f"🚀 GENERATING TIMESERIES DATA using centralized service - user={user_id}, {days} days (no HTTP calls)")
+
+        # Récupérer les données avec la même logique que les métriques (isolées par user)
+        balances_response = await get_current_balances(source="cointracking", user_id=user_id)
         if not balances_response.get("items"):
             logger.error("No portfolio data available for drawdown timeseries")
             raise HTTPException(status_code=404, detail="No portfolio data available for timeseries")

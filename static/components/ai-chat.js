@@ -8,8 +8,9 @@ export class AIChatComponent {
     constructor(options = {}) {
         this.page = options.page || 'unknown';
         this.contextBuilder = options.contextBuilder || (() => ({}));
-        this.provider = localStorage.getItem('aiProvider') || 'groq';
-        this.includeDocs = localStorage.getItem('aiIncludeDocs') !== 'false';  // Default true
+        // ✅ USER ISOLATION: Use globalConfig (already isolated per user)
+        this.provider = window.globalConfig?.get('aiProvider') || 'groq';
+        this.includeDocs = window.globalConfig?.get('aiIncludeDocs') !== false;  // Default true
         this.messages = [];
         this.availableProviders = [];
         this.state = {
@@ -192,7 +193,8 @@ export class AIChatComponent {
 
     switchProvider(newProvider) {
         this.provider = newProvider;
-        localStorage.setItem('aiProvider', newProvider);
+        // ✅ USER ISOLATION: Use globalConfig (already isolated per user)
+        window.globalConfig?.set('aiProvider', newProvider);
         console.log(`AI provider switched to: ${newProvider}`);
     }
 

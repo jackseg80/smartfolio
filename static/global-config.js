@@ -85,6 +85,14 @@ const DEFAULT_SETTINGS = {
   cointracking_api_key: '',
   cointracking_api_secret: '',
   fred_api_key: '',
+  // AI API keys (isolated per user)
+  groq_api_key: '',
+  claude_api_key: '',
+  grok_api_key: '',
+  openai_api_key: '',
+  // AI provider preferences
+  aiProvider: 'groq',  // 'groq', 'claude', 'openai', 'grok'
+  aiIncludeDocs: true,  // Include documentation in AI context
   api_base_url: detectDefaultApiBase(),
   // Admin/debug access for protected endpoints (dev only)
   admin_key: '',

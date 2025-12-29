@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-12-29T16:20:26.749224+00:00",
+  "total_sessions": 1,
+  "sessions": [
+    {
+      "id": "8fe212bf-92e7-40fd-933b-bcde4c01f0d4",
+      "created_at": "2025-12-29T16:20:26.748943+00:00",
+      "started_at": null,
+      "completed_at": null,
+      "source": "test_demo",
+      "pricing_mode": "auto",
+      "min_trade_usd": 25.0,
+      "target_allocations": {
+        "BTC": 40.0,
+        "ETH": 30.0,
+        "Stables": 30.0
+      },
+      "dynamic_targets_used": false,
+      "ccs_score": null,
+      "strategy_notes": "",
+      "portfolio_before": null,
+      "portfolio_after": null,
+      "actions": [],
+      "status": "planned",
+      "total_planned_volume": 0.0,
+      "total_executed_volume": 0.0,
+      "total_fees": 0.0,
+      "execution_success_rate": 0.0,
+      "avg_execution_variance_pct": 0.0,
+      "total_slippage_bps": 0.0,
+      "error_message": null,
+      "user_notes": ""
+    }
+  ]
+}

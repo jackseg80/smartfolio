@@ -570,16 +570,17 @@ export async function buildSettingsContext() {
         context.theme = localStorage.getItem('theme') || 'auto';
         context.min_usd_threshold = parseFloat(localStorage.getItem('minUsdThreshold') || '1.0');
 
-        // Check which API keys are configured (without exposing values)
+        // ✅ USER ISOLATION: Check which API keys are configured (without exposing values)
+        // Use globalConfig which is already isolated per user
         const apiKeys = {
-            cointracking_api: !!localStorage.getItem('cointracking_api_key'),
-            cointracking_secret: !!localStorage.getItem('cointracking_api_secret'),
-            coingecko: !!localStorage.getItem('coingecko_api_key'),
-            fred: !!localStorage.getItem('fred_api_key'),
-            groq: !!localStorage.getItem('groq_api_key'),
-            claude: !!localStorage.getItem('claude_api_key'),
-            grok: !!localStorage.getItem('grok_api_key'),
-            openai: !!localStorage.getItem('openai_api_key')
+            cointracking_api: !!window.globalConfig?.get('cointracking_api_key'),
+            cointracking_secret: !!window.globalConfig?.get('cointracking_api_secret'),
+            coingecko: !!window.globalConfig?.get('coingecko_api_key'),
+            fred: !!window.globalConfig?.get('fred_api_key'),
+            groq: !!window.globalConfig?.get('groq_api_key'),
+            claude: !!window.globalConfig?.get('claude_api_key'),
+            grok: !!window.globalConfig?.get('grok_api_key'),
+            openai: !!window.globalConfig?.get('openai_api_key')
         };
         context.configured_apis = Object.entries(apiKeys)
             .filter(([_, configured]) => configured)
@@ -610,9 +611,9 @@ export async function buildSettingsContext() {
             performance_tracking: localStorage.getItem('enable_performance_tracking') !== 'false'
         };
 
-        // Get AI provider preference
-        context.ai_provider = localStorage.getItem('aiProvider') || 'groq';
-        context.ai_include_docs = localStorage.getItem('aiIncludeDocs') !== 'false';
+        // ✅ USER ISOLATION: Get AI provider preference (from globalConfig)
+        context.ai_provider = window.globalConfig?.get('aiProvider') || 'groq';
+        context.ai_include_docs = window.globalConfig?.get('aiIncludeDocs') !== false;
 
     } catch (error) {
         console.error('[AI Chat] Error building settings context:', error);
