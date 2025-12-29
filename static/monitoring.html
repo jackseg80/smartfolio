@@ -12,16 +12,16 @@
     <style>
         .monitoring-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .kpi-card {
             background: var(--theme-surface);
             border: 1px solid var(--theme-border);
             border-radius: var(--radius-lg);
-            padding: 1.5rem;
+            padding: 1rem;
             position: relative;
             overflow: hidden;
         }
@@ -29,38 +29,79 @@
         .kpi-header {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
         .kpi-icon {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
         }
 
         .kpi-title {
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--theme-text);
         }
 
         .kpi-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
-            margin: 1rem 0;
+            margin: 0.5rem 0;
             transition: color 0.3s ease;
         }
 
         .kpi-details {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--theme-text-muted);
-            line-height: 1.4;
+            line-height: 1.3;
         }
 
         .kpi-trend {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            font-size: 1.2rem;
+            top: 0.75rem;
+            right: 0.75rem;
+            font-size: 1rem;
+        }
+
+        .section-divider {
+            margin: 2rem 0 1.5rem 0;
+            padding-top: 2rem;
+            border-top: 2px solid var(--theme-border);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .filters-compact {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filters-compact label {
+            font-size: 0.8rem;
+            color: var(--theme-text-muted);
+            margin-right: 4px;
+        }
+
+        .filters-compact select {
+            padding: 4px 8px;
+            border: 1px solid var(--theme-border);
+            border-radius: var(--radius-sm);
+            background: var(--theme-surface);
+            color: var(--theme-text);
+            font-size: 0.85rem;
         }
 
         /* Status Colors */
@@ -121,33 +162,17 @@
 </head>
 <body>
     <div class="wrap">
-        <div class="page-header">
-            <h1>🔍 Monitoring</h1>
-        </div>
-
-        <!-- Tabs -->
-        <div class="tabs" style="display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid var(--theme-border); padding-bottom: 8px;">
-            <button class="tab-btn active" data-target="kpis-tab" style="background: var(--brand-primary); color: white; border: none; padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
-                KPIs Système
-            </button>
-            <button class="tab-btn" data-target="alerts-tab" style="background: var(--theme-surface); color: var(--theme-text); border: 1px solid var(--theme-border); padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
-                Alerts History
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="margin: 0;">🔍 Monitoring</h1>
+            <button id="refresh-btn" class="refresh-btn" onclick="refreshAllMetrics()">
+                🔄 Refresh All
             </button>
         </div>
 
-        <!-- Tab Content: KPIs -->
-        <div id="kpis-tab" class="tab-content active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="margin: 0;">KPIs Vitaux</h2>
-                <button id="refresh-btn" class="refresh-btn" onclick="refreshAllMetrics()">
-                    🔄 Refresh
-                </button>
-            </div>
-
-            <!-- Alert Banner -->
-            <div id="alert-banner" class="alert-banner">
-                <strong>⚠️ Alerte Système:</strong> <span id="alert-message"></span>
-            </div>
+        <!-- Alert Banner -->
+        <div id="alert-banner" class="alert-banner">
+            <strong>⚠️ Alerte Système:</strong> <span id="alert-message"></span>
+        </div>
 
             <!-- KPIs Grid -->
         <div class="monitoring-grid">
@@ -212,51 +237,38 @@
             </div>
         </div>
 
-            <div class="last-update">
-                Dernière mise à jour: <span id="global-timestamp">--</span> |
-                Auto-refresh: <span id="auto-refresh-status">Actif (30s)</span>
-            </div>
-        </div>
-
-        <!-- Tab Content: Alerts History -->
-        <div id="alerts-tab" class="tab-content" style="display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="margin: 0;">Alerts History</h2>
-                <button id="refresh-alerts-btn" class="refresh-btn" onclick="window.refreshAlerts?.()">
-                    🔄 Refresh Alerts
-                </button>
+        <!-- Alerts History Section -->
+        <div class="section-divider">
+            <div class="section-header">
+                <h2>📊 Alerts History</h2>
             </div>
 
-            <!-- Filters -->
-            <div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; padding: 12px; background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md);">
-                <div>
-                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Severity</label>
-                    <select id="alerts-severity-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
-                        <option value="">All Severities</option>
-                        <option value="S1">S1 - Info</option>
-                        <option value="S2">S2 - Warning</option>
-                        <option value="S3">S3 - Critical</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Type</label>
-                    <select id="alerts-type-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
-                        <option value="">All Types</option>
-                        <option value="VOL_Q90_CROSS">High Volatility</option>
-                        <option value="REGIME_FLIP">Regime Change</option>
-                        <option value="CONTRADICTION_SPIKE">ML Contradiction</option>
-                        <option value="DECISION_DROP">Low Confidence</option>
-                        <option value="EXEC_COST_SPIKE">High Exec Cost</option>
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 4px; display: block;">Period</label>
-                    <select id="alerts-period-filter" style="padding: 6px 12px; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-surface); color: var(--theme-text);">
-                        <option value="7">Last 7 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
-                </div>
+            <!-- Filters Compact -->
+            <div class="filters-compact">
+                <label>Severity:</label>
+                <select id="alerts-severity-filter">
+                    <option value="">All</option>
+                    <option value="S1">S1</option>
+                    <option value="S2">S2</option>
+                    <option value="S3">S3</option>
+                </select>
+
+                <label style="margin-left: 12px;">Type:</label>
+                <select id="alerts-type-filter">
+                    <option value="">All</option>
+                    <option value="VOL_Q90_CROSS">High Vol</option>
+                    <option value="REGIME_FLIP">Regime</option>
+                    <option value="CONTRADICTION_SPIKE">Contradiction</option>
+                    <option value="DECISION_DROP">Low Conf</option>
+                    <option value="EXEC_COST_SPIKE">Exec Cost</option>
+                </select>
+
+                <label style="margin-left: 12px;">Period:</label>
+                <select id="alerts-period-filter">
+                    <option value="7">7d</option>
+                    <option value="30" selected>30d</option>
+                    <option value="90">90d</option>
+                </select>
             </div>
 
             <!-- Alerts Table -->
@@ -267,11 +279,17 @@
             </div>
 
             <!-- Pagination -->
-            <div id="alerts-pagination" style="display: none; margin-top: 16px; text-align: center; padding: 12px;">
+            <div id="alerts-pagination" style="display: none; margin-top: 12px; text-align: center; padding: 8px;">
                 <button id="alerts-prev-btn" class="refresh-btn" disabled>← Previous</button>
                 <span id="alerts-page-info" style="margin: 0 16px; color: var(--theme-text);">Page 1 of 1</span>
                 <button id="alerts-next-btn" class="refresh-btn" disabled>Next →</button>
             </div>
+        </div>
+
+        <!-- Global Update Info -->
+        <div class="last-update">
+            Dernière mise à jour: <span id="global-timestamp">--</span> |
+            Auto-refresh: <span id="auto-refresh-status">Actif (30s)</span>
         </div>
     </div>
 
@@ -280,36 +298,6 @@
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();  // Vérifie authentification + redirect si nécessaire
     // =================================
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const target = btn.dataset.target;
-
-                // Update buttons
-                document.querySelectorAll('.tab-btn').forEach(b => {
-                    b.classList.remove('active');
-                    b.style.background = 'var(--theme-surface)';
-                    b.style.color = 'var(--theme-text)';
-                    b.style.border = '1px solid var(--theme-border)';
-                });
-                btn.classList.add('active');
-                btn.style.background = 'var(--brand-primary)';
-                btn.style.color = 'white';
-                btn.style.border = 'none';
-
-                // Update content
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.style.display = 'none';
-                });
-                document.getElementById(target).style.display = 'block';
-
-                // Load alerts if switching to alerts tab
-                if (target === 'alerts-tab' && window.refreshAlerts) {
-                    window.refreshAlerts();
-                }
-            });
-        });
 
         // Configuration
         const API_BASE = globalConfig?.get('api_base_url') || window.location.origin;
@@ -549,22 +537,24 @@
         async function refreshAllMetrics() {
             const refreshBtn = document.getElementById('refresh-btn');
             refreshBtn.disabled = true;
-            refreshBtn.textContent = '⏳ Refresh...';
+            refreshBtn.textContent = '⏳ Refreshing...';
 
             try {
+                // Refresh KPIs + Alerts en parallèle
                 await Promise.all([
                     measureLatency(),
                     checkMLErrors(),
                     checkStaleness(),
-                    checkVaR()
+                    checkVaR(),
+                    window.refreshAlerts ? window.refreshAlerts() : Promise.resolve()
                 ]);
 
                 updateDisplay();
             } catch (error) {
-                debugLogger.error('Refresh failed:', error);
+                console.error('Refresh failed:', error);
             } finally {
                 refreshBtn.disabled = false;
-                refreshBtn.textContent = '🔄 Refresh';
+                refreshBtn.textContent = '🔄 Refresh All';
             }
         }
 
@@ -573,6 +563,7 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', () => {
+            // Load tout au démarrage
             refreshAllMetrics();
 
             // Auto-refresh toutes les 30 secondes
@@ -709,15 +700,9 @@
         }
 
         window.refreshAlerts = async function() {
-            const severity = document.getElementById('alerts-severity-filter').value;
-            const type = document.getElementById('alerts-type-filter').value;
-            const period = parseInt(document.getElementById('alerts-period-filter').value);
-
-            const refreshBtn = document.getElementById('refresh-alerts-btn');
-            if (refreshBtn) {
-                refreshBtn.disabled = true;
-                refreshBtn.textContent = '⏳ Loading...';
-            }
+            const severity = document.getElementById('alerts-severity-filter')?.value || '';
+            const type = document.getElementById('alerts-type-filter')?.value || '';
+            const period = parseInt(document.getElementById('alerts-period-filter')?.value || '30');
 
             try {
                 let alerts = await fetchAlertsHistory({ severity, type });
@@ -727,11 +712,6 @@
                 renderAlertsTable(alerts);
             } catch (error) {
                 console.error('Error refreshing alerts:', error);
-            } finally {
-                if (refreshBtn) {
-                    refreshBtn.disabled = false;
-                    refreshBtn.textContent = '🔄 Refresh Alerts';
-                }
             }
         };
 
