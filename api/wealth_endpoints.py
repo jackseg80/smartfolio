@@ -8,7 +8,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, HTTPException, Query, Depends
 
 from adapters import banks_adapter, crypto_adapter, saxo_adapter
-from api.deps import get_active_user
+from api.deps import get_required_user
 from models.wealth import (
     AccountModel,
     InstrumentModel,
@@ -53,7 +53,7 @@ def _ensure_module(module: str) -> None:
 
 @router.get("/patrimoine/items")
 async def list_patrimoine_items(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     category: Optional[str] = Query(None, regex="^(liquidity|tangible|liability|insurance)$"),
     type: Optional[str] = Query(None, description="Item type filter"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of items to return"),
@@ -105,7 +105,7 @@ async def list_patrimoine_items(
 @router.get("/patrimoine/items/{item_id}")
 async def get_patrimoine_item(
     item_id: str,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """Get a specific patrimoine item by ID."""
     from services.wealth.patrimoine_service import get_item
@@ -121,7 +121,7 @@ async def get_patrimoine_item(
 @router.post("/patrimoine/items", status_code=201)
 async def create_patrimoine_item(
     item: "PatrimoineItemInput",
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Create a new patrimoine item for the user.
@@ -146,7 +146,7 @@ async def create_patrimoine_item(
 async def update_patrimoine_item(
     item_id: str,
     item: "PatrimoineItemInput",
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Update an existing patrimoine item.
@@ -176,7 +176,7 @@ async def update_patrimoine_item(
 @router.delete("/patrimoine/items/{item_id}", status_code=204)
 async def delete_patrimoine_item(
     item_id: str,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Delete a patrimoine item.
@@ -203,7 +203,7 @@ async def delete_patrimoine_item(
 
 @router.get("/patrimoine/summary")
 async def get_patrimoine_summary(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Get patrimoine summary for user.
@@ -245,7 +245,7 @@ def _patrimoine_to_bank_account(item: PatrimoineItemOutput) -> BankAccountOutput
 
 @router.get("/banks/accounts", response_model=list[BankAccountOutput])
 async def list_bank_accounts(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> list[BankAccountOutput]:
     """
     List all bank accounts for user with balance_usd calculated.
@@ -273,7 +273,7 @@ async def list_bank_accounts(
 @router.post("/banks/accounts", response_model=BankAccountOutput, status_code=201)
 async def create_bank_account(
     account: BankAccountInput,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> BankAccountOutput:
     """
     Create a new bank account for the user.
@@ -331,7 +331,7 @@ async def create_bank_account(
 async def update_bank_account(
     account_id: str,
     account: BankAccountInput,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> BankAccountOutput:
     """
     Update an existing bank account.
@@ -387,7 +387,7 @@ async def update_bank_account(
 @router.delete("/banks/accounts/{account_id}", status_code=204)
 async def delete_bank_account(
     account_id: str,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Delete a bank account.
@@ -420,7 +420,7 @@ async def delete_bank_account(
 
 
 @router.get("/modules", response_model=List[str])
-async def list_modules(user: str = Depends(get_active_user)) -> List[str]:
+async def list_modules(user: str = Depends(get_required_user)) -> List[str]:
     """Liste les modules wealth disponibles pour l'utilisateur."""
     discovered = []
     for module in _SUPPORTED_MODULES:
@@ -435,7 +435,7 @@ async def list_modules(user: str = Depends(get_active_user)) -> List[str]:
 @router.get("/{module}/accounts", response_model=List[AccountModel])
 async def get_accounts(
     module: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto", description="Crypto source resolver"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
 ) -> List[AccountModel]:
@@ -461,7 +461,7 @@ async def get_accounts(
 @router.get("/{module}/instruments", response_model=List[InstrumentModel])
 async def get_instruments(
     module: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
 ) -> List[InstrumentModel]:
@@ -479,7 +479,7 @@ async def get_instruments(
 @router.get("/{module}/positions", response_model=List[PositionModel])
 async def get_positions(
     module: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
     min_usd_threshold: float = Query(1.0, description="Minimum USD value to filter dust assets"),
@@ -499,7 +499,7 @@ async def get_positions(
 @router.get("/{module}/transactions", response_model=List[TransactionModel])
 async def get_transactions(
     module: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
     start: Optional[str] = Query(None, alias="from"),
@@ -527,7 +527,7 @@ async def get_prices(
     module: str,
     ids: List[str] = Query(..., description="Instrument identifiers"),
     granularity: str = Query("daily", regex="^(daily|intraday)$"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
 ) -> List[PricePoint]:
@@ -548,7 +548,7 @@ async def get_prices(
 async def preview_rebalance(
     module: str,
     payload: Optional[dict] = Body(default=None, description="Module-specific preview payload"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
 ) -> List[ProposedTrade]:
@@ -570,7 +570,7 @@ async def preview_rebalance(
 
 @router.get("/global/summary")
 async def global_summary(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("auto", description="Crypto source resolver"),
     min_usd_threshold: float = Query(1.0, description="Minimum USD value to filter dust assets"),
     bourse_file_key: Optional[str] = Query(None, description="Bourse file key for specific CSV selection"),
@@ -796,7 +796,7 @@ async def global_summary(
 
 @router.get("/banks/export-lists")
 async def export_bank_lists(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$")
 ):
     """
@@ -866,7 +866,7 @@ async def export_bank_lists(
 
 @router.get("/patrimoine/export-lists")
 async def export_patrimoine_lists(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$")
 ):
     """

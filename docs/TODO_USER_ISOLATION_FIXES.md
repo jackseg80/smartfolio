@@ -186,38 +186,56 @@ Object.keys(localStorage).filter(k => k.startsWith('smartfolio_settings_'));
 
 ---
 
-### 3. get_active_user() Fallback Silencieux
-**Fichier:** `api/deps.py:109-164`
+### 7. get_active_user() → get_required_user() Migration ✅
 
-**Problème:**
+**Fichiers:** `api/risk_endpoints.py`, `api/portfolio_endpoints.py`, `api/wealth_endpoints.py`
+
+**Fix appliqué:**
+
+- **27 endpoints sensibles migrés** vers `get_required_user()`:
+  - `api/risk_endpoints.py`: 3 endpoints (dashboard, alerts, monitoring)
+  - `api/portfolio_endpoints.py`: 4 endpoints (metrics, snapshot, trend, alerts)
+  - `api/wealth_endpoints.py`: 20 endpoints (patrimoine, banks, transactions)
+
+**Impact:** Header `X-User` maintenant OBLIGATOIRE pour endpoints sensibles
+
+**Avant (fallback silencieux):**
+
 ```python
-def get_active_user(x_user: Optional[str] = Header(None)) -> str:
-    if not x_user:
-        return "demo"  # ❌ Fallback silencieux sans erreur
+# Client oublie header X-User → fallback "demo" SANS erreur
+curl "http://localhost:8080/api/risk/dashboard"
+# ✅ 200 OK (données "demo") ❌ PAS DÉTECTÉ
 ```
 
-**Impact:**
-- Si client oublie header `X-User` → fallback "demo" SANS erreur
-- Données renvoyées: portfolio de "demo" au lieu de "jack"
+**Après (erreur explicite):**
 
-**Fix:**
 ```python
-# Option A: Rendre X-User obligatoire (breaking change)
-def get_required_user(x_user: str = Header(...)) -> str:
-    return x_user
+# Client oublie header X-User → erreur 422
+curl "http://localhost:8080/api/risk/dashboard"
+# ❌ 422 {"detail":[{"loc":["header","X-User"],"msg":"field required"}]}
 
-# Option B: Log warning + metric (non-breaking)
-def get_active_user(x_user: Optional[str] = Header(None)) -> str:
-    if not x_user:
-        logger.warning("Missing X-User header, using default 'demo'")
-        # Emit metric for monitoring
-        return get_default_user()
-    return x_user
+# Avec header X-User → OK
+curl -H "X-User: demo" "http://localhost:8080/api/risk/dashboard"
+# ✅ 200 OK (données "demo")
 ```
 
-**Recommandation:** Migrer endpoints sensibles (risk, portfolio, wealth) vers `get_required_user()`
+**Test validation:**
 
-**Effort:** 2h (migration progressive + tests)
+```powershell
+# Test 1: Risk endpoint sans header → Erreur 422
+curl "http://localhost:8080/api/risk/dashboard"
+
+# Test 2: Portfolio endpoint sans header → Erreur 422
+curl "http://localhost:8080/api/portfolio/metrics"
+
+# Test 3: Wealth endpoint sans header → Erreur 422
+curl "http://localhost:8080/api/wealth/patrimoine/summary"
+
+# Test 4: Avec header X-User → OK
+curl -H "X-User: demo" "http://localhost:8080/api/risk/dashboard"
+```
+
+**Note:** `get_active_user()` conservé pour endpoints non-critiques (compatibilité backward)
 
 ---
 

@@ -14,7 +14,7 @@ from typing import Dict, Any
 import logging
 
 from services.portfolio import PortfolioAnalytics
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.utils.formatters import success_response, error_response
 
 # Use BalanceService instead of importing from api.main to avoid circular dependency
@@ -54,7 +54,7 @@ def _to_rows(items):
 
 @router.get("/portfolio/metrics")
 async def portfolio_metrics(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("cointracking"),
     anchor: str = Query("prev_snapshot"),  # "midnight", "prev_snapshot", "prev_close"
     window: str = Query("24h"),  # "24h", "7d", "30d", "ytd"
@@ -105,7 +105,7 @@ async def portfolio_metrics(
 
 @router.post("/portfolio/snapshot")
 async def save_portfolio_snapshot(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("cointracking"),
     min_usd: float = Query(1.0)  # Default 1.0 to match dashboard behavior
 ):
@@ -145,7 +145,7 @@ async def portfolio_trend(days: int = Query(30, ge=1, le=365)):
 
 @router.get("/portfolio/alerts")
 async def get_portfolio_alerts(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("cointracking"),
     drift_threshold: float = Query(10.0)
 ):
@@ -263,7 +263,7 @@ async def get_portfolio_alerts(
 
 @router.get("/portfolio/export-lists")
 async def export_crypto_lists(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("cointracking"),
     format: str = Query("json", regex="^(json|csv|markdown)$"),
     min_usd: float = Query(1.0)

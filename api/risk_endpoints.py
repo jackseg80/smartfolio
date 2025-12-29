@@ -13,7 +13,7 @@ import math
 import numpy as np
 
 from fastapi import APIRouter, HTTPException, Query, Depends
-from api.deps import get_active_user
+from api.deps import get_required_user
 from pydantic import BaseModel
 
 from services.risk_management import risk_manager, RiskMetrics, CorrelationMatrix, StressTestResult, StressScenario, PerformanceAttribution, BacktestResult, RiskAlert, AlertSeverity, AlertCategory
@@ -272,7 +272,7 @@ async def get_risk_system_status():
 @router.get("/metrics", response_model=RiskMetricsResponse)
 async def get_portfolio_risk_metrics(
     price_history_days: int = Query(30, ge=10, le=365, description="Nombre de jours d'historique"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Calcule les métriques de risque complètes du portfolio
@@ -368,7 +368,7 @@ async def get_portfolio_risk_metrics(
 async def get_correlation_matrix(
     lookback_days: int = Query(30, ge=10, le=365, description="Nombre de jours pour calcul corrélation"),
     source: str = Query("cointracking", description="Source de données: stub_balanced, cointracking, ou cointracking_api"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Calcule la matrice de corrélation temps réel entre assets
@@ -589,7 +589,7 @@ async def get_risk_dashboard(
     min_usd: float = Query(1.0, description="Seuil minimum en USD"),
     price_history_days: int = Query(30, ge=10, le=365, description="Fenêtre d'historique pour métriques (jours)"),
     lookback_days: int = Query(30, ge=10, le=365, description="Fenêtre pour corrélations (jours)"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     # 🆕 Risk Version (Phase 5 - V2 Active)
     risk_version: str = Query("v2_active", description="Version Risk Score: legacy | v2_shadow | v2_active"),
     # 🆕 Dual Window System parameters
