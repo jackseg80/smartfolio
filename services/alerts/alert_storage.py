@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Any, Tuple
 from filelock import FileLock
 from contextlib import contextmanager
+from enum import Enum
 
 try:
     import redis
@@ -29,6 +30,27 @@ except ImportError:
 from .alert_types import Alert, AlertType, AlertSeverity
 
 logger = logging.getLogger(__name__)
+
+def _serialize_for_json(obj: Any) -> Any:
+    """
+    Serializer custom pour gérer Enum, datetime et autres objets non-JSON-serializable
+
+    Args:
+        obj: Objet à serializer
+
+    Returns:
+        Version JSON-serializable de l'objet
+    """
+    if isinstance(obj, Enum):
+        return obj.value
+    elif isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, dict):
+        return {k: _serialize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [_serialize_for_json(item) for item in obj]
+    else:
+        return obj
 
 class AlertStorage:
     """
@@ -712,8 +734,10 @@ class AlertStorage:
             return {"alerts": [], "metadata": {}}
     
     def _save_json_data(self, data: Dict[str, Any]):
-        """Sauvegarde les données JSON"""
-        self.json_file.write_text(json.dumps(data, indent=2))
+        """Sauvegarde les données JSON avec serialization custom pour Enum/datetime"""
+        # Serializer les objets non-JSON-serializable (Enum, datetime, etc.)
+        serialized_data = _serialize_for_json(data)
+        self.json_file.write_text(json.dumps(serialized_data, indent=2))
     
     def _is_duplicate(self, alert: Alert) -> bool:
         """
@@ -811,24 +835,41 @@ class AlertStorage:
                 local dedup_key = ARGV[4]
                 local dedup_ttl = ARGV[5]
                 local is_active = ARGV[6]
-                
+
                 -- Check dedup first
                 if redis.call('EXISTS', dedup_key) == 1 then
                     return {0, 'duplicate'}
                 end
-                
+
                 -- Set dedup with TTL
                 redis.call('SETEX', dedup_key, dedup_ttl, '1')
-                
+
                 -- Store in ZSET (timeline) and HASH (data)
                 redis.call('ZADD', KEYS[1], created_timestamp, alert_id)
-                redis.call('HSET', KEYS[2] .. alert_id, unpack(cjson.decode(alert_data)))
-                
+
+                -- Convert JSON dict to flat array for HSET: [key1, val1, key2, val2, ...]
+                local alert_table = cjson.decode(alert_data)
+                local fields = {}
+                for key, value in pairs(alert_table) do
+                    table.insert(fields, key)
+                    -- Convert value to string (handles nested tables, numbers, etc.)
+                    if type(value) == 'table' then
+                        table.insert(fields, cjson.encode(value))
+                    else
+                        table.insert(fields, tostring(value))
+                    end
+                end
+
+                -- Store fields in hash (only if fields exist)
+                if #fields > 0 then
+                    redis.call('HSET', KEYS[2] .. alert_id, unpack(fields))
+                end
+
                 -- Add to active set if active
                 if is_active == '1' then
                     redis.call('SADD', KEYS[3], alert_id)
                 end
-                
+
                 return {1, 'stored'}
             """)
             
@@ -935,12 +976,15 @@ class AlertStorage:
             return False, "redis_unavailable"
             
         try:
-            # Prepare data
+            # Prepare data with custom serialization for Enum/datetime
             alert_dict = alert.dict()
             alert_dict['created_at'] = alert.created_at.isoformat()
-            
+
+            # Serialize non-JSON-serializable objects (Phase Enum, etc.)
+            serialized_dict = _serialize_for_json(alert_dict)
+
             # Convert to JSON for Lua script
-            alert_data = json.dumps(alert_dict)
+            alert_data = json.dumps(serialized_dict)
             created_timestamp = alert.created_at.timestamp()
             
             # Create dedup key with stable signature

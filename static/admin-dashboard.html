@@ -1241,8 +1241,9 @@
             });
         });
 
-        // Check URL hash on load
-        window.addEventListener('DOMContentLoaded', () => {
+        // Check URL hash on load (execute immediately, not in DOMContentLoaded)
+        // This function runs when the script loads (after DOM is ready)
+        function initializeTabFromHash() {
             const hash = window.location.hash.substring(1);
             if (hash) {
                 const btn = document.querySelector(`[data-tab="${hash}"]`);
@@ -1253,6 +1254,17 @@
                 }
             } else {
                 loadTabContent('overview');
+            }
+        }
+
+        // Also listen for hash changes (when clicking browser back/forward)
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                const btn = document.querySelector(`[data-tab="${hash}"]`);
+                if (btn) {
+                    btn.click();
+                }
             }
         });
 
@@ -2897,6 +2909,9 @@
         window.showVersionHistory = showVersionHistory;
         window.showConfigureTrainModal = showConfigureTrainModal;  // NEW (Phase 2)
         window.submitTraining = submitTraining;  // NEW (Phase 2)
+
+        // Initialize tab from URL hash (must be called after all functions are defined)
+        initializeTabFromHash();
     </script>
 </body>
 </html>
