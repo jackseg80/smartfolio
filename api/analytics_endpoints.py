@@ -3,9 +3,13 @@ API Endpoints pour l'analytics et l'historique
 
 Ces endpoints gèrent l'historique des rebalancement et les analyses
 de performance pour optimiser les stratégies.
+
+⚠️ TODO (User Isolation): HistoryManager utilise un storage global (data/rebalance_history.json)
+   qui n'isole PAS par user_id. Cache keys incluent maintenant user pour éviter cross-contamination,
+   mais storage backend reste partagé. Refactor nécessaire pour isolation complète.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body
+from fastapi import APIRouter, HTTPException, Query, Body, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional, Tuple
 import logging
@@ -14,12 +18,13 @@ from datetime import datetime
 from services.analytics.history_manager import history_manager, SessionStatus, PortfolioSnapshot
 from services.analytics.performance_tracker import performance_tracker
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
+from api.deps import get_active_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
-# Cache pour les analytics
+# Cache pour les analytics (isolé par user_id dans les cache keys)
 _analytics_cache = {}
 
 # Models pour les requêtes/réponses
@@ -317,17 +322,22 @@ async def get_sessions(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/performance/summary")
-async def get_performance_summary(days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse en jours")):
+async def get_performance_summary(
+    days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse en jours"),
+    user: str = Depends(get_active_user)
+):
     """
     Obtenir un résumé des performances
-    
+
     Calcule les métriques de performance globales pour la période donnée.
+
+    🔒 User Isolation: Cache key inclut user_id pour éviter cross-contamination
     """
-    # Vérifier le cache (TTL de 5 minutes pour les résumés)
-    cache_key = f"perf_summary_{days_back}"
+    # 🔒 FIX: Inclure user dans cache key pour isolation multi-tenant
+    cache_key = f"perf_summary:{user}:{days_back}"
     cached_result = cache_get(_analytics_cache, cache_key, 300)
     if cached_result:
-        logger.info(f"Returning cached performance summary for {days_back} days")
+        logger.info(f"Returning cached performance summary for user={user}, days={days_back}")
         return cached_result
     
     try:
@@ -344,18 +354,23 @@ async def get_performance_summary(days_back: int = Query(default=30, ge=1, le=36
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/performance/detailed")
-async def get_detailed_performance_analysis(days_back: int = Query(default=30, ge=1, le=365)):
+async def get_detailed_performance_analysis(
+    days_back: int = Query(default=30, ge=1, le=365),
+    user: str = Depends(get_active_user)
+):
     """
     Obtenir une analyse de performance détaillée
-    
+
     Analyse avancée des performances avec comparaison des stratégies
     et recommandations d'optimisation.
+
+    🔒 User Isolation: Cache key inclut user_id pour éviter cross-contamination
     """
-    # Vérifier le cache (TTL de 10 minutes pour les analyses détaillées)
-    cache_key = f"perf_detailed_{days_back}"
+    # 🔒 FIX: Inclure user dans cache key pour isolation multi-tenant
+    cache_key = f"perf_detailed:{user}:{days_back}"
     cached_result = cache_get(_analytics_cache, cache_key, 600)
     if cached_result:
-        logger.info(f"Returning cached detailed analysis for {days_back} days")
+        logger.info(f"Returning cached detailed analysis for user={user}, days={days_back}")
         return cached_result
     
     try:
