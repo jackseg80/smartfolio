@@ -41,10 +41,13 @@ PAGE_DOC_FILES: Dict[str, list] = {
     ],
     "wealth-dashboard": [
         "docs/PATRIMOINE_MODULE.md"
+    ],
+    "settings": [
+        "docs/AI_CHAT_GLOBAL.md"
     ]
 }
 
-MAX_DOC_CHARS = 800  # Max chars per doc file (token budget control)
+MAX_DOC_CHARS = 4000  # Max chars per doc file (~1000 tokens) - sections complètes avec formules
 
 
 def _read_markdown_file(file_path: Path) -> Optional[str]:
@@ -116,7 +119,7 @@ def _extract_doc_summary(file_path: Path, max_chars: int = MAX_DOC_CHARS) -> Opt
     summary_lines = []
     current_chars = 0
 
-    for line in lines[:80]:  # First 80 lines max
+    for line in lines[:200]:  # First 200 lines max - couvre les formules et architecture
         if current_chars + len(line) > max_chars:
             break
         summary_lines.append(line)
@@ -274,85 +277,191 @@ def _get_fallback_knowledge() -> str:
 """
 
 
-# Page-specific knowledge subsets (static - low change frequency)
+# Page-specific knowledge subsets (static - enriched with formulas Dec 2025)
 PAGE_KNOWLEDGE: Dict[str, str] = {
     "risk-dashboard": """
 ## RISK DASHBOARD SPECIFICS
 
-Focus on:
-- Risk Score interpretation (0-100, higher = more robust)
-- VaR 95%: Expected maximum loss
-- Max Drawdown: Worst decline from peak
-- Sharpe/Sortino: Risk-adjusted returns
-- HHI: Concentration index (>2500 = danger)
-- Market Cycles: BTC/ETH/SPY regime detection
+### Risk Score - Calcul et Interprétation
+- **Échelle**: 0-100 où **PLUS HAUT = PLUS ROBUSTE/SÛR** (vert = bon)
+- **Composants**: Volatilité, Concentration (HHI), Drawdown, Sharpe ratio
+- ❌ **JAMAIS inverser**: Ne PAS utiliser `100 - riskScore`
+- **Interprétation**: 80+ = excellent, 60-80 = bon, 40-60 = attention, <40 = risque élevé
 
-Alerts should be triaged by severity (S1 critical → S3 info).
+### Métriques de Risque Clés
+- **VaR 95%**: Perte maximale attendue (95% confiance) sur 1 jour
+- **Max Drawdown**: Pire baisse cumulée depuis le plus haut historique
+- **HHI (Herfindahl-Hirschman Index)**: Concentration du portefeuille
+  - Formule: Σ(weight_i²) où weight_i = poids de l'asset i
+  - Plus HHI élevé = plus concentré = plus risqué
+  - Utilisé dans structural_score avec seuil 0.25
+- **Sharpe Ratio**: Rendement excédentaire / volatilité (>1 = bon, >2 = excellent)
+- **Sortino Ratio**: Comme Sharpe mais pénalise seulement la volatilité négative
+
+### Market Cycles - Détection de Phase
+- **Cycle Score < 70**: Phase **BEARISH** → Allocation conservatrice, plus de stables
+- **Cycle Score 70-90**: Phase **MODERATE** → Allocation équilibrée
+- **Cycle Score ≥ 90**: Phase **BULLISH** → Allocation agressive, floors crypto relevés
+
+### Alertes par Sévérité
+- **S1 (Critical)**: Action immédiate requise (ex: VaR dépassé, drawdown extrême)
+- **S2 (Warning)**: Attention requise (ex: concentration élevée)
+- **S3 (Info)**: Surveillance recommandée (ex: volatilité en hausse)
 """,
 
     "analytics-unified": """
 ## ANALYTICS & DECISION INDEX SPECIFICS
 
-Focus on:
-- Decision Index: 65 (valid) or 45 (invalid) - NOT a weighted sum!
-- ML Sentiment: Fear (<25) vs Greed (>75)
-- Phase: Bullish (cycle ≥90), Moderate (70-90), Bearish (<70)
-- Regime Score: 0.5×CCS + 0.3×OnChain + 0.2×Risk (separate from DI!)
+### Decision Index (DI) - Calcul EXACT
+- **Échelle**: 0-100 (valeur continue, pas binaire!)
+- **Formule**: `DI = (Cycle×w₁ + OnChain×w₂ + Risk×w₃ + Sentiment×w₄) × phase_factor`
+- **4 Piliers** (pas 3!): Cycle, OnChain, Risk, **Sentiment ML**
+- **Poids adaptatifs** (varient selon cycle):
+  - **Base**: Cycle 50%, OnChain 30%, Risk 20%, Sentiment variable
+  - **Bullish (≥90)**: Cycle 65%, OnChain 25%, Risk 10% (boost cycle fort)
+  - **Moderate (70-89)**: Cycle 55%, OnChain 28%, Risk 17%
+- **Phase adjustment**: Score × phase_factor (ajustement selon phase marché)
+- **Source**: Backend strategy_registry.py + Frontend unified-insights-v2.js
 
-Phase and Regime can diverge - this is NORMAL.
+⚠️ **CONFUSION "65/45"**: C'est un score de QUALITÉ d'allocation (total_check.isValid), PAS le DI!
+Le DI est toujours une moyenne pondérée continue 0-100.
+
+### Score de Régime (concept documentaire)
+- **Nature**: Métrique composite pour communication (pas calculée en backend)
+- **Interprétation**: Combinaison qualitative des signaux Cycle/OnChain/Risk
+- **Régimes**: Accumulation (<40), Expansion (40-69), Euphorie (70-89), Contraction (≥90)
+- ⚠️ Le DI utilise des poids adaptatifs DIFFÉRENTS de toute formule fixe
+
+### ML Sentiment - Interprétation
+- **Échelle**: 0-100 (converti de sentiment ML [-1, +1] via `50 + score × 50`)
+- **< 25 (Extreme Fear)**: Override défensif → Réduit risky assets (Memecoins ×0.3, Gaming ×0.5)
+- **25-45 (Fear)**: Prudence recommandée
+- **45-55 (Neutral)**: Conditions normales
+- **55-75 (Greed)**: Conditions favorables
+- **> 75 (Extreme Greed)**: Prise de profits recommandée
+- **Source**: `/api/ml/sentiment/unified` (agrégé ML, PAS l'index alternative.me!)
+
+### Phase vs Régime - Distinction IMPORTANTE
+- **Phase**: Basée UNIQUEMENT sur Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
+- **Régime**: Basé sur Score de Régime (Accumulation, Expansion, Euphorie, Contraction)
+- ⚠️ Phase "bearish" + Régime "Expansion" est NORMAL et ne doit pas être forcé à converger!
+
+### Overrides Contextuels (appliqués à l'allocation)
+1. **ML Sentiment < 25**: Force allocation défensive (réduit risky assets)
+2. **Contradiction élevée**: Réduit speedMultiplier (0.6× si ≥3 signaux, 0.8× si ≥2)
+3. **Structure Score < 50**: +10 pts stables + cap réduit (-0.5%)
 """,
 
     "dashboard": """
 ## DASHBOARD SPECIFICS
 
-Focus on:
-- P&L Today: Daily snapshot performance
-- Cross-asset allocation: Crypto vs Bourse vs Wealth
-- Market regime: Overall market health (BTC/ETH/SPY)
-- Global risk score: Portfolio-wide risk assessment
+### Vue Globale Cross-Asset
+- **Crypto**: Portefeuille crypto (BTC, ETH, altcoins) via CoinTracking
+- **Bourse**: Actions et ETFs via Saxo Bank
+- **Patrimoine**: Liquidités, biens tangibles, passifs
 
-This is the overview page - summarize high-level insights.
+### P&L Today
+- Variation journalière basée sur snapshot de minuit
+- Format: +/-XX.XX% (€XX.XX)
+- Comparaison vs snapshot précédent
+
+### Allocation Globale
+- Répartition entre Crypto / Actions / Liquidités / Autres
+- Targets optimaux vs allocation actuelle
+
+### Market Analytics (résumé)
+- **Decision Index**: 0-100 (moyenne pondérée adaptative des 4 piliers)
+- **ML Sentiment**: 0-100 (Fear/Neutral/Greed)
+- **Risk Score**: 0-100 (higher = safer)
+- **Régime**: Accumulation/Expansion/Euphorie/Contraction
+
+Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécialisées.
 """,
 
     "saxo-dashboard": """
 ## SAXO (BOURSE) DASHBOARD SPECIFICS
 
-Focus on:
-- Stock positions: GICS 11 sectors
-- Stop Loss recommendations: 6 methods, R/R ratio importance
-- Market Opportunities: 88 blue-chips + 45 ETFs, global coverage
-- Sector gaps: Under/over-represented sectors vs targets
-- Risk metrics: Beta, volatility, earnings risk
+### Stop Loss - 6 Méthodes de Calcul
+1. **Trailing Stop** (NEW): Pour positions avec >20% gain latent, protège profits avec trailing -15% à -30% from ATH
+2. **Fixed Variable** ✅ (RECOMMANDÉ): Adaptatif selon volatilité - 4% (low vol), 6% (moderate), 8% (high vol)
+3. **ATR 2x**: Multiplicateur ATR selon régime marché (1.5x-2.5x)
+4. **Technical Support**: Basé sur MA20/MA50
+5. **Volatility 2σ**: 2 écarts-types statistiques
+6. **Fixed %**: Pourcentage fixe (fallback legacy)
 
-Fixed Variable SL is recommended (backtest-proven winner).
+### R/R Ratio (Risk/Reward)
+- ✅ **≥2.0**: Bon trade (risque acceptable vs potentiel)
+- ⚠️ **1.5-2.0**: Trade acceptable avec prudence
+- ❌ **<1.5**: Trade NON recommandé (risque trop élevé vs reward)
+
+### Market Opportunities System
+- **Gaps sectoriels**: Écart entre allocation actuelle et cibles optimales
+- **Score opportunité**: Momentum 40% + Value 30% + Diversification 30%
+- **Univers**: 88 blue-chips (US + Europe + Asia) + ~36 ETFs (sectoriels + géographiques)
+- **Horizons**: Short (1-3M), Medium (6-12M), Long (2-3Y)
+
+### Suggested Sales
+- Maximum 30% par position
+- Top 2 holdings protégés (jamais vendus)
+- Détention minimum 30 jours
+- Respect des trailing stops
 """,
 
     "wealth-dashboard": """
 ## WEALTH DASHBOARD SPECIFICS
 
-Focus on:
-- Net worth: Assets - Liabilities
-- Liquidity: Bank accounts, available cash
-- Asset diversification: Real estate, investments, liquid
-- Liability management: Loans, mortgages
-- Insurance coverage: Life, property, health
+### Patrimoine Net
+- **Formule**: Total Actifs - Total Passifs
+- **Actifs**: Liquidités + Biens tangibles + Investissements + Assurances
+- **Passifs**: Prêts + Hypothèques + Dettes
 
-Balance sheet analysis - assets vs liabilities.
+### Catégories d'Actifs
+- **Liquidités**: Comptes bancaires, épargne disponible
+- **Biens tangibles**: Immobilier, véhicules, objets de valeur
+- **Assurances**: Valeur de rachat assurance-vie
+- **Investissements**: Crypto + Bourse (cross-référencés)
+
+### Ratio d'Endettement
+- **Formule**: (Total Passifs / Total Actifs) × 100
+- **< 30%**: Situation saine
+- **30-50%**: Endettement modéré
+- **> 50%**: Attention requise
+
+### Analyse Balance Sheet
+- Équilibre actifs vs passifs
+- Liquidité disponible pour urgences
+- Diversification du patrimoine
 """,
 
     "settings": """
 ## SETTINGS PAGE SPECIFICS
 
-Focus on:
-- Configuration review: User settings, preferences, active source
-- API Keys status: Which providers configured (CoinTracking, CoinGecko, FRED, AI providers)
-- Saxo OAuth: Connection status, expiration, environment (sim/live)
-- AI Providers: Groq (free), Claude (premium), OpenAI, Grok
-- Data sources: cointracking (CSV), cointracking_api (API), saxobank
-- Features: CoinGecko classification, snapshots, performance tracking
+### Configuration Utilisateur
+- **User ID**: Identifiant unique (multi-tenant isolation)
+- **Source Active**: cointracking (CSV) ou cointracking_api (API temps réel)
+- **Devise d'Affichage**: USD, EUR, CHF, etc.
+- **Thème**: Dark/Light/Auto
 
-NEVER expose actual API key values - only report if configured (true/false).
-Recommend missing critical keys: CoinTracking API for real-time, Groq for free AI chat.
+### API Keys (Status uniquement - jamais les valeurs!)
+- **CoinTracking**: API + Secret pour données temps réel
+- **CoinGecko**: Classification et prix crypto
+- **FRED**: Données macro-économiques
+- **AI Providers**: Groq (gratuit), Claude, OpenAI, Grok
+
+### Saxo OAuth
+- **Status**: Connected/Disconnected
+- **Environment**: SIM (simulation) ou LIVE (production)
+- **Expiration**: Date d'expiration du token
+
+### AI Chat Configuration
+- **Provider par défaut**: Groq (gratuit) ou Claude (premium)
+- **Include Docs**: Inclusion de la knowledge base
+- **Token Budget**: ~3500 tokens par requête
+
+### Recommandations
+- Configurer CoinTracking API pour données temps réel
+- Configurer Groq API pour AI Chat gratuit
+- Connecter Saxo OAuth pour données bourse
 """
 }
 

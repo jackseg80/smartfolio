@@ -23,6 +23,45 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/ai", tags=["AI Chat"])
 
+# Page ID mapping for robust page name extraction
+PAGE_ID_MAPPING = {
+    "analytics unified": "analytics-unified",
+    "risk dashboard": "risk-dashboard",
+    "saxo dashboard": "saxo-dashboard",
+    "wealth dashboard": "wealth-dashboard",
+    "dashboard": "dashboard",
+    "settings": "settings"
+}
+
+
+def _extract_page_id(page_name: str) -> str:
+    """
+    Extract page ID from page name for knowledge base lookup.
+
+    Examples:
+        'Analytics Unified - ML Analysis' → 'analytics-unified'
+        'Risk Dashboard - Risk Analysis' → 'risk-dashboard'
+        'Dashboard - Global Portfolio View' → 'dashboard'
+
+    Args:
+        page_name: Full page name from context
+
+    Returns:
+        Normalized page ID for PAGE_DOC_FILES and PAGE_KNOWLEDGE lookup
+    """
+    if not page_name:
+        return ""
+
+    # Normalize: lowercase, split on " - " to get first part
+    normalized = page_name.lower().split(" - ")[0].strip()
+
+    # Try direct mapping first
+    if normalized in PAGE_ID_MAPPING:
+        return PAGE_ID_MAPPING[normalized]
+
+    # Fallback: replace spaces with dashes
+    return normalized.replace(" ", "-")
+
 # Provider configurations
 PROVIDERS = {
     "groq": {
@@ -999,9 +1038,7 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
     # Add documentation knowledge if requested
     if include_docs:
         page = context.get("page", "")
-        # Extract page identifier from full page name (e.g., "Risk Dashboard" → "risk-dashboard")
-        page_id = page.lower().replace(" ", "-").split("-")[0:2]
-        page_id = "-".join(page_id) if page_id else ""
+        page_id = _extract_page_id(page)
 
         knowledge = get_knowledge_context(page_id)
         lines.append("\n" + knowledge)
