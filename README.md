@@ -38,6 +38,10 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
   - 🔄 Auto-refresh: Knowledge base reloads from .md files (5-min cache TTL)
 - **Advanced ML**: LSTM & Transformers for volatility and trend prediction.
 - **Risk Score V2**: Unified "Robustness Score" (0-100) across all asset classes.
+- **Stress Testing & Monte Carlo** (Dec 2025): Real portfolio simulations
+  - 🎲 **Monte Carlo**: 10,000 simulations with historical distributions (VaR/CVaR, loss probabilities)
+  - 📉 **Stress Tests**: 6 crisis scenarios (2008, COVID-19, China ban, Tether collapse, Fed hike, Exchange hack)
+  - 📊 Interactive charts with on-demand calculation (10-30 sec, sessionStorage cache)
 - **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Calcul: `50 + (sentiment_ml × 50)` où sentiment ∈ [-1, 1].
 - **Multi-Tenant**: Complete isolation of data and configurations per user.
 

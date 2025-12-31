@@ -510,6 +510,114 @@ ethTarget = (baseEthRatio / baseTotal) × nonStablesSpace
 - [`docs/STOP_LOSS_BACKTEST_RESULTS.md`](docs/STOP_LOSS_BACKTEST_RESULTS.md) - Backtest validation
 - [`docs/STOP_LOSS_SYSTEM.md`](docs/STOP_LOSS_SYSTEM.md) - Architecture système
 
+### Stress Testing & Monte Carlo Simulation (Dec 2025)
+
+**Système d'analyse de risque avancé** avec simulations réelles sur le portfolio ([services/risk/](services/risk/)):
+
+**Status:** ✅ **100% Production Ready** - Stress testing + Monte Carlo avec régularisation SVD
+
+#### **1. Stress Testing - Scénarios de Crise Historiques**
+
+**6 scénarios calibrés** ([stress_testing.py](services/risk/stress_testing.py)):
+
+1. **📉 Crise Financière 2008** (-45% à -60%, 6-12 mois, probabilité 2%/10 ans)
+2. **🦠 COVID-19 Mars 2020** (-35% à -50%, 2-6 mois, probabilité 5%/10 ans)
+3. **🇨🇳 Interdiction Crypto Chine** (-25% à -40%, 3-9 mois, probabilité 10%/10 ans)
+4. **💰 Effondrement Tether** (-30% à -55%, 1-4 mois, probabilité 8%/10 ans)
+5. **🏦 Hausse Taux Fed d'Urgence** (-20% à -35%, 6-18 mois, probabilité 15%/10 ans)
+6. **🔓 Hack Exchange Majeur** (-15% à -30%, 1-3 mois, probabilité 20%/10 ans)
+
+**Calculs:**
+- Shocks différenciés par groupe d'assets (Taxonomy)
+- Ex: DeFi -70% en 2008, Memecoins -80%, Stablecoins -5%
+- Impact réel sur portfolio actuel
+- Top 3 pires/meilleurs groupes
+
+**API Endpoints:**
+```bash
+GET  /api/risk/stress-scenarios           # Liste scénarios disponibles
+POST /api/risk/stress-test-portfolio      # Exécute stress test réel
+```
+
+**Frontend** ([risk-dashboard.html](static/risk-dashboard.html)):
+- Onglet "Advanced Risk" → Section Stress Testing
+- Clic sur scénario → Modal avec impact détaillé
+- Perte totale %, valeur finale, breakdown par groupe
+
+#### **2. Monte Carlo Simulation - 10,000 Scénarios**
+
+**Simulations probabilistes** avec distributions historiques réelles ([monte_carlo.py](services/risk/monte_carlo.py)):
+
+**Features:**
+- **10,000 simulations** basées sur rendements historiques (365 jours)
+- **Préserve corrélations** entre assets (matrice de covariance)
+- **Régularisation SVD** (epsilon 1e-6) pour éviter "SVD did not converge"
+- **Horizon paramétrable**: 1-365 jours (défaut: 30 jours)
+
+**Métriques calculées:**
+- Statistiques: moyenne, médiane, écart-type des rendements
+- Scénarios extrêmes: P1 (pire), P5, P95, P99 (meilleur)
+- Probabilités de pertes: >5%, >10%, >20%, >30%
+- VaR/CVaR Monte Carlo: 95%, 99%
+- Distribution complète (percentiles)
+
+**API Endpoint:**
+```bash
+GET /api/risk/monte-carlo?num_simulations=10000&horizon_days=30
+# Returns: stats, scenarios, loss probabilities, VaR/CVaR, distribution
+```
+
+**Frontend** ([risk-dashboard.html](static/risk-dashboard.html)):
+- Onglet "Advanced Risk" → Section Monte Carlo
+- **On-demand calculation** (bouton trigger, 10-30 sec)
+- **SessionStorage cache** (évite recalcul à chaque refresh)
+- **Graphique interactif** (Chart.js):
+  - Histogramme coloré: vert (gains), orange (pertes), rouge (VaR breach)
+  - Marqueurs VaR 95% et médiane
+  - Tooltips avec rendement exact + fréquence
+- Bouton "🔄 Re-calculer" pour données fraîches
+
+**Exemple Résultat:**
+```javascript
+{
+  "simulation_params": {
+    "num_simulations": 10000,
+    "horizon_days": 30,
+    "num_assets": 48
+  },
+  "statistics": {
+    "mean_return_pct": 2.45,
+    "median_return_pct": 2.12,
+    "std_return_pct": 15.32
+  },
+  "scenarios": {
+    "worst_case_pct": -42.5,  // P1
+    "best_case_pct": 58.3     // P99
+  },
+  "loss_probabilities": {
+    "prob_loss_20": 0.123     // 12.3% chance de perte >20%
+  },
+  "risk_metrics": {
+    "var_95_pct": 18.7,
+    "cvar_95_pct": 25.4
+  }
+}
+```
+
+**UX Workflow:**
+1. Ouvrir "Advanced Risk" tab
+2. Voir bouton "🚀 Lancer la Simulation"
+3. Clic → Loading 10-30 sec (animation)
+4. Résultats + graphique affichés
+5. Badge "📦 Mis en cache" (sessionStorage)
+6. Refresh page → Résultats instantanés (cache)
+7. Besoin de refaire? → Bouton "🔄 Re-calculer"
+
+**Performance:**
+- Durée: 10-30 secondes (48 assets, 10k simulations)
+- Cache session: instantané après 1er calcul
+- Fallback graceful si SVD error (utilise rendement moyen)
+
 ### Global AI Chat System - Multi-Provider (Dec 2025)
 
 **Système d'assistant IA unifié** disponible sur toutes les pages ([docs/AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md)):
