@@ -772,71 +772,23 @@
 
     async function loadStressTestScenarios() {
       try {
-        const scenarios = [
-          {
-            id: "crisis_2008",
-            name: "📉 Crise Financière 2008",
-            description: "Réplique la chute des marchés de septembre-novembre 2008",
-            impact: { min: -45, max: -60 },
-            probability: 0.02,
-            duration: "6-12 mois",
-            context: "Effondrement Lehman Brothers, crise des subprimes"
-          },
-          {
-            id: "covid_2020",
-            name: "🦠 Crash COVID-19 Mars 2020",
-            description: "Chute brutale liée à la pandémie mondiale",
-            impact: { min: -35, max: -50 },
-            probability: 0.05,
-            duration: "2-6 mois",
-            context: "Confinements mondiaux, arrêt économique brutal"
-          },
-          {
-            id: "china_ban",
-            name: "🇨🇳 Interdiction Crypto Chine",
-            description: "Bannissement complet des cryptos par autorités chinoises",
-            impact: { min: -25, max: -40 },
-            probability: 0.10,
-            duration: "3-9 mois",
-            context: "Fermeture exchanges, interdiction mining"
-          },
-          {
-            id: "tether_collapse",
-            name: "💰 Effondrement Tether",
-            description: "Perte de confiance totale dans USDT",
-            impact: { min: -30, max: -55 },
-            probability: 0.08,
-            duration: "1-4 mois",
-            context: "Découverte de sous-collatéralisation massive"
-          },
-          {
-            id: "fed_emergency",
-            name: "🏦 Hausse Taux Fed d'Urgence",
-            description: "Remontée brutale des taux pour lutter contre l'inflation",
-            impact: { min: -20, max: -35 },
-            probability: 0.15,
-            duration: "6-18 mois",
-            context: "Taux directeur à 8-10%, fuite des capitaux risqués"
-          },
-          {
-            id: "exchange_hack",
-            name: "🔓 Hack Exchange Majeur",
-            description: "Piratage d'un exchange de premier plan (Binance/Coinbase)",
-            impact: { min: -15, max: -30 },
-            probability: 0.20,
-            duration: "1-3 mois",
-            context: "Vol de plusieurs milliards, panique générale"
-          }
-        ];
+        // ✅ NEW: Load real scenarios from backend API
+        const response = await window.globalConfig.apiRequest('/api/risk/stress-scenarios');
+
+        if (!response || !response.scenarios) {
+          throw new Error('No scenarios returned from API');
+        }
+
+        const scenarios = response.scenarios;
 
         const scenariosHtml = scenarios.map(scenario => `
-            <div class="scenario-card" onclick="window.showScenarioDetails('${scenario.id}')">
+            <div class="scenario-card" onclick="window.runStressTest('${scenario.id}')">
               <div class="scenario-header">
                 <h5>${scenario.name}</h5>
-                <span class="scenario-probability">${(scenario.probability * 100).toFixed(0)}% / 10 ans</span>
+                <span class="scenario-probability">${(scenario.probability_10y * 100).toFixed(0)}% / 10 ans</span>
               </div>
               <div class="scenario-impact">
-                Impact: ${scenario.impact.min}% à ${scenario.impact.max}%
+                Impact: ${scenario.impact_range.min}% à ${scenario.impact_range.max}%
               </div>
               <div class="scenario-duration">
                 Durée: ${scenario.duration}
@@ -859,9 +811,9 @@
                 <button class="btn-secondary" onclick="window.runAllStressTests()">
                   🧪 Lancer tous les tests
                 </button>
-                <button class="btn-secondary" onclick="window.createCustomScenario()">
-                  ⚙️ Scénario personnalisé
-                </button>
+                <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--theme-text-muted);">
+                  💡 Cliquez sur un scénario pour voir l'impact réel sur votre portfolio
+                </p>
               </div>
             </div>
           `;
@@ -875,19 +827,97 @@
       }
     }
 
-    // Interaction functions for stress scenarios
-    window.showScenarioDetails = function (scenarioId) {
-      const scenario = window.stressScenarios?.find(s => s.id === scenarioId);
-      if (!scenario) return;
+    // ✅ NEW: Real stress test execution
+    window.runStressTest = async function (scenarioId) {
+      try {
+        window.showToast?.(`Calcul de l'impact du scénario ${scenarioId}...`, 'info');
 
-      alert(`${scenario.name}\n\n${scenario.description}\n\nImpact estimé: ${scenario.impact.min}% à ${scenario.impact.max}%\nProbabilité sur 10 ans: ${(scenario.probability * 100).toFixed(1)}%\nDurée typique: ${scenario.duration}`);
+        const response = await window.globalConfig.apiRequest(`/api/risk/stress-test-portfolio?scenario_id=${scenarioId}`, {
+          method: 'POST'
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Stress test failed');
+        }
+
+        const result = response.result;
+
+        // Afficher les résultats dans un modal
+        const modalHtml = `
+          <div style="padding: 1.5rem;">
+            <h3>${result.scenario_name}</h3>
+            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">${result.scenario_description}</p>
+
+            <div class="stress-results">
+              <h4>Impact Portfolio</h4>
+              <div class="metric-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="metric">
+                  <span class="label">Perte totale</span>
+                  <span class="value" style="color: var(--danger); font-size: 1.5rem; font-weight: 700;">
+                    ${result.portfolio_impact.loss_pct.toFixed(1)}%
+                  </span>
+                  <span class="sublabel">$${result.portfolio_impact.loss_usd.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="metric">
+                  <span class="label">Valeur finale</span>
+                  <span class="value" style="font-size: 1.5rem; font-weight: 700;">
+                    $${result.portfolio_impact.value_after.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                  </span>
+                  <span class="sublabel">Initial: $${result.portfolio_impact.value_before.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                </div>
+              </div>
+
+              <h4>Pires Groupes Impactés</h4>
+              <div style="margin-bottom: 1.5rem;">
+                ${result.worst_groups.map(g => `
+                  <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--theme-bg); margin-bottom: 0.5rem; border-radius: 4px;">
+                    <span>${g.group}</span>
+                    <span style="color: var(--danger); font-weight: 600;">${g.loss_pct.toFixed(1)}% ($${g.loss_usd.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})})</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div style="font-size: 0.85rem; color: var(--theme-text-muted);">
+                <strong>Métadonnées:</strong><br/>
+                Probabilité 10 ans: ${(result.metadata.probability_10y * 100).toFixed(1)}%<br/>
+                Durée estimée: ${result.metadata.duration_estimate}
+              </div>
+            </div>
+
+            <button onclick="this.closest('.modal').remove()" style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Fermer
+            </button>
+          </div>
+        `;
+
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+        modal.innerHTML = `<div style="background: var(--theme-surface); border-radius: 8px; max-width: 600px; max-height: 80vh; overflow-y: auto;">${modalHtml}</div>`;
+        document.body.appendChild(modal);
+
+        window.showToast?.(`Impact calculé: ${result.portfolio_impact.loss_pct.toFixed(1)}%`, 'success');
+
+      } catch (error) {
+        console.error('Stress test failed:', error);
+        window.showToast?.(`Erreur: ${error.message}`, 'error');
+      }
     };
 
     window.runAllStressTests = async function () {
-      window.showToast?.('Lancement des tests de stress en cours...', 'info');
-      setTimeout(() => {
-        window.showToast?.('Tests de stress terminés. Résultats mis à jour.', 'success');
-      }, 2000);
+      const scenarios = window.stressScenarios || [];
+      if (scenarios.length === 0) {
+        window.showToast?.('Aucun scénario chargé', 'warning');
+        return;
+      }
+
+      window.showToast?.(`Lancement de ${scenarios.length} tests de stress...`, 'info');
+
+      for (const scenario of scenarios) {
+        await window.runStressTest(scenario.id);
+        await new Promise(resolve => setTimeout(resolve, 1000));  // Pause 1s entre chaque
+      }
     };
 
     window.createCustomScenario = function () {
@@ -895,30 +925,409 @@
     };
 
     async function loadMonteCarloResults() {
-      document.getElementById('monte-carlo-content').innerHTML = `
-          <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 1rem; font-style: italic;">
-            Simulation de 10 000 scénarios aléatoires basée sur la distribution historique de rendements.
-            Fournit une évaluation probabiliste du risque extrême.
+      // ✅ NEW: Show button instead of auto-calculating (10-30 seconds is too long)
+      const container = document.getElementById('monte-carlo-content');
+
+      // Check if we have cached results in sessionStorage
+      const cached = sessionStorage.getItem('monte_carlo_result');
+      if (cached) {
+        try {
+          const result = JSON.parse(cached);
+          renderMonteCarloResultsUI(result);
+          return;
+        } catch (e) {
+          console.warn('Failed to parse cached Monte Carlo results:', e);
+          sessionStorage.removeItem('monte_carlo_result');
+        }
+      }
+
+      // Show initial state with button
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎲</div>
+          <h4 style="margin-bottom: 1rem;">Simulation Monte Carlo</h4>
+          <p style="color: var(--theme-text-muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Génère 10,000 scénarios basés sur les distributions historiques réelles de rendements.
+            Calcule les probabilités de pertes et les scénarios extrêmes.
           </p>
-          <div class="monte-carlo-summary">
-            <div class="sim-stat hinted" data-key="mc_simulations">
-              <span class="stat-label">Simulations</span>
-              <span class="stat-value">10,000</span>
-            </div>
-            <div class="sim-stat hinted" data-key="mc_worst_case">
-              <span class="stat-label">Pire scénario</span>
-              <span class="stat-value text-danger">-68.5%</span>
-            </div>
-            <div class="sim-stat hinted" data-key="mc_loss_prob">
-              <span class="stat-label">Probabilité perte >20%</span>
-              <span class="stat-value">12.3%</span>
-            </div>
+          <button
+            onclick="window.runMonteCarloSimulation()"
+            style="padding: 1rem 2rem; background: var(--brand-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;"
+            onmouseover="this.style.transform='scale(1.05)'"
+            onmouseout="this.style.transform='scale(1)'"
+          >
+            🚀 Lancer la Simulation (10-30 sec)
+          </button>
+          <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 1rem;">
+            Le résultat sera mis en cache pendant cette session
+          </p>
+        </div>
+      `;
+    }
+
+    /**
+     * Run Monte Carlo simulation (user-triggered)
+     */
+    window.runMonteCarloSimulation = async function() {
+      try {
+        const container = document.getElementById('monte-carlo-content');
+
+        // Show loading
+        container.innerHTML = `
+          <div class="loading" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 3rem; animation: spin 2s linear infinite;">⏳</div>
+            <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600;">Exécution simulation Monte Carlo...</p>
+            <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 0.5rem;">
+              10,000 simulations en cours (10-30 secondes)...
+            </p>
+            <style>
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
           </div>
         `;
 
+        const response = await window.globalConfig.apiRequest('/api/risk/monte-carlo', {
+          params: {
+            num_simulations: 10000,
+            horizon_days: 30,
+            confidence_level: 0.95,
+            price_history_days: 365
+          }
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Monte Carlo simulation failed');
+        }
+
+        const result = response.result;
+
+        // Cache result in sessionStorage
+        sessionStorage.setItem('monte_carlo_result', JSON.stringify(result));
+
+        // Render results
+        renderMonteCarloResultsUI(result);
+
+        window.showToast?.('✅ Simulation terminée avec succès', 'success');
+
+      } catch (error) {
+        console.error('Error running Monte Carlo simulation:', error);
+        const container = document.getElementById('monte-carlo-content');
+        container.innerHTML = `
+          <div class="error" style="text-align: center; padding: 2rem;">
+            ❌ Erreur lors du calcul Monte Carlo: ${error.message}<br/>
+            <button onclick="window.runMonteCarloSimulation()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--brand-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Réessayer
+            </button>
+          </div>
+        `;
+      }
+    };
+
+    /**
+     * Render Monte Carlo results UI
+     * @param {Object} result - Monte Carlo simulation result
+     */
+    function renderMonteCarloResultsUI(result) {
+      const container = document.getElementById('monte-carlo-content');
+      container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin: 0; font-style: italic;">
+              Simulation de ${result.simulation_params.num_simulations.toLocaleString()} scénarios basée sur les distributions historiques réelles de rendements.
+              Horizon: ${result.simulation_params.horizon_days} jours.
+            </p>
+            <button
+              onclick="sessionStorage.removeItem('monte_carlo_result'); window.runMonteCarloSimulation();"
+              style="padding: 0.5rem 1rem; background: var(--theme-surface); color: var(--theme-text); border: 1px solid var(--theme-border); border-radius: 4px; cursor: pointer; font-size: 0.85rem; white-space: nowrap;"
+              title="Relancer le calcul avec de nouvelles données"
+            >
+              🔄 Re-calculer
+            </button>
+          </div>
+          <div class="monte-carlo-summary">
+            <div class="sim-stat hinted" data-key="mc_simulations">
+              <span class="stat-label">Simulations</span>
+              <span class="stat-value">${result.simulation_params.num_simulations.toLocaleString()}</span>
+            </div>
+            <div class="sim-stat hinted" data-key="mc_worst_case">
+              <span class="stat-label">Pire scénario (P1)</span>
+              <span class="stat-value text-danger">${result.scenarios.worst_case_pct.toFixed(1)}%</span>
+            </div>
+            <div class="sim-stat hinted" data-key="mc_best_case">
+              <span class="stat-label">Meilleur scénario (P99)</span>
+              <span class="stat-value text-success">${result.scenarios.best_case_pct.toFixed(1)}%</span>
+            </div>
+          </div>
+
+          <div class="monte-carlo-stats" style="margin-top: 1.5rem;">
+            <h5 style="margin-bottom: 1rem;">Statistiques Distribution</h5>
+            <div class="monte-carlo-summary">
+              <div class="sim-stat">
+                <span class="stat-label">Rendement moyen</span>
+                <span class="stat-value">${result.statistics.mean_return_pct.toFixed(2)}%</span>
+              </div>
+              <div class="sim-stat">
+                <span class="stat-label">Rendement médian</span>
+                <span class="stat-value">${result.statistics.median_return_pct.toFixed(2)}%</span>
+              </div>
+              <div class="sim-stat">
+                <span class="stat-label">Écart-type</span>
+                <span class="stat-value">${result.statistics.std_return_pct.toFixed(2)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="monte-carlo-risk" style="margin-top: 1.5rem;">
+            <h5 style="margin-bottom: 1rem;">Probabilités de Perte</h5>
+            <div class="monte-carlo-summary">
+              <div class="sim-stat hinted" data-key="mc_loss_5">
+                <span class="stat-label">Perte >5%</span>
+                <span class="stat-value">${(result.loss_probabilities.prob_loss_5 * 100).toFixed(1)}%</span>
+              </div>
+              <div class="sim-stat hinted" data-key="mc_loss_10">
+                <span class="stat-label">Perte >10%</span>
+                <span class="stat-value">${(result.loss_probabilities.prob_loss_10 * 100).toFixed(1)}%</span>
+              </div>
+              <div class="sim-stat hinted" data-key="mc_loss_20">
+                <span class="stat-label">Perte >20%</span>
+                <span class="stat-value text-danger">${(result.loss_probabilities.prob_loss_20 * 100).toFixed(1)}%</span>
+              </div>
+              <div class="sim-stat hinted" data-key="mc_loss_30">
+                <span class="stat-label">Perte >30%</span>
+                <span class="stat-value text-danger">${(result.loss_probabilities.prob_loss_30 * 100).toFixed(1)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="monte-carlo-var" style="margin-top: 1.5rem;">
+            <h5 style="margin-bottom: 1rem;">VaR/CVaR Monte Carlo</h5>
+            <div class="monte-carlo-summary">
+              <div class="sim-stat">
+                <span class="stat-label">VaR 95%</span>
+                <span class="stat-value">${result.risk_metrics.var_95_pct.toFixed(2)}%</span>
+              </div>
+              <div class="sim-stat">
+                <span class="stat-label">CVaR 95%</span>
+                <span class="stat-value">${result.risk_metrics.cvar_95_pct.toFixed(2)}%</span>
+              </div>
+              <div class="sim-stat">
+                <span class="stat-label">VaR 99%</span>
+                <span class="stat-value">${result.risk_metrics.var_99_pct.toFixed(2)}%</span>
+              </div>
+              <div class="sim-stat">
+                <span class="stat-label">CVaR 99%</span>
+                <span class="stat-value">${result.risk_metrics.cvar_99_pct.toFixed(2)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="monte-carlo-chart" style="margin-top: 2rem;">
+            <h5 style="margin-bottom: 1rem;">📊 Distribution des Rendements (${result.simulation_params.horizon_days} jours)</h5>
+            <div style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border);">
+              <canvas id="monte-carlo-distribution-chart" style="max-height: 400px;"></canvas>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: 4px; font-size: 0.85rem; color: var(--theme-text-muted);">
+            <strong>ℹ️ Méthodologie:</strong><br/>
+            Simulations basées sur distributions réelles (${result.simulation_params.num_assets} assets, ${result.simulation_params.num_simulations.toLocaleString()} runs).<br/>
+            Préserve les corrélations historiques entre assets (matrice de covariance).<br/>
+            Calculé: ${new Date(result.timestamp).toLocaleString('fr-FR')}
+            ${sessionStorage.getItem('monte_carlo_result') ? ' <span style="color: var(--success);">(📦 Mis en cache)</span>' : ''}
+          </div>
+        `;
+
+      // ✅ NEW: Render distribution chart
       setTimeout(() => {
         window.decorateRiskTooltips?.();
+        renderMonteCarloDistributionChart(result);
       }, 100);
+    }
+
+    // ✅ FIX: Expose loadMonteCarloResults globally for retry button
+    window.loadMonteCarloResults = loadMonteCarloResults;
+
+    /**
+     * Render Monte Carlo distribution chart
+     * @param {Object} result - Monte Carlo simulation result
+     */
+    function renderMonteCarloDistributionChart(result) {
+      const canvas = document.getElementById('monte-carlo-distribution-chart');
+      if (!canvas) {
+        console.warn('Monte Carlo chart canvas not found');
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      // Destroy existing chart if any
+      if (window.monteCarloChart) {
+        window.monteCarloChart.destroy();
+      }
+
+      // Generate histogram data from percentiles
+      const percentiles = result.distribution_percentiles;
+      const labels = [];
+      const data = [];
+
+      // Create bins from percentiles (approximate histogram)
+      // We'll use percentiles as representative points
+      const percentileKeys = Object.keys(percentiles).map(Number).sort((a, b) => a - b);
+
+      // Create histogram-like data
+      const bins = [];
+      for (let i = 0; i < percentileKeys.length - 1; i++) {
+        const p1 = percentileKeys[i];
+        const p2 = percentileKeys[i + 1];
+        const midValue = (percentiles[p1] + percentiles[p2]) / 2;
+        const frequency = p2 - p1; // Approximate frequency
+
+        bins.push({
+          x: midValue.toFixed(1),
+          y: frequency
+        });
+      }
+
+      // Extract values for chart
+      bins.forEach(bin => {
+        labels.push(bin.x + '%');
+        data.push(bin.y);
+      });
+
+      // Color bins based on positive/negative
+      const backgroundColors = bins.map(bin => {
+        const value = parseFloat(bin.x);
+        if (value < -result.risk_metrics.var_95_pct) {
+          return 'rgba(239, 68, 68, 0.7)'; // Dark red (VaR breach)
+        } else if (value < 0) {
+          return 'rgba(251, 146, 60, 0.7)'; // Orange (losses)
+        } else {
+          return 'rgba(34, 197, 94, 0.7)'; // Green (gains)
+        }
+      });
+
+      // Get theme colors
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#ffffff';
+      const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-border').trim() || '#333333';
+
+      // Create chart
+      window.monteCarloChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Fréquence (%)',
+            data: data,
+            backgroundColor: backgroundColors,
+            borderColor: backgroundColors.map(c => c.replace('0.7', '1')),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = parseFloat(labels[context.dataIndex]);
+                  const freq = context.parsed.y;
+                  return `Rendement: ${value.toFixed(1)}% | Fréquence: ${freq.toFixed(1)}%`;
+                }
+              }
+            },
+            annotation: {
+              annotations: {
+                // VaR 95% line
+                var95Line: {
+                  type: 'line',
+                  xMin: bins.findIndex(b => parseFloat(b.x) >= -result.risk_metrics.var_95_pct),
+                  xMax: bins.findIndex(b => parseFloat(b.x) >= -result.risk_metrics.var_95_pct),
+                  borderColor: 'rgb(239, 68, 68)',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: `VaR 95%: ${result.risk_metrics.var_95_pct.toFixed(1)}%`,
+                    position: 'start',
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    color: '#ffffff',
+                    font: {
+                      size: 10
+                    }
+                  }
+                },
+                // Median line
+                medianLine: {
+                  type: 'line',
+                  xMin: bins.findIndex(b => parseFloat(b.x) >= result.statistics.median_return_pct),
+                  xMax: bins.findIndex(b => parseFloat(b.x) >= result.statistics.median_return_pct),
+                  borderColor: 'rgb(59, 130, 246)',
+                  borderWidth: 2,
+                  borderDash: [3, 3],
+                  label: {
+                    display: true,
+                    content: `Médiane: ${result.statistics.median_return_pct.toFixed(1)}%`,
+                    position: 'end',
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    color: '#ffffff',
+                    font: {
+                      size: 10
+                    }
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Rendement (%)',
+                color: textColor,
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              ticks: {
+                color: textColor,
+                maxRotation: 45,
+                minRotation: 45
+              },
+              grid: {
+                color: gridColor,
+                display: true
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Fréquence (%)',
+                color: textColor,
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              ticks: {
+                color: textColor
+              },
+              grid: {
+                color: gridColor,
+                display: true
+              }
+            }
+          }
+        }
+      });
+
+      console.debug('✅ Monte Carlo distribution chart rendered');
     }
 
     async function loadRiskAttribution() {

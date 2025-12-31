@@ -1689,6 +1689,213 @@ def _generate_risk_alerts(risk_metrics: RiskMetrics, correlation_matrix: Correla
             "message": f"Sharpe ratio négatif: {risk_metrics.sharpe_ratio:.2f}",
             "recommendation": "Revoir la stratégie d'allocation"
         })
-    
+
     return alerts
+
+
+# ===== NEW ENDPOINTS: Stress Testing & Monte Carlo (Dec 2025) =====
+
+@router.get("/stress-scenarios")
+async def get_stress_scenarios():
+    """
+    Liste tous les scénarios de stress test disponibles
+
+    Returns:
+        Liste des scénarios avec métadonnées (impact, probabilité, durée)
+    """
+    try:
+        from services.risk.stress_testing import get_available_scenarios
+
+        scenarios = get_available_scenarios()
+
+        return {
+            "success": True,
+            "scenarios": scenarios,
+            "count": len(scenarios)
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get stress scenarios: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/stress-test-portfolio")
+async def run_stress_test_portfolio(
+    scenario_id: str = Query(..., description="Scenario ID (crisis_2008, covid_2020, etc.)"),
+    user: str = Depends(get_required_user)
+):
+    """
+    Exécute un stress test réel sur le portfolio avec un scénario donné
+
+    Scénarios disponibles:
+    - crisis_2008: Crise financière 2008
+    - covid_2020: Crash COVID Mars 2020
+    - china_ban: Interdiction crypto Chine
+    - tether_collapse: Effondrement Tether
+    - fed_emergency: Hausse taux Fed d'urgence
+    - exchange_hack: Hack exchange majeur
+
+    Returns:
+        Impact détaillé sur le portfolio (pertes par groupe, pires/meilleurs performers)
+    """
+    try:
+        from services.risk.stress_testing import calculate_stress_test
+        from api.unified_data import get_unified_filtered_balances
+
+        # Récupérer portfolio actuel
+        balances_response = await get_unified_filtered_balances(
+            source="cointracking",
+            min_usd=1.0,
+            user_id=user
+        )
+
+        balances = balances_response.get('items', [])
+
+        if not balances or len(balances) == 0:
+            return {
+                "success": False,
+                "message": "No holdings found in portfolio"
+            }
+
+        # Exécuter stress test
+        result = await calculate_stress_test(
+            holdings=balances,
+            scenario_id=scenario_id,
+            user_id=user
+        )
+
+        # Convertir en dict pour JSON
+        return {
+            "success": True,
+            "result": {
+                "scenario_id": result.scenario_id,
+                "scenario_name": result.scenario_name,
+                "scenario_description": result.scenario_description,
+                "portfolio_impact": {
+                    "loss_pct": result.portfolio_loss_pct,
+                    "loss_usd": result.portfolio_loss_usd,
+                    "value_before": result.portfolio_value_before,
+                    "value_after": result.portfolio_value_after
+                },
+                "group_impacts": result.group_impacts,
+                "worst_groups": result.worst_groups,
+                "best_groups": result.best_groups,
+                "metadata": {
+                    "probability_10y": result.probability_10y,
+                    "duration_estimate": result.duration_estimate,
+                    "timestamp": result.timestamp.isoformat()
+                }
+            }
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Stress test failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/monte-carlo")
+async def run_monte_carlo(
+    num_simulations: int = Query(10000, ge=1000, le=50000, description="Number of simulations"),
+    horizon_days: int = Query(30, ge=1, le=365, description="Forecast horizon in days"),
+    confidence_level: float = Query(0.95, ge=0.90, le=0.99, description="Confidence level for VaR"),
+    price_history_days: int = Query(365, ge=90, le=730, description="Days of price history for distributions"),
+    # ✅ FIX: Accept extra params from frontend (global-config.js adds these automatically)
+    source: str = Query("cointracking", description="Data source (ignored, uses unified data)"),
+    pricing: str = Query("auto", description="Pricing source (ignored)"),
+    min_usd: float = Query(1.0, description="Min USD threshold (ignored)"),
+    user: str = Depends(get_required_user)
+):
+    """
+    Exécute une simulation Monte Carlo sur le portfolio
+
+    Génère N simulations basées sur les distributions historiques réelles
+    de rendements (préserve corrélations entre assets)
+
+    Returns:
+        - Statistiques distribution (moyenne, médiane, écart-type)
+        - Scénarios extrêmes (meilleur/pire cas)
+        - Probabilités de pertes (>5%, >10%, >20%, >30%)
+        - VaR/CVaR Monte Carlo (95%, 99%)
+        - Distribution complète (percentiles)
+    """
+    try:
+        from services.risk.monte_carlo import run_monte_carlo_simulation
+        from api.unified_data import get_unified_filtered_balances
+
+        # Récupérer portfolio actuel (use unified data, ignore source param)
+        balances_response = await get_unified_filtered_balances(
+            source="cointracking",  # Force cointracking for stability
+            min_usd=1.0,
+            user_id=user
+        )
+
+        balances = balances_response.get('items', [])
+
+        if not balances or len(balances) == 0:
+            return {
+                "success": False,
+                "message": "No holdings found in portfolio"
+            }
+
+        # Exécuter Monte Carlo
+        result = await run_monte_carlo_simulation(
+            holdings=balances,
+            num_simulations=num_simulations,
+            horizon_days=horizon_days,
+            confidence_level=confidence_level,
+            price_history_days=price_history_days,
+            user_id=user
+        )
+
+        # Convertir en dict pour JSON
+        return {
+            "success": True,
+            "result": {
+                "simulation_params": {
+                    "num_simulations": result.num_simulations,
+                    "horizon_days": result.horizon_days,
+                    "confidence_level": result.confidence_level,
+                    "portfolio_value": result.portfolio_value,
+                    "num_assets": result.num_assets
+                },
+                "statistics": {
+                    "mean_return_pct": result.mean_return_pct,
+                    "median_return_pct": result.median_return_pct,
+                    "std_return_pct": result.std_return_pct
+                },
+                "scenarios": {
+                    "worst_case_pct": result.worst_case_pct,
+                    "best_case_pct": result.best_case_pct,
+                    "percentile_5_pct": result.percentile_5_pct,
+                    "percentile_95_pct": result.percentile_95_pct
+                },
+                "loss_probabilities": {
+                    "prob_loss_any": result.prob_loss_any,
+                    "prob_loss_5": result.prob_loss_5,
+                    "prob_loss_10": result.prob_loss_10,
+                    "prob_loss_20": result.prob_loss_20,
+                    "prob_loss_30": result.prob_loss_30
+                },
+                "risk_metrics": {
+                    "var_95_pct": result.var_95_pct,
+                    "cvar_95_pct": result.cvar_95_pct,
+                    "var_99_pct": result.var_99_pct,
+                    "cvar_99_pct": result.cvar_99_pct
+                },
+                "distribution_percentiles": result.distribution_percentiles,
+                "timestamp": result.timestamp.isoformat()
+            }
+        }
+
+    except ValueError as e:
+        logger.error(f"Monte Carlo validation error: {e}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
+    except np.linalg.LinAlgError as e:
+        logger.error(f"Monte Carlo numerical error (SVD): {e}")
+        raise HTTPException(status_code=500, detail=f"Numerical error in covariance calculation: {str(e)}")
+    except Exception as e:
+        logger.error(f"Monte Carlo simulation failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
