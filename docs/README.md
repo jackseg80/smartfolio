@@ -1,100 +1,71 @@
-# Documentation — Portail
+# 📔 Portail de la Documentation
 
-> **Navigation principale** : Ce fichier sert d'index pour toute la documentation du projet.
-
----
-
-## 🎯 Vue d'ensemble
-
-### Architecture & Design
-- **Architecture** : [ARCHITECTURE.md](ARCHITECTURE.md) - Design système
-- **Risk (source canonique)** : [RISK_SEMANTICS.md](RISK_SEMANTICS.md) - Conventions risk scoring
-- **Decision Index (Unified Insights)** : [UNIFIED_INSIGHTS_V2.md](UNIFIED_INSIGHTS_V2.md) - Système de scoring unifié
-- **UX & Règles UI** : [UX_GUIDE.md](UX_GUIDE.md) - Standards UI/UX
+Bienvenue dans le centre de documentation de **SmartFolio**. Ce portail centralise l'état de l'art du système, ses règles critiques et ses guides d'utilisation.
 
 ---
 
-## 🖥️ Frontend
+## 🚀 Essentiels
+Accès rapide pour démarrer et comprendre le projet.
 
-### Pages & Components
-- **Pages** : [FRONTEND_PAGES.md](FRONTEND_PAGES.md) - Inventaire prod/test/legacy
-- **Modules** : [MODULE_MAP.md](MODULE_MAP.md) - Cartographie modules JS
-- **Flyout Panel** : [FLYOUT_IMPLEMENTATION_DONE.md](FLYOUT_IMPLEMENTATION_DONE.md) - Web Components (Risk Sidebar)
-
----
-
-## ⚙️ Backend & API
-
-### API Reference
-- **Référence API** : [API_REFERENCE.md](API_REFERENCE.md) - Auto-généré, tous les endpoints
-- **Services** : `services/` - Business logic
-- **Connecteurs** : `connectors/` - External integrations
-
-### Features
-- **P&L Today** : [PNL_TODAY.md](PNL_TODAY.md) - Portfolio tracking
-- **Simulation Engine** : [SIMULATION_ENGINE.md](SIMULATION_ENGINE.md) - Backtesting system
-- **Sources System** : [SOURCES_SYSTEM.md](SOURCES_SYSTEM.md) - Multi-source data resolution
-- **Wealth Modules** : [wealth-modules.md](wealth-modules.md) - Cross-asset tracking
+- **[Guide de démarrage rapide](quickstart.md)** — Installation et premier lancement.
+- **[Guide Utilisateur](user-guide.md)** — Comment utiliser l'interface et comprendre les métriques.
+- **[Règles Critiques (Agent IA)](../CLAUDE.md)** ⭐ — **Source canonique** pour les développeurs et agents IA.
+- **[Dépannage](troubleshooting.md)** — Solutions aux problèmes courants.
 
 ---
 
-## 🔧 Systems & Operations
+## 🏗️ Architecture & Design
+La structure technique et les standards du projet.
 
-### Infrastructure
-- **Logging** : [LOGGING.md](LOGGING.md) - Système de logs rotatifs (5MB, optimisé IA)
-- **Redis** : [REDIS_SETUP.md](REDIS_SETUP.md) - Cache & streaming temps réel
-- **Scheduler** : [SCHEDULER.md](SCHEDULER.md) - Background jobs
-
-### Monitoring
-- **Performance** : [PERFORMANCE_MONITORING.md](PERFORMANCE_MONITORING.md) - Metrics & alerting
-- **Technical Debt** : [TECHNICAL_DEBT.md](TECHNICAL_DEBT.md) - Known issues
+- **[Architecture Système](ARCHITECTURE.md)** — Design global, flux de données et composants.
+- **[Référence API](API_REFERENCE.md)** — Documentation technique de tous les endpoints.
+- **[Cartographie des Modules](MODULE_MAP.md)** — Organisation des fichiers JavaScript et services Python.
+- **[Standards UI/UX](UX_GUIDE.md)** — Principes de design et composants Web.
+- **[Système de Télémétrie](LOGGING.md)** — Gestion des logs et monitoring système.
 
 ---
 
-## 🧪 Testing & Quality
+## 🎯 Fonctionnalités Clés
+Spécifications détaillées des modules métiers.
 
-### Testing
-- **Guide** : [TESTING_GUIDE.md](TESTING_GUIDE.md) - Strategy & best practices
-- **E2E Testing** : [E2E_TESTING_GUIDE.md](E2E_TESTING_GUIDE.md) - End-to-end tests
+### 🤖 Intelligence Artificielle & Insights
+- **[Assistant IA Global](AI_CHAT_GLOBAL.md)** — Système d'aide contextuel unifié (Multi-provider).
+- **[Moteur de Phase](PHASE_ENGINE.md)** — Détection automatique des cycles de marché.
+- **[Index de Décision V2](DECISION_INDEX_V2.md)** — Système dual de scoring (Régime vs Qualité).
 
-### Code Quality
-- **Latest Audit** : [../AUDIT_REPORT_2025-10-19.md](../AUDIT_REPORT_2025-10-19.md) - Code quality audit
-- **Refactoring (Phases)** : [REFACTORING_PHASES_SUMMARY.md](REFACTORING_PHASES_SUMMARY.md) - Phases 0-2 summary
-- **Refactoring (Dashboard)** : [REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md) - Risk Dashboard tabs modularization
-- **Security** : [TESTS_SECURITY_SUMMARY.md](TESTS_SECURITY_SUMMARY.md) - Security testing
+### 📈 Gestion de Portefeuille & Allocation
+- **[Moteur d'Allocation V2](ALLOCATION_ENGINE_V2.md)** — Stratégie hiérarchique et gestion des "floors".
+- **[Optimisation de Portefeuille](PORTFOLIO_OPTIMIZATION_GUIDE.md)** — Guide des 6 algorithmes de Markowitz.
+- **[Système de Sources](SOURCES_SYSTEM.md)** — Résolution multi-source (CSV, API, Banks).
 
----
+### 🛡️ Risque & Protection
+- **[Sémantique du Risque](RISK_SEMANTICS.md)** ⭐ — **Convention cruciale** sur le calcul des scores.
+- **[Stop Loss Intelligent](STOP_LOSS_SYSTEM.md)** — Méthodes adaptatives et trailing stops.
+- **[Stress Testing & Monte Carlo](STRESS_TESTING_MONTE_CARLO.md)** — Simulations de crise et probabilités.
 
-## 🚀 Implementation Guides
-
-### Recent Features (Oct 2025)
-- **BTC Hybrid Regime Detector** : [BTC_HYBRID_REGIME_DETECTOR.md](BTC_HYBRID_REGIME_DETECTOR.md) - Market regime detection
-- **Sentiment Contextual Logic** : [README_SENTIMENT_CONTEXTUAL_LOGIC.md](README_SENTIMENT_CONTEXTUAL_LOGIC.md) - ML sentiment integration
-- **Risk Score V2** : [RISK_SCORE_V2_IMPLEMENTATION.md](RISK_SCORE_V2_IMPLEMENTATION.md) - Enhanced risk scoring
-- **Decision Index V2** : [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) - Quality allocation scoring
-
-### Integration & Setup
-- **Saxo Integration** : [SAXO_INTEGRATION_SUMMARY.md](SAXO_INTEGRATION_SUMMARY.md) - Bourse/Saxo Bank
-- **Quickstart** : [quickstart.md](quickstart.md) - Getting started
-- **Dev Checklist** : [DEV_TO_PROD_CHECKLIST.md](DEV_TO_PROD_CHECKLIST.md) - Deployment
+### 🌍 Bourse & Patrimoine
+- **[Scanner d'Opportunités](MARKET_OPPORTUNITIES_SYSTEM.md)** — Détection de gaps sectoriels mondiaux.
+- **[Module Patrimoine](PATRIMOINE_MODULE.md)** — Suivi unifié des actifs (Banks, Immobilier, Cash).
+- **[Intégration Saxo](SAXO_OAUTH2_INTEGRATION.md)** — Connexion OAuth2 et gestion des comptes titres.
 
 ---
 
-## 📚 Contribution
+## 🛠️ Développement & Qualité
+Outils et procédures pour maintenir la robustesse du code.
 
-### Guidelines
-- **Conventions & PR** : [CONTRIBUTING.md](CONTRIBUTING.md) - Code standards
-- **Troubleshooting** : [troubleshooting.md](troubleshooting.md) - Common issues
-- **Developer Guide** : [developer.md](developer.md) - Development setup
+- **[Guide du Développeur](developer.md)** — Setup local, environnement et conventions.
+- **[Workflow de Contribution](../CONTRIBUTING.md)** — Règles Git, commits et Pull Requests.
+- **[Guide des Tests](TESTING_GUIDE.md)** — Stratégie de tests unitaires, intégration et E2E.
+- **[Dette Technique](TECHNICAL_DEBT.md)** — Suivi des points d'amélioration et bugs connus.
 
 ---
 
 ## 🗂️ Archives
+Historique du projet et notes de travail.
 
-- **Historique** : [_archive/](_archive/) - Session notes, deprecated docs (17 fichiers archivés Oct 2025)
+- **[Logs de Développement](_archive/2025_dev_logs/)** — Historique des correctifs et sessions de 2025.
+- **[Rapports d'Audit](_archive/audit_reports/)** — Anciens audits de sécurité, performance et accessibilité.
+- **[Notes de Session](_archive/session_notes/)** — Détails des anciennes sessions de travail.
 
 ---
-
-**Dernière mise à jour** : 2025-10-22
-**Fichiers actifs** : ~100 docs
-**Statut** : ✅ Production-ready
+*Dernière mise à jour : Janvier 2026*

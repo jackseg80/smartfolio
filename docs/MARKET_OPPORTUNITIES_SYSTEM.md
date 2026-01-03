@@ -215,7 +215,7 @@ Le système utilise les 11 secteurs GICS standard du S&P 500:
 | Contrainte | Valeur | Rationale |
 |------------|--------|-----------|
 | **Max vente par position** | 30% | Évite liquidation forcée |
-| **Top N holdings protégés** | 3 | Préserve colonne vertébrale portfolio |
+| **Top N holdings protégés** | 2 | Préserve colonne vertébrale portfolio |
 | **Détention minimale** | 30 jours | Évite wash sales, frais transaction |
 | **Max allocation par secteur** | 25% | Diversification obligatoire |
 | **Protection stop loss** | Validation | Respect trailing stops existants |
@@ -241,7 +241,7 @@ Le système utilise les 11 secteurs GICS standard du S&P 500:
    - Rationale: "Near stop loss (reduce caution)"
 
 **Exclusions:**
-- Top 3 holdings (jamais vendus)
+- Top 2 holdings (jamais vendus)
 - Positions <30 jours (trop récentes)
 - Positions protégées par stop loss
 
@@ -480,7 +480,7 @@ No significant sector gaps detected. Portfolio is well-diversified!
 
 ✅ Scan secteurs S&P 500 vs portfolio
 ✅ Scoring 3-pillar (Momentum/Value/Diversification)
-✅ Suggestions ventes intelligentes (max 30%, top 3 protected)
+✅ Suggestions ventes intelligentes (max 30%, top 2 protected)
 ✅ Impact simulator (avant/après allocation)
 ✅ Frontend UI complet (onglet dédié)
 
@@ -535,7 +535,7 @@ const url = `/api/bourse/opportunities?user_id=jack&min_gap_pct=2.0`;
 **Cause:** Aucune position éligible (toutes protégées ou récentes <30j)
 
 **Solution:**
-- Normal si top 3 holdings représentent >80% portfolio
+- Normal si top 2 holdings représentent >80% portfolio
 - Vérifier dates d'acquisition des positions
 - Réduire protection (modifier `TOP_N_PROTECTED` dans code)
 

@@ -226,7 +226,7 @@ data/
 - **Allocation**: [ALLOCATION_ENGINE_V2.md](docs/ALLOCATION_ENGINE_V2.md) - Topdown hierarchical, floors, incumbency
 - **Decision Index**: [DECISION_INDEX_V2.md](docs/DECISION_INDEX_V2.md) - Dual scoring (DI vs Regime)
 - **Risk Management**: [RISK_SEMANTICS.md](docs/RISK_SEMANTICS.md), [RISK_SCORE_V2_IMPLEMENTATION.md](docs/RISK_SCORE_V2_IMPLEMENTATION.md)
-- **Governance**: [GOVERNANCE_FIXES_OCT_2025.md](docs/GOVERNANCE_FIXES_OCT_2025.md) - Freeze semantics, TTL vs Cooldown
+- **Governance**: [governance.md](docs/governance.md) - Automated governance system
 - **Phase Engine**: [PHASE_ENGINE.md](docs/PHASE_ENGINE.md) - Market phase detection
 - **Simulator**: [SIMULATION_ENGINE.md](docs/SIMULATION_ENGINE.md) - Complete pipeline
 - **Sources System**: [SOURCES_SYSTEM.md](docs/SOURCES_SYSTEM.md) - Unified multi-source
