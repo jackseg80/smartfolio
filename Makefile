@@ -33,15 +33,15 @@ endif
 qa:
 	@echo "[*] Régénération API_REFERENCE.md..."
 ifeq ($(OS),Windows_NT)
-	.venv\Scripts\python.exe tools/gen_api_reference.py
+	.venv\Scripts\python.exe scripts/dev_tools/gen_api_reference.py
 	@echo "[*] Scan liens cassés..."
-	.venv\Scripts\python.exe tools/gen_broken_refs.py
+	.venv\Scripts\python.exe scripts/dev_tools/gen_broken_refs.py
 	@echo "[*] Exécution hooks pre-commit sur tous fichiers..."
 	.venv\Scripts\pre-commit.exe run --all-files
 else
-	.venv/bin/python tools/gen_api_reference.py
+	.venv/bin/python scripts/dev_tools/gen_api_reference.py
 	@echo "[*] Scan liens cassés..."
-	.venv/bin/python tools/gen_broken_refs.py
+	.venv/bin/python scripts/dev_tools/gen_broken_refs.py
 	@echo "[*] Exécution hooks pre-commit sur tous fichiers..."
 	.venv/bin/pre-commit run --all-files
 endif
@@ -50,9 +50,9 @@ endif
 docs:
 	@echo "[*] Régénération docs/API_REFERENCE.md..."
 ifeq ($(OS),Windows_NT)
-	.venv\Scripts\python.exe tools/gen_api_reference.py
+	.venv\Scripts\python.exe scripts/dev_tools/gen_api_reference.py
 else
-	.venv/bin/python tools/gen_api_reference.py
+	.venv/bin/python scripts/dev_tools/gen_api_reference.py
 endif
 	@echo "[✓] API_REFERENCE.md régénéré. Vérifie le diff avant commit."
 

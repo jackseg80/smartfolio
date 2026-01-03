@@ -56,7 +56,16 @@ def run_tests(test_type="all", verbose=False, coverage=False, markers=None):
     print("-" * 50)
     
     try:
-        result = subprocess.run(cmd, cwd=Path(__file__).parent)
+        # Determine project root (parent of scripts/ folder)
+        # If script is in root: parent is root
+        # If script is in scripts/: parent.parent is root
+        script_dir = Path(__file__).resolve().parent
+        if script_dir.name == 'scripts':
+            project_root = script_dir.parent
+        else:
+            project_root = script_dir
+            
+        result = subprocess.run(cmd, cwd=project_root)
         
         if result.returncode == 0:
             print("-" * 50)
