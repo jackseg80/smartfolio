@@ -45,6 +45,27 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 - **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Calcul: `50 + (sentiment_ml × 50)` où sentiment ∈ [-1, 1].
 - **Multi-Tenant**: Complete isolation of data and configurations per user.
 
+## 📸 Gallery
+
+<div align="center">
+  <img src="docs/images/dashboard_preview.png" alt="SmartFolio Dashboard" width="100%"/>
+  <p><em>Global Dashboard with Real-time P&L and Allocation</em></p>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="docs/images/risk_preview.png" alt="Risk Dashboard" width="100%"/>
+  <p><em>Advanced Risk Management & Scenarios</em></p>
+</div>
+
+<br/>
+
+<div align="center">
+  <img src="docs/images/analytics_preview.png" alt="Analytics View" width="100%"/>
+  <p><em>Unified Analytics & AI Insights</em></p>
+</div>
+
 ## Quick Start
 
 ### Prerequisites

@@ -85,6 +85,39 @@
       "acquisition_date": null,
       "notes": "Demo account",
       "metadata": {}
+    },
+    {
+      "id": "f53b2d51-ba9b-46f8-a8b1-75d08fac7796",
+      "name": "Maison",
+      "category": "tangible",
+      "type": "real_estate",
+      "value": 400000.0,
+      "currency": "CHF",
+      "acquisition_date": null,
+      "notes": null,
+      "metadata": {}
+    },
+    {
+      "id": "ba2b960f-cd36-4205-a38e-55c7a1f207b9",
+      "name": "Prêt Raiffeisen",
+      "category": "liability",
+      "type": "mortgage",
+      "value": -200000.0,
+      "currency": "CHF",
+      "acquisition_date": null,
+      "notes": null,
+      "metadata": {}
+    },
+    {
+      "id": "cc3405bf-175d-4635-869d-0529a350ae0a",
+      "name": "Assurance Vie",
+      "category": "insurance",
+      "type": "life_insurance",
+      "value": 50000.0,
+      "currency": "EUR",
+      "acquisition_date": null,
+      "notes": null,
+      "metadata": {}
     }
   ]
 }
