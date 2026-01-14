@@ -18,7 +18,7 @@ htmlcov/
 !.env.example
 !.env.production.example
 !.env.docker
-.claude/settings.local.json
+.claude/
 
 # ML Models & Cache (too large, auto-generated)
 # All ML model formats (binary files)
