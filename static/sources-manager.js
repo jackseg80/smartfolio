@@ -212,8 +212,12 @@ function updateModulesGrid(modules) {
   gridEl.innerHTML = '';
 
   for (const module of modules) {
-    const card = createModuleCard(module);
-    gridEl.appendChild(card);
+    try {
+      const card = createModuleCard(module);
+      gridEl.appendChild(card);
+    } catch (err) {
+      console.error(`Error creating card for module ${module.name}:`, err);
+    }
   }
 }
 
@@ -290,11 +294,19 @@ function createSourcesList(moduleName, module) {
     );
 
     if (!fileStillExists) {
-      debugLogger.warn('[sources] CSV sélectionné manquant:', config.csv_selected_file);
-
-      // Fallback: sélectionner le premier fichier disponible si possible
-      if (module.detected_files.length > 0 && window.showToast) {
-        window.showToast(`Le fichier "${config.csv_selected_file}" n'existe plus. Veuillez sélectionner une nouvelle source.`, 'warning');
+      if (window.__DEBUG_SOURCES__) debugLogger.warn('[sources] CSV sélectionné manquant (auto-cleanup):', config.csv_selected_file);
+      
+      // Auto-cleanup: Désélectionner le fichier manquant pour arrêter le spam
+      const currentUser = getCurrentUser();
+      if (userConfig[currentUser]) {
+        userConfig[currentUser].csv_selected_file = null;
+        userConfig[currentUser].csv_glob = null;
+        localStorage.setItem('userConfig', JSON.stringify(userConfig));
+        
+        // Notifier le changement pour rafraîchir l'UI proprement
+        window.dispatchEvent(new CustomEvent('dataSourceChanged', {
+          detail: { oldSource: 'missing', newSource: null, user: currentUser }
+        }));
       }
     }
   }
@@ -474,8 +486,6 @@ async function importSelectedSource(moduleName) {
 
   try {
     (window.debugLogger?.debug || console.log)(`[Sources] Importing selected source: ${selectedSource} from ${moduleName}`);
-
-    let requestBody;
 
     if (selectedSource === 'api') {
       // Import via API
@@ -1066,6 +1076,13 @@ function showExtendedFeedback(message, type = 'info') {
  * Récupère l'utilisateur actuel
  */
 function getCurrentUser() {
+  // 🔥 FIX: Utiliser localStorage comme source principale (nav.js standard)
+  // Fallback sur user-selector DOM element si disponible
+  const activeUser = localStorage.getItem('activeUser');
+  if (activeUser) {
+    return activeUser;
+  }
+
   const userSelector = document.getElementById('user-selector');
   return userSelector ? userSelector.value : 'demo';
 }
@@ -1127,6 +1144,9 @@ async function deleteFile(moduleName, fileName) {
 function showUploadDialog(moduleName) {
   (window.debugLogger?.debug || console.log)(`[Sources] Showing upload dialog for: ${moduleName}`);
 
+  // Nettoyer d'éventuelles modals existantes avant d'en créer une nouvelle
+  forceCloseUploadDialog();
+
   const moduleDisplayName = getModuleName(moduleName);
   const allowedExtensions = getModuleAllowedExtensions(moduleName);
 
@@ -1171,11 +1191,12 @@ function showUploadDialog(moduleName) {
   // Ajouter la modal au DOM
   document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-  // Ajouter les event listeners après création de la modal
-  setupModalEvents(moduleName);
-
-  // Gérer le drag & drop
-  setupDragAndDrop();
+  // Attendre que le DOM soit complètement mis à jour avant d'attacher les events
+  // insertAdjacentHTML est synchrone mais les event listeners doivent être attachés après render
+  requestAnimationFrame(() => {
+    setupModalEvents(moduleName);
+    setupDragAndDrop();
+  });
 }
 
 /**
@@ -1183,6 +1204,13 @@ function showUploadDialog(moduleName) {
  */
 function setupModalEvents(moduleName) {
   const modal = document.getElementById('uploadModal');
+
+  // Protection si la modal n'existe pas encore
+  if (!modal) {
+    console.error('[Sources] Upload modal not found in DOM');
+    return;
+  }
+
   const closeBtn = modal.querySelector('.close-btn');
   const cancelBtn = document.getElementById('cancelBtn');
   const uploadBtn = document.getElementById('uploadBtn');
@@ -1201,7 +1229,9 @@ function setupModalEvents(moduleName) {
 
   // Upload avec le bouton principal
   if (uploadBtn) {
-    uploadBtn.addEventListener('click', () => uploadFiles(moduleName));
+    uploadBtn.addEventListener('click', () => {
+      uploadFiles(moduleName);
+    });
   }
 
   // Clic sur la zone d'upload
@@ -1232,8 +1262,6 @@ function setupModalEvents(moduleName) {
       document.removeEventListener('keydown', escapeHandler);
     }
   });
-
-  (window.debugLogger?.debug || console.log)('[Sources] Modal events configured');
 }
 
 /**
@@ -1263,7 +1291,6 @@ function closeUploadDialog(event) {
  * Forcer la fermeture de la modal (fallback)
  */
 function forceCloseUploadDialog() {
-  (window.debugLogger?.debug || console.log)('[Sources] Force closing upload dialog');
   const modal = document.getElementById('uploadModal');
   if (modal) {
     modal.remove();
@@ -1295,8 +1322,20 @@ function setupDragAndDrop() {
     e.preventDefault();
     uploadArea.classList.remove('drag-over');
 
-    const files = Array.from(e.dataTransfer.files);
-    document.getElementById('fileInput').files = e.dataTransfer.files;
+    // Transférer correctement les fichiers droppés vers l'input
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput) return;
+
+    // Créer un nouveau DataTransfer pour copier les fichiers
+    const dataTransfer = new DataTransfer();
+    Array.from(e.dataTransfer.files).forEach(file => {
+      dataTransfer.items.add(file);
+    });
+
+    // Assigner les fichiers (maintenant possible via DataTransfer)
+    fileInput.files = dataTransfer.files;
+
+    // Déclencher l'affichage
     handleFileSelection();
   });
 }
@@ -1361,9 +1400,10 @@ async function uploadFiles(moduleName) {
     });
 
     const currentUser = getCurrentUser();
+    const uploadUrl = `${SOURCES_CONFIG.apiBase}/upload`;
 
     // Upload avec progression
-    const response = await fetch(`${SOURCES_CONFIG.apiBase}/upload`, {
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
         'X-User': currentUser
@@ -1379,14 +1419,16 @@ async function uploadFiles(moduleName) {
     if (result.success) {
       showNotification(result.message, 'success');
       closeUploadDialog();
+
       // Rafraîchir les sources après upload
       setTimeout(() => refreshSourcesStatus(), 1000);
     } else {
+      console.error('[Sources] Upload failed:', result.error || result.message);
       showNotification(`Erreur d'upload: ${result.error || result.message}`, 'error');
     }
 
   } catch (error) {
-    debugLogger.error(`[Sources] Upload error:`, error);
+    console.error('[Sources] Upload error:', error);
     showNotification('Erreur lors de l\'upload', 'error');
   } finally {
     uploadBtn.disabled = false;
@@ -1414,4 +1456,6 @@ window.isSourceCurrentlySelected = isSourceCurrentlySelected;
 window.testActiveSource = testActiveSource;
 window.showUploadDialog = showUploadDialog;
 window.forceCloseUploadDialog = forceCloseUploadDialog;
+window.closeUploadDialog = closeUploadDialog;  // Export pour inline onclick
 window.deleteFile = deleteFile;
+window.uploadFiles_global = uploadFiles;  // Export pour inline onclick (backup)

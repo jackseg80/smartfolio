@@ -166,6 +166,111 @@ Si la sauvegarde PUT échoue :
 - **Endpoints** : [api/sources_endpoints.py](../api/sources_endpoints.py)
 - **User filesystem** : [api/services/user_fs.py](../api/services/user_fs.py)
 
+## Bug Fixes - Janvier 2026
+
+### 🐛 Bug #1: Upload vers mauvais répertoire utilisateur
+
+**Symptôme**: Les fichiers CSV uploadés pour Saxo Bank étaient systématiquement sauvegardés dans `data/users/demo/saxobank/data/` au lieu du répertoire de l'utilisateur connecté (ex: `data/users/jack/saxobank/data/`).
+
+**Cause**: La fonction `getCurrentUser()` vérifiait d'abord l'élément DOM `user-selector` qui n'existe pas dans `settings.html`, donc retournait toujours le fallback `'demo'`.
+
+**Fix**: Modification de `getCurrentUser()` pour prioriser `localStorage.getItem('activeUser')` (standard utilisé par nav.js) avant le fallback DOM:
+
+```javascript
+function getCurrentUser() {
+  const activeUser = localStorage.getItem('activeUser');
+  if (activeUser) {
+    return activeUser;
+  }
+
+  const userSelector = document.getElementById('user-selector');
+  return userSelector ? userSelector.value : 'demo';
+}
+```
+
+**Impact**: ✅ Les fichiers sont maintenant uploadés dans le bon répertoire utilisateur.
+
 ---
 
-**Dernière mise à jour** : Octobre 2025 (v2 avec durcissements robustesse)
+### 🐛 Bug #2: Drag & Drop ne fonctionnait pas
+
+**Symptôme**: Glisser-déposer des fichiers sur la zone d'upload ne remplissait pas l'input file.
+
+**Cause**: Tentative d'assigner directement `fileInput.files = e.dataTransfer.files`, mais la propriété `files` est en lecture seule (read-only).
+
+**Fix**: Utilisation de l'API DataTransfer pour créer un objet transférable:
+
+```javascript
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+
+  const dataTransfer = new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(file => {
+    dataTransfer.items.add(file);
+  });
+
+  fileInput.files = dataTransfer.files; // Fonctionne maintenant!
+  handleFileSelection();
+});
+```
+
+**Impact**: ✅ Le drag & drop fonctionne correctement.
+
+---
+
+### 🐛 Bug #3: Bouton Upload ne réagissait pas
+
+**Symptôme**: Cliquer sur le bouton "📤 Uploader" ne déclenchait aucune action, pas d'erreur dans la console.
+
+**Cause**: Conflit entre les handlers `onclick` inline dans le HTML et les `addEventListener` en JavaScript:
+
+1. Le `onclick` inline désactivait le bouton en premier
+2. Le `addEventListener` détectait `disabled=true` et sortait immédiatement
+
+**Fix**: Suppression des handlers `onclick` inline et de la vérification `disabled` dans le gestionnaire d'événements.
+
+**Impact**: ✅ Le bouton d'upload fonctionne correctement.
+
+---
+
+### 🐛 Bug #4: Event listeners attachés trop tôt
+
+**Symptôme**: Parfois, les event listeners de la modal n'étaient pas attachés car les éléments DOM n'existaient pas encore.
+
+**Cause**: `insertAdjacentHTML` est synchrone mais les event listeners étaient attachés immédiatement après sans attendre le rendu du navigateur.
+
+**Fix**: Utilisation de `requestAnimationFrame` pour différer l'attachement des event listeners:
+
+```javascript
+function showUploadDialog(moduleName) {
+  forceCloseUploadDialog();
+
+  // ... créer modalHTML ...
+
+  document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+  // Attendre le rendu du DOM avant d'attacher les events
+  requestAnimationFrame(() => {
+    setupModalEvents(moduleName);
+    setupDragAndDrop();
+  });
+}
+```
+
+**Impact**: ✅ Les event listeners sont toujours attachés correctement.
+
+---
+
+### 🐛 Bug #5: Logs de debug excessifs
+
+**Symptôme**: Console saturée de logs avec emojis (🎯🎯🎯, 📤, 📦, 👤, etc.) rendant le debugging difficile.
+
+**Cause**: Logs de debug ajoutés pendant la phase de troubleshooting.
+
+**Fix**: Nettoyage des logs excessifs, conservation uniquement des logs critiques (erreurs et succès).
+
+**Impact**: ✅ Console propre et logs pertinents seulement.
+
+---
+
+**Dernière mise à jour** : Janvier 2026 (Bug fixes upload Saxo Bank)
