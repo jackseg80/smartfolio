@@ -122,7 +122,8 @@ async def list_sources(
             from api.services.config_migrator import resolve_secret_ref
 
             # NOUVEAU SYSTÈME SIMPLIFIÉ: Chercher uniquement dans data/
-            data_pattern = f"{module_name}/data/*.csv"
+            # On cherche tous les fichiers, l'upload filtre déjà les extensions valides
+            data_pattern = f"{module_name}/data/*"
             files = user_fs.glob_files(data_pattern)
 
             for file_path in files:
@@ -225,7 +226,7 @@ async def scan_sources(
                 continue
 
             # NOUVEAU SYSTÈME SIMPLIFIÉ: Chercher uniquement dans data/
-            data_pattern = f"{module_name}/data/*.csv"
+            data_pattern = f"{module_name}/data/*"
             all_files = user_fs.glob_files(data_pattern)
 
             # Supprimer les doublons tout en préservant l'ordre
@@ -526,7 +527,12 @@ async def upload_files(
 
             # Générer un nom unique avec timestamp pour versioning
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            safe_filename = "".join(c for c in file.filename if c.isalnum() or c in "._-")
+            
+            # Sanitize filename: remplace espaces par _ et garde alnum + ._-
+            # Note: isalnum() garde les accents en Python 3 (unicode), ce qui est souhaité
+            raw_filename = file.filename.replace(" ", "_")
+            safe_filename = "".join(c for c in raw_filename if c.isalnum() or c in "._-")
+            
             unique_filename = f"{timestamp}_{safe_filename}"
 
             # Sauvegarder le fichier directement dans data/
