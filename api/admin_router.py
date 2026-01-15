@@ -38,6 +38,7 @@ class CreateUserRequest(BaseModel):
     """Request model pour création utilisateur"""
     user_id: str = Field(..., min_length=1, max_length=50, description="User ID (alphanumeric + underscore)")
     label: str = Field(..., min_length=1, max_length=100, description="Display label")
+    password: Optional[str] = Field(None, min_length=8, description="Initial password (optional, min 8 caractères)")
     roles: List[str] = Field(default=["viewer"], description="User roles")
 
 
@@ -177,7 +178,7 @@ async def create_user(
     Créer un nouvel utilisateur avec structure de dossiers complète.
 
     Args:
-        request: Données utilisateur (user_id, label, roles)
+        request: Données utilisateur (user_id, label, password, roles)
 
     Returns:
         dict: Utilisateur créé
@@ -185,6 +186,7 @@ async def create_user(
     try:
         service = get_user_management_service()
 
+        # Créer l'utilisateur avec la structure de base
         new_user = service.create_user(
             user_id=request.user_id,
             label=request.label,
@@ -192,9 +194,38 @@ async def create_user(
             admin_user=user
         )
 
+        # Si un password est fourni, le hasher et l'ajouter immédiatement
+        if request.password:
+            from api.auth_router import get_password_hash
+
+            password_hash = get_password_hash(request.password)
+
+            # Mettre à jour users.json avec le password_hash
+            import json
+            from pathlib import Path
+
+            users_path = Path(__file__).parent.parent / "config" / "users.json"
+            with open(users_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            # Trouver et mettre à jour l'utilisateur nouvellement créé
+            for u in config.get("users", []):
+                if u.get("id") == request.user_id:
+                    u["password_hash"] = password_hash
+                    break
+
+            # Sauvegarder
+            with open(users_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
+
+            # Vider le cache pour forcer reload
+            clear_users_cache()
+
+            logger.info(f"Password set for new user '{request.user_id}'")
+
         return success_response(
             new_user,
-            meta={"message": f"User '{request.user_id}' created successfully"}
+            meta={"message": f"User '{request.user_id}' created successfully" + (" with password" if request.password else "")}
         )
 
     except ValueError as e:
@@ -273,17 +304,23 @@ async def update_user(
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
+    hard_delete: bool = Query(False, description="Si True, suppression complète (hard delete). Si False, soft delete (défaut)"),
     user: str = Depends(require_admin_role)
 ):
     """
-    Supprimer un utilisateur (soft delete).
+    Supprimer un utilisateur (soft ou hard delete).
 
-    Processus:
+    Soft delete (défaut):
     1. Marquer status = "inactive" dans config
     2. Renommer dossier: data/users/{user_id} → data/users/{user_id}_deleted_{timestamp}
 
+    Hard delete:
+    1. Supprimer complètement l'utilisateur de users.json
+    2. Supprimer le dossier data/users/{user_id}
+
     Args:
         user_id: ID utilisateur à supprimer
+        hard_delete: Si True, suppression permanente
 
     Returns:
         dict: Confirmation suppression
@@ -293,12 +330,14 @@ async def delete_user(
 
         result = service.delete_user(
             user_id=user_id,
-            admin_user=user
+            admin_user=user,
+            hard_delete=hard_delete
         )
 
+        delete_type = "HARD (permanent)" if hard_delete else "soft (désactivation)"
         return success_response(
             result,
-            meta={"message": f"User '{user_id}' deleted successfully (soft delete)"}
+            meta={"message": f"User '{user_id}' deleted successfully ({delete_type})"}
         )
 
     except ValueError as e:
@@ -408,6 +447,9 @@ async def reset_user_password(
         # Sauvegarder
         with open(users_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
+
+        # CRITICAL: Vider le cache pour forcer reload de la config
+        clear_users_cache()
 
         logger.info(f"Password reset by admin '{user}' for user '{user_id}'")
 

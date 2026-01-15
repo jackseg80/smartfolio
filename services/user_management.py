@@ -71,10 +71,23 @@ class UserManagementService:
         config_file = user_path / "config.json"
         if not config_file.exists():
             default_config = {
-                "data_source": "cointracking",
+                "data_source": "category_based",  # V2 mode: empty sources by default
                 "theme": "dark",
                 "refresh_interval": 60,
-                "language": "fr"
+                "language": "fr",
+                "sources": {
+                    "crypto": {
+                        "active_source": "manual_crypto",
+                        "manual_crypto": {"enabled": True},
+                        "cointracking_csv": {"enabled": False},
+                        "cointracking_api": {"enabled": False}
+                    },
+                    "bourse": {
+                        "active_source": "manual_bourse",
+                        "manual_bourse": {"enabled": True},
+                        "saxobank_csv": {"enabled": False}
+                    }
+                }
             }
             with open(config_file, 'w', encoding='utf-8') as f:
                 json.dump(default_config, f, indent=2)
@@ -247,18 +260,24 @@ class UserManagementService:
     def delete_user(
         self,
         user_id: str,
-        admin_user: str = "system"
+        admin_user: str = "system",
+        hard_delete: bool = False
     ) -> Dict[str, Any]:
         """
-        Supprime un utilisateur (soft delete).
+        Supprime un utilisateur (soft ou hard delete).
 
         Soft delete process:
         1. Marquer status = "inactive" dans config
         2. Renommer dossier: data/users/{user_id} → data/users/{user_id}_deleted_{timestamp}
 
+        Hard delete process:
+        1. Supprimer complètement l'utilisateur de users.json
+        2. Supprimer le dossier data/users/{user_id}
+
         Args:
             user_id: ID utilisateur
             admin_user: User qui supprime (pour audit log)
+            hard_delete: Si True, suppression complète. Si False, soft delete (défaut)
 
         Returns:
             dict: Confirmation suppression
@@ -286,34 +305,56 @@ class UserManagementService:
         if user_index is None:
             raise ValueError(f"User not found: {normalized_user_id}")
 
-        # Marquer comme inactive
-        config["users"][user_index]["status"] = "inactive"
+        if hard_delete:
+            # HARD DELETE: Supprimer complètement de users.json
+            deleted_user = config["users"].pop(user_index)
+            self._save_users_config(config)
 
-        # Sauvegarder config
-        self._save_users_config(config)
+            # Supprimer dossier complètement
+            user_path = self.data_users_path / normalized_user_id
+            if user_path.exists():
+                try:
+                    shutil.rmtree(str(user_path))
+                    logger.info(f"✅ User folder deleted permanently: {user_path}")
+                except Exception as e:
+                    logger.error(f"Failed to delete user folder: {e}")
 
-        # Renommer dossier (soft delete)
-        user_path = self.data_users_path / normalized_user_id
-        if user_path.exists():
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            deleted_path = self.data_users_path / f"{normalized_user_id}_deleted_{timestamp}"
+            logger.info(f"✅ User deleted (HARD): {normalized_user_id} by {admin_user}")
 
-            try:
-                shutil.move(str(user_path), str(deleted_path))
-                logger.info(f"✅ User folder renamed: {user_path} → {deleted_path}")
-            except Exception as e:
-                logger.error(f"Failed to rename user folder: {e}")
-                # Continue même si rename échoue
+            return {
+                "user_id": normalized_user_id,
+                "deleted": True,
+                "delete_type": "hard",
+                "deleted_at": datetime.now(timezone.utc).isoformat(),
+                "deleted_by": admin_user
+            }
 
-        # Audit log
-        logger.info(f"✅ User deleted (soft): {normalized_user_id} by {admin_user}")
+        else:
+            # SOFT DELETE: Marquer comme inactive
+            config["users"][user_index]["status"] = "inactive"
+            self._save_users_config(config)
 
-        return {
-            "user_id": normalized_user_id,
-            "deleted": True,
-            "deleted_at": datetime.now(timezone.utc).isoformat(),
-            "deleted_by": admin_user
-        }
+            # Renommer dossier
+            user_path = self.data_users_path / normalized_user_id
+            if user_path.exists():
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                deleted_path = self.data_users_path / f"{normalized_user_id}_deleted_{timestamp}"
+
+                try:
+                    shutil.move(str(user_path), str(deleted_path))
+                    logger.info(f"✅ User folder renamed: {user_path} → {deleted_path}")
+                except Exception as e:
+                    logger.error(f"Failed to rename user folder: {e}")
+
+            logger.info(f"✅ User deleted (soft): {normalized_user_id} by {admin_user}")
+
+            return {
+                "user_id": normalized_user_id,
+                "deleted": True,
+                "delete_type": "soft",
+                "deleted_at": datetime.now(timezone.utc).isoformat(),
+                "deleted_by": admin_user
+            }
 
     def assign_roles(
         self,
