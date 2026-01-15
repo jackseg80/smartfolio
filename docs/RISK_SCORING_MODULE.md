@@ -3,6 +3,8 @@
 > 📁 **Module** : `services/risk_scoring.py`
 > 🎯 **Rôle** : Single Source of Truth pour le calcul Risk Score et mapping score→level
 > 📅 **Créé** : Octobre 2025 (centralisation anti-duplication)
+>
+> 📖 **Document de référence** : [RISK_SEMANTICS.md](RISK_SEMANTICS.md) — Sémantique, formules, V2 et Dual-Window
 
 ---
 

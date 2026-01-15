@@ -196,7 +196,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 | Portfolio Optimization | [`docs/PORTFOLIO_OPTIMIZATION_GUIDE.md`](docs/PORTFOLIO_OPTIMIZATION_GUIDE.md) |
 | Risk Semantics | [`docs/RISK_SEMANTICS.md`](docs/RISK_SEMANTICS.md) |
 | Stop Loss System | [`docs/STOP_LOSS_SYSTEM.md`](docs/STOP_LOSS_SYSTEM.md) |
-| Stress Testing | [`docs/STRESS_TESTING.md`](docs/STRESS_TESTING.md) |
+| Stress Testing | [`docs/STRESS_TESTING_MONTE_CARLO.md`](docs/STRESS_TESTING_MONTE_CARLO.md) |
 | Monte Carlo | [services/risk/monte_carlo.py](services/risk/monte_carlo.py) |
 | Market Opportunities | [`docs/MARKET_OPPORTUNITIES_SYSTEM.md`](docs/MARKET_OPPORTUNITIES_SYSTEM.md) |
 | AI Chat Global | [`docs/AI_CHAT_GLOBAL.md`](docs/AI_CHAT_GLOBAL.md) |
@@ -246,7 +246,7 @@ curl "localhost:8080/admin/health" -H "X-User: demo"    # 403
 
 ## Docs Architecture
 
-- Architecture: `docs/ARCHITECTURE.md`
+- Architecture: `docs/architecture.md`
 - Audit: `docs/audit/AUDIT_REPORT_2025-10-19.md`
 - Logging: `docs/LOGGING.md`
 - Redis: `docs/REDIS_SETUP.md`

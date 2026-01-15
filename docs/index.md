@@ -7,7 +7,7 @@ Bienvenue dans le centre de documentation de **SmartFolio**. Ce portail centrali
 ## 🚀 Essentiels
 Accès rapide pour démarrer et comprendre le projet.
 
-- **[Guide de démarrage rapide](quickstart.md)** — Installation et premier lancement.
+- **[Guide Développeur](developer.md)** — Installation, setup et conventions.
 - **[Guide Utilisateur](user-guide.md)** — Comment utiliser l'interface et comprendre les métriques.
 - **[Règles Critiques (Agent IA)](../CLAUDE.md)** ⭐ — **Source canonique** pour les développeurs et agents IA.
 - **[Dépannage](troubleshooting.md)** — Solutions aux problèmes courants.
@@ -17,7 +17,7 @@ Accès rapide pour démarrer et comprendre le projet.
 ## 🏗️ Architecture & Design
 La structure technique et les standards du projet.
 
-- **[Architecture Système](ARCHITECTURE.md)** — Design global, flux de données et composants.
+- **[Architecture Système](architecture.md)** — Design global, flux de données et composants.
 - **[Référence API](API_REFERENCE.md)** — Documentation technique de tous les endpoints.
 - **[Cartographie des Modules](MODULE_MAP.md)** — Organisation des fichiers JavaScript et services Python.
 - **[Standards UI/UX](UX_GUIDE.md)** — Principes de design et composants Web.

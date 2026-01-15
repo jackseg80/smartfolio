@@ -4,6 +4,8 @@
 > **Status:** Production-Ready
 > **Asset:** Bitcoin (BTC)
 
+> 📖 **Document lié** : [HYBRID_REGIME_DETECTOR.md](HYBRID_REGIME_DETECTOR.md) — Version Equity Markets (SPY, QQQ) - architecture de base
+
 ## 🎯 Executive Summary
 
 The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based + HMM system (originally designed for equity markets) to cryptocurrency markets, with thresholds adjusted for Bitcoin's 3x higher volatility.

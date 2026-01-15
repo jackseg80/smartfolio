@@ -2,6 +2,9 @@
 
 > **Version:** 1.0 - October 2025
 > **Status:** Production-Ready
+> **Asset:** Equity Markets (SPY, QQQ, etc.)
+
+> 📖 **Document lié** : [BTC_HYBRID_REGIME_DETECTOR.md](BTC_HYBRID_REGIME_DETECTOR.md) — Version Bitcoin/Crypto avec seuils adaptés
 
 ## 🎯 Executive Summary
 
