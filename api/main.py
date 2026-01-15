@@ -151,6 +151,7 @@ from api.admin_router import router as admin_router
 from api.auth_router import router as auth_router
 from api.wealth_endpoints import router as wealth_router
 from api.sources_endpoints import router as sources_router
+from api.sources_v2_endpoints import router as sources_v2_router
 from api.fx_endpoints import router as fx_router
 from api.debug_router import router as debug_router
 from api.health_router import router as health_router
@@ -747,6 +748,7 @@ app.include_router(intelligence_router)
 app.include_router(user_settings_router)
 app.include_router(admin_router)  # Admin dashboard (RBAC protected)
 app.include_router(sources_router)
+app.include_router(sources_v2_router)  # Sources V2 - category-based modular sources
 app.include_router(wealth_router)
 app.include_router(fx_router)
 app.include_router(debug_router)

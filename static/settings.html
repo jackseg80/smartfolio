@@ -18,6 +18,9 @@
   <script src="global-config.js"></script>
   <script src="appearance.js"></script>
   <script type="module" src="sources-manager.js"></script>
+  <!-- Sources V2 - Category-based sources -->
+  <script src="components/manual-source-editor.js"></script>
+  <script src="sources-manager-v2.js"></script>
 
   <!-- AI Chat Component (Global System) -->
   <link rel="stylesheet" href="/static/components/ai-chat.css">
@@ -1243,6 +1246,317 @@
   text-align: center;
   font-size: 14px;
   color: var(--theme-text-secondary);
+}
+
+/* ============================================
+   Sources V2 - Category-based UI
+   ============================================ */
+.sources-v2-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.category-section {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.category-icon {
+  font-size: 24px;
+}
+
+.category-header h4 {
+  margin: 0;
+  flex: 1;
+  font-size: 18px;
+}
+
+.status-badge.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.not_configured {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.source-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.source-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.source-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--theme-surface-elevated);
+}
+
+.source-option:hover {
+  border-color: var(--theme-accent);
+}
+
+.source-option.active {
+  border-color: var(--theme-accent);
+  background: rgba(var(--theme-accent-rgb), 0.1);
+}
+
+.source-option input[type="radio"] {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.source-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+.source-info strong {
+  display: block;
+  font-size: 14px;
+}
+
+.source-config-panel {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--theme-border);
+}
+
+/* Manual Source Editor Styles */
+.manual-source-editor {
+  margin-top: 8px;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-info h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.header-total .total-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--theme-success);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--theme-text-muted);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.empty-state .hint {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.table-container {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.data-table th {
+  font-weight: 600;
+  background: var(--theme-surface-elevated);
+  color: var(--theme-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.data-table tbody tr:hover {
+  background: var(--theme-surface-elevated);
+}
+
+.data-table .actions {
+  white-space: nowrap;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.btn-icon:hover {
+  opacity: 1;
+}
+
+.add-form {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--theme-surface-elevated);
+  border-radius: 8px;
+}
+
+.add-form h5 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--theme-text-muted);
+}
+
+.form-group input,
+.form-group select {
+  padding: 8px 12px;
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--theme-accent);
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Modal Styles for V2 */
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--theme-surface);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.modal-header h4 {
+  margin: 0;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--theme-text-muted);
+}
+
+.close-modal:hover {
+  color: var(--theme-text);
 }
 </style>
 

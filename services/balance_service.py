@@ -4,6 +4,10 @@ Balance Service - Centralized balance resolution logic.
 This service extracts the resolve_current_balances logic from api/main.py
 to break circular dependencies and improve separation of concerns.
 
+Supports two modes:
+- Legacy mode (V1): Direct source specification (cointracking, cointracking_api, etc.)
+- Category mode (V2): Category-based sources via SourceRegistry
+
 Usage:
     from services.balance_service import balance_service
 
@@ -12,8 +16,9 @@ Usage:
         user_id="demo"
     )
 """
+import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pathlib import Path
 import httpx
 
@@ -24,6 +29,9 @@ try:
     from connectors import cointracking as ct_file
 except (ImportError, ModuleNotFoundError):
     ct_file = None
+
+# Feature flag for V2 sources system
+SOURCES_V2_ENABLED = True
 
 
 class BalanceService:
@@ -48,6 +56,99 @@ class BalanceService:
         self.base_dir = base_dir or Path.cwd()
         logger.info(f"BalanceService initialized with base_dir: {self.base_dir}")
 
+    def _is_category_based_user(self, user_id: str) -> bool:
+        """
+        Check if user should use category-based source config (V2).
+
+        Returns True for:
+        - Users with data_source="category_based"
+        - NEW users (no config.json) -> default to V2 with empty manual sources
+        """
+        config_path = self.base_dir / "data" / "users" / user_id / "config.json"
+        if not config_path.exists():
+            # New user: use V2 mode by default (manual sources, empty)
+            return True
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
+                # Explicit category_based OR no data_source set (new user)
+                data_source = config.get("data_source", "")
+                if data_source == "category_based":
+                    return True
+                # If no data_source configured at all, use V2
+                if not data_source:
+                    return True
+                return False
+        except Exception:
+            return True  # On error, default to V2 (safer, no fallback data)
+
+    async def _resolve_via_registry(
+        self,
+        user_id: str,
+        category: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Resolve balances using V2 SourceRegistry.
+
+        Args:
+            user_id: User ID for multi-tenant isolation
+            category: Optional category filter ("crypto", "bourse", or None for all)
+
+        Returns:
+            Dict with source_used, items, etc.
+        """
+        from services.sources import source_registry, SourceCategory
+        from services.sources.migration import ensure_user_migrated, get_effective_sources
+
+        project_root = str(self.base_dir)
+
+        # Ensure user is migrated
+        ensure_user_migrated(user_id, project_root)
+
+        # Get effective sources
+        effective = get_effective_sources(user_id, project_root)
+        crypto_source_id = effective.get("crypto_source", "manual_crypto")
+        bourse_source_id = effective.get("bourse_source", "manual_bourse")
+
+        all_items = []
+        sources_used = []
+
+        # Fetch crypto balances
+        if category is None or category == "crypto":
+            crypto_source = source_registry.get_source(crypto_source_id, user_id, project_root)
+            if crypto_source:
+                try:
+                    balances = await crypto_source.get_balances()
+                    for b in balances:
+                        all_items.append(b.to_dict())
+                    sources_used.append(crypto_source_id)
+                    logger.info(f"[V2] Loaded {len(balances)} crypto items from {crypto_source_id}")
+                except Exception as e:
+                    logger.error(f"[V2] Error loading crypto from {crypto_source_id}: {e}")
+
+        # Fetch bourse balances
+        if category is None or category == "bourse":
+            bourse_source = source_registry.get_source(bourse_source_id, user_id, project_root)
+            if bourse_source:
+                try:
+                    balances = await bourse_source.get_balances()
+                    for b in balances:
+                        all_items.append(b.to_dict())
+                    sources_used.append(bourse_source_id)
+                    logger.info(f"[V2] Loaded {len(balances)} bourse items from {bourse_source_id}")
+                except Exception as e:
+                    logger.error(f"[V2] Error loading bourse from {bourse_source_id}: {e}")
+
+        return {
+            "source_used": "+".join(sources_used) if sources_used else "none",
+            "items": all_items,
+            "mode": "category_based",
+            "sources": {
+                "crypto": crypto_source_id,
+                "bourse": bourse_source_id,
+            },
+        }
+
     async def resolve_current_balances(
         self,
         source: str = "cointracking_api",
@@ -55,6 +156,10 @@ class BalanceService:
     ) -> Dict[str, Any]:
         """
         Resolve current balances from specified source.
+
+        Supports two modes:
+        - V2 (category_based): Uses SourceRegistry for modular source resolution
+        - V1 (legacy): Direct source specification for backward compatibility
 
         Args:
             source: Data source (cointracking_api, cointracking, auto, stub_*)
@@ -83,14 +188,27 @@ class BalanceService:
 
         logger.info(f"Resolving balances for user '{user_id}' with source '{source}'")
 
-        # Create data router for this user
-        project_root = str(self.base_dir)
-        data_router = UserDataRouter(project_root, user_id)
-
-        # --- Stub sources: Use default stubs ---
+        # --- Stub sources: Use default stubs (always V1) ---
         if source.startswith("stub"):
             logger.debug(f"Using stub source: {source}")
             return self._get_stub_data(source)
+
+        # --- V2 Category-based mode ---
+        if SOURCES_V2_ENABLED and self._is_category_based_user(user_id):
+            logger.info(f"[V2] Using category-based sources for user '{user_id}'")
+            # Determine category from source hint
+            category = None
+            if source in ("saxobank", "saxobank_api", "saxobank_csv"):
+                category = "bourse"
+            elif source in ("cointracking", "cointracking_api", "cointracking_csv"):
+                category = "crypto"
+            # auto or category_based → fetch all
+            return await self._resolve_via_registry(user_id, category)
+
+        # --- V1 Legacy mode ---
+        # Create data router for this user
+        project_root = str(self.base_dir)
+        data_router = UserDataRouter(project_root, user_id)
 
         # --- Determine effective source for user ---
         effective_source = data_router.get_effective_source()

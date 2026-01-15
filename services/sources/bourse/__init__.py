@@ -1,0 +1,1 @@
+"""Bourse (stocks) sources package."""

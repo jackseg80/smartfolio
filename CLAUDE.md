@@ -1,6 +1,6 @@
 # CLAUDE.md — Guide Agent SmartFolio
 
-> Version condensée pour agents IA. Dernière mise à jour: Dec 2025
+> Version condensée pour agents IA. Dernière mise à jour: Jan 2026
 
 ## Règles Critiques
 
@@ -203,6 +203,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 | Alerts System | [`docs/ML_ALERT_PREDICTOR_REAL_DATA_OCT_2025.md`](docs/ML_ALERT_PREDICTOR_REAL_DATA_OCT_2025.md) |
 | Governance Freeze | [`docs/GOVERNANCE_FIXES_OCT_2025.md`](docs/GOVERNANCE_FIXES_OCT_2025.md) |
 | Patrimoine | [`docs/PATRIMOINE_MODULE.md`](docs/PATRIMOINE_MODULE.md) |
+| Sources V2 | [`docs/SOURCES_V2.md`](docs/SOURCES_V2.md) |
 | Admin Dashboard | [`docs/ADMIN_DASHBOARD.md`](docs/ADMIN_DASHBOARD.md) |
 | Export System | [`docs/EXPORT_SYSTEM.md`](docs/EXPORT_SYSTEM.md) |
 
