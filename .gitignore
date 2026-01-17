@@ -179,3 +179,5 @@ phase3_*_results.json
 # Pytest reports
 pytest_report.json
 junit_*.xml
+
+refactor_sources.md

@@ -56,6 +56,53 @@ function saveCacheToStorage(activeUser, bourseSource, summary, timestamp) {
  * Récupère un résumé des positions Saxo depuis l'API legacy
  * @returns {Promise<{total_value: number, positions_count: number, asof: string, error?: string}>}
  */
+/**
+ * Convert Sources V2 balance items to Saxo summary format
+ */
+function convertV2BalancesToSaxoSummary(items, userId) {
+    if (!items || items.length === 0) {
+        return {
+            total_value: 0,
+            positions_count: 0,
+            asof: 'Manuel (vide)',
+            isEmpty: true,
+            source: 'manual'
+        };
+    }
+
+    // Calculate total value from balance items
+    const totalValue = items.reduce((sum, item) => {
+        const value = Number(item.value_usd || item.value || 0);
+        return sum + value;
+    }, 0);
+
+    // Find the most recent timestamp
+    const timestamps = items
+        .map(item => item.timestamp || item.updated_at)
+        .filter(Boolean);
+    const latestTimestamp = timestamps.length > 0
+        ? Math.max(...timestamps.map(t => new Date(t).getTime()))
+        : Date.now();
+
+    const asof = new Date(latestTimestamp).toLocaleString('fr-FR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    return {
+        total_value: totalValue,
+        positions_count: items.length,
+        asof: asof || 'Manuel',
+        isEmpty: items.length === 0,
+        source: 'manual',
+        cash_balance: 0, // Manual entries don't track cash separately
+        positions: items // Include raw items for detailed views
+    };
+}
+
 export async function fetchSaxoSummary() {
     const now = Date.now();
     const activeUser = localStorage.getItem('activeUser') || 'demo';
@@ -108,6 +155,69 @@ export async function fetchSaxoSummary() {
     (window.debugLogger?.debug || console.log)(`[Saxo Summary] 🌐 No cache, fetching from API...`);
 
     try {
+        // Check if Sources V2 mode (manual_bourse or any V2 source)
+        if (bourseSource === 'manual_bourse') {
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] Using Sources V2 mode: ${bourseSource}`);
+
+            try {
+                const { ok, data } = await safeFetch('/api/sources/v2/bourse/balances', {
+                    timeout: 10000,
+                    headers: { 'X-User': activeUser }
+                });
+
+                // Debug: log full response
+                console.log('🔍 [Saxo Summary] V2 API Response:', {
+                    ok,
+                    hasData: !!data,
+                    dataKeys: data ? Object.keys(data) : [],
+                    dataDataKeys: data?.data ? Object.keys(data.data) : [],
+                    items_at_data: data?.items,
+                    items_at_data_data: data?.data?.items,
+                    count_at_data_data: data?.data?.count
+                });
+
+                if (!ok) {
+                    const errorMsg = data?.message || data?.error || 'API request failed';
+                    throw new Error(`Sources V2 API failed: ${errorMsg}`);
+                }
+
+                if (!data) {
+                    throw new Error('No data returned from Sources V2 API');
+                }
+
+                // Backend returns success_response: { ok, data: { items: [...], count: N } }
+                // safeFetch returns this as-is, so items are at data.data.items
+                const items = data.data?.items || data.items || [];
+                const summary = convertV2BalancesToSaxoSummary(items, activeUser);
+
+                // Cache and return
+                _cachedSummary = summary;
+                _cacheTimestamp = now;
+                _cachedForUser = activeUser;
+                _cachedForSource = bourseSource;
+                saveCacheToStorage(activeUser, bourseSource, summary);
+
+                (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ V2 manual source loaded: ${items.length} items`);
+                return summary;
+            } catch (error) {
+                (window.debugLogger?.error || console.error)(`[Saxo Summary] V2 API error:`, error);
+
+                // Return empty state with error
+                const emptySummary = {
+                    total_value: 0,
+                    positions_count: 0,
+                    asof: 'Erreur V2',
+                    isEmpty: true,
+                    error: error.message
+                };
+                _cachedSummary = emptySummary;
+                _cacheTimestamp = now;
+                _cachedForUser = activeUser;
+                _cachedForSource = bourseSource;
+                return emptySummary;
+            }
+        }
+
         // bourseSource already defined at top of function (line 22)
         let apiUrl = '/api/saxo/positions';
 

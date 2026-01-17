@@ -169,6 +169,9 @@ class WealthContextBar {
 
     let html = '<option value="all">Tous</option>';
 
+    // Ajouter option Manuel (Sources V2)
+    html += '<option value="manual_crypto" data-type="manual">📝 Saisie Manuelle</option>';
+
     if (apis.length > 0) {
       html += '<option disabled>──── API ────</option>';
       apis.forEach(s => {
@@ -259,6 +262,9 @@ class WealthContextBar {
 
     let html = '<option value="all">Tous</option>';
 
+    // Ajouter option Manuel (Sources V2)
+    html += '<option value="manual_bourse" data-type="manual">📝 Saisie Manuelle</option>';
+
     // Section API (en premier pour visibilité)
     if (saxoAPIs.length > 0) {
       html += '<option disabled>──── API ────</option>';
@@ -346,6 +352,30 @@ class WealthContextBar {
       this.context.account = 'all';
       if (!skipSave) {
         this.saveContext();
+      }
+      return;
+    }
+
+    // Gérer mode manuel (Sources V2)
+    if (selectedValue === 'manual_crypto') {
+      const activated = await this.activateManualSource('crypto');
+      if (!activated) {
+        console.error('[WealthContextBar] Failed to activate manual source');
+        return;
+      }
+
+      this.context.account = 'manual_crypto';
+      if (!skipSave) {
+        this.saveContext();
+      }
+
+      if (!skipNotification && typeof window.showNotification === 'function') {
+        window.showNotification('✅ Mode Manuel activé pour Crypto. Gérez vos assets dans Settings → Sources', 'info');
+      }
+
+      // Déclencher le reload automatique comme pour les autres sources
+      if (!skipNotification) {
+        this.scheduleSmartReload();
       }
       return;
     }
@@ -583,6 +613,31 @@ class WealthContextBar {
       this.context.bourse = 'all';
       if (!skipSave) {
         this.saveContext();
+      }
+      return;
+    }
+
+    // Gérer mode manuel (Sources V2)
+    if (selectedValue === 'manual_bourse') {
+      const activated = await this.activateManualSource('bourse');
+      if (!activated) {
+        console.error('[WealthContextBar] Failed to activate manual bourse source');
+        return;
+      }
+
+      this.context.bourse = 'manual_bourse';
+      if (!skipSave) {
+        this.saveContext();
+      }
+
+      if (!skipNotification && typeof window.showNotification === 'function') {
+        window.showNotification('✅ Mode Manuel activé pour Bourse. Gérez vos positions dans Settings → Sources', 'info');
+      }
+
+      // Attendre un peu pour que le backend persiste le config et que les listeners se registrent
+      if (!skipNotification) {
+        await new Promise(resolve => setTimeout(resolve, 150));
+        this.scheduleSmartReload();
       }
       return;
     }
@@ -850,7 +905,7 @@ class WealthContextBar {
     bar.className = 'wealth-context-bar';
     bar.innerHTML = `
       <div class="context-group">
-        <span class="context-label">Cointracking:</span>
+        <span class="context-label">Crypto:</span>
         <select id="wealth-account" aria-busy="true">
           <option>Chargement…</option>
         </select>
@@ -910,6 +965,62 @@ class WealthContextBar {
     setTimeout(() => {
       this.emit('wealth:change', this.context);
     }, 100);
+  }
+
+  /**
+   * Get human-readable label for source ID
+   */
+  getSourceLabel(sourceId) {
+    const labels = {
+      'manual_crypto': 'Manuel',
+      'manual_bourse': 'Manuel',
+      'cointracking_csv': 'CoinTracking CSV',
+      'cointracking_api': 'CoinTracking API',
+      'saxobank_csv': 'Saxo CSV',
+    };
+    return labels[sourceId] || sourceId;
+  }
+
+  /**
+   * Activate manual source via Sources V2 API
+   */
+  async activateManualSource(category) {
+    try {
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const sourceId = `manual_${category}`;
+
+      console.debug(`[WealthContextBar] Activating manual source for ${category}: ${sourceId}`);
+
+      const response = await fetch(`/api/sources/v2/${category}/active`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User': activeUser
+        },
+        body: JSON.stringify({ source_id: sourceId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to activate manual source: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.debug(`[WealthContextBar] Manual source activated:`, data);
+
+      // Emit event for data refresh
+      window.dispatchEvent(new CustomEvent('dataSourceChanged', {
+        detail: {
+          category: category,
+          newSource: sourceId,
+          mode: 'manual'
+        }
+      }));
+
+      return true;
+    } catch (error) {
+      console.error(`[WealthContextBar] Error activating manual source for ${category}:`, error);
+      return false;
+    }
   }
 
   async loadAndPopulateAccountSources() {

@@ -299,7 +299,7 @@ class SourcesManagerV2 {
                     const panel = container.querySelector(`#${category}-config-panel`);
                     if (panel) {
                         panel.innerHTML = await this.renderSourceConfigPanel(category, sourceId);
-                        this.initializeConfigPanel(category, sourceId);
+                        await this.initializeConfigPanel(category, sourceId);
                     }
 
                     this.showToast(`Source ${category} changee`, 'success');
@@ -312,11 +312,11 @@ class SourcesManagerV2 {
         });
 
         // Initialize config panels for active sources
-        container.querySelectorAll('.category-section').forEach(section => {
+        container.querySelectorAll('.category-section').forEach(async (section) => {
             const category = section.dataset.category;
             const activeRadio = section.querySelector('input[type="radio"]:checked');
             if (activeRadio) {
-                this.initializeConfigPanel(category, activeRadio.value);
+                await this.initializeConfigPanel(category, activeRadio.value);
             }
         });
     }
@@ -324,7 +324,7 @@ class SourcesManagerV2 {
     /**
      * Initialize config panel for a source
      */
-    initializeConfigPanel(category, sourceId) {
+    async initializeConfigPanel(category, sourceId) {
         if (sourceId.includes('manual')) {
             // Initialize ManualSourceEditor
             const containerId = `${category}-manual-editor`;
@@ -333,6 +333,43 @@ class SourcesManagerV2 {
                 const editor = new ManualSourceEditor(containerId, category);
                 editor.render();
             }
+        } else if (sourceId.includes('csv')) {
+            // Load CSV file list
+            await this.loadCSVFileList(category, sourceId);
+        }
+    }
+
+    /**
+     * Load and display CSV file list
+     */
+    async loadCSVFileList(category, sourceId) {
+        const fileListContainer = document.getElementById(`${category}-file-list`);
+        if (!fileListContainer) return;
+
+        try {
+            // For now, show a message that CSV files are managed in the old way
+            // TODO: Implement proper CSV file listing via API
+            fileListContainer.innerHTML = `
+                <div style="padding: 16px; background: var(--theme-surface-elevated); border-radius: 8px;">
+                    <p style="margin: 0 0 12px 0; color: var(--theme-text);">
+                        📁 Fichiers CSV gérés via le système existant
+                    </p>
+                    <p style="margin: 0; font-size: 13px; color: var(--theme-text-muted);">
+                        Les fichiers ${sourceId === 'cointracking_csv' ? 'CoinTracking' : 'Saxo Bank'}
+                        sont stockés dans <code>data/users/${this.getCurrentUser()}/${sourceId === 'cointracking_csv' ? 'cointracking' : 'saxobank'}/data/</code>
+                    </p>
+                    <p style="margin: 8px 0 0 0; font-size: 13px; color: var(--theme-text-muted);">
+                        Le fichier le plus récent sera automatiquement utilisé.
+                    </p>
+                </div>
+            `;
+        } catch (error) {
+            console.error('[SourcesManagerV2] Error loading CSV files:', error);
+            fileListContainer.innerHTML = `
+                <div style="padding: 16px; color: var(--danger);">
+                    ❌ Erreur: ${error.message}
+                </div>
+            `;
         }
     }
 

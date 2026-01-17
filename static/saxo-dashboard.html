@@ -3099,13 +3099,14 @@
                 }
 
                 // Determine source type from bourseSource
+                const isManualSource = bourseSource === 'manual_bourse';
                 const isApiSource = bourseSource && bourseSource.startsWith('api:');
                 const isCsvSource = bourseSource && bourseSource.startsWith('saxo:');
 
-                debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
+                debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${isManualSource ? 'MANUAL' : isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
 
                 // Include source type in cache key to avoid mixing API and CSV data
-                const sourcePrefix = isApiSource ? 'api' : (currentFileKey || 'default');
+                const sourcePrefix = isManualSource ? 'manual' : isApiSource ? 'api' : (currentFileKey || 'default');
                 const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
                 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -3148,8 +3149,84 @@
 
                 let portfolioData;
 
+                // Load from Sources V2 if manual mode
+                if (isManualSource) {
+                    debugLogger.debug('📝 Loading Saxo data from Sources V2 (manual)...');
+
+                    try {
+                        const { ok, data } = await safeFetch('/api/sources/v2/bourse/balances', {
+                            timeout: 10000,
+                            headers: { 'X-User': activeUser }
+                        });
+
+                        // Debug: log full response
+                        console.log('🔍 V2 API Response:', {
+                            ok,
+                            hasData: !!data,
+                            dataKeys: data ? Object.keys(data) : [],
+                            dataDataKeys: data?.data ? Object.keys(data.data) : [],
+                            items_at_data: data?.items,
+                            items_at_data_data: data?.data?.items,
+                            count: data?.data?.count
+                        });
+
+                        if (!ok) {
+                            const errorMsg = data?.message || data?.error || 'API request failed';
+                            throw new Error(`Sources V2 API failed: ${errorMsg}`);
+                        }
+
+                        if (!data) {
+                            throw new Error('No data returned from Sources V2 API');
+                        }
+
+                        // Backend returns success_response: { ok, data: { items: [...], count: N } }
+                        // safeFetch returns this as-is, so items are at data.data.items
+                        const items = data.data?.items || data.items || [];
+
+                        // Transform V2 items to positions array
+                        const positions = items.map(item => ({
+                            symbol: item.symbol || item.asset_name || 'N/A',
+                            asset_name: item.asset_name || item.symbol || 'N/A',
+                            quantity: Number(item.amount || item.quantity || 0),
+                            market_value: Number(item.value_usd || item.value || 0),
+                            market_value_usd: Number(item.value_usd || item.value || 0),
+                            asset_class: item.asset_class || 'EQUITY',
+                            currency: item.currency || 'USD',
+                            broker: item.broker || item.location || 'Manual',
+                            avg_price: item.avg_price || (item.value / item.amount) || 0,
+                            // Extra fields for compatibility
+                            value: Number(item.value_usd || item.value || 0),
+                            notes: item.notes || ''
+                        }));
+
+                        // Calculate summary metrics from positions
+                        const totalValue = positions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0);
+                        const summary = calculateSummaryMetrics(positions, totalValue);
+
+                        // Format portfolioData same as API mode (with positions property)
+                        portfolioData = {
+                            portfolio_id: 'manual_bourse',
+                            name: 'Manual Bourse Entry',
+                            positions: positions,
+                            source: 'manual',
+                            timestamp: new Date().toISOString(),
+                            summary: summary,
+                            totalValueIncludesCash: false
+                        };
+
+                        // Manual entries don't have separate cash
+                        window.portfolioCash = 0;
+
+                        debugLogger.debug(`✅ Loaded ${positions.length} manual positions from Sources V2`);
+
+                    } catch (error) {
+                        debugLogger.error('Erreur lors du chargement depuis Sources V2:', error);
+                        showNoDataState(`❌ Erreur Sources V2: ${error.message}`);
+                        return;
+                    }
+
                 // Load from API or CSV based on source type
-                if (isApiSource) {
+                } else if (isApiSource) {
                     debugLogger.debug('🌐 Loading Saxo data from API...');
 
                     // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
@@ -4085,6 +4162,15 @@
             window.addEventListener('bourseSourceChanged', async (event) => {
                 debugLogger.debug('🔄 Bourse source changed:', event.detail);
 
+                // Invalidate all Saxo caches (critical for source switching)
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(`saxo_portfolio_${activeUser}_`)) {
+                        localStorage.removeItem(key);
+                        debugLogger.debug(`🧹 Cleared cache: ${key}`);
+                    }
+                });
+
                 // Clear previous timeout to debounce rapid changes
                 if (sourceChangeTimeout) {
                     clearTimeout(sourceChangeTimeout);
@@ -4098,8 +4184,13 @@
                     currentFileKey = null; // Reset
                     window.saxoSourceType = null; // Reset source type
 
+                    // Detect Manual source (Sources V2)
+                    if (bourseSource === 'manual_bourse') {
+                        window.saxoSourceType = 'manual';
+                        debugLogger.debug(`📝 Manual source detected: ${bourseSource}`);
+                    }
                     // Detect API source (starts with 'api:')
-                    if (bourseSource && bourseSource.startsWith('api:')) {
+                    else if (bourseSource && bourseSource.startsWith('api:')) {
                         window.saxoSourceType = 'api';
                         debugLogger.debug(`🌐 API source detected: ${bourseSource}`);
                     }

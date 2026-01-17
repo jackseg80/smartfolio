@@ -808,97 +808,20 @@
       </div>
     </section>
 
-<!-- Sources Tab Unified - Remplace CSV + Intégrations -->
+<!-- Sources Tab V2 - Category-based Sources Management -->
 <section class="tab-panel" id="tab-sources">
-  <div class="card" data-tooltip="Gérez toutes vos sources de données (CoinTracking, Saxo, etc.) depuis un point central unifié."
-    data-source="Système sources unifié v2">
+  <div class="card" data-tooltip="Gérez vos sources de données par catégorie (Crypto, Bourse)"
+    data-source="Système sources modulaire V2">
     <h3>📊 Sources de Données</h3>
     <div class="help" style="margin-bottom: 16px;">
-      Point d'entrée unique pour gérer toutes vos sources : scan, import et refresh des données CoinTracking, Saxo Bank et autres.
+      Gérez vos sources crypto et bourse de manière indépendante. Chaque catégorie peut utiliser une source différente (saisie manuelle, import CSV, API temps réel).
     </div>
 
-    <!-- Status global des sources -->
-    <div class="status-grid" id="sources_status_grid">
-      <div class="status-item">
-        <span class="label">Modules actifs:</span>
-        <span class="value" id="sources_active_count">Loading...</span>
-      </div>
-      <div class="status-item">
-        <span class="label">Dernière activité:</span>
-        <span class="value" id="sources_last_activity">-</span>
-      </div>
-      <div class="status-item">
-        <span class="label">Status global:</span>
-        <span class="value" id="sources_status">Initialisation...</span>
-      </div>
-    </div>
-
-    <!-- Grille des modules sources -->
-    <div class="modules-grid" id="sources_modules_grid" style="margin-top: 16px;">
-      <!-- Les cartes de modules seront injectées dynamiquement par sources-manager.js -->
+    <!-- Container for Sources V2 UI (dynamically rendered) -->
+    <div id="sources-v2-container">
       <div class="loading-placeholder">
         <div class="spinner"></div>
-        <span>Chargement des modules sources...</span>
-      </div>
-    </div>
-
-    <!-- Actions globales -->
-    <div style="margin-top: 16px;">
-      <div class="flex-row" style="gap: 12px; flex-wrap: wrap;">
-        <button class="btn info" onclick="refreshSourcesStatus()">
-          🔄 Actualiser status
-        </button>
-        <button class="btn secondary" onclick="showSourcesConfiguration()">
-          ⚙️ Configuration avancée
-        </button>
-      </div>
-    </div>
-
-    <!-- Configuration sources (collapsible) -->
-    <details class="config-details" id="sources_config_details" style="margin-top: 16px;">
-      <summary>⚙️ Configuration Sources Avancée</summary>
-      <div class="config-content">
-
-        <div class="form-group">
-          <label for="sources_snapshot_ttl">TTL des snapshots (heures)</label>
-          <input type="number" id="sources_snapshot_ttl" value="24" min="1" max="168">
-          <div class="help">Durée avant qu'un snapshot soit considéré comme obsolète (défaut: 24h)</div>
-        </div>
-
-        <div class="form-group">
-          <label for="sources_warning_threshold">Seuil d'alerte (heures)</label>
-          <input type="number" id="sources_warning_threshold" value="12" min="1" max="72">
-          <div class="help">Durée avant d'afficher un avertissement de staleness (défaut: 12h)</div>
-        </div>
-
-        <div class="form-group">
-          <label for="sources_auto_refresh">Actualisation automatique</label>
-          <input type="checkbox" id="sources_auto_refresh" checked>
-          <div class="help">Actualise automatiquement le statut toutes les 30 secondes</div>
-        </div>
-
-        <div style="margin-top: 16px;">
-          <button class="btn secondary" onclick="saveSourcesConfiguration()">
-            💾 Sauvegarder configuration
-          </button>
-        </div>
-
-      </div>
-    </details>
-
-    <!-- Logs sources -->
-    <div id="sources_logs" style="margin-top: 16px; display: none;">
-      <h4>📋 Logs récents</h4>
-      <div class="logs-container" id="sources_logs_content" style="max-height: 200px; overflow-y: auto; background: var(--theme-surface); padding: 8px; border-radius: 4px; font-family: monospace; font-size: 12px;">
-        <!-- Les logs seront ajoutés dynamiquement -->
-      </div>
-      <div style="margin-top: 8px;">
-        <button class="btn small secondary" onclick="toggleSourcesLogs()">
-          📋 Basculer les logs
-        </button>
-        <button class="btn small info" onclick="clearSourcesLogs()">
-          🗑️ Effacer
-        </button>
+        <span>Chargement des sources...</span>
       </div>
     </div>
 
@@ -1886,6 +1809,58 @@
         alert('❌ Erreur lors du rafraîchissement: ' + error.message);
       }
     }
+
+    // ===== Sources V2 Initialization =====
+    // Initialize SourcesManagerV2 when the Sources tab is activated
+    let sourcesManagerV2Instance = null;
+
+    async function initializeSourcesV2() {
+      if (sourcesManagerV2Instance) {
+        // Already initialized, just re-render
+        await sourcesManagerV2Instance.renderUI('sources-v2-container');
+        return;
+      }
+
+      try {
+        console.log('[Settings] Initializing Sources V2...');
+        sourcesManagerV2Instance = new SourcesManagerV2();
+        await sourcesManagerV2Instance.renderUI('sources-v2-container');
+        console.log('[Settings] Sources V2 initialized successfully');
+      } catch (error) {
+        console.error('[Settings] Error initializing Sources V2:', error);
+        const container = document.getElementById('sources-v2-container');
+        if (container) {
+          container.innerHTML = `
+            <div class="error-state" style="text-align: center; padding: 40px 20px; color: var(--danger);">
+              <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+              <div style="font-size: 16px; font-weight: 600;">Erreur de chargement</div>
+              <div style="font-size: 13px; margin-top: 8px; color: var(--theme-text-muted);">${error.message}</div>
+              <button class="btn secondary" onclick="initializeSourcesV2()" style="margin-top: 16px;">
+                🔄 Réessayer
+              </button>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // Initialize Sources V2 when Sources tab becomes visible
+    document.addEventListener('DOMContentLoaded', function() {
+      // Listen for tab changes
+      const sourcesTabBtn = document.querySelector('[data-target="#tab-sources"]');
+      if (sourcesTabBtn) {
+        sourcesTabBtn.addEventListener('click', function() {
+          // Defer initialization to next tick to ensure tab is visible
+          setTimeout(() => initializeSourcesV2(), 100);
+        });
+      }
+
+      // If Sources tab is already active on page load, initialize immediately
+      const sourcesTab = document.getElementById('tab-sources');
+      if (sourcesTab && sourcesTab.classList.contains('active')) {
+        initializeSourcesV2();
+      }
+    });
   </script>
 </body>
 
