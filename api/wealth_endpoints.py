@@ -635,8 +635,29 @@ async def global_summary(
 
         if saxo_available:
             logger.info(f"[wealth][global] 📌 Bourse source param: {bourse_source}, file_key param: {bourse_file_key}")
+            # ✅ Check if Manual mode (manual_bourse)
+            if bourse_source == "manual_bourse":
+                logger.info(f"[wealth][global] ✍️ Loading Saxo via Manual mode: {bourse_source}")
+                try:
+                    from services.sources import source_registry
+
+                    project_root = str(Path(__file__).parent.parent)
+                    manual_source = source_registry.get_source("manual_bourse", user, project_root)
+
+                    if manual_source:
+                        items = await manual_source.get_balances()
+                        # Calculate total from BalanceItem list
+                        total_value = sum(float(item.value_usd or 0) for item in items)
+                        breakdown["saxo"] = total_value
+                        logger.info(f"[wealth][global] ✅ Manual bourse: {len(items)} positions, total=${total_value:.2f} USD")
+                    else:
+                        logger.warning(f"[wealth][global] ⚠️ Manual bourse source not available for user {user}")
+                        breakdown["saxo"] = 0.0
+                except Exception as manual_error:
+                    logger.error(f"[wealth][global] ❌ Manual bourse load failed: {manual_error}", exc_info=True)
+                    breakdown["saxo"] = 0.0
             # ✅ Check if API mode (bourse_source starts with 'api:')
-            if bourse_source and bourse_source.startswith('api:'):
+            elif bourse_source and bourse_source.startswith('api:'):
                 logger.info(f"[wealth][global] 🌐 Loading Saxo via API mode: {bourse_source}")
                 # ✅ OPTIMIZED: Use cached data directly (FAST, no HTTP call, instant response)
                 try:

@@ -2845,7 +2845,11 @@ async function refreshGlobalTile() {
         const bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
         if (bourseSource && bourseSource !== 'all') {
-            if (bourseSource.startsWith('api:')) {
+            if (bourseSource === 'manual_bourse') {
+                // Manual mode: pass source parameter directly
+                bourseSourceParam = bourseSource;
+                debugLogger.debug(`[Global Tile] Using Bourse Manual mode: ${bourseSource}`);
+            } else if (bourseSource.startsWith('api:')) {
                 // API mode: pass source parameter directly
                 bourseSourceParam = bourseSource;
                 debugLogger.debug(`[Global Tile] Using Bourse API mode: ${bourseSource}`);
