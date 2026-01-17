@@ -431,29 +431,54 @@
           }
 
           // Ajouter la stratégie dynamique CCS en deuxième
-          const ccsTargets = syncCCSTargets();
-          if (ccsTargets) {
-            availableStrategies['ccs-dynamic'] = {
-              name: 'Strategic (Dynamic)',
-              icon: '🎯',
-              description: `Targets CCS du Risk Dashboard - ${ccsTargets.strategy}`,
-              risk_level: 'Variable',
-              allocations: ccsTargets.targets,
-              _isDynamic: true,
-              _ccsData: ccsTargets
-            };
-            debugLogger.debug('Added dynamic CCS strategy:', ccsTargets);
-          } else {
-            // Ajouter une stratégie placeholder pour indiquer qu'il faut sync
-            availableStrategies['ccs-dynamic-placeholder'] = {
-              name: 'Strategic (Dynamic)',
-              icon: '🎯',
-              description: 'Cliquez "🎯 Sync CCS" pour charger les targets du Risk Dashboard',
-              risk_level: 'N/A',
-              allocations: {},
-              _isPlaceholder: true
-            };
+          let ccsTargets = syncCCSTargets();
+
+          // Si pas de données localStorage, générer automatiquement
+          if (!ccsTargets && window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
+            try {
+              debugLogger.debug('No localStorage targets, auto-generating with blend strategy...');
+              const proposal = window.targetsCoordinator.proposeTargets('blend');
+              if (proposal && proposal.targets) {
+                // Sauvegarder pour les prochaines fois
+                window.targetsCoordinator.applyTargets(proposal);
+                ccsTargets = {
+                  targets: proposal.targets,
+                  strategy: proposal.strategy + ' (auto)',
+                  timestamp: proposal.timestamp
+                };
+                debugLogger.debug('Auto-generated targets:', ccsTargets);
+              }
+            } catch (genError) {
+              debugLogger.warn('Error auto-generating targets:', genError);
+            }
           }
+
+          // Si toujours pas de targets, utiliser les defaults
+          if (!ccsTargets) {
+            const defaultTargets = window.targetsCoordinator?.DEFAULT_MACRO_TARGETS || {
+              'BTC': 35.0, 'ETH': 25.0, 'Stablecoins': 20.0, 'SOL': 5.0,
+              'L1/L0 majors': 7.0, 'L2/Scaling': 4.0, 'DeFi': 2.0,
+              'AI/Data': 1.5, 'Gaming/NFT': 0.5, 'Memecoins': 0.0, 'Others': 0.0
+            };
+            ccsTargets = {
+              targets: { ...defaultTargets },
+              strategy: 'Macro Baseline (default)',
+              timestamp: new Date().toISOString()
+            };
+            delete ccsTargets.targets.model_version;
+          }
+
+          // Toujours ajouter la stratégie dynamique (jamais placeholder)
+          availableStrategies['ccs-dynamic'] = {
+            name: 'Strategic (Dynamic)',
+            icon: '🎯',
+            description: `Targets CCS - ${ccsTargets.strategy}`,
+            risk_level: 'Variable',
+            allocations: ccsTargets.targets,
+            _isDynamic: true,
+            _ccsData: ccsTargets
+          };
+          debugLogger.debug('Added dynamic CCS strategy:', ccsTargets);
 
         } catch (syncError) {
           debugLogger.warn('Erreur synchronisation stratégies dynamiques (non bloquante):', syncError);
@@ -2572,7 +2597,7 @@
       // Ajouter une fonction pour rafraîchir la stratégie dynamique
       window.refreshDynamicStrategy = async function () {
         try {
-          showNotification('🔄 Recherche des targets CCS depuis Risk Dashboard...', 'info', 1000);
+          showNotification('🔄 Génération des targets dynamiques...', 'info', 1000);
 
           // Debug localStorage avant sync
           console.debug('refreshDynamicStrategy - localStorage keys:', Object.keys(localStorage));
@@ -2583,42 +2608,55 @@
 
           console.debug('refreshDynamicStrategy - Parsed CCS targets:', ccsTargets);
 
-          // Si pas de données localStorage récentes
+          // Si pas de données localStorage récentes, générer automatiquement
           if (!ccsTargets) {
-            // Vérifier si Risk Dashboard a récemment sauvegardé des données
-            const allStorageKeys = Object.keys(localStorage);
-            const ccsKeys = allStorageKeys.filter(key =>
-              key.includes('ccs') || key.includes('target') || key.includes('risk-dashboard')
-            );
+            debugLogger.debug('No localStorage targets found, generating automatically...');
 
-            debugLogger.debug('Found CCS-related localStorage keys:', ccsKeys);
+            // Vérifier si targetsCoordinator est disponible
+            if (window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
+              try {
+                // Générer les targets avec la stratégie blend (la plus équilibrée)
+                const proposal = window.targetsCoordinator.proposeTargets('blend');
+                debugLogger.debug('Auto-generated proposal:', proposal);
 
-            showNotification(
-              '📭 Aucune donnée CCS récente trouvée.\n\n' +
-              '1️⃣ Allez dans Risk Dashboard\n' +
-              '2️⃣ Cliquez sur l\'onglet "Strategic Targets"\n' +
-              '3️⃣ Appliquez une stratégie (ex: "Blended Strategy")\n' +
-              '4️⃣ Revenez ici et cliquez "🎯 Sync CCS"',
-              'info',
-              8000
-            );
+                if (proposal && proposal.targets) {
+                  // Sauvegarder pour les prochaines fois
+                  window.targetsCoordinator.applyTargets(proposal);
 
-            // Ajouter stratégie placeholder
-            availableStrategies['ccs-dynamic-placeholder'] = {
-              name: 'Strategic (Dynamic)',
-              icon: '📭',
-              description: 'Cliquez "🎯 Sync CCS" après avoir défini des targets dans Risk Dashboard',
-              risk_level: 'N/A',
-              allocations: {},
-              _isPlaceholder: true
+                  // Utiliser les targets générés
+                  ccsTargets = {
+                    targets: proposal.targets,
+                    strategy: proposal.strategy + ' (auto)',
+                    timestamp: proposal.timestamp
+                  };
+
+                  showNotification('🎯 Targets générés automatiquement (Blended Strategy)', 'success', 3000);
+                }
+              } catch (genError) {
+                debugLogger.error('Error auto-generating targets:', genError);
+              }
+            } else {
+              debugLogger.warn('targetsCoordinator not available, waiting for module load...');
+            }
+          }
+
+          // Si toujours pas de targets (module pas chargé), utiliser les defaults
+          if (!ccsTargets) {
+            debugLogger.debug('Using default macro targets as fallback');
+            const defaultTargets = window.targetsCoordinator?.DEFAULT_MACRO_TARGETS || {
+              'BTC': 35.0, 'ETH': 25.0, 'Stablecoins': 20.0, 'SOL': 5.0,
+              'L1/L0 majors': 7.0, 'L2/Scaling': 4.0, 'DeFi': 2.0,
+              'AI/Data': 1.5, 'Gaming/NFT': 0.5, 'Memecoins': 0.0, 'Others': 0.0
             };
 
-            // Supprimer l'ancienne version si elle existe
-            delete availableStrategies['ccs-dynamic'];
-            delete availableStrategies['ccs-dynamic-error'];
+            ccsTargets = {
+              targets: { ...defaultTargets },
+              strategy: 'Macro Baseline (default)',
+              timestamp: new Date().toISOString()
+            };
+            delete ccsTargets.targets.model_version;
 
-            renderStrategiesUI();
-            return;
+            showNotification('📊 Utilisation des targets macro par défaut', 'info', 3000);
           }
 
           if (ccsTargets) {

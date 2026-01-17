@@ -1100,3 +1100,13 @@ export function validateTargets(targets) {
 
   return { valid: true };
 }
+
+// ============ Global Exports for non-module scripts (rebalance-controller.js) ============
+// Expose key functions globally so they can be used by non-ES6 module scripts
+window.targetsCoordinator = {
+  proposeTargets,
+  applyTargets,
+  normalizeTargets,
+  DEFAULT_MACRO_TARGETS,
+  CANONICAL_GROUPS
+};
