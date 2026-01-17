@@ -3196,10 +3196,18 @@
                     debugLogger.debug('📝 Loading Saxo data from Sources V2 (manual)...');
 
                     try {
-                        const { ok, data } = await safeFetch('/api/sources/v2/bourse/balances', {
-                            timeout: 10000,
+                        // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                        const response = await fetch('/api/sources/v2/bourse/balances', {
                             headers: { 'X-User': activeUser }
                         });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+
+                        const apiResponse = await response.json();
+                        const ok = apiResponse.ok;
+                        const data = apiResponse.data || apiResponse;
 
                         // Debug: log full response
                         console.log('🔍 V2 API Response:', {

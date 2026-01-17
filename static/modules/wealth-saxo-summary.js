@@ -160,27 +160,32 @@ export async function fetchSaxoSummary() {
             (window.debugLogger?.debug || console.log)(`[Saxo Summary] Using Sources V2 mode: ${bourseSource}`);
 
             try {
-                const { ok, data } = await safeFetch('/api/sources/v2/bourse/balances', {
-                    timeout: 10000,
+                // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                const response = await fetch('/api/sources/v2/bourse/balances', {
                     headers: { 'X-User': activeUser }
                 });
 
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const apiData = await response.json();
+
                 // Debug: log full response
                 console.log('🔍 [Saxo Summary] V2 API Response:', {
-                    ok,
-                    hasData: !!data,
-                    dataKeys: data ? Object.keys(data) : [],
-                    dataDataKeys: data?.data ? Object.keys(data.data) : [],
-                    items_at_data: data?.items,
-                    items_at_data_data: data?.data?.items,
-                    count_at_data_data: data?.data?.count
+                    ok: apiData.ok,
+                    hasData: !!apiData.data,
+                    dataKeys: apiData.data ? Object.keys(apiData.data) : [],
+                    items_at_data: apiData.data?.items,
+                    count_at_data: apiData.data?.count
                 });
 
-                if (!ok) {
-                    const errorMsg = data?.message || data?.error || 'API request failed';
+                if (!apiData.ok) {
+                    const errorMsg = apiData.data?.message || apiData.data?.error || 'API request failed';
                     throw new Error(`Sources V2 API failed: ${errorMsg}`);
                 }
 
+                const data = apiData.data;
                 if (!data) {
                     throw new Error('No data returned from Sources V2 API');
                 }

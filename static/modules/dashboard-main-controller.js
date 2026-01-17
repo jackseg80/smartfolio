@@ -2617,9 +2617,16 @@ async function refreshSaxoTile() {
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
                 const bourseSource = window.wealthContextBar?.getContext()?.bourse;
                 let apiUrl;
+                let isManualSource = false;
 
+                // Check if Manual mode (manual_bourse)
+                if (bourseSource === 'manual_bourse') {
+                    apiUrl = `/api/sources/v2/bourse/balances`;
+                    isManualSource = true;
+                    debugLogger.debug(`[Saxo Tile Chart] Using Manual mode: ${bourseSource}`);
+                }
                 // Check if API mode (api:saxobank_api)
-                if (bourseSource && bourseSource.startsWith('api:')) {
+                else if (bourseSource && bourseSource.startsWith('api:')) {
                     // API mode: use api-positions endpoint with cache (FAST, no live API call)
                     apiUrl = `/api/saxo/api-positions?use_cache=true&max_cache_age_hours=24`;
                     debugLogger.debug(`[Saxo Tile Chart] Using API mode (cached): ${bourseSource}`);
@@ -2641,9 +2648,28 @@ async function refreshSaxoTile() {
 
                 if (positionsResponse.ok) {
                     const positionsData = await positionsResponse.json();
-                    // ✅ Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
-                    const positions = positionsData.data?.positions || positionsData.positions || [];
-                    const cashBalance = positionsData.data?.cash_balance || 0;
+
+                    let positions, cashBalance;
+                    if (isManualSource) {
+                        // Manual mode: transform BalanceItem[] to positions format
+                        const items = positionsData.data?.items || positionsData.items || [];
+                        positions = items.map(item => ({
+                            symbol: item.symbol,
+                            asset_name: item.alias || item.symbol,
+                            quantity: item.amount || 0,
+                            market_value: item.value_usd || 0,
+                            asset_class: item.asset_class || 'EQUITY',
+                            currency: item.currency || 'USD',
+                            broker: item.location || 'Manual'
+                        }));
+                        cashBalance = 0; // Manual entries don't have cash balance
+                        debugLogger.debug(`[Saxo Tile Chart] Manual mode: Transformed ${items.length} items to ${positions.length} positions`);
+                    } else {
+                        // ✅ Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
+                        positions = positionsData.data?.positions || positionsData.positions || [];
+                        cashBalance = positionsData.data?.cash_balance || 0;
+                    }
+
                     debugLogger.debug(`[Saxo Tile Chart] Extracted ${positions.length} positions + cash=$${cashBalance} for chart`);
                     await updateSaxoChart(positions, cashBalance);
                 }
