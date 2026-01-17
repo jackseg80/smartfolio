@@ -583,6 +583,18 @@
                     case 'analytics':
                         loadAnalyticsTab();
                         break;
+                    case 'recommendations':
+                        // Reload recommendations if already loaded
+                        if (recommendationsLoaded && currentRecommendations.length > 0) {
+                            loadRecommendations(currentTimeframe);
+                        }
+                        break;
+                    case 'opportunities':
+                        // Reload opportunities if already loaded
+                        if (lastOpportunitiesData) {
+                            loadOpportunities();
+                        }
+                        break;
                 }
             }
         }
@@ -646,9 +658,13 @@
                 document.getElementById('riskMetrics').innerHTML = '<div class="loading">…</div>';
                 document.getElementById('riskStructure').innerHTML = '<div class="loading">…</div>';
 
-                // Build URL with file_key (CSV) or source (API)
+                // Build URL with file_key (CSV) or source (API/Manual)
                 let riskUrl = `/api/risk/bourse/dashboard?user_id=${activeUser}`;
-                if (window.saxoSourceType === 'api') {
+                if (window.saxoSourceType === 'manual') {
+                    // Manual mode: use source parameter
+                    riskUrl += `&source=manual_bourse`;
+                    debugLogger.debug(`🔍 Loading risk from Manual source: manual_bourse`);
+                } else if (window.saxoSourceType === 'api') {
                     // API mode: use source parameter
                     riskUrl += `&source=saxobank_api`;
                     debugLogger.debug(`🔍 Loading risk from API source: saxobank_api`);
@@ -663,7 +679,11 @@
                     debugLogger.debug(`💵 Including cash in risk calculation: $${window.portfolioCash}`);
                 }
 
-                const response = await safeFetch(globalConfig.getApiUrl(riskUrl));
+                // CRITICAL: Don't use globalConfig.getApiUrl() here because it adds source=stub_balanced
+                const fullRiskUrl = `${window.getApiBase()}${riskUrl}`;
+                const response = await safeFetch(fullRiskUrl, {
+                    headers: { 'X-User': activeUser }
+                });
                 if (!response?.ok) throw new Error('risk endpoint failed');
 
                 const { risk, coverage, positions_count, total_value_usd } = response.data || response;
@@ -797,11 +817,19 @@
             try {
                 // Build URL with file_key if available
                 let alertsUrl = `/api/risk/bourse/alerts?user_id=${activeUser}`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'manual') {
+                    alertsUrl += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    alertsUrl += `&source=saxobank_api`;
+                } else if (currentFileKey) {
                     alertsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
-                const response = await safeFetch(globalConfig.getApiUrl(alertsUrl));
+                // CRITICAL: Don't use globalConfig.getApiUrl() because it adds source=stub_balanced
+                const fullAlertsUrl = `${window.getApiBase()}${alertsUrl}`;
+                const response = await safeFetch(fullAlertsUrl, {
+                    headers: { 'X-User': activeUser }
+                });
                 if (!response?.ok) {
                     throw new Error('Alerts endpoint failed');
                 }
@@ -977,8 +1005,10 @@
 
                 // Call acknowledge endpoint
                 const acknowledgeUrl = `/api/risk/bourse/alerts/${alertId}/acknowledge?user_id=${activeUser}`;
-                const response = await safeFetch(globalConfig.getApiUrl(acknowledgeUrl), {
-                    method: 'POST'
+                const fullAcknowledgeUrl = `${window.getApiBase()}${acknowledgeUrl}`;
+                const response = await safeFetch(fullAcknowledgeUrl, {
+                    method: 'POST',
+                    headers: { 'X-User': activeUser }
                 });
 
                 if (!response?.ok) {
@@ -3105,6 +3135,18 @@
 
                 debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${isManualSource ? 'MANUAL' : isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
 
+                // CRITICAL: Update window.saxoSourceType for other functions (Risk, Recommendations, etc.)
+                if (isManualSource) {
+                    window.saxoSourceType = 'manual';
+                } else if (isApiSource) {
+                    window.saxoSourceType = 'api';
+                } else if (isCsvSource) {
+                    window.saxoSourceType = 'csv';
+                } else {
+                    window.saxoSourceType = null;
+                }
+                debugLogger.debug(`🔧 window.saxoSourceType set to: ${window.saxoSourceType}`);
+
                 // Include source type in cache key to avoid mixing API and CSV data
                 const sourcePrefix = isManualSource ? 'manual' : isApiSource ? 'api' : (currentFileKey || 'default');
                 const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
@@ -4590,9 +4632,13 @@
 
                 tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
 
-                // Build URL with parameters (file_key for CSV, source for API)
+                // Build URL with parameters (file_key for CSV, source for API/Manual)
                 let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=90`;
-                if (window.saxoSourceType === 'api') {
+                if (window.saxoSourceType === 'manual') {
+                    // Manual mode: use source parameter
+                    recsUrl += `&source=manual_bourse`;
+                    debugLogger.debug(`🔍 Loading recommendations from Manual source: manual_bourse`);
+                } else if (window.saxoSourceType === 'api') {
                     // API mode: use source parameter
                     recsUrl += `&source=saxobank_api`;
                     debugLogger.debug(`🔍 Loading recommendations from API source: saxobank_api`);
@@ -4607,7 +4653,11 @@
                     debugLogger.debug(`💵 Including cash in recommendations: $${window.portfolioCash}`);
                 }
 
-                const response = await safeFetch(globalConfig.getApiUrl(recsUrl));
+                // CRITICAL: Don't use globalConfig.getApiUrl() because it adds source=stub_balanced
+                const fullRecsUrl = `${window.getApiBase()}${recsUrl}`;
+                const response = await safeFetch(fullRecsUrl, {
+                    headers: { 'X-User': activeUser }
+                });
 
                 if (!response?.ok) {
                     throw new Error(`HTTP ${response.status || 'unknown'}: ${response.error || 'unknown error'}`);
@@ -4920,14 +4970,22 @@
                     debugLogger.info(`Fetching ${tf.id} timeframe recommendations...`);
 
                     let recsUrl = `/api/ml/bourse/portfolio-recommendations?user_id=${activeUser}&timeframe=${tf.id}&lookback_days=90`;
-                    if (currentFileKey) {
+                    if (window.saxoSourceType === 'manual') {
+                        recsUrl += `&source=manual_bourse`;
+                    } else if (window.saxoSourceType === 'api') {
+                        recsUrl += `&source=saxobank_api`;
+                    } else if (currentFileKey) {
                         recsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
                     }
                     if (window.portfolioCash && window.portfolioCash > 0) {
                         recsUrl += `&cash_amount=${window.portfolioCash}`;
                     }
 
-                    const response = await safeFetch(globalConfig.getApiUrl(recsUrl));
+                    // CRITICAL: Don't use globalConfig.getApiUrl() because it adds source=stub_balanced
+                    const fullRecsUrl = `${window.getApiBase()}${recsUrl}`;
+                    const response = await safeFetch(fullRecsUrl, {
+                        headers: { 'X-User': activeUser }
+                    });
                     if (!response?.ok) throw new Error(`Failed to fetch ${tf.id} recommendations`);
 
                     const data = response.data || response;
@@ -5833,13 +5891,21 @@
 
                 // Build API URL
                 let url = `/api/bourse/opportunities?user_id=${activeUser}&horizon=${currentHorizon}`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'manual') {
+                    url += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    url += `&source=saxobank_api`;
+                } else if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
                 debugLogger.info(`Loading market opportunities (horizon: ${currentHorizon})`);
 
-                const response = await safeFetch(globalConfig.getApiUrl(url));
+                // CRITICAL: Don't use globalConfig.getApiUrl() because it adds source=stub_balanced
+                const fullUrl = `${window.getApiBase()}${url}`;
+                const response = await safeFetch(fullUrl, {
+                    headers: { 'X-User': activeUser }
+                });
                 if (!response?.ok) {
                     throw new Error('Opportunities endpoint failed');
                 }
@@ -5914,11 +5980,19 @@
                     debugLogger.info(`Fetching ${horizon.id} horizon opportunities...`);
 
                     let url = `/api/bourse/opportunities?user_id=${activeUser}&horizon=${horizon.id}`;
-                    if (currentFileKey) {
+                    if (window.saxoSourceType === 'manual') {
+                        url += `&source=manual_bourse`;
+                    } else if (window.saxoSourceType === 'api') {
+                        url += `&source=saxobank_api`;
+                    } else if (currentFileKey) {
                         url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                     }
 
-                    const response = await safeFetch(globalConfig.getApiUrl(url));
+                    // CRITICAL: Don't use globalConfig.getApiUrl() because it adds source=stub_balanced
+                    const fullUrl = `${window.getApiBase()}${url}`;
+                    const response = await safeFetch(fullUrl, {
+                        headers: { 'X-User': activeUser }
+                    });
                     if (!response?.ok) throw new Error(`Failed to fetch ${horizon.id} opportunities`);
 
                     const data = response.data || response;

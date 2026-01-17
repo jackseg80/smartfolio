@@ -688,30 +688,73 @@ async def get_portfolio_recommendations(
                 detail=f"Invalid timeframe '{timeframe}'. Must be: short, medium, or long"
             )
 
-        # Get user positions from Saxo (API or CSV)
+        # Import httpx at the beginning (used later for regime detection)
         import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            if source == "saxobank_api":
-                # API mode: use api-positions endpoint
-                positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
-            else:
-                # CSV mode: use positions endpoint
-                positions_url = f"{API_BASE_URL}/api/saxo/positions"
-                if file_key:
-                    positions_url += f"?file_key={file_key}"
 
-            pos_response = await client.get(
-                positions_url,
-                headers={"X-User": user}
-            )
-            pos_response.raise_for_status()
-            positions_data = pos_response.json()
+        # Get user positions from Manual/API/CSV
+        if source == "manual_bourse":
+            # Manual mode: load from Sources V2
+            from services.sources import source_registry
+            from pathlib import Path
 
-            # Handle nested response structure from API
-            if source == "saxobank_api":
-                positions = positions_data.get("data", {}).get("positions", [])
-            else:
-                positions = positions_data.get("positions", [])
+            project_root = Path(__file__).parent.parent
+            manual_source = source_registry.get_source("manual_bourse", user, project_root)
+
+            if not manual_source:
+                return {
+                    "recommendations": [],
+                    "summary": {
+                        "total_positions": 0,
+                        "message": "Manual bourse source not available"
+                    },
+                    "timeframe": timeframe,
+                    "generated_at": datetime.now().isoformat()
+                }
+
+            result = await manual_source.get_balances()
+            # get_balances() returns List[BalanceItem] directly, not a dict
+            items = result if isinstance(result, list) else []
+
+            # Transform BalanceItem (dataclass) to positions format
+            positions = [
+                {
+                    "symbol": item.symbol,
+                    "asset_name": item.alias or item.symbol,
+                    "quantity": float(item.amount or 0),
+                    "market_value": float(item.value_usd or 0),
+                    "market_value_usd": float(item.value_usd or 0),
+                    "asset_class": item.asset_class or "EQUITY",
+                    "currency": item.currency or "USD",
+                    "broker": item.location or "Manual",
+                    "avg_price": item.avg_price or 0
+                }
+                for item in items
+            ]
+
+        else:
+            # API or CSV mode: use HTTP endpoints
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                if source == "saxobank_api":
+                    # API mode: use api-positions endpoint
+                    positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
+                else:
+                    # CSV mode: use positions endpoint
+                    positions_url = f"{API_BASE_URL}/api/saxo/positions"
+                    if file_key:
+                        positions_url += f"?file_key={file_key}"
+
+                pos_response = await client.get(
+                    positions_url,
+                    headers={"X-User": user}
+                )
+                pos_response.raise_for_status()
+                positions_data = pos_response.json()
+
+                # Handle nested response structure from API
+                if source == "saxobank_api":
+                    positions = positions_data.get("data", {}).get("positions", [])
+                else:
+                    positions = positions_data.get("positions", [])
 
         if not positions:
             return {
@@ -781,6 +824,7 @@ async def get_portfolio_recommendations(
 async def get_market_opportunities(
     user: str = Depends(get_active_user),
     horizon: str = Query("medium", description="Time horizon: short (1-3M), medium (6-12M), long (2-3Y)"),
+    source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
     file_key: Optional[str] = Query(None, description="Saxo CSV file key"),
     min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum gap percentage to consider")
 ):
@@ -806,19 +850,72 @@ async def get_market_opportunities(
                 detail=f"Invalid horizon '{horizon}'. Must be: short, medium, or long"
             )
 
-        # 1. Get user positions from Saxo
+        # Import httpx at the beginning (may be used later)
         import httpx
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            positions_url = f"{API_BASE_URL}/api/saxo/positions"
-            if file_key:
-                positions_url += f"?file_key={file_key}"
-            pos_response = await client.get(
-                positions_url,
-                headers={"X-User": user}
-            )
-            pos_response.raise_for_status()
-            positions_data = pos_response.json()
-            positions = positions_data.get("positions", [])
+
+        # 1. Get user positions from Manual/API/CSV
+        if source == "manual_bourse":
+            # Manual mode: load from Sources V2
+            from services.sources import source_registry
+            from pathlib import Path
+
+            project_root = Path(__file__).parent.parent
+            manual_source = source_registry.get_source("manual_bourse", user, project_root)
+
+            if not manual_source:
+                return {
+                    "gaps": [],
+                    "opportunities": [],
+                    "suggested_sales": [],
+                    "impact": {},
+                    "message": "Manual bourse source not available",
+                    "generated_at": datetime.now().isoformat()
+                }
+
+            result = await manual_source.get_balances()
+            # get_balances() returns List[BalanceItem] directly, not a dict
+            items = result if isinstance(result, list) else []
+
+            # Transform BalanceItem (dataclass) to positions format
+            positions = [
+                {
+                    "symbol": item.symbol,
+                    "asset_name": item.alias or item.symbol,
+                    "quantity": float(item.amount or 0),
+                    "market_value": float(item.value_usd or 0),
+                    "market_value_usd": float(item.value_usd or 0),
+                    "asset_class": item.asset_class or "EQUITY",
+                    "currency": item.currency or "USD",
+                    "broker": item.location or "Manual"
+                }
+                for item in items
+            ]
+
+        else:
+            # API or CSV mode: use HTTP endpoints
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                if source == "saxobank_api":
+                    # API mode: use api-positions endpoint
+                    positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
+                    pos_response = await client.get(
+                        positions_url,
+                        headers={"X-User": user}
+                    )
+                    pos_response.raise_for_status()
+                    positions_data = pos_response.json()
+                    positions = positions_data.get("data", {}).get("positions", [])
+                else:
+                    # CSV mode: use positions endpoint
+                    positions_url = f"{API_BASE_URL}/api/saxo/positions"
+                    if file_key:
+                        positions_url += f"?file_key={file_key}"
+                    pos_response = await client.get(
+                        positions_url,
+                        headers={"X-User": user}
+                    )
+                    pos_response.raise_for_status()
+                    positions_data = pos_response.json()
+                    positions = positions_data.get("positions", [])
 
         if not positions:
             return {

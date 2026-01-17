@@ -72,8 +72,69 @@ async def bourse_risk_dashboard(
     try:
         logger.info(f"[risk-bourse] Computing risk dashboard for user {user_id} (source={source}, file_key={file_key})")
 
-        # 1) Récupérer positions depuis API ou CSV
-        if source == "saxobank_api":
+        # 1) Récupérer positions depuis Manual/API/CSV
+        if source == "manual_bourse":
+            # Manual mode: charger depuis Sources V2
+            from services.sources import source_registry
+            from pathlib import Path
+
+            project_root = Path(__file__).parent.parent
+            manual_source = source_registry.get_source("manual_bourse", user_id, project_root)
+
+            if not manual_source:
+                logger.warning(f"[risk-bourse] Manual bourse source not found for user {user_id}")
+                return RiskDashboardResponse(
+                    ok=True,
+                    coverage=0.0,
+                    positions_count=0,
+                    total_value_usd=0.0,
+                    risk={
+                        "score": 0,
+                        "level": "N/A",
+                        "metrics": {},
+                        "message": "Manual bourse source not available"
+                    },
+                    asof=datetime.utcnow().isoformat(),
+                    user_id=user_id
+                )
+
+            result = await manual_source.get_balances()
+            # get_balances() returns List[BalanceItem] directly, not a dict
+            items = result if isinstance(result, list) else []
+
+            if not items:
+                logger.warning(f"[risk-bourse] No manual positions for user {user_id}")
+                return RiskDashboardResponse(
+                    ok=True,
+                    coverage=0.0,
+                    positions_count=0,
+                    total_value_usd=0.0,
+                    risk={
+                        "score": 0,
+                        "level": "N/A",
+                        "metrics": {},
+                        "message": "No manual positions available"
+                    },
+                    asof=datetime.utcnow().isoformat(),
+                    user_id=user_id
+                )
+
+            # Transform BalanceItem (dataclass) to positions format
+            positions = [
+                {
+                    "symbol": item.symbol,
+                    "asset_name": item.alias or item.symbol,
+                    "quantity": float(item.amount or 0),
+                    "market_value_usd": float(item.value_usd or 0),
+                    "asset_class": item.asset_class or "EQUITY",
+                    "currency": item.currency or "USD",
+                    "broker": item.location or "Manual",
+                    "avg_price": item.avg_price or 0
+                }
+                for item in items
+            ]
+
+        elif source == "saxobank_api":
             # API mode: charger depuis l'endpoint API
             from services.saxo_auth_service import SaxoAuthService
             auth_service = SaxoAuthService(user_id)
