@@ -620,6 +620,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ✅ Store interval IDs for proper cleanup
     dashboardRefreshInterval = setInterval(loadDashboardData, 60000);
 
+    // ✅ Wait for WealthContextBar to be ready before loading tiles
+    // CRITICAL: Prevents using stale localStorage cache in production
+    const maxWait = 50; // 50 attempts x 100ms = 5 seconds max
+    let attempts = 0;
+    while (!window.wealthContextBar?.getContext()?.bourse && attempts < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+
+    if (attempts >= maxWait) {
+        console.warn('[Dashboard] WealthContextBar not ready after 5s, proceeding anyway...');
+    } else {
+        debugLogger.debug(`[Dashboard] WealthContextBar ready after ${attempts * 100}ms`);
+    }
+
     // ✅ Initialize wealth tiles sequentially to avoid race conditions
     await refreshSaxoTile();
     await refreshPatrimoineTile();

@@ -108,13 +108,19 @@ export async function fetchSaxoSummary() {
     const activeUser = localStorage.getItem('activeUser') || 'demo';
 
     // Get current source FIRST (before checking cache)
-    // ✅ FALLBACK: If wealthContextBar not ready, use localStorage directly
+    // ✅ CRITICAL: Do NOT use localStorage fallback - wait for wealthContextBar to be ready
     let bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
     if (!bourseSource) {
-        // Fallback to localStorage (wealthContextBar may not be ready yet)
-        bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
-        (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ wealthContextBar not ready, using localStorage fallback: ${bourseSource}`);
+        // wealthContextBar not ready yet - return empty state instead of using stale localStorage cache
+        (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ wealthContextBar not ready yet, returning empty state`);
+        return {
+            total_value: 0,
+            positions_count: 0,
+            asof: 'Loading...',
+            isEmpty: true,
+            error: 'wealthContextBar_not_ready'
+        };
     }
 
     (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, source: ${bourseSource}`);
