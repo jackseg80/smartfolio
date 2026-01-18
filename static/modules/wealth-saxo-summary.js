@@ -22,8 +22,23 @@ function loadCacheFromStorage(activeUser, bourseSource) {
         const cached = localStorage.getItem(cacheKey);
         if (!cached) return null;
 
-        const { summary, timestamp } = JSON.parse(cached);
+        const parsed = JSON.parse(cached);
+        const { summary, timestamp, source } = parsed;
         const age = Date.now() - timestamp;
+
+        // ✅ CRITICAL: Invalidate old cache format (without source field) to prevent corruption
+        if (!source) {
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Old cache format detected (no source field), invalidating`);
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
+
+        // ✅ CRITICAL: Validate cache source matches requested source (prevent race condition cache corruption)
+        if (source !== bourseSource) {
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Cache source mismatch (cached: ${source}, requested: ${bourseSource}), invalidating`);
+            localStorage.removeItem(cacheKey);
+            return null;
+        }
 
         if (age < CACHE_TTL) {
             (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Loaded from localStorage (age: ${Math.round(age/1000)}s)`);
@@ -45,7 +60,8 @@ function loadCacheFromStorage(activeUser, bourseSource) {
 function saveCacheToStorage(activeUser, bourseSource, summary, timestamp) {
     try {
         const cacheKey = `${CACHE_KEY_PREFIX}${activeUser}_${bourseSource}`;
-        localStorage.setItem(cacheKey, JSON.stringify({ summary, timestamp }));
+        // ✅ CRITICAL: Store source in cache to validate on load (prevent race condition corruption)
+        localStorage.setItem(cacheKey, JSON.stringify({ summary, timestamp, source: bourseSource }));
         (window.debugLogger?.debug || console.log)(`[Saxo Summary] 💾 Saved to localStorage: ${cacheKey}`);
     } catch (err) {
         (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to save to localStorage:', err);
@@ -438,6 +454,20 @@ export async function fetchSaxoSummary() {
             asof: latestDate,
             isEmpty: false
         };
+
+        // ✅ CRITICAL: Verify source didn't change during async fetch (race condition protection)
+        const currentSource = window.wealthContextBar?.getContext()?.bourse;
+        if (currentSource && currentSource !== bourseSource) {
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Source changed during fetch (${bourseSource} → ${currentSource}), discarding result`);
+            // Don't cache - source changed, data is stale
+            return {
+                total_value: 0,
+                positions_count: 0,
+                asof: 'Source changed',
+                isEmpty: true,
+                error: 'source_changed_during_fetch'
+            };
+        }
 
         _cachedSummary = summary;
         _cacheTimestamp = now;
