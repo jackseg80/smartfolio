@@ -2559,7 +2559,8 @@ async function refreshSaxoTile() {
 
     try {
         // Dynamic import to access module functions
-        const { fetchSaxoSummary, formatCurrency, getMetricColor } = await import('../modules/wealth-saxo-summary.js');
+        // ✅ CRITICAL: Add timestamp to bust browser cache and ensure latest code is loaded
+        const { fetchSaxoSummary, formatCurrency, getMetricColor } = await import(`../modules/wealth-saxo-summary.js?v=${Date.now()}`);
         debugLogger.debug('[Saxo Tile] Module imported successfully, calling fetchSaxoSummary...');
         const summary = await fetchSaxoSummary();
         debugLogger.debug('[Saxo Tile] fetchSaxoSummary returned:', {isEmpty: summary.isEmpty, error: summary.error, total_value: summary.total_value, positions_count: summary.positions_count});
