@@ -364,6 +364,22 @@ class WealthContextBar {
         return;
       }
 
+      // ✅ FIX: Mettre à jour globalConfig pour que loadBalanceData() utilise la bonne source
+      if (typeof window.globalConfig !== 'undefined') {
+        window.globalConfig.set('data_source', 'manual_crypto');
+      }
+
+      // Mettre à jour userSettings
+      if (!window.userSettings) {
+        window.userSettings = {};
+      }
+      window.userSettings.data_source = 'manual_crypto';
+
+      // Vider cache balance
+      if (typeof window.clearBalanceCache === 'function') {
+        window.clearBalanceCache();
+      }
+
       this.context.account = 'manual_crypto';
       if (!skipSave) {
         this.saveContext();
@@ -530,6 +546,33 @@ class WealthContextBar {
 
     // Sauvegarder dans le backend AVANT d'émettre l'événement (évite race condition)
     if (sourceChanged || fileChanged) {
+      // ✅ FIX: Mettre à jour Sources V2 pour désactiver manual_crypto
+      // Mapper la source V1 vers l'ID source V2 correspondant
+      let sourcesV2Id = null;
+      if (type === 'csv') {
+        sourcesV2Id = 'cointracking_csv';
+      } else if (type === 'api' && key === 'cointracking_api') {
+        sourcesV2Id = 'cointracking_api';
+      }
+
+      if (sourcesV2Id) {
+        try {
+          const activeUser = localStorage.getItem('activeUser') || 'demo';
+          console.debug(`[WealthContextBar] Syncing Sources V2: activating ${sourcesV2Id}`);
+          await fetch('/api/sources/v2/crypto/active', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User': activeUser
+            },
+            body: JSON.stringify({ source_id: sourcesV2Id })
+          });
+        } catch (error) {
+          console.warn('[WealthContextBar] Failed to sync Sources V2:', error);
+          // Non-bloquant, on continue avec V1
+        }
+      }
+
       // Sauvegarder état AVANT modification pour rollback si échec
       const rollbackState = {
         source: oldSource,
@@ -625,6 +668,22 @@ class WealthContextBar {
         return;
       }
 
+      // ✅ FIX: Mettre à jour globalConfig pour que les modules bourse utilisent la bonne source
+      if (typeof window.globalConfig !== 'undefined') {
+        window.globalConfig.set('saxo_source', 'manual_bourse');
+      }
+
+      // Mettre à jour userSettings
+      if (!window.userSettings) {
+        window.userSettings = {};
+      }
+      window.userSettings.saxo_source = 'manual_bourse';
+
+      // Vider cache Saxo
+      if (typeof window.clearSaxoCache === 'function') {
+        window.clearSaxoCache();
+      }
+
       this.context.bourse = 'manual_bourse';
       if (!skipSave) {
         this.saveContext();
@@ -688,6 +747,29 @@ class WealthContextBar {
         }
         return;
       }
+    }
+
+    // ✅ FIX: Synchroniser Sources V2 pour Bourse
+    // Mapper vers l'ID source V2 correspondant
+    let sourcesV2Id = 'saxobank_csv'; // Par défaut, assumer CSV Saxo
+    if (_sourceType === 'api') {
+      sourcesV2Id = 'saxobank_api'; // Si c'est une API
+    }
+
+    try {
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      console.debug(`[WealthContextBar] Syncing Sources V2 Bourse: activating ${sourcesV2Id}`);
+      await fetch('/api/sources/v2/bourse/active', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User': activeUser
+        },
+        body: JSON.stringify({ source_id: sourcesV2Id })
+      });
+    } catch (error) {
+      console.warn('[WealthContextBar] Failed to sync Sources V2 Bourse:', error);
+      // Non-bloquant, on continue
     }
 
     // Pour Bourse/Saxo, mettre à jour le contexte seulement (pas de globalConfig)

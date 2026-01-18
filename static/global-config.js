@@ -699,6 +699,21 @@ window.loadBalanceData = async function (forceRefresh = false) {
 
   try {
     switch (dataSource) {
+      case 'manual_crypto': {
+        // ✅ Sources V2: Manual crypto entry
+        console.debug('📝 Using Manual Crypto source (Sources V2)');
+        const params = { source: 'manual_crypto' };
+        if (forceRefresh) params._t = timestamp;
+
+        // Call Sources V2 API for manual crypto balances
+        const response = await globalConfig.apiRequest('/api/sources/v2/crypto/balances', { params });
+        // Extract data from success_response wrapper
+        const manualData = response.data || response;
+        const result = { success: true, data: manualData, source: 'manual_crypto' };
+        balanceCache.set(manualData, cacheKey);
+        return result;
+      }
+
       case 'cointracking_api': {
         // CoinTracking API via backend
         console.debug('📡 Using CoinTracking API source');
