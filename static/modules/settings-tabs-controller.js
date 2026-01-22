@@ -19,6 +19,14 @@
   // Deep link support via hash
   const hash = location.hash && document.querySelector(location.hash);
   if (hash && hash.classList.contains('tab-panel')) activate(hash);
+
+  // Expose global function for programmatic tab switching
+  window.switchToTab = function(tabId) {
+    const target = document.querySelector(`#tab-${tabId}`);
+    if (target && target.classList.contains('tab-panel')) {
+      activate(target);
+    }
+  };
 })();
 
 // Appliquer le thème dès le chargement de global-config.js

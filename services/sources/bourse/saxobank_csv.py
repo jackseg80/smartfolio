@@ -170,27 +170,40 @@ class SaxoBankCSVSource(SourceBase):
                     or row.get("Qty")
                     or "0"
                 )
-                value_str = (
-                    row.get("Market Value")
+                # Get value and detect currency from column name
+                value_column_eur = row.get("Valeur actuelle (EUR)")
+                value_column_usd = row.get("Valeur actuelle (USD)")
+                value_column_generic = (
+                    row.get("Val. actuelle")
+                    or row.get("Market Value")
                     or row.get("MarketValue")
                     or row.get("Value")
                     or row.get("Valeur")
-                    or "0"
                 )
-                currency = (
-                    row.get("Currency")
-                    or row.get("Devise")
-                    or "USD"
-                )
+
+                # Determine value and currency based on which column has data
+                if value_column_eur:
+                    value_str = value_column_eur
+                    value_currency = "EUR"
+                elif value_column_usd:
+                    value_str = value_column_usd
+                    value_currency = "USD"
+                else:
+                    value_str = value_column_generic or "0"
+                    # Fallback to Currency/Devise column for generic value columns
+                    value_currency = row.get("Currency") or row.get("Devise") or "USD"
 
                 # Parse numeric values (handle European number format)
                 quantity = self._parse_number(quantity_str)
                 value = self._parse_number(value_str)
 
-                # Convert to USD
-                value_usd = fx_convert(value, currency.upper(), "USD") if currency.upper() != "USD" else value
+                # Convert to USD using the correct currency
+                value_usd = fx_convert(value, value_currency.upper(), "USD") if value_currency.upper() != "USD" else value
 
                 if quantity != 0:  # Skip zero positions
+                    # Get instrument currency (different from value currency)
+                    instrument_currency = row.get("Currency") or row.get("Devise") or value_currency
+
                     items.append(
                         BalanceItem(
                             symbol=symbol,
@@ -198,7 +211,7 @@ class SaxoBankCSVSource(SourceBase):
                             amount=quantity,
                             value_usd=value_usd,
                             location="Saxo Bank",
-                            currency=currency.upper(),
+                            currency=instrument_currency.upper(),
                             asset_class=row.get("AssetType", "EQUITY"),
                             isin=row.get("ISIN") or row.get("Isin"),
                             instrument_name=name,

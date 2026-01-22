@@ -38,7 +38,8 @@ class CoinTrackingAPISource(SourceBase):
 
     def __init__(self, user_id: str, project_root: str):
         super().__init__(user_id, project_root)
-        self._secrets_path = Path(project_root) / "data" / "users" / user_id / "config" / "secrets.json"
+        # secrets.json is stored directly in user folder, not in config subfolder
+        self._secrets_path = Path(project_root) / "data" / "users" / user_id / "secrets.json"
 
     def _get_credentials(self) -> tuple[Optional[str], Optional[str]]:
         """Load API credentials from secrets file."""

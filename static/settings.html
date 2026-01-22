@@ -1175,9 +1175,16 @@
    Sources V2 - Category-based UI
    ============================================ */
 .sources-v2-container {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 24px;
+}
+
+/* 2 colonnes sur écrans larges */
+@media (min-width: 1200px) {
+  .sources-v2-container {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .category-section {
@@ -1480,6 +1487,614 @@
 
 .close-modal:hover {
   color: var(--theme-text);
+}
+
+/* ============================================
+   CSV File Manager - P0 Improvements
+   ============================================ */
+.csv-file-manager-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Active File Card */
+.active-file-section {
+  margin-bottom: 8px;
+}
+
+.active-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--theme-surface-elevated);
+  border: 2px solid var(--success);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.active-file-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.active-file-card .file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.active-file-card .file-icon {
+  font-size: 24px;
+}
+
+.active-file-card .file-details {
+  flex: 1;
+}
+
+.active-file-card .file-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--theme-text);
+  margin-bottom: 4px;
+}
+
+.active-file-card .file-meta {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+.active-file-card .file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Other Files Dropdown */
+.other-files-section {
+  margin-top: 8px;
+}
+
+.dropdown-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--theme-text);
+  font-weight: 500;
+}
+
+.dropdown-toggle:hover {
+  background: var(--theme-surface-elevated);
+  border-color: var(--theme-accent);
+}
+
+.dropdown-icon {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-content {
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.dropdown-content.hidden {
+  display: none;
+}
+
+/* File Items in Dropdown */
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: var(--theme-surface-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.file-item:last-child {
+  margin-bottom: 0;
+}
+
+.file-item:hover {
+  border-color: var(--theme-accent);
+  background: var(--theme-surface);
+}
+
+.file-item .file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.file-item .file-icon {
+  font-size: 18px;
+}
+
+.file-item .file-details {
+  flex: 1;
+}
+
+.file-item .file-name-small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--theme-text);
+}
+
+.file-item .file-meta-small {
+  font-size: 11px;
+  color: var(--theme-text-muted);
+  margin-top: 2px;
+}
+
+.file-item .file-actions-small {
+  display: flex;
+  gap: 6px;
+}
+
+/* Button Icons */
+.btn-icon-small {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  padding: 4px;
+}
+
+.btn-icon-small:hover {
+  opacity: 1;
+}
+
+.btn-icon-small.danger:hover {
+  color: var(--danger);
+}
+
+/* Empty State */
+.empty-state-small {
+  text-align: center;
+  padding: 24px;
+  color: var(--theme-text-muted);
+  font-size: 13px;
+}
+
+/* Drag & Drop Zone - P2 */
+.drag-drop-zone {
+  margin-top: 16px;
+  padding: 32px 16px;
+  border: 2px dashed var(--theme-border);
+  border-radius: 12px;
+  background: var(--theme-surface);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.drag-drop-zone:hover {
+  border-color: var(--theme-accent);
+  background: color-mix(in oklab, var(--theme-accent) 5%, var(--theme-surface));
+}
+
+.drag-drop-zone.drag-over {
+  border-color: var(--success);
+  background: color-mix(in oklab, var(--success) 10%, var(--theme-surface));
+  border-style: solid;
+  transform: scale(1.02);
+}
+
+.drag-drop-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.drag-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.drag-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--theme-text);
+  margin: 0;
+}
+
+.drag-hint {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+  margin: 0;
+}
+
+/* Preview Modal Enhancements */
+.csv-preview-modal .summary-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px;
+  background: var(--theme-surface-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.csv-preview-modal .summary-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--theme-text-muted);
+  margin-bottom: 4px;
+}
+
+.csv-preview-modal .summary-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .active-file-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .active-file-card .file-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 12px;
+  }
+
+  .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .file-item .file-actions-small {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .csv-preview-modal .modal-content {
+    width: 95%;
+    max-width: none;
+  }
+}
+
+/* ============================================
+   P1/P2 Features - Health Status & Comparison
+   ============================================ */
+
+/* Category Header Actions */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.category-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Health Status Bar */
+.health-status-bar {
+  margin-bottom: 16px;
+}
+
+.health-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--theme-surface-elevated);
+  border-left: 4px solid var(--theme-border);
+}
+
+.health-bar.success {
+  border-left-color: var(--success);
+  background: color-mix(in oklab, var(--success) 5%, var(--theme-surface-elevated));
+}
+
+.health-bar.warning {
+  border-left-color: var(--warning);
+  background: color-mix(in oklab, var(--warning) 5%, var(--theme-surface-elevated));
+}
+
+.health-bar.error {
+  border-left-color: var(--danger);
+  background: color-mix(in oklab, var(--danger) 5%, var(--theme-surface-elevated));
+}
+
+.health-metric {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.metric-icon {
+  font-size: 18px;
+}
+
+.metric-value {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--theme-text);
+}
+
+.metric-label {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+.health-icon {
+  font-size: 20px;
+}
+
+.health-text {
+  font-size: 14px;
+  color: var(--theme-text);
+}
+
+/* Comparison Modal */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.comparison-card {
+  padding: 16px;
+  background: var(--theme-surface-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.comparison-card.available {
+  border-color: var(--success);
+}
+
+.comparison-card.unavailable {
+  opacity: 0.6;
+}
+
+.comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--theme-border);
+}
+
+.comparison-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.comparison-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comparison-metrics .metric {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.comparison-metrics .metric-label {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+.comparison-metrics .metric-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+.empty-comparison {
+  text-align: center;
+  padding: 16px 8px;
+  color: var(--theme-text-muted);
+  font-size: 13px;
+}
+
+/* Insights Section */
+.insights-section {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid var(--theme-accent);
+  background: var(--theme-surface-elevated);
+}
+
+.insights-section.warning {
+  border-left-color: var(--warning);
+  background: color-mix(in oklab, var(--warning) 5%, var(--theme-surface-elevated));
+}
+
+.insights-section.success {
+  border-left-color: var(--success);
+  background: color-mix(in oklab, var(--success) 5%, var(--theme-surface-elevated));
+}
+
+.insights-section h5 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.insights-section p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--theme-text);
+}
+
+/* ============================================
+   History Modal - P2
+   ============================================ */
+.history-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: var(--theme-surface-elevated);
+  border-radius: 8px;
+  border-left: 3px solid var(--theme-accent);
+}
+
+.history-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.history-content {
+  flex: 1;
+}
+
+.history-change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.history-change .old-source {
+  color: var(--theme-text-muted);
+}
+
+.history-change .arrow {
+  color: var(--theme-accent);
+  font-weight: bold;
+}
+
+.history-change .new-source {
+  color: var(--theme-text);
+  font-weight: 600;
+}
+
+.history-time {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+}
+
+/* ============================================
+   Recommendations Modal - P2
+   ============================================ */
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.recommendation-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--theme-surface-elevated);
+  border-radius: 8px;
+  border-left: 4px solid var(--theme-border);
+}
+
+.recommendation-card.warning {
+  border-left-color: var(--warning);
+  background: color-mix(in oklab, var(--warning) 5%, var(--theme-surface-elevated));
+}
+
+.recommendation-card.info {
+  border-left-color: var(--theme-accent);
+  background: color-mix(in oklab, var(--theme-accent) 5%, var(--theme-surface-elevated));
+}
+
+.recommendation-card.success {
+  border-left-color: var(--success);
+  background: color-mix(in oklab, var(--success) 5%, var(--theme-surface-elevated));
+}
+
+.recommendation-card.priority-high {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rec-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.rec-content {
+  flex: 1;
+}
+
+.rec-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin-bottom: 6px;
+}
+
+.rec-message {
+  font-size: 13px;
+  color: var(--theme-text);
+  line-height: 1.5;
+}
+
+/* Responsive - P1/P2 */
+@media (max-width: 768px) {
+  .health-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-header {
+    flex-wrap: wrap;
+  }
+
+  .category-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }
 </style>
 
