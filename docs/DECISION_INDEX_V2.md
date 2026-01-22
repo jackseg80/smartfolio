@@ -52,66 +52,101 @@ const blendedScore = Math.round(
 
 ---
 
-## 🏗️ 2. Decision Index (Allocation Engine V2)
+## 🏗️ 2. Decision Index (Score Décisionnel)
 
 ### Objectif
-**Score de QUALITÉ de l'allocation** calculée par Allocation Engine V2 (topdown hierarchical).
+**Score stratégique composite (0-100)** calculé par pondération des piliers avec ajustements contextuels.
 
-⚠️ **IMPORTANT:** Le Decision Index N'EST PAS une somme pondérée des piliers!
+⚠️ **IMPORTANT:** Le Decision Index EST une somme pondérée des 4 composantes (pas 3!), modulée par un facteur de phase.
 
-### Formule Réelle
-```javascript
-// strategy-api-adapter.js ligne 448
-const decisionScore = v2Allocation.metadata.total_check.isValid ? 65 : 45;
+### Formule Réelle (Backend - Source de Vérité)
+**Fichier**: `services/execution/strategy_registry.py` lignes 252-262
+
+```python
+# 4 composantes (pas 3!)
+raw_decision_score = (
+    cycle_score * weights.cycle +           # ~0.2-0.35
+    onchain_score * weights.onchain +       # ~0.3-0.4
+    risk_score * weights.risk_adjusted +    # ~0.15-0.4
+    sentiment_score * weights.sentiment     # ~0.1
+)
+
+# Ajustement par phase (bullish/bearish/moderate)
+adjusted_score = raw_decision_score * phase_factor
+
+# Clamp final 0-100
+final_score = max(0.0, min(100.0, adjusted_score))
 ```
 
-| Condition | DI | Signification |
-|-----------|-----|---------------|
-| **Allocation valide** | 65 | Allocation optimale trouvée, contraintes respectées |
-| **Allocation invalide** | 45 | Problème (somme ≠ 100%, hiérarchie violée) |
+**API Spec**: `api/strategy_endpoints.py` ligne 32
+```python
+decision_score: float = Field(..., ge=0, le=100, description="Score décisionnel 0-100")
+```
+
+### Range de Valeurs
+
+| Conditions | DI Range | Exemple |
+|-----------|----------|---------|
+| **Bear extreme** (tous scores bas) | 0-30 | Cycle=20, OnChain=25, Risk=30, Sentiment=20 → ~25 |
+| **Bear moderate** | 30-45 | Cycle=40, OnChain=35, Risk=50 → ~42 |
+| **Neutral** | 45-60 | Cycle=55, OnChain=50, Risk=60 → ~55 |
+| **Bull moderate** | 60-75 | Cycle=70, OnChain=65, Risk=70 → ~68 |
+| **Bull extreme** (tous scores élevés) | 75-100 | Cycle=90, OnChain=85, Risk=90 → ~88 |
 
 ### Ce que le DI Mesure
 
-✅ **Qualité de l'allocation:**
-- Cohérence interne (somme = 100%)
-- Respect hiérarchie (pas de double-comptage)
-- Validité des contraintes (caps, floors)
-- Convergence possible vers target
+✅ **Position stratégique du marché:**
+- Pondération des 4 piliers (Cycle, OnChain, Risk, Sentiment)
+- Ajustement par phase de marché (bullish/bearish)
+- Niveau de confiance pour allocation agressive vs défensive
+- Guide pour ratio stables/risky et exposition maximale
 
 ❌ **Ce que le DI NE mesure PAS:**
-- Somme pondérée des 3 piliers (c'est le Score de Régime!)
-- Variation directe avec Cycle/OnChain/Risk
-- Conditions de marché (c'est la Phase!)
+- Qualité technique de l'allocation (voir "Allocation Validity Check" ci-dessous)
+- Somme = 100% (ça c'est le check de validité)
+- Respect des contraintes hiérarchiques
+
+### ⚠️ À NE PAS CONFONDRE: Allocation Validity Check (65/45)
+
+**Fichier**: `static/core/strategy-api-adapter.js` ligne 442
+
+```javascript
+// CECI N'EST PAS LE DECISION INDEX!
+const allocationQuality = v2Allocation.metadata.total_check.isValid ? 65 : 45;
+```
+
+| Condition | Score | Signification |
+|-----------|-------|---------------|
+| **Allocation valide** | 65 | Somme = 100%, hiérarchie OK, contraintes respectées |
+| **Allocation invalide** | 45 | Problème technique (somme ≠ 100%, hiérarchie violée) |
+
+**Utilisé uniquement pour:** Valider la qualité technique du calcul d'allocation V2, **PAS** pour déterminer le Decision Index.
 
 ### Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ Allocation Engine V2 (Topdown Hierarchical)    │
+│ Decision Index Calculation (Backend)            │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  1. Phase Detection (cycle < 70 → bearish)      │
-│  2. Macro Allocation (BTC/ETH/Stables/Alts)    │
-│  3. Sector Allocation (avec floors contextuels)│
-│  4. Coin Allocation (incumbency + meme caps)   │
-│  5. Validation & Checksum                       │
-│     └─ total_check.isValid → DI = 65 ou 45     │
+│  1. Collect Scores (Cycle, OnChain, Risk, Sent) │
+│  2. Apply Adaptive Weights (context-aware)      │
+│  3. Weighted Sum → raw_decision_score           │
+│  4. Phase Multiplier (bull/bear/moderate)       │
+│  5. Clamp to [0, 100] → final_decision_score    │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
 
 ### Implémentation
-**Fichiers**:
-- `static/core/strategy-api-adapter.js` (ligne 448)
-- `static/core/allocation-engine.js` (calcul topdown V2)
+**Fichiers principaux**:
+- `services/execution/strategy_registry.py` (backend - source de vérité)
+- `api/strategy_endpoints.py` (API spec)
+- `static/core/unified-insights-v2.js` (frontend mirror)
+- `static/modules/simulation-engine.js` (simulateur)
 
-```javascript
-// Entry point
-const decision = await calculateIntelligentDecisionIndexAPI(context);
-// → {score: 65, source: 'allocation_engine_v2', confidence: 0.8, ...}
-
-// Le score est FIXE (65 ou 45), pas variable!
-```
+**Simulation**:
+Le simulateur permet de tester toute la plage 0-100 via `simulations.html`
 
 ### Poids Adaptatifs (pour l'allocation, pas le DI)
 Les poids sont utilisés pour **calculer l'allocation**, pas le DI final:

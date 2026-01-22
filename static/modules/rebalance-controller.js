@@ -81,6 +81,7 @@
     let availableStrategies = {};
     let selectedStrategyId = null;
     let strategyViewMode = localStorage.getItem('strategyViewMode') || 'detailed'; // 'compact' | 'detailed'
+    let strategiesLoaded = false; // Track if strategies have been loaded (fix race condition)
     const TOP_N = 5; // nombre de badges visibles en mode compact
 
     /* ---------- Fonction de toggle section stratégies ---------- */
@@ -431,9 +432,40 @@
           }
 
           // Ajouter la stratégie dynamique CCS en deuxième
-          let ccsTargets = syncCCSTargets();
+          // FIX: TOUJOURS recalculer si le store est hydraté (ignorer localStorage qui peut être obsolète)
+          const storeState = window.store?.snapshot?.();
+          const storeIsHydrated = storeState?._hydrated && (storeState?.scores?.blended || storeState?.cycle?.ccsStar);
 
-          // Si pas de données localStorage, générer automatiquement
+          let ccsTargets = null;
+
+          // Si store hydraté, TOUJOURS recalculer avec scores frais (ignorer localStorage)
+          if (storeIsHydrated && window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
+            try {
+              debugLogger.debug('🔄 Store hydrated, recalculating CCS targets with fresh scores (ignoring localStorage)...');
+              const proposal = window.targetsCoordinator.proposeTargets('blend');
+              if (proposal && proposal.targets) {
+                window.targetsCoordinator.applyTargets(proposal);
+                ccsTargets = {
+                  targets: proposal.targets,
+                  strategy: proposal.strategy,
+                  timestamp: proposal.timestamp
+                };
+                debugLogger.debug('✅ CCS targets recalculated with fresh scores:', ccsTargets);
+              }
+            } catch (genError) {
+              debugLogger.warn('Error recalculating targets with fresh scores:', genError);
+            }
+          }
+
+          // Fallback: essayer localStorage SEULEMENT si le store n'est pas encore hydraté
+          if (!ccsTargets) {
+            ccsTargets = syncCCSTargets();
+            if (ccsTargets) {
+              debugLogger.debug('📦 Loaded CCS targets from localStorage (store not yet hydrated)');
+            }
+          }
+
+          // Si toujours pas de données, générer automatiquement
           if (!ccsTargets && window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
             try {
               debugLogger.debug('No localStorage targets, auto-generating with blend strategy...');
@@ -590,6 +622,9 @@
         renderStrategiesUI();
         showNotification('❌ Erreur partielle chargement stratégies - Mode dégradé activé', 'warning', 5000);
       }
+
+      // Marquer comme chargé pour éviter double appel
+      strategiesLoaded = true;
     }
 
     function riskClass(level = '') {
@@ -2461,8 +2496,26 @@
       // Initialize WealthContextBar integration
       initWealthContextIntegration();
 
-      // Charger les stratégies
-      loadStrategies();
+      // ✅ CRITIQUE: Attendre hydratation du store avant de charger les stratégies
+      // Fix race condition: proposeTargets() lit le store qui n'est pas encore hydraté
+      window.addEventListener('riskStoreReady', (e) => {
+        if (e.detail?.hydrated) {
+          debugLogger.debug('✅ Store hydrated, loading strategies with populated scores');
+          loadStrategies();
+        }
+      }, { once: true });
+
+      // Fallback: Si le store est déjà hydraté (event émis avant DOMContentLoaded), charger immédiatement
+      // Vérifier si le store contient des scores (indique hydratation déjà complétée)
+      setTimeout(() => {
+        const state = window.riskStore?.snapshot?.() || window.store?.snapshot?.();
+        const hasScores = state?.scores?.blended || state?.ccs?.score || state?.scores?.onchain;
+
+        if (hasScores && !strategiesLoaded) {
+          debugLogger.debug('✅ Store already hydrated (fallback), loading strategies');
+          loadStrategies();
+        }
+      }, 1000); // Attendre 1s au cas où l'event n'a pas encore été émis
 
       // Test exchange data loading
       setTimeout(async () => {

@@ -629,8 +629,10 @@ export function proposeTargets(mode = 'blend', options = {}) {
         // Use final blended score if available, fallback to blendedCCS
         const effectiveScore = finalBlendedScore || blendedCCS;
 
-        // Deterministic priority logic
-        if (!ccsScore || (!finalBlendedScore && !blendedCCS)) {
+        // Deterministic priority logic - use fallback ONLY if no scores available at all
+        // FIX: Changed from (!ccsScore || ...) to (!effectiveScore) to allow using blended scores
+        // even when CCS is not available (external APIs can fail but we still have OnChain + Risk)
+        if (!effectiveScore) {
           // Fallback to balanced blend when no score data
           proposedTargets = {};
           ALL_ASSET_GROUPS.forEach(group => {
@@ -650,8 +652,9 @@ export function proposeTargets(mode = 'blend', options = {}) {
           proposedTargets.model_version = 'blend-fallback';
           strategy = 'Balanced Blend (no scores available)';
         } else if (effectiveScore >= 70) {
-          // High confidence: use blended CCS
-          proposedTargets = generateCCSTargets(blendedCCS);
+          // High confidence: use effective score (blended or CCS*cycle)
+          // FIX: Use effectiveScore instead of blendedCCS which may be undefined
+          proposedTargets = generateCCSTargets(effectiveScore);
           if (cycleMultipliers) {
             proposedTargets = applyCycleMultipliers(proposedTargets, cycleMultipliers);
           }
