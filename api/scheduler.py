@@ -67,30 +67,66 @@ async def job_pnl_intraday():
 
         # Import here to avoid circular dependencies
         from scripts.pnl_snapshot import create_snapshot
+        import json
+
+        # Load active users from config
+        try:
+            with open("config/users.json", "r", encoding="utf-8") as f:
+                users_config = json.load(f)
+                active_users = [
+                    user["id"]
+                    for user in users_config.get("users", [])
+                    if user.get("status") == "active"
+                ]
+        except Exception as e:
+            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            active_users = ["jack"]
+
+        if not active_users:
+            logger.warning(f"⚠️ [{job_id}] No active users found, skipping")
+            await _update_job_status(job_id, "skipped", 0, "No active users")
+            return
 
         # Default params (can be overridden via env vars)
-        user_id = os.getenv("SNAPSHOT_USER_ID", "jack")
         source = os.getenv("SNAPSHOT_SOURCE", "cointracking_api")
         min_usd = float(os.getenv("SNAPSHOT_MIN_USD", "1.0"))
 
-        # Validate user_id for security (multi-tenant isolation)
-        if not is_allowed_user(user_id):
-            error_msg = f"Invalid or unauthorized user_id: {user_id}"
-            logger.error(f"❌ [{job_id}] {error_msg}")
-            await _update_job_status(job_id, "failed", 0, error_msg)
-            return
+        logger.info(f"   Creating P&L snapshots for {len(active_users)} users: {', '.join(active_users)}")
 
-        result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd)
+        # Process snapshots for all active users
+        success_count = 0
+        fail_count = 0
+        errors = []
+
+        for user_id in active_users:
+            try:
+                result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd)
+                if result.get("ok"):
+                    logger.debug(f"   ✅ Snapshot created for [{user_id}]")
+                    success_count += 1
+                else:
+                    error_msg = result.get("error", "Unknown error")
+                    logger.warning(f"   ⚠️ Snapshot failed for [{user_id}]: {error_msg}")
+                    fail_count += 1
+                    errors.append(f"{user_id}: {error_msg}")
+            except Exception as e:
+                logger.warning(f"   ❌ Snapshot exception for [{user_id}]: {e}")
+                fail_count += 1
+                errors.append(f"{user_id}: {str(e)}")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
-        if result.get("ok"):
-            logger.info(f"✅ [{job_id}] P&L snapshot completed in {duration_ms:.0f}ms")
+        if fail_count == 0:
+            logger.info(f"✅ [{job_id}] All {success_count} P&L snapshots completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
+        elif success_count > 0:
+            error_summary = f"{success_count} OK, {fail_count} failed: {'; '.join(errors[:3])}"
+            logger.warning(f"⚠️ [{job_id}] Partial success: {error_summary}")
+            await _update_job_status(job_id, "partial", duration_ms, error_summary)
         else:
-            error_msg = result.get("error", "Unknown error")
-            logger.error(f"❌ [{job_id}] P&L snapshot failed: {error_msg}")
-            await _update_job_status(job_id, "failed", duration_ms, error_msg)
+            error_summary = f"All {fail_count} snapshots failed: {'; '.join(errors[:3])}"
+            logger.error(f"❌ [{job_id}] {error_summary}")
+            await _update_job_status(job_id, "failed", duration_ms, error_summary)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
@@ -107,29 +143,66 @@ async def job_pnl_eod():
         logger.info(f"🔄 [{job_id}] Starting P&L EOD snapshot...")
 
         from scripts.pnl_snapshot import create_snapshot
+        import json
 
-        user_id = os.getenv("SNAPSHOT_USER_ID", "jack")
+        # Load active users from config
+        try:
+            with open("config/users.json", "r", encoding="utf-8") as f:
+                users_config = json.load(f)
+                active_users = [
+                    user["id"]
+                    for user in users_config.get("users", [])
+                    if user.get("status") == "active"
+                ]
+        except Exception as e:
+            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            active_users = ["jack"]
+
+        if not active_users:
+            logger.warning(f"⚠️ [{job_id}] No active users found, skipping")
+            await _update_job_status(job_id, "skipped", 0, "No active users")
+            return
+
+        # Default params (can be overridden via env vars)
         source = os.getenv("SNAPSHOT_SOURCE", "cointracking_api")
         min_usd = float(os.getenv("SNAPSHOT_MIN_USD", "1.0"))
 
-        # Validate user_id for security (multi-tenant isolation)
-        if not is_allowed_user(user_id):
-            error_msg = f"Invalid or unauthorized user_id: {user_id}"
-            logger.error(f"❌ [{job_id}] {error_msg}")
-            await _update_job_status(job_id, "failed", 0, error_msg)
-            return
+        logger.info(f"   Creating EOD P&L snapshots for {len(active_users)} users: {', '.join(active_users)}")
 
-        result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd, is_eod=True)
+        # Process EOD snapshots for all active users
+        success_count = 0
+        fail_count = 0
+        errors = []
+
+        for user_id in active_users:
+            try:
+                result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd, is_eod=True)
+                if result.get("ok"):
+                    logger.debug(f"   ✅ EOD snapshot created for [{user_id}]")
+                    success_count += 1
+                else:
+                    error_msg = result.get("error", "Unknown error")
+                    logger.warning(f"   ⚠️ EOD snapshot failed for [{user_id}]: {error_msg}")
+                    fail_count += 1
+                    errors.append(f"{user_id}: {error_msg}")
+            except Exception as e:
+                logger.warning(f"   ❌ EOD snapshot exception for [{user_id}]: {e}")
+                fail_count += 1
+                errors.append(f"{user_id}: {str(e)}")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
-        if result.get("ok"):
-            logger.info(f"✅ [{job_id}] P&L EOD snapshot completed in {duration_ms:.0f}ms")
+        if fail_count == 0:
+            logger.info(f"✅ [{job_id}] All {success_count} EOD P&L snapshots completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
+        elif success_count > 0:
+            error_summary = f"{success_count} OK, {fail_count} failed: {'; '.join(errors[:3])}"
+            logger.warning(f"⚠️ [{job_id}] Partial success: {error_summary}")
+            await _update_job_status(job_id, "partial", duration_ms, error_summary)
         else:
-            error_msg = result.get("error", "Unknown error")
-            logger.error(f"❌ [{job_id}] P&L EOD snapshot failed: {error_msg}")
-            await _update_job_status(job_id, "failed", duration_ms, error_msg)
+            error_summary = f"All {fail_count} snapshots failed: {'; '.join(errors[:3])}"
+            logger.error(f"❌ [{job_id}] {error_summary}")
+            await _update_job_status(job_id, "failed", duration_ms, error_summary)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
@@ -316,43 +389,61 @@ async def job_api_warmers():
         logger.info(f"🔄 [{job_id}] Starting API warmers...")
 
         import httpx
+        import json
 
-        # Get warmup user_id from env and validate
-        warmup_user = os.getenv("WARMUP_USER_ID", "demo")
+        # Load active users from config
+        try:
+            with open("config/users.json", "r", encoding="utf-8") as f:
+                users_config = json.load(f)
+                active_users = [
+                    user["id"]
+                    for user in users_config.get("users", [])
+                    if user.get("status") == "active"
+                ]
+        except Exception as e:
+            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            active_users = ["jack"]  # Fallback to jack if config fails
 
-        # Validate user_id for security (multi-tenant isolation)
-        if not is_allowed_user(warmup_user):
-            error_msg = f"Invalid warmup user_id: {warmup_user}, skipping warmers"
-            logger.warning(f"⚠️ [{job_id}] {error_msg}")
-            await _update_job_status(job_id, "skipped", 0, error_msg)
+        if not active_users:
+            logger.warning(f"⚠️ [{job_id}] No active users found, skipping warmers")
+            await _update_job_status(job_id, "skipped", 0, "No active users")
             return
 
-        # Warm up critical endpoints with validated user
-        endpoints = [
-            f"/balances/current?source=cointracking&user_id={warmup_user}",
-            f"/portfolio/metrics?source=cointracking&user_id={warmup_user}",
-            f"/api/risk/dashboard?source=cointracking&user_id={warmup_user}",
+        logger.info(f"   Warming caches for {len(active_users)} active users: {', '.join(active_users)}")
+
+        # Critical endpoints to warm (use Depends(get_required_user) - need X-User header)
+        endpoint_templates = [
+            "/balances/current?source=cointracking",
+            "/portfolio/metrics?source=cointracking",
+            "/api/risk/dashboard?source=cointracking",
         ]
 
         base_url = os.getenv("API_BASE_URL", "http://localhost:8080")
 
-        # PERFORMANCE FIX: Parallelize API warmup calls instead of sequential
-        async def warm_endpoint(client: httpx.AsyncClient, endpoint: str):
-            """Warm a single endpoint"""
+        # PERFORMANCE FIX: Parallelize API warmup calls for all users
+        async def warm_endpoint(client: httpx.AsyncClient, endpoint: str, user_id: str):
+            """Warm a single endpoint for a specific user"""
             try:
                 url = f"{base_url}{endpoint}"
-                response = await client.get(url)
+                headers = {"X-User": user_id}
+                response = await client.get(url, headers=headers)
 
                 if response.status_code == 200:
-                    logger.debug(f"   ✅ Warmed: {endpoint}")
+                    logger.debug(f"   ✅ Warmed [{user_id}]: {endpoint}")
                 else:
-                    logger.warning(f"   ⚠️ Warm failed ({response.status_code}): {endpoint}")
+                    logger.warning(f"   ⚠️ Warm failed [{user_id}] ({response.status_code}): {endpoint}")
             except Exception as e:
-                logger.warning(f"   ❌ Warm error: {endpoint} - {e}")
+                logger.warning(f"   ❌ Warm error [{user_id}]: {endpoint} - {e}")
 
         async with httpx.AsyncClient(timeout=10.0) as client:
+            # Create warmup tasks for all users x endpoints
+            tasks = [
+                warm_endpoint(client, endpoint, user_id)
+                for user_id in active_users
+                for endpoint in endpoint_templates
+            ]
             # Execute all warmup calls in parallel
-            await asyncio.gather(*[warm_endpoint(client, ep) for ep in endpoints])
+            await asyncio.gather(*tasks, return_exceptions=True)
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
         logger.info(f"✅ [{job_id}] API warmers completed in {duration_ms:.0f}ms")
