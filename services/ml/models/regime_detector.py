@@ -660,19 +660,20 @@ class RegimeDetector:
 
             # Classification logic based on professional market cycles:
             # 1. Bear Market: Negative returns + High volatility (crashes)
-            # 2. Correction: Negative/flat returns + Medium vol (pullbacks, sideways)
-            # 3. Bull Market: Positive returns + LOW volatility (stable uptrend, QE era)
-            # 4. Expansion: High positive returns + Strong momentum (violent rebounds post-crash)
+            # 2. Bull Market: Positive returns + LOW volatility (stable uptrend, QE era)  ← Priority 2!
+            # 3. Expansion: High positive returns + Strong momentum (violent rebounds post-crash)  ← Priority 3!
+            # 4. Correction: Negative/flat returns + Medium vol (pullbacks, sideways)
 
+            # PRIORITY ORDER MATTERS: Test low-vol Bull before high-momentum Expansion!
             if ret < -0.001 and vol > vol_mean:  # Negative returns + high vol
                 new_regime = 0  # Bear Market
                 reason = "negative returns + high vol"
-            elif ret > 0.002 and momentum > 0.03:  # Strong returns + strong momentum
-                new_regime = 3  # Expansion (violent rebounds)
-                reason = "strong returns + strong momentum"
-            elif ret > 0 and vol < vol_mean:  # Positive returns + low vol
+            elif ret > 0 and vol < vol_mean:  # Positive returns + LOW vol (test FIRST!)
                 new_regime = 2  # Bull Market (stable uptrend)
                 reason = "positive returns + low vol"
+            elif ret > 0.0015 and momentum > 0.02:  # Strong returns + strong momentum (test AFTER low vol!)
+                new_regime = 3  # Expansion (violent rebounds)
+                reason = "strong returns + strong momentum"
             else:  # Everything else (flat/negative with medium vol)
                 new_regime = 1  # Correction (pullbacks, sideways)
                 reason = "flat/negative returns or medium vol"
@@ -705,15 +706,35 @@ class RegimeDetector:
         logger.info("Training hybrid regime detection model")
 
         try:
+            # DIAGNOSTIC: Log input data size
+            logger.info(f"📥 Input data: {len(multi_asset_data)} assets")
+            for symbol, df in multi_asset_data.items():
+                logger.info(f"   {symbol}: {len(df)} days of data (from {df.index.min()} to {df.index.max()})")
+
             # Prepare features
             features_df = self.prepare_regime_features(multi_asset_data)
+            logger.info(f"📈 Features prepared: {len(features_df)} samples with {len(features_df.columns)} features")
 
             if len(features_df) < 100:
                 raise ValueError(f"Insufficient data: {len(features_df)} samples (minimum 100 required)")
             
             # Create regime labels using HMM
             regime_labels = self._create_hmm_regime_labels(features_df)
-            
+
+            # DIAGNOSTIC: Log class distribution BEFORE any processing
+            class_distribution = np.bincount(regime_labels, minlength=self.num_regimes)
+            logger.info(f"📊 Class distribution BEFORE train/val split: {class_distribution.tolist()}")
+            logger.info(f"   Regime counts: Bear={class_distribution[0]}, Correction={class_distribution[1]}, "
+                       f"Bull={class_distribution[2]}, Expansion={class_distribution[3]}")
+            logger.info(f"   Total samples: {len(regime_labels)}")
+
+            # Check for severely imbalanced classes
+            min_samples = class_distribution.min()
+            if min_samples < 2:
+                logger.error(f"❌ CRITICAL: Some regimes have <2 samples! Distribution: {class_distribution.tolist()}")
+                logger.error(f"   This will cause train_test_split to fail with stratify=True")
+                logger.error(f"   Rare regimes: {[self.regime_names[i] for i in range(self.num_regimes) if class_distribution[i] < 2]}")
+
             # Prepare data for neural network
             X = features_df.values
             y = regime_labels
@@ -725,12 +746,30 @@ class RegimeDetector:
             # Train-validation split (stratified to preserve class distribution)
             # Temporal split can lead to validation set with only one class!
             from sklearn.model_selection import train_test_split
-            X_train, X_val, y_train, y_val = train_test_split(
-                X_scaled, y,
-                test_size=validation_split,
-                stratify=y,  # Preserve class distribution in both sets
-                random_state=42  # Reproducibility
-            )
+
+            # Check if all classes have at least 2 samples for stratification
+            class_counts = np.bincount(y, minlength=self.num_regimes)
+            min_samples_per_class = class_counts.min()
+
+            if min_samples_per_class < 2:
+                # Can't use stratify when some classes have <2 samples
+                logger.warning(f"⚠️ Class imbalance detected: {class_counts.tolist()}. "
+                              f"Classes with <2 samples: {np.where(class_counts < 2)[0].tolist()}. "
+                              f"Disabling stratified split to avoid sklearn error.")
+                X_train, X_val, y_train, y_val = train_test_split(
+                    X_scaled, y,
+                    test_size=validation_split,
+                    stratify=None,  # Disable stratify for severely imbalanced data
+                    random_state=42  # Reproducibility
+                )
+            else:
+                # Normal case: all classes have ≥2 samples
+                X_train, X_val, y_train, y_val = train_test_split(
+                    X_scaled, y,
+                    test_size=validation_split,
+                    stratify=y,  # Preserve class distribution in both sets
+                    random_state=42  # Reproducibility
+                )
 
             logger.info(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
             logger.info(f"Validation class distribution: {np.bincount(y_val, minlength=self.num_regimes).tolist()}")

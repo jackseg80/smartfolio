@@ -329,16 +329,56 @@ class TrainingExecutor:
             logger.info(f"📚 Training {model_type} model: {model_name} (custom_config={config is not None})")
 
             # Determine training parameters based on model type
-            if model_type == "regime" or "regime" in model_name.lower():
+            # PRIORITY 1: Stock market regime detector (use StocksMLAdapter)
+            if model_name == "stock_regime_detector" or model_type == "stock_regime_detector":
+                logger.info("Training STOCK market regime detection model with SPY/QQQ data...")
+
+                # Extract params from config or use defaults
+                days = config.get("days", 7300) if config else 7300  # 20 years for stocks
+                epochs = config.get("epochs", 100) if config else 100
+                patience = config.get("patience", 15) if config else 15
+
+                logger.info(f"📊 Stock regime training params: days={days}, epochs={epochs}, patience={patience}")
+
+                # Use StocksMLAdapter for stock market training
+                import asyncio
+                from services.ml.bourse.stocks_adapter import StocksMLAdapter
+
+                adapter = StocksMLAdapter()
+
+                # Run async training in sync context
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result = loop.run_until_complete(adapter.detect_market_regime(
+                        benchmark="SPY",
+                        lookback_days=days,
+                        force_retrain=True
+                    ))
+                finally:
+                    loop.close()
+
+                # Return metrics from StocksMLAdapter
+                return {
+                    "current_regime": result.get("current_regime", "Unknown"),
+                    "confidence": float(result.get("confidence", 0.0)),
+                    "regime_probabilities": result.get("regime_probabilities", {}),
+                    "data_source": f"real_stocks_{days}d",
+                    "benchmark": result.get("benchmark", "SPY"),
+                    "trained_at": result.get("timestamp", "unknown")
+                }
+
+            # PRIORITY 2: Crypto regime detector (legacy BTC model)
+            elif model_type == "regime" or "regime" in model_name.lower():
                 # Train regime detection model
-                logger.info("Training regime detection model with real BTC data...")
+                logger.info("Training CRYPTO regime detection model with real BTC data...")
 
                 # Extract params from config or use defaults
                 days = config.get("days", 730) if config else 730
                 epochs = config.get("epochs", 100) if config else 100
                 patience = config.get("patience", 15) if config else 15
 
-                logger.info(f"📊 Regime training params: days={days}, epochs={epochs}, patience={patience}")
+                logger.info(f"📊 Crypto regime training params: days={days}, epochs={epochs}, patience={patience}")
 
                 save_models(
                     symbols=[],  # No volatility models

@@ -139,7 +139,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2025-12-20T14:39:55.076536",
+      "updated_at": "2026-01-23T18:39:50.988691",
       "file_path": "models/stocks/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -168,26 +168,32 @@
         "num_layers": 2
       },
       "validation_metrics": {
-        "accuracy": 0.7859778597785978,
-        "best_val_accuracy": 0.7763401109057301,
-        "data_source": "synthetic",
-        "train_samples": 1623,
-        "test_samples": 542,
-        "val_samples": 541,
-        "feature_count": 10,
-        "trained_at": "2025-12-20T14:39:30.323747",
-        "training_time_seconds": 57.854504346847534
+        "current_regime": "Bull Market",
+        "confidence": 0.8861026763916016,
+        "regime_probabilities": {
+          "Bear Market": 0.03750007972121239,
+          "Correction": 0.0385921336710453,
+          "Bull Market": 0.8861026763916016,
+          "Consolidation": 0.03780510649085045
+        },
+        "data_source": "real_stocks_7300d",
+        "benchmark": "SPY",
+        "trained_at": "2026-01-23T18:39:50.985848",
+        "training_time_seconds": 6.251861095428467
       },
       "test_metrics": {
-        "accuracy": 0.7859778597785978,
-        "best_val_accuracy": 0.7763401109057301,
-        "data_source": "synthetic",
-        "train_samples": 1623,
-        "test_samples": 542,
-        "val_samples": 541,
-        "feature_count": 10,
-        "trained_at": "2025-12-20T14:39:30.323747",
-        "training_time_seconds": 57.854504346847534
+        "current_regime": "Bull Market",
+        "confidence": 0.8861026763916016,
+        "regime_probabilities": {
+          "Bear Market": 0.03750007972121239,
+          "Correction": 0.0385921336710453,
+          "Bull Market": 0.8861026763916016,
+          "Consolidation": 0.03780510649085045
+        },
+        "data_source": "real_stocks_7300d",
+        "benchmark": "SPY",
+        "trained_at": "2026-01-23T18:39:50.985848",
+        "training_time_seconds": 6.251861095428467
       },
       "target_assets": [
         "AAPL",
