@@ -327,7 +327,16 @@ class BTCRegimeDetector:
 
         # Get regime probabilities
         probabilities = self.hmm_model.predict_proba(features_scaled)
-        regime_confidence = float(probabilities[-1, regime_id])
+
+        # CRITICAL: Apply Bayesian prior to avoid dangerous overconfidence
+        # Prevents 100% confidence that misleads users - model can't predict black swans
+        # Same as regime_detector.py:955-960 (Neural Network version)
+        min_uncertainty = 0.15  # Force at least 15% total uncertainty
+        uniform_prior = np.ones(self.num_regimes) / self.num_regimes  # [0.25, 0.25, 0.25, 0.25]
+        probabilities_calibrated = (1 - min_uncertainty) * probabilities + min_uncertainty * uniform_prior
+
+        # Use calibrated probabilities for confidence
+        regime_confidence = float(probabilities_calibrated[-1, regime_id])
 
         regime_info = self.regime_descriptions[regime_id]
 
@@ -364,8 +373,9 @@ class BTCRegimeDetector:
             result['rule_reason'] = None
 
         if return_probabilities:
+            # Use calibrated probabilities (with Bayesian prior applied)
             result['regime_probabilities'] = {
-                self.regime_names[i]: float(probabilities[-1, i])
+                self.regime_names[i]: float(probabilities_calibrated[-1, i])
                 for i in range(self.num_regimes)
             }
 

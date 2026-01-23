@@ -6,7 +6,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2025-12-26T00:20:39.054672",
+      "updated_at": "2026-01-23T18:42:55.137753",
       "file_path": "models/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -35,26 +35,26 @@
         "num_layers": 2
       },
       "validation_metrics": {
-        "accuracy": 0.7842778793418648,
-        "best_val_accuracy": 0.7875457875457875,
+        "accuracy": 0.796875,
+        "best_val_accuracy": 0.808695652173913,
         "data_source": "synthetic",
-        "train_samples": 1638,
-        "test_samples": 547,
-        "val_samples": 546,
+        "train_samples": 1725,
+        "test_samples": 576,
+        "val_samples": 575,
         "feature_count": 10,
-        "trained_at": "2025-12-26T00:20:19.577015",
-        "training_time_seconds": 33.552988052368164
+        "trained_at": "2026-01-23T18:42:34.003148",
+        "training_time_seconds": 34.4801127910614
       },
       "test_metrics": {
-        "accuracy": 0.7842778793418648,
-        "best_val_accuracy": 0.7875457875457875,
+        "accuracy": 0.796875,
+        "best_val_accuracy": 0.808695652173913,
         "data_source": "synthetic",
-        "train_samples": 1638,
-        "test_samples": 547,
-        "val_samples": 546,
+        "train_samples": 1725,
+        "test_samples": 576,
+        "val_samples": 575,
         "feature_count": 10,
-        "trained_at": "2025-12-26T00:20:19.577015",
-        "training_time_seconds": 33.552988052368164
+        "trained_at": "2026-01-23T18:42:34.003148",
+        "training_time_seconds": 34.4801127910614
       },
       "target_assets": [
         "BTC"
