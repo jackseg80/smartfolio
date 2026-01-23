@@ -132,6 +132,11 @@ class SourcesManagerV2 {
             const data = await response.json();
             console.log(`[SourcesManagerV2] Set ${category} source to ${sourceId}`);
 
+            // ✅ FIX: Si source CSV, s'assurer qu'un fichier est sélectionné dans la config V2
+            if (sourceId.endsWith('_csv')) {
+                await this.ensureCSVFileSelected(category, sourceId);
+            }
+
             // Emit event for other components
             window.dispatchEvent(new CustomEvent('sources:changed', {
                 detail: { category, sourceId }
@@ -141,6 +146,52 @@ class SourcesManagerV2 {
         } catch (error) {
             console.error(`[SourcesManagerV2] Error setting ${category} source:`, error);
             throw error;
+        }
+    }
+
+    /**
+     * Ensure a CSV file is selected in V2 config when activating a CSV source.
+     * This fixes the race condition where the active source is set but no file is selected.
+     */
+    async ensureCSVFileSelected(category, sourceId) {
+        try {
+            // Get list of CSV files
+            const response = await fetch(`${this.apiBase}/${category}/csv/files`, {
+                headers: this.getHeaders()
+            });
+
+            if (!response.ok) {
+                console.warn('[SourcesManagerV2] Failed to fetch CSV files list');
+                return;
+            }
+
+            const data = await response.json();
+            const files = data.data?.files || [];
+
+            if (files.length === 0) {
+                console.debug('[SourcesManagerV2] No CSV files available to select');
+                return;
+            }
+
+            // Find currently active file or use most recent (first in sorted list)
+            const activeFile = files.find(f => f.is_active);
+            const targetFile = activeFile || files[0];
+
+            if (targetFile) {
+                const filename = targetFile.filename || targetFile.name;
+                console.debug(`[SourcesManagerV2] Auto-selecting CSV file: ${filename}`);
+
+                await fetch(
+                    `${this.apiBase}/${category}/csv/select?filename=${encodeURIComponent(filename)}`,
+                    {
+                        method: 'PUT',
+                        headers: this.getHeaders()
+                    }
+                );
+            }
+        } catch (error) {
+            console.warn('[SourcesManagerV2] Failed to auto-select CSV file:', error);
+            // Non-blocking - continue anyway
         }
     }
 
@@ -322,6 +373,15 @@ class SourcesManagerV2 {
                     // Refresh health status bar
                     await this.loadHealthStatus(category);
 
+                    // Emit event to notify WealthContextBar and other components
+                    window.dispatchEvent(new CustomEvent('dataSourceChanged', {
+                        detail: {
+                            category: category,
+                            newSource: sourceId,
+                            sourceType: 'sources_v2'
+                        }
+                    }));
+
                     this.showToast(`Source ${category} changee`, 'success');
                 } catch (error) {
                     this.showToast(`Erreur: ${error.message}`, 'error');
@@ -452,6 +512,9 @@ class SourcesManagerV2 {
                                         </div>
                                     </div>
                                     <div class="file-actions-small">
+                                        <button class="btn-icon-small activate-btn" onclick="sourcesManagerV2.selectCSVFile('${category}', '${file.filename}')" title="Activer ce fichier">
+                                            ✅
+                                        </button>
                                         <button class="btn-icon-small" onclick="sourcesManagerV2.previewCSV('${category}', '${file.filename}')" title="Aperçu">
                                             👁️
                                         </button>
@@ -724,6 +787,47 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error deleting CSV:', error);
+            this.showToast(`Erreur: ${error.message}`, 'error');
+        }
+    }
+
+    /**
+     * Select a CSV file as active (manual selection instead of always using most recent)
+     */
+    async selectCSVFile(category, filename) {
+        try {
+            const response = await fetch(
+                `${this.apiBase}/${category}/csv/select?filename=${encodeURIComponent(filename)}`,
+                {
+                    method: 'PUT',
+                    headers: this.getHeaders()
+                }
+            );
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Erreur serveur');
+            }
+
+            this.showToast(`Fichier ${filename} activé`, 'success');
+
+            // Refresh file list to update active badges
+            await this.loadCSVFileList(category, `${category === 'crypto' ? 'cointracking' : 'saxobank'}_csv`);
+
+            // Refresh health status to show new data
+            await this.loadHealthStatus(category);
+
+            // Emit event to notify WealthContextBar and other components
+            window.dispatchEvent(new CustomEvent('dataSourceChanged', {
+                detail: {
+                    category: category,
+                    sourceType: 'csv_file_selection',
+                    filename: filename
+                }
+            }));
+
+        } catch (error) {
+            console.error('[SourcesManagerV2] Error selecting CSV:', error);
             this.showToast(`Erreur: ${error.message}`, 'error');
         }
     }

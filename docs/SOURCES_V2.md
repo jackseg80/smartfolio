@@ -116,6 +116,14 @@ Base URL: `/api/sources/v2`
 | `/bourse/manual/positions/{id}` | PUT | Modifier une position |
 | `/bourse/manual/positions/{id}` | DELETE | Supprimer une position |
 
+### Sélection fichier CSV
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/{category}/csv/files` | GET | Liste les fichiers CSV disponibles |
+| `/{category}/csv/select?filename=...` | PUT | Sélectionne un fichier actif |
+| `/{category}/csv/download?filename=...` | GET | Télécharge un fichier CSV |
+
 ### Migration
 
 | Endpoint | Méthode | Description |
@@ -267,6 +275,47 @@ pytest tests/unit/test_manual_sources.py -v
 
 # Integration tests
 pytest tests/integration/test_sources_v2.py -v
+```
+
+## Synchronisation WealthContextBar ↔ Sources V2
+
+### Architecture de sélection CSV
+
+Le système a deux niveaux de sélection :
+
+1. **Type de source** (WealthContextBar) : `cointracking_csv`, `saxobank_csv`, `manual_crypto`, etc.
+2. **Fichier spécifique** (SourcesManagerV2) : sélection du fichier CSV au sein d'un type
+
+### Configuration
+
+Le backend lit la config dans cet ordre de priorité :
+
+```
+1. V2: config.sources.{category}.selected_csv_file  (prioritaire)
+2. V1: config.csv_selected_file                     (legacy)
+3. Fallback: fichier le plus récent dans le dossier
+```
+
+### Mécanismes de synchronisation
+
+| Composant | Action | Clé mise à jour |
+|-----------|--------|-----------------|
+| WealthContextBar | Sélection type source | `sources.{cat}.active_source` + `csv/select` |
+| SourcesManagerV2 | Sélection fichier | `sources.{cat}.selected_csv_file` via `csv/select` |
+| PUT /api/users/settings | Sauvegarde settings | Sync V1 → V2 automatique |
+
+### Flux typique
+
+```
+User sélectionne CSV dans WealthContextBar
+  ↓
+PUT /api/sources/v2/{cat}/active (active_source = cointracking_csv)
+  ↓
+PUT /api/sources/v2/{cat}/csv/select (selected_csv_file = filename)
+  ↓
+Backend lit config.sources.{cat}.selected_csv_file
+  ↓
+Données correctes affichées
 ```
 
 ## Voir aussi

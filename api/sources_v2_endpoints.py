@@ -166,7 +166,7 @@ def _get_csv_directory(user_id: str, source_type: str) -> Path:
     return root / "data" / "users" / user_id / source_type / "data"
 
 
-def _list_csv_files(user_id: str, source_type: str) -> List[Dict[str, Any]]:
+def _list_csv_files(user_id: str, source_type: str, category: str = None) -> List[Dict[str, Any]]:
     """List all CSV files for a source type, sorted by modification time (newest first)."""
     csv_dir = _get_csv_directory(user_id, source_type)
 
@@ -187,9 +187,24 @@ def _list_csv_files(user_id: str, source_type: str) -> List[Dict[str, Any]]:
     # Sort by modification time (newest first)
     files.sort(key=lambda f: f["modified_at"], reverse=True)
 
-    # Mark the most recent file as active (if any)
+    # Determine which file is active
     if files:
-        files[0]["is_active"] = True
+        # Try to get selected file from config (if category is provided)
+        selected_file = None
+        if category:
+            config = _load_user_sources_config(user_id)
+            if "sources" in config and category in config["sources"]:
+                selected_file = config["sources"][category].get("selected_csv_file")
+
+        # Mark the selected file as active, or default to most recent
+        if selected_file:
+            for file in files:
+                if file["filename"] == selected_file:
+                    file["is_active"] = True
+                    break
+        else:
+            # Default to most recent file
+            files[0]["is_active"] = True
 
     return files
 
@@ -715,7 +730,7 @@ async def list_csv_files(
     if not source_type:
         return error_response(f"Invalid category: {category}. Use 'crypto' or 'bourse'", code=400)
 
-    files = _list_csv_files(user, source_type)
+    files = _list_csv_files(user, source_type, category)
 
     return success_response({
         "category": category,
@@ -796,10 +811,11 @@ async def delete_csv_file(
     if not filepath.exists():
         return error_response(f"File not found: {filename}", code=404)
 
-    # Check if it's the most recent file (active)
-    files = _list_csv_files(user, source_type)
-    if files and files[0]["filename"] == filename:
-        return error_response("Cannot delete the active file. Upload a newer file first.", code=400)
+    # Check if it's the currently active file
+    files = _list_csv_files(user, source_type, category)
+    active_files = [f for f in files if f.get("is_active")]
+    if active_files and active_files[0]["filename"] == filename:
+        return error_response("Cannot delete the active file. Select another file first.", code=400)
 
     # Delete the file
     try:
@@ -849,6 +865,56 @@ async def download_csv_file(
         filename=filename,
         media_type="text/csv",
     )
+
+
+@router.put("/{category}/csv/select")
+async def select_csv_file(
+    category: str,
+    filename: str = Query(..., description="Filename to set as active"),
+    user: str = Depends(get_active_user),
+):
+    """
+    Manually select a CSV file to use as the active data source.
+
+    This allows users to switch between different CSV files instead of always using the most recent one.
+    """
+    # Map category to source type
+    source_type_map = {
+        "crypto": "cointracking",
+        "bourse": "saxobank",
+    }
+
+    source_type = source_type_map.get(category)
+    if not source_type:
+        return error_response(f"Invalid category: {category}", code=400)
+
+    # Get file path
+    csv_dir = _get_csv_directory(user, source_type)
+    filepath = csv_dir / filename
+
+    # Security: Ensure file is within expected directory
+    if not filepath.is_relative_to(csv_dir):
+        return error_response("Invalid file path", code=400)
+
+    if not filepath.exists():
+        return error_response(f"File not found: {filename}", code=404)
+
+    # Update user config to store selected file
+    config = _load_user_sources_config(user)
+    config = _ensure_category_config(config, category)
+
+    # Store the selected CSV file
+    config["sources"][category]["selected_csv_file"] = filename
+
+    _save_user_sources_config(user, config)
+
+    logger.info(f"[sources_v2] User {user} selected CSV file for {category}: {filename}")
+
+    return success_response({
+        "category": category,
+        "selected_file": filename,
+        "message": f"CSV file {filename} is now active",
+    })
 
 
 # ============ Source Change History Endpoints ============

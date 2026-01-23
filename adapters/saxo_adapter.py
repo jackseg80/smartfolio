@@ -53,11 +53,28 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
 
         if data_files:
             # Si file_key fourni, chercher le fichier correspondant
-            if file_key:
-                logger.info(f"[saxo_adapter] Searching for file_key: {file_key}")
+            effective_file_key = file_key
+
+            # ✅ FIX: Si pas de file_key, lire la config V2 pour trouver le fichier sélectionné
+            if not effective_file_key:
+                try:
+                    config_path = Path(project_root) / "data" / "users" / user_id / "config.json"
+                    if config_path.exists():
+                        import json
+                        with open(config_path, "r", encoding="utf-8") as f:
+                            config = json.load(f)
+                            selected_file = config.get("sources", {}).get("bourse", {}).get("selected_csv_file")
+                            if selected_file:
+                                effective_file_key = selected_file
+                                logger.info(f"[saxo_adapter] [V2 Config] Using selected CSV file for user {user_id}: {selected_file}")
+                except Exception as e:
+                    logger.debug(f"[saxo_adapter] Could not read V2 config for user {user_id}: {e}")
+
+            if effective_file_key:
+                logger.info(f"[saxo_adapter] Searching for file_key: {effective_file_key}")
                 target_file = None
                 for f in data_files:
-                    if Path(f).name == file_key or file_key in Path(f).name:
+                    if Path(f).name == effective_file_key or effective_file_key in Path(f).name:
                         target_file = f
                         logger.info(f"[saxo_adapter] MATCH FOUND: {Path(f).name}")
                         break
@@ -74,7 +91,7 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
                     logger.info(f"[saxo_adapter] 📊 Portfolio summary total: ${portfolio.get('summary', {}).get('total_value_usd', 0):.2f}")
                     return parsed
                 else:
-                    logger.warning(f"Requested file_key '{file_key}' not found, falling back to latest")
+                    logger.warning(f"Requested file_key '{effective_file_key}' not found, falling back to latest")
 
             # Prendre le plus récent (comportement par défaut)
             latest_data = max(data_files, key=lambda f: os.path.getmtime(f))

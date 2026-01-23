@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-01-22T20:05:11.084624",
+    "category": "crypto",
+    "old_source": "cointracking_api",
+    "new_source": "cointracking_csv"
+  },
+  {
+    "timestamp": "2026-01-22T20:05:09.798722",
+    "category": "crypto",
+    "old_source": "cointracking_csv",
+    "new_source": "cointracking_api"
+  },
+  {
+    "timestamp": "2026-01-22T20:05:04.791189",
+    "category": "bourse",
+    "old_source": "manual_bourse",
+    "new_source": "saxobank_csv"
+  },
+  {
+    "timestamp": "2026-01-22T20:04:57.776823",
+    "category": "crypto",
+    "old_source": "manual_crypto",
+    "new_source": "cointracking_csv"
+  }
+]

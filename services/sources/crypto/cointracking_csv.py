@@ -58,13 +58,19 @@ class CoinTrackingCSVSource(SourceBase):
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
-                    selected = config.get("csv_selected_file")
-                    if selected:
-                        # Check in new category-based config
-                        sources_config = config.get("sources", {}).get("crypto", {})
-                        csv_config = sources_config.get("cointracking_csv", {})
-                        selected = csv_config.get("selected_file") or selected
 
+                    # Check in Sources V2 category-based config first
+                    sources_config = config.get("sources", {}).get("crypto", {})
+                    selected = sources_config.get("selected_csv_file")
+
+                    # Fall back to legacy config locations
+                    if not selected:
+                        selected = config.get("csv_selected_file")
+                        if not selected:
+                            csv_config = sources_config.get("cointracking_csv", {})
+                            selected = csv_config.get("selected_file")
+
+                    if selected:
                         selected_path = self._data_dir / selected
                         if selected_path.exists():
                             return selected_path

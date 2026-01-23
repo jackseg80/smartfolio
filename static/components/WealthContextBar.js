@@ -35,9 +35,29 @@ class WealthContextBar {
       const userKey = `wealth_ctx:${activeUser}`;
       const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
 
+      // Migration Sources V1 → V2: Migrer anciennes clés vers nouvelles clés
+      let account = params.get('account') || stored.account || this.defaults.account;
+      let bourse = params.get('bourse') || stored.bourse || this.defaults.bourse;
+
+      // Migrer account: csv:csv_XXXXX → csv:cointracking_csv
+      if (account && account.includes('csv_') && !account.includes('cointracking_csv')) {
+        if (account.startsWith('csv:') || account.startsWith('csv_')) {
+          account = 'csv:cointracking_csv';
+          console.debug('[WealthContextBar] Migrated account from V1 to V2:', account);
+        }
+      }
+
+      // Migrer bourse: saxo:saxo_XXXXX → saxo:saxobank_csv
+      if (bourse && bourse.includes('saxo_') && !bourse.includes('saxobank_csv')) {
+        if (bourse.startsWith('saxo:') || bourse.startsWith('saxo_')) {
+          bourse = 'saxo:saxobank_csv';
+          console.debug('[WealthContextBar] Migrated bourse from V1 to V2:', bourse);
+        }
+      }
+
       return {
-        account: params.get('account') || stored.account || this.defaults.account,
-        bourse: params.get('bourse') || stored.bourse || this.defaults.bourse,
+        account: account,
+        bourse: bourse,
         currency: params.get('ccy') || stored.currency || this.defaults.currency
       };
     } catch (error) {
@@ -113,6 +133,8 @@ class WealthContextBar {
         (now - this.sourcesCacheTime) < this.sourcesCacheTTL &&
         this.sourcesCache.user === activeUser) {
       console.debug('WealthContextBar: Using cached sources');
+      // Aussi mettre à jour window.availableSources depuis le cache
+      window.availableSources = this.sourcesCache.sources || [];
       return this.buildAccountOptions(this.sourcesCache.sources || []);
     }
 
@@ -141,6 +163,9 @@ class WealthContextBar {
         sources: data.sources || []
       };
       this.sourcesCacheTime = now;
+
+      // Stocker également dans window.availableSources pour handleAccountChange/handleBourseChange
+      window.availableSources = data.sources || [];
 
       return this.buildAccountOptions(data.sources || []);
 
@@ -205,6 +230,8 @@ class WealthContextBar {
         (now - this.sourcesCacheTime) < this.sourcesCacheTTL &&
         this.sourcesCache.user === activeUser) {
       console.debug('WealthContextBar: Using cached bourse sources');
+      // Aussi mettre à jour window.availableSources depuis le cache
+      window.availableSources = this.sourcesCache.sources || [];
       return this.buildBourseOptions(this.sourcesCache.sources || []);
     }
 
@@ -234,6 +261,9 @@ class WealthContextBar {
           sources: data.sources || []
         };
         this.sourcesCacheTime = now;
+
+        // Stocker également dans window.availableSources
+        window.availableSources = data.sources || [];
       }
 
       return this.buildBourseOptions(data.sources || []);
@@ -528,12 +558,13 @@ class WealthContextBar {
     }
 
     // Mettre à jour userSettings
+    // NOTE: Ne PAS mettre à jour csv_selected_file ici - c'est géré par SourcesManagerV2
+    // Le dropdown WealthContextBar gère le TYPE de source (csv vs api vs manual)
+    // La sélection de FICHIER CSV est gérée dans Settings → Sources
     if (type === 'csv') {
       window.userSettings.data_source = 'cointracking';
-      window.userSettings.csv_selected_file = newFile;
     } else {
       window.userSettings.data_source = effectiveNew;
-      window.userSettings.csv_selected_file = null;
     }
 
     // Mettre à jour context interne
@@ -567,6 +598,32 @@ class WealthContextBar {
             },
             body: JSON.stringify({ source_id: sourcesV2Id })
           });
+
+          // ✅ FIX: Si source CSV, aussi sélectionner le fichier spécifique
+          if (type === 'csv' && source) {
+            // Extraire le filename depuis file_path ou key
+            let filename = null;
+            if (source.file_path) {
+              filename = source.file_path.split(/[/\\]/).pop();
+            } else if (source.key && source.key.startsWith('csv_')) {
+              // Fallback: extraire du format V1 key (csv_YYYYMMDD_HHMMSS_filename)
+              const parts = source.key.split('_');
+              if (parts.length >= 4) {
+                filename = parts.slice(3).join('_') + '.csv';
+              }
+            }
+
+            if (filename) {
+              console.debug(`[WealthContextBar] Syncing Crypto CSV file: ${filename}`);
+              await fetch(`/api/sources/v2/crypto/csv/select?filename=${encodeURIComponent(filename)}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-User': activeUser
+                }
+              });
+            }
+          }
         } catch (error) {
           console.warn('[WealthContextBar] Failed to sync Sources V2:', error);
           // Non-bloquant, on continue avec V1
@@ -767,6 +824,32 @@ class WealthContextBar {
         },
         body: JSON.stringify({ source_id: sourcesV2Id })
       });
+
+      // ✅ FIX: Si source CSV, aussi sélectionner le fichier spécifique
+      if (_sourceType === 'saxo' && source) {
+        // Extraire le filename depuis file_path ou key
+        let filename = null;
+        if (source.file_path) {
+          filename = source.file_path.split(/[/\\]/).pop();
+        } else if (source.key && source.key.startsWith('csv_')) {
+          // Fallback: extraire du format V1 key (csv_YYYYMMDD_HHMMSS_filename)
+          const parts = source.key.split('_');
+          if (parts.length >= 4) {
+            filename = parts.slice(3).join('_') + '.csv';
+          }
+        }
+
+        if (filename) {
+          console.debug(`[WealthContextBar] Syncing Bourse CSV file: ${filename}`);
+          await fetch(`/api/sources/v2/bourse/csv/select?filename=${encodeURIComponent(filename)}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-User': activeUser
+            }
+          });
+        }
+      }
     } catch (error) {
       console.warn('[WealthContextBar] Failed to sync Sources V2 Bourse:', error);
       // Non-bloquant, on continue
@@ -1037,6 +1120,14 @@ class WealthContextBar {
     // Setup listener pour changement d'utilisateur
     this.setupUserSwitchListener();
 
+    // Setup listener pour changement de source depuis Settings V2
+    window.addEventListener('dataSourceChanged', async (event) => {
+      console.debug('[WealthContextBar] dataSourceChanged event received:', event.detail);
+      if (event.detail.sourceType === 'sources_v2' || event.detail.sourceType === 'csv_file_selection') {
+        await this.refreshSourcesFromSettings();
+      }
+    });
+
     // Mettre à jour les autres selects (module, currency)
     this.updateSelects();
 
@@ -1272,6 +1363,24 @@ class WealthContextBar {
     this.context = { ...this.context, ...newContext };
     this.updateSelects();
     this.saveContext();
+  }
+
+  /**
+   * Invalidate sources cache and reload dropdowns
+   * Called when sources change from Settings page (Sources V2)
+   */
+  async refreshSourcesFromSettings() {
+    console.debug('[WealthContextBar] Refreshing sources from Settings change...');
+
+    // Invalidate cache
+    this.sourcesCache = null;
+    this.sourcesCacheTime = 0;
+
+    // Reload dropdowns
+    await this.loadAndPopulateAccountSources();
+    await this.loadAndPopulateBourseSources();
+
+    console.debug('[WealthContextBar] Sources refreshed successfully');
   }
 
   async initGlobalBadge() {

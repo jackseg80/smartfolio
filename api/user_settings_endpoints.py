@@ -171,6 +171,19 @@ async def save_user_settings(
 
         merged_settings = {**old_config, **new_settings}
 
+        # ✅ FIX: Synchroniser V1 → V2 pour csv_selected_file
+        # Évite la race condition où V1 est mis à jour mais V2 non
+        csv_selected = merged_settings.get("csv_selected_file")
+        if csv_selected:
+            # S'assurer que la structure V2 existe
+            if "sources" not in merged_settings:
+                merged_settings["sources"] = {}
+            if "crypto" not in merged_settings["sources"]:
+                merged_settings["sources"]["crypto"] = {}
+            # Synchroniser V1 → V2
+            merged_settings["sources"]["crypto"]["selected_csv_file"] = csv_selected
+            logger.debug(f"Synced V1 csv_selected_file to V2 for user {user}: {csv_selected}")
+
         # Sauvegarder config.json (SANS les clés API)
         user_fs.write_json("config.json", merged_settings)
 
@@ -241,37 +254,29 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
 
         sources = []
 
-        # CSV CoinTracking et Saxo: lister les fichiers depuis data/
-        csv_files = []
+        # ========== SOURCES V2 STRUCTURE ==========
+        # Instead of listing each CSV file, return generic source types
 
-        # Scanner data/ CoinTracking
+        # 1. Manual Crypto Source
+        sources.append({
+            "key": "manual_crypto",
+            "label": "📝 Saisie Manuelle (Crypto)",
+            "type": "manual",
+            "module": "manual_crypto",
+            "file_path": None
+        })
+
+        # 2. CoinTracking CSV (generic, single entry)
         ct_data_dir = data_router.user_fs.get_path("cointracking/data")
-        if Path(ct_data_dir).exists():
-            csv_files.extend([(p, "cointracking") for p in Path(ct_data_dir).glob("*.csv")])
+        ct_has_csv = Path(ct_data_dir).exists() and any(Path(ct_data_dir).glob("*.csv"))
 
-        # Scanner data/ Saxo
-        saxo_data_dir = data_router.user_fs.get_path("saxobank/data")
-        if Path(saxo_data_dir).exists():
-            csv_files.extend([(p, "saxobank") for p in Path(saxo_data_dir).glob("*.csv")])
-
-        # Trier par nom et dédupliquer
-        csv_files = sorted(set(csv_files), key=lambda item: item[0].name.lower())
-
-        for i, (csv_path, module) in enumerate(csv_files[:100]):  # Max 100 fichiers (50 cointracking + 50 saxo)
-            file_name = csv_path.name
-            # Générer une clé unique basée sur le nom du fichier (slug-friendly)
-            file_slug = file_name.replace('.csv', '').lower().replace(' ', '_').replace('-', '_')
-
-            # Préfixe selon le module
-            key_prefix = "saxo" if module == "saxobank" else "csv"
-            icon = "🏦" if module == "saxobank" else "📄"
-
+        if ct_has_csv:
             sources.append({
-                "key": f"{key_prefix}_{file_slug}",
-                "label": f"{icon} {file_name}",
+                "key": "cointracking_csv",
+                "label": "📄 Import CSV (CoinTracking)",
                 "type": "csv",
-                "module": module,
-                "file_path": str(csv_path)
+                "module": "cointracking",
+                "file_path": None  # File selection is handled by Sources V2 UI
             })
 
         # API CoinTracking: seulement si l'utilisateur a des clés API
@@ -290,7 +295,29 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
                 "file_path": None
             })
 
-        # API SaxoBank: seulement si l'utilisateur est connecté via OAuth2
+        # 4. Manual Bourse Source
+        sources.append({
+            "key": "manual_bourse",
+            "label": "📝 Saisie Manuelle (Bourse)",
+            "type": "manual",
+            "module": "manual_bourse",
+            "file_path": None
+        })
+
+        # 5. Saxo CSV (generic, single entry)
+        saxo_data_dir = data_router.user_fs.get_path("saxobank/data")
+        saxo_has_csv = Path(saxo_data_dir).exists() and any(Path(saxo_data_dir).glob("*.csv"))
+
+        if saxo_has_csv:
+            sources.append({
+                "key": "saxobank_csv",
+                "label": "📄 Import CSV (Saxo)",
+                "type": "csv",
+                "module": "saxobank",
+                "file_path": None  # File selection is handled by Sources V2 UI
+            })
+
+        # 6. API SaxoBank: seulement si l'utilisateur est connecté via OAuth2
         from services.saxo_auth_service import SaxoAuthService
 
         saxo_auth = SaxoAuthService(user)
@@ -308,15 +335,15 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
                 "environment": connection_status.get("environment")
             })
 
-        # Compter le nombre de fichiers par module
-        cointracking_count = sum(1 for _, m in csv_files if m == "cointracking")
-        saxo_count = sum(1 for _, m in csv_files if m == "saxobank")
+        # Count CSV files (for statistics)
+        cointracking_count = len(list(Path(ct_data_dir).glob("*.csv"))) if Path(ct_data_dir).exists() else 0
+        saxo_count = len(list(Path(saxo_data_dir).glob("*.csv"))) if Path(saxo_data_dir).exists() else 0
 
         return {
             "user": user,
             "sources": sources,
             "current_source": data_router.settings.get("data_source", "csv"),
-            "total_csv_files": len(csv_files) if csv_files else 0,
+            "total_csv_files": cointracking_count + saxo_count,
             "cointracking_files": cointracking_count,
             "saxo_files": saxo_count
         }

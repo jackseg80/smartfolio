@@ -62,10 +62,15 @@ class SaxoBankCSVSource(SourceBase):
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
-                    # Check in new category-based config
+
+                    # Check in Sources V2 category-based config first
                     sources_config = config.get("sources", {}).get("bourse", {})
-                    csv_config = sources_config.get("saxobank_csv", {})
-                    selected = csv_config.get("selected_file")
+                    selected = sources_config.get("selected_csv_file")
+
+                    # Fall back to legacy config locations
+                    if not selected:
+                        csv_config = sources_config.get("saxobank_csv", {})
+                        selected = csv_config.get("selected_file")
 
                     if selected:
                         selected_path = self._data_dir / selected

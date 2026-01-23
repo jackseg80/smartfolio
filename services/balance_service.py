@@ -236,7 +236,12 @@ class BalanceService:
         if source == "cointracking_api":
             return await self._legacy_api_mode(user_id)
 
+        # ✅ FIX: Use _try_csv_mode() which reads V2 config, instead of _legacy_csv_mode()
         if source == "cointracking":
+            csv_result = await self._try_csv_mode(data_router, user_id)
+            if csv_result:
+                return csv_result
+            # Fallback to legacy only if _try_csv_mode fails
             return await self._legacy_csv_mode()
 
         # --- Final fallback to CSV ---
@@ -313,7 +318,28 @@ class BalanceService:
             Balance data dict if successful, None otherwise
         """
         try:
-            csv_file = data_router.get_most_recent_csv("balance")
+            # ✅ FIX: First check for V2 config selected_csv_file
+            csv_file = None
+            config_path = self.base_dir / "data" / "users" / user_id / "config.json"
+            if config_path.exists():
+                try:
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        config = json.load(f)
+                        # Check V2 config for selected file
+                        selected_file = config.get("sources", {}).get("crypto", {}).get("selected_csv_file")
+                        if selected_file:
+                            csv_dir = self.base_dir / "data" / "users" / user_id / "cointracking" / "data"
+                            candidate = csv_dir / selected_file
+                            if candidate.exists():
+                                csv_file = str(candidate)
+                                logger.info(f"[V2 Config] Using selected CSV file for user {user_id}: {selected_file}")
+                except Exception as e:
+                    logger.debug(f"Could not read V2 config for user {user_id}: {e}")
+
+            # Fallback to most recent if no V2 selection
+            if not csv_file:
+                csv_file = data_router.get_most_recent_csv("balance")
+
             if not csv_file:
                 logger.warning(f"No CSV files found for user {user_id}")
                 return None

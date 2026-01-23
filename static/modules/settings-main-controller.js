@@ -48,7 +48,9 @@ async function buildQuickSourceDropdown() {
       }
     }
 
-    window.availableSources = sources; // Pour lookup lors de la sélection
+    // NOTE: WealthContextBar gère window.availableSources avec le format V2
+    // Ne pas écraser ici pour éviter les conflits
+    // window.availableSources = sources; // Pour lookup lors de la sélection
 
     const quickSelect = document.getElementById('quick_data_source');
     if (quickSelect) {
