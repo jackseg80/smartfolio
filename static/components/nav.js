@@ -189,6 +189,7 @@ const initUnifiedNav = () => {
                 <a href="ai-dashboard.html" data-route="ai-dashboard.html">🤖 AI Dashboard</a>
                 <a href="monitoring.html" data-route="monitoring.html">📊 Monitoring</a>
                 <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>
+                <a href="optimization.html" data-route="optimization.html">🧮 Optimization</a>
                 <div class="menu-separator"></div>
                 <a href="alias-manager.html" data-route="alias-manager.html">🔍 Alias Manager</a>
                 <a href="settings.html" data-route="settings.html">⚙️ Settings</a>

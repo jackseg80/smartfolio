@@ -132,14 +132,7 @@
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="tabs" id="rebalance-tabs">
-      <button class="tab-btn active" data-target="#rebalance-tab">Rebalancing</button>
-      <button class="tab-btn" data-target="#optimization-tab">Optimization</button>
-    </div>
-  </div>
-
-  <main class="wrap tab-panel active" id="rebalance-tab">
+  <main class="wrap">
     <!-- Paramètres d'allocation intra-groupe -->
     <section class="card" style="margin-bottom: 16px;">
       <h3 style="margin-bottom: 12px;">⚙️ Paramètres d'Allocation</h3>
@@ -255,19 +248,6 @@
       <div id="unknownList" class="small mt16"></div>
     </section>
   </main>
-
-  <section id="optimization-tab" class="wrap tab-panel">
-    <div class="card">
-      <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem;">
-        <h3 style="margin:0;">Optimization</h3>
-        <button id="openOptimizationNewTab" class="btn btn-sm btn-secondary" style="margin-left:auto;">Open in new
-          tab</button>
-      </div>
-      <div id="optimization-container"></div>
-      <div id="optimization-status" class="small muted" style="margin-top:.5rem; display:none"></div>
-    </div>
-  </section>
-
 
   <script type="module" src="modules/rebalance-controller.js"></script>
 
