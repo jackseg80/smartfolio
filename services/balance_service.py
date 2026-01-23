@@ -244,8 +244,15 @@ class BalanceService:
             # Fallback to legacy only if _try_csv_mode fails
             return await self._legacy_csv_mode()
 
-        # --- Final fallback to CSV ---
-        return await self._fallback_csv_mode()
+        # --- Final fallback: Return error instead of loading wrong data ---
+        # ⚠️ SÉCURITÉ: Ne JAMAIS charger de données globales partagées
+        # Si aucune source valide n'est trouvée, retourner une erreur explicite
+        logger.error(f"No valid data source found for user {user_id} with source={source}")
+        return {
+            "source_used": "none",
+            "items": [],
+            "error": f"Aucune source de données valide trouvée. Veuillez configurer une source dans Settings."
+        }
 
     async def _try_api_mode(
         self,
