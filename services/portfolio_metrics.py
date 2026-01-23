@@ -219,9 +219,16 @@ class PortfolioMetricsService:
         
         # Calculer les rendements pondérés du portfolio
         portfolio_returns = self._calculate_weighted_portfolio_returns(price_data, balances)
-        
-        if len(portfolio_returns) < 30:
-            raise ValueError("Insufficient data points for reliable metrics calculation")
+
+        # ✅ FIX: Clearer error message with actual data point count
+        min_required_points = 30
+        if len(portfolio_returns) < min_required_points:
+            raise ValueError(
+                f"Insufficient data points for reliable metrics calculation: "
+                f"{len(portfolio_returns)} available, {min_required_points} required. "
+                f"Original price_data had {len(price_data)} rows, but weighted returns only produced {len(portfolio_returns)} valid points. "
+                f"This may indicate sparse price coverage across assets."
+            )
         
         # Calculs de base
         total_return = self._calculate_total_return(portfolio_returns)
@@ -443,6 +450,13 @@ class PortfolioMetricsService:
                 # ⚠️ IMPORTANT: Filtrer les colonnes de la cohorte AVANT de nettoyer les NaN
                 cohort_symbols = [b.get('symbol', '').upper() for b in cohort_balances]
                 cohort_price_data = price_data[cohort_symbols].dropna().tail(target_days)
+
+                # ✅ FIX: Verify minimum data points BEFORE calculating metrics
+                min_required_points = 30  # Same as calculate_portfolio_metrics requirement
+                if len(cohort_price_data) < min_required_points:
+                    logger.warning(f"⚠️  Cohort {target_days}d has insufficient data points: {len(cohort_price_data)} < {min_required_points} (after dropna)")
+                    continue  # Skip to next cascade config
+
                 try:
                     long_term_metrics = self.calculate_portfolio_metrics(
                         cohort_price_data,
@@ -486,6 +500,15 @@ class PortfolioMetricsService:
         try:
             # ⚠️ IMPORTANT: dropna() pour éliminer les lignes avec NaN (intersection temporelle)
             full_intersection_price_data = price_data.dropna()
+
+            # ✅ FIX: Verify minimum data points for full intersection
+            min_required_points = 30
+            if len(full_intersection_price_data) < min_required_points:
+                raise ValueError(
+                    f"Insufficient data points for full intersection: {len(full_intersection_price_data)} < {min_required_points}. "
+                    f"Price data coverage is too sparse across assets."
+                )
+
             full_intersection_metrics = self.calculate_portfolio_metrics(
                 full_intersection_price_data,
                 balances,

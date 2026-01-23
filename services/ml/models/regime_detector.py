@@ -49,7 +49,8 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
         Array of regime labels (0-3) matching input length
     """
     close = price_data['close'].values
-    labels = np.zeros(len(close), dtype=int)
+    # ✅ FIX: Initialize with -1 to distinguish unlabeled from Bear Market (0)
+    labels = np.full(len(close), -1, dtype=int)
 
     # Calculate features
     returns = pd.Series(close).pct_change()
@@ -101,12 +102,9 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
 
     # PHASE 4: Rest are Bull Markets (default)
     # Price >MA200, low volatility, positive trend
-    labels[labels == 0] = 2  # Unlabeled → Bull Market (but avoid overwriting Bear=0!)
-
-    # Fix: Re-apply Bear Market labels (got overwritten)
-    for i in range(42, len(close)):
-        if drawdown[i] <= -0.20 and np.all(drawdown[i-42:i+1] <= -0.15):
-            labels[i-42:i+1] = 0
+    # ✅ FIX: Assign Bull Market (2) to all remaining unlabeled periods (-1)
+    # Now we can safely distinguish unlabeled (-1) from Bear Market (0)
+    labels[labels == -1] = 2  # All unlabeled → Bull Market
 
     return labels
 
@@ -731,9 +729,11 @@ class RegimeDetector:
             # Check for severely imbalanced classes
             min_samples = class_distribution.min()
             if min_samples < 2:
-                logger.error(f"❌ CRITICAL: Some regimes have <2 samples! Distribution: {class_distribution.tolist()}")
-                logger.error(f"   This will cause train_test_split to fail with stratify=True")
-                logger.error(f"   Rare regimes: {[self.regime_names[i] for i in range(self.num_regimes) if class_distribution[i] < 2]}")
+                # ✅ FIX: Use WARNING instead of ERROR since we have fallback logic
+                logger.warning(f"⚠️  Class imbalance detected: Some regimes have <2 samples!")
+                logger.warning(f"   Distribution: {class_distribution.tolist()}")
+                logger.warning(f"   Rare regimes (<2 samples): {[self.regime_names[i] for i in range(self.num_regimes) if class_distribution[i] < 2]}")
+                logger.warning(f"   Will disable stratified split and proceed with random split (fallback)")
 
             # Prepare data for neural network
             X = features_df.values
@@ -753,9 +753,12 @@ class RegimeDetector:
 
             if min_samples_per_class < 2:
                 # Can't use stratify when some classes have <2 samples
-                logger.warning(f"⚠️ Class imbalance detected: {class_counts.tolist()}. "
-                              f"Classes with <2 samples: {np.where(class_counts < 2)[0].tolist()}. "
-                              f"Disabling stratified split to avoid sklearn error.")
+                # ✅ FIX: More informative log message
+                rare_regimes = [self.regime_names[i] for i in range(self.num_regimes) if class_counts[i] < 2]
+                logger.info(f"📊 Using random split (stratify disabled) due to class imbalance")
+                logger.info(f"   Class counts: {class_counts.tolist()}")
+                logger.info(f"   Regimes with <2 samples: {rare_regimes}")
+                logger.info(f"   This is expected for datasets without Bear Markets or Expansion phases")
                 X_train, X_val, y_train, y_val = train_test_split(
                     X_scaled, y,
                     test_size=validation_split,

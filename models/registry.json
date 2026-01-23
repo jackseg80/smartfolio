@@ -6,7 +6,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2026-01-23T18:42:55.137753",
+      "updated_at": "2026-01-23T19:29:47.794721",
       "file_path": "models/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -35,26 +35,26 @@
         "num_layers": 2
       },
       "validation_metrics": {
-        "accuracy": 0.796875,
-        "best_val_accuracy": 0.808695652173913,
+        "accuracy": 0.7704160246533128,
+        "best_val_accuracy": 0.8009259259259259,
         "data_source": "synthetic",
-        "train_samples": 1725,
-        "test_samples": 576,
-        "val_samples": 575,
+        "train_samples": 1944,
+        "test_samples": 649,
+        "val_samples": 648,
         "feature_count": 10,
-        "trained_at": "2026-01-23T18:42:34.003148",
-        "training_time_seconds": 34.4801127910614
+        "trained_at": "2026-01-23T19:29:21.428009",
+        "training_time_seconds": 45.83188247680664
       },
       "test_metrics": {
-        "accuracy": 0.796875,
-        "best_val_accuracy": 0.808695652173913,
+        "accuracy": 0.7704160246533128,
+        "best_val_accuracy": 0.8009259259259259,
         "data_source": "synthetic",
-        "train_samples": 1725,
-        "test_samples": 576,
-        "val_samples": 575,
+        "train_samples": 1944,
+        "test_samples": 649,
+        "val_samples": 648,
         "feature_count": 10,
-        "trained_at": "2026-01-23T18:42:34.003148",
-        "training_time_seconds": 34.4801127910614
+        "trained_at": "2026-01-23T19:29:21.428009",
+        "training_time_seconds": 45.83188247680664
       },
       "target_assets": [
         "BTC"
@@ -76,7 +76,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2025-12-25T09:50:24.225621",
+      "updated_at": "2026-01-23T19:31:51.833214",
       "file_path": "models/regime/btc_regime_hmm.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -98,26 +98,26 @@
         "covariance_type": "full"
       },
       "validation_metrics": {
-        "accuracy": 0.8025594149908593,
-        "best_val_accuracy": 0.7875457875457875,
+        "accuracy": 0.7442218798151001,
+        "best_val_accuracy": 0.8055555555555556,
         "data_source": "synthetic",
-        "train_samples": 1638,
-        "test_samples": 547,
-        "val_samples": 546,
+        "train_samples": 1944,
+        "test_samples": 649,
+        "val_samples": 648,
         "feature_count": 10,
-        "trained_at": "2025-12-25T09:50:06.895616",
-        "training_time_seconds": 33.61621165275574
+        "trained_at": "2026-01-23T19:31:26.131345",
+        "training_time_seconds": 43.82249045372009
       },
       "test_metrics": {
-        "accuracy": 0.8025594149908593,
-        "best_val_accuracy": 0.7875457875457875,
+        "accuracy": 0.7442218798151001,
+        "best_val_accuracy": 0.8055555555555556,
         "data_source": "synthetic",
-        "train_samples": 1638,
-        "test_samples": 547,
-        "val_samples": 546,
+        "train_samples": 1944,
+        "test_samples": 649,
+        "val_samples": 648,
         "feature_count": 10,
-        "trained_at": "2025-12-25T09:50:06.895616",
-        "training_time_seconds": 33.61621165275574
+        "trained_at": "2026-01-23T19:31:26.131345",
+        "training_time_seconds": 43.82249045372009
       },
       "target_assets": [
         "BTC"
@@ -139,7 +139,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2026-01-23T18:39:50.988691",
+      "updated_at": "2026-01-23T19:32:14.408019",
       "file_path": "models/stocks/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -169,31 +169,31 @@
       },
       "validation_metrics": {
         "current_regime": "Bull Market",
-        "confidence": 0.8861026763916016,
+        "confidence": 0.8871198296546936,
         "regime_probabilities": {
-          "Bear Market": 0.03750007972121239,
-          "Correction": 0.0385921336710453,
-          "Bull Market": 0.8861026763916016,
-          "Consolidation": 0.03780510649085045
+          "Bear Market": 0.03750063106417656,
+          "Correction": 0.03787863254547119,
+          "Bull Market": 0.8871198296546936,
+          "Consolidation": 0.03750086948275566
         },
-        "data_source": "real_stocks_7300d",
+        "data_source": "real_stocks_1095d",
         "benchmark": "SPY",
-        "trained_at": "2026-01-23T18:39:50.985848",
-        "training_time_seconds": 6.251861095428467
+        "trained_at": "2026-01-23T19:32:14.405865",
+        "training_time_seconds": 1.1537840366363525
       },
       "test_metrics": {
         "current_regime": "Bull Market",
-        "confidence": 0.8861026763916016,
+        "confidence": 0.8871198296546936,
         "regime_probabilities": {
-          "Bear Market": 0.03750007972121239,
-          "Correction": 0.0385921336710453,
-          "Bull Market": 0.8861026763916016,
-          "Consolidation": 0.03780510649085045
+          "Bear Market": 0.03750063106417656,
+          "Correction": 0.03787863254547119,
+          "Bull Market": 0.8871198296546936,
+          "Consolidation": 0.03750086948275566
         },
-        "data_source": "real_stocks_7300d",
+        "data_source": "real_stocks_1095d",
         "benchmark": "SPY",
-        "trained_at": "2026-01-23T18:39:50.985848",
-        "training_time_seconds": 6.251861095428467
+        "trained_at": "2026-01-23T19:32:14.405865",
+        "training_time_seconds": 1.1537840366363525
       },
       "target_assets": [
         "AAPL",
@@ -218,7 +218,7 @@
       "model_type": "volatility",
       "status": "trained",
       "created_at": "2024-09-15T08:53:00+00:00",
-      "updated_at": "2025-12-20T22:29:12.387031",
+      "updated_at": "2026-01-23T19:33:39.839626",
       "file_path": "models/volatility/volatility_model_v2.1.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -273,7 +273,7 @@
             "test_samples": 71
           }
         ],
-        "training_time_seconds": 7.646095514297485
+        "training_time_seconds": 37.81085443496704
       },
       "test_metrics": {
         "test_mse": 0.028034913043181103,
@@ -308,7 +308,7 @@
             "test_samples": 71
           }
         ],
-        "training_time_seconds": 7.646095514297485
+        "training_time_seconds": 37.81085443496704
       },
       "target_assets": [
         "BTC",
