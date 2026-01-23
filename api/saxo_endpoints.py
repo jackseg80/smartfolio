@@ -182,8 +182,22 @@ async def list_positions(
     normalized = [p.model_dump() if isinstance(p, PositionModel) else p for p in wealth_positions]
     total = len(normalized)
     window = normalized[offset : offset + limit]
+
+    # ✅ Extract asof date from snapshot metadata
+    asof = None
+    try:
+        from adapters.saxo_adapter import _load_snapshot
+        snapshot = _load_snapshot(user_id=user, file_key=file_key)
+        if snapshot.get("portfolios"):
+            # Extract date from first portfolio
+            portfolio = snapshot["portfolios"][0]
+            asof = portfolio.get("last_updated") or portfolio.get("updated_at")
+    except Exception as e:
+        logger.warning(f"Failed to extract asof from snapshot: {e}")
+
     return {
         "positions": window,
+        "asof": asof,  # ✅ Include CSV date for frontend display
         "pagination": {
             "total": total,
             "limit": limit,

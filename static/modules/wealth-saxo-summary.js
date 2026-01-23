@@ -425,13 +425,10 @@ export async function fetchSaxoSummary() {
         // Trouver la date la plus récente (asof)
         let latestDate = 'Date inconnue';
         try {
-            const dates = positions
-                .map(pos => pos.asof || pos.date || pos.timestamp)
-                .filter(d => d)
-                .sort((a, b) => new Date(b) - new Date(a));
-
-            if (dates.length > 0) {
-                const date = new Date(dates[0]);
+            // ✅ PRIORITY 1: Use asof from API response (backend now returns this for CSV mode)
+            if (data.data?.asof || data.asof) {
+                const apiAsof = data.data?.asof || data.asof;
+                const date = new Date(apiAsof);
                 latestDate = date.toLocaleDateString('fr-FR', {
                     day: '2-digit',
                     month: '2-digit',
@@ -439,13 +436,28 @@ export async function fetchSaxoSummary() {
                     hour: '2-digit',
                     minute: '2-digit'
                 });
+                (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Using asof from API: ${latestDate}`);
+            } else {
+                // Fallback: Extract from positions if API doesn't provide asof
+                const dates = positions
+                    .map(pos => pos.asof || pos.date || pos.timestamp)
+                    .filter(d => d)
+                    .sort((a, b) => new Date(b) - new Date(a));
+
+                if (dates.length > 0) {
+                    const date = new Date(dates[0]);
+                    latestDate = date.toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                }
             }
         } catch (e) {
-            // Fallback: extraire de portfolio_id si disponible
-            const portfolioId = data.portfolio_id || data.portfolios?.[0]?.portfolio_id || '';
-            if (portfolioId.includes('25-09-2025')) {
-                latestDate = '25/09/2025 18:40';
-            }
+            (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to extract date:', e);
+            latestDate = 'Date inconnue';
         }
 
         const summary = {

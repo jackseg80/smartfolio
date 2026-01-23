@@ -130,6 +130,33 @@ def _parse_saxo_csv(csv_path: str, source_type: str, user_id: Optional[str] = No
         positions = result["positions"]
         portfolio_id = f"saxo_{source_type}"
 
+        # ✅ Extract real file date instead of parsing date
+        import os
+        file_date = None
+        try:
+            # Try to extract date from filename (format: YYYYMMDD_HHMMSS_filename.csv)
+            filename = Path(csv_path).stem
+            if '_' in filename:
+                parts = filename.split('_')
+                if len(parts) >= 2 and parts[0].isdigit() and len(parts[0]) == 8:
+                    # Parse YYYYMMDD_HHMMSS format
+                    date_str = parts[0]
+                    time_str = parts[1] if len(parts) > 1 and parts[1].isdigit() else '000000'
+                    file_date = datetime.strptime(f"{date_str}_{time_str}", "%Y%m%d_%H%M%S").isoformat()
+                    logger.debug(f"Extracted date from filename: {file_date}")
+        except Exception as e:
+            logger.debug(f"Failed to extract date from filename, using file mtime: {e}")
+
+        # Fallback: use file modification time
+        if not file_date:
+            try:
+                mtime = os.path.getmtime(csv_path)
+                file_date = datetime.fromtimestamp(mtime).isoformat()
+                logger.debug(f"Using file mtime as date: {file_date}")
+            except Exception as e:
+                logger.warning(f"Failed to get file mtime: {e}")
+                file_date = datetime.now().isoformat()
+
         # Normaliser au format attendu
         normalized_data = {
             "portfolios": [{
@@ -137,12 +164,12 @@ def _parse_saxo_csv(csv_path: str, source_type: str, user_id: Optional[str] = No
                 "name": f"Saxo Portfolio ({source_type})",
                 "positions": positions,
                 "summary": result.get("summary", {}),
-                "last_updated": datetime.now().isoformat(),
+                "last_updated": file_date,  # ✅ Use real file date instead of parsing date
                 "source": source_type
             }]
         }
 
-        logger.info(f"Parsed Saxo CSV: {len(positions)} positions from {source_type}")
+        logger.info(f"Parsed Saxo CSV: {len(positions)} positions from {source_type}, date: {file_date}")
         return normalized_data
 
     except Exception as e:

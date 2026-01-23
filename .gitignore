@@ -73,8 +73,8 @@ temp_*.json
 rebalance-actions.csv
 risk*.txt
 test*.json
-prompt_claude.txt
-prompt_claude.md
+prompt_claude*.txt
+prompt_claude*.md
 NEXT_SESSION.md
 
 # Cleanup scripts & audits (temporary)
