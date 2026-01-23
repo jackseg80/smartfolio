@@ -25,7 +25,7 @@
 
     <!-- Grille des modules sources -->
     <div class="modules-grid" id="sources_modules_grid" style="margin-top: 16px;">
-      <!-- Les cartes de modules seront injectées dynamiquement par sources-manager.js -->
+      <!-- Les cartes de modules seront injectées dynamiquement par sources-manager-v2.js -->
       <div class="loading-placeholder">
         <div class="spinner"></div>
         <span>Chargement des modules sources...</span>
@@ -35,7 +35,7 @@
     <!-- Actions globales -->
     <div style="margin-top: 16px;">
       <div class="flex-row" style="gap: 12px; flex-wrap: wrap;">
-        <button class="btn info" onclick="refreshSourcesStatus()">
+        <button class="btn info" onclick="window.sourcesManagerV2 && window.sourcesManagerV2.fetchSourcesSummary()">
           🔄 Actualiser status
         </button>
         <button class="btn secondary" onclick="showSourcesConfiguration()">
@@ -299,12 +299,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const sourcesTab = document.querySelector('button[data-target="#tab-sources"]');
   if (sourcesTab) {
     sourcesTab.addEventListener('click', function() {
-      // Initialiser le sources manager quand l'onglet est activé
+      // Initialiser le sources manager V2 quand l'onglet est activé
       setTimeout(() => {
-        if (typeof initSourcesManager === 'function') {
-          initSourcesManager();
+        if (window.sourcesManagerV2 && typeof window.sourcesManagerV2.initialize === 'function') {
+          window.sourcesManagerV2.initialize();
         } else {
-          debugLogger.warn('[Sources] sources-manager.js not loaded');
+          debugLogger.warn('[Sources] sources-manager-v2.js not loaded');
         }
       }, 100);
     });

@@ -64,13 +64,13 @@ function clearSourcesLogs() {
 
 // Initialisation automatique quand l'onglet Sources est activé
 document.addEventListener('DOMContentLoaded', function() {
-  // Fonction d'initialisation
+  // Fonction d'initialisation V2
   function tryInitSourcesManager() {
     setTimeout(() => {
-      if (typeof initSourcesManager === 'function') {
-        initSourcesManager();
+      if (window.sourcesManagerV2 && typeof window.sourcesManagerV2.initialize === 'function') {
+        window.sourcesManagerV2.initialize();
       } else {
-        debugLogger.warn('[Sources] sources-manager.js not loaded');
+        debugLogger.warn('[Sources] sources-manager-v2.js not loaded');
       }
     }, 100);
   }

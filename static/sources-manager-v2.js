@@ -659,20 +659,156 @@ class SourcesManagerV2 {
     }
 
     /**
-     * Show upload dialog (delegate to existing sources-manager)
+     * Show upload dialog - native V2 implementation
      */
     showUploadDialog(category) {
-        // Map category to module name for existing upload system
+        // Map category to module name
         const moduleMap = {
             'crypto': 'cointracking',
             'bourse': 'saxobank'
         };
         const module = moduleMap[category];
+        const title = category === 'crypto' ? 'CoinTracking' : 'Saxo Bank';
 
-        if (typeof showUploadDialog === 'function') {
-            showUploadDialog(module);
-        } else {
-            this.showToast('Fonction upload non disponible', 'error');
+        // Create native V2 upload modal
+        const modalHTML = `
+            <div class="modal-overlay upload-modal" id="uploadModalV2">
+                <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>📁 Upload de fichiers - ${title}</h3>
+                        <button class="close-modal" onclick="document.getElementById('uploadModalV2').remove()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Extensions autorisées: <strong>.csv</strong></p>
+                        <p>Taille max: <strong>10MB par fichier</strong></p>
+
+                        <div class="upload-area" id="uploadAreaV2" style="border: 2px dashed var(--theme-border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin: 16px 0;">
+                            <div class="upload-placeholder">
+                                📄 Cliquez ici ou glissez-déposez vos fichiers
+                            </div>
+                            <input type="file" id="fileInputV2" accept=".csv" style="display: none;">
+                        </div>
+
+                        <div id="uploadProgressV2" style="display: none; margin-top: 16px;">
+                            <div style="background: var(--theme-surface); border-radius: 4px; height: 8px; overflow: hidden;">
+                                <div id="progressFillV2" style="background: var(--brand-primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div id="progressTextV2" style="text-align: center; margin-top: 8px; font-size: 12px;">Préparation...</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
+                        <button class="btn secondary" onclick="document.getElementById('uploadModalV2').remove()">Annuler</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Setup event handlers
+        const modal = document.getElementById('uploadModalV2');
+        const uploadArea = document.getElementById('uploadAreaV2');
+        const fileInput = document.getElementById('fileInputV2');
+
+        // Click on overlay closes modal
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+
+        // Click on upload area triggers file input
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        // File selection handler
+        fileInput.addEventListener('change', async () => {
+            if (fileInput.files.length > 0) {
+                await this.processUpload(category, module, fileInput.files[0]);
+                modal.remove();
+            }
+        });
+
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--brand-primary)';
+            uploadArea.style.background = 'var(--theme-surface)';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--theme-border)';
+            uploadArea.style.background = 'transparent';
+        });
+
+        uploadArea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--theme-border)';
+            uploadArea.style.background = 'transparent';
+
+            if (e.dataTransfer.files.length > 0) {
+                await this.processUpload(category, module, e.dataTransfer.files[0]);
+                modal.remove();
+            }
+        });
+
+        // Escape key closes modal
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+
+    /**
+     * Process file upload
+     */
+    async processUpload(category, module, file) {
+        // Validate file type
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            this.showToast('Veuillez sélectionner un fichier CSV', 'error');
+            return;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            this.showToast('Fichier trop volumineux (max 10MB)', 'error');
+            return;
+        }
+
+        try {
+            this.showToast('Upload en cours...', 'info');
+
+            const formData = new FormData();
+            formData.append('module', module);
+            formData.append('files', file);
+
+            const response = await fetch('/api/sources/upload', {
+                method: 'POST',
+                headers: {
+                    'X-User': localStorage.getItem('activeUser') || 'demo'
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || error.error || 'Erreur upload');
+            }
+
+            this.showToast('✅ Fichier uploadé avec succès', 'success');
+
+            // Refresh file list
+            await this.loadCSVFileList(category, `${module}_csv`);
+
+            // Emit event for data refresh
+            window.dispatchEvent(new CustomEvent('sources:changed', {
+                detail: { category, action: 'upload' }
+            }));
+
+        } catch (error) {
+            console.error('[SourcesManagerV2] Error uploading file:', error);
+            this.showToast(`Erreur upload: ${error.message}`, 'error');
         }
     }
 

@@ -198,11 +198,11 @@ async function initQuickSettings() {
 // Fonction helper pour obtenir les settings par défaut
 function getDefaultSettings() {
   return {
-    data_source: "csv",
+    data_source: "cointracking", // V2: Use module name instead of generic "csv"
     api_base_url: window.location.origin, // Will be overridden by backend value
     display_currency: "USD",
     min_usd_threshold: 1.0,
-    csv_glob: "csv/*.csv",
+    // csv_glob removed - V2 uses sources.{category}.selected_csv_file
     cointracking_api_key: "",
     cointracking_api_secret: "",
     coingecko_api_key: "",
