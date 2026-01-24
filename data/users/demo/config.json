@@ -1,23 +1,23 @@
 {
-  "data_source": "cointracking",
-  "api_base_url": "http://localhost:8080",
-  "display_currency": "USD",
-  "min_usd_threshold": 1.0,
-  "csv_glob": "",
-  "csv_selected_file": "20251229_105628_20251013_185242_High_Risk_Contra.csv",
-  "pricing": "auto",
-  "refresh_interval": 5,
-  "enable_coingecko_classification": true,
-  "enable_portfolio_snapshots": true,
-  "enable_performance_tracking": true,
-  "theme": "auto",
-  "debug_mode": false,
-  "sources": {
-    "crypto": {
-      "active_source": "cointracking_csv"
-    },
-    "bourse": {
-      "active_source": "saxobank_csv"
+    "data_source": "category_based",
+    "api_base_url": "http://localhost:8080",
+    "display_currency": "USD",
+    "min_usd_threshold": 1.0,
+    "csv_glob": "",
+    "csv_selected_file": "20251229_105628_20251013_185242_High_Risk_Contra.csv",
+    "pricing": "auto",
+    "refresh_interval": 5,
+    "enable_coingecko_classification": true,
+    "enable_portfolio_snapshots": true,
+    "enable_performance_tracking": true,
+    "theme": "auto",
+    "debug_mode": false,
+    "sources": {
+        "crypto": {
+            "active_source": "cointracking_csv"
+        },
+        "bourse": {
+            "active_source": "saxobank_csv"
+        }
     }
-  }
 }

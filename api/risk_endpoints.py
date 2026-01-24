@@ -956,7 +956,12 @@ async def get_risk_dashboard(
                     }
 
             except Exception as e:
-                logger.error(f"❌ Dual window V2 calculation failed: {e}")
+                # ✅ FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
+                error_msg = str(e)
+                if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
+                    logger.warning(f"⚠️ Dual window V2 data quality issue: {e}")
+                else:
+                    logger.error(f"❌ Dual window V2 calculation failed: {e}")
                 risk_metrics_v2 = None
 
         # Fallback si V2 demandé mais échec
@@ -1231,10 +1236,16 @@ async def get_risk_dashboard(
         return sanitized_dashboard
         
     except Exception as e:
-        logger.error(f"Erreur dashboard risque: {e}")
+        # ✅ FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
+        error_msg = str(e)
+        if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
+            logger.warning(f"⚠️ Risk dashboard data quality issue: {e}")
+        else:
+            logger.error(f"❌ Erreur dashboard risque: {e}")
+
         return {
             "success": False,
-            "message": f"Erreur lors du calcul dashboard: {str(e)}"
+            "message": f"Erreur lors du calcul dashboard: {error_msg}"
         }
 
 def _generate_centralized_risk_alerts(risk_metrics, correlation_metrics) -> List[Dict[str, Any]]:

@@ -697,14 +697,27 @@ class MLOrchestrator:
     async def _get_correlation_forecasts(self, symbols: List[str]) -> Dict[str, Any]:
         """Get correlation forecasts between assets"""
         correlations = {}
+        correlation_values = []
+
         for i, symbol1 in enumerate(symbols[:3]):
             for symbol2 in symbols[i+1:4]:
                 pair = f"{symbol1}-{symbol2}"
+                current_corr = 0.65  # Simulated value - in production, calculate from real price data
                 correlations[pair] = {
-                    'current_correlation': 0.65,
+                    'current_correlation': current_corr,
                     'forecast_correlation': 0.58,
                     'correlation_trend': 'decreasing'
                 }
+                correlation_values.append(current_corr)
+
+        # Calculate aggregate metrics expected by governance.py
+        avg_correlation = sum(correlation_values) / len(correlation_values) if correlation_values else 0.5
+        systemic_risk_level = "high" if avg_correlation > 0.7 else "medium" if avg_correlation > 0.5 else "low"
+
+        # Add aggregate fields that governance expects
+        correlations['avg_correlation'] = avg_correlation
+        correlations['systemic_risk'] = systemic_risk_level
+
         return correlations
     
     async def _get_advanced_risk_analysis(self, symbols: List[str], horizons: List[int]) -> Dict[str, Any]:

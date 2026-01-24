@@ -1279,8 +1279,11 @@
 
                 // 4. ML Sentiment via API réelle
                 let sentimentSources = [];
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
                 try {
-                    const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/symbol/BTC?days=1`);
+                    const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/symbol/BTC?days=1`, {
+                        headers: { 'X-User': activeUser }
+                    });
                     if (sentimentResponse.ok) {
                         const sentimentData = await sentimentResponse.json();
                         if (sentimentData.success && sentimentData.aggregated_sentiment) {
@@ -1303,7 +1306,9 @@
                     debugLogger.warn('⚠️ API ML Sentiment non disponible');
                     // Fallback: essayer l'ancien endpoint Fear & Greed
                     try {
-                        const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/fear-greed?days=1`);
+                        const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/fear-greed?days=1`, {
+                            headers: { 'X-User': activeUser }
+                        });
                         if (sentimentResponse.ok) {
                             const sentimentData = await sentimentResponse.json();
                             if (sentimentData.fear_greed_data) {
@@ -1711,8 +1716,11 @@
                 }
 
                 // Charger ML Sentiment
+                const activeUserDetail = localStorage.getItem('activeUser') || 'demo';
                 try {
-                    const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/symbol/BTC?days=1`);
+                    const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/symbol/BTC?days=1`, {
+                        headers: { 'X-User': activeUserDetail }
+                    });
                     if (sentimentResponse.ok) {
                         const sentimentData = await sentimentResponse.json();
                         if (sentimentData.success && sentimentData.aggregated_sentiment) {
@@ -1960,9 +1968,12 @@
         async function fetchPredictionsFromAPI() {
             try {
                 const config = await fetchUserConfig();
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
 
                 // Essayer l'endpoint ML prédictions live
-                const predictionsResponse = await fetch(`${config.api_base_url}/api/ml/predictions/live`);
+                const predictionsResponse = await fetch(`${config.api_base_url}/api/ml/predictions/live`, {
+                    headers: { 'X-User': activeUser }
+                });
 
                 if (!predictionsResponse.ok) {
                     debugLogger.warn('Endpoint ML predictions live non disponible');
@@ -2227,11 +2238,13 @@
         async function loadCrossAssetComparison() {
             try {
                 const config = await fetchUserConfig();
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const headers = { 'X-User': activeUser };
                 debugLogger.debug('📡 Fetching cross-asset comparison data...');
 
                 // Load Bitcoin regime
                 debugLogger.debug('📡 Fetching BTC regime from:', `${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
-                const btcResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
+                const btcResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`, { headers });
                 let btcData = null;
                 if (btcResponse.ok) {
                     btcData = await btcResponse.json();
@@ -2241,9 +2254,11 @@
                 }
 
                 // Load Stock regime
+                // Note: Using 365 days for quick comparison view. For full market cycle analysis,
+                // use saxo-dashboard.html which uses 7300 days (20 years) to capture dot-com, 2008, COVID, 2022 cycles.
                 debugLogger.debug('📡 Fetching stock regime for comparison...');
                 const stockEndpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
-                const stockResponse = await fetch(stockEndpoint);
+                const stockResponse = await fetch(stockEndpoint, { headers });
                 let stockData = null;
                 if (stockResponse.ok) {
                     stockData = await stockResponse.json();
@@ -2254,7 +2269,7 @@
 
                 // Load Ethereum regime
                 debugLogger.debug('📡 Fetching ETH regime from:', `${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
-                const ethResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
+                const ethResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`, { headers });
                 let ethData = null;
                 if (ethResponse.ok) {
                     ethData = await ethResponse.json();

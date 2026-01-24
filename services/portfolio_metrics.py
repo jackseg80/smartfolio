@@ -220,8 +220,9 @@ class PortfolioMetricsService:
         # Calculer les rendements pondérés du portfolio
         portfolio_returns = self._calculate_weighted_portfolio_returns(price_data, balances)
 
-        # ✅ FIX: Clearer error message with actual data point count
-        min_required_points = 30
+        # ✅ FIX: Reduce minimum to 28 to account for pct_change() consuming 1-2 rows
+        # With 30 days of price data, pct_change() produces 29 valid returns
+        min_required_points = 28
         if len(portfolio_returns) < min_required_points:
             raise ValueError(
                 f"Insufficient data points for reliable metrics calculation: "
@@ -452,7 +453,7 @@ class PortfolioMetricsService:
                 cohort_price_data = price_data[cohort_symbols].dropna().tail(target_days)
 
                 # ✅ FIX: Verify minimum data points BEFORE calculating metrics
-                min_required_points = 30  # Same as calculate_portfolio_metrics requirement
+                min_required_points = 28  # Same as calculate_portfolio_metrics requirement (accounting for pct_change loss)
                 if len(cohort_price_data) < min_required_points:
                     logger.warning(f"⚠️  Cohort {target_days}d has insufficient data points: {len(cohort_price_data)} < {min_required_points} (after dropna)")
                     continue  # Skip to next cascade config
@@ -502,7 +503,7 @@ class PortfolioMetricsService:
             full_intersection_price_data = price_data.dropna()
 
             # ✅ FIX: Verify minimum data points for full intersection
-            min_required_points = 30
+            min_required_points = 28  # Accounting for pct_change() consuming 1-2 rows
             if len(full_intersection_price_data) < min_required_points:
                 raise ValueError(
                     f"Insufficient data points for full intersection: {len(full_intersection_price_data)} < {min_required_points}. "
@@ -522,7 +523,12 @@ class PortfolioMetricsService:
                 'coverage_pct': 1.0
             }
         except Exception as e:
-            logger.error(f"❌ Full intersection calculation failed: {e}")
+            # ✅ FIX: Log data quality issues as warnings, not errors
+            error_msg = str(e)
+            if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
+                logger.warning(f"⚠️ Full intersection data quality issue: {e}")
+            else:
+                logger.error(f"❌ Full intersection calculation failed: {e}")
             raise
 
         return {
