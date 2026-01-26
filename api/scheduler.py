@@ -28,6 +28,30 @@ from api.config.users import is_allowed_user, validate_user_id
 
 logger = logging.getLogger(__name__)
 
+
+def _user_has_cointracking_credentials(user_id: str) -> bool:
+    """
+    Check if a user has CoinTracking API credentials configured.
+
+    Returns:
+        bool: True if user has valid API credentials
+    """
+    try:
+        from api.services.config_migrator import resolve_secret_ref
+        from api.services.user_fs import UserScopedFS
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent
+        user_fs = UserScopedFS(str(project_root), user_id)
+
+        key = resolve_secret_ref("cointracking_api_key", user_fs)
+        secret = resolve_secret_ref("cointracking_api_secret", user_fs)
+
+        return bool(key and secret)
+    except Exception as e:
+        logger.debug(f"Credentials check failed for {user_id}: {e}")
+        return False
+
 # Singleton scheduler instance
 _scheduler: Optional[AsyncIOScheduler] = None
 _job_status: Dict[str, Dict[str, Any]] = {}
@@ -90,6 +114,19 @@ async def job_pnl_intraday():
         # Default params (can be overridden via env vars)
         source = os.getenv("SNAPSHOT_SOURCE", "cointracking_api")
         min_usd = float(os.getenv("SNAPSHOT_MIN_USD", "1.0"))
+
+        # Filter users with valid credentials for cointracking_api source
+        if source == "cointracking_api":
+            users_with_credentials = [u for u in active_users if _user_has_cointracking_credentials(u)]
+            skipped_users = [u for u in active_users if u not in users_with_credentials]
+            if skipped_users:
+                logger.info(f"   ℹ️ Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
+            active_users = users_with_credentials
+
+        if not active_users:
+            logger.info(f"ℹ️ [{job_id}] No users with valid credentials for source={source}, skipping")
+            await _update_job_status(job_id, "skipped", 0, "No users with credentials")
+            return
 
         logger.info(f"   Creating P&L snapshots for {len(active_users)} users: {', '.join(active_users)}")
 
@@ -166,6 +203,19 @@ async def job_pnl_eod():
         # Default params (can be overridden via env vars)
         source = os.getenv("SNAPSHOT_SOURCE", "cointracking_api")
         min_usd = float(os.getenv("SNAPSHOT_MIN_USD", "1.0"))
+
+        # Filter users with valid credentials for cointracking_api source
+        if source == "cointracking_api":
+            users_with_credentials = [u for u in active_users if _user_has_cointracking_credentials(u)]
+            skipped_users = [u for u in active_users if u not in users_with_credentials]
+            if skipped_users:
+                logger.info(f"   ℹ️ Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
+            active_users = users_with_credentials
+
+        if not active_users:
+            logger.info(f"ℹ️ [{job_id}] No users with valid credentials for source={source}, skipping")
+            await _update_job_status(job_id, "skipped", 0, "No users with credentials")
+            return
 
         logger.info(f"   Creating EOD P&L snapshots for {len(active_users)} users: {', '.join(active_users)}")
 
