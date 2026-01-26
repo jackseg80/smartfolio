@@ -3280,14 +3280,23 @@
                     debugLogger.debug('🌐 Loading Saxo data from API...');
 
                     // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
-                    const [apiResult, cashResult] = await Promise.all([
-                        safeFetch(`${window.getApiBase()}/api/saxo/api-positions`, {
+                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                    const [apiResponse, cashResult] = await Promise.all([
+                        fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
                             headers: { 'X-User': activeUser }
                         }),
                         loadPortfolioCash() // Run in parallel
                     ]);
 
-                    const { ok: apiOk, data: apiData } = apiResult;
+                    if (!apiResponse.ok) {
+                        debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
+                        showNoDataState('❌ Erreur lors du chargement depuis l\'API Saxo');
+                        return;
+                    }
+
+                    const apiResult = await apiResponse.json();
+                    const apiOk = apiResult.ok;
+                    const apiData = apiResult.data || apiResult;
 
                     if (!apiOk || !apiData) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
@@ -3358,7 +3367,7 @@
                     }
 
                 } else {
-                    // Load from CSV (existing logic)
+                    // Load from CSV
                     debugLogger.debug('📄 Loading Saxo data from CSV...');
 
                     // Extract file_key from bourseSource if available
@@ -3369,11 +3378,14 @@
                         // Try to resolve file_key from availableSources
                         if (!window.availableSources) {
                             try {
-                                const response = await safeFetch(`${window.getApiBase()}/api/users/sources`, {
+                                // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                                const response = await fetch(`${window.getApiBase()}/api/users/sources`, {
                                     headers: { 'X-User': activeUser }
                                 });
-                                if (response?.ok) {
-                                    window.availableSources = response.data?.sources || [];
+                                if (response.ok) {
+                                    const result = await response.json();
+                                    // API returns { user, sources: [...], ... } directly (not wrapped in data)
+                                    window.availableSources = result.sources || [];
                                 }
                             } catch (err) {
                                 debugLogger.warn('Failed to load availableSources:', err);
@@ -3383,10 +3395,15 @@
                         // Find matching source and extract filename
                         const source = window.availableSources?.find(s => s.key === key);
                         if (source?.file_path) {
+                            // Sources V1: specific file path provided
                             fileKey = source.file_path.split(/[/\\]/).pop();
                             debugLogger.debug(`📄 Resolved file_key from bourseSource: ${fileKey}`);
+                        } else if (source) {
+                            // Sources V2: generic source without specific file (backend auto-loads from config/latest)
+                            fileKey = null;
+                            debugLogger.debug(`📄 Using Sources V2 (backend will auto-load): ${key}`);
                         } else {
-                            debugLogger.warn(`⚠️ Could not resolve file_key for source: ${key}`);
+                            debugLogger.warn(`⚠️ Source not found: ${key}`);
                         }
                     }
 
@@ -3395,26 +3412,49 @@
                     if (fileKey) {
                         portfoliosUrl += `?file_key=${encodeURIComponent(fileKey)}`;
                         debugLogger.debug(`🔍 Loading portfolio with file_key: ${fileKey}`);
+                    } else {
+                        debugLogger.debug(`🔍 Loading portfolio without file_key (backend auto-select)`);
                     }
 
                     // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
-                    const [listResult, cashResult] = await Promise.all([
-                        safeFetch(`${window.getApiBase()}${portfoliosUrl}`, {
+                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                    const fullUrl = `${window.getApiBase()}${portfoliosUrl}`;
+                    debugLogger.debug(`🌐 Calling API: ${fullUrl} with X-User: ${activeUser}`);
+
+                    const [listResponse, cashResult] = await Promise.all([
+                        fetch(fullUrl, {
                             headers: { 'X-User': activeUser }
                         }),
                         loadPortfolioCash(fileKey) // Run in parallel (pass fileKey)
                     ]);
 
-                    const { ok: listOk, data: listData } = listResult;
+                    if (!listResponse.ok) {
+                        debugLogger.warn(`❌ HTTP ${listResponse.status}: ${listResponse.statusText}`);
+                        showNoDataState(`❌ Erreur HTTP ${listResponse.status}: ${listResponse.statusText}`);
+                        return;
+                    }
 
-                    if (!listOk || !listData?.portfolios || listData.portfolios.length === 0) {
-                        debugLogger.warn('Aucun portfolio Saxo disponible.');
-                        showNoDataState('📂 Aucune donnée Saxo disponible');
+                    const listResult = await listResponse.json();
+
+                    // ✅ FIX: /api/saxo/portfolios returns {portfolios: [...]} directly (no wrapper)
+                    const portfolios = listResult.portfolios || [];
+
+                    // Debug: log FULL response structure
+                    debugLogger.debug('📦 Full API Response:', listResult);
+                    debugLogger.debug('📦 Portfolio data:', {
+                        hasPortfolios: portfolios.length > 0,
+                        portfolioCount: portfolios.length,
+                        firstPortfolioId: portfolios[0]?.portfolio_id
+                    });
+
+                    if (!portfolios || portfolios.length === 0) {
+                        debugLogger.warn('⚠️ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
+                        showNoDataState('📂 Aucun CSV Saxo trouvé. Veuillez importer un fichier CSV Saxo Bank.');
                         return;
                     }
 
                     // Get first portfolio
-                    const portfolio = listData.portfolios[0];
+                    const portfolio = portfolios[0];
                     const portfolioId = portfolio.portfolio_id;
 
                     if (!portfolioId) {
@@ -3429,21 +3469,44 @@
                         detailUrl += `?file_key=${encodeURIComponent(fileKey)}`;
                     }
 
-                    const { ok: detailOk, data: csvData } = await safeFetch(`${window.getApiBase()}${detailUrl}`, {
+                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                    const detailResponse = await fetch(`${window.getApiBase()}${detailUrl}`, {
                         headers: { 'X-User': activeUser }
                     });
 
-                    if (!detailOk || !csvData) {
+                    if (!detailResponse.ok) {
                         debugLogger.warn('Erreur lors du chargement du portfolio.');
                         showNoDataState('❌ Erreur lors du chargement du portfolio');
                         return;
                     }
 
-                    portfolioData = csvData;
+                    // ✅ FIX: /api/saxo/portfolios/{id} returns portfolio object directly (no wrapper)
+                    portfolioData = await detailResponse.json();
+
+                    if (!portfolioData || !portfolioData.portfolio_id) {
+                        debugLogger.warn('Erreur lors du chargement du portfolio.');
+                        showNoDataState('❌ Erreur lors du chargement du portfolio');
+                        return;
+                    }
+
+                    debugLogger.debug('✅ Portfolio loaded:', {
+                        id: portfolioData.portfolio_id,
+                        positionsCount: portfolioData.positions?.length || 0,
+                        totalValue: portfolioData.total_value_usd
+                    });
                 }
 
                 // Store portfolio data
                 currentPortfolioData = portfolioData;
+
+                // Debug: log final portfolio structure before displaying
+                debugLogger.debug('📊 Final portfolio data to display:', {
+                    portfolioId: currentPortfolioData?.portfolio_id,
+                    positionsCount: currentPortfolioData?.positions?.length || 0,
+                    totalValue: currentPortfolioData?.total_value_usd || currentPortfolioData?.summary?.total_value_usd,
+                    hasSummary: !!currentPortfolioData?.summary,
+                    summaryKeys: currentPortfolioData?.summary ? Object.keys(currentPortfolioData.summary) : []
+                });
 
                 // Save to cache
                 try {
@@ -3643,7 +3706,7 @@
 
         // ==================== CASH / LIQUIDITIES MANAGEMENT ====================
 
-        // Load saved cash amount for current portfolio
+        // Load saved cash amount for current portfolio (Sources V2)
         async function loadPortfolioCash(fileKey = null) {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
 
@@ -3655,9 +3718,12 @@
                     url += `&file_key=${encodeURIComponent(key)}`;
                 }
 
-                const response = await safeFetch(`${window.getApiBase()}${url}`);
-                if (response?.ok && response?.data) {
-                    window.portfolioCash = Number(response.data.cash_amount || 0);
+                // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                const response = await fetch(`${window.getApiBase()}${url}`);
+                if (response?.ok) {
+                    const result = await response.json();
+                    const data = result.data || result;
+                    window.portfolioCash = Number(data.cash_amount || 0);
                     debugLogger.debug(`💵 Loaded cash amount: $${window.portfolioCash}`);
                 } else {
                     window.portfolioCash = 0;
@@ -4253,17 +4319,27 @@
                         try {
                             // Load available sources to resolve file_key
                             if (!window.availableSources) {
-                                const response = await safeFetch(globalConfig.getApiUrl('/api/users/sources'));
-                                if (response?.ok) {
-                                    window.availableSources = response.data?.sources || [];
+                                // Use fetch directly (safeFetch may not be loaded yet due to race condition)
+                                const response = await fetch(globalConfig.getApiUrl('/api/users/sources'));
+                                if (response.ok) {
+                                    const result = await response.json();
+                                    // API returns { user, sources: [...], ... } directly (not wrapped in data)
+                                    window.availableSources = result.sources || [];
                                 }
                             }
 
                             // Find matching source and extract filename
                             const source = window.availableSources?.find(s => s.key === key);
                             if (source?.file_path) {
+                                // Sources V1: specific file path provided
                                 currentFileKey = source.file_path.split(/[/\\]/).pop();
                                 debugLogger.debug(`📄 Resolved file_key: ${currentFileKey}`);
+                            } else if (source) {
+                                // Sources V2: generic source without specific file (backend auto-loads)
+                                currentFileKey = null;
+                                debugLogger.debug(`📄 Using Sources V2 (backend will auto-load): ${key}`);
+                            } else {
+                                debugLogger.warn(`⚠️ Source not found: ${key}`);
                             }
                         } catch (err) {
                             debugLogger.warn('[Saxo Dashboard] Failed to resolve file_key:', err);

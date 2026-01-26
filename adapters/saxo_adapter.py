@@ -98,8 +98,8 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
             logger.debug(f"Using Saxo data/ (latest) for user {user_id}: {latest_data}")
             return _parse_saxo_csv(latest_data, "saxo_data", user_id=user_id)
 
-        # 2. Fallback vers anciens dossiers (uploads/snapshots) si data/ vide
-        legacy_patterns = ["saxobank/uploads/*.csv", "saxobank/snapshots/*.csv"]
+        # 2. Fallback vers anciens dossiers (uploads/snapshots/imports) si data/ vide
+        legacy_patterns = ["saxobank/imports/*.csv", "saxobank/uploads/*.csv", "saxobank/snapshots/*.csv"]
         legacy_files = []
         for pattern in legacy_patterns:
             legacy_files.extend(user_fs.glob_files(pattern))
