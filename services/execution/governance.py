@@ -262,7 +262,7 @@ class GovernanceEngine:
         self._last_plan_publication = datetime.min
 
         # Default policy values - will be overridden by derived policy
-        self._signals_ttl_seconds = 3600  # 1 hour - signaux peuvent être rafraîchis (optimized: aligned with ML orchestrator)
+        self._signals_ttl_seconds = 60  # TEMPORARY: 60 seconds to force refresh (was 3600)
         self._plan_cooldown_hours = 24     # 24 heures - nouvelles publications limitées
 
         # Phase 1A: Cap stability variables (hystérésis + smoothing)
@@ -386,15 +386,17 @@ class GovernanceEngine:
     async def _refresh_ml_signals(self) -> None:
         """Refresh les signaux ML depuis le vrai MLOrchestrator ou fallback vers endpoints"""
         try:
+            logger.info(f"[DEBUG] _refresh_ml_signals called, ML_ORCHESTRATOR_AVAILABLE={ML_ORCHESTRATOR_AVAILABLE}")
             if ML_ORCHESTRATOR_AVAILABLE:
                 # Use real ML orchestrator
                 orchestrator = get_orchestrator()
-                
+
                 # Get unified predictions from all models
                 ml_predictions = await orchestrator.get_unified_predictions(
                     symbols=['BTC', 'ETH', 'SOL'],  # Main portfolio assets
                     horizons=[1, 7, 30]
                 )
+                logger.info(f"[DEBUG] Got ML predictions, keys: {list(ml_predictions.keys())}")
                 
                 if 'error' not in ml_predictions:
                     # Extract signals from real ML models
@@ -2003,7 +2005,9 @@ class GovernanceEngine:
         """Extrait les signaux de corrélation depuis les vraies prédictions ML"""
         try:
             correlation_data = ml_predictions.get('models', {}).get('correlation', {})
+            logger.info(f"[DEBUG CORRELATION] Raw correlation_data: {correlation_data}")
             if not correlation_data:
+                logger.warning("[DEBUG CORRELATION] correlation_data is empty, using fallback 0.5")
                 return {"avg_correlation": 0.5, "systemic_risk": "medium"}
 
             # PRIORITY 1: Use pre-calculated aggregate fields if they exist (from orchestrator.py)

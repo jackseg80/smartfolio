@@ -421,6 +421,9 @@ async def get_ml_signals():
         except Exception as e:
             logger.warning(f"Error deriving policy: {e}", exc_info=True)
 
+        logger.info(f"[DEBUG ENDPOINT] signals.correlation = {signals.correlation}")
+        logger.info(f"[DEBUG ENDPOINT] type(signals.correlation) = {type(signals.correlation)}")
+
         return {
             "signals": {
                 "volatility": signals.volatility,
