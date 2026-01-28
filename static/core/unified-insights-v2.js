@@ -35,17 +35,20 @@ export function computeStructureModulation(structureScore) {
     return { deltaStables: 0, deltaCap: 0 };
   }
 
+  // ✅ DÉSACTIVÉ (Jan 2026): Risk Budget est la source canonique INTOUCHABLE pour stables
+  // La Structure Modulation ne doit PAS modifier le % stables calculé par Risk Budget
+  // On conserve seulement deltaCap pour ajuster le plafond d'exposition risque
+
+  let deltaCap = 0;
+
   if (structureScore < 50) {
-    return { deltaStables: +10, deltaCap: -0.5 };
+    deltaCap = -0.5; // Portfolio fragile → réduire cap
+  } else if (structureScore >= 80) {
+    deltaCap = +0.5; // Portfolio robuste → augmenter cap
   }
-  if (structureScore < 60) {
-    return { deltaStables: +5, deltaCap: 0 };
-  }
-  if (structureScore >= 80) {
-    return { deltaStables: -5, deltaCap: +0.5 };
-  }
-  // Neutre pour 60-80
-  return { deltaStables: 0, deltaCap: 0 };
+
+  // deltaStables TOUJOURS 0 - Risk Budget est intouchable
+  return { deltaStables: 0, deltaCap: deltaCap };
 }
 
 // Simple inline fallback (remplace import legacy archivé)
