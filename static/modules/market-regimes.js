@@ -184,26 +184,28 @@ export function applyMarketOverrides(regime, onchainScore, riskScore) {
     }
   }
   
-  // Override 2: Risk Score ≥ 80 (très risqué)
-  if (riskScore != null && riskScore >= 80) {
+  // Override 2: Risk Score ≤ 30 (Fragile / Risque élevé)
+  // CORRECTION: Risk Score bas = Portfolio fragile -> Protection
+  if (riskScore != null && riskScore <= 30) {
     adjustedRegime.allocation_bias.stables_target = Math.max(50, adjustedRegime.allocation_bias.stables_target);
-    adjustedRegime.allocation_bias.alts_reduction -= 10; // Encore moins d'alts
-    adjustedRegime.allocation_bias.meme_cap = 0; // Pas de memes
+    adjustedRegime.allocation_bias.alts_reduction -= 10; // Réduire alts
+    adjustedRegime.allocation_bias.meme_cap = 0; // Couper memes
     overrides.push({
-      type: 'high_risk',
-      message: `Risk Score très élevé (${riskScore})`,
-      adjustment: 'Stables ≥50%, alts ≤20%, memes=0%'
+      type: 'low_robustness',
+      message: `Risk Score faible / Portfolio fragile (${riskScore})`,
+      adjustment: 'Protection: Stables ≥50%, Alts réduits'
     });
   }
   
-  // Override 3: Risk Score ≤ 30 (très peu risqué)
-  if (riskScore != null && riskScore <= 30) {
+  // Override 3: Risk Score ≥ 80 (Robuste / Risque faible)
+  // CORRECTION: Risk Score haut = Portfolio robuste -> Autoriser plus de volatilité
+  if (riskScore != null && riskScore >= 80) {
     adjustedRegime.allocation_bias.alts_reduction += 5; // Plus d'alts permis
     adjustedRegime.allocation_bias.meme_cap += 5; // Plus de memes
     overrides.push({
-      type: 'low_risk',
-      message: `Risk Score très faible (${riskScore})`,
-      adjustment: '+5% alts/memes autorisés'
+      type: 'high_robustness',
+      message: `Risk Score élevé / Portfolio robuste (${riskScore})`,
+      adjustment: 'Boost: +5% alts/memes autorisés'
     });
   }
   
