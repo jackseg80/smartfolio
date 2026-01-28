@@ -1030,6 +1030,7 @@ export function deriveRecommendations(u) {
   let recos = [];
 
   // 1. USE STRATEGY API TARGETS avec primary stable (tie-breaker)
+  // ⚠️ FILTRE: Ne pas afficher si contredit fortement le Risk Budget (source de vérité)
   if (u.strategy?.targets?.length > 0) {
     // Tri stable: poids DESC puis symbol ASC
     const targets = [...u.strategy.targets].sort((a,b) =>
@@ -1051,16 +1052,28 @@ export function deriveRecommendations(u) {
     const isStablesTarget = /stablecoin/i.test(primaryTarget.symbol);
     const allocPct = Math.round(primaryTarget.weight * 100);
 
-    recos.push({
-      key: `reco:strategy:primary:${primaryTarget.symbol}`,  // Clé canonique stable
-      topic: isStablesTarget ? 'stables_allocation' : undefined,
-      value: isStablesTarget ? allocPct : undefined,
-      priority: 'high',
-      title: `Allocation ${primaryTarget.symbol}: ${allocPct}%`,
-      reason: primaryTarget.rationale || `Suggestion ${u.strategy.template_used}`,
-      icon: '🎯',
-      source: 'strategy-api'
-    });
+    // ✅ VALIDATION: Comparer avec Risk Budget si disponible (source canonique)
+    const riskBudgetStables = u.risk?.budget?.percentages?.stables;
+    const shouldSkipStrategyReco = isStablesTarget && riskBudgetStables != null && Math.abs(allocPct - riskBudgetStables) > 15;
+
+    if (shouldSkipStrategyReco) {
+      debugLogger.debug('[RECOMMENDATIONS] Strategy API stables reco skipped - conflicts with Risk Budget:', {
+        strategyValue: allocPct,
+        riskBudgetValue: riskBudgetStables,
+        delta: Math.abs(allocPct - riskBudgetStables)
+      });
+    } else {
+      recos.push({
+        key: `reco:strategy:primary:${primaryTarget.symbol}`,  // Clé canonique stable
+        topic: isStablesTarget ? 'stables_allocation' : undefined,
+        value: isStablesTarget ? allocPct : undefined,
+        priority: 'high',
+        title: `Allocation ${primaryTarget.symbol}: ${allocPct}%`,
+        reason: primaryTarget.rationale || `Suggestion ${u.strategy.template_used}`,
+        icon: '🎯',
+        source: 'strategy-api'
+      });
+    }
   }
 
   // 2. USE REGIME RECOMMENDATIONS avec clés canoniques
@@ -1101,23 +1114,44 @@ export function deriveRecommendations(u) {
   }
 
   // 3. CYCLE-BASED RECOMMENDATIONS avec clés canoniques
+  // ✅ VALIDATION: Tenir compte du RÉGIME RÉEL (blended) pas seulement du cycle position
   if (u.cycle?.phase?.phase) {
-    const phase = u.cycle.phase.phase;
-    if (phase === 'peak' && u.decision.score > 75) {
+    const cyclePhase = u.cycle.phase.phase;
+    const blendedScore = u.scores?.blended ?? 50;
+    const regimeKey = u.market?.regime?.key ||
+                      (blendedScore >= 85 ? 'distribution' :
+                       blendedScore >= 70 ? 'euphoria' :
+                       blendedScore >= 40 ? 'expansion' : 'accumulation');
+
+    // Prendre profits SEULEMENT si cycle=peak ET (régime=euphoria OU distribution) ET DI>75
+    if (cyclePhase === 'peak' && u.decision.score > 75 && (regimeKey === 'euphoria' || regimeKey === 'distribution')) {
       recos.push({
         key: 'reco:cycle:peak_profits',
         priority: 'high',
         title: 'Prendre des profits progressifs',
-        reason: `Phase ${u.cycle.phase.description} + Score élevé`,
+        reason: `Cycle peak + Régime ${regimeKey} + DI élevé (${u.decision.score})`,
         icon: '📈',
         source: 'cycle-intelligence'
       });
-    } else if (phase === 'accumulation' && u.decision.score < 40) {
+    }
+    // Vigilance si cycle=peak mais régime pas encore euphorie (divergence)
+    else if (cyclePhase === 'peak' && u.decision.score > 75 && regimeKey === 'expansion') {
+      recos.push({
+        key: 'reco:cycle:peak_but_expansion',
+        priority: 'medium',
+        title: 'Vigilance accrue recommandée',
+        reason: `Cycle au peak mais marché en expansion (blended: ${blendedScore}) - divergence possible`,
+        icon: '⚠️',
+        source: 'cycle-intelligence'
+      });
+    }
+    // Accumulation classique
+    else if (cyclePhase === 'accumulation' && u.decision.score < 40) {
       recos.push({
         key: 'reco:cycle:accumulation',
         priority: 'medium',
         title: 'Accumuler positions de qualité',
-        reason: `Phase ${u.cycle.phase.description} + Score bas`,
+        reason: `Cycle accumulation + DI bas (${u.decision.score})`,
         icon: '🔵',
         source: 'cycle-intelligence'
       });
@@ -1222,8 +1256,51 @@ export function deriveRecommendations(u) {
 
     if (stablesRecs.length <= 1) return recos; // Pas de duplication
 
+    // ✅ VALIDATION: Vérifier si les valeurs sont cohérentes (±5%)
+    const values = stablesRecs.map(r => r.value).filter(v => v != null);
+    const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
+    const maxDelta = Math.max(...values.map(v => Math.abs(v - avgValue)));
+    const areValuesConsistent = maxDelta <= 5;
+
+    debugLogger.debug('[CONSOLIDATION DEBUG] Values consistency check:', {
+      values,
+      avgValue,
+      maxDelta,
+      areValuesConsistent
+    });
+
+    // Si incohérent (>5% delta), PRIORISER Risk Budget (source canonique)
+    if (!areValuesConsistent) {
+      const riskBudgetRec = stablesRecs.find(r => r.source === 'risk-budget');
+      if (riskBudgetRec) {
+        debugLogger.info('[CONSOLIDATION] Inconsistent stables recommendations - using Risk Budget as canonical source');
+        // Garder seulement Risk Budget et Regime (si proche)
+        const keptRecs = stablesRecs.filter(r => {
+          if (r.source === 'risk-budget') return true;
+          if (r.source === 'regime-intelligence' && Math.abs(r.value - riskBudgetRec.value) <= 3) return true;
+          return false;
+        });
+
+        // Si 1 seule source reste, retourner tel quel
+        if (keptRecs.length <= 1) {
+          return [...recos.filter(r => r.topic !== 'stables_allocation'), ...keptRecs];
+        }
+
+        // Sinon merger les sources cohérentes
+        stablesRecs.length = 0;
+        stablesRecs.push(...keptRecs);
+      } else {
+        // Pas de Risk Budget, garder la valeur la plus conservatrice (la plus haute)
+        const maxStables = Math.max(...values);
+        const conservativeRec = stablesRecs.find(r => r.value === maxStables);
+        debugLogger.info('[CONSOLIDATION] No Risk Budget found - using most conservative recommendation');
+        return [...recos.filter(r => r.topic !== 'stables_allocation'), conservativeRec];
+      }
+    }
+
+    // Consolidation normale si valeurs cohérentes
     const order = { critical: 0, high: 1, medium: 2, low: 3 };
-    const value = stablesRecs[0].value ?? stablesRecs[0].title?.match(/(\d+)%/)?.[1];
+    const value = Math.round(avgValue); // Utiliser moyenne si cohérent
     const sources = [...new Set(stablesRecs.map(r => r.source))];
     const topPriority = stablesRecs.reduce((p, r) =>
       order[p] <= order[r.priority] ? p : r.priority, 'medium'
