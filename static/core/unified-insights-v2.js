@@ -1049,7 +1049,9 @@ export function deriveRecommendations(u) {
     }
     window.__prevPrimaryTarget = primaryTarget;
 
-    const isStablesTarget = /stablecoin/i.test(primaryTarget.symbol);
+    // Détection stables élargie (EUR, USDT, USDC, DAI, Stablecoins groupe, etc.)
+    const stablesPattern = /stablecoin|usdt|usdc|busd|dai|eur|usd\b|tusd|gusd|pax|husd/i;
+    const isStablesTarget = stablesPattern.test(primaryTarget.symbol);
     const allocPct = Math.round(primaryTarget.weight * 100);
 
     // ✅ VALIDATION: Comparer avec Risk Budget si disponible (source canonique)
