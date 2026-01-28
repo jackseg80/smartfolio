@@ -106,21 +106,21 @@ decision_score: float = Field(..., ge=0, le=100, description="Score décisionnel
 - Somme = 100% (ça c'est le check de validité)
 - Respect des contraintes hiérarchiques
 
-### ⚠️ À NE PAS CONFONDRE: Allocation Validity Check (65/45)
+### ✅ Allocation Validity Check (interne uniquement)
 
-**Fichier**: `static/core/strategy-api-adapter.js` ligne 442
+**Note (Jan 2026)**: Le bug qui affichait 65/45 au lieu du vrai DI a été corrigé.
+
+Le check `v2Allocation.metadata.total_check.isValid` est maintenant utilisé **uniquement en interne** pour valider la qualité technique de l'allocation calculée (somme = 100%, contraintes respectées).
+
+**Fichier**: `static/core/strategy-api-adapter.js` - `convertV2AllocationToLegacyFormat()`
+
+Le Decision Index affiché est désormais calculé correctement avec la formule pondérée:
 
 ```javascript
-// CECI N'EST PAS LE DECISION INDEX!
-const allocationQuality = v2Allocation.metadata.total_check.isValid ? 65 : 45;
+const decisionScore = Math.round(
+  (cycleScore * wCycle + onchainScore * wOnchain + riskScore * wRisk) * phaseFactor
+);
 ```
-
-| Condition | Score | Signification |
-|-----------|-------|---------------|
-| **Allocation valide** | 65 | Somme = 100%, hiérarchie OK, contraintes respectées |
-| **Allocation invalide** | 45 | Problème technique (somme ≠ 100%, hiérarchie violée) |
-
-**Utilisé uniquement pour:** Valider la qualité technique du calcul d'allocation V2, **PAS** pour déterminer le Decision Index.
 
 ### Architecture
 
@@ -248,56 +248,62 @@ if (structureScore < 50) {
 → Régime détecté: **"Expansion"** (range 40-69)
 → Allocation théorique: ~30% stables
 
-**Decision Index** = 65 ✅
+**Decision Index** = 52 ✅
 ```
-Allocation Engine V2 détecte:
+Calcul pondéré (formule backend):
+DI = (58 × 0.5) + (35 × 0.3) + (76 × 0.2) × phase_factor
+   = 29 + 10.5 + 15.2 = 54.7
+   × 0.95 (phase bearish car Fear extrême) = 52
+
+Allocation ajustée séparément:
 - Fear extrême (15 < 25) → Override défensif
 - Risk Budget recalculé: 63% stables
-- Structure Score: 83 → -5% stables
 - Final: 58% stables recommandés
-→ DI = 65 (qualité allocation optimale)
 ```
 
 **Résultat**:
-- ✅ **Score de Régime** communique le "régime général" (Expansion)
-- ✅ **Decision Index** adapte l'allocation au contexte réel (Fear panic)
-- ✅ **Recommandation finale**: 58-61% stables (défensif) malgré régime Expansion
+- ✅ **Score de Régime** = 54 (formule canonique 0.5C + 0.3O + 0.2R)
+- ✅ **Decision Index** = 52 (même formule × phase_factor)
+- ✅ **Recommandation finale**: 58-61% stables (défensif via overrides)
 
 ---
 
 ## 📖 5. Interprétation pour IA
 
 ### Question Fréquente
-> "Pourquoi le DI (65) est différent du Score de Régime (54)?"
+> "Pourquoi le DI (52) est proche mais différent du Score de Régime (54)?"
 
 **Réponse**:
-1. Le **Score de Régime** est une **moyenne simple** des 3 piliers (formule canonique)
-2. Le **Decision Index** est un **score stratégique** calculé par Allocation Engine V2
-3. Ils servent des **objectifs différents**:
-   - Score de Régime → Communication, cohérence, régime général
-   - Decision Index → Allocation optimale, prise en compte overrides
+
+1. Le **Score de Régime** est une **moyenne simple** des 3 piliers (formule canonique fixe)
+2. Le **Decision Index** utilise la **même formule** mais avec poids adaptatifs + phase_factor
+3. Les deux utilisent les mêmes inputs (Cycle, OnChain, Risk) mais:
+   - Score de Régime → Poids fixes (0.5/0.3/0.2), pas d'ajustement phase
+   - Decision Index → Poids adaptatifs selon contexte × multiplicateur de phase
 
 ### Flowchart de Décision
 
 ```mermaid
 graph TD
     A[Inputs: Cycle, On-Chain, Risk] --> B[Score de Régime]
-    A --> C[Decision Index V2]
+    A --> C[Decision Index]
 
-    B --> D[Formule canonique: 0.5C + 0.3O + 0.2R]
+    B --> D[Poids fixes: 0.5C + 0.3O + 0.2R]
     D --> E[Score: 54]
     E --> F[Régime: Expansion]
 
-    C --> G[Allocation Engine V2]
-    G --> H[Détection overrides]
-    H --> I{Fear < 25?}
-    I -->|Oui| J[+10 stables]
-    I -->|Non| K[Risk Budget standard]
-    J --> L[DI: 65]
-    K --> L
+    C --> G[Poids adaptatifs selon contexte]
+    G --> H[Weighted sum × phase_factor]
+    H --> I[DI: 52]
+
+    I --> J{Overrides actifs?}
+    J -->|Fear < 25| K[Allocation défensive]
+    J -->|Normal| L[Allocation standard]
 
     F --> M[Affichage tuile]
-    L --> N[Affichage panel + allocation]
+    I --> N[Affichage panel DI]
+    K --> O[Risk Budget ajusté]
+    L --> O
 ```
 
 ---

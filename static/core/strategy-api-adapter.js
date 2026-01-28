@@ -438,8 +438,45 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
     rationale: `V2 engine allocation (${v2Allocation.metadata.phase} phase)`
   }));
 
-  // Calculer decision score basé sur la cohérence
-  const decisionScore = v2Allocation.metadata.total_check.isValid ? 65 : 45;
+  // ✅ FIX: Calculer le VRAI Decision Index (0-100) avec formule pondérée
+  // Comme documenté dans DECISION_INDEX_V2.md et services/execution/strategy_registry.py
+  const cycleScore = context.cycleData?.score ?? 50;
+  const onchainScore = context.onchainScore ?? 50;
+  const riskScore = context.riskScore ?? 50;
+
+  // Poids adaptatifs (depuis context ou défaut)
+  const weights = context.adaptiveWeights || { wCycle: 0.5, wOnchain: 0.3, wRisk: 0.2 };
+  const wCycle = weights.wCycle ?? 0.5;
+  const wOnchain = weights.wOnchain ?? 0.3;
+  const wRisk = weights.wRisk ?? 0.2;
+
+  // Calcul pondéré comme dans strategy_registry.py
+  let rawDecisionScore = (
+    cycleScore * wCycle +
+    onchainScore * wOnchain +
+    riskScore * wRisk
+  );
+
+  // Ajustement par phase (bullish boost, bearish reduce)
+  const phase = v2Allocation.metadata.phase?.toLowerCase() || 'neutral';
+  let phaseFactor = 1.0;
+  if (phase === 'bullish' || phase === 'expansion') {
+    phaseFactor = 1.05;
+  } else if (phase === 'bearish' || phase === 'contraction') {
+    phaseFactor = 0.95;
+  }
+
+  // Score final clampé [0, 100]
+  const decisionScore = Math.max(0, Math.min(100, Math.round(rawDecisionScore * phaseFactor)));
+
+  debugLog('🎯 Decision Index calculated:', {
+    inputs: { cycleScore, onchainScore, riskScore },
+    weights: { wCycle, wOnchain, wRisk },
+    rawScore: rawDecisionScore.toFixed(1),
+    phase,
+    phaseFactor,
+    finalScore: decisionScore
+  });
 
   return {
     score: decisionScore,

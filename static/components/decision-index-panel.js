@@ -732,18 +732,20 @@ function renderHelpContent() {
           <button class="di-help-close" aria-label="Fermer" type="button">×</button>
         </div>
         <div class="di-help-body">
-          <p><strong>Decision Index (DI) - Score de Qualité</strong><br>
-          Score FIXE indiquant la qualité de l'allocation V2:<br>
-          • <strong>65</strong> = Allocation valide (contraintes OK)<br>
-          • <strong>45</strong> = Allocation invalide (problème détecté)<br>
+          <p><strong>Decision Index (DI) - Score Stratégique</strong><br>
+          Score continu <strong>0-100</strong> calculé par pondération des piliers:<br>
+          <code>DI = (Cycle × w₁ + OnChain × w₂ + Risk × w₃) × phase_factor</code><br>
           <br>
-          ⚠️ <strong>Important:</strong> Le DI N'EST PAS une somme pondérée!<br>
-          • Score de Régime (tuile) = 0.5×CCS + 0.3×OnChain + 0.2×Risk<br>
-          • Decision Index (panel) = Qualité allocation (65 ou 45)</p>
+          ⚠️ <strong>Important:</strong> Le DI EST une somme pondérée!<br>
+          • Poids adaptatifs selon contexte (cycle fort → boost wCycle)<br>
+          • Ajustement par phase de marché (bullish/bearish)</p>
 
           <p><strong>Échelle</strong><br>
-          65 = Bon (allocation optimale trouvée)<br>
-          45 = Moyen (contraintes violées, fallback)</p>
+          75+ = Conditions favorables (allocation agressive OK)<br>
+          60-74 = Neutre (maintenir position)<br>
+          45-59 = Prudence (surveillance renforcée)<br>
+          30-44 = Défensif (réduire exposition)<br>
+          &lt;30 = Sécuriser (max stables)</p>
 
           <p><strong>Piliers (colonne droite)</strong><br>
           🔄 Cycle: CCS Mixte (CCS blendé avec position cycle)<br>
@@ -757,11 +759,12 @@ function renderHelpContent() {
           Un régime "Expansion" + phase "bearish" est normal!</p>
 
           <p><strong>Contributions</strong><br>
-          Pourcentages = poids utilisés pour calculer l'ALLOCATION.<br>
-          Poids adaptatifs selon marché (pas pour le DI lui-même):<br>
+          Pourcentages = poids utilisés pour calculer le DI ET l'allocation.<br>
+          Poids adaptatifs selon contexte marché:<br>
           • Cycle ≥70 → boost cycle (55-65%)<br>
+          • Cycle ≥90 → fort boost (65% cycle, 25% onchain, 10% risk)<br>
           • Contradiction >50% → pénalise OnChain/Risk<br>
-          • Confidences appliquées</p>
+          • Phase bullish/bearish → ajuste score final (±5%)</p>
 
           <p><strong>Recommandation Intelligente</strong><br>
           Conseil contextuel basé sur DI + analyse des 3 piliers:<br>
