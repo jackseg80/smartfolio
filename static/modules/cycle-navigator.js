@@ -9,15 +9,15 @@
  * Bitcoin halving cycles: ~4 years (48 months)
  */
 
-// --- Paramètres globaux (défauts = mêmes courbes que ta version actuelle) ---
+// --- Paramètres globaux optimisés pour cycles historiques (moyenne pics ~15-16 mois) ---
 let CYCLE_PARAMS = {
-  m_rise_center: 8.0,   // centre montée (comme avant)
-  m_fall_center: 32.0,  // centre descente (comme avant)
-  k_rise: 0.9,          // pente montée (comme avant)
-  k_fall: 0.9,          // pente descente (comme avant)
-  p_shape: 0.9,         // expo "douce" (comme avant)
-  floor: 0,             // on garde 0..100 pour ne rien changer par défaut
-  ceil: 100
+  m_rise_center: 7.0,   // centre montée ajusté (était 8.0) - pic plus précoce
+  m_fall_center: 30.0,  // centre descente ajusté (était 32.0) - meilleur fit bottoms ~28-30m
+  k_rise: 1.0,          // pente montée légèrement plus raide (était 0.9)
+  k_fall: 0.9,          // pente descente (inchangée)
+  p_shape: 0.9,         // expo "douce" (inchangée)
+  floor: 0,             // plancher score minimum
+  ceil: 100             // plafond score maximum
 };
 
 // Cache pour cycle position (optimisé: données changent lentement)
@@ -297,12 +297,12 @@ function objective(params, anchors) {
 
 export function calibrateCycleParams(userAnchors) {
   const anchors = Array.isArray(userAnchors) && userAnchors.length ? userAnchors : DEF_ANCHORS;
-  // Grid search restreint (rapide et robuste dans le navigateur)
-  const mRise = [8, 9, 10, 11, 12];
-  const mFall = [26, 27, 28, 29, 30, 31];
-  const kRise = [0.8, 0.9, 1.1, 1.3, 1.5];
-  const kFall = [0.8, 0.9, 1.1, 1.3];
-  const pPow = [0.85, 0.9, 1.0, 1.2, 1.35];
+  // Grid search étendu pour capturer Cycle 1 précoce (pic ~12m) et cycles tardifs
+  const mRise = [5, 6, 7, 8, 9, 10, 11, 12];  // Étendu vers le bas (5-12 au lieu de 8-12)
+  const mFall = [24, 26, 28, 30, 32, 34];     // Étendu pour plus de flexibilité
+  const kRise = [0.7, 0.8, 0.9, 1.0, 1.2, 1.4]; // Pentes plus variées
+  const kFall = [0.7, 0.8, 0.9, 1.0, 1.2];
+  const pPow = [0.8, 0.85, 0.9, 1.0, 1.15, 1.3]; // Formes plus variées
   let best = { params: { ...CYCLE_PARAMS }, score: Infinity };
   for (const r of mRise) {
     for (const f of mFall) {

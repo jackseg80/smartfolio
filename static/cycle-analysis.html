@@ -322,22 +322,41 @@
         peakPrice: null,
         bottom: null,
         bottomPrice: null,
-        currentPrice: 65000, // Estimation
+        // Prix actuel récupéré dynamiquement (voir fetchCurrentBTCPrice())
+        currentPrice: null,
         cycleHigh: null,
         cycleLow: null
       }
     ];
 
     // --- Fallback local si le module ne se charge pas ---
-    // Sigmoïde simple 0→100 avec pic vers ~18-20 mois
+    // Double-sigmoïde (cohérente avec cycle-navigator.js) - cloche 0→100
     function _fallbackCycleScoreFromMonths(m) {
-      // logistique centrée sur 18 mois, pente 0.35
-      const s = 1 / (1 + Math.exp(-(m - 18) * 0.35));
-      return Math.max(0, Math.min(100, s * 100));
+      // Paramètres par défaut IDENTIQUES au module principal (synchronisés)
+      const m48 = m % 48;
+      const m_rise_center = 7.0;  // Optimisé pour pics historiques ~15-16m
+      const m_fall_center = 30.0; // Optimisé pour bottoms ~28-30m
+      const k_rise = 1.0;         // Pente montée ajustée
+      const k_fall = 0.9;
+      const p_shape = 0.9;
+
+      const rise = 1 / (1 + Math.exp(-k_rise * (m48 - m_rise_center)));
+      const fall = 1 / (1 + Math.exp(-k_fall * (m_fall_center - m48)));
+      const base = rise * fall;
+      const score = Math.pow(base, p_shape) * 100;
+
+      return Math.max(0, Math.min(100, score));
     }
-    function _fallbackGetCycleParams() { return { center: 18, slope: 0.35 }; }
-    function _fallbackCalibrate() { return { score: 0 }; }
-    function _fallbackGetCurrentCycleMonths() { return 0; }
+    function _fallbackGetCycleParams() {
+      return { m_rise_center: 7.0, m_fall_center: 30.0, k_rise: 1.0, k_fall: 0.9, p_shape: 0.9 };
+    }
+    function _fallbackCalibrate() { return { score: 0, params: _fallbackGetCycleParams() }; }
+    function _fallbackGetCurrentCycleMonths() {
+      const lastHalving = new Date('2024-04-20');
+      const now = new Date();
+      const months = (now - lastHalving) / (1000 * 60 * 60 * 24 * 30.44);
+      return Math.max(0, months);
+    }
 
 
     // Persistance des paramètres calibrés
@@ -419,6 +438,41 @@
       }
     }
 
+
+    // Récupération du prix BTC actuel depuis l'API
+    async function fetchCurrentBTCPrice() {
+      try {
+        // Essayer CoinGecko d'abord (pas de rate limit strict)
+        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+        if (response.ok) {
+          const data = await response.json();
+          const price = data?.bitcoin?.usd;
+          if (typeof price === 'number' && price > 0) {
+            console.debug('✅ Prix BTC récupéré:', price);
+            return price;
+          }
+        }
+      } catch (e) {
+        debugLogger.warn('CoinGecko fetch failed, trying fallback:', e.message);
+      }
+
+      // Fallback: essayer via le store (qui peut avoir des données récentes)
+      try {
+        const state = window.store?.snapshot();
+        const btcPrice = state?.prices?.BTC;
+        if (typeof btcPrice === 'number' && btcPrice > 0) {
+          console.debug('✅ Prix BTC depuis store:', btcPrice);
+          return btcPrice;
+        }
+      } catch (e) {
+        debugLogger.warn('Store price fetch failed:', e.message);
+      }
+
+      // Dernier fallback: estimation raisonnable basée sur la date
+      const defaultPrice = 100000; // Estimation conservatrice jan 2026
+      console.debug('⚠️ Prix BTC par défaut utilisé:', defaultPrice);
+      return defaultPrice;
+    }
 
     function parseISODateStrict(value) {
       if (value instanceof Date) return value;
@@ -908,6 +962,15 @@ Rapport généré le ${new Date().toLocaleString('fr-FR')}
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', async () => {
+      // Récupérer le prix BTC actuel en arrière-plan
+      fetchCurrentBTCPrice().then(price => {
+        const cycle4 = HISTORICAL_CYCLES.find(c => c.id === 4);
+        if (cycle4) {
+          cycle4.currentPrice = price;
+          console.debug('✅ Cycle 4 mis à jour avec prix actuel:', price);
+        }
+      }).catch(e => debugLogger.warn('Failed to fetch BTC price:', e));
+
       // Charger les modules d'abord
       await loadModules();
 
