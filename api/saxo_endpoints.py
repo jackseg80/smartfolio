@@ -258,7 +258,24 @@ async def get_portfolio_cash(
     from datetime import datetime
 
     # Determine file identifier
-    cash_key = file_key or "default"
+    # If file_key not provided, resolve from user config (Sources V2)
+    cash_key = file_key
+    if not cash_key:
+        config_path = Path(f"data/users/{user}/config.json")
+        if config_path.exists():
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                # Get selected CSV file from bourse source configuration
+                selected_csv = config.get("sources", {}).get("bourse", {}).get("selected_csv_file")
+                if selected_csv:
+                    cash_key = selected_csv
+                    logger.debug(f"Resolved cash_key from config: {cash_key}")
+            except Exception as e:
+                logger.warning(f"Failed to read user config for cash resolution: {e}")
+
+    # Fallback to "default" if no key found
+    cash_key = cash_key or "default"
 
     # Build cash file path
     cash_dir = Path(f"data/users/{user}/saxobank/cash")
@@ -319,7 +336,24 @@ async def save_portfolio_cash(
     currency = payload.get("currency", "USD")
 
     # Determine file identifier
-    cash_key = file_key or "default"
+    # If file_key not provided, resolve from user config (Sources V2)
+    cash_key = file_key
+    if not cash_key:
+        config_path = Path(f"data/users/{user}/config.json")
+        if config_path.exists():
+            try:
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                # Get selected CSV file from bourse source configuration
+                selected_csv = config.get("sources", {}).get("bourse", {}).get("selected_csv_file")
+                if selected_csv:
+                    cash_key = selected_csv
+                    logger.debug(f"Resolved cash_key from config for save: {cash_key}")
+            except Exception as e:
+                logger.warning(f"Failed to read user config for cash save: {e}")
+
+    # Fallback to "default" if no key found
+    cash_key = cash_key or "default"
 
     # Build cash file path
     cash_dir = Path(f"data/users/{user}/saxobank/cash")

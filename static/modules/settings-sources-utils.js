@@ -62,7 +62,9 @@ function clearSourcesLogs() {
   }
 }
 
+// ✅ NOTE: Initialisation déplacée dans settings.html (ligne 2470-2486) pour éviter conflit
 // Initialisation automatique quand l'onglet Sources est activé
+/* OBSOLETE - Ne pas utiliser, voir settings.html pour l'initialisation de Sources V2
 document.addEventListener('DOMContentLoaded', function() {
   // Fonction d'initialisation V2
   function tryInitSourcesManager() {
@@ -89,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(tryInitSourcesManager, 500);
   }
 });
+*/
 
 // Make functions globally available
 window.showSourcesConfiguration = showSourcesConfiguration;
