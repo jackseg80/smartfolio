@@ -14,7 +14,21 @@ logger = logging.getLogger(__name__)
 class UserScopedFS:
     """
     Système de fichiers scopé par utilisateur avec sécurité renforcée.
-    Empêche le path traversal et isole chaque utilisateur.
+
+    🔒 SÉCURITÉ MULTI-TENANT:
+    - Tous les chemins sont validés via _validate_path()
+    - Protection anti-path traversal (../../../etc/passwd bloqué)
+    - Isolation stricte: chaque utilisateur dans data/users/{user_id}/
+    - Résolution de symlinks pour détecter les échappements
+
+    ✅ Architecture de sécurité en couches:
+    1. Construction path: self.user_root / relative_path
+    2. Résolution complète: .resolve() (canonicalisation)
+    3. Validation: is_relative_to(user_root)
+    4. Logging: tentatives bloquées enregistrées
+
+    Note: Toutes les méthodes publiques (get_path, read_json, glob_files, etc.)
+    passent par _validate_path() → aucun bypass possible.
     """
 
     def __init__(self, project_root: str, user_id: str):
@@ -36,25 +50,39 @@ class UserScopedFS:
         """
         Valide qu'un chemin relatif reste dans le scope utilisateur.
 
+        🔒 SÉCURITÉ: Protection anti-path traversal
+        Cette méthode bloque toute tentative d'accéder à des fichiers
+        en dehors du répertoire utilisateur (data/users/{user_id}/).
+
         Args:
             relative_path: Chemin relatif au répertoire utilisateur
 
         Returns:
-            Path: Chemin absolu validé
+            Path: Chemin absolu validé et résolu
 
         Raises:
-            ValueError: Si path traversal détecté
+            ValueError: Si path traversal détecté (ex: ../../../etc/passwd)
+
+        Examples:
+            ✅ Valide: "cointracking/data/balances.csv"
+            ✅ Valide: "config.json"
+            ❌ Bloqué: "../../../etc/passwd"
+            ❌ Bloqué: "/etc/passwd"
+            ❌ Bloqué: "../../other_user/secrets.json"
         """
         if not relative_path:
             return self.user_root
 
-        # Résolution et vérification anti-traversal
+        # Résolution complète du chemin (symlinks, .., etc.)
         candidate = (self.user_root / relative_path).resolve()
 
-        try:
-            # S'assurer que le chemin reste dans user_root
-            candidate.relative_to(self.user_root)
-        except ValueError:
+        # 🔒 Vérification anti-path traversal
+        # S'assurer que le chemin résolu reste strictement dans user_root
+        if not candidate.is_relative_to(self.user_root):
+            logger.warning(
+                f"🚨 Path traversal attempt blocked: user={self.user_id}, "
+                f"requested={relative_path}, resolved={candidate}"
+            )
             raise ValueError(f"Path traversal detected: {relative_path}")
 
         return candidate
