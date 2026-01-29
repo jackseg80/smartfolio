@@ -219,7 +219,7 @@ class PortfolioAnalytics:
     def calculate_performance_metrics(
         self,
         current_data: Dict[str, Any],
-        user_id: str = "demo",
+        user_id: str,
         source: str = "cointracking",
         anchor: Literal["midnight", "prev_snapshot", "prev_close"] = "prev_snapshot",
         window: str = "24h"
@@ -335,7 +335,7 @@ class PortfolioAnalytics:
             "historical_entries_count": len(historical_data)
         }
     
-    def save_portfolio_snapshot(self, balances_data: Dict[str, Any], user_id: str = "demo", source: str = "cointracking") -> bool:
+    def save_portfolio_snapshot(self, balances_data: Dict[str, Any], user_id: str, source: str = "cointracking") -> bool:
         """
         Sauvegarde un snapshot du portfolio pour suivi historique.
 
@@ -532,7 +532,7 @@ class PortfolioAnalytics:
         
         return recommendations[:3]  # Limiter à 3 recommandations
     
-    def _load_historical_data(self, user_id: str = "demo", source: str = "cointracking") -> List[Dict[str, Any]]:
+    def _load_historical_data(self, user_id: str, source: str = "cointracking") -> List[Dict[str, Any]]:
         """
         Charge les données historiques du portfolio filtrées par user et source.
 

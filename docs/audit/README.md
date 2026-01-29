@@ -1,6 +1,6 @@
 # 📁 Dossier Audit SmartFolio
 
-**Dernière mise à jour:** 23 Décembre 2025
+**Dernière mise à jour:** 29 Janvier 2026
 **Audits actifs:** Sécurité, Performance, Accessibilité, Dette Technique, Tests, CI/CD
 **Note globale:** 7.7/10 (vs 7.2 en Nov) = **+7% amélioration**
 
@@ -56,7 +56,15 @@
    - eval() elimination
    - MD5 usedforsecurity=False
 
-**Status:** ✅ Production ready
+3. ⭐ [PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md](./PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md) - **Plan d'amélioration sécurité multi-tenant**
+   - 🔄 EN COURS - Itération 1 (P0)
+   - ✅ P0-2: Supprimé user_id="demo" (11 fichiers, 19 occurrences)
+   - ✅ P0-3: Sécurisé logs API keys
+   - 🔄 P0-1: Migration get_active_user (100 endpoints restants)
+   - 6 itérations planifiées (P0 → P1 → P2)
+   - Document de suivi vivant (mis à jour au fur et à mesure)
+
+**Status:** ✅ Production ready | 🔄 Amélioration continue en cours
 
 ---
 
@@ -337,5 +345,5 @@ SmartFolio dispose d'un **système d'audit complet et automatisé**:
 
 **Documentation générée par:** Claude Code Agent
 **Méthode:** Multi-agents parallèles + automation GitHub Actions
-**Dernière mise à jour:** 23 Décembre 2025
+**Dernière mise à jour:** 29 Janvier 2026
 **Prochaine revue:** Janvier 2026

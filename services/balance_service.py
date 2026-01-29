@@ -151,8 +151,8 @@ class BalanceService:
 
     async def resolve_current_balances(
         self,
-        source: str = "cointracking_api",
-        user_id: str = "demo"
+        user_id: str,
+        source: str = "cointracking_api"
     ) -> Dict[str, Any]:
         """
         Resolve current balances from specified source.
@@ -269,7 +269,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG [_try_api_mode]: api_key='{api_key[:10] if api_key else None}...', len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
+            logger.info(f"🔑 DEBUG [_try_api_mode]: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}, len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
 
             if not (api_key and api_secret):
                 logger.warning(f"No CoinTracking API credentials configured for user {user_id}")
@@ -448,7 +448,7 @@ class BalanceService:
             ]
             return {"source_used": source, "items": demo_data}
 
-    async def _legacy_api_mode(self, user_id: str = "demo") -> Dict[str, Any]:
+    async def _legacy_api_mode(self, user_id: str) -> Dict[str, Any]:
         """Legacy API mode for backward compatibility."""
         from api.services.cointracking_helpers import load_ctapi_exchanges, pick_primary_location_for_symbol
         from api.services.data_router import UserDataRouter
@@ -460,7 +460,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG: api_key='{api_key[:10] if api_key else None}...', api_secret='{api_secret[:10] if api_secret else None}...', len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
+            logger.info(f"🔑 DEBUG: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}, len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
 
             # 1) Load snapshot by exchange via CT-API
             snap = await load_ctapi_exchanges(min_usd=0.0, api_key=api_key, api_secret=api_secret)

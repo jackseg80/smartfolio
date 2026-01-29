@@ -414,7 +414,7 @@ async def get_risk_metrics(
         logger.error(f"Error calculating risk metrics: {str(e)}")
         raise HTTPException(status_code=500, detail="Error calculating risk metrics")
 
-async def _generate_real_performance_data(days: int, user_id: str = "demo") -> Dict[str, Any]:
+async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, Any]:
     """Générer des données de performance réelles en utilisant le service centralisé (PLUS D'APPELS API)"""
     try:
         # 🎯 UTILISATION DIRECTE DU SERVICE CENTRALISÉ - Plus d'appels HTTP récursifs!

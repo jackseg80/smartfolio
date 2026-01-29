@@ -22,7 +22,7 @@ class UserSecretsManager:
         self._cache = {}  # {user_id: (secrets, timestamp)}
         self._cache_ttl = 3600  # 1 hour TTL for security (credentials may rotate)
 
-    def get_user_secrets(self, user_id: str = "demo") -> Dict[str, Any]:
+    def get_user_secrets(self, user_id: str) -> Dict[str, Any]:
         """
         Récupère les secrets d'un utilisateur avec fallbacks:
         1. data/users/{user_id}/secrets.json
@@ -84,7 +84,7 @@ class UserSecretsManager:
         logger.debug(f"Cache SET for user {user_id} secrets")
         return secrets
 
-    def get_exchange_config(self, user_id: str = "demo", exchange: str = None) -> Dict[str, Any]:
+    def get_exchange_config(self, user_id: str, exchange: str = None) -> Dict[str, Any]:
         """Récupère la config d'un exchange spécifique"""
         secrets = self.get_user_secrets(user_id)
 
@@ -93,7 +93,7 @@ class UserSecretsManager:
 
         return secrets.get(exchange, {})
 
-    def is_dev_mode(self, user_id: str = "demo") -> bool:
+    def is_dev_mode(self, user_id: str) -> bool:
         """Vérifie si le mode dev est activé"""
         secrets = self.get_user_secrets(user_id)
         return secrets.get("dev_mode", {}).get("enabled", False)
@@ -109,11 +109,11 @@ class UserSecretsManager:
 user_secrets_manager = UserSecretsManager()
 
 # Fonctions helper pour compatibilité
-def get_user_secrets(user_id: str = "demo") -> Dict[str, Any]:
+def get_user_secrets(user_id: str) -> Dict[str, Any]:
     """Helper function pour récupérer les secrets d'un utilisateur"""
     return user_secrets_manager.get_user_secrets(user_id)
 
-def is_dev_mode(user_id: str = "demo") -> bool:
+def is_dev_mode(user_id: str) -> bool:
     """Helper function pour vérifier le mode dev"""
     return user_secrets_manager.is_dev_mode(user_id)
 

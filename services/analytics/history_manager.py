@@ -206,7 +206,7 @@ class RebalanceSession:
 class HistoryManager:
     """Gestionnaire de l'historique des rebalancement"""
 
-    def __init__(self, user_id: str = "demo", storage_path: Optional[str] = None):
+    def __init__(self, user_id: str, storage_path: Optional[str] = None):
         # Isolation multi-tenant: chaque user a son propre fichier d'historique
         if storage_path is None:
             storage_path = f"data/users/{user_id}/rebalance_history.json"
@@ -538,7 +538,7 @@ class HistoryManager:
         }
 
 # Factory function pour créer des instances isolées par user
-def get_history_manager(user_id: str = "demo") -> HistoryManager:
+def get_history_manager(user_id: str) -> HistoryManager:
     """
     Obtenir une instance de HistoryManager isolée par utilisateur.
 
@@ -549,8 +549,3 @@ def get_history_manager(user_id: str = "demo") -> HistoryManager:
         HistoryManager: Instance isolée pour cet utilisateur
     """
     return HistoryManager(user_id=user_id)
-
-
-# DEPRECATED: Instance globale maintenue pour rétrocompatibilité
-# Utiliser get_history_manager(user_id) à la place
-history_manager = HistoryManager(user_id="demo")
