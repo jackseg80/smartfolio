@@ -4,20 +4,9 @@ from time import monotonic
 import os, sys, inspect, hashlib, time, json
 from datetime import datetime
 import httpx
-from fastapi import FastAPI, Query, Body, Response, HTTPException, Request, APIRouter, Depends, Header, Path
+from fastapi import FastAPI, Query, Body, Response, HTTPException, Depends, Path
 import logging
 from logging.handlers import RotatingFileHandler
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
-from api.middleware import RateLimitMiddleware
-from api.middlewares import (
-    add_security_headers_middleware,
-    request_timing_middleware,
-    request_logger_middleware,
-    no_cache_dev_middleware,
-)
 from api.services.location_assigner import assign_locations_to_actions
 from api.services.price_enricher import enrich_actions_with_prices, get_data_age_minutes
 from api.services.cointracking_helpers import (
@@ -29,10 +18,8 @@ from api.services.cointracking_helpers import (
 from api.services.csv_helpers import load_csv_balances, to_csv
 from api.services.utils import parse_min_usd, to_rows, norm_primary_symbols
 from fastapi import middleware
-from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from pathlib import Path
-from fastapi.staticfiles import StaticFiles
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()
@@ -113,60 +100,11 @@ except (ImportError, ModuleNotFoundError) as e:
 
 # Import BalanceService singleton for resolving balances
 from services.balance_service import balance_service
-from api.taxonomy_endpoints import router as taxonomy_router
-# Execution endpoints - modular routers (Phase 2.1)
-from api.execution import (
-    validation_router,
-    execution_router,
-    monitoring_router,
-    governance_router,
-    signals_router
-)
-from api.analytics_endpoints import router as analytics_router
-from api.kraken_endpoints import router as kraken_router
-from api.smart_taxonomy_endpoints import router as smart_taxonomy_router  # FIXED - aiohttp mocké
-from api.advanced_rebalancing_endpoints import router as advanced_rebalancing_router
-from api.risk_endpoints import router as risk_router
-from api.risk_bourse_endpoints import router as risk_bourse_router
-from api.ml_bourse_endpoints import router as ml_bourse_router
-from api.ml_crypto_endpoints import router as ml_crypto_router
-from api.execution_history import router as execution_history_router
-from api.monitoring_advanced import router as monitoring_advanced_router
-from api.portfolio_monitoring import router as portfolio_monitoring_router
-from api.csv_endpoints import router as csv_router
-from api.portfolio_optimization_endpoints import router as portfolio_optimization_router
-from api.advanced_analytics_endpoints import router as advanced_analytics_router
-from api.performance_endpoints import router as performance_router
-from api.unified_ml_endpoints import router as ml_router
-from api.multi_asset_endpoints import router as multi_asset_router
-from api.backtesting_endpoints import router as backtesting_router
-from api.alerts_endpoints import router as alerts_router
-from api.strategy_endpoints import router as strategy_router
-from api.saxo_endpoints import router as saxo_router
-from api.saxo_auth_router import router as saxo_auth_router
-from api.advanced_risk_endpoints import router as advanced_risk_router
-from api.realtime_endpoints import router as realtime_router
-from api.intelligence_endpoints import router as intelligence_router
-from api.user_settings_endpoints import router as user_settings_router
-from api.admin_router import router as admin_router
-from api.auth_router import router as auth_router
-from api.wealth_endpoints import router as wealth_router
-from api.sources_endpoints import router as sources_router
-from api.sources_v2_endpoints import router as sources_v2_router
-from api.fx_endpoints import router as fx_router
-from api.debug_router import router as debug_router
-from api.health_router import router as health_router
-from api.coingecko_proxy_router import router as coingecko_proxy_router
-from api.pricing_router import router as pricing_router
-from api.rebalancing_strategy_router import router as rebalancing_strategy_router
-from api.config_router import router as config_router
-from api.ai_chat_router import router as ai_chat_router
-## NOTE: market_endpoints est désactivé tant que le client prix n'est pas réimplémenté
-from api.market_endpoints import router as market_router
-from api.exceptions import (
-    CryptoRebalancerException, APIException, ValidationException,
-    ConfigurationException, TradingException, DataException, ErrorCodes
-)
+# Import modular configuration (Phase 2.1 - Refactoring)
+from api.middleware_setup import setup_middlewares
+from api.router_registration import register_routers
+from api.exception_handlers import setup_exception_handlers
+from api.static_files_setup import setup_static_files
 from api.deps import get_required_user
 # Imports optionnels pour extensions futures (réservé)
 from api.models import APIKeysRequest, PortfolioMetricsRequest
@@ -200,181 +138,23 @@ async def shutdown():
     handler = get_shutdown_handler()
     await handler()
 
-# Gestionnaires d'exceptions globaux
-@app.exception_handler(CryptoRebalancerException)
-async def crypto_exception_handler(request: Request, exc: CryptoRebalancerException):
-    """Gestionnaire pour toutes les exceptions personnalisées"""
-    status_code = 400
-    if isinstance(exc, APIException):
-        status_code = exc.status_code or 500
-    elif isinstance(exc, ValidationException):
-        status_code = ErrorCodes.INVALID_INPUT
-    elif isinstance(exc, ConfigurationException):
-        status_code = ErrorCodes.INVALID_CONFIG
-    elif isinstance(exc, TradingException):
-        status_code = ErrorCodes.INSUFFICIENT_BALANCE
-    elif isinstance(exc, DataException):
-        status_code = ErrorCodes.DATA_NOT_FOUND
-    
-    return JSONResponse(
-        status_code=status_code,
-        content={
-            "ok": False,
-            "error": exc.__class__.__name__,
-            "message": exc.message,
-            "details": exc.details,
-            "path": request.url.path
-        }
-    )
+# ========== Exception Handlers (Modular) ==========
+# All exception handlers configured in api/exception_handlers.py for maintainability
+setup_exception_handlers(app)
 
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    """Gestionnaire pour toutes les autres exceptions"""
-    # Log l'exception complète avec stacktrace pour debugging
-    logger.error(
-        f"Unhandled exception on {request.method} {request.url.path}: {exc}",
-        exc_info=True
-    )
-
-    return JSONResponse(
-        status_code=500,
-        content={
-            "ok": False,
-            "error": "InternalServerError",
-            "message": "An unexpected error occurred",
-            "details": str(exc) if app.debug else None,
-            "path": request.url.path
-        }
-    )
-
-# CORS sécurisé avec configuration dynamique
-# Note: file:// et null retirés pour sécurité (risque CSRF)
-# Pour fichiers HTML locaux, utiliser un serveur HTTP local (ex: python -m http.server)
-default_origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:8080",
-]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=(CORS_ORIGINS or default_origins),
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+# ========== Middleware Setup (Modular) ==========
+# All middlewares configured in api/middleware_setup.py for maintainability
+setup_middlewares(
+    app=app,
+    settings=settings,
+    debug=DEBUG,
+    environment=ENVIRONMENT,
+    cors_origins=CORS_ORIGINS
 )
 
-# Middleware de sécurité
-# HTTPS redirect activé en production pour protéger les tokens JWT
-if settings.is_production():
-    app.add_middleware(HTTPSRedirectMiddleware)
-    logger.info("🔒 HTTPSRedirectMiddleware activé (production mode)")
-else:
-    logger.info("⚠️  HTTPSRedirectMiddleware désactivé (dev/LAN mode)")
-
-# TrustedHost config selon l'environnement
-# Lecture depuis ALLOWED_HOSTS (env var) pour flexibilité production
-ALLOWED_HOSTS_ENV = os.getenv("ALLOWED_HOSTS", "")
-if ALLOWED_HOSTS_ENV:
-    # Si ALLOWED_HOSTS défini, utiliser la liste (comma-separated)
-    allowed_hosts = [h.strip() for h in ALLOWED_HOSTS_ENV.split(",") if h.strip()]
-    logger.info(f"🔒 TrustedHostMiddleware: custom allowed_hosts={allowed_hosts}")
-elif DEBUG:
-    # En développement, plus permissif pour les tests
-    allowed_hosts = ["*"]
-    logger.info("🔒 TrustedHostMiddleware: dev mode (allow all hosts)")
-else:
-    # En production sans ALLOWED_HOSTS: fallback permissif pour Docker/LAN
-    allowed_hosts = ["*"]
-    logger.warning("⚠️  TrustedHostMiddleware: production sans ALLOWED_HOSTS défini, utilise '*' (permissif)")
-
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
-
-# Compression GZip pour améliorer les performances
-app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-# ========== Middleware Registration (Modular) ==========
-# Extracted to api/middlewares/ for maintainability
-# See: api/middlewares/{security,timing,logging,cache}.py
-
-# Rate limiting (production only)
-if ENVIRONMENT == "production" or not DEBUG:
-    app.add_middleware(RateLimitMiddleware)
-    logger.info("Rate limiting middleware enabled (production mode)")
-else:
-    logger.info("Rate limiting middleware disabled (development mode)")
-
-# Security headers (CSP, HSTS, etc.)
-app.middleware("http")(add_security_headers_middleware)
-
-# Request timing and structured logging
-app.middleware("http")(request_timing_middleware)
-
-# Request logger (debug mode)
-app.middleware("http")(request_logger_middleware)
-
-# No-cache for static files (development only)
-app.middleware("http")(no_cache_dev_middleware)
-
-BASE_DIR = Path(__file__).resolve().parent.parent  # répertoire du repo (niveau au-dessus d'api/)
-STATIC_DIR = BASE_DIR / "static"                    # D:\Python\smartfolio\static
-DATA_DIR = BASE_DIR / "data"                        # D:\Python\smartfolio\data
-
-logger.debug(f"BASE_DIR = {BASE_DIR}")
-logger.debug(f"STATIC_DIR = {STATIC_DIR}, exists = {STATIC_DIR.exists()}")
-logger.debug(f"DATA_DIR = {DATA_DIR}, exists = {DATA_DIR.exists()}")
-
-if not STATIC_DIR.exists():
-    logger.warning("STATIC_DIR not found, using fallback")
-    # fallback si l'arbo a changé
-    STATIC_DIR = Path.cwd() / "static"
-    
-if not DATA_DIR.exists():
-    logger.warning("DATA_DIR not found, using fallback")
-    DATA_DIR = Path.cwd() / "data"
-    
-logger.debug(f"Final STATIC_DIR = {STATIC_DIR}")
-logger.debug(f"Final DATA_DIR = {DATA_DIR}")
-
-# Vérifier le fichier CSV spécifiquement
-csv_file = DATA_DIR / "raw" / "CoinTracking - Current Balance.csv"
-logger.debug(f"CSV file = {csv_file}, exists = {csv_file.exists()}")
-
-app.mount(
-    "/static",
-    StaticFiles(directory=str(STATIC_DIR), html=True),
-    name="static",
-)
-
-# Mount data directory for CSV access (nécessaire en production pour les dashboards)
-app.mount(
-    "/data",
-    StaticFiles(directory=str(DATA_DIR)),
-    name="data",
-)
-
-# Mount config directory for users.json access
-CONFIG_DIR = BASE_DIR / "config"
-if CONFIG_DIR.exists():
-    app.mount(
-        "/config",
-        StaticFiles(directory=str(CONFIG_DIR)),
-        name="config",
-    )
-
-# Optionnel: exposer les pages de test HTML en local (sécurisé par DEBUG)
-try:
-    TESTS_DIR = BASE_DIR / "tests"
-    if DEBUG and TESTS_DIR.exists():
-        logger.debug(f"Mounting TESTS_DIR at /tests -> {TESTS_DIR}")
-        app.mount(
-            "/tests",
-            StaticFiles(directory=str(TESTS_DIR), html=True),
-            name="tests",
-        )
-except (OSError, RuntimeError) as e:
-    logger.warning(f"Could not mount /tests: {e}")
+# ========== Static Files Setup (Modular) ==========
+# All static file mounts configured in api/static_files_setup.py for maintainability
+setup_static_files(app, debug=DEBUG)
 
 # Cache prix unifié utilisant le système centralisé
 _PRICE_CACHE: Dict[str, tuple] = {}  # symbol -> (ts, price)
@@ -676,115 +456,9 @@ async def proxy_fred_bitcoin(start_date: str = "2014-01-01", limit: int = None, 
             "data": []
         }
 
-# inclure les routes taxonomie, execution, monitoring et analytics
-app.include_router(auth_router)  # Authentication (login/logout JWT)
-app.include_router(taxonomy_router)
-# Execution routers - modular structure (Phase 2.1)
-app.include_router(validation_router)
-app.include_router(execution_router)
-app.include_router(monitoring_router)
-app.include_router(governance_router)
-app.include_router(signals_router)
-# Analytics router monté une seule fois avec prefix=/api/analytics
-app.include_router(analytics_router, prefix="/api")
-app.include_router(market_router)
-app.include_router(kraken_router)
-app.include_router(smart_taxonomy_router)
-app.include_router(advanced_rebalancing_router)
-app.include_router(risk_router)
-app.include_router(execution_history_router)
-app.include_router(monitoring_advanced_router)
-app.include_router(portfolio_monitoring_router)
-app.include_router(csv_router)
-app.include_router(saxo_router)
-app.include_router(saxo_auth_router)  # Saxo OAuth2 authentication
-app.include_router(risk_bourse_router)  # Risk management pour Bourse/Saxo
-app.include_router(ml_bourse_router)  # ML predictions pour Bourse/Saxo
-app.include_router(ml_crypto_router, prefix="/api/ml/crypto", tags=["ML Crypto"])  # ML regime detection pour Bitcoin
-app.include_router(portfolio_optimization_router)
-app.include_router(performance_router)
-app.include_router(alerts_router)
-# ML endpoints avec chargement ultra-lazy (pas d'import au démarrage)
-ml_router_lazy = APIRouter(prefix="/api/ml", tags=["ML (lazy)"])
-
-@ml_router_lazy.get("/status")
-async def get_ml_status_lazy():
-    """Status ML avec chargement à la demande"""
-    try:
-        # Import seulement quand cette route est appelée
-        from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
-        status = pipeline_manager.get_pipeline_status()
-        return {
-            "pipeline_status": status,
-            "timestamp": datetime.now().isoformat(),
-            "loading_mode": "lazy"
-        }
-    except (ImportError, ModuleNotFoundError, RuntimeError, AttributeError) as e:
-        return {
-            "error": "ML system not ready",
-            "details": str(e),
-            "status": "loading",
-            "loading_mode": "lazy"
-        }
-
-@ml_router_lazy.get("/health")  
-async def ml_health_lazy():
-    """Health check ML minimal sans imports lourds"""
-    return {
-        "status": "available", 
-        "message": "ML system ready for lazy loading",
-        "timestamp": datetime.now().isoformat()
-    }
-
-app.include_router(ml_router_lazy)
-# Test simple endpoint pour debugging
-@app.get("/api/ml/pipeline/test")
-async def test_pipeline():
-    return {"message": "Pipeline API is working!"}
-app.include_router(ml_router)
-app.include_router(multi_asset_router)
-app.include_router(backtesting_router)
-app.include_router(advanced_analytics_router)
-app.include_router(rebalancing_strategy_router)
-app.include_router(strategy_router)
-app.include_router(advanced_risk_router)
-app.include_router(realtime_router)
-app.include_router(intelligence_router)
-app.include_router(user_settings_router)
-app.include_router(admin_router)  # Admin dashboard (RBAC protected)
-app.include_router(sources_router)
-app.include_router(sources_v2_router)  # Sources V2 - category-based modular sources
-app.include_router(wealth_router)
-app.include_router(fx_router)
-app.include_router(debug_router)
-app.include_router(health_router)
-app.include_router(coingecko_proxy_router)  # CoinGecko CORS proxy with caching
-app.include_router(pricing_router)
-app.include_router(config_router)
-app.include_router(ai_chat_router)  # AI Chat with Groq (free tier)
-# Phase 3 Unified Orchestration
-from api.unified_phase3_endpoints import router as unified_phase3_router
-app.include_router(unified_phase3_router)
-
-# Portfolio Analytics (refactored endpoints)
-from api.portfolio_endpoints import router as portfolio_router
-app.include_router(portfolio_router)
-
-# Crypto-Toolbox router (native FastAPI with Playwright)
-try:
-    from api.crypto_toolbox_endpoints import router as crypto_toolbox_router
-    app.include_router(crypto_toolbox_router)
-    logger.info("🎭 Crypto-Toolbox: FastAPI native scraper enabled")
-except (ImportError, ModuleNotFoundError) as e:
-    logger.error(f"❌ Failed to load crypto_toolbox router: {e}")
-    logger.warning("⚠️ Crypto-toolbox endpoints will not be available")
-
-# ---------- Legacy Portfolio Endpoints Removed ----------
-# Migrated to api/portfolio_endpoints.py:
-# - GET /portfolio/metrics
-# - POST /portfolio/snapshot
-# - GET /portfolio/trend
-# - GET /portfolio/alerts
+# ========== Router Registration (Modular) ==========
+# All routers registered in api/router_registration.py for maintainability
+register_routers(app)
 
 @app.get("/portfolio/breakdown-locations")
 async def portfolio_breakdown_locations(
