@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.utils import error_response, success_response
 from services.sources import SourceCategory, SourceMode, SourceStatus, source_registry
 
@@ -280,7 +280,7 @@ def _preview_csv_file(filepath: str, max_rows: int = 10) -> Dict[str, Any]:
 @router.get("/available")
 async def list_available_sources(
     category: Optional[str] = Query(None, description="Filter by category (crypto, bourse)"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     List all available sources, optionally filtered by category.
@@ -313,7 +313,7 @@ async def list_available_sources(
 
 
 @router.get("/categories")
-async def list_categories(user: str = Depends(get_active_user)):
+async def list_categories(user: str = Depends(get_required_user)):
     """
     List source categories with their available sources grouped by mode.
 
@@ -338,7 +338,7 @@ async def list_categories(user: str = Depends(get_active_user)):
 @router.get("/{category}/active")
 async def get_active_source(
     category: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Get the currently active source for a category.
@@ -372,7 +372,7 @@ async def get_active_source(
 async def set_active_source(
     category: str,
     request: SetActiveSourceRequest,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Set the active source for a category (mutually exclusive).
@@ -434,7 +434,7 @@ async def set_active_source(
 
 
 @router.get("/crypto/manual/assets")
-async def list_manual_crypto_assets(user: str = Depends(get_active_user)):
+async def list_manual_crypto_assets(user: str = Depends(get_required_user)):
     """List all manual crypto asset entries."""
     source = source_registry.get_source("manual_crypto", user, _get_project_root())
     if not source:
@@ -453,7 +453,7 @@ async def list_manual_crypto_assets(user: str = Depends(get_active_user)):
 @router.post("/crypto/manual/assets")
 async def add_manual_crypto_asset(
     asset: ManualCryptoAssetInput,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Add a new manual crypto asset entry."""
     source = source_registry.get_source("manual_crypto", user, _get_project_root())
@@ -481,7 +481,7 @@ async def add_manual_crypto_asset(
 async def update_manual_crypto_asset(
     asset_id: str,
     asset: ManualCryptoAssetInput,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Update an existing manual crypto asset."""
     source = source_registry.get_source("manual_crypto", user, _get_project_root())
@@ -511,7 +511,7 @@ async def update_manual_crypto_asset(
 @router.delete("/crypto/manual/assets/{asset_id}")
 async def delete_manual_crypto_asset(
     asset_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Delete a manual crypto asset."""
     source = source_registry.get_source("manual_crypto", user, _get_project_root())
@@ -532,7 +532,7 @@ async def delete_manual_crypto_asset(
 
 
 @router.get("/bourse/manual/positions")
-async def list_manual_bourse_positions(user: str = Depends(get_active_user)):
+async def list_manual_bourse_positions(user: str = Depends(get_required_user)):
     """List all manual bourse position entries."""
     source = source_registry.get_source("manual_bourse", user, _get_project_root())
     if not source:
@@ -550,7 +550,7 @@ async def list_manual_bourse_positions(user: str = Depends(get_active_user)):
 @router.post("/bourse/manual/positions")
 async def add_manual_bourse_position(
     position: ManualBoursePositionInput,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Add a new manual bourse position entry."""
     source = source_registry.get_source("manual_bourse", user, _get_project_root())
@@ -581,7 +581,7 @@ async def add_manual_bourse_position(
 async def update_manual_bourse_position(
     position_id: str,
     position: ManualBoursePositionInput,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Update an existing manual bourse position."""
     source = source_registry.get_source("manual_bourse", user, _get_project_root())
@@ -614,7 +614,7 @@ async def update_manual_bourse_position(
 @router.delete("/bourse/manual/positions/{position_id}")
 async def delete_manual_bourse_position(
     position_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """Delete a manual bourse position."""
     source = source_registry.get_source("manual_bourse", user, _get_project_root())
@@ -638,7 +638,7 @@ async def delete_manual_bourse_position(
 async def get_category_balances(
     category: str,
     source: Optional[str] = Query(None, description="Optional source ID to override active source"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Get balances from the active source for a category (or override with specific source).
@@ -682,7 +682,7 @@ async def get_category_balances(
 
 
 @router.get("/summary")
-async def get_sources_summary(user: str = Depends(get_active_user)):
+async def get_sources_summary(user: str = Depends(get_required_user)):
     """
     Get summary of all source categories.
 
@@ -713,7 +713,7 @@ async def get_sources_summary(user: str = Depends(get_active_user)):
 @router.get("/{category}/csv/files")
 async def list_csv_files(
     category: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     List all CSV files for a category (cointracking for crypto, saxobank for bourse).
@@ -745,7 +745,7 @@ async def preview_csv_file(
     category: str,
     filename: str = Query(..., description="Filename to preview"),
     max_rows: int = Query(10, ge=1, le=50, description="Maximum rows to preview"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Preview a CSV file with validation and summary.
@@ -783,7 +783,7 @@ async def preview_csv_file(
 async def delete_csv_file(
     category: str,
     filename: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Delete a CSV file.
@@ -831,7 +831,7 @@ async def delete_csv_file(
 async def download_csv_file(
     category: str,
     filename: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Download a CSV file.
@@ -871,7 +871,7 @@ async def download_csv_file(
 async def select_csv_file(
     category: str,
     filename: str = Query(..., description="Filename to set as active"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Manually select a CSV file to use as the active data source.
@@ -968,7 +968,7 @@ def _log_source_change(user_id: str, category: str, old_source: str, new_source:
 async def get_source_history(
     category: str,
     limit: int = Query(10, ge=1, le=50, description="Maximum number of entries"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
 ):
     """
     Get source change history for a category.

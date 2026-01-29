@@ -15,7 +15,7 @@ from pydantic import BaseModel
 import logging
 import httpx
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from services.user_secrets import user_secrets_manager
 from api.services.ai_knowledge_base import get_knowledge_context
 
@@ -171,7 +171,7 @@ def _get_provider_api_key(user_id: str, provider: str) -> Optional[str]:
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_ai(
     request: ChatRequest,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> ChatResponse:
     """
     Chat with AI assistant for portfolio analysis.
@@ -526,7 +526,7 @@ async def _call_claude(user: str, api_key: str, request: ChatRequest) -> ChatRes
 
 
 @router.get("/status")
-async def get_ai_status(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_ai_status(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """Check if AI chat is configured and available (backward compatibility)"""
     groq_key = _get_provider_api_key(user, "groq")
     claude_key = _get_provider_api_key(user, "claude")
@@ -544,7 +544,7 @@ async def get_ai_status(user: str = Depends(get_active_user)) -> Dict[str, Any]:
 
 
 @router.get("/providers")
-async def get_providers(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_providers(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """List available AI providers and their configuration status"""
     providers_status = []
 
@@ -1119,7 +1119,7 @@ async def get_page_quick_questions(page: str) -> Dict[str, Any]:
 
 
 @router.post("/refresh-knowledge")
-async def refresh_knowledge_cache(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def refresh_knowledge_cache(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """
     Force refresh of knowledge base cache
 
@@ -1153,7 +1153,7 @@ async def refresh_knowledge_cache(user: str = Depends(get_active_user)) -> Dict[
 
 
 @router.get("/knowledge-stats")
-async def get_knowledge_cache_stats(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_knowledge_cache_stats(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """
     Get knowledge base cache statistics
 

@@ -9,7 +9,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, UploadFile
 
 from adapters.saxo_adapter import ingest_file, get_portfolio_detail, list_portfolios_overview
-from api.deps import get_active_user
+from api.deps import get_required_user
 from connectors.saxo_import import SaxoImportConnector
 from api.wealth_endpoints import (
     get_accounts as wealth_get_accounts,
@@ -127,7 +127,7 @@ async def import_portfolio(
 
 @router.get("/portfolios")
 async def list_portfolios(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
 ) -> dict:
     """Return lightweight overview of stored Saxo portfolios."""
@@ -139,7 +139,7 @@ async def list_portfolios(
 @router.get("/portfolios/{portfolio_id}")
 async def get_portfolio(
     portfolio_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
 ) -> dict:
     """Return full detail for a given Saxo portfolio."""
@@ -153,7 +153,7 @@ async def get_portfolio(
 
 @router.get("/accounts", response_model=List[AccountModel])
 async def list_accounts(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
 ) -> List[AccountModel]:
     _legacy_log("/accounts")
@@ -162,7 +162,7 @@ async def list_accounts(
 
 @router.get("/instruments", response_model=List[InstrumentModel])
 async def list_instruments(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
 ) -> List[InstrumentModel]:
     _legacy_log("/instruments")
@@ -171,7 +171,7 @@ async def list_instruments(
 
 @router.get("/positions")
 async def list_positions(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
     limit: int = Query(200, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -209,7 +209,7 @@ async def list_positions(
 
 @router.get("/transactions", response_model=List[TransactionModel])
 async def list_transactions(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -220,7 +220,7 @@ async def list_transactions(
 
 @router.get("/prices", response_model=List[PricePoint])
 async def list_prices(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
     ids: List[str] = Query(...),
     granularity: str = "daily"
@@ -233,7 +233,7 @@ async def list_prices(
 
 @router.post("/rebalance/preview", response_model=List[ProposedTrade])
 async def preview_rebalance(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
     payload: Optional[dict] = Body(default=None)
 ) -> List[ProposedTrade]:
@@ -245,7 +245,7 @@ async def preview_rebalance(
 
 @router.get("/cash")
 async def get_portfolio_cash(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file identifier")
 ) -> dict:
     """
@@ -317,7 +317,7 @@ async def get_portfolio_cash(
 
 @router.post("/cash")
 async def save_portfolio_cash(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file identifier"),
     payload: dict = Body(..., description="Cash amount payload")
 ) -> dict:
@@ -403,7 +403,7 @@ async def save_portfolio_cash(
 
 @router.get("/export-lists")
 async def export_saxo_lists(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$"),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
 ):

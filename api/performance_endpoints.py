@@ -13,7 +13,7 @@ import time
 from hashlib import sha256
 import json
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from services.performance_optimizer import performance_optimizer
 from api.dependencies.dev_guards import require_dev_mode
 
@@ -283,7 +283,7 @@ async def precompute_matrices(
 async def get_performance_summary(
     request: Request,
     anchor: str = Query(default="prev_close", description="Point de référence temporel (prev_close, midnight, session)"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query(default="cointracking", description="Data source")
 ):
     """

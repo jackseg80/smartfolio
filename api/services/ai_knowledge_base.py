@@ -221,10 +221,10 @@ def _extract_essential_patterns(content: str) -> str:
 ### Multi-Tenant Pattern
 ```python
 # Backend: ALWAYS use dependency injection
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 @router.get("/endpoint")
-async def endpoint(user: str = Depends(get_active_user)):
+async def endpoint(user: str = Depends(get_required_user)):
     pass
 ```
 
@@ -260,7 +260,7 @@ def _get_fallback_knowledge() -> str:
 
 ## CRITICAL RULES
 
-1. **Multi-Tenant**: ALWAYS use `Depends(get_active_user)` or `window.loadBalanceData()`
+1. **Multi-Tenant**: ALWAYS use `Depends(get_required_user)` or `window.loadBalanceData()`
 2. **Risk Score**: 0-100 (higher = more robust), NEVER invert
 3. **Decision Index**: Binary 65/45 (NOT weighted sum)
 4. **Dual System**: Regime Score != Decision Index (separate systems)

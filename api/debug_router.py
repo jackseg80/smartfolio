@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from fastapi.responses import Response
 
 from api.models import APIKeysRequest
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 # Import debug flag and paths from config
 from config import get_settings
@@ -104,7 +104,7 @@ async def debug_ctapi():
 
 
 @router.get("/api-keys")
-async def debug_api_keys(debug_token: Optional[str] = Query(None), user: str = Depends(get_active_user)):
+async def debug_api_keys(debug_token: Optional[str] = Query(None), user: str = Depends(get_required_user)):
     """
     Expose les clés API pour auto-configuration (DEBUG ONLY).
 
@@ -187,7 +187,7 @@ async def update_api_keys(payload: APIKeysRequest, debug_token: Optional[str] = 
 
 
 @router.get("/secrets-status")
-async def debug_secrets_status(user: str = Depends(get_active_user)):
+async def debug_secrets_status(user: str = Depends(get_required_user)):
     """
     Debug endpoint: Vérifie quelles clés API sont chargées depuis secrets.json
 

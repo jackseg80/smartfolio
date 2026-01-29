@@ -19,7 +19,7 @@ from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from fastapi.responses import RedirectResponse
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.utils import success_response, error_response
 from api.services.user_fs import UserScopedFS
 from connectors.saxo_api import SaxoOAuthClient, generate_state
@@ -93,7 +93,7 @@ def retrieve_pkce_verifier(state: str) -> Optional[Dict[str, Any]]:
 
 @router.get("/auth/login")
 async def saxo_login(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Generate OAuth2 authorization URL for user to login at Saxo.
@@ -210,7 +210,7 @@ async def saxo_callback(
 
 @router.get("/auth/status")
 async def saxo_status(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Get current connection status for user.
@@ -245,7 +245,7 @@ async def saxo_status(
 
 @router.post("/auth/refresh")
 async def saxo_refresh(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Manually refresh access token.
@@ -303,7 +303,7 @@ async def saxo_refresh(
 
 @router.post("/auth/disconnect")
 async def saxo_disconnect(
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Disconnect user from Saxo (logout).
@@ -338,7 +338,7 @@ async def saxo_disconnect(
 async def resolve_instruments(
     uics: str = Query(..., description="Comma-separated UICs (e.g., '34909,12345')"),
     asset_types: Optional[str] = Query(None, description="Comma-separated asset types (e.g., 'Etf,Stock')"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Resolve UICs to instrument metadata (Symbol, Name, ISIN).
@@ -445,7 +445,7 @@ async def resolve_instruments(
 
 @router.get("/api-positions")
 async def get_saxo_api_positions(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     use_cache: bool = Query(False, description="Force use cached data"),
     max_cache_age_hours: int = Query(24, description="Maximum cache age in hours")
 ):

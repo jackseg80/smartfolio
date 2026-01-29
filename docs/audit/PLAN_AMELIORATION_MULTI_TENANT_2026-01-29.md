@@ -26,11 +26,12 @@
 - ✅ Configuration du document de suivi vivant
 - ✅ **P0-2 FIXÉ**: Supprimé `user_id="demo"` dans 11 fichiers (19 occurrences corrigées)
 - ✅ **P0-3 FIXÉ**: Sécurisé logs API keys dans `services/balance_service.py` (2 lignes)
-- 🔄 **P0-1 EN COURS**: Migration `get_active_user` → `get_required_user` (100 endpoints)
+- ✅ **P0-1 FIXÉ**: Migration `get_active_user` → `get_required_user` (98 occurrences dans 17 fichiers)
+  - Ajout deprecation warning sur `get_active_user()` dans `api/deps.py`
 
 **Points Bloquants**: Aucun
 
-**Prochaines Actions**: Terminer P0-1 - Migrer les 100 endpoints restants
+**Prochaines Actions**: Vérifier les tests → Passer à Itération 2 (P1 - Sécurité)
 
 ---
 
@@ -167,10 +168,10 @@
 
 ## 4. Plan d'Amélioration par Itérations
 
-### Itération 1 - Sécurité Multi-Tenant (Priorité: P0) 🔄
+### Itération 1 - Sécurité Multi-Tenant (Priorité: P0) ✅
 
 **Durée estimée**: 1-2 sprints
-**Statut**: 🔄 IN PROGRESS (3/3 actions partiellement complétées)
+**Statut**: ✅ COMPLETED (3/3 actions terminées)
 
 #### Objectif
 
@@ -178,11 +179,28 @@
 
 #### Actions
 
-1. 🔄 **Audit et migration `get_active_user()`**
-   - ✅ Rechercher toutes les utilisations de `get_active_user()` (100 endpoints trouvés)
-   - 🔄 Remplacer par `get_required_user()` ou `get_current_user_jwt()` (0/100 migrés)
-   - ⬜ Ajouter deprecation warning sur `get_active_user()`
-   - **Fichiers**: `api/deps.py`, 18 fichiers endpoints
+1. ✅ **Audit et migration `get_active_user()`**
+   - ✅ Rechercher toutes les utilisations de `get_active_user()` (98 occurrences trouvées)
+   - ✅ Remplacer par `get_required_user()` dans 17 fichiers (98/98 migrés)
+   - ✅ Ajouter deprecation warning sur `get_active_user()` dans `api/deps.py`
+   - **Fichiers migrés**:
+     - `api/sources_v2_endpoints.py` (20 occurrences)
+     - `api/risk_bourse_endpoints.py` (13 occurrences)
+     - `api/analytics_endpoints.py` (11 occurrences)
+     - `api/saxo_endpoints.py` (11 occurrences)
+     - `api/user_settings_endpoints.py` (6 occurrences)
+     - `api/saxo_auth_router.py` (6 occurrences)
+     - `api/advanced_analytics_endpoints.py` (5 occurrences)
+     - `api/ai_chat_router.py` (5 occurrences)
+     - `api/main.py` (4 occurrences)
+     - `api/portfolio_monitoring.py` (4 occurrences)
+     - `api/sources_endpoints.py` (3 occurrences)
+     - `api/csv_endpoints.py` (2 occurrences)
+     - `api/debug_router.py` (2 occurrences)
+     - `api/ml_bourse_endpoints.py` (2 occurrences)
+     - `api/services/ai_knowledge_base.py` (2 occurrences)
+     - `api/performance_endpoints.py` (1 occurrence)
+     - `api/unified_ml_endpoints.py` (1 occurrence)
 
 2. ✅ **Supprimer les defaults `user_id="demo"`**
    - ✅ Identifier les 52 occurrences (16 fichiers)

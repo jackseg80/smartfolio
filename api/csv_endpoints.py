@@ -11,7 +11,7 @@ from datetime import datetime
 import aiohttp
 import asyncio
 from pathlib import Path
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.services.user_fs import UserScopedFS
 
 router = APIRouter()
@@ -167,7 +167,7 @@ def generate_csv_filename(file_type: str, auto_name: bool = True) -> str:
 
 
 @router.post("/csv/download")
-async def download_csv_file(request: CSVDownloadRequest, user: str = Depends(get_active_user)) -> CSVDownloadResponse:
+async def download_csv_file(request: CSVDownloadRequest, user: str = Depends(get_required_user)) -> CSVDownloadResponse:
     """[LEGACY] Télécharge un fichier CSV depuis CoinTracking - délègue vers /api/sources"""
     _log_legacy_usage("download", user)
 
@@ -252,7 +252,7 @@ async def download_csv_file(request: CSVDownloadRequest, user: str = Depends(get
 
 
 @router.get("/csv/status")
-async def get_csv_files_status(user: str = Depends(get_active_user)) -> CSVStatusResponse:
+async def get_csv_files_status(user: str = Depends(get_required_user)) -> CSVStatusResponse:
     """[LEGACY] Retourne le status des fichiers CSV - délègue vers /api/sources"""
     _log_legacy_usage("status", user)
 

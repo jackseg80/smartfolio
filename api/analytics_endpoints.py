@@ -19,7 +19,7 @@ from datetime import datetime
 from services.analytics.history_manager import get_history_manager, SessionStatus, PortfolioSnapshot
 from services.analytics.performance_tracker import performance_tracker
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class ExecutionResultRequest(BaseModel):
 @router.post("/sessions")
 async def create_rebalance_session(
     request: SessionCreateRequest,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Créer une nouvelle session de rebalancement
@@ -105,7 +105,7 @@ async def create_rebalance_session(
 @router.get("/sessions/{session_id}")
 async def get_session(
     session_id: str,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir les détails d'une session de rebalancement
@@ -159,7 +159,7 @@ async def get_session(
 async def add_portfolio_snapshot(
     session_id: str,
     request: PortfolioSnapshotRequest,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     is_before: bool = Query(default=True, description="Snapshot avant rebalancement")
 ):
     """
@@ -202,7 +202,7 @@ async def add_portfolio_snapshot(
 @router.post("/sessions/{session_id}/actions")
 async def add_rebalance_actions(
     session_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     actions: List[Dict[str, Any]] = Body(..., description="Actions de rebalancement")
 ):
     """
@@ -232,7 +232,7 @@ async def add_rebalance_actions(
 async def update_execution_results(
     session_id: str,
     request: ExecutionResultRequest,
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Mettre à jour les résultats d'exécution d'une session
@@ -261,7 +261,7 @@ async def update_execution_results(
 @router.post("/sessions/{session_id}/complete")
 async def complete_session(
     session_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     status: str = Body(default="completed", description="Statut final"),
     error_message: Optional[str] = Body(default=None, description="Message d'erreur")
 ):
@@ -299,7 +299,7 @@ async def get_sessions(
     limit: int = Query(default=50, le=100, description="Nombre maximum de sessions"),
     days_back: Optional[int] = Query(default=None, description="Nombre de jours en arrière"),
     status: Optional[str] = Query(default=None, description="Filtrer par statut"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir la liste des sessions de rebalancement
@@ -354,7 +354,7 @@ async def get_sessions(
 @router.get("/performance/summary")
 async def get_performance_summary(
     days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse en jours"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir un résumé des performances
@@ -387,7 +387,7 @@ async def get_performance_summary(
 @router.get("/performance/detailed")
 async def get_detailed_performance_analysis(
     days_back: int = Query(default=30, ge=1, le=365),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir une analyse de performance détaillée
@@ -478,7 +478,7 @@ async def calculate_portfolio_performance(
 async def generate_comprehensive_report(
     days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse"),
     include_portfolio_history: bool = Query(default=False, description="Inclure l'historique portfolio"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Générer un rapport de performance complet
@@ -516,7 +516,7 @@ async def generate_comprehensive_report(
 @router.get("/optimization/recommendations")
 async def get_optimization_recommendations(
     days_back: int = Query(default=30),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir des recommandations d'optimisation

@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
 from services.ml.orchestrator import get_orchestrator, get_ml_predictions
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
-from api.deps import get_active_user
+from api.deps import get_required_user
 from shared.error_handlers import handle_api_errors, handle_service_errors
 
 logger = logging.getLogger(__name__)
@@ -416,7 +416,7 @@ async def alias_regime_current():
 @router.get("/correlation/matrix/current")
 @handle_api_errors(fallback={"assets": [], "correlations": {}, "market_metrics": {}})
 async def alias_correlation_matrix(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     window_days: int = Query(30)
 ):
     """Alias routed to risk correlation endpoint logic.

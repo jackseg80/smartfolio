@@ -166,7 +166,7 @@ from api.exceptions import (
     CryptoRebalancerException, APIException, ValidationException,
     ConfigurationException, TradingException, DataException, ErrorCodes
 )
-from api.deps import get_active_user
+from api.deps import get_required_user
 # Imports optionnels pour extensions futures (réservé)
 from api.models import APIKeysRequest, PortfolioMetricsRequest
 
@@ -423,7 +423,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 async def resolve_current_balances(
     source: str = Query("cointracking_api"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> Dict[str, Any]:
     """
     Retourne {source_used, items:[{symbol, alias, amount, value_usd, location}]}
@@ -452,7 +452,7 @@ async def resolve_current_balances(
 async def balances_current(
     source: str = Query("cointracking"),
     min_usd: float = Query(1.0),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     from api.unified_data import get_unified_filtered_balances
     return await get_unified_filtered_balances(source=source, min_usd=min_usd, user_id=user)
@@ -467,7 +467,7 @@ async def rebalance_plan(
     dynamic_targets: bool = Query(False, description="Use dynamic targets from CCS/cycle module"),
     payload: Dict[str, Any] = Body(...),
     pricing_diag: bool = Query(False, description="Include pricing diagnostic details in response meta"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     min_usd = parse_min_usd(min_usd_raw, default=1.0)
 
@@ -594,7 +594,7 @@ async def rebalance_plan_csv(
 # to_csv moved to api/services/csv_helpers.py
 
 @app.get("/proxy/fred/bitcoin")
-async def proxy_fred_bitcoin(start_date: str = "2014-01-01", limit: int = None, user: str = Depends(get_active_user)):
+async def proxy_fred_bitcoin(start_date: str = "2014-01-01", limit: int = None, user: str = Depends(get_required_user)):
     """Proxy pour récupérer les données Bitcoin historiques via FRED API (user-scoped)"""
     # Lire la clé FRED depuis secrets.json (modern system)
     from services.user_secrets import get_user_secrets

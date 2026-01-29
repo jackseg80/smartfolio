@@ -110,8 +110,12 @@ def get_active_user(x_user: Optional[str] = Header(None)) -> str:
     """
     Dépendance FastAPI pour récupérer l'utilisateur actuel.
 
-    DEPRECATED: Utiliser get_required_user() pour nouveaux endpoints critiques.
+    ⚠️ DEPRECATED: Cette fonction est dépréciée depuis 2026-01-29.
+    ⚠️ Utiliser get_required_user() pour tous les nouveaux endpoints.
+    ⚠️ Raison: Fallback "demo" non sécurisé → risque de fuite multi-tenant (P0-1)
+
     Cette fonction garde un fallback "demo" pour compatibilité avec endpoints existants.
+    Migration en cours vers get_required_user() qui force le header X-User.
 
     Args:
         x_user: Header X-User optionnel
@@ -122,6 +126,12 @@ def get_active_user(x_user: Optional[str] = Header(None)) -> str:
     Raises:
         HTTPException: 403 si utilisateur inconnu
     """
+    # ⚠️ DEPRECATION WARNING: Emit warning on every call
+    logger.warning(
+        f"[DEPRECATED] get_active_user() is deprecated since 2026-01-29. "
+        f"Use get_required_user() instead. Called with x_user={x_user!r}"
+    )
+
     # Fallback vers utilisateur par défaut si pas de header
     if not x_user:
         default_user = get_default_user()

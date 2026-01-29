@@ -21,7 +21,7 @@ from pathlib import Path
 
 # Import services pour données réelles
 from services.portfolio import portfolio_analytics
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 logger = logging.getLogger(__name__)
 
@@ -271,7 +271,7 @@ def get_mock_portfolio_data():
 @router.get("/metrics")
 async def get_portfolio_metrics(
     source: str = Query("cointracking", description="Source de données (cointracking, cointracking_api, etc.)"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Obtenir les métriques actuelles du portefeuille
@@ -328,7 +328,7 @@ async def get_portfolio_metrics(
 @router.get("/alerts")
 async def get_portfolio_alerts(
     source: str = Query("cointracking", description="Source de données"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     active_only: bool = Query(True, description="Retourner seulement les alertes actives"),
     limit: int = Query(20, ge=1, le=100, description="Nombre maximum d'alertes")
 ):
@@ -509,7 +509,7 @@ async def get_rebalance_history(
 @router.get("/performance")
 async def get_performance_analytics(
     source: str = Query("cointracking", description="Source de données"),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     period_days: int = Query(30, ge=1, le=365, description="Période d'analyse en jours")
 ):
     """
@@ -761,7 +761,7 @@ async def get_strategy_performance(
 @router.get("/dashboard-summary")
 async def get_dashboard_summary(
     source: str = Query("cointracking", description="Source de données"),
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ):
     """
     Résumé complet pour le dashboard de monitoring

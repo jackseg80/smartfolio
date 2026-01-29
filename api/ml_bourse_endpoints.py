@@ -18,7 +18,7 @@ import json
 import math
 import os
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 # Read API base URL from environment or use default
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080")
@@ -613,7 +613,7 @@ async def get_regime_history(
 
 @router.get("/api/ml/bourse/portfolio-recommendations")
 async def get_portfolio_recommendations(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     source: str = Query("saxobank", description="Data source (saxobank, cointracking, etc.)"),
     timeframe: str = Query("medium", description="Timeframe: short (1-2w), medium (1m), long (3-6m)"),
     lookback_days: int = Query(90, ge=60, le=365, description="Days of historical data to analyze"),
@@ -822,7 +822,7 @@ async def get_portfolio_recommendations(
 
 @router.get("/api/bourse/opportunities")
 async def get_market_opportunities(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     horizon: str = Query("medium", description="Time horizon: short (1-3M), medium (6-12M), long (2-3Y)"),
     source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
     file_key: Optional[str] = Query(None, description="Saxo CSV file key"),

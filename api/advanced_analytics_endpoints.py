@@ -12,7 +12,7 @@ import math
 import statistics
 import pandas as pd
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
-from api.deps import get_active_user
+from api.deps import get_required_user
 from connectors.cointracking_api import get_current_balances
 from services.price_history import get_cached_history
 
@@ -79,7 +79,7 @@ class TimeSeriesData(BaseModel):
 
 @router.get("/metrics", response_model=AdvancedMetrics)
 async def get_advanced_metrics(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     benchmark: Optional[str] = Query(None, description="Symbol de benchmark (BTC, ETH, etc.)")
 ):
@@ -182,7 +182,7 @@ async def get_advanced_metrics(
 
 @router.get("/timeseries", response_model=TimeSeriesData)
 async def get_timeseries_data(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     granularity: str = Query("daily", description="Granularité: daily, weekly, monthly")
 ):
@@ -278,7 +278,7 @@ async def get_timeseries_data(
 
 @router.get("/drawdown-analysis")
 async def analyze_drawdowns(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     days: int = Query(365, description="Nombre de jours d'historique"),
     min_duration: int = Query(5, description="Durée minimum en jours")
 ):
@@ -316,7 +316,7 @@ async def analyze_drawdowns(
 
 @router.get("/strategy-comparison")
 async def compare_strategies(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     strategies: List[str] = Query(["rebalancing", "buy_hold", "momentum"], description="Stratégies à comparer"),
     days: int = Query(365, description="Période d'analyse")
 ):
@@ -368,7 +368,7 @@ async def compare_strategies(
 
 @router.get("/risk-metrics")
 async def get_risk_metrics(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     days: int = Query(365, description="Période d'analyse"),
     confidence_level: float = Query(0.95, description="Niveau de confiance pour VaR")
 ):

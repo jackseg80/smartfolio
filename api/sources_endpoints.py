@@ -13,7 +13,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel, Field
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.services.user_fs import UserScopedFS
 from api.services.config_migrator import ConfigMigrator, resolve_secret_ref, get_staleness_state
 
@@ -90,7 +90,7 @@ class RefreshApiResponse(BaseModel):
     message: str
     error: Optional[str] = None
 
-def get_user_fs(user: str = Depends(get_active_user)) -> UserScopedFS:
+def get_user_fs(user: str = Depends(get_required_user)) -> UserScopedFS:
     """Dependency pour obtenir le UserScopedFS de l'utilisateur actuel"""
     project_root = str(Path(__file__).parent.parent)  # api/sources_endpoints.py -> smartfolio/
     return UserScopedFS(project_root, user)
@@ -465,7 +465,7 @@ class DeleteFileResponse(BaseModel):
 async def upload_files(
     module: str = Form(...),
     files: List[UploadFile] = File(...),
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     user_fs: UserScopedFS = Depends(get_user_fs),
     config_migrator: ConfigMigrator = Depends(get_config_migrator)
 ) -> UploadResponse:
@@ -585,7 +585,7 @@ async def upload_files(
 @router.post("/delete-file", response_model=DeleteFileResponse)
 async def delete_file(
     request: DeleteFileRequest,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     user_fs: UserScopedFS = Depends(get_user_fs),
     config_migrator: ConfigMigrator = Depends(get_config_migrator)
 ) -> DeleteFileResponse:

@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
 import logging
 
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.services.user_fs import UserScopedFS
 from services.user_secrets import user_secrets_manager
 from pathlib import Path
@@ -41,7 +41,7 @@ class UserSettings(BaseModel):
     debug_mode: bool = False
 
 @router.get("/settings", response_model=Dict[str, Any])
-async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_user_settings(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """
     Récupère les settings de l'utilisateur actuel.
 
@@ -94,7 +94,7 @@ async def get_user_settings(user: str = Depends(get_active_user)) -> Dict[str, A
 @router.put("/settings")
 async def save_user_settings(
     settings: Dict[str, Any],
-    user: str = Depends(get_active_user)
+    user: str = Depends(get_required_user)
 ) -> Dict[str, str]:
     """
     Sauvegarde les settings de l'utilisateur actuel.
@@ -205,7 +205,7 @@ async def save_user_settings(
         )
 
 @router.delete("/settings")
-async def reset_user_settings(user: str = Depends(get_active_user)) -> Dict[str, str]:
+async def reset_user_settings(user: str = Depends(get_required_user)) -> Dict[str, str]:
     """
     Remet les settings utilisateur aux valeurs par défaut.
 
@@ -239,7 +239,7 @@ async def reset_user_settings(user: str = Depends(get_active_user)) -> Dict[str,
         )
 
 @router.get("/sources")
-async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_user_data_sources(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """
     Récupère les sources de données disponibles pour l'utilisateur depuis data/ (nouveau système).
 
@@ -356,7 +356,7 @@ async def get_user_data_sources(user: str = Depends(get_active_user)) -> Dict[st
         )
 
 @router.get("/settings/info")
-async def get_user_settings_info(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def get_user_settings_info(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """
     Récupère des informations de debug sur les settings utilisateur.
 
@@ -392,7 +392,7 @@ async def get_user_settings_info(user: str = Depends(get_active_user)) -> Dict[s
         )
 
 @router.get("/sources/debug")
-async def debug_user_sources(user: str = Depends(get_active_user)) -> Dict[str, Any]:
+async def debug_user_sources(user: str = Depends(get_required_user)) -> Dict[str, Any]:
     """DEBUG: Vérifie directement les fichiers dans data/ vs imports/"""
     try:
         project_root = str(Path(__file__).parent.parent)

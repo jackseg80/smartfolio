@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from services.risk.bourse.calculator import BourseRiskCalculator
 from services.risk.bourse.alerts import BourseAlertsDetector
 from services.risk.bourse.alerts_persistence import AlertsPersistenceService
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.deps import get_redis_client
 
 logger = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class RiskDashboardResponse(BaseModel):
 
 @router.get("/dashboard", response_model=RiskDashboardResponse)
 async def bourse_risk_dashboard(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo file to use (CSV mode)"),
     source: Optional[str] = Query(None, description="Data source (API mode): saxobank_api"),
     min_usd: float = Query(1.0, ge=0.0, description="Minimum position value in USD"),
@@ -284,7 +284,7 @@ async def bourse_risk_dashboard(
 
 @router.get("/advanced/position-var")
 async def get_position_var(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Specific Saxo file to use"),
     confidence_level: float = Query(0.95, ge=0.8, le=0.99),
     lookback_days: int = Query(252, ge=30, le=730)
@@ -379,7 +379,7 @@ async def get_position_var(
 
 @router.get("/advanced/correlation")
 async def get_correlation_matrix(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     method: str = Query("pearson", description="Correlation method"),
     lookback_days: int = Query(252, ge=30, le=730)
@@ -453,7 +453,7 @@ async def get_correlation_matrix(
 
 @router.post("/advanced/stress-test")
 async def run_stress_test(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     scenario: str = Query("market_crash", description="Stress scenario name"),
     market_shock: Optional[float] = Query(None, description="Market shock percentage for custom scenario"),
@@ -526,7 +526,7 @@ async def run_stress_test(
 
 @router.get("/advanced/fx-exposure")
 async def get_fx_exposure(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     base_currency: str = Query("USD", description="Base currency for reporting")
 ):
@@ -577,7 +577,7 @@ async def get_fx_exposure(
 
 @router.get("/specialized/earnings")
 async def get_earnings_prediction(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     ticker: str = Query(..., description="Ticker to analyze"),
     lookback_days: int = Query(365, ge=30, le=1825)
@@ -636,7 +636,7 @@ async def get_earnings_prediction(
 
 @router.get("/specialized/sector-rotation")
 async def get_sector_rotation(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     lookback_days: int = Query(60, ge=30, le=180)
 ):
@@ -731,7 +731,7 @@ async def get_sector_rotation(
 
 @router.get("/specialized/beta-forecast")
 async def get_beta_forecast(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     ticker: str = Query(..., description="Ticker to analyze"),
     benchmark: str = Query("SPY", description="Benchmark ticker"),
@@ -794,7 +794,7 @@ async def get_beta_forecast(
 
 @router.get("/specialized/dividends")
 async def get_dividend_analysis(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     ticker: str = Query(..., description="Ticker to analyze")
 ):
@@ -871,7 +871,7 @@ async def get_dividend_analysis(
 
 @router.get("/specialized/margin")
 async def get_margin_monitoring(
-    user_id: str = Depends(get_active_user),
+    user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     account_equity: Optional[float] = Query(None, description="Override account equity"),
     maintenance_margin_pct: float = Query(0.25, ge=0.10, le=0.50),
@@ -932,7 +932,7 @@ async def get_margin_monitoring(
 
 @router.get("/alerts")
 async def get_risk_alerts(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None, description="Saxo file key for multi-file support"),
     use_cache: bool = Query(True, description="Use cached alerts if available"),
     redis: Optional[Any] = Depends(get_redis_client)
@@ -1082,7 +1082,7 @@ async def get_risk_alerts(
 @router.post("/alerts/{alert_id}/acknowledge")
 async def acknowledge_alert(
     alert_id: str,
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     redis: Optional[Any] = Depends(get_redis_client)
 ):
     """
@@ -1134,7 +1134,7 @@ async def acknowledge_alert(
 
 @router.get("/alerts/history")
 async def get_alerts_history(
-    user: str = Depends(get_active_user),
+    user: str = Depends(get_required_user),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of alerts to return"),
     days_back: int = Query(7, ge=1, le=30, description="Number of days to look back"),
     redis: Optional[Any] = Depends(get_redis_client)
