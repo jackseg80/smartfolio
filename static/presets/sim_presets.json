@@ -16,7 +16,7 @@
         "riskScore": 45,
         "cycleConf": 0.75,
         "onchainConf": 0.7,
-        "regimeConf": 0.65,
+        "sentimentScore": 60,
         "contradictionPenalty": 0.12,
         "backendDecision": null
       },
@@ -58,7 +58,7 @@
         "riskScore": 65,
         "cycleConf": 0.8,
         "onchainConf": 0.7,
-        "regimeConf": 0.6,
+        "sentimentScore": 75,
         "contradictionPenalty": 0.15,
         "backendDecision": null
       },
@@ -105,7 +105,7 @@
         "riskScore": 38,
         "cycleConf": 0.8,
         "onchainConf": 0.85,
-        "regimeConf": 0.75,
+        "sentimentScore": 70,
         "contradictionPenalty": 0.08,
         "backendDecision": null
       },
@@ -147,7 +147,7 @@
         "riskScore": 35,
         "cycleConf": 0.85,
         "onchainConf": 0.8,
-        "regimeConf": 0.8,
+        "sentimentScore": 75,
         "contradictionPenalty": 0.06,
         "backendDecision": null
       },
@@ -189,7 +189,7 @@
         "riskScore": 25,
         "cycleConf": 0.9,
         "onchainConf": 0.85,
-        "regimeConf": 0.85,
+        "sentimentScore": 85,
         "contradictionPenalty": 0.04,
         "backendDecision": null
       },
@@ -231,7 +231,7 @@
         "riskScore": 90,
         "cycleConf": 0.7,
         "onchainConf": 0.65,
-        "regimeConf": 0.6,
+        "sentimentScore": 50,
         "contradictionPenalty": 0.35,
         "backendDecision": null
       },
@@ -278,7 +278,7 @@
         "riskScore": 75,
         "cycleConf": 0.6,
         "onchainConf": 0.8,
-        "regimeConf": 0.7,
+        "sentimentScore": 30,
         "contradictionPenalty": 0.2,
         "backendDecision": null
       },
@@ -320,7 +320,7 @@
         "riskScore": 88,
         "cycleConf": 0.9,
         "onchainConf": 0.85,
-        "regimeConf": 0.8,
+        "sentimentScore": 15,
         "contradictionPenalty": 0.05,
         "backendDecision": null
       },
@@ -367,7 +367,7 @@
         "riskScore": 70,
         "cycleConf": 0.4,
         "onchainConf": 0.5,
-        "regimeConf": 0.3,
+        "sentimentScore": 35,
         "contradictionPenalty": 0.25,
         "backendDecision": null
       },
@@ -409,7 +409,7 @@
         "riskScore": 48,
         "cycleConf": 0.65,
         "onchainConf": 0.7,
-        "regimeConf": 0.6,
+        "sentimentScore": 55,
         "contradictionPenalty": 0.12,
         "backendDecision": null
       },
@@ -451,7 +451,7 @@
         "riskScore": 45,
         "cycleConf": 0.75,
         "onchainConf": 0.65,
-        "regimeConf": 0.7,
+        "sentimentScore": 65,
         "contradictionPenalty": 0.1,
         "backendDecision": null
       },
@@ -493,7 +493,7 @@
         "riskScore": 55,
         "cycleConf": 0.5,
         "onchainConf": 0.6,
-        "regimeConf": 0.4,
+        "sentimentScore": 50,
         "contradictionPenalty": 0.18,
         "backendDecision": null
       },

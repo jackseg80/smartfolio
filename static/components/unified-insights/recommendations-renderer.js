@@ -20,6 +20,7 @@ export function renderRecommendationsBlock(recos) {
               </div>
               ${r.subtitle ? `<div style="font-size:.75rem; color: var(--info); margin-top:.25rem; font-style: italic;">${r.subtitle}</div>` : ''}
               <div style="font-size:.85rem; color: var(--theme-text-muted); margin-top:.25rem; white-space: pre-line;">${r.reason}</div>
+              ${r.tacticalAction ? `<div style="font-size:.75rem; color: var(--success, #10b981); margin-top:.375rem; padding: .25rem .5rem; background: rgba(16, 185, 129, 0.1); border-radius: 4px; font-weight: 600;">→ ${r.tacticalAction}</div>` : ''}
             </div>
             <div style="font-size:.7rem; padding:2px 6px; border-radius:10px; color:white; background:${r.priority==='critical'?'var(--danger)':r.priority==='high'?'var(--danger)':r.priority==='medium'?'var(--warning)':'var(--info)'}; text-transform:uppercase; font-weight:700; flex-shrink: 0;">${r.priority}</div>
           </div>

@@ -392,12 +392,14 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
       risk: uiOverrides.riskScore ?? simulationState.sourceData.scores.risk ?? 50
     },
 
-    // Confiances
+    // Confiances (réalistes: cycle ~0.46, onchain ~0.6)
     confidences: {
-      cycle: uiOverrides.cycleConf ?? 0.7,
-      onchain: uiOverrides.onchainConf ?? 0.6,
-      regime: uiOverrides.regimeConf ?? 0.5
+      cycle: uiOverrides.cycleConf ?? 0.46,
+      onchain: uiOverrides.onchainConf ?? 0.6
     },
+
+    // Sentiment score (0-100) - 4th component per DECISION_INDEX_V2.md
+    sentimentScore: uiOverrides.sentimentScore ?? 50,
 
     // Backend decision override
     backendDecision: uiOverrides.backendDecision || null,
@@ -426,15 +428,18 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 /**
  * 3. CALCUL DECISION INDEX (même logique qu'Analytics Unified)
  *
+ * ⚠️ ALIGNÉ avec DECISION_INDEX_V2.md - 4 composantes:
+ * raw_decision_score = (cycle × wCycle) + (onchain × wOnchain) + (risk × wRisk) + (sentiment × wSentiment)
+ * final_score = raw_decision_score × phase_factor
+ *
  * ⚠️ IMPORTANT — Sémantique Risk:
- * Risk est un score POSITIF (0..100, plus haut = mieux).
+ * Risk est un score POSITIF (0..100, plus haut = mieux/robuste).
  * Ne jamais inverser (pas de 100 - risk).
- * Contributions UI: (w * score) / Σ(w * score).
  */
 export function computeDecisionIndex(context) {
   console.debug('🎭 SIM: computeDecisionIndex called');
 
-  const { scores, confidences, backendDecision, contradictionPenalty } = context;
+  const { scores, confidences, backendDecision, contradictionPenalty, sentimentScore = 50 } = context;
 
   // PRIORITÉ 1: Backend Decision (si forcé)
   if (backendDecision && typeof backendDecision.score === 'number') {
@@ -450,24 +455,24 @@ export function computeDecisionIndex(context) {
     return result;
   }
 
-  // PRIORITÉ 2: CCS Mixte (cycle + onchain + risk)
-  // ⚠️ FIX CRITIQUE: Utiliser context.weights si fourni (poids adaptatifs)
-  let wCycle = context.weights?.cycle ?? context.weights?.wCycle ?? 0.50;
+  // PRIORITÉ 2: Formule 4-composantes (per DECISION_INDEX_V2.md)
+  // Base weights from adaptive system
+  let wCycle = context.weights?.cycle ?? context.weights?.wCycle ?? 0.35;
   let wOnchain = context.weights?.onchain ?? context.weights?.wOnchain ?? 0.30;
-  let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.20;
+  let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.25;
+  let wSentiment = 0.10; // Sentiment weight (fixed ~10%)
 
-  // Ajuster selon confiances
-  wCycle *= (0.8 + 0.4 * confidences.cycle);
-  wOnchain *= (0.8 + 0.4 * confidences.onchain);
-  wRisk *= (0.8 + 0.4 * (scores.risk / 100)); // ✅ Direct (plus haut = plus robuste)
+  // Ajuster poids selon confiances (cycle et onchain uniquement)
+  wCycle *= (0.8 + 0.4 * (confidences?.cycle ?? 0.46));
+  wOnchain *= (0.8 + 0.4 * (confidences?.onchain ?? 0.6));
+  // Risk n'a pas de "confidence" séparée - le score EST la mesure de robustesse
+  // Sentiment n'a pas de confidence - c'est un score déjà agrégé
 
   // Initialiser deterministicState si nécessaire
   ensureDeterministicState();
 
-  // Pénalité contradiction (déterministe basée sur les scores)
+  // Pénalité contradiction (déterministe basée sur la divergence entre scores)
   let contradictionCount = simulationState.deterministicState.contradictionLevel;
-
-  // Calculer niveau de contradictions basé sur la divergence entre scores
   const scoreSpread = Math.abs(scores.cycle - scores.onchain);
   if (scoreSpread > 30) {
     contradictionCount = Math.min(2, contradictionCount + 1);
@@ -479,32 +484,50 @@ export function computeDecisionIndex(context) {
   const contraFactor = Math.max(0.8, 1 - contradictionPenalty * contradictionCount);
   wOnchain *= contraFactor;
 
-  // Normaliser
-  const sum = wCycle + wOnchain + wRisk;
+  // Normaliser les poids pour somme = 1
+  const sum = wCycle + wOnchain + wRisk + wSentiment;
   wCycle /= sum;
   wOnchain /= sum;
   wRisk /= sum;
+  wSentiment /= sum;
 
-  // Calcul DI final
+  // Calcul DI brut (4 composantes)
   // ✅ Risk est positif (0-100, plus haut = mieux) - pas d'inversion
-  const di = Math.round(
+  const rawDI =
     (scores.cycle * wCycle) +
     (scores.onchain * wOnchain) +
-    (scores.risk * wRisk)
-  );
+    (scores.risk * wRisk) +
+    (sentimentScore * wSentiment);
 
-  const confidence = Math.min(1, (confidences.cycle + confidences.onchain + confidences.regime) / 3);
+  // Phase factor (per DECISION_INDEX_V2.md)
+  // bullish: cycle ≥ 70 → factor 1.0-1.05
+  // bearish: cycle < 40 OR sentiment < 25 → factor 0.85-0.95
+  // moderate: sinon → factor 0.95-1.0
+  let phaseFactor = 1.0;
+  if (scores.cycle >= 70 && sentimentScore >= 50) {
+    phaseFactor = 1.0 + (scores.cycle - 70) * 0.001; // Slight boost for strong bull
+  } else if (scores.cycle < 40 || sentimentScore < 25) {
+    phaseFactor = 0.90; // Bearish phase penalty
+  } else {
+    phaseFactor = 0.95; // Moderate
+  }
+
+  const di = Math.round(rawDI * phaseFactor);
+
+  // Confidence basée sur cycle + onchain (les 2 seules métriques avec confidence réelle)
+  const confidence = Math.min(1, ((confidences?.cycle ?? 0.46) + (confidences?.onchain ?? 0.6)) / 2);
 
   const result = {
     di: Math.max(0, Math.min(100, di)),
-    source: 'ccs_mixed',
+    source: 'decision_index_v2',
     confidence,
-    weights: { wCycle, wOnchain, wRisk },
+    weights: { wCycle, wOnchain, wRisk, wSentiment },
+    phaseFactor,
     penalties: {
       contradiction: contradictionCount,
       contradictionFactor: contraFactor
     },
-    reasoning: `CCS mixte: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)})`
+    reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)}) + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)}) × phase(${phaseFactor.toFixed(2)})`
   };
 
   (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
@@ -840,12 +863,13 @@ export function explainPipeline(context, steps) {
       status: 'completed',
       children: {
         inputs: {
-          label: 'Decision Inputs',
+          label: 'Decision Inputs (4 composantes)',
           status: 'completed',
           data: {
             scores: context.scores,
+            sentimentScore: context.sentimentScore ?? 50,
             confidences: context.confidences,
-            overrides: context.backendDecision ? 'Backend forcé' : 'CCS mixte'
+            overrides: context.backendDecision ? 'Backend forcé' : 'DI V2 (4 comp.)'
           }
         },
 

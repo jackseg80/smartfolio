@@ -232,7 +232,7 @@ function renderScoresAndContributions(scores, contributions) {
 
   return `
     <div class="scores-contrib-annotated">
-      <div class="contrib-title">CONTRIBUTIONS</div>
+      <div class="contrib-title">CONTRIBUTIONS <span class="contrib-subtitle" title="Contribution relative = (poids × score) / total">(poids × score)</span></div>
 
       <!-- Ligne 1: Icons + Scores -->
       <div class="contrib-labels-row">
@@ -377,6 +377,10 @@ function renderMetadata(meta) {
   const source = meta.source || 'N/A';
   const timestamp = meta.timestamp || meta.last_update;
 
+  // Blended Score (régime) - affiché pour clarifier les recommandations
+  const blendedScore = meta.blended_score ?? meta.regime_score ?? null;
+  const blendedDisplay = blendedScore != null ? Math.round(blendedScore) : '--';
+
   let freshness = 'N/A';
   if (timestamp) {
     try {
@@ -419,6 +423,10 @@ function renderMetadata(meta) {
       <div class="meta-row">
         <span class="meta-label">Mode</span>
         <span class="meta-value">${mode}</span>
+      </div>
+      <div class="meta-row">
+        <span class="meta-label">Blended</span>
+        <span class="meta-value" title="Score de régime utilisé dans les recommandations">${blendedDisplay}</span>
       </div>
       <div class="meta-row">
         <span class="meta-label">Mise à jour</span>
@@ -484,6 +492,46 @@ function renderLeftColumn(data) {
       ${scoresAndContributions}
       ${metadata}
       ${recommendation}
+    </div>
+  `;
+}
+
+/**
+ * Génère le footer stats global (à placer en bas du panneau complet)
+ */
+function renderGlobalFooterStats(meta) {
+  const sentimentFG = meta.sentiment_fg || '—';
+  const sentimentColor = typeof sentimentFG === 'number' ?
+    (sentimentFG >= 70 ? '#ef4444' : sentimentFG >= 30 ? '#f59e0b' : '#10b981') : '#6b7280';
+
+  // ML Sentiment zone detection
+  const sentimentZone = typeof sentimentFG === 'number'
+    ? (sentimentFG < 25 ? 'panic' : sentimentFG > 75 ? 'euphoria' : 'normal')
+    : 'unknown';
+  const sentimentZoneLabel = {
+    panic: '(Override Panic)',
+    euphoria: '(Override Euphoria)',
+    normal: '',
+    unknown: ''
+  }[sentimentZone];
+
+  return `
+    <div class="di-global-footer">
+      <div class="footer-stat">
+        <span class="footer-label">ML Sentiment</span>
+        <span class="footer-value" style="color: ${sentimentColor}" title="Override actif si <25 ou >75">
+          ${sentimentFG}
+          ${sentimentZoneLabel ? `<span class="sentiment-zone ${sentimentZone}">${sentimentZoneLabel}</span>` : ''}
+        </span>
+      </div>
+      <div class="footer-stat">
+        <span class="footer-label">Status</span>
+        <span class="footer-value ${meta.live ? 'live' : 'offline'}">${meta.live ? '● Live' : '○ Off'}</span>
+      </div>
+      <div class="footer-stat">
+        <span class="footer-label">Source</span>
+        <span class="footer-value">${meta.source || 'N/A'}</span>
+      </div>
     </div>
   `;
 }
@@ -585,6 +633,49 @@ function renderAllocationRing(allocation) {
 }
 
 /**
+ * Génère les Key Metrics (VaR + Sharpe)
+ */
+function renderKeyMetrics(meta) {
+  const var95 = meta.risk_var95 ?? meta.var95 ?? null;
+
+  // Chercher Sharpe dans plusieurs sources possibles
+  const sharpe = meta.sharpe ?? meta.sharpe_ratio ?? meta.risk_sharpe ?? null;
+
+  // Debug log pour comprendre pourquoi Sharpe n'est pas disponible
+  if (sharpe == null) {
+    console.debug('[DI Panel] Sharpe ratio not available. Meta keys:', Object.keys(meta));
+  }
+
+  const var95Display = var95 != null
+    ? `${(Math.abs(var95) * 100).toFixed(2)}%`
+    : '--';
+  const sharpeDisplay = sharpe != null
+    ? sharpe.toFixed(2)
+    : '--';
+
+  // Couleurs basées sur les valeurs
+  const varColor = var95 != null
+    ? (Math.abs(var95) > 0.05 ? '#ef4444' : Math.abs(var95) > 0.03 ? '#f59e0b' : '#10b981')
+    : '#6b7280';
+  const sharpeColor = sharpe != null
+    ? (sharpe >= 1.5 ? '#10b981' : sharpe >= 0.5 ? '#f59e0b' : '#ef4444')
+    : '#6b7280';
+
+  return `
+    <div class="di-key-metrics">
+      <div class="metric-mini">
+        <span class="metric-mini-label">VaR 95%</span>
+        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk à 95% de confiance">${var95Display}</span>
+      </div>
+      <div class="metric-mini">
+        <span class="metric-mini-label">Sharpe</span>
+        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Ratio de Sharpe (rendement ajusté au risque)">${sharpeDisplay}</span>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Génère la Quick Context Bar (Régime, Phase, Vol, Cycle position)
  */
 function renderQuickContextBar(meta) {
@@ -599,9 +690,14 @@ function renderQuickContextBar(meta) {
     ? `${(Math.abs(meta.risk_var95) * 100).toFixed(1)}%`
     : (meta.volatility ? `${meta.volatility.toFixed(1)}%` : '--');
 
-  // Position dans le cycle
+  // Position dans le cycle - format amélioré
   const months = meta.cycle_months;
-  const cyclePos = months ? `${Math.round(months)}/18` : '--';
+  const cyclePos = months
+    ? (months > 18 ? `${Math.round(months)}m+` : `${Math.round(months)}m`)
+    : '--';
+  const cycleTooltip = months
+    ? `${Math.round(months)} mois depuis halving (cycle typique: 18 mois)`
+    : 'Position dans le cycle Bitcoin';
 
   // Couleur du régime
   const regimeColor = {
@@ -621,9 +717,9 @@ function renderQuickContextBar(meta) {
         <span class="ctx-value" style="color: ${regimeColor};">${regimeEmoji} ${regime}</span>
       </div>
       <div class="ctx-divider"></div>
-      <div class="ctx-item">
+      <div class="ctx-item" data-ctx="phase">
         <span class="ctx-label">Phase</span>
-        <span class="ctx-value">${cyclePhase}</span>
+        <span class="ctx-value" title="${cyclePhase}">${cyclePhase}</span>
       </div>
       <div class="ctx-divider"></div>
       <div class="ctx-item">
@@ -631,9 +727,9 @@ function renderQuickContextBar(meta) {
         <span class="ctx-value">${vol}</span>
       </div>
       <div class="ctx-divider"></div>
-      <div class="ctx-item">
+      <div class="ctx-item" data-ctx="cycle">
         <span class="ctx-label">Cycle</span>
-        <span class="ctx-value">${cyclePos} mois</span>
+        <span class="ctx-value" title="${cycleTooltip}">${cyclePos}</span>
       </div>
     </div>
   `;
@@ -682,13 +778,11 @@ function renderRightColumn(data) {
     '#ef4444'
   );
 
-  // ML Sentiment compact
-  const sentimentFG = m.sentiment_fg || '—';
-  const sentimentColor = typeof sentimentFG === 'number' ?
-    (sentimentFG >= 70 ? '#ef4444' : sentimentFG >= 30 ? '#f59e0b' : '#10b981') : '#6b7280';
-
   // Quick Context Bar
   const contextBar = renderQuickContextBar(m);
+
+  // Key Metrics (VaR + Sharpe)
+  const keyMetrics = renderKeyMetrics(m);
 
   return `
     <div class="di-right-col">
@@ -700,21 +794,7 @@ function renderRightColumn(data) {
         ${riskBar}
       </div>
 
-      <div class="di-footer-stats">
-        <div class="footer-stat">
-          <span class="footer-label">ML Sentiment</span>
-          <span class="footer-value" style="color: ${sentimentColor}">${sentimentFG}</span>
-        </div>
-        <div class="footer-stat">
-          <span class="footer-label">Status</span>
-          <span class="footer-value ${m.live ? 'live' : 'offline'}">${m.live ? '● Live' : '○ Off'}</span>
-        </div>
-        <div class="footer-stat">
-          <span class="footer-label">Source</span>
-          <span class="footer-value">${m.source || 'N/A'}</span>
-        </div>
-      </div>
-
+      ${keyMetrics}
       ${contextBar}
     </div>
   `;
@@ -1073,6 +1153,14 @@ function injectStyles() {
       text-align: center;
     }
 
+    .contrib-subtitle {
+      font-size: 0.55rem;
+      text-transform: none;
+      letter-spacing: 0;
+      color: rgba(148, 163, 184, 0.4);
+      cursor: help;
+    }
+
     /* Ligne 1: Labels (icons + scores) */
     .contrib-labels-row {
       display: flex;
@@ -1243,7 +1331,7 @@ function injectStyles() {
       padding: 0.75rem;
       border: 1px solid rgba(148, 163, 184, 0.05);
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 0.75rem;
     }
 
@@ -1372,14 +1460,17 @@ function injectStyles() {
       color: rgba(148, 163, 184, 0.7);
     }
 
-    /* Footer stats */
-    .di-footer-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-      margin-top: auto;
-      padding-top: 0.75rem;
+    /* Global Footer (centré en bas du panneau) */
+    .di-global-footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 0.875rem 1rem;
+      margin-top: 1rem;
       border-top: 1px solid rgba(148, 163, 184, 0.1);
+      background: rgba(30, 41, 59, 0.2);
+      border-radius: 0 0 12px 12px;
     }
 
     .footer-stat {
@@ -1407,6 +1498,57 @@ function injectStyles() {
 
     .footer-value.offline {
       color: #ef4444;
+    }
+
+    /* Sentiment zone indicator */
+    .sentiment-zone {
+      display: block;
+      font-size: 0.5rem;
+      font-weight: 500;
+      margin-top: 0.125rem;
+    }
+
+    .sentiment-zone.panic {
+      color: #ef4444;
+    }
+
+    .sentiment-zone.euphoria {
+      color: #f59e0b;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       KEY METRICS (VaR + Sharpe)
+       ═══════════════════════════════════════════════════════════ */
+
+    .di-key-metrics {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 0.625rem 0.875rem;
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+
+    .metric-mini {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.125rem;
+    }
+
+    .metric-mini-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(148, 163, 184, 0.6);
+    }
+
+    .metric-mini-value {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: rgba(226, 232, 240, 0.95);
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -1514,6 +1656,14 @@ function injectStyles() {
       max-width: 100%;
     }
 
+    /* Phase with proper overflow handling */
+    .ctx-item[data-ctx="phase"] .ctx-value {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+
     .ctx-divider {
       width: 1px;
       height: 24px;
@@ -1609,12 +1759,14 @@ function injectStyles() {
         font-size: 3rem;
       }
 
-      .di-footer-stats {
-        grid-template-columns: repeat(3, 1fr);
+      .di-global-footer {
+        gap: 1rem;
+        padding: 0.75rem 0.5rem;
+        flex-wrap: wrap;
       }
 
       .di-metadata {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.5rem;
       }
 
@@ -1622,6 +1774,38 @@ function injectStyles() {
         flex-direction: row;
         justify-content: space-between;
         text-align: left;
+      }
+
+      /* Context Bar responsive */
+      .di-context-bar {
+        padding: 0.5rem;
+        gap: 0.25rem;
+      }
+
+      .ctx-label {
+        font-size: 0.45rem;
+      }
+
+      .ctx-value {
+        font-size: 0.65rem;
+      }
+
+      .ctx-item[data-ctx="phase"] .ctx-value {
+        max-width: 80px;
+      }
+
+      /* Key Metrics responsive */
+      .di-key-metrics {
+        gap: 1rem;
+        padding: 0.5rem;
+      }
+
+      .metric-mini-label {
+        font-size: 0.45rem;
+      }
+
+      .metric-mini-value {
+        font-size: 0.75rem;
       }
     }
 
@@ -1637,6 +1821,27 @@ function injectStyles() {
       .contrib-labels-row,
       .contrib-pcts-row {
         font-size: 0.65rem;
+      }
+
+      .di-metadata {
+        grid-template-columns: 1fr;
+      }
+
+      .ctx-item[data-ctx="phase"] .ctx-value {
+        max-width: 60px;
+      }
+
+      .di-context-bar {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .ctx-item {
+        flex: 0 0 calc(50% - 0.5rem);
+      }
+
+      .ctx-divider {
+        display: none;
       }
     }
 
@@ -1706,6 +1911,9 @@ function _renderDIPanelInternal(container, data, opts = {}) {
   const leftCol = renderLeftColumn(data);
   const rightCol = renderRightColumn(data);
 
+  // Générer le footer global
+  const globalFooter = renderGlobalFooterStats(data.meta || {});
+
   // Construire le panneau complet
   container.innerHTML = `
     <div class="di-panel-gaming">
@@ -1713,6 +1921,7 @@ function _renderDIPanelInternal(container, data, opts = {}) {
         ${leftCol}
         ${rightCol}
       </div>
+      ${globalFooter}
       ${renderHelpContent()}
     </div>
   `;

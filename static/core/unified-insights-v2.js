@@ -1230,14 +1230,26 @@ export function deriveRecommendations(u) {
   flags.stables_high = flip(flags.stables_high, stablesAlloc, 0.45, 0.37);
 
   if (flags.stables_high) {
+    const targetStables = u.risk.budget.percentages?.stables || 0;
+    const riskScore = u.scores?.risk ?? 50;
+
+    // Generate tactical action based on risk profile
+    let tacticalAction = '';
+    if (targetStables >= 40) {
+      tacticalAction = `Objectif: ${targetStables}% stables - Sécuriser progressivement`;
+    } else if (targetStables >= 25) {
+      tacticalAction = `Objectif: ${targetStables}% stables - Réduire exposition risque`;
+    }
+
     recos.push({
       key: 'reco:risk:stables_high',
       topic: 'stables_allocation',
-      value: u.risk.budget.percentages?.stables,
+      value: targetStables,
       priority: 'medium',
-      title: `Allocation stables: ${u.risk.budget.percentages?.stables}%`,
-      reason: 'Budget de risque calculé par algorithme sophistiqué',
-      icon: '🛡️',
+      title: `Budget risque élevé détecté`,
+      reason: `Allocation stables recommandée: ${targetStables}%`,
+      tacticalAction: tacticalAction,
+      icon: '💡',
       source: 'risk-budget'
     });
   }

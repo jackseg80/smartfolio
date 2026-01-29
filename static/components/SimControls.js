@@ -27,9 +27,9 @@ export class SimControls {
       cycleScore: 50,
       onChainScore: 50,
       riskScore: 50,
-      cycleConf: 0.7,
-      onchainConf: 0.6,
-      regimeConf: 0.5,
+      cycleConf: 0.46,        // Default ~0.46 matches real estimateCyclePosition()
+      onchainConf: 0.6,       // Default ~0.6 matches typical composite confidence
+      sentimentScore: 50,     // Sentiment score (0-100) - 4th component per DECISION_INDEX_V2.md
       contradictionPenalty: 0.1,
       backendDecision: null,
 
@@ -120,9 +120,9 @@ export class SimControls {
               ${this.renderSlider('riskScore', 'Risk Score', 0, 100, 1, '%')}
             </div>
             <div class="controls-grid">
-              ${this.renderSlider('cycleConf', 'Cycle Confidence', 0, 1, 0.1, '', 100)}
-              ${this.renderSlider('onchainConf', 'OnChain Confidence', 0, 1, 0.1, '', 100)}
-              ${this.renderSlider('regimeConf', 'Regime Confidence', 0, 1, 0.1, '', 100)}
+              ${this.renderSlider('cycleConf', 'Cycle Confidence', 0.3, 0.95, 0.05, '', 100)}
+              ${this.renderSlider('onchainConf', 'OnChain Confidence', 0.2, 0.95, 0.05, '', 100)}
+              ${this.renderSlider('sentimentScore', 'Sentiment Score', 0, 100, 1, '%')}
             </div>
             <div class="controls-grid">
               ${this.renderSlider('contradictionPenalty', 'Contradiction Penalty', 0, 0.5, 0.05, '', 100)}
@@ -399,9 +399,12 @@ export class SimControls {
 
         case 'cycleConf':
         case 'onchainConf':
-        case 'regimeConf':
         case 'contradictionPenalty':
           this.state[id] = adjustedValue;
+          break;
+
+        case 'sentimentScore':
+          this.state.sentimentScore = value;
           break;
 
         case 'phase-enabled':
@@ -549,9 +552,16 @@ export class SimControls {
     }
 
     // Confiances faibles
-    const lowConf = Math.min(this.state.cycleConf, this.state.onchainConf, this.state.regimeConf) < 0.4;
+    const lowConf = Math.min(this.state.cycleConf, this.state.onchainConf) < 0.4;
     if (lowConf) {
       badges.push({ text: 'LOW_CONF', type: 'danger' });
+    }
+
+    // Sentiment extreme (Fear < 25 or Greed > 75)
+    if (this.state.sentimentScore < 25) {
+      badges.push({ text: 'EXTREME_FEAR', type: 'danger' });
+    } else if (this.state.sentimentScore > 75) {
+      badges.push({ text: 'EXTREME_GREED', type: 'warning' });
     }
 
     // Contradiction penalty

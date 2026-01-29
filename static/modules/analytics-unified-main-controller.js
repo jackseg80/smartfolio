@@ -413,12 +413,18 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         signals_status: s.ui?.apiStatus?.signals || 'limited',
         alpha: alpha,                          // ✅ alpha si dispo [0..1]
 
+        // Blended Score (régime) pour affichage dans métadonnées
+        blended_score: u.scores?.blended ?? blendedScore ?? null,
+        regime_score: u.scores?.blended ?? blendedScore ?? null,
+
         // Données pour tuiles
         cycle_phase: u.cycle?.phase?.description || u.cycle?.phase?.phase || actualPhase,
         cycle_months: u.cycle?.months,
         onchain_critiques: u.onchain?.criticalCount || 0,
         onchain_confidence: u.onchain?.confidence,
         risk_var95: u.risk?.var95_1d,
+        sharpe: u.risk?.sharpe ?? u.risk?.sharpe_ratio ?? null,  // Sharpe ratio pour Key Metrics
+        sharpe_ratio: u.risk?.sharpe ?? u.risk?.sharpe_ratio ?? null,  // Alias pour compatibilité
         risk_budget: u.risk?.budget?.percentages ? {
           risky: u.risk.budget.percentages.risky,
           stables: u.risk.budget.percentages.stables
