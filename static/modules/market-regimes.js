@@ -224,12 +224,19 @@ export function calculateRiskBudget(blendedScore, riskScore) {
   const blendedRounded = Math.round(blendedScore);
   const riskRounded = Math.round(riskScore || 0);
 
-  // FEATURE FLAG: Risk semantics version (legacy, v2_conservative, v2_aggressive)
-  // IMPORTANT: Lire AVANT le cache pour inclure dans la clé
-  // FIXÉ À v2_conservative (Oct 2025) pour cohérence - migration progressive
-  const riskSemanticsMode = (typeof localStorage !== 'undefined')
-    ? localStorage.getItem('RISK_SEMANTICS_MODE') || 'v2_conservative'  // CHANGED: default v2_conservative
-    : 'v2_conservative';
+  // Risk semantics version (v2_conservative, v2_aggressive)
+  // MIGRATION: Force v2 mode if legacy is detected (legacy removed in Jan 2026)
+  let riskSemanticsMode = 'v2_conservative'; // Default
+  if (typeof localStorage !== 'undefined') {
+    const storedMode = localStorage.getItem('RISK_SEMANTICS_MODE');
+    if (storedMode === 'legacy') {
+      console.warn('⚠️ LEGACY mode detected and auto-migrated to v2_conservative (legacy removed in Jan 2026)');
+      localStorage.setItem('RISK_SEMANTICS_MODE', 'v2_conservative');
+      riskSemanticsMode = 'v2_conservative';
+    } else {
+      riskSemanticsMode = storedMode || 'v2_conservative';
+    }
+  }
 
   const now = Date.now();
   const cacheKey = `${blendedRounded}-${riskRounded}-${riskSemanticsMode}`; // Include mode in key!
@@ -247,30 +254,25 @@ export function calculateRiskBudget(blendedScore, riskScore) {
     mode: riskSemanticsMode
   });
 
+  // Calculate risk_factor based on Risk Score (higher score = more robust portfolio)
+  // ✅ CORRECT SEMANTICS: Risk Score = robustesse (haut=robuste → plus de risky autorisé)
   let risk_factor;
 
-  if (riskSemanticsMode === 'legacy') {
-    // LEGACY (INVERSÉ): RiskCap = 1 - 0.5 × (RiskScore/100)
-    // ❌ BUG: Traite Risk Score comme danger (haut=dangereux) au lieu de robustesse
-    const riskCap = riskRounded != null ? 1 - 0.5 * (riskRounded / 100) : 0.75;
-    risk_factor = riskCap;
-    console.debug('⚠️ LEGACY MODE: Using inverted risk semantics (will be deprecated)');
-  } else if (riskSemanticsMode === 'v2_conservative') {
+  if (riskSemanticsMode === 'v2_conservative') {
     // V2 CONSERVATIVE: risk_factor = 0.5 + 0.5 × (RiskScore/100)
-    // ✅ CORRECT: Risk Score = robustesse (haut=robuste → plus de risky autorisé)
     // Range: [0.5 .. 1.0]
     risk_factor = 0.5 + 0.5 * (riskRounded / 100);
     console.debug('✅ V2 CONSERVATIVE: risk_factor =', risk_factor.toFixed(3));
   } else if (riskSemanticsMode === 'v2_aggressive') {
     // V2 AGGRESSIVE: risk_factor = 0.4 + 0.7 × (RiskScore/100)
-    // ✅ CORRECT: Plus de différenciation entre portfolios fragiles/robustes
+    // Plus de différenciation entre portfolios fragiles/robustes
     // Range: [0.4 .. 1.1]
     risk_factor = 0.4 + 0.7 * (riskRounded / 100);
     console.debug('✅ V2 AGGRESSIVE: risk_factor =', risk_factor.toFixed(3));
   } else {
     // Fallback to conservative if unknown mode
     risk_factor = 0.5 + 0.5 * (riskRounded / 100);
-    debugLogger.warn('Unknown RISK_SEMANTICS_MODE:', riskSemanticsMode, '- using v2_conservative');
+    console.warn('Unknown RISK_SEMANTICS_MODE:', riskSemanticsMode, '- using v2_conservative fallback');
   }
 
   // BaseRisky = clamp((Blended - 35)/45, 0, 1) - utiliser score arrondi
@@ -312,7 +314,7 @@ export function calculateRiskBudget(blendedScore, riskScore) {
       semantics_mode: riskSemanticsMode,
       blended_score: blendedRounded,
       risk_score: riskRounded,
-      formula_version: riskSemanticsMode === 'legacy' ? 'v1_inverted' : 'v2_correct'
+      formula_version: 'v2_correct' // Legacy mode removed Jan 2026
     }
   };
 

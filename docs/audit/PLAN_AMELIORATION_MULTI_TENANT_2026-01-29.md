@@ -54,9 +54,30 @@
   - Hiérarchie d'exceptions clarifiée (shared/exceptions.py avec helper `convert_standard_exception()`)
   - Patterns: ✅ catches en cascade, ✅ fallback sécurisé, ❌ bare Exception, ❌ silent failure
 
-**Points Bloquants**: Aucun
+- ✅ **P1-3 FIXÉ**: HTTPS redirect activé en production
+  - Ajouté import `HTTPSRedirectMiddleware` dans `api/main.py`
+  - Activation conditionnelle basée sur `settings.is_production()` (au lieu de DEBUG)
+  - Logging explicite pour indiquer si HTTPS redirect est actif ou non
+  - Créé tests unitaires: `tests/unit/test_https_middleware.py` (3 tests passed)
+  - **Fichiers modifiés**:
+    - `api/main.py` (import + activation conditionnelle)
+    - `tests/unit/test_https_middleware.py` (nouveau)
 
-**Prochaines Actions**: Passer à P1-3 (HTTPS redirect) ou P1-4 (Frontend tests)
+- ✅ **P1-5 FIXÉ**: Bug Risk Score legacy mode éliminé
+  - **Supprimé complètement le code legacy** de `static/modules/market-regimes.js` (lignes 252-257)
+  - Ajouté migration automatique: si `localStorage.RISK_SEMANTICS_MODE === 'legacy'` → force `v2_conservative`
+  - Sémantique correcte garantie: Risk Score = robustesse (haut=robuste → plus de risky autorisé)
+  - Seuls modes valides: `v2_conservative` (default) et `v2_aggressive`
+  - Créé tests de régression: `static/tests/riskScoreSemantics.test.js` (17 tests)
+    - ⚠️ Note: Tests créés mais infrastructure Vitest nécessite réparation (P1-4)
+  - **Fichiers modifiés**:
+    - `static/modules/market-regimes.js` (suppression legacy + migration)
+    - `static/tests/riskScoreSemantics.test.js` (nouveau)
+
+**Points Bloquants**:
+- Infrastructure tests frontend (Vitest) non fonctionnelle → P1-4 nécessaire
+
+**Prochaines Actions**: Passer à Itération 3 (P1-P2 - Qualité de Code) ou P1-4 (Frontend tests infrastructure)
 
 ---
 
@@ -252,10 +273,10 @@ grep -r "api_key\[:" services/
 
 ---
 
-### Itération 2 - Sécurité et Robustesse (Priorité: P1) 🔄
+### Itération 2 - Sécurité et Robustesse (Priorité: P1) ✅
 
 **Durée estimée**: 1-2 sprints
-**Statut**: 🔄 IN PROGRESS (2/4 actions complétées)
+**Statut**: ✅ COMPLETED (4/4 actions complétées)
 
 #### Actions
 
@@ -278,20 +299,33 @@ grep -r "api_key\[:" services/
    - **Fichiers créés**:
      - `docs/EXCEPTION_HANDLING_GUIDE.md` (guide complet avec patterns ✅/❌)
 
-3. ⬜ **Activer HTTPS redirect pour production**
-   - ⬜ Conditionner sur `ENVIRONMENT=production`
-   - **Fichier**: `api/main.py`
+3. ✅ **Activer HTTPS redirect pour production**
+   - ✅ Importé `HTTPSRedirectMiddleware` dans `api/main.py`
+   - ✅ Activation conditionnelle basée sur `settings.is_production()`
+   - ✅ Logging explicite pour monitoring
+   - ✅ Tests unitaires créés: `tests/unit/test_https_middleware.py` (3 tests passed)
+   - **Fichiers modifiés**:
+     - `api/main.py` (lignes 10-13, 268-274)
+     - `tests/unit/test_https_middleware.py` (nouveau)
 
-4. ⬜ **Corriger le bug Risk Score**
-   - ⬜ Investiguer le commentaire dans `market-regimes.js:254`
-   - ⬜ Appliquer la sémantique correcte (haut = robuste)
-   - ⬜ Ajouter test de régression
-   - **Fichier**: `static/modules/market-regimes.js`
+4. ✅ **Corriger le bug Risk Score**
+   - ✅ **Code legacy complètement supprimé** (plus de mode inversé)
+   - ✅ Migration automatique: legacy → v2_conservative
+   - ✅ Sémantique correcte: Risk Score = robustesse (haut=robuste)
+   - ✅ Tests de régression créés: `static/tests/riskScoreSemantics.test.js` (17 tests)
+   - **Note**: Infrastructure Vitest nécessite réparation (P1-4 scope)
+   - **Fichiers modifiés**:
+     - `static/modules/market-regimes.js` (lignes 227-269, 317)
+     - `static/tests/riskScoreSemantics.test.js` (nouveau)
 
 #### Vérification
 ```bash
-pytest tests/integration/test_path_traversal.py
-pytest tests/unit/test_risk_score.py
+# Backend
+pytest tests/unit/test_https_middleware.py  # 3 passed ✅
+pytest tests/unit/test_user_scoped_fs.py    # 19 passed ✅
+
+# Frontend (nécessite fix P1-4)
+npm test -- static/tests/riskScoreSemantics.test.js
 ```
 
 ---

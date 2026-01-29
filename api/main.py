@@ -10,6 +10,7 @@ from logging.handlers import RotatingFileHandler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from api.middleware import RateLimitMiddleware
 from api.middlewares import (
     add_security_headers_middleware,
@@ -265,9 +266,12 @@ app.add_middleware(
 )
 
 # Middleware de sécurité
-# Note: HTTPSRedirectMiddleware désactivé pour LAN HTTP (Docker production)
-# if not DEBUG:
-#     app.add_middleware(HTTPSRedirectMiddleware)
+# HTTPS redirect activé en production pour protéger les tokens JWT
+if settings.is_production():
+    app.add_middleware(HTTPSRedirectMiddleware)
+    logger.info("🔒 HTTPSRedirectMiddleware activé (production mode)")
+else:
+    logger.info("⚠️  HTTPSRedirectMiddleware désactivé (dev/LAN mode)")
 
 # TrustedHost config selon l'environnement
 # Lecture depuis ALLOWED_HOSTS (env var) pour flexibilité production
