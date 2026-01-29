@@ -4,32 +4,32 @@ Middleware configuration for SmartFolio API
 Extracted from api/main.py for better maintainability.
 Configures all application middlewares: CORS, security, compression, rate limiting, etc.
 """
+
 from __future__ import annotations
-import os
+
 import logging
+import os
 from typing import List, Optional
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 from api.middleware import RateLimitMiddleware
 from api.middlewares import (
     add_security_headers_middleware,
-    request_timing_middleware,
-    request_logger_middleware,
     no_cache_dev_middleware,
+    request_logger_middleware,
+    request_timing_middleware,
 )
 
 logger = logging.getLogger(__name__)
 
 
 def setup_middlewares(
-    app: FastAPI,
-    settings,
-    debug: bool,
-    environment: str,
-    cors_origins: Optional[List[str]] = None
+    app: FastAPI, settings, debug: bool, environment: str, cors_origins: Optional[List[str]] = None
 ) -> None:
     """
     Configure all application middlewares in the correct order.
@@ -90,7 +90,9 @@ def setup_middlewares(
     else:
         # En production sans ALLOWED_HOSTS: fallback permissif pour Docker/LAN
         allowed_hosts = ["*"]
-        logger.warning("⚠️  TrustedHostMiddleware: production sans ALLOWED_HOSTS défini, utilise '*' (permissif)")
+        logger.warning(
+            "⚠️  TrustedHostMiddleware: production sans ALLOWED_HOSTS défini, utilise '*' (permissif)"
+        )
 
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 

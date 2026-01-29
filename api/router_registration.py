@@ -4,10 +4,13 @@ Router registration for SmartFolio API
 Extracted from api/main.py for better maintainability.
 Imports and registers all API routers in the FastAPI application.
 """
+
 from __future__ import annotations
+
 import logging
 from datetime import datetime
-from fastapi import FastAPI, APIRouter
+
+from fastapi import APIRouter, FastAPI
 
 logger = logging.getLogger(__name__)
 
@@ -34,16 +37,16 @@ def register_routers(app: FastAPI) -> None:
     logger.info("📦 Starting router registration...")
 
     # ========== Authentication & Admin ==========
-    from api.auth_router import router as auth_router
     from api.admin_router import router as admin_router
+    from api.auth_router import router as auth_router
 
     app.include_router(auth_router)  # Authentication (login/logout JWT)
     app.include_router(admin_router)  # Admin dashboard (RBAC protected)
     logger.info("✅ Auth & Admin routers registered")
 
     # ========== Taxonomy & Classification ==========
-    from api.taxonomy_endpoints import router as taxonomy_router
     from api.smart_taxonomy_endpoints import router as smart_taxonomy_router
+    from api.taxonomy_endpoints import router as taxonomy_router
 
     app.include_router(taxonomy_router)
     app.include_router(smart_taxonomy_router)
@@ -52,11 +55,11 @@ def register_routers(app: FastAPI) -> None:
     # ========== Execution & Monitoring ==========
     # Execution endpoints - modular routers (Phase 2.1)
     from api.execution import (
-        validation_router,
         execution_router,
-        monitoring_router,
         governance_router,
-        signals_router
+        monitoring_router,
+        signals_router,
+        validation_router,
     )
     from api.execution_history import router as execution_history_router
     from api.monitoring_advanced import router as monitoring_advanced_router
@@ -73,19 +76,21 @@ def register_routers(app: FastAPI) -> None:
     logger.info("✅ Execution & Monitoring routers registered")
 
     # ========== Analytics & ML ==========
-    from api.analytics_endpoints import router as analytics_router
     from api.advanced_analytics_endpoints import router as advanced_analytics_router
-    from api.unified_ml_endpoints import router as ml_router
+    from api.analytics_endpoints import router as analytics_router
+    from api.intelligence_endpoints import router as intelligence_router
     from api.ml_bourse_endpoints import router as ml_bourse_router
     from api.ml_crypto_endpoints import router as ml_crypto_router
-    from api.intelligence_endpoints import router as intelligence_router
+    from api.unified_ml_endpoints import router as ml_router
 
     # Analytics router monté une seule fois avec prefix=/api/analytics
     app.include_router(analytics_router, prefix="/api")
     app.include_router(advanced_analytics_router)
     app.include_router(ml_router)
     app.include_router(ml_bourse_router)  # ML predictions pour Bourse/Saxo
-    app.include_router(ml_crypto_router, prefix="/api/ml/crypto", tags=["ML Crypto"])  # ML regime detection pour Bitcoin
+    app.include_router(
+        ml_crypto_router, prefix="/api/ml/crypto", tags=["ML Crypto"]
+    )  # ML regime detection pour Bitcoin
     app.include_router(intelligence_router)
     logger.info("✅ Analytics & ML routers registered")
 
@@ -98,19 +103,22 @@ def register_routers(app: FastAPI) -> None:
         """Status ML avec chargement à la demande"""
         try:
             # Import seulement quand cette route est appelée
-            from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
+            from services.ml_pipeline_manager_optimized import (
+                optimized_pipeline_manager as pipeline_manager,
+            )
+
             status = pipeline_manager.get_pipeline_status()
             return {
                 "pipeline_status": status,
                 "timestamp": datetime.now().isoformat(),
-                "loading_mode": "lazy"
+                "loading_mode": "lazy",
             }
         except (ImportError, ModuleNotFoundError, RuntimeError, AttributeError) as e:
             return {
                 "error": "ML system not ready",
                 "details": str(e),
                 "status": "loading",
-                "loading_mode": "lazy"
+                "loading_mode": "lazy",
             }
 
     @ml_router_lazy.get("/health")
@@ -119,16 +127,16 @@ def register_routers(app: FastAPI) -> None:
         return {
             "status": "available",
             "message": "ML system ready for lazy loading",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     app.include_router(ml_router_lazy)
     logger.info("✅ ML Lazy Loading router registered")
 
     # ========== Risk Management ==========
-    from api.risk_endpoints import router as risk_router
-    from api.risk_bourse_endpoints import router as risk_bourse_router
     from api.advanced_risk_endpoints import router as advanced_risk_router
+    from api.risk_bourse_endpoints import router as risk_bourse_router
+    from api.risk_endpoints import router as risk_router
 
     app.include_router(risk_router)
     app.include_router(risk_bourse_router)  # Risk management pour Bourse/Saxo
@@ -136,10 +144,10 @@ def register_routers(app: FastAPI) -> None:
     logger.info("✅ Risk Management routers registered")
 
     # ========== Portfolio & Performance ==========
+    from api.advanced_rebalancing_endpoints import router as advanced_rebalancing_router
+    from api.performance_endpoints import router as performance_router
     from api.portfolio_endpoints import router as portfolio_router
     from api.portfolio_optimization_endpoints import router as portfolio_optimization_router
-    from api.performance_endpoints import router as performance_router
-    from api.advanced_rebalancing_endpoints import router as advanced_rebalancing_router
     from api.rebalancing_strategy_router import router as rebalancing_strategy_router
 
     app.include_router(portfolio_router)
@@ -150,9 +158,9 @@ def register_routers(app: FastAPI) -> None:
     logger.info("✅ Portfolio & Performance routers registered")
 
     # ========== Strategy & Backtesting ==========
-    from api.strategy_endpoints import router as strategy_router
     from api.backtesting_endpoints import router as backtesting_router
     from api.multi_asset_endpoints import router as multi_asset_router
+    from api.strategy_endpoints import router as strategy_router
 
     app.include_router(strategy_router)
     app.include_router(backtesting_router)
@@ -168,9 +176,9 @@ def register_routers(app: FastAPI) -> None:
     logger.info("✅ Alerts & Real-time routers registered")
 
     # ========== Market Data & Pricing ==========
+    from api.coingecko_proxy_router import router as coingecko_proxy_router
     from api.market_endpoints import router as market_router
     from api.pricing_router import router as pricing_router
-    from api.coingecko_proxy_router import router as coingecko_proxy_router
 
     app.include_router(market_router)
     app.include_router(pricing_router)
@@ -185,8 +193,8 @@ def register_routers(app: FastAPI) -> None:
 
     # ========== Integrations ==========
     # Saxo Bank
-    from api.saxo_endpoints import router as saxo_router
     from api.saxo_auth_router import router as saxo_auth_router
+    from api.saxo_endpoints import router as saxo_router
 
     app.include_router(saxo_router)
     app.include_router(saxo_auth_router)  # Saxo OAuth2 authentication
@@ -199,9 +207,9 @@ def register_routers(app: FastAPI) -> None:
     logger.info("✅ Kraken router registered")
 
     # ========== Data Sources ==========
+    from api.csv_endpoints import router as csv_router
     from api.sources_endpoints import router as sources_router
     from api.sources_v2_endpoints import router as sources_v2_router
-    from api.csv_endpoints import router as csv_router
 
     app.include_router(sources_router)
     app.include_router(sources_v2_router)  # Sources V2 - category-based modular sources
@@ -236,6 +244,7 @@ def register_routers(app: FastAPI) -> None:
     # Crypto-Toolbox router (native FastAPI with Playwright)
     try:
         from api.crypto_toolbox_endpoints import router as crypto_toolbox_router
+
         app.include_router(crypto_toolbox_router)
         logger.info("🎭 Crypto-Toolbox: FastAPI native scraper enabled")
     except (ImportError, ModuleNotFoundError) as e:
@@ -243,9 +252,9 @@ def register_routers(app: FastAPI) -> None:
         logger.warning("⚠️  Crypto-toolbox endpoints will not be available")
 
     # ========== Utilities ==========
+    from api.config_router import router as config_router
     from api.debug_router import router as debug_router
     from api.health_router import router as health_router
-    from api.config_router import router as config_router
 
     app.include_router(debug_router)
     app.include_router(health_router)

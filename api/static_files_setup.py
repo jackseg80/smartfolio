@@ -4,9 +4,12 @@ Static files configuration for SmartFolio API
 Extracted from api/main.py for better maintainability.
 Configures static file serving: /static, /data, /config, /tests directories.
 """
+
 from __future__ import annotations
+
 import logging
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -27,9 +30,11 @@ def setup_static_files(app: FastAPI, debug: bool = False) -> None:
         app: FastAPI application instance
         debug: Enable debug mode to mount test files
     """
-    BASE_DIR = Path(__file__).resolve().parent.parent  # répertoire du repo (niveau au-dessus d'api/)
-    STATIC_DIR = BASE_DIR / "static"                    # D:\Python\smartfolio\static
-    DATA_DIR = BASE_DIR / "data"                        # D:\Python\smartfolio\data
+    BASE_DIR = (
+        Path(__file__).resolve().parent.parent
+    )  # répertoire du repo (niveau au-dessus d'api/)
+    STATIC_DIR = BASE_DIR / "static"  # D:\Python\smartfolio\static
+    DATA_DIR = BASE_DIR / "data"  # D:\Python\smartfolio\data
 
     logger.debug(f"BASE_DIR = {BASE_DIR}")
     logger.debug(f"STATIC_DIR = {STATIC_DIR}, exists = {STATIC_DIR.exists()}")
