@@ -5,12 +5,12 @@
  */
 
 import { calculateRiskBudget } from '../modules/market-regimes.js';
-import { describe, test, expect, beforeEach, afterEach } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Helper for range validation
 const inRange = (val, min, max, label = 'value') => {
-  expect(val, `${label} should be >= ${min}`).toBeGreaterThanOrEqual(min);
-  expect(val, `${label} should be <= ${max}`).toBeLessThanOrEqual(max);
+  expect(val).toBeGreaterThanOrEqual(min);
+  expect(val).toBeLessThanOrEqual(max);
 };
 
 describe('Risk Score Semantics - Correct Interpretation', () => {

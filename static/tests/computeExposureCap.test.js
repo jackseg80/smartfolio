@@ -4,12 +4,12 @@
  */
 
 import { computeExposureCap } from '../modules/targets-coordinator.js';
-import { describe, test, expect } from 'vitest';
+import { describe, test, expect } from '@jest/globals';
 
 // Helper for range validation
 const inRange = (val, min, max, label = 'value') => {
-  expect(val, `${label} should be >= ${min}`).toBeGreaterThanOrEqual(min);
-  expect(val, `${label} should be <= ${max}`).toBeLessThanOrEqual(max);
+  expect(val).toBeGreaterThanOrEqual(min);
+  expect(val).toBeLessThanOrEqual(max);
 };
 
 describe('computeExposureCap - Core Functionality', () => {
