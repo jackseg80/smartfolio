@@ -68,4 +68,45 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=1.2.0",
     "pytest-cov>=7.0.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+]
+
+# Code formatting with black
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312", "py313"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | archive
+  | data
+  | logs
+  | htmlcov
+  | node_modules
+  | __pycache__
+)/
+'''
+
+# Import sorting with isort
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_glob = [
+    ".venv/*",
+    "venv/*",
+    "archive/*",
+    "data/*",
+    "logs/*",
+    "htmlcov/*",
+    "node_modules/*",
 ]

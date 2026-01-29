@@ -77,7 +77,30 @@
 **Points Bloquants**:
 - Infrastructure tests frontend (Vitest) non fonctionnelle → P1-4 nécessaire
 
-**Prochaines Actions**: Passer à Itération 3 (P1-P2 - Qualité de Code) ou P1-4 (Frontend tests infrastructure)
+**Prochaines Actions**: ~~Passer à Itération 3 (P1-P2 - Qualité de Code)~~ ou P1-4 (Frontend tests infrastructure)
+
+---
+
+### Session 2026-01-29 (suite 2) - Itération 3 (P1-P2) En Cours
+
+**Accomplissements**:
+
+- ✅ **P1-P2 Linting Python CONFIGURÉ**: Outils de qualité de code configurés
+  - Ajouté black config dans `pyproject.toml` (line-length=100, target py311-py313)
+  - Ajouté isort config dans `pyproject.toml` (profile="black", compatibilité totale)
+  - Créé `.flake8` avec règles adaptées (max-complexity=15, ignore E203/W503/E501)
+  - Installé dépendances: black>=24.0.0, isort>=5.13.0, flake8>=7.0.0
+  - Créé script helper: `scripts/lint.py` (usage: `python scripts/lint.py [--check|--fix]`)
+  - **Fichiers créés/modifiés**:
+    - `pyproject.toml` (sections [tool.black] et [tool.isort])
+    - `.flake8` (nouveau)
+    - `scripts/lint.py` (nouveau - helper script)
+  - **Tests validés**: black, isort, flake8 fonctionnels et détectent les problèmes
+  - **Note**: Application sur le codebase (434 fichiers) reportée pour effort graduel
+
+**Points Bloquants**: Aucun
+
+**Prochaines Actions**: Documenter l'utilisation du linting dans README/CONTRIBUTING ou continuer Itération 3 (découper main.py)
 
 ---
 
@@ -330,30 +353,24 @@ npm test -- static/tests/riskScoreSemantics.test.js
 
 ---
 
-### Itération 3 - Qualité de Code (Priorité: P1-P2) ⬜
+### Itération 3 - Qualité de Code (Priorité: P1-P2) 🔄
 
 **Durée estimée**: 1 sprint
-**Statut**: ⬜ TODO
+**Statut**: 🔄 IN PROGRESS (1/3 actions complétées)
 
 #### Actions
 
-1. ⬜ **Configurer linting Python**
-   - ⬜ Ajouter config black dans pyproject.toml
-   - ⬜ Ajouter config isort dans pyproject.toml
-   - ⬜ Ajouter config flake8
-   - ⬜ Exécuter black/isort sur codebase
-   ```toml
-   # pyproject.toml additions
-   [tool.black]
-   line-length = 100
-
-   [tool.isort]
-   profile = "black"
-
-   [tool.flake8]
-   max-line-length = 100
-   extend-ignore = ["E203"]
-   ```
+1. ✅ **Configurer linting Python**
+   - ✅ Ajouté config black dans pyproject.toml (line-length=100, py311-py313)
+   - ✅ Ajouté config isort dans pyproject.toml (profile="black")
+   - ✅ Créé .flake8 (max-complexity=15, ignore E203/W503/E501)
+   - ✅ Installé dépendances: black, isort, flake8
+   - ✅ Créé script helper: `scripts/lint.py`
+   - ⚠️ Application graduelle sur codebase (434 fichiers Python)
+   - **Fichiers créés/modifiés**:
+     - `pyproject.toml` (sections [tool.black] et [tool.isort])
+     - `.flake8` (nouveau)
+     - `scripts/lint.py` (nouveau)
 
 2. ⬜ **Découper main.py**
    - ⬜ Extraire: `api/router_registration.py`

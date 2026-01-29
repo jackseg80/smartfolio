@@ -1,0 +1,39 @@
+[flake8]
+# Maximum line length (aligned with black)
+max-line-length = 100
+
+# Ignore specific errors
+extend-ignore =
+    # E203: whitespace before ':' (conflicts with black)
+    E203,
+    # W503: line break before binary operator (black style)
+    W503,
+    # E501: line too long (handled by black)
+    E501
+
+# Exclude directories
+exclude =
+    .git,
+    .venv,
+    venv,
+    archive,
+    data,
+    logs,
+    htmlcov,
+    __pycache__,
+    node_modules,
+    *.egg-info,
+    build,
+    dist
+
+# Maximum complexity (McCabe)
+max-complexity = 15
+
+# Show source code for each error
+show-source = True
+
+# Show statistics at the end
+statistics = True
+
+# Count errors
+count = True
