@@ -66,13 +66,15 @@ def setup_middlewares(
     )
     logger.info(f"✅ CORS configured with {len(cors_origins or default_origins)} allowed origins")
 
-    # ========== HTTPS Redirect (Production Only) ==========
-    # HTTPS redirect activé en production pour protéger les tokens JWT
-    if settings.is_production():
+    # ========== HTTPS Redirect (Configurable) ==========
+    # HTTPS redirect contrôlé via SECURITY_FORCE_HTTPS
+    # Pour serveur LAN sans SSL : laisser à False
+    # Pour serveur public avec SSL : mettre à True
+    if settings.security.force_https:
         app.add_middleware(HTTPSRedirectMiddleware)
-        logger.info("🔒 HTTPSRedirectMiddleware activé (production mode)")
+        logger.info("🔒 HTTPSRedirectMiddleware activé (SECURITY_FORCE_HTTPS=true)")
     else:
-        logger.info("⚠️  HTTPSRedirectMiddleware désactivé (dev/LAN mode)")
+        logger.info("⚠️  HTTPSRedirectMiddleware désactivé (SECURITY_FORCE_HTTPS=false)")
 
     # ========== Trusted Host Configuration ==========
     # TrustedHost config selon l'environnement

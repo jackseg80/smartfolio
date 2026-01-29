@@ -81,6 +81,8 @@ services:
       # Security (optional, for dev/debug)
       DEBUG_TOKEN: ${DEBUG_TOKEN:-}
       ADMIN_KEY: ${ADMIN_KEY:-}
+      # HTTPS Redirect (set to true only if you have SSL certificate)
+      SECURITY_FORCE_HTTPS: ${SECURITY_FORCE_HTTPS:-false}
 
       # Data sources
       ALLOW_STUB_SOURCES: ${ALLOW_STUB_SOURCES:-false}

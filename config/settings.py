@@ -80,7 +80,10 @@ class SecurityConfig(BaseSettings):
     )
     csp_frame_ancestors: List[str] = Field(default=["'self'"], description="Origines autorisées pour l'embed (frame-ancestors)")
     csp_allow_inline_dev: bool = Field(default=True, description="Autoriser 'unsafe-inline' et 'unsafe-eval' en dev pour /docs/")
-    
+
+    # HTTPS Redirect Control
+    force_https: bool = Field(default=False, description="Forcer redirection HTTPS (désactiver pour serveur LAN sans SSL)")
+
     @field_validator('debug_token')
     @classmethod
     def validate_debug_token(cls, v):
