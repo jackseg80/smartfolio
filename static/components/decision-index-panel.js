@@ -537,12 +537,18 @@ function renderGlobalFooterStats(meta) {
 }
 
 /**
- * Génère une barre de pilier compacte
+ * Génère une barre de pilier compacte avec phases visuelles pour le Cycle
  */
-function renderCompactPillarBar(label, icon, value, subtext, confidence, color) {
+function renderCompactPillarBar(label, icon, value, subtext, confidence, color, meta = {}) {
   const percentage = Math.min(100, Math.max(0, value));
   const barColor = color || getScoreColor(value);
 
+  // Si c'est le pilier Cycle, afficher les phases visuelles
+  if (label === 'Cycle' && meta.cycle_months != null) {
+    return renderCyclePillarWithPhases(value, subtext, confidence, meta);
+  }
+
+  // Barre standard pour les autres piliers
   return `
     <div class="pillar-bar-compact">
       <div class="pillar-header">
@@ -562,12 +568,68 @@ function renderCompactPillarBar(label, icon, value, subtext, confidence, color) 
 }
 
 /**
- * Génère le SVG Allocation Ring (donut chart)
+ * Génère une barre de cycle avec phases visuelles
+ */
+function renderCyclePillarWithPhases(value, subtext, confidence, meta) {
+  const months = meta.cycle_months || 0;
+  const totalMonths = 48;
+  const positionPercent = Math.min(100, (months / totalMonths) * 100);
+
+  // Phases du cycle (48 mois)
+  const phases = [
+    { name: 'Acc', start: 0, end: 6, color: '#f59e0b', emoji: '🟡' },
+    { name: 'Bull', start: 6, end: 18, color: '#10b981', emoji: '🟢' },
+    { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '🟣' },
+    { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '🔴' },
+    { name: 'Pre', start: 36, end: 48, color: '#6b7280', emoji: '⚫' }
+  ];
+
+  // Déterminer la phase actuelle
+  const currentPhase = phases.find(p => months >= p.start && months < p.end) || phases[0];
+
+  // Générer les segments de phases
+  const phaseSegments = phases.map(p => {
+    const widthPct = ((p.end - p.start) / totalMonths) * 100;
+    const isActive = p === currentPhase;
+    return `
+      <div class="cycle-phase-mini"
+           style="width: ${widthPct}%; background: ${p.color}; opacity: ${isActive ? 1 : 0.4};"
+           title="${p.name}: ${p.start}-${p.end}m"></div>
+    `;
+  }).join('');
+
+  return `
+    <div class="pillar-bar-compact pillar-cycle-visual">
+      <div class="pillar-header">
+        <div class="pillar-label">
+          <span class="pillar-icon">🔄</span>
+          <span class="pillar-name">Cycle</span>
+          ${confidence ? `<span class="conf-chip">${confidence}%</span>` : ''}
+        </div>
+        <div class="pillar-score">${Math.round(value)}</div>
+      </div>
+      <div class="pillar-track pillar-track-cycle">
+        <!-- Phases en arrière-plan -->
+        <div class="cycle-phases-bg">
+          ${phaseSegments}
+        </div>
+        <!-- Marqueur de position -->
+        <div class="cycle-position-mini" style="left: ${positionPercent}%;">
+          <div class="cycle-marker-mini"></div>
+        </div>
+      </div>
+      ${subtext ? `<div class="pillar-sub">${currentPhase.emoji} ${subtext}</div>` : ''}
+    </div>
+  `;
+}
+
+/**
+ * Génère une barre horizontale compacte pour l'allocation (remplace le donut)
  * @param {Object} allocation - { btc: %, eth: %, stables: %, alts: % }
  */
-function renderAllocationRing(allocation) {
+function renderAllocationBar(allocation) {
   if (!allocation || typeof allocation !== 'object') {
-    return '<div class="alloc-ring-placeholder">Allocation non disponible</div>';
+    return '<div class="alloc-bar-placeholder">Allocation non disponible</div>';
   }
 
   const btc = allocation.btc || 0;
@@ -577,7 +639,7 @@ function renderAllocationRing(allocation) {
   const total = btc + eth + stables + alts;
 
   if (total === 0) {
-    return '<div class="alloc-ring-placeholder">Pas de données</div>';
+    return '<div class="alloc-bar-placeholder">Pas de données</div>';
   }
 
   // Normaliser à 100%
@@ -589,87 +651,72 @@ function renderAllocationRing(allocation) {
     { name: 'Alts', pct: normalize(alts), color: '#8b5cf6' }
   ].filter(s => s.pct > 0);
 
-  // SVG donut avec stroke-dasharray
-  const radius = 32;
-  const circumference = 2 * Math.PI * radius;
-  let offset = 0;
+  // Barre empilée horizontale
+  const barSegments = segments.map(seg => `
+    <div class="alloc-seg" style="width: ${seg.pct}%; background: ${seg.color};" title="${seg.name}: ${seg.pct.toFixed(0)}%">
+      <span class="alloc-seg-label">${seg.pct >= 12 ? `${seg.pct.toFixed(0)}%` : ''}</span>
+    </div>
+  `).join('');
 
-  const arcs = segments.map(seg => {
-    const dashLen = (seg.pct / 100) * circumference;
-    const dashGap = circumference - dashLen;
-    const arc = `
-      <circle
-        cx="50" cy="50" r="${radius}"
-        fill="none"
-        stroke="${seg.color}"
-        stroke-width="12"
-        stroke-dasharray="${dashLen} ${dashGap}"
-        stroke-dashoffset="${-offset}"
-        style="transition: stroke-dashoffset 0.5s ease;"
-      />
-    `;
-    offset += dashLen;
-    return arc;
-  }).join('');
-
+  // Légende inline compacte
   const legend = segments.map(seg =>
-    `<span class="alloc-leg" style="--c:${seg.color}">
-      <span class="alloc-dot"></span>${seg.name} ${seg.pct.toFixed(0)}%
+    `<span class="alloc-leg-inline" style="--c:${seg.color}">
+      <span class="alloc-dot-sm"></span>${seg.name} ${seg.pct.toFixed(0)}%
     </span>`
   ).join('');
 
   return `
-    <div class="alloc-ring-container">
-      <div class="alloc-ring-title">ALLOCATION</div>
-      <div class="alloc-ring-wrapper">
-        <svg viewBox="0 0 100 100" class="alloc-ring-svg">
-          <circle cx="50" cy="50" r="${radius}" fill="none" stroke="rgba(148,163,184,0.1)" stroke-width="12"/>
-          ${arcs}
-        </svg>
+    <div class="alloc-bar-container">
+      <div class="alloc-bar-title">ALLOCATION</div>
+      <div class="alloc-bar-track">
+        ${barSegments}
       </div>
-      <div class="alloc-legend">${legend}</div>
+      <div class="alloc-legend-inline">${legend}</div>
     </div>
   `;
 }
 
 /**
- * Génère les Key Metrics (VaR + Sharpe)
+ * Génère les Key Metrics (VaR + Sharpe + Risk Budget)
  */
 function renderKeyMetrics(meta) {
+  // VaR 95%
   const var95 = meta.risk_var95 ?? meta.var95 ?? null;
-
-  // Chercher Sharpe dans plusieurs sources possibles
-  const sharpe = meta.sharpe ?? meta.sharpe_ratio ?? meta.risk_sharpe ?? null;
-
-  // Debug log pour comprendre pourquoi Sharpe n'est pas disponible
-  if (sharpe == null) {
-    console.debug('[DI Panel] Sharpe ratio not available. Meta keys:', Object.keys(meta));
-  }
-
   const var95Display = var95 != null
     ? `${(Math.abs(var95) * 100).toFixed(2)}%`
     : '--';
-  const sharpeDisplay = sharpe != null
-    ? sharpe.toFixed(2)
-    : '--';
-
-  // Couleurs basées sur les valeurs
   const varColor = var95 != null
     ? (Math.abs(var95) > 0.05 ? '#ef4444' : Math.abs(var95) > 0.03 ? '#f59e0b' : '#10b981')
     : '#6b7280';
+
+  // Sharpe Ratio
+  const sharpe = meta.sharpe ?? meta.sharpe_ratio ?? meta.risk_sharpe ?? null;
+  const sharpeDisplay = sharpe != null ? sharpe.toFixed(2) : '--';
   const sharpeColor = sharpe != null
     ? (sharpe >= 1.5 ? '#10b981' : sharpe >= 0.5 ? '#f59e0b' : '#ef4444')
+    : '#6b7280';
+
+  // Risk Budget (% risky assets)
+  const riskBudget = meta.risk_budget ?? null;
+  const riskyPct = riskBudget?.risky ?? null;
+  const riskBudgetDisplay = riskyPct != null ? `${Math.round(riskyPct)}%` : '--';
+  const riskBudgetColor = riskyPct != null
+    ? (riskyPct >= 60 ? '#ef4444' : riskyPct >= 40 ? '#f59e0b' : '#10b981')
     : '#6b7280';
 
   return `
     <div class="di-key-metrics">
       <div class="metric-mini">
         <span class="metric-mini-label">VaR 95%</span>
-        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk à 95% de confiance">${var95Display}</span>
+        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk à 95%">${var95Display}</span>
       </div>
       <div class="metric-mini">
         <span class="metric-mini-label">Sharpe</span>
-        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Ratio de Sharpe (rendement ajusté au risque)">${sharpeDisplay}</span>
+        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Ratio de Sharpe">${sharpeDisplay}</span>
+      </div>
+      <div class="metric-mini">
+        <span class="metric-mini-label">Risk %</span>
+        <span class="metric-mini-value" style="color: ${riskBudgetColor};" title="Allocation actifs risqués">${riskBudgetDisplay}</span>
       </div>
     </div>
   `;
@@ -742,8 +789,8 @@ function renderRightColumn(data) {
   const s = data.scores || {};
   const m = data.meta || {};
 
-  // Allocation Ring (si données disponibles)
-  const allocationRing = data.allocation ? renderAllocationRing(data.allocation) : '';
+  // Allocation Bar compacte (si données disponibles)
+  const allocationRing = data.allocation ? renderAllocationBar(data.allocation) : '';
 
   // Préparer les données pour chaque pilier
   const cycleConf = m.cycle_confidence ? Math.round(m.cycle_confidence * 100) : null;
@@ -760,7 +807,8 @@ function renderRightColumn(data) {
     'Cycle', '🔄', s.cycle || 0,
     cycleMonths ? `${cyclePhase} • ${Math.round(cycleMonths)}m` : cyclePhase,
     cycleConf,
-    '#3b82f6'
+    '#3b82f6',
+    m  // Pass meta for visual phases
   );
 
   const onchainBar = renderCompactPillarBar(
@@ -1460,6 +1508,81 @@ function injectStyles() {
       color: rgba(148, 163, 184, 0.7);
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       CYCLE PILLAR - Visual Phases
+       ═══════════════════════════════════════════════════════════ */
+
+    .pillar-cycle-visual .pillar-track {
+      position: relative;
+      overflow: visible;
+    }
+
+    .pillar-track-cycle {
+      background: rgba(15, 23, 42, 0.8) !important;
+    }
+
+    .cycle-phases-bg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 999px;
+    }
+
+    .cycle-phase-mini {
+      height: 100%;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .cycle-phase-mini::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 35%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+    }
+
+    .cycle-position-mini {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 3px;
+      transform: translateX(-50%);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .cycle-marker-mini {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      border-radius: 999px;
+      box-shadow:
+        0 0 8px rgba(59, 130, 246, 0.8),
+        0 0 12px rgba(59, 130, 246, 0.4),
+        0 2px 4px rgba(0, 0, 0, 0.3);
+      animation: pulse-marker 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-marker {
+      0%, 100% {
+        box-shadow:
+          0 0 8px rgba(59, 130, 246, 0.8),
+          0 0 12px rgba(59, 130, 246, 0.4),
+          0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+      50% {
+        box-shadow:
+          0 0 12px rgba(59, 130, 246, 1),
+          0 0 20px rgba(59, 130, 246, 0.6),
+          0 2px 6px rgba(0, 0, 0, 0.4);
+      }
+    }
+
     /* Global Footer (centré en bas du panneau) */
     .di-global-footer {
       display: flex;
@@ -1522,8 +1645,8 @@ function injectStyles() {
 
     .di-key-metrics {
       display: flex;
-      justify-content: center;
-      gap: 2rem;
+      justify-content: space-between;
+      gap: 1rem;
       padding: 0.625rem 0.875rem;
       background: rgba(30, 41, 59, 0.4);
       border: 1px solid rgba(148, 163, 184, 0.1);
@@ -1552,18 +1675,18 @@ function injectStyles() {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       ALLOCATION RING (Donut Chart)
+       ALLOCATION BAR (Horizontal Stacked Bar - Compact)
        ═══════════════════════════════════════════════════════════ */
 
-    .alloc-ring-container {
+    .alloc-bar-container {
       background: rgba(30, 41, 59, 0.3);
       border-radius: 8px;
-      padding: 0.75rem;
+      padding: 0.625rem 0.75rem;
       border: 1px solid rgba(148, 163, 184, 0.08);
       margin-bottom: 0.75rem;
     }
 
-    .alloc-ring-title {
+    .alloc-bar-title {
       font-size: 0.625rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -1572,43 +1695,69 @@ function injectStyles() {
       text-align: center;
     }
 
-    .alloc-ring-wrapper {
+    .alloc-bar-track {
       display: flex;
+      height: 24px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(15, 23, 42, 0.5);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .alloc-seg {
+      height: 100%;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      margin-bottom: 0.5rem;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      min-width: 4px;
     }
 
-    .alloc-ring-svg {
-      width: 80px;
-      height: 80px;
-      transform: rotate(-90deg);
+    .alloc-seg::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
     }
 
-    .alloc-legend {
+    .alloc-seg-label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      z-index: 1;
+    }
+
+    .alloc-legend-inline {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0.5rem 0.75rem;
+      gap: 0.375rem 0.625rem;
+      margin-top: 0.5rem;
     }
 
-    .alloc-leg {
+    .alloc-leg-inline {
       display: flex;
       align-items: center;
-      gap: 0.25rem;
-      font-size: 0.65rem;
+      gap: 0.2rem;
+      font-size: 0.6rem;
       color: rgba(226, 232, 240, 0.85);
     }
 
-    .alloc-dot {
-      width: 8px;
-      height: 8px;
+    .alloc-dot-sm {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--c, #6b7280);
     }
 
-    .alloc-ring-placeholder {
+    .alloc-bar-placeholder {
       text-align: center;
-      padding: 1rem;
+      padding: 0.75rem;
       color: rgba(148, 163, 184, 0.5);
       font-size: 0.75rem;
     }
@@ -1796,8 +1945,14 @@ function injectStyles() {
 
       /* Key Metrics responsive */
       .di-key-metrics {
-        gap: 1rem;
+        gap: 0.75rem;
         padding: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .metric-mini {
+        flex: 1 1 45%;
+        min-width: 80px;
       }
 
       .metric-mini-label {

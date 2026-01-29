@@ -562,17 +562,160 @@ function updatePerformanceBreakdown(cache, memory) {
 }
 
 function updateCycleIndicators(cycleData, phase) {
-    const indicatorsContainer = document.querySelector('#tab-cycles .panel-card div:nth-child(3)');
-    if (!indicatorsContainer) return;
+    // Render the visual cycle timeline
+    renderCycleTimeline(cycleData, phase);
 
-    indicatorsContainer.innerHTML = `
-        <h4>Market Cycle Indicators</h4>
-        <div style="display: grid; gap: 0.5rem;">
-            <div style="display: flex; justify-content: space-between;"><span>Current Phase:</span><span>${phase.phase.replace('_', ' ')}</span></div>
-            <div style="display: flex; justify-content: space-between;"><span>Phase Color:</span><span style="color: ${phase.color};">●</span></div>
-            <div style="display: flex; justify-content: space-between;"><span>Score Range:</span><span>${Math.round(cycleData.score)}/100</span></div>
+    // Render allocation multipliers
+    renderCycleMultipliers(cycleData, phase);
+}
+
+/**
+ * Renders a visual timeline showing position in the Bitcoin cycle
+ */
+function renderCycleTimeline(cycleData, phase) {
+    const container = document.getElementById('cycle-timeline-container');
+    if (!container) return;
+
+    const months = cycleData.months || 0;
+    const score = cycleData.score || 50;
+    const confidence = Math.round((cycleData.confidence || 0) * 100);
+
+    // Cycle phases definition (48 months total)
+    const phases = [
+        { name: 'Accumulation', start: 0, end: 6, color: '#f59e0b', emoji: '🟡' },
+        { name: 'Bull Build', start: 6, end: 18, color: '#10b981', emoji: '🟢' },
+        { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '🟣' },
+        { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '🔴' },
+        { name: 'Pre-Acc', start: 36, end: 48, color: '#6b7280', emoji: '⚫' }
+    ];
+
+    const totalMonths = 48;
+    const positionPercent = Math.min(100, (months / totalMonths) * 100);
+
+    // Build phase segments HTML
+    const segmentsHTML = phases.map(p => {
+        const widthPct = ((p.end - p.start) / totalMonths) * 100;
+        const isCurrentPhase = months >= p.start && months < p.end;
+        return `
+            <div class="cycle-phase-seg"
+                 style="width: ${widthPct}%; background: ${p.color}; opacity: ${isCurrentPhase ? 1 : 0.6};"
+                 title="${p.name}: ${p.start}-${p.end} mois">
+                <span class="cycle-phase-seg-label">${p.emoji} ${widthPct >= 15 ? p.name : ''}</span>
+            </div>
+        `;
+    }).join('');
+
+    // Build legend HTML
+    const legendHTML = phases.map(p => `
+        <span class="cycle-legend-item">
+            <span class="cycle-legend-dot" style="background: ${p.color};"></span>
+            ${p.name}
+        </span>
+    `).join('');
+
+    // Timeline labels
+    const labelsHTML = [0, 12, 24, 36, 48].map(m => `
+        <span class="cycle-timeline-label">${m}m</span>
+    `).join('');
+
+    // Score color based on level
+    const scoreColor = score >= 75 ? 'positive' : score < 45 ? 'warning' : '';
+
+    container.innerHTML = `
+        <div class="cycle-timeline-title">🔄 Position dans le Cycle Bitcoin (Post-Halving)</div>
+
+        <div class="cycle-timeline-wrapper">
+            <div class="cycle-timeline-track">
+                <div class="cycle-phase-segments">
+                    ${segmentsHTML}
+                </div>
+
+                <!-- Current position marker -->
+                <div class="cycle-position-marker" style="left: ${positionPercent}%;">
+                    <div class="cycle-marker-pin"></div>
+                    <div class="cycle-marker-dot"></div>
+                    <span class="cycle-marker-label">${Math.round(months)}m</span>
+                </div>
+            </div>
+
+            <div class="cycle-timeline-labels">
+                ${labelsHTML}
+            </div>
+        </div>
+
+        <div class="cycle-phase-legend">
+            ${legendHTML}
+        </div>
+
+        <div class="cycle-stats-row">
+            <div class="cycle-stat">
+                <div class="cycle-stat-label">Phase</div>
+                <div class="cycle-stat-value">${phase.emoji} ${phase.phase.replace('_', ' ')}</div>
+            </div>
+            <div class="cycle-stat">
+                <div class="cycle-stat-label">Score</div>
+                <div class="cycle-stat-value ${scoreColor}">${Math.round(score)}/100</div>
+            </div>
+            <div class="cycle-stat">
+                <div class="cycle-stat-label">Confiance</div>
+                <div class="cycle-stat-value">${confidence}%</div>
+            </div>
         </div>
     `;
+}
+
+/**
+ * Renders allocation multipliers based on current cycle phase
+ */
+function renderCycleMultipliers(cycleData, phase) {
+    const container = document.getElementById('cycle-multipliers-container');
+    if (!container) return;
+
+    // Get multipliers from cycle-navigator if available, otherwise use defaults
+    const multipliers = cycleData.multipliers || getDefaultMultipliers(phase.phase);
+
+    const multipliersHTML = Object.entries(multipliers).map(([asset, mult]) => {
+        const value = typeof mult === 'number' ? mult : 1.0;
+        const className = value > 1.05 ? 'overweight' : value < 0.95 ? 'underweight' : 'neutral';
+        const label = value > 1.05 ? '↑' : value < 0.95 ? '↓' : '→';
+
+        return `
+            <div class="cycle-multiplier-item">
+                <span class="cycle-multiplier-asset">${formatAssetName(asset)}</span>
+                <span class="cycle-multiplier-value ${className}">${value.toFixed(2)}x ${label}</span>
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = multipliersHTML || '<div style="text-align: center; color: var(--theme-text-muted);">Multiplicateurs non disponibles</div>';
+}
+
+/**
+ * Get default multipliers based on phase name
+ */
+function getDefaultMultipliers(phaseName) {
+    const phaseMultipliers = {
+        'accumulation': { BTC: 1.15, ETH: 1.10, Stables: 0.85, Alts: 1.05 },
+        'bull_build': { BTC: 1.20, ETH: 1.15, Stables: 0.75, Alts: 1.10 },
+        'peak': { BTC: 0.90, ETH: 0.85, Stables: 1.30, Alts: 0.80 },
+        'bear': { BTC: 0.85, ETH: 0.80, Stables: 1.40, Alts: 0.70 },
+        'pre_accumulation': { BTC: 1.05, ETH: 1.00, Stables: 1.00, Alts: 0.95 }
+    };
+    return phaseMultipliers[phaseName.toLowerCase()] || phaseMultipliers['accumulation'];
+}
+
+/**
+ * Format asset name for display
+ */
+function formatAssetName(asset) {
+    const names = {
+        'btc': 'Bitcoin',
+        'eth': 'Ethereum',
+        'stables': 'Stables',
+        'alts': 'Altcoins',
+        'l1_majors': 'L1 Majors'
+    };
+    return names[asset.toLowerCase()] || asset;
 }
 
 // No longer needed; advanced metrics are filled inline above
