@@ -1693,9 +1693,13 @@
     }
 
     async function postJson(url, body) {
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
       const r = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-User": activeUser
+        },
         body: JSON.stringify(body || {})
       });
       if (!r.ok) { throw new Error(`[${r.status}] ${await r.text()}`); }
@@ -1703,9 +1707,13 @@
     }
 
     async function postCsv(url, body) {
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
       const r = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "X-User": activeUser
+        },
         body: JSON.stringify(body || {})
       });
       if (!r.ok) { throw new Error(`[${r.status}] ${await r.text()}`); }

@@ -466,13 +466,14 @@ async def rebalance_plan(
     pricing: str = Query("local"),   # local | auto
     dynamic_targets: bool = Query(False, description="Use dynamic targets from CCS/cycle module"),
     payload: Dict[str, Any] = Body(...),
-    pricing_diag: bool = Query(False, description="Include pricing diagnostic details in response meta")
+    pricing_diag: bool = Query(False, description="Include pricing diagnostic details in response meta"),
+    user: str = Depends(get_active_user)
 ):
     min_usd = parse_min_usd(min_usd_raw, default=1.0)
 
     # portefeuille - utiliser la fonction helper unifiée
     from api.unified_data import get_unified_filtered_balances
-    unified_data = await get_unified_filtered_balances(source=source, min_usd=min_usd)
+    unified_data = await get_unified_filtered_balances(source=source, min_usd=min_usd, user_id=user)
     rows = unified_data.get("items", [])
 
     # targets - support for dynamic CCS-based targets

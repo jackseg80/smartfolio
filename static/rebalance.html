@@ -69,7 +69,7 @@
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
 
-  <div class="wrap" style="padding-top: var(--space-lg);">
+  <main class="wrap" style="padding-top: var(--space-lg);">
     <!-- Governance Panel (Decision Engine) -->
     <div id="governance-container"></div>
 
@@ -93,13 +93,38 @@
           </div>
         </div>
         <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--theme-border);">
-          <div class="row" style="gap: 8px; flex-wrap: wrap;">
+          <!-- Ligne 1: Contrôles et boutons -->
+          <div class="row" style="gap: 8px; flex-wrap: wrap; align-items: center;">
+            <!-- Paramètres compacts -->
+            <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--theme-surface-elevated); border-radius: 4px; border: 1px solid var(--theme-border);">
+              <label class="switch" style="margin: 0;">
+                <input type="checkbox" id="sub-allocation-toggle">
+                <span class="slider"></span>
+              </label>
+              <span id="sub-allocation-label" style="font-size: 12px; font-weight: 600; color: var(--brand-primary); white-space: nowrap;">
+                Proportionnel
+              </span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--theme-surface-elevated); border-radius: 4px; border: 1px solid var(--theme-border);">
+              <label for="min-trade-input" style="font-size: 12px; white-space: nowrap;">Min:</label>
+              <input type="number" id="min-trade-input" value="25" min="1" max="1000" step="1"
+                aria-label="Montant minimum de trade en dollars américains"
+                style="width: 60px; padding: 2px 4px; border: 1px solid var(--theme-border); border-radius: 3px; font-size: 12px;">
+              <span style="font-size: 11px; color: var(--theme-text-muted);">USD</span>
+            </div>
+            <div id="priority-status" style="display: none; font-size: 11px; color: var(--brand-primary); padding: 4px 8px;">
+              <span id="universe-source"></span> • <span id="universe-timestamp"></span>
+            </div>
+
+            <!-- Séparateur vertical -->
+            <div style="border-left: 1px solid var(--theme-border); height: 32px; margin: 0 4px;"></div>
+
             <!-- Boutons d'action stratégies -->
             <button id="apply-strategy-btn" class="btn btn-sm" style="background: var(--success);" disabled>
-              ✅ Appliquer la Stratégie
+              ✅ Appliquer
             </button>
             <button id="reset-strategy-btn" class="btn btn-sm btn-secondary">
-              🔄 Reset Manuel
+              🔄 Reset
             </button>
             <button id="refresh-dynamic-btn" class="btn btn-sm" style="background: var(--warning);"
               onclick="window.refreshDynamicStrategy()">
@@ -110,14 +135,13 @@
             <div style="border-left: 1px solid var(--theme-border); height: 32px; margin: 0 4px;"></div>
 
             <!-- Boutons d'export -->
-            <button id="btnCsv" class="btn btn-sm btn-secondary" disabled>Télécharger CSV</button>
-            <button id="btnJson" class="btn btn-sm btn-secondary" disabled>Export JSON</button>
-            <button id="btnCopyJson" class="btn btn-sm btn-secondary" disabled>📋 Copier JSON</button>
+            <button id="btnCsv" class="btn btn-sm btn-secondary" disabled>CSV</button>
+            <button id="btnJson" class="btn btn-sm btn-secondary" disabled>JSON</button>
+            <button id="btnCopyJson" class="btn btn-sm btn-secondary" disabled>📋 Copier</button>
+          </div>
 
-            <!-- Spacer -->
-            <div style="flex-grow: 1;"></div>
-
-            <!-- Pills de status -->
+          <!-- Ligne 2: Pills de status (centré) -->
+          <div class="row" style="gap: 8px; margin-top: 8px; justify-content: center; flex-wrap: nowrap; align-items: center;">
             <span id="selected-strategy-info" class="pill" style="display: none;">
               Aucune stratégie sélectionnée
             </span>
@@ -130,65 +154,31 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <main class="wrap">
-    <!-- Paramètres d'allocation intra-groupe -->
-    <section class="card" style="margin-bottom: 16px;">
-      <h3 style="margin-bottom: 12px;">⚙️ Paramètres d'Allocation</h3>
-      <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <label for="sub-allocation-toggle" style="font-size: 14px; cursor: pointer;">
-            Mode intra-groupe :
-          </label>
-          <label class="switch">
-            <input type="checkbox" id="sub-allocation-toggle">
-            <span class="slider"></span>
-          </label>
-          <span id="sub-allocation-label" style="font-weight: 600; color: var(--brand-primary);">
-            Proportionnel
-          </span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <label for="min-trade-input" style="font-size: 14px;">Trade minimum :</label>
-          <input type="number" id="min-trade-input" value="25" min="1" max="1000" step="1"
-            aria-label="Montant minimum de trade en dollars américains"
-            style="width: 80px; padding: 4px 8px; border: 1px solid var(--theme-border); border-radius: 4px;">
-          <span style="font-size: 14px; color: var(--theme-text-muted);">USD</span>
-        </div>
-        <div id="priority-status" style="display: none; flex: 1; min-width: 200px;">
-          <div style="font-size: 12px; color: var(--theme-text-muted); margin-bottom: 4px;">
-            <span id="universe-source"></span> • <span id="universe-timestamp"></span>
-          </div>
-          <div id="priority-groups-info" style="font-size: 11px; color: var(--brand-primary);"></div>
-        </div>
-      </div>
-    </section>
 
     <!-- Donuts -->
-    <section class="card">
+    <section class="card" style="margin-bottom: 16px;">
       <h3>Répartition</h3>
       <div class="grid g2">
-        <div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
           <div class="small muted">Actuelle</div>
           <div id="donutCurrent"></div>
         </div>
-        <div>
+        <div style="display: flex; flex-direction: column; align-items: center;">
           <div class="small muted">Cible</div>
           <div id="donutTarget"></div>
         </div>
       </div>
-      <div id="legend" class="legend mt8"></div>
+      <div id="legend" class="legend mt8" style="justify-content: center;"></div>
     </section>
 
     <!-- Résumé -->
-    <section id="dca-schedule" class="card mt16">
+    <section id="dca-schedule" class="card" style="margin-bottom: 16px;">
       <h3>Résumé par groupe</h3>
       <div id="summary" class="grid g3 mt8"></div>
     </section>
 
     <!-- Actions -->
-    <section id="funding-plan" class="card mt16">
+    <section id="funding-plan" class="card" style="margin-bottom: 16px;">
       <div class="row" style="justify-content:space-between;align-items:flex-end">
         <h3>Actions</h3>
         <div id="pricing-badge"></div>
@@ -213,7 +203,7 @@
     </section>
 
     <!-- Unknown aliases -->
-    <section id="constraints" class="card mt16">
+    <section id="constraints" class="card" style="margin-bottom: 16px;">
       <div class="row" style="justify-content:space-between;align-items:flex-end">
         <div>
           <h3>Unknown aliases</h3>
