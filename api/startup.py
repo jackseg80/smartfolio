@@ -184,6 +184,42 @@ async def initialize_task_scheduler():
         return False
 
 
+async def initialize_ml_auto_trainer():
+    """
+    Initialize ML Auto-Trainer for automatic periodic model retraining.
+
+    Returns:
+        bool: True if auto-trainer started successfully
+
+    Note:
+        - Trains regime models weekly (Sunday 3am)
+        - Trains volatility models daily (midnight)
+        - Uses MLTrainingScheduler rules to check if retraining is needed
+        - Integrates with TrainingExecutor for background jobs
+    """
+    try:
+        import os
+        from services.ml.auto_trainer import ml_auto_trainer
+
+        # Check if auto-training is enabled (default: enabled)
+        auto_train_enabled = os.getenv("ML_AUTO_TRAIN", "1").strip() == "1"
+
+        if not auto_train_enabled:
+            logger.info("⏸️ ML Auto-Trainer disabled (ML_AUTO_TRAIN != 1)")
+            return False
+
+        # Start the scheduler
+        ml_auto_trainer.start()
+
+        logger.info("✅ ML Auto-Trainer initialized successfully")
+        return True
+
+    except Exception as e:
+        logger.warning(f"⚠️ ML Auto-Trainer initialization failed (non-blocking): {e}")
+        logger.info("📊 Models will only train manually via Admin Dashboard")
+        return False
+
+
 async def background_startup_tasks():
     """
     Background task to initialize ML models, Governance, and Alerts.
@@ -213,13 +249,18 @@ async def background_startup_tasks():
             # Note: Only starts if RUN_SCHEDULER=1
             scheduler_ok = await initialize_task_scheduler()
 
+            # Initialize ML Auto-Trainer (optional, automatic model retraining)
+            # Note: Only starts if ML_AUTO_TRAIN=1 (default: enabled)
+            ml_auto_trainer_ok = await initialize_ml_auto_trainer()
+
             logger.info(
                 f"🎯 Startup complete: "
                 f"ML={models_count} models, "
                 f"Governance={'✅' if governance_ok else '⚠️'}, "
                 f"Alerts={'✅' if alerts_ok else '⚠️'}, "
                 f"Playwright={'✅' if playwright_ok else '⏭️'}, "
-                f"Scheduler={'✅' if scheduler_ok else '⏸️'}"
+                f"Scheduler={'✅' if scheduler_ok else '⏸️'}, "
+                f"ML-AutoTrain={'✅' if ml_auto_trainer_ok else '⏸️'}"
             )
 
     except Exception as e:
@@ -288,6 +329,14 @@ def get_shutdown_handler():
                 await shutdown_scheduler()
             except Exception as e:
                 logger.warning(f"⚠️ Task scheduler cleanup failed: {e}")
+
+            # Stop ML Auto-Trainer if running
+            try:
+                from services.ml.auto_trainer import ml_auto_trainer
+                ml_auto_trainer.stop()
+                logger.info("✅ ML Auto-Trainer stopped")
+            except Exception as e:
+                logger.warning(f"⚠️ ML Auto-Trainer cleanup failed: {e}")
 
             # Close Playwright browser if initialized
             try:

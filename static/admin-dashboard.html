@@ -1151,14 +1151,13 @@
                             📋 Preset Configuration:
                         </label>
                         <select id="preset-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
-                            <option value="quick">Quick Test (90d, 20 epochs) - ~1-2 min</option>
-                            <option value="standard">Standard (365d, 50 epochs) - ~3-5 min</option>
-                            <option value="full" selected>Full Training (730d, 100 epochs) - ~5-10 min</option>
-                            <option value="deep">Deep Research (1095d, 200 epochs) - ~15-30 min</option>
+                            <option value="standard">Standard (model-specific)</option>
+                            <option value="deep" selected>Deep (model-specific)</option>
+                            <option value="ultra">Ultra Deep (maximum data available)</option>
                             <option value="custom">Custom (Manual Configuration)</option>
                         </select>
                         <small style="display: block; margin-top: 0.5rem; color: var(--theme-text-muted);">
-                            Choose a preset or select Custom to configure manually
+                            Presets are optimized for each model's data availability and training needs
                         </small>
                     </div>
 
@@ -1168,9 +1167,9 @@
 
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Historical Data (days):</label>
-                            <input type="number" id="config-days" min="90" max="1825" value="730"
+                            <input type="number" id="config-days" min="90" max="7300" value="730"
                                    style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border);">
-                            <small style="color: var(--theme-text-muted);">Range: 90-1825 days (~3 months to 5 years)</small>
+                            <small style="color: var(--theme-text-muted);">Range: 90-7300 days (~3 months to 20 years)</small>
                         </div>
 
                         <div style="margin-bottom: 0;">
@@ -2757,13 +2756,43 @@
 
         let currentTrainingModel = {name: null, type: null};  // Store current model info
 
-        // Preset configurations
+        // Preset configurations (model-specific to match backend defaults)
         const TRAINING_PRESETS = {
-            quick: { days: 90, epochs: 20, patience: 10, description: '~1-2 min' },
-            standard: { days: 365, epochs: 50, patience: 12, description: '~3-5 min' },
-            full: { days: 730, epochs: 100, patience: 15, description: '~5-10 min' },
-            deep: { days: 1095, epochs: 200, patience: 20, description: '~15-30 min' }
+            // Stock regime detector presets (needs 20 years for all regimes)
+            stock_regime_detector: {
+                standard: { days: 1825, epochs: 100, patience: 15, description: '~8-12 min (5 years)' },
+                deep: { days: 3650, epochs: 150, patience: 20, description: '~15-25 min (10 years)' },
+                ultra: { days: 7300, epochs: 200, patience: 25, description: '~25-40 min (20 years, all regimes)' }
+            },
+            // Bitcoin regime detectors (max 13.7 years of reliable data since 2012)
+            btc_regime_detector: {
+                standard: { days: 1825, epochs: 150, patience: 20, description: '~10-15 min (5 years)' },
+                deep: { days: 3650, epochs: 175, patience: 22, description: '~20-30 min (10 years)' },
+                ultra: { days: 5000, epochs: 200, patience: 25, description: '~30-45 min (13.7 years max)' }
+            },
+            btc_regime_hmm: {
+                standard: { days: 1825, epochs: 150, patience: 20, description: '~10-15 min (5 years)' },
+                deep: { days: 3650, epochs: 175, patience: 22, description: '~20-30 min (10 years)' },
+                ultra: { days: 5000, epochs: 200, patience: 25, description: '~30-45 min (13.7 years max)' }
+            },
+            // Volatility forecaster (2 years optimal for volatility patterns)
+            volatility_forecaster: {
+                standard: { days: 365, epochs: 100, patience: 15, description: '~5-8 min (1 year)' },
+                deep: { days: 730, epochs: 150, patience: 20, description: '~10-15 min (2 years)' },
+                ultra: { days: 1095, epochs: 200, patience: 25, description: '~15-25 min (3 years)' }
+            },
+            // Generic fallback (for unknown models)
+            _generic: {
+                standard: { days: 730, epochs: 100, patience: 15, description: '~5-10 min (2 years)' },
+                deep: { days: 1825, epochs: 150, patience: 20, description: '~15-25 min (5 years)' },
+                ultra: { days: 3650, epochs: 200, patience: 25, description: '~25-40 min (10 years)' }
+            }
         };
+
+        // Helper function to get presets for a specific model
+        function getPresetsForModel(modelName) {
+            return TRAINING_PRESETS[modelName] || TRAINING_PRESETS._generic;
+        }
 
         async function showConfigureTrainModal(modelName, modelType) {
             currentTrainingModel = {name: modelName, type: modelType};
@@ -2853,7 +2882,9 @@
                     return;
                 }
 
-                const preset = TRAINING_PRESETS[presetName];
+                // Get presets for current model
+                const modelPresets = getPresetsForModel(currentTrainingModel.name);
+                const preset = modelPresets[presetName];
                 if (preset) {
                     // Apply preset values
                     document.getElementById('config-days').value = preset.days;

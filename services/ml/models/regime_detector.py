@@ -749,9 +749,38 @@ class RegimeDetector:
 
             if len(features_df) < 100:
                 raise ValueError(f"Insufficient data: {len(features_df)} samples (minimum 100 required)")
-            
-            # Create regime labels using HMM
-            regime_labels = self._create_hmm_regime_labels(features_df)
+
+            # === MODIFICATION: Use rule-based labels instead of HMM ===
+            # Get main benchmark for price data
+            main_benchmark = list(multi_asset_data.keys())[0]
+            price_df = multi_asset_data[main_benchmark].copy()
+
+            # Ensure 'close' column exists (normalize column name)
+            if 'Close' in price_df.columns and 'close' not in price_df.columns:
+                price_df['close'] = price_df['Close']
+            elif 'close' not in price_df.columns:
+                raise ValueError(f"Price data must contain 'close' or 'Close' column. Found: {price_df.columns.tolist()}")
+
+            # Create rule-based labels
+            logger.info("📊 Using rule-based labeling for training (replacing HMM)")
+            rule_labels = create_rule_based_labels(price_df)
+
+            # Align with features (features_df may be shorter due to feature calculations)
+            offset = len(price_df) - len(features_df)
+            if offset > 0:
+                regime_labels = rule_labels[offset:]
+                logger.info(f"   Aligned labels with features: offset={offset}, final length={len(regime_labels)}")
+            else:
+                regime_labels = rule_labels
+                logger.info(f"   No alignment needed: both have {len(regime_labels)} samples")
+
+            # Log class distribution for verification
+            class_dist = np.bincount(regime_labels, minlength=self.num_regimes)
+            logger.info(f"📊 Rule-based class distribution: {class_dist.tolist()}")
+            logger.info(f"   Bear Market: {class_dist[0]} samples ({100*class_dist[0]/len(regime_labels):.1f}%)")
+            logger.info(f"   Correction: {class_dist[1]} samples ({100*class_dist[1]/len(regime_labels):.1f}%)")
+            logger.info(f"   Bull Market: {class_dist[2]} samples ({100*class_dist[2]/len(regime_labels):.1f}%)")
+            logger.info(f"   Expansion: {class_dist[3]} samples ({100*class_dist[3]/len(regime_labels):.1f}%)")
 
             # DIAGNOSTIC: Log class distribution BEFORE any processing
             class_distribution = np.bincount(regime_labels, minlength=self.num_regimes)

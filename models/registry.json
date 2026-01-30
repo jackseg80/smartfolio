@@ -6,7 +6,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2026-01-23T19:29:47.794721",
+      "updated_at": "2026-01-30T15:43:56.185549",
       "file_path": "models/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -35,26 +35,26 @@
         "num_layers": 2
       },
       "validation_metrics": {
-        "accuracy": 0.7704160246533128,
-        "best_val_accuracy": 0.8009259259259259,
+        "accuracy": 0.7590132827324478,
+        "best_val_accuracy": 0.7741935483870968,
         "data_source": "synthetic",
-        "train_samples": 1944,
-        "test_samples": 649,
-        "val_samples": 648,
+        "train_samples": 3162,
+        "test_samples": 1054,
+        "val_samples": 1054,
         "feature_count": 10,
-        "trained_at": "2026-01-23T19:29:21.428009",
-        "training_time_seconds": 45.83188247680664
+        "trained_at": "2026-01-30T15:41:41.858867",
+        "training_time_seconds": 208.87879490852356
       },
       "test_metrics": {
-        "accuracy": 0.7704160246533128,
-        "best_val_accuracy": 0.8009259259259259,
+        "accuracy": 0.7590132827324478,
+        "best_val_accuracy": 0.7741935483870968,
         "data_source": "synthetic",
-        "train_samples": 1944,
-        "test_samples": 649,
-        "val_samples": 648,
+        "train_samples": 3162,
+        "test_samples": 1054,
+        "val_samples": 1054,
         "feature_count": 10,
-        "trained_at": "2026-01-23T19:29:21.428009",
-        "training_time_seconds": 45.83188247680664
+        "trained_at": "2026-01-30T15:41:41.858867",
+        "training_time_seconds": 208.87879490852356
       },
       "target_assets": [
         "BTC"
@@ -139,7 +139,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2026-01-23T19:32:14.408019",
+      "updated_at": "2026-01-30T15:28:11.068014",
       "file_path": "models/stocks/regime/regime_neural_best.pth",
       "file_size": 0,
       "file_hash": null,
@@ -169,31 +169,31 @@
       },
       "validation_metrics": {
         "current_regime": "Bull Market",
-        "confidence": 0.8871198296546936,
+        "confidence": 0.9499719738960266,
         "regime_probabilities": {
-          "Bear Market": 0.03750063106417656,
-          "Correction": 0.03787863254547119,
-          "Bull Market": 0.8871198296546936,
-          "Consolidation": 0.03750086948275566
+          "Bear Market": 0.012508731335401535,
+          "Correction": 0.020220819860696793,
+          "Bull Market": 0.9499719738960266,
+          "Expansion": 0.01729848049581051
         },
-        "data_source": "real_stocks_1095d",
+        "data_source": "real_stocks_7300d",
         "benchmark": "SPY",
-        "trained_at": "2026-01-23T19:32:14.405865",
-        "training_time_seconds": 1.1537840366363525
+        "trained_at": "2026-01-30T15:28:11.066039",
+        "training_time_seconds": 9.007946968078613
       },
       "test_metrics": {
         "current_regime": "Bull Market",
-        "confidence": 0.8871198296546936,
+        "confidence": 0.9499719738960266,
         "regime_probabilities": {
-          "Bear Market": 0.03750063106417656,
-          "Correction": 0.03787863254547119,
-          "Bull Market": 0.8871198296546936,
-          "Consolidation": 0.03750086948275566
+          "Bear Market": 0.012508731335401535,
+          "Correction": 0.020220819860696793,
+          "Bull Market": 0.9499719738960266,
+          "Expansion": 0.01729848049581051
         },
-        "data_source": "real_stocks_1095d",
+        "data_source": "real_stocks_7300d",
         "benchmark": "SPY",
-        "trained_at": "2026-01-23T19:32:14.405865",
-        "training_time_seconds": 1.1537840366363525
+        "trained_at": "2026-01-30T15:28:11.066039",
+        "training_time_seconds": 9.007946968078613
       },
       "target_assets": [
         "AAPL",

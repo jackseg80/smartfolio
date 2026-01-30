@@ -62,7 +62,7 @@ class AssignRolesRequest(BaseModel):
 class TrainingConfig(BaseModel):
     """Configuration pour training ML models (Phase 2)"""
     # Data configuration
-    days: int = Field(730, ge=90, le=1825, description="Historique données (jours): 90-1825")
+    days: int = Field(730, ge=90, le=7300, description="Historique données (jours): 90-7300 (20 years max)")
     train_val_split: float = Field(0.8, ge=0.6, le=0.9, description="Train/Val split: 0.6-0.9")
 
     # Common hyperparameters
@@ -818,22 +818,35 @@ async def get_model_default_params(
             else:
                 model_type = "unknown"
 
-        # Retourner les defaults selon le type
-        if model_type == "regime":
+        # Retourner les defaults selon le MODÈLE SPÉCIFIQUE (pas juste le type)
+        # Ceci permet d'adapter les defaults à la disponibilité des données historiques
+
+        if model_name == "stock_regime_detector":
+            # Stocks: Besoin de 20 ans pour capturer 2008-2009 et 2020 bear markets
             config = TrainingConfig(
-                days=730,           # 2 years
+                days=7300,          # 20 years (includes 2008 -57%, 2020 -35%)
                 epochs=100,
                 patience=15,
                 batch_size=32,
                 learning_rate=0.001,
-                train_val_split=0.8,
-                hidden_size=None,   # Not used for regime
-                min_r2=None,        # Not used for regime
-                symbols=None        # Not used for regime
+                train_val_split=0.8
             )
-        elif model_type == "volatility":
+
+        elif model_name in ["btc_regime_detector", "btc_regime_hmm"]:
+            # Bitcoin: Données fiables depuis ~2012, max ~14 ans disponibles
             config = TrainingConfig(
-                days=365,           # 1 year
+                days=5000,          # ~13.7 years (max reliable BTC data, from 2012)
+                epochs=200,         # Plus d'epochs pour crypto (plus volatile)
+                patience=25,
+                batch_size=32,
+                learning_rate=0.001,
+                train_val_split=0.8
+            )
+
+        elif model_name == "volatility_forecaster":
+            # Volatility: 2 ans suffisent pour capturer différents régimes de vol
+            config = TrainingConfig(
+                days=730,           # 2 years (sufficient for volatility patterns)
                 epochs=100,
                 patience=15,
                 batch_size=32,
@@ -843,6 +856,32 @@ async def get_model_default_params(
                 min_r2=0.5,
                 symbols=['BTC', 'ETH', 'SOL']
             )
+
+        elif model_type == "regime":
+            # Fallback pour autres regime models: 2 ans par défaut
+            config = TrainingConfig(
+                days=730,
+                epochs=100,
+                patience=15,
+                batch_size=32,
+                learning_rate=0.001,
+                train_val_split=0.8
+            )
+
+        elif model_type == "volatility":
+            # Fallback pour autres volatility models
+            config = TrainingConfig(
+                days=730,
+                epochs=100,
+                patience=15,
+                batch_size=32,
+                learning_rate=0.001,
+                train_val_split=0.8,
+                hidden_size=64,
+                min_r2=0.5,
+                symbols=['BTC', 'ETH', 'SOL']
+            )
+
         else:
             # Generic defaults
             config = TrainingConfig()
@@ -1015,6 +1054,134 @@ async def cancel_training_job(
         logger.error(f"Error cancelling job {job_id}: {e}")
         return error_response(
             f"Failed to cancel job: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# ============================================================================
+# ML Auto-Trainer (Automatic Periodic Training)
+# ============================================================================
+
+@router.get("/ml/auto-trainer/status")
+async def get_auto_trainer_status(user: str = Depends(require_admin_role)):
+    """
+    Get ML Auto-Trainer status and schedule.
+
+    Returns:
+        dict: Auto-trainer status, running state, and next run times
+    """
+    try:
+        from services.ml.auto_trainer import ml_auto_trainer
+
+        status_info = ml_auto_trainer.get_status()
+
+        logger.info(f"✅ Auto-trainer status retrieved by {user}")
+        return success_response(status_info)
+
+    except Exception as e:
+        logger.error(f"Error getting auto-trainer status: {e}")
+        return error_response(
+            f"Failed to get auto-trainer status: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/ml/auto-trainer/start")
+async def start_auto_trainer(user: str = Depends(require_admin_role)):
+    """
+    Start the ML Auto-Trainer scheduler.
+
+    Returns:
+        dict: Success message
+    """
+    try:
+        from services.ml.auto_trainer import ml_auto_trainer
+
+        ml_auto_trainer.start()
+
+        logger.info(f"✅ Auto-trainer started by {user}")
+        return success_response({
+            "message": "ML Auto-Trainer started successfully",
+            "schedule": {
+                "regime_models": "Every Sunday at 3am",
+                "volatility_models": "Daily at midnight",
+                "correlation_models": "Every Sunday at 4am"
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error starting auto-trainer: {e}")
+        return error_response(
+            f"Failed to start auto-trainer: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/ml/auto-trainer/stop")
+async def stop_auto_trainer(user: str = Depends(require_admin_role)):
+    """
+    Stop the ML Auto-Trainer scheduler.
+
+    Returns:
+        dict: Success message
+    """
+    try:
+        from services.ml.auto_trainer import ml_auto_trainer
+
+        ml_auto_trainer.stop()
+
+        logger.info(f"✅ Auto-trainer stopped by {user}")
+        return success_response({
+            "message": "ML Auto-Trainer stopped successfully"
+        })
+
+    except Exception as e:
+        logger.error(f"Error stopping auto-trainer: {e}")
+        return error_response(
+            f"Failed to stop auto-trainer: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/ml/auto-trainer/trigger/{job_id}")
+async def trigger_auto_trainer_job(
+    job_id: str,
+    user: str = Depends(require_admin_role)
+):
+    """
+    Manually trigger a scheduled auto-trainer job immediately.
+
+    Args:
+        job_id: Job ID (regime_training_weekly, volatility_training_daily, correlation_training_weekly)
+
+    Returns:
+        dict: Success message
+    """
+    try:
+        from services.ml.auto_trainer import ml_auto_trainer
+
+        valid_jobs = ['regime_training_weekly', 'volatility_training_daily', 'correlation_training_weekly']
+        if job_id not in valid_jobs:
+            return error_response(
+                f"Invalid job_id. Valid: {valid_jobs}",
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        result = ml_auto_trainer.trigger_now(job_id)
+
+        if not result.get("ok", False):
+            return error_response(
+                result.get("error", "Unknown error"),
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        logger.info(f"✅ Auto-trainer job {job_id} triggered by {user}")
+        return success_response(result)
+
+    except Exception as e:
+        logger.error(f"Error triggering auto-trainer job {job_id}: {e}")
+        return error_response(
+            f"Failed to trigger job: {str(e)}",
             code=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
