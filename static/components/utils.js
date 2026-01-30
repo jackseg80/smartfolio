@@ -59,14 +59,17 @@ export async function fetchRisk() {
   // 🆕 FIX Nov 2025: Récupérer l'user actif depuis localStorage pour multi-tenant
   const activeUser = localStorage.getItem('activeUser') || 'demo';
 
+  // 🔧 FIX Jan 2026: Récupérer la source active depuis globalConfig pour multi-tenant isolation
+  const currentSource = window.globalConfig?.get('data_source') || 'cointracking';
+
   // Safe debugLogger avec fallback
   const debugLogger = window.debugLogger || console;
-  debugLogger.debug(`[fetchRisk] Fetching risk data for user: ${activeUser}`);
+  debugLogger.debug(`[fetchRisk] Fetching risk data for user: ${activeUser}, source: ${currentSource}`);
 
   // 1) Endpoint canonique
   try {
     const r = await fetchWithTimeout(
-      '/api/risk/dashboard?min_usd=0&price_history_days=30&lookback_days=30',
+      `/api/risk/dashboard?source=${encodeURIComponent(currentSource)}&min_usd=0&price_history_days=30&lookback_days=30`,
       {
         timeoutMs: 5000,
         headers: {

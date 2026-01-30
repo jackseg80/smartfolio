@@ -66,14 +66,18 @@ export async function hydrateRiskStore() {
           return null;
         }
 
+        // 🔧 FIX: Get current source from globalConfig (MULTI-TENANT CRITICAL - Nov 2025)
+        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+
         // 🔧 FIX: Add _csv_hint to invalidate backend cache when CSV changes (Nov 2025)
         const csvFile = window.userSettings?.csv_selected_file || 'latest';
         const cacheBuster = csvFile !== 'latest' ? csvFile : Date.now().toString().substring(0, 10);
 
-        debugLogger.debug(`🔍 hydrateRiskStore - fetching risk data with _csv_hint: '${cacheBuster}'`);
+        debugLogger.debug(`🔍 hydrateRiskStore - fetching risk data with source: '${currentSource}', _csv_hint: '${cacheBuster}'`);
 
         const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
           params: {
+            source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
             min_usd: 1.0,
             price_history_days: 365,
             lookback_days: 90,

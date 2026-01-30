@@ -380,7 +380,10 @@ async function getCurrentPositions() {
   try {
     // Essayer d'obtenir depuis le globalConfig ou API
     if (window.globalConfig) {
-      const apiResponse = await window.globalConfig.apiRequest('/balances/current');
+      const currentSource = window.globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+      const apiResponse = await window.globalConfig.apiRequest('/balances/current', {
+        params: { source: currentSource }  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+      });
       return apiResponse?.items || [];
     }
 

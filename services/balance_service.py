@@ -198,11 +198,12 @@ class BalanceService:
             logger.info(f"[V2] Using category-based sources for user '{user_id}'")
             # Determine category from source hint
             category = None
-            if source in ("saxobank", "saxobank_api", "saxobank_csv"):
+            if source in ("saxobank", "saxobank_api", "saxobank_csv", "manual_bourse"):
                 category = "bourse"
-            elif source in ("cointracking", "cointracking_api", "cointracking_csv"):
+            elif source in ("cointracking", "cointracking_api", "cointracking_csv", "manual_crypto"):
                 category = "crypto"
             # auto or category_based → fetch all
+            logger.info(f"[V2] Mapped source '{source}' to category '{category}'")
             return await self._resolve_via_registry(user_id, category)
 
         # --- V1 Legacy mode ---

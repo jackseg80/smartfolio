@@ -157,9 +157,11 @@
           const minUsd = globalConfig.get('min_usd_threshold') || 1.0;
           const priceDays = 365;
           const corrDays = 90;
+          const currentSource = globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {
+              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
               price_history_days: priceDays,
               lookback_days: corrDays,
               min_usd: minUsd,
@@ -475,9 +477,11 @@
           const minUsd = globalConfig.get('min_usd_threshold') || 1.0;
           const priceDays = 365;
           const corrDays = 90;
+          const currentSource = globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {
+              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
               price_history_days: priceDays,
               lookback_days: corrDays,
               min_usd: minUsd,

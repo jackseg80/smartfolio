@@ -225,10 +225,16 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
       try {
         // Utiliser le seuil global configuré pour rester cohérent avec dashboard
         const cfgMin = (window.globalConfig && window.globalConfig.get?.('min_usd_threshold')) || minUsd || 1.0;
+        const currentSource = window.globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
         // Fetch with X-User via globalConfig
         const [taxo, balances] = await Promise.all([
           window.globalConfig.apiRequest('/taxonomy').catch(() => null),
-          window.globalConfig.apiRequest('/balances/current', { params: { min_usd: cfgMin } })
+          window.globalConfig.apiRequest('/balances/current', {
+            params: {
+              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+              min_usd: cfgMin
+            }
+          })
         ]);
         items = (balances && balances.items) || [];
         (window.debugLogger?.info || console.log)('✅ API SUCCESS: Using fresh API data', {

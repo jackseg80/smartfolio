@@ -375,12 +375,15 @@ class GlobalConfig {
   async testConnection() {
     try {
       const health = await this.apiRequest('/healthz');
-      const balances = await this.apiRequest('/balances/current');
+      const currentSource = this.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+      const balances = await this.apiRequest('/balances/current', {
+        params: { source: currentSource }  // 🔧 FIX: Pass source parameter for consistency
+      });
 
       return {
         backend: health ? 'OK' : 'Erreur',
         balances: balances?.items?.length > 0 ? `OK (${balances.items.length} assets)` : 'Vide',
-        source: balances?.source_used || 'Inconnue'
+        source: balances?.source_used || currentSource
       };
     } catch (error) {
       return {
