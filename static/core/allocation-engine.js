@@ -172,9 +172,34 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
       execution: executionPlan
     });
 
+    // Convert allocation object to array with proper rounding (sum = 100%)
+    const entries = Object.entries(coinAllocation);
+    const percentages = entries.map(([group, weight]) => ({
+      group,
+      exact: weight * 100,
+      rounded: Math.floor(weight * 100)
+    }));
+
+    // Calculate remainder and distribute to largest remainders
+    let totalRounded = percentages.reduce((sum, p) => sum + p.rounded, 0);
+    const remainders = percentages.map(p => ({ ...p, remainder: p.exact - p.rounded }));
+    remainders.sort((a, b) => b.remainder - a.remainder);
+
+    // Distribute remaining points to largest remainders
+    const pointsToDistribute = 100 - totalRounded;
+    for (let i = 0; i < pointsToDistribute && i < remainders.length; i++) {
+      remainders[i].rounded += 1;
+    }
+
+    const allocations = remainders.map(p => ({
+      group: p.group,
+      target_allocation: p.rounded
+    }));
+
     const result = {
       version: 'v2',
       allocation: coinAllocation,
+      allocations,
       execution: executionPlan,
       metadata: {
         phase: isBullishPhase ? 'bullish' : isModeratePhase ? 'moderate' : 'bearish',
@@ -213,6 +238,7 @@ function calculateMacroAllocation(context, floors) {
   // SOURCE UNIQUE: risk_budget.target_stables_pct avec fallback regime_based
   const stablesTarget = risk_budget.target_stables_pct ?
     risk_budget.target_stables_pct / 100 :
+    risk_budget.stable_allocation ||  // Fallback to stable_allocation if provided
     (cycleScore >= 90 ? 0.15 : cycleScore >= 70 ? 0.20 : 0.30);
 
   // RENORMALISATION PROPORTIONNELLE des non-stables

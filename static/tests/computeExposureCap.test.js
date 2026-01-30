@@ -281,7 +281,7 @@ describe('computeExposureCap - Regime Floors', () => {
         backendStatus: 'stale'  // Pénalité backend pour tester floor
       });
 
-      expect(cap, `${name} floor`).toBeGreaterThanOrEqual(floor);
+      expect(cap).toBeGreaterThanOrEqual(floor);
     });
   });
 });

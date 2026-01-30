@@ -15,7 +15,7 @@ import {
   isAdmin,
   requireRole
 } from '../core/auth-guard.js';
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 
 // Mock fetch globally
 global.fetch = jest.fn();
