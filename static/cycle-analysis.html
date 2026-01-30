@@ -974,6 +974,17 @@ Rapport généré le ${new Date().toLocaleString('fr-FR')}
       // Charger les modules d'abord
       await loadModules();
 
+      // CRITICAL: Force cache invalidation after loading modules
+      // This ensures fresh cycle calculations on every page load
+      try {
+        const { estimateCyclePosition } = await import('./modules/cycle-navigator.js');
+        // Force recalculation by calling it once (will cache fresh data)
+        const cyclePos = estimateCyclePosition();
+        console.debug('🔄 Cycle position recalculated on page load:', cyclePos);
+      } catch (e) {
+        console.warn('Failed to recalculate cycle position:', e);
+      }
+
       // Initialiser le graphique Bitcoin historique
       initBitcoinCycleChart();
 

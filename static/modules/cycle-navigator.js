@@ -42,12 +42,15 @@ function autoLoadCalibrationParams() {
       // Check data is not too old (24h)
       if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
         CYCLE_PARAMS = { ...CYCLE_PARAMS, ...data.params };
+        // CRITICAL: Invalidate cache when params are loaded
+        _cyclePositionCache = null;
+        _cyclePositionCacheTimestamp = 0;
         console.debug('✅ Auto-loaded calibrated cycle parameters', CYCLE_PARAMS);
         return true;
       }
     }
   } catch (error) {
-    debugLogger.error('❌ Error auto-loading cycle parameters:', error);
+    console.error('❌ Error auto-loading cycle parameters:', error);
   }
   return false;
 }

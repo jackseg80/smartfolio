@@ -208,8 +208,12 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     }));
 
     // Import cycle navigator functions et indicateurs on-chain
+    // CRITICAL: NO cache buster for cycle-navigator.js - it has stateful calibrated params
+    // that are loaded from localStorage on module init. Cache buster would reset them!
+    const { cycleScoreFromMonths, getCyclePhase } = await import(`./cycle-navigator.js`);
+
+    // Cache buster for other modules to ensure fresh code during development
     const cacheBuster = `?v=${Date.now()}`;
-    const { cycleScoreFromMonths, getCyclePhase } = await import(`./cycle-navigator.js${cacheBuster}`);
     const { fetchAllIndicators, enhanceCycleScore, analyzeDivergence } = await import(`./onchain-indicators.js${cacheBuster}`);
 
     // 🎯 CALIBRATION HISTORIQUE AUTOMATIQUE (avec garde anti-boucle)
@@ -766,9 +770,12 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
 export async function loadOnChainIndicators() {
   try {
     debugLogger.debug('🔄 Loading on-chain indicators modules...');
+    // CRITICAL: NO cache buster for cycle-navigator.js (stateful calibrated params)
+    const cycleModule = await import(`./cycle-navigator.js`);
+
+    // Cache buster for other modules
     const cacheBuster = `?v=${Date.now()}`;
     const onchainModule = await import(`./onchain-indicators.js${cacheBuster}`);
-    const cycleModule = await import(`./cycle-navigator.js${cacheBuster}`);
 
     const { fetchAllIndicators, enhanceCycleScore, analyzeDivergence, generateRecommendations } = onchainModule;
     const { cycleScoreFromMonths, getCurrentCycleMonths } = cycleModule;
