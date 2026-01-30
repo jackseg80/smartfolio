@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 import pandas as pd
 from datetime import datetime
 import logging
+import time
 
 from api.utils import success_response, error_response
 from services.ml.models.btc_regime_detector import BTCRegimeDetector
@@ -19,9 +20,9 @@ from services.price_history import price_history
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Simple in-memory cache for regime history (TTL: 1 hour)
+# Simple in-memory cache for regime history (TTL: 4 hours)
 _regime_history_cache = {}
-_CACHE_TTL = 3600  # 1 hour in seconds
+_CACHE_TTL = 14400  # 4 hours in seconds (historical data changes infrequently)
 
 
 def get_btc_events(start_date: pd.Timestamp, end_date: pd.Timestamp) -> List[Dict[str, str]]:
@@ -135,6 +136,17 @@ async def get_crypto_regime_history(
     try:
         logger.info(f"GET /api/ml/crypto/regime-history - symbol={symbol}, lookback_days={lookback_days}")
 
+        # Check cache first
+        cache_key = f"{symbol}_{lookback_days}"
+        if cache_key in _regime_history_cache:
+            cached_data, cache_time = _regime_history_cache[cache_key]
+            if time.time() - cache_time < _CACHE_TTL:
+                logger.debug(f"[Cache HIT] Returning cached regime history for {cache_key}")
+                return success_response(cached_data)
+            else:
+                logger.debug(f"[Cache EXPIRED] Removing stale cache for {cache_key}")
+                del _regime_history_cache[cache_key]
+
         # Get data
         history = price_history.get_cached_history(symbol, days=lookback_days)
         if history is None or len(history) == 0:
@@ -158,17 +170,31 @@ async def get_crypto_regime_history(
         features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
         hmm_labels = detector.hmm_model.predict(features_scaled)
 
+        # Pre-calculate rolling minimum drawdown for Expansion detection (performance optimization)
+        features_df['lookback_180d_min_dd'] = features_df['drawdown_from_peak'].rolling(
+            window=180, min_periods=1
+        ).min()
+
         # Apply HYBRID detection for each day (rule-based + HMM fallback)
         regime_names = []
         regime_ids = []
 
-        for i in range(len(features_df)):
-            # Get features up to this day (for context like lookback_dd)
-            features_up_to_day = features_df.iloc[:i+1]
-            row = features_df.iloc[i]
+        # Vectorized detection for simple rules (Bear, Bull, Correction)
+        drawdown = features_df['drawdown_from_peak'].values
+        days_since_peak = features_df['days_since_peak'].values
+        trend_30d = features_df['trend_30d'].values
+        volatility = features_df['market_volatility'].values
+        lookback_dd = features_df['lookback_180d_min_dd'].values
 
-            # Apply rule-based detection
-            rule_result = _detect_regime_rule_based_for_row(row, features_up_to_day)
+        for i in range(len(features_df)):
+            dd = drawdown[i]
+            dsp = days_since_peak[i]
+            trend = trend_30d[i]
+            vol = volatility[i]
+            lb_dd = lookback_dd[i]
+
+            # Apply rule-based detection (optimized, no DataFrame slicing)
+            rule_result = _detect_regime_rule_based_optimized(dd, dsp, trend, vol, lb_dd)
 
             if rule_result:
                 regime_names.append(rule_result['regime_name'])
@@ -191,6 +217,10 @@ async def get_crypto_regime_history(
             'events': get_btc_events(features_df.index.min(), features_df.index.max()),
             'note': 'Hybrid detection (rule-based + HMM fallback) for accurate regime classification.'
         }
+
+        # Store in cache
+        _regime_history_cache[cache_key] = (response_data, time.time())
+        logger.debug(f"[Cache STORE] Cached regime history for {cache_key}")
 
         return success_response(response_data)
 
@@ -247,6 +277,47 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
             'regime_id': 1,
             'regime_name': 'Correction',
         }
+
+    # No clear rule-based detection → defer to HMM
+    return None
+
+
+def _detect_regime_rule_based_optimized(
+    drawdown: float,
+    days_since_peak: int,
+    trend_30d: float,
+    volatility: float,
+    lookback_180d_min_dd: float
+) -> Optional[Dict[str, Any]]:
+    """
+    Optimized version of rule-based detection using pre-calculated values.
+
+    Args:
+        drawdown: Current drawdown from peak
+        days_since_peak: Days since last peak
+        trend_30d: 30-day trend
+        volatility: Market volatility
+        lookback_180d_min_dd: Pre-calculated 180-day rolling minimum drawdown
+
+    Returns:
+        Dict with regime info if clear rule match, else None
+    """
+    # Rule 1: BEAR MARKET (highest priority)
+    if drawdown <= -0.50 and days_since_peak >= 30:
+        return {'regime_id': 0, 'regime_name': 'Bear Market'}
+
+    # Rule 2: EXPANSION (post-crash recovery)
+    if drawdown >= -0.20 and days_since_peak >= 30:
+        if lookback_180d_min_dd <= -0.50 and trend_30d >= 0.30:
+            return {'regime_id': 3, 'regime_name': 'Expansion'}
+
+    # Rule 3: BULL MARKET (clear uptrend)
+    if drawdown >= -0.20 and volatility < 0.60 and trend_30d > 0.10:
+        return {'regime_id': 2, 'regime_name': 'Bull Market'}
+
+    # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
+    if (-0.50 < drawdown < -0.05) and (volatility > 0.40):
+        return {'regime_id': 1, 'regime_name': 'Correction'}
 
     # No clear rule-based detection → defer to HMM
     return None

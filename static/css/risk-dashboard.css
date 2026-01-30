@@ -2559,7 +2559,8 @@
 }
 
 /* Timeframe buttons */
-.btc-regime-timeframe-selector .timeframe-btn {
+.btc-regime-timeframe-selector .timeframe-btn,
+.eth-regime-timeframe-selector .timeframe-btn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--theme-border);
   border-radius: var(--radius-sm);
@@ -2571,12 +2572,14 @@
   transition: all var(--transition-fast);
 }
 
-.btc-regime-timeframe-selector .timeframe-btn:hover {
+.btc-regime-timeframe-selector .timeframe-btn:hover,
+.eth-regime-timeframe-selector .timeframe-btn:hover {
   border-color: var(--brand-primary);
   color: var(--brand-primary);
 }
 
-.btc-regime-timeframe-selector .timeframe-btn.active {
+.btc-regime-timeframe-selector .timeframe-btn.active,
+.eth-regime-timeframe-selector .timeframe-btn.active {
   background: var(--brand-primary);
   border-color: var(--brand-primary);
   color: white;
@@ -2588,4 +2591,83 @@
 #comparison-eth-regime {
   font-size: 0.9rem;
   padding: 0.25rem 0.75rem;
+}
+
+/* ===== Loading State for BTC & ETH Regime Charts ===== */
+#btc-regime-chart-container.loading,
+#eth-regime-chart-container.loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+  transition: opacity var(--transition-normal);
+}
+
+#btc-regime-chart-container.loading::after,
+#eth-regime-chart-container.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--theme-border);
+  border-top-color: var(--brand-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  z-index: 100;
+}
+
+@keyframes spin {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+/* ===== Responsive Mobile for Bitcoin & Ethereum Charts ===== */
+@media (max-width: 768px) {
+  .btc-regime-summary,
+  .eth-regime-summary {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+
+  .btc-regime-timeframe-selector,
+  .eth-regime-timeframe-selector {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btc-regime-timeframe-selector .timeframe-btn,
+  .btc-regime-timeframe-selector button,
+  .eth-regime-timeframe-selector .timeframe-btn,
+  .eth-regime-timeframe-selector button {
+    width: 100%;
+    margin: 0;
+  }
+
+  .btc-regime-legend {
+    flex-direction: column;
+    gap: 1rem !important;
+  }
+
+  /* Make regime chips stack on mobile */
+  .regime-chip {
+    display: block;
+    text-align: center;
+    margin: 0.25rem 0;
+  }
+
+  /* Adjust chart container padding on mobile */
+  #btc-regime-chart-container,
+  #eth-regime-chart-container {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  /* Tablet adjustments */
+  .btc-regime-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

@@ -77,10 +77,12 @@
   <!-- Market Regimes modules (migrated from ai-dashboard.html - Dec 2025) -->
   <script type="module">
     import { initializeBTCRegimeChart } from './modules/btc-regime-chart.js';
+    import { initializeETHRegimeChart } from './modules/eth-regime-chart.js';
     import { initializeStockRegimeHistory, openStockRegimeHistory, closeStockRegimeHistory } from './modules/stock-regime-history.js';
 
     // Expose globally for tab switching
     window.initializeBTCRegimeChart = initializeBTCRegimeChart;
+    window.initializeETHRegimeChart = initializeETHRegimeChart;
     window.openStockRegimeHistory = openStockRegimeHistory;
     window.closeStockRegimeHistory = closeStockRegimeHistory;
   </script>
@@ -396,6 +398,22 @@
                     </div>
                 </div>
 
+                <!-- Historical Timeline -->
+                <div style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="margin: 0;">Historical Regime Timeline</h4>
+                        <div class="eth-regime-timeframe-selector" style="display: flex; gap: 0.5rem;">
+                            <button class="timeframe-btn active" data-days="365">1Y</button>
+                            <button class="timeframe-btn" data-days="730">2Y</button>
+                            <button class="timeframe-btn" data-days="1825">5Y</button>
+                        </div>
+                    </div>
+                    <div id="eth-regime-chart-container" style="position: relative; height: 500px; width: 100%;">
+                        <canvas id="eth-regime-timeline-chart" style="position: absolute; top: 0; left: 0; height: 100%; width: 100%;"></canvas>
+                    </div>
+                    <div id="eth-regime-error-message" class="error-state" style="display: none;"></div>
+                </div>
+
                 <!-- Info Note -->
                 <div
                     style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
@@ -405,7 +423,7 @@
                             Bitcoin</li>
                         <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -50% (30d+), Bull > -20% (vol
                             <60%), Expansion +30%/mo</li>
-                        <li><strong>Lightweight View:</strong> Summary only (full charts available in Bitcoin
+                        <li><strong>Timeline Chart:</strong> Interactive regime visualization with price history
                             section)</li>
                     </ul>
                 </div>
@@ -1527,6 +1545,9 @@
       }
     }
 
+    // Store cross-asset comparison data for export
+    let crossAssetComparisonData = null;
+
     // Load cross-asset comparison data
     async function loadCrossAssetComparison() {
       try {
@@ -1541,6 +1562,14 @@
 
         const ethResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
         let ethData = ethResponse.ok ? await ethResponse.json() : null;
+
+        // Store data for export
+        crossAssetComparisonData = {
+          timestamp: new Date().toISOString(),
+          stock: stockData,
+          btc: btcData?.data || btcData,
+          eth: ethData?.data || ethData
+        };
 
         // Helper to get regime CSS class
         const getRegimeClass = (regime) => regime ? regime.toLowerCase().replace(' ', '-').replace('_', '-') : 'unknown';
@@ -1580,6 +1609,64 @@
       }
     }
 
+    // Export cross-asset comparison data
+    function exportCrossAssetComparison(format = 'json') {
+      if (!crossAssetComparisonData) {
+        if (window.toast) window.toast.showError('No data available. Please refresh first.');
+        return;
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      let blob, filename;
+
+      if (format === 'json') {
+        const jsonData = JSON.stringify(crossAssetComparisonData, null, 2);
+        blob = new Blob([jsonData], { type: 'application/json' });
+        filename = `cross-asset-comparison_${timestamp}.json`;
+      } else if (format === 'csv') {
+        // Create CSV with flattened data
+        const csvRows = [];
+        csvRows.push('Asset,Regime,Confidence (%),Detection Method,Drawdown (%),Volatility (%),Trend 30d (%)');
+
+        const formatRow = (asset, data) => {
+          if (!data) return null;
+          return [
+            asset,
+            data.current_regime || 'N/A',
+            ((data.confidence || 0) * 100).toFixed(1),
+            data.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM',
+            ((data.drawdown_from_peak || 0) * 100).toFixed(1),
+            ((data.market_volatility || 0) * 100).toFixed(1),
+            ((data.trend_30d || 0) * 100).toFixed(1)
+          ].join(',');
+        };
+
+        const stockRow = formatRow('S&P 500 (SPY)', crossAssetComparisonData.stock);
+        const btcRow = formatRow('Bitcoin (BTC)', crossAssetComparisonData.btc);
+        const ethRow = formatRow('Ethereum (ETH)', crossAssetComparisonData.eth);
+
+        if (stockRow) csvRows.push(stockRow);
+        if (btcRow) csvRows.push(btcRow);
+        if (ethRow) csvRows.push(ethRow);
+
+        const csvContent = csvRows.join('\n');
+        blob = new Blob([csvContent], { type: 'text/csv' });
+        filename = `cross-asset-comparison_${timestamp}.csv`;
+      }
+
+      // Trigger download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      if (window.toast) window.toast.showSuccess(`Exported as ${filename}`);
+    }
+
     // Setup button event listeners for Market Regimes tab
     function setupRegimesTabButtons() {
       document.getElementById('refresh-stock-regime')?.addEventListener('click', async () => {
@@ -1601,7 +1688,9 @@
       });
 
       document.getElementById('export-comparison')?.addEventListener('click', () => {
-        if (window.toast) window.toast.showInfo('Export feature coming soon');
+        // Ask for format preference
+        const format = confirm('Click OK for JSON, Cancel for CSV') ? 'json' : 'csv';
+        exportCrossAssetComparison(format);
       });
     }
 
@@ -1618,6 +1707,9 @@
             try {
               if (window.initializeBTCRegimeChart) {
                 await window.initializeBTCRegimeChart('btc-regime-section');
+              }
+              if (window.initializeETHRegimeChart) {
+                await window.initializeETHRegimeChart();
               }
               await loadStockRegimeData();
               await loadEthereumRegimeData();
