@@ -122,14 +122,15 @@ async def get_crypto_regime_history(
     lookback_days: int = Query(90, ge=30, le=3650, description="Timeline period (days)")
 ):
     """
-    Get Bitcoin regime history (SIMPLIFIED - HMM only, less reliable for >90 days).
+    Get Bitcoin regime history using HYBRID detection (rule-based + HMM).
 
-    WARNING: HMM-based detection is less accurate for Bitcoin due to limited training data.
-    For the most accurate CURRENT regime, use /api/ml/crypto/regime endpoint instead.
+    Uses the same hybrid logic as current regime detection:
+    - Rule-based for clear cases (Bear, Bull, Correction, Expansion)
+    - HMM fallback for nuanced cases
 
     Args:
         symbol: Crypto symbol (default: BTC)
-        lookback_days: Timeline length (30-3650 days, default 90, reliable up to 90 days)
+        lookback_days: Timeline length (30-3650 days, default 90)
     """
     try:
         logger.info(f"GET /api/ml/crypto/regime-history - symbol={symbol}, lookback_days={lookback_days}")
@@ -150,25 +151,45 @@ async def get_crypto_regime_history(
         if len(features_df) == 0:
             return error_response("Insufficient data", code=400)
 
-        # Simple HMM predictions (no complex hybrid rules)
+        # Load HMM model for fallback
         if not detector.load_model("btc_regime_hmm.pkl"):
             await detector.train_hmm(symbol=symbol, lookback_days=3650)
 
         features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
-        regime_labels = detector.hmm_model.predict(features_scaled)
-        regime_names = [detector.regime_names[int(label)] for label in regime_labels]
+        hmm_labels = detector.hmm_model.predict(features_scaled)
+
+        # Apply HYBRID detection for each day (rule-based + HMM fallback)
+        regime_names = []
+        regime_ids = []
+
+        for i in range(len(features_df)):
+            # Get features up to this day (for context like lookback_dd)
+            features_up_to_day = features_df.iloc[:i+1]
+            row = features_df.iloc[i]
+
+            # Apply rule-based detection
+            rule_result = _detect_regime_rule_based_for_row(row, features_up_to_day)
+
+            if rule_result:
+                regime_names.append(rule_result['regime_name'])
+                regime_ids.append(rule_result['regime_id'])
+            else:
+                # Fallback to HMM
+                hmm_label = int(hmm_labels[i])
+                regime_names.append(detector.regime_names[hmm_label])
+                regime_ids.append(hmm_label)
 
         # Format response
         response_data = {
             'dates': features_df.index.strftime('%Y-%m-%d').tolist(),
             'prices': data.loc[features_df.index, 'close'].tolist(),
             'regimes': regime_names,
-            'regime_ids': regime_labels.tolist(),
+            'regime_ids': regime_ids,
             'symbol': symbol,
             'lookback_days': lookback_days,
             'regime_id_mapping': {i: name for i, name in enumerate(detector.regime_names)},
-            'events': [],
-            'note': 'Simplified HMM-only detection. For accurate current regime, use /api/ml/crypto/regime endpoint.'
+            'events': get_btc_events(features_df.index.min(), features_df.index.max()),
+            'note': 'Hybrid detection (rule-based + HMM fallback) for accurate regime classification.'
         }
 
         return success_response(response_data)
@@ -176,6 +197,59 @@ async def get_crypto_regime_history(
     except Exception as e:
         logger.error(f"Error in regime-history: {e}", exc_info=True)
         return error_response(f"Failed to get regime history: {str(e)}", code=500)
+
+
+def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataFrame) -> Optional[Dict[str, Any]]:
+    """
+    Apply rule-based regime detection for a single row with historical context.
+
+    Crypto-adapted thresholds:
+    - Bear: DD ≤ -50%, sustained 30 days
+    - Correction: -50% < DD < -5% AND vol > 40%
+    - Bull: DD > -20%, vol < 60%, trend > +10%
+    - Expansion: Recovery from -50%+ at +30%/month
+
+    Returns:
+        Dict with regime info if clear rule match, else None (defer to HMM)
+    """
+    drawdown = row.get('drawdown_from_peak', 0)
+    days_since_peak = row.get('days_since_peak', 0)
+    trend_30d = row.get('trend_30d', 0)
+    volatility = row.get('market_volatility', 0)
+
+    # Rule 1: BEAR MARKET (highest priority)
+    if drawdown <= -0.50 and days_since_peak >= 30:
+        return {
+            'regime_id': 0,
+            'regime_name': 'Bear Market',
+        }
+
+    # Rule 2: EXPANSION (post-crash recovery)
+    if drawdown >= -0.20 and days_since_peak >= 30:
+        # Check if there was recent deep drawdown in last 180 days
+        lookback_dd = features_context.tail(180)['drawdown_from_peak'].min() if len(features_context) > 0 else 0
+        if lookback_dd <= -0.50 and trend_30d >= 0.30:
+            return {
+                'regime_id': 3,
+                'regime_name': 'Expansion',
+            }
+
+    # Rule 3: BULL MARKET (clear uptrend)
+    if drawdown >= -0.20 and volatility < 0.60 and trend_30d > 0.10:
+        return {
+            'regime_id': 2,
+            'regime_name': 'Bull Market',
+        }
+
+    # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
+    if (-0.50 < drawdown < -0.05) and (volatility > 0.40):
+        return {
+            'regime_id': 1,
+            'regime_name': 'Correction',
+        }
+
+    # No clear rule-based detection → defer to HMM
+    return None
 
 
 @router.get("/regime-forecast")

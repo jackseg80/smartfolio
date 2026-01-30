@@ -1438,8 +1438,16 @@
             const regimeName = data.current_regime;
             const confidencePercent = (data.confidence * 100).toFixed(1);
 
-            document.getElementById('stock-regime-name').textContent = regimeName;
-            document.getElementById('stock-regime-confidence').textContent = confidencePercent + '%';
+            // Apply regime chip with proper class for coloring
+            const regimeEl = document.getElementById('stock-regime-name');
+            regimeEl.textContent = regimeName;
+            regimeEl.className = 'regime-chip ' + regimeName.toLowerCase().replace(' ', '-').replace('_', '-');
+
+            // Style confidence based on value
+            const confidenceEl = document.getElementById('stock-regime-confidence');
+            confidenceEl.textContent = confidencePercent + '%';
+            const conf = data.confidence;
+            confidenceEl.style.color = conf >= 0.8 ? 'var(--success)' : conf >= 0.6 ? 'var(--warning)' : 'var(--danger)';
 
             debugLogger.debug('✅ Stock regime loaded:', regimeName, confidencePercent + '%');
           } else {
@@ -1534,15 +1542,22 @@
         const ethResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
         let ethData = ethResponse.ok ? await ethResponse.json() : null;
 
+        // Helper to get regime CSS class
+        const getRegimeClass = (regime) => regime ? regime.toLowerCase().replace(' ', '-').replace('_', '-') : 'unknown';
+
         if (stockData && stockData.current_regime) {
-          document.getElementById('comparison-stock-regime').textContent = stockData.current_regime;
+          const stockEl = document.getElementById('comparison-stock-regime');
+          stockEl.textContent = stockData.current_regime;
+          stockEl.className = 'regime-chip ' + getRegimeClass(stockData.current_regime);
           document.getElementById('comparison-stock-confidence').textContent = (stockData.confidence * 100).toFixed(1) + '%';
         }
 
         if (btcData) {
           const btc = btcData.data || btcData;
           if (btc.current_regime) {
-            document.getElementById('comparison-btc-regime').textContent = btc.current_regime;
+            const btcEl = document.getElementById('comparison-btc-regime');
+            btcEl.textContent = btc.current_regime;
+            btcEl.className = 'regime-chip ' + getRegimeClass(btc.current_regime);
             document.getElementById('comparison-btc-confidence').textContent = (btc.confidence * 100).toFixed(1) + '%';
             document.getElementById('comparison-btc-method').textContent = btc.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
           }
@@ -1551,7 +1566,9 @@
         if (ethData) {
           const eth = ethData.data || ethData;
           if (eth.current_regime) {
-            document.getElementById('comparison-eth-regime').textContent = eth.current_regime;
+            const ethEl = document.getElementById('comparison-eth-regime');
+            ethEl.textContent = eth.current_regime;
+            ethEl.className = 'regime-chip ' + getRegimeClass(eth.current_regime);
             document.getElementById('comparison-eth-confidence').textContent = (eth.confidence * 100).toFixed(1) + '%';
             document.getElementById('comparison-eth-method').textContent = eth.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
           }

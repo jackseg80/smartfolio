@@ -168,8 +168,14 @@ function updateCurrentRegimeSummary(currentRegime) {
     }
 
     // Update regime probabilities chart
+    // Pass current regime info to adjust probabilities for rule-based detection
     if (currentRegime.regime_probabilities) {
-        createProbabilitiesChart(currentRegime.regime_probabilities);
+        createProbabilitiesChart(
+            currentRegime.regime_probabilities,
+            currentRegime.current_regime,
+            currentRegime.confidence,
+            currentRegime.detection_method
+        );
     }
 }
 
@@ -236,7 +242,7 @@ function createTimelineChart(historyData) {
             plugins: {
                 title: {
                     display: true,
-                    text: `Bitcoin Regime Detection (${historyData.period_days} days)`,
+                    text: `Bitcoin Regime Detection (${historyData.lookback_days || dates.length} days)`,
                     font: { size: 16, weight: 'bold' }
                 },
                 legend: {
@@ -380,8 +386,12 @@ function createEventAnnotations(events, prices) {
 
 /**
  * Create regime probabilities bar chart
+ * @param {Object} hmmProbabilities - Raw HMM probabilities
+ * @param {string} currentRegime - Detected regime name (from hybrid system)
+ * @param {number} confidence - Detection confidence (0-1)
+ * @param {string} detectionMethod - 'rule_based' or 'hmm'
  */
-function createProbabilitiesChart(probabilities) {
+function createProbabilitiesChart(hmmProbabilities, currentRegime, confidence, detectionMethod) {
     const canvas = document.getElementById('btc-regime-probabilities-chart');
     if (!canvas) return;
 
@@ -390,6 +400,28 @@ function createProbabilitiesChart(probabilities) {
     // Destroy existing chart
     if (window.btcProbabilitiesChart) {
         window.btcProbabilitiesChart.destroy();
+    }
+
+    // For rule-based detection, adjust probabilities to match detected regime
+    // This ensures the chart reflects the actual hybrid detection, not just HMM
+    let probabilities = { ...hmmProbabilities };
+    let chartSubtitle = '';
+
+    if (detectionMethod === 'rule_based' && currentRegime) {
+        // Redistribute probabilities: detected regime gets confidence, others share remainder
+        const totalRegimes = Object.keys(probabilities).length;
+        const remainder = (1 - confidence) / Math.max(1, totalRegimes - 1);
+
+        for (const regime of Object.keys(probabilities)) {
+            if (regime === currentRegime) {
+                probabilities[regime] = confidence;
+            } else {
+                probabilities[regime] = remainder;
+            }
+        }
+        chartSubtitle = '(Rule-Based Detection)';
+    } else {
+        chartSubtitle = '(HMM Model)';
     }
 
     const labels = Object.keys(probabilities);
@@ -415,7 +447,7 @@ function createProbabilitiesChart(probabilities) {
                 legend: { display: false },
                 title: {
                     display: true,
-                    text: 'Regime Probabilities',
+                    text: `Regime Probabilities ${chartSubtitle}`,
                     font: { size: 14 }
                 }
             },

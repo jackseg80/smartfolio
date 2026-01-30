@@ -2420,3 +2420,172 @@
   font-weight: 600;
   color: var(--theme-text);
 }
+
+/* ===== Regime Chip Styles (Market Regimes Tab) ===== */
+.regime-chip {
+  display: inline-block;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.025em;
+  transition: all var(--transition-fast);
+}
+
+/* Stock Market Regime - Larger display */
+.status-grid .status-value .regime-chip,
+#stock-regime-name {
+  font-size: 1.25rem;
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+}
+
+/* Regime colors */
+.regime-chip.bear,
+.regime-chip.bear-market {
+  background: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  border: 2px solid #dc2626;
+}
+
+.regime-chip.correction {
+  background: rgba(234, 88, 12, 0.15);
+  color: #ea580c;
+  border: 2px solid #ea580c;
+}
+
+.regime-chip.bull,
+.regime-chip.bull-market {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 2px solid #22c55e;
+}
+
+.regime-chip.expansion {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+}
+
+.regime-chip.sideways,
+.regime-chip.distribution {
+  background: rgba(156, 163, 175, 0.15);
+  color: #9ca3af;
+  border: 2px solid #9ca3af;
+}
+
+.regime-chip.unknown {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+  border: 2px solid #6b7280;
+}
+
+/* Stock Market Regime Section Enhanced Styling */
+#stock-regime-name {
+  display: inline-block;
+  min-width: 140px;
+  text-align: center;
+}
+
+#stock-regime-confidence {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+/* Detection method badges */
+.detection-method {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.detection-method.rule_based,
+.detection-method.rule-based {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid #22c55e;
+}
+
+.detection-method.hmm {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid #3b82f6;
+}
+
+/* Metric cards in regime sections */
+.btc-regime-summary .metric-card,
+.eth-regime-summary .metric-card {
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.btc-regime-summary .metric-card:hover,
+.eth-regime-summary .metric-card:hover {
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.btc-regime-summary .metric-card h5,
+.eth-regime-summary .metric-card h5 {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.btc-regime-summary .metric-card .metric-value,
+.eth-regime-summary .metric-card .metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--theme-text);
+  margin-bottom: var(--space-xs);
+}
+
+.btc-regime-summary .metric-card small,
+.eth-regime-summary .metric-card small {
+  font-size: 0.7rem;
+  color: var(--theme-text-muted);
+}
+
+/* Timeframe buttons */
+.btc-regime-timeframe-selector .timeframe-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-sm);
+  background: var(--theme-surface);
+  color: var(--theme-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btc-regime-timeframe-selector .timeframe-btn:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.btc-regime-timeframe-selector .timeframe-btn.active {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: white;
+}
+
+/* Cross-Asset Comparison table regime chips */
+#comparison-stock-regime,
+#comparison-btc-regime,
+#comparison-eth-regime {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+}
