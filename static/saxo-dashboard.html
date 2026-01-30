@@ -1354,6 +1354,8 @@
                 `;
 
                 // Plot heatmap with Plotly
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+                
                 const heatmapTrace = {
                     z: corrArray,
                     x: labels,
@@ -1367,20 +1369,33 @@
                     zmid: 0,
                     colorbar: {
                         title: 'Correlation',
-                        titleside: 'right'
+                        titleside: 'right',
+                        tickfont: { color: textColor },
+                        titlefont: { color: textColor }
                     },
                     hovertemplate: '%{y} & %{x}<br>Correlation: %{z:.3f}<extra></extra>'
                 };
 
                 const layout = {
-                    title: '🔗 Position Correlation Heatmap',
-                    xaxis: { title: '', tickangle: -45 },
-                    yaxis: { title: '' },
+                    title: {
+                        text: '🔗 Position Correlation Heatmap',
+                        font: { color: textColor, size: 16 }
+                    },
+                    xaxis: { 
+                        title: '', 
+                        tickangle: -45,
+                        tickfont: { color: textColor }
+                    },
+                    yaxis: { 
+                        title: '',
+                        tickfont: { color: textColor }
+                    },
                     width: null,
                     height: 600,
-                    margin: { l: 100, r: 50, t: 100, b: 100 },
+                    margin: { l: 150, r: 50, t: 50, b: 100 },
                     paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)'
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: textColor }
                 };
 
                 Plotly.newPlot(heatmapDiv, [heatmapTrace], layout, { responsive: true, displayModeBar: false });
@@ -1407,8 +1422,8 @@
                 // Plotly requires dendrogram data in specific format
                 // linkageMatrix from scipy: [[idx1, idx2, distance, count], ...]
 
-                // Simple dendrogram visualization using scatter plot
-                // (Full dendrogram requires complex transformation, so we use simplified visualization)
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+                const lineColor = '#cbd5e1'; // slate-300 for better visibility in dark mode
 
                 // Create hierarchical tree structure visualization
                 const n = labels.length;
@@ -1425,7 +1440,7 @@
                         x: [distance, distance],
                         y: [y1, y2],
                         mode: 'lines',
-                        line: { color: '#64748b', width: 2 },
+                        line: { color: lineColor, width: 2 },
                         showlegend: false,
                         hoverinfo: 'skip'
                     });
@@ -1436,7 +1451,7 @@
                             x: [0, distance],
                             y: [y1, y1],
                             mode: 'lines',
-                            line: { color: '#64748b', width: 1 },
+                            line: { color: lineColor, width: 1 },
                             showlegend: false,
                             hoverinfo: 'skip'
                         });
@@ -1446,7 +1461,7 @@
                             x: [0, distance],
                             y: [y2, y2],
                             mode: 'lines',
-                            line: { color: '#64748b', width: 1 },
+                            line: { color: lineColor, width: 1 },
                             showlegend: false,
                             hoverinfo: 'skip'
                         });
@@ -1461,7 +1476,7 @@
                     marker: { size: 8, color: '#3b82f6' },
                     text: labels,
                     textposition: 'middle left',
-                    textfont: { size: 10 },
+                    textfont: { size: 10, color: textColor },
                     showlegend: false,
                     hovertemplate: '%{text}<extra></extra>'
                 };
@@ -1472,9 +1487,11 @@
                     showlegend: false,
                     xaxis: {
                         title: 'Distance (Correlation Dissimilarity)',
+                        titlefont: { color: textColor },
+                        tickfont: { color: textColor },
                         zeroline: false,
                         showgrid: true,
-                        gridcolor: 'rgba(100, 116, 139, 0.1)'
+                        gridcolor: 'rgba(100, 116, 139, 0.2)'
                     },
                     yaxis: {
                         title: '',
@@ -1486,7 +1503,8 @@
                     height: 400,
                     margin: { l: 120, r: 50, t: 50, b: 60 },
                     paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)'
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: textColor }
                 };
 
                 Plotly.newPlot(divId, traces, layout, { responsive: true, displayModeBar: false });
@@ -2167,6 +2185,8 @@
                 }
 
                 // Create new chart
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+                
                 regimeTimelineChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
@@ -2174,8 +2194,8 @@
                         datasets: [{
                             label: `${historyData.benchmark} Price`,
                             data: displayPrices,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                            borderColor: '#8b5cf6', // Violet-500 to match legend (was blue #3b82f6)
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)', // Violet-500 with opacity
                             borderWidth: 2,
                             fill: true,
                             tension: 0.1,
@@ -2192,13 +2212,12 @@
                             legend: {
                                 display: true,
                                 labels: {
-                                    color: 'var(--theme-text)',
+                                    color: textColor,
                                     font: {
                                         size: 12
                                     },
                                     generateLabels: function(chart) {
                                         // Add custom legend for regimes (Phase 2.7 + Option 1 colors)
-                                        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
                                         return [
                                             { text: `${historyData.benchmark} Price`, fillStyle: '#8b5cf6', strokeStyle: '#8b5cf6', fontColor: textColor },
                                             { text: 'Bear Market', fillStyle: '#dc2626', fontColor: textColor },
@@ -2247,35 +2266,35 @@
                                 title: {
                                     display: true,
                                     text: 'Price ($)',
-                                    color: 'var(--theme-text)',
+                                    color: textColor,
                                     font: { size: 12 }
                                 },
                                 ticks: {
-                                    color: 'var(--theme-text-muted)',
+                                    color: textColor,
                                     callback: function(value) {
                                         return '$' + value.toFixed(0);
                                     }
                                 },
                                 grid: {
-                                    color: 'var(--theme-border)'
+                                    color: 'rgba(100, 116, 139, 0.2)'
                                 }
                             },
                             x: {
                                 title: {
                                     display: true,
                                     text: 'Date',
-                                    color: 'var(--theme-text)',
+                                    color: textColor,
                                     font: { size: 12 }
                                 },
                                 ticks: {
-                                    color: 'var(--theme-text-muted)',
+                                    color: textColor,
                                     maxRotation: 45,
                                     minRotation: 45,
                                     autoSkip: true,
                                     maxTicksLimit: 20
                                 },
                                 grid: {
-                                    color: 'var(--theme-border)'
+                                    color: 'rgba(100, 116, 139, 0.2)'
                                 }
                             }
                         }
