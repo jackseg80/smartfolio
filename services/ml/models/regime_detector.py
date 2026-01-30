@@ -37,10 +37,10 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
     even when 2000-2002 crash (-49%) and 2008 crisis (-57%) are included.
 
     Regime Definitions (Objective):
-    - 0 (Bear Market): Drawdown ≥20% from peak, duration >2 months
-    - 1 (Correction): Drawdown 10-20% OR volatility >30% (60d) OR price <MA200
+    - 0 (Bear Market): Drawdown ≥20% from peak, with majority of days at ≥10% drawdown
+    - 1 (Correction): Drawdown 10-20% OR volatility >25% (60d) OR price <MA200
     - 2 (Bull Market): Price >MA200, volatility <25%, positive momentum
-    - 3 (Expansion): Recovery from drawdown >20% at rate >15%/month for 3+ months
+    - 3 (Expansion): Strong recovery from major drawdown (≥25% gain from local bottom)
 
     Args:
         price_data: DataFrame with 'close' column and DatetimeIndex
@@ -49,13 +49,14 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
         Array of regime labels (0-3) matching input length
     """
     close = price_data['close'].values
-    # ✅ FIX: Initialize with -1 to distinguish unlabeled from Bear Market (0)
-    labels = np.full(len(close), -1, dtype=int)
+    n = len(close)
+    # Initialize with -1 to distinguish unlabeled from Bear Market (0)
+    labels = np.full(n, -1, dtype=int)
 
     # Calculate features
     returns = pd.Series(close).pct_change()
     cumulative_max = pd.Series(close).cummax()
-    drawdown = (close - cumulative_max) / cumulative_max
+    drawdown = (close - cumulative_max.values) / cumulative_max.values
 
     # 60-day rolling volatility (annualized)
     volatility_60d = returns.rolling(60).std() * np.sqrt(252)
@@ -63,38 +64,73 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
     # 200-day moving average
     ma_200 = pd.Series(close).rolling(200).mean()
 
-    # 20-day momentum
-    momentum_20 = pd.Series(close).pct_change(20)
+    # Rolling 20-day mean drawdown (smooths out relief rallies)
+    drawdown_ma20 = pd.Series(drawdown).rolling(20).mean().values
 
     # PHASE 1: Identify Bear Markets (priority 1)
-    # Drawdown ≥20% from peak AND sustained >2 months (42 trading days)
-    for i in range(42, len(close)):
-        if drawdown[i] <= -0.20:  # 20% drawdown
-            # Check if sustained for at least 2 months
-            if np.all(drawdown[i-42:i+1] <= -0.15):  # At least 15% for 2 months
-                labels[i-42:i+1] = 0  # Bear Market
+    # Criteria: Rolling mean drawdown ≥15% for at least 30 consecutive days
+    # OR: Any day with drawdown ≥20% AND at least 70% of last 42 days had ≥10% drawdown
+    bear_market_mask = np.zeros(n, dtype=bool)
+
+    for i in range(42, n):
+        current_dd = drawdown[i]
+
+        # Method 1: Rolling mean drawdown ≥15% (smooths relief rallies)
+        if i >= 30 and not np.isnan(drawdown_ma20[i]):
+            if drawdown_ma20[i] <= -0.15:
+                # Check if sustained for at least 30 days
+                if np.all(drawdown_ma20[max(0, i-29):i+1] <= -0.12):
+                    bear_market_mask[max(0, i-29):i+1] = True
+
+        # Method 2: Deep drawdown (≥20%) with majority of window at ≥10%
+        if current_dd <= -0.20:
+            window = drawdown[i-42:i+1]
+            days_in_correction = np.sum(window <= -0.10)
+            if days_in_correction >= 30:  # 70% of 42 days
+                bear_market_mask[i-42:i+1] = True
+
+    labels[bear_market_mask] = 0  # Bear Market
 
     # PHASE 2: Identify Expansion (priority 2)
-    # Recovery from drawdown >20% at rate >15%/month for 3+ months
-    for i in range(63, len(close)):  # 3 months = 63 trading days
-        # Check if recovering from major drawdown
-        min_dd_past = np.min(drawdown[i-126:i-63])  # 3-6 months ago
-        if min_dd_past <= -0.20:  # Was in 20%+ drawdown
-            # Check if strong recovery (>15% gain per month)
-            gain_3m = (close[i] - close[i-63]) / close[i-63]
-            if gain_3m >= 0.45:  # 45% in 3 months = 15%/month
-                labels[i-63:i+1] = 3  # Expansion
+    # Recovery from significant drawdown with strong momentum
+    # Criteria: Was in ≥15% drawdown within last 4 months, now recovering with ≥20% gain
+    for i in range(63, n):
+        if labels[i] == 0:
+            continue  # Already labeled as Bear
+
+        # Check if there was a significant drawdown in the past 4 months (84 trading days)
+        lookback_start = max(0, i - 84)
+        min_dd_past = np.min(drawdown[lookback_start:i])
+
+        if min_dd_past <= -0.15:  # Was in 15%+ drawdown
+            # Check if strong recovery from the bottom
+            # Find the local bottom in the lookback period
+            bottom_idx = lookback_start + np.argmin(drawdown[lookback_start:i])
+            if bottom_idx < i - 10:  # At least 10 days since bottom
+                gain_from_bottom = (close[i] - close[bottom_idx]) / close[bottom_idx]
+                days_since_bottom = i - bottom_idx
+
+                # Strong recovery: ≥25% gain from bottom OR ≥8%/month sustained recovery
+                monthly_rate = gain_from_bottom / (days_since_bottom / 21) if days_since_bottom > 0 else 0
+
+                if gain_from_bottom >= 0.25 or (monthly_rate >= 0.08 and days_since_bottom >= 42):
+                    # Only label as expansion if coming out of bear/correction
+                    if current_dd > -0.10:  # Drawdown recovered to <10%
+                        labels[max(bottom_idx, i-42):i+1] = 3  # Expansion
 
     # PHASE 3: Identify Corrections (priority 3)
     # Drawdown 10-20% OR high volatility OR below MA200
-    for i in range(200, len(close)):
+    for i in range(200, n):
         if labels[i] == 0 or labels[i] == 3:
             continue  # Already labeled as Bear or Expansion
 
+        vol = volatility_60d.iloc[i] if not np.isnan(volatility_60d.iloc[i]) else 0
+        ma = ma_200.iloc[i] if not np.isnan(ma_200.iloc[i]) else close[i]
+
         is_correction = (
-            (-0.20 < drawdown[i] <= -0.10) or  # 10-20% drawdown
-            (volatility_60d[i] >= 0.30) or  # High vol (30%+)
-            (close[i] < ma_200[i])  # Below 200-day MA
+            (-0.20 < drawdown[i] <= -0.08) or  # 8-20% drawdown (slightly relaxed)
+            (vol >= 0.25) or  # High vol (25%+, relaxed from 30%)
+            (close[i] < ma * 0.98)  # Below 200-day MA by 2%+
         )
 
         if is_correction:
@@ -102,8 +138,6 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
 
     # PHASE 4: Rest are Bull Markets (default)
     # Price >MA200, low volatility, positive trend
-    # ✅ FIX: Assign Bull Market (2) to all remaining unlabeled periods (-1)
-    # Now we can safely distinguish unlabeled (-1) from Bear Market (0)
     labels[labels == -1] = 2  # All unlabeled → Bull Market
 
     return labels
@@ -994,10 +1028,10 @@ class RegimeDetector:
                 # Higher temperature = less overconfident predictions
                 probabilities = torch.softmax(logits / self.temperature, dim=1)
 
-                # CRITICAL: Apply Bayesian prior to enforce uncertainty floor
-                # Prevents dangerous overconfidence (99%+) that misleads users
-                # Model trained on 20Y bull market (66%) can't predict black swans
-                min_uncertainty = 0.15  # Force at least 15% total uncertainty
+                # Apply Bayesian prior to enforce minimum uncertainty floor
+                # Reduced from 15% to 5% to allow more varied probability distributions
+                # while still preventing dangerous 0% probabilities for rare events
+                min_uncertainty = 0.05  # Force at least 5% total uncertainty (was 15%)
                 uniform_prior = torch.ones(self.num_regimes, device=self.device) / self.num_regimes
                 probabilities = (1 - min_uncertainty) * probabilities + min_uncertainty * uniform_prior
 
@@ -1215,8 +1249,12 @@ class RegimeDetector:
 
             # Load optimal temperature (calibrated on validation set)
             # Fall back to default if not available (old models)
-            self.temperature = self.training_metadata.get('optimal_temperature', 2.5)
-            logger.info(f"Loaded model with calibrated temperature: {self.temperature:.3f}")
+            # Enforce minimum temperature of 2.0 to prevent overly extreme predictions
+            calibrated_temp = self.training_metadata.get('optimal_temperature', 2.5)
+            self.temperature = max(calibrated_temp, 2.0)  # Minimum 2.0 for realistic probabilities
+            if calibrated_temp < 2.0:
+                logger.warning(f"Calibrated temperature {calibrated_temp:.3f} too low, using minimum 2.0")
+            logger.info(f"Loaded model with temperature: {self.temperature:.3f}")
             
             # Initialize and load neural network
             self.neural_model = RegimeClassificationNetwork(

@@ -58,12 +58,12 @@ class StocksMLAdapter:
     - Technical signals aggregation
     """
 
-    # Stock market regimes (adapted from crypto regimes)
+    # Stock market regimes (must match RegimeDetector.regime_names)
     STOCK_REGIMES = {
-        0: "Bear Market",        # Down trend, high fear
-        1: "Consolidation",      # Sideways, low volume
-        2: "Bull Market",        # Up trend, positive momentum
-        3: "Distribution"        # Topping, high volatility
+        0: "Bear Market",        # Drawdown ≥20%, sustained decline
+        1: "Correction",         # Drawdown 10-20%, high vol, price <MA200
+        2: "Bull Market",        # Stable uptrend, price >MA200, low vol
+        3: "Expansion"           # Strong recovery from major drawdown
     }
 
     def __init__(self, models_dir: str = "models/stocks"):
@@ -285,24 +285,15 @@ class StocksMLAdapter:
             # Map probabilities to stock regime names
             regime_probs_raw = prediction.get('regime_probabilities', {})
 
-            # Mapping from crypto regime names to stock regime names (by index)
-            # crypto: 0=Accumulation, 1=Expansion, 2=Euphoria, 3=Distribution
-            # stock:  0=Bear Market, 1=Consolidation, 2=Bull Market, 3=Distribution
-            crypto_to_stock_names = {
-                'Accumulation': 'Bear Market',
-                'Expansion': 'Consolidation',
-                'Euphoria': 'Bull Market',
-                'Distribution': 'Distribution'
-            }
+            # RegimeDetector now uses consistent stock regime names:
+            # 0=Bear Market, 1=Correction, 2=Bull Market, 3=Expansion
+            # No mapping needed - names should match directly
 
             # Convert probabilities dict
             if isinstance(regime_probs_raw, dict):
-                regime_probs = {}
-                for crypto_name, prob in regime_probs_raw.items():
-                    stock_name = crypto_to_stock_names.get(crypto_name, crypto_name)
-                    regime_probs[stock_name] = float(prob)
+                regime_probs = {name: float(prob) for name, prob in regime_probs_raw.items()}
             else:
-                # It's an array/list - map by index
+                # It's an array/list - map by index using STOCK_REGIMES
                 regime_probs = {
                     self.STOCK_REGIMES.get(i, f"State{i}"): float(prob)
                     for i, prob in enumerate(regime_probs_raw)
@@ -345,15 +336,26 @@ class StocksMLAdapter:
                 "volatility": "high",
                 "sentiment": "fearful"
             },
-            "Consolidation": {
+            "Correction": {
                 "trend": "sideways",
-                "volatility": "low",
-                "sentiment": "neutral"
+                "volatility": "elevated",
+                "sentiment": "cautious"
             },
             "Bull Market": {
                 "trend": "upward",
                 "volatility": "moderate",
                 "sentiment": "optimistic"
+            },
+            "Expansion": {
+                "trend": "recovering",
+                "volatility": "high",
+                "sentiment": "hopeful"
+            },
+            # Backward compatibility aliases
+            "Consolidation": {
+                "trend": "sideways",
+                "volatility": "low",
+                "sentiment": "neutral"
             },
             "Distribution": {
                 "trend": "topping",
@@ -385,7 +387,7 @@ class StocksMLAdapter:
         current_ma50 = ma_50.iloc[-1]
         current_ma200 = ma_200.iloc[-1]
 
-        # Simple regime classification
+        # Simple regime classification (matching RegimeDetector names)
         if current_price > current_ma50 > current_ma200:
             regime = "Bull Market"
             confidence = 0.7
@@ -393,10 +395,10 @@ class StocksMLAdapter:
             regime = "Bear Market"
             confidence = 0.7
         elif abs(current_price - current_ma50) / current_ma50 < 0.02:
-            regime = "Consolidation"
+            regime = "Correction"  # Sideways/consolidation
             confidence = 0.6
         else:
-            regime = "Distribution"
+            regime = "Correction"  # Default to Correction for uncertain cases
             confidence = 0.5
 
         result = {

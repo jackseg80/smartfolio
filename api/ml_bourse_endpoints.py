@@ -469,12 +469,15 @@ async def get_regime_history(
     """
     Retourne l'historique des régimes ML avec les prix réels du benchmark.
 
-    Utilise le modèle HMM pour identifier les régimes historiques sur la période demandée.
-    Permet de visualiser les transitions de régimes et valider le modèle.
+    Utilise des critères économiques objectifs (rule-based) pour identifier les régimes:
+    - Bear Market: Drawdown ≥20% du pic, durée >2 mois
+    - Correction: Drawdown 10-20% OU volatilité >30% OU prix <MA200
+    - Bull Market: Prix >MA200, volatilité <25%, momentum positif
+    - Expansion: Recovery de drawdown >20% à +15%/mois pendant 3+ mois
 
     Args:
         benchmark: Ticker du benchmark (default: SPY)
-        lookback_days: Jours d'historique (365-7300, default: 365, minimum 1 year for reliable regime detection)
+        lookback_days: Jours d'historique (365-10950, default: 365)
 
     Returns:
         {
@@ -504,57 +507,27 @@ async def get_regime_history(
             lookback_days=lookback_days
         )
 
-        # After feature calculation, we lose ~60-100 days due to rolling windows
-        # So we need raw data length check before features, not after
-        # Lowered to 200 to allow 1Y timeframe to work (365 days - ~100 warmup = ~265 samples)
+        # Need at least 200 days for MA200 calculation
         if len(data) < 200:
             raise HTTPException(
                 status_code=400,
-                detail=f"Insufficient data: only {len(data)} days available (minimum 200 days required for regime detection with feature windows)"
+                detail=f"Insufficient data: only {len(data)} days available (minimum 200 days required for regime detection)"
             )
 
-        # Load the trained regime detector
-        from services.ml.models.regime_detector import RegimeDetector
-        detector = RegimeDetector(model_dir="models/stocks/regime")
+        # Use rule-based labels instead of neural network
+        # This properly detects Bear Markets and Expansion phases using objective economic criteria
+        from services.ml.models.regime_detector import create_rule_based_labels, RegimeDetector
 
-        # Load the trained model (neural network + scaler)
-        if not detector.load_model():
-            raise HTTPException(
-                status_code=503,
-                detail="Regime model not trained yet. Please call /api/ml/bourse/regime first to train the model."
-            )
+        # Create regime labels using objective criteria (drawdown, MA200, volatility, recovery rate)
+        regime_labels = create_rule_based_labels(data)
 
-        # Prepare features for all historical data
-        multi_asset_data = {benchmark: data}
-        features_df = detector.prepare_regime_features(multi_asset_data)
+        # Regime names mapping (same as RegimeDetector)
+        regime_names_map = ['Bear Market', 'Correction', 'Bull Market', 'Expansion']
+        regime_names_list = [regime_names_map[label] for label in regime_labels]
 
-        if len(features_df) == 0:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to prepare features from historical data"
-            )
-
-        # Use trained neural network to predict regimes for ALL historical data
-        # Scale features using the trained scaler
-        features_scaled = detector.scaler.transform(features_df.values)
-
-        # Convert to tensor
-        import torch
-        X_tensor = torch.FloatTensor(features_scaled).to(detector.device)
-
-        # Predict with trained model
-        detector.neural_model.eval()
-        with torch.no_grad():
-            logits, _ = detector.neural_model(X_tensor)
-            regime_labels = torch.argmax(logits, dim=1).cpu().numpy()
-
-        # Map regime IDs to names
-        regime_names = [detector.regime_names[label] for label in regime_labels]
-
-        # Get dates and prices aligned with features
-        # Features are calculated with some lag, so we need to align properly
-        dates = features_df.index.strftime('%Y-%m-%d').tolist()
-        prices = data.loc[features_df.index, 'close'].tolist()
+        # Get dates and prices
+        dates = data.index.strftime('%Y-%m-%d').tolist()
+        prices = data['close'].tolist()
 
         # Define key market events for annotations (last 20 years)
         events = []
@@ -572,10 +545,10 @@ async def get_regime_history(
 
         # Calculate regime statistics
         regime_counts = {}
-        for name in detector.regime_names:
-            regime_counts[name] = regime_names.count(name)
+        for name in regime_names_map:
+            regime_counts[name] = regime_names_list.count(name)
 
-        total_samples = len(regime_names)
+        total_samples = len(regime_names_list)
         regime_distribution = {
             name: {
                 "count": count,
@@ -585,21 +558,25 @@ async def get_regime_history(
         }
 
         # Add debug info: regime ID distribution
+        import numpy as np
         regime_id_counts = {}
-        for i, name in enumerate(detector.regime_names):
-            count = (regime_labels == i).sum()
-            regime_id_counts[i] = {"name": name, "count": int(count)}
+        for i, name in enumerate(regime_names_map):
+            count = int((np.array(regime_labels) == i).sum())
+            regime_id_counts[i] = {"name": name, "count": count}
+
+        logger.info(f"Rule-based regime detection: {regime_id_counts}")
 
         return {
             "dates": dates,
             "prices": prices,
-            "regimes": regime_names,
+            "regimes": regime_names_list,
             "regime_ids": regime_labels.tolist(),
             "benchmark": benchmark,
             "lookback_days": lookback_days,
             "total_samples": total_samples,
             "regime_distribution": regime_distribution,
-            "regime_id_mapping": regime_id_counts,  # Debug: see which IDs map to which names
+            "regime_id_mapping": regime_id_counts,
+            "detection_method": "rule_based",  # Indicate we use objective criteria
             "events": events,
             "timestamp": datetime.now().isoformat()
         }
