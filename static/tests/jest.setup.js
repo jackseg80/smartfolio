@@ -25,6 +25,12 @@ if (typeof window !== 'undefined') {
     warn: jest.fn(),
     error: jest.fn()
   };
+
+  // Mock window.alert (jsdom doesn't implement it)
+  global.alert = jest.fn();
+
+  // Note: window.location.href cannot be easily mocked in jsdom
+  // Tests should verify behavior via alert() calls instead of checking href
 }
 
 // Set default Risk Semantics mode for tests

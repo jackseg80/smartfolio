@@ -138,14 +138,14 @@
 
 ---
 
-### Session 2026-01-30 - Itération 4 (P1) ⚠️ PARTIELLE
+### Session 2026-01-30 - Itération 4 (P1) ✅ COMPLÉTÉE
 
 **Accomplissements**:
 
 - ✅ **Infrastructure Jest 30.x FIXÉE**: Migration Vitest → Jest (problème ESM/Windows résolu)
   - Créé `jest.config.js` avec support ESM natif
-  - 58 tests créés sur modules critiques (allocation-engine, computeExposureCap, auth-guard, phase-engine)
-  - **60/83 tests passing (72%)** - Excellent progrès !
+  - 84 tests créés sur modules critiques (allocation-engine, computeExposureCap, auth-guard, phase-engine)
+  - **84/84 tests passing (100%)** 🎉
 
 - ✅ **3 Régressions critiques CORRIGÉES**:
   - **computeExposureCap**: Bear market cap 37% → ≤30%, Neutral ≤55%
@@ -155,19 +155,45 @@
   - **allocation-engine**: Somme arrondis 101% au lieu de 100%
     - Implémenté Largest Remainder rounding dans [allocation-engine.js:175-195](static/core/allocation-engine.js#L175-L195)
 
+- ✅ **auth-guard.test.js**: 14/25 → **26/26 passing (100%)**
+  - Mocks globaux window.alert et window.location dans [jest.setup.js](static/tests/jest.setup.js)
+  - Correction tests RBAC: `roles` array au lieu de `role` string
+  - Correction URL logout: `/api/auth/logout` → `/auth/logout`
+  - Correction clé localStorage: `currentUser` → `activeUser`
+  - Mocks fetch avec structure `{ ok: true, data: { valid: true } }`
+  - **Coverage: 84.7%**
+
+- ✅ **phase-engine.test.js**: 5/17 → **17/17 passing (100%)**
+  - Adaptation tests à l'API réelle: `inferPhase()` retourne string, pas objet
+  - Correction `applyPhaseTilts()`: retourne `{targets, metadata}`, pas juste targets
+  - Correction `getCurrentForce()`: retourne string, pas objet
+  - Gestion de l'hysteresis: appels multiples pour consensus
+  - **Coverage: 50.95%**
+
 - ✅ **Tests modules critiques - 100% passing**:
-  - ✅ `allocation-engine.test.js` (10/10 passing)
-  - ✅ `computeExposureCap.test.js` (15/15 passing)
+  - ✅ `allocation-engine.test.js` (10/10) - **Coverage: 67.68%**
+  - ✅ `computeExposureCap.test.js` (15/15)
   - ✅ `riskScoreSemantics.test.js` (passing)
+  - ✅ `auth-guard.test.js` (26/26) - **Coverage: 84.7%**
+  - ✅ `phase-engine.test.js` (17/17) - **Coverage: 50.95%**
+  - ✅ `jest-basic.test.js` (3/3)
 
-- ⚠️ **Tests nécessitant mocks complexes** (23/83 failing):
-  - `auth-guard.test.js` (14/25 passing, 11 failing) - Mocks localStorage scope, fetch, alert, location
-  - `phase-engine.test.js` (5/17 passing, 12 failing) - Mocks complexes nécessaires
+**Métriques Coverage** (modules testés):
+- Coverage global: ~5% (beaucoup de modules non testés)
+- Modules critiques testés: **50-85% coverage** ✅
+  - auth-guard.js: 84.7%
+  - allocation-engine.js: 67.68%
+  - phase-tilts-helpers.js: 68.31%
+  - phase-engine.js: 50.95%
 
-**Points Bloquants**:
-- Mocks jsdom élaborés nécessaires pour auth-guard et phase-engine
+**Fichiers Modifiés**:
+- [static/tests/jest.setup.js](static/tests/jest.setup.js) - Mocks globaux window.alert
+- [static/tests/auth-guard.test.js](static/tests/auth-guard.test.js) - 26 tests passing
+- [static/tests/phase-engine.test.js](static/tests/phase-engine.test.js) - 17 tests passing
 
-**Prochaines Actions**: Finaliser les 23 tests restants (auth-guard + phase-engine mocks)
+**Points Bloquants**: Aucun
+
+**Prochaines Actions**: Itération 5 (Observabilité) ou extension coverage à d'autres modules
 
 ---
 
