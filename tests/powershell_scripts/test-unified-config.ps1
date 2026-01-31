@@ -2,6 +2,7 @@
 # Vérifie que le système de configuration unifié fonctionne
 
 $BASE_URL = "http://localhost:8001"
+$HEADERS = @{ "X-User" = "jack" }
 
 Write-Host "=== Test Configuration Centralisée ===" -ForegroundColor Green
 
@@ -14,13 +15,13 @@ foreach ($source in $sources) {
     Write-Host "  Testing source: $source" -ForegroundColor Cyan
     
     try {
-        $response = Invoke-RestMethod -Uri "$BASE_URL/balances/current?source=$source" -Method Get -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "$BASE_URL/balances/current?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
         $itemCount = $response.items.Count
         $sourceUsed = $response.source_used
         Write-Host "    ✅ OK - $itemCount assets (source: $sourceUsed)" -ForegroundColor Green
         
         # Test portfolio metrics avec cette source
-        $metricsResponse = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=$source" -Method Get -ErrorAction Stop
+        $metricsResponse = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
         if ($metricsResponse.ok) {
             $totalValue = '{0:F0}' -f $metricsResponse.metrics.total_value_usd
             $assetCount = $metricsResponse.metrics.asset_count
@@ -53,7 +54,7 @@ foreach ($pricing in $pricingModes) {
             }
         }
         
-        $response = Invoke-RestMethod -Uri "$BASE_URL/rebalance/plan?source=cointracking&pricing=$pricing" -Method Post -Body ($payload | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri "$BASE_URL/rebalance/plan?source=cointracking&pricing=$pricing" -Method Post -Headers $HEADERS -Body ($payload | ConvertTo-Json) -ContentType "application/json" -ErrorAction Stop
         
         if ($response.ok) {
             $totalValue = '{0:F0}' -f $response.portfolio_summary.total_value_usd
@@ -81,7 +82,7 @@ foreach ($test in $tests) {
     
     try {
         $url = "$BASE_URL$($test.endpoint)$($test.params)"
-        $response = Invoke-RestMethod -Uri $url -Method Get -ErrorAction Stop
+        $response = Invoke-RestMethod -Uri $url -Method Get -Headers $HEADERS -ErrorAction Stop
         
         if ($response.ok) {
             Write-Host "    ✅ OK" -ForegroundColor Green
@@ -102,8 +103,8 @@ $results = @{}
 
 foreach ($source in $sourcesToCompare) {
     try {
-        $balances = Invoke-RestMethod -Uri "$BASE_URL/balances/current?source=$source" -Method Get -ErrorAction Stop
-        $metrics = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=$source" -Method Get -ErrorAction Stop
+        $balances = Invoke-RestMethod -Uri "$BASE_URL/balances/current?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
+        $metrics = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
         
         $results[$source] = @{
             "asset_count" = $balances.items.Count

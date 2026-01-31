@@ -2,12 +2,13 @@
 # Utilise des données de test (source=stub) pour démontrer les fonctionnalités
 
 $BASE_URL = "http://localhost:8001"
+$HEADERS = @{ "X-User" = "jack" }
 
 Write-Host "=== Test Portfolio Analytics Dashboard ===" -ForegroundColor Green
 
 # 1. Test de base - métriques avec données stub
 Write-Host "`n1. Test métriques avec données de démo..." -ForegroundColor Yellow
-$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=stub" -Method Get
+$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=stub" -Method Get -Headers $HEADERS
 Write-Host "Status: OK = $($response.ok)" -ForegroundColor Cyan
 if ($response.ok) {
     $metrics = $response.metrics
@@ -28,18 +29,18 @@ if ($response.ok) {
 
 # 2. Test sauvegarde snapshot
 Write-Host "`n2. Test sauvegarde snapshot..." -ForegroundColor Yellow
-$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/snapshot?source=stub" -Method Post
+$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/snapshot?source=stub" -Method Post -Headers $HEADERS
 Write-Host "Status: OK = $($response.ok)" -ForegroundColor Cyan
 Write-Host "Message: $($response.message)" -ForegroundColor White
 
 # 3. Attendre un moment puis sauver un autre snapshot pour tester la performance
 Write-Host "`n3. Attente 2 secondes puis nouveau snapshot..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
-$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/snapshot?source=stub" -Method Post
+$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/snapshot?source=stub" -Method Post -Headers $HEADERS
 
 # 4. Test des métriques de performance
 Write-Host "`n4. Test métriques après snapshot..." -ForegroundColor Yellow
-$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=stub" -Method Get
+$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=stub" -Method Get -Headers $HEADERS
 if ($response.ok -and $response.performance.performance_available) {
     $perf = $response.performance
     Write-Host "   - Performance disponible: $($perf.performance_available)" -ForegroundColor Green
@@ -53,7 +54,7 @@ if ($response.ok -and $response.performance.performance_available) {
 
 # 5. Test données de tendance
 Write-Host "`n5. Test données de tendance (30 jours)..." -ForegroundColor Yellow
-$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/trend?days=30" -Method Get
+$response = Invoke-RestMethod -Uri "$BASE_URL/portfolio/trend?days=30" -Method Get -Headers $HEADERS
 Write-Host "Status: OK = $($response.ok)" -ForegroundColor Cyan
 if ($response.ok) {
     $trend = $response.trend

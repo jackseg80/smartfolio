@@ -335,13 +335,15 @@ class PortfolioAnalytics:
             "historical_entries_count": len(historical_data)
         }
     
-    def save_portfolio_snapshot(self, balances_data: Dict[str, Any], user_id: str, source: str = "cointracking") -> bool:
+    async def save_portfolio_snapshot(self, balances_data: Dict[str, Any], user_id: str, source: str = "cointracking") -> bool:
         """
         Sauvegarde un snapshot du portfolio pour suivi historique.
 
         PERFORMANCE FIX (Dec 2025): Uses partitioned storage for O(1) write.
         Previous version: O(n) - load ALL snapshots, filter, write ALL.
         New version: O(1) - save only to current month partition.
+        
+        Updated Jan 2026: Async implementation for concurrent safety.
 
         Args:
             balances_data: Données de balance actuelles
@@ -375,7 +377,7 @@ class PortfolioAnalytics:
 
             # PERFORMANCE FIX: Use partitioned storage (O(1) write)
             # Saves to: data/portfolio_history/{user_id}/{source}/{YYYY}/{MM}/snapshots.json
-            success = self.storage.save_snapshot(snapshot, user_id, source)
+            success = await self.storage.save_snapshot(snapshot, user_id, source)
 
             if success:
                 logger.info(
@@ -393,17 +395,19 @@ class PortfolioAnalytics:
             logger.error(f"Unexpected error saving snapshot: {e}", exc_info=True)
             return False
     
-    def get_portfolio_trend(self, days: int = 30) -> Dict[str, Any]:
+    def get_portfolio_trend(self, days: int = 30, user_id: str = "demo", source: str = "cointracking") -> Dict[str, Any]:
         """
         Retourne les données de tendance du portfolio
         
         Args:
             days: Nombre de jours d'historique à retourner
+            user_id: ID utilisateur
+            source: Source de données
             
         Returns:
             Données de tendance pour graphiques
         """
-        historical_data = self._load_historical_data()
+        historical_data = self._load_historical_data(user_id=user_id, source=source)
         
         if not historical_data:
             return {"trend_data": [], "days_available": 0}

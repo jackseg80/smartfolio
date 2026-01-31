@@ -118,7 +118,7 @@ async def save_portfolio_snapshot(
         balances = {"source_used": res.get("source_used"), "items": rows}
 
         # Sauvegarder le snapshot
-        saved = portfolio_analytics.save_portfolio_snapshot(balances, user_id=user, source=source)
+        saved = await portfolio_analytics.save_portfolio_snapshot(balances, user_id=user, source=source)
 
         if saved:
             return success_response(
@@ -133,11 +133,15 @@ async def save_portfolio_snapshot(
 
 
 @router.get("/portfolio/trend")
-async def portfolio_trend(days: int = Query(30, ge=1, le=365)):
+async def portfolio_trend(
+    days: int = Query(30, ge=1, le=365),
+    user: str = Depends(get_required_user),
+    source: str = Query("cointracking")
+):
     """Données de tendance du portfolio pour graphiques"""
     try:
-        trend_data = portfolio_analytics.get_portfolio_trend(days)
-        return success_response(data=trend_data, meta={"days": days})
+        trend_data = portfolio_analytics.get_portfolio_trend(days, user_id=user, source=source)
+        return success_response(data=trend_data, meta={"days": days, "user": user, "source": source})
     except Exception as e:
         logger.exception("Error getting portfolio trend")
         return error_response(str(e), code=500)
@@ -389,7 +393,7 @@ async def migrate_portfolio_history():
 
         # Execute migration
         logger.info("Starting portfolio history migration...")
-        stats = storage.migrate_from_legacy()
+        stats = await storage.migrate_from_legacy()
 
         logger.info(
             f"Portfolio history migration complete: {stats['snapshots_migrated']} snapshots, "

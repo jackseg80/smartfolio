@@ -37,6 +37,7 @@ Architecture:
 import json
 import os
 import logging
+import asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Dict, Any, Optional
@@ -57,6 +58,7 @@ class PartitionedPortfolioStorage:
         - O(1) read/write (no full file scan)
         - Automatic retention (365 days default)
         - Backward compatible with legacy portfolio_history.json
+        - Thread-safe / Coroutine-safe via asyncio locks
     """
 
     def __init__(self, retention_days: int = 365):
@@ -68,6 +70,13 @@ class PartitionedPortfolioStorage:
         """
         self.retention_days = retention_days
         self.legacy_file = Path("data/portfolio_history.json")
+        self._locks: Dict[str, asyncio.Lock] = {}
+
+    def _get_lock(self, path: str) -> asyncio.Lock:
+        """Get or create an asyncio lock for a specific file path."""
+        if path not in self._locks:
+            self._locks[path] = asyncio.Lock()
+        return self._locks[path]
 
     def _get_partition_path(self, user_id: str, source: str, date: datetime) -> Path:
         """
@@ -87,7 +96,7 @@ class PartitionedPortfolioStorage:
         partition_dir = BASE_DIR / user_id / source / year / month
         return partition_dir / "snapshots.json"
 
-    def save_snapshot(
+    async def save_snapshot(
         self,
         snapshot: Dict[str, Any],
         user_id: str,
@@ -95,6 +104,7 @@ class PartitionedPortfolioStorage:
     ) -> bool:
         """
         Save portfolio snapshot to partitioned storage.
+        Async method with partition-level locking to prevent race conditions.
 
         Args:
             snapshot: Snapshot data (must contain 'date' field)
@@ -112,45 +122,50 @@ class PartitionedPortfolioStorage:
 
             # Get partition path
             partition_path = self._get_partition_path(user_id, source, snapshot_date)
+            lock_key = str(partition_path)
 
             # Create directory if needed
             partition_path.parent.mkdir(parents=True, exist_ok=True)
 
-            # Load existing snapshots for this month
-            month_snapshots = []
-            if partition_path.exists():
-                try:
-                    with open(partition_path, 'r', encoding='utf-8') as f:
-                        month_snapshots = json.load(f)
-                except (json.JSONDecodeError, ValueError) as e:
-                    logger.warning(f"Corrupted partition file {partition_path}, resetting: {e}")
-                    month_snapshots = []
+            # Critical Section: Read -> Modify -> Write
+            async with self._get_lock(lock_key):
+                # Load existing snapshots for this month
+                month_snapshots = []
+                if partition_path.exists():
+                    try:
+                        # Note: Blocking I/O in async method, but acceptable inside lock for small JSONs
+                        # For very large files, consider run_in_executor
+                        with open(partition_path, 'r', encoding='utf-8') as f:
+                            month_snapshots = json.load(f)
+                    except (json.JSONDecodeError, ValueError) as e:
+                        logger.warning(f"Corrupted partition file {partition_path}, resetting: {e}")
+                        month_snapshots = []
 
-            # Upsert snapshot (replace if same date exists)
-            snapshot_date_str = snapshot["date"]
-            existing_idx = next(
-                (i for i, s in enumerate(month_snapshots) if s.get("date") == snapshot_date_str),
-                None
-            )
+                # Upsert snapshot (replace if same date exists)
+                snapshot_date_str = snapshot["date"]
+                existing_idx = next(
+                    (i for i, s in enumerate(month_snapshots) if s.get("date") == snapshot_date_str),
+                    None
+                )
 
-            if existing_idx is not None:
-                # Update existing snapshot
-                month_snapshots[existing_idx] = snapshot
-                logger.debug(f"Updated existing snapshot for {snapshot_date_str}")
-            else:
-                # Append new snapshot
-                month_snapshots.append(snapshot)
-                logger.debug(f"Added new snapshot for {snapshot_date_str}")
+                if existing_idx is not None:
+                    # Update existing snapshot
+                    month_snapshots[existing_idx] = snapshot
+                    logger.debug(f"Updated existing snapshot for {snapshot_date_str}")
+                else:
+                    # Append new snapshot
+                    month_snapshots.append(snapshot)
+                    logger.debug(f"Added new snapshot for {snapshot_date_str}")
 
-            # Sort by date
-            month_snapshots.sort(key=lambda x: x.get("date", ""))
+                # Sort by date
+                month_snapshots.sort(key=lambda x: x.get("date", ""))
 
-            # Save atomically
-            temp_path = partition_path.with_suffix('.tmp')
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                json.dump(month_snapshots, f, indent=2)
+                # Save atomically
+                temp_path = partition_path.with_suffix('.tmp')
+                with open(temp_path, 'w', encoding='utf-8') as f:
+                    json.dump(month_snapshots, f, indent=2)
 
-            temp_path.replace(partition_path)
+                temp_path.replace(partition_path)
 
             logger.info(
                 f"Snapshot saved: user={user_id}, source={source}, "
@@ -332,7 +347,7 @@ class PartitionedPortfolioStorage:
             logger.error(f"Error during cleanup: {e}", exc_info=True)
             return 0
 
-    def migrate_from_legacy(self) -> Dict[str, int]:
+    async def migrate_from_legacy(self) -> Dict[str, int]:
         """
         Migrate data from legacy portfolio_history.json to partitioned structure.
 
@@ -366,7 +381,7 @@ class PartitionedPortfolioStorage:
             migrated_count = 0
             for (user_id, source), snapshots in grouped.items():
                 for snapshot in snapshots:
-                    if self.save_snapshot(snapshot, user_id, source):
+                    if await self.save_snapshot(snapshot, user_id, source):
                         migrated_count += 1
 
             # Rename legacy file to .backup
