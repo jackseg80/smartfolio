@@ -132,6 +132,17 @@
   <script type="module" src="modules/targets-coordinator.js"></script>
   <script type="module" src="core/risk-data-orchestrator.js?v=20251022fix"></script>
 
+  <!-- Auto-load calibrated cycle parameters (synced with cycle-analysis.html) -->
+  <script type="module">
+    import { autoLoadCalibratedParams, listenForCalibrationUpdates } from './modules/cycle-params-loader.js';
+
+    // Charger les paramètres calibrés au démarrage
+    document.addEventListener('DOMContentLoaded', async () => {
+      await autoLoadCalibratedParams();
+      listenForCalibrationUpdates(); // Écouter les mises à jour depuis cycle-analysis.html
+    });
+  </script>
+
   <!-- AI Chat Styles -->
   <link rel="stylesheet" href="/static/components/ai-chat.css">
 </head>

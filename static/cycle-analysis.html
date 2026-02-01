@@ -565,8 +565,22 @@
       const avgBottomError = bottomErrors.reduce((a, b) => a + b, 0) / bottomErrors.length;
       const overallAccuracy = Math.max(0, 100 - (totalError / completedCycles.length / 2));
 
+      // Calculer le score actuel (aujourd'hui)
+      const currentCycleData = getCurrentCycleMonths();
+      const currentMonths = typeof currentCycleData === 'object' ? currentCycleData.months : currentCycleData;
+      const currentScore = cycleScoreFromMonths(currentMonths);
+      const today = new Date().toLocaleDateString('fr-FR');
+
       // Affichage des métriques
       metrics.innerHTML = `
+        <div class="metric good" style="background: linear-gradient(135deg, var(--success-bg) 0%, var(--info-bg) 100%); border: 2px solid var(--success);">
+          <span style="font-weight: 700;">📍 Score Actuel (${today}):</span>
+          <span style="font-size: 1.3em; font-weight: 800;">${currentScore.toFixed(1)}/100</span>
+        </div>
+        <div class="metric good" style="border-left: 4px solid var(--info);">
+          <span>📅 Mois depuis Halving:</span>
+          <span>${currentMonths.toFixed(1)} mois (depuis 20 avril 2024)</span>
+        </div>
         <div class="metric ${avgPeakError < 15 ? 'good' : avgPeakError < 30 ? 'warning' : 'error'}">
           <span>Erreur Moyenne Pics:</span>
           <span>${avgPeakError.toFixed(1)} points</span>

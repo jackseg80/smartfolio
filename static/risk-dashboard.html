@@ -30,6 +30,17 @@
   <script type="module" src="modules/onchain-indicators.js"></script>
   <script type="module" src="modules/market-regimes.js"></script>
 
+  <!-- Auto-load calibrated cycle parameters (synced with cycle-analysis.html) -->
+  <script type="module">
+    import { autoLoadCalibratedParams, listenForCalibrationUpdates } from './modules/cycle-params-loader.js';
+
+    // Charger les paramètres calibrés au démarrage
+    document.addEventListener('DOMContentLoaded', async () => {
+      await autoLoadCalibratedParams();
+      listenForCalibrationUpdates(); // Écouter les mises à jour depuis cycle-analysis.html
+    });
+  </script>
+
   <!-- Unified asset groups system -->
   <script type="module" src="shared-asset-groups.js"></script>
 
