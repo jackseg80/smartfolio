@@ -24,6 +24,10 @@
   </script>
 
   <style>
+    :root {
+      --header-height: 80px;
+    }
+
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       margin: 0;
@@ -45,6 +49,88 @@
       margin: 1rem 0;
       box-shadow: var(--shadow-md);
       color: var(--theme-text);
+    }
+
+    /* Modern Controls Section (Compact & Sticky) */
+    .controls-card {
+      position: sticky;
+      top: 130px; /* Offset for sticky header + wealthbar */
+      z-index: 90; /* High enough but below modals/tooltips */
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      padding: 0.5rem 1rem;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      opacity: 0.98;
+      backdrop-filter: blur(8px);
+      margin-bottom: 1.5rem; /* Ensure space below when static */
+    }
+
+    .controls-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.3;
+    }
+
+    .controls-header p {
+      color: var(--theme-text-muted);
+      margin: 0;
+      font-size: 0.8em;
+      display: none; /* Hidden on small mobile */
+    }
+
+    .controls-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Desktop: Horizontal Layout */
+    @media (min-width: 768px) {
+      .controls-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.4rem 1.5rem;
+        text-align: left;
+      }
+
+      .controls-actions {
+        margin-top: 0;
+        justify-content: flex-end;
+      }
+
+      .controls-header p {
+        display: block;
+      }
+    }
+
+    .control-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+      min-width: auto;
+      box-shadow: var(--shadow-sm);
+      margin: 0 !important;
+      white-space: nowrap;
+    }
+
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .control-btn .icon {
+      font-size: 1.1em;
     }
 
     .metric {
@@ -137,6 +223,25 @@
       border-radius: 4px;
       text-align: center;
     }
+
+    /* Responsive Grid for Metrics & Indicators */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .metrics-grid .metric {
+      margin: 0; /* Let grid gap handle spacing */
+      height: 100%; /* Uniform height */
+      box-sizing: border-box;
+    }
+
+    @media (min-width: 992px) {
+      .metrics-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   </style>
   <!-- Navigation unifiée (conditionnelle) -->
   <!-- Note: navigation is conditionally loaded above; avoid duplicate wrong path -->
@@ -153,18 +258,35 @@
     <h1>🎯 Bitcoin Cycle Analysis - Validation du Modèle</h1>
 
     <!-- Contrôles -->
-    <div class="card">
-      <h2>🔧 Contrôles d'Analyse</h2>
-      <button class="btn-primary" onclick="runFullAnalysis()">🚀 Analyse Complète</button>
-      <button class="btn-success" onclick="calibrateModel()">⚙️ Calibrer Modèle</button>
-      <button class="btn-warning" onclick="testAlternatives()">🧪 Tester Alternatives</button>
-      <button class="btn-primary" onclick="generateReport()">📊 Rapport Détaillé</button>
+    <div class="card controls-card">
+      <div class="controls-header">
+        <h2>🔧 Contrôles d'Analyse</h2>
+        <p>Gérez l'exécution et la calibration du modèle de cycle</p>
+      </div>
+      <div class="controls-actions">
+        <button class="btn-primary control-btn" onclick="runFullAnalysis()">
+          <span class="icon">🚀</span>
+          <span>Analyse Complète</span>
+        </button>
+        <button class="btn-success control-btn" onclick="calibrateModel()">
+          <span class="icon">⚙️</span>
+          <span>Calibrer Modèle</span>
+        </button>
+        <button class="btn-warning control-btn" onclick="testAlternatives()">
+          <span class="icon">🧪</span>
+          <span>Tester Alternatives</span>
+        </button>
+        <button class="btn-primary control-btn" onclick="generateReport()">
+          <span class="icon">📊</span>
+          <span>Rapport Détaillé</span>
+        </button>
+      </div>
     </div>
 
     <!-- Métriques de Précision -->
     <div class="card">
       <h2>📊 Métriques de Précision du Modèle</h2>
-      <div id="precision-metrics"></div>
+      <div id="precision-metrics" class="metrics-grid"></div>
     </div>
 
     <!-- Graphique Historique Bitcoin avec Halvings -->
@@ -213,7 +335,7 @@
     <!-- Indicateurs Complémentaires -->
     <div class="card">
       <h2>🌟 Indicateurs On-Chain Recommandés</h2>
-      <div id="indicators-suggestions"></div>
+      <div id="indicators-suggestions" class="metrics-grid"></div>
     </div>
 
     <!-- Résultats -->
@@ -816,7 +938,7 @@
       ];
 
       container.innerHTML = indicators.map(ind => `
-        <div class="metric good" style="display: block; margin: 1rem 0;">
+        <div class="metric good" style="display: block;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
             <strong>${ind.name}</strong>
             <span style="font-size: 0.9em;">${ind.priority}</span>
