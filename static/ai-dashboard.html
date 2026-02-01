@@ -147,41 +147,69 @@
             background: var(--theme-muted);
         }
 
-        .tab-container {
-            margin-bottom: 2rem;
-        }
-
-        .tab-buttons {
+        /* ===== Onglets - Modern Styled Tabs ===== */
+        .tabs {
             display: flex;
-            gap: 1rem;
-            justify-content: center;
+            gap: var(--space-xs);
+            padding: var(--space-sm) var(--space-md) 0;
+            background: var(--theme-bg);
+            border-bottom: 2px solid var(--theme-border);
+            position: relative;
             margin-bottom: 2rem;
-            flex-wrap: wrap;
         }
 
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
+        .tab-button {
+            flex: 1;
+            padding: var(--space-md) var(--space-lg);
+            background: var(--theme-bg);
             border: 1px solid var(--theme-border);
-            background: var(--theme-surface);
-            color: var(--theme-text);
-            border-radius: 8px;
+            border-bottom: none;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            color: var(--theme-text-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-weight: 500;
+            transition: all var(--transition-fast);
+            position: relative;
+            transform: translateY(0);
         }
 
-        .tab-btn.active {
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: transparent;
+            transition: all var(--transition-fast);
+        }
+
+        .tab-button:hover {
+            color: var(--theme-text);
+            background: color-mix(in oklab, var(--theme-surface) 80%, var(--brand-primary) 5%);
+            transform: translateY(-2px);
+            border-color: color-mix(in oklab, var(--theme-border) 50%, var(--brand-primary) 30%);
+        }
+
+        .tab-button.active {
+            color: var(--brand-primary);
+            background: var(--theme-surface);
+            border-color: var(--theme-border);
+            border-bottom-color: transparent;
+            transform: translateY(2px);
+            box-shadow: 0 -2px 8px color-mix(in oklab, var(--brand-primary) 10%, transparent),
+                        inset 0 1px 0 color-mix(in oklab, var(--brand-primary) 15%, transparent);
+        }
+
+        .tab-button.active::before {
             background: var(--brand-primary);
-            color: white;
-            border-color: var(--brand-primary);
-        }
-
-        .tab-btn:hover:not(.active) {
-            background: var(--theme-muted);
+            box-shadow: 0 0 8px var(--brand-primary);
         }
 
         .tab-content {
             display: none;
+            padding: var(--space-lg) 0;
         }
 
         .tab-content.active {
@@ -231,11 +259,66 @@
             box-shadow: var(--shadow-lg);
         }
 
+        /* Compact Card Style */
+        .ml-card-compact {
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            transition: all var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ml-card-compact:hover {
+            border-color: var(--brand-primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ml-card-compact .card-header {
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--theme-border);
+        }
+
+        .ml-card-compact .card-title {
+            font-size: 1rem;
+        }
+
+        .ml-card-compact .card-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
+        }
+
+        .ml-card-compact .card-content {
+            margin: 0.5rem 0;
+            flex: 1;
+        }
+
+        .ml-card-compact .status-grid-2x2 {
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .ml-card-compact .status-item {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .ml-card-compact .status-value {
+            font-size: 1.1rem;
+        }
+
         .ml-cards-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.2rem;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
         }
 
         .card-header {
@@ -544,19 +627,18 @@
             </div>
 
             <!-- Onglets -->
-            <div class="tab-container">
-                <div class="tab-buttons">
-                    <button class="tab-btn active" data-tab="overview">📊 Vue d'Ensemble</button>
-                    <button class="tab-btn" data-tab="models">🤖 Modèles</button>
-                    <button class="tab-btn" data-tab="predictions">🔮 Prédictions</button>
-                    <button class="tab-btn" data-tab="administration">⚙️ État des Modèles</button>
-                </div>
+            <div class="tabs" role="tablist">
+                <button class="tab-button active" data-tab="overview" role="tab">📊 Vue d'Ensemble</button>
+                <button class="tab-button" data-tab="models" role="tab">🤖 Modèles</button>
+                <button class="tab-button" data-tab="predictions" role="tab">🔮 Prédictions</button>
+                <button class="tab-button" data-tab="administration" role="tab">⚙️ État des Modèles</button>
+            </div>
 
                 <!-- Vue d'ensemble -->
                 <div id="overview-tab" class="tab-content active">
                     <!-- Section Alertes Phase 3 -->
-                    <div class="ml-card"
-                        style="margin-bottom: 2rem; border: 2px solid var(--brand-primary); background: linear-gradient(135deg, var(--theme-surface) 0%, color-mix(in oklab, var(--brand-primary) 5%, var(--theme-surface)) 100%);">
+                    <div class="ml-card-compact"
+                        style="margin-bottom: 1.5rem; border: 1px solid var(--brand-primary); background: linear-gradient(135deg, var(--theme-surface) 0%, color-mix(in oklab, var(--brand-primary) 5%, var(--theme-surface)) 100%);">
                         <div class="card-header">
                             <div class="card-title">
                                 <span class="card-icon" aria-hidden="true">🚨</span>
@@ -1362,7 +1444,7 @@
         // Créer une carte ML avec plus d'informations
         function createMLCard(icon, title, status, metric, source) {
             const card = document.createElement('div');
-            card.className = 'ml-card';
+            card.className = 'ml-card-compact';
             card.innerHTML = `
                 <div class="card-header">
                     <div class="card-title">
@@ -2411,7 +2493,7 @@
 
         // Configuration des onglets
         function setupTabs() {
-            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
 
             // Track if regimes tab has been initialized
