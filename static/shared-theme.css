@@ -90,6 +90,9 @@
   --warning-light: #f0c96b;
   --danger-light: #ff9aa4;
   --info-light: #9bbcff;
+
+  /* Layout dimensions */
+  --header-height: 64px;
 }
 
 /* Mode clair (défaut) */

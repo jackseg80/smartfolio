@@ -90,8 +90,8 @@ const initUnifiedNav = () => {
 
     const style = document.createElement('style');
     style.textContent = `
-      .app-header { position: sticky; top: 0; z-index: 1000; background: var(--theme-surface); border-bottom: 1px solid var(--theme-border); box-shadow: var(--shadow-sm); }
-      .app-header .nav-inner { max-width: 1200px; margin: 0 auto; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 1rem; }
+      .app-header { position: sticky; top: 0; z-index: 1000; background: var(--theme-surface); border-bottom: 1px solid var(--theme-border); box-shadow: var(--shadow-sm); height: var(--header-height); display: flex; align-items: center; }
+      .app-header .nav-inner { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: 1rem; height: 100%; }
       .app-header .brand { font-weight: 700; color: var(--theme-text); letter-spacing: .3px; }
       .app-header nav a { color: var(--theme-text-muted); text-decoration: none; padding: .5rem .75rem; border-radius: var(--radius-sm); transition: background var(--transition-fast), color var(--transition-fast); }
       .app-header nav a:hover { background: var(--theme-bg); color: var(--theme-text); }

@@ -24,10 +24,6 @@
   </script>
 
   <style>
-    :root {
-      --header-height: 80px;
-    }
-
     body {
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       margin: 0;
@@ -54,8 +50,8 @@
     /* Modern Controls Section (Compact & Sticky) */
     .controls-card {
       position: sticky;
-      top: 130px; /* Offset for sticky header + wealthbar */
-      z-index: 90; /* High enough but below modals/tooltips */
+      top: calc(var(--header-height) + 50px); /* Offset: Header + WealthBar */
+      z-index: 90;
       background: var(--theme-surface);
       border: 1px solid var(--theme-border);
       padding: 0.5rem 1rem;
