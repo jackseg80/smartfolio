@@ -739,10 +739,10 @@ function renderQuickContextBar(meta) {
   // Phase d'allocation (depuis cycle score)
   const cyclePhase = meta.cycle_phase || 'Unknown';
 
-  // Volatilité (depuis VaR ou estimation)
-  const vol = meta.risk_var95
-    ? `${(Math.abs(meta.risk_var95) * 100).toFixed(1)}%`
-    : (meta.volatility ? `${meta.volatility.toFixed(1)}%` : '--');
+  // Volatilité annualisée (Feb 2026: corrigé pour afficher vraie volatilité, pas VaR)
+  const vol = meta.volatility_annualized != null
+    ? `${(meta.volatility_annualized * 100).toFixed(1)}%`
+    : (meta.volatility ? `${(meta.volatility * 100).toFixed(1)}%` : '--');
 
   // Position dans le cycle - format amélioré
   const months = meta.cycle_months;

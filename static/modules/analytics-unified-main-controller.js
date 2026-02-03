@@ -438,6 +438,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         onchain_critiques: u.onchain?.criticalCount || 0,
         onchain_confidence: u.onchain?.confidence,
         risk_var95: u.risk?.var95_1d,
+        volatility_annualized: u.risk?.volatility ?? null,  // Volatilité annualisée pour Quick Context Bar
         sharpe: u.risk?.sharpe ?? u.risk?.sharpe_ratio ?? null,  // Sharpe ratio pour Key Metrics
         sharpe_ratio: u.risk?.sharpe ?? u.risk?.sharpe_ratio ?? null,  // Alias pour compatibilité
         risk_budget: u.risk?.budget?.percentages ? {
