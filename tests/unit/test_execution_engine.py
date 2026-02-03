@@ -597,3 +597,172 @@ class TestExecutionEngineEdgeCases:
 
         # Au moins quelques ordres cancelled (dépend du timing)
         assert cancelled_count + filled_count == 5
+
+
+# ============================================================================
+# TESTS EXECUTIONENGINE - GOVERNANCE FREEZE INTEGRATION
+# ============================================================================
+
+class TestGovernanceFreezeIntegration:
+    """
+    Tests pour vérifier que ExecutionEngine respecte les freezes de GovernanceEngine.
+
+    Fix critique (Feb 2026): ExecutionEngine ignorait les freezes avant cette correction.
+    Ces tests garantissent que le comportement est maintenant correct.
+    """
+
+    @pytest.mark.anyio
+    async def test_buy_orders_blocked_when_freeze_active(
+        self, execution_engine, mock_order_manager, mock_exchange_registry
+    ):
+        """Test que les achats sont bloqués quand un freeze est actif"""
+        # Setup: Plan avec uniquement des buy orders
+        buy_orders = [
+            Order(
+                id=f"buy_{i}",
+                alias="BTC",
+                action="buy",
+                quantity=0.1,
+                usd_amount=1000.0,
+                target_price=50000.0,
+                status=OrderStatus.PENDING
+            )
+            for i in range(3)
+        ]
+
+        plan = ExecutionPlan(
+            orders=buy_orders,
+            total_usd_volume=3000.0,
+            status="pending",
+            created_at=datetime.now(timezone.utc)
+        )
+        plan.id = "plan_freeze_test"
+        mock_order_manager.execution_plans["plan_freeze_test"] = plan
+
+        # Mock governance_engine pour simuler un freeze actif
+        with patch('services.execution.execution_engine.governance_engine') as mock_gov:
+            mock_gov.validate_operation.return_value = (False, "S3_ALERT_FREEZE: Achats bloqués")
+
+            # Execute (dry_run=False pour que le freeze soit vérifié)
+            stats = await execution_engine.execute_plan("plan_freeze_test", dry_run=False)
+
+            # Assertions
+            mock_gov.validate_operation.assert_called_once_with("new_purchases")
+
+            # Tous les buy orders doivent être CANCELLED
+            for order in buy_orders:
+                assert order.status == OrderStatus.CANCELLED
+                assert "freeze" in order.error_message.lower()
+
+            # Stats: tous les ordres ont échoué
+            assert stats.failed_orders == 3
+            assert stats.completed_orders == 0
+
+    @pytest.mark.anyio
+    async def test_buy_orders_allowed_when_no_freeze(
+        self, execution_engine, mock_order_manager, mock_exchange_registry
+    ):
+        """Test que les achats passent quand aucun freeze n'est actif"""
+        buy_orders = [
+            Order(
+                id=f"buy_{i}",
+                alias="ETH",
+                action="buy",
+                quantity=1.0,
+                usd_amount=500.0,
+                target_price=2000.0,
+                status=OrderStatus.PENDING
+            )
+            for i in range(2)
+        ]
+
+        plan = ExecutionPlan(
+            orders=buy_orders,
+            total_usd_volume=1000.0,
+            status="pending",
+            created_at=datetime.now(timezone.utc)
+        )
+        plan.id = "plan_no_freeze"
+        mock_order_manager.execution_plans["plan_no_freeze"] = plan
+
+        with patch('services.execution.execution_engine.governance_engine') as mock_gov:
+            mock_gov.validate_operation.return_value = (True, "No freeze active")
+
+            stats = await execution_engine.execute_plan("plan_no_freeze", dry_run=False)
+
+            mock_gov.validate_operation.assert_called_once_with("new_purchases")
+            assert stats.completed_orders == 2
+            assert stats.failed_orders == 0
+
+    @pytest.mark.anyio
+    async def test_dry_run_bypasses_freeze_check(
+        self, execution_engine, mock_order_manager, mock_exchange_registry
+    ):
+        """Test que dry_run=True ne vérifie pas le freeze (simulation)"""
+        buy_orders = [
+            Order(
+                id="buy_dry",
+                alias="SOL",
+                action="buy",
+                quantity=10.0,
+                usd_amount=200.0,
+                target_price=20.0,
+                status=OrderStatus.PENDING
+            )
+        ]
+
+        plan = ExecutionPlan(
+            orders=buy_orders,
+            total_usd_volume=200.0,
+            status="pending",
+            created_at=datetime.now(timezone.utc)
+        )
+        plan.id = "plan_dry_run"
+        mock_order_manager.execution_plans["plan_dry_run"] = plan
+
+        with patch('services.execution.execution_engine.governance_engine') as mock_gov:
+            # Même avec freeze actif, dry_run doit passer
+            mock_gov.validate_operation.return_value = (False, "FULL_FREEZE")
+
+            stats = await execution_engine.execute_plan("plan_dry_run", dry_run=True)
+
+            # validate_operation ne doit PAS être appelé en dry_run
+            mock_gov.validate_operation.assert_not_called()
+            assert stats.completed_orders == 1
+
+    @pytest.mark.anyio
+    async def test_sell_orders_execute_regardless_of_freeze(
+        self, execution_engine, mock_order_manager, mock_exchange_registry
+    ):
+        """Test que les ventes s'exécutent même avec freeze (S3_FREEZE autorise ventes)"""
+        sell_orders = [
+            Order(
+                id="sell_1",
+                alias="DOGE",
+                action="sell",
+                quantity=1000.0,
+                usd_amount=-500.0,
+                target_price=0.5,
+                status=OrderStatus.PENDING
+            )
+        ]
+
+        plan = ExecutionPlan(
+            orders=sell_orders,
+            total_usd_volume=500.0,
+            status="pending",
+            created_at=datetime.now(timezone.utc)
+        )
+        plan.id = "plan_sell_only"
+        mock_order_manager.execution_plans["plan_sell_only"] = plan
+
+        with patch('services.execution.execution_engine.governance_engine') as mock_gov:
+            # Freeze actif mais uniquement des ventes
+            mock_gov.validate_operation.return_value = (False, "S3_ALERT_FREEZE")
+
+            stats = await execution_engine.execute_plan("plan_sell_only", dry_run=False)
+
+            # validate_operation n'est appelé que pour les achats
+            # Les ventes passent sans vérification
+            assert stats.completed_orders == 1
+            assert stats.failed_orders == 0

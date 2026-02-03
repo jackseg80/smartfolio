@@ -134,6 +134,14 @@ Voir: `docs/contradiction-system.md` pour architecture détaillée
 - **Action** : Arrêt complet nouvelles positions
 - **Sortie** : Validation manuelle governance_admin
 
+### Intégration ExecutionEngine ↔ Freeze
+
+- **Vérification** : `ExecutionEngine` appelle `governance_engine.validate_operation("new_purchases")` avant tout achat
+- **Comportement** : Si freeze actif → ordres d'achat bloqués (status `CANCELLED`)
+- **Ventes autorisées** : Les ordres de vente passent même sous freeze S3
+- **Dry-run** : Mode simulation bypass le check freeze
+- **Tests** : `tests/unit/test_execution_engine.py::TestGovernanceFreezeIntegration`
+
 ---
 
 ## RBAC (Role-Based Access Control)
