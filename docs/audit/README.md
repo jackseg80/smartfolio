@@ -1,6 +1,6 @@
-# 📁 Dossier Audit SmartFolio
+# Dossier Audit SmartFolio
 
-**Dernière mise à jour:** 29 Janvier 2026
+**Dernière mise à jour:** 3 Février 2026
 **Audits actifs:** Sécurité, Performance, Accessibilité, Dette Technique, Tests, CI/CD
 **Note globale:** 7.7/10 (vs 7.2 en Nov) = **+7% amélioration**
 
@@ -68,7 +68,30 @@
 
 ---
 
-### ⚡ Performance (7.5/10 - EN COURS)
+### Plan de Sauvetage Decision Index (COMPLET - Fév 2026)
+
+**Rapport principal:**
+1. [RESCUE_PLAN_REPORT_2026-02-03.md](./RESCUE_PLAN_REPORT_2026-02-03.md) - **Rapport final complet**
+   - Audit Gemini + Investigation Claude
+   - 3 phases implémentées et validées
+   - Tests automatisés: 3/3 PASS
+
+**Corrections critiques:**
+- Phase 1: Garde-fous (volatilité, freeze, intégrité prix)
+- Phase 2: Assainissement (split-brain frontend/backend)
+- Phase 3: Intégration macro DXY/VIX dans Decision Index
+
+**Commits:**
+- `e997a3e` - Fix affichage volatilité
+- `2988a95` - Documentation + UI macro stress
+- `b084475` - Intégration DXY/VIX stress
+- `26b6570` - Calibration default params
+
+**Status:** ✅ COMPLET ET VALIDÉ (3 Feb 2026)
+
+---
+
+### Performance (7.5/10 - EN COURS)
 
 **Audits complets:**
 1. [PERFORMANCE_AUDIT_2025-12-12.md](./PERFORMANCE_AUDIT_2025-12-12.md) - 47 problèmes identifiés

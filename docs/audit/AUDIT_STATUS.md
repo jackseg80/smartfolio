@@ -1,8 +1,8 @@
-# 📊 Statut Global des Audits - SmartFolio
+# Statut Global des Audits - SmartFolio
 
-**Date de mise à jour:** 23 Décembre 2025
-**Dernière revue complète:** Novembre-Décembre 2025
-**Prochaine revue:** Janvier 2026
+**Date de mise à jour:** 3 Février 2026
+**Dernière revue complète:** Février 2026 (Plan de Sauvetage)
+**Prochaine revue:** Mars 2026
 
 ---
 
@@ -59,7 +59,50 @@
 
 ---
 
-## ⚡ Performance: 7.5/10 - EN COURS
+## Plan de Sauvetage Decision Index: COMPLET (Fév 2026)
+
+### Statut
+
+✅ **COMPLET ET VALIDÉ** - Toutes les phases terminées, tests passés
+
+### Contexte
+
+Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques dans le système Decision Index:
+- Contamination volatilité (portfolio quasi-cash)
+- ExecutionEngine ignorait les freezes
+- Split-brain poids frontend/backend
+
+### Phases Complétées
+
+| Phase | Description | Status |
+|-------|-------------|--------|
+| Phase 1 | Urgence Vitale (garde-fous) | ✅ |
+| Phase 2 | Assainissement (split-brain) | ✅ |
+| Phase 3 | Évolution Stratégique (macro DXY/VIX) | ✅ |
+
+### Tests de Validation (3 Feb 2026)
+
+| Test | Description | Résultat |
+|------|-------------|----------|
+| Test 1 | Volatilité garde-fou clamp 5% | ✅ PASS |
+| Test 2 | Freeze bloque achats | ✅ PASS |
+| Test 3 | Poids frontend harmonisés | ✅ PASS |
+
+### Commits
+
+- `e997a3e` - Fix affichage volatilité
+- `2988a95` - Documentation + UI macro stress Override #4
+- `b084475` - Intégration DXY/VIX stress → Decision Index penalty
+- `26b6570` - Calibration default params + versioning v2.0
+
+### Documentation
+
+- [RESCUE_PLAN_REPORT_2026-02-03.md](./RESCUE_PLAN_REPORT_2026-02-03.md) - Rapport final complet
+- [docs/DECISION_INDEX_V2.md](../DECISION_INDEX_V2.md) - Documentation technique
+
+---
+
+## Performance: 7.5/10 - EN COURS
 
 ### Statut
 🔄 **40% Résolu** - 19/47 problèmes corrigés
