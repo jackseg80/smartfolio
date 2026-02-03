@@ -159,7 +159,51 @@
     <!-- Governance Panel -->
     <div id="governance-container"></div>
 
-    <div id="unified-root"></div>
+    <div id="unified-root">
+      <!-- Skeleton loader visible immédiatement pendant le chargement du Decision Index -->
+      <div class="di-loading-container panel-card" style="min-height: 280px; position: relative; overflow: hidden;">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="di-spinner" style="
+            width: 40px; height: 40px;
+            border: 3px solid var(--theme-border, rgba(255,255,255,0.1));
+            border-top-color: var(--brand-primary, #3b82f6);
+            border-radius: 50%;
+            animation: di-spin 1s linear infinite;
+          "></div>
+          <div>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--theme-text, #c0caf5);">
+              🎯 Decision Index
+            </div>
+            <div style="font-size: 0.85rem; color: var(--theme-text-muted, #6b7280);">
+              Chargement des données en cours...
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div>
+            <div class="skeleton" style="height: 80px; margin-bottom: 1rem;"></div>
+            <div class="skeleton" style="height: 24px; width: 60%; margin-bottom: 0.75rem;"></div>
+            <div class="skeleton" style="height: 16px; width: 80%;"></div>
+          </div>
+          <div>
+            <div class="skeleton" style="height: 60px; margin-bottom: 1rem;"></div>
+            <div class="skeleton" style="height: 20px; width: 50%; margin-bottom: 0.75rem;"></div>
+            <div class="skeleton" style="height: 40px;"></div>
+          </div>
+        </div>
+
+        <div style="position: absolute; bottom: 1rem; right: 1rem; font-size: 0.75rem; color: var(--theme-text-muted, #6b7280); display: flex; align-items: center; gap: 0.5rem;">
+          <span style="animation: di-pulse 1.2s ease-in-out infinite;">⏳</span>
+          <span>Récupération des scores ML, cycles et on-chain...</span>
+        </div>
+
+        <style>
+          @keyframes di-spin { to { transform: rotate(360deg); } }
+          @keyframes di-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        </style>
+      </div>
+    </div>
 
     <!-- Tabs connectés directement aux panels -->
     <div class="tabs" id="analytics-tabs" role="tablist" aria-label="Analytics sections">

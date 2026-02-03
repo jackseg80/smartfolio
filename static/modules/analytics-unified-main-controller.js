@@ -66,18 +66,89 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     return;
   }
 
-  // Affichage de chargement initial
+  // Affichage de chargement initial - Skeleton loader proéminent
   el.innerHTML = `
-    <div style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-md);">
-      <div style="display:flex; align-items:center; justify-content: space-between; gap:.75rem;">
+    <div class="di-loading-container" style="
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-lg, 16px);
+      padding: var(--space-xl, 2rem);
+      min-height: 280px;
+      position: relative;
+      overflow: hidden;
+    ">
+      <style>
+        @keyframes di-shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes di-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        .di-skeleton {
+          background: linear-gradient(90deg,
+            rgba(255,255,255,0.04) 0%,
+            rgba(255,255,255,0.1) 50%,
+            rgba(255,255,255,0.04) 100%
+          );
+          background-size: 200% 100%;
+          animation: di-shimmer 1.5s ease-in-out infinite;
+          border-radius: 8px;
+        }
+        .di-loading-spinner {
+          animation: di-pulse 1.2s ease-in-out infinite;
+        }
+      </style>
+
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="di-loading-spinner" style="
+          width: 48px; height: 48px;
+          border: 3px solid var(--theme-border);
+          border-top-color: var(--brand-primary, #3b82f6);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        "></div>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         <div>
-          <div style="font-size: .9rem; color: var(--theme-text-muted); font-weight:600;">Decision Index</div>
-          <div style="font-size: 2rem; font-weight: 800; color: var(--success);">Loading...</div>
-          <div style="font-size: .8rem; color: var(--theme-text-muted);">Chargement des insights unifiés CORRIGÉS</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--theme-text);">
+            🎯 Decision Index
+          </div>
+          <div style="font-size: 0.85rem; color: var(--theme-text-muted);">
+            Chargement des données en cours...
+          </div>
         </div>
-        <div style="text-align:right; font-size:.8rem; color: var(--theme-text-muted);">
-          <div>Status: Initializing FIX</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <!-- Left skeleton -->
+        <div>
+          <div class="di-skeleton" style="height: 80px; margin-bottom: 1rem;"></div>
+          <div class="di-skeleton" style="height: 24px; width: 60%; margin-bottom: 0.75rem;"></div>
+          <div class="di-skeleton" style="height: 16px; width: 80%; margin-bottom: 0.5rem;"></div>
+          <div class="di-skeleton" style="height: 16px; width: 70%;"></div>
         </div>
+        <!-- Right skeleton -->
+        <div>
+          <div class="di-skeleton" style="height: 60px; margin-bottom: 1rem;"></div>
+          <div class="di-skeleton" style="height: 20px; width: 50%; margin-bottom: 0.75rem;"></div>
+          <div class="di-skeleton" style="height: 40px; margin-bottom: 0.5rem;"></div>
+          <div class="di-skeleton" style="height: 16px; width: 65%;"></div>
+        </div>
+      </div>
+
+      <div style="
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 0.75rem;
+        color: var(--theme-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      ">
+        <span class="di-loading-spinner">⏳</span>
+        <span>Récupération des scores ML, cycles et on-chain...</span>
       </div>
     </div>
   `;
