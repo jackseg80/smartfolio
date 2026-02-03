@@ -143,7 +143,7 @@ async def run_backtest(
                 df_data[asset] = pd.Series(values, index=timestamps)
         
         # Create price DataFrame
-        price_df = pd.DataFrame(df_data).fillna(method='ffill').dropna()
+        price_df = pd.DataFrame(df_data).ffill().dropna()
         
         # Ensure we have enough data for the backtest period
         if price_df.index[0] > start_date:
@@ -273,7 +273,7 @@ async def compare_strategies(
         if len(price_data) < 2:
             raise HTTPException(status_code=400, detail="Insufficient price data")
         
-        price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
+        price_df = pd.DataFrame(price_data).ffill().dropna()
         
         # Create configuration
         try:

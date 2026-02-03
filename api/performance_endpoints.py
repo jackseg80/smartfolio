@@ -260,7 +260,7 @@ async def precompute_matrices(
             values = [p[1] for p in prices]
             df_data[asset] = pd.Series(values, index=timestamps)
         
-        price_df = pd.DataFrame(df_data).fillna(method='ffill').dropna()
+        price_df = pd.DataFrame(df_data).ffill().dropna()
         
         # Trigger matrix precomputation
         preprocessed = performance_optimizer.batch_optimization_preprocessing(

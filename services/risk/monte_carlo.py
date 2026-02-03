@@ -150,7 +150,7 @@ async def run_monte_carlo_simulation(
 
         # ✅ FIX: Clean data - remove NaN/Inf to avoid SVD convergence issues
         returns_df = returns_df.replace([np.inf, -np.inf], np.nan)
-        returns_df = returns_df.fillna(method='ffill').fillna(method='bfill').fillna(0)
+        returns_df = returns_df.ffill().bfill().fillna(0)
 
         # Calculer matrice de corrélation
         corr_matrix = returns_df.corr()

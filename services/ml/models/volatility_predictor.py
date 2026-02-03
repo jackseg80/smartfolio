@@ -255,7 +255,7 @@ class VolatilityPredictor:
         
         # More lenient data cleaning - only drop rows where all features are NaN
         result_df = result_df.dropna(subset=feature_columns, how='all')
-        result_df = result_df.fillna(method='ffill').fillna(method='bfill')
+        result_df = result_df.ffill().bfill()
         
         logger.info(f"Features prepared for {symbol}: {len(result_df)} samples, {len(feature_columns)} features")
         return result_df

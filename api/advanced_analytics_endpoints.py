@@ -126,7 +126,7 @@ async def get_advanced_metrics(
                 raise HTTPException(status_code=503, detail="Insufficient price data for centralized calculation")
             
             # Créer DataFrame des prix
-            price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
+            price_df = pd.DataFrame(price_data).ffill().dropna()
             
             # ⚡ CALCULER AVEC LE SERVICE CENTRALISÉ (même calculs que Risk Dashboard)
             centralized_metrics = portfolio_metrics_service.calculate_portfolio_metrics(
@@ -221,7 +221,7 @@ async def get_timeseries_data(
                             continue
                 
                 if len(price_data) >= 2:
-                    price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
+                    price_df = pd.DataFrame(price_data).ffill().dropna()
                     portfolio_returns = portfolio_metrics_service._calculate_weighted_portfolio_returns(price_df, balances)
                     
                     # Calculer la courbe de valeur
@@ -452,7 +452,7 @@ async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, 
             raise HTTPException(status_code=503, detail="Insufficient price data for centralized timeseries")
         
         # Créer DataFrame des prix
-        price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
+        price_df = pd.DataFrame(price_data).ffill().dropna()
         
         # 📊 CALCULER AVEC LE SERVICE CENTRALISÉ pour les métriques ET les rendements
         centralized_metrics = portfolio_metrics_service.calculate_portfolio_metrics(

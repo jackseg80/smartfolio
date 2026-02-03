@@ -226,7 +226,7 @@ class MLDataPipeline:
                 # Create OHLCV approximation from price data
                 df = df.resample('1D').agg({
                     'price': ['first', 'max', 'min', 'last', 'count']
-                }).fillna(method='ffill')
+                }).ffill()
                 
                 df.columns = ['open', 'high', 'low', 'close', 'volume']
                 df['volume'] = df['volume'] * df['close'] * 1000  # Approximate volume
@@ -280,7 +280,7 @@ class MLDataPipeline:
             logger.warning(f"High missing data ratio for {symbol}: {missing_ratio:.2%}")
         
         # Forward fill missing values
-        df = df.fillna(method='ffill').dropna()
+        df = df.ffill().dropna()
         
         # Remove outliers using z-score
         for col in ['open', 'high', 'low', 'close']:

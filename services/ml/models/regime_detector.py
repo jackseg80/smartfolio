@@ -421,7 +421,7 @@ class RegimeDetector:
                 simple_features['price_momentum_20'] = asset_df['close'].pct_change(20) if 'close' in asset_df.columns else pd.Series(0, index=asset_df.index)
                 
                 # Fill NaN values
-                simple_features = simple_features.fillna(method='ffill').fillna(0)
+                simple_features = simple_features.ffill().fillna(0)
                 
                 asset_features[symbol] = simple_features
                 logger.info(f"Created simple features for {symbol}: {len(simple_features)} samples")

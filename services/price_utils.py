@@ -62,7 +62,7 @@ def price_history_to_dataframe(price_data: Dict[str, List[Tuple[int, float]]]) -
     df = pd.concat(series_list, axis=1)
     
     # Forward fill missing values and drop any remaining NaN
-    df = df.fillna(method='ffill').dropna()
+    df = df.ffill().dropna()
     
     return df
 
@@ -213,7 +213,7 @@ def resample_to_daily(df: pd.DataFrame) -> pd.DataFrame:
     daily_df = df.resample('D').last()
     
     # Forward fill weekends/holidays
-    daily_df = daily_df.fillna(method='ffill')
+    daily_df = daily_df.ffill()
     
     return daily_df
 

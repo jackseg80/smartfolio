@@ -140,7 +140,7 @@ class CryptoMLPredictor:
                 elif isinstance(series, (int, float)):
                     features[f'market_{name}'] = series
                     
-        return features.fillna(method='ffill').dropna()
+        return features.ffill().dropna()
     
     def prepare_regime_labels(self, price_data: pd.DataFrame, 
                              primary_asset: str = 'BTC') -> pd.Series:
