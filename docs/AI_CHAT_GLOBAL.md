@@ -313,9 +313,10 @@ PAGE_DOC_FILES = {
 
 ### Concepts Core (CLAUDE.md)
 
-- Decision Index (65/45 binaire)
+- Decision Index (0-100, weighted formula + macro penalty)
 - Risk Score (0-100, higher = robust)
 - Regime Score vs Decision Index
+- Macro Stress (VIX/DXY → -15 pts penalty)
 - Market Phases (bearish/moderate/bullish)
 - Allocation Engine V2 (topdown hierarchical)
 - Multi-tenant pattern

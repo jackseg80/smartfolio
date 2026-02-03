@@ -469,33 +469,59 @@ risk_score = (risk_score_full × w_full) + (risk_score_long × w_long)
 
 ## 6. Decision Index Logic
 
-**File**: `static/core/strategy-api-adapter.js` (line 448)
+**File**: `services/execution/strategy_registry.py` (lines 256-275)
 
-### 6.1 Binary Score
+> **Note (Feb 2026)**: L'ancien système binaire 65/45 a été remplacé par un calcul pondéré complet.
 
-```javascript
-const decisionScore = v2Allocation.metadata.total_check.isValid ? 65 : 45;
+### 6.1 Formule Complète (Backend - Source de Vérité)
+
+```python
+# 1. Weighted sum of 4 components
+raw_decision_score = (
+    cycle_score * weights.cycle +           # ~0.30
+    onchain_score * weights.onchain +       # ~0.35
+    risk_score * weights.risk_adjusted +    # ~0.25
+    sentiment_score * weights.sentiment     # ~0.10
+)
+
+# 2. Phase adjustment (bullish=1.0, moderate=0.95, bearish=0.85)
+adjusted_score = raw_decision_score * phase_factor
+
+# 3. Macro penalty (Feb 2026) - VIX > 30 OR DXY +5% over 30d
+macro_penalty = macro_stress_service.get_cached_penalty()  # 0 or -15
+adjusted_score += macro_penalty
+
+# 4. Clamp to [0, 100]
+final_score = max(0.0, min(100.0, adjusted_score))
 ```
 
-**Rule:**
-- **65** = Allocation valid (sum = 100% ± 0.1%)
-- **45** = Allocation invalid (constraint violated)
+### 6.2 Macro Stress Thresholds
 
-### 6.2 Validation Check
+**File**: `services/macro_stress.py`
+
+| Indicator | Series | Threshold | Effect |
+|-----------|--------|-----------|--------|
+| **VIX** | VIXCLS (FRED) | > 30 | Trigger stress |
+| **DXY** | DTWEXBGS (FRED) | +5% over 30d | Trigger stress |
+| **Penalty** | — | -15 points | Applied to DI |
+
+```python
+VIX_STRESS_THRESHOLD = 30.0
+DXY_CHANGE_THRESHOLD_PCT = 5.0
+DECISION_PENALTY = -15
+CACHE_TTL = 4 hours
+```
+
+### 6.3 Allocation Validity Check (Internal Only)
 
 **File**: `static/core/allocation-engine.js` (lines 607-620)
 
+The allocation validity check (`total_check.isValid`) is now used **internally only** to validate allocation quality, NOT for the Decision Index score.
+
 ```javascript
 function validateTotalAllocation(allocation) {
-  const validValues = Object.values(allocation).filter(val =>
-    val !== null && val !== undefined && !isNaN(val) && typeof val === 'number'
-  );
-  const total = validValues.reduce((sum, val) => sum + val, 0);
-
-  // Tolerance: 0.1% (0.001 in decimal)
-  const isValid = abs(total - 1) < 0.001;
-
-  return { total, isValid };
+  const total = Object.values(allocation).filter(v => typeof v === 'number').reduce((s, v) => s + v, 0);
+  return { total, isValid: Math.abs(total - 1) < 0.001 };
 }
 ```
 

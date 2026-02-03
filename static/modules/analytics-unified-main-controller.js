@@ -254,6 +254,21 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const u = await getUnifiedState();
     console.debug('🔍 Unified state for DI panel:', u);
     console.debug('🔍 Scores object in unified state:', u.scores);
+
+    // Récupérer le stress macro (VIX/DXY) pour Override #4 (Feb 2026)
+    let macroStress = null;
+    try {
+      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const macroResp = await fetch('/proxy/fred/macro-stress', {
+        headers: { 'X-User': activeUser }
+      });
+      if (macroResp.ok) {
+        macroStress = await macroResp.json();
+        console.debug('🌍 Macro stress data:', macroStress);
+      }
+    } catch (macroErr) {
+      console.debug('⚠️ Failed to fetch macro stress (non-blocking):', macroErr.message);
+    }
     console.debug('🔍 Risk score from unified state:', u.scores?.risk);
     console.debug('🔍 Risk score from store:', store.get('scores.risk'));
 
@@ -431,7 +446,16 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         } : null,
         regime_emoji: u.regime?.emoji,
         sentiment_fg: u.signals?.sentiment?.value,
-        sentiment_interpretation: u.signals?.sentiment?.interpretation
+        sentiment_interpretation: u.signals?.sentiment?.interpretation,
+
+        // Macro Stress Override (VIX/DXY) - Feb 2026
+        macro_stress: macroStress?.macro_stress || false,
+        macro_penalty: macroStress?.decision_penalty || 0,
+        vix_value: macroStress?.vix?.value || null,
+        vix_stress: macroStress?.vix?.is_stress || false,
+        dxy_value: macroStress?.dxy?.value || null,
+        dxy_change_30d: macroStress?.dxy?.pct_change_30d || null,
+        dxy_stress: macroStress?.dxy?.is_stress || false
       },
       history: diHistory.map(h => h.di),                                       // ✅ di history (array de scores)
       regimeHistory: (s?.regime?.history || s?.regime_history || []),          // ✅ regime history (2 clés possibles)
@@ -842,7 +866,27 @@ async function loadUnifiedData(force = false) {
     }
 
     // 2) Cycle (client-side) - With cache
-    if (isCacheValid(CACHE_CONFIG.cycle.key, CACHE_CONFIG.cycle.ttl)) {
+    // Check if calibrated params are newer than cached cycle data
+    let cycleCacheValid = isCacheValid(CACHE_CONFIG.cycle.key, CACHE_CONFIG.cycle.ttl);
+    if (cycleCacheValid) {
+      try {
+        const paramsStr = localStorage.getItem('bitcoin_cycle_params');
+        if (paramsStr) {
+          const paramsData = JSON.parse(paramsStr);
+          const cachedCycle = getCache(CACHE_CONFIG.cycle.key);
+          const cacheKey = getCacheKey(CACHE_CONFIG.cycle.key);
+          const rawCache = localStorage.getItem(cacheKey);
+          const cacheTimestamp = rawCache ? JSON.parse(rawCache).timestamp : 0;
+          // If params are newer than cache, invalidate
+          if (paramsData.timestamp > cacheTimestamp) {
+            debugLogger.debug('🔄 Cycle params newer than cache, forcing recalc');
+            cycleCacheValid = false;
+          }
+        }
+      } catch (e) { /* ignore parse errors */ }
+    }
+
+    if (cycleCacheValid) {
       debugLogger.debug('✅ Cycle data loaded from cache');
       const cycleData = getCache(CACHE_CONFIG.cycle.key);
       store.set('cycle.months', cycleData.months);
@@ -860,7 +904,7 @@ async function loadUnifiedData(force = false) {
         store.set('cycle.months', c.months);
         store.set('cycle.score', score);
         store.set('cycle.phase', phase);
-        debugLogger.debug('✅ Cycle data calculated and cached');
+        debugLogger.debug('✅ Cycle data calculated and cached', { score });
       } catch (e) { debugLogger.warn('Cycle data load failed:', e.message); }
     }
 

@@ -406,6 +406,13 @@ function renderMetadata(meta) {
   if (contradiction != null && contradiction > 0.5) {
     overrides.push(`⚠️ Contradiction (${Math.round(contradiction * 100)}%)`);
   }
+  // Override #4: Macro Stress (VIX/DXY) - Feb 2026
+  if (meta.macro_stress) {
+    const macroDetails = [];
+    if (meta.vix_stress) macroDetails.push(`VIX ${meta.vix_value?.toFixed(1)}`);
+    if (meta.dxy_stress) macroDetails.push(`DXY +${meta.dxy_change_30d?.toFixed(1)}%`);
+    overrides.push(`🌍 Macro Stress (${macroDetails.join(', ') || 'VIX/DXY'})`);
+  }
 
   const overrideBadge = overrides.length > 0
     ? `<div class="meta-row meta-override">
@@ -912,6 +919,7 @@ function renderHelpContent() {
           Des facteurs externes peuvent modifier l'allocation:<br>
           • ML Sentiment <25 → Force allocation défensive<br>
           • Contradiction >50% → Pénalise On-Chain/Risk<br>
+          • 🌍 Macro Stress (VIX>30 ou DXY+5%) → Pénalité -15 pts sur DI<br>
           • Structure Score <50 → +10pts stables</p>
 
           <p><strong>Métadonnées</strong><br>

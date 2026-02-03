@@ -1,7 +1,7 @@
 # Decision Index V2 - Système Dual de Scoring
 
-> **Date**: Octobre 2025
-> **Version**: 2.0 (Allocation Engine intégré)
+> **Date**: Février 2026
+> **Version**: 2.1 (Macro Stress DXY/VIX intégré)
 
 ## 📊 Vue d'Ensemble
 
@@ -74,6 +74,11 @@ raw_decision_score = (
 # Ajustement par phase (bullish/bearish/moderate)
 adjusted_score = raw_decision_score * phase_factor
 
+# Pénalité macro (Feb 2026) - VIX > 30 OU DXY +5% sur 30j → -15 points
+from services.macro_stress import macro_stress_service
+macro_penalty = macro_stress_service.get_cached_penalty()  # 0 ou -15
+adjusted_score += macro_penalty
+
 # Clamp final 0-100
 final_score = max(0.0, min(100.0, adjusted_score))
 ```
@@ -133,6 +138,7 @@ const decisionScore = Math.round(
 │  2. Apply Adaptive Weights (context-aware)      │
 │  3. Weighted Sum → raw_decision_score           │
 │  4. Phase Multiplier (bull/bear/moderate)       │
+│  4b. Macro Penalty (VIX/DXY stress → -15 pts)   │
 │  5. Clamp to [0, 100] → final_decision_score    │
 │                                                 │
 └─────────────────────────────────────────────────┘
@@ -228,6 +234,37 @@ if (structureScore < 50) {
   deltaCap -= 0.5;      // Cap réduit
 }
 ```
+
+### Override #4: Macro Stress (VIX/DXY) — NEW Feb 2026
+
+**Source de données**:
+- **VIX**: CBOE Volatility Index via FRED (série VIXCLS)
+- **DXY**: Trade Weighted U.S. Dollar Index via FRED (série DTWEXBGS)
+- **Endpoint**: `/proxy/fred/macro-stress`
+- **Cache**: 4 heures (partagé avec Decision Index)
+
+**Règle de pénalité**:
+```python
+# services/macro_stress.py
+VIX_STRESS_THRESHOLD = 30.0      # VIX > 30 = stress marché
+DXY_CHANGE_THRESHOLD = 5.0       # DXY +5% sur 30j = stress dollar
+DECISION_PENALTY = -15           # Pénalité appliquée au DI
+
+if vix_value > 30 or dxy_change_30d >= 5:
+    adjusted_score += (-15)  # Pénalité directe sur le DI
+    rationale.append("Stress macro détecté (VIX/DXY) - pénalité -15 pts")
+```
+
+**Exemple**:
+- VIX = 35 (stress marché élevé)
+- DI avant pénalité = 62
+- **DI après pénalité = 47** (62 - 15)
+- Rationale affiché: "Stress macro détecté (VIX/DXY) - pénalité -15 pts"
+
+**Fichiers**:
+- Service: `services/macro_stress.py`
+- Intégration: `services/execution/strategy_registry.py:265-272`
+- API: `api/main.py` (endpoints `/proxy/fred/*`)
 
 ---
 
@@ -359,6 +396,8 @@ grep "Risk Budget from cache" logs/app.log | tail -1
 - Allocation Engine V2: `static/core/allocation-engine.js`
 - Strategy API Adapter: `static/core/strategy-api-adapter.js`
 - Unified Insights V2: `static/core/unified-insights-v2.js`
+- Macro Stress Service: `services/macro_stress.py`
+- Strategy Registry (DI calc): `services/execution/strategy_registry.py`
 
 ### Tests
 ```bash
@@ -386,4 +425,4 @@ pytest tests/unit/test_allocation_engine_v2.py
 
 ---
 
-*Dernière mise à jour: 2025-10-22*
+*Dernière mise à jour: 2026-02-03*
