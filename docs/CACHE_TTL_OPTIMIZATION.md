@@ -241,6 +241,7 @@ BALANCE_CACHE_TTL = 300  # 5 minutes
 | **On-Chain Indicators** | 10 min → **4 heures** | -96% appels API externes |
 | **Asset Groups Taxonomy** | 30s → **1 heure** | -99% lectures fichier |
 | **VaR Calculator** | 5 min → **30 minutes** | -83% calculs lourds |
+| **Macro Stress (DXY/VIX)** | N/A → **4 heures** | Nouveaux indicateurs FRED |
 
 **Actions:**
 ```javascript
@@ -336,6 +337,7 @@ self._signals_ttl_seconds = 3600  # 1 heure
 | On-Chain | 4h | ✅ Négligeable (données quotidiennes) |
 | Cycle | 24h | ✅ Négligeable (évolution lente) |
 | ML Sentiment | 15 min | ✅ Acceptable (tendances 30+ min) |
+| Macro Stress (DXY/VIX) | 4h | ✅ Négligeable (données FRED quotidiennes) |
 | Prix | 3 min | ✅ OK pour portfolio management |
 | Risk Metrics | 30 min | ✅ OK (décisions stratégiques) |
 

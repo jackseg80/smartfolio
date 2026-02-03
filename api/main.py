@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -388,7 +388,7 @@ async def rebalance_plan_csv(
 
 @app.get("/proxy/fred/bitcoin")
 async def proxy_fred_bitcoin(
-    start_date: str = "2014-01-01", limit: int = None, user: str = Depends(get_required_user)
+    start_date: str = "2014-01-01", limit: Optional[int] = None, user: str = Depends(get_required_user)
 ):
     """Proxy pour récupérer les données Bitcoin historiques via FRED API (user-scoped)"""
     # Lire la clé FRED depuis secrets.json (modern system)
@@ -453,6 +453,187 @@ async def proxy_fred_bitcoin(
     except (ValueError, KeyError) as e:
         logger.warning(f"Data parsing error in FRED proxy: {e}")
         return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+
+
+@app.get("/proxy/fred/dxy")
+async def proxy_fred_dxy(
+    start_date: str = "2020-01-01", limit: Optional[int] = None, user: str = Depends(get_required_user)
+):
+    """Proxy pour récupérer l'index DXY (Trade Weighted U.S. Dollar Index) via FRED API"""
+    from services.user_secrets import get_user_secrets
+
+    secrets = get_user_secrets(user)
+    fred_api_key = secrets.get("fred", {}).get("api_key") or os.getenv("FRED_API_KEY")
+
+    if not fred_api_key:
+        raise HTTPException(status_code=503, detail="FRED API key not configured")
+
+    try:
+        url = "https://api.stlouisfed.org/fred/series/observations"
+        params = {
+            "series_id": "DTWEXBGS",  # Trade Weighted U.S. Dollar Index: Broad, Goods and Services
+            "api_key": fred_api_key,
+            "file_type": "json",
+            "observation_start": start_date,
+        }
+        if limit:
+            params["limit"] = limit
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+
+        if response.status_code == 200:
+            data = response.json()
+            if "observations" in data:
+                dxy_data = []
+                for obs in data["observations"]:
+                    if obs["value"] != "." and obs["value"] is not None:
+                        try:
+                            value = float(obs["value"])
+                            timestamp = int(datetime.fromisoformat(obs["date"]).timestamp() * 1000)
+                            dxy_data.append({"time": timestamp, "value": value, "date": obs["date"]})
+                        except (ValueError, TypeError):
+                            continue
+
+                # Calculer variation sur 30 jours pour macro penalty
+                pct_change_30d = None
+                if len(dxy_data) >= 30:
+                    recent = dxy_data[-1]["value"]
+                    past = dxy_data[-30]["value"]
+                    if past > 0:
+                        pct_change_30d = ((recent - past) / past) * 100
+
+                return {
+                    "success": True,
+                    "source": "FRED (DTWEXBGS)",
+                    "data": dxy_data,
+                    "count": len(dxy_data),
+                    "latest": dxy_data[-1] if dxy_data else None,
+                    "pct_change_30d": round(pct_change_30d, 2) if pct_change_30d else None,
+                }
+
+        return {
+            "success": False,
+            "error": f"FRED API error: HTTP {response.status_code}",
+            "data": [],
+        }
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error in FRED DXY proxy: {e}")
+        return {"success": False, "error": f"HTTP error: {str(e)}", "data": []}
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout in FRED DXY proxy: {e}")
+        return {"success": False, "error": f"Timeout: {str(e)}", "data": []}
+    except (ValueError, KeyError) as e:
+        logger.warning(f"Data parsing error in FRED DXY proxy: {e}")
+        return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+
+
+@app.get("/proxy/fred/vix")
+async def proxy_fred_vix(
+    start_date: str = "2020-01-01", limit: Optional[int] = None, user: str = Depends(get_required_user)
+):
+    """Proxy pour récupérer l'index VIX (CBOE Volatility Index) via FRED API"""
+    from services.user_secrets import get_user_secrets
+
+    secrets = get_user_secrets(user)
+    fred_api_key = secrets.get("fred", {}).get("api_key") or os.getenv("FRED_API_KEY")
+
+    if not fred_api_key:
+        raise HTTPException(status_code=503, detail="FRED API key not configured")
+
+    try:
+        url = "https://api.stlouisfed.org/fred/series/observations"
+        params = {
+            "series_id": "VIXCLS",  # CBOE Volatility Index: VIX
+            "api_key": fred_api_key,
+            "file_type": "json",
+            "observation_start": start_date,
+        }
+        if limit:
+            params["limit"] = limit
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+
+        if response.status_code == 200:
+            data = response.json()
+            if "observations" in data:
+                vix_data = []
+                for obs in data["observations"]:
+                    if obs["value"] != "." and obs["value"] is not None:
+                        try:
+                            value = float(obs["value"])
+                            timestamp = int(datetime.fromisoformat(obs["date"]).timestamp() * 1000)
+                            vix_data.append({"time": timestamp, "value": value, "date": obs["date"]})
+                        except (ValueError, TypeError):
+                            continue
+
+                # Flag si VIX > 30 (stress marché)
+                latest_vix = vix_data[-1]["value"] if vix_data else None
+                is_stress = latest_vix is not None and latest_vix > 30
+
+                return {
+                    "success": True,
+                    "source": "FRED (VIXCLS)",
+                    "data": vix_data,
+                    "count": len(vix_data),
+                    "latest": vix_data[-1] if vix_data else None,
+                    "is_stress": is_stress,
+                    "stress_threshold": 30,
+                }
+
+        return {
+            "success": False,
+            "error": f"FRED API error: HTTP {response.status_code}",
+            "data": [],
+        }
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error in FRED VIX proxy: {e}")
+        return {"success": False, "error": f"HTTP error: {str(e)}", "data": []}
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout in FRED VIX proxy: {e}")
+        return {"success": False, "error": f"Timeout: {str(e)}", "data": []}
+    except (ValueError, KeyError) as e:
+        logger.warning(f"Data parsing error in FRED VIX proxy: {e}")
+        return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+
+
+@app.get("/proxy/fred/macro-stress")
+async def proxy_fred_macro_stress(
+    user: str = Depends(get_required_user),
+    force_refresh: bool = Query(False, description="Force le rafraîchissement du cache")
+):
+    """
+    Endpoint combiné pour évaluer le stress macro et calculer la pénalité Decision Index.
+    Règle: VIX > 30 OU DXY +5% sur 30j → pénalité -15 points
+
+    Utilise le service macro_stress avec cache (4h TTL) pour éviter les appels FRED excessifs.
+    Le cache est partagé avec le calcul du Decision Index dans strategy_registry.
+    """
+    from services.macro_stress import macro_stress_service
+
+    result = await macro_stress_service.evaluate_stress(user_id=user, force_refresh=force_refresh)
+
+    return {
+        "success": result.error is None,
+        "error": result.error,
+        "vix": {
+            "value": result.vix_value,
+            "is_stress": result.vix_stress,
+            "threshold": 30,
+        },
+        "dxy": {
+            "value": result.dxy_value,
+            "pct_change_30d": result.dxy_change_30d,
+            "is_stress": result.dxy_stress,
+            "threshold_pct": 5,
+        },
+        "macro_stress": result.macro_stress,
+        "decision_penalty": result.decision_penalty,
+        "fetched_at": result.fetched_at.isoformat() if result.fetched_at else None,
+    }
 
 
 # ========== Router Registration (Modular) ==========

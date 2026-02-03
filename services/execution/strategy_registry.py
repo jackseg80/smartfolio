@@ -265,6 +265,13 @@ class StrategyRegistry:
             # 4. Ajustement par phase
             phase_factor = strategy_config.phase_adjustments.get(phase_state.phase_now.value, 1.0)
             adjusted_score = raw_decision_score * phase_factor
+
+            # 4b. Pénalité macro (VIX > 30 ou DXY +5% → -15 points)
+            # Phase 3 Plan de Sauvetage SmartFolio (Feb 2026)
+            from services.macro_stress import macro_stress_service
+            macro_penalty = macro_stress_service.get_cached_penalty()
+            adjusted_score += macro_penalty
+
             final_score = max(0.0, min(100.0, adjusted_score))
             
             # 5. Calcul de confiance (similaire au frontend)
@@ -432,7 +439,13 @@ class StrategyRegistry:
         # Contradictions
         if scores.contradiction > 0.5:
             rationale.append("Signaux contradictoires - réduction confiance")
-        
+
+        # Pénalité macro (VIX/DXY stress)
+        from services.macro_stress import macro_stress_service
+        macro_penalty = macro_stress_service.get_cached_penalty()
+        if macro_penalty != 0:
+            rationale.append(f"Stress macro détecté (VIX/DXY) - pénalité {macro_penalty} pts")
+
         return rationale
     
     def get_available_templates(self) -> Dict[str, Dict[str, Any]]:

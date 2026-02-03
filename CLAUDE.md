@@ -95,6 +95,7 @@ admin-dashboard.html    # Admin Dashboard (RBAC)
 /api/sources/*                           # Sources System v2
 /execution/governance/*                  # Decision Engine
 /admin/*                                 # Admin (RBAC protected)
+/proxy/fred/*                            # Macro indicators (DXY, VIX, Bitcoin)
 ```
 
 ### Fichiers Clés
@@ -102,6 +103,7 @@ admin-dashboard.html    # Admin Dashboard (RBAC)
 api/main.py, api/admin_router.py, api/deps.py
 services/balance_service.py, services/portfolio.py
 services/execution/governance.py, services/ml/orchestrator.py
+services/macro_stress.py                 # DXY/VIX stress → Decision Index penalty
 static/global-config.js, static/core/allocation-engine.js
 config/users.json
 ```
@@ -177,7 +179,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 ```
 
 ### Cache TTL
-- On-Chain: 4h | Cycle Score: 24h | ML Sentiment: 15min | Prix crypto: 3min | Risk Metrics: 30min
+- On-Chain: 4h | Cycle Score: 24h | ML Sentiment: 15min | Prix crypto: 3min | Risk Metrics: 30min | Macro Stress (DXY/VIX): 4h
 
 ---
 
