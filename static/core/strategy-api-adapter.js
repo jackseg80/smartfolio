@@ -447,11 +447,19 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
   const onchainScore = context.onchainScore ?? 50;
   const riskScore = context.riskScore ?? 50;
 
-  // Poids adaptatifs (depuis context ou défaut)
-  const weights = context.adaptiveWeights || { wCycle: 0.5, wOnchain: 0.3, wRisk: 0.2 };
-  const wCycle = weights.wCycle ?? 0.5;
-  const wOnchain = weights.wOnchain ?? 0.3;
-  const wRisk = weights.wRisk ?? 0.2;
+  // ============================================================================
+  // CRITICAL FIX (Feb 2026): Harmonisation poids frontend/backend
+  // Audit Gemini: Split-brain détecté - poids JS différents de Python
+  // Source de vérité: services/execution/strategy_registry.py template "balanced"
+  // Backend poids: cycle=0.3, onchain=0.35, risk_adjusted=0.25, sentiment=0.1
+  // Ici on ignore sentiment car non disponible côté frontend, donc on renormalise:
+  // cycle=0.33, onchain=0.39, risk=0.28 (proportionnel aux 0.9 restants)
+  // ============================================================================
+  const BACKEND_BALANCED_WEIGHTS = { wCycle: 0.33, wOnchain: 0.39, wRisk: 0.28 };
+  const weights = context.adaptiveWeights || BACKEND_BALANCED_WEIGHTS;
+  const wCycle = weights.wCycle ?? 0.33;
+  const wOnchain = weights.wOnchain ?? 0.39;
+  const wRisk = weights.wRisk ?? 0.28;
 
   // Calcul pondéré comme dans strategy_registry.py
   let rawDecisionScore = (

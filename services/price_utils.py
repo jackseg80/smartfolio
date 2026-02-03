@@ -69,30 +69,131 @@ def price_history_to_dataframe(price_data: Dict[str, List[Tuple[int, float]]]) -
 def validate_price_data(df: pd.DataFrame, min_days: int = 30) -> bool:
     """
     Validate price DataFrame has sufficient data
-    
+
     Args:
         df: Price DataFrame
         min_days: Minimum required days
-        
+
     Returns:
         True if data is sufficient
     """
-    
+
     if df.empty:
         return False
-        
+
     if len(df) < min_days:
         return False
-        
+
     if df.columns.empty:
         return False
-        
+
     # Check for too many NaN values
     nan_ratio = df.isnull().sum().sum() / (len(df) * len(df.columns))
     if nan_ratio > 0.2:  # More than 20% NaN
         return False
-        
+
     return True
+
+
+def validate_price_data_integrity(
+    df: pd.DataFrame,
+    min_volatility_threshold: float = 0.05,
+    max_daily_change: float = 0.99,
+    reject_on_anomaly: bool = False
+) -> Dict[str, any]:
+    """
+    Validate price data integrity to prevent Risk Score contamination.
+
+    CRITICAL FIX (Feb 2026): Audit Gemini + Claude identified that corrupted
+    price data (zero volatility, flat prices) contaminates Risk Score → Decision Index.
+
+    Args:
+        df: Price DataFrame with datetime index and asset columns
+        min_volatility_threshold: Minimum annualized volatility expected for crypto (default 5%)
+        max_daily_change: Maximum single-day change considered valid (default 99%)
+        reject_on_anomaly: If True, raises ValueError on anomaly detection
+
+    Returns:
+        Dict with validation results:
+        - valid: bool
+        - anomalies: list of detected issues
+        - flagged_assets: list of assets with suspicious data
+        - volatility_per_asset: dict of annualized volatility per asset
+    """
+    import numpy as np
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    result = {
+        "valid": True,
+        "anomalies": [],
+        "flagged_assets": [],
+        "volatility_per_asset": {}
+    }
+
+    if df.empty:
+        result["valid"] = False
+        result["anomalies"].append("Empty DataFrame")
+        return result
+
+    # Calculate returns for volatility analysis
+    returns = df.pct_change().dropna()
+
+    if returns.empty:
+        result["valid"] = False
+        result["anomalies"].append("No valid returns calculated")
+        return result
+
+    for col in df.columns:
+        asset_anomalies = []
+        prices = df[col].dropna()
+
+        # Check 1: Zero or negative prices
+        zero_or_negative = (prices <= 0).sum()
+        if zero_or_negative > 0:
+            asset_anomalies.append(f"{zero_or_negative} zero/negative prices")
+
+        # Check 2: Flat prices (all identical = 0 volatility)
+        unique_prices = prices.nunique()
+        if unique_prices == 1:
+            asset_anomalies.append("All prices identical (zero volatility)")
+
+        # Check 3: Extreme daily changes (> max_daily_change)
+        if col in returns.columns:
+            asset_returns = returns[col].dropna()
+            extreme_moves = (asset_returns.abs() > max_daily_change).sum()
+            if extreme_moves > 0:
+                asset_anomalies.append(f"{extreme_moves} extreme daily moves (>{max_daily_change*100:.0f}%)")
+
+            # Check 4: Annualized volatility below threshold
+            annualized_vol = asset_returns.std() * np.sqrt(252)
+            result["volatility_per_asset"][col] = annualized_vol
+
+            if annualized_vol < min_volatility_threshold:
+                asset_anomalies.append(
+                    f"Volatility {annualized_vol:.2%} below {min_volatility_threshold:.0%} threshold"
+                )
+
+        # Flag asset if any anomalies found
+        if asset_anomalies:
+            result["flagged_assets"].append(col)
+            result["anomalies"].extend([f"{col}: {a}" for a in asset_anomalies])
+
+    # Overall validation
+    if result["flagged_assets"]:
+        result["valid"] = False
+        logger.warning(
+            f"⚠️ PRICE DATA INTEGRITY CHECK FAILED: {len(result['flagged_assets'])} assets flagged. "
+            f"Anomalies: {result['anomalies']}"
+        )
+
+        if reject_on_anomaly:
+            raise ValueError(
+                f"Price data integrity check failed: {result['anomalies']}"
+            )
+
+    return result
 
 def resample_to_daily(df: pd.DataFrame) -> pd.DataFrame:
     """

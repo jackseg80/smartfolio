@@ -107,27 +107,33 @@ class StrategyRegistry:
                 template=StrategyTemplate.CONSERVATIVE,
                 weights=StrategyWeights(cycle=0.2, onchain=0.3, risk_adjusted=0.4, sentiment=0.1),
                 risk_budget={"volatility": 0.12, "correlation": 0.7, "var_95_pct": 0.03},
-                phase_adjustments={"btc": 1.1, "eth": 1.0, "large": 0.9, "alt": 0.8},
+                phase_adjustments={"btc": 1.05, "eth": 1.0, "large": 0.95, "alt": 0.85, "bearish": 0.80},
                 confidence_threshold=0.6,
                 rebalance_threshold_pct=0.08,
                 description="Favorise la stabilité et la préservation du capital"
             ),
             "balanced": StrategyConfig(
-                name="Balanced", 
+                name="Balanced",
                 template=StrategyTemplate.BALANCED,
                 weights=StrategyWeights(cycle=0.3, onchain=0.35, risk_adjusted=0.25, sentiment=0.1),
                 risk_budget={"volatility": 0.18, "correlation": 0.8, "var_95_pct": 0.05},
-                phase_adjustments={"btc": 1.0, "eth": 1.0, "large": 1.0, "alt": 1.0},
+                phase_adjustments={"btc": 1.0, "eth": 1.0, "large": 1.0, "alt": 1.0, "bearish": 0.85},
                 confidence_threshold=0.5,
                 rebalance_threshold_pct=0.05,
                 description="Équilibre entre croissance et sécurité (défaut frontend)"
             ),
+            # ============================================================================
+            # CRITICAL FIX (Feb 2026): Calibration des phase_adjustments
+            # Audit Gemini: boosters trop agressifs (1.3) peuvent amplifier scores contaminés
+            # Réduction: alt 1.3→1.05, large 1.2→1.05, eth 1.1→1.02
+            # Ajout: pénalité bearish explicite (0.85)
+            # ============================================================================
             "aggressive": StrategyConfig(
                 name="Aggressive",
                 template=StrategyTemplate.AGGRESSIVE,
                 weights=StrategyWeights(cycle=0.35, onchain=0.4, risk_adjusted=0.15, sentiment=0.1),
                 risk_budget={"volatility": 0.25, "correlation": 0.85, "var_95_pct": 0.08},
-                phase_adjustments={"btc": 0.9, "eth": 1.1, "large": 1.2, "alt": 1.3},
+                phase_adjustments={"btc": 1.0, "eth": 1.02, "large": 1.05, "alt": 1.05, "bearish": 0.85},
                 confidence_threshold=0.4,
                 rebalance_threshold_pct=0.03,
                 description="Maximise l'alpha avec tolérance aux fluctuations"

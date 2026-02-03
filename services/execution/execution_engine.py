@@ -14,6 +14,7 @@ import logging
 
 from .order_manager import OrderManager, Order, OrderStatus, ExecutionPlan
 from .exchange_adapter import ExchangeRegistry, exchange_registry
+from .governance import governance_engine
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +181,30 @@ class ExecutionEngine:
         
         # Phase 2: Achats
         if buy_orders:
+            # ============================================================================
+            # CRITICAL FIX (Feb 2026): Vérifier freeze AVANT achats
+            # Audit Claude: ExecutionEngine ignorait les freezes de GovernanceEngine
+            # Chaîne de danger: Freeze actif → Achats passent quand même → Trading non-sécurisé
+            # ============================================================================
+            if not dry_run:
+                can_buy, freeze_reason = governance_engine.validate_operation("new_purchases")
+                if not can_buy:
+                    logger.error(f"🛑 BUY ORDERS BLOCKED BY FREEZE: {freeze_reason}")
+                    # Marquer tous les buy_orders comme bloqués
+                    for order in buy_orders:
+                        order.status = OrderStatus.CANCELLED
+                        order.error_message = f"Blocked by freeze: {freeze_reason}"
+                        order.updated_at = datetime.now(timezone.utc)
+                        stats.failed_orders += 1
+
+                    self._emit_event(ExecutionEvent(
+                        type="phase_blocked",
+                        plan_id=plan.id,
+                        message=f"Buy phase blocked by governance freeze: {freeze_reason}",
+                        data={"blocked_orders": len(buy_orders), "reason": freeze_reason}
+                    ))
+                    return  # Skip la phase d'achat entière
+
             logger.info(f"Phase 2: Executing {len(buy_orders)} buy orders")
             await self._execute_order_batch(buy_orders, stats, dry_run, max_parallel)
     

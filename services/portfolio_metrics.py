@@ -235,7 +235,24 @@ class PortfolioMetricsService:
         total_return = self._calculate_total_return(portfolio_returns)
         annualized_return = self._calculate_annualized_return(portfolio_returns)
         volatility = self._calculate_volatility(portfolio_returns)
-        
+
+        # ============================================================================
+        # CRITICAL FIX (Feb 2026): Garde-fou anti-contamination volatilité
+        # Audit Gemini + Claude: volatilité portefeuille < 5% = données corrompues
+        # Chaîne de contamination: vol corrompue → Risk Score faussé → Decision Index biaisé
+        # ============================================================================
+        CRYPTO_MIN_VOLATILITY = 0.05  # 5% annualisé = seuil minimum réaliste crypto
+        if volatility < CRYPTO_MIN_VOLATILITY:
+            logger.warning(
+                f"⚠️ VOLATILITY ANOMALY DETECTED: {volatility:.2%} < {CRYPTO_MIN_VOLATILITY:.0%} minimum. "
+                f"Possible data corruption or cash-heavy portfolio. "
+                f"Risk Score calculation may be unreliable."
+            )
+            # Option: Clamp à valeur minimale plutôt que lever erreur
+            # pour éviter de casser le dashboard, mais log l'anomalie
+            volatility = CRYPTO_MIN_VOLATILITY
+            logger.info(f"Volatility clamped to minimum: {volatility:.2%}")
+
         # Ratios de risque
         sharpe_ratio = self._calculate_sharpe_ratio(annualized_return, volatility)
         sortino_ratio = self._calculate_sortino_ratio(portfolio_returns, annualized_return)

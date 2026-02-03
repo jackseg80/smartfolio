@@ -51,22 +51,22 @@ export function computeStructureModulation(structureScore) {
   return { deltaStables: 0, deltaCap: deltaCap };
 }
 
-// Simple inline fallback (remplace import legacy archivé)
-function simpleFallbackCalculation(context) {
-  const { blendedScore = 50, cycleData = {}, onchainScore = 50, riskScore = 50 } = context;
-  const cycleScore = cycleData.score ?? 50;
-  const weights = { cycle: 0.35, onchain: 0.25, risk: 0.2, blended: 0.2 };
-  const score = Math.round(
-    weights.cycle * cycleScore +
-    weights.onchain * onchainScore +
-    weights.risk * riskScore +
-    weights.blended * blendedScore
-  );
+// ============================================================================
+// CRITICAL FIX (Feb 2026): Fallback supprimé pour éviter split-brain
+// Audit Gemini + Claude: Les poids JS (0.35/0.25/0.2/0.2) étaient différents
+// du backend (0.2/0.3/0.4/0.1), causant des scores incohérents.
+// Maintenant: si l'API échoue → erreur explicite, pas de score fallback.
+// ============================================================================
+function simpleFallbackCalculation(_context) {
+  // SUPPRIMÉ: Ne plus calculer de score avec des poids différents du backend
+  // Retourner un état d'erreur explicite pour que l'UI affiche un message clair
+  console.error('❌ SPLIT-BRAIN PREVENTION: Strategy API failed, no fallback calculation');
   return {
-    score: Math.max(0, Math.min(100, score)),
-    confidence: 0.5,
-    action: score > 70 ? 'HOLD_STABLE' : score >= 40 ? 'MONITOR' : 'RISK_ON',
-    source: 'inline_fallback'
+    score: null,  // null = pas de score disponible
+    confidence: 0,
+    action: 'API_ERROR',
+    source: 'api_failed_no_fallback',
+    error: 'Strategy API unavailable - decision score cannot be calculated without backend'
   };
 }
 
@@ -86,21 +86,27 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
     Math.round(governanceContradiction * 100) :
     (contradictions?.length ?? 0);
 
-  // Pondérations de base
-  let wCycle = 0.5;
-  let wOnchain = 0.3;
-  let wRisk = 0.2;
+  // ============================================================================
+  // CRITICAL FIX (Feb 2026): Harmonisation poids frontend/backend
+  // Source de vérité: services/execution/strategy_registry.py template "balanced"
+  // Backend: cycle=0.3, onchain=0.35, risk=0.25 (sentiment ignoré côté frontend)
+  // Renormalisé sur 0.9 total: cycle≈0.33, onchain≈0.39, risk≈0.28
+  // ============================================================================
+  let wCycle = 0.33;
+  let wOnchain = 0.39;
+  let wRisk = 0.28;
 
-  // RÈGLE 1: Cycle ≥ 90 → boost wCycle, préserve exposition Alts
+  // RÈGLE 1: Cycle ≥ 90 → boost modéré wCycle (calibration Feb 2026)
+  // Boosters réduits pour éviter amplification de scores potentiellement contaminés
   if (cycleScore >= 90) {
-    wCycle = 0.65; // Boost cycle fort
-    wOnchain = 0.25; // Réduit impact on-chain faible
-    wRisk = 0.1; // Moins de poids au risque en phase bullish
-    console.debug('🚀 Adaptive weights: Cycle ≥ 90 → boost cycle influence');
+    wCycle = 0.45; // Boost modéré (était 0.65)
+    wOnchain = 0.35; // Préserve on-chain (était 0.25)
+    wRisk = 0.20; // Maintient risque significatif (était 0.1)
+    console.debug('🚀 Adaptive weights: Cycle ≥ 90 → moderate cycle boost (calibrated)');
   } else if (cycleScore >= 70) {
-    wCycle = 0.55;
-    wOnchain = 0.28;
-    wRisk = 0.17;
+    wCycle = 0.40;
+    wOnchain = 0.37;
+    wRisk = 0.23;
   }
 
   // RÈGLE 2: Plafond de pénalité On-Chain pour préserver floors Alts
