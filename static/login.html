@@ -1,55 +1,135 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartFolio - Login</title>
-    <link rel="stylesheet" href="/static/styles.css">
     <style>
-        /* Login page specific styles */
-        body {
+        /* Reset & Base */
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
 
+        /* Animated background shapes */
+        .bg-shapes {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .bg-shapes::before,
+        .bg-shapes::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-shapes::before {
+            width: 600px;
+            height: 600px;
+            top: -200px;
+            left: -200px;
+        }
+
+        .bg-shapes::after {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            right: -100px;
+            animation-delay: -10s;
+            animation-direction: reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(30px, 30px) rotate(5deg); }
+            50% { transform: translate(0, 50px) rotate(0deg); }
+            75% { transform: translate(-30px, 30px) rotate(-5deg); }
+        }
+
+        /* Login Container */
         .login-container {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             padding: 48px;
             width: 100%;
             max-width: 420px;
             margin: 20px;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out;
         }
 
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
         .login-header {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 36px;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+        }
+
+        .logo svg {
+            width: 36px;
+            height: 36px;
+            color: white;
         }
 
         .login-header h1 {
-            margin: 0 0 8px 0;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 700;
             color: #1a202c;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
 
         .login-header p {
-            margin: 0;
             font-size: 14px;
             color: #718096;
         }
 
+        /* Form */
         .login-form {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
         }
 
         .form-group {
@@ -60,126 +140,310 @@
 
         .form-group label {
             font-size: 14px;
-            font-weight: 500;
-            color: #4a5568;
+            font-weight: 600;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .form-group input {
-            padding: 12px 16px;
+        .form-group label svg {
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 14px 16px;
+            padding-left: 48px;
             font-size: 16px;
-            border: 2px solid #e2e8f0;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            outline: none;
+            background: #f9fafb;
+        }
+
+        .input-wrapper input:hover {
+            border-color: #d1d5db;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-wrapper input::placeholder {
+            color: #9ca3af;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            width: 20px;
+            height: 20px;
+            color: #9ca3af;
+            transition: color 0.2s;
+            pointer-events: none;
+        }
+
+        .input-wrapper input:focus ~ .input-icon,
+        .input-wrapper:focus-within .input-icon {
+            color: #667eea;
+        }
+
+        /* Password toggle */
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #9ca3af;
             border-radius: 8px;
             transition: all 0.2s;
-            outline: none;
         }
 
-        .form-group input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .password-toggle:hover {
+            background: #f3f4f6;
+            color: #667eea;
         }
 
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Login Button */
         .login-button {
-            padding: 14px 24px;
+            padding: 16px 24px;
             font-size: 16px;
             font-weight: 600;
             color: white;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .login-button:hover:not(:disabled)::before {
+            opacity: 1;
         }
 
         .login-button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.5);
+        }
+
+        .login-button:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         .login-button:disabled {
-            opacity: 0.6;
+            opacity: 0.7;
             cursor: not-allowed;
-        }
-
-        .error-message {
-            padding: 12px 16px;
-            background-color: #fed7d7;
-            border: 1px solid #fc8181;
-            border-radius: 8px;
-            color: #c53030;
-            font-size: 14px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .version-info {
-            text-align: center;
-            margin-top: 24px;
-            font-size: 12px;
-            color: #a0aec0;
-        }
-
-        /* Loading spinner */
-        .spinner {
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 2px solid white;
-            width: 16px;
-            height: 16px;
-            animation: spin 0.8s linear infinite;
-            display: inline-block;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            transform: none;
         }
 
         .button-content {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Error Message */
+        .error-message {
+            padding: 14px 16px;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #dc2626;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .error-message svg {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Version Info */
+        .version-info {
+            text-align: center;
+            margin-top: 28px;
+            font-size: 12px;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .version-info::before,
+        .version-info::after {
+            content: '';
+            height: 1px;
+            width: 40px;
+            background: #e5e7eb;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 32px 24px;
+                margin: 16px;
+            }
+
+            .logo {
+                width: 56px;
+                height: 56px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="bg-shapes"></div>
+
     <div class="login-container">
         <div class="login-header">
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
             <h1>SmartFolio</h1>
             <p>Portfolio Intelligence Platform</p>
         </div>
 
-        <div id="error-message" class="error-message"></div>
+        <div id="error-message" class="error-message">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="error-text"></span>
+        </div>
 
         <form id="login-form" class="login-form">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input
-                    type="text"
-                    id="username"
-                    name="username"
-                    required
-                    autofocus
-                    autocomplete="username"
-                    placeholder="Enter your username"
-                >
+                <label for="username">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    Username
+                </label>
+                <div class="input-wrapper">
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autofocus
+                        autocomplete="username"
+                        placeholder="Enter your username"
+                    >
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                    autocomplete="current-password"
-                    placeholder="Enter your password"
-                >
+                <label for="password">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Password
+                </label>
+                <div class="input-wrapper">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                        placeholder="Enter your password"
+                    >
+                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    <button type="button" id="password-toggle" class="password-toggle" aria-label="Show password">
+                        <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <svg id="eye-off-icon" style="display: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <button type="submit" id="login-button" class="login-button">
@@ -190,7 +454,7 @@
         </form>
 
         <div class="version-info">
-            SmartFolio v2.0 &bull; Secure Authentication
+            SmartFolio v2.0
         </div>
     </div>
 
@@ -205,24 +469,33 @@
         const loginButton = document.getElementById('login-button');
         const buttonText = document.getElementById('button-text');
         const errorMessage = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        const passwordToggle = document.getElementById('password-toggle');
+        const eyeIcon = document.getElementById('eye-icon');
+        const eyeOffIcon = document.getElementById('eye-off-icon');
+
+        // Password visibility toggle
+        passwordToggle.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            eyeIcon.style.display = isPassword ? 'none' : 'block';
+            eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+            passwordToggle.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+        });
 
         // Check if already logged in
         (async function checkExistingAuth() {
             const token = localStorage.getItem('authToken');
             if (token) {
                 try {
-                    // Verify token is still valid
                     const response = await fetch(`${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`);
                     if (response.ok) {
                         const data = await response.json();
                         if (data.ok && data.data?.valid) {
-                            // Token is valid, redirect to dashboard
-                            console.log('Already authenticated, redirecting...');
                             window.location.href = '/static/dashboard.html';
                             return;
                         }
                     }
-                    // Token invalid, clear it
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('activeUser');
                 } catch (err) {
@@ -235,7 +508,7 @@
 
         // Show error message
         function showError(message) {
-            errorMessage.textContent = message;
+            errorText.textContent = message;
             errorMessage.classList.add('show');
             setTimeout(() => {
                 errorMessage.classList.remove('show');
@@ -249,7 +522,7 @@
             passwordInput.disabled = loading;
 
             if (loading) {
-                buttonText.innerHTML = 'Signing in<span class="spinner"></span>';
+                buttonText.innerHTML = '<span class="spinner"></span>';
             } else {
                 buttonText.textContent = 'Sign In';
             }
@@ -270,7 +543,6 @@
             setLoading(true);
 
             try {
-                // Create FormData for application/x-www-form-urlencoded
                 const formData = new URLSearchParams();
                 formData.append('username', username);
                 formData.append('password', password);
@@ -286,7 +558,6 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    // Handle error response
                     const errorMsg = data.error || data.detail || 'Login failed';
                     showError(errorMsg);
                     setLoading(false);
@@ -294,14 +565,9 @@
                 }
 
                 if (data.ok && data.data?.token) {
-                    // Store token and user info
                     localStorage.setItem('authToken', data.data.token);
                     localStorage.setItem('activeUser', data.data.user.id);
                     localStorage.setItem('userInfo', JSON.stringify(data.data.user));
-
-                    console.log('Login successful:', data.data.user);
-
-                    // Redirect to dashboard
                     window.location.href = '/static/dashboard.html';
                 } else {
                     showError('Invalid response from server');
@@ -310,7 +576,7 @@
 
             } catch (error) {
                 console.error('Login error:', error);
-                showError('Network error. Please check your connection and try again.');
+                showError('Network error. Please check your connection.');
                 setLoading(false);
             }
         });
