@@ -286,7 +286,7 @@
 
     <!-- Métriques de Précision -->
     <div class="card">
-      <h2>Métriques de Précision du Modèle</h2>
+      <h2>📊 Métriques de Précision du Modèle</h2>
       <div id="precision-metrics" class="metrics-grid"></div>
     </div>
 
@@ -456,13 +456,14 @@
     // --- Fallback local si le module ne se charge pas ---
     // Double-sigmoïde (cohérente avec cycle-navigator.js) - cloche 0→100
     function _fallbackCycleScoreFromMonths(m) {
-      // Paramètres par défaut IDENTIQUES au module principal (synchronisés)
+      // Paramètres CALIBRÉS IDENTIQUES au module principal (synchronisés)
+      // Ces valeurs sont le résultat de la calibration sur les 3 cycles complets
       const m48 = m % 48;
-      const m_rise_center = 7.0;  // Optimisé pour pics historiques ~15-16m
-      const m_fall_center = 30.0; // Optimisé pour bottoms ~28-30m
-      const k_rise = 1.0;         // Pente montée ajustée
-      const k_fall = 0.9;
-      const p_shape = 0.9;
+      const m_rise_center = 5.0;  // Calibré (depuis 7.0)
+      const m_fall_center = 24.0; // Calibré (depuis 30.0)
+      const k_rise = 0.8;         // Calibré (depuis 1.0)
+      const k_fall = 1.2;         // Calibré (depuis 0.9)
+      const p_shape = 1.15;       // Calibré (depuis 0.9)
 
       const rise = 1 / (1 + Math.exp(-k_rise * (m48 - m_rise_center)));
       const fall = 1 / (1 + Math.exp(-k_fall * (m_fall_center - m48)));
@@ -472,7 +473,8 @@
       return Math.max(0, Math.min(100, score));
     }
     function _fallbackGetCycleParams() {
-      return { m_rise_center: 7.0, m_fall_center: 30.0, k_rise: 1.0, k_fall: 0.9, p_shape: 0.9 };
+      // Paramètres CALIBRÉS (synchronisés avec cycle-navigator.js)
+      return { m_rise_center: 5.0, m_fall_center: 24.0, k_rise: 0.8, k_fall: 1.2, p_shape: 1.15 };
     }
     function _fallbackCalibrate() { return { score: 0, params: _fallbackGetCycleParams() }; }
     function _fallbackGetCurrentCycleMonths() {
@@ -484,12 +486,15 @@
 
 
     // Persistance des paramètres calibrés
+    // IMPORTANT: Version must match CALIBRATION_VERSION in cycle-navigator.js
+    const CALIBRATION_VERSION = '2.0';
+
     function saveCalibrationParams(params) {
       try {
         localStorage.setItem('bitcoin_cycle_params', JSON.stringify({
           params: params,
           timestamp: Date.now(),
-          version: '1.0'
+          version: CALIBRATION_VERSION
         }));
         console.debug('✅ Paramètres calibrés sauvegardés', params);
       } catch (error) {

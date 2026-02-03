@@ -105,28 +105,31 @@ currentPrice: null,  // ✅ Récupéré dynamiquement au chargement
 
 ---
 
-### 4. 📐 Paramètres par Défaut Optimisés
+### 4. 📐 Paramètres par Défaut Optimisés (v2.0 - Fév 2026)
 
 **Fichiers:**
 - [`static/modules/cycle-navigator.js`](../static/modules/cycle-navigator.js)
 - [`static/cycle-analysis.html`](../static/cycle-analysis.html) (fallback)
+- [`static/modules/cycle-params-loader.js`](../static/modules/cycle-params-loader.js) (validation)
 
 **Problème:**
 Les paramètres par défaut donnaient un pic théorique à ~20 mois, alors que la moyenne historique est ~15-16 mois.
 
 ```javascript
-// AVANT
-m_rise_center: 8.0,   // → pic tardif (~20m)
-m_fall_center: 32.0,
-k_rise: 0.9
+// AVANT (Jan 2026)
+m_rise_center: 7.0,   // → pic tardif (~18m)
+m_fall_center: 30.0,
+k_rise: 1.0
 ```
 
-**Solution:**
+**Solution (Fév 2026 - Calibration Grid Search):**
 ```javascript
-// APRÈS (optimisé pour moyenne historique)
-m_rise_center: 7.0,   // ✅ Pic plus précoce (~15-16m)
-m_fall_center: 30.0,  // ✅ Bottoms ajustés (~28-30m)
-k_rise: 1.0           // ✅ Montée légèrement plus raide
+// APRÈS (optimisé par grid search sur 3 cycles complets)
+m_rise_center: 5.0,   // ✅ Pic calibré (~9.5 mois actuellement = score 90)
+m_fall_center: 24.0,  // ✅ Bottoms ajustés (~24m)
+k_rise: 0.8,          // ✅ Montée plus douce
+k_fall: 1.2,          // ✅ Descente plus raide
+p_shape: 1.15         // ✅ Forme ajustée
 ```
 
 **Analyse des Cycles:**
@@ -264,6 +267,31 @@ Le système détecte les anciens paramètres et recalibre automatiquement:
 // Si timestamp > 24h OU version params < 2.0
 → Recalibration automatique au prochain chargement
 ```
+
+### Système de Versioning v2.0 (Fév 2026)
+
+Le système utilise un préfixe de version pour invalider automatiquement les anciens paramètres cachés:
+
+```javascript
+// cycle-navigator.js
+const CALIBRATION_VERSION = '2.0';
+
+function autoLoadCalibrationParams() {
+  const data = JSON.parse(localStorage.getItem('bitcoin_cycle_params'));
+  // CRITICAL: Rejeter les versions pré-2.x
+  if (!data.version || !data.version.startsWith('2.')) {
+    localStorage.removeItem('bitcoin_cycle_params');
+    return false;  // Utiliser les paramètres par défaut calibrés
+  }
+  return applyParams(data.params);
+}
+```
+
+**Fichiers concernés:**
+
+- `cycle-navigator.js`: `CALIBRATION_VERSION = '2.0'`
+- `cycle-analysis.html`: `CALIBRATION_VERSION = '2.0'`
+- `cycle-params-loader.js`: `CALIBRATION_VERSION_PREFIX = '2.'`
 
 ### Cache Invalidation
 

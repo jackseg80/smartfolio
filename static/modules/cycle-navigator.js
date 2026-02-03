@@ -9,13 +9,15 @@
  * Bitcoin halving cycles: ~4 years (48 months)
  */
 
-// --- Paramètres globaux optimisés pour cycles historiques (moyenne pics ~15-16 mois) ---
+// --- Paramètres globaux CALIBRÉS pour cycles historiques (optimisés par grid search) ---
+// Ces valeurs sont le résultat de la calibration sur les 3 cycles complets (2012, 2016, 2020)
+// et donnent un score de ~90-95 pour le cycle actuel (21 mois post-halving), pas 100
 let CYCLE_PARAMS = {
-  m_rise_center: 7.0,   // centre montée ajusté (était 8.0) - pic plus précoce
-  m_fall_center: 30.0,  // centre descente ajusté (était 32.0) - meilleur fit bottoms ~28-30m
-  k_rise: 1.0,          // pente montée légèrement plus raide (était 0.9)
-  k_fall: 0.9,          // pente descente (inchangée)
-  p_shape: 0.9,         // expo "douce" (inchangée)
+  m_rise_center: 5.0,   // centre montée optimisé (calibré depuis 7.0)
+  m_fall_center: 24.0,  // centre descente optimisé (calibré depuis 30.0)
+  k_rise: 0.8,          // pente montée calibrée (depuis 1.0)
+  k_fall: 1.2,          // pente descente calibrée (depuis 0.9)
+  p_shape: 1.15,        // expo calibré (depuis 0.9)
   floor: 0,             // plancher score minimum
   ceil: 100             // plafond score maximum
 };
@@ -34,13 +36,22 @@ export function setCycleParams(p) {
 }
 
 // Auto-load calibrated parameters on module initialization
+// IMPORTANT: Version check to invalidate outdated calibrations
+const CALIBRATION_VERSION = '2.0';  // Increment when optimal params change
+
 function autoLoadCalibrationParams() {
   try {
     const saved = localStorage.getItem('bitcoin_cycle_params');
     if (saved) {
       const data = JSON.parse(saved);
-      // Check data is not too old (24h)
-      if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+      // CRITICAL: Check version - invalidate old calibrations (pre-2.0)
+      if (!data.version || !data.version.startsWith('2.')) {
+        console.debug('🔄 Invalidating old calibration (version:', data.version, ')');
+        localStorage.removeItem('bitcoin_cycle_params');
+        return false;  // Force recalibration with new defaults
+      }
+      // Check data is not too old (7 days for calibration - it's slow-changing)
+      if (Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
         CYCLE_PARAMS = { ...CYCLE_PARAMS, ...data.params };
         // CRITICAL: Invalidate cache when params are loaded
         _cyclePositionCache = null;
@@ -55,8 +66,100 @@ function autoLoadCalibrationParams() {
   return false;
 }
 
+// Auto-calibrate if no saved params exist (runs once on first load)
+// Uses the FULL calibrateCycleParams() function for accurate results
+function autoCalibrate() {
+  // Check if already calibrated
+  const saved = localStorage.getItem('bitcoin_cycle_params');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      // If params exist and are less than 7 days old, skip auto-calibration
+      if (data.timestamp && Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+        return false;
+      }
+    } catch (e) { /* continue to calibrate */ }
+  }
+
+  console.debug('🔧 No calibrated params found, running FULL auto-calibration...');
+
+  // Use the full calibration function (same as cycle-analysis.html)
+  // This is defined later in the file, but will be available at runtime
+  try {
+    // Call the full grid search calibration
+    const result = calibrateCycleParamsInternal();
+
+    // Save to localStorage for future loads (use current CALIBRATION_VERSION)
+    localStorage.setItem('bitcoin_cycle_params', JSON.stringify({
+      params: result.params,
+      timestamp: Date.now(),
+      version: CALIBRATION_VERSION + '-auto'
+    }));
+
+    console.debug('✅ Full auto-calibration complete, params saved:', result.params, 'error:', result.score.toFixed(2));
+    return true;
+  } catch (e) {
+    console.warn('⚠️ Auto-calibration failed, using defaults:', e);
+    return false;
+  }
+}
+
+// Internal calibration function (called by autoCalibrate and calibrateCycleParams)
+function calibrateCycleParamsInternal(userAnchors) {
+  const anchors = Array.isArray(userAnchors) && userAnchors.length ? userAnchors : [
+    { halving: '2012-11-28', peak: '2013-11-30', bottom: '2015-01-14' },
+    { halving: '2016-07-09', peak: '2017-12-17', bottom: '2018-12-15' },
+    { halving: '2020-05-11', peak: '2021-11-10', bottom: '2022-11-21' },
+  ];
+
+  // Full grid search (same as calibrateCycleParams)
+  const mRise = [5, 6, 7, 8, 9, 10, 11, 12];
+  const mFall = [24, 26, 28, 30, 32, 34];
+  const kRise = [0.7, 0.8, 0.9, 1.0, 1.2, 1.4];
+  const kFall = [0.7, 0.8, 0.9, 1.0, 1.2];
+  const pPow = [0.8, 0.85, 0.9, 1.0, 1.15, 1.3];
+
+  let best = { params: { ...CYCLE_PARAMS }, score: Infinity };
+
+  for (const r of mRise) {
+    for (const f of mFall) {
+      if (f - r < 10) continue;
+      for (const kr of kRise) {
+        for (const kf of kFall) {
+          for (const p of pPow) {
+            const pset = { m_rise_center: r, m_fall_center: f, k_rise: kr, k_fall: kf, p_shape: p, floor: CYCLE_PARAMS.floor, ceil: CYCLE_PARAMS.ceil };
+            let err = 0;
+            for (const a of anchors) {
+              const m_peak = (new Date(a.peak) - new Date(a.halving)) / (1000 * 60 * 60 * 24 * 30.44);
+              const m_bot = (new Date(a.bottom) - new Date(a.halving)) / (1000 * 60 * 60 * 24 * 30.44);
+              const m_early = 2;
+              const s_peak = cycleScoreFromMonths(m_peak, pset);
+              const s_bot = cycleScoreFromMonths(m_bot, pset);
+              const s_early = cycleScoreFromMonths(m_early, pset);
+              err += Math.pow(100 - s_peak, 2) * 1.0;
+              err += Math.pow(10 - s_bot, 2) * 0.8;
+              err += Math.pow(5 - s_early, 2) * 0.6;
+            }
+            if (err < best.score) { best = { params: pset, score: err }; }
+          }
+        }
+      }
+    }
+  }
+
+  // Apply calibrated params
+  CYCLE_PARAMS = { ...CYCLE_PARAMS, ...best.params };
+  _cyclePositionCache = null;
+  _cyclePositionCacheTimestamp = 0;
+
+  return best;
+}
+
 // Initialize on module load
-autoLoadCalibrationParams();
+if (!autoLoadCalibrationParams()) {
+  // No saved params or expired - auto-calibrate with FULL grid search
+  autoCalibrate();
+}
 
 export function cycleScoreFromMonths(monthsAfterHalving, opts = {}) {
 

@@ -7,6 +7,9 @@
  * Source de calibration: cycle-analysis.html
  */
 
+// Version must match CALIBRATION_VERSION in cycle-navigator.js
+const CALIBRATION_VERSION_PREFIX = '2.';
+
 /**
  * Charge les paramètres calibrés depuis localStorage
  * @returns {Object|null} Paramètres calibrés ou null si non disponibles/expirés
@@ -20,6 +23,13 @@ export function loadCalibrationParams() {
     }
 
     const data = JSON.parse(saved);
+
+    // CRITICAL: Check version - reject old calibrations (pre-2.0)
+    if (!data.version || !data.version.startsWith(CALIBRATION_VERSION_PREFIX)) {
+      console.debug('🔄 Anciens paramètres calibrés rejetés (version:', data.version, ')');
+      localStorage.removeItem('bitcoin_cycle_params');
+      return null;
+    }
 
     // Vérifier que les données ne sont pas trop anciennes (24h)
     const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 heures
@@ -79,6 +89,56 @@ export async function applyCalibratedParams(cycleNavigatorModule) {
 }
 
 /**
+ * Invalide les caches cycle obsolètes dans localStorage
+ * Appelé après chargement des paramètres calibrés pour forcer un recalcul
+ * @param {number} paramsTimestamp - Timestamp des paramètres calibrés
+ */
+function invalidateObsoleteCycleCaches(paramsTimestamp) {
+  const CYCLE_CACHE_KEYS = [
+    'analytics_unified_cycle',
+    'risk_scores_cache_',  // Partial match for multi-tenant
+    'cycle_content_cache',  // risk-dashboard CYCLE_CONTENT
+    'cycle_data_cache',     // risk-dashboard CYCLE_DATA
+    'cycle_chart_cache',    // risk-dashboard CYCLE_CHART
+    'ccs_data_cache',       // CCS data may include cycle-blended scores
+  ];
+
+  let invalidatedCount = 0;
+
+  try {
+    // Parcourir toutes les clés localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+
+      // Vérifier si c'est un cache cycle
+      const isCycleCache = CYCLE_CACHE_KEYS.some(pattern => key.includes(pattern));
+      if (!isCycleCache) continue;
+
+      try {
+        const cached = JSON.parse(localStorage.getItem(key));
+        const cacheTimestamp = cached?.timestamp || 0;
+
+        // Si le cache est plus ancien que les paramètres calibrés, l'invalider
+        if (cacheTimestamp < paramsTimestamp) {
+          localStorage.removeItem(key);
+          invalidatedCount++;
+          console.debug(`🗑️ Cache cycle obsolète invalidé: ${key}`);
+        }
+      } catch (e) {
+        // Ignorer les erreurs de parsing
+      }
+    }
+
+    if (invalidatedCount > 0) {
+      console.debug(`✅ ${invalidatedCount} cache(s) cycle obsolète(s) invalidé(s)`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Erreur lors de l\'invalidation des caches cycle:', error);
+  }
+}
+
+/**
  * Auto-chargement des paramètres calibrés au démarrage
  * À utiliser dans les pages qui importent cycle-navigator.js
  *
@@ -91,6 +151,16 @@ export async function autoLoadCalibratedParams() {
     // Import dynamique du module cycle-navigator
     const cycleModule = await import('./cycle-navigator.js');
 
+    // Charger les paramètres pour obtenir le timestamp
+    const saved = localStorage.getItem('bitcoin_cycle_params');
+    const paramsData = saved ? JSON.parse(saved) : null;
+    const paramsTimestamp = paramsData?.timestamp || 0;
+
+    // Invalider les caches obsolètes AVANT d'appliquer les paramètres
+    if (paramsTimestamp > 0) {
+      invalidateObsoleteCycleCaches(paramsTimestamp);
+    }
+
     // Appliquer les paramètres calibrés
     const applied = await applyCalibratedParams(cycleModule);
 
@@ -99,7 +169,7 @@ export async function autoLoadCalibratedParams() {
 
       // Dispatch event pour notifier les autres composants
       window.dispatchEvent(new CustomEvent('cycle-params-loaded', {
-        detail: { source: 'localStorage', calibrated: true }
+        detail: { source: 'localStorage', calibrated: true, timestamp: paramsTimestamp }
       }));
     } else {
       console.debug('📊 Cycle non calibré - paramètres par défaut utilisés');
@@ -127,6 +197,10 @@ export function listenForCalibrationUpdates() {
     if (event.data?.type === 'CYCLE_PARAMS_UPDATED') {
       console.debug('🔄 Mise à jour des paramètres cycle détectée', event.data);
 
+      // Invalider les caches obsolètes avec le timestamp de la mise à jour
+      const updateTimestamp = event.data.timestamp || Date.now();
+      invalidateObsoleteCycleCaches(updateTimestamp);
+
       // Recharger les paramètres
       await autoLoadCalibratedParams();
 
@@ -134,6 +208,20 @@ export function listenForCalibrationUpdates() {
       window.dispatchEvent(new CustomEvent('cycle-params-updated', {
         detail: event.data
       }));
+    }
+  });
+
+  // Écouter aussi les événements storage (quand une autre page modifie localStorage)
+  window.addEventListener('storage', async (event) => {
+    if (event.key === 'bitcoin_cycle_params' && event.newValue) {
+      console.debug('🔄 Paramètres cycle modifiés depuis une autre page');
+      try {
+        const data = JSON.parse(event.newValue);
+        invalidateObsoleteCycleCaches(data.timestamp || Date.now());
+        await autoLoadCalibratedParams();
+      } catch (e) {
+        console.warn('Erreur parsing mise à jour cycle params:', e);
+      }
     }
   });
 
