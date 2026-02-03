@@ -1,18 +1,20 @@
 # CLAUDE.md — Guide Agent SmartFolio
 
-> Version condensée pour agents IA. Dernière mise à jour: Jan 2026
+> Version condensée pour agents IA. Dernière mise à jour: Fév 2026
 
 ## Règles Critiques
 
 ### 1. Multi-Tenant OBLIGATOIRE
 ```python
-# Backend: TOUJOURS utiliser dependencies ou BalanceService
-from api.deps import get_active_user
+# Backend: TOUJOURS utiliser get_required_user (header X-User obligatoire)
+from api.deps import get_required_user
 from services.balance_service import balance_service
 
 @app.get("/endpoint")
-async def endpoint(user: str = Depends(get_active_user), source: str = Query("cointracking")):
+async def endpoint(user: str = Depends(get_required_user), source: str = Query("cointracking")):
     res = await balance_service.resolve_current_balances(source=source, user_id=user)
+
+# ⚠️ DEPRECATED: get_active_user (fallback "demo" non sécurisé) → NE PAS UTILISER
 ```
 
 ```javascript
@@ -65,6 +67,7 @@ async def endpoint(user: str = Depends(get_current_user_jwt)): pass
 - Pas d'URL API en dur → `static/global-config.js`
 - Windows: `.venv\Scripts\Activate.ps1` avant tout
 - Pas de `--reload` flag → demander restart manuel après modifs backend
+- **Git commits:** NE JAMAIS ajouter "Co-Authored-By: Claude" dans les messages de commit
 
 ---
 
@@ -109,12 +112,12 @@ config/users.json
 
 ### Endpoint API
 ```python
-from api.deps import get_active_user
+from api.deps import get_required_user
 from api.utils import success_response, error_response
 from services.balance_service import balance_service
 
 @router.get("/metrics")
-async def get_metrics(user: str = Depends(get_active_user), source: str = Query("cointracking")):
+async def get_metrics(user: str = Depends(get_required_user), source: str = Query("cointracking")):
     res = await balance_service.resolve_current_balances(source=source, user_id=user)
     return success_response(res.get("items", []))
 ```
@@ -180,7 +183,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 
 ## Pièges Fréquents
 
-- Oublier `user_id` → Utiliser `Depends(get_active_user)`
+- Oublier `user_id` → Utiliser `Depends(get_required_user)`
 - Hardcoder `user_id='demo'` → Dependency injection
 - Importer de `api.main` → Utiliser `services.balance_service`
 - `fetch()` sans header `X-User` sur endpoints user-specific
@@ -250,7 +253,7 @@ curl "localhost:8080/admin/health" -H "X-User: demo"    # 403
 ## Docs Architecture
 
 - Architecture: `docs/architecture.md`
-- Audit: `docs/audit/AUDIT_REPORT_2025-10-19.md`
+- Audit: `docs/audit/` (voir README.md dans ce dossier)
 - Logging: `docs/LOGGING.md`
 - Redis: `docs/REDIS_SETUP.md`
 - Security: `docs/SECURITY.md`
