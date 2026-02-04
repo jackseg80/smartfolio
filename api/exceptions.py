@@ -1,84 +1,67 @@
 """
 Exceptions personnalisées pour l'API crypto-rebalancer
+
+NOTE: Les classes d'exceptions sont maintenant définies dans shared/exceptions.py
+Ce fichier réexporte pour backward compatibility et ajoute les helpers FastAPI.
 """
 from typing import Any, Optional
 from fastapi import HTTPException
 
+# Re-export from shared for backward compatibility
+from shared.exceptions import (
+    CryptoRebalancerException,
+    APIException,
+    DataException,
+    ExchangeException,
+    ConfigurationException,
+    ValidationException,
+    TradingException,
+    StorageException,
+    GovernanceException,
+    MonitoringException,
+    ConfigurationError,
+    PricingException,
+    NetworkException,
+    TimeoutException,
+    RateLimitException,
+    DataNotFoundException,
+    InsufficientBalanceException,
+    ErrorCode,
+    convert_standard_exception,
+    handle_exceptions,
+    handle_exceptions_async,
+)
 
-class CryptoRebalancerException(Exception):
-    """Exception de base pour l'application"""
-    def __init__(self, message: str, details: Optional[Any] = None):
-        self.message = message
-        self.details = details
-        super().__init__(message)
-
-
-class APIException(CryptoRebalancerException):
-    """Exception pour les erreurs d'API externe"""
-    def __init__(self, service: str, message: str, status_code: Optional[int] = None, details: Optional[Any] = None):
-        self.service = service
-        self.status_code = status_code
-        super().__init__(f"{service} API Error: {message}", details)
-
-
-class ValidationException(CryptoRebalancerException):
-    """Exception pour les erreurs de validation"""
-    def __init__(self, field: str, message: str, value: Optional[Any] = None):
-        self.field = field
-        self.value = value
-        super().__init__(f"Validation error on {field}: {message}", {"field": field, "value": value})
-
-
-class ConfigurationException(CryptoRebalancerException):
-    """Exception pour les erreurs de configuration"""
-    pass
-
-
-class TradingException(CryptoRebalancerException):
-    """Exception pour les erreurs de trading/rebalancing"""
-    def __init__(self, operation: str, message: str, details: Optional[Any] = None):
-        self.operation = operation
-        super().__init__(f"Trading error in {operation}: {message}", details)
-
-
-class DataException(CryptoRebalancerException):
-    """Exception pour les erreurs de données"""
-    def __init__(self, source: str, message: str, details: Optional[Any] = None):
-        self.source = source
-        super().__init__(f"Data error from {source}: {message}", details)
-
-
-class StorageException(CryptoRebalancerException):
-    """Exception pour les erreurs de stockage (Redis, fichiers, etc.)"""
-    def __init__(self, storage_type: str, operation: str, message: str, details: Optional[Any] = None):
-        self.storage_type = storage_type
-        self.operation = operation
-        super().__init__(f"{storage_type} storage error during {operation}: {message}", details)
-
-
-class GovernanceException(CryptoRebalancerException):
-    """Exception pour les erreurs de gouvernance et decision engine"""
-    def __init__(self, rule: str, message: str, details: Optional[Any] = None):
-        self.rule = rule
-        super().__init__(f"Governance rule '{rule}' violation: {message}", details)
+# Export all for `from api.exceptions import *`
+__all__ = [
+    "CryptoRebalancerException",
+    "APIException",
+    "DataException",
+    "ExchangeException",
+    "ConfigurationException",
+    "ValidationException",
+    "TradingException",
+    "StorageException",
+    "GovernanceException",
+    "MonitoringException",
+    "ConfigurationError",
+    "PricingException",
+    "NetworkException",
+    "TimeoutException",
+    "RateLimitException",
+    "DataNotFoundException",
+    "InsufficientBalanceException",
+    "ErrorCode",
+    "convert_standard_exception",
+    "handle_exceptions",
+    "handle_exceptions_async",
+    "create_http_exception",
+    "ErrorCodes",
+]
 
 
-class MonitoringException(CryptoRebalancerException):
-    """Exception pour les erreurs de monitoring et health checks"""
-    def __init__(self, component: str, message: str, details: Optional[Any] = None):
-        self.component = component
-        super().__init__(f"Monitoring error in {component}: {message}", details)
+# === FastAPI-specific helpers (not in shared/) ===
 
-
-class ExchangeException(CryptoRebalancerException):
-    """Exception pour les erreurs d'exchange adapters"""
-    def __init__(self, exchange: str, operation: str, message: str, details: Optional[Any] = None):
-        self.exchange = exchange
-        self.operation = operation
-        super().__init__(f"{exchange} error during {operation}: {message}", details)
-
-
-# Convertisseurs pour FastAPI
 def create_http_exception(exc: CryptoRebalancerException, status_code: int = 400) -> HTTPException:
     """Convertit une exception personnalisée en HTTPException"""
     return HTTPException(
@@ -86,32 +69,33 @@ def create_http_exception(exc: CryptoRebalancerException, status_code: int = 400
         detail={
             "error": exc.__class__.__name__,
             "message": exc.message,
-            "details": exc.details
+            "details": getattr(exc, 'details', None)
         }
     )
 
 
-# Codes d'erreur standards
+# Codes d'erreur HTTP standards (legacy - prefer ErrorCode enum from shared)
 class ErrorCodes:
+    """Legacy HTTP error codes - prefer ErrorCode enum from shared.exceptions"""
     # API Errors (500-599)
     API_UNAVAILABLE = 500
     API_TIMEOUT = 503
     API_RATE_LIMIT = 429
-    
+
     # Validation Errors (400-499)
     INVALID_INPUT = 400
     MISSING_PARAMETER = 422
     INVALID_FORMAT = 400
-    
+
     # Configuration Errors (500-599)
     MISSING_CONFIG = 500
     INVALID_CONFIG = 500
-    
+
     # Trading Errors (400-499)
     INSUFFICIENT_BALANCE = 400
     INVALID_SYMBOL = 400
     MARKET_CLOSED = 400
-    
+
     # Data Errors (500-599)
     DATA_NOT_FOUND = 404
     DATA_CORRUPT = 500

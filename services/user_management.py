@@ -12,7 +12,8 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 import logging
 
-from api.config.users import clear_users_cache, get_user_info, validate_user_id
+# Import from config/ (not api/) to respect layered architecture
+from config.users import clear_users_cache, get_user_info, validate_user_id
 
 logger = logging.getLogger(__name__)
 

@@ -15,8 +15,8 @@ import logging
 import asyncio
 import httpx
 
-# Custom exceptions for better error handling
-from api.exceptions import (
+# Custom exceptions for better error handling (from shared, not api)
+from shared.exceptions import (
     ConfigurationException,
     APIException,
     GovernanceException,

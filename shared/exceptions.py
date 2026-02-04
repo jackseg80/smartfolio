@@ -120,8 +120,57 @@ class InsufficientBalanceException(ExchangeException):
 class PricingException(CryptoRebalancerException):
     """Erreur de pricing"""
     def __init__(self, message: str, symbol: str = None, source: str = None, **kwargs):
-        super().__init__(message, ErrorCode.PRICE_NOT_AVAILABLE, 
+        super().__init__(message, ErrorCode.PRICE_NOT_AVAILABLE,
                         {'symbol': symbol, 'source': source}, **kwargs)
+
+
+# === Classes additionnelles (migrées depuis api/exceptions.py) ===
+
+class ConfigurationException(CryptoRebalancerException):
+    """Exception pour les erreurs de configuration (alias ConfigurationError)"""
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None, **kwargs):
+        super().__init__(message, ErrorCode.CONFIG_INVALID, details, **kwargs)
+
+
+class ValidationException(CryptoRebalancerException):
+    """Exception pour les erreurs de validation"""
+    def __init__(self, field: str, message: str, value: Any = None, **kwargs):
+        details = {"field": field, "value": value}
+        super().__init__(f"Validation error on {field}: {message}", ErrorCode.DATA_INVALID, details, **kwargs)
+        self.field = field
+        self.value = value
+
+
+class TradingException(CryptoRebalancerException):
+    """Exception pour les erreurs de trading/rebalancing"""
+    def __init__(self, operation: str, message: str, details: Optional[Dict[str, Any]] = None, **kwargs):
+        super().__init__(f"Trading error in {operation}: {message}", ErrorCode.ORDER_FAILED, details, **kwargs)
+        self.operation = operation
+
+
+class StorageException(CryptoRebalancerException):
+    """Exception pour les erreurs de stockage (Redis, fichiers, etc.)"""
+    def __init__(self, storage_type: str, operation: str, message: str, details: Optional[Dict[str, Any]] = None, **kwargs):
+        full_details = {"storage_type": storage_type, "operation": operation, **(details or {})}
+        super().__init__(f"{storage_type} storage error during {operation}: {message}", None, full_details, **kwargs)
+        self.storage_type = storage_type
+        self.operation = operation
+
+
+class GovernanceException(CryptoRebalancerException):
+    """Exception pour les erreurs de gouvernance et decision engine"""
+    def __init__(self, rule: str, message: str, details: Optional[Dict[str, Any]] = None, **kwargs):
+        full_details = {"rule": rule, **(details or {})}
+        super().__init__(f"Governance rule '{rule}' violation: {message}", None, full_details, **kwargs)
+        self.rule = rule
+
+
+class MonitoringException(CryptoRebalancerException):
+    """Exception pour les erreurs de monitoring et health checks"""
+    def __init__(self, component: str, message: str, details: Optional[Dict[str, Any]] = None, **kwargs):
+        full_details = {"component": component, **(details or {})}
+        super().__init__(f"Monitoring error in {component}: {message}", None, full_details, **kwargs)
+        self.component = component
 
 class NetworkException(CryptoRebalancerException):
     """Erreur réseau"""
