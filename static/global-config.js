@@ -29,9 +29,15 @@ window.DATA_SOURCES = {
 
 /**
  * Récupère l'utilisateur actuel depuis le système de navigation
+ * Source de vérité centralisée - utilise authGuard si disponible
  * @returns {string} ID de l'utilisateur actuel
  */
 window.getCurrentUser = function () {
+  // Prefer centralized auth-guard.js implementation
+  if (window.authGuard?.getCurrentUser) {
+    return window.authGuard.getCurrentUser();
+  }
+
   // Récupérer depuis localStorage (géré par nav.js)
   const activeUser = localStorage.getItem('activeUser');
   if (activeUser) {
@@ -47,6 +53,9 @@ window.getCurrentUser = function () {
   // Fallback final: demo
   return 'demo';
 };
+
+// Alias for backward compatibility - prefer getCurrentUser()
+window.getActiveUser = window.getCurrentUser;
 
 // Ordre d'affichage par défaut
 window.DATA_SOURCE_ORDER = [

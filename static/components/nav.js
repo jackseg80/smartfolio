@@ -45,7 +45,15 @@ const initUserDisplay = async () => {
 };
 
 // ✅ Define global getCurrentUser for safeFetch and other modules
-window.getCurrentUser = () => localStorage.getItem('activeUser') || 'demo';
+// Delegates to auth-guard.js if available, with localStorage fallback
+window.getCurrentUser = () => {
+  if (window.authGuard?.getCurrentUser) {
+    return window.authGuard.getCurrentUser();
+  }
+  return localStorage.getItem('activeUser') || 'demo';
+};
+// Alias for backward compatibility
+window.getActiveUser = window.getCurrentUser;
 
 // Vérification des rôles RBAC pour menu Admin
 const checkAdminRole = () => {

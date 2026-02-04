@@ -1,5 +1,10 @@
-// Active user helper for per-user settings
+// Active user helper - delegate to auth-guard.js if available
 function getActiveUser() {
+  // Prefer centralized auth-guard.js implementation
+  if (window.authGuard?.getCurrentUser) {
+    return window.authGuard.getCurrentUser();
+  }
+  // Fallback for pages where auth-guard not loaded yet
   try {
     const u = localStorage.getItem('activeUser');
     return u && typeof u === 'string' ? u : 'demo';
