@@ -77,7 +77,9 @@ async def endpoint(user: str = Depends(get_current_user_jwt)): pass
 ```
 dashboard.html          # Vue globale + P&L Today
 analytics-unified.html  # ML temps réel + Decision Index
-risk-dashboard.html     # Risk metrics + quick links
+risk-dashboard.html     # Risk Overview + Market Cycles
+market-regimes.html     # Stock/BTC/ETH regime detection (HMM)
+advanced-risk.html      # Monte Carlo, GRI, Stress Testing
 cycle-analysis.html     # Bitcoin cycle analysis
 rebalance.html         # Rebalancing + Optimization (6 algos Markowitz)
 execution.html         # Exécution temps réel

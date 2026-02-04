@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Risk Analysis - SmartFolio</title>
+
+  <!-- Theme/compat -->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="theme-compat.css">
+
+  <!-- Shared scripts -->
+  <script src="debug-logger.js"></script>
+  <script src="components/toast.js" type="module"></script>
+  <script src="global-config.js"></script>
+  <script type="module" src="network-state-manager.js"></script>
+  <script src="appearance.js"></script>
+  <script src="lazy-loader.js"></script>
+
+  <!-- Chart.js for Monte Carlo distribution -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script>
+    if (window.Chart && window.ChartAnnotation && !window.__di_annotation_registered__) {
+      window.Chart.register(window.ChartAnnotation);
+      window.__di_annotation_registered__ = true;
+      console.debug('chartjs-plugin-annotation registered');
+    }
+  </script>
+
+  <!-- Risk Dashboard CSS (reuse existing styles) -->
+  <link rel="stylesheet" href="css/risk-dashboard.css">
+
+  <!-- Navigation -->
+  <script type="module">
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();
+    if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
+      import('./components/nav.js');
+    }
+  </script>
+  <script type="module" src="components/tooltips.js"></script>
+
+  <!-- AI Chat Styles -->
+  <link rel="stylesheet" href="/static/components/ai-chat.css">
+</head>
+
+<body>
+  <div class="wrap">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="page-title">
+        <h1>Advanced Risk Analysis</h1>
+      </div>
+      <div class="header-controls">
+        <div class="timestamp" id="last-update">Loading...</div>
+        <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M13.65 2.35C12.2 0.9 10.21 0 8 0 3.58 0 0.01 3.58 0.01 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="dashboard-layout">
+      <div class="main-content">
+        <div class="tab-content">
+          <div class="tab-pane active" id="advanced-tab" role="tabpanel">
+            <div id="advanced-badge-container" class="badge-container"></div>
+            <div id="advanced-risk-content">
+              <div class="loading">Loading advanced risk analysis...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tooltip -->
+  <div id="tooltip" class="tooltip" aria-hidden="true" role="tooltip">
+    <div class="tip-title"></div>
+    <div class="tip-body"></div>
+  </div>
+
+  <!-- Phase 3A: Advanced Risk Analysis -->
+  <script type="module">
+    // ====== Phase 3A: Advanced Risk Analysis ======
+
+    async function loadAdvancedRiskComponents() {
+      try {
+        // Check if advanced panel already exists
+        if (document.querySelector('.advanced-risk-panel')) {
+          console.debug('Advanced Risk Components already loaded');
+          return;
+        }
+
+        const advancedContent = document.getElementById('advanced-risk-content');
+        advancedContent.innerHTML = '';
+
+        // Create Advanced Risk Analysis Panel
+        const advancedPanel = document.createElement('div');
+        advancedPanel.className = 'advanced-section advanced-risk-panel';
+        advancedPanel.innerHTML = `
+          <div class="risk-grid two-col-advanced">
+            <div class="left-stack">
+              <!-- Group Risk Index (GRI) -->
+              <div class="risk-card">
+                <h4>Group Risk Index (GRI)</h4>
+                <div id="gri-analysis-content">
+                  <div class="loading">Loading GRI analysis...</div>
+                </div>
+              </div>
+              <!-- Monte Carlo -->
+              <div class="risk-card">
+                <h4>Monte Carlo Simulation</h4>
+                <div id="monte-carlo-content">
+                  <div class="loading">Loading simulations...</div>
+                </div>
+              </div>
+              <!-- Risk Attribution -->
+              <div class="risk-card">
+                <h4>Risk Attribution</h4>
+                <div id="risk-attribution-content">
+                  <div class="loading">Loading attribution analysis...</div>
+                </div>
+              </div>
+            </div>
+            <div class="right-stack">
+              <!-- Stress Testing -->
+              <div class="risk-card">
+                <h4>Stress Testing</h4>
+                <div id="stress-test-content">
+                  <div class="loading">Loading stress tests...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        advancedContent.appendChild(advancedPanel);
+
+        // Load actual Phase 3A data
+        await loadPhase3AData();
+
+      } catch (error) {
+        console.error('Error loading advanced risk components:', error);
+        window.showToast?.('Failed to load advanced risk analysis', 'error');
+      }
+    }
+
+    async function loadPhase3AData() {
+      try {
+        const statusData = await window.globalConfig.apiRequest('/api/phase3/status');
+
+        if (statusData.phase_3a_advanced_risk?.status === 'active') {
+          await loadGRIAnalysis();
+          await loadStressTestScenarios();
+          await loadMonteCarloResults();
+          await loadRiskAttribution();
+        } else {
+          document.getElementById('gri-analysis-content').innerHTML =
+            '<div class="warning">Advanced Risk Engine not available</div>';
+        }
+      } catch (error) {
+        console.error('Error loading Phase 3A data:', error);
+      }
+    }
+
+    // Debug metadata banner function
+    function showDebugMetadataBanner(meta) {
+      let banner = document.getElementById('debug-metadata-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'debug-metadata-banner';
+        banner.style.cssText = `
+          position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+          background: color-mix(in oklab, var(--info) 90%, transparent);
+          border-bottom: 1px solid var(--info);
+          color: var(--theme-text); padding: 0.5rem 1rem; font-size: 0.8rem;
+          display: flex; justify-content: space-between; align-items: center;
+        `;
+        document.body.appendChild(banner);
+      }
+
+      banner.innerHTML = `
+        <div>
+          <strong>Debug Metadata:</strong>
+          User: <code>${meta.user_id}</code> |
+          Source: <code>${meta.source_id}</code> |
+          Taxonomy: <code>${meta.taxonomy_version}:${meta.taxonomy_hash}</code> |
+          Generated: <code>${new Date(meta.generated_at).toLocaleTimeString()}</code>
+          ${meta.correlation_id ? `| ID: <code>${meta.correlation_id}</code>` : ''}
+        </div>
+        <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:var(--theme-text);cursor:pointer;font-size:1.2rem;">×</button>
+      `;
+    }
+
+    async function loadGRIAnalysis() {
+      try {
+        const minUsd = window.globalConfig.get('min_usd_threshold') || 1.0;
+        const priceDays = 365;
+        const corrDays = 90;
+        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+
+        const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
+          params: {
+            source: currentSource,
+            price_history_days: priceDays,
+            lookback_days: corrDays,
+            min_usd: minUsd,
+            risk_version: 'v2_active',
+            use_dual_window: true
+          }
+        });
+
+        if (!data.success) {
+          throw new Error(data.message || 'API request failed');
+        }
+
+        if (localStorage.getItem('debug_metadata') === 'true' && data.meta) {
+          showDebugMetadataBanner(data.meta);
+        }
+
+        const metrics = data.risk_metrics;
+        const exposureByGroup = metrics.exposure_by_group || {};
+        const gri = metrics.group_risk_index || 0;
+
+        const topGroups = Object.entries(exposureByGroup)
+          .sort(([, a], [, b]) => b - a)
+          .map(([name, weight]) => ({
+            name,
+            weight: Math.round(weight * 100),
+            weight_raw: weight
+          }));
+
+        const griColor = gri < 3 ? 'var(--success)' : gri < 6 ? 'var(--warning)' : 'var(--danger)';
+        const griLevel = gri < 3 ? 'LOW' : gri < 6 ? 'MEDIUM' : 'HIGH';
+
+        const GROUP_RISK_LEVELS = {
+          'Stablecoins': 5, 'BTC': 2, 'ETH': 3, 'L2/Scaling': 5,
+          'DeFi': 5, 'AI/Data': 5, 'SOL': 6, 'L1/L0 majors': 6,
+          'Gaming/NFT': 6, 'Others': 7, 'Memecoins': 9
+        };
+
+        console.debug('GRI groups from API:', Object.keys(exposureByGroup));
+
+        document.getElementById('gri-analysis-content').innerHTML = `
+          <div class="gri-overview">
+            <div class="var-method">
+              <span class="method-label hinted" data-key="gri_index">
+                Group Risk Index (GRI)
+              </span>
+              <span class="var-value" style="color: ${griColor}">${gri.toFixed(1)}/10</span>
+            </div>
+            <div class="var-method">
+              <span class="method-label hinted" data-key="gri_level">
+                Risk Level
+              </span>
+              <span class="var-value">${griLevel}</span>
+            </div>
+            <div class="var-method">
+              <span class="method-label hinted" data-key="groups_count">
+                Groups Count
+              </span>
+              <span class="var-value">${Object.keys(exposureByGroup).length}</span>
+            </div>
+          </div>
+          <div class="gri-groups">
+            <h5 class="hinted" data-key="gri_groups_header">
+              Exposition & Risque par Groupe
+            </h5>
+            ${topGroups.map(group => {
+              const riskLevel = GROUP_RISK_LEVELS[group.name] || 5;
+              const riskColor = riskLevel < 3 ? '#9ece6a' :
+                                riskLevel < 6 ? '#e0af68' :
+                                riskLevel < 8 ? '#ff9e64' :
+                                '#f7768e';
+
+              if (!(group.name in GROUP_RISK_LEVELS)) {
+                console.warn('Group name not in risk levels:', group.name, '(using fallback 5/10)');
+              }
+
+              return `
+                <div class="var-method hinted" data-key="group:${group.name}" data-risk-level="${riskLevel}" style="position: relative; padding: 0.75rem 0.75rem 0.75rem 0.75rem; background: var(--theme-bg); border-radius: 6px; margin-bottom: 0.5rem; overflow: hidden;">
+                  <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${group.weight}%; background: ${riskColor}; opacity: 0.15; border-radius: 6px; transition: width 0.3s ease;"></div>
+                  <div style="position: relative; display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <span class="method-label" style="font-weight: 500;">${group.name}</span>
+                    <span class="var-value" style="font-weight: 600;">${group.weight}%</span>
+                  </div>
+                  <span style="position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.7rem; padding: 2px 6px; background: ${riskColor}; color: white; border-radius: 3px; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.3);">
+                    ${riskLevel}/10
+                  </span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div class="gri-interpretation">
+            <div class="metric-interpretation hinted" data-key="gri_interpretation">
+              ${gri < 3 ? 'Portfolio faible risque' :
+                gri < 6 ? 'Portfolio risque modere' :
+                'Portfolio haut risque - Considerer diversifier'}
+            </div>
+          </div>
+        `;
+
+        setTimeout(() => {
+          window.decorateRiskTooltips?.();
+        }, 100);
+
+      } catch (error) {
+        console.error('Error loading GRI Analysis:', error);
+        document.getElementById('gri-analysis-content').innerHTML =
+          '<div class="error">Failed to load GRI analysis from API</div>';
+      }
+    }
+
+    async function loadStressTestScenarios() {
+      try {
+        const response = await window.globalConfig.apiRequest('/api/risk/stress-scenarios');
+
+        if (!response || !response.scenarios) {
+          throw new Error('No scenarios returned from API');
+        }
+
+        const scenarios = response.scenarios;
+
+        const scenariosHtml = scenarios.map(scenario => `
+          <div class="scenario-card" onclick="window.runStressTest('${scenario.id}')">
+            <div class="scenario-header">
+              <h5>${scenario.name}</h5>
+              <span class="scenario-probability">${(scenario.probability_10y * 100).toFixed(0)}% / 10 ans</span>
+            </div>
+            <div class="scenario-impact">
+              Impact: ${scenario.impact_range.min}% à ${scenario.impact_range.max}%
+            </div>
+            <div class="scenario-duration">
+              Durée: ${scenario.duration}
+            </div>
+            <div class="scenario-context">
+              ${scenario.context}
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('stress-test-content').innerHTML = `
+          <div class="stress-scenarios">
+            <div class="scenarios-header">
+              <p class="scenarios-description">
+                Scénarios historiques et hypothétiques pour évaluer la résilience du portefeuille
+              </p>
+            </div>
+            ${scenariosHtml}
+            <div class="scenarios-footer">
+              <button class="btn-secondary" onclick="window.runAllStressTests()">
+                Lancer tous les tests
+              </button>
+              <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--theme-text-muted);">
+                Cliquez sur un scénario pour voir l'impact réel sur votre portfolio
+              </p>
+            </div>
+          </div>
+        `;
+
+        window.stressScenarios = scenarios;
+
+      } catch (error) {
+        console.error('Error loading stress test scenarios:', error);
+        document.getElementById('stress-test-content').innerHTML =
+          '<div class="error">Erreur de chargement des scénarios de stress</div>';
+      }
+    }
+
+    // Real stress test execution
+    window.runStressTest = async function(scenarioId) {
+      try {
+        window.showToast?.(`Calcul de l'impact du scénario ${scenarioId}...`, 'info');
+
+        const response = await window.globalConfig.apiRequest(`/api/risk/stress-test-portfolio?scenario_id=${scenarioId}`, {
+          method: 'POST'
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Stress test failed');
+        }
+
+        const result = response.result;
+
+        const modalHtml = `
+          <div style="padding: 1.5rem;">
+            <h3>${result.scenario_name}</h3>
+            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">${result.scenario_description}</p>
+
+            <div class="stress-results">
+              <h4>Impact Portfolio</h4>
+              <div class="metric-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="metric">
+                  <span class="label">Perte totale</span>
+                  <span class="value" style="color: var(--danger); font-size: 1.5rem; font-weight: 700;">
+                    ${result.portfolio_impact.loss_pct.toFixed(1)}%
+                  </span>
+                  <span class="sublabel">$${result.portfolio_impact.loss_usd.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                </div>
+                <div class="metric">
+                  <span class="label">Valeur finale</span>
+                  <span class="value" style="font-size: 1.5rem; font-weight: 700;">
+                    $${result.portfolio_impact.value_after.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}
+                  </span>
+                  <span class="sublabel">Initial: $${result.portfolio_impact.value_before.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}</span>
+                </div>
+              </div>
+
+              <h4>Pires Groupes Impactés</h4>
+              <div style="margin-bottom: 1.5rem;">
+                ${result.worst_groups.map(g => `
+                  <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--theme-bg); margin-bottom: 0.5rem; border-radius: 4px;">
+                    <span>${g.group}</span>
+                    <span style="color: var(--danger); font-weight: 600;">${g.loss_pct.toFixed(1)}% ($${g.loss_usd.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})})</span>
+                  </div>
+                `).join('')}
+              </div>
+
+              <div style="font-size: 0.85rem; color: var(--theme-text-muted);">
+                <strong>Métadonnées:</strong><br/>
+                Probabilité 10 ans: ${(result.metadata.probability_10y * 100).toFixed(1)}%<br/>
+                Durée estimée: ${result.metadata.duration_estimate}
+              </div>
+            </div>
+
+            <button onclick="this.closest('.modal').remove()" style="margin-top: 1.5rem; padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Fermer
+            </button>
+          </div>
+        `;
+
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;';
+        modal.innerHTML = `<div style="background: var(--theme-surface); border-radius: 8px; max-width: 600px; max-height: 80vh; overflow-y: auto;">${modalHtml}</div>`;
+        document.body.appendChild(modal);
+
+        window.showToast?.(`Impact calculé: ${result.portfolio_impact.loss_pct.toFixed(1)}%`, 'success');
+
+      } catch (error) {
+        console.error('Stress test failed:', error);
+        window.showToast?.(`Erreur: ${error.message}`, 'error');
+      }
+    };
+
+    window.runAllStressTests = async function() {
+      const scenarios = window.stressScenarios || [];
+      if (scenarios.length === 0) {
+        window.showToast?.('Aucun scénario chargé', 'warning');
+        return;
+      }
+
+      window.showToast?.(`Lancement de ${scenarios.length} tests de stress...`, 'info');
+
+      for (const scenario of scenarios) {
+        await window.runStressTest(scenario.id);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    };
+
+    window.createCustomScenario = function() {
+      window.showToast?.('Fonctionnalité de scénarios personnalisés à venir', 'info');
+    };
+
+    async function loadMonteCarloResults() {
+      const container = document.getElementById('monte-carlo-content');
+
+      // Check if we have cached results in sessionStorage
+      const cached = sessionStorage.getItem('monte_carlo_result');
+      if (cached) {
+        try {
+          const result = JSON.parse(cached);
+          renderMonteCarloResultsUI(result);
+          return;
+        } catch (e) {
+          console.warn('Failed to parse cached Monte Carlo results:', e);
+          sessionStorage.removeItem('monte_carlo_result');
+        }
+      }
+
+      // Show initial state with button
+      container.innerHTML = `
+        <div style="text-align: center; padding: 3rem 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎲</div>
+          <h4 style="margin-bottom: 1rem;">Simulation Monte Carlo</h4>
+          <p style="color: var(--theme-text-muted); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+            Génère 10,000 scénarios basés sur les distributions historiques réelles de rendements.
+            Calcule les probabilités de pertes et les scénarios extrêmes.
+          </p>
+          <button
+            onclick="window.runMonteCarloSimulation()"
+            style="padding: 1rem 2rem; background: var(--brand-primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.2s;"
+            onmouseover="this.style.transform='scale(1.05)'"
+            onmouseout="this.style.transform='scale(1)'"
+          >
+            Lancer la Simulation (10-30 sec)
+          </button>
+          <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 1rem;">
+            Le résultat sera mis en cache pendant cette session
+          </p>
+        </div>
+      `;
+    }
+
+    window.runMonteCarloSimulation = async function() {
+      try {
+        const container = document.getElementById('monte-carlo-content');
+
+        container.innerHTML = `
+          <div class="loading" style="text-align: center; padding: 2rem;">
+            <div style="font-size: 3rem; animation: spin 2s linear infinite;">⏳</div>
+            <p style="margin-top: 1rem; font-size: 1.1rem; font-weight: 600;">Exécution simulation Monte Carlo...</p>
+            <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 0.5rem;">
+              10,000 simulations en cours (10-30 secondes)...
+            </p>
+            <style>
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </div>
+        `;
+
+        const response = await window.globalConfig.apiRequest('/api/risk/monte-carlo', {
+          params: {
+            num_simulations: 10000,
+            horizon_days: 30,
+            confidence_level: 0.95,
+            price_history_days: 365
+          }
+        });
+
+        if (!response.success) {
+          throw new Error(response.message || 'Monte Carlo simulation failed');
+        }
+
+        const result = response.result;
+
+        sessionStorage.setItem('monte_carlo_result', JSON.stringify(result));
+
+        renderMonteCarloResultsUI(result);
+
+        window.showToast?.('Simulation terminée avec succès', 'success');
+
+      } catch (error) {
+        console.error('Error running Monte Carlo simulation:', error);
+        const container = document.getElementById('monte-carlo-content');
+        container.innerHTML = `
+          <div class="error" style="text-align: center; padding: 2rem;">
+            Erreur lors du calcul Monte Carlo: ${error.message}<br/>
+            <button onclick="window.runMonteCarloSimulation()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--brand-primary); color: white; border: none; border-radius: 4px; cursor: pointer;">
+              Réessayer
+            </button>
+          </div>
+        `;
+      }
+    };
+
+    function renderMonteCarloResultsUI(result) {
+      const container = document.getElementById('monte-carlo-content');
+      container.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin: 0; font-style: italic;">
+            Simulation de ${result.simulation_params.num_simulations.toLocaleString()} scénarios basée sur les distributions historiques réelles de rendements.
+            Horizon: ${result.simulation_params.horizon_days} jours.
+          </p>
+          <button
+            onclick="sessionStorage.removeItem('monte_carlo_result'); window.runMonteCarloSimulation();"
+            style="padding: 0.5rem 1rem; background: var(--theme-surface); color: var(--theme-text); border: 1px solid var(--theme-border); border-radius: 4px; cursor: pointer; font-size: 0.85rem; white-space: nowrap;"
+            title="Relancer le calcul avec de nouvelles données"
+          >
+            Re-calculer
+          </button>
+        </div>
+        <div class="monte-carlo-summary">
+          <div class="sim-stat hinted" data-key="mc_simulations">
+            <span class="stat-label">Simulations</span>
+            <span class="stat-value">${result.simulation_params.num_simulations.toLocaleString()}</span>
+          </div>
+          <div class="sim-stat hinted" data-key="mc_worst_case">
+            <span class="stat-label">Pire scénario (P1)</span>
+            <span class="stat-value text-danger">${result.scenarios.worst_case_pct.toFixed(1)}%</span>
+          </div>
+          <div class="sim-stat hinted" data-key="mc_best_case">
+            <span class="stat-label">Meilleur scénario (P99)</span>
+            <span class="stat-value text-success">${result.scenarios.best_case_pct.toFixed(1)}%</span>
+          </div>
+        </div>
+
+        <div class="monte-carlo-stats" style="margin-top: 1.5rem;">
+          <h5 style="margin-bottom: 1rem;">Statistiques Distribution</h5>
+          <div class="monte-carlo-summary">
+            <div class="sim-stat">
+              <span class="stat-label">Rendement moyen</span>
+              <span class="stat-value">${result.statistics.mean_return_pct.toFixed(2)}%</span>
+            </div>
+            <div class="sim-stat">
+              <span class="stat-label">Rendement médian</span>
+              <span class="stat-value">${result.statistics.median_return_pct.toFixed(2)}%</span>
+            </div>
+            <div class="sim-stat">
+              <span class="stat-label">Écart-type</span>
+              <span class="stat-value">${result.statistics.std_return_pct.toFixed(2)}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="monte-carlo-risk" style="margin-top: 1.5rem;">
+          <h5 style="margin-bottom: 1rem;">Probabilités de Perte</h5>
+          <div class="monte-carlo-summary">
+            <div class="sim-stat hinted" data-key="mc_loss_5">
+              <span class="stat-label">Perte >5%</span>
+              <span class="stat-value">${(result.loss_probabilities.prob_loss_5 * 100).toFixed(1)}%</span>
+            </div>
+            <div class="sim-stat hinted" data-key="mc_loss_10">
+              <span class="stat-label">Perte >10%</span>
+              <span class="stat-value">${(result.loss_probabilities.prob_loss_10 * 100).toFixed(1)}%</span>
+            </div>
+            <div class="sim-stat hinted" data-key="mc_loss_20">
+              <span class="stat-label">Perte >20%</span>
+              <span class="stat-value text-danger">${(result.loss_probabilities.prob_loss_20 * 100).toFixed(1)}%</span>
+            </div>
+            <div class="sim-stat hinted" data-key="mc_loss_30">
+              <span class="stat-label">Perte >30%</span>
+              <span class="stat-value text-danger">${(result.loss_probabilities.prob_loss_30 * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="monte-carlo-var" style="margin-top: 1.5rem;">
+          <h5 style="margin-bottom: 1rem;">VaR/CVaR Monte Carlo</h5>
+          <div class="monte-carlo-summary">
+            <div class="sim-stat">
+              <span class="stat-label">VaR 95%</span>
+              <span class="stat-value">${result.risk_metrics.var_95_pct.toFixed(2)}%</span>
+            </div>
+            <div class="sim-stat">
+              <span class="stat-label">CVaR 95%</span>
+              <span class="stat-value">${result.risk_metrics.cvar_95_pct.toFixed(2)}%</span>
+            </div>
+            <div class="sim-stat">
+              <span class="stat-label">VaR 99%</span>
+              <span class="stat-value">${result.risk_metrics.var_99_pct.toFixed(2)}%</span>
+            </div>
+            <div class="sim-stat">
+              <span class="stat-label">CVaR 99%</span>
+              <span class="stat-value">${result.risk_metrics.cvar_99_pct.toFixed(2)}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="monte-carlo-chart" style="margin-top: 2rem;">
+          <h5 style="margin-bottom: 1rem;">Distribution des Rendements (${result.simulation_params.horizon_days} jours)</h5>
+          <div style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border);">
+            <canvas id="monte-carlo-distribution-chart" style="max-height: 400px;"></canvas>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: 4px; font-size: 0.85rem; color: var(--theme-text-muted);">
+          <strong>Méthodologie:</strong><br/>
+          Simulations basées sur distributions réelles (${result.simulation_params.num_assets} assets, ${result.simulation_params.num_simulations.toLocaleString()} runs).<br/>
+          Préserve les corrélations historiques entre assets (matrice de covariance).<br/>
+          Calculé: ${new Date(result.timestamp).toLocaleString('fr-FR')}
+          ${sessionStorage.getItem('monte_carlo_result') ? ' <span style="color: var(--success);">(Mis en cache)</span>' : ''}
+        </div>
+      `;
+
+      setTimeout(() => {
+        window.decorateRiskTooltips?.();
+        renderMonteCarloDistributionChart(result);
+      }, 100);
+    }
+
+    window.loadMonteCarloResults = loadMonteCarloResults;
+
+    function renderMonteCarloDistributionChart(result) {
+      const canvas = document.getElementById('monte-carlo-distribution-chart');
+      if (!canvas) {
+        console.warn('Monte Carlo chart canvas not found');
+        return;
+      }
+
+      const ctx = canvas.getContext('2d');
+
+      if (window.monteCarloChart) {
+        window.monteCarloChart.destroy();
+      }
+
+      const percentiles = result.distribution_percentiles;
+      const labels = [];
+      const data = [];
+
+      const percentileKeys = Object.keys(percentiles).map(Number).sort((a, b) => a - b);
+
+      const bins = [];
+      for (let i = 0; i < percentileKeys.length - 1; i++) {
+        const p1 = percentileKeys[i];
+        const p2 = percentileKeys[i + 1];
+        const midValue = (percentiles[p1] + percentiles[p2]) / 2;
+        const frequency = p2 - p1;
+
+        bins.push({
+          x: midValue.toFixed(1),
+          y: frequency
+        });
+      }
+
+      bins.forEach(bin => {
+        labels.push(bin.x + '%');
+        data.push(bin.y);
+      });
+
+      const backgroundColors = bins.map(bin => {
+        const value = parseFloat(bin.x);
+        if (value < -result.risk_metrics.var_95_pct) {
+          return 'rgba(239, 68, 68, 0.7)';
+        } else if (value < 0) {
+          return 'rgba(251, 146, 60, 0.7)';
+        } else {
+          return 'rgba(34, 197, 94, 0.7)';
+        }
+      });
+
+      const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#ffffff';
+      const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-border').trim() || '#333333';
+
+      window.monteCarloChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Fréquence (%)',
+            data: data,
+            backgroundColor: backgroundColors,
+            borderColor: backgroundColors.map(c => c.replace('0.7', '1')),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const value = parseFloat(labels[context.dataIndex]);
+                  const freq = context.parsed.y;
+                  return `Rendement: ${value.toFixed(1)}% | Fréquence: ${freq.toFixed(1)}%`;
+                }
+              }
+            },
+            annotation: {
+              annotations: {
+                var95Line: {
+                  type: 'line',
+                  xMin: bins.findIndex(b => parseFloat(b.x) >= -result.risk_metrics.var_95_pct),
+                  xMax: bins.findIndex(b => parseFloat(b.x) >= -result.risk_metrics.var_95_pct),
+                  borderColor: 'rgb(239, 68, 68)',
+                  borderWidth: 2,
+                  borderDash: [5, 5],
+                  label: {
+                    display: true,
+                    content: `VaR 95%: ${result.risk_metrics.var_95_pct.toFixed(1)}%`,
+                    position: 'start',
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    color: '#ffffff',
+                    font: {
+                      size: 10
+                    }
+                  }
+                },
+                medianLine: {
+                  type: 'line',
+                  xMin: bins.findIndex(b => parseFloat(b.x) >= result.statistics.median_return_pct),
+                  xMax: bins.findIndex(b => parseFloat(b.x) >= result.statistics.median_return_pct),
+                  borderColor: 'rgb(59, 130, 246)',
+                  borderWidth: 2,
+                  borderDash: [3, 3],
+                  label: {
+                    display: true,
+                    content: `Médiane: ${result.statistics.median_return_pct.toFixed(1)}%`,
+                    position: 'end',
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    color: '#ffffff',
+                    font: {
+                      size: 10
+                    }
+                  }
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Rendement (%)',
+                color: textColor,
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              ticks: {
+                color: textColor,
+                maxRotation: 45,
+                minRotation: 45
+              },
+              grid: {
+                color: gridColor,
+                display: true
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Fréquence (%)',
+                color: textColor,
+                font: {
+                  size: 12,
+                  weight: 'bold'
+                }
+              },
+              ticks: {
+                color: textColor
+              },
+              grid: {
+                color: gridColor,
+                display: true
+              }
+            }
+          }
+        }
+      });
+
+      console.debug('Monte Carlo distribution chart rendered');
+    }
+
+    async function loadRiskAttribution() {
+      const el = document.getElementById('risk-attribution-content');
+      if (!el) return;
+      try {
+        const minUsd = window.globalConfig.get('min_usd_threshold') || 1.0;
+        const priceDays = 365;
+        const corrDays = 90;
+        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+
+        const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
+          params: {
+            source: currentSource,
+            price_history_days: priceDays,
+            lookback_days: corrDays,
+            min_usd: minUsd,
+            risk_version: 'v2_active',
+            use_dual_window: true
+          }
+        });
+        if (!data.success) {
+          throw new Error(data.message || 'API request failed');
+        }
+
+        const riskMetrics = data.risk_metrics;
+        const correlationMetrics = data.correlation_metrics || {};
+
+        el.innerHTML = `
+          <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 1rem; font-style: italic;">
+            Analyse de la structure du risque et de la diversification du portefeuille.
+          </p>
+          <div class="var-methods">
+            <div class="sim-stat hinted" data-key="diversification_ratio" data-value="${correlationMetrics.diversification_ratio || 0}" style="justify-content:space-between;">
+              <span class="stat-label">Diversification Ratio</span>
+              <span class="stat-value">${(correlationMetrics.diversification_ratio || 0).toFixed(2)}</span>
+            </div>
+            <div class="sim-stat hinted" data-key="effective_assets" data-value="${correlationMetrics.effective_assets || 0}" style="justify-content:space-between;">
+              <span class="stat-label">Effective Assets</span>
+              <span class="stat-value">${Math.round(correlationMetrics.effective_assets || 0)}</span>
+            </div>
+          </div>
+        `;
+
+        setTimeout(() => {
+          window.decorateRiskTooltips?.();
+        }, 100);
+
+      } catch (e) {
+        console.warn('Risk attribution load failed:', e);
+        el.innerHTML = `<div class="warning">Erreur lors du calcul d'attribution: ${e.message}</div>`;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+      await loadAdvancedRiskComponents();
+
+      // Refresh button
+      document.getElementById('refresh-btn')?.addEventListener('click', async () => {
+        await loadAdvancedRiskComponents();
+        window.showToast?.('Advanced risk data refreshed', 'success');
+      });
+    });
+  </script>
+
+  <!-- AI Chat Components -->
+  <script type="module">
+    import { initAIChat } from '/static/components/ai-chat-init.js';
+    initAIChat('advanced-risk');
+  </script>
+</body>
+
+</html>

@@ -159,40 +159,60 @@ const initUnifiedNav = () => {
         <div class="brand">SmartFolio</div>
         <nav class="main-nav" aria-label="Navigation principale">
           <ul class="menu">
-            <!-- MODULE CRYPTO -->
-            <li><a href="dashboard.html" data-route="dashboard.html">Portfolio</a></li>
-            <li><a href="risk-dashboard.html" data-route="risk-dashboard.html">Risk</a></li>
-            <li><a href="analytics-unified.html" data-route="analytics-unified.html">Analytics</a></li>
-            <li><a href="rebalance.html" data-route="rebalance.html">Rebalance</a></li>
-            <li><a href="execution.html" data-route="execution.html">Execution</a></li>
+            <!-- DASHBOARD -->
+            <li><a href="dashboard.html" data-route="dashboard.html">Dashboard</a></li>
 
-            <!-- SEPARATEUR -->
+            <!-- RISK (dropdown) -->
+            <li class="has-submenu">
+              <a href="risk-dashboard.html" data-route="risk-dashboard.html">Risk</a>
+              <div class="submenu">
+                <a href="risk-dashboard.html" data-route="risk-dashboard.html">🛡️ Risk Dashboard</a>
+                <a href="cycle-analysis.html" data-route="cycle-analysis.html">🔄 Cycle Analysis</a>
+                <a href="market-regimes.html" data-route="market-regimes.html">📈 Market Regimes</a>
+                <a href="advanced-risk.html" data-route="advanced-risk.html">🎯 Advanced Risk</a>
+              </div>
+            </li>
+
+            <!-- ANALYTICS (dropdown) -->
+            <li class="has-submenu">
+              <a href="analytics-unified.html" data-route="analytics-unified.html">Analytics</a>
+              <div class="submenu">
+                <a href="analytics-unified.html" data-route="analytics-unified.html">📊 Analytics Dashboard</a>
+                <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>
+              </div>
+            </li>
+
+            <!-- ACTIONS (dropdown) -->
+            <li class="has-submenu">
+              <a href="rebalance.html" data-route="rebalance.html">Actions</a>
+              <div class="submenu">
+                <a href="rebalance.html" data-route="rebalance.html">⚖️ Rebalance</a>
+                <a href="execution.html" data-route="execution.html">🎯 Execution</a>
+                <a href="optimization.html" data-route="optimization.html">🧮 Optimization</a>
+              </div>
+            </li>
+
+            <!-- SÉPARATEUR -->
             <li class="nav-separator" aria-hidden="true"></li>
 
-            <!-- MODULE BOURSE -->
+            <!-- BOURSE -->
             <li><a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Bourse</a></li>
 
-            <!-- SEPARATEUR -->
-            <li class="nav-separator" aria-hidden="true"></li>
-
-            <!-- MODULE PATRIMOINE -->
+            <!-- PATRIMOINE -->
             <li><a href="wealth-dashboard.html" data-route="wealth-dashboard.html">Patrimoine</a></li>
 
-            <!-- SEPARATEUR -->
+            <!-- SÉPARATEUR -->
             <li class="nav-separator" aria-hidden="true"></li>
 
-            <!-- OUTILS -->
+            <!-- OUTILS (réduit) -->
             <li class="has-submenu">
               <a href="settings.html" data-route="settings.html">Outils</a>
               <div class="submenu">
-                <a href="cycle-analysis.html" data-route="cycle-analysis.html">📈 Cycle Analysis</a>
+                <a href="settings.html" data-route="settings.html">⚙️ Settings</a>
+                <div class="menu-separator"></div>
                 <a href="ai-dashboard.html" data-route="ai-dashboard.html">🤖 AI Dashboard</a>
                 <a href="monitoring.html" data-route="monitoring.html">📊 Monitoring</a>
-                <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>
-                <a href="optimization.html" data-route="optimization.html">🧮 Optimization</a>
-                <div class="menu-separator"></div>
                 <a href="alias-manager.html" data-route="alias-manager.html">🔍 Alias Manager</a>
-                <a href="settings.html" data-route="settings.html">⚙️ Settings</a>
               </div>
             </li>
           </ul>
