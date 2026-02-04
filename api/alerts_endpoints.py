@@ -15,6 +15,7 @@ import os
 import uuid
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
+from api.utils.formatters import success_response, error_response
 from services.alerts.alert_engine import AlertEngine
 from services.alerts.alert_types import Alert, AlertType, AlertSeverity
 from services.alerts.prometheus_metrics import get_alert_metrics
@@ -205,7 +206,7 @@ async def get_active_alerts(
         
     except Exception as e:
         logger.error(f"Error getting active alerts: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/list")
 async def list_alerts(
@@ -279,7 +280,7 @@ async def list_alerts(
 
     except Exception as e:
         logger.error(f"Error listing alerts: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/formatted")
 async def get_formatted_alerts(
@@ -351,7 +352,7 @@ async def get_formatted_alerts(
         
     except Exception as e:
         logger.error(f"Error getting formatted alerts: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.post("/acknowledge/{alert_id}")
 async def acknowledge_alert(
@@ -369,20 +370,17 @@ async def acknowledge_alert(
         success = await engine.acknowledge_alert(alert_id, current_user.username)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Alert not found")
-        
-        return {
-            "success": True,
+            return error_response("Alert not found", code=404)
+
+        return success_response({
             "message": f"Alert {alert_id} acknowledged",
             "acknowledged_by": current_user.username,
             "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error acknowledging alert {alert_id}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.post("/snooze/{alert_id}")
 async def snooze_alert(
@@ -400,22 +398,19 @@ async def snooze_alert(
         success = await engine.snooze_alert(alert_id, request.minutes)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Alert not found")
-        
+            return error_response("Alert not found", code=404)
+
         snooze_until = datetime.now().timestamp() + (request.minutes * 60)
-        
-        return {
-            "success": True,
+
+        return success_response({
             "message": f"Alert {alert_id} snoozed for {request.minutes} minutes",
             "snooze_until": datetime.fromtimestamp(snooze_until).isoformat(),
             "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error snoozing alert {alert_id}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.post("/resolve/{alert_id}")
 async def resolve_alert(
@@ -434,21 +429,18 @@ async def resolve_alert(
         success = await engine.resolve_alert(alert_id, current_user.username, request.resolution_note)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Alert not found")
-        
-        return {
-            "success": True,
+            return error_response("Alert not found", code=404)
+
+        return success_response({
             "message": f"Alert {alert_id} resolved",
             "resolved_by": current_user.username,
             "resolution_note": request.resolution_note,
             "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error resolving alert {alert_id}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/metrics", response_model=MetricsResponse)
 async def get_alert_metrics(
@@ -547,7 +539,7 @@ async def get_alert_history(
         
     except Exception as e:
         logger.error(f"Error getting alert history: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 # Fonctions helper
 
@@ -605,7 +597,7 @@ async def reload_config(
         
     except Exception as e:
         logger.error(f"Error reloading config: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/config/current")
 async def get_current_config(
@@ -627,7 +619,7 @@ async def get_current_config(
         
     except Exception as e:
         logger.error(f"Error getting current config: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/health")
 async def get_health_status(
@@ -713,7 +705,7 @@ async def get_multi_timeframe_status(
         
     except Exception as e:
         logger.error(f"Error getting multi-timeframe status: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/multi-timeframe/coherence/{alert_type}")
 async def get_alert_type_coherence(
@@ -728,13 +720,13 @@ async def get_alert_type_coherence(
     """
     try:
         if not engine.multi_timeframe_enabled or not engine.multi_timeframe_analyzer:
-            raise HTTPException(status_code=404, detail="Multi-timeframe analysis not enabled")
-        
+            return error_response("Multi-timeframe analysis not enabled", code=404)
+
         # Valider le type d'alerte
         try:
             alert_type_enum = AlertType(alert_type)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid alert type: {alert_type}")
+            return error_response(f"Invalid alert type: {alert_type}", code=400)
         
         coherence = engine.multi_timeframe_analyzer.calculate_coherence_score(
             alert_type_enum, lookback_minutes
@@ -758,7 +750,7 @@ async def get_alert_type_coherence(
         
     except Exception as e:
         logger.error(f"Error calculating coherence for {alert_type}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/metrics/prometheus", response_class=PlainTextResponse)
 async def get_prometheus_metrics(
@@ -804,7 +796,7 @@ async def get_prometheus_metrics(
         
     except Exception as e:
         logger.error(f"Error generating Phase 2A Prometheus metrics: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 # Phase 2B2: Cross-Asset Correlation Endpoints
 
@@ -815,16 +807,16 @@ async def get_cross_asset_status(
 ):
     """
     Phase 2B2: Cross-Asset Correlation Status
-    
+
     Retourne le statut complet du système de corrélation cross-asset incluant:
     - Matrice de corrélation actuelle
-    - Score de risque systémique  
+    - Score de risque systémique
     - Clusters de concentration détectés
     - Spikes récents
     """
     try:
         if not engine.cross_asset_enabled or not engine.cross_asset_analyzer:
-            raise HTTPException(status_code=404, detail="Cross-asset correlation analysis not enabled")
+            return error_response("Cross-asset correlation analysis not enabled", code=404)
         
         # Obtenir status complet
         status = engine.cross_asset_analyzer.get_status(timeframe)
@@ -879,7 +871,7 @@ async def get_cross_asset_status(
         
     except Exception as e:
         logger.error(f"Error getting cross-asset status: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/cross-asset/top-correlated")
 async def get_top_correlated_pairs(
@@ -889,12 +881,12 @@ async def get_top_correlated_pairs(
 ):
     """
     Phase 2B2: Top Correlated Asset Pairs
-    
+
     Retourne les paires d'assets les plus corrélées pour dashboard temps réel.
     """
     try:
         if not engine.cross_asset_enabled or not engine.cross_asset_analyzer:
-            raise HTTPException(status_code=404, detail="Cross-asset correlation analysis not enabled")
+            return error_response("Cross-asset correlation analysis not enabled", code=404)
         
         # Obtenir top paires corrélées
         top_pairs = engine.cross_asset_analyzer.get_top_correlated_pairs(timeframe, top_n=top_n)
@@ -923,7 +915,7 @@ async def get_top_correlated_pairs(
         
     except Exception as e:
         logger.error(f"Error getting top correlated pairs: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.get("/cross-asset/systemic-risk")
 async def get_systemic_risk(
@@ -932,12 +924,12 @@ async def get_systemic_risk(
 ):
     """
     Phase 2B2: Systemic Risk Assessment
-    
+
     Retourne l'évaluation complète du risque systémique.
     """
     try:
         if not engine.cross_asset_enabled or not engine.cross_asset_analyzer:
-            raise HTTPException(status_code=404, detail="Cross-asset correlation analysis not enabled")
+            return error_response("Cross-asset correlation analysis not enabled", code=404)
         
         # Calculer score de risque systémique
         risk_score = engine.cross_asset_analyzer.calculate_systemic_risk_score(timeframe)
@@ -970,7 +962,7 @@ async def get_systemic_risk(
         
     except Exception as e:
         logger.error(f"Error calculating systemic risk: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 # REMOVED: Test endpoints for debugging Phase 3 (production cleanup)
 # Former endpoints: /test/generate, /test/clear, /test/force-evaluation
@@ -990,20 +982,16 @@ async def test_acknowledge_alert(
         success = await engine.acknowledge_alert(alert_id, "test_user")
         
         if not success:
-            raise HTTPException(status_code=404, detail="Alert not found")
-        
-        return {
-            "success": True,
+            return error_response("Alert not found", code=404)
+
+        return success_response({
             "message": f"Alert {alert_id} acknowledged by test_user",
             "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        # Propager 404/503 correctement
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error in test acknowledge: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.post("/test/snooze/{alert_id}")
 async def test_snooze_alert(
@@ -1028,21 +1016,17 @@ async def test_snooze_alert(
         success = await engine.snooze_alert(alert_id, minutes)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Alert not found")
-        
-        return {
-            "success": True,
+            return error_response("Alert not found", code=404)
+
+        return success_response({
             "message": f"Alert {alert_id} snoozed for {minutes} minutes",
             "snooze_until": (datetime.now() + timedelta(minutes=minutes)).isoformat(),
             "timestamp": datetime.now().isoformat()
-        }
-        
-    except HTTPException:
-        # Propager 404 correctement
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error in test snooze: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 @router.post("/test/generate/{count}")
 async def test_generate_alerts(
@@ -1094,7 +1078,7 @@ async def test_generate_alerts(
         
     except Exception as e:
         logger.error(f"Error generating test alerts: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        return error_response("Internal server error", code=500)
 
 # Convenience alias: allow both POST and GET without path param
 @router.post("/test/generate")

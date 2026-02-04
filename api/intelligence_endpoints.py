@@ -2,12 +2,13 @@
 Phase 3C Intelligence API Endpoints - Hybrid Intelligence System
 Provides REST API for Explainable AI, Human-in-the-loop, and Feedback Learning
 """
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
+from fastapi import APIRouter, Query, Body, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any, Union
 import logging
 from datetime import datetime
 
+from api.utils.formatters import success_response, error_response
 from services.intelligence.explainable_ai import (
     get_explainable_ai_engine, ExplainableAIEngine, ExplanationType
 )
@@ -76,7 +77,7 @@ async def explain_decision(
         
     except Exception as e:
         log.error(f"Failed to explain decision: {e}")
-        raise HTTPException(500, f"explanation_failed: {str(e)}")
+        return error_response(f"explanation_failed: {str(e)}", code=500)
 
 # Test endpoint for debugging
 @router.post("/explain/decision-simple")
@@ -99,7 +100,7 @@ async def explain_decision_simple(
         
     except Exception as e:
         log.error(f"Failed to explain decision (simple): {e}")
-        raise HTTPException(500, f"explanation_failed: {str(e)}")
+        return error_response(f"explanation_failed: {str(e)}", code=500)
 
 # Quick diagnostic endpoint
 @router.get("/explain/test")
@@ -117,7 +118,7 @@ async def test_explanation_engine(
         }
     except Exception as e:
         log.error(f"Engine test failed: {e}")
-        raise HTTPException(500, f"engine_test_failed: {str(e)}")
+        return error_response(f"engine_test_failed: {str(e)}", code=500)
 
 # Mock endpoint pour tests du frontend
 @router.post("/explain/decision-mock")
@@ -178,7 +179,7 @@ async def explain_alert(
         
     except Exception as e:
         log.error(f"Failed to explain alert: {e}")
-        raise HTTPException(500, f"alert_explanation_failed: {str(e)}")
+        return error_response(f"alert_explanation_failed: {str(e)}", code=500)
 
 @router.post("/explain/counterfactual")
 async def generate_counterfactual(
@@ -196,7 +197,7 @@ async def generate_counterfactual(
         
     except Exception as e:
         log.error(f"Failed to generate counterfactual: {e}")
-        raise HTTPException(500, f"counterfactual_failed: {str(e)}")
+        return error_response(f"counterfactual_failed: {str(e)}", code=500)
 
 @router.get("/explain/history")
 async def get_explanation_history(
@@ -211,7 +212,7 @@ async def get_explanation_history(
         
     except Exception as e:
         log.error(f"Failed to get explanation history: {e}")
-        raise HTTPException(500, f"history_failed: {str(e)}")
+        return error_response(f"history_failed: {str(e)}", code=500)
 
 # Human-in-the-loop Endpoints
 @router.post("/human/request-decision")
@@ -243,7 +244,7 @@ async def request_human_decision(
         
     except Exception as e:
         log.error(f"Failed to request human decision: {e}")
-        raise HTTPException(500, f"human_request_failed: {str(e)}")
+        return error_response(f"human_request_failed: {str(e)}", code=500)
 
 @router.post("/human/provide-decision/{request_id}")
 async def provide_human_decision(
@@ -261,15 +262,13 @@ async def provide_human_decision(
         )
         
         if not success:
-            raise HTTPException(404, f"Decision request {request_id} not found")
-        
-        return {"success": True, "request_id": request_id}
-        
-    except HTTPException:
-        raise
+            return error_response(f"Decision request {request_id} not found", code=404)
+
+        return success_response({"request_id": request_id})
+
     except Exception as e:
         log.error(f"Failed to provide human decision: {e}")
-        raise HTTPException(500, f"decision_provision_failed: {str(e)}")
+        return error_response(f"decision_provision_failed: {str(e)}", code=500)
 
 @router.get("/human/pending-decisions")
 async def get_pending_decisions(
@@ -287,7 +286,7 @@ async def get_pending_decisions(
         
     except Exception as e:
         log.error(f"Failed to get pending decisions: {e}")
-        raise HTTPException(500, f"pending_decisions_failed: {str(e)}")
+        return error_response(f"pending_decisions_failed: {str(e)}", code=500)
 
 @router.get("/human/decision-history")
 async def get_decision_history(
@@ -301,7 +300,7 @@ async def get_decision_history(
         
     except Exception as e:
         log.error(f"Failed to get decision history: {e}")
-        raise HTTPException(500, f"decision_history_failed: {str(e)}")
+        return error_response(f"decision_history_failed: {str(e)}", code=500)
 
 @router.get("/human/dashboard-stats")
 async def get_human_dashboard_stats(
@@ -314,7 +313,7 @@ async def get_human_dashboard_stats(
         
     except Exception as e:
         log.error(f"Failed to get dashboard stats: {e}")
-        raise HTTPException(500, f"dashboard_stats_failed: {str(e)}")
+        return error_response(f"dashboard_stats_failed: {str(e)}", code=500)
 
 @router.post("/human/wait-for-decision/{request_id}")
 async def wait_for_decision(
@@ -332,36 +331,34 @@ async def wait_for_decision(
                   completed_requests.get(request_id))
         
         if not request:
-            raise HTTPException(404, f"Decision request {request_id} not found")
-        
+            return error_response(f"Decision request {request_id} not found", code=404)
+
         # Si déjà complétée, retourner immédiatement
         if request.status != DecisionStatus.PENDING:
-            return {
+            return success_response({
                 "decision": request.human_decision,
                 "status": request.status.value,
                 "decided_by": request.decided_by,
                 "decided_at": request.decided_at.isoformat() if request.decided_at else None
-            }
-        
+            })
+
         # Attendre la décision
         final_decision = await human_engine.wait_for_decision(request, polling_interval)
-        
+
         # Récupérer le statut final
-        final_request = (completed_requests.get(request_id) or 
+        final_request = (completed_requests.get(request_id) or
                         pending_requests.get(request_id))
-        
-        return {
+
+        return success_response({
             "decision": final_decision,
             "status": final_request.status.value if final_request else "unknown",
             "decided_by": final_request.decided_by if final_request else None,
             "decided_at": final_request.decided_at.isoformat() if final_request and final_request.decided_at else None
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         log.error(f"Failed to wait for decision: {e}")
-        raise HTTPException(500, f"decision_wait_failed: {str(e)}")
+        return error_response(f"decision_wait_failed: {str(e)}", code=500)
 
 # Feedback Learning Endpoints
 @router.post("/feedback/submit")
@@ -387,7 +384,7 @@ async def submit_feedback(
         
     except Exception as e:
         log.error(f"Failed to submit feedback: {e}")
-        raise HTTPException(500, f"feedback_submission_failed: {str(e)}")
+        return error_response(f"feedback_submission_failed: {str(e)}", code=500)
 
 @router.get("/learning/insights")
 async def get_learning_insights(
@@ -400,7 +397,7 @@ async def get_learning_insights(
         
     except Exception as e:
         log.error(f"Failed to get learning insights: {e}")
-        raise HTTPException(500, f"learning_insights_failed: {str(e)}")
+        return error_response(f"learning_insights_failed: {str(e)}", code=500)
 
 @router.get("/learning/suggestions")
 async def get_model_suggestions(
@@ -414,7 +411,7 @@ async def get_model_suggestions(
         
     except Exception as e:
         log.error(f"Failed to get model suggestions: {e}")
-        raise HTTPException(500, f"model_suggestions_failed: {str(e)}")
+        return error_response(f"model_suggestions_failed: {str(e)}", code=500)
 
 @router.post("/learning/generate-improvements")
 async def generate_model_improvements(
@@ -430,7 +427,7 @@ async def generate_model_improvements(
         
     except Exception as e:
         log.error(f"Failed to generate model improvements: {e}")
-        raise HTTPException(500, f"improvement_generation_failed: {str(e)}")
+        return error_response(f"improvement_generation_failed: {str(e)}", code=500)
 
 @router.get("/learning/metrics")
 async def get_learning_metrics(
@@ -443,7 +440,7 @@ async def get_learning_metrics(
         
     except Exception as e:
         log.error(f"Failed to get learning metrics: {e}")
-        raise HTTPException(500, f"learning_metrics_failed: {str(e)}")
+        return error_response(f"learning_metrics_failed: {str(e)}", code=500)
 
 @router.get("/learning/performance-trends")
 async def get_performance_trends(
@@ -456,7 +453,7 @@ async def get_performance_trends(
         
     except Exception as e:
         log.error(f"Failed to get performance trends: {e}")
-        raise HTTPException(500, f"performance_trends_failed: {str(e)}")
+        return error_response(f"performance_trends_failed: {str(e)}", code=500)
 
 @router.get("/learning/feature-status")
 async def get_feature_learning_status(
@@ -469,7 +466,7 @@ async def get_feature_learning_status(
         
     except Exception as e:
         log.error(f"Failed to get feature learning status: {e}")
-        raise HTTPException(500, f"feature_status_failed: {str(e)}")
+        return error_response(f"feature_status_failed: {str(e)}", code=500)
 
 # System Status Endpoints
 @router.get("/status")
@@ -501,7 +498,7 @@ async def get_intelligence_status(
         
     except Exception as e:
         log.error(f"Failed to get intelligence status: {e}")
-        raise HTTPException(500, f"status_failed: {str(e)}")
+        return error_response(f"status_failed: {str(e)}", code=500)
 
 @router.post("/system/start")
 async def start_intelligence_system(
@@ -521,7 +518,7 @@ async def start_intelligence_system(
         
     except Exception as e:
         log.error(f"Failed to start intelligence system: {e}")
-        raise HTTPException(500, f"system_start_failed: {str(e)}")
+        return error_response(f"system_start_failed: {str(e)}", code=500)
 
 @router.post("/system/stop")
 async def stop_intelligence_system(
@@ -541,7 +538,7 @@ async def stop_intelligence_system(
         
     except Exception as e:
         log.error(f"Failed to stop intelligence system: {e}")
-        raise HTTPException(500, f"system_stop_failed: {str(e)}")
+        return error_response(f"system_stop_failed: {str(e)}", code=500)
 
 # Demo/Test Endpoints
 @router.post("/demo/simulate-decision-flow")
@@ -592,4 +589,4 @@ async def simulate_decision_flow(
         
     except Exception as e:
         log.error(f"Failed to simulate decision flow: {e}")
-        raise HTTPException(500, f"simulation_failed: {str(e)}")
+        return error_response(f"simulation_failed: {str(e)}", code=500)

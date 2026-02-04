@@ -10,12 +10,13 @@ de performance pour optimiser les stratégies.
    - Cache keys incluent user pour éviter cross-contamination
 """
 
-from fastapi import APIRouter, HTTPException, Query, Body, Depends
+from fastapi import APIRouter, Query, Body, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional, Tuple
 import logging
 from datetime import datetime
 
+from api.utils.formatters import success_response, error_response
 from services.analytics.history_manager import get_history_manager, SessionStatus, PortfolioSnapshot
 from services.analytics.performance_tracker import performance_tracker
 from api.utils.cache import cache_get, cache_set, cache_clear_expired
@@ -100,7 +101,7 @@ async def create_rebalance_session(
         
     except Exception as e:
         logger.error(f"Error creating session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/sessions/{session_id}")
 async def get_session(
@@ -118,7 +119,7 @@ async def get_session(
         session = history_mgr.get_session(session_id)
         
         if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+            return error_response("Session not found", code=404)
         
         # Convertir en réponse API
         response = SessionResponse(
@@ -149,11 +150,9 @@ async def get_session(
         
         return session_dict
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error getting session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.post("/sessions/{session_id}/portfolio-snapshot")
 async def add_portfolio_snapshot(
@@ -186,18 +185,16 @@ async def add_portfolio_snapshot(
         success = history_mgr.add_portfolio_snapshot(session_id, snapshot, is_before)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Session not found")
+            return error_response("Session not found", code=404)
         
         return {
             "success": True,
             "message": f"Portfolio snapshot added ({'before' if is_before else 'after'} rebalancement)"
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error adding portfolio snapshot: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.post("/sessions/{session_id}/actions")
 async def add_rebalance_actions(
@@ -215,18 +212,16 @@ async def add_rebalance_actions(
         success = history_mgr.add_rebalance_actions(session_id, actions)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Session not found")
+            return error_response("Session not found", code=404)
         
         return {
             "success": True,
             "message": f"Added {len(actions)} rebalance actions to session"
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error adding actions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.post("/sessions/{session_id}/execution-results")
 async def update_execution_results(
@@ -245,18 +240,16 @@ async def update_execution_results(
         success = history_mgr.update_execution_results(session_id, request.order_results)
         
         if not success:
-            raise HTTPException(status_code=404, detail="Session not found")
+            return error_response("Session not found", code=404)
         
         return {
             "success": True,
             "message": f"Updated execution results for {len(request.order_results)} orders"
         }
         
-    except HTTPException:
-        raise
     except Exception as e:
         logger.error(f"Error updating execution results: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.post("/sessions/{session_id}/complete")
 async def complete_session(
@@ -275,24 +268,21 @@ async def complete_session(
         try:
             session_status = SessionStatus(status)
         except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+            return error_response(f"Invalid status: {status}", code=400)
 
         history_mgr = get_history_manager(user)
         success = history_mgr.complete_session(session_id, session_status, error_message)
-        
+
         if not success:
-            raise HTTPException(status_code=404, detail="Session not found")
-        
-        return {
-            "success": True,
+            return error_response("Session not found", code=404)
+
+        return success_response({
             "message": f"Session marked as {status}"
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error completing session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/sessions")
 async def get_sessions(
@@ -316,8 +306,8 @@ async def get_sessions(
                 filter_status = SessionStatus(status)
                 sessions = [s for s in sessions if s.status == filter_status]
             except ValueError:
-                raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
-        
+                return error_response(f"Invalid status: {status}", code=400)
+
         # Convertir en réponses API
         session_responses = []
         for session in sessions:
@@ -334,22 +324,20 @@ async def get_sessions(
                 total_fees=session.total_fees
             )
             session_responses.append(response)
-        
-        return {
-            "sessions": session_responses,
+
+        return success_response({
+            "sessions": [r.model_dump() for r in session_responses],
             "total": len(session_responses),
             "filters": {
                 "limit": limit,
                 "days_back": days_back,
                 "status": status
             }
-        }
-        
-    except HTTPException:
-        raise
+        })
+
     except Exception as e:
         logger.error(f"Error getting sessions: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/performance/summary")
 async def get_performance_summary(
@@ -382,7 +370,7 @@ async def get_performance_summary(
         
     except Exception as e:
         logger.error(f"Error getting performance summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/performance/detailed")
 async def get_detailed_performance_analysis(
@@ -424,7 +412,7 @@ async def get_detailed_performance_analysis(
         
     except Exception as e:
         logger.error(f"Error getting detailed performance analysis: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.post("/performance/calculate")
 async def calculate_portfolio_performance(
@@ -472,7 +460,7 @@ async def calculate_portfolio_performance(
         
     except Exception as e:
         logger.error(f"Error calculating portfolio performance: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/reports/comprehensive")
 async def generate_comprehensive_report(
@@ -511,7 +499,7 @@ async def generate_comprehensive_report(
         
     except Exception as e:
         logger.error(f"Error generating comprehensive report: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 @router.get("/optimization/recommendations")
 async def get_optimization_recommendations(
@@ -555,7 +543,7 @@ async def get_optimization_recommendations(
         
     except Exception as e:
         logger.error(f"Error getting optimization recommendations: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return error_response(str(e), code=500)
 
 
 async def _get_portfolio_history_data(days_back: int) -> List[Dict[str, Any]]:
