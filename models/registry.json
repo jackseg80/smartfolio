@@ -218,7 +218,7 @@
       "model_type": "volatility",
       "status": "trained",
       "created_at": "2024-09-15T08:53:00+00:00",
-      "updated_at": "2026-01-30T16:09:53.142638",
+      "updated_at": "2026-02-04T00:00:17.777881",
       "file_path": "models/volatility/volatility_model_v2.1.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -273,7 +273,7 @@
             "test_samples": 71
           }
         ],
-        "training_time_seconds": 28.375505685806274
+        "training_time_seconds": 17.762165069580078
       },
       "test_metrics": {
         "test_mse": 0.028034913043181103,
@@ -308,7 +308,7 @@
             "test_samples": 71
           }
         ],
-        "training_time_seconds": 28.375505685806274
+        "training_time_seconds": 17.762165069580078
       },
       "target_assets": [
         "BTC",

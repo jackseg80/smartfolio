@@ -724,6 +724,14 @@ async def get_portfolio_recommendations(
                     positions_url,
                     headers={"X-User": user}
                 )
+
+                # Handle 401 Unauthorized specifically (Saxo not connected)
+                if pos_response.status_code == 401:
+                    raise HTTPException(
+                        status_code=401,
+                        detail="Saxo Bank not connected - please connect first via Dashboard"
+                    )
+
                 pos_response.raise_for_status()
                 positions_data = pos_response.json()
 
@@ -878,6 +886,12 @@ async def get_market_opportunities(
                         positions_url,
                         headers={"X-User": user}
                     )
+                    # Handle 401 Unauthorized specifically (Saxo not connected)
+                    if pos_response.status_code == 401:
+                        raise HTTPException(
+                            status_code=401,
+                            detail="Saxo Bank not connected - please connect first via Dashboard"
+                        )
                     pos_response.raise_for_status()
                     positions_data = pos_response.json()
                     positions = positions_data.get("data", {}).get("positions", [])

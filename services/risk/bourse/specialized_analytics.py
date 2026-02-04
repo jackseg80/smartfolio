@@ -77,6 +77,106 @@ class SpecializedBourseAnalytics:
             'XGDU': 'ETF-Commodities',  # Xtrackers Physical Gold ETC
         }
 
+        # Cache for dynamic sector lookups
+        self._sector_cache = {}
+
+    def _get_sector_for_ticker(self, ticker: str) -> str:
+        """
+        Get sector for a ticker, using static map first then yfinance fallback.
+
+        Args:
+            ticker: Stock ticker symbol (supports formats: GOOGL, GOOGL:xnas, GOOGL.L)
+
+        Returns:
+            Sector name or 'Other' if not found
+        """
+        # Clean ticker FIRST - remove exchange suffix
+        # Saxo format: GOOGL:xnas, MSFT:xnas, GLEN:xlon
+        # Yahoo format: GOOGL, MSFT, GLEN.L
+        if ':' in ticker:
+            clean_ticker = ticker.split(':')[0].upper()
+        elif '.' in ticker:
+            clean_ticker = ticker.split('.')[0].upper()
+        else:
+            clean_ticker = ticker.upper()
+
+        # Check static map with CLEAN ticker
+        if clean_ticker in self.sector_map:
+            logger.debug(f"[sector-lookup] {ticker} -> {self.sector_map[clean_ticker]} (static map)")
+            return self.sector_map[clean_ticker]
+
+        # Check cache with original ticker (to avoid re-lookups)
+        if ticker in self._sector_cache:
+            return self._sector_cache[ticker]
+
+        # Try yfinance for dynamic lookup with CLEAN ticker
+        try:
+            import yfinance as yf
+
+            # Convert exchange suffix to Yahoo format if needed
+            # :xlon -> .L (London), :xpar -> .PA (Paris), :xetr -> .DE (Frankfurt)
+            exchange_suffix = ''
+            if ':' in ticker:
+                exchange = ticker.split(':')[1].lower()
+                exchange_map = {
+                    'xlon': '.L',      # London
+                    'xpar': '.PA',     # Paris
+                    'xetr': '.DE',     # Frankfurt
+                    'xams': '.AS',     # Amsterdam
+                    'xswx': '.SW',     # Swiss
+                    'xmil': '.MI',     # Milan
+                    'xnas': '',        # NASDAQ (no suffix needed)
+                    'xnys': '',        # NYSE (no suffix needed)
+                }
+                exchange_suffix = exchange_map.get(exchange, '')
+
+            yf_ticker = clean_ticker + exchange_suffix
+            logger.debug(f"[sector-lookup] Trying yfinance for {yf_ticker} (from {ticker})")
+
+            stock = yf.Ticker(yf_ticker)
+            info = stock.info
+
+            # Try to get sector
+            sector = info.get('sector')
+            if sector:
+                self._sector_cache[ticker] = sector
+                logger.debug(f"[sector-lookup] {ticker} -> {sector} (yfinance)")
+                return sector
+
+            # If no sector, check if it's an ETF
+            quote_type = info.get('quoteType', '')
+            if quote_type == 'ETF':
+                # Try to classify ETF by name/category
+                name = info.get('longName', '').lower()
+                category = info.get('category', '').lower()
+
+                if any(x in name or x in category for x in ['bond', 'fixed income', 'treasury']):
+                    self._sector_cache[ticker] = 'ETF-Bonds'
+                elif any(x in name or x in category for x in ['tech', 'technology', 'nasdaq']):
+                    self._sector_cache[ticker] = 'ETF-Tech'
+                elif any(x in name or x in category for x in ['emerging', 'em market']):
+                    self._sector_cache[ticker] = 'ETF-Emerging'
+                elif any(x in name or x in category for x in ['world', 'global', 'international', 'msci']):
+                    self._sector_cache[ticker] = 'ETF-International'
+                elif any(x in name or x in category for x in ['gold', 'silver', 'commodity', 'commodities']):
+                    self._sector_cache[ticker] = 'ETF-Commodities'
+                elif any(x in name or x in category for x in ['health', 'biotech', 'pharma']):
+                    self._sector_cache[ticker] = 'ETF-Healthcare'
+                elif any(x in name or x in category for x in ['s&p 500', 'sp500', 'total market', 'large cap']):
+                    self._sector_cache[ticker] = 'ETF-Broad'
+                else:
+                    self._sector_cache[ticker] = 'ETF-Other'
+
+                logger.debug(f"[sector-lookup] {ticker} -> {self._sector_cache[ticker]} (ETF)")
+                return self._sector_cache[ticker]
+
+        except Exception as e:
+            logger.warning(f"[sector-lookup] Failed for {ticker}: {e}")
+
+        # Fallback to Other
+        self._sector_cache[ticker] = 'Other'
+        return 'Other'
+
     def _analyze_portfolio_allocation(
         self,
         sector_metrics: Dict[str, Dict],
@@ -319,10 +419,12 @@ class SpecializedBourseAnalytics:
             }
         """
         try:
-            # Map tickers to sectors
+            # Map tickers to sectors (use dynamic lookup)
             ticker_sectors = {}
             for ticker in positions_returns.keys():
-                ticker_sectors[ticker] = self.sector_map.get(ticker, 'Other')
+                ticker_sectors[ticker] = self._get_sector_for_ticker(ticker)
+
+            logger.info(f"[sector-rotation] Ticker-Sector mapping: {ticker_sectors}")
 
             # Align returns to common dates
             returns_df = pd.DataFrame(positions_returns)

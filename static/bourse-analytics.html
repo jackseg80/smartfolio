@@ -17,6 +17,7 @@
     // =================================
 
     import { initDeepLinks } from './components/deep-links.js';
+    import { wealthContextBar } from './components/WealthContextBar.js';
     import { safeFetch } from './modules/http.js';
 
     // Anchors for bourse-analytics.html
@@ -25,6 +26,7 @@
         'analytics': 'Analytics'
     });
 
+    window.wealthContextBar = wealthContextBar;
     window.safeFetch = safeFetch;
     </script>
     <script src="debug-logger.js"></script>
@@ -259,22 +261,35 @@
             await loadBourseData();
         });
 
-        // Resolve source type from localStorage
+        // Resolve source type dynamically (same logic as saxo-dashboard.html)
         async function resolveSourceType() {
-            const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+            // ✅ FIX: Read bourseSource dynamically from wealthContextBar first
+            let bourseSource = window.wealthContextBar?.getContext()?.bourse;
+            if (!bourseSource) {
+                bourseSource = localStorage.getItem('bourseSource');
+                debugLogger.debug(`⚠️ wealthContextBar not ready, using localStorage: ${bourseSource}`);
+            }
 
+            // Reset state
+            currentFileKey = null;
+            window.saxoSourceType = null;
+
+            if (!bourseSource) {
+                debugLogger.warn('No bourse source configured');
+                return;
+            }
+
+            // Determine source type
             if (bourseSource === 'manual_bourse') {
                 window.saxoSourceType = 'manual';
             } else if (bourseSource.startsWith('api:')) {
                 window.saxoSourceType = 'api';
             } else if (bourseSource.startsWith('saxo:')) {
                 window.saxoSourceType = 'csv';
-                currentFileKey = bourseSource.replace('saxo:', '');
-            } else {
-                window.saxoSourceType = null;
+                currentFileKey = bourseSource.substring(5); // Remove 'saxo:' prefix
             }
 
-            debugLogger.debug(`Source type resolved: ${window.saxoSourceType}`);
+            debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${window.saxoSourceType}`);
         }
 
         // ==================== TAB SWITCHING ====================
@@ -314,6 +329,23 @@
 
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
 
+                // Check if source is configured
+                if (!window.saxoSourceType) {
+                    document.getElementById('mainContent').innerHTML = `
+                        <div class="dashboard-card" style="padding: 3rem; text-align: center;">
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">📊</div>
+                            <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source non configurée</h2>
+                            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                Veuillez sélectionner une source de données Bourse dans le Dashboard.
+                            </p>
+                            <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                Aller au Dashboard Saxo →
+                            </a>
+                        </div>
+                    `;
+                    return;
+                }
+
                 // Get positions to have portfolio context
                 let portfolioData = { positions: [], summary: {} };
 
@@ -335,6 +367,22 @@
                     const response = await fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
                         headers: { 'X-User': activeUser }
                     });
+                    if (response.status === 401) {
+                        // Saxo not connected - show connection message
+                        document.getElementById('mainContent').innerHTML = `
+                            <div class="dashboard-card" style="padding: 3rem; text-align: center;">
+                                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                                <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Connexion Saxo requise</h2>
+                                <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                    Veuillez vous connecter à votre compte Saxo Bank pour accéder aux analytics.
+                                </p>
+                                <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                    Aller au Dashboard Saxo →
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    }
                     if (response.ok) {
                         const result = await response.json();
                         const data = result.data || result;
@@ -345,8 +393,8 @@
                             market_value_usd: pos.market_value || 0
                         }));
                     }
-                } else {
-                    // CSV mode - simplified
+                } else if (window.saxoSourceType === 'csv') {
+                    // CSV mode
                     let portfoliosUrl = '/api/saxo/portfolios';
                     if (currentFileKey) {
                         portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
@@ -589,50 +637,115 @@
             try {
                 document.getElementById('mlBadge').textContent = 'Analyzing...';
 
+                // Get top 3 stocks from portfolio for predictions
+                const topStocks = currentPortfolioData?.summary?.top_holdings?.slice(0, 3) || [];
                 const benchmark = 'SPY';
-                const topStock = currentPortfolioData?.positions?.[0]?.symbol?.split(':')[0] || 'AAPL';
+                const firstStockRaw = topStocks[0]?.symbol || currentPortfolioData?.positions?.[0]?.symbol || 'AAPL';
+                const firstStock = firstStockRaw.split(':')[0];
 
+                // Fetch ML predictions in parallel (20 years for 4-5 full market cycles)
                 const baseUrl = window.location.origin;
                 const [regimeRes, volatilityRes] = await Promise.all([
                     window.safeFetch(`${baseUrl}/api/ml/bourse/regime?benchmark=${benchmark}&lookback_days=7300`),
-                    window.safeFetch(`${baseUrl}/api/ml/bourse/forecast?symbol=${topStock}&lookback_days=365`)
+                    window.safeFetch(`${baseUrl}/api/ml/bourse/forecast?symbol=${firstStock}&lookback_days=365`)
                 ]);
 
                 if (!regimeRes?.ok && !volatilityRes?.ok) {
-                    throw new Error('ML services unavailable');
+                    throw new Error('ML services unavailable. Please check backend logs.');
                 }
 
                 const regime = regimeRes?.data || regimeRes || {};
                 const volatility = volatilityRes?.data || volatilityRes || {};
 
-                const getRegimeColor = (reg) => {
-                    const r = String(reg).toLowerCase();
-                    if (r.includes('bull')) return 'var(--success)';
-                    if (r.includes('bear')) return 'var(--danger)';
-                    return 'var(--warning)';
-                };
-
                 const regimeColor = getRegimeColor(regime.current_regime);
                 const regimeConfidence = ((regime.confidence || 0) * 100).toFixed(0);
 
+                // Extract volatility predictions
+                const vol1d = volatility.predictions?.['1d']?.predicted_volatility;
+                const vol7d = volatility.predictions?.['7d']?.predicted_volatility;
+                const vol30d = volatility.predictions?.['30d']?.predicted_volatility;
+
                 document.getElementById('mlInsights').innerHTML = `
-                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;margin-bottom:1.5rem;">
+                        <!-- Market Regime -->
                         <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
                             <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Market Regime</div>
-                            <div style="font-size:1.25rem;font-weight:700;color:${regimeColor};">${regime.current_regime || 'Unknown'}</div>
-                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">Confidence: ${regimeConfidence}%</div>
-                        </div>
-                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
-                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Volatility Forecast (${topStock})</div>
-                            <div style="font-size:1.25rem;font-weight:700;">
-                                ${volatility.predictions?.['7d']?.predicted_volatility ? (volatility.predictions['7d'].predicted_volatility * 100).toFixed(2) + '%' : 'N/A'}
+                            <div style="font-size:1.25rem;font-weight:700;color:${regimeColor};margin-bottom:0.25rem;">
+                                ${regime.current_regime || 'Unknown'}
                             </div>
-                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">7-day horizon</div>
+                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">
+                                Confidence: ${regimeConfidence}% • ${regime.benchmark || benchmark}
+                            </div>
+                        </div>
+
+                        <!-- Volatility Forecast -->
+                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Volatility Forecast (${firstStock})</div>
+                            <div style="display:flex;gap:1rem;align-items:baseline;">
+                                <div>
+                                    <div style="font-size:0.7rem;color:var(--theme-text-muted);">1d</div>
+                                    <div style="font-weight:600;">${vol1d ? (vol1d * 100).toFixed(2) : 'N/A'}%</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.7rem;color:var(--theme-text-muted);">7d</div>
+                                    <div style="font-weight:600;">${vol7d ? (vol7d * 100).toFixed(2) : 'N/A'}%</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:0.7rem;color:var(--theme-text-muted);">30d</div>
+                                    <div style="font-weight:600;">${vol30d ? (vol30d * 100).toFixed(2) : 'N/A'}%</div>
+                                </div>
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--theme-text-muted);margin-top:0.5rem;">
+                                Model: ${volatility.model_type || 'Historical'}
+                            </div>
+                        </div>
+
+                        <!-- Regime Characteristics -->
+                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Regime Characteristics</div>
+                            ${Object.entries(regime.characteristics || {})
+                                .map(([key, value]) => `
+                                    <div style="display:flex;justify-content:space-between;margin:0.25rem 0;">
+                                        <span style="font-size:0.8rem;text-transform:capitalize;">${key}:</span>
+                                        <span style="font-size:0.8rem;font-weight:600;color:var(--theme-text);">${value}</span>
+                                    </div>
+                                `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Regime Probabilities -->
+                    ${Object.keys(regime.regime_probabilities || {}).length > 0 ? `
+                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.75rem;">Regime Probabilities</div>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem;">
+                                ${Object.entries(regime.regime_probabilities || {})
+                                    .sort(([,a], [,b]) => b - a)
+                                    .map(([regimeName, prob]) => `
+                                        <div style="text-align:center;">
+                                            <div style="font-weight:700;font-size:1.1rem;color:${getRegimeColor(regimeName)};">
+                                                ${(prob * 100).toFixed(0)}%
+                                            </div>
+                                            <div style="font-size:0.7rem;color:var(--theme-text-muted);margin-top:0.25rem;">
+                                                ${regimeName}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Model Limitations -->
+                    <div style="margin-top:1rem;padding:0.75rem;background:var(--warning-bg);border-radius:var(--radius-sm);border:1px solid var(--warning);font-size:0.875rem;color:var(--theme-text);">
+                        <div style="font-weight:600;color:var(--warning);margin-bottom:0.5rem;">⚠️ Model Limitations</div>
+                        <div style="line-height:1.5;">
+                            • <strong>Historical Pattern Matching:</strong> High confidence indicates strong resemblance to past regime periods<br>
+                            • <strong>Not Predictive:</strong> Cannot anticipate black swans or rapid regime shifts<br>
+                            • <strong>Use with Caution:</strong> Combine with fundamental analysis and risk management
                         </div>
                     </div>
                 `;
 
-                document.getElementById('mlBadge').textContent = 'Active';
+                document.getElementById('mlBadge').textContent = `${regime.model_type || 'ML'} Active`;
                 document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--success) 10%, transparent)';
                 document.getElementById('mlBadge').style.color = 'var(--success)';
 
@@ -640,11 +753,16 @@
                 debugLogger.error('ML insights load failed', error);
                 document.getElementById('mlInsights').innerHTML = `
                     <div style="padding:1rem;background:var(--warning-bg);border:1px solid var(--warning);border-radius:var(--radius-md);">
-                        <div style="color:var(--warning);">⚠️ ML Predictions Unavailable</div>
-                        <div style="font-size:0.875rem;color:var(--theme-text-muted);">${error.message}</div>
+                        <div style="color:var(--warning);margin-bottom:0.5rem;"><strong>⚠️ ML Predictions Unavailable</strong></div>
+                        <div style="font-size:0.875rem;color:var(--theme-text-muted);">
+                            ${error.message || 'Failed to load ML predictions'}
+                            <br><small>Models may need training or data may be insufficient.</small>
+                        </div>
                     </div>
                 `;
                 document.getElementById('mlBadge').textContent = 'Fallback';
+                document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--warning) 10%, transparent)';
+                document.getElementById('mlBadge').style.color = 'var(--warning)';
             }
         }
 
@@ -678,7 +796,11 @@
                 document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Calculating correlations…</div>';
 
                 let url = `/api/risk/bourse/advanced/correlation?user_id=${activeUser}&method=pearson&lookback_days=252`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'manual') {
+                    url += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    url += `&source=saxobank_api`;
+                } else if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
@@ -688,6 +810,10 @@
                 const data = response.data || response;
                 const corrMatrix = data.correlation_matrix || {};
                 const labels = data.clustering?.labels || Object.keys(corrMatrix);
+                const corrArray = labels.map(row => labels.map(col => corrMatrix[row]?.[col] || 0));
+
+                const heatmapDiv = 'correlationHeatmap';
+                const dendrogramDiv = 'correlationDendrogram';
 
                 document.getElementById('correlationAnalysis').innerHTML = `
                     <div style="margin-bottom: 1rem;">
@@ -695,27 +821,81 @@
                             ${data.num_positions} positions analyzed • Avg correlation: ${(data.avg_correlation || 0).toFixed(3)}
                         </span>
                     </div>
-                    <div id="correlationHeatmap" style="width: 100%; height: 500px;"></div>
+
+                    <!-- Correlation Heatmap -->
+                    <div id="${heatmapDiv}" style="width: 100%; height: 600px;"></div>
+
+                    <!-- Clustering Dendrogram -->
+                    <div style="margin-top: 2rem;">
+                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--theme-text);">
+                            🌳 Hierarchical Clustering Dendrogram
+                        </h4>
+                        <div id="${dendrogramDiv}" style="width: 100%; height: 400px;"></div>
+                        <div style="margin-top: 0.75rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--theme-text-muted);">
+                            ℹ️ Dendrogram shows hierarchical grouping based on correlation similarity (Ward linkage)
+                        </div>
+                    </div>
+
+                    ${data.max_pair ? `
+                        <div style="margin-top: 1rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm); font-size: 0.875rem;">
+                            <strong>Max correlation:</strong> ${data.max_pair.pair.join(' & ')} (${data.max_pair.correlation.toFixed(3)})<br>
+                            <strong>Min correlation:</strong> ${data.min_pair.pair.join(' & ')} (${data.min_pair.correlation.toFixed(3)})
+                        </div>
+                    ` : ''}
                 `;
 
-                // Create heatmap
-                const corrArray = labels.map(row => labels.map(col => corrMatrix[row]?.[col] || 0));
+                // Create heatmap with Plotly
                 const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
 
-                Plotly.newPlot('correlationHeatmap', [{
+                const heatmapTrace = {
                     z: corrArray,
                     x: labels,
                     y: labels,
                     type: 'heatmap',
-                    colorscale: [[0, '#ef4444'], [0.5, '#f3f4f6'], [1, '#22c55e']],
-                    zmid: 0
-                }], {
-                    title: { text: '🔗 Position Correlation Heatmap', font: { color: textColor } },
-                    xaxis: { tickangle: -45, tickfont: { color: textColor } },
-                    yaxis: { tickfont: { color: textColor } },
+                    colorscale: [
+                        [0, '#ef4444'],
+                        [0.5, '#f3f4f6'],
+                        [1, '#22c55e']
+                    ],
+                    zmid: 0,
+                    colorbar: {
+                        title: 'Correlation',
+                        titleside: 'right',
+                        tickfont: { color: textColor },
+                        titlefont: { color: textColor }
+                    },
+                    hovertemplate: '%{y} & %{x}<br>Correlation: %{z:.3f}<extra></extra>'
+                };
+
+                const layout = {
+                    title: {
+                        text: '🔗 Position Correlation Heatmap',
+                        font: { color: textColor, size: 16 }
+                    },
+                    xaxis: {
+                        title: '',
+                        tickangle: -45,
+                        tickfont: { color: textColor }
+                    },
+                    yaxis: {
+                        title: '',
+                        tickfont: { color: textColor }
+                    },
+                    width: null,
+                    height: 600,
+                    margin: { l: 150, r: 50, t: 50, b: 100 },
                     paper_bgcolor: 'rgba(0,0,0,0)',
-                    plot_bgcolor: 'rgba(0,0,0,0)'
-                }, { responsive: true, displayModeBar: false });
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: textColor }
+                };
+
+                Plotly.newPlot(heatmapDiv, [heatmapTrace], layout, { responsive: true, displayModeBar: false });
+
+                // Create dendrogram if linkage matrix available
+                const linkageMatrix = data.clustering?.linkage_matrix || [];
+                if (linkageMatrix && linkageMatrix.length > 0) {
+                    createDendrogram(dendrogramDiv, linkageMatrix, labels);
+                }
 
                 document.getElementById('correlationBadge').textContent = `${labels.length} positions`;
 
@@ -725,29 +905,333 @@
             }
         }
 
+        // Create Dendrogram using Plotly
+        function createDendrogram(divId, linkageMatrix, labels) {
+            try {
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+                const lineColor = '#cbd5e1';
+
+                const n = labels.length;
+                const traces = [];
+
+                // Draw lines connecting clusters
+                linkageMatrix.forEach((link, i) => {
+                    const [idx1, idx2, distance, count] = link;
+                    const y1 = idx1 < n ? idx1 : (n + linkageMatrix.findIndex(l => l === linkageMatrix[idx1 - n]));
+                    const y2 = idx2 < n ? idx2 : (n + linkageMatrix.findIndex(l => l === linkageMatrix[idx2 - n]));
+
+                    traces.push({
+                        x: [distance, distance],
+                        y: [y1, y2],
+                        mode: 'lines',
+                        line: { color: lineColor, width: 2 },
+                        showlegend: false,
+                        hoverinfo: 'skip'
+                    });
+
+                    if (idx1 < n) {
+                        traces.push({
+                            x: [0, distance],
+                            y: [y1, y1],
+                            mode: 'lines',
+                            line: { color: lineColor, width: 1 },
+                            showlegend: false,
+                            hoverinfo: 'skip'
+                        });
+                    }
+                    if (idx2 < n) {
+                        traces.push({
+                            x: [0, distance],
+                            y: [y2, y2],
+                            mode: 'lines',
+                            line: { color: lineColor, width: 1 },
+                            showlegend: false,
+                            hoverinfo: 'skip'
+                        });
+                    }
+                });
+
+                // Add leaf labels
+                const leafTrace = {
+                    x: Array(n).fill(0),
+                    y: Array.from({length: n}, (_, i) => i),
+                    mode: 'markers+text',
+                    marker: { size: 8, color: '#3b82f6' },
+                    text: labels,
+                    textposition: 'middle left',
+                    textfont: { size: 10, color: textColor },
+                    showlegend: false,
+                    hovertemplate: '%{text}<extra></extra>'
+                };
+                traces.push(leafTrace);
+
+                const layout = {
+                    title: '',
+                    showlegend: false,
+                    xaxis: {
+                        title: 'Distance (Correlation Dissimilarity)',
+                        titlefont: { color: textColor },
+                        tickfont: { color: textColor },
+                        zeroline: false,
+                        showgrid: true,
+                        gridcolor: 'rgba(100, 116, 139, 0.2)'
+                    },
+                    yaxis: {
+                        title: '',
+                        showticklabels: false,
+                        zeroline: false,
+                        showgrid: false
+                    },
+                    width: null,
+                    height: 400,
+                    margin: { l: 120, r: 50, t: 50, b: 60 },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: { color: textColor }
+                };
+
+                Plotly.newPlot(divId, traces, layout, { responsive: true, displayModeBar: false });
+
+            } catch (error) {
+                debugLogger.error('Failed to create dendrogram', error);
+                document.getElementById(divId).innerHTML = `
+                    <div class="error-message" style="padding: 1rem;">Dendrogram visualization unavailable</div>
+                `;
+            }
+        }
+
         async function loadStressTestingUI() {
             document.getElementById('stressTestingUI').innerHTML = `
+                <!-- Predefined Scenarios -->
                 <div style="margin-bottom: 1.5rem;">
                     <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Generic Scenarios</h4>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
-                        <button onclick="runStressTest('market_crash')" style="padding: 0.75rem; border: 1px solid var(--danger); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">📉 Market Crash (-10%)</button>
-                        <button onclick="runStressTest('market_rally')" style="padding: 0.75rem; border: 1px solid var(--success); background: color-mix(in oklab, var(--success) 10%, transparent); color: var(--success); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">📈 Market Rally (+10%)</button>
-                        <button onclick="runStressTest('moderate_selloff')" style="padding: 0.75rem; border: 1px solid var(--warning); background: color-mix(in oklab, var(--warning) 10%, transparent); color: var(--warning); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">⚠️ Moderate Selloff (-5%)</button>
+                        <button onclick="runStressTest('market_crash')" style="padding: 0.75rem; border: 1px solid var(--danger); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                            📉 Market Crash (-10%)
+                        </button>
+                        <button onclick="runStressTest('market_rally')" style="padding: 0.75rem; border: 1px solid var(--success); background: color-mix(in oklab, var(--success) 10%, transparent); color: var(--success); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                            📈 Market Rally (+10%)
+                        </button>
+                        <button onclick="runStressTest('moderate_selloff')" style="padding: 0.75rem; border: 1px solid var(--warning); background: color-mix(in oklab, var(--warning) 10%, transparent); color: var(--warning); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                            ⚠️ Moderate Selloff (-5%)
+                        </button>
+                        <button onclick="runStressTest('rate_hike')" style="padding: 0.75rem; border: 1px solid var(--warning); background: color-mix(in oklab, var(--warning) 10%, transparent); color: var(--warning); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                            📊 Rate Hike (-3%)
+                        </button>
                     </div>
                 </div>
+
+                <!-- Historical Crisis Scenarios -->
                 <div style="margin-bottom: 1.5rem;">
                     <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📜 Historical Crisis Scenarios</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
-                        <button onclick="runStressTest('covid_crash')" style="padding: 0.75rem; border: 1px solid #DC143C; background: color-mix(in oklab, #DC143C 10%, transparent); color: #DC143C; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">🦠 COVID-19 (-34%)</button>
-                        <button onclick="runStressTest('financial_crisis_2008')" style="padding: 0.75rem; border: 1px solid #8B0000; background: color-mix(in oklab, #8B0000 10%, transparent); color: #8B0000; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">🏦 2008 Crisis (-57%)</button>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;">
+                        <button onclick="runStressTest('covid_crash')" style="padding: 0.75rem; border: 1px solid #DC143C; background: color-mix(in oklab, #DC143C 10%, transparent); color: #DC143C; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">🦠 COVID-19 (2020)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-34% S&P 500</div>
+                        </button>
+                        <button onclick="runStressTest('financial_crisis_2008')" style="padding: 0.75rem; border: 1px solid #8B0000; background: color-mix(in oklab, #8B0000 10%, transparent); color: #8B0000; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">🏦 Financial Crisis (2008)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-57% peak-to-trough</div>
+                        </button>
+                        <button onclick="runStressTest('dotcom_bubble')" style="padding: 0.75rem; border: 1px solid #4B0082; background: color-mix(in oklab, #4B0082 10%, transparent); color: #4B0082; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">💻 Dot-com Bubble (2000)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-78% NASDAQ</div>
+                        </button>
+                        <button onclick="runStressTest('black_monday_1987')" style="padding: 0.75rem; border: 1px solid #DC143C; background: color-mix(in oklab, #DC143C 10%, transparent); color: #DC143C; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">📉 Black Monday (1987)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-22% in 1 day</div>
+                        </button>
+                        <button onclick="runStressTest('flash_crash_2010')" style="padding: 0.75rem; border: 1px solid #FF6347; background: color-mix(in oklab, #FF6347 10%, transparent); color: #FF6347; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">⚡ Flash Crash (2010)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-9% in minutes</div>
+                        </button>
+                        <button onclick="runStressTest('brexit_2016')" style="padding: 0.75rem; border: 1px solid #FF8C00; background: color-mix(in oklab, #FF8C00 10%, transparent); color: #FF8C00; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600; text-align: left;">
+                            <div style="font-size: 0.875rem; font-weight: 700;">🇬🇧 Brexit (2016)</div>
+                            <div style="font-size: 0.75rem; opacity: 0.8;">-12% FTSE</div>
+                        </button>
                     </div>
                 </div>
+
+                <!-- Custom Scenario -->
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.75rem;">🎚️ Custom Scenario</h4>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                        <label style="flex: 0 0 120px; font-weight: 600;">Market Impact:</label>
+                        <input type="range" id="customStressSlider" min="-30" max="30" value="0" step="1" style="flex: 1;" oninput="updateStressSliderValue()">
+                        <span id="customStressValue" style="flex: 0 0 80px; font-weight: 700; font-size: 1.25rem;">0%</span>
+                    </div>
+                    <button onclick="runCustomStressTest()" style="padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">
+                        🧪 Run Custom Test
+                    </button>
+                </div>
+
+                <!-- Results Section -->
                 <div id="stressTestResults" style="display: none;">
                     <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📊 Stress Test Results</h4>
                     <div id="stressTestChart" style="width: 100%; height: 300px; margin-bottom: 1rem;"></div>
                     <div id="stressTestMetrics"></div>
                 </div>
             `;
+        }
+
+        function updateStressSliderValue() {
+            const slider = document.getElementById('customStressSlider');
+            const display = document.getElementById('customStressValue');
+            const value = parseInt(slider.value);
+            display.textContent = (value >= 0 ? '+' : '') + value + '%';
+            display.style.color = value >= 0 ? 'var(--success)' : 'var(--danger)';
+        }
+
+        async function runCustomStressTest() {
+            const slider = document.getElementById('customStressSlider');
+            const impact = parseInt(slider.value) / 100;
+            await runStressTestWithImpact(impact);
+        }
+
+        async function runStressTestWithImpact(impact) {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                document.getElementById('stressTestResults').style.display = 'block';
+                document.getElementById('stressTestMetrics').innerHTML = '<div class="loading">Running stress test…</div>';
+
+                let url = `/api/risk/bourse/advanced/stress-test?user_id=${activeUser}&scenario=custom&impact=${impact}`;
+                if (window.saxoSourceType === 'manual') {
+                    url += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    url += `&source=saxobank_api`;
+                } else if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const response = await window.safeFetch(globalConfig.getApiUrl(url), { method: 'POST' });
+                if (!response?.ok) throw new Error('Stress test failed');
+
+                const data = response.data || response;
+                displayStressTestResults(data, `Custom (${(impact*100).toFixed(0)}%)`);
+
+            } catch (error) {
+                debugLogger.error('Custom stress test failed', error);
+                document.getElementById('stressTestMetrics').innerHTML = `<div class="error-message">${error.message}</div>`;
+            }
+        }
+
+        function displayStressTestResults(data, scenarioName) {
+            const pnlPct = data.pnl_pct || 0;
+            const totalPnl = data.total_pnl || 0;
+            const valueBefore = data.total_value_before || 0;
+            const valueAfter = data.total_value_after || 0;
+            const pnlColor = pnlPct >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            document.getElementById('stressTestMetrics').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                    <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                        <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Scenario</div>
+                        <div style="font-size: 1.25rem; font-weight: 700;">${scenarioName || data.scenario}</div>
+                    </div>
+                    <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                        <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Total P&L</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: ${pnlColor};">
+                            ${pnlPct >= 0 ? '+' : ''}$${totalPnl.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                            (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)
+                        </div>
+                    </div>
+                    <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                        <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Portfolio Value</div>
+                        <div style="font-size: 1rem; font-weight: 600;">
+                            $${valueBefore.toLocaleString()} → $${valueAfter.toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Create Chart.js impact chart
+            const ctx = document.createElement('canvas');
+            document.getElementById('stressTestChart').innerHTML = '';
+            document.getElementById('stressTestChart').appendChild(ctx);
+
+            // Destroy previous chart to prevent memory leak
+            if (stressTestChartInstance) {
+                stressTestChartInstance.destroy();
+            }
+
+            stressTestChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Current', 'Stressed'],
+                    datasets: [{
+                        label: 'Portfolio Value ($)',
+                        data: [valueBefore, valueAfter],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.8)',
+                            pnlPct >= 0 ? 'rgba(75, 192, 192, 0.8)' : 'rgba(255, 99, 132, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            pnlPct >= 0 ? 'rgba(75, 192, 192, 1)' : 'rgba(255, 99, 132, 1)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Stress Test Impact: ${scenarioName || data.scenario}`,
+                            font: { size: 14, weight: '600' }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: { display: true, text: 'Portfolio Value ($)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Display position impacts if available (convert object to array)
+            if (data.position_impacts && typeof data.position_impacts === 'object') {
+                const impacts = Object.entries(data.position_impacts)
+                    .map(([symbol, impact]) => ({ symbol, ...impact }))
+                    .sort((a, b) => a.pnl - b.pnl)
+                    .slice(0, 10);
+
+                if (impacts.length > 0) {
+                    const impactsHtml = `
+                        <div style="margin-top: 1.5rem;">
+                            <h5 style="font-weight: 600; margin-bottom: 0.75rem;">Position Impacts (Top 10)</h5>
+                            <div style="max-height: 300px; overflow-y: auto;">
+                                <table class="positions-table">
+                                    <thead>
+                                        <tr><th>Symbol</th><th>Before</th><th>After</th><th>P&L</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        ${impacts.map(p => `
+                                            <tr>
+                                                <td style="font-weight: 600;">${p.symbol}</td>
+                                                <td>$${(p.value_before || 0).toLocaleString()}</td>
+                                                <td>$${(p.value_after || 0).toLocaleString()}</td>
+                                                <td style="color: ${p.pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                                    ${p.pnl >= 0 ? '+' : ''}$${(p.pnl || 0).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('stressTestMetrics').innerHTML += impactsHtml;
+                }
+            }
         }
 
         async function runStressTest(scenario) {
@@ -757,7 +1241,11 @@
                 document.getElementById('stressTestMetrics').innerHTML = '<div class="loading">Running stress test…</div>';
 
                 let url = `/api/risk/bourse/advanced/stress-test?user_id=${activeUser}&scenario=${scenario}`;
-                if (currentFileKey) {
+                if (window.saxoSourceType === 'manual') {
+                    url += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    url += `&source=saxobank_api`;
+                } else if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
@@ -765,25 +1253,7 @@
                 if (!response?.ok) throw new Error('Stress test failed');
 
                 const data = response.data || response;
-                const pnlPct = data.pnl_pct || 0;
-                const totalPnl = data.total_pnl || 0;
-                const pnlColor = pnlPct >= 0 ? 'var(--success)' : 'var(--danger)';
-
-                document.getElementById('stressTestMetrics').innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
-                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Scenario</div>
-                            <div style="font-size: 1.25rem; font-weight: 700;">${data.scenario}</div>
-                        </div>
-                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
-                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Total P&L</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: ${pnlColor};">
-                                ${pnlPct >= 0 ? '+' : ''}$${totalPnl.toLocaleString('en-US', {maximumFractionDigits: 0})}
-                                (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)
-                            </div>
-                        </div>
-                    </div>
-                `;
+                displayStressTestResults(data, null);
 
             } catch (error) {
                 debugLogger.error('Stress test failed', error);
@@ -791,13 +1261,338 @@
             }
         }
 
+        // Helper: Get regime color
+        function getRegimeColor(regime) {
+            const colors = {
+                'Bear Market': '#dc2626',
+                'Correction': '#f97316',
+                'Consolidation': '#94a3b8',
+                'Bull Market': '#22c55e',
+                'Expansion': '#3b82f6',
+                'Strong Bull Market': '#3b82f6'
+            };
+            return colors[regime] || '#64748b';
+        }
+
+        // Helper: Get regime emoji
+        function getRegimeEmoji(regime) {
+            const emojis = {
+                'Bear Market': '🔴',
+                'Correction': '🟠',
+                'Consolidation': '↔️',
+                'Bull Market': '🟢',
+                'Expansion': '🔵',
+                'Strong Bull Market': '🚀'
+            };
+            return emojis[regime] || '❓';
+        }
+
         async function loadRegimeHistory() {
-            document.getElementById('regimeHistory').innerHTML = `
-                <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
-                    📈 Regime History visualization available in full dashboard
-                    <br><a href="saxo-dashboard.html" style="color: var(--brand-primary);">View Full Dashboard →</a>
-                </div>
-            `;
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+            try {
+                // Fetch current regime (20 years for 4-5 full market cycles)
+                const regimeUrl = `/api/ml/bourse/regime?user_id=${activeUser}&benchmark=SPY&lookback_days=7300`;
+                const regimeResponse = await window.safeFetch(globalConfig.getApiUrl(regimeUrl));
+                if (!regimeResponse?.ok) throw new Error('Regime detection failed');
+
+                const regimeData = regimeResponse.data || regimeResponse;
+
+                // Detect absurd probabilities
+                const probabilities = regimeData.regime_probabilities || {};
+                const probValues = Object.values(probabilities);
+                const hasAbsurdProbs = probValues.some(p => p === 1.0) && probValues.filter(p => p === 0).length >= 3;
+
+                const fallbackWarning = hasAbsurdProbs ? `
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius-md);">
+                        <div style="color: var(--warning); font-weight: 600; margin-bottom: 0.5rem;">⚠️ Model Confidence Issue Detected</div>
+                        <div style="font-size: 0.875rem; color: var(--theme-text-muted);">
+                            Le modèle ML affiche une confiance anormale (100%). Le modèle sera recalibré.
+                        </div>
+                    </div>
+                ` : '';
+
+                document.getElementById('regimeHistory').innerHTML = `
+                    ${fallbackWarning}
+                    <!-- Current Regime Summary -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Current Regime</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: ${getRegimeColor(regimeData.current_regime)};">
+                                ${getRegimeEmoji(regimeData.current_regime)} ${regimeData.current_regime}
+                            </div>
+                        </div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Confidence</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${(regimeData.confidence * 100).toFixed(1)}%</div>
+                        </div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Benchmark</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${regimeData.benchmark}</div>
+                        </div>
+                    </div>
+
+                    <!-- Regime Probabilities Chart -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--theme-text);">
+                            📊 Regime Probabilities
+                        </h4>
+                        <canvas id="regimeProbabilitiesChart" style="max-height: 250px;"></canvas>
+                    </div>
+
+                    <!-- Regime Timeline -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                            <h4 style="font-size: 0.9rem; font-weight: 600; margin: 0; color: var(--theme-text);">
+                                📈 Market Regime History with SPY Price
+                            </h4>
+                            <div id="timeframeSelector" style="display: flex; gap: 0.25rem;">
+                                <button class="timeframe-btn active" data-days="365" onclick="updateRegimeTimeline(365)">1Y</button>
+                                <button class="timeframe-btn" data-days="730" onclick="updateRegimeTimeline(730)">2Y</button>
+                                <button class="timeframe-btn" data-days="1825" onclick="updateRegimeTimeline(1825)">5Y</button>
+                                <button class="timeframe-btn" data-days="3650" onclick="updateRegimeTimeline(3650)">10Y</button>
+                            </div>
+                        </div>
+                        <canvas id="regimeTimelineChart" style="max-height: 350px;"></canvas>
+                        <div id="regimeTimelineInfo" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--theme-text-muted);">
+                            ℹ️ Loading historical regime data...
+                        </div>
+                    </div>
+                `;
+
+                // Create Regime Probabilities Bar Chart
+                createRegimeProbabilitiesChart(regimeData.regime_probabilities);
+
+                // Create Regime Timeline
+                window.currentRegimeData = regimeData;
+                await createRegimeTimelineChart(regimeData, 365);
+
+                document.getElementById('regimeBadge').textContent = `${regimeData.benchmark} • ${regimeData.current_regime}`;
+
+            } catch (error) {
+                debugLogger.error('Failed to load regime history', error);
+                document.getElementById('regimeHistory').innerHTML = `
+                    <div class="error-message">Failed to load ML regime history: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Create Regime Probabilities Bar Chart
+        function createRegimeProbabilitiesChart(probabilities) {
+            const ctx = document.getElementById('regimeProbabilitiesChart');
+            if (!ctx) return;
+
+            const regimes = Object.keys(probabilities);
+            const values = Object.values(probabilities);
+
+            if (regimeProbabilitiesChartInstance) {
+                regimeProbabilitiesChartInstance.destroy();
+            }
+
+            regimeProbabilitiesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: regimes,
+                    datasets: [{
+                        label: 'Probability',
+                        data: values,
+                        backgroundColor: regimes.map(r => getRegimeColor(r) + '80'),
+                        borderColor: regimes.map(r => getRegimeColor(r)),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Probability: ${(context.parsed.x * 100).toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create Regime Timeline Chart
+        async function createRegimeTimelineChart(regimeData, lookback_days = 365) {
+            const ctx = document.getElementById('regimeTimelineChart');
+            if (!ctx) return;
+
+            try {
+                document.getElementById('regimeTimelineInfo').innerHTML = '⏳ Loading historical data...';
+
+                const baseUrl = window.location.origin;
+                const historyUrl = `${baseUrl}/api/ml/bourse/regime-history?benchmark=${regimeData.benchmark || 'SPY'}&lookback_days=${lookback_days}`;
+                const historyResponse = await window.safeFetch(historyUrl);
+
+                if (!historyResponse?.ok) {
+                    const errorMsg = historyResponse?.status === 503
+                        ? 'ML service temporarily unavailable. Model may need initialization or yfinance data download.'
+                        : `Failed to fetch regime history (status: ${historyResponse?.status || 'unknown'})`;
+                    document.getElementById('regimeTimelineInfo').innerHTML = `⚠️ ${errorMsg}`;
+                    return;
+                }
+
+                const historyData = historyResponse.data || historyResponse;
+
+                // API returns: dates[], prices[], regimes[], regime_ids[]
+                const dates = historyData.dates || [];
+                const prices = historyData.prices || [];
+                const regimes = historyData.regimes || [];
+
+                if (dates.length === 0 || prices.length === 0) {
+                    document.getElementById('regimeTimelineInfo').innerHTML = '⚠️ No historical regime data available';
+                    return;
+                }
+
+                // Prepare data for Chart.js
+                const regimeColors = regimes.map(r => getRegimeColor(r));
+
+                if (regimeTimelineChartInstance) {
+                    regimeTimelineChartInstance.destroy();
+                }
+
+                // Subsample data for better performance if > 250 points
+                let displayLabels = dates;
+                let displayPrices = prices;
+                let displayColors = regimeColors;
+                let displayRegimes = regimes;
+
+                if (dates.length > 250) {
+                    const sampleRate = Math.ceil(dates.length / 250);
+                    displayLabels = dates.filter((_, i) => i % sampleRate === 0);
+                    displayPrices = prices.filter((_, i) => i % sampleRate === 0);
+                    displayColors = regimeColors.filter((_, i) => i % sampleRate === 0);
+                    displayRegimes = regimes.filter((_, i) => i % sampleRate === 0);
+                }
+
+                // Get text color for theme compatibility
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+                const benchmark = historyData.benchmark || 'SPY';
+
+                regimeTimelineChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: displayLabels,
+                        datasets: [{
+                            label: `${benchmark} Price`,
+                            data: displayPrices,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.1,
+                            pointBackgroundColor: displayColors,
+                            pointBorderColor: displayColors,
+                            pointRadius: lookback_days > 1825 ? 3 : 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: {
+                                    color: textColor,
+                                    font: { size: 12 },
+                                    generateLabels: function(chart) {
+                                        return [
+                                            { text: `${benchmark} Price`, fillStyle: '#8b5cf6', strokeStyle: '#8b5cf6', fontColor: textColor },
+                                            { text: 'Bear Market', fillStyle: '#dc2626', fontColor: textColor },
+                                            { text: 'Correction', fillStyle: '#f97316', fontColor: textColor },
+                                            { text: 'Bull Market', fillStyle: '#22c55e', fontColor: textColor },
+                                            { text: 'Expansion', fillStyle: '#3b82f6', fontColor: textColor }
+                                        ];
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        const idx = context.dataIndex;
+                                        return `Regime: ${displayRegimes[idx] || 'Unknown'}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'category',
+                                ticks: {
+                                    maxTicksLimit: 12,
+                                    maxRotation: 45,
+                                    color: textColor
+                                },
+                                grid: { color: 'rgba(128, 128, 128, 0.1)' }
+                            },
+                            y: {
+                                title: { display: true, text: 'Price (USD)', color: textColor },
+                                ticks: { color: textColor },
+                                grid: { color: 'rgba(128, 128, 128, 0.1)' }
+                            }
+                        }
+                    }
+                });
+
+                // Update info using regime_distribution from API if available
+                const totalDays = dates.length;
+                let infoHtml = '';
+
+                if (historyData.regime_distribution) {
+                    // Use pre-calculated distribution from API
+                    infoHtml = Object.entries(historyData.regime_distribution)
+                        .map(([regime, data]) => `${getRegimeEmoji(regime)} ${regime}: ${data.percentage}%`)
+                        .join(' • ');
+                } else {
+                    // Calculate from regimes array
+                    const regimeCounts = {};
+                    regimes.forEach(r => {
+                        regimeCounts[r] = (regimeCounts[r] || 0) + 1;
+                    });
+                    infoHtml = Object.entries(regimeCounts)
+                        .map(([regime, count]) => `${getRegimeEmoji(regime)} ${regime}: ${((count/totalDays)*100).toFixed(1)}%`)
+                        .join(' • ');
+                }
+
+                document.getElementById('regimeTimelineInfo').innerHTML = `📊 ${totalDays} days analyzed • ${infoHtml}`;
+
+            } catch (error) {
+                debugLogger.error('Failed to create regime timeline', error);
+                document.getElementById('regimeTimelineInfo').innerHTML = `⚠️ Error: ${error.message}`;
+            }
+        }
+
+        // Update regime timeline with new timeframe
+        async function updateRegimeTimeline(days) {
+            // Update button states
+            document.querySelectorAll('#timeframeSelector .timeframe-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.days) === days);
+            });
+
+            if (window.currentRegimeData) {
+                await createRegimeTimelineChart(window.currentRegimeData, days);
+            }
         }
 
         // ==================== SPECIALIZED ANALYTICS ====================
@@ -812,6 +1607,7 @@
         async function loadSectorRotation() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
+                document.getElementById('sectorRotation').innerHTML = '<div class="loading">Loading visualization library…</div>';
                 await loadPlotlyLib();
                 document.getElementById('sectorRotation').innerHTML = '<div class="loading">Analyzing sectors…</div>';
 
@@ -827,41 +1623,183 @@
                 const sectors = data.sectors || {};
                 const sortedSectors = Object.entries(sectors).sort((a, b) => (b[1].momentum || 0) - (a[1].momentum || 0));
 
+                // Store for filtering
+                window.sectorData = { sectors, sortedSectors, data };
+
                 document.getElementById('sectorRotation').innerHTML = `
                     <div style="margin-bottom: 1rem;">
-                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--${data.rotation_detected ? 'warning' : 'info'}) 10%, transparent); color: var(--${data.rotation_detected ? 'warning' : 'info'}); font-size: 0.75rem; font-weight: 600;">
+                        <div style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--${data.rotation_detected ? 'warning' : 'info'}) 10%, transparent); color: var(--${data.rotation_detected ? 'warning' : 'info'}); font-size: 0.75rem; font-weight: 600;">
                             ${data.rotation_detected ? '🔄 Rotation Detected' : '📊 No Rotation'}
+                        </div>
+                        <span style="margin-left: 1rem; font-size: 0.875rem; color: var(--theme-text-muted);">
+                            ${data.num_sectors || Object.keys(sectors).length} sectors analyzed over ${data.lookback_days || 60} days
                         </span>
                     </div>
-                    <table class="positions-table">
+
+                    <!-- Portfolio Analysis - Alerts/Warnings/Opportunities -->
+                    ${data.portfolio_analysis ? `
+                        ${data.portfolio_analysis.alerts && data.portfolio_analysis.alerts.length > 0 ? `
+                            <div style="margin-bottom: 1rem; padding: 0.75rem; background: color-mix(in oklab, var(--danger) 10%, transparent); border-left: 3px solid var(--danger); border-radius: var(--radius-sm);">
+                                <strong style="color: var(--danger); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">⚠️ ALERTS</strong>
+                                ${data.portfolio_analysis.alerts.map(alert => `
+                                    <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                                        <div style="font-weight: 600; color: var(--theme-text);">${alert.message}</div>
+                                        <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">→ ${alert.suggestion}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        ${data.portfolio_analysis.warnings && data.portfolio_analysis.warnings.length > 0 ? `
+                            <div style="margin-bottom: 1rem; padding: 0.75rem; background: color-mix(in oklab, var(--warning) 10%, transparent); border-left: 3px solid var(--warning); border-radius: var(--radius-sm);">
+                                <strong style="color: var(--warning); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">⚡ WARNINGS</strong>
+                                ${data.portfolio_analysis.warnings.map(warning => `
+                                    <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                                        <div style="font-weight: 600; color: var(--theme-text);">${warning.message}</div>
+                                        <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">→ ${warning.suggestion}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+
+                        ${data.portfolio_analysis.opportunities && data.portfolio_analysis.opportunities.length > 0 ? `
+                            <div style="margin-bottom: 1rem; padding: 0.75rem; background: color-mix(in oklab, var(--success) 10%, transparent); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
+                                <strong style="color: var(--success); font-size: 0.875rem; display: block; margin-bottom: 0.5rem;">💡 OPPORTUNITIES</strong>
+                                ${data.portfolio_analysis.opportunities.map(opp => `
+                                    <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+                                        <div style="font-weight: 600; color: var(--theme-text);">${opp.message}</div>
+                                        <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">→ ${opp.suggestion}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    ` : ''}
+
+                    <!-- Filters -->
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center;">
+                        <input type="text" id="sectorSearch" placeholder="🔍 Search sectors..."
+                            style="flex: 1; min-width: 200px; padding: 0.5rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-bg); color: var(--theme-text);"
+                            oninput="filterSectorTable()">
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="filterSectors('all')" id="filterAll" class="sector-filter-btn" style="padding: 0.5rem 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--brand-primary); color: white; cursor: pointer; font-size: 0.875rem; font-weight: 600;">
+                                All
+                            </button>
+                            <button onclick="filterSectors('hot')" id="filterHot" class="sector-filter-btn" style="padding: 0.5rem 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-bg); color: var(--theme-text); cursor: pointer; font-size: 0.875rem; font-weight: 600;">
+                                🔥 Hot
+                            </button>
+                            <button onclick="filterSectors('cold')" id="filterCold" class="sector-filter-btn" style="padding: 0.5rem 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm); background: var(--theme-bg); color: var(--theme-text); cursor: pointer; font-size: 0.875rem; font-weight: 600;">
+                                ❄️ Cold
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="positions-table" id="sectorTable" style="margin-bottom: 1rem;">
                         <thead>
-                            <tr><th>Sector</th><th>Return</th><th>Momentum</th><th>Signal</th></tr>
+                            <tr>
+                                <th>Sector</th>
+                                <th>Return</th>
+                                <th>Weight</th>
+                                <th>Momentum</th>
+                                <th>Signal</th>
+                                <th>Positions</th>
+                            </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="sectorTableBody">
                             ${sortedSectors.map(([name, d]) => {
-                                const signalColor = d.signal === 'overweight' ? 'var(--success)' : d.signal === 'underweight' ? 'var(--danger)' : 'var(--theme-text-muted)';
-                                return `<tr>
-                                    <td style="font-weight: 600;">${name}</td>
-                                    <td style="color: ${d.return >= 0 ? 'var(--success)' : 'var(--danger)'};">${d.return >= 0 ? '+' : ''}${d.return.toFixed(2)}%</td>
-                                    <td>${d.momentum.toFixed(2)}x</td>
-                                    <td style="color: ${signalColor}; font-weight: 600;">${d.signal.toUpperCase()}</td>
-                                </tr>`;
+                                const signalColor = d.signal === 'overweight' ? 'var(--success)' :
+                                                   d.signal === 'underweight' ? 'var(--danger)' : 'var(--theme-text-muted)';
+                                const signalIcon = d.signal === 'overweight' ? '🔥' :
+                                                  d.signal === 'underweight' ? '❄️' : '➖';
+                                const weight = d.weight !== undefined ? d.weight.toFixed(1) : '—';
+                                return `
+                                    <tr data-sector="${name}" data-signal="${d.signal}">
+                                        <td style="font-weight: 600;">${name}</td>
+                                        <td style="color: ${d.return >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                            ${d.return >= 0 ? '+' : ''}${d.return.toFixed(2)}%
+                                        </td>
+                                        <td style="font-weight: 600; color: var(--theme-text-muted);">${weight}%</td>
+                                        <td>${d.momentum.toFixed(2)}x</td>
+                                        <td style="color: ${signalColor}; font-weight: 600;">
+                                            ${signalIcon} ${d.signal.toUpperCase()}
+                                        </td>
+                                        <td>${d.num_positions || '—'}</td>
+                                    </tr>
+                                `;
                             }).join('')}
                         </tbody>
                     </table>
+
+                    ${data.recommendations && data.recommendations.length > 0 ? `
+                        <div style="padding: 0.75rem; background: var(--info-bg); border-radius: var(--radius-sm); border: 1px solid var(--info); font-size: 0.875rem;">
+                            <strong style="color: var(--info);">💡 Recommendations:</strong>
+                            <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0;">
+                                ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
                 `;
 
+                // Setup search filter
+                document.getElementById('sectorSearch')?.addEventListener('input', filterSectorTable);
+
                 document.getElementById('sectorBadge').textContent = `${data.hot_sectors?.length || 0} hot, ${data.cold_sectors?.length || 0} cold`;
+                document.getElementById('sectorBadge').style.background = data.rotation_detected ?
+                    'color-mix(in oklab, var(--warning) 10%, transparent)' : '';
+                document.getElementById('sectorBadge').style.color = data.rotation_detected ? 'var(--warning)' : '';
 
             } catch (error) {
                 debugLogger.error('Sector rotation failed', error);
-                document.getElementById('sectorRotation').innerHTML = `<div class="error-message">${error.message}</div>`;
+                document.getElementById('sectorRotation').innerHTML = `
+                    <div class="error-message" style="font-size: 0.875rem;">
+                        Failed to load sector rotation data: ${error.message}
+                    </div>
+                `;
             }
+        }
+
+        // Filter sectors by signal type
+        function filterSectors(filter) {
+            const rows = document.querySelectorAll('#sectorTableBody tr');
+            rows.forEach(row => {
+                const signal = row.dataset.signal;
+                if (filter === 'all') {
+                    row.style.display = '';
+                } else if (filter === 'hot' && signal === 'overweight') {
+                    row.style.display = '';
+                } else if (filter === 'cold' && signal === 'underweight') {
+                    row.style.display = '';
+                } else if (filter !== 'all') {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update button styles
+            document.querySelectorAll('.sector-filter-btn').forEach(btn => {
+                btn.style.background = 'var(--theme-bg)';
+                btn.style.color = 'var(--theme-text)';
+            });
+            const activeBtn = document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.style.background = 'var(--brand-primary)';
+                activeBtn.style.color = 'white';
+            }
+        }
+
+        // Filter sector table by search text
+        function filterSectorTable() {
+            const searchText = document.getElementById('sectorSearch')?.value.toLowerCase() || '';
+            const rows = document.querySelectorAll('#sectorTableBody tr');
+            rows.forEach(row => {
+                const sectorName = row.dataset.sector?.toLowerCase() || '';
+                row.style.display = sectorName.includes(searchText) ? '' : 'none';
+            });
         }
 
         async function loadMarginMonitoring() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
+                document.getElementById('marginMonitoring').innerHTML = '<div class="loading">Calculating margin metrics…</div>';
+
                 let url = `/api/risk/bourse/specialized/margin?user_id=${activeUser}`;
                 if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
@@ -871,31 +1809,76 @@
                 if (!response?.ok) throw new Error('Margin monitoring failed');
 
                 const data = response.data || response;
+
+                const warningLevel = data.warnings && data.warnings.length > 0 ?
+                    (data.warnings.some(w => w.includes('CRITICAL')) ? 'danger' : 'warning') : 'success';
+
                 const marginColor = data.margin_call_distance < 10 ? 'var(--danger)' :
                                    data.margin_call_distance < 20 ? 'var(--warning)' : 'var(--success)';
 
                 document.getElementById('marginMonitoring').innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
-                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Margin Utilization</div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Margin Utilization</div>
                             <div style="font-size: 1.5rem; font-weight: 700;">${data.margin_utilization.toFixed(1)}%</div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">
+                                $${(data.total_margin_used || 0).toLocaleString()} / $${(data.account_equity || 0).toLocaleString()}
+                            </div>
                         </div>
-                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
-                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Leverage</div>
+
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Current Leverage</div>
                             <div style="font-size: 1.5rem; font-weight: 700;">${data.current_leverage.toFixed(2)}x</div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">
+                                Optimal: ${(data.optimal_leverage || 1).toFixed(2)}x
+                            </div>
                         </div>
-                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
-                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Margin Call Distance</div>
+
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Margin Call Distance</div>
                             <div style="font-size: 1.5rem; font-weight: 700; color: ${marginColor};">${data.margin_call_distance.toFixed(1)}%</div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">
+                                ${data.margin_call_distance >= 50 ? '✅ Very Safe' :
+                                  data.margin_call_distance >= 20 ? '⚠️ Monitor' : '🚨 Risk'}
+                            </div>
                         </div>
                     </div>
+
+                    ${data.warnings && data.warnings.length > 0 ? `
+                        <div style="padding: 0.75rem; background: color-mix(in oklab, var(--${warningLevel}) 10%, transparent); border-radius: var(--radius-sm); border: 1px solid var(--${warningLevel}); font-size: 0.875rem;">
+                            <strong style="color: var(--${warningLevel});">⚠️ Warnings (${data.warnings.length}):</strong>
+                            <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0; color: var(--${warningLevel});">
+                                ${data.warnings.map(w => `<li>${w}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : `
+                        <div style="padding: 0.75rem; background: color-mix(in oklab, var(--success) 10%, transparent); border-radius: var(--radius-sm); border: 1px solid var(--success); font-size: 0.875rem; color: var(--success);">
+                            ✅ No margin warnings - Portfolio is healthy
+                        </div>
+                    `}
+
+                    ${data.recommendations && data.recommendations.length > 0 ? `
+                        <div style="margin-top: 0.75rem; padding: 0.75rem; background: var(--info-bg); border-radius: var(--radius-sm); border: 1px solid var(--info); font-size: 0.875rem;">
+                            <strong style="color: var(--info);">💡 Recommendations:</strong>
+                            <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0;">
+                                ${data.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
                 `;
 
-                document.getElementById('marginBadge').textContent = data.warnings?.length > 0 ? `${data.warnings.length} warnings` : 'Healthy';
+                document.getElementById('marginBadge').textContent = data.warnings && data.warnings.length > 0 ?
+                    `${data.warnings.length} warnings` : 'Healthy';
+                document.getElementById('marginBadge').style.background = `color-mix(in oklab, var(--${warningLevel}) 10%, transparent)`;
+                document.getElementById('marginBadge').style.color = `var(--${warningLevel})`;
 
             } catch (error) {
                 debugLogger.error('Margin monitoring failed', error);
-                document.getElementById('marginMonitoring').innerHTML = `<div class="error-message">${error.message}</div>`;
+                document.getElementById('marginMonitoring').innerHTML = `
+                    <div class="error-message" style="font-size: 0.875rem;">
+                        Failed to load margin data: ${error.message}
+                    </div>
+                `;
             }
         }
 
@@ -923,61 +1906,275 @@
         async function loadTickerAnalytics(ticker) {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
 
-            // Beta Forecast
+            // Load all ticker analytics in parallel
+            await Promise.all([
+                loadBetaForecast(ticker, activeUser),
+                loadEarningsPredictor(ticker, activeUser),
+                loadDividendAnalysis(ticker, activeUser)
+            ]);
+        }
+
+        // Load Beta Forecast for ticker
+        async function loadBetaForecast(ticker, activeUser) {
             try {
-                document.getElementById('betaForecast').innerHTML = '<div class="loading">Loading...</div>';
+                document.getElementById('betaForecast').innerHTML = '<div class="loading">Loading beta forecast…</div>';
                 const url = `/api/risk/bourse/specialized/beta-forecast?user_id=${activeUser}&ticker=${ticker}&benchmark=SPY`;
                 const response = await window.safeFetch(globalConfig.getApiUrl(url));
-                if (response?.ok) {
-                    const data = response.data || response;
-                    document.getElementById('betaForecast').innerHTML = `
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current Beta</div><div style="font-size: 1.25rem; font-weight: 700;">${data.current_beta.toFixed(2)}</div></div>
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Forecast</div><div style="font-size: 1.25rem; font-weight: 700;">${data.forecasted_beta.toFixed(2)}</div></div>
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Trend</div><div style="font-size: 1.25rem; font-weight: 700;">${data.beta_trend}</div></div>
-                        </div>
-                    `;
-                }
-            } catch (e) {
-                document.getElementById('betaForecast').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
-            }
+                if (!response?.ok) throw new Error('Beta forecast failed');
 
-            // Earnings
+                const data = response.data || response;
+
+                const trendColor = data.beta_trend === 'increasing' ? 'var(--danger)' :
+                                  data.beta_trend === 'decreasing' ? 'var(--success)' : 'var(--theme-text-muted)';
+                const trendIcon = data.beta_trend === 'increasing' ? '📈' :
+                                 data.beta_trend === 'decreasing' ? '📉' : '➡️';
+
+                // Create canvas for chart
+                const canvasId = `betaChart-${ticker}`;
+                document.getElementById('betaForecast').innerHTML = `
+                    <!-- Beta Rolling Chart -->
+                    ${data.rolling_betas && data.rolling_betas.length > 0 ? `
+                        <div style="margin-bottom: 1.5rem;">
+                            <canvas id="${canvasId}" style="max-height: 250px;"></canvas>
+                        </div>
+                    ` : ''}
+
+                    <!-- Key Metrics -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Current Beta</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${data.current_beta.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Forecast (EWMA)</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${data.forecasted_beta.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Trend</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: ${trendColor};">
+                                ${trendIcon} ${data.beta_trend}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">R² (Fit Quality)</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${((data.r_squared || 0) * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Annual Alpha</div>
+                            <div style="font-size: 1rem; font-weight: 600; color: ${(data.alpha || 0) >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ${(data.alpha || 0) >= 0 ? '+' : ''}${(data.alpha || 0).toFixed(2)}%
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Volatility Ratio</div>
+                            <div style="font-size: 1rem; font-weight: 600;">${(data.volatility_ratio || 1).toFixed(2)}x vs SPY</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--theme-text-muted);">
+                        Based on ${data.observation_days || 252} days of returns • Forecast method: ${data.forecast_method || 'EWMA'}
+                    </div>
+                `;
+
+                // Create Chart.js beta rolling chart if data available
+                if (data.rolling_betas && data.rolling_betas.length > 0) {
+                    const ctx = document.getElementById(canvasId)?.getContext('2d');
+                    if (ctx) {
+                        const labels = data.rolling_betas.map((_, i) => `-${data.rolling_betas.length - i}d`);
+
+                        if (betaForecastChartInstance) {
+                            betaForecastChartInstance.destroy();
+                        }
+
+                        betaForecastChartInstance = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Rolling Beta (60d)',
+                                        data: data.rolling_betas,
+                                        borderColor: 'rgba(54, 162, 235, 1)',
+                                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                                        borderWidth: 2,
+                                        fill: true,
+                                        tension: 0.3
+                                    },
+                                    {
+                                        label: 'Current Beta',
+                                        data: new Array(data.rolling_betas.length).fill(data.current_beta),
+                                        borderColor: 'rgba(255, 99, 132, 0.8)',
+                                        borderWidth: 2,
+                                        borderDash: [5, 5],
+                                        fill: false,
+                                        pointRadius: 0
+                                    },
+                                    {
+                                        label: 'Forecast (EWMA)',
+                                        data: new Array(data.rolling_betas.length).fill(data.forecasted_beta),
+                                        borderColor: 'rgba(75, 192, 192, 0.8)',
+                                        borderWidth: 2,
+                                        borderDash: [10, 5],
+                                        fill: false,
+                                        pointRadius: 0
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: true,
+                                plugins: {
+                                    title: {
+                                        display: true,
+                                        text: `${ticker} Beta Rolling History vs SPY`,
+                                        font: { size: 14, weight: '600' }
+                                    },
+                                    legend: {
+                                        display: true,
+                                        position: 'bottom',
+                                        labels: { font: { size: 11 } }
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        beginAtZero: false,
+                                        title: { display: true, text: 'Beta' }
+                                    },
+                                    x: {
+                                        title: { display: true, text: 'Days Ago' },
+                                        ticks: { maxTicksLimit: 10 }
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                debugLogger.error('Beta forecast failed', error);
+                document.getElementById('betaForecast').innerHTML = `
+                    <div class="error-message" style="font-size: 0.875rem;">
+                        Failed to load beta forecast: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Load Earnings Predictor for ticker
+        async function loadEarningsPredictor(ticker, activeUser) {
             try {
-                document.getElementById('earningsPredictor').innerHTML = '<div class="loading">Loading...</div>';
+                document.getElementById('earningsPredictor').innerHTML = '<div class="loading">Loading earnings data…</div>';
                 const url = `/api/risk/bourse/specialized/earnings?user_id=${activeUser}&ticker=${ticker}`;
                 const response = await window.safeFetch(globalConfig.getApiUrl(url));
-                if (response?.ok) {
-                    const data = response.data || response;
-                    document.getElementById('earningsPredictor').innerHTML = `
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Alert Level</div><div style="font-size: 1.25rem; font-weight: 700; text-transform: uppercase;">${data.alert_level}</div></div>
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Post-Earnings Vol</div><div style="font-size: 1.25rem; font-weight: 700;">${(data.post_earnings_vol * 100).toFixed(1)}%</div></div>
-                        </div>
-                    `;
-                }
-            } catch (e) {
-                document.getElementById('earningsPredictor').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
-            }
+                if (!response?.ok) throw new Error('Earnings predictor failed');
 
-            // Dividends
+                const data = response.data || response;
+
+                const alertColor = data.alert_level === 'high' ? 'var(--danger)' :
+                                  data.alert_level === 'medium' ? 'var(--warning)' : 'var(--info)';
+
+                document.getElementById('earningsPredictor').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Alert Level</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: ${alertColor}; text-transform: uppercase;">
+                                ${data.alert_level}
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Pre-Earnings Vol</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${((data.pre_earnings_vol || 0) * 100).toFixed(1)}%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Post-Earnings Vol</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--warning);">${((data.post_earnings_vol || 0) * 100).toFixed(1)}%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Vol Increase</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--danger);">+${(data.vol_increase_pct || 0).toFixed(1)}%</div>
+                        </div>
+                    </div>
+
+                    ${data.recommendation ? `
+                        <div style="padding: 0.75rem; background: color-mix(in oklab, var(--${data.alert_level === 'low' ? 'info' : 'warning'}) 10%, transparent); border-radius: var(--radius-sm); border: 1px solid var(--${data.alert_level === 'low' ? 'info' : 'warning'}); font-size: 0.875rem;">
+                            <strong style="color: var(--${data.alert_level === 'low' ? 'info' : 'warning'});">💡 ${data.recommendation}</strong>
+                        </div>
+                    ` : ''}
+
+                    <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--theme-text-muted);">
+                        Avg post-earnings move: ${(data.avg_post_earnings_move || 0).toFixed(2)}%
+                        ${data.next_earnings_date ? ` • Next earnings: ${data.next_earnings_date}` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                debugLogger.error('Earnings predictor failed', error);
+                document.getElementById('earningsPredictor').innerHTML = `
+                    <div class="error-message" style="font-size: 0.875rem;">
+                        Failed to load earnings data: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Load Dividend Analysis for ticker
+        async function loadDividendAnalysis(ticker, activeUser) {
             try {
-                document.getElementById('dividendAnalysis').innerHTML = '<div class="loading">Loading...</div>';
+                document.getElementById('dividendAnalysis').innerHTML = '<div class="loading">Loading dividend data…</div>';
                 const url = `/api/risk/bourse/specialized/dividends?user_id=${activeUser}&ticker=${ticker}`;
                 const response = await window.safeFetch(globalConfig.getApiUrl(url));
+
                 const data = response.data || response;
-                if (data.has_dividend_data && data.current_yield > 0) {
+
+                // Check if data is available
+                if (!data.ok || !data.has_dividend_data || data.current_yield === 0) {
+                    const errorMsg = data.error ? ` (${data.error})` : '';
                     document.getElementById('dividendAnalysis').innerHTML = `
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Yield</div><div style="font-size: 1.25rem; font-weight: 700; color: var(--success);">${data.current_yield.toFixed(2)}%</div></div>
-                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Annual</div><div style="font-size: 1.25rem; font-weight: 700;">$${data.annual_dividend.toFixed(2)}</div></div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); text-align: center; color: var(--theme-text-muted); font-size: 0.875rem;">
+                            ℹ️ No dividend data available for ${ticker}${errorMsg}
                         </div>
                     `;
-                } else {
-                    document.getElementById('dividendAnalysis').innerHTML = `<div style="color: var(--theme-text-muted);">No dividend data for ${ticker}</div>`;
+                    return;
                 }
-            } catch (e) {
-                document.getElementById('dividendAnalysis').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
+
+                document.getElementById('dividendAnalysis').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Current Yield</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--success);">${data.current_yield.toFixed(2)}%</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Annual Dividend</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">$${data.annual_dividend.toFixed(2)}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Frequency</div>
+                            <div style="font-size: 1rem; font-weight: 600; text-transform: capitalize;">${data.payout_frequency || 'quarterly'}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Growth Rate (YoY)</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: ${(data.dividend_growth_rate || 0) >= 0 ? 'var(--success)' : 'var(--danger)'};">
+                                ${(data.dividend_growth_rate || 0) >= 0 ? '+' : ''}${(data.dividend_growth_rate || 0).toFixed(2)}%
+                            </div>
+                        </div>
+                    </div>
+
+                    ${data.next_ex_dividend_date ? `
+                        <div style="padding: 0.75rem; background: var(--info-bg); border-radius: var(--radius-sm); border: 1px solid var(--info); font-size: 0.875rem;">
+                            <strong style="color: var(--info);">📅 Next Ex-Dividend:</strong> ${data.next_ex_dividend_date}
+                            ${data.days_until_ex_dividend ? ` (in ${data.days_until_ex_dividend} days)` : ''}
+                            <br><small>Expected price drop: ~${(data.avg_price_drop_ex_div || 0).toFixed(2)}%</small>
+                        </div>
+                    ` : ''}
+                `;
+            } catch (error) {
+                debugLogger.error('Dividend analysis failed', error);
+                document.getElementById('dividendAnalysis').innerHTML = `
+                    <div class="error-message" style="font-size: 0.875rem;">
+                        Failed to load dividend data: ${error.message}
+                    </div>
+                `;
             }
         }
 

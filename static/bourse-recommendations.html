@@ -17,6 +17,7 @@
     // =================================
 
     import { initDeepLinks } from './components/deep-links.js';
+    import { wealthContextBar } from './components/WealthContextBar.js';
     import { safeFetch } from './modules/http.js';
 
     // Anchors for bourse-recommendations.html
@@ -25,6 +26,7 @@
         'opportunities': 'Opportunities'
     });
 
+    window.wealthContextBar = wealthContextBar;
     window.safeFetch = safeFetch;
     </script>
     <script src="debug-logger.js"></script>
@@ -280,22 +282,35 @@
             setupOpportunitiesListeners();
         });
 
-        // Resolve source type from localStorage
+        // Resolve source type dynamically (same logic as saxo-dashboard.html)
         async function resolveSourceType() {
-            const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+            // ✅ FIX: Read bourseSource dynamically from wealthContextBar first
+            let bourseSource = window.wealthContextBar?.getContext()?.bourse;
+            if (!bourseSource) {
+                bourseSource = localStorage.getItem('bourseSource');
+                debugLogger.debug(`⚠️ wealthContextBar not ready, using localStorage: ${bourseSource}`);
+            }
 
+            // Reset state
+            currentFileKey = null;
+            window.saxoSourceType = null;
+
+            if (!bourseSource) {
+                debugLogger.warn('No bourse source configured');
+                return;
+            }
+
+            // Determine source type
             if (bourseSource === 'manual_bourse') {
                 window.saxoSourceType = 'manual';
             } else if (bourseSource.startsWith('api:')) {
                 window.saxoSourceType = 'api';
             } else if (bourseSource.startsWith('saxo:')) {
                 window.saxoSourceType = 'csv';
-                currentFileKey = bourseSource.replace('saxo:', '');
-            } else {
-                window.saxoSourceType = null;
+                currentFileKey = bourseSource.substring(5); // Remove 'saxo:' prefix
             }
 
-            debugLogger.debug(`Source type resolved: ${window.saxoSourceType}`);
+            debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${window.saxoSourceType}`);
         }
 
         // ==================== TAB SWITCHING ====================
@@ -359,6 +374,23 @@
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             const originalText = scanBtn ? scanBtn.textContent : '';
 
+            // Check if source is configured
+            if (!window.saxoSourceType) {
+                tableContainer.innerHTML = `
+                    <div style="padding: 3rem; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">📊</div>
+                        <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source non configurée</h2>
+                        <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                            Veuillez sélectionner une source de données Bourse dans le Dashboard.
+                        </p>
+                        <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                            Aller au Dashboard Saxo →
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
             try {
                 debugLogger.info(`Fetching ${timeframe} recommendations...`);
 
@@ -374,7 +406,7 @@
                     recsUrl += `&source=manual_bourse`;
                 } else if (window.saxoSourceType === 'api') {
                     recsUrl += `&source=saxobank_api`;
-                } else if (currentFileKey) {
+                } else if (window.saxoSourceType === 'csv' && currentFileKey) {
                     recsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
@@ -384,6 +416,22 @@
                 });
 
                 if (!response?.ok) {
+                    // Handle 401 Unauthorized (Saxo not connected)
+                    if (response.status === 401) {
+                        tableContainer.innerHTML = `
+                            <div style="padding: 3rem; text-align: center;">
+                                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                                <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Connexion Saxo requise</h2>
+                                <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                    Veuillez vous connecter à votre compte Saxo Bank pour obtenir des recommandations.
+                                </p>
+                                <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                    Aller au Dashboard Saxo →
+                                </a>
+                            </div>
+                        `;
+                        return;
+                    }
                     throw new Error(`HTTP ${response.status || 'unknown'}`);
                 }
 
@@ -396,7 +444,24 @@
 
             } catch (error) {
                 debugLogger.error('Failed to load recommendations:', error);
-                tableContainer.innerHTML = `<div class="error-message"><strong>Error</strong><p>${error.message}</p></div>`;
+                // Check if error message contains 401 or unauthorized
+                const isAuthError = error.message?.includes('401') || error.message?.toLowerCase().includes('unauthorized') || error.message?.toLowerCase().includes('not connected');
+                if (isAuthError) {
+                    tableContainer.innerHTML = `
+                        <div style="padding: 3rem; text-align: center;">
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                            <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Connexion Saxo requise</h2>
+                            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                Veuillez vous connecter à votre compte Saxo Bank pour obtenir des recommandations.
+                            </p>
+                            <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                Aller au Dashboard Saxo →
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    tableContainer.innerHTML = `<div class="error-message"><strong>Error</strong><p>${error.message}</p></div>`;
+                }
             } finally {
                 if (scanBtn) {
                     scanBtn.disabled = false;
@@ -671,6 +736,27 @@
             const scanBtn = document.getElementById('btnScanOpportunities');
             const originalText = scanBtn.textContent;
 
+            // Check if source is configured
+            if (!window.saxoSourceType) {
+                const authMessage = `
+                    <div style="padding: 3rem; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">📊</div>
+                        <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source non configurée</h2>
+                        <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                            Veuillez sélectionner une source de données Bourse dans le Dashboard.
+                        </p>
+                        <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                            Aller au Dashboard Saxo →
+                        </a>
+                    </div>
+                `;
+                document.getElementById('portfolioGaps').innerHTML = authMessage;
+                document.getElementById('opportunitiesTable').innerHTML = '';
+                document.getElementById('suggestedSales').innerHTML = '';
+                document.getElementById('impactSimulator').innerHTML = '';
+                return;
+            }
+
             try {
                 scanBtn.disabled = true;
                 scanBtn.textContent = '🔍 Scanning...';
@@ -685,7 +771,7 @@
                     url += `&source=manual_bourse`;
                 } else if (window.saxoSourceType === 'api') {
                     url += `&source=saxobank_api`;
-                } else if (currentFileKey) {
+                } else if (window.saxoSourceType === 'csv' && currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
@@ -694,7 +780,31 @@
                     headers: { 'X-User': activeUser }
                 });
 
-                if (!response?.ok) throw new Error('Opportunities endpoint failed');
+                if (!response?.ok) {
+                    // Handle 401 Unauthorized (Saxo not connected)
+                    if (response.status === 401) {
+                        const authMessage = `
+                            <div style="padding: 3rem; text-align: center;">
+                                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                                <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Connexion Saxo requise</h2>
+                                <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                    Veuillez vous connecter à votre compte Saxo Bank pour voir les opportunités.
+                                </p>
+                                <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                    Aller au Dashboard Saxo →
+                                </a>
+                            </div>
+                        `;
+                        document.getElementById('portfolioGaps').innerHTML = authMessage;
+                        document.getElementById('opportunitiesTable').innerHTML = '';
+                        document.getElementById('suggestedSales').innerHTML = '';
+                        document.getElementById('impactSimulator').innerHTML = '';
+                        scanBtn.textContent = originalText;
+                        scanBtn.disabled = false;
+                        return;
+                    }
+                    throw new Error('Opportunities endpoint failed');
+                }
 
                 const data = response.data || response;
                 lastOpportunitiesData = data;
@@ -713,7 +823,25 @@
 
             } catch (error) {
                 debugLogger.error('Failed to load opportunities:', error);
-                document.getElementById('portfolioGaps').innerHTML = `<div class="error-message">${error.message}</div>`;
+                // Check if error message contains 401 or unauthorized
+                const isAuthError = error.message?.includes('401') || error.message?.toLowerCase().includes('unauthorized') || error.message?.toLowerCase().includes('not connected');
+                if (isAuthError) {
+                    const authMessage = `
+                        <div style="padding: 3rem; text-align: center;">
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                            <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Connexion Saxo requise</h2>
+                            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
+                                Veuillez vous connecter à votre compte Saxo Bank pour voir les opportunités.
+                            </p>
+                            <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
+                                Aller au Dashboard Saxo →
+                            </a>
+                        </div>
+                    `;
+                    document.getElementById('portfolioGaps').innerHTML = authMessage;
+                } else {
+                    document.getElementById('portfolioGaps').innerHTML = `<div class="error-message">${error.message}</div>`;
+                }
                 scanBtn.textContent = '❌ Error';
                 setTimeout(() => { scanBtn.textContent = originalText; scanBtn.disabled = false; }, 2000);
             }
