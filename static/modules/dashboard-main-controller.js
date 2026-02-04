@@ -3,7 +3,8 @@ import { getUnifiedState, deriveRecommendations } from '../core/unified-insights
 import { store } from '../core/risk-dashboard-store.js';
 import { UNIFIED_ASSET_GROUPS, getAssetGroup, groupAssetsByClassification } from '../shared-asset-groups.js';
 import { selectCapPercent, selectPolicyCapPercent, selectEngineCapPercent } from '../selectors/governance.js';
-// Note: fetchSaxoSummary, formatCurrency imported dynamically in refreshSaxoTile() to avoid scope issues
+import { formatUSD } from '../core/formatters.js';
+// Note: fetchSaxoSummary imported dynamically in refreshSaxoTile()
 
 // ✅ Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
 const colorForScore = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' : 'var(--danger)';
@@ -2745,7 +2746,6 @@ async function refreshPatrimoineTile() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const summary = await response.json();
-        const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
 
         // Calculate metrics
         const netWorth = summary.net_worth || 0;
@@ -2756,7 +2756,7 @@ async function refreshPatrimoineTile() {
         // Update UI
         if (totalItems === 0) {
             // Empty state
-            if (netWorthEl) netWorthEl.textContent = formatCurrency(0);
+            if (netWorthEl) netWorthEl.textContent = formatUSD(0);
             if (assetsLiabilitiesEl) assetsLiabilitiesEl.textContent = '0 / 0';
             if (itemsCountEl) itemsCountEl.textContent = '0';
 
@@ -2766,11 +2766,11 @@ async function refreshPatrimoineTile() {
         } else {
             // Success with data
             if (netWorthEl) {
-                netWorthEl.textContent = formatCurrency(netWorth);
+                netWorthEl.textContent = formatUSD(netWorth);
                 netWorthEl.style.color = netWorth > 0 ? 'var(--success)' : netWorth < 0 ? 'var(--danger)' : 'var(--theme-text)';
             }
             if (assetsLiabilitiesEl) {
-                assetsLiabilitiesEl.textContent = `${formatCurrency(totalAssets)} / ${formatCurrency(totalLiabilities)}`;
+                assetsLiabilitiesEl.textContent = `${formatUSD(totalAssets)} / ${formatUSD(totalLiabilities)}`;
             }
             if (itemsCountEl) {
                 const assetsCount = (summary.counts.liquidity || 0) + (summary.counts.tangible || 0) + (summary.counts.insurance || 0);
@@ -2902,7 +2902,6 @@ async function refreshGlobalTile() {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        const formatCurrency = (val) => `$${Math.round(val).toLocaleString()}`;
 
         // 🔥 DEBUG: Log P&L data from API
         console.error('🔥 P&L DATA FROM API:', {
@@ -2912,7 +2911,7 @@ async function refreshGlobalTile() {
         });
 
         // Update total value
-        if (totalValueEl) totalValueEl.textContent = formatCurrency(data.total_value_usd);
+        if (totalValueEl) totalValueEl.textContent = formatUSD(data.total_value_usd);
 
         // Update currency conversions (EUR and CHF)
         const eurEl = document.getElementById('global-total-eur');
@@ -2946,7 +2945,7 @@ async function refreshGlobalTile() {
             const pnlSign = pnlValue >= 0 ? '+' : '-';
             const pnlPct = data.pnl_today_pct !== undefined ? ` (${pnlValue >= 0 ? '+' : ''}${data.pnl_today_pct.toFixed(1)}%)` : '';
 
-            pnlTodayEl.textContent = `${pnlSign}${formatCurrency(Math.abs(pnlValue))}${pnlPct}`;
+            pnlTodayEl.textContent = `${pnlSign}${formatUSD(Math.abs(pnlValue))}${pnlPct}`;
             pnlTodayEl.style.color = pnlColor;
         } else if (pnlTodayEl) {
             // Fallback si pas de P&L Today dans l'API
@@ -2980,7 +2979,7 @@ async function refreshGlobalTile() {
                                         <span style="font-size:0.8rem;font-weight:600;color:var(--theme-text);">${m.name}</span>
                                     </div>
                                     <span style="font-size:1rem;font-weight:700;color:${m.color};">
-                                        ${formatCurrency(m.value)}
+                                        ${formatUSD(m.value)}
                                     </span>
                                 </div>
 

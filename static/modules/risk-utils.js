@@ -3,6 +3,12 @@
  * Common helpers and formatters used across the Risk Dashboard
  */
 
+// Import shared formatters from core module
+import { formatNumber, formatMoney, formatRelativeTime } from '../core/formatters.js';
+
+// Re-export for backward compatibility
+export { formatNumber, formatMoney, formatRelativeTime };
+
 // ===== Formatting Functions =====
 
 /**
@@ -22,57 +28,6 @@ export function safeFixed(v, d = 2) {
  */
 export function formatPercent(v) {
   return (v == null || isNaN(v)) ? 'N/A' : (v * 100).toFixed(2) + '%';
-}
-
-/**
- * Format number with thousand separators
- * @param {number} v - Value to format
- * @returns {string} Formatted number or 'N/A'
- */
-export function formatNumber(v) {
-  if (v == null || isNaN(v)) return 'N/A';
-  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(v);
-}
-
-/**
- * Format money with currency conversion support
- * @param {number} usd - Value in USD
- * @returns {string} Formatted money or '—'
- */
-export function formatMoney(usd) {
-  const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
-  const rate = (window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
-  if (cur !== 'USD' && (!rate || rate <= 0)) return '—';
-  const v = (usd == null || isNaN(usd)) ? 0 : (usd * rate);
-  try {
-    const dec = (cur === 'BTC') ? 8 : 0;
-    const out = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
-    return (cur === 'USD') ? out.replace(/\s?US$/, '') : out;
-  } catch (_) {
-    return `${v.toFixed(cur === 'BTC' ? 8 : 0)} ${cur}`;
-  }
-}
-
-/**
- * Format relative time (e.g., "2h ago", "3d ago")
- * @param {string|number} timestamp - ISO timestamp or ms since epoch
- * @returns {string} Relative time string
- */
-export function formatRelativeTime(timestamp) {
-  const now = Date.now();
-  const then = typeof timestamp === 'string' ? new Date(timestamp).getTime() : timestamp;
-  const diff = now - then;
-
-  const minutes = Math.floor(diff / (1000 * 60));
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return `${Math.floor(days / 30)}mo ago`;
 }
 
 // ===== Risk Score Functions =====

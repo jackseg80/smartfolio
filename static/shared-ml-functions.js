@@ -132,40 +132,8 @@ export async function getFearGreedIndex(days = 7) {
     return await fetchMLStatus(`sentiment/fear-greed?days=${days}`);
 }
 
-// Utilitaires de formatage
-export function formatPercentage(value, decimals = 2) {
-    return `${(value * 100).toFixed(decimals)}%`;
-}
-
-export function formatCurrency(value, currency, decimals = 2) {
-    const cur = (currency || (typeof globalConfig !== 'undefined' && globalConfig.get('display_currency')) || 'USD');
-    const rate = (typeof window !== 'undefined' && window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
-    if (cur !== 'USD' && (!rate || rate <= 0)) return '—';
-    const v = (value == null || isNaN(value)) ? 0 : (value * rate);
-    try {
-        const dec = (cur === 'BTC') ? 8 : decimals;
-        const out = new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: cur,
-            minimumFractionDigits: dec,
-            maximumFractionDigits: dec
-        }).format(v);
-        return (cur === 'USD') ? out.replace(/\s?US$/, '') : out;
-    } catch (_) {
-        const dec = (cur === 'BTC') ? 8 : decimals;
-        return `${v.toFixed(dec)} ${cur}`;
-    }
-}
-
-export function formatDate(date, options = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-}) {
-    return new Intl.DateTimeFormat('fr-FR', options).format(new Date(date));
-}
+// Utilitaires de formatage - réexportés depuis core/formatters.js
+export { formatPercentage, formatCurrency, formatDate } from './core/formatters.js';
 
 // Gestion des boutons d'action
 export function setupActionButton(buttonId, actionFn, loadingText = 'Traitement...') {
