@@ -47,8 +47,8 @@ class CacheManager:
             logger.warning("Could not import risk cache")
 
         try:
-            from api.unified_ml_endpoints import _unified_ml_cache
-            self.register_cache("unified_ml", _unified_ml_cache, ttl=900)
+            from api.ml.cache_utils import get_ml_cache
+            self.register_cache("unified_ml", get_ml_cache(), ttl=900)
         except ImportError:
             logger.warning("Could not import unified_ml cache")
 
