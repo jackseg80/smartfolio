@@ -98,7 +98,7 @@ else {
                     Write-Host "✅ Redis started on WSL2" -ForegroundColor Green
                     $redisHost = $wslIP
                     # Set REDIS_URL to WSL2 IP (accessible from Windows)
-                    $env:REDIS_URL = "redis://$wslIP:6379/0"
+                    $env:REDIS_URL = "redis://${wslIP}:6379/0"
                     Write-Host "   Using REDIS_URL=$env:REDIS_URL (WSL2 IP)" -ForegroundColor Gray
                 }
                 else {

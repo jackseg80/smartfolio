@@ -62,6 +62,7 @@ Scrapes crypto-toolbox.vercel.app indicators with Playwright and exposes them vi
 import asyncio
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -74,7 +75,6 @@ logger = logging.getLogger(__name__)
 # Optional Redis support
 try:
     import redis.asyncio as aioredis
-    from config.settings import get_settings
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
@@ -129,14 +129,14 @@ async def startup_playwright():
         # Initialize Redis if available
         if REDIS_AVAILABLE:
             try:
-                settings = get_settings()
+                redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
                 _redis_client = await aioredis.from_url(
-                    settings.REDIS_URL,
+                    redis_url,
                     encoding="utf-8",
                     decode_responses=True
                 )
                 await _redis_client.ping()
-                logger.info("✅ Redis cache initialized for crypto-toolbox")
+                logger.info(f"✅ Redis cache initialized for crypto-toolbox ({redis_url})")
             except Exception as e:
                 logger.warning(f"⚠️ Redis cache not available: {e}")
                 _redis_client = None
