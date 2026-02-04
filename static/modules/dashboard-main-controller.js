@@ -1630,21 +1630,8 @@ function updateScoresDisplay(scoresData) {
     }
 }
 
-function formatUSD(v) {
-    const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
-    const rate = (window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
-    if (cur !== 'USD' && (!rate || rate <= 0)) return '—';
-    const val = (v == null || isNaN(v)) ? 0 : (v * rate);
-    try {
-        // BTC is not a standard ISO code; Intl may throw
-        const decimals = (cur === 'BTC') ? 8 : 0;
-        const out = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(val);
-        return (cur === 'USD') ? out.replace(/\s?US$/, '') : out;
-    } catch (_) {
-        const decimals = (cur === 'BTC') ? 8 : 0;
-        return `${val.toFixed(decimals)} ${cur}`;
-    }
-}
+// formatUSD is now imported from ../core/formatters.js (see top of file)
+
 function formatTimeAgo(ts) {
     if (!ts) return 'N/A';
     const d = new Date(ts), now = new Date(), dm = Math.floor((now - d) / (1000 * 60));
@@ -2243,7 +2230,6 @@ async function updatePatrimoineChart(breakdown, counts) {
                         label: function (context) {
                             const value = context.parsed;
                             const percentage = ((value / total) * 100).toFixed(1);
-                            const formatUSD = (val) => `$${Math.round(val).toLocaleString()}`;
                             const categoryData = nonZeroCategories[context.dataIndex];
                             const itemCount = counts[categoryData.key] || 0;
                             return `${context.label}: ${formatUSD(value)} (${percentage}%) - ${itemCount} item${itemCount > 1 ? 's' : ''}`;

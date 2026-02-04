@@ -221,20 +221,14 @@ function getDefaultSettings() {
   };
 }
 
-// Charger l'API Base URL depuis le backend (.env)
+// Charger l'API Base URL - utilise window.location.origin pour le frontend
+// (la valeur backend API_BASE_URL est pour les appels serveur-à-serveur, pas frontend)
 async function loadApiBaseUrl() {
-  try {
-    const response = await fetch('/api/config/api-base-url');
-    if (response.ok) {
-      const data = await response.json();
-      const apiBaseUrl = data.data?.api_base_url || data.api_base_url;
-      debugLogger.info(`✓ API Base URL loaded from backend: ${apiBaseUrl}`);
-      return apiBaseUrl;
-    }
-  } catch (error) {
-    debugLogger.warn('Failed to load API Base URL from backend, using default');
-  }
-  return window.location.origin; // Fallback
+  // Toujours utiliser l'origine actuelle du navigateur pour les appels frontend
+  // Cela fonctionne automatiquement en dev (localhost) ET en prod (192.168.x.x)
+  const apiBaseUrl = window.location.origin;
+  debugLogger.info(`✓ API Base URL using browser origin: ${apiBaseUrl}`);
+  return apiBaseUrl;
 }
 
 // Charger les settings depuis l'API utilisateur ET localStorage
