@@ -4,6 +4,11 @@ Moteur d'alertes prédictives principal
 Orchestre l'évaluation des alertes, l'escalade automatique, et la coordination
 avec le système de gouvernance. Conçu pour être production-ready avec
 anti-bruit robuste et observabilité complète.
+
+Refactoré en modules (Fév 2026):
+- phase_context.py: PhaseSnapshot, PhaseAwareContext
+- metrics.py: AlertMetrics
+- evaluators/risk_evaluator.py: AdvancedRiskEvaluator
 """
 
 import asyncio
@@ -11,7 +16,6 @@ import logging
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
 import socket
 import random
 import json
@@ -23,143 +27,14 @@ from .alert_storage import AlertStorage
 from .prometheus_metrics import get_alert_metrics
 from .multi_timeframe import MultiTimeframeAnalyzer, TemporalGatingMatrix, Timeframe, TimeframeSignal
 from .cross_asset_correlation import CrossAssetCorrelationAnalyzer, create_cross_asset_analyzer
+from .phase_context import PhaseSnapshot, PhaseAwareContext
+from .metrics import AlertMetrics
+from .evaluators.risk_evaluator import AdvancedRiskEvaluator
 from ..execution.phase_engine import PhaseEngine, Phase, PhaseState
 from ..streaming.realtime_engine import RealtimeEngine, StreamEvent, StreamEventType, SubscriptionType
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class PhaseSnapshot:
-    """Snapshot de phase avec timestamp pour le lag"""
-    phase: Phase
-    confidence: float
-    persistence_count: int
-    captured_at: datetime
-    contradiction_index: float = 0.0
-
-class PhaseAwareContext:
-    """Gestionnaire de phase laggée avec persistance pour anti-oscillation"""
-    
-    def __init__(self, lag_minutes: int = 15, persistence_ticks: int = 3, metrics=None):
-        self.lag_minutes = lag_minutes
-        self.persistence_ticks = persistence_ticks
-        self.phase_history: List[PhaseSnapshot] = []
-        self.current_lagged_phase: Optional[PhaseSnapshot] = None
-        self.metrics = metrics
-        
-    def update_phase(self, phase_state: PhaseState, contradiction_index: float = 0.0):
-        """Met à jour l'historique de phase et calcule la phase laggée"""
-        now = datetime.utcnow()
-        
-        # Ajouter le snapshot actuel
-        snapshot = PhaseSnapshot(
-            phase=phase_state.phase_now,
-            confidence=phase_state.confidence,
-            persistence_count=phase_state.persistence_count,
-            captured_at=now,
-            contradiction_index=contradiction_index
-        )
-        
-        self.phase_history.append(snapshot)
-        
-        # Nettoyer l'historique > 2 * lag_minutes
-        cutoff = now - timedelta(minutes=self.lag_minutes * 2)
-        self.phase_history = [s for s in self.phase_history if s.captured_at > cutoff]
-        
-        # Calculer la phase laggée
-        lag_cutoff = now - timedelta(minutes=self.lag_minutes)
-        lagged_snapshots = [s for s in self.phase_history if s.captured_at <= lag_cutoff]
-        
-        if lagged_snapshots:
-            # Prendre le plus récent dans la fenêtre laggée
-            candidate = max(lagged_snapshots, key=lambda x: x.captured_at)
-            
-            # Vérifier la persistance: phases similaires consécutives
-            if candidate.persistence_count >= self.persistence_ticks:
-                # Record phase transition if phase changed
-                if self.current_lagged_phase and self.current_lagged_phase.phase != candidate.phase:
-                    if self.metrics:
-                        self.metrics.record_phase_transition(
-                            self.current_lagged_phase.phase.value.lower(),
-                            candidate.phase.value.lower()
-                        )
-                
-                self.current_lagged_phase = candidate
-                
-                # Update current phase metrics
-                if self.metrics:
-                    self.metrics.update_current_lagged_phase(
-                        candidate.phase.value.lower(),
-                        candidate.persistence_count
-                    )
-                
-                logger.debug(f"Phase laggée mise à jour: {candidate.phase.value} "
-                           f"(persistance: {candidate.persistence_count}, "
-                           f"contradiction: {candidate.contradiction_index:.2f})")
-        
-        return self.current_lagged_phase
-    
-    def get_lagged_phase(self) -> Optional[PhaseSnapshot]:
-        """Retourne la phase laggée actuelle"""
-        return self.current_lagged_phase
-    
-    def is_phase_stable(self) -> bool:
-        """Vérifie si la phase laggée est stable (persistance suffisante)"""
-        if not self.current_lagged_phase:
-            return False
-        return self.current_lagged_phase.persistence_count >= self.persistence_ticks
-
-class AlertMetrics:
-    """Collecteur de métriques pour observabilité"""
-    
-    def __init__(self):
-        self.counters = {
-            "alerts_emitted_total": {},      # {type:severity: count}
-            "alerts_suppressed_total": {},   # {reason: count}
-            "policy_changes_total": {},      # {mode: count}
-            "freeze_seconds_total": {},      # fixed: should be dict like others
-            "alerts_ack_total": {},          # fixed: should be dict like others
-            "alerts_snoozed_total": {}       # fixed: should be dict like others
-        }
-        
-        self.gauges = {
-            "last_alert_eval_ts": 0,
-            "last_policy_change_ts": 0,
-            "active_alerts_count": 0
-        }
-        
-        self.labels = {
-            "policy_origin": "manual"  # manual|alert|api
-        }
-    
-    def increment(self, metric: str, labels: Dict[str, str] = None, value: int = 1):
-        """Incrémente un compteur"""
-        if labels:
-            key = f"{metric}:{':'.join(f'{k}={v}' for k, v in labels.items())}"
-        else:
-            key = metric
-        
-        if metric not in self.counters:
-            self.counters[metric] = {}
-        
-        self.counters[metric][key] = self.counters[metric].get(key, 0) + value
-    
-    def set_gauge(self, metric: str, value: float):
-        """Met à jour une gauge"""
-        self.gauges[metric] = value
-    
-    def set_label(self, label: str, value: str):
-        """Met à jour un label"""
-        self.labels[label] = value
-    
-    def get_metrics(self) -> Dict[str, Any]:
-        """Retourne toutes les métriques au format JSON"""
-        return {
-            "counters": self.counters,
-            "gauges": self.gauges,
-            "labels": self.labels,
-            "timestamp": datetime.now().isoformat()
-        }
 
 class AlertEngine:
     """
@@ -260,19 +135,23 @@ class AlertEngine:
                 self.ml_alert_predictor = None
                 logger.info("ML Alert Predictor disabled")
             
-            # Phase 3A: Advanced Risk Engine
+            # Phase 3A: Advanced Risk Engine + Evaluator (refactoré Fév 2026)
             risk_engine_config = self.config.get("alerting_config", {}).get("advanced_risk", {})
             self.risk_engine_enabled = risk_engine_config.get("enabled", False)
             if self.risk_engine_enabled:
                 from services.risk.advanced_risk_engine import create_advanced_risk_engine
                 self.risk_engine = create_advanced_risk_engine(risk_engine_config)
                 if self.risk_engine:
-                    logger.info("Advanced Risk Engine enabled - VaR/Stress testing active")
+                    # Initialiser l'évaluateur de risque avancé (module extrait)
+                    self.risk_evaluator = AdvancedRiskEvaluator(self.risk_engine, risk_engine_config)
+                    logger.info("Advanced Risk Engine + Evaluator enabled - VaR/Stress testing active")
                 else:
                     logger.warning("Advanced Risk Engine failed to initialize")
                     self.risk_engine_enabled = False
+                    self.risk_evaluator = None
             else:
                 self.risk_engine = None
+                self.risk_evaluator = None
                 logger.info("Advanced Risk Engine disabled")
             
             # Phase 3B: Real-time Streaming Integration
@@ -288,13 +167,21 @@ class AlertEngine:
             self.phase_context = None
             self.phase_engine = None
             self.multi_timeframe_analyzer = None
+            self.multi_timeframe_enabled = False
             self.temporal_gating = None
-            self.cross_asset_analyzer = None  # Phase 2B2: Pas d'analyzer si phase-aware désactivé
-            
+            self.cross_asset_analyzer = None
+            self.cross_asset_enabled = False
+            self.ml_alert_predictor = None
+            self.ml_predictor_enabled = False
+            self.risk_engine = None
+            self.risk_engine_enabled = False
+            self.risk_evaluator = None
+            self.streaming_enabled = False
+
             # Record disabled state in metrics
             self.prometheus_metrics.update_phase_aware_config(False, 0, 0)
             self.prometheus_metrics.update_multi_timeframe_config(False)
-            
+
             logger.info("Phase-aware alerting disabled")
         
         # État interne
@@ -863,180 +750,34 @@ class AlertEngine:
                         logger.error(f"ML prediction error for {alert_type.value}: {e}")
                         return
             
-            # Phase 3A: Advanced Risk Analysis
+            # Phase 3A: Advanced Risk Analysis (refactoré vers evaluators/risk_evaluator.py)
             risk_analysis_metadata = {}
-            if self.risk_engine_enabled and self.risk_engine:
-                # Évaluer seulement les alertes de risque avancé
-                advanced_risk_types = {
-                    AlertType.VAR_BREACH, 
-                    AlertType.STRESS_TEST_FAILED,
-                    AlertType.MONTE_CARLO_EXTREME, 
-                    AlertType.RISK_CONCENTRATION
-                }
-                
-                if alert_type in advanced_risk_types:
+            if self.risk_engine_enabled and self.risk_evaluator:
+                if self.risk_evaluator.supports_alert_type(alert_type):
                     try:
-                        # Obtenir portfolio actuel depuis governance
-                        current_state = await self.governance_engine.get_current_state()
-                        portfolio_weights: Dict[str, float] = {}
-                        if current_state:
-                            plan = getattr(current_state, "current_plan", None) or getattr(current_state, "proposed_plan", None)
-                            if plan and getattr(plan, "targets", None):
-                                cleaned_weights: Dict[str, float] = {}
-                                for target in plan.targets:
-                                    symbol = getattr(target, "symbol", None)
-                                    raw_weight = getattr(target, "weight", None)
-                                    if not symbol or raw_weight is None:
-                                        continue
-                                    try:
-                                        cleaned_weights[symbol] = float(raw_weight)
-                                    except (TypeError, ValueError):
-                                        logger.debug(f"Skipping target {symbol} with invalid weight {raw_weight!r}")
-                                if cleaned_weights:
-                                    portfolio_weights = cleaned_weights
-                        if not portfolio_weights and current_state and hasattr(current_state.execution_policy, "target_allocation"):
-                            maybe_targets = getattr(current_state.execution_policy, "target_allocation", {})
-                            if isinstance(maybe_targets, dict):
-                                try:
-                                    portfolio_weights = {k: float(v) for k, v in maybe_targets.items() if v is not None}
-                                except (TypeError, ValueError):
-                                    portfolio_weights = {}
+                        # Obtenir contexte portfolio via l'évaluateur
+                        portfolio_weights, portfolio_value = await self.risk_evaluator.get_portfolio_context(
+                            self.governance_engine
+                        )
+
                         if not portfolio_weights:
                             logger.debug("Advanced risk analysis skipped: no portfolio targets available")
                             return
 
-                        # Récupérer la valeur réelle du portfolio
-                        try:
-                            # Use BalanceService instead of importing from api.main
-                            # This breaks the circular dependency
-                            from services.balance_service import balance_service
+                        # Déléguer l'évaluation au module extrait
+                        should_trigger, enriched_signals, metadata = await self.risk_evaluator.evaluate(
+                            alert_type, signals, portfolio_weights, portfolio_value
+                        )
 
-                            # Récupérer user_id et source depuis le contexte (ou défauts)
-                            user_id = getattr(current_state, 'user_id', 'demo')
-                            source = getattr(current_state, 'source', 'cointracking_api')
-
-                            balance_result = await balance_service.resolve_current_balances(source=source, user_id=user_id)
-                            balances = balance_result.get('items', []) if isinstance(balance_result, dict) else []
-
-                            if balances:
-                                portfolio_value = sum(float(b.get('value_usd', 0)) for b in balances)
-                                logger.debug(f"Real portfolio value retrieved for user={user_id}, source={source}: ${portfolio_value:,.2f}")
-                            else:
-                                # Fallback si pas de balances disponibles
-                                portfolio_value = 100000
-                                logger.debug(f"No balances available for user={user_id}, source={source}, using fallback portfolio value: $100,000")
-                        except Exception as e:
-                            # Fallback robuste en cas d'erreur
-                            portfolio_value = 100000
-                            logger.warning(f"Failed to retrieve real portfolio value for user={user_id}, source={source} ({e}), using fallback: $100,000")
-
-                        if alert_type == AlertType.VAR_BREACH:
-                            # Calculer VaR et vérifier limites
-                            from services.risk.advanced_risk_engine import VaRMethod
-                            var_result = self.risk_engine.calculate_var(
-                                portfolio_weights, portfolio_value,
-                                method=VaRMethod.PARAMETRIC, confidence_level=0.95
-                            )
-
-                            # Limites VaR (configurables)
-                            var_limits = self.config.get("alerting_config", {}).get("advanced_risk", {}).get("var_limits", {
-                                "daily_95": 0.05,  # 5% du portfolio
-                                "daily_99": 0.08   # 8% du portfolio
-                            })
-
-                            var_limit_95 = portfolio_value * var_limits["daily_95"]
-                            var_breach = var_result.var_absolute > var_limit_95
-
-                            if var_breach:
-                                signals["var_breach"] = {
-                                    "var_current": var_result.var_absolute,
-                                    "var_limit": var_limit_95,
-                                    "var_method": var_result.method.value,
-                                    "confidence_level": var_result.confidence_level,
-                                    "var_ratio": var_result.var_absolute / var_limit_95,
-                                    "horizon": var_result.horizon.value
-                                }
-
-                                risk_analysis_metadata = {
-                                    "var_breach_severity": "critical" if var_result.var_absolute > var_limit_95 * 2 else "major",
-                                    "var_excess": var_result.var_absolute - var_limit_95
-                                }
-                            else:
-                                logger.debug("VaR within limits, suppressing VAR_BREACH alert")
-                                return
-
-                        elif alert_type == AlertType.STRESS_TEST_FAILED:
-                            # Run stress tests
-                            stress_results = self.risk_engine.run_stress_test(
-                                portfolio_weights, portfolio_value
-                            )
-
-                            # Trouver le pire scénario
-                            worst_scenario = min(stress_results, key=lambda x: x.portfolio_pnl_pct)
-                            stress_threshold = -0.15  # -15% max acceptable loss
-
-                            if worst_scenario.portfolio_pnl_pct < stress_threshold:
-                                signals["stress_test_failed"] = {
-                                    "stress_scenario": worst_scenario.scenario,
-                                    "stress_loss": abs(worst_scenario.portfolio_pnl),
-                                    "stress_loss_pct": abs(worst_scenario.portfolio_pnl_pct),
-                                    "worst_asset": worst_scenario.worst_asset,
-                                    "recovery_days": worst_scenario.recovery_time_days
-                                }
-
-                                risk_analysis_metadata = {
-                                    "failed_scenarios": len([r for r in stress_results if r.portfolio_pnl_pct < stress_threshold]),
-                                    "worst_loss_pct": abs(worst_scenario.portfolio_pnl_pct)
-                                }
-                            else:
-                                logger.debug("All stress tests passed, suppressing STRESS_TEST_FAILED alert")
-                                return
-
-                        elif alert_type == AlertType.MONTE_CARLO_EXTREME:
-                            # Monte Carlo simulation
-                            mc_result = self.risk_engine.run_monte_carlo_simulation(
-                                portfolio_weights, portfolio_value, horizon_days=30
-                            )
-
-                            # Seuil extrême (P5 outcome)
-                            extreme_threshold = -0.25  # -25% loss
-                            extreme_prob = mc_result.confidence_intervals["P5"] < extreme_threshold
-
-                            if extreme_prob or mc_result.confidence_intervals["P1"] < -0.40:
-                                signals["monte_carlo_extreme"] = {
-                                    "mc_extreme_prob": abs(mc_result.confidence_intervals["P5"]),
-                                    "mc_threshold": portfolio_value * 0.25,  # 25% threshold
-                                    "max_dd_p99": mc_result.max_drawdown_p99,
-                                    "horizon": mc_result.horizon_days
-                                }
-
-                                risk_analysis_metadata = {
-                                    "simulation_count": mc_result.simulations_count,
-                                    "worst_p1": mc_result.confidence_intervals["P1"]
-                                }
-                            else:
-                                logger.debug("Monte Carlo within acceptable range, suppressing alert")
-                                return
-
-                        elif alert_type == AlertType.RISK_CONCENTRATION:
-                            concentration = signals.get("concentration", 0.0)
-                            top_assets = signals.get("top_contributors", [])
-                            if concentration > 0.25:
-                                signals["risk_concentration"] = {
-                                    "concentration_ratio": concentration,
-                                    "top_assets": top_assets[:5]
-                                }
-                                risk_analysis_metadata = {
-                                    "concentration_ratio": concentration,
-                                    "top_assets": top_assets[:3]
-                                }
-                            else:
-                                logger.debug("Risk concentration within tolerance, suppressing alert")
-                                return
-
-                        else:
-                            logger.debug(f"Unsupported advanced risk alert type: {alert_type}")
+                        if not should_trigger:
                             return
+
+                        # Enrichir les signaux avec les données de risque
+                        if enriched_signals:
+                            signals.update(enriched_signals)
+                        if metadata:
+                            risk_analysis_metadata = metadata
+
                     except Exception as e:
                         logger.error(f"Advanced risk analysis error for {alert_type.value}: {e}")
                         return
