@@ -63,6 +63,30 @@ async def health_detailed():
     })
 
 
+@router.get("/health/redis")
+async def health_redis():
+    """Test Redis connectivity"""
+    import os
+    try:
+        import aioredis
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis = await aioredis.from_url(redis_url, socket_timeout=2.0)
+        await redis.ping()
+        keys_count = await redis.dbsize()
+        await redis.close()
+        return success_response({
+            "status": "connected",
+            "url": redis_url.split("@")[-1] if "@" in redis_url else redis_url,  # Hide credentials
+            "keys": keys_count
+        })
+    except Exception as e:
+        logger.warning(f"Redis health check failed: {e}")
+        return success_response({
+            "status": "disconnected",
+            "error": str(e)
+        })
+
+
 @router.get("/api/scheduler/health")
 async def scheduler_health():
     """

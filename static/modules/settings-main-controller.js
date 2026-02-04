@@ -2364,17 +2364,20 @@ async function testRedis() {
   resultsDiv.innerHTML = '🔴 Test Redis...';
 
   try {
-    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/health`, {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/health/redis`, {
       headers: { 'X-User': getActiveUser() }
     });
     const data = await response.json();
 
-    // Check if Redis info is in health response
-    const redisOk = data.redis === 'connected' || data.redis?.status === 'ok';
+    // API retourne { ok: true, data: { status: "connected"|"disconnected", keys: N } }
+    const redisStatus = data.data?.status;
+    const redisKeys = data.data?.keys;
 
-    resultsDiv.innerHTML = redisOk
-      ? '<span style="color: var(--success);">✅ Redis: Connecté</span>'
-      : '<span style="color: var(--warning);">⚠️ Redis: Non accessible (non critique)</span>';
+    if (redisStatus === 'connected') {
+      resultsDiv.innerHTML = `<span style="color: var(--success);">✅ Redis: Connecté (${redisKeys} clés)</span>`;
+    } else {
+      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ Redis: Non accessible (non critique)</span>';
+    }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Redis: ${e.message}</span>`;
   }
@@ -2391,8 +2394,9 @@ async function testMLModels() {
 
     if (response.ok) {
       const data = await response.json();
-      const models = data.data?.models || [];
-      const trainedCount = models.filter(m => m.status === 'TRAINED').length;
+      // API retourne { ok: true, data: [...array de modèles...] }
+      const models = Array.isArray(data.data) ? data.data : [];
+      const trainedCount = models.filter(m => m.status === 'trained').length;
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
@@ -2418,7 +2422,8 @@ async function testRiskAPI() {
 
     if (response.ok) {
       const data = await response.json();
-      const hasData = data.data || data.risk_score !== undefined;
+      // API retourne { success: true, risk_metrics: {...}, ... }
+      const hasData = data.success === true || data.risk_metrics !== undefined;
 
       resultsDiv.innerHTML = hasData
         ? '<span style="color: var(--success);">✅ Risk API: Données disponibles</span>'
