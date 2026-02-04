@@ -19,11 +19,19 @@
 
 ## Pages Bourse/Saxo
 
-| Page                  | Title                | Endpoints                          | Modules JS                  | Statut |
-|-----------------------|----------------------|------------------------------------|-----------------------------|--------|
-| saxo-dashboard.html   | Bourse Overview      | /api/saxo/positions                | wealth-saxo-summary.js      | Prod   |
-| saxo-upload.html      | Import Saxo          | /api/sources/*                     | sources-manager.js          | Migrating |
-| analytics-equities.html| Analytics Equities  | /api/wealth/*                      | wealth-analytics.js         | Beta   |
+| Page | Title | Endpoints | Modules JS | Statut |
+|------|-------|-----------|------------|--------|
+| saxo-dashboard.html | Bourse Dashboard | /api/saxo/positions | wealth-saxo-summary.js | Prod |
+| bourse-analytics.html | Bourse Analytics | /api/risk/bourse/*, /api/ml/bourse/* | plotly.js, chart.js | Prod |
+| bourse-recommendations.html | Bourse Recommendations | /api/ml/bourse/portfolio-recommendations | - | Prod |
+| saxo-upload.html | Import Saxo | /api/sources/* | sources-manager.js | Migrating |
+| analytics-equities.html | Analytics Equities | /api/wealth/* | wealth-analytics.js | Beta |
+
+**Menu Bourse (dropdown):**
+
+- 📊 Dashboard → saxo-dashboard.html (Overview + Positions)
+- 📈 Analytics → bourse-analytics.html (Risk Analysis + Advanced Analytics)
+- 💡 Recommendations → bourse-recommendations.html (Recommendations + Market Opportunities)
 
 ---
 

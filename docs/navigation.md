@@ -63,6 +63,26 @@ Configuration, intégrations et outils administrateurs.
 - `#monitoring` - Monitoring système
 - `#tools` - Outils & debug
 
+## Menu Bourse (Dropdown)
+
+Accès aux fonctionnalités avancées du portefeuille Bourse (Saxo Bank) via un dropdown dédié.
+
+### Sous-menus
+
+- **📊 Dashboard** → `saxo-dashboard.html` (Overview + Positions)
+- **📈 Analytics** → `bourse-analytics.html` (Risk Analysis + Advanced Analytics)
+- **💡 Recommendations** → `bourse-recommendations.html` (Recommendations + Market Opportunities)
+
+### Pages détaillées
+
+| Page                        | Contenu                                                                                      |
+|-----------------------------|----------------------------------------------------------------------------------------------|
+| saxo-dashboard.html         | Vue d'ensemble, positions, allocation par asset class                                        |
+| bourse-analytics.html       | Risk Score, VaR, Sharpe, Correlation Matrix, Stress Testing, ML Insights, Sector Rotation   |
+| bourse-recommendations.html | BUY/HOLD/SELL recommendations, Market Opportunities, Suggested Sales, Impact Simulator      |
+
+---
+
 ## Menu Admin (RBAC)
 
 **Visible uniquement** pour les rôles `governance_admin` ou `ml_admin`.
