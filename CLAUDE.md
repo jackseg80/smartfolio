@@ -87,6 +87,11 @@ simulations.html       # Simulateur complet
 wealth-dashboard.html   # Patrimoine unifié
 monitoring.html        # KPIs système + Alerts History
 admin-dashboard.html    # Admin Dashboard (RBAC)
+
+# Bourse (Saxo Bank)
+saxo-dashboard.html     # Dashboard Bourse: Overview + Positions
+bourse-analytics.html   # Risk Analysis + Advanced Analytics
+bourse-recommendations.html  # Recommendations + Market Opportunities
 ```
 
 ### API Namespaces

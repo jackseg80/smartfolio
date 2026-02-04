@@ -195,8 +195,15 @@ const initUnifiedNav = () => {
             <!-- SÉPARATEUR -->
             <li class="nav-separator" aria-hidden="true"></li>
 
-            <!-- BOURSE -->
-            <li><a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Bourse</a></li>
+            <!-- BOURSE (dropdown) -->
+            <li class="has-submenu">
+              <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Bourse</a>
+              <div class="submenu">
+                <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">📊 Dashboard</a>
+                <a href="bourse-analytics.html" data-route="bourse-analytics.html">📈 Analytics</a>
+                <a href="bourse-recommendations.html" data-route="bourse-recommendations.html">💡 Recommendations</a>
+              </div>
+            </li>
 
             <!-- PATRIMOINE -->
             <li><a href="wealth-dashboard.html" data-route="wealth-dashboard.html">Patrimoine</a></li>

@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 Bourse Analytics - SmartFolio</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="theme-compat.css">
+    <link rel="stylesheet" href="css/saxo-dashboard.css">
+    <script type="module" src="components/nav.js"></script>
+    <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();
+    // =================================
+
+    import { initDeepLinks } from './components/deep-links.js';
+    import { safeFetch } from './modules/http.js';
+
+    // Anchors for bourse-analytics.html
+    initDeepLinks({
+        'risk': 'Risk Analysis',
+        'analytics': 'Analytics'
+    });
+
+    window.safeFetch = safeFetch;
+    </script>
+    <script src="debug-logger.js"></script>
+    <script src="components/toast.js" type="module"></script>
+    <script src="global-config.js"></script>
+    <script src="appearance.js"></script>
+
+    <!-- Chart.js for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- AI Chat Component (Global System) -->
+    <link rel="stylesheet" href="/static/components/ai-chat.css">
+    <script type="module">
+        import { initAIChat } from '/static/components/ai-chat-init.js';
+        initAIChat('bourse-analytics');
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
+                    <h1>📊 Bourse Analytics</h1>
+                    <p style="color: var(--theme-text-muted); margin: 0;">Risk Analysis & Advanced Analytics</p>
+                </div>
+                <span
+                    id="cacheIndicator"
+                    style="display: none; padding: 0.25rem 0.75rem; background: var(--success); color: white; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600;">
+                    ⚡ Cached
+                </span>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <a href="saxo-dashboard.html" class="btn secondary" style="padding: 0.75rem 1.25rem; text-decoration: none;">
+                    ← Dashboard
+                </a>
+                <button
+                    id="btnForceRefresh"
+                    onclick="loadBourseData(true)"
+                    style="padding: 0.75rem 1.25rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;"
+                    title="Forcer le rechargement des données (bypass cache)">
+                    🔄 Actualiser
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content (initially empty) -->
+        <div id="mainContent">
+            <div class="loading">📊 Chargement initial...</div>
+        </div>
+
+        <!-- Dashboard Content (hidden by default) -->
+        <div id="dashboardContent" style="display: none;">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('risk', event)">Risk Analysis</button>
+                <button class="tab-btn" onclick="switchTab('analytics', event)">Analytics</button>
+            </div>
+
+            <!-- Risk Tab -->
+            <div id="risk" class="tab-content active">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Risk Score (Bourse)</h3>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="exportRiskPDF()" style="padding: 0.5rem 1rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.875rem; font-weight: 600;">
+                                📄 Export PDF
+                            </button>
+                        </div>
+                    </div>
+                    <div id="riskSummary"><div class="loading">Calcul en cours…</div></div>
+                </div>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-header"><h3 class="card-title">Métriques principales</h3></div>
+                        <div id="riskMetrics" class="table-wrapper"><div class="loading">…</div></div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="card-header"><h3 class="card-title">Concentration & Diversification</h3></div>
+                        <div id="riskStructure" class="table-wrapper"><div class="loading">…</div></div>
+                    </div>
+                </div>
+
+                <!-- Alerts Section -->
+                <div class="dashboard-card" style="margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">⚠️ Critical Alerts</h3>
+                        <div class="card-badge" id="alertsBadge">0 active</div>
+                    </div>
+                    <div id="criticalAlerts">
+                        <div style="padding: 1.5rem; text-align: center; color: var(--theme-text-muted); font-size: 0.875rem;">
+                            ✅ No critical alerts. Portfolio within safe thresholds.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-content">
+                <!-- ML Insights Section -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">🤖 ML Insights & Predictions</h3>
+                        <div class="card-badge" id="mlBadge">Loading...</div>
+                    </div>
+                    <div id="mlInsights"><div class="loading">Chargement des prédictions ML…</div></div>
+                </div>
+
+                <!-- Advanced Analytics Section -->
+                <div style="margin-top: 2rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--theme-text);">
+                        📊 Advanced Analytics
+                    </h2>
+
+                    <!-- Correlation Heatmap -->
+                    <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">🔗 Correlation Matrix & Clustering</h3>
+                            <div class="card-badge" id="correlationBadge">Portfolio-wide</div>
+                        </div>
+                        <div id="correlationAnalysis"><div class="loading">Loading correlation matrix…</div></div>
+                    </div>
+
+                    <!-- Stress Testing -->
+                    <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">💥 Stress Testing Scenarios</h3>
+                            <div class="card-badge" id="stressBadge">Interactive</div>
+                        </div>
+                        <div id="stressTestingUI"><div class="loading">Loading stress testing…</div></div>
+                    </div>
+
+                    <!-- ML Regime History -->
+                    <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">🤖 ML Regime History & Forecast</h3>
+                            <div class="card-badge" id="regimeBadge">SPY Benchmark</div>
+                        </div>
+                        <div id="regimeHistory"><div class="loading">Loading ML regime history…</div></div>
+                    </div>
+                </div>
+
+                <!-- Specialized Analytics Section -->
+                <div style="margin-top: 2rem;">
+                    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--theme-text);">
+                        🎯 Specialized Analytics
+                    </h2>
+
+                    <!-- Sector Rotation -->
+                    <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">📊 Sector Rotation Analysis</h3>
+                            <div class="card-badge" id="sectorBadge">Portfolio-wide</div>
+                        </div>
+                        <div id="sectorRotation"><div class="loading">Loading sector rotation data…</div></div>
+                    </div>
+
+                    <!-- Margin Monitoring -->
+                    <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3 class="card-title">⚠️ Margin Monitoring</h3>
+                            <div class="card-badge" id="marginBadge">Portfolio-wide</div>
+                        </div>
+                        <div id="marginMonitoring"><div class="loading">Loading margin data…</div></div>
+                    </div>
+
+                    <!-- Ticker-Specific Analytics -->
+                    <div class="dashboard-card">
+                        <div class="card-header">
+                            <h3 class="card-title">🔍 Ticker-Specific Analysis</h3>
+                            <select id="tickerSelector" style="padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text); font-size: 0.875rem;">
+                                <option value="">Select a ticker...</option>
+                            </select>
+                        </div>
+
+                        <div id="tickerAnalytics" style="display: none;">
+                            <!-- Beta Forecast -->
+                            <div style="padding: 1rem; border-top: 1px solid var(--theme-border); margin-top: 1rem;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📈 Beta Forecast vs SPY</h4>
+                                <div id="betaForecast"><div class="loading">Loading beta forecast…</div></div>
+                            </div>
+
+                            <!-- Earnings Predictor -->
+                            <div style="padding: 1rem; border-top: 1px solid var(--theme-border); margin-top: 1rem;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📅 Earnings Impact Prediction</h4>
+                                <div id="earningsPredictor"><div class="loading">Loading earnings data…</div></div>
+                            </div>
+
+                            <!-- Dividend Analysis -->
+                            <div style="padding: 1rem; border-top: 1px solid var(--theme-border); margin-top: 1rem;">
+                                <h4 style="font-weight: 600; margin-bottom: 0.75rem;">💰 Dividend Analysis</h4>
+                                <div id="dividendAnalysis"><div class="loading">Loading dividend data…</div></div>
+                            </div>
+                        </div>
+
+                        <div id="tickerPlaceholder" style="padding: 2rem; text-align: center; color: var(--theme-text-muted); font-size: 0.875rem;">
+                            👆 Select a ticker above to view Beta Forecast, Earnings Predictor, and Dividend Analysis
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        let currentPortfolioData = null;
+        let currentFileKey = null;
+        let analyticsTabLoaded = false;
+
+        // Chart instances (prevent memory leaks)
+        let regimeTimelineChartInstance = null;
+        let stressTestChartInstance = null;
+        let regimeProbabilitiesChartInstance = null;
+        let betaForecastChartInstance = null;
+
+        // Plotly lazy loading state
+        let plotlyLoaded = false;
+        let pdfLibsLoaded = false;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            debugLogger.debug('🚀 Bourse Analytics page loaded');
+
+            // Resolve source type from localStorage
+            await resolveSourceType();
+
+            // Load data
+            await loadBourseData();
+        });
+
+        // Resolve source type from localStorage
+        async function resolveSourceType() {
+            const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+
+            if (bourseSource === 'manual_bourse') {
+                window.saxoSourceType = 'manual';
+            } else if (bourseSource.startsWith('api:')) {
+                window.saxoSourceType = 'api';
+            } else if (bourseSource.startsWith('saxo:')) {
+                window.saxoSourceType = 'csv';
+                currentFileKey = bourseSource.replace('saxo:', '');
+            } else {
+                window.saxoSourceType = null;
+            }
+
+            debugLogger.debug(`Source type resolved: ${window.saxoSourceType}`);
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName, event) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            if (event && event.target) {
+                event.target.classList.add('active');
+            }
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+
+            // Load data for specific tab if needed
+            if (currentPortfolioData) {
+                if (tabName === 'risk') {
+                    loadRiskAnalytics();
+                } else if (tabName === 'analytics') {
+                    loadAnalyticsTab();
+                }
+            }
+        }
+
+        // ==================== DATA LOADING ====================
+        async function loadBourseData(forceRefresh = false) {
+            debugLogger.debug('📊 Loading Bourse data for Analytics...');
+
+            try {
+                document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Chargement des données Bourse...</div>';
+                document.getElementById('dashboardContent').style.display = 'none';
+
+                const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+                // Get positions to have portfolio context
+                let portfolioData = { positions: [], summary: {} };
+
+                if (window.saxoSourceType === 'manual') {
+                    const response = await fetch('/api/sources/v2/bourse/balances', {
+                        headers: { 'X-User': activeUser }
+                    });
+                    if (response.ok) {
+                        const apiResponse = await response.json();
+                        const data = apiResponse.data || apiResponse;
+                        const items = data.data?.items || data.items || [];
+                        portfolioData.positions = items.map(item => ({
+                            symbol: item.symbol || item.asset_name,
+                            ticker: item.symbol || item.asset_name,
+                            market_value_usd: Number(item.value_usd || item.value || 0)
+                        }));
+                    }
+                } else if (window.saxoSourceType === 'api') {
+                    const response = await fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
+                        headers: { 'X-User': activeUser }
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        const data = result.data || result;
+                        const innerData = data.data || data;
+                        portfolioData.positions = (innerData.positions || []).map(pos => ({
+                            symbol: pos.symbol,
+                            ticker: pos.symbol,
+                            market_value_usd: pos.market_value || 0
+                        }));
+                    }
+                } else {
+                    // CSV mode - simplified
+                    let portfoliosUrl = '/api/saxo/portfolios';
+                    if (currentFileKey) {
+                        portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
+                    }
+                    const response = await fetch(`${window.getApiBase()}${portfoliosUrl}`, {
+                        headers: { 'X-User': activeUser }
+                    });
+                    if (response.ok) {
+                        const result = await response.json();
+                        const portfolios = result.portfolios || [];
+                        if (portfolios.length > 0) {
+                            const portfolio = portfolios[0];
+                            let detailUrl = `/api/saxo/portfolios/${portfolio.portfolio_id}`;
+                            if (currentFileKey) {
+                                detailUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
+                            }
+                            const detailResponse = await fetch(`${window.getApiBase()}${detailUrl}`, {
+                                headers: { 'X-User': activeUser }
+                            });
+                            if (detailResponse.ok) {
+                                portfolioData = await detailResponse.json();
+                            }
+                        }
+                    }
+                }
+
+                currentPortfolioData = portfolioData;
+
+                // Hide loading, show content
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+                // Load Risk tab by default
+                await loadRiskAnalytics();
+
+                debugLogger.debug('✅ Bourse Analytics data loaded');
+
+            } catch (error) {
+                debugLogger.error('Error loading Bourse data:', error);
+                document.getElementById('mainContent').innerHTML = `
+                    <div class="error-message">❌ Erreur: ${error.message}</div>
+                `;
+            }
+        }
+
+        // ==================== RISK ANALYTICS ====================
+        async function loadRiskAnalytics() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                document.getElementById('riskSummary').innerHTML = '<div class="loading">Calcul des métriques de risque…</div>';
+                document.getElementById('riskMetrics').innerHTML = '<div class="loading">…</div>';
+                document.getElementById('riskStructure').innerHTML = '<div class="loading">…</div>';
+
+                let riskUrl = `/api/risk/bourse/dashboard?user_id=${activeUser}`;
+                if (window.saxoSourceType === 'manual') {
+                    riskUrl += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    riskUrl += `&source=saxobank_api`;
+                } else if (currentFileKey) {
+                    riskUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const fullRiskUrl = `${window.getApiBase()}${riskUrl}`;
+                const response = await window.safeFetch(fullRiskUrl, {
+                    headers: { 'X-User': activeUser }
+                });
+                if (!response?.ok) throw new Error('risk endpoint failed');
+
+                const { risk, coverage, positions_count, total_value_usd } = response.data || response;
+                const score = risk?.score ?? 0;
+                const level = risk?.level ?? 'N/A';
+
+                const getRiskColor = (lvl) => {
+                    const levelUpper = String(lvl).toUpperCase();
+                    if (levelUpper === 'LOW' || levelUpper === 'VERY_LOW') return 'var(--success)';
+                    if (levelUpper === 'MEDIUM' || levelUpper === 'MODERATE') return 'var(--warning)';
+                    if (levelUpper === 'HIGH' || levelUpper === 'VERY_HIGH') return 'var(--danger)';
+                    if (levelUpper === 'CRITICAL') return '#8B0000';
+                    return 'var(--theme-text-muted)';
+                };
+
+                const riskColor = getRiskColor(level);
+
+                const metricWithTooltip = (label, tooltip) => `
+                    <span class="metric-with-tooltip">
+                        <strong>${label}</strong>
+                        <span class="tooltip-icon" data-tooltip="${tooltip}">i</span>
+                    </span>`;
+
+                document.getElementById('riskSummary').innerHTML = `
+                  <div style="display:flex;gap:1.5rem;align-items:center;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                      <div class="metric-large" style="color:${riskColor}">${score.toFixed(0)}<span style="font-size:1rem;color:var(--theme-text-muted);">/100</span></div>
+                      <div class="metric-label">
+                        ${metricWithTooltip('Risk Score (higher = safer)', 'Score de risque global (0-100)')}
+                      </div>
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                      <div style="font-weight:600;font-size:1.25rem;color:${riskColor};margin-bottom:0.5rem;">${level}</div>
+                      <div style="color:var(--theme-text-muted);font-size:0.875rem;">
+                        ${positions_count || 0} positions • $${(total_value_usd || 0).toLocaleString()}
+                      </div>
+                      <div style="margin-top:0.5rem;color:var(--theme-text-muted);font-size:0.875rem;">
+                        ${metricWithTooltip('Coverage: ' + (coverage*100).toFixed(0) + '%', 'Couverture des données de prix')}
+                      </div>
+                    </div>
+                  </div>`;
+
+                const m = risk?.metrics || {};
+                const formatPct = (val) => ((val ?? 0) * 100).toFixed(2);
+
+                document.getElementById('riskMetrics').innerHTML = `
+                  <table class="positions-table">
+                    <tbody>
+                      <tr><td>${metricWithTooltip('VaR (95%, 1d)', 'Value at Risk')}</td><td style="color:var(--danger)">${formatPct(m.var_95_1d)}%</td></tr>
+                      <tr><td>${metricWithTooltip('Volatility (30d)', 'Volatilité 30 jours')}</td><td>${formatPct(m.volatility_30d)}%</td></tr>
+                      <tr><td>${metricWithTooltip('Volatility (252d)', 'Volatilité annuelle')}</td><td>${formatPct(m.volatility_252d)}%</td></tr>
+                      <tr><td>${metricWithTooltip('Max Drawdown', 'Perte max depuis le pic')}</td><td style="color:var(--danger)">${formatPct(m.max_drawdown)}%</td></tr>
+                      <tr><td>${metricWithTooltip('Sharpe Ratio', 'Rendement ajusté du risque')}</td><td style="color:${(m.sharpe_ratio??0) > 1 ? 'var(--success)' : 'var(--theme-text)'}">${(m.sharpe_ratio??0).toFixed(2)}</td></tr>
+                      <tr><td>${metricWithTooltip('Sortino Ratio', 'Ratio de Sortino')}</td><td>${(m.sortino_ratio??0).toFixed(2)}</td></tr>
+                    </tbody>
+                  </table>`;
+
+                document.getElementById('riskStructure').innerHTML = `
+                  <table class="positions-table">
+                    <tbody>
+                      <tr><td>${metricWithTooltip('Beta (Portfolio)', 'Beta vs marché')}</td><td>${(m.beta_portfolio??1.0).toFixed(2)}</td></tr>
+                      <tr><td>${metricWithTooltip('Calmar Ratio', 'Rendement/Drawdown')}</td><td>${(m.calmar_ratio??0).toFixed(2)}</td></tr>
+                      <tr><td>${metricWithTooltip('Volatility (90d)', 'Volatilité 3 mois')}</td><td>${formatPct(m.volatility_90d)}%</td></tr>
+                      <tr><td>${metricWithTooltip('VaR Method', 'Méthode de calcul')}</td><td style="text-transform:capitalize;">${m.var_method || 'historical'}</td></tr>
+                      <tr><td>${metricWithTooltip('Drawdown Days', 'Jours depuis le pic')}</td><td>${m.drawdown_days ?? 'N/A'}</td></tr>
+                    </tbody>
+                  </table>`;
+
+            } catch (e) {
+                debugLogger.error('Risk analytics load failed', e);
+                document.getElementById('riskSummary').innerHTML = `
+                  <div class="error-message"><strong>Erreur de chargement</strong><br>${e.message}</div>`;
+            }
+
+            // Load alerts in parallel
+            loadCriticalAlerts().catch(err => debugLogger.warn('Alerts loading failed', err));
+        }
+
+        // ==================== CRITICAL ALERTS ====================
+        async function loadCriticalAlerts() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+            try {
+                let alertsUrl = `/api/risk/bourse/alerts?user_id=${activeUser}`;
+                if (window.saxoSourceType === 'manual') {
+                    alertsUrl += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    alertsUrl += `&source=saxobank_api`;
+                } else if (currentFileKey) {
+                    alertsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const fullAlertsUrl = `${window.getApiBase()}${alertsUrl}`;
+                const response = await window.safeFetch(fullAlertsUrl, {
+                    headers: { 'X-User': activeUser }
+                });
+                if (!response?.ok) throw new Error('Alerts endpoint failed');
+
+                const data = response.data || response;
+                const { critical, warnings, info, summary } = data;
+
+                const totalAlerts = summary?.total || 0;
+                const badge = document.getElementById('alertsBadge');
+
+                if (totalAlerts === 0) {
+                    badge.textContent = '0 active';
+                    badge.style.background = 'var(--success)';
+                    badge.style.color = 'white';
+                    document.getElementById('criticalAlerts').innerHTML = `
+                        <div class="alert-empty">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
+                            <div style="font-weight: 600; font-size: 1.125rem;">Portfolio Sain</div>
+                            <div style="font-size: 0.875rem;">Aucune alerte détectée.</div>
+                        </div>
+                    `;
+                } else {
+                    badge.textContent = `${totalAlerts} alert${totalAlerts > 1 ? 's' : ''}`;
+                    badge.style.background = summary?.critical > 0 ? 'var(--danger)' : 'var(--warning)';
+                    badge.style.color = 'white';
+
+                    let html = '';
+                    (critical || []).forEach(alert => {
+                        html += renderAlert(alert, 'critical');
+                    });
+                    (warnings || []).forEach(alert => {
+                        html += renderAlert(alert, 'warning');
+                    });
+                    (info || []).forEach(alert => {
+                        html += renderAlert(alert, 'info');
+                    });
+                    document.getElementById('criticalAlerts').innerHTML = html;
+                }
+
+            } catch (e) {
+                debugLogger.error('Critical alerts load failed', e);
+                document.getElementById('criticalAlerts').innerHTML = `
+                    <div class="alert-empty" style="color: var(--danger);">⚠️ Erreur de chargement des alertes</div>
+                `;
+            }
+        }
+
+        function renderAlert(alert, level) {
+            const icons = { critical: '🔴', warning: '⚠️', info: 'ℹ️' };
+            const colors = { critical: 'var(--danger)', warning: 'var(--warning)', info: 'var(--info)' };
+            return `
+                <div class="alert alert-${level}" style="border-left: 4px solid ${colors[level]}; padding: 1rem; margin-bottom: 0.75rem; background: color-mix(in oklab, ${colors[level]} 10%, transparent); border-radius: var(--radius-sm);">
+                    <div style="font-weight: 600; margin-bottom: 0.5rem;">${icons[level]} ${alert.title}</div>
+                    <div style="font-size: 0.875rem; color: var(--theme-text-muted);">${alert.recommendation || alert.impact || ''}</div>
+                </div>
+            `;
+        }
+
+        // ==================== ANALYTICS TAB ====================
+        async function loadAnalyticsTab() {
+            if (analyticsTabLoaded) {
+                debugLogger.debug('Analytics tab already loaded');
+                return;
+            }
+
+            debugLogger.debug('Loading Analytics tab...');
+            analyticsTabLoaded = true;
+
+            Promise.all([
+                loadMLInsights().catch(err => debugLogger.warn('ML insights failed', err)),
+                loadAdvancedAnalytics().catch(err => debugLogger.warn('Advanced analytics failed', err)),
+                loadSpecializedAnalytics().catch(err => debugLogger.warn('Specialized analytics failed', err))
+            ]);
+        }
+
+        // ==================== ML INSIGHTS ====================
+        async function loadMLInsights() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+            try {
+                document.getElementById('mlBadge').textContent = 'Analyzing...';
+
+                const benchmark = 'SPY';
+                const topStock = currentPortfolioData?.positions?.[0]?.symbol?.split(':')[0] || 'AAPL';
+
+                const baseUrl = window.location.origin;
+                const [regimeRes, volatilityRes] = await Promise.all([
+                    window.safeFetch(`${baseUrl}/api/ml/bourse/regime?benchmark=${benchmark}&lookback_days=7300`),
+                    window.safeFetch(`${baseUrl}/api/ml/bourse/forecast?symbol=${topStock}&lookback_days=365`)
+                ]);
+
+                if (!regimeRes?.ok && !volatilityRes?.ok) {
+                    throw new Error('ML services unavailable');
+                }
+
+                const regime = regimeRes?.data || regimeRes || {};
+                const volatility = volatilityRes?.data || volatilityRes || {};
+
+                const getRegimeColor = (reg) => {
+                    const r = String(reg).toLowerCase();
+                    if (r.includes('bull')) return 'var(--success)';
+                    if (r.includes('bear')) return 'var(--danger)';
+                    return 'var(--warning)';
+                };
+
+                const regimeColor = getRegimeColor(regime.current_regime);
+                const regimeConfidence = ((regime.confidence || 0) * 100).toFixed(0);
+
+                document.getElementById('mlInsights').innerHTML = `
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;">
+                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Market Regime</div>
+                            <div style="font-size:1.25rem;font-weight:700;color:${regimeColor};">${regime.current_regime || 'Unknown'}</div>
+                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">Confidence: ${regimeConfidence}%</div>
+                        </div>
+                        <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Volatility Forecast (${topStock})</div>
+                            <div style="font-size:1.25rem;font-weight:700;">
+                                ${volatility.predictions?.['7d']?.predicted_volatility ? (volatility.predictions['7d'].predicted_volatility * 100).toFixed(2) + '%' : 'N/A'}
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">7-day horizon</div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('mlBadge').textContent = 'Active';
+                document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--success) 10%, transparent)';
+                document.getElementById('mlBadge').style.color = 'var(--success)';
+
+            } catch (error) {
+                debugLogger.error('ML insights load failed', error);
+                document.getElementById('mlInsights').innerHTML = `
+                    <div style="padding:1rem;background:var(--warning-bg);border:1px solid var(--warning);border-radius:var(--radius-md);">
+                        <div style="color:var(--warning);">⚠️ ML Predictions Unavailable</div>
+                        <div style="font-size:0.875rem;color:var(--theme-text-muted);">${error.message}</div>
+                    </div>
+                `;
+                document.getElementById('mlBadge').textContent = 'Fallback';
+            }
+        }
+
+        // ==================== ADVANCED ANALYTICS ====================
+        async function loadAdvancedAnalytics() {
+            await Promise.all([
+                loadCorrelationAnalysis().catch(err => debugLogger.warn('Correlation failed', err)),
+                loadStressTestingUI().catch(err => debugLogger.warn('Stress testing failed', err)),
+                loadRegimeHistory().catch(err => debugLogger.warn('Regime history failed', err))
+            ]);
+        }
+
+        async function loadPlotlyLib() {
+            if (plotlyLoaded) return;
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/plotly.js-dist@2.26.0/plotly.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            plotlyLoaded = true;
+        }
+
+        async function loadCorrelationAnalysis() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Loading visualization library…</div>';
+                await loadPlotlyLib();
+
+                document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Calculating correlations…</div>';
+
+                let url = `/api/risk/bourse/advanced/correlation?user_id=${activeUser}&method=pearson&lookback_days=252`;
+                if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                if (!response?.ok) throw new Error('Correlation analysis failed');
+
+                const data = response.data || response;
+                const corrMatrix = data.correlation_matrix || {};
+                const labels = data.clustering?.labels || Object.keys(corrMatrix);
+
+                document.getElementById('correlationAnalysis').innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <span style="font-size: 0.875rem; color: var(--theme-text-muted);">
+                            ${data.num_positions} positions analyzed • Avg correlation: ${(data.avg_correlation || 0).toFixed(3)}
+                        </span>
+                    </div>
+                    <div id="correlationHeatmap" style="width: 100%; height: 500px;"></div>
+                `;
+
+                // Create heatmap
+                const corrArray = labels.map(row => labels.map(col => corrMatrix[row]?.[col] || 0));
+                const textColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-text').trim() || '#e2e8f0';
+
+                Plotly.newPlot('correlationHeatmap', [{
+                    z: corrArray,
+                    x: labels,
+                    y: labels,
+                    type: 'heatmap',
+                    colorscale: [[0, '#ef4444'], [0.5, '#f3f4f6'], [1, '#22c55e']],
+                    zmid: 0
+                }], {
+                    title: { text: '🔗 Position Correlation Heatmap', font: { color: textColor } },
+                    xaxis: { tickangle: -45, tickfont: { color: textColor } },
+                    yaxis: { tickfont: { color: textColor } },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)'
+                }, { responsive: true, displayModeBar: false });
+
+                document.getElementById('correlationBadge').textContent = `${labels.length} positions`;
+
+            } catch (error) {
+                debugLogger.error('Correlation analysis failed', error);
+                document.getElementById('correlationAnalysis').innerHTML = `<div class="error-message">Failed: ${error.message}</div>`;
+            }
+        }
+
+        async function loadStressTestingUI() {
+            document.getElementById('stressTestingUI').innerHTML = `
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Generic Scenarios</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                        <button onclick="runStressTest('market_crash')" style="padding: 0.75rem; border: 1px solid var(--danger); background: color-mix(in oklab, var(--danger) 10%, transparent); color: var(--danger); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">📉 Market Crash (-10%)</button>
+                        <button onclick="runStressTest('market_rally')" style="padding: 0.75rem; border: 1px solid var(--success); background: color-mix(in oklab, var(--success) 10%, transparent); color: var(--success); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">📈 Market Rally (+10%)</button>
+                        <button onclick="runStressTest('moderate_selloff')" style="padding: 0.75rem; border: 1px solid var(--warning); background: color-mix(in oklab, var(--warning) 10%, transparent); color: var(--warning); border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">⚠️ Moderate Selloff (-5%)</button>
+                    </div>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📜 Historical Crisis Scenarios</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem;">
+                        <button onclick="runStressTest('covid_crash')" style="padding: 0.75rem; border: 1px solid #DC143C; background: color-mix(in oklab, #DC143C 10%, transparent); color: #DC143C; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">🦠 COVID-19 (-34%)</button>
+                        <button onclick="runStressTest('financial_crisis_2008')" style="padding: 0.75rem; border: 1px solid #8B0000; background: color-mix(in oklab, #8B0000 10%, transparent); color: #8B0000; border-radius: var(--radius-sm); cursor: pointer; font-weight: 600;">🏦 2008 Crisis (-57%)</button>
+                    </div>
+                </div>
+                <div id="stressTestResults" style="display: none;">
+                    <h4 style="font-weight: 600; margin-bottom: 0.75rem;">📊 Stress Test Results</h4>
+                    <div id="stressTestChart" style="width: 100%; height: 300px; margin-bottom: 1rem;"></div>
+                    <div id="stressTestMetrics"></div>
+                </div>
+            `;
+        }
+
+        async function runStressTest(scenario) {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                document.getElementById('stressTestResults').style.display = 'block';
+                document.getElementById('stressTestMetrics').innerHTML = '<div class="loading">Running stress test…</div>';
+
+                let url = `/api/risk/bourse/advanced/stress-test?user_id=${activeUser}&scenario=${scenario}`;
+                if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const response = await window.safeFetch(globalConfig.getApiUrl(url), { method: 'POST' });
+                if (!response?.ok) throw new Error('Stress test failed');
+
+                const data = response.data || response;
+                const pnlPct = data.pnl_pct || 0;
+                const totalPnl = data.total_pnl || 0;
+                const pnlColor = pnlPct >= 0 ? 'var(--success)' : 'var(--danger)';
+
+                document.getElementById('stressTestMetrics').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Scenario</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${data.scenario}</div>
+                        </div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Total P&L</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: ${pnlColor};">
+                                ${pnlPct >= 0 ? '+' : ''}$${totalPnl.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                                (${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%)
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                debugLogger.error('Stress test failed', error);
+                document.getElementById('stressTestMetrics').innerHTML = `<div class="error-message">${error.message}</div>`;
+            }
+        }
+
+        async function loadRegimeHistory() {
+            document.getElementById('regimeHistory').innerHTML = `
+                <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
+                    📈 Regime History visualization available in full dashboard
+                    <br><a href="saxo-dashboard.html" style="color: var(--brand-primary);">View Full Dashboard →</a>
+                </div>
+            `;
+        }
+
+        // ==================== SPECIALIZED ANALYTICS ====================
+        async function loadSpecializedAnalytics() {
+            await Promise.all([
+                loadSectorRotation().catch(err => debugLogger.warn('Sector rotation failed', err)),
+                loadMarginMonitoring().catch(err => debugLogger.warn('Margin monitoring failed', err))
+            ]);
+            populateTickerSelector();
+        }
+
+        async function loadSectorRotation() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                await loadPlotlyLib();
+                document.getElementById('sectorRotation').innerHTML = '<div class="loading">Analyzing sectors…</div>';
+
+                let url = `/api/risk/bourse/specialized/sector-rotation?user_id=${activeUser}&lookback_days=60`;
+                if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                if (!response?.ok) throw new Error('Sector rotation failed');
+
+                const data = response.data || response;
+                const sectors = data.sectors || {};
+                const sortedSectors = Object.entries(sectors).sort((a, b) => (b[1].momentum || 0) - (a[1].momentum || 0));
+
+                document.getElementById('sectorRotation').innerHTML = `
+                    <div style="margin-bottom: 1rem;">
+                        <span style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--${data.rotation_detected ? 'warning' : 'info'}) 10%, transparent); color: var(--${data.rotation_detected ? 'warning' : 'info'}); font-size: 0.75rem; font-weight: 600;">
+                            ${data.rotation_detected ? '🔄 Rotation Detected' : '📊 No Rotation'}
+                        </span>
+                    </div>
+                    <table class="positions-table">
+                        <thead>
+                            <tr><th>Sector</th><th>Return</th><th>Momentum</th><th>Signal</th></tr>
+                        </thead>
+                        <tbody>
+                            ${sortedSectors.map(([name, d]) => {
+                                const signalColor = d.signal === 'overweight' ? 'var(--success)' : d.signal === 'underweight' ? 'var(--danger)' : 'var(--theme-text-muted)';
+                                return `<tr>
+                                    <td style="font-weight: 600;">${name}</td>
+                                    <td style="color: ${d.return >= 0 ? 'var(--success)' : 'var(--danger)'};">${d.return >= 0 ? '+' : ''}${d.return.toFixed(2)}%</td>
+                                    <td>${d.momentum.toFixed(2)}x</td>
+                                    <td style="color: ${signalColor}; font-weight: 600;">${d.signal.toUpperCase()}</td>
+                                </tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                `;
+
+                document.getElementById('sectorBadge').textContent = `${data.hot_sectors?.length || 0} hot, ${data.cold_sectors?.length || 0} cold`;
+
+            } catch (error) {
+                debugLogger.error('Sector rotation failed', error);
+                document.getElementById('sectorRotation').innerHTML = `<div class="error-message">${error.message}</div>`;
+            }
+        }
+
+        async function loadMarginMonitoring() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            try {
+                let url = `/api/risk/bourse/specialized/margin?user_id=${activeUser}`;
+                if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                if (!response?.ok) throw new Error('Margin monitoring failed');
+
+                const data = response.data || response;
+                const marginColor = data.margin_call_distance < 10 ? 'var(--danger)' :
+                                   data.margin_call_distance < 20 ? 'var(--warning)' : 'var(--success)';
+
+                document.getElementById('marginMonitoring').innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Margin Utilization</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">${data.margin_utilization.toFixed(1)}%</div>
+                        </div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Leverage</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">${data.current_leverage.toFixed(2)}x</div>
+                        </div>
+                        <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
+                            <div style="font-size: 0.875rem; color: var(--theme-text-muted);">Margin Call Distance</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: ${marginColor};">${data.margin_call_distance.toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('marginBadge').textContent = data.warnings?.length > 0 ? `${data.warnings.length} warnings` : 'Healthy';
+
+            } catch (error) {
+                debugLogger.error('Margin monitoring failed', error);
+                document.getElementById('marginMonitoring').innerHTML = `<div class="error-message">${error.message}</div>`;
+            }
+        }
+
+        function populateTickerSelector() {
+            const selector = document.getElementById('tickerSelector');
+            if (!currentPortfolioData || !currentPortfolioData.positions) return;
+
+            const tickers = [...new Set(currentPortfolioData.positions.map(p => p.ticker || p.symbol))].filter(Boolean).sort();
+            selector.innerHTML = '<option value="">Select a ticker...</option>' +
+                tickers.map(ticker => `<option value="${ticker}">${ticker}</option>`).join('');
+
+            selector.onchange = (e) => {
+                const ticker = e.target.value;
+                if (ticker) {
+                    document.getElementById('tickerAnalytics').style.display = 'block';
+                    document.getElementById('tickerPlaceholder').style.display = 'none';
+                    loadTickerAnalytics(ticker);
+                } else {
+                    document.getElementById('tickerAnalytics').style.display = 'none';
+                    document.getElementById('tickerPlaceholder').style.display = 'block';
+                }
+            };
+        }
+
+        async function loadTickerAnalytics(ticker) {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+
+            // Beta Forecast
+            try {
+                document.getElementById('betaForecast').innerHTML = '<div class="loading">Loading...</div>';
+                const url = `/api/risk/bourse/specialized/beta-forecast?user_id=${activeUser}&ticker=${ticker}&benchmark=SPY`;
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                if (response?.ok) {
+                    const data = response.data || response;
+                    document.getElementById('betaForecast').innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current Beta</div><div style="font-size: 1.25rem; font-weight: 700;">${data.current_beta.toFixed(2)}</div></div>
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Forecast</div><div style="font-size: 1.25rem; font-weight: 700;">${data.forecasted_beta.toFixed(2)}</div></div>
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Trend</div><div style="font-size: 1.25rem; font-weight: 700;">${data.beta_trend}</div></div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('betaForecast').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
+            }
+
+            // Earnings
+            try {
+                document.getElementById('earningsPredictor').innerHTML = '<div class="loading">Loading...</div>';
+                const url = `/api/risk/bourse/specialized/earnings?user_id=${activeUser}&ticker=${ticker}`;
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                if (response?.ok) {
+                    const data = response.data || response;
+                    document.getElementById('earningsPredictor').innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Alert Level</div><div style="font-size: 1.25rem; font-weight: 700; text-transform: uppercase;">${data.alert_level}</div></div>
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Post-Earnings Vol</div><div style="font-size: 1.25rem; font-weight: 700;">${(data.post_earnings_vol * 100).toFixed(1)}%</div></div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('earningsPredictor').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
+            }
+
+            // Dividends
+            try {
+                document.getElementById('dividendAnalysis').innerHTML = '<div class="loading">Loading...</div>';
+                const url = `/api/risk/bourse/specialized/dividends?user_id=${activeUser}&ticker=${ticker}`;
+                const response = await window.safeFetch(globalConfig.getApiUrl(url));
+                const data = response.data || response;
+                if (data.has_dividend_data && data.current_yield > 0) {
+                    document.getElementById('dividendAnalysis').innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Yield</div><div style="font-size: 1.25rem; font-weight: 700; color: var(--success);">${data.current_yield.toFixed(2)}%</div></div>
+                            <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Annual</div><div style="font-size: 1.25rem; font-weight: 700;">$${data.annual_dividend.toFixed(2)}</div></div>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('dividendAnalysis').innerHTML = `<div style="color: var(--theme-text-muted);">No dividend data for ${ticker}</div>`;
+                }
+            } catch (e) {
+                document.getElementById('dividendAnalysis').innerHTML = `<div style="color: var(--theme-text-muted);">N/A</div>`;
+            }
+        }
+
+        // ==================== PDF EXPORT ====================
+        async function loadPDFLibraries() {
+            if (pdfLibsLoaded) return;
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            pdfLibsLoaded = true;
+        }
+
+        async function exportRiskPDF() {
+            try {
+                const exportBtn = event.target;
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '⏳ Loading...';
+                exportBtn.disabled = true;
+
+                await loadPDFLibraries();
+                exportBtn.innerHTML = '⏳ Generating...';
+
+                const { jsPDF } = window.jspdf;
+                const riskTab = document.getElementById('risk');
+
+                const tempContainer = document.createElement('div');
+                tempContainer.style.cssText = 'position: absolute; left: -9999px; top: 0; background: white; padding: 20px; width: 800px;';
+                tempContainer.innerHTML = `<div style="font-family: Arial; color: #000;"><h1 style="text-align: center;">📊 Risk Analytics Report</h1>${riskTab.innerHTML}</div>`;
+                document.body.appendChild(tempContainer);
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const canvas = await html2canvas(tempContainer, { scale: 2, backgroundColor: '#ffffff' });
+                document.body.removeChild(tempContainer);
+
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const imgWidth = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save(`Risk_Analytics_${new Date().toISOString().split('T')[0]}.pdf`);
+
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+
+            } catch (error) {
+                debugLogger.error('PDF export failed', error);
+                alert('Failed to export PDF');
+                event.target.innerHTML = '📄 Export PDF';
+                event.target.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

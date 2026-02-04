@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💡 Bourse Recommendations - SmartFolio</title>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="shared-theme.css">
+    <link rel="stylesheet" href="theme-compat.css">
+    <link rel="stylesheet" href="css/saxo-dashboard.css">
+    <script type="module" src="components/nav.js"></script>
+    <script type="module">
+    // ===== AUTH GUARD (Dec 2025) =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();
+    // =================================
+
+    import { initDeepLinks } from './components/deep-links.js';
+    import { safeFetch } from './modules/http.js';
+
+    // Anchors for bourse-recommendations.html
+    initDeepLinks({
+        'recommendations': 'Recommendations',
+        'opportunities': 'Opportunities'
+    });
+
+    window.safeFetch = safeFetch;
+    </script>
+    <script src="debug-logger.js"></script>
+    <script src="components/toast.js" type="module"></script>
+    <script src="global-config.js"></script>
+    <script src="appearance.js"></script>
+
+    <!-- AI Chat Component (Global System) -->
+    <link rel="stylesheet" href="/static/components/ai-chat.css">
+    <script type="module">
+        import { initAIChat } from '/static/components/ai-chat-init.js';
+        initAIChat('bourse-recommendations');
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div>
+                    <h1>💡 Bourse Recommendations</h1>
+                    <p style="color: var(--theme-text-muted); margin: 0;">Portfolio Recommendations & Market Opportunities</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <a href="saxo-dashboard.html" class="btn secondary" style="padding: 0.75rem 1.25rem; text-decoration: none;">
+                    ← Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Dashboard Content -->
+        <div id="dashboardContent">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('recommendations', event)">Recommendations</button>
+                <button class="tab-btn" onclick="switchTab('opportunities', event)">Market Opportunities</button>
+            </div>
+
+            <!-- Recommendations Tab -->
+            <div id="recommendations" class="tab-content active">
+                <!-- Market Context Banner -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #1e40af) 100%); color: white;">
+                    <div style="padding: 1.5rem;">
+                        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white;">
+                            📊 Portfolio Recommendations
+                        </h2>
+                        <div id="marketContext" style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-size: 0.75rem; opacity: 0.9;">Market Regime</div>
+                                <div id="contextRegime" style="font-size: 1.125rem; font-weight: 600;">--</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; opacity: 0.9;">Overall Posture</div>
+                                <div id="contextPosture" style="font-size: 1.125rem; font-weight: 600;">--</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.75rem; opacity: 0.9;">Last Update</div>
+                                <div id="contextUpdate" style="font-size: 1.125rem; font-weight: 600;">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeframe Selector & Summary -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h3 class="card-title">Investment Horizon</h3>
+                            <p style="margin: 0; font-size: 0.875rem; color: var(--theme-text-muted);">Select your timeframe for optimized recommendations</p>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="timeframe-btn" data-timeframe="short">
+                                <div style="font-weight: 600;">1-2 Weeks</div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">Trading</div>
+                            </button>
+                            <button class="timeframe-btn active" data-timeframe="medium">
+                                <div style="font-weight: 600;">1 Month</div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">Tactical</div>
+                            </button>
+                            <button class="timeframe-btn" data-timeframe="long">
+                                <div style="font-weight: 600;">3-6 Months</div>
+                                <div style="font-size: 0.75rem; opacity: 0.8;">Strategic</div>
+                            </button>
+                            <div style="border-left: 1px solid var(--theme-border); height: 2rem; margin: 0 0.5rem;"></div>
+                            <button id="btnScanRecommendations" class="btn primary small" style="padding: 0.5rem 1rem;">
+                                🔍 Scan
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Stats -->
+                    <div id="recSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; padding: 1rem; border-top: 1px solid var(--theme-border);">
+                        <div style="text-align: center; color: var(--theme-text-muted); padding: 1rem;">
+                            📊 Click "Scan" to analyze your portfolio
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters & Search -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 1rem;">
+                        <input type="text" id="recSearch" placeholder="🔍 Search by symbol or name..."
+                            style="flex: 1; min-width: 200px; padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                        <select id="recFilter" style="padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
+                            <option value="all">All Actions</option>
+                            <option value="STRONG BUY">Strong Buy</option>
+                            <option value="BUY">Buy</option>
+                            <option value="HOLD">Hold</option>
+                            <option value="SELL">Sell</option>
+                            <option value="STRONG SELL">Strong Sell</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Recommendations Table -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Position Recommendations</h3>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button id="btnExportTextRecs" class="btn secondary small" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
+                                📄 Export Text
+                            </button>
+                            <div class="card-badge" id="recCount">0 positions</div>
+                        </div>
+                    </div>
+                    <div id="recommendationsTable">
+                        <div style="padding: 3rem; text-align: center; color: var(--theme-text-muted);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">Ready to Analyze</div>
+                            <div style="font-size: 0.875rem;">Click the "Scan" button above to get personalized recommendations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Market Opportunities Tab -->
+            <div id="opportunities" class="tab-content">
+                <!-- Banner -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                    <div style="padding: 1rem;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; color: white;">
+                            🌍 Market Opportunities
+                        </h2>
+                        <p style="margin: 0; opacity: 0.9; font-size: 0.875rem;">
+                            Discover underweight sectors and new investment opportunities.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Horizon Selector & Actions -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header" style="flex-wrap: wrap; gap: 1rem; align-items: center;">
+                        <div>
+                            <h3 class="card-title">Scan Configuration</h3>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+                            <button class="timeframe-btn" data-opp-horizon="short">
+                                <div style="font-weight: 600;">1-3 Months</div>
+                            </button>
+                            <button class="timeframe-btn active" data-opp-horizon="medium">
+                                <div style="font-weight: 600;">6-12 Months</div>
+                            </button>
+                            <button class="timeframe-btn" data-opp-horizon="long">
+                                <div style="font-weight: 600;">2-3 Years</div>
+                            </button>
+                            <div style="border-left: 1px solid var(--theme-border); height: 2rem; margin: 0 0.5rem;"></div>
+                            <button id="btnScanOpportunities" class="btn primary small" style="padding: 0.5rem 1rem;">
+                                🔍 Scan
+                            </button>
+                            <button id="btnExportTextOpps" class="btn secondary small" style="padding: 0.5rem 1rem;">
+                                📄 Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Portfolio Gaps (Sectors) -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">📊 Portfolio Gaps (Underweight Sectors)</h3>
+                        <div class="card-badge" id="gapsCount">0 gaps</div>
+                    </div>
+                    <div id="portfolioGaps">
+                        <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
+                            Click "Scan" to identify sector gaps
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Opportunities -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">🎯 Top Opportunities</h3>
+                        <div class="card-badge" id="opportunitiesCount">0 opportunities</div>
+                    </div>
+                    <div id="opportunitiesTable">
+                        <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
+                            No opportunities yet. Run scan first.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggested Sales -->
+                <div class="dashboard-card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3 class="card-title">💰 Suggested Sales (To Fund Opportunities)</h3>
+                        <div class="card-badge" id="salesCount">0 suggestions</div>
+                    </div>
+                    <div id="suggestedSales">
+                        <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
+                            No sales suggestions yet. Run scan first.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Impact Simulator -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3 class="card-title">📈 Reallocation Impact Simulator</h3>
+                        <div class="card-badge">Before / After</div>
+                    </div>
+                    <div id="impactSimulator">
+                        <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
+                            Impact analysis will appear here after scan
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==================== STATE MANAGEMENT ====================
+        let currentPortfolioData = null;
+        let currentFileKey = null;
+        let currentRecommendations = [];
+        let currentTimeframe = 'medium';
+        let currentHorizon = 'medium';
+        let lastOpportunitiesData = null;
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            debugLogger.debug('🚀 Bourse Recommendations page loaded');
+
+            // Resolve source type from localStorage
+            await resolveSourceType();
+
+            // Setup event listeners
+            setupRecommendationsListeners();
+            setupOpportunitiesListeners();
+        });
+
+        // Resolve source type from localStorage
+        async function resolveSourceType() {
+            const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
+
+            if (bourseSource === 'manual_bourse') {
+                window.saxoSourceType = 'manual';
+            } else if (bourseSource.startsWith('api:')) {
+                window.saxoSourceType = 'api';
+            } else if (bourseSource.startsWith('saxo:')) {
+                window.saxoSourceType = 'csv';
+                currentFileKey = bourseSource.replace('saxo:', '');
+            } else {
+                window.saxoSourceType = null;
+            }
+
+            debugLogger.debug(`Source type resolved: ${window.saxoSourceType}`);
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tabName, event) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            if (event && event.target) event.target.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        // ==================== RECOMMENDATIONS ====================
+        function setupRecommendationsListeners() {
+            // Scan button
+            const scanBtn = document.getElementById('btnScanRecommendations');
+            if (scanBtn) {
+                scanBtn.addEventListener('click', async () => {
+                    await loadRecommendations(currentTimeframe);
+                });
+            }
+
+            // Timeframe buttons
+            const recButtons = document.querySelectorAll('#recommendations .timeframe-btn');
+            recButtons.forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const timeframe = e.currentTarget.dataset.timeframe;
+                    recButtons.forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    currentTimeframe = timeframe;
+                });
+            });
+
+            // Search filter
+            const searchInput = document.getElementById('recSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    filterRecommendations(e.target.value, document.getElementById('recFilter').value);
+                });
+            }
+
+            // Action filter
+            const filterSelect = document.getElementById('recFilter');
+            if (filterSelect) {
+                filterSelect.addEventListener('change', (e) => {
+                    filterRecommendations(document.getElementById('recSearch').value, e.target.value);
+                });
+            }
+
+            // Export button
+            const exportBtn = document.getElementById('btnExportTextRecs');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', async () => {
+                    await exportRecommendationsToText();
+                });
+            }
+        }
+
+        async function loadRecommendations(timeframe = 'medium') {
+            const tableContainer = document.getElementById('recommendationsTable');
+            const scanBtn = document.getElementById('btnScanRecommendations');
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const originalText = scanBtn ? scanBtn.textContent : '';
+
+            try {
+                debugLogger.info(`Fetching ${timeframe} recommendations...`);
+
+                if (scanBtn) {
+                    scanBtn.disabled = true;
+                    scanBtn.textContent = '🔍 Scanning...';
+                }
+
+                tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
+
+                let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=90`;
+                if (window.saxoSourceType === 'manual') {
+                    recsUrl += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    recsUrl += `&source=saxobank_api`;
+                } else if (currentFileKey) {
+                    recsUrl += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const fullRecsUrl = `${window.getApiBase()}${recsUrl}`;
+                const response = await window.safeFetch(fullRecsUrl, {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response?.ok) {
+                    throw new Error(`HTTP ${response.status || 'unknown'}`);
+                }
+
+                const data = response.data || response;
+                currentRecommendations = data.recommendations || [];
+
+                updateMarketContext(data);
+                updateRecommendationsSummary(data.summary || {});
+                renderRecommendationsTable(currentRecommendations);
+
+            } catch (error) {
+                debugLogger.error('Failed to load recommendations:', error);
+                tableContainer.innerHTML = `<div class="error-message"><strong>Error</strong><p>${error.message}</p></div>`;
+            } finally {
+                if (scanBtn) {
+                    scanBtn.disabled = false;
+                    scanBtn.textContent = originalText || '🔍 Scan';
+                }
+            }
+        }
+
+        function updateMarketContext(data) {
+            const regimeEl = document.getElementById('contextRegime');
+            const postureEl = document.getElementById('contextPosture');
+            const updateEl = document.getElementById('contextUpdate');
+
+            if (regimeEl) regimeEl.textContent = data.market_regime || '--';
+            if (postureEl) postureEl.textContent = data.summary?.overall_posture || '--';
+            if (updateEl) {
+                const date = data.generated_at ? new Date(data.generated_at) : new Date();
+                updateEl.textContent = date.toLocaleTimeString();
+            }
+        }
+
+        function updateRecommendationsSummary(summary) {
+            const summaryEl = document.getElementById('recSummary');
+            const counts = summary.action_counts || {};
+
+            summaryEl.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--success);">${counts['STRONG BUY'] || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Strong Buy</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--success);">${counts['BUY'] || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Buy</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--theme-text-muted);">${counts['HOLD'] || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Hold</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">${counts['SELL'] || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Sell</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700; color: var(--danger);">${counts['STRONG SELL'] || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Strong Sell</div>
+                </div>
+            `;
+        }
+
+        function renderRecommendationsTable(recommendations) {
+            const tableContainer = document.getElementById('recommendationsTable');
+            const countBadge = document.getElementById('recCount');
+
+            if (countBadge) {
+                countBadge.textContent = `${recommendations.length} position${recommendations.length !== 1 ? 's' : ''}`;
+            }
+
+            if (recommendations.length === 0) {
+                tableContainer.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No recommendations available</div>`;
+                return;
+            }
+
+            let tableHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Name</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Action</th>
+                                <th style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">R/R</th>
+                                <th style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Confidence</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
+                                <th style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Weight</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            recommendations.forEach(rec => {
+                const actionBadge = getActionBadge(rec.action);
+                const confidenceBar = getConfidenceBar(rec.confidence);
+                const rr = rec.price_targets?.risk_reward_tp1 || 0;
+                const rrDisplay = rr > 0 ? `1:${rr.toFixed(2)}` : 'N/A';
+                const rrColor = rr >= 2 ? 'var(--success)' : rr >= 1.5 ? 'var(--warning)' : 'var(--danger)';
+
+                tableHTML += `
+                    <tr style="border-bottom: 1px solid var(--theme-border); cursor: pointer;" onclick="showRecommendationModal('${rec.symbol}')">
+                        <td style="padding: 0.75rem; font-weight: 600;">${rec.symbol}</td>
+                        <td style="padding: 0.75rem; color: var(--theme-text-muted);">${rec.name || rec.symbol}</td>
+                        <td style="padding: 0.75rem;">${actionBadge}</td>
+                        <td style="padding: 0.75rem; text-align: center; color: ${rrColor}; font-weight: 600;">${rrDisplay}</td>
+                        <td style="padding: 0.75rem; text-align: center;">${confidenceBar}</td>
+                        <td style="padding: 0.75rem; color: var(--theme-text-muted);">${rec.sector}</td>
+                        <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${rec.weight_pct}%</td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `</tbody></table></div>`;
+            tableContainer.innerHTML = tableHTML;
+        }
+
+        function getActionBadge(action) {
+            const badges = {
+                'STRONG BUY': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #22c55e; color: white; font-size: 0.75rem; font-weight: 600;">🟢 STRONG BUY</span>',
+                'BUY': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #86efac; color: #166534; font-size: 0.75rem; font-weight: 600;">🟢 BUY</span>',
+                'HOLD': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: var(--theme-bg-subtle); color: var(--theme-text-muted); font-size: 0.75rem; font-weight: 600;">🔵 HOLD</span>',
+                'SELL': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #fbbf24; color: #78350f; font-size: 0.75rem; font-weight: 600;">🟠 SELL</span>',
+                'STRONG SELL': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #ef4444; color: white; font-size: 0.75rem; font-weight: 600;">🔴 STRONG SELL</span>'
+            };
+            return badges[action] || action;
+        }
+
+        function getConfidenceBar(confidence) {
+            const percentage = Math.round(confidence * 100);
+            const color = percentage > 70 ? '#22c55e' : percentage > 50 ? '#fbbf24' : '#ef4444';
+            return `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="flex: 1; height: 8px; background: var(--theme-bg-subtle); border-radius: var(--radius-full); overflow: hidden; min-width: 60px;">
+                        <div style="height: 100%; width: ${percentage}%; background: ${color};"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 600;">${percentage}%</span>
+                </div>
+            `;
+        }
+
+        function filterRecommendations(searchTerm, actionFilter) {
+            const filtered = currentRecommendations.filter(rec => {
+                const matchesSearch = !searchTerm ||
+                    rec.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (rec.name && rec.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                const matchesAction = actionFilter === 'all' || rec.action === actionFilter;
+                return matchesSearch && matchesAction;
+            });
+            renderRecommendationsTable(filtered);
+        }
+
+        function showRecommendationModal(symbol) {
+            const rec = currentRecommendations.find(r => r.symbol === symbol);
+            if (!rec) return;
+
+            const modalHTML = `
+                <div id="recModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 1rem;" onclick="closeRecommendationModal(event)">
+                    <div style="background: var(--theme-surface); border-radius: var(--radius-lg); max-width: 700px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+                        <div style="padding: 1.5rem; border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h2 style="font-size: 1.5rem; font-weight: 700; margin: 0;">${rec.symbol}</h2>
+                                <p style="margin: 0; color: var(--theme-text-muted);">${rec.name}</p>
+                            </div>
+                            <button onclick="closeRecommendationModal()" style="padding: 0.5rem; border: none; background: transparent; cursor: pointer; font-size: 1.5rem; color: var(--theme-text-muted);">×</button>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Action</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700;">${getActionBadge(rec.action)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Confidence</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700;">${Math.round(rec.confidence * 100)}%</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Score</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700;">${rec.score?.toFixed(2) || 'N/A'}</div>
+                                </div>
+                            </div>
+                            ${rec.price_targets ? `
+                                <div style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
+                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">📊 Price Targets</h3>
+                                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current</div><div style="font-weight: 600;">$${rec.price_targets.current_price}</div></div>
+                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Stop Loss</div><div style="font-weight: 600; color: var(--danger);">$${rec.price_targets.stop_loss} (${rec.price_targets.stop_loss_pct}%)</div></div>
+                                        ${rec.price_targets.take_profit_1 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 1</div><div style="font-weight: 600; color: var(--success);">$${rec.price_targets.take_profit_1} (+${rec.price_targets.take_profit_1_pct}%)</div></div>` : ''}
+                                        ${rec.price_targets.take_profit_2 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 2</div><div style="font-weight: 600; color: var(--success);">$${rec.price_targets.take_profit_2} (+${rec.price_targets.take_profit_2_pct}%)</div></div>` : ''}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div style="margin-bottom: 1.5rem;">
+                                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">💡 Rationale</h3>
+                                <ul style="list-style: none; padding: 0; margin: 0;">
+                                    ${(rec.rationale || []).map(r => `<li style="padding: 0.5rem 0; border-bottom: 1px solid var(--theme-border); font-size: 0.875rem;">${r}</li>`).join('')}
+                                </ul>
+                            </div>
+                            ${rec.tactical_advice ? `
+                                <div style="background: var(--theme-bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid var(--primary);">
+                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">🎯 Tactical Advice</h3>
+                                    <p style="margin: 0; font-size: 0.875rem;">${rec.tactical_advice}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function closeRecommendationModal(event) {
+            if (event && event.target.id !== 'recModal') return;
+            const modal = document.getElementById('recModal');
+            if (modal) modal.remove();
+        }
+
+        async function exportRecommendationsToText() {
+            const btn = document.getElementById('btnExportTextRecs');
+            const originalText = btn.textContent;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Generating...';
+
+                let markdownText = `# Portfolio Recommendations Export\n\n`;
+                markdownText += `**Generated:** ${new Date().toLocaleString()}\n\n`;
+
+                currentRecommendations.forEach((rec, idx) => {
+                    markdownText += `## ${idx + 1}. ${rec.symbol} - ${rec.name || ''}\n`;
+                    markdownText += `- **Action:** ${rec.action}\n`;
+                    markdownText += `- **Confidence:** ${Math.round(rec.confidence * 100)}%\n`;
+                    markdownText += `- **Sector:** ${rec.sector}\n`;
+                    if (rec.tactical_advice) markdownText += `- **Advice:** ${rec.tactical_advice}\n`;
+                    markdownText += `\n`;
+                });
+
+                const blob = new Blob([markdownText], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `recommendations-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                btn.textContent = '✅ Downloaded!';
+                setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
+
+            } catch (error) {
+                debugLogger.error('Export failed:', error);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ==================== MARKET OPPORTUNITIES ====================
+        function setupOpportunitiesListeners() {
+            const horizonButtons = document.querySelectorAll('[data-opp-horizon]');
+            horizonButtons.forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    horizonButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentHorizon = btn.getAttribute('data-opp-horizon');
+                });
+            });
+
+            const scanBtn = document.getElementById('btnScanOpportunities');
+            if (scanBtn) {
+                scanBtn.addEventListener('click', async () => {
+                    await loadMarketOpportunities();
+                });
+            }
+
+            const exportBtn = document.getElementById('btnExportTextOpps');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', async () => {
+                    await exportOpportunitiesToText();
+                });
+            }
+        }
+
+        async function loadMarketOpportunities() {
+            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const scanBtn = document.getElementById('btnScanOpportunities');
+            const originalText = scanBtn.textContent;
+
+            try {
+                scanBtn.disabled = true;
+                scanBtn.textContent = '🔍 Scanning...';
+
+                document.getElementById('portfolioGaps').innerHTML = '<div class="loading">Analyzing sector gaps...</div>';
+                document.getElementById('opportunitiesTable').innerHTML = '<div class="loading">Identifying opportunities...</div>';
+                document.getElementById('suggestedSales').innerHTML = '<div class="loading">Calculating suggested sales...</div>';
+                document.getElementById('impactSimulator').innerHTML = '<div class="loading">Computing impact...</div>';
+
+                let url = `/api/bourse/opportunities?user_id=${activeUser}&horizon=${currentHorizon}`;
+                if (window.saxoSourceType === 'manual') {
+                    url += `&source=manual_bourse`;
+                } else if (window.saxoSourceType === 'api') {
+                    url += `&source=saxobank_api`;
+                } else if (currentFileKey) {
+                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
+                }
+
+                const fullUrl = `${window.getApiBase()}${url}`;
+                const response = await window.safeFetch(fullUrl, {
+                    headers: { 'X-User': activeUser }
+                });
+
+                if (!response?.ok) throw new Error('Opportunities endpoint failed');
+
+                const data = response.data || response;
+                lastOpportunitiesData = data;
+
+                renderGapsCards(data.gaps || []);
+                renderOpportunitiesTable(data.opportunities || []);
+                renderSuggestedSales(data.suggested_sales || []);
+                renderImpactSimulator(data.impact || {});
+
+                document.getElementById('gapsCount').textContent = `${data.gaps?.length || 0} gaps`;
+                document.getElementById('opportunitiesCount').textContent = `${data.opportunities?.length || 0} opportunities`;
+                document.getElementById('salesCount').textContent = `${data.suggested_sales?.length || 0} suggestions`;
+
+                scanBtn.textContent = '✅ Done';
+                setTimeout(() => { scanBtn.textContent = originalText; scanBtn.disabled = false; }, 2000);
+
+            } catch (error) {
+                debugLogger.error('Failed to load opportunities:', error);
+                document.getElementById('portfolioGaps').innerHTML = `<div class="error-message">${error.message}</div>`;
+                scanBtn.textContent = '❌ Error';
+                setTimeout(() => { scanBtn.textContent = originalText; scanBtn.disabled = false; }, 2000);
+            }
+        }
+
+        function renderGapsCards(gaps) {
+            const container = document.getElementById('portfolioGaps');
+
+            if (!gaps || gaps.length === 0) {
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No significant sector gaps detected. Portfolio is well-diversified!</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding: 1rem;">
+                    ${gaps.map(gap => {
+                        const scoreColor = gap.score >= 70 ? 'var(--success)' : gap.score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
+                        return `
+                            <div style="padding: 1.5rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">${gap.sector}</h4>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: ${scoreColor};">${gap.score.toFixed(0)}</div>
+                                </div>
+                                <div style="margin-bottom: 0.75rem;">
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current / Target</div>
+                                    <div style="font-size: 1.125rem; font-weight: 600;">${gap.current_pct.toFixed(1)}% → ${gap.target_pct.toFixed(1)}%</div>
+                                </div>
+                                <div style="padding: 0.5rem; background: var(--theme-surface); border-radius: var(--radius-sm); font-size: 0.75rem;">
+                                    <div style="color: var(--theme-text-muted);">Gap: <strong style="color: var(--warning);">${gap.gap_pct.toFixed(1)}%</strong></div>
+                                    <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">ETF: <strong>${gap.etf}</strong></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function renderOpportunitiesTable(opportunities) {
+            const container = document.getElementById('opportunitiesTable');
+
+            if (!opportunities || opportunities.length === 0) {
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No significant opportunities identified.</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
+                                <th style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Score</th>
+                                <th style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Type</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Rationale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${opportunities.map(opp => {
+                                const scoreColor = opp.score >= 70 ? 'var(--success)' : opp.score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
+                                return `
+                                    <tr style="border-bottom: 1px solid var(--theme-border);">
+                                        <td style="padding: 0.75rem; font-weight: 600;">${opp.symbol}</td>
+                                        <td style="padding: 0.75rem;">${opp.sector}</td>
+                                        <td style="padding: 0.75rem; text-align: center; color: ${scoreColor}; font-weight: 600;">${opp.score.toFixed(0)}</td>
+                                        <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--info-bg); color: var(--info); border-radius: var(--radius-sm); font-size: 0.75rem;">${opp.type}</span></td>
+                                        <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${opp.rationale}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderSuggestedSales(sales) {
+            const container = document.getElementById('suggestedSales');
+
+            if (!sales || sales.length === 0) {
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No sales needed.</div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
+                                <th style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Current Value</th>
+                                <th style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sell %</th>
+                                <th style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Frees</th>
+                                <th style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Rationale</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sales.map(sale => `
+                                <tr style="border-bottom: 1px solid var(--theme-border);">
+                                    <td style="padding: 0.75rem; font-weight: 600;">${sale.symbol}</td>
+                                    <td style="padding: 0.75rem; text-align: right;">€${sale.current_value?.toLocaleString() || 'N/A'}</td>
+                                    <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--warning-bg); color: var(--warning); border-radius: var(--radius-sm); font-weight: 600;">${sale.sale_pct?.toFixed(0) || 0}%</span></td>
+                                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: var(--success);">+€${sale.sale_value?.toLocaleString() || 'N/A'}</td>
+                                    <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${sale.rationale}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function renderImpactSimulator(impact) {
+            const container = document.getElementById('impactSimulator');
+
+            if (!impact || !impact.before || !impact.after) {
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No impact data available.</div>`;
+                return;
+            }
+
+            const allSectors = new Set([...Object.keys(impact.before), ...Object.keys(impact.after)]);
+
+            container.innerHTML = `
+                <div style="padding: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div style="text-align: center; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Risk Score</div>
+                            <div style="font-size: 1.5rem; font-weight: 700;">
+                                <span style="color: var(--warning);">${impact.risk_before?.toFixed(1) || 'N/A'}</span>
+                                → <span style="color: var(--success);">${impact.risk_after?.toFixed(1) || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
+                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Capital Freed</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">€${Math.round(impact.total_freed || 0).toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 1rem;">Sector Allocation Changes</h4>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
+                                <th style="padding: 0.75rem; text-align: left;">Sector</th>
+                                <th style="padding: 0.75rem; text-align: right;">Before</th>
+                                <th style="padding: 0.75rem; text-align: right;">After</th>
+                                <th style="padding: 0.75rem; text-align: right;">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array.from(allSectors).map(sector => {
+                                const beforePct = impact.before[sector] || 0;
+                                const afterPct = impact.after[sector] || 0;
+                                const change = afterPct - beforePct;
+                                const changeColor = change > 0 ? 'var(--success)' : change < 0 ? 'var(--danger)' : 'var(--theme-text-muted)';
+                                return `
+                                    <tr style="border-bottom: 1px solid var(--theme-border);">
+                                        <td style="padding: 0.75rem; font-weight: 600;">${sector}</td>
+                                        <td style="padding: 0.75rem; text-align: right;">${beforePct.toFixed(1)}%</td>
+                                        <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${afterPct.toFixed(1)}%</td>
+                                        <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: ${changeColor};">${change > 0 ? '+' : ''}${change.toFixed(1)}%</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        async function exportOpportunitiesToText() {
+            const btn = document.getElementById('btnExportTextOpps');
+            const originalText = btn.textContent;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = '⏳ Generating...';
+
+                if (!lastOpportunitiesData) {
+                    alert('No data to export. Run a scan first.');
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                let markdownText = `# Market Opportunities Export\n\n`;
+                markdownText += `**Generated:** ${new Date().toLocaleString()}\n`;
+                markdownText += `**Horizon:** ${currentHorizon}\n\n`;
+
+                markdownText += `## Portfolio Gaps\n`;
+                (lastOpportunitiesData.gaps || []).forEach(gap => {
+                    markdownText += `- **${gap.sector}**: ${gap.current_pct.toFixed(1)}% → ${gap.target_pct.toFixed(1)}% (ETF: ${gap.etf})\n`;
+                });
+
+                markdownText += `\n## Top Opportunities\n`;
+                (lastOpportunitiesData.opportunities || []).forEach(opp => {
+                    markdownText += `- **${opp.symbol}** (${opp.sector}): Score ${opp.score.toFixed(0)} - ${opp.rationale}\n`;
+                });
+
+                markdownText += `\n## Suggested Sales\n`;
+                (lastOpportunitiesData.suggested_sales || []).forEach(sale => {
+                    markdownText += `- **${sale.symbol}**: Sell ${sale.sale_pct?.toFixed(0) || 0}% (€${sale.sale_value?.toLocaleString() || 'N/A'}) - ${sale.rationale}\n`;
+                });
+
+                const blob = new Blob([markdownText], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `opportunities-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                btn.textContent = '✅ Downloaded!';
+                setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
+
+            } catch (error) {
+                debugLogger.error('Export failed:', error);
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
