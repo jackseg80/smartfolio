@@ -150,68 +150,169 @@ class OrderResult:
 
 class ExchangeAdapter(ABC):
     """Interface abstraite pour tous les adaptateurs d'exchange"""
-    
+
     def __init__(self, config: ExchangeConfig):
         self.config = config
         self.name = config.name
         self.type = config.type
         self.connected = False
-        
+
     @abstractmethod
     async def connect(self) -> bool:
         """Se connecter à l'exchange"""
         pass
-    
+
     @abstractmethod
     async def disconnect(self) -> None:
         """Se déconnecter de l'exchange"""
         pass
-    
+
     @abstractmethod
     async def get_trading_pairs(self) -> List[TradingPair]:
         """Obtenir la liste des paires de trading disponibles"""
         pass
-    
+
     @abstractmethod
     async def get_balance(self, asset: str) -> float:
         """Obtenir le solde d'un actif"""
         pass
-    
+
     @abstractmethod
     async def get_current_price(self, symbol: str) -> Optional[float]:
         """Obtenir le prix actuel d'un symbole"""
         pass
-    
+
     @abstractmethod
     async def place_order(self, order: Order) -> OrderResult:
         """Placer un ordre sur l'exchange"""
         pass
-    
+
     @abstractmethod
     async def cancel_order(self, exchange_order_id: str) -> bool:
         """Annuler un ordre"""
         pass
-    
+
     @abstractmethod
     async def get_order_status(self, exchange_order_id: str) -> OrderResult:
         """Obtenir le statut d'un ordre"""
         pass
-    
+
     def validate_order(self, order: Order) -> List[str]:
         """Valider un ordre avant placement"""
         errors = []
-        
+
         # Vérifications de base
         if not order.symbol:
             errors.append("Symbol is required")
-        
+
         if order.quantity <= 0:
             errors.append("Quantity must be positive")
-        
+
         if abs(order.usd_amount) < self.config.min_order_size:
             errors.append(f"Order size below minimum: ${self.config.min_order_size}")
-        
+
         return errors
+
+
+class BaseRealExchangeAdapter(ExchangeAdapter):
+    """
+    Classe de base pour les adaptateurs d'exchanges réels (CEX).
+
+    Fournit des méthodes communes pour:
+    - Reconnexion automatique
+    - Validation de sécurité des ordres
+    - Cache des paires de trading
+    - Gestion d'erreurs standardisée
+
+    Refactoré depuis BinanceAdapter et KrakenAdapter (Fév 2026).
+    """
+
+    def __init__(self, config: ExchangeConfig):
+        super().__init__(config)
+        self._trading_pairs_cache: Optional[List[TradingPair]] = None
+        self._last_pairs_update: Optional[datetime] = None
+        self._cache_duration_hours: int = 1
+
+    async def ensure_connected(self, operation: str = "operation") -> bool:
+        """
+        Vérifie la connexion et tente une reconnexion si nécessaire.
+
+        Args:
+            operation: Nom de l'opération pour le logging
+
+        Returns:
+            True si connecté, False sinon
+        """
+        if self.connected:
+            return True
+
+        logger.warning(f"Not connected to {self.name} for {operation}, attempting reconnection...")
+        return await self.connect()
+
+    def validate_order_safety(self, order: Order) -> tuple[bool, Optional[OrderResult]]:
+        """
+        Valide la sécurité d'un ordre avant placement.
+
+        Args:
+            order: L'ordre à valider
+
+        Returns:
+            Tuple (passed, error_result):
+            - passed=True, error_result=None si validation OK
+            - passed=False, error_result=OrderResult d'erreur sinon
+        """
+        logger.info(f"Validation de sécurité pour ordre {order.id}")
+        safety_result = safety_validator.validate_order(order, {"adapter": self})
+
+        if not safety_result.passed:
+            error_msg = f"Ordre rejeté par validation de sécurité: {'; '.join(safety_result.errors)}"
+            logger.error(error_msg)
+            return False, OrderResult(
+                success=False,
+                order_id=order.id,
+                error_message=error_msg,
+                status=OrderStatus.FAILED
+            )
+
+        # Log des avertissements de sécurité
+        for warning in safety_result.warnings:
+            logger.warning(f"Avertissement sécurité ordre {order.id}: {warning}")
+
+        logger.info(f"✓ Ordre {order.id} validé par sécurité (score: {safety_result.total_score:.1f}/100)")
+        return True, None
+
+    def get_cached_pairs(self) -> Optional[List[TradingPair]]:
+        """
+        Retourne les paires en cache si encore valides.
+
+        Returns:
+            Liste des paires ou None si cache expiré/vide
+        """
+        if (self._trading_pairs_cache and self._last_pairs_update and
+            datetime.now(timezone.utc) - self._last_pairs_update.replace(tzinfo=timezone.utc)
+            < timedelta(hours=self._cache_duration_hours)):
+            return self._trading_pairs_cache
+        return None
+
+    def update_pairs_cache(self, pairs: List[TradingPair]) -> None:
+        """Met à jour le cache des paires de trading."""
+        self._trading_pairs_cache = pairs
+        self._last_pairs_update = datetime.now(timezone.utc)
+        logger.info(f"Loaded {len(pairs)} trading pairs from {self.name}")
+
+    def create_failed_order_result(
+        self,
+        order_id: str,
+        error_message: str,
+        status: OrderStatus = OrderStatus.FAILED
+    ) -> OrderResult:
+        """Crée un OrderResult d'erreur standardisé."""
+        return OrderResult(
+            success=False,
+            order_id=order_id,
+            error_message=error_message,
+            status=status
+        )
 
 class SimulatorAdapter(ExchangeAdapter):
     """Adaptateur simulateur pour tests et dry-run"""
@@ -344,14 +445,12 @@ class SimulatorAdapter(ExchangeAdapter):
             status=OrderStatus.FILLED
         )
 
-class BinanceAdapter(ExchangeAdapter):
+class BinanceAdapter(BaseRealExchangeAdapter):
     """Adaptateur pour Binance avec API réelle et gestion d'erreurs robuste"""
-    
+
     def __init__(self, config: ExchangeConfig):
         super().__init__(config)
         self.client = None
-        self._trading_pairs_cache = None
-        self._last_pairs_update = None
         self._connection_attempts = 0
         self._last_connection_attempt = None
         self._rate_limit_reset_time = None
@@ -463,30 +562,25 @@ class BinanceAdapter(ExchangeAdapter):
     @retry_on_error(max_attempts=2, base_delay=2.0)
     async def get_trading_pairs(self) -> List[TradingPair]:
         """Récupérer les paires de trading Binance avec cache et retry"""
-        if not self.connected or not self.client:
-            logger.warning("Not connected to Binance, attempting reconnection...")
-            if not await self.connect():
-                return []
-            
+        if not await self.ensure_connected("get_trading_pairs"):
+            return []
+
+        # Vérifier le cache
+        cached = self.get_cached_pairs()
+        if cached:
+            return cached
+
         try:
-            from datetime import datetime, timedelta
-            
-            # Cache pendant 1 heure
-            if (self._trading_pairs_cache and self._last_pairs_update and 
-                datetime.now() - self._last_pairs_update < timedelta(hours=1)):
-                return self._trading_pairs_cache
-            
             # Récupérer info sur les paires depuis Binance
             exchange_info = self.client.get_exchange_info()
             pairs = []
-            
+
             for symbol_info in exchange_info['symbols']:
                 if symbol_info['status'] == 'TRADING':
-                    # Conversion format Binance → format standard
                     base_asset = symbol_info['baseAsset']
                     quote_asset = symbol_info['quoteAsset']
                     symbol = f"{base_asset}/{quote_asset}"
-                    
+
                     # Filtrer les paires USDT principales
                     if quote_asset in ['USDT', 'BUSD', 'USD']:
                         min_qty = None
@@ -494,7 +588,7 @@ class BinanceAdapter(ExchangeAdapter):
                             if filter['filterType'] == 'MIN_NOTIONAL':
                                 min_qty = float(filter.get('minNotional', 10.0))
                                 break
-                        
+
                         pairs.append(TradingPair(
                             symbol=symbol,
                             base_asset=base_asset,
@@ -502,18 +596,14 @@ class BinanceAdapter(ExchangeAdapter):
                             available=True,
                             min_order_size=min_qty
                         ))
-            
-            self._trading_pairs_cache = pairs
-            self._last_pairs_update = datetime.now()
-            
-            logger.info(f"Loaded {len(pairs)} trading pairs from Binance")
+
+            self.update_pairs_cache(pairs)
             return pairs
-            
+
         except Exception as e:
             try:
                 self._handle_binance_exception(e)
             except (RetryableError, RateLimitError):
-                # Let the retry decorator handle these
                 raise
             except Exception as converted_e:
                 logger.error(f"Non-retryable error getting trading pairs: {converted_e}")
@@ -522,11 +612,9 @@ class BinanceAdapter(ExchangeAdapter):
     @retry_on_error(max_attempts=3, base_delay=1.0)
     async def get_balance(self, asset: str) -> float:
         """Récupérer balance réelle d'un asset avec retry automatique"""
-        if not self.connected or not self.client:
-            logger.warning("Not connected to Binance, attempting reconnection...")
-            if not await self.connect():
-                return 0.0
-            
+        if not await self.ensure_connected("get_balance"):
+            return 0.0
+
         try:
             account = self.client.get_account()
             
@@ -554,11 +642,9 @@ class BinanceAdapter(ExchangeAdapter):
     @retry_on_error(max_attempts=3, base_delay=0.5)
     async def get_current_price(self, symbol: str) -> Optional[float]:
         """Récupérer prix actuel depuis Binance avec retry automatique"""
-        if not self.connected or not self.client:
-            logger.warning("Not connected to Binance, attempting reconnection...")
-            if not await self.connect():
-                return None
-            
+        if not await self.ensure_connected("get_current_price"):
+            return None
+
         try:
             # Conversion format standard → format Binance
             binance_symbol = symbol.replace('/', '').replace('USD', 'USDT')
@@ -582,37 +668,17 @@ class BinanceAdapter(ExchangeAdapter):
     @retry_on_error(max_attempts=2, base_delay=1.0)
     async def place_order(self, order: Order) -> OrderResult:
         """Placer un ordre réel sur Binance avec gestion d'erreurs robuste et validation de sécurité"""
-        
+
         # ÉTAPE 1: Validation de sécurité AVANT toute connexion
-        logger.info(f"Validation de sécurité pour ordre {order.id}")
-        safety_result = safety_validator.validate_order(order, {"adapter": self})
-        
-        if not safety_result.passed:
-            error_msg = f"Ordre rejeté par validation de sécurité: {'; '.join(safety_result.errors)}"
-            logger.error(error_msg)
-            return OrderResult(
-                success=False,
-                order_id=order.id,
-                error_message=error_msg,
-                status=OrderStatus.FAILED
-            )
-        
-        # Log des avertissements de sécurité
-        for warning in safety_result.warnings:
-            logger.warning(f"Avertissement sécurité ordre {order.id}: {warning}")
-        
-        logger.info(f"✓ Ordre {order.id} validé par sécurité (score: {safety_result.total_score:.1f}/100)")
-        
+        passed, error_result = self.validate_order_safety(order)
+        if not passed:
+            return error_result
+
         # ÉTAPE 2: Vérification de connexion
-        if not self.connected or not self.client:
-            logger.warning("Not connected to Binance for order placement, attempting reconnection...")
-            if not await self.connect():
-                return OrderResult(
-                    success=False,
-                    order_id=order.id,
-                    error_message="Failed to connect to Binance for order placement",
-                    status=OrderStatus.FAILED
-                )
+        if not await self.ensure_connected("place_order"):
+            return self.create_failed_order_result(
+                order.id, "Failed to connect to Binance for order placement"
+            )
         
         try:
             from binance.enums import SIDE_BUY, SIDE_SELL, ORDER_TYPE_MARKET
@@ -790,16 +856,14 @@ class BinanceAdapter(ExchangeAdapter):
             logger.error(f"Error getting order status {exchange_order_id}: {e}")
             return OrderResult(success=False, order_id=exchange_order_id, error_message=str(e))
 
-class KrakenAdapter(ExchangeAdapter):
+class KrakenAdapter(BaseRealExchangeAdapter):
     """Adaptateur pour Kraken avec API réelle et gestion d'erreurs robuste"""
-    
+
     def __init__(self, config: ExchangeConfig):
         super().__init__(config)
         self.kraken_client = None
-        self._trading_pairs_cache = None
-        self._last_pairs_update = None
         self._asset_pairs_info = {}
-        
+
         # Mapping des frais Kraken (approximatif)
         self.kraken_fees = {
             'maker': 0.0016,  # 0.16%
@@ -854,19 +918,15 @@ class KrakenAdapter(ExchangeAdapter):
     
     async def get_trading_pairs(self) -> List[TradingPair]:
         """Récupérer les paires de trading Kraken avec cache"""
-        if not self.connected or not self.kraken_client:
-            logger.warning("Not connected to Kraken, attempting reconnection...")
-            if not await self.connect():
-                return []
-        
+        if not await self.ensure_connected("get_trading_pairs"):
+            return []
+
+        # Vérifier le cache
+        cached = self.get_cached_pairs()
+        if cached:
+            return cached
+
         try:
-            from datetime import datetime, timedelta
-            
-            # Cache pendant 1 heure
-            if (self._trading_pairs_cache and self._last_pairs_update and 
-                datetime.now() - self._last_pairs_update < timedelta(hours=1)):
-                return self._trading_pairs_cache
-            
             # Récupérer info sur les paires depuis Kraken
             pairs_info = await self.kraken_client.get_tradable_asset_pairs()
             pairs = []
@@ -895,11 +955,8 @@ class KrakenAdapter(ExchangeAdapter):
                             price_precision=int(pair_info.get('pair_decimals', 8)),
                             quantity_precision=int(pair_info.get('lot_decimals', 8))
                         ))
-            
-            self._trading_pairs_cache = pairs
-            self._last_pairs_update = datetime.now()
-            
-            logger.info(f"Loaded {len(pairs)} trading pairs from Kraken")
+
+            self.update_pairs_cache(pairs)
             return pairs
             
         except Exception as e:
@@ -908,11 +965,9 @@ class KrakenAdapter(ExchangeAdapter):
     
     async def get_balance(self, asset: str) -> float:
         """Récupérer balance réelle d'un asset depuis Kraken"""
-        if not self.connected or not self.kraken_client:
-            logger.warning("Not connected to Kraken, attempting reconnection...")
-            if not await self.connect():
-                return 0.0
-        
+        if not await self.ensure_connected("get_balance"):
+            return 0.0
+
         try:
             balance_dict = await self.kraken_client.get_account_balance()
             return balance_dict.get(asset.upper(), 0.0)
@@ -923,11 +978,9 @@ class KrakenAdapter(ExchangeAdapter):
     
     async def get_current_price(self, symbol: str) -> Optional[float]:
         """Récupérer prix actuel depuis Kraken"""
-        if not self.connected or not self.kraken_client:
-            logger.warning("Not connected to Kraken, attempting reconnection...")
-            if not await self.connect():
-                return None
-        
+        if not await self.ensure_connected("get_current_price"):
+            return None
+
         try:
             # Conversion format standard → format Kraken
             base, quote = symbol.split('/')
@@ -962,37 +1015,17 @@ class KrakenAdapter(ExchangeAdapter):
     
     async def place_order(self, order: Order) -> OrderResult:
         """Placer un ordre réel sur Kraken avec validation de sécurité"""
-        
+
         # ÉTAPE 1: Validation de sécurité AVANT toute connexion
-        logger.info(f"Validation de sécurité pour ordre {order.id}")
-        safety_result = safety_validator.validate_order(order, {"adapter": self})
-        
-        if not safety_result.passed:
-            error_msg = f"Ordre rejeté par validation de sécurité: {'; '.join(safety_result.errors)}"
-            logger.error(error_msg)
-            return OrderResult(
-                success=False,
-                order_id=order.id,
-                error_message=error_msg,
-                status=OrderStatus.FAILED
-            )
-        
-        # Log des avertissements de sécurité
-        for warning in safety_result.warnings:
-            logger.warning(f"Avertissement sécurité ordre {order.id}: {warning}")
-        
-        logger.info(f"✓ Ordre {order.id} validé par sécurité (score: {safety_result.total_score:.1f}/100)")
-        
+        passed, error_result = self.validate_order_safety(order)
+        if not passed:
+            return error_result
+
         # ÉTAPE 2: Vérification de connexion
-        if not self.connected or not self.kraken_client:
-            logger.warning("Not connected to Kraken for order placement, attempting reconnection...")
-            if not await self.connect():
-                return OrderResult(
-                    success=False,
-                    order_id=order.id,
-                    error_message="Failed to connect to Kraken for order placement",
-                    status=OrderStatus.FAILED
-                )
+        if not await self.ensure_connected("place_order"):
+            return self.create_failed_order_result(
+                order.id, "Failed to connect to Kraken for order placement"
+            )
         
         try:
             # Conversion format standard → format Kraken
