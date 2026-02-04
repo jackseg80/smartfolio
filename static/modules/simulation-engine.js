@@ -426,11 +426,14 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 }
 
 /**
- * 3. CALCUL DECISION INDEX (même logique qu'Analytics Unified)
+ * 3. CALCUL DECISION INDEX (aligné sur unified-insights-v2.js - Production)
  *
- * ⚠️ ALIGNÉ avec DECISION_INDEX_V2.md - 4 composantes:
- * raw_decision_score = (cycle × wCycle) + (onchain × wOnchain) + (risk × wRisk) + (sentiment × wSentiment)
+ * ⚠️ ALIGNÉ avec unified-insights-v2.js - 3 composantes:
+ * raw_decision_score = (cycle × wCycle) + (onchain × wOnchain) + (risk × wRisk)
  * final_score = raw_decision_score × phase_factor
+ *
+ * NOTE: Le sentiment n'est PAS une composante du DI (poids 0.33/0.39/0.28).
+ * Le sentiment est utilisé comme OVERRIDE contextuel via applySentimentOverride().
  *
  * ⚠️ IMPORTANT — Sémantique Risk:
  * Risk est un score POSITIF (0..100, plus haut = mieux/robuste).
@@ -439,7 +442,7 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 export function computeDecisionIndex(context) {
   console.debug('🎭 SIM: computeDecisionIndex called');
 
-  const { scores, confidences, backendDecision, contradictionPenalty, sentimentScore = 50 } = context;
+  const { scores, confidences, backendDecision, contradictionPenalty } = context;
 
   // PRIORITÉ 1: Backend Decision (si forcé)
   if (backendDecision && typeof backendDecision.score === 'number') {
@@ -455,18 +458,28 @@ export function computeDecisionIndex(context) {
     return result;
   }
 
-  // PRIORITÉ 2: Formule 4-composantes (per DECISION_INDEX_V2.md)
-  // Base weights from adaptive system
-  let wCycle = context.weights?.cycle ?? context.weights?.wCycle ?? 0.35;
-  let wOnchain = context.weights?.onchain ?? context.weights?.wOnchain ?? 0.30;
-  let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.25;
-  let wSentiment = 0.10; // Sentiment weight (fixed ~10%)
+  // PRIORITÉ 2: Formule 3-composantes (aligné unified-insights-v2.js)
+  // Poids par défaut alignés sur production: 0.33/0.39/0.28
+  let wCycle = context.weights?.cycle ?? context.weights?.wCycle ?? 0.33;
+  let wOnchain = context.weights?.onchain ?? context.weights?.wOnchain ?? 0.39;
+  let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.28;
+
+  // Règle adaptative: Cycle ≥ 90 → boost wCycle (comme unified-insights-v2.js)
+  if (scores.cycle >= 90) {
+    wCycle = 0.45;
+    wOnchain = 0.35;
+    wRisk = 0.20;
+    console.debug('🚀 SIM: Adaptive weights: Cycle ≥ 90 → cycle boost');
+  } else if (scores.cycle >= 70) {
+    wCycle = 0.40;
+    wOnchain = 0.37;
+    wRisk = 0.23;
+  }
 
   // Ajuster poids selon confiances (cycle et onchain uniquement)
   wCycle *= (0.8 + 0.4 * (confidences?.cycle ?? 0.46));
   wOnchain *= (0.8 + 0.4 * (confidences?.onchain ?? 0.6));
   // Risk n'a pas de "confidence" séparée - le score EST la mesure de robustesse
-  // Sentiment n'a pas de confidence - c'est un score déjà agrégé
 
   // Initialiser deterministicState si nécessaire
   ensureDeterministicState();
@@ -485,28 +498,26 @@ export function computeDecisionIndex(context) {
   wOnchain *= contraFactor;
 
   // Normaliser les poids pour somme = 1
-  const sum = wCycle + wOnchain + wRisk + wSentiment;
+  const sum = wCycle + wOnchain + wRisk;
   wCycle /= sum;
   wOnchain /= sum;
   wRisk /= sum;
-  wSentiment /= sum;
 
-  // Calcul DI brut (4 composantes)
+  // Calcul DI brut (3 composantes - aligné production)
   // ✅ Risk est positif (0-100, plus haut = mieux) - pas d'inversion
   const rawDI =
     (scores.cycle * wCycle) +
     (scores.onchain * wOnchain) +
-    (scores.risk * wRisk) +
-    (sentimentScore * wSentiment);
+    (scores.risk * wRisk);
 
-  // Phase factor (per DECISION_INDEX_V2.md)
+  // Phase factor (basé uniquement sur cycle, pas sentiment)
   // bullish: cycle ≥ 70 → factor 1.0-1.05
-  // bearish: cycle < 40 OR sentiment < 25 → factor 0.85-0.95
-  // moderate: sinon → factor 0.95-1.0
+  // bearish: cycle < 40 → factor 0.90
+  // moderate: sinon → factor 0.95
   let phaseFactor = 1.0;
-  if (scores.cycle >= 70 && sentimentScore >= 50) {
+  if (scores.cycle >= 70) {
     phaseFactor = 1.0 + (scores.cycle - 70) * 0.001; // Slight boost for strong bull
-  } else if (scores.cycle < 40 || sentimentScore < 25) {
+  } else if (scores.cycle < 40) {
     phaseFactor = 0.90; // Bearish phase penalty
   } else {
     phaseFactor = 0.95; // Moderate
@@ -521,17 +532,113 @@ export function computeDecisionIndex(context) {
     di: Math.max(0, Math.min(100, di)),
     source: 'decision_index_v2',
     confidence,
-    weights: { wCycle, wOnchain, wRisk, wSentiment },
+    weights: { wCycle, wOnchain, wRisk },
     phaseFactor,
     penalties: {
       contradiction: contradictionCount,
       contradictionFactor: contraFactor
     },
-    reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)}) + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)}) × phase(${phaseFactor.toFixed(2)})`
+    reasoning: `DI V2 (aligned): Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)}) × phase(${phaseFactor.toFixed(2)})`
   };
 
   (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
   return result;
+}
+
+/**
+ * Applique l'override de sentiment sur les targets (comme unified-insights-v2.js)
+ *
+ * Le sentiment n'est PAS une composante du DI mais un OVERRIDE contextuel:
+ * - Extreme Fear (<25): opportunité en bull, protection en bear
+ * - Extreme Greed (>75): prise de profits systématique
+ *
+ * @param {Object} targets - Targets d'allocation { BTC: 30, ETH: 25, ... }
+ * @param {number} sentimentScore - Score sentiment ML (0-100)
+ * @param {string} regime - Régime de marché ('bull', 'bear', 'neutral')
+ * @param {number} cycleScore - Score cycle pour déterminer le contexte
+ * @returns {Object} - Targets modifiées avec override info
+ */
+export function applySentimentOverride(targets, sentimentScore, regime = 'neutral', cycleScore = 50) {
+  const extremeFear = sentimentScore < 25;
+  const extremeGreed = sentimentScore > 75;
+
+  // Si pas de sentiment extrême, retourner les targets inchangées
+  if (!extremeFear && !extremeGreed) {
+    return {
+      targets,
+      overrideApplied: false,
+      overrideReason: null
+    };
+  }
+
+  // Copie des targets pour modification
+  const modified = { ...targets };
+  let overrideReason = null;
+
+  // Déterminer le contexte bull/bear
+  const bullContext = (regime === 'bull') || (cycleScore >= 70);
+  const bearContext = (regime === 'bear') || (cycleScore <= 30);
+
+  if (extremeFear) {
+    if (bullContext) {
+      // 🐂 Bull + Fear = OPPORTUNITÉ (contrarian buy)
+      if (modified.ETH) modified.ETH *= 1.15;
+      if (modified.SOL) modified.SOL *= 1.20;
+      if (modified['L2/Scaling']) modified['L2/Scaling'] *= 1.20;
+      if (modified.DeFi) modified.DeFi *= 1.10;
+      if (modified.Memecoins) modified.Memecoins = Math.max(modified.Memecoins * 1.5, 2);
+      overrideReason = `🐂 Bull + Extreme Fear (${sentimentScore}) → Opportunité d'achat`;
+      console.debug('💎 SIM OVERRIDE: Opportunistic allocation (Bull + Fear)');
+    } else if (bearContext) {
+      // 🐻 Bear + Fear = DANGER (capitulation)
+      if (modified.Memecoins) modified.Memecoins *= 0.3;
+      if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.5;
+      if (modified.DeFi) modified.DeFi *= 0.7;
+      if (modified['AI/Data']) modified['AI/Data'] *= 0.8;
+      overrideReason = `🐻 Bear + Extreme Fear (${sentimentScore}) → Protection`;
+      console.debug('🛡️ SIM OVERRIDE: Defensive allocation (Bear + Fear)');
+    } else {
+      // 😐 Neutral + Fear = Prudence légère
+      if (modified.Memecoins) modified.Memecoins *= 0.7;
+      if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.8;
+      overrideReason = `😐 Neutral + Extreme Fear (${sentimentScore}) → Prudence`;
+      console.debug('⚖️ SIM OVERRIDE: Cautious allocation (Neutral + Fear)');
+    }
+  }
+
+  if (extremeGreed) {
+    // ⚠️ Extreme Greed = TOUJOURS prise de profits
+    if (modified.Memecoins) modified.Memecoins *= 0.3;
+    if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.5;
+    if (modified['AI/Data']) modified['AI/Data'] *= 0.7;
+    if (modified.DeFi) modified.DeFi *= 0.8;
+    overrideReason = overrideReason
+      ? `${overrideReason} + Extreme Greed (${sentimentScore}) → Prise de profits`
+      : `⚠️ Extreme Greed (${sentimentScore}) → Prise de profits`;
+    console.debug('⚠️ SIM OVERRIDE: Profit-taking (Extreme Greed)');
+  }
+
+  // Renormaliser pour que la somme = 100%
+  const stables = modified.Stablecoins || 0;
+  const riskyTotal = Object.entries(modified)
+    .filter(([k]) => k !== 'Stablecoins')
+    .reduce((sum, [, v]) => sum + v, 0);
+
+  if (riskyTotal > 0) {
+    const targetRisky = 100 - stables;
+    const scale = targetRisky / riskyTotal;
+    for (const key of Object.keys(modified)) {
+      if (key !== 'Stablecoins') {
+        modified[key] = +(modified[key] * scale).toFixed(1);
+      }
+    }
+  }
+
+  return {
+    targets: modified,
+    overrideApplied: true,
+    overrideReason
+  };
 }
 
 /**
@@ -1033,7 +1140,9 @@ export function exportPreset(uiState, name, description) {
  */
 export function stateToUrlHash(uiState) {
   try {
-    const compressed = btoa(JSON.stringify(uiState));
+    // UTF-8 safe encoding (btoa only supports Latin1)
+    const jsonString = JSON.stringify(uiState);
+    const compressed = btoa(unescape(encodeURIComponent(jsonString)));
     return `#sim=${compressed}`;
   } catch (error) {
     (window.debugLogger?.warn || console.warn)('🎭 SIM: Failed to encode state to URL:', error);
@@ -1047,7 +1156,8 @@ export function stateFromUrlHash() {
     if (!hash.startsWith('#sim=')) return null;
 
     const compressed = hash.substring(5);
-    const state = JSON.parse(atob(compressed));
+    // UTF-8 safe decoding (reverse of stateToUrlHash)
+    const state = JSON.parse(decodeURIComponent(escape(atob(compressed))));
 
     (window.debugLogger?.debug || console.log)('🎭 SIM: State restored from URL hash');
     return state;
@@ -1193,6 +1303,24 @@ export async function simulateFullPipeline(uiOverrides = {}) {
 
     // 8. Governance caps
     const cappedResult = applyGovernanceCaps(contradictionCaps, uiOverrides.governance);
+
+    // 8.5 Sentiment Override (nouveau - comme unified-insights-v2.js)
+    // Le sentiment n'est PAS une composante du DI mais un OVERRIDE contextuel
+    const sentimentScore = uiOverrides.sentimentScore ?? baseContext.sentimentScore ?? 50;
+    const cycleScore = baseContext.scores?.cycle ?? 50;
+    const regime = cycleScore >= 70 ? 'bull' : (cycleScore <= 30 ? 'bear' : 'neutral');
+
+    const sentimentResult = applySentimentOverride(cappedResult.targets, sentimentScore, regime, cycleScore);
+    if (sentimentResult.overrideApplied) {
+      cappedResult.targets = sentimentResult.targets;
+      cappedResult.sentimentOverride = {
+        applied: true,
+        reason: sentimentResult.overrideReason,
+        sentiment: sentimentScore,
+        regime
+      };
+      console.debug('🎭 SIM: Sentiment override applied:', sentimentResult.overrideReason);
+    }
 
     const effectiveCap01 = (typeof policyCap01 === 'number' && Number.isFinite(policyCap01) && policyCap01 > 0)
       ? policyCap01

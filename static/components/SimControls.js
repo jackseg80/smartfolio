@@ -122,7 +122,9 @@ export class SimControls {
             <div class="controls-grid">
               ${this.renderSlider('cycleConf', 'Cycle Confidence', 0.3, 0.95, 0.05, '', 100)}
               ${this.renderSlider('onchainConf', 'OnChain Confidence', 0.2, 0.95, 0.05, '', 100)}
-              ${this.renderSlider('sentimentScore', 'Sentiment Score', 0, 100, 1, '%')}
+            </div>
+            <div class="controls-grid" style="grid-template-columns: 1fr;">
+              ${this.renderSentimentSlider()}
             </div>
             <div class="controls-grid">
               ${this.renderSlider('contradictionPenalty', 'Contradiction Penalty', 0, 0.5, 0.05, '', 100)}
@@ -262,6 +264,72 @@ export class SimControls {
     `;
   }
 
+  /**
+   * Render special sentiment slider with Fear/Greed indicators
+   * Sentiment n'est PAS une composante du DI mais un OVERRIDE contextuel
+   */
+  renderSentimentSlider() {
+    const value = this.state.sentimentScore ?? 50;
+
+    // Déterminer l'état du sentiment
+    let sentimentState, stateIcon, stateClass;
+    if (value < 25) {
+      sentimentState = 'Extreme Fear';
+      stateIcon = '🔴';
+      stateClass = 'sentiment-fear';
+    } else if (value > 75) {
+      sentimentState = 'Extreme Greed';
+      stateIcon = '🟢';
+      stateClass = 'sentiment-greed';
+    } else {
+      sentimentState = 'Neutral';
+      stateIcon = '🟡';
+      stateClass = 'sentiment-neutral';
+    }
+
+    const overrideActive = value < 25 || value > 75;
+
+    return `
+      <div class="control-group sentiment-control ${stateClass}">
+        <label for="sim-sentimentScore" style="display: flex; justify-content: space-between; align-items: center;">
+          <span>
+            ML Sentiment (Override)
+            <span class="sentiment-tooltip" title="Le sentiment n'est PAS une composante du DI. C'est un OVERRIDE contextuel qui modifie les targets d'allocation en cas de sentiment extrême (Fear<25 ou Greed>75).">ℹ️</span>
+          </span>
+          <span class="value-display" id="sim-sentimentScore-value">${value}%</span>
+        </label>
+        <div class="sentiment-indicator" style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px;">
+          <span style="color: var(--danger);">Fear</span>
+          <span style="color: var(--theme-text-muted);">${stateIcon} ${sentimentState}</span>
+          <span style="color: var(--success);">Greed</span>
+        </div>
+        <input
+          type="range"
+          id="sim-sentimentScore"
+          min="0"
+          max="100"
+          step="1"
+          value="${value}"
+          class="sim-slider sentiment-slider ${stateClass}"
+        />
+        ${overrideActive ? `
+        <div class="sentiment-override-badge" style="
+          margin-top: 6px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          background: ${value < 25 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)'};
+          color: ${value < 25 ? 'var(--danger)' : 'var(--success)'};
+          border: 1px solid ${value < 25 ? 'var(--danger)' : 'var(--success)'};
+        ">
+          ⚡ Override ${value < 25 ? 'Protection' : 'Prise de profits'} actif
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   getNestedValue(obj, path) {
     try {
       // Mapping spécifique pour les valeurs complexes
@@ -368,6 +436,77 @@ export class SimControls {
       const unit = valueSpan.textContent.match(/[^\d.-]/g)?.join('') || '';
       const value = multiplier === 100 ? Math.round(slider.value) : parseFloat(slider.value);
       valueSpan.textContent = value + unit;
+    }
+
+    // Mise à jour spéciale pour le slider sentiment (indicateurs Fear/Greed)
+    if (slider.id === 'sim-sentimentScore') {
+      this.updateSentimentIndicators(parseFloat(slider.value));
+    }
+  }
+
+  /**
+   * Met à jour les indicateurs visuels du sentiment (Fear/Neutral/Greed)
+   */
+  updateSentimentIndicators(value) {
+    const controlGroup = this.container.querySelector('.sentiment-control');
+    if (!controlGroup) return;
+
+    // Déterminer le nouvel état
+    let sentimentState, stateIcon, stateClass;
+    if (value < 25) {
+      sentimentState = 'Extreme Fear';
+      stateIcon = '🔴';
+      stateClass = 'sentiment-fear';
+    } else if (value > 75) {
+      sentimentState = 'Extreme Greed';
+      stateIcon = '🟢';
+      stateClass = 'sentiment-greed';
+    } else {
+      sentimentState = 'Neutral';
+      stateIcon = '🟡';
+      stateClass = 'sentiment-neutral';
+    }
+
+    // Mettre à jour les classes CSS
+    controlGroup.classList.remove('sentiment-fear', 'sentiment-neutral', 'sentiment-greed');
+    controlGroup.classList.add(stateClass);
+
+    // Mettre à jour l'indicateur central
+    const indicator = controlGroup.querySelector('.sentiment-indicator span:nth-child(2)');
+    if (indicator) {
+      indicator.textContent = `${stateIcon} ${sentimentState}`;
+    }
+
+    // Mettre à jour le slider
+    const slider = controlGroup.querySelector('.sentiment-slider');
+    if (slider) {
+      slider.classList.remove('sentiment-fear', 'sentiment-neutral', 'sentiment-greed');
+      slider.classList.add(stateClass);
+    }
+
+    // Gérer le badge d'override
+    const overrideActive = value < 25 || value > 75;
+    let badge = controlGroup.querySelector('.sentiment-override-badge');
+
+    if (overrideActive) {
+      if (!badge) {
+        badge = document.createElement('div');
+        badge.className = 'sentiment-override-badge';
+        badge.style.cssText = `
+          margin-top: 6px;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 0.75rem;
+          font-weight: 600;
+        `;
+        controlGroup.appendChild(badge);
+      }
+      badge.textContent = `⚡ Override ${value < 25 ? 'Protection' : 'Prise de profits'} actif`;
+      badge.style.background = value < 25 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)';
+      badge.style.color = value < 25 ? 'var(--danger)' : 'var(--success)';
+      badge.style.border = `1px solid ${value < 25 ? 'var(--danger)' : 'var(--success)'}`;
+    } else if (badge) {
+      badge.remove();
     }
   }
 

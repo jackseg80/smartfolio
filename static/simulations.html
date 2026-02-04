@@ -6,9 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Simulator - SmartFolio</title>
   <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
-  <link rel="stylesheet" href="components/decision-index-panel.css?v=20250130h">
+  <!-- Decision Index Panel CSS (unifié avec analytics-unified.html) -->
+  <link rel="stylesheet" href="components/decision-index-panel.css?v=20251015fixed">
+  <link rel="stylesheet" href="analytics-unified-theme.css?v=20260129v1">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script>
@@ -201,32 +203,6 @@
       align-items: center;
     }
 
-    .mode-toggle {
-      display: flex;
-      background: var(--theme-bg);
-      border: 1px solid var(--theme-border);
-      border-radius: var(--radius-sm);
-      overflow: hidden;
-    }
-
-    .mode-toggle button {
-      padding: 0.5rem 1rem;
-      border: none;
-      background: transparent;
-      color: var(--theme-text-muted);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .mode-toggle button.active {
-      background: var(--brand-primary);
-      color: white;
-    }
-
-    .mode-toggle button:hover:not(.active) {
-      background: var(--theme-surface);
-      color: var(--theme-text);
-    }
 
     .results-content {
       padding: var(--space-lg);
@@ -549,10 +525,9 @@
       </div>
 
       <div class="source-controls">
-        <div class="mode-toggle">
-          <button id="mode-live" class="active">📊 Live</button>
-          <button id="mode-simulation">🎭 Simulation</button>
-        </div>
+        <a href="analytics-unified.html" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
+          📊 Voir les Données Live
+        </a>
 
         <div style="display: flex; align-items: center; gap: 8px;">
           <label for="sim-source-select" style="font-size: 0.9rem; color: var(--theme-text-muted);">Source:</label>
@@ -808,7 +783,7 @@
 
     // État global de l'application
     let appState = {
-      mode: 'live', // 'live' ou 'simulation'
+      mode: 'simulation', // Mode simulation uniquement (Live supprimé - utiliser analytics-unified.html)
       sourceId: null, // Sera initialisé depuis globalConfig
       controls: null,
       inspector: null,
@@ -828,7 +803,10 @@
     async function loadAvailableSources() {
       try {
         const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin;
-        const response = await fetch(`${apiBase}/api/users/sources`);
+        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const response = await fetch(`${apiBase}/api/users/sources`, {
+          headers: { 'X-User': activeUser }
+        });
 
         if (!response.ok) {
           debugLogger.warn('Failed to load sources');
@@ -966,15 +944,6 @@
       const pinButton = document.getElementById('controls-pin-btn');
       setControlsPinned(false);
 
-      // Mode toggle
-      document.getElementById('mode-live')?.addEventListener('click', () => {
-        switchMode('live');
-      });
-
-      document.getElementById('mode-simulation')?.addEventListener('click', () => {
-        switchMode('simulation');
-      });
-
       // Source selector
       document.getElementById('sim-source-select')?.addEventListener('change', (e) => {
         const newSource = e.target.value;
@@ -982,10 +951,6 @@
         // Mettre à jour globalConfig pour cohérence
         if (window.globalConfig) {
           window.globalConfig.set('data_source', newSource);
-        }
-        // Recharger si en mode Live
-        if (appState.mode === 'live') {
-          loadLiveData();
         }
       });
 
@@ -1020,11 +985,15 @@
       const hashState = SimEngine.stateFromUrlHash();
       if (hashState) {
         appState.controls.setState(hashState);
-        switchMode('simulation');
       }
 
-      // État initial empty
-      showEmptyState();
+      // Initialiser le mode simulation
+      initializeMode();
+
+      // État initial empty (si pas de hash state)
+      if (!hashState) {
+        showEmptyState();
+      }
 
       if (window.location.hash === '#controls') {
         setControlsPinned(true);
@@ -1032,37 +1001,24 @@
       }
     }
 
-    function switchMode(mode) {
-      appState.mode = mode;
-
-      // UI updates
-      document.getElementById('mode-live')?.classList.toggle('active', mode === 'live');
-      document.getElementById('mode-simulation')?.classList.toggle('active', mode === 'simulation');
+    function initializeMode() {
+      // Mode simulation uniquement (Live supprimé - utiliser analytics-unified.html)
+      appState.mode = 'simulation';
 
       // Mettre à jour le statut
       const statusEl = document.getElementById('simulation-status');
       if (statusEl) {
         const badge = statusEl.querySelector('.status-badge');
-        if (mode === 'live') {
-          badge.textContent = 'Mode Live';
-          badge.className = 'status-badge success';
-        } else {
-          badge.textContent = 'Mode Simulation';
-          badge.className = 'status-badge info';
-        }
+        badge.textContent = 'Mode Simulation';
+        badge.className = 'status-badge info';
       }
 
-      debugLogger.debug('🎭 SIM: Mode switched to:', mode);
+      debugLogger.debug('🎭 SIM: Mode initialized: simulation');
 
-      // Si on passe en mode simulation et qu'on a des contrôles, lancer simulation
-      if (mode === 'simulation' && appState.controls) {
+      // Lancer simulation si des contrôles existent
+      if (appState.controls) {
         const state = appState.controls.getState();
         onControlsUpdate(state);
-      }
-
-      // Si on passe en mode live, charger les vraies données depuis Analytics
-      if (mode === 'live') {
-        loadLiveData();
       }
     }
 
@@ -1115,470 +1071,12 @@
       }
     }
 
-    async function loadLiveData() {
-      if (appState.isRunning) return;
-
-      appState.isRunning = true;
-      showLoadingState();
-
-      try {
-        const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin;
-
-        // Charger les données réelles depuis les endpoints existants
-        debugLogger.debug('🎭 SIM: Loading live data from Analytics...');
-
-        const activeSource = getActiveSource();
-        const userId = localStorage.getItem('activeUser') || 'demo';
-        debugLogger.debug('🎭 SIM: Using data source:', activeSource, '| User:', userId);
-
-        // ✅ USE UNIFIED loadBalanceData() like dashboard.html (lines 1130-1148)
-        debugLogger.debug('🎭 SIM: Calling window.loadBalanceData() with forceRefresh...');
-        const balanceResult = await window.loadBalanceData(true); // forceRefresh=true
-
-        if (!balanceResult || !balanceResult.success) {
-          throw new Error('Failed to load balance data via loadBalanceData()');
-        }
-
-        debugLogger.debug('🎭 SIM: Balance result received:', {
-          hasData: !!balanceResult.data,
-          hasCsvText: !!balanceResult.csvText,
-          source: balanceResult.source
-        });
-
-        // Parse balances (same as dashboard.html lines 1150-1166)
-        let balances;
-        if (balanceResult.csvText) {
-          // CSV source
-          const minThreshold = (window.globalConfig && window.globalConfig.get('min_usd_threshold')) || 1.0;
-          balances = parseCSVBalancesAuto(balanceResult.csvText, { thresholdUSD: minThreshold });
-        } else if (balanceResult.data && Array.isArray(balanceResult.data.items)) {
-          // API source
-          balances = balanceResult.data.items.map(item => ({
-            symbol: item.symbol,
-            balance: item.balance,
-            value_usd: item.value_usd
-          }));
-        } else {
-          throw new Error('Invalid balance data format');
-        }
-
-        const totalValue = balances.reduce((sum, it) => sum + (parseFloat(it.value_usd) || 0), 0);
-        const assetCount = balances.length;
-        debugLogger.debug(`🎭 SIM: Parsed ${assetCount} assets, total: $${totalValue.toFixed(2)}`);
-
-        // Create balancesData structure
-        const balancesData = {
-          items: balances,
-          source_used: balanceResult.source,
-          total_count: assetCount
-        };
-
-        // 1. Portfolio metrics (contient DI, performance, etc.)
-        const metricsResponse = await fetch(`${apiBase}/portfolio/metrics?source=${activeSource}&user_id=${userId}`);
-        if (!metricsResponse.ok) {
-          throw new Error(`Portfolio metrics failed: ${metricsResponse.status}`);
-        }
-        const metricsData = await metricsResponse.json();
-
-        // 2. Calculer les VRAIES allocations actuelles du wallet (comme analytics-unified.html)
-        debugLogger.debug('🎭 SIM: Calculating real current allocations from balances...');
-        const { groupAssetsByClassification } = await import('./shared-asset-groups.js');
-        const groupedData = groupAssetsByClassification(balances);
-
-        // Convertir en format attendu: allocations actuelles en %
-        const currentAllocations = {};
-        groupedData.forEach(group => {
-          const percentage = (group.value / totalValue) * 100;
-          currentAllocations[group.label] = percentage;
-        });
-
-        debugLogger.debug('🎭 SIM: Real current allocations calculated:', {
-          allocations: currentAllocations,
-          totalValue,
-          groupsCount: groupedData.length
-        });
-
-        // 3. NOTE: Les targets théoriques viendront de unified-insights-v2.js, PAS de /portfolio/metrics
-        // Les métriques ne sont utilisées que pour des informations supplémentaires
-        debugLogger.debug('🎭 SIM: Portfolio metrics loaded (for reference only):', {
-          hasTargets: !!metricsData.targets,
-          targetKeys: Object.keys(metricsData.targets || {})
-        });
-
-        // 4. INITIALISER LE STORE avant d'appeler getUnifiedState() (CRITIQUE!)
-        debugLogger.debug('🎭 SIM: Initializing store with complete data...');
-
-        // CRITICAL: Utiliser le VRAI store de risk-dashboard-store.js
-        // unified-insights-v2.js importe ce store, donc il FAUT utiliser le même !
-        if (!window.store) {
-          debugLogger.warn('🎭 SIM: window.store not found, importing risk-dashboard-store...');
-          const { store: riskStore } = await import('./core/risk-dashboard-store.js');
-          window.store = riskStore;
-          debugLogger.debug('🎭 SIM: ✅ risk-dashboard-store imported and set as window.store');
-        }
-
-        // Injecter balances dans le store (requis par getUnifiedState)
-        window.store.set('wallet.balances', balances);
-        window.store.set('wallet.total', totalValue);
-        debugLogger.debug('🎭 SIM: Store initialized with wallet data:', {
-          balances: balances.length,
-          total: totalValue
-        });
-
-        // CRITICAL: Charger les scores avec le MÊME système qu'Analytics Unified
-        // Utiliser la logique de cache identique + modules client-side
-        debugLogger.debug('🎭 SIM: Loading scores with Analytics cache system (force=false)...');
-
-        try {
-          // 1) Cycle score (client-side)
-          const { getCurrentCycleMonths, cycleScoreFromMonths, getCyclePhase } = await import('./modules/cycle-navigator.js');
-          const c = getCurrentCycleMonths();
-          const cycleScore = Math.round(cycleScoreFromMonths(c.months));
-          const cyclePhase = getCyclePhase(c.months);
-          window.store.set('cycle.months', c.months);
-          window.store.set('cycle.score', cycleScore);
-          window.store.set('cycle.phase', cyclePhase);
-          window.store.set('cycle.confidence', 0.46); // Static pour l'instant
-          debugLogger.debug('🎭 SIM: ✅ Cycle score loaded:', { score: cycleScore, phase: cyclePhase });
-
-          // 2) On-Chain score (modules client-side avec SWR cache - SAME AS ANALYTICS)
-          try {
-            debugLogger.debug('🎭 SIM: Loading onchain from client-side modules (NOT API)...');
-            const onchain = await import('./modules/onchain-indicators.js');
-            const v2 = await import('./modules/composite-score-v2.js');
-            // Use SWR-cached version (force=false pour utiliser cache)
-            const indicators = await onchain.fetchAllIndicators({ force: false });
-            // Dynamic weighting always enabled (V2 production mode)
-            const composite = v2.calculateCompositeScoreV2(indicators, true);
-
-            if (typeof composite.score === 'number') {
-              window.store.set('scores.onchain', composite.score);
-              // CRITICAL: unified-insights-v2 lit scores.onchain_metadata, PAS onchain.confidence !
-              window.store.set('scores.onchain_metadata', {
-                confidence: composite.confidence || 0.6,
-                criticalZoneCount: composite.criticalZoneCount || 0,
-                categoryBreakdown: composite.categoryBreakdown || {}
-              });
-              debugLogger.debug('🎭 SIM: ✅ Onchain score from modules:', {
-                score: composite.score,
-                confidence: composite.confidence,
-                criticalZones: composite.criticalZoneCount
-              });
-            } else {
-              debugLogger.warn('🎭 SIM: Onchain composite score is null, using default');
-              window.store.set('scores.onchain', 50);
-              window.store.set('scores.onchain_metadata', { confidence: 0, criticalZoneCount: 0 });
-            }
-          } catch (e) {
-            debugLogger.error('🎭 SIM: Onchain modules error:', e.message);
-            window.store.set('scores.onchain', 50);
-            window.store.set('onchain.confidence', 0);
-          }
-
-          // 3) Risk score (API /risk/dashboard - SAME AS ANALYTICS using apiRequest)
-          try {
-            const minUsd = window.globalConfig?.get('min_usd_threshold') || 1;
-            const priceDays = 365, corrDays = 90;
-            debugLogger.debug('🎭 SIM: Loading risk from /risk/dashboard using globalConfig.apiRequest...');
-            // Use apiRequest like Analytics does (handles headers automatically)
-            const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
-              params: { price_history_days: priceDays, lookback_days: corrDays, min_usd: minUsd }
-            });
-
-            debugLogger.debug('🎭 SIM: Risk API response structure:', {
-              hasSuccess: !!riskData?.success,
-              hasRiskMetrics: !!riskData?.risk_metrics,
-              riskMetricsKeys: riskData?.risk_metrics ? Object.keys(riskData.risk_metrics) : [],
-              riskScore: riskData?.risk_metrics?.risk_score,
-              fullStructure: riskData ? Object.keys(riskData) : []
-            });
-
-            if (riskData && riskData.success) {
-              const riskScore = riskData?.risk_metrics?.risk_score;
-              if (typeof riskScore === 'number') {
-                window.store.set('scores.risk', riskScore);
-                // ALSO set in store.risk for compatibility with unified-insights-v2
-                window.store.set('risk', riskData);
-                debugLogger.debug('🎭 SIM: ✅ Risk score from dashboard:', { score: riskScore });
-              } else {
-                debugLogger.warn('🎭 SIM: ⚠️ Risk score not found in response path risk_metrics.risk_score');
-                window.store.set('scores.risk', 50);
-              }
-            } else {
-              debugLogger.warn('🎭 SIM: Risk API did not return success=true');
-              window.store.set('scores.risk', 50);
-            }
-          } catch (e) {
-            debugLogger.error('🎭 SIM: Risk API error:', e.message);
-            window.store.set('scores.risk', 50);
-          }
-        } catch (e) {
-          debugLogger.error('🎭 SIM: Failed to load scores:', e.message);
-        }
-
-        // 5. VÉRIFIER que les scores sont bien dans le store AVANT d'appeler getUnifiedState
-        debugLogger.debug('🎭 SIM: Verifying scores in store before calling getUnifiedState...');
-        const storeSnapshot = window.store.snapshot();
-        debugLogger.debug('🎭 SIM: Store snapshot BEFORE getUnifiedState:', {
-          'scores.onchain': storeSnapshot.scores?.onchain,
-          'scores.risk': storeSnapshot.scores?.risk,
-          'cycle.score': storeSnapshot.cycle?.score,
-          'wallet.balances': storeSnapshot.wallet?.balances?.length,
-          'wallet.total': storeSnapshot.wallet?.total
-        });
-
-        // 6. Utiliser le SYSTÈME UNIFIÉ pour obtenir les VRAIES données (comme analytics-unified.html)
-        debugLogger.debug('🎭 SIM: Loading unified state from Analytics system...');
-        let unifiedState = null;
-        try {
-          // IMPORTANT: Utiliser le même système qu'Analytics Unified
-          const { getUnifiedState } = await import('./core/unified-insights-v2.js');
-          unifiedState = await getUnifiedState();
-          debugLogger.debug('🎭 SIM: ✅ Unified state loaded (SAME AS ANALYTICS):', {
-            '📊 SCORES': {
-              cycle: unifiedState?.cycle?.score,
-              onchain: unifiedState?.onchain?.composite_score,
-              risk: unifiedState?.risk?.score
-            },
-            '🎯 DECISION': unifiedState?.decision?.score,
-            '⚖️ CONTRADICTION': (unifiedState?.governance?.contradiction_index * 100).toFixed(1) + '%',
-            '💰 RISK_BUDGET': unifiedState?.risk?.budget?.target_stables_pct + '% stables',
-            '🎲 TARGETS': Object.keys(unifiedState?.targets_by_group || {}).length + ' groups',
-            '🔍 PREVIEW': Object.keys(unifiedState?.targets_by_group || {}).slice(0, 5)
-          });
-        } catch (e) {
-          debugLogger.error('🎭 SIM: ❌ CRITICAL - Failed to load unified state:', e.message);
-          throw new Error(`Cannot load unified state: ${e.message}`);
-        }
-
-        if (!unifiedState) {
-          throw new Error('Unified state is null - cannot proceed with Live mode');
-        }
-
-        // 6. Construire un contexte complet pour le Pipeline Inspector (comme mode simulation)
-        const decisionIndex = unifiedState?.decision?.score ?? 50;
-        const contradictionIndex = unifiedState?.governance?.contradiction_index ?? 0.5;
-        const confidence = unifiedState?.decision?.confidence ?? 0.8;
-        const targetStables = unifiedState?.risk?.budget?.target_stables_pct ?? (metricsData.performance?.risk_budget || 30);
-
-        // Construire le contexte du pipeline (inputs + intermediate + outputs)
-        // IMPORTANT: Utiliser UNIQUEMENT les valeurs d'unifiedState (source unique de vérité)
-        const cycleScore = unifiedState.cycle?.score ?? 50;
-        const onchainScore = unifiedState.onchain?.score ?? 50;  // FIX: use .score, not .composite_score
-        const riskScore = unifiedState.risk?.score ?? 50;
-        const cycleConf = unifiedState.cycle?.confidence ?? 0.7;
-        const onchainConf = unifiedState.onchain?.confidence ?? 0.6;
-        const regimeConf = 0.5;
-
-        debugLogger.debug('🎭 SIM: Using scores from unified-insights-v2 (SAME AS ANALYTICS):', {
-          cycle: cycleScore,
-          onchain: onchainScore,
-          risk: riskScore,
-          source: 'unified-insights-v2'
-        });
-
-        const pipelineContext = {
-          // INPUTS (structure attendue par explainPipeline)
-          inputs: {
-            cycleScore: cycleScore,
-            onChainScore: onchainScore,
-            riskScore: riskScore,
-            cycleConf: cycleConf,
-            onchainConf: onchainConf,
-            regimeConf: regimeConf,
-            contradictionPenalty: contradictionIndex,
-            backendDecision: null
-          },
-          // SCORES (requis par explainPipeline pour Decision Inputs)
-          scores: {
-            cycle: cycleScore,
-            onchain: onchainScore,
-            risk: riskScore
-          },
-          // CONFIDENCES (requis par explainPipeline pour Decision Inputs)
-          confidences: {
-            cycle: cycleConf,
-            onchain: onchainConf,
-            regime: regimeConf
-          },
-          // INTERMEDIATE
-          cycle: unifiedState?.cycle || { score: cycleScore, phase: window.store.get('cycle.phase') },
-          onchain: unifiedState?.onchain || { composite_score: onchainScore, confidence: onchainConf },
-          risk: unifiedState?.risk || { score: riskScore },
-          // COMPUTED
-          decision: {
-            score: decisionIndex,
-            confidence: confidence,
-            source: unifiedState ? 'unified_insights_v2' : 'live_analytics'
-          },
-          governance: {
-            contradiction_index: contradictionIndex,
-            contradiction_pct: Math.round(contradictionIndex * 100)
-          },
-          risk_budget: {
-            target_stables_pct: targetStables,
-            methodology: unifiedState.risk?.budget?.methodology || 'unified_insights_v2',
-            min_stables_pct: unifiedState.risk?.budget?.min_stables_pct || 10,
-            max_stables_pct: unifiedState.risk?.budget?.max_stables_pct || 60
-          },
-          // TOUJOURS utiliser unified-insights targets (source unique de vérité)
-          targets: unifiedState.targets_by_group,
-          current_allocations: currentAllocations,
-          balances: balances,
-          total_value: totalValue,
-          // Phase Engine info (pour l'affichage)
-          phaseEngine: {
-            enabled: false,
-            mode: 'shadow',
-            forcedPhase: null
-          }
-        };
-
-        // Générer l'explication du pipeline (comme en mode simulation)
-        // explainPipeline attend: (context, steps) où steps contient { di, riskBudget, targets, finalTargets, cappedResult, orders }
-        const pipelineSteps = {
-          di: {
-            di: decisionIndex,
-            confidence: confidence,
-            source: unifiedState ? 'unified_insights_v2' : 'live_analytics',
-            reasoning: 'Calculated from unified state'
-          },
-          riskBudget: {
-            target_stables_pct: targetStables,
-            curve: unifiedState?.risk?.budget?.methodology || 'live-data',
-            clamps: {
-              min_stables: unifiedState?.risk?.budget?.min_stables_pct || 10,
-              max_stables: unifiedState?.risk?.budget?.max_stables_pct || 60
-            },
-            flags: {
-              hysteresis: false,
-              cb_vol: false,
-              cb_dd: false
-            }
-          },
-          // Utiliser les targets unifiés (pas de fallback pour garantir cohérence)
-          targets: unifiedState.targets_by_group,
-          finalTargets: unifiedState.targets_by_group,
-          cappedResult: {
-            targets: unifiedState.targets_by_group,
-            caps_triggered: []
-          },
-          orders: {
-            orders: [],
-            summary: {
-              totalDelta: 0,
-              globalThreshold: 2,
-              shouldExecute: false
-            }
-          }
-        };
-
-        const pipelineExplanation = SimEngine.explainPipeline(pipelineContext, pipelineSteps);
-
-        // LOG DÉTAILLÉ : Ce que le moteur de décision utilise EXACTEMENT
-        debugLogger.debug('🎯 PIPELINE LIVE - ÉTAT COMPLET DU MOTEUR (identique à Analytics Unified):', {
-          '⚠️ SOURCE': 'unified-insights-v2.js (SAME AS ANALYTICS)',
-          '1️⃣ INPUTS (scores)': {
-            cycle: cycleScore,
-            onchain: onchainScore,
-            risk: riskScore,
-            contradiction: Math.round(contradictionIndex * 100) + '%'
-          },
-          '2️⃣ DECISION INDEX': {
-            score: decisionIndex,
-            confidence: (confidence * 100).toFixed(1) + '%',
-            methodology: 'unified_insights_v2'
-          },
-          '3️⃣ RISK_BUDGET': {
-            stables: targetStables + '%',
-            risky: (100 - targetStables) + '%',
-            curve: unifiedState.risk?.budget?.methodology || 'unified'
-          },
-          '4️⃣ TARGETS (theoretical)': unifiedState.targets_by_group,
-          '5️⃣ CURRENT_ALLOCATIONS (real)': currentAllocations,
-          '6️⃣ DELTAS (target - current)': Object.keys(unifiedState.targets_by_group).map(group => ({
-            group,
-            target: unifiedState.targets_by_group[group].toFixed(1) + '%',
-            current: (currentAllocations[group] || 0).toFixed(1) + '%',
-            delta: (unifiedState.targets_by_group[group] - (currentAllocations[group] || 0)).toFixed(1) + '%'
-          })),
-          '✅ VÉRIFICATION': '👉 Comparer ces valeurs avec Analytics Unified pour confirmer parité'
-        });
-
-        const liveResult = {
-          di: {
-            di: Math.round(decisionIndex),
-            source: 'unified_insights_v2',
-            confidence: confidence
-          },
-          riskBudget: {
-            target_stables_pct: targetStables,
-            curve: unifiedState?.risk?.budget?.methodology || 'live-data',
-            clamps: {
-              min_stables: unifiedState?.risk?.budget?.min_stables_pct || 10,
-              max_stables: unifiedState?.risk?.budget?.max_stables_pct || 60
-            }
-          },
-          // ALLOCATIONS ACTUELLES RÉELLES (depuis wallet groupé)
-          currentAllocations: currentAllocations,
-          // TARGETS THÉORIQUES (depuis unified-insights-v2 UNIQUEMENT - source de vérité)
-          cappedTargets: unifiedState.targets_by_group,
-          orders: {
-            orders: [],
-            summary: {
-              totalDelta: 0,
-              globalThreshold: 2,
-              shouldExecute: false,
-              message: `Mode Live - ${balancesData.items?.length || 0} assets réels`
-            }
-          },
-          // UTILISER l'explication générée par le pipeline
-          explanation: pipelineExplanation,
-          presetInfo: {
-            name: 'Live Data',
-            desc: `Source: ${activeSource} | User: ${userId} | ${assetCount} assets | Unified: ${!!unifiedState}`
-          },
-          ui: {
-            stateForEngine: {
-              governance: {
-                contradiction_index: contradictionIndex,
-                contradiction_pct: Math.round(contradictionIndex * 100)
-              },
-              cycle: unifiedState?.cycle,
-              onchain: unifiedState?.onchain,
-              risk: unifiedState?.risk
-            }
-          },
-          // Ajouter les données complètes pour debug et Inspector
-          _debug: {
-            balances: balances,
-            groupedData: groupedData,
-            totalValue: totalValue,
-            unifiedState: unifiedState,
-            pipelineContext: pipelineContext
-          }
-        };
-
-        debugLogger.debug('🎭 SIM: Live data loaded:', liveResult);
-
-        // Afficher les résultats
-        displayResults(liveResult);
-        appState.inspector.updateInspector(liveResult);
-        showResultsState();
-
-      } catch (error) {
-        debugLogger.error('🎭 SIM: Live data loading failed:', error);
-        showError('Erreur de chargement des données live: ' + error.message);
-      } finally {
-        appState.isRunning = false;
-      }
-    }
 
     function displayResults(result) {
-      const { di, riskBudget, cappedTargets, currentAllocations, orders, explanation } = result;
+      const { di, riskBudget, cappedTargets, orders, explanation } = result;
 
-      // Déterminer si on est en mode Live ou Simulation
-      const isLiveMode = result?.presetInfo?.name === 'Live Data';
+      // Mode simulation uniquement
+      const isLiveMode = false;
 
       // Affichage badges dans le header des résultats
       const stateForEngine = result?.ui?.stateForEngine ?? null;
@@ -1621,24 +1119,61 @@
         diCapPercent = null;
       }
 
-      // Préparer data pour panneau DI
+      // Préparer data pour panneau DI (aligné avec analytics-unified-main-controller.js)
+      const cycleScore = result.context?.scores?.cycle || 0;
+      const onchainScore = result.context?.scores?.onchain || 0;
+      const riskScore = result.context?.scores?.risk || 0;
+      const cyclePhase = result.context?.cycle?.phase || (cycleScore >= 70 ? 'bull' : (cycleScore <= 30 ? 'bear' : 'neutral'));
+
       const diPanelData = {
         di: diClamped,
-        weights: di.weights || { cycle: 0.5, onchain: 0.3, risk: 0.2 },  // POST-adaptatifs
-        scores: {
-          cycle: result.context?.scores?.cycle || 0,
-          onchain: result.context?.scores?.onchain || 0,
-          risk: result.context?.scores?.risk || 0
-        },
-        history: [...window.diHistoryBuffers[historyKey]],
+        scores: { cycle: cycleScore, onchain: onchainScore, risk: riskScore },
+        weights: di.weights || { cycle: 0.33, onchain: 0.39, risk: 0.28 },
         meta: {
-          confidence: di.confidence || 0,
-          contradiction: result.ui?.stateForEngine?.governance?.contradiction_index || 0,
+          // Champs alignés avec analytics-unified-main-controller.js
+          phase: cyclePhase,
+          source: di.source || 'simulation_engine',
+          live: isLiveMode,
+          backend: false,  // Simulation = pas de backend live
+          signals: false,
+          governance_mode: result.ui?.stateForEngine?.governance?.current_state || 'SIMULATION',
           cap: diCapPercent,
           mode: result.ui?.mode || 'Normal',
-          source: di.source || 'simulation_engine',
-          live: isLiveMode
-        }
+          confidence: di.confidence || 0,
+          contradiction: result.ui?.stateForEngine?.governance?.contradiction_index || 0,
+          cycle_confidence: 0.8,  // Valeur par défaut pour simulation
+          updated: result.timestamp || new Date().toISOString(),
+          signals_status: 'simulation',
+          alpha: null,
+
+          // Données pour tuiles
+          blended_score: diClamped,
+          regime_score: diClamped,
+          cycle_phase: cyclePhase,
+          cycle_months: result.context?.cycle?.months || null,
+          onchain_critiques: 0,
+          onchain_confidence: null,
+          risk_var95: null,
+          volatility_annualized: null,
+          sharpe: null,
+          risk_budget: riskBudget ? {
+            risky: 100 - riskBudget.target_stables_pct,
+            stables: riskBudget.target_stables_pct
+          } : null,
+          regime_emoji: cycleScore >= 70 ? '🐂' : (cycleScore <= 30 ? '🐻' : '😐'),
+          sentiment_fg: result.context?.sentimentScore || null,
+          sentiment_interpretation: null
+        },
+        history: [...window.diHistoryBuffers[historyKey]],
+        regimeHistory: [],
+        allocation: result.cappedTargets ? {
+          BTC: result.cappedTargets.BTC || 0,
+          ETH: result.cappedTargets.ETH || 0,
+          Stablecoins: result.cappedTargets.Stablecoins || 0,
+          Alts: Object.entries(result.cappedTargets)
+            .filter(([k]) => !['BTC', 'ETH', 'Stablecoins'].includes(k))
+            .reduce((sum, [, v]) => sum + v, 0)
+        } : null
       };
 
       // Render panneau DI
@@ -1671,9 +1206,8 @@
       document.getElementById('sim-stables-bar').style.width = `${stablesPct}%`;
       document.getElementById('sim-risky-bar').style.width = `${riskyPct}%`;
 
-      // Allocation chart: afficher currentAllocations en mode Live, cappedTargets en mode Simulation
-      const allocationsToDisplay = isLiveMode && currentAllocations ? currentAllocations : cappedTargets;
-      displayAllocationChart(allocationsToDisplay, isLiveMode);
+      // Allocation chart: afficher les targets de simulation
+      displayAllocationChart(cappedTargets);
 
       // Execution plan
       document.getElementById('sim-total-delta').textContent = `${orders.summary.totalDelta}%`;
@@ -1695,7 +1229,7 @@
       document.getElementById('sim-summary-nl').textContent = explanation.summaryNL;
     }
 
-    function displayAllocationChart(targets, isLiveMode = false) {
+    function displayAllocationChart(targets) {
       const chartEl = document.getElementById('sim-allocation-chart');
       if (!chartEl || !targets) return;
 
@@ -1704,7 +1238,7 @@
         .sort(([,a], [,b]) => b - a)
         .filter(([, value]) => value >= 0.1); // Filtrer les très petites valeurs
 
-      const chartTitle = isLiveMode ? '📊 Allocations Actuelles (Wallet Réel)' : '🎯 Allocations Cibles (Simulation)';
+      const chartTitle = '🎯 Allocations Cibles (Simulation)';
 
       let html = `<div style="margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: var(--theme-text);">${chartTitle}</div>`;
       html += '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
@@ -1805,7 +1339,7 @@
       const hashState = SimEngine.stateFromUrlHash();
       if (hashState && appState.controls) {
         appState.controls.setState(hashState);
-        switchMode('simulation');
+        initializeMode();
       }
     }
 
@@ -1843,8 +1377,7 @@
     window.simApp = {
       state: appState,
       engine: SimEngine,
-      runSimulation,
-      switchMode
+      runSimulation
     };
   </script>
 </body>
