@@ -438,6 +438,161 @@ class DISignalStrategy(PortfolioStrategy):
         return weights
 
 
+class DISmartfolioReplicaStrategy(PortfolioStrategy):
+    """
+    Stratégie S6: SmartFolio Replica
+
+    Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio:
+    - Allocation stables basée sur le cycle score (pas le DI directement)
+    - Phase bullish (cycle ≥90): 15% stables, 85% risky
+    - Phase moderate (cycle 70-90): 20% stables, 80% risky
+    - Phase bearish (cycle <70): 30% stables, 70% risky
+
+    Utilise le cycle_score composant du DI pour déterminer la phase de marché.
+    C'est la stratégie la plus proche du comportement réel du projet.
+    """
+
+    def __init__(self, config: Optional[DIStrategyConfig] = None):
+        super().__init__("SmartFolio Replica")
+        self.config = config or DIStrategyConfig()
+        self.di_series: Optional[pd.Series] = None
+        self.cycle_series: Optional[pd.Series] = None
+
+    def set_di_series(self, di_series: pd.Series):
+        """Injecte la série DI historique"""
+        self.di_series = di_series
+
+    def set_cycle_series(self, cycle_series: pd.Series):
+        """Injecte la série cycle score historique"""
+        self.cycle_series = cycle_series
+
+    def get_weights(
+        self,
+        date: pd.Timestamp,
+        price_data: pd.DataFrame,
+        current_weights: pd.Series,
+        **kwargs
+    ) -> pd.Series:
+        """
+        Calcule les poids selon la logique de l'Allocation Engine V2
+
+        L'allocation dépend du cycle score pour déterminer la phase:
+        - Phase bullish (cycle ≥90): 85% risky
+        - Phase moderate (70≤cycle<90): 80% risky
+        - Phase bearish (cycle <70): 70% risky
+
+        Les ratios BTC/ETH/Alts dans la partie risky:
+        - Bullish: BTC 21%, ETH 17%, Alts 47% (du total)
+        - Moderate: BTC 24%, ETH 18%, Alts 38%
+        - Bearish: BTC 25%, ETH 18%, Alts 28%
+        """
+        # Récupérer cycle score si disponible, sinon estimer depuis DI
+        cycle_score = kwargs.get('cycle_score')
+
+        if cycle_score is None and self.cycle_series is not None:
+            try:
+                cycle_score = self.cycle_series.loc[date]
+            except KeyError:
+                idx = self.cycle_series.index.get_indexer([date], method='nearest')[0]
+                cycle_score = self.cycle_series.iloc[idx]
+
+        # Fallback: estimer cycle depuis DI (approximation)
+        if cycle_score is None:
+            di_value = kwargs.get('di_value')
+            if di_value is None and self.di_series is not None:
+                try:
+                    di_value = self.di_series.loc[date]
+                except KeyError:
+                    idx = self.di_series.index.get_indexer([date], method='nearest')[0]
+                    di_value = self.di_series.iloc[idx]
+
+            if di_value is not None:
+                # Approximation: DI élevé souvent corrélé à cycle élevé
+                # Mais le DI peut être bas même en bullish (macro penalty)
+                # On utilise une estimation conservatrice
+                cycle_score = di_value * 1.1  # Léger boost car DI inclut penalties
+                cycle_score = min(100, max(0, cycle_score))
+            else:
+                cycle_score = 50.0  # Neutre par défaut
+
+        # Déterminer phase et allocation stables selon Allocation Engine V2
+        if cycle_score >= 90:
+            # Phase bullish
+            stables_pct = 0.15
+            # Ratios non-stables: BTC 25%, ETH 20%, Alts 55% (renormalisés)
+            btc_ratio = 0.25
+            eth_ratio = 0.20
+            alts_ratio = 0.55
+        elif cycle_score >= 70:
+            # Phase moderate
+            stables_pct = 0.20
+            btc_ratio = 0.30
+            eth_ratio = 0.22
+            alts_ratio = 0.48
+        else:
+            # Phase bearish
+            stables_pct = 0.30
+            btc_ratio = 0.35
+            eth_ratio = 0.25
+            alts_ratio = 0.40
+
+        # L'espace pour risky après stables
+        non_stables_space = 1.0 - stables_pct
+
+        # Renormaliser les ratios
+        base_total = btc_ratio + eth_ratio + alts_ratio
+        btc_target = (btc_ratio / base_total) * non_stables_space
+        eth_target = (eth_ratio / base_total) * non_stables_space
+
+        # Appliquer floors (comme dans l'engine réel)
+        btc_floor = 0.15  # 15% minimum BTC
+        eth_floor = 0.12  # 12% minimum ETH
+        stables_floor = 0.10  # 10% minimum stables
+
+        btc_target = max(btc_target, btc_floor)
+        eth_target = max(eth_target, eth_floor)
+        final_stables = max(stables_pct, stables_floor)
+
+        # Calculer alts = reste
+        alts_target = 1.0 - btc_target - eth_target - final_stables
+
+        # Normaliser si dépassement
+        total = btc_target + eth_target + final_stables + alts_target
+        if total > 1.0:
+            scale = 1.0 / total
+            btc_target *= scale
+            eth_target *= scale
+            final_stables *= scale
+            alts_target *= scale
+
+        # Répartir entre assets du backtest (simplifié: BTC = risky, reste = stables)
+        assets = price_data.columns.tolist()
+        weights = pd.Series(0.0, index=assets)
+
+        stable_assets = [a for a in assets if a.upper() in ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS']]
+        risky_assets = [a for a in assets if a not in stable_assets]
+
+        if not risky_assets:
+            risky_assets = assets
+            stable_assets = []
+
+        # Dans le backtest simplifié, on a BTC + STABLES
+        # On considère que risky = BTC représente tout le non-stable
+        risky_pct = btc_target + eth_target + alts_target  # = 1 - stables
+
+        if risky_assets:
+            weight_per_risky = risky_pct / len(risky_assets)
+            for asset in risky_assets:
+                weights[asset] = weight_per_risky
+
+        if stable_assets:
+            weight_per_stable = final_stables / len(stable_assets)
+            for asset in stable_assets:
+                weights[asset] = weight_per_stable
+
+        return weights
+
+
 # Dictionnaire des stratégies disponibles
 DI_STRATEGIES = {
     "di_threshold": DIThresholdStrategy,
@@ -445,6 +600,7 @@ DI_STRATEGIES = {
     "di_contrarian": DIContrarianStrategy,
     "di_risk_parity": DIRiskParityStrategy,
     "di_signal": DISignalStrategy,
+    "di_smartfolio_replica": DISmartfolioReplicaStrategy,
 }
 
 

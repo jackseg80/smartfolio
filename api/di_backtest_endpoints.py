@@ -148,17 +148,38 @@ MARKET_EVENTS = [
 # ========== Endpoints ==========
 
 @router.get("/strategies")
-async def list_di_strategies():
-    """Liste les stratégies DI disponibles pour le backtest"""
+async def list_di_strategies(
+    details: bool = Query(False, description="Inclure descriptions détaillées")
+):
+    """
+    Liste les stratégies DI disponibles pour le backtest
+
+    Args:
+        details: Si True, inclut les règles détaillées, pros/cons, etc.
+    """
     strategies = []
 
     for key, strategy_class in DI_STRATEGIES.items():
         instance = strategy_class()
-        strategies.append({
+        strategy_info = {
             "key": key,
             "name": instance.name,
             "description": _get_strategy_description(key)
-        })
+        }
+
+        # Ajouter détails si demandé
+        if details and key in STRATEGY_DETAILS:
+            detail = STRATEGY_DETAILS[key]
+            strategy_info.update({
+                "short": detail.get("short"),
+                "full_description": detail.get("description"),
+                "rules": detail.get("rules", []),
+                "pros": detail.get("pros", []),
+                "cons": detail.get("cons", []),
+                "best_for": detail.get("best_for")
+            })
+
+        strategies.append(strategy_info)
 
     return success_response({
         "strategies": strategies,
@@ -572,8 +593,102 @@ def _get_strategy_description(key: str) -> str:
         "di_contrarian": "Stratégie contrarian (DI<20→accumulation, DI>80→prise profits)",
         "di_risk_parity": "Risk Parity + scaling DI (allocation inversement proportionnelle à la vol)",
         "di_signal": "Signaux purs (BUY quand DI croise 40↑, SELL quand croise 60↓)",
+        "di_smartfolio_replica": "Réplique la logique réelle SmartFolio (cycle score → phase → allocation)",
     }
     return descriptions.get(key, "Stratégie basée sur le Decision Index")
+
+
+# Descriptions détaillées pour le frontend
+STRATEGY_DETAILS = {
+    "di_threshold": {
+        "name": "DI Threshold",
+        "short": "Allocation par seuils de DI",
+        "description": "Stratégie simple basée sur des niveaux de Decision Index. L'allocation entre actifs risqués (crypto) et stables change selon les seuils du DI.",
+        "rules": [
+            "DI < 20 (extreme fear) → 30% risky, 70% stables",
+            "DI 20-40 (fear) → 50% risky, 50% stables",
+            "DI 40-60 (neutral) → 60% risky, 40% stables",
+            "DI 60-80 (greed) → 75% risky, 25% stables",
+            "DI > 80 (extreme greed) → 85% risky, 15% stables"
+        ],
+        "pros": ["Simple à comprendre", "Réactive aux conditions de marché", "Suit le sentiment"],
+        "cons": ["Peut être en retard sur les retournements", "Pas de lissage"],
+        "best_for": "Validation de base du DI comme indicateur"
+    },
+    "di_momentum": {
+        "name": "DI Momentum",
+        "short": "Suit la tendance du DI",
+        "description": "Ajuste l'exposition en fonction de la direction du DI sur les 7 derniers jours. Quand le DI monte fortement, on augmente l'exposition, et inversement.",
+        "rules": [
+            "Base: allocation du threshold strategy",
+            "DI hausse >5pts/7j → +10% exposition risky",
+            "DI baisse >5pts/7j → -10% exposition risky",
+            "Renormalisation après ajustement"
+        ],
+        "pros": ["Suit les tendances", "Réagit aux changements rapides", "Combine base + momentum"],
+        "cons": ["Peut amplifier la volatilité", "Whipsaws possibles"],
+        "best_for": "Marchés tendanciels avec des mouvements clairs"
+    },
+    "di_contrarian": {
+        "name": "DI Contrarian",
+        "short": "Be greedy when others are fearful",
+        "description": "Stratégie à contre-courant inspirée de Warren Buffett. Accumule agressivement en extreme fear et prend des profits en extreme greed.",
+        "rules": [
+            "DI < 20 (extreme fear) → 85% risky (accumulation max)",
+            "DI 20-40 (fear) → 70% risky",
+            "DI 40-70 (neutral) → 60% risky",
+            "DI 70-80 (greed) → 45% risky",
+            "DI > 80 (extreme greed) → 30% risky (prise profits)"
+        ],
+        "pros": ["Achète les dips", "Vend les sommets", "Discipline anti-FOMO"],
+        "cons": ["Peut être prématuré", "Requiert patience", "Difficile psychologiquement"],
+        "best_for": "Investisseurs long terme, marchés cycliques"
+    },
+    "di_risk_parity": {
+        "name": "DI Risk Parity",
+        "short": "Parité de risque ajustée par DI",
+        "description": "Combine Risk Parity classique (allocation inversement proportionnelle à la volatilité) avec un scaling dynamique basé sur le DI.",
+        "rules": [
+            "Base: Inverse volatility weighting (30j lookback)",
+            "Scale factor = 0.5 + (DI / 100)",
+            "DI=0 → 50% de l'allocation risk parity",
+            "DI=50 → 100% de l'allocation risk parity",
+            "DI=100 → 150% de l'allocation risk parity"
+        ],
+        "pros": ["Gestion du risque intégrée", "Adaptatif à la volatilité", "DI comme booster"],
+        "cons": ["Plus complexe", "Lookback peut être en retard", "Moins intuitif"],
+        "best_for": "Gestion de risque sophistiquée, portefeuilles diversifiés"
+    },
+    "di_signal": {
+        "name": "DI Signal",
+        "short": "Signaux de trading purs",
+        "description": "Stratégie de trading avec signaux discrets basés sur les croisements de seuils du DI, avec confirmation et holding minimum.",
+        "rules": [
+            "BUY: DI croise 40 à la hausse (confirmation 3 jours)",
+            "SELL: DI croise 60 à la baisse",
+            "Holding minimum: 14 jours après chaque signal",
+            "Position long = 100% risky, neutral = 50/50"
+        ],
+        "pros": ["Signaux clairs", "Évite l'overtrading", "Confirmation intégrée"],
+        "cons": ["Peut rater des opportunités", "Binaire (all-in ou not)", "Holding forcé"],
+        "best_for": "Trading actif avec règles strictes"
+    },
+    "di_smartfolio_replica": {
+        "name": "SmartFolio Replica",
+        "short": "Logique réelle du projet",
+        "description": "Réplique exactement la logique de l'Allocation Engine V2 de SmartFolio. Utilise le cycle score (pas le DI) pour déterminer la phase de marché et l'allocation stables.",
+        "rules": [
+            "Phase bullish (cycle ≥90): 15% stables, 85% risky",
+            "Phase moderate (70≤cycle<90): 20% stables, 80% risky",
+            "Phase bearish (cycle <70): 30% stables, 70% risky",
+            "Floors: BTC min 15%, ETH min 12%, Stables min 10%",
+            "Ratios BTC/ETH/Alts varient selon phase"
+        ],
+        "pros": ["Comportement réel du projet", "Phase-based comme production", "Floors de sécurité"],
+        "cons": ["Dépend du cycle score estimé", "Simplification du vrai engine"],
+        "best_for": "Valider que le DI Backtest est cohérent avec SmartFolio réel"
+    }
+}
 
 
 def _calculate_di_specific_metrics(di_df: pd.DataFrame, backtest_result) -> Dict:

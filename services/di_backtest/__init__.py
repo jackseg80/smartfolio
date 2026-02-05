@@ -35,6 +35,7 @@ from .trading_strategies import (
     DIContrarianStrategy,
     DIRiskParityStrategy,
     DISignalStrategy,
+    DISmartfolioReplicaStrategy,
     DI_STRATEGIES,
     get_di_strategy,
 )
@@ -59,6 +60,7 @@ __all__ = [
     "DIContrarianStrategy",
     "DIRiskParityStrategy",
     "DISignalStrategy",
+    "DISmartfolioReplicaStrategy",
     "DI_STRATEGIES",
     "get_di_strategy",
 ]

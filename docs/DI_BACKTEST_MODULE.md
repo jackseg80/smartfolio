@@ -86,6 +86,22 @@ Signaux discrets:
 - **BUY**: DI croise 40 à la hausse (confirmation 3 jours)
 - **SELL**: DI croise 60 à la baisse (holding minimum 14 jours)
 
+### S6: DISmartfolioReplicaStrategy (Recommandé)
+
+**Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio.**
+
+Utilise le cycle score (pas le DI directement) pour déterminer la phase de marché:
+- Phase bullish (cycle ≥90): 15% stables, 85% risky
+- Phase moderate (70≤cycle<90): 20% stables, 80% risky
+- Phase bearish (cycle <70): 30% stables, 70% risky
+
+Floors appliqués:
+- BTC minimum: 15%
+- ETH minimum: 12%
+- Stables minimum: 10%
+
+**Idéal pour**: Valider que le DI Backtest est cohérent avec le comportement réel du projet SmartFolio
+
 ## API Endpoints
 
 ### POST /api/di-backtest/run

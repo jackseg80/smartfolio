@@ -302,6 +302,89 @@
     .rank-1 { background: #ffd700; color: #000; }
     .rank-2 { background: #c0c0c0; color: #000; }
     .rank-3 { background: #cd7f32; color: #fff; }
+
+    /* Strategy Description Panel */
+    .strategy-info {
+      margin-top: var(--space-md);
+      padding: var(--space-md);
+      background: var(--theme-bg);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+    }
+
+    .strategy-info-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-sm);
+    }
+
+    .strategy-info-title {
+      font-weight: 600;
+      color: var(--theme-text);
+    }
+
+    .strategy-info-toggle {
+      background: none;
+      border: none;
+      color: var(--brand-primary);
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .strategy-description {
+      color: var(--theme-text-muted);
+      margin-bottom: var(--space-sm);
+    }
+
+    .strategy-rules {
+      display: none;
+      margin-top: var(--space-sm);
+    }
+
+    .strategy-rules.expanded {
+      display: block;
+    }
+
+    .strategy-rules h4 {
+      font-size: 0.85rem;
+      color: var(--theme-text);
+      margin: var(--space-sm) 0 var(--space-xs) 0;
+    }
+
+    .strategy-rules ul {
+      margin: 0;
+      padding-left: var(--space-md);
+      color: var(--theme-text-muted);
+    }
+
+    .strategy-rules li {
+      margin-bottom: var(--space-xs);
+      font-size: 0.85rem;
+    }
+
+    .strategy-pros-cons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+    }
+
+    .pros li::marker { color: var(--color-success); }
+    .cons li::marker { color: var(--color-danger); }
+
+    .strategy-best-for {
+      margin-top: var(--space-sm);
+      padding: var(--space-xs) var(--space-sm);
+      background: rgba(var(--brand-primary-rgb, 59, 130, 246), 0.1);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+    }
+
+    .strategy-best-for strong {
+      color: var(--brand-primary);
+    }
   </style>
 </head>
 
@@ -324,6 +407,7 @@
         <div class="control-group">
           <label for="strategy">Stratégie</label>
           <select id="strategy">
+            <option value="di_smartfolio_replica">SmartFolio Replica (Recommandé)</option>
             <option value="di_threshold">DI Threshold (Seuils)</option>
             <option value="di_momentum">DI Momentum</option>
             <option value="di_contrarian">DI Contrarian</option>
@@ -360,6 +444,32 @@
           <button class="btn-primary" id="runBacktest">
             Exécuter Backtest
           </button>
+        </div>
+      </div>
+
+      <!-- Strategy Description -->
+      <div class="strategy-info" id="strategyInfo">
+        <div class="strategy-info-header">
+          <span class="strategy-info-title" id="strategyTitle">SmartFolio Replica</span>
+          <button class="strategy-info-toggle" id="strategyToggle">Voir détails</button>
+        </div>
+        <p class="strategy-description" id="strategyDescription">
+          Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio.
+        </p>
+        <div class="strategy-rules" id="strategyDetails">
+          <h4>Règles</h4>
+          <ul id="strategyRules"></ul>
+          <div class="strategy-pros-cons">
+            <div class="pros">
+              <h4>Avantages</h4>
+              <ul id="strategyPros"></ul>
+            </div>
+            <div class="cons">
+              <h4>Inconvénients</h4>
+              <ul id="strategyCons"></ul>
+            </div>
+          </div>
+          <div class="strategy-best-for" id="strategyBestFor"></div>
         </div>
       </div>
 
@@ -446,11 +556,30 @@
     let drawdownChart = null;
     let monthlyReturnsChart = null;
 
+    // Strategy descriptions cache
+    let strategyDetails = {};
+
     // Initialize
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Set default end date to today
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('endDate').value = today;
+
+      // Load strategy descriptions
+      await loadStrategyDescriptions();
+
+      // Update description on strategy change
+      document.getElementById('strategy').addEventListener('change', (e) => {
+        updateStrategyDescription(e.target.value);
+      });
+
+      // Toggle strategy details
+      document.getElementById('strategyToggle').addEventListener('click', () => {
+        const details = document.getElementById('strategyDetails');
+        const toggle = document.getElementById('strategyToggle');
+        const isExpanded = details.classList.toggle('expanded');
+        toggle.textContent = isExpanded ? 'Masquer détails' : 'Voir détails';
+      });
 
       // Period presets
       document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -464,7 +593,91 @@
 
       // Run backtest button
       document.getElementById('runBacktest').addEventListener('click', runBacktest);
+
+      // Initial description update
+      updateStrategyDescription(document.getElementById('strategy').value);
     });
+
+    async function loadStrategyDescriptions() {
+      try {
+        const response = await fetch(`${window.globalConfig.get('api_base_url')}/api/di-backtest/strategies?details=true`, {
+          headers: getAuthHeaders()
+        });
+        const result = await response.json();
+        if (result.ok && result.data?.strategies) {
+          result.data.strategies.forEach(s => {
+            strategyDetails[s.key] = s;
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load strategy descriptions:', error);
+      }
+    }
+
+    function updateStrategyDescription(strategyKey) {
+      const details = strategyDetails[strategyKey];
+      if (!details) {
+        // Fallback descriptions si API pas disponible
+        const fallback = getFallbackDescription(strategyKey);
+        document.getElementById('strategyTitle').textContent = fallback.name;
+        document.getElementById('strategyDescription').textContent = fallback.description;
+        return;
+      }
+
+      document.getElementById('strategyTitle').textContent = details.name;
+      document.getElementById('strategyDescription').textContent = details.full_description || details.description;
+
+      // Rules
+      const rulesEl = document.getElementById('strategyRules');
+      rulesEl.innerHTML = (details.rules || []).map(r => `<li>${r}</li>`).join('');
+
+      // Pros
+      const prosEl = document.getElementById('strategyPros');
+      prosEl.innerHTML = (details.pros || []).map(p => `<li>${p}</li>`).join('');
+
+      // Cons
+      const consEl = document.getElementById('strategyCons');
+      consEl.innerHTML = (details.cons || []).map(c => `<li>${c}</li>`).join('');
+
+      // Best for
+      const bestForEl = document.getElementById('strategyBestFor');
+      if (details.best_for) {
+        bestForEl.innerHTML = `<strong>Idéal pour:</strong> ${details.best_for}`;
+        bestForEl.style.display = 'block';
+      } else {
+        bestForEl.style.display = 'none';
+      }
+    }
+
+    function getFallbackDescription(key) {
+      const fallbacks = {
+        'di_smartfolio_replica': {
+          name: 'SmartFolio Replica',
+          description: 'Réplique la logique réelle de l\'Allocation Engine V2 de SmartFolio. Utilise le cycle score pour déterminer la phase de marché (bullish/moderate/bearish) et l\'allocation stables correspondante.'
+        },
+        'di_threshold': {
+          name: 'DI Threshold',
+          description: 'Allocation basée sur des seuils de Decision Index. Plus le DI est élevé, plus l\'exposition aux actifs risqués augmente.'
+        },
+        'di_momentum': {
+          name: 'DI Momentum',
+          description: 'Suit la tendance du DI. Augmente l\'exposition quand le DI monte fortement, réduit quand il baisse.'
+        },
+        'di_contrarian': {
+          name: 'DI Contrarian',
+          description: 'Stratégie à contre-courant. Accumule en extreme fear (DI<20), prend des profits en extreme greed (DI>80).'
+        },
+        'di_risk_parity': {
+          name: 'DI Risk Parity',
+          description: 'Combine Risk Parity (allocation inversement proportionnelle à la volatilité) avec un scaling basé sur le DI.'
+        },
+        'di_signal': {
+          name: 'DI Signal',
+          description: 'Signaux de trading purs. BUY quand DI croise 40 à la hausse, SELL quand il croise 60 à la baisse.'
+        }
+      };
+      return fallbacks[key] || { name: key, description: 'Stratégie basée sur le Decision Index' };
+    }
 
     async function runBacktest() {
       const strategy = document.getElementById('strategy').value;
