@@ -281,12 +281,8 @@ const initUnifiedNav = () => {
       if (current.endsWith(route)) a.classList.add('active');
     });
 
-    // Open the parent submenu if an item inside is active
-    const activeLink = header.querySelector('nav a.active');
-    if (activeLink) {
-      const li = activeLink.closest('.has-submenu');
-      if (li) li.classList.add('open');
-    }
+    // Note: On n'ouvre plus automatiquement le sous-menu parent quand un item est actif
+    // Le sous-menu s'ouvre au survol uniquement (meilleure UX)
 
     // Improve submenu usability: keep open on hover with slight delay, allow first click to open on touch
     const submenus = header.querySelectorAll('.main-nav .has-submenu');
