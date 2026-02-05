@@ -1,7 +1,7 @@
 # Dette Technique - Suivi et Roadmap
 
-> **Dernière mise à jour** : 3 novembre 2025 (nettoyage fichiers obsolètes)
-> **Statut global** : 🟢 Excellent progrès (8 items actifs, nettoyage majeur effectué)
+> **Dernière mise à jour** : Février 2026 (refactoring majeur complété)
+> **Statut global** : 🟢 Excellent - Refactoring majeur terminé (19 tâches complétées)
 
 Ce document centralise les TODO, FIXME et items de dette technique identifiés dans le codebase, avec priorités et plan de résolution.
 
@@ -11,14 +11,40 @@ Ce document centralise les TODO, FIXME et items de dette technique identifiés d
 |-----------|-------|----------|--------|
 | **Features futures** | 6 | 🟢 LOW | Backlog product |
 | **À implémenter** | 2 | 🟡 MEDIUM | Plan d'implémentation |
-| **Documentation** | 0 | 🔵 INFO | N/A |
+| **Refactoring Fév 2026** | 19 | ✅ DONE | Voir section dédiée |
 | **HIGH priority résolus** | 2 | ✅ DONE | Complétés Oct 2025 |
 | **MEDIUM priority résolus** | 3 | ✅ DONE | Complétés Oct 2025 |
-| **Migration terminée** | 4 | ✅ DONE | Complétée Oct 2025 |
-| **Archives nettoyées** | 7 | ✅ DONE | Supprimées Oct 2025 |
 
-**Total actif** : 8 items (excluant migrations/MEDIUM/HIGH/archives complétées)
-**Réduction dette** : 11 → 8 items (-27%) en 1 session
+**Total actif** : ~8 items features (dette technique majeure résolue)
+
+---
+
+## ✅ DONE - Refactoring Majeur Février 2026
+
+> Voir rapport complet: [`docs/REFACTORING_2026_REPORT.md`](REFACTORING_2026_REPORT.md)
+
+### Backend (4 tâches majeures)
+| Composant | Avant | Après | Gain |
+|-----------|-------|-------|------|
+| governance.py | 2161L | ~500L + 4 modules | -77% |
+| alert_engine.py | 1584L | 1324L + 3 modules | Modularisé |
+| unified_ml_endpoints.py | 1728L | 57L + 8 modules | -97% |
+| exchange_adapter.py | 1322L | ABC + classes | Factorisé |
+
+### Frontend (4 tâches majeures)
+| Composant | Avant | Après | Gain |
+|-----------|-------|-------|------|
+| risk-dashboard-controller.js | 4185L | 3518L | -16% |
+| Systèmes fetch | 5 patterns | 1 (fetcher.js) | Unifié |
+| localStorage | 255+ appels | StorageService | Centralisé |
+| Legacy AI | 3 fichiers | Supprimés | -2100L |
+
+### Cleanup (11 tâches)
+- Fichiers parasites supprimés
+- get_active_user deprecated supprimé
+- 4 tests obsolètes supprimés
+- /health/all endpoint unifié créé
+- Script console.log migration préparé
 
 ---
 

@@ -11,6 +11,9 @@
 | static/core/risk-dashboard-store.js      | riskStore, getDecision()  | risk-dashboard.html, simulations.html | Store central Risk |
 | static/core/unified-insights-v2.js       | computeUnifiedInsights()  | analytics-unified.html       | Prod, DI calcul |
 | static/core/phase-engine.js              | detectPhase(), applyTilts() | unified-insights-v2.js     | Phase detection |
+| static/core/storage-service.js           | StorageService            | auth-guard.js, pages         | **NEW Fév 2026** Abstraction localStorage |
+| static/core/fetcher.js                   | safeFetch, apiCall, fetchCached | pages, modules      | **NEW Fév 2026** Point d'entrée fetch unifié |
+| static/core/auth-guard.js                | checkAuth(), getAuthHeaders() | toutes pages auth      | Migré vers StorageService |
 
 ---
 
@@ -28,9 +31,11 @@
 
 | Module                                   | Exports                   | Domaine     | Notes |
 |------------------------------------------|----------------------------|-------------|-------|
-| static/modules/simulation-engine.js      | Fonctions simulation       | Simulation  | Aligne DI prod (pas de classe exportée) |
-| static/modules/wealth-saxo-summary.js    | fetchSaxoSummary()         | Bourse      | Utilisé dashboard & saxo-dashboard |
-| static/utils/di-history.js               | getTodayCH(), makeKey(), loadHistory() | DI History | Persistence localStorage |
+| static/modules/simulation-engine.js      | Fonctions simulation       | Simulation  | Aligne DI prod |
+| static/modules/wealth-saxo-summary.js    | fetchSaxoSummary()         | Bourse      | dashboard & saxo-dashboard |
+| static/modules/risk-dashboard-toasts.js  | showToast, showS3AlertToast | Risk       | **NEW Fév 2026** Extrait du controller |
+| static/modules/risk-dashboard-alerts-history.js | loadAlertsHistory, formatAlertType | Risk | **NEW Fév 2026** Extrait du controller |
+| static/utils/di-history.js               | getTodayCH(), makeKey()    | DI History  | Persistence localStorage |
 
 ---
 

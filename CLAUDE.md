@@ -108,10 +108,14 @@ bourse-recommendations.html  # Recommendations + Market Opportunities
 ### Fichiers Clés
 ```
 api/main.py, api/admin_router.py, api/deps.py
+api/ml/*.py                              # ML endpoints (8 modules - refactorisé Fév 2026)
 services/balance_service.py, services/portfolio.py
-services/execution/governance.py, services/ml/orchestrator.py
+services/execution/governance.py         # Orchestrateur (refactorisé Fév 2026)
+services/ml/orchestrator.py
 services/macro_stress.py                 # DXY/VIX stress → Decision Index penalty
 static/global-config.js, static/core/allocation-engine.js
+static/core/fetcher.js                   # Point d'entrée fetch unifié (Fév 2026)
+static/core/storage-service.js           # Abstraction localStorage (Fév 2026)
 config/users.json
 ```
 
@@ -149,6 +153,14 @@ checkpoint = safe_torch_load("cache/ml_pipeline/models/regime.pth", map_location
 
 ### Frontend Fetch Multi-Tenant
 ```javascript
+// Méthode recommandée (Fév 2026): utiliser fetcher.js + StorageService
+import { apiCall } from './core/fetcher.js';
+import { StorageService } from './core/storage-service.js';
+
+const user = StorageService.getActiveUser();
+const response = await apiCall('/api/risk/dashboard'); // X-User ajouté automatiquement
+
+// Méthode legacy (encore supportée)
 const activeUser = localStorage.getItem('activeUser') || 'demo';
 const response = await fetch('/api/risk/dashboard', { headers: { 'X-User': activeUser } });
 // TOUJOURS passer X-User sur: /api/risk/*, /api/portfolio/*, /api/wealth/*, /api/saxo/*
@@ -262,6 +274,7 @@ curl "localhost:8080/admin/health" -H "X-User: demo"    # 403
 ## Docs Architecture
 
 - Architecture: `docs/architecture.md`
+- **Refactoring 2026**: `docs/REFACTORING_2026_REPORT.md` (dette technique résolue)
 - Audit: `docs/audit/` (voir README.md dans ce dossier)
 - Logging: `docs/LOGGING.md`
 - Redis: `docs/REDIS_SETUP.md`
