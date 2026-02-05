@@ -4,8 +4,8 @@
  * PERFORMANCE FIX (Dec 2025): Prevent event spam and excessive function calls
  *
  * Usage:
- *   const debouncedFn = debounce(() => console.log('Debounced'), 300);
- *   const throttledFn = throttle(() => console.log('Throttled'), 1000);
+ *   const debouncedFn = debounce(() => console.debug('Debounced'), 300);
+ *   const throttledFn = throttle(() => console.debug('Throttled'), 1000);
  */
 
 /**
@@ -39,7 +39,7 @@ export function debounce(fn, ms = 300) {
  *
  * Example:
  *   const handleScroll = throttle(() => {
- *     console.log('Scrolled', window.scrollY);
+ *     console.debug('Scrolled', window.scrollY);
  *   }, 100);
  */
 export function throttle(fn, ms = 100) {

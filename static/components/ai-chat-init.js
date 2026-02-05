@@ -49,7 +49,7 @@ export function initAIChat(pageId = 'generic') {
         }
     });
 
-    console.log(`AI Chat initialized for page: ${pageId}`);
+    console.debug(`AI Chat initialized for page: ${pageId}`);
 }
 
 /**

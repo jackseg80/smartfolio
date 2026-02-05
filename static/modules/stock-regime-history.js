@@ -9,7 +9,7 @@
 
 // Debug logger
 const debugLogger = {
-    debug: (...args) => console.log('[StockRegimeHistory]', ...args),
+    debug: (...args) => console.debug('[StockRegimeHistory]', ...args),
     warn: (...args) => console.warn('[StockRegimeHistory]', ...args),
     error: (...args) => console.error('[StockRegimeHistory]', ...args)
 };

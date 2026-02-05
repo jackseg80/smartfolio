@@ -44,7 +44,7 @@ class NetworkStateManager {
   }
 
   _handleOnline() {
-    console.log('🌐 Network connection restored');
+    console.debug('🌐 Network connection restored');
     this.isOnline = true;
     this.consecutiveFailures = 0;
     this.isRecovering = true;
@@ -74,19 +74,19 @@ class NetworkStateManager {
 
     if (!wasVisible && this.isVisible) {
       // Onglet redevenu visible
-      console.log('👁️ Tab became visible, resuming polling');
+      console.debug('👁️ Tab became visible, resuming polling');
       this._notifyListeners('visible');
 
       // Reset failures si l'utilisateur revient après longtemps
       if (this.consecutiveFailures > 0) {
-        console.log('🔄 Resetting failure count on tab visibility');
+        console.debug('🔄 Resetting failure count on tab visibility');
         this.consecutiveFailures = 0;
       }
 
       this._resumeIntervals();
     } else if (wasVisible && !this.isVisible) {
       // Onglet masqué
-      console.log('👁️ Tab hidden, pausing polling');
+      console.debug('👁️ Tab hidden, pausing polling');
       this._notifyListeners('hidden');
       this._pauseIntervals();
     }
@@ -105,7 +105,7 @@ class NetworkStateManager {
   }
 
   _pauseIntervals() {
-    console.log(`⏸️ Pausing ${this.managedIntervals.size} managed intervals`);
+    console.debug(`⏸️ Pausing ${this.managedIntervals.size} managed intervals`);
     for (const [id, info] of this.managedIntervals) {
       if (info.intervalId) {
         clearInterval(info.intervalId);
@@ -116,11 +116,11 @@ class NetworkStateManager {
 
   _resumeIntervals() {
     if (!this.isOnline || !this.isVisible) {
-      console.log('⏸️ Not resuming intervals: offline or hidden');
+      console.debug('⏸️ Not resuming intervals: offline or hidden');
       return;
     }
 
-    console.log(`▶️ Resuming ${this.managedIntervals.size} managed intervals`);
+    console.debug(`▶️ Resuming ${this.managedIntervals.size} managed intervals`);
     for (const [id, info] of this.managedIntervals) {
       if (!info.intervalId) {
         // Exécuter immédiatement puis reprendre l'intervalle
@@ -158,7 +158,7 @@ class NetworkStateManager {
       info.intervalId = setInterval(callback, delay);
     }
 
-    console.log(`📌 Created managed interval: ${name || id} (${delay}ms)`);
+    console.debug(`📌 Created managed interval: ${name || id} (${delay}ms)`);
     return id;
   }
 
@@ -173,7 +173,7 @@ class NetworkStateManager {
         clearInterval(info.intervalId);
       }
       this.managedIntervals.delete(id);
-      console.log(`🗑️ Cleared managed interval: ${info.name || id}`);
+      console.debug(`🗑️ Cleared managed interval: ${info.name || id}`);
     }
   }
 
@@ -213,7 +213,7 @@ class NetworkStateManager {
         if (isNetworkError && attempt < maxRetries) {
           // Backoff exponentiel: 1s, 2s, 4s
           const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
-          console.log(`🔄 Network error, retrying in ${backoffMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+          console.debug(`🔄 Network error, retrying in ${backoffMs}ms (attempt ${attempt + 1}/${maxRetries})`);
 
           await this._sleep(backoffMs);
           continue;
@@ -257,7 +257,7 @@ class NetworkStateManager {
         error.message.includes('ERR_NETWORK_IO_SUSPENDED');
 
       if (isNetworkError && this.consecutiveFailures < 5) {
-        console.log(`⚠️ Network error (${this.consecutiveFailures} consecutive), will retry on next poll`);
+        console.debug(`⚠️ Network error (${this.consecutiveFailures} consecutive), will retry on next poll`);
         // Ne pas afficher d'erreur dans la console pour éviter le spam
         return null; // Retourner null au lieu de throw
       }
@@ -293,7 +293,7 @@ class NetworkStateManager {
     if (window.showToast) {
       window.showToast(message, type);
     } else {
-      console.log(`[${type.toUpperCase()}] ${message}`);
+      console.debug(`[${type.toUpperCase()}] ${message}`);
     }
   }
 
@@ -329,4 +329,4 @@ export const networkStateManager = new NetworkStateManager();
 // Exposer globalement pour debugging
 window.networkStateManager = networkStateManager;
 
-console.log('🌐 Network State Manager initialized');
+console.debug('🌐 Network State Manager initialized');

@@ -198,7 +198,7 @@ export async function fetchSaxoSummary() {
                 const apiData = await response.json();
 
                 // Debug: log full response
-                console.log('🔍 [Saxo Summary] V2 API Response:', {
+                console.debug('🔍 [Saxo Summary] V2 API Response:', {
                     ok: apiData.ok,
                     hasData: !!apiData.data,
                     dataKeys: apiData.data ? Object.keys(apiData.data) : [],

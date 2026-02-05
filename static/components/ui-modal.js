@@ -18,7 +18,7 @@
  * UIModal.show({
  *   title: 'Export Data',
  *   content: '<p>Choose format:</p><select>...</select>',
- *   onConfirm: () => { console.log('Confirmed'); }
+ *   onConfirm: () => { console.debug('Confirmed'); }
  * });
  *
  * // Confirmation

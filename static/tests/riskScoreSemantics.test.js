@@ -22,7 +22,7 @@ describe('Risk Score Semantics - Correct Interpretation', () => {
 
     // Assert: Higher Risk Score should allow MORE risky allocation
     expect(budgetHighRisk.risky_allocation).toBeGreaterThan(budgetLowRisk.risky_allocation);
-    console.log(`Risk 90: ${budgetHighRisk.risky_allocation.toFixed(2)} > Risk 40: ${budgetLowRisk.risky_allocation.toFixed(2)} ✅`);
+    console.debug(`Risk 90: ${budgetHighRisk.risky_allocation.toFixed(2)} > Risk 40: ${budgetLowRisk.risky_allocation.toFixed(2)} ✅`);
   });
 
   test('Risk Score 100 → Maximum risk_factor (1.0 for conservative)', () => {

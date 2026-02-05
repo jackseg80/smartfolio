@@ -52,7 +52,7 @@ class SourcesManagerV2 {
             await this.fetchSourcesSummary();
 
             this.initialized = true;
-            console.log('[SourcesManagerV2] Initialized');
+            console.debug('[SourcesManagerV2] Initialized');
         } catch (error) {
             console.error('[SourcesManagerV2] Init error:', error);
         }
@@ -130,7 +130,7 @@ class SourcesManagerV2 {
             }
 
             const data = await response.json();
-            console.log(`[SourcesManagerV2] Set ${category} source to ${sourceId}`);
+            console.debug(`[SourcesManagerV2] Set ${category} source to ${sourceId}`);
 
             // ✅ FIX: Si source CSV, s'assurer qu'un fichier est sélectionné dans la config V2
             if (sourceId.endsWith('_csv')) {
@@ -819,7 +819,7 @@ class SourcesManagerV2 {
         if (typeof window.showToast === 'function') {
             window.showToast(message, type);
         } else {
-            console.log(`[${type}] ${message}`);
+            console.debug(`[${type}] ${message}`);
         }
     }
 

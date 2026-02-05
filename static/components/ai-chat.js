@@ -40,7 +40,7 @@ export class AIChatComponent {
                 page: this.page,
                 timestamp: new Date().toISOString()
             });
-            console.log('Sending AI chat message with context:', Object.keys(fullContext));
+            console.debug('Sending AI chat message with context:', Object.keys(fullContext));
 
             const response = await fetch('/api/ai/chat', {
                 method: 'POST',
@@ -195,7 +195,7 @@ export class AIChatComponent {
         this.provider = newProvider;
         // ✅ USER ISOLATION: Use globalConfig (already isolated per user)
         window.globalConfig?.set('aiProvider', newProvider);
-        console.log(`AI provider switched to: ${newProvider}`);
+        console.debug(`AI provider switched to: ${newProvider}`);
     }
 
     updateUIState() {

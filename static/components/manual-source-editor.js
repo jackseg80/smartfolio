@@ -562,7 +562,7 @@ class ManualSourceEditor {
         }
 
         // Fallback to console
-        console.log(`[${type}] ${message}`);
+        console.debug(`[${type}] ${message}`);
     }
 }
 

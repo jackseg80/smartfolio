@@ -9,7 +9,7 @@
  * Uses /api/ml/crypto/regime and /api/ml/crypto/regime-history with symbol=ETH
  */
 
-console.log('[ETH Regime] Module loaded');
+console.debug('[ETH Regime] Module loaded');
 
 const ETH_REGIME_CONFIG = {
     regimeColors: {
@@ -29,7 +29,7 @@ let ethRegimeChart = null;
  * Initialize Ethereum Regime Chart
  */
 export async function initializeETHRegimeChart() {
-    console.log('[ETH Regime] Initializing chart');
+    console.debug('[ETH Regime] Initializing chart');
 
     const container = document.getElementById('eth-regime-chart-container');
     if (!container) {
@@ -71,7 +71,7 @@ function setupTimeframeSelector() {
  */
 async function loadETHRegimeData(lookbackDays) {
     try {
-        console.log(`[ETH Regime] Loading data for ${lookbackDays} days`);
+        console.debug(`[ETH Regime] Loading data for ${lookbackDays} days`);
 
         // Show loading state
         showLoadingState();
@@ -90,7 +90,7 @@ async function loadETHRegimeData(lookbackDays) {
         // Hide loading state
         hideLoadingState();
 
-        console.log(`[ETH Regime] Loaded ${historyResult.data.dates?.length || 0} days of history`);
+        console.debug(`[ETH Regime] Loaded ${historyResult.data.dates?.length || 0} days of history`);
 
     } catch (error) {
         console.error('[ETH Regime] Error loading data:', error);
@@ -209,7 +209,7 @@ function createTimelineChart(historyData) {
         }
     });
 
-    console.log(`[ETH Regime] Chart created with ${dates.length} data points`);
+    console.debug(`[ETH Regime] Chart created with ${dates.length} data points`);
 }
 
 /**
@@ -253,7 +253,7 @@ function createRegimeBoxAnnotations(dates, regimes) {
         }
     }
 
-    console.log(`[ETH Regime] Created ${Object.keys(annotations).length} regime box annotations`);
+    console.debug(`[ETH Regime] Created ${Object.keys(annotations).length} regime box annotations`);
     return annotations;
 }
 

@@ -1121,7 +1121,7 @@ window.currencyManager = (function () {
     error: (...args) => console.error(...args),
     warn: (...args) => console.warn(...args),
     info: (...args) => console.info(...args),
-    log: (...args) => console.log(...args),
+    log: (...args) => console.debug(...args),
     debug: (...args) => console.debug(...args),
 
     // Mock methods that might be called

@@ -154,7 +154,7 @@ export async function logout(showMessage = false) {
 
     console.debug(`✅ Logged out user: ${currentUser} (settings preserved for future login)`);
 
-    console.log('User logged out');
+    console.debug('User logged out');
 
     // Redirect to login
     const redirectUrl = '/static/login.html';
@@ -205,7 +205,7 @@ export async function checkAuth(options = {}) {
 
     // Token valide, retourner user info
     const userInfo = getUserInfo();
-    console.log('Authenticated as:', userInfo?.label || getCurrentUser());
+    console.debug('Authenticated as:', userInfo?.label || getCurrentUser());
     return userInfo;
 }
 

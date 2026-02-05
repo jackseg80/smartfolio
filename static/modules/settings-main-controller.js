@@ -252,13 +252,13 @@ async function loadSettings() {
       const backendSettings = await response.json();
 
       // 🔍 DEBUG: Vérifier groq_api_key
-      console.log('🔍 [loadSettings] localSettings.groq_api_key:', localSettings.groq_api_key || '(undefined)');
-      console.log('🔍 [loadSettings] backendSettings.groq_api_key:', backendSettings.groq_api_key || '(undefined)');
+      console.debug('🔍 [loadSettings] localSettings.groq_api_key:', localSettings.groq_api_key || '(undefined)');
+      console.debug('🔍 [loadSettings] backendSettings.groq_api_key:', backendSettings.groq_api_key || '(undefined)');
 
       // Fusionner: API Base URL (backend global) a priorité sur tout
       window.userSettings = { ...getDefaultSettings(), ...localSettings, ...backendSettings, api_base_url: apiBaseUrl };
 
-      console.log('🔍 [loadSettings] APRÈS fusion, groq_api_key:', window.userSettings.groq_api_key || '(undefined)');
+      console.debug('🔍 [loadSettings] APRÈS fusion, groq_api_key:', window.userSettings.groq_api_key || '(undefined)');
 
       debugLogger.info('✓ Settings loaded from backend + localStorage');
     } else {
@@ -296,7 +296,7 @@ async function saveSettings() {
 
   // 🔍 DEBUG: Vérifier groq_api_key avant sauvegarde
   if (window.userSettings && window.userSettings.groq_api_key) {
-    console.log('🔍 [saveSettings] groq_api_key présent:', window.userSettings.groq_api_key.substring(0, 10) + '...');
+    console.debug('🔍 [saveSettings] groq_api_key présent:', window.userSettings.groq_api_key.substring(0, 10) + '...');
   } else {
     console.warn('⚠️ [saveSettings] groq_api_key MANQUANT ou VIDE!');
   }
@@ -401,10 +401,10 @@ function updateUI() {
   // 🔍 DEBUG groq_api_key - Log what we're displaying
   const groqMasked = globalSettings.groq_api_key ? maskApiKey(globalSettings.groq_api_key) : '';
   const groqField = document.getElementById('groq_api_key');
-  console.log('🔍 [updateUI] groq_api_key:');
-  console.log('  - Raw value:', globalSettings.groq_api_key ? globalSettings.groq_api_key.substring(0, 10) + '...' : '(undefined)');
-  console.log('  - Masked value:', groqMasked || '(vide)');
-  console.log('  - Field type:', groqField ? groqField.type : '(field not found)');
+  console.debug('🔍 [updateUI] groq_api_key:');
+  console.debug('  - Raw value:', globalSettings.groq_api_key ? globalSettings.groq_api_key.substring(0, 10) + '...' : '(undefined)');
+  console.debug('  - Masked value:', groqMasked || '(vide)');
+  console.debug('  - Field type:', groqField ? groqField.type : '(field not found)');
   groqField.value = groqMasked;
 
   // Claude API Key
@@ -837,12 +837,12 @@ async function saveAllSettings() {
 
     // 🔍 DEBUG pour groq_api_key
     if (settingKey === 'groq_api_key') {
-      console.log('🔍 [saveSecretIfProvided] groq_api_key:');
-      console.log('  - current:', current ? current.substring(0, 10) + '...' : '(vide)');
-      console.log('  - masked:', masked ? masked.substring(0, 10) + '...' : '(vide)');
-      console.log('  - incoming:', incoming ? incoming.substring(0, 10) + '...' : '(vide)');
-      console.log('  - field.type:', field.type);
-      console.log('  - incoming === masked:', incoming === masked);
+      console.debug('🔍 [saveSecretIfProvided] groq_api_key:');
+      console.debug('  - current:', current ? current.substring(0, 10) + '...' : '(vide)');
+      console.debug('  - masked:', masked ? masked.substring(0, 10) + '...' : '(vide)');
+      console.debug('  - incoming:', incoming ? incoming.substring(0, 10) + '...' : '(vide)');
+      console.debug('  - field.type:', field.type);
+      console.debug('  - incoming === masked:', incoming === masked);
     }
 
     // Si le champ est vide, effacer la clé (userSettings + globalConfig)
@@ -861,9 +861,9 @@ async function saveAllSettings() {
       if (window.globalConfig) {
         window.globalConfig.set(settingKey, incoming);
       }
-      if (settingKey === 'groq_api_key') console.log('✅ [saveSecretIfProvided] groq_api_key SAUVEGARDÉE');
+      if (settingKey === 'groq_api_key') console.debug('✅ [saveSecretIfProvided] groq_api_key SAUVEGARDÉE');
     } else {
-      if (settingKey === 'groq_api_key') console.log('ℹ️ [saveSecretIfProvided] groq_api_key IGNORÉE (masque détecté, garde la valeur existante)');
+      if (settingKey === 'groq_api_key') console.debug('ℹ️ [saveSecretIfProvided] groq_api_key IGNORÉE (masque détecté, garde la valeur existante)');
     }
   }
 

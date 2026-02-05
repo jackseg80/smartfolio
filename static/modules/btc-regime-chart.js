@@ -10,7 +10,7 @@
  * Uses /api/ml/crypto/regime and /api/ml/crypto/regime-history
  */
 
-console.log('[BTC Regime] Module loaded');
+console.debug('[BTC Regime] Module loaded');
 
 const BTC_REGIME_CONFIG = {
     regimeColors: {
@@ -38,7 +38,7 @@ let btcRegimeData = null;
  * @param {string} containerId - Container div ID
  */
 export async function initializeBTCRegimeChart(containerId) {
-    console.log('[BTC Regime] Initializing chart with containerId:', containerId);
+    console.debug('[BTC Regime] Initializing chart with containerId:', containerId);
 
     const container = document.getElementById(containerId);
     if (!container) {
@@ -46,13 +46,13 @@ export async function initializeBTCRegimeChart(containerId) {
         return;
     }
 
-    console.log('[BTC Regime] Container found:', container);
+    console.debug('[BTC Regime] Container found:', container);
 
     // Setup timeframe selector
     setupTimeframeSelector(container);
 
     // Load initial data (1 year)
-    console.log('[BTC Regime] Loading initial data (365 days)');
+    console.debug('[BTC Regime] Loading initial data (365 days)');
     await loadBTCRegimeData(BTC_REGIME_CONFIG.defaultTimeframe);
 }
 
@@ -84,18 +84,18 @@ function setupTimeframeSelector(container) {
  */
 async function loadBTCRegimeData(lookbackDays) {
     try {
-        console.log(`[BTC Regime] Loading data for ${lookbackDays} days`);
+        console.debug(`[BTC Regime] Loading data for ${lookbackDays} days`);
 
         // Show loading state
         showLoadingState();
 
         // Fetch current regime
         const url = `/api/ml/crypto/regime?symbol=BTC&lookback_days=${lookbackDays}`;
-        console.log(`[BTC Regime] Fetching current regime from: ${url}`);
+        console.debug(`[BTC Regime] Fetching current regime from: ${url}`);
         const currentRegimeResponse = await fetch(url);
         const currentRegimeResult = await currentRegimeResponse.json();
 
-        console.log('[BTC Regime] Current regime response:', currentRegimeResult);
+        console.debug('[BTC Regime] Current regime response:', currentRegimeResult);
 
         if (!currentRegimeResult.ok) {
             throw new Error(currentRegimeResult.error || 'Failed to fetch current regime');
@@ -123,7 +123,7 @@ async function loadBTCRegimeData(lookbackDays) {
         // Hide loading state
         hideLoadingState();
 
-        console.log(`[BTC Regime] Loaded ${historyResult.data.dates?.length || 0} days of history`);
+        console.debug(`[BTC Regime] Loaded ${historyResult.data.dates?.length || 0} days of history`);
 
     } catch (error) {
         console.error('[BTC Regime] Error loading data:', error);
@@ -301,7 +301,7 @@ function createTimelineChart(historyData) {
         }
     });
 
-    console.log(`[BTC Regime] Chart created with ${dates.length} data points`);
+    console.debug(`[BTC Regime] Chart created with ${dates.length} data points`);
 }
 
 /**
@@ -345,7 +345,7 @@ function createRegimeBoxAnnotations(dates, regimes) {
         }
     }
 
-    console.log(`[BTC Regime] Created ${Object.keys(annotations).length} regime box annotations`);
+    console.debug(`[BTC Regime] Created ${Object.keys(annotations).length} regime box annotations`);
     return annotations;
 }
 
@@ -481,12 +481,12 @@ function getRegimeClass(regime) {
  * Show loading state
  */
 function showLoadingState() {
-    console.log('[BTC Regime] Showing loading state');
+    console.debug('[BTC Regime] Showing loading state');
 
     const chartContainer = document.getElementById('btc-regime-chart-container');
     if (chartContainer) {
         chartContainer.classList.add('loading');
-        console.log('[BTC Regime] Chart container set to loading');
+        console.debug('[BTC Regime] Chart container set to loading');
     } else {
         console.warn('[BTC Regime] Chart container not found');
     }
@@ -494,7 +494,7 @@ function showLoadingState() {
     const loadingMsg = document.getElementById('btc-regime-loading-message');
     if (loadingMsg) {
         loadingMsg.style.display = 'block';
-        console.log('[BTC Regime] Loading message shown');
+        console.debug('[BTC Regime] Loading message shown');
     } else {
         console.warn('[BTC Regime] Loading message element not found');
     }
@@ -510,18 +510,18 @@ function showLoadingState() {
  * Hide loading state
  */
 function hideLoadingState() {
-    console.log('[BTC Regime] Hiding loading state');
+    console.debug('[BTC Regime] Hiding loading state');
 
     const chartContainer = document.getElementById('btc-regime-chart-container');
     if (chartContainer) {
         chartContainer.classList.remove('loading');
-        console.log('[BTC Regime] Chart container loading removed');
+        console.debug('[BTC Regime] Chart container loading removed');
     }
 
     const loadingMsg = document.getElementById('btc-regime-loading-message');
     if (loadingMsg) {
         loadingMsg.style.display = 'none';
-        console.log('[BTC Regime] Loading message hidden');
+        console.debug('[BTC Regime] Loading message hidden');
     }
 
     // Hide error message too
@@ -535,7 +535,7 @@ function hideLoadingState() {
  * Show error state
  */
 function showErrorState(errorMessage) {
-    console.log('[BTC Regime] Showing error state:', errorMessage);
+    console.debug('[BTC Regime] Showing error state:', errorMessage);
 
     // First hide loading state
     hideLoadingState();
@@ -545,7 +545,7 @@ function showErrorState(errorMessage) {
     if (errorMsg) {
         errorMsg.textContent = `Error: ${errorMessage}`;
         errorMsg.style.display = 'block';
-        console.log('[BTC Regime] Error message shown');
+        console.debug('[BTC Regime] Error message shown');
     }
 
     console.error('[BTC Regime] Error state:', errorMessage);
