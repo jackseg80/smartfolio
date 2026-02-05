@@ -460,14 +460,15 @@ class GovernancePanel {
     localStorage.setItem('governance_panel_visible', this.isVisible.toString());
   }
   
-  async refreshState() {
+  async refreshState(options = {}) {
+    const { silent = false } = options;
     try {
       const refreshBtn = document.getElementById('btn-refresh');
       if (refreshBtn) {
         refreshBtn.disabled = true;
         refreshBtn.innerHTML = '⏳ Refreshing...';
       }
-      
+
       // Try to sync governance state with graceful error handling
       try {
         if (store && typeof store.syncGovernanceState === 'function') {
@@ -483,7 +484,7 @@ class GovernancePanel {
           last_update: new Date().toISOString()
         });
       }
-      
+
       // Try to sync ML signals with graceful error handling
       try {
         if (store && typeof store.syncMLSignals === 'function') {
@@ -497,27 +498,31 @@ class GovernancePanel {
           decision_score: 0.5
         });
       }
-      
+
       // Try to sync alerts with graceful error handling
       try {
         await this.syncAlerts();
       } catch (alertError) {
         (window.debugLogger?.warn || console.warn)('Alerts sync failed (non-critical):', alertError.message);
       }
-      
+
       // Update UI
       this.updateDisplay();
-      
+
       if (refreshBtn) {
         refreshBtn.disabled = false;
         refreshBtn.innerHTML = '🔄 Refresh';
       }
-      
-      this.showNotification('State refreshed successfully', 'success');
-      
+
+      if (!silent) {
+        this.showNotification('State refreshed successfully', 'success');
+      }
+
     } catch (error) {
       debugLogger.error('Critical error in refresh state:', error);
-      this.showNotification('Refresh completed with warnings - check console', 'warning');
+      if (!silent) {
+        this.showNotification('Refresh completed with warnings - check console', 'warning');
+      }
       
       // Reset button state
       const refreshBtn = document.getElementById('btn-refresh');

@@ -1516,9 +1516,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       // IMPORTANT: Attendre que le rendu soit terminé pour éviter race condition
       await renderUnifiedInsightsOnce();
 
-      // Refresh governance panel if initialized
+      // Refresh governance panel if initialized (silent to avoid toast on page load)
       if (window.governancePanel) {
-        window.governancePanel.refreshState();
+        window.governancePanel.refreshState({ silent: true });
       }
     } catch (error) {
       debugLogger.warn('⚠️ Failed to initialize governance in analytics:', error);

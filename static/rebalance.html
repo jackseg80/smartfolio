@@ -252,9 +252,9 @@
         debugLogger.debug('🏛️ Initializing Governance Panel for rebalance...');
         const governancePanel = new GovernancePanel(governanceContainer);
 
-        // Auto-refresh initial state
+        // Auto-refresh initial state (silent to avoid toast on page load)
         setTimeout(() => {
-          governancePanel.refreshState();
+          governancePanel.refreshState({ silent: true });
         }, 1000);
 
         // Store reference globally for debugging
