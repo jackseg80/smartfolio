@@ -25,6 +25,8 @@ from services.di_backtest import (
     historical_di_calculator,
     HistoricalDICalculator,
     DIHistoryPoint,
+    di_backtest_engine,
+    DIBacktestEngine,
 )
 from services.di_backtest.trading_strategies import (
     DI_STRATEGIES,
@@ -307,97 +309,55 @@ async def run_di_backtest(
         if di_data.df.empty:
             return error_response("Impossible de calculer le DI historique", code=500)
 
-        # 2. Préparer les données de prix pour le backtest
-        # On utilise BTC + USDT comme proxy simple
-        btc_prices = di_data.df['btc_price'].copy()
-
-        # S'assurer que l'index est un DatetimeIndex pandas
-        if not isinstance(btc_prices.index, pd.DatetimeIndex):
-            btc_prices.index = pd.to_datetime(btc_prices.index)
-
-        logger.info(f"BTC prices: {len(btc_prices)} points, index type: {type(btc_prices.index)}")
-        logger.info(f"Index range: {btc_prices.index.min()} to {btc_prices.index.max()}")
-
-        # Créer un DataFrame avec BTC et un stable synthétique
-        price_df = pd.DataFrame({
-            'BTC': btc_prices.values,
-            'STABLES': [1.0] * len(btc_prices)
-        }, index=btc_prices.index)
-
-        # Vérifier que le DataFrame est valide
-        if price_df.empty:
-            return error_response("Pas de données de prix disponibles pour cette période", code=400)
-
-        logger.info(f"Price DataFrame: {len(price_df)} rows, columns: {list(price_df.columns)}")
-
-        # 3. Créer la stratégie DI
+        # 2. Créer la stratégie DI
         strategy_config = DIStrategyConfig()
         strategy = get_di_strategy(request.strategy, config=strategy_config)
         strategy.set_di_series(di_data.df['decision_index'])
 
-        # Enregistrer dans le backtest engine
-        strategy_key = f"di_{request.strategy}_{id(strategy)}"
-        backtesting_engine.add_strategy(strategy_key, strategy)
+        # Injecter le cycle_score pour SmartFolio Replica (utilise le vrai cycle, pas une estimation)
+        if hasattr(strategy, 'set_cycle_series') and 'cycle_score' in di_data.df.columns:
+            strategy.set_cycle_series(di_data.df['cycle_score'])
+            logger.info(f"Cycle score injected: mean={di_data.df['cycle_score'].mean():.1f}")
 
-        # 4. Configurer et exécuter le backtest
-        try:
-            rebal_freq = RebalanceFrequency(request.rebalance_frequency)
-        except ValueError:
-            rebal_freq = RebalanceFrequency.WEEKLY
-
-        transaction_costs = TransactionCosts(
-            maker_fee=request.transaction_fee_pct,
-            taker_fee=request.transaction_fee_pct * 1.5,
-            slippage_bps=request.slippage_bps,
-            min_trade_size=10.0
+        # 3. Exécuter le backtest avec di_backtest_engine (moteur simplifié correct)
+        # Créer une instance avec les coûts de transaction
+        engine = DIBacktestEngine(
+            transaction_cost=request.transaction_fee_pct,
+            rebalance_threshold=0.05,  # Rebalance si écart > 5%
+            risk_free_rate=0.02
         )
 
-        # Ajuster les dates pour s'assurer qu'elles sont dans la plage du DataFrame
-        df_start = price_df.index.min()
-        df_end = price_df.index.max()
-
-        config_start = pd.to_datetime(request.start_date)
-        config_end = pd.to_datetime(request.end_date)
-
-        # Ajuster si nécessaire
-        if config_start < df_start:
-            config_start = df_start
-            logger.warning(f"Start date adjusted to {config_start}")
-        if config_end > df_end:
-            config_end = df_end
-            logger.warning(f"End date adjusted to {config_end}")
-
-        config = BacktestConfig(
-            start_date=config_start.strftime("%Y-%m-%d"),
-            end_date=config_end.strftime("%Y-%m-%d"),
-            initial_capital=request.initial_capital,
-            rebalance_frequency=rebal_freq,
-            transaction_costs=transaction_costs,
-            benchmark="BTC",
-            risk_free_rate=0.02,
-            max_position_size=0.95
+        logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}")
+        result = engine.run_backtest(
+            di_history=di_data.di_history,
+            strategy=strategy,
+            initial_capital=request.initial_capital
         )
 
-        logger.info(f"Running backtest from {config.start_date} to {config.end_date}")
-        result = backtesting_engine.run_backtest(price_df, strategy_key, config)
+        # 4. Calculer métriques additionnelles spécifiques au DI
+        di_metrics = _calculate_di_specific_metrics_v2(di_data.df, result)
 
-        # 5. Calculer métriques additionnelles spécifiques au DI
-        di_metrics = _calculate_di_specific_metrics(di_data.df, result)
-
-        # 6. Formater la réponse
+        # 5. Formater la réponse
+        # Monthly returns depuis l'equity curve
+        equity_df = pd.DataFrame({
+            'value': result.equity_curve.values
+        }, index=result.equity_curve.index)
+        monthly_returns_series = equity_df['value'].resample('ME').last().pct_change().dropna()
         monthly_returns = []
-        for date, ret in result.monthly_returns.items():
+        for date, ret in monthly_returns_series.items():
             monthly_returns.append({
                 "date": date.strftime("%Y-%m"),
                 "return_pct": round(float(ret) * 100, 2)
             })
 
+        # Equity curve
         equity_curve = []
-        for date, value in result.portfolio_value.items():
+        for i, (date, value) in enumerate(result.equity_curve.items()):
+            bench_value = result.benchmark_curve.iloc[i] if i < len(result.benchmark_curve) else request.initial_capital
             equity_curve.append({
-                "date": date.strftime("%Y-%m-%d"),
+                "date": date.strftime("%Y-%m-%d") if hasattr(date, 'strftime') else str(date)[:10],
                 "portfolio_value": round(float(value), 2),
-                "benchmark_value": round(float(result.benchmark_performance.get(date, request.initial_capital)), 2)
+                "benchmark_value": round(float(bench_value), 2)
             })
 
         # Sous-échantillonner l'equity curve pour éviter trop de données
@@ -405,10 +365,11 @@ async def run_di_backtest(
             step = len(equity_curve) // 365
             equity_curve = equity_curve[::step]
 
+        # Drawdowns
         drawdowns = []
-        for date, dd in result.drawdowns.items():
+        for date, dd in result.drawdown_curve.items():
             drawdowns.append({
-                "date": date.strftime("%Y-%m-%d"),
+                "date": date.strftime("%Y-%m-%d") if hasattr(date, 'strftime') else str(date)[:10],
                 "drawdown_pct": round(float(dd) * 100, 2)
             })
 
@@ -425,25 +386,32 @@ async def run_di_backtest(
                 "days": len(di_data.df)
             },
             "metrics": {
-                "total_return_pct": round(result.metrics.get("total_return", 0) * 100, 2),
-                "annualized_return_pct": round(result.metrics.get("annualized_return", 0) * 100, 2),
-                "max_drawdown_pct": round(result.metrics.get("max_drawdown", 0) * 100, 2),
-                "sharpe_ratio": round(result.metrics.get("sharpe_ratio", 0), 3),
-                "sortino_ratio": round(result.metrics.get("sortino_ratio", 0), 3),
-                "calmar_ratio": round(result.metrics.get("calmar_ratio", 0), 3),
-                "volatility_pct": round(result.metrics.get("volatility", 0) * 100, 2),
-                "win_rate_pct": round(result.metrics.get("win_rate", 0) * 100, 2),
+                "total_return_pct": round(result.total_return * 100, 2),
+                "annualized_return_pct": round(result.annualized_return * 100, 2),
+                "max_drawdown_pct": round(result.max_drawdown * 100, 2),
+                "sharpe_ratio": round(result.sharpe_ratio, 3),
+                "sortino_ratio": round(result.sortino_ratio, 3),
+                "calmar_ratio": round(result.calmar_ratio, 3),
+                "volatility_pct": round(result.volatility * 100, 2),
+                "win_rate_pct": round(result.win_rate * 100, 2),
             },
             "benchmark_comparison": {
                 "benchmark": "BTC Buy & Hold",
-                "benchmark_return_pct": round(result.summary.get("benchmark_return_pct", 0), 2),
-                "excess_return_pct": round(result.summary.get("excess_return_pct", 0) * 100, 2),
+                "benchmark_return_pct": round(result.benchmark_return * 100, 2),
+                "excess_return_pct": round(result.excess_return * 100, 2),
             },
             "di_metrics": di_metrics,
             "equity_curve": equity_curve,
             "monthly_returns": monthly_returns,
             "drawdowns": drawdowns,
-            "summary": result.summary
+            "summary": {
+                "strategy_name": result.strategy_name,
+                "total_days": len(di_data.df),
+                "num_trades": result.num_trades,
+                "final_value": round(result.final_value, 2),
+                "total_return_pct": round(result.total_return * 100, 2),
+                "benchmark_return_pct": round(result.benchmark_return * 100, 2),
+            }
         })
 
     except Exception as e:
@@ -692,7 +660,12 @@ STRATEGY_DETAILS = {
 
 
 def _calculate_di_specific_metrics(di_df: pd.DataFrame, backtest_result) -> Dict:
-    """Calcule des métriques spécifiques au DI"""
+    """Calcule des métriques spécifiques au DI (legacy)"""
+    return _calculate_di_specific_metrics_v2(di_df, backtest_result)
+
+
+def _calculate_di_specific_metrics_v2(di_df: pd.DataFrame, backtest_result) -> Dict:
+    """Calcule des métriques spécifiques au DI pour DIBacktestResult"""
     di_series = di_df['decision_index']
     btc_returns = di_df['btc_price'].pct_change(30).shift(-30)  # Returns 30j futurs
 

@@ -385,6 +385,108 @@
     .strategy-best-for strong {
       color: var(--brand-primary);
     }
+
+    /* ===== Chart Modal (zoom) ===== */
+    .chart-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-lg);
+    }
+
+    .chart-modal.active {
+      display: flex;
+    }
+
+    .chart-modal-content {
+      background: var(--theme-surface);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      width: 90vw;
+      max-width: 1400px;
+      height: 80vh;
+      max-height: 800px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--space-md);
+    }
+
+    .chart-modal-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .chart-modal-close {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--theme-text-muted);
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .chart-modal-close:hover {
+      color: var(--theme-text);
+    }
+
+    .chart-modal-body {
+      flex: 1;
+      min-height: 0;
+    }
+
+    .chart-modal-body canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Make chart containers clickable */
+    .chart-container {
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .chart-container:hover {
+      opacity: 0.9;
+    }
+
+    .chart-container::after {
+      content: "🔍 Cliquer pour agrandir";
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      font-size: 0.7rem;
+      color: var(--theme-text-muted);
+      background: var(--theme-surface);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .chart-container:hover::after {
+      opacity: 1;
+    }
+
+    .result-card .chart-container {
+      position: relative;
+    }
   </style>
 </head>
 
@@ -547,6 +649,19 @@
     </div>
   </div>
 
+  <!-- Chart Zoom Modal -->
+  <div class="chart-modal" id="chartModal">
+    <div class="chart-modal-content">
+      <div class="chart-modal-header">
+        <h3 id="chartModalTitle">Graphique</h3>
+        <button class="chart-modal-close" id="chartModalClose">&times;</button>
+      </div>
+      <div class="chart-modal-body">
+        <canvas id="modalChart"></canvas>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { getAuthHeaders } from './core/auth-guard.js';
 
@@ -555,9 +670,91 @@
     let diHistoryChart = null;
     let drawdownChart = null;
     let monthlyReturnsChart = null;
+    let modalChart = null;
 
     // Strategy descriptions cache
     let strategyDetails = {};
+
+    // Chart modal functions
+    const chartConfigs = {
+      equityChart: { title: 'Equity Curve', getChart: () => equityChart },
+      diHistoryChart: { title: 'Decision Index Historique', getChart: () => diHistoryChart },
+      drawdownChart: { title: 'Drawdown', getChart: () => drawdownChart },
+      monthlyReturnsChart: { title: 'Rendements Mensuels', getChart: () => monthlyReturnsChart }
+    };
+
+    function openChartModal(chartId) {
+      const config = chartConfigs[chartId];
+      if (!config) return;
+
+      const sourceChart = config.getChart();
+      if (!sourceChart) return;
+
+      const modal = document.getElementById('chartModal');
+      const modalCanvas = document.getElementById('modalChart');
+      const modalTitle = document.getElementById('chartModalTitle');
+
+      modalTitle.textContent = config.title;
+
+      // Destroy previous modal chart
+      if (modalChart) {
+        modalChart.destroy();
+        modalChart = null;
+      }
+
+      // Clone chart config
+      const chartConfig = JSON.parse(JSON.stringify(sourceChart.config));
+
+      // Adjust options for modal
+      chartConfig.options = chartConfig.options || {};
+      chartConfig.options.responsive = true;
+      chartConfig.options.maintainAspectRatio = false;
+
+      // Create new chart in modal
+      modalChart = new Chart(modalCanvas, chartConfig);
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeChartModal() {
+      const modal = document.getElementById('chartModal');
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+
+      if (modalChart) {
+        modalChart.destroy();
+        modalChart = null;
+      }
+    }
+
+    // Initialize modal event listeners
+    function initChartModalListeners() {
+      // Close button
+      document.getElementById('chartModalClose').addEventListener('click', closeChartModal);
+
+      // Click outside to close
+      document.getElementById('chartModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) {
+          closeChartModal();
+        }
+      });
+
+      // ESC key to close
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeChartModal();
+        }
+      });
+
+      // Make charts clickable
+      Object.keys(chartConfigs).forEach(chartId => {
+        const canvas = document.getElementById(chartId);
+        if (canvas) {
+          canvas.parentElement.addEventListener('click', () => openChartModal(chartId));
+        }
+      });
+    }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
@@ -596,6 +793,9 @@
 
       // Initial description update
       updateStrategyDescription(document.getElementById('strategy').value);
+
+      // Initialize chart modal listeners
+      initChartModalListeners();
     });
 
     async function loadStrategyDescriptions() {

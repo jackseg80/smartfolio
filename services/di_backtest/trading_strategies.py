@@ -460,11 +460,34 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
 
     def set_di_series(self, di_series: pd.Series):
         """Injecte la série DI historique"""
-        self.di_series = di_series
+        # Normaliser l'index pour faciliter les lookups
+        normalized_series = di_series.copy()
+        if isinstance(normalized_series.index, pd.DatetimeIndex):
+            normalized_series.index = normalized_series.index.normalize()
+        self.di_series = normalized_series
 
     def set_cycle_series(self, cycle_series: pd.Series):
         """Injecte la série cycle score historique"""
-        self.cycle_series = cycle_series
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Normaliser l'index pour faciliter les lookups (minuit, sans timezone)
+        normalized_series = cycle_series.copy()
+        if isinstance(normalized_series.index, pd.DatetimeIndex):
+            normalized_series.index = normalized_series.index.normalize()
+
+        self.cycle_series = normalized_series
+        self._log_count = 0  # Reset log counter
+
+        # Afficher quelques exemples de l'index pour debug
+        sample_dates = normalized_series.index[:3].tolist() if len(normalized_series) > 3 else normalized_series.index.tolist()
+
+        logger.info(
+            f"SmartFolioReplica: cycle_series set, len={len(normalized_series)}, "
+            f"index_type={type(normalized_series.index).__name__}, "
+            f"min={normalized_series.min():.1f}, max={normalized_series.max():.1f}, "
+            f"mean={normalized_series.mean():.1f}, sample_dates={sample_dates}"
+        )
 
     def get_weights(
         self,
@@ -486,25 +509,57 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         - Moderate: BTC 24%, ETH 18%, Alts 38%
         - Bearish: BTC 25%, ETH 18%, Alts 28%
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         # Récupérer cycle score si disponible, sinon estimer depuis DI
         cycle_score = kwargs.get('cycle_score')
+        lookup_method = "kwargs"
+
+        # Normaliser la date pour le lookup (l'index des séries a été normalisé)
+        date_normalized = pd.Timestamp(date).normalize()
 
         if cycle_score is None and self.cycle_series is not None:
             try:
-                cycle_score = self.cycle_series.loc[date]
+                # Lookup avec date normalisée
+                cycle_score = self.cycle_series.loc[date_normalized]
+                lookup_method = "normalized"
             except KeyError:
-                idx = self.cycle_series.index.get_indexer([date], method='nearest')[0]
-                cycle_score = self.cycle_series.iloc[idx]
+                # Fallback vers nearest
+                idx = self.cycle_series.index.get_indexer([date_normalized], method='nearest')[0]
+                if idx >= 0:
+                    cycle_score = self.cycle_series.iloc[idx]
+                    lookup_method = f"nearest[{idx}]"
+                else:
+                    cycle_score = None
+                    lookup_method = "failed"
+
+            # Log pour debug (premiers appels seulement)
+            if not hasattr(self, '_log_count'):
+                self._log_count = 0
+            if self._log_count < 5:
+                cycle_str = f"{cycle_score:.1f}" if cycle_score is not None else "None"
+                logger.info(
+                    f"SmartFolioReplica: date={date}, norm={date_normalized}, cycle_score={cycle_str}, "
+                    f"method={lookup_method}, series_len={len(self.cycle_series)}"
+                )
+                self._log_count += 1
 
         # Fallback: estimer cycle depuis DI (approximation)
         if cycle_score is None:
             di_value = kwargs.get('di_value')
             if di_value is None and self.di_series is not None:
                 try:
-                    di_value = self.di_series.loc[date]
+                    # Lookup avec date normalisée (l'index a été normalisé dans set_di_series)
+                    di_value = self.di_series.loc[date_normalized]
+                    lookup_method = "di_normalized"
                 except KeyError:
-                    idx = self.di_series.index.get_indexer([date], method='nearest')[0]
-                    di_value = self.di_series.iloc[idx]
+                    idx = self.di_series.index.get_indexer([date_normalized], method='nearest')[0]
+                    if idx >= 0:
+                        di_value = self.di_series.iloc[idx]
+                        lookup_method = f"di_nearest[{idx}]"
+                    else:
+                        lookup_method = "di_failed"
 
             if di_value is not None:
                 # Approximation: DI élevé souvent corrélé à cycle élevé
@@ -512,8 +567,19 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
                 # On utilise une estimation conservatrice
                 cycle_score = di_value * 1.1  # Léger boost car DI inclut penalties
                 cycle_score = min(100, max(0, cycle_score))
+
+                # Log fallback
+                if self._log_count < 10:
+                    logger.warning(
+                        f"SmartFolioReplica FALLBACK: date={date}, di_value={di_value:.1f}, "
+                        f"estimated cycle={cycle_score:.1f}, method={lookup_method}"
+                    )
+                    self._log_count += 1
             else:
                 cycle_score = 50.0  # Neutre par défaut
+                if self._log_count < 10:
+                    logger.error(f"SmartFolioReplica: No cycle or DI data for {date}, using default 50")
+                    self._log_count += 1
 
         # Déterminer phase et allocation stables selon Allocation Engine V2
         if cycle_score >= 90:
@@ -589,6 +655,16 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
             weight_per_stable = final_stables / len(stable_assets)
             for asset in stable_assets:
                 weights[asset] = weight_per_stable
+
+        # Log les 3 premiers appels pour voir les weights
+        if self._log_count < 15 and self._log_count >= 5:
+            phase = "bullish" if cycle_score >= 90 else ("moderate" if cycle_score >= 70 else "bearish")
+            logger.info(
+                f"SmartFolioReplica WEIGHTS: cycle={cycle_score:.1f}, phase={phase}, "
+                f"risky={risky_pct*100:.1f}%, stables={final_stables*100:.1f}%, "
+                f"assets={list(weights.items())}"
+            )
+            self._log_count += 1
 
         return weights
 

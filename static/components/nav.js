@@ -413,7 +413,7 @@ const initUnifiedNav = () => {
       }
     }
 
-    function initWebSocketConnection() {
+    async function initWebSocketConnection() {
       // Start fallback polling immediately - will be cleared if WebSocket succeeds
       if (!fallbackInterval) {
         fallbackInterval = setInterval(fallbackBadgeUpdate, 30000);
@@ -431,6 +431,26 @@ const initUnifiedNav = () => {
         // WebSocket is optional - fallback polling works perfectly
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/api/realtime/ws?client_id=nav_badge`;
+
+        // Check if realtime service is available before attempting WebSocket
+        // This prevents the browser's native WebSocket error in the console
+        try {
+          const statusCheck = await fetch('/api/realtime/status');
+          const statusData = await statusCheck.json();
+          if (statusData?.status !== 'running') {
+            console.debug('Realtime service not running, using polling only');
+            if (!fallbackInterval) {
+              fallbackInterval = setInterval(fallbackBadgeUpdate, 30000);
+            }
+            return;
+          }
+        } catch (checkError) {
+          console.debug('Realtime service check failed, using polling only');
+          if (!fallbackInterval) {
+            fallbackInterval = setInterval(fallbackBadgeUpdate, 30000);
+          }
+          return;
+        }
 
         websocketConnection = new WebSocket(wsUrl);
 
