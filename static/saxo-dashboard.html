@@ -60,6 +60,7 @@
 </head>
 
 <body>
+    <main role="main">
     <div class="container">
         <!-- Dashboard Header -->
         <div class="dashboard-header">
@@ -109,7 +110,7 @@
                     <!-- Portfolio Summary -->
                     <div class="dashboard-card">
                         <div class="card-header">
-                            <h3 class="card-title">Portfolio Summary</h3>
+                            <h2 class="card-title">Portfolio Summary</h2>
                             <div class="card-badge" id="portfolioBadge">Read-Only</div>
                         </div>
                         <div id="portfolioSummary">
@@ -120,7 +121,7 @@
                     <!-- Asset Allocation & Currency Exposure -->
                     <div class="dashboard-card pro-only">
                         <div class="card-header">
-                            <h3 class="card-title">Asset Allocation & Currency Exposure</h3>
+                            <h2 class="card-title">Asset Allocation & Currency Exposure</h2>
                         </div>
                         <div id="assetAllocationCurrency">
                             <div class="loading">Loading...</div>
@@ -130,7 +131,7 @@
                     <!-- Asset Allocation Chart -->
                     <div class="dashboard-card pro-only">
                         <div class="card-header">
-                            <h3 class="card-title">Allocation Breakdown</h3>
+                            <h2 class="card-title">Allocation Breakdown</h2>
                         </div>
                         <div style="padding: 1.5rem; display: flex; justify-content: center; align-items: center;">
                             <canvas id="allocationChart" style="max-width: 350px; max-height: 350px;"></canvas>
@@ -141,7 +142,7 @@
                 <!-- Top Holdings -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">Top 10 Holdings</h3>
+                        <h2 class="card-title">Top 10 Holdings</h2>
                     </div>
                     <div id="topHoldings">
                         <div class="loading">Loading...</div>
@@ -153,7 +154,7 @@
             <div id="positions" class="tab-content">
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">All Positions</h3>
+                        <h2 class="card-title">All Positions</h2>
                         <div class="card-badge" id="positionsCount">0 positions</div>
                     </div>
                     <div id="allPositions">
@@ -1609,6 +1610,7 @@
         });
 
     </script>
+    </main>
 </body>
 
 </html>

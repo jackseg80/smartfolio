@@ -174,7 +174,7 @@ class GovernancePanel {
           <div class="governance-section">
             <h4>🎛️ Governance Mode</h4>
             <div class="mode-selector" id="mode-selector">
-              <select class="gov-select" id="governance-mode-select">
+              <select class="gov-select" id="governance-mode-select" aria-label="Mode de gouvernance">
                 <option value="manual">🤝 Manual</option>
                 <option value="ai_assisted">🤖 AI Assisted</option>
                 <option value="full_ai">🚀 Full AI</option>
@@ -640,7 +640,7 @@ class GovernancePanel {
     const etagEl = document.getElementById('gov-etag');
     if (etagEl) {
       const currentEtag = governance?.etag || '--';
-      etagEl.textContent = currentEtag.substr(-8); // Show last 8 chars
+      etagEl.textContent = currentEtag.slice(-8); // Show last 8 chars
       etagEl.title = currentEtag; // Full ETag on hover
     }
     
@@ -730,7 +730,7 @@ class GovernancePanel {
       });
       
       if (result) {
-        this.showNotification(`System frozen successfully (Key: ${idempotencyKey.substr(0, 8)})`, 'success');
+        this.showNotification(`System frozen successfully (Key: ${idempotencyKey.slice(0, 8)})`, 'success');
         this.refreshState();
         // Update transparency badge
         this.updateTransparencyBadge('High', 'System frozen - enhanced monitoring active');
@@ -756,7 +756,7 @@ class GovernancePanel {
       });
       
       if (result) {
-        this.showNotification(`System unfrozen successfully (Key: ${idempotencyKey.substr(0, 8)})`, 'success');
+        this.showNotification(`System unfrozen successfully (Key: ${idempotencyKey.slice(0, 8)})`, 'success');
         this.refreshState();
         // Reset transparency badge
         this.updateTransparencyBadge('Normal', 'System operational');

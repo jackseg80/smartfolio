@@ -179,7 +179,8 @@
 
     <div id="unified-root">
       <!-- Skeleton loader visible immédiatement pendant le chargement du Decision Index -->
-      <div class="di-loading-container panel-card" style="min-height: 280px; position: relative; overflow: hidden;">
+      <!-- min-height increased to 450px to match actual DI panel height and prevent CLS -->
+      <div class="di-loading-container panel-card" style="min-height: 450px; position: relative; overflow: hidden;">
         <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
           <div class="di-spinner" style="
             width: 40px; height: 40px;
@@ -224,37 +225,39 @@
     </div>
 
     <!-- Tabs connectés directement aux panels -->
-    <div class="tabs" id="analytics-tabs" role="tablist" aria-label="Analytics sections">
-      <button class="tab-btn active" data-target="#tab-risk" role="tab" aria-selected="true" aria-controls="tab-risk" id="tab-btn-risk">Risk</button>
-      <button class="tab-btn" data-target="#tab-performance" role="tab" aria-selected="false" aria-controls="tab-performance" id="tab-btn-performance">Performance</button>
-      <button class="tab-btn pro-only" data-target="#tab-cycles" role="tab" aria-selected="false" aria-controls="tab-cycles" id="tab-btn-cycles">Cycles</button>
-      <button class="tab-btn pro-only" data-target="#tab-monitoring" role="tab" aria-selected="false" aria-controls="tab-monitoring" id="tab-btn-monitoring">Monitoring</button>
-      <button class="tab-btn pro-only" data-target="#tab-intelligence-ml" role="tab" aria-selected="false" aria-controls="tab-intelligence-ml" id="tab-btn-intelligence-ml">🤖 Intelligence ML</button>
+    <div class="tabs-wrapper" style="display: flex; align-items: center; gap: 0.5rem;">
+      <div class="tabs" id="analytics-tabs" role="tablist" aria-label="Analytics sections">
+        <button class="tab-btn active" data-target="#tab-risk" role="tab" aria-selected="true" aria-controls="tab-risk" id="tab-btn-risk">Risk</button>
+        <button class="tab-btn" data-target="#tab-performance" role="tab" aria-selected="false" aria-controls="tab-performance" id="tab-btn-performance">Performance</button>
+        <button class="tab-btn pro-only" data-target="#tab-cycles" role="tab" aria-selected="false" aria-controls="tab-cycles" id="tab-btn-cycles">Cycles</button>
+        <button class="tab-btn pro-only" data-target="#tab-monitoring" role="tab" aria-selected="false" aria-controls="tab-monitoring" id="tab-btn-monitoring">Monitoring</button>
+        <button class="tab-btn pro-only" data-target="#tab-intelligence-ml" role="tab" aria-selected="false" aria-controls="tab-intelligence-ml" id="tab-btn-intelligence-ml">🤖 Intelligence ML</button>
+      </div>
       <button class="btn-refresh" id="manual-refresh-onchain" title="Force refresh of on-chain indicators" aria-label="Refresh on-chain indicators">🔄 Refresh</button>
     </div>
 
-    <!-- Tab Panels -->
-    <section class="tab-panel active" id="tab-risk" role="tabpanel" aria-labelledby="tab-btn-risk">
+    <!-- Tab Panels - min-height prevents CLS during dynamic content load -->
+    <section class="tab-panel active" id="tab-risk" role="tabpanel" aria-labelledby="tab-btn-risk" style="min-height: 500px;">
     <div class="panel-card">
-      <h3>🛡️ Risk Dashboard</h3>
+      <h2>🛡️ Risk Dashboard</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="risk-var">
-          <h4>VaR Portfolio</h4>
+          <h3>VaR Portfolio</h3>
           <div class="metric-value skeleton" id="risk-var-value" aria-busy="true">Loading</div>
           <small>Niveau de confiance 95%</small>
         </div>
         <div class="metric-card" data-metric="risk-drawdown">
-          <h4>Drawdown Maximum</h4>
+          <h3>Drawdown Maximum</h3>
           <div class="metric-value skeleton" id="risk-drawdown-value" aria-busy="true">Loading</div>
           <small>Cycle actuel</small>
         </div>
         <div class="metric-card" data-metric="risk-volatility">
-          <h4>Volatilité</h4>
+          <h3>Volatilité</h3>
           <div class="metric-value skeleton" id="risk-volatility-value" aria-busy="true">Loading</div>
           <small>Annualisée 30 jours</small>
         </div>
         <div class="metric-card" data-metric="risk-score">
-          <h4>Score de Risque</h4>
+          <h3>Score de Risque</h3>
           <div class="metric-value skeleton" id="risk-score-value" aria-busy="true">Loading</div>
           <small>Inconnu</small>
         </div>
@@ -262,28 +265,28 @@
       <!-- Scores clés du Risk Dashboard (version complète) - Pro only -->
       <div class="metrics-grid-220 pro-only">
         <div class="metric-card" data-metric="risk-kpi-diversification">
-          <h4>Diversification Ratio</h4>
+          <h3>Diversification Ratio</h3>
           <div class="metric-value">--</div>
           <small>Corrélation de portefeuille</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-effective-assets">
-          <h4>Effective Assets</h4>
+          <h3>Effective Assets</h3>
           <div class="metric-value">--</div>
           <small>Actifs non-redondants</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-blended">
-          <h4>Blended Score</h4>
+          <h3>Blended Score</h3>
           <div class="metric-value">--</div>
           <small>Score de régime (0-100)</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-onchain">
-          <h4>On-Chain Composite</h4>
+          <h3>On-Chain Composite</h3>
           <div class="metric-value" id="risk-kpi-onchain-value">--</div>
           <small>Fondamentaux on-chain</small>
         </div>
       </div>
       <div class="info-section">
-        <h4>Alertes Risque</h4>
+        <h3>Alertes Risque</h3>
         <div class="info-section-content" id="risk-alerts-container" aria-live="polite">
           <!-- Alerts populated dynamically by analytics-unified.js -->
           <div class="info-list-item">• Chargement des alertes...</div>
@@ -301,31 +304,31 @@
     </section>
     <section class="tab-panel" id="tab-performance" role="tabpanel" aria-labelledby="tab-btn-performance">
     <div class="panel-card">
-      <h3>📊 Performance Monitor</h3>
+      <h2>📊 Performance Monitor</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="perf-cache-size">
-          <h4>Taille Cache Mémoire</h4>
+          <h3>Taille Cache Mémoire</h3>
           <div class="metric-value">--</div>
           <small>Entrées en cache</small>
         </div>
         <div class="metric-card" data-metric="perf-disk-cache">
-          <h4>Utilisation Cache Disque</h4>
+          <h3>Utilisation Cache Disque</h3>
           <div class="metric-value">-- MB</div>
           <small>Usage disque</small>
         </div>
         <div class="metric-card" data-metric="perf-memory">
-          <h4>Mémoire Processus</h4>
+          <h3>Mémoire Processus</h3>
           <div class="metric-value">-- MB</div>
           <small>Mémoire processus</small>
         </div>
         <div class="metric-card" data-metric="perf-system-memory">
-          <h4>Utilisation Mémoire Système</h4>
+          <h3>Utilisation Mémoire Système</h3>
           <div class="metric-value">--%</div>
           <small>Mémoire système</small>
         </div>
       </div>
       <div class="info-section">
-        <h4>Performance Système</h4>
+        <h3>Performance Système</h3>
         <div class="info-section-content">
           <div class="info-item"><span>Taux de réussite cache:</span><span class="text-positive">--%</span></div>
           <div class="info-item"><span>Mémoire disponible:</span><span>-- GB</span></div>
@@ -341,25 +344,25 @@
     </section>
     <section class="tab-panel" id="tab-cycles" role="tabpanel" aria-labelledby="tab-btn-cycles">
     <div class="panel-card">
-      <h3>🔄 Cycle Analysis</h3>
+      <h2>🔄 Cycle Analysis</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="cycle-phase">
-          <h4>Phase Actuelle</h4>
+          <h3>Phase Actuelle</h3>
           <div class="metric-value">--</div>
           <small>Phase courante</small>
         </div>
         <div class="metric-card" data-metric="cycle-progress">
-          <h4>Progrès Post-Halving</h4>
+          <h3>Progrès Post-Halving</h3>
           <div class="metric-value">-- mois</div>
           <small>Progression depuis halving</small>
         </div>
         <div class="metric-card" data-metric="cycle-score">
-          <h4>Score de Cycle</h4>
+          <h3>Score de Cycle</h3>
           <div class="metric-value">--</div>
           <small>Position dans le cycle</small>
         </div>
         <div class="metric-card" data-metric="cycle-confidence">
-          <h4>Confiance</h4>
+          <h3>Confiance</h3>
           <div class="metric-value">--%</div>
           <small>Certitude du modèle</small>
         </div>
@@ -370,7 +373,7 @@
       </div>
 
       <div class="info-section">
-        <h4>Multiplicateurs d'Allocation par Phase</h4>
+        <h3>Multiplicateurs d'Allocation par Phase</h3>
         <div class="info-section-content" id="cycle-multipliers-container">
           <!-- Rendu dynamiquement -->
         </div>
@@ -384,31 +387,31 @@
     </section>
     <section class="tab-panel" id="tab-monitoring" role="tabpanel" aria-labelledby="tab-btn-monitoring">
     <div class="panel-card">
-      <h3>📈 Advanced Analytics</h3>
+      <h2>📈 Advanced Analytics</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="monitor-total-return">
-          <h4>Rendement Total</h4>
+          <h3>Rendement Total</h3>
           <div class="metric-value">--%</div>
           <small>Sur la période</small>
         </div>
         <div class="metric-card" data-metric="monitor-sharpe">
-          <h4>Ratio de Sharpe</h4>
+          <h3>Ratio de Sharpe</h3>
           <div class="metric-value">--</div>
           <small>Risque ajusté</small>
         </div>
         <div class="metric-card" data-metric="monitor-volatility">
-          <h4>Volatilité</h4>
+          <h3>Volatilité</h3>
           <div class="metric-value">--%</div>
           <small>Risque de marché</small>
         </div>
         <div class="metric-card" data-metric="monitor-drawdown">
-          <h4>Drawdown Max</h4>
+          <h3>Drawdown Max</h3>
           <div class="metric-value">--%</div>
           <small>Pire baisse</small>
         </div>
       </div>
       <div class="info-section">
-        <h4>Métriques Avancées</h4>
+        <h3>Métriques Avancées</h3>
         <div id="advanced-metrics-breakdown" class="info-section-content"></div>
       </div>
       <div class="actions-row">
@@ -422,27 +425,27 @@
     <!-- Intelligence ML Tab Panel -->
     <section class="tab-panel" id="tab-intelligence-ml" role="tabpanel" aria-labelledby="tab-btn-intelligence-ml">
     <div class="panel-card">
-      <h3>🤖 Intelligence ML - Vue Analyse Complète</h3>
+      <h2>🤖 Intelligence ML - Vue Analyse Complète</h2>
       <p>
         Analyse détaillée des modèles ML, prédictions temps réel et administration avancée
       </p>
 
       <!-- Stats ML Globales -->
       <div class="ml-stats-section">
-        <h4>📊 Statistiques ML Globales</h4>
+        <h3>📊 Statistiques ML Globales</h3>
         <div class="metrics-grid-200" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
-            <h5>Modèles Actifs</h5>
+            <h4>Modèles Actifs</h4>
             <div class="metric-value" id="ml-active-models">--/4</div>
             <small>Modèles chargés</small>
           </div>
           <div class="metric-card">
-            <h5>Confiance Moyenne</h5>
+            <h4>Confiance Moyenne</h4>
             <div class="metric-value" id="ml-avg-confidence">--%</div>
             <small>Niveau de confiance</small>
           </div>
           <div class="metric-card">
-            <h5>Dernière Mise à Jour</h5>
+            <h4>Dernière Mise à Jour</h4>
             <div class="metric-value" id="ml-last-update">--</div>
             <small>Status ML</small>
           </div>
@@ -451,25 +454,25 @@
 
       <!-- Vue Modèles Détaillée -->
       <div class="ml-models-section">
-        <h4>🧠 Santé des Modèles</h4>
+        <h3>🧠 Santé des Modèles</h3>
         <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
-            <h5>🌊 Volatility LSTM</h5>
+            <h4>🌊 Volatility LSTM</h4>
             <div class="metric-value" id="ml-vol-model-status">⚪ Unknown</div>
             <small id="ml-vol-model-details">Statut du modèle</small>
           </div>
           <div class="metric-card">
-            <h5>🔄 Regime HMM</h5>
+            <h4>🔄 Regime HMM</h4>
             <div class="metric-value" id="ml-regime-model-status">⚪ Unknown</div>
             <small id="ml-regime-model-details">Statut du modèle</small>
           </div>
           <div class="metric-card">
-            <h5>🔗 Correlation Transformer</h5>
+            <h4>🔗 Correlation Transformer</h4>
             <div class="metric-value" id="ml-corr-model-status">⚪ Unknown</div>
             <small id="ml-corr-model-details">Statut du modèle</small>
           </div>
           <div class="metric-card">
-            <h5>💭 Sentiment Composite</h5>
+            <h4>💭 Sentiment Composite</h4>
             <div class="metric-value" id="ml-sent-model-status">⚪ Unknown</div>
             <small id="ml-sent-model-details">Statut du modèle</small>
           </div>
@@ -478,29 +481,29 @@
 
       <!-- Prédictions Temps Réel -->
       <div class="ml-predictions-section">
-        <h4>🔮 Prédictions Temps Réel</h4>
+        <h3>🔮 Prédictions Temps Réel</h3>
         <div id="ml-predictions-container" aria-live="polite">
           <div class="prediction-grid metrics-grid-250" aria-atomic="false">
             <!-- Volatilité -->
             <div class="metric-card" data-metric="ml-volatility-btc">
-              <h5>BTC Volatilité 24h</h5>
+              <h4>BTC Volatilité 24h</h4>
               <div class="metric-value" id="ml-vol-btc">--</div>
               <small>Prédiction LSTM</small>
             </div>
             <div class="metric-card" data-metric="ml-volatility-eth">
-              <h5>ETH Volatilité 24h</h5>
+              <h4>ETH Volatilité 24h</h4>
               <div class="metric-value" id="ml-vol-eth">--</div>
               <small>Prédiction LSTM</small>
             </div>
             <!-- Régimes -->
             <div class="metric-card" data-metric="ml-regime">
-              <h5>Régime Marché</h5>
+              <h4>Régime Marché</h4>
               <div class="metric-value" id="ml-regime">--</div>
               <small>Classification HMM</small>
             </div>
             <!-- Sentiment -->
             <div class="metric-card" data-metric="ml-sentiment">
-              <h5>ML Sentiment</h5>
+              <h4>ML Sentiment</h4>
               <div class="metric-value" id="ml-sentiment">--</div>
               <small>Sentiment ML Agrégé</small>
             </div>
@@ -534,7 +537,7 @@
 
           <!-- ML Pipeline Status -->
           <div class="ml-pipeline-status">
-            <h5>Pipeline Status</h5>
+            <h4>Pipeline Status</h4>
             <div id="ml-pipeline-container">
               Loading pipeline status...
             </div>

@@ -1070,22 +1070,22 @@ class WealthContextBar {
     bar.className = 'wealth-context-bar';
     bar.innerHTML = `
       <div class="context-group">
-        <span class="context-label">Crypto:</span>
-        <select id="wealth-account" aria-busy="true">
+        <label for="wealth-account" class="context-label">Crypto:</label>
+        <select id="wealth-account" aria-label="Source crypto" aria-busy="true">
           <option>Chargement…</option>
         </select>
       </div>
 
       <div class="context-group">
-        <span class="context-label">Bourse:</span>
-        <select id="wealth-bourse" aria-busy="true">
+        <label for="wealth-bourse" class="context-label">Bourse:</label>
+        <select id="wealth-bourse" aria-label="Source bourse" aria-busy="true">
           <option>Chargement…</option>
         </select>
       </div>
 
       <div class="context-group">
-        <span class="context-label">Devise:</span>
-        <select id="wealth-currency">
+        <label for="wealth-currency" class="context-label">Devise:</label>
+        <select id="wealth-currency" aria-label="Devise d'affichage">
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
           <option value="CHF">CHF</option>

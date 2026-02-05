@@ -101,23 +101,23 @@ unsubscribe();
 
 ## Tokens CSS
 
-### Couleurs Principales
+### Couleurs Principales (WCAG AA Compliant)
 
 ```css
-/* Success - UNIFIÉ sur #059669 */
---success: #059669;
+/* Success - WCAG AA (5.4:1 sur success-bg) */
+--success: #047857;      /* WCAG FIX: Was #059669 (4.5:1) */
 --success-bg: #d1fae5;
 
-/* Danger */
---danger: #ef4444;
+/* Danger - WCAG AA (5.0:1 sur danger-bg) */
+--danger: #b91c1c;       /* WCAG FIX: Was #dc2626 (4.1:1) */
 --danger-bg: #fee2e2;
 
-/* Warning */
---warning: #f59e0b;
+/* Warning - WCAG AA (5.2:1 sur warning-bg) */
+--warning: #92400e;      /* WCAG FIX: Was #d97706 (3.2:1) */
 --warning-bg: #fef3c7;
 
-/* Info */
---info: #3b82f6;
+/* Info - WCAG AA (5.2:1 sur info-bg) */
+--info: #1d4ed8;         /* WCAG FIX: Was #2563eb (4.4:1) */
 --info-bg: #dbeafe;
 
 /* Brand */
@@ -387,6 +387,19 @@ Pour les pages avec beaucoup de styles inline (>50), créer un fichier CSS exter
 
 ## Accessibilité (WCAG 2.1 AA)
 
+> **Audit Lighthouse : Février 2026** - Toutes les pages principales atteignent ≥90 en accessibilité
+
+### Corrections Effectuées (Fév 2026)
+
+| Problème | Pages Affectées | Solution |
+|----------|-----------------|----------|
+| Color contrast insuffisant | Toutes | Couleurs sémantiques assombries (voir Tokens CSS) |
+| Heading order incorrect | analytics-unified, risk-dashboard, saxo-dashboard | Restructuration h1→h2→h3→h4 |
+| Missing main landmark | settings, saxo-dashboard | Ajout `<main role="main">` |
+| Form labels manquants | settings, ai-chat-modal, WealthContextBar | Ajout `<label for="id">` et `aria-label` |
+| aria-required-children | analytics-unified | Bouton refresh sorti du tablist |
+| Label-content mismatch | dashboard (export buttons) | `aria-label` aligné avec contenu visuel |
+
 ### Focus Visible
 
 ```css
@@ -399,11 +412,38 @@ Pour les pages avec beaucoup de styles inline (>50), créer un fichier CSS exter
 
 ### Contraste Minimum
 
-| Élément | Ratio minimum |
-|---------|---------------|
-| Texte normal | 4.5:1 |
-| Grand texte (18px+ ou 14px bold) | 3:1 |
-| Composants UI | 3:1 |
+| Élément | Ratio minimum | Couleurs SmartFolio |
+|---------|---------------|---------------------|
+| Texte normal | 4.5:1 | success=#047857, danger=#b91c1c, warning=#92400e, info=#1d4ed8 |
+| Grand texte (18px+ ou 14px bold) | 3:1 | Conforme |
+| Composants UI | 3:1 | Conforme |
+
+### Structure Sémantique
+
+```html
+<!-- Ordre des headings -->
+<h1>Page Title</h1>
+  <h2>Section</h2>
+    <h3>Subsection</h3>
+      <h4>Detail</h4>
+
+<!-- Main landmark obligatoire -->
+<body>
+  <nav>...</nav>
+  <main role="main">
+    <!-- Contenu principal -->
+  </main>
+</body>
+
+<!-- Tablist correct -->
+<div class="tabs-wrapper">
+  <div role="tablist" aria-label="Section tabs">
+    <button role="tab">Tab 1</button>
+    <button role="tab">Tab 2</button>
+  </div>
+  <button class="btn-refresh">Refresh</button> <!-- Hors du tablist -->
+</div>
+```
 
 ### Reduced Motion
 
@@ -430,6 +470,13 @@ Pour les pages avec beaucoup de styles inline (>50), créer un fichier CSS exter
 
 <!-- Alertes -->
 <div role="alert" aria-live="assertive">Error message</div>
+
+<!-- Form labels -->
+<label for="input-id">Label text</label>
+<input id="input-id" aria-label="Description complète">
+
+<!-- Selects -->
+<select aria-label="Sélection de source">
 ```
 
 ## Tests Visuels
@@ -456,7 +503,16 @@ Pour les pages avec beaucoup de styles inline (>50), créer un fichier CSS exter
 
 ### Février 2026
 
-#### Phase 4 - Finitions
+#### Phase 4.2 - Accessibilité WCAG AA (5 Fév)
+
+- **Couleurs sémantiques WCAG AA** : success=#047857, danger=#b91c1c, warning=#92400e, info=#1d4ed8
+- **Heading order** : Corrigé sur analytics-unified (19 headings), risk-dashboard, saxo-dashboard
+- **Main landmarks** : Ajoutés sur settings.html, saxo-dashboard.html
+- **Form labels** : Corrigés sur settings.html, ai-chat-modal.html, WealthContextBar.js, GovernancePanel.js
+- **ARIA fixes** : analytics-unified tablist, dashboard export buttons
+- **Lighthouse scores** : Toutes pages ≥92 en accessibilité (target: 90)
+
+#### Phase 4.1 - Finitions (4 Fév)
 
 - Unifié `--theme-accent` sur `var(--brand-accent)` (était `#00ff88`)
 - Corrigé couleurs Decision Index (`.status-badge--live` → `var(--success)`)

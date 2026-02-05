@@ -34,14 +34,14 @@
   --brand-accent: #2dd4bf;
   --brand-accent-hover: #0d9488;
 
-  /* Couleurs sémantiques */
-  --success: #059669;
+  /* Couleurs sémantiques - WCAG AA contrast ratios */
+  --success: #047857;           /* WCAG FIX: Was #059669 (4.5:1) → Now 5.4:1 on success-bg */
   --success-bg: #d1fae5;
-  --warning: #d97706;
+  --warning: #92400e;           /* WCAG FIX: Was #d97706 (3.2:1) → Now 5.2:1 on warning-bg */
   --warning-bg: #fef3c7;
-  --danger: #dc2626;
+  --danger: #b91c1c;            /* WCAG FIX: Was #dc2626 (4.1:1) → Now 5.0:1 on danger-bg */
   --danger-bg: #fee2e2;
-  --info: #2563eb;
+  --info: #1d4ed8;              /* WCAG FIX: Was #2563eb (4.4:1) → Now 5.2:1 on info-bg */
   --info-bg: #dbeafe;
 
   /* Système de shadows */

@@ -177,7 +177,8 @@
             <div id="risk-overview-badge-container" class="badge-container"></div>
 
             <!-- Persistent Controls (do not get replaced by dynamic render) -->
-            <div id="risk-dashboard-content">
+            <!-- min-height prevents CLS (Cumulative Layout Shift) during load -->
+            <div id="risk-dashboard-content" style="min-height: 800px;">
               <div class="loading">Loading risk metrics...</div>
             </div>
           </div>
@@ -185,7 +186,8 @@
           <!-- Market Cycles Tab -->
           <div class="tab-pane" id="cycles-tab" role="tabpanel" aria-labelledby="cycles">
             <div id="cycles-badge-container" class="badge-container"></div>
-            <div id="cycles-content">
+            <!-- min-height prevents CLS during load -->
+            <div id="cycles-content" style="min-height: 600px;">
               <div class="loading">Loading cycle analysis...</div>
             </div>
           </div>
