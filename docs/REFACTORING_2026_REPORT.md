@@ -233,6 +233,33 @@ f824fdb refactor(frontend): unifier fetch + StorageService + cleanup legacy
 
 ---
 
+## Corrections Sécurité Multi-Tenant (Février 2026)
+
+Suite à un audit des logs de démarrage, plusieurs violations du principe multi-tenant ont été corrigées :
+
+### Problèmes Identifiés et Corrigés
+
+| Fichier | Problème | Correction |
+|---------|----------|------------|
+| `api/analytics_endpoints.py` | `/market-breadth` appelait `get_unified_filtered_balances()` sans `user_id` → fallback 'demo' | Réécrit pour utiliser CoinGecko global market data (top 100 cryptos) |
+| `services/ml/orchestrator.py` | Accès incorrect `settings.cointracking.api_key` | Corrigé vers `settings.api_keys.cointracking_api_key` avec `getattr()` |
+| `services/alerts/evaluators/risk_evaluator.py` | Fallback `user_id='demo'` si `current_state` sans user | Utilise maintenant une valeur portfolio par défaut sans appel balance_service |
+| `api/main.py` | Logs dupliqués (handlers multiples) | Ajouté `force=True` à `logging.basicConfig()` |
+| `api/startup.py` | Erreur 503 au shutdown si AlertEngine non initialisé | Ignore HTTPException 503 pendant le cleanup |
+
+### Sémantique Market Breadth
+
+**Avant**: Calculé sur le portfolio utilisateur (incorrect - mesure la diversification portfolio)
+**Après**: Calculé sur le marché global (top 100 cryptos CoinGecko)
+
+Le market breadth mesure la **santé du marché global** :
+- Ratio advance/decline sur les 100 plus grandes cryptos
+- Nombre de cryptos proches de leurs ATH
+- Concentration du volume sur les top 10
+- Dispersion du momentum (écart-type des rendements 24h)
+
+---
+
 ## Recommandations Post-Refactoring
 
 ### Court Terme

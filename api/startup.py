@@ -12,6 +12,8 @@ Handles:
 import asyncio
 import logging
 
+from fastapi import HTTPException
+
 logger = logging.getLogger(__name__)
 
 
@@ -320,6 +322,10 @@ def get_shutdown_handler():
                 if alert_engine:
                     await alert_engine.stop()
                     logger.info("✅ AlertEngine scheduler stopped")
+            except HTTPException as e:
+                # 503 = Alert engine not initialized, normal during early shutdown
+                if e.status_code != 503:
+                    logger.warning(f"⚠️ Alert engine cleanup failed: {e}")
             except Exception as e:
                 logger.warning(f"⚠️ Alert engine cleanup failed: {e}")
 

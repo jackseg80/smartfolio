@@ -303,22 +303,25 @@ class AdvancedRiskEvaluator:
                     except (TypeError, ValueError):
                         portfolio_weights = {}
 
-            # Récupérer la valeur réelle du portfolio
-            try:
-                from services.balance_service import balance_service
+            # Récupérer la valeur réelle du portfolio (seulement si user_id explicite)
+            user_id = getattr(current_state, 'user_id', None)
+            if user_id and user_id != 'demo':
+                try:
+                    from services.balance_service import balance_service
 
-                user_id = getattr(current_state, 'user_id', 'demo')
-                source = getattr(current_state, 'source', 'cointracking_api')
+                    source = getattr(current_state, 'source', 'cointracking_api')
 
-                balance_result = await balance_service.resolve_current_balances(source=source, user_id=user_id)
-                balances = balance_result.get('items', []) if isinstance(balance_result, dict) else []
+                    balance_result = await balance_service.resolve_current_balances(source=source, user_id=user_id)
+                    balances = balance_result.get('items', []) if isinstance(balance_result, dict) else []
 
-                if balances:
-                    portfolio_value = sum(float(b.get('value_usd', 0)) for b in balances)
-                    logger.debug(f"Real portfolio value: ${portfolio_value:,.2f}")
+                    if balances:
+                        portfolio_value = sum(float(b.get('value_usd', 0)) for b in balances)
+                        logger.debug(f"Real portfolio value: ${portfolio_value:,.2f}")
 
-            except Exception as e:
-                logger.warning(f"Failed to retrieve portfolio value: {e}, using fallback $100,000")
+                except Exception as e:
+                    logger.warning(f"Failed to retrieve portfolio value: {e}, using fallback $100,000")
+            else:
+                logger.debug("No explicit user_id in current_state, using fallback portfolio value $100,000")
 
         except Exception as e:
             logger.error(f"Error extracting portfolio context: {e}")

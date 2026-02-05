@@ -107,7 +107,9 @@ class MLOrchestrator:
                 return self.settings.data_source
             
             # Smart detection based on available resources
-            if self.settings.cointracking.api_key and self.settings.cointracking.api_secret:
+            api_key = getattr(self.settings.api_keys, 'cointracking_api_key', None)
+            api_secret = getattr(self.settings.api_keys, 'cointracking_api_secret', None)
+            if api_key and api_secret:
                 logger.info("API keys found, using cointracking_api")
                 return 'cointracking_api'
             elif Path('data/raw').exists() and any(Path('data/raw').glob('*.csv')):

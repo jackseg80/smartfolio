@@ -50,9 +50,11 @@ log_level = getattr(logging, LOG_LEVEL, logging.INFO)
 log_format = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 
 # Configuration avec RotatingFileHandler pour limiter la taille des logs
+# Utiliser force=True pour éviter les handlers dupliqués si le module est importé plusieurs fois
 logging.basicConfig(
     level=log_level,
     format=log_format,
+    force=True,  # Python 3.8+: reset handlers pour éviter les doublons
     handlers=[
         # Console (stdout) - pour le terminal
         logging.StreamHandler(),
