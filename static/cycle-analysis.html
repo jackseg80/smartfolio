@@ -9,7 +9,12 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
+  <link rel="stylesheet" href="css/view-modes.css">
   <script src="global-config.js"></script>
+
+  <!-- View Mode System (Feb 2026) -->
+  <script type="module" src="components/view-toggle.js"></script>
+  <script type="module" src="components/domain-nav.js"></script>
 
   <!-- Navigation unifiée (conditionnelle) -->
   <script type="module">
@@ -17,6 +22,11 @@
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();  // Vérifie authentification + redirect si nécessaire
     // =================================
+
+    // ===== VIEW MODE MANAGER (Feb 2026) =====
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    ViewModeManager.init();
+    // ========================================
 
     if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
       import('./components/nav.js');
@@ -256,7 +266,14 @@
 <body>
 
   <div class="wrap">
-    <h1>Bitcoin Cycle Analysis - Validation du Modèle</h1>
+    <!-- Page Header (Feb 2026) -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h1 style="margin: 0;">Bitcoin Cycle Analysis</h1>
+      <view-toggle></view-toggle>
+    </div>
+
+    <!-- Navigation contextuelle Risk Domain (Feb 2026) -->
+    <domain-nav domain="risk"></domain-nav>
 
     <!-- Contrôles -->
     <div class="card controls-card">

@@ -506,7 +506,7 @@ canvas {
 }
 
 .alert-banner--success {
-  border-left-color: var(--success, #38d39f);
+  border-left-color: var(--success, #059669);
 }
 
 .alert-banner--warning {

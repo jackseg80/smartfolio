@@ -11,10 +11,11 @@
     --ml-card-padding: 1.5rem;
     --ml-card-gap: 1rem;
     
-    --status-active: #22c55e;
-    --status-inactive: #64748b;
-    --status-error: #ef4444;
-    --status-warning: #f59e0b;
+    /* Status colors - aligned with shared-theme.css */
+    --status-active: var(--success, #059669);
+    --status-inactive: var(--theme-text-muted, #64748b);
+    --status-error: var(--danger, #ef4444);
+    --status-warning: var(--warning, #f59e0b);
 }
 
 /* Cartes ML unifiées */

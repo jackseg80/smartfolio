@@ -63,11 +63,12 @@
   --space-xl: 2rem;
   --space-2xl: 3rem;
 
-  /* Rayons de bordure */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
+  /* Rayons de bordure - aligned with tokens.css (source of truth) */
+  /* Note: tokens.css defines the base values, these are kept for backwards compatibility */
+  --radius-sm: 0.25rem;   /* 4px - same as tokens.css */
+  --radius-md: 0.375rem;  /* 6px - same as tokens.css */
+  --radius-lg: 0.5rem;    /* 8px - same as tokens.css */
+  --radius-xl: 0.75rem;   /* 12px - same as tokens.css */
 
   /* Decision card variables */
   --decision-bg: var(--theme-surface);

@@ -8,8 +8,9 @@
 
   <!-- Thème/compat identiques à ta page actuelle -->
   <link rel="stylesheet" href="css/tokens.css">
-    <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
+  <link rel="stylesheet" href="css/view-modes.css">
 
   <!-- Scripts partagés existants -->
   <script src="debug-logger.js"></script>
@@ -69,12 +70,21 @@
   <!-- Risk Dashboard CSS -->
   <link rel="stylesheet" href="css/risk-dashboard.css">
 
+  <!-- View Mode System (Feb 2026) -->
+  <script type="module" src="components/view-toggle.js"></script>
+  <script type="module" src="components/domain-nav.js"></script>
+
   <!-- Navigation unifiée (conditionnelle) -->
   <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();  // Vérifie authentification + redirect si nécessaire
     // =================================
+
+    // ===== VIEW MODE MANAGER (Feb 2026) =====
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    ViewModeManager.init();
+    // ========================================
 
     if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
       import('./components/nav.js');
@@ -114,6 +124,7 @@
         <h1>Risk Dashboard</h1>
       </div>
       <div class="header-controls">
+        <view-toggle></view-toggle>
         <div class="timestamp" id="last-update">Loading...</div>
         <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -137,8 +148,8 @@
               <span class="item-icon">🔄</span>
               <span class="item-text">Refresh Cycles</span>
             </button>
-            <div class="dropdown-divider"></div>
-            <button class="dropdown-item" id="test-endpoint-btn" title="Test API connection (dev only)">
+            <div class="dropdown-divider pro-only"></div>
+            <button class="dropdown-item pro-only" id="test-endpoint-btn" title="Test API connection (dev only)">
               <span class="item-icon">🧪</span>
               <span class="item-text">Test API</span>
             </button>
@@ -147,6 +158,9 @@
       </div>
     </div>
 
+    <!-- Navigation contextuelle Risk Domain (Feb 2026) -->
+    <domain-nav domain="risk"></domain-nav>
+
     <!-- Layout Simple: Main Content uniquement (sidebar remplacée par Web Component flyout-panel) -->
     <div class="dashboard-layout">
       <!-- Main Content avec Onglets -->
@@ -154,7 +168,7 @@
         <!-- Tabs -->
         <div class="tabs" role="tablist">
           <button class="tab-button active" data-tab="risk" role="tab" aria-selected="true" aria-controls="risk-tab">Risk Overview</button>
-          <button class="tab-button" data-tab="cycles" role="tab" aria-selected="false" aria-controls="cycles-tab">Market Cycles</button>
+          <button class="tab-button pro-only" data-tab="cycles" role="tab" aria-selected="false" aria-controls="cycles-tab">Market Cycles</button>
         </div>
 
         <div class="tab-content">

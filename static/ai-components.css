@@ -3,15 +3,15 @@
  * Design système cohérent avec animations et états
  */
 
-/* Variables CSS pour les composants IA */
+/* Variables CSS pour les composants IA - aligned with shared-theme.css */
 :root {
-  /* Couleurs principales */
-  --ai-primary: #6366f1;
-  --ai-secondary: #8b5cf6;
-  --ai-success: #10b981;
-  --ai-warning: #f59e0b;
-  --ai-danger: #ef4444;
-  --ai-info: #3b82f6;
+  /* Couleurs principales - using global theme tokens */
+  --ai-primary: var(--brand-primary, #6366f1);
+  --ai-secondary: var(--brand-accent, #8b5cf6);
+  --ai-success: var(--success, #059669);
+  --ai-warning: var(--warning, #f59e0b);
+  --ai-danger: var(--danger, #ef4444);
+  --ai-info: var(--info, #3b82f6);
   
   /* Couleurs de fond */
   --ai-bg-primary: #ffffff;

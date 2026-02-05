@@ -18,10 +18,10 @@
   --di-color-onchain: #2ac3de;
   --di-color-risk: #f7768e;
 
-  /* Regime colors */
-  --di-ribbon-bull: #33cc88;
+  /* Regime colors - aligned with design system */
+  --di-ribbon-bull: var(--success, #059669);
   --di-ribbon-neutral: #c5c7ce;
-  --di-ribbon-risk: #f7768e;
+  --di-ribbon-risk: var(--danger, #ef4444);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -149,9 +149,9 @@
 }
 
 .status-badge--live {
-  background: rgba(56, 211, 159, 0.15);
-  color: #38d39f;
-  border-color: rgba(56, 211, 159, 0.3);
+  background: color-mix(in srgb, var(--success, #059669) 15%, transparent);
+  color: var(--success, #059669);
+  border-color: color-mix(in srgb, var(--success, #059669) 30%, transparent);
   animation: pulse-subtle 3s ease-in-out infinite;
 }
 

@@ -1,0 +1,266 @@
+/**
+ * View Modes CSS - Classes pour les modes Simple et Pro
+ *
+ * Ce fichier définit les classes utilitaires pour masquer/afficher
+ * des éléments selon le mode de visualisation actif.
+ *
+ * Usage:
+ *   <div class="pro-only">Visible uniquement en mode Pro</div>
+ *   <div class="simple-only">Visible uniquement en mode Simple</div>
+ *   <div class="simple-compact">Plus compact en mode Simple</div>
+ *
+ * Le mode est déterminé par l'attribut data-view-mode sur <body>.
+ *
+ * @version 1.0.0
+ * @since Feb 2026
+ */
+
+/* =============================================================================
+   BASE VISIBILITY CLASSES
+   ============================================================================= */
+
+/**
+ * Éléments visibles uniquement en mode Pro
+ * Cachés quand data-view-mode="simple"
+ */
+[data-view-mode="simple"] .pro-only {
+    display: none !important;
+}
+
+/**
+ * Éléments visibles uniquement en mode Simple
+ * Cachés quand data-view-mode="pro" ou par défaut
+ */
+[data-view-mode="pro"] .simple-only,
+body:not([data-view-mode]) .simple-only {
+    display: none !important;
+}
+
+/* =============================================================================
+   LAYOUT SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Cards plus compactes en mode Simple
+ */
+[data-view-mode="simple"] .simple-compact {
+    padding: var(--space-md, 12px) !important;
+}
+
+/**
+ * Grilles simplifiées : moins de colonnes en mode Simple
+ */
+[data-view-mode="simple"] .grid-simple-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+}
+
+[data-view-mode="simple"] .grid-simple-1 {
+    grid-template-columns: 1fr !important;
+}
+
+/* =============================================================================
+   TYPOGRAPHY SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Labels cachés en mode Simple (valeurs seules)
+ */
+[data-view-mode="simple"] .simple-hide-label .metric-label {
+    display: none !important;
+}
+
+/**
+ * Valeurs plus grandes en mode Simple pour meilleure lisibilité
+ */
+[data-view-mode="simple"] .simple-large-value .metric-value {
+    font-size: var(--font-size-2xl, 1.5rem) !important;
+    font-weight: 700 !important;
+}
+
+/**
+ * Texte d'aide/description caché en mode Simple
+ */
+[data-view-mode="simple"] .help-text,
+[data-view-mode="simple"] .description-text,
+[data-view-mode="simple"] .technical-note {
+    display: none !important;
+}
+
+/* =============================================================================
+   METRIC CARDS SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Cartes de métriques simplifiées
+ */
+[data-view-mode="simple"] .metric-card.simple-mode {
+    text-align: center;
+    padding: var(--space-lg, 16px);
+}
+
+[data-view-mode="simple"] .metric-card.simple-mode .metric-label {
+    font-size: var(--font-size-xs, 11px);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    margin-bottom: var(--space-xs, 4px);
+}
+
+[data-view-mode="simple"] .metric-card.simple-mode .metric-value {
+    font-size: var(--font-size-3xl, 1.875rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+/* =============================================================================
+   CHARTS SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Graphiques simplifiés : hauteur réduite
+ */
+[data-view-mode="simple"] .chart-container.simple-small {
+    height: 120px !important;
+    min-height: 120px !important;
+}
+
+/**
+ * Légendes de graphiques cachées en mode Simple
+ */
+[data-view-mode="simple"] .chart-legend {
+    display: none !important;
+}
+
+/* =============================================================================
+   TABLES SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Colonnes de table cachées en mode Simple
+ */
+[data-view-mode="simple"] table .pro-column {
+    display: none !important;
+}
+
+/**
+ * Tables plus compactes en mode Simple
+ */
+[data-view-mode="simple"] table.simple-compact td,
+[data-view-mode="simple"] table.simple-compact th {
+    padding: var(--space-xs, 4px) var(--space-sm, 8px) !important;
+    font-size: var(--font-size-sm, 13px) !important;
+}
+
+/* =============================================================================
+   SIDEBAR/PANEL SIMPLIFICATION
+   ============================================================================= */
+
+/**
+ * Panneaux latéraux plus étroits en mode Simple
+ */
+[data-view-mode="simple"] .sidebar.simple-narrow {
+    width: 280px !important;
+    min-width: 280px !important;
+}
+
+/**
+ * Sections détaillées des panneaux cachées
+ */
+[data-view-mode="simple"] .panel-details,
+[data-view-mode="simple"] .panel-advanced {
+    display: none !important;
+}
+
+/* =============================================================================
+   ANIMATIONS / TRANSITIONS
+   ============================================================================= */
+
+/**
+ * Transition douce lors du changement de mode
+ */
+.pro-only,
+.simple-only,
+.simple-compact,
+.simple-large-value .metric-value {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/**
+ * Fade-in lors de l'affichage
+ */
+[data-view-mode="simple"] .simple-only,
+[data-view-mode="pro"] .pro-only {
+    animation: viewModeFadeIn 0.2s ease forwards;
+}
+
+@keyframes viewModeFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+
+/**
+ * Sur mobile, le mode Simple est plus agressif
+ */
+@media (max-width: 768px) {
+    [data-view-mode="simple"] .simple-hide-mobile {
+        display: none !important;
+    }
+
+    [data-view-mode="simple"] .metric-card.simple-mode .metric-value {
+        font-size: var(--font-size-2xl, 1.5rem);
+    }
+}
+
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
+
+/**
+ * Forcer l'affichage même en mode contraire (override)
+ */
+.always-visible {
+    display: block !important;
+}
+
+.always-flex {
+    display: flex !important;
+}
+
+.always-grid {
+    display: grid !important;
+}
+
+/**
+ * Indicateur visuel du mode actif (debug)
+ */
+[data-view-mode="simple"] .mode-indicator::before {
+    content: "Simple";
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--info, #3b82f6);
+    color: white;
+    font-size: 10px;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+[data-view-mode="pro"] .mode-indicator::before {
+    content: "Pro";
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--warning, #f59e0b);
+    color: white;
+    font-size: 10px;
+    border-radius: 4px;
+    margin-right: 8px;
+}

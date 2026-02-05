@@ -8,13 +8,21 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
+    <link rel="stylesheet" href="css/view-modes.css">
     <link rel="stylesheet" href="css/saxo-dashboard.css">
     <script type="module" src="components/nav.js"></script>
+    <script type="module" src="components/view-toggle.js"></script>
+    <script type="module" src="components/domain-nav.js"></script>
     <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();
     // =================================
+
+    // ===== VIEW MODE MANAGER (Feb 2026) =====
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    ViewModeManager.init();
+    // ========================================
 
     import { initDeepLinks } from './components/deep-links.js';
     import { wealthContextBar } from './components/WealthContextBar.js';
@@ -53,11 +61,12 @@
                 </div>
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
-                <a href="saxo-dashboard.html" class="btn secondary" style="padding: 0.75rem 1.25rem; text-decoration: none;">
-                    ← Dashboard
-                </a>
+                <view-toggle></view-toggle>
             </div>
         </div>
+
+        <!-- Navigation contextuelle Bourse Domain (Feb 2026) -->
+        <domain-nav domain="bourse"></domain-nav>
 
         <!-- Dashboard Content -->
         <div id="dashboardContent">

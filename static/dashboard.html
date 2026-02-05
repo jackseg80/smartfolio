@@ -8,13 +8,20 @@
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
+    <link rel="stylesheet" href="css/view-modes.css">
     <script type="module" src="components/nav.js"></script>
     <script type="module" src="components/tooltips.js"></script>
+    <script type="module" src="components/view-toggle.js"></script>
     <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();  // Vérifie authentification + redirect si nécessaire
     // =================================
+
+    // ===== VIEW MODE MANAGER (Feb 2026) =====
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    ViewModeManager.init();
+    // ========================================
 
         import { initDeepLinks } from './components/deep-links.js';
         // Anchors for dashboard.html: #global #crypto #bourse #banque #overview #market-regime #risk-alerts
@@ -519,6 +526,12 @@
 
 <body>
     <main class="wrap" role="main">
+        <!-- Page Header with View Toggle -->
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--theme-border);">
+            <h1 style="font-size:1.5rem;font-weight:700;color:var(--theme-text);margin:0;">Dashboard</h1>
+            <view-toggle></view-toggle>
+        </div>
+
         <!-- LEVEL 1: WEALTH -->
         <div class="dashboard-grid" id="grid-niveau-1">
             <!-- Global Overview ENHANCED -->
@@ -537,8 +550,8 @@
                     </div>
                     <div id="global-pnl-today" style="font-size:0.95rem;font-weight:600;margin-top:4px;">--</div>
 
-                    <!-- Values in EUR and CHF -->
-                    <div id="global-currency-conversions"
+                    <!-- Values in EUR and CHF (Pro mode only) -->
+                    <div id="global-currency-conversions" class="pro-only"
                         style="margin-top:8px;font-size:0.75rem;color:var(--theme-text-muted);">
                         <div id="global-total-eur">-- EUR</div>
                         <div id="global-total-chf">-- CHF</div>
@@ -558,7 +571,7 @@
                 <div class="card-header">
                     <div class="card-title"><span class="card-icon" aria-hidden="true">₿</span>Crypto</div>
                     <div style="display:flex;gap:8px;align-items:center;">
-                        <span id="portfolio-source-display"
+                        <span id="portfolio-source-display" class="pro-only"
                             style="font-size:11px;color:var(--theme-text-muted);padding:2px 6px;background:var(--theme-bg);border-radius:4px;border:1px solid var(--theme-border);">--</span>
                         <span class="status-badge status-active" id="portfolio-status" role="status" aria-live="polite">Loading</span>
                     </div>
@@ -574,12 +587,12 @@
                     <span class="metric-value" id="daily-pnl">--</span>
                 </div>
 
-                <div class="metric">
+                <div class="metric pro-only">
                     <span class="metric-label">Assets Count</span>
                     <span class="metric-value" id="assets-count">--</span>
                 </div>
 
-                <div class="portfolio-chart" id="portfolio-chart" style="height: 140px; margin-top: 12px;">
+                <div class="portfolio-chart pro-only" id="portfolio-chart" style="height: 140px; margin-top: 12px;">
                     <div id="crypto-chart-desc" class="sr-only">Graphique circulaire du portefeuille crypto. Description chargée dynamiquement.</div>
                     <canvas id="portfolioChartCanvas" width="400" height="200"
                         aria-label="Graphique circulaire du portefeuille crypto"
@@ -587,8 +600,8 @@
                         role="img"></canvas>
                 </div>
 
-                <!-- Export Button -->
-                <button id="crypto-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export crypto portfolio lists">
+                <!-- Export Button (Pro mode only) -->
+                <button id="crypto-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export crypto portfolio lists">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -623,12 +636,12 @@
                     <span class="metric-value" id="saxo-positions-count">--</span>
                 </div>
 
-                <div class="metric">
+                <div class="metric pro-only">
                     <span class="metric-label">Last Import</span>
                     <span class="metric-value" id="saxo-last-import" style="font-size:0.9rem;">--</span>
                 </div>
 
-                <div class="portfolio-chart" id="saxo-chart" style="height: 140px; margin-top: 12px;">
+                <div class="portfolio-chart pro-only" id="saxo-chart" style="height: 140px; margin-top: 12px;">
                     <div id="saxo-chart-desc" class="sr-only">Graphique circulaire du portefeuille actions. Description chargée dynamiquement.</div>
                     <canvas id="saxoChartCanvas" width="400" height="200"
                         aria-label="Graphique circulaire du portefeuille actions"
@@ -636,8 +649,8 @@
                         role="img"></canvas>
                 </div>
 
-                <!-- Export Button -->
-                <button id="saxo-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export stock market portfolio lists">
+                <!-- Export Button (Pro mode only) -->
+                <button id="saxo-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export stock market portfolio lists">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -685,8 +698,8 @@
                         role="img"></canvas>
                 </div>
 
-                <!-- Export Button -->
-                <button id="patrimoine-export-btn" class="action-btn secondary" style="margin-top: 12px; width: 100%;" aria-label="Export wealth portfolio lists">
+                <!-- Export Button (Pro mode only) -->
+                <button id="patrimoine-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export wealth portfolio lists">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -826,8 +839,8 @@
             </div>
         </div>
 
-        <!-- LEVEL 3: OPERATIONS & SYSTEM -->
-        <div class="dashboard-grid" id="grid-niveau-3" style="margin-top: 20px;">
+        <!-- LEVEL 3: OPERATIONS & SYSTEM (Pro mode only) -->
+        <div class="dashboard-grid pro-only" id="grid-niveau-3" style="margin-top: 20px;">
             <!-- Execution Status -->
             <div class="card level-3" id="card-execution" draggable="true"
                 data-tooltip="Status of automatic trade executions with performance history and processed volumes."

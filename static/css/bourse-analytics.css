@@ -1,0 +1,263 @@
+/**
+ * Bourse Analytics Page Styles
+ * Extracted from inline styles - Feb 2026
+ */
+
+/* =============================================
+   LAYOUT PATTERNS
+   ============================================= */
+
+.ba-flex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.ba-flex-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.ba-flex-gap-sm {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.ba-flex-gap-md {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.ba-flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+/* =============================================
+   SPACING UTILITIES
+   ============================================= */
+
+.ba-mt-lg {
+  margin-top: var(--space-lg);
+}
+
+.ba-mt-xl {
+  margin-top: var(--space-xl);
+}
+
+.ba-mb-lg {
+  margin-bottom: var(--space-lg);
+}
+
+.ba-mb-xl {
+  margin-bottom: var(--space-xl);
+}
+
+.ba-p-lg {
+  padding: var(--space-lg);
+}
+
+.ba-p-xl {
+  padding: var(--space-xl);
+}
+
+/* =============================================
+   SECTION HEADERS
+   ============================================= */
+
+.ba-section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-lg);
+  color: var(--theme-text);
+}
+
+.ba-card-title {
+  font-weight: 600;
+  margin-bottom: var(--space-md);
+}
+
+.ba-subtitle {
+  color: var(--theme-text-muted);
+  margin: 0;
+}
+
+/* =============================================
+   METRIC DISPLAYS
+   ============================================= */
+
+.ba-metric-large {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.ba-metric-unit {
+  font-size: 1rem;
+  color: var(--theme-text-muted);
+}
+
+.ba-metric-label {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: var(--space-sm);
+}
+
+.ba-metric-desc {
+  color: var(--theme-text-muted);
+  font-size: 0.875rem;
+}
+
+.ba-metric-flex {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* =============================================
+   BADGES & INDICATORS
+   ============================================= */
+
+.ba-cache-badge {
+  display: none;
+  padding: 0.25rem 0.75rem;
+  background: var(--success);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ba-cache-badge.visible {
+  display: inline-block;
+}
+
+/* =============================================
+   BUTTONS
+   ============================================= */
+
+.ba-btn-primary {
+  padding: 0.75rem 1.25rem;
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: background 0.2s ease;
+}
+
+.ba-btn-primary:hover {
+  background: var(--brand-primary-hover, #2563eb);
+}
+
+.ba-btn-secondary {
+  padding: 0.5rem 1rem;
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* =============================================
+   CARDS & PANELS
+   ============================================= */
+
+.ba-card-spacing {
+  margin-bottom: var(--space-lg);
+}
+
+.ba-card-section {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--theme-border);
+  margin-top: var(--space-lg);
+}
+
+/* =============================================
+   EMPTY/PLACEHOLDER STATES
+   ============================================= */
+
+.ba-placeholder {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--theme-text-muted);
+  font-size: 0.875rem;
+}
+
+.ba-placeholder-icon {
+  font-size: 4rem;
+  margin-bottom: var(--space-lg);
+}
+
+.ba-placeholder-title {
+  margin-bottom: var(--space-lg);
+  color: var(--theme-text);
+}
+
+.ba-placeholder-desc {
+  color: var(--theme-text-muted);
+  margin-bottom: var(--space-lg);
+}
+
+/* =============================================
+   FORM ELEMENTS
+   ============================================= */
+
+.ba-select {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+  font-size: 0.875rem;
+}
+
+/* =============================================
+   TABLE STYLES
+   ============================================= */
+
+.ba-table-cell-danger {
+  color: var(--danger);
+}
+
+.ba-table-cell-success {
+  color: var(--success);
+}
+
+.ba-table-cell-capitalize {
+  text-transform: capitalize;
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
+@media (max-width: 768px) {
+  .ba-flex-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ba-flex-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ba-metric-flex {
+    min-width: 100%;
+  }
+
+  .ba-section-title {
+    font-size: 1.25rem;
+  }
+}

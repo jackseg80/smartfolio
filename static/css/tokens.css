@@ -186,6 +186,13 @@
   --radius-3xl: 1.5rem;   /* 24px */
   --radius-full: 9999px;
 
+  /* Semantic radius aliases */
+  --radius-card: var(--radius-lg);      /* Standard card radius: 8px */
+  --radius-button: var(--radius-md);    /* Button radius: 6px */
+  --radius-input: var(--radius-md);     /* Input field radius: 6px */
+  --radius-badge: var(--radius-sm);     /* Badge/tag radius: 4px */
+  --radius-modal: var(--radius-xl);     /* Modal dialog radius: 12px */
+
   /* ══════════════════════════════════════════════════════════
      OMBRES
      ══════════════════════════════════════════════════════════ */

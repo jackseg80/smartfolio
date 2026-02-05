@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
+  <link rel="stylesheet" href="css/view-modes.css">
 
   <!-- Shared scripts -->
   <script src="debug-logger.js"></script>
@@ -42,10 +43,20 @@
   <!-- Risk Dashboard CSS (reuse existing styles) -->
   <link rel="stylesheet" href="css/risk-dashboard.css">
 
+  <!-- View Mode System (Feb 2026) -->
+  <script type="module" src="components/view-toggle.js"></script>
+  <script type="module" src="components/domain-nav.js"></script>
+
   <!-- Navigation -->
   <script type="module">
     import { checkAuth } from './core/auth-guard.js';
     await checkAuth();
+
+    // ===== VIEW MODE MANAGER (Feb 2026) =====
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    ViewModeManager.init();
+    // ========================================
+
     if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
       import('./components/nav.js');
     }
@@ -76,6 +87,7 @@
         <h1>Market Regimes</h1>
       </div>
       <div class="header-controls">
+        <view-toggle></view-toggle>
         <div class="timestamp" id="last-update">Loading...</div>
         <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -84,6 +96,9 @@
         </button>
       </div>
     </div>
+
+    <!-- Navigation contextuelle Risk Domain (Feb 2026) -->
+    <domain-nav domain="risk"></domain-nav>
 
     <!-- Main Content -->
     <div class="dashboard-layout">
@@ -101,7 +116,7 @@
                 </div>
                 <div class="card-actions">
                   <button id="refresh-stock-regime" class="btn primary">🔄 Refresh</button>
-                  <button id="view-stock-history" class="btn secondary">📊 View Probabilities</button>
+                  <button id="view-stock-history" class="btn secondary pro-only">📊 View Probabilities</button>
                 </div>
               </div>
               <div class="card-content">
@@ -124,7 +139,7 @@
                   </div>
                 </div>
 
-                <div style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
+                <div class="pro-only" style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
                   <strong>ℹ️ Stock Market Detection:</strong>
                   <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                     <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
@@ -163,7 +178,7 @@
                   <small>Detection Certainty</small>
                 </div>
 
-                <div class="metric-card">
+                <div class="metric-card pro-only">
                   <h5>Detection Method</h5>
                   <div class="metric-value">
                     <span id="btc-current-regime-method" class="detection-method">--</span>
@@ -171,7 +186,7 @@
                   <small>Rule-Based or HMM</small>
                 </div>
 
-                <div class="metric-card" id="btc-regime-reason-card" style="display: none;">
+                <div class="metric-card pro-only" id="btc-regime-reason-card" style="display: none;">
                   <h5>Rule Trigger</h5>
                   <div class="metric-value" style="font-size: 0.85rem;" id="btc-current-regime-reason">--</div>
                   <small>Detection Criteria</small>
