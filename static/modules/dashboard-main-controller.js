@@ -2871,8 +2871,8 @@ async function refreshGlobalTile() {
             apiUrl += `&bourse_file_key=${encodeURIComponent(bourseFileKey)}`;
         }
 
-        // ✅ CRITICAL DEBUG: Log API call details
-        console.error(`🔥 GLOBAL API CALL DEBUG:`, {
+        // Debug: Log API call details (use console.debug to avoid Lighthouse errors)
+        console.debug(`GLOBAL API CALL DEBUG:`, {
             url: apiUrl,
             user: activeUser,
             currentSource,
@@ -2889,8 +2889,8 @@ async function refreshGlobalTile() {
 
         const data = await response.json();
 
-        // 🔥 DEBUG: Log P&L data from API
-        console.error('🔥 P&L DATA FROM API:', {
+        // Debug: Log P&L data from API
+        console.debug('P&L DATA FROM API:', {
             pnl_today: data.pnl_today,
             pnl_today_pct: data.pnl_today_pct,
             has_pnl: data.pnl_today !== undefined
@@ -3007,8 +3007,8 @@ async function refreshGlobalTile() {
             statusEl.className = 'status-badge status-active';
         }
 
-        // ✅ CRITICAL DEBUG: Log breakdown details to diagnose missing Bourse card
-        console.error(`🔥 GLOBAL BREAKDOWN DEBUG:`, {
+        // Debug: Log breakdown details
+        console.debug(`GLOBAL BREAKDOWN DEBUG:`, {
             crypto: data.breakdown?.crypto,
             saxo: data.breakdown?.saxo,
             patrimoine: data.breakdown?.patrimoine,

@@ -312,8 +312,8 @@ async function showMLDebug() {
 
     if (response.ok) {
       const data = await response.json();
-      const debugWindow = window.open('', '_blank', 'width=800,height=600');
-      debugWindow.document.write(`
+      // Use Blob URL instead of deprecated document.write()
+      const htmlContent = `
         <html>
           <head><title>ML Debug Info</title></head>
           <body style="font-family: monospace; padding: 20px;">
@@ -321,7 +321,10 @@ async function showMLDebug() {
             <pre>${JSON.stringify(data, null, 2)}</pre>
           </body>
         </html>
-      `);
+      `;
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'width=800,height=600');
     } else {
       alert('❌ Admin access required');
     }

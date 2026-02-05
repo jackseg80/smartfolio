@@ -142,7 +142,7 @@ class NetworkStateManager {
    * @returns {string} ID de l'intervalle
    */
   createManagedInterval(callback, delay, name = '') {
-    const id = `interval_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const id = `interval_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 
     const info = {
       callback,

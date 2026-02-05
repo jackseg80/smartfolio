@@ -35,7 +35,7 @@ export class UIModal {
   static styleInjected = false;
 
   constructor(options = {}) {
-    this.id = `modal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    this.id = `modal-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
     this.title = options.title || '';
     this.content = options.content || '';
     this.size = options.size || 'medium'; // small, medium, large, fullscreen
