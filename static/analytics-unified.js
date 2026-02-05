@@ -545,20 +545,36 @@ function updatePerformanceBreakdown(cache, memory) {
     const breakdownContainer = document.querySelector('#tab-performance .panel-card div:nth-child(3)');
     if (!breakdownContainer) return;
 
-    const memEntries = Number(cache?.memory_cache_size);
-    const diskFiles = Number(cache?.disk_cache_files);
-    const hitRate = (Number.isFinite(memEntries) && Number.isFinite(diskFiles) && (memEntries + diskFiles) > 0)
-        ? ((memEntries / (memEntries + diskFiles)) * 100).toFixed(1) + '%'
-        : 'N/A';
+    // Extract detailed cache stats
+    const redis = cache?.redis || {};
+    const mlModels = cache?.ml_models || {};
+    const optCache = cache?.optimization_cache || {};
+
+    // Memory stats
     const availGb = Number.isFinite(Number(memory?.available_system_mb)) ? (memory.available_system_mb / 1024).toFixed(1) + ' GB' : 'N/A';
     const procEff = (typeof memory?.percent === 'number')
         ? (memory.percent < 5 ? 'Excellent' : memory.percent < 10 ? 'Good' : 'Average')
         : 'N/A';
 
+    // Redis status
+    const redisStatus = redis.available
+        ? `<span style="color: var(--success);">✓ ${redis.total_keys || 0} keys (${redis.used_memory_mb || 0} MB)</span>`
+        : `<span style="color: var(--warning);">○ Disconnected</span>`;
+
+    // ML Models stats
+    const mlCount = mlModels.total_models || 0;
+    const mlSize = mlModels.total_size_mb || 0;
+    const mlDetails = mlModels.by_type
+        ? Object.entries(mlModels.by_type).map(([k, v]) => `${k}: ${v.count}`).join(', ')
+        : '';
+
     breakdownContainer.innerHTML = `
         <h4>System Performance</h4>
         <div style="display: grid; gap: 0.5rem;">
-            <div style="display: flex; justify-content: space-between;"><span>Memory Cache Hit Rate:</span><span style="color: var(--success);">${hitRate}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span>Redis Cache:</span>${redisStatus}</div>
+            <div style="display: flex; justify-content: space-between;"><span>ML Models:</span><span>${mlCount} files (${mlSize.toFixed(1)} MB)</span></div>
+            ${mlDetails ? `<div style="display: flex; justify-content: space-between; font-size: 0.85em; color: var(--theme-text-muted);"><span>&nbsp;&nbsp;→ ${mlDetails}</span></div>` : ''}
+            <div style="display: flex; justify-content: space-between;"><span>Optimization Cache:</span><span>${optCache.memory_cache_size || 0} entries</span></div>
             <div style="display: flex; justify-content: space-between;"><span>Available Memory:</span><span>${availGb}</span></div>
             <div style="display: flex; justify-content: space-between;"><span>Process Efficiency:</span><span>${procEff}</span></div>
         </div>

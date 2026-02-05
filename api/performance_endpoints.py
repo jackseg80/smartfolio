@@ -13,41 +13,141 @@ import time
 from hashlib import sha256
 import json
 
-from api.deps import get_required_user
+from api.deps import get_required_user, get_redis_client
 from services.performance_optimizer import performance_optimizer
 from api.dependencies.dev_guards import require_dev_mode
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/performance", tags=["Performance"])
 
+
+def _get_redis_stats() -> Dict:
+    """Get Redis cache statistics if available"""
+    try:
+        redis_client = get_redis_client()
+        if redis_client is None:
+            return {"available": False, "error": "Redis not connected"}
+
+        info = redis_client.info("memory")
+        keyspace = redis_client.info("keyspace")
+
+        # Count total keys across all databases
+        total_keys = 0
+        for db_name, db_info in keyspace.items():
+            if isinstance(db_info, dict) and "keys" in db_info:
+                total_keys += db_info["keys"]
+
+        return {
+            "available": True,
+            "total_keys": total_keys,
+            "used_memory_mb": round(info.get("used_memory", 0) / (1024 * 1024), 2),
+            "used_memory_peak_mb": round(info.get("used_memory_peak", 0) / (1024 * 1024), 2),
+            "hit_rate": None  # Redis doesn't track hit rate by default
+        }
+    except Exception as e:
+        logger.debug(f"Redis stats unavailable: {e}")
+        return {"available": False, "error": str(e)}
+
+
+def _get_ml_models_stats() -> Dict:
+    """Get ML models cache statistics"""
+    models_dir = Path("models")
+    stats = {
+        "total_models": 0,
+        "total_size_mb": 0.0,
+        "by_type": {}
+    }
+
+    if not models_dir.exists():
+        return stats
+
+    try:
+        # Count models by type
+        model_types = {
+            "regime": ["*.pth", "*.pkl"],
+            "volatility": ["*.pth", "*.pkl"],
+            "correlation": ["*.pth", "*.pkl"],
+            "config": ["*.json"]
+        }
+
+        total_size = 0
+        total_count = 0
+
+        for model_file in models_dir.rglob("*"):
+            if model_file.is_file() and model_file.suffix in [".pth", ".pkl", ".json"]:
+                total_count += 1
+                total_size += model_file.stat().st_size
+
+                # Categorize by parent folder
+                parent = model_file.parent.name
+                if parent not in stats["by_type"]:
+                    stats["by_type"][parent] = {"count": 0, "size_mb": 0.0}
+                stats["by_type"][parent]["count"] += 1
+                stats["by_type"][parent]["size_mb"] += model_file.stat().st_size / (1024 * 1024)
+
+        stats["total_models"] = total_count
+        stats["total_size_mb"] = round(total_size / (1024 * 1024), 2)
+
+        # Round sizes in by_type
+        for key in stats["by_type"]:
+            stats["by_type"][key]["size_mb"] = round(stats["by_type"][key]["size_mb"], 2)
+
+    except Exception as e:
+        logger.warning(f"Could not calculate ML models stats: {e}")
+
+    return stats
+
+
 @router.get("/cache/stats")
 async def get_cache_stats():
-    """Get cache statistics and memory usage"""
-    
-    cache_stats = {
+    """Get comprehensive cache statistics (Redis, ML models, optimization cache)"""
+
+    # 1. Optimization cache (portfolio optimization matrices)
+    optimization_cache = {
         "memory_cache_size": len(performance_optimizer.memory_cache),
         "max_cache_size": performance_optimizer.max_cache_size,
-        "cache_directory": str(performance_optimizer.cache_dir),
-        "timestamp": datetime.now().isoformat()
+        "cache_directory": str(performance_optimizer.cache_dir)
     }
-    
-    # Count disk cache files
+
     try:
         disk_files = list(performance_optimizer.cache_dir.glob("*.json"))
-        cache_stats["disk_cache_files"] = len(disk_files)
-        
-        # Calculate total disk usage
+        optimization_cache["disk_cache_files"] = len(disk_files)
         total_size = sum(f.stat().st_size for f in disk_files)
-        cache_stats["disk_cache_size_mb"] = round(total_size / (1024 * 1024), 2)
-        
+        optimization_cache["disk_cache_size_mb"] = round(total_size / (1024 * 1024), 2)
     except Exception as e:
-        logger.warning(f"Could not calculate disk cache stats: {e}")
-        cache_stats["disk_cache_files"] = "unknown"
-        cache_stats["disk_cache_size_mb"] = "unknown"
-    
+        logger.warning(f"Could not calculate optimization cache stats: {e}")
+        optimization_cache["disk_cache_files"] = 0
+        optimization_cache["disk_cache_size_mb"] = 0
+
+    # 2. Redis cache
+    redis_stats = _get_redis_stats()
+
+    # 3. ML models cache
+    ml_stats = _get_ml_models_stats()
+
+    # Compute aggregated stats for frontend compatibility
+    total_memory_entries = optimization_cache["memory_cache_size"]
+    total_disk_mb = optimization_cache["disk_cache_size_mb"] + ml_stats["total_size_mb"]
+
+    if redis_stats.get("available"):
+        total_memory_entries += redis_stats.get("total_keys", 0)
+        total_disk_mb += redis_stats.get("used_memory_mb", 0)
+
     return {
         "success": True,
-        "cache_stats": cache_stats
+        "cache_stats": {
+            # Aggregated stats (for frontend backward compatibility)
+            "memory_cache_size": total_memory_entries,
+            "disk_cache_size_mb": round(total_disk_mb, 2),
+            "disk_cache_files": optimization_cache["disk_cache_files"] + ml_stats["total_models"],
+            "timestamp": datetime.now().isoformat(),
+
+            # Detailed breakdown
+            "optimization_cache": optimization_cache,
+            "redis": redis_stats,
+            "ml_models": ml_stats
+        }
     }
 
 @router.post("/cache/clear", dependencies=[Depends(require_dev_mode)])
