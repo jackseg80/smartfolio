@@ -683,6 +683,107 @@
       monthlyReturnsChart: { title: 'Rendements Mensuels', getChart: () => monthlyReturnsChart }
     };
 
+    /**
+     * Clone Chart.js configuration properly (JSON.stringify cannot handle functions/circular refs)
+     */
+    function cloneChartConfig(sourceChart) {
+      const sourceData = sourceChart.data;
+      const sourceOptions = sourceChart.options;
+
+      // Clone datasets manually
+      const clonedDatasets = sourceData.datasets.map(ds => {
+        const cloned = {
+          label: ds.label,
+          data: [...ds.data], // Copy data array
+          borderColor: ds.borderColor,
+          backgroundColor: ds.backgroundColor,
+          borderWidth: ds.borderWidth,
+          fill: ds.fill,
+          tension: ds.tension,
+          pointRadius: ds.pointRadius,
+          pointHoverRadius: ds.pointHoverRadius,
+          yAxisID: ds.yAxisID,
+          stack: ds.stack,
+          order: ds.order,
+          hidden: ds.hidden
+        };
+        // Remove undefined properties
+        Object.keys(cloned).forEach(key => {
+          if (cloned[key] === undefined) delete cloned[key];
+        });
+        return cloned;
+      });
+
+      // Clone labels
+      const clonedLabels = sourceData.labels ? [...sourceData.labels] : [];
+
+      // Build new config
+      return {
+        type: sourceChart.config.type,
+        data: {
+          labels: clonedLabels,
+          datasets: clonedDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: sourceOptions.interaction ? { ...sourceOptions.interaction } : undefined,
+          plugins: {
+            legend: sourceOptions.plugins?.legend ? {
+              display: sourceOptions.plugins.legend.display !== false,
+              position: sourceOptions.plugins.legend.position || 'top'
+            } : { display: true },
+            title: sourceOptions.plugins?.title ? {
+              display: sourceOptions.plugins.title.display,
+              text: sourceOptions.plugins.title.text
+            } : undefined,
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: cloneScales(sourceOptions.scales)
+        }
+      };
+    }
+
+    /**
+     * Clone scales configuration
+     */
+    function cloneScales(scales) {
+      if (!scales) return undefined;
+
+      const cloned = {};
+      Object.keys(scales).forEach(key => {
+        const scale = scales[key];
+        cloned[key] = {
+          type: scale.type,
+          display: scale.display !== false,
+          position: scale.position,
+          stacked: scale.stacked,
+          title: scale.title ? {
+            display: scale.title.display,
+            text: scale.title.text
+          } : undefined,
+          grid: scale.grid ? {
+            display: scale.grid.display !== false,
+            color: scale.grid.color
+          } : undefined,
+          ticks: scale.ticks ? {
+            callback: undefined // Cannot clone functions, use default
+          } : undefined,
+          min: scale.min,
+          max: scale.max,
+          beginAtZero: scale.beginAtZero
+        };
+        // Remove undefined properties
+        Object.keys(cloned[key]).forEach(k => {
+          if (cloned[key][k] === undefined) delete cloned[key][k];
+        });
+      });
+      return cloned;
+    }
+
     function openChartModal(chartId) {
       const config = chartConfigs[chartId];
       if (!config) return;
@@ -702,13 +803,8 @@
         modalChart = null;
       }
 
-      // Clone chart config
-      const chartConfig = JSON.parse(JSON.stringify(sourceChart.config));
-
-      // Adjust options for modal
-      chartConfig.options = chartConfig.options || {};
-      chartConfig.options.responsive = true;
-      chartConfig.options.maintainAspectRatio = false;
+      // Clone chart config properly
+      const chartConfig = cloneChartConfig(sourceChart);
 
       // Create new chart in modal
       modalChart = new Chart(modalCanvas, chartConfig);

@@ -223,6 +223,8 @@ Menu Analytics → DI Backtest (`/di-backtest.html`)
 3. **Drawdown Chart**: Underwater curve
 4. **Monthly Returns**: Calendrier des performances
 
+**Zoom**: Cliquer sur n'importe quel graphique pour l'afficher en plein écran. Fermer avec Échap ou clic en dehors.
+
 ## Utilisation Programmatique
 
 ```python
