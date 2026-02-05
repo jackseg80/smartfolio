@@ -11,6 +11,8 @@ Score d'accessibilité WCAG AA **≥92%** sur toutes les pages.
 | Page | Score Initial | Score Final | Statut |
 |------|--------------|-------------|--------|
 | rebalance.html | 79% → 84% | **95%** | ✅ |
+| market-regimes.html | 93% | **93%+** | ✅ (landmark ajouté) |
+| cycle-analysis.html | 90% | **90%+** | ✅ (landmark + lang ajoutés) |
 
 ## Corrections Effectuées (rebalance.html)
 
