@@ -137,6 +137,119 @@ async def scheduler_health():
         return error_response(str(e), code=500)
 
 
+@router.get("/health/all")
+async def health_all():
+    """
+    Unified health check endpoint - aggregates status from all subsystems.
+
+    Returns comprehensive health status including:
+    - API server status
+    - Redis connectivity
+    - ML system status
+    - Alerts engine status
+    - Scheduler status
+
+    Use this endpoint for monitoring dashboards and alerting systems.
+    """
+    import os
+    import asyncio
+    from datetime import datetime
+
+    results = {
+        "timestamp": datetime.now().isoformat(),
+        "environment": ENVIRONMENT,
+        "overall_status": "healthy",
+        "components": {}
+    }
+
+    # 1. API Server (always healthy if we reach here)
+    results["components"]["api"] = {
+        "status": "healthy",
+        "version": "2.0"
+    }
+
+    # 2. Redis
+    try:
+        import aioredis
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        redis = await aioredis.from_url(redis_url, socket_timeout=2.0)
+        await redis.ping()
+        keys_count = await redis.dbsize()
+        await redis.close()
+        results["components"]["redis"] = {
+            "status": "healthy",
+            "keys": keys_count
+        }
+    except Exception as e:
+        results["components"]["redis"] = {
+            "status": "unhealthy",
+            "error": str(e)
+        }
+        results["overall_status"] = "degraded"
+
+    # 3. ML System
+    try:
+        from services.ml.orchestrator import MLOrchestrator
+        ml = MLOrchestrator()
+        ml_status = await ml.get_system_health() if hasattr(ml, 'get_system_health') else {"available": True}
+        results["components"]["ml"] = {
+            "status": "healthy" if ml_status.get("available", True) else "degraded",
+            "models_loaded": ml_status.get("models_loaded", "unknown")
+        }
+    except Exception as e:
+        results["components"]["ml"] = {
+            "status": "unknown",
+            "error": str(e)
+        }
+
+    # 4. Alerts Engine
+    try:
+        from services.alerts.alert_engine import AlertEngine
+        alert_engine = AlertEngine()
+        results["components"]["alerts"] = {
+            "status": "healthy",
+            "engine_ready": True
+        }
+    except Exception as e:
+        results["components"]["alerts"] = {
+            "status": "unknown",
+            "error": str(e)
+        }
+
+    # 5. Scheduler
+    try:
+        from api.scheduler import get_scheduler
+        scheduler = get_scheduler()
+        if scheduler:
+            jobs = scheduler.get_jobs()
+            results["components"]["scheduler"] = {
+                "status": "healthy",
+                "enabled": True,
+                "jobs_count": len(jobs)
+            }
+        else:
+            results["components"]["scheduler"] = {
+                "status": "disabled",
+                "enabled": False
+            }
+    except Exception as e:
+        results["components"]["scheduler"] = {
+            "status": "unknown",
+            "error": str(e)
+        }
+
+    # Compute overall status
+    statuses = [c.get("status") for c in results["components"].values()]
+    if all(s == "healthy" for s in statuses):
+        results["overall_status"] = "healthy"
+    elif any(s == "unhealthy" for s in statuses):
+        results["overall_status"] = "unhealthy"
+    else:
+        results["overall_status"] = "degraded"
+
+    return success_response(results)
+
+
 @router.get("/schema")
 async def schema():
     """Fallback endpoint to expose OpenAPI schema if /openapi.json isn't reachable in your env."""
