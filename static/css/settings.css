@@ -1,0 +1,183 @@
+/**
+ * Settings Page Styles
+ * Extracted from inline styles - Feb 2026
+ */
+
+/* =============================================
+   LAYOUT
+   ============================================= */
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-flex-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.settings-form-col {
+  flex: 1;
+  min-width: 240px;
+}
+
+/* =============================================
+   FORM GROUPS
+   ============================================= */
+
+.settings-form-group {
+  margin-bottom: var(--space-md);
+}
+
+.settings-form-group-inline {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.settings-input-flex {
+  flex: 1;
+}
+
+.settings-input-readonly {
+  background: var(--theme-surface-elevated);
+  cursor: not-allowed;
+}
+
+.settings-btn-toggle {
+  min-width: 60px;
+}
+
+.settings-status-badge {
+  font-size: 0.625rem;
+}
+
+/* =============================================
+   SECTIONS
+   ============================================= */
+
+.settings-section {
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.settings-section-title {
+  margin: 0 0 var(--space-lg) 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+/* =============================================
+   SOURCE CARDS
+   ============================================= */
+
+.settings-source-card {
+  background: var(--theme-surface-elevated);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.settings-source-header {
+  margin-bottom: var(--space-md);
+}
+
+.settings-source-title {
+  color: var(--brand-primary);
+}
+
+.settings-source-subtitle {
+  color: var(--theme-text-muted);
+  font-size: 0.75rem;
+  margin-left: var(--space-sm);
+}
+
+/* =============================================
+   HELPER TEXT
+   ============================================= */
+
+.settings-helper-text {
+  color: var(--theme-text-muted);
+  font-size: 0.8125rem;
+}
+
+.settings-auto-save {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  align-items: center;
+}
+
+/* =============================================
+   STATUS INDICATORS
+   ============================================= */
+
+.settings-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.settings-status.connected {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+}
+
+.settings-status.disconnected {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+}
+
+.settings-status.pending {
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+  color: var(--warning);
+}
+
+/* =============================================
+   BUTTONS
+   ============================================= */
+
+.settings-btn-group {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.settings-btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.settings-btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 85%, black);
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
+@media (max-width: 768px) {
+  .settings-header {
+    flex-direction: column;
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+
+  .settings-form-col {
+    min-width: 100%;
+  }
+
+  .settings-form-group-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

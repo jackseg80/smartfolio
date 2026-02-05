@@ -1,0 +1,292 @@
+/**
+ * Bourse Recommendations Page Styles
+ * Extracted from inline styles - Feb 2026
+ */
+
+/* =============================================
+   HERO CARDS (Gradient backgrounds)
+   ============================================= */
+
+.br-hero-card {
+  margin-bottom: var(--space-lg);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover, #1e40af) 100%);
+  color: white;
+}
+
+.br-hero-card-success {
+  margin-bottom: var(--space-lg);
+  background: linear-gradient(135deg, #10b981 0%, var(--success, #059669) 100%);
+  color: white;
+}
+
+.br-hero-content {
+  padding: var(--space-lg);
+}
+
+.br-hero-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  color: white;
+}
+
+.br-hero-subtitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+  color: white;
+}
+
+/* =============================================
+   MARKET CONTEXT METRICS
+   ============================================= */
+
+.br-context-grid {
+  display: flex;
+  gap: var(--space-xl);
+  margin-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.br-context-label {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.br-context-value {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* =============================================
+   TIMEFRAME SELECTOR
+   ============================================= */
+
+.br-timeframe-selector {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.br-timeframe-btn-content {
+  font-weight: 600;
+}
+
+.br-timeframe-btn-label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.br-divider-vertical {
+  border-left: 1px solid var(--theme-border);
+  height: 2rem;
+  margin: 0 var(--space-sm);
+}
+
+/* =============================================
+   SUMMARY GRID
+   ============================================= */
+
+.br-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-top: 1px solid var(--theme-border);
+}
+
+.br-summary-placeholder {
+  text-align: center;
+  color: var(--theme-text-muted);
+  padding: var(--space-lg);
+}
+
+/* =============================================
+   FILTERS & CONTROLS
+   ============================================= */
+
+.br-filters-row {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  padding: var(--space-lg);
+}
+
+.br-search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+.br-filter-select {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--theme-border);
+  background: var(--theme-surface);
+  color: var(--theme-text);
+}
+
+.br-export-btn {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+/* =============================================
+   EMPTY STATES
+   ============================================= */
+
+.br-empty-state {
+  padding: var(--space-2xl);
+  text-align: center;
+  color: var(--theme-text-muted);
+}
+
+.br-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-lg);
+}
+
+.br-empty-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+}
+
+.br-empty-desc {
+  font-size: 0.875rem;
+}
+
+/* =============================================
+   RECOMMENDATION CARDS
+   ============================================= */
+
+.br-rec-card {
+  border-left: 4px solid var(--theme-border);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  background: var(--theme-surface);
+  border-radius: var(--radius-md);
+}
+
+.br-rec-card.buy {
+  border-left-color: var(--success);
+}
+
+.br-rec-card.sell {
+  border-left-color: var(--danger);
+}
+
+.br-rec-card.hold {
+  border-left-color: var(--warning);
+}
+
+.br-rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-md);
+}
+
+.br-rec-symbol {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.br-rec-action {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.br-rec-action.buy {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+}
+
+.br-rec-action.sell {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+  color: var(--danger);
+}
+
+.br-rec-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.br-rec-metric-label {
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+}
+
+.br-rec-metric-value {
+  font-weight: 600;
+}
+
+/* =============================================
+   OPPORTUNITIES SECTION
+   ============================================= */
+
+.br-opp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-lg);
+}
+
+.br-opp-card {
+  padding: var(--space-lg);
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius-md);
+}
+
+.br-opp-score {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--brand-primary);
+}
+
+/* =============================================
+   LOADING STATES
+   ============================================= */
+
+.br-loading {
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--theme-text-muted);
+}
+
+/* =============================================
+   RESPONSIVE
+   ============================================= */
+
+@media (max-width: 768px) {
+  .br-context-grid {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .br-timeframe-selector {
+    flex-wrap: wrap;
+  }
+
+  .br-filters-row {
+    flex-direction: column;
+  }
+
+  .br-search-input {
+    min-width: 100%;
+  }
+
+  .br-rec-header {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+}
