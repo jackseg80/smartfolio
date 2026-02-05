@@ -187,6 +187,7 @@ const initUnifiedNav = () => {
               <div class="submenu">
                 <a href="analytics-unified.html" data-route="analytics-unified.html">📊 Analytics Dashboard</a>
                 <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>
+                <a href="di-backtest.html" data-route="di-backtest.html">📈 DI Backtest</a>
               </div>
             </li>
 

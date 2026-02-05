@@ -159,13 +159,15 @@ def register_routers(app: FastAPI) -> None:
 
     # ========== Strategy & Backtesting ==========
     from api.backtesting_endpoints import router as backtesting_router
+    from api.di_backtest_endpoints import router as di_backtest_router
     from api.multi_asset_endpoints import router as multi_asset_router
     from api.strategy_endpoints import router as strategy_router
 
     app.include_router(strategy_router)
     app.include_router(backtesting_router)
+    app.include_router(di_backtest_router)  # DI Backtest - validation rétroactive Decision Index
     app.include_router(multi_asset_router)
-    logger.info("✅ Strategy & Backtesting routers registered")
+    logger.info("✅ Strategy & Backtesting routers registered (incl. DI Backtest)")
 
     # ========== Alerts & Real-time ==========
     from api.alerts_endpoints import router as alerts_router

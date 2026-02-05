@@ -593,43 +593,84 @@ class MarketBreadthResponse(BaseModel):
     meta: Dict[str, Any] = Field(description="Métadonnées")
 
 
+async def _fetch_global_market_data(limit: int = 100) -> List[Dict[str, Any]]:
+    """
+    Récupère les données de marché global depuis CoinGecko (top N cryptos par market cap).
+
+    Utilisé pour les métriques de market breadth - représente le marché global,
+    pas un portefeuille utilisateur spécifique.
+
+    Returns:
+        Liste de cryptos avec price_change_percentage_24h, total_volume, market_cap, ath, etc.
+    """
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            params = {
+                "vs_currency": "usd",
+                "order": "market_cap_desc",
+                "per_page": limit,
+                "page": 1,
+                "sparkline": "false",
+                "price_change_percentage": "24h"
+            }
+            response = await client.get(
+                "https://api.coingecko.com/api/v3/coins/markets",
+                params=params
+            )
+            if response.status_code == 200:
+                data = response.json()
+                logger.debug(f"Fetched {len(data)} coins from CoinGecko for market breadth")
+                return data
+            else:
+                logger.warning(f"CoinGecko API returned {response.status_code} for market breadth")
+                return []
+    except httpx.TimeoutException:
+        logger.warning("CoinGecko API timeout for market breadth")
+        return []
+    except Exception as e:
+        logger.error(f"Failed to fetch global market data: {e}")
+        return []
+
+
 @router.get("/market-breadth", response_model=MarketBreadthResponse)
 async def get_market_breadth():
     """
-    Analyse de largeur de marché (market breadth)
+    Analyse de largeur de marché (market breadth) - DONNÉES MARCHÉ GLOBAL
 
-    Fournit des métriques sur la participation du marché:
-    - Ratio avance/déclin: proportion d'actifs en hausse
-    - Nouveaux ATH: nombre d'actifs à des nouveaux sommets
-    - Concentration volume: degré de concentration du volume
-    - Dispersion momentum: variabilité des performances
+    Fournit des métriques sur la participation du marché crypto global (top 100):
+    - Ratio avance/déclin: proportion de cryptos du marché en hausse vs déclin
+    - Nouveaux ATH: nombre de cryptos proches de leurs ATH historiques
+    - Concentration volume: degré de concentration du volume sur les top assets
+    - Dispersion momentum: variabilité des performances (écart-type normalisé)
+
+    Note: Ces métriques sont calculées sur les top 100 cryptos du marché global
+    (par market cap), pas sur un portefeuille utilisateur spécifique.
     """
     try:
-        logger.info("Calculating market breadth metrics")
+        logger.info("Calculating market breadth metrics from global market data")
 
-        # Utiliser les données de balances existantes pour calculer les métriques
-        from api.unified_data import get_unified_filtered_balances
+        # Récupérer les données de marché global via CoinGecko
+        market_data = await _fetch_global_market_data(limit=100)
 
-        balances_response = await get_unified_filtered_balances()
-        balances = balances_response.get('items', []) if isinstance(balances_response, dict) else balances_response
-
-        if not balances:
-            logger.warning("No balance data available for market breadth calculation")
+        if not market_data:
+            logger.warning("No global market data available for market breadth calculation")
             return MarketBreadthResponse(
                 advance_decline_ratio=0.5,
                 new_highs_count=0,
                 volume_concentration=0.5,
                 momentum_dispersion=0.5,
-                meta={"status": "no_data", "timestamp": datetime.now().isoformat()}
+                meta={"status": "no_data", "source": "coingecko", "timestamp": datetime.now().isoformat()}
             )
 
         # 1. Calculer le ratio avance/déclin
-        # Utiliser le changement sur 24h comme proxy pour avance/déclin
+        # Basé sur le changement de prix sur 24h
         advancing_assets = 0
         total_assets = 0
 
-        for balance in balances:
-            change_24h = balance.get('price_change_percentage_24h', 0)
+        for coin in market_data:
+            change_24h = coin.get('price_change_percentage_24h')
             if change_24h is not None:
                 total_assets += 1
                 if change_24h > 0:
@@ -637,30 +678,33 @@ async def get_market_breadth():
 
         advance_decline_ratio = advancing_assets / total_assets if total_assets > 0 else 0.5
 
-        # 2. Calculer les nouveaux ATH (approximation)
-        # Dans un vrai système, on comparerait avec les ATH historiques
-        # Ici on utilise les actifs avec de très fortes performances (>20% sur 24h)
-        new_highs_count = sum(1 for balance in balances
-                             if balance.get('price_change_percentage_24h', 0) > 20)
+        # 2. Calculer les nouveaux ATH
+        # CoinGecko fournit ath et ath_change_percentage (distance from ATH)
+        # On compte les cryptos à moins de 5% de leur ATH
+        new_highs_count = 0
+        for coin in market_data:
+            ath_change = coin.get('ath_change_percentage')
+            if ath_change is not None and ath_change >= -5:  # À moins de 5% de l'ATH
+                new_highs_count += 1
 
         # 3. Concentration du volume
-        # Calculer la concentration du volume sur les top assets
-        total_volume = sum(float(balance.get('value_usd', 0)) for balance in balances)
-        top_10_volume = sum(float(balance.get('value_usd', 0)) for balance in balances[:10])
+        # Calculer quelle proportion du volume total est captée par les top 10
+        volumes = [float(coin.get('total_volume', 0) or 0) for coin in market_data]
+        total_volume = sum(volumes)
+        top_10_volume = sum(sorted(volumes, reverse=True)[:10])
         volume_concentration = top_10_volume / total_volume if total_volume > 0 else 0.5
 
         # 4. Dispersion du momentum
-        # Calculer la variance des rendements comme mesure de dispersion
-        returns_24h = [balance.get('price_change_percentage_24h', 0)
-                      for balance in balances
-                      if balance.get('price_change_percentage_24h') is not None]
+        # Calculer l'écart-type des rendements 24h comme mesure de dispersion
+        returns_24h = [coin.get('price_change_percentage_24h', 0) or 0
+                      for coin in market_data
+                      if coin.get('price_change_percentage_24h') is not None]
 
-        if returns_24h:
+        if len(returns_24h) > 1:
             import statistics
-            mean_return = statistics.mean(returns_24h)
-            variance = statistics.variance(returns_24h) if len(returns_24h) > 1 else 0
-            # Normaliser la dispersion (0 = très concentré, 1 = très dispersé)
-            momentum_dispersion = min(1.0, variance / 100)  # Normalisation approximative
+            std_dev = statistics.stdev(returns_24h)
+            # Normaliser: écart-type de 10% = dispersion de 1.0
+            momentum_dispersion = min(1.0, std_dev / 10.0)
         else:
             momentum_dispersion = 0.5
 
@@ -670,11 +714,12 @@ async def get_market_breadth():
             volume_concentration=round(volume_concentration, 3),
             momentum_dispersion=round(momentum_dispersion, 3),
             meta={
-                "assets_analyzed": len(balances),
+                "assets_analyzed": len(market_data),
                 "advancing_assets": advancing_assets,
+                "declining_assets": total_assets - advancing_assets,
                 "total_assets": total_assets,
                 "timestamp": datetime.now().isoformat(),
-                "source": "portfolio_data"
+                "source": "coingecko_global_top100"
             }
         )
 
@@ -685,7 +730,6 @@ async def get_market_breadth():
 
     except Exception as e:
         logger.error(f"Error calculating market breadth: {e}")
-        # Retourner des valeurs par défaut en cas d'erreur
         return MarketBreadthResponse(
             advance_decline_ratio=0.5,
             new_highs_count=0,

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DI Backtest - SmartFolio</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="theme-compat.css">
+  <link rel="stylesheet" href="analytics-unified-theme.css?v=20260129v1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+  <script src="debug-logger.js"></script>
+  <script src="components/toast.js" type="module"></script>
+  <script src="global-config.js"></script>
+  <script src="appearance.js"></script>
+  <script type="module" src="components/nav.js"></script>
+  <script type="module">
+    // ===== AUTH GUARD =====
+    import { checkAuth } from './core/auth-guard.js';
+    await checkAuth();
+  </script>
+  <style>
+    .wrap {
+      max-width: min(1600px, 96vw);
+      margin: 0 auto;
+      padding: var(--space-lg);
+    }
+
+    .page-header {
+      margin-bottom: var(--space-xl);
+    }
+
+    .page-header h1 {
+      font-size: 1.75rem;
+      margin: 0 0 var(--space-sm) 0;
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    .page-header p {
+      color: var(--theme-text-muted);
+      margin: 0;
+    }
+
+    /* Controls Panel */
+    .controls-panel {
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-md);
+      align-items: end;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .control-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--theme-text-muted);
+    }
+
+    .control-group select,
+    .control-group input {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-md);
+      background: var(--theme-surface);
+      color: var(--theme-text);
+      font-size: 0.9rem;
+      color-scheme: light dark;
+    }
+
+    /* Dark mode specific: ensure inputs are readable */
+    [data-theme="dark"] .control-group select,
+    [data-theme="dark"] .control-group input {
+      background: var(--theme-bg);
+    }
+
+    .control-group select:focus,
+    .control-group input:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 2px rgba(var(--brand-primary-rgb, 59, 130, 246), 0.2);
+    }
+
+    /* Date inputs specific styling for dark mode */
+    .control-group input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: var(--theme-icon-filter, none);
+      cursor: pointer;
+    }
+
+    [data-theme="dark"] .control-group input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+    }
+
+    .btn-primary {
+      background: var(--brand-primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Results Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--space-lg);
+    }
+
+    .result-card {
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-lg);
+    }
+
+    .result-card h3 {
+      font-size: 1rem;
+      margin: 0 0 var(--space-md) 0;
+      color: var(--theme-text);
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+    }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .kpi-card {
+      background: var(--theme-bg);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+      text-align: center;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: var(--space-xs);
+    }
+
+    .kpi-value.positive { color: var(--color-success); }
+    .kpi-value.negative { color: var(--color-danger); }
+    .kpi-value.neutral { color: var(--theme-text); }
+
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--theme-text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Charts */
+    .chart-container {
+      position: relative;
+      height: 300px;
+      width: 100%;
+    }
+
+    /* Period Presets */
+    .period-presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-top: var(--space-sm);
+    }
+
+    .preset-btn {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      background: var(--theme-surface);
+      color: var(--theme-text);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+      background: var(--theme-bg);
+    }
+
+    .preset-btn.active {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    /* Loading State */
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--theme-border);
+      border-top-color: var(--brand-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* DI History Chart Zones */
+    .di-zone-bullish { background: rgba(16, 185, 129, 0.1); }
+    .di-zone-neutral { background: rgba(245, 158, 11, 0.1); }
+    .di-zone-bearish { background: rgba(239, 68, 68, 0.1); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .controls-grid {
+        grid-template-columns: 1fr;
+      }
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Strategy comparison table */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: var(--space-sm);
+      text-align: left;
+      border-bottom: 1px solid var(--theme-border);
+    }
+
+    .comparison-table th {
+      font-weight: 600;
+      color: var(--theme-text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .comparison-table tr:hover {
+      background: var(--theme-bg);
+    }
+
+    .rank-badge {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      line-height: 20px;
+      text-align: center;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .rank-1 { background: #ffd700; color: #000; }
+    .rank-2 { background: #c0c0c0; color: #000; }
+    .rank-3 { background: #cd7f32; color: #fff; }
+  </style>
+</head>
+
+<body>
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+  </div>
+
+  <div class="wrap">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>Decision Index Backtest</h1>
+      <p>Validez rétrospectivement les performances du Decision Index sur des périodes historiques (2017+)</p>
+    </div>
+
+    <!-- Controls Panel -->
+    <div class="controls-panel">
+      <div class="controls-grid">
+        <div class="control-group">
+          <label for="strategy">Stratégie</label>
+          <select id="strategy">
+            <option value="di_threshold">DI Threshold (Seuils)</option>
+            <option value="di_momentum">DI Momentum</option>
+            <option value="di_contrarian">DI Contrarian</option>
+            <option value="di_risk_parity">DI Risk Parity</option>
+            <option value="di_signal">DI Signal Only</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="startDate">Date Début</label>
+          <input type="date" id="startDate" value="2020-01-01">
+        </div>
+
+        <div class="control-group">
+          <label for="endDate">Date Fin</label>
+          <input type="date" id="endDate">
+        </div>
+
+        <div class="control-group">
+          <label for="rebalanceFreq">Rebalancement</label>
+          <select id="rebalanceFreq">
+            <option value="daily">Quotidien</option>
+            <option value="weekly" selected>Hebdomadaire</option>
+            <option value="monthly">Mensuel</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="initialCapital">Capital Initial ($)</label>
+          <input type="number" id="initialCapital" value="10000" min="100">
+        </div>
+
+        <div class="control-group">
+          <button class="btn-primary" id="runBacktest">
+            Exécuter Backtest
+          </button>
+        </div>
+      </div>
+
+      <!-- Period Presets -->
+      <div class="period-presets">
+        <span style="font-size: 0.85rem; color: var(--theme-text-muted);">Périodes:</span>
+        <button class="preset-btn" data-start="2017-01-01" data-end="2017-12-31">Bull 2017</button>
+        <button class="preset-btn" data-start="2018-01-01" data-end="2018-12-31">Crash 2018</button>
+        <button class="preset-btn" data-start="2020-02-01" data-end="2020-05-01">COVID</button>
+        <button class="preset-btn" data-start="2020-10-01" data-end="2021-11-15">Bull 2020-21</button>
+        <button class="preset-btn" data-start="2021-11-15" data-end="2022-11-15">Bear 2022</button>
+        <button class="preset-btn" data-start="2022-11-15" data-end="2024-04-01">Recovery 23-24</button>
+        <button class="preset-btn" data-start="2017-01-01" data-end="">Full History</button>
+      </div>
+    </div>
+
+    <!-- Results Grid -->
+    <div class="results-grid" id="resultsGrid" style="display: none;">
+      <!-- KPIs -->
+      <div class="result-card" style="grid-column: 1 / -1;">
+        <h3>Performance</h3>
+        <div class="kpi-grid" id="kpiGrid">
+          <!-- KPIs injectés dynamiquement -->
+        </div>
+      </div>
+
+      <!-- Equity Curve -->
+      <div class="result-card">
+        <h3>Equity Curve</h3>
+        <div class="chart-container">
+          <canvas id="equityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- DI History -->
+      <div class="result-card">
+        <h3>Decision Index Historique</h3>
+        <div class="chart-container">
+          <canvas id="diHistoryChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Drawdown -->
+      <div class="result-card">
+        <h3>Drawdown</h3>
+        <div class="chart-container">
+          <canvas id="drawdownChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Monthly Returns -->
+      <div class="result-card">
+        <h3>Rendements Mensuels</h3>
+        <div class="chart-container">
+          <canvas id="monthlyReturnsChart"></canvas>
+        </div>
+      </div>
+
+      <!-- DI Metrics -->
+      <div class="result-card" style="grid-column: 1 / -1;">
+        <h3>Métriques Decision Index</h3>
+        <div class="kpi-grid" id="diMetricsGrid">
+          <!-- DI metrics injectés dynamiquement -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Placeholder when no results -->
+    <div class="result-card" id="placeholder" style="text-align: center; padding: var(--space-xl);">
+      <h3 style="margin-bottom: var(--space-md);">Sélectionnez une période et lancez le backtest</h3>
+      <p style="color: var(--theme-text-muted);">
+        Le backtest reconstruit le Decision Index historique et simule une stratégie de trading
+        pour évaluer les performances sur la période sélectionnée.
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getAuthHeaders } from './core/auth-guard.js';
+
+    // State
+    let equityChart = null;
+    let diHistoryChart = null;
+    let drawdownChart = null;
+    let monthlyReturnsChart = null;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default end date to today
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('endDate').value = today;
+
+      // Period presets
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('startDate').value = btn.dataset.start;
+          document.getElementById('endDate').value = btn.dataset.end || today;
+        });
+      });
+
+      // Run backtest button
+      document.getElementById('runBacktest').addEventListener('click', runBacktest);
+    });
+
+    async function runBacktest() {
+      const strategy = document.getElementById('strategy').value;
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const rebalanceFreq = document.getElementById('rebalanceFreq').value;
+      const initialCapital = parseFloat(document.getElementById('initialCapital').value);
+
+      if (!startDate || !endDate) {
+        alert('Veuillez sélectionner une période');
+        return;
+      }
+
+      // Show loading
+      document.getElementById('loadingOverlay').classList.add('active');
+      document.getElementById('runBacktest').disabled = true;
+
+      try {
+        const response = await fetch(`${window.globalConfig.get('api_base_url')}/api/di-backtest/run`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            strategy,
+            start_date: startDate,
+            end_date: endDate,
+            initial_capital: initialCapital,
+            rebalance_frequency: rebalanceFreq,
+            use_macro_penalty: true
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.ok && result.data) {
+          displayResults(result.data);
+        } else {
+          throw new Error(result.error || result.message || 'Backtest failed');
+        }
+
+      } catch (error) {
+        console.error('Backtest error:', error);
+        alert(`Erreur: ${error.message}`);
+      } finally {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.getElementById('runBacktest').disabled = false;
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById('resultsGrid').style.display = 'grid';
+      document.getElementById('placeholder').style.display = 'none';
+
+      // KPIs
+      const kpiGrid = document.getElementById('kpiGrid');
+      const metrics = data.metrics || {};
+      const benchmark = data.benchmark_comparison || {};
+
+      kpiGrid.innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-value ${metrics.total_return_pct >= 0 ? 'positive' : 'negative'}">
+            ${metrics.total_return_pct >= 0 ? '+' : ''}${metrics.total_return_pct?.toFixed(1) || '0'}%
+          </div>
+          <div class="kpi-label">Return Total</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${metrics.annualized_return_pct >= 0 ? 'positive' : 'negative'}">
+            ${metrics.annualized_return_pct >= 0 ? '+' : ''}${metrics.annualized_return_pct?.toFixed(1) || '0'}%
+          </div>
+          <div class="kpi-label">Return Annualisé</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value negative">${metrics.max_drawdown_pct?.toFixed(1) || '0'}%</div>
+          <div class="kpi-label">Max Drawdown</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${metrics.sharpe_ratio >= 1 ? 'positive' : 'neutral'}">
+            ${metrics.sharpe_ratio?.toFixed(2) || '0'}
+          </div>
+          <div class="kpi-label">Sharpe Ratio</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${metrics.sortino_ratio?.toFixed(2) || '0'}</div>
+          <div class="kpi-label">Sortino Ratio</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${metrics.win_rate_pct?.toFixed(1) || '0'}%</div>
+          <div class="kpi-label">Win Rate</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${benchmark.excess_return_pct >= 0 ? 'positive' : 'negative'}">
+            ${benchmark.excess_return_pct >= 0 ? '+' : ''}${benchmark.excess_return_pct?.toFixed(1) || '0'}%
+          </div>
+          <div class="kpi-label">vs BTC B&H</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${data.period?.days || '0'}</div>
+          <div class="kpi-label">Jours</div>
+        </div>
+      `;
+
+      // DI Metrics
+      const diMetricsGrid = document.getElementById('diMetricsGrid');
+      const diMetrics = data.di_metrics || {};
+
+      diMetricsGrid.innerHTML = `
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${diMetrics.di_btc_correlation_30d?.toFixed(2) || 'N/A'}</div>
+          <div class="kpi-label">Correlation DI-BTC 30j</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${diMetrics.di_accuracy_pct > 55 ? 'positive' : 'neutral'}">
+            ${diMetrics.di_accuracy_pct?.toFixed(1) || '0'}%
+          </div>
+          <div class="kpi-label">Accuracy DI</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${diMetrics.di_mean?.toFixed(1) || '50'}</div>
+          <div class="kpi-label">DI Moyen</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${diMetrics.avg_di_during_gains?.toFixed(1) || 'N/A'}</div>
+          <div class="kpi-label">DI (Gains >10%)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${diMetrics.avg_di_during_losses?.toFixed(1) || 'N/A'}</div>
+          <div class="kpi-label">DI (Pertes >10%)</div>
+        </div>
+      `;
+
+      // Charts
+      renderEquityChart(data.equity_curve || []);
+      renderDrawdownChart(data.drawdowns || []);
+      renderMonthlyReturnsChart(data.monthly_returns || []);
+
+      // Fetch DI history for the chart
+      fetchDIHistory(data.period?.start, data.period?.end);
+    }
+
+    async function fetchDIHistory(startDate, endDate) {
+      try {
+        const response = await fetch(`${window.globalConfig.get('api_base_url')}/api/di-backtest/historical-di`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders()
+          },
+          body: JSON.stringify({
+            start_date: startDate,
+            end_date: endDate,
+            include_macro: true
+          })
+        });
+
+        const result = await response.json();
+        if (result.ok && result.data?.history) {
+          renderDIHistoryChart(result.data.history);
+        }
+      } catch (error) {
+        console.error('Error fetching DI history:', error);
+      }
+    }
+
+    function renderEquityChart(data) {
+      const ctx = document.getElementById('equityChart').getContext('2d');
+
+      if (equityChart) equityChart.destroy();
+
+      const labels = data.map(d => d.date);
+      const portfolioValues = data.map(d => d.portfolio_value);
+      const benchmarkValues = data.map(d => d.benchmark_value);
+
+      equityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Portfolio (DI Strategy)',
+              data: portfolioValues,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 0
+            },
+            {
+              label: 'Benchmark (BTC B&H)',
+              data: benchmarkValues,
+              borderColor: '#f59e0b',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              tension: 0.3,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'month' },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: false,
+              grid: { color: 'rgba(128, 128, 128, 0.1)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDIHistoryChart(data) {
+      const ctx = document.getElementById('diHistoryChart').getContext('2d');
+
+      if (diHistoryChart) diHistoryChart.destroy();
+
+      // Sample data if too large
+      let sampledData = data;
+      if (data.length > 500) {
+        const step = Math.ceil(data.length / 500);
+        sampledData = data.filter((_, i) => i % step === 0);
+      }
+
+      const labels = sampledData.map(d => d.date);
+      const diValues = sampledData.map(d => d.decision_index);
+
+      diHistoryChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Decision Index',
+            data: diValues,
+            borderColor: '#8b5cf6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            annotation: {
+              annotations: {
+                bullZone: {
+                  type: 'box',
+                  yMin: 60,
+                  yMax: 100,
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  borderWidth: 0
+                },
+                bearZone: {
+                  type: 'box',
+                  yMin: 0,
+                  yMax: 40,
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  borderWidth: 0
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'month' },
+              grid: { display: false }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              grid: { color: 'rgba(128, 128, 128, 0.1)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderDrawdownChart(data) {
+      const ctx = document.getElementById('drawdownChart').getContext('2d');
+
+      if (drawdownChart) drawdownChart.destroy();
+
+      const labels = data.map(d => d.date);
+      const ddValues = data.map(d => d.drawdown_pct);
+
+      drawdownChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Drawdown %',
+            data: ddValues,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.2)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'month' },
+              grid: { display: false }
+            },
+            y: {
+              max: 0,
+              grid: { color: 'rgba(128, 128, 128, 0.1)' }
+            }
+          }
+        }
+      });
+    }
+
+    function renderMonthlyReturnsChart(data) {
+      const ctx = document.getElementById('monthlyReturnsChart').getContext('2d');
+
+      if (monthlyReturnsChart) monthlyReturnsChart.destroy();
+
+      const labels = data.map(d => d.date);
+      const returns = data.map(d => d.return_pct);
+      const colors = returns.map(r => r >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)');
+
+      monthlyReturnsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Rendement Mensuel %',
+            data: returns,
+            backgroundColor: colors,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false } },
+            y: { grid: { color: 'rgba(128, 128, 128, 0.1)' } }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

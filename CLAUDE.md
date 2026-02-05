@@ -84,6 +84,7 @@ cycle-analysis.html     # Bitcoin cycle analysis
 rebalance.html         # Rebalancing + Optimization (6 algos Markowitz)
 execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
+di-backtest.html        # Backtest historique Decision Index
 wealth-dashboard.html   # Patrimoine unifié
 monitoring.html        # KPIs système + Alerts History
 admin-dashboard.html    # Admin Dashboard (RBAC)
@@ -101,6 +102,7 @@ bourse-recommendations.html  # Recommendations + Market Opportunities
 /api/wealth/patrimoine/*, /api/wealth/*  # Patrimoine + Wealth
 /api/sources/*                           # Sources System v2
 /execution/governance/*                  # Decision Engine
+/api/di-backtest/*                       # DI Backtest historique
 /admin/*                                 # Admin (RBAC protected)
 /proxy/fred/*                            # Macro indicators (DXY, VIX, Bitcoin)
 ```
@@ -232,6 +234,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 | Sources V2 | [`docs/SOURCES_V2.md`](docs/SOURCES_V2.md) |
 | Admin Dashboard | [`docs/ADMIN_DASHBOARD.md`](docs/ADMIN_DASHBOARD.md) |
 | Export System | [`docs/EXPORT_SYSTEM.md`](docs/EXPORT_SYSTEM.md) |
+| DI Backtest | [`docs/DI_BACKTEST_MODULE.md`](docs/DI_BACKTEST_MODULE.md) |
 
 ---
 
