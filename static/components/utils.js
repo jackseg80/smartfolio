@@ -22,6 +22,7 @@ export function ns(persistKey) {
 
 /**
  * Fetch avec timeout automatique + support merge de signal externe
+ * @deprecated Use safeFetch from core/fetcher.js with timeout option instead
  * @param {string} url - URL à fetcher
  * @param {Object} options
  * @param {number} options.timeoutMs - Timeout en ms (défaut 5000)

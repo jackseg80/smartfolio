@@ -1,7 +1,18 @@
 /**
- * Cache basique avec RAM + localStorage
- * Simple retry logic, pas de circuit breaker
+ * Unified Fetch Module - Source unique pour tous les appels HTTP
+ *
+ * Expose:
+ * - safeFetch: retry + ETag + X-User automatique
+ * - apiCall: wrapper safeFetch optimisé pour APIs
+ * - fetchCached: cache RAM + localStorage avec TTL
+ * - cachedApiCall: combinaison cache + safeFetch
+ *
+ * Migration (Fév 2026): Centralisation de tous les patterns fetch
  */
+
+// Re-export depuis http.js pour point d'entrée unique
+import { safeFetch, apiCall } from '../modules/http.js';
+export { safeFetch, apiCall };
 
 // RAM cache
 const RAM_CACHE = new Map();
@@ -163,10 +174,46 @@ export function clearCache() {
 export function getCacheStats() {
   const ramSize = RAM_CACHE.size;
   let diskCount = 0;
-  
+
   // Compter les clés cache efficacement
   const cacheKeys = Object.keys(localStorage).filter(key => key.startsWith('cache:'));
   diskCount = cacheKeys.length;
-  
+
   return { ramSize, diskCount };
+}
+
+/**
+ * Cached API call - combines caching with safeFetch
+ * Use this for API endpoints that benefit from caching
+ *
+ * @param {string} cacheKey - Unique cache key
+ * @param {string} url - API endpoint URL
+ * @param {Object} options - Options for safeFetch
+ * @param {string} cacheType - Cache type for TTL config
+ * @returns {Promise<any>} - Response data
+ */
+export async function cachedApiCall(cacheKey, url, options = {}, cacheType = 'signals') {
+  return fetchCached(cacheKey, async () => {
+    const result = await safeFetch(url, options);
+    if (!result.ok) {
+      throw new Error(result.error || `HTTP ${result.status}`);
+    }
+    return result.data;
+  }, cacheType);
+}
+
+/**
+ * Fetch with timeout wrapper - for backward compatibility
+ * @deprecated Use safeFetch with timeout option instead
+ */
+export async function fetchWithTimeout(url, { timeoutMs = 5000, ...fetchOptions } = {}) {
+  console.warn('[fetcher.js] fetchWithTimeout is deprecated, use safeFetch with timeout option');
+  const result = await safeFetch(url, { timeout: timeoutMs, ...fetchOptions });
+  // Return raw response-like object for compatibility
+  return {
+    ok: result.ok,
+    status: result.status,
+    json: async () => result.data,
+    headers: new Headers()
+  };
 }

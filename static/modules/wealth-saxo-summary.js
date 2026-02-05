@@ -2,7 +2,7 @@
  * Store utilitaire pour résumer les données Saxo (Bourse)
  * Utilisé par dashboard.html et settings.html pour éviter la duplication
  */
-import { safeFetch } from './http.js';
+import { safeFetch } from '../core/fetcher.js';
 import { formatUSD } from '../core/formatters.js';
 
 // Re-export formatUSD as formatCurrency for backward compatibility

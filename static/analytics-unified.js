@@ -7,6 +7,8 @@ console.debug('🔄 Analytics Unified - Initialisation');
 
 // Import risk alerts loader
 import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
+// Import centralized fetcher (for future migration)
+import { fetchCached as fetchCachedCentral, safeFetch } from './core/fetcher.js';
 // PERFORMANCE FIX (Dec 2025): Throttle utilities to prevent event spam
 import { throttle } from './utils/debounce.js';
 
@@ -52,6 +54,8 @@ const CACHE_TTL = {
 };
 
 // Cache intelligent avec TTL adaptatif
+// @deprecated Use fetchCachedCentral from core/fetcher.js with custom TTL config
+// This local cache is kept for custom TTL keys specific to analytics
 const cache = new Map();
 
 async function fetchWithCache(key, fetchFn) {

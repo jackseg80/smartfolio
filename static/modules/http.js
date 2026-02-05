@@ -1,3 +1,11 @@
+/**
+ * HTTP utilities module - Low-level fetch implementations
+ *
+ * NOTE: Prefer importing from core/fetcher.js which re-exports these
+ * and adds caching capabilities:
+ *   import { safeFetch, apiCall, fetchCached } from './core/fetcher.js';
+ */
+
 const __etagCache = new Map();
 
 export async function safeFetch(url, options = {}) {

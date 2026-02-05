@@ -5,7 +5,7 @@
 import { store } from './risk-dashboard-store.js';
 import { calculateHierarchicalAllocation } from './allocation-engine.js';
 import { GROUP_ORDER, getAssetGroup } from '../shared-asset-groups.js';
-import { fetchWithTimeout } from '../components/utils.js';
+import { safeFetch } from './fetcher.js';
 
 // Configuration de migration avec feature flags
 const MIGRATION_CONFIG = {
@@ -27,12 +27,13 @@ const MIGRATION_CONFIG = {
 // Cache simple pour éviter appels répétés
 let _strategyCache = { timestamp: 0, data: null, template: null };
 
-// fetchWithTimeout now imported from components/utils.js (centralized)
+// safeFetch imported from core/fetcher.js (centralized - Feb 2026)
 
 // Local wrapper to auto-parse JSON and check response.ok
 async function fetchJSON(url, options = {}) {
-  const response = await fetchWithTimeout(url, {
-    timeoutMs: MIGRATION_CONFIG.api_timeout_ms,
+  const result = await safeFetch(url, {
+    timeout: MIGRATION_CONFIG.api_timeout_ms,
+    maxRetries: 1,  // Quick fail for strategy calls
     headers: {
       'Content-Type': 'application/json',
       ...options.headers
@@ -40,11 +41,11 @@ async function fetchJSON(url, options = {}) {
     ...options
   });
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  if (!result.ok) {
+    throw new Error(`HTTP ${result.status}: ${result.error || 'Unknown error'}`);
   }
 
-  return await response.json();
+  return result.data;
 }
 
 // Obtenir l'URL de base API

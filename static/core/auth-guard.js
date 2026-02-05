@@ -16,6 +16,8 @@
  * </script>
  */
 
+import { StorageService } from './storage-service.js';
+
 const API_BASE = window.location.origin;
 
 // Pages publiques (ne nécessitent pas d'authentification)
@@ -33,14 +35,14 @@ function isPublicPage() {
  * Récupère le token JWT stocké
  */
 export function getAuthToken() {
-    return localStorage.getItem('authToken');
+    return StorageService.getAuthToken();
 }
 
 /**
  * Récupère l'utilisateur actuel
  */
 export function getCurrentUser() {
-    return localStorage.getItem('activeUser') || 'demo';
+    return StorageService.getActiveUser();
 }
 
 /**
@@ -129,10 +131,9 @@ export async function logout(showMessage = false) {
     // 🔒 FIX: Capture currentUser avant de vider localStorage
     const currentUser = getCurrentUser();
 
-    // Clear localStorage (auth only)
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('activeUser');
-    localStorage.removeItem('userInfo');
+    // Clear auth data via StorageService
+    StorageService.clearAuth();
+    StorageService.remove('userInfo');
 
     // Clear caches
     if (window.clearCache) {
@@ -149,7 +150,7 @@ export async function logout(showMessage = false) {
             keysToRemove.push(key);
         }
     }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach(key => StorageService.remove(key));
 
     console.debug(`✅ Logged out user: ${currentUser} (settings preserved for future login)`);
 
@@ -196,9 +197,8 @@ export async function checkAuth(options = {}) {
     const isValid = await verifyToken();
     if (!isValid) {
         console.warn('Invalid or expired token, redirecting to login');
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('activeUser');
-        localStorage.removeItem('userInfo');
+        StorageService.clearAuth();
+        StorageService.remove('userInfo');
         window.location.href = '/static/login.html?message=session_expired';
         return null;
     }
