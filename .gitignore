@@ -64,6 +64,10 @@ mockup_*.html
 .DS_Store
 Thumbs.db
 
+# Lighthouse reports (generated)
+lighthouse-*.html
+lighthouse-*.json
+
 # Temporary files
 temp_*.json
 *_temp.json
