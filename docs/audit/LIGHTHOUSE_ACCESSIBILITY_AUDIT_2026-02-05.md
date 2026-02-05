@@ -13,6 +13,7 @@
 | risk-dashboard | 71 | 95 | 81 | 90 | ✅ |
 | saxo-dashboard | 77 | 96 | 100 | 90 | ✅ |
 | settings | 80 | 96 | 100 | 90 | ✅ |
+| rebalance | 74 | 95 | 77 | 90 | ✅ |
 
 **Targets**: Performance ≥85, Accessibility ≥90, Best Practices ≥90, SEO ≥80
 

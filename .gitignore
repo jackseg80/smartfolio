@@ -67,6 +67,7 @@ Thumbs.db
 # Lighthouse reports (generated)
 lighthouse-*.html
 lighthouse-*.json
+docs/audit/Lighthouse/*.json
 
 # Temporary files
 temp_*.json

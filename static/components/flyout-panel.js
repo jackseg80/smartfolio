@@ -98,12 +98,13 @@ class FlyoutPanel extends HTMLElement {
           opacity: 1;
         }
 
-        .handle {
+        button.handle {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
           right: -48px;
           width: var(--flyout-handle-width);
+          height: auto;
           padding: var(--space-md, 12px) var(--space-xs, 6px);
           background: var(--brand-primary, #3b82f6);
           color: white;
@@ -115,6 +116,7 @@ class FlyoutPanel extends HTMLElement {
           cursor: pointer;
           font-size: 0.75rem;
           font-weight: 700;
+          font-family: inherit;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           writing-mode: vertical-rl;
@@ -124,7 +126,7 @@ class FlyoutPanel extends HTMLElement {
           pointer-events: auto;
         }
 
-        .flyout.right .handle {
+        .flyout.right button.handle {
           left: -1px;
           right: auto;
           border-left: 1px solid var(--flyout-border);
@@ -132,8 +134,8 @@ class FlyoutPanel extends HTMLElement {
           border-radius: 8px 0 0 8px;
         }
 
-        .flyout.open .handle,
-        .flyout.pinned .handle {
+        .flyout.open button.handle,
+        .flyout.pinned button.handle {
           opacity: 0;
           pointer-events: none;
         }
@@ -206,11 +208,11 @@ class FlyoutPanel extends HTMLElement {
       </style>
 
       <div class="flyout" role="complementary" aria-label="Flyout panel" aria-expanded="false">
-        <div class="handle" title="Ouvrir">≡</div>
+        <button class="handle" aria-label="Ouvrir le panneau Risk Dashboard" title="Ouvrir">≡</button>
         <header>
           <div class="title"><slot name="title">Panel</slot></div>
           <div class="actions">
-            <button id="pin" title="Épingler" aria-pressed="false">📍</button>
+            <button id="pin" title="Épingler" aria-label="Épingler le panneau" aria-pressed="false"><span aria-hidden="true">📍</span></button>
           </div>
         </header>
         <main>

@@ -103,7 +103,7 @@ const initUnifiedNav = () => {
       .app-header .brand { font-weight: 700; color: var(--theme-text); letter-spacing: .3px; }
       .app-header nav a { color: var(--theme-text-muted); text-decoration: none; padding: .5rem .75rem; border-radius: var(--radius-sm); transition: background var(--transition-fast), color var(--transition-fast); }
       .app-header nav a:hover { background: var(--theme-bg); color: var(--theme-text); }
-      .app-header nav a.active { color: var(--brand-primary); background: color-mix(in oklab, var(--brand-primary) 12%, transparent); }
+      .app-header nav a.active { color: var(--color-primary-400, #60a5fa); background: color-mix(in oklab, var(--brand-primary) 12%, transparent); }
       .app-header .main-nav { position: relative; }
       .app-header .main-nav ul { list-style: none; display: flex; gap: .25rem; margin: 0; padding: 0; }
       .app-header .main-nav li { position: relative; }

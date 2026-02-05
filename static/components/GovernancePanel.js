@@ -57,8 +57,8 @@ class GovernancePanel {
               <span class="badge-text" id="alerts-count">0</span>
             </div>
           </div>
-          <button class="governance-toggle" id="governance-toggle">
-            <span class="toggle-icon">▲</span>
+          <button class="governance-toggle" id="governance-toggle" aria-label="Réduire/Développer le panneau de gouvernance" aria-expanded="true">
+            <span class="toggle-icon" aria-hidden="true">▲</span>
           </button>
         </div>
         
@@ -265,7 +265,7 @@ class GovernancePanel {
         <div class="modal-content">
           <div class="modal-header">
             <h3>📋 Decision Approval</h3>
-            <button class="modal-close" id="modal-close">&times;</button>
+            <button class="modal-close" id="modal-close" aria-label="Fermer">&times;</button>
           </div>
           <div class="modal-body" id="modal-body">
             <!-- Dynamic content -->
@@ -283,7 +283,7 @@ class GovernancePanel {
         <div class="modal-content">
           <div class="modal-header">
             <h3><span id="confirmation-icon">⚠️</span> <span id="confirmation-title">Confirm Action</span></h3>
-            <button class="modal-close" id="confirmation-close">&times;</button>
+            <button class="modal-close" id="confirmation-close" aria-label="Fermer">&times;</button>
           </div>
           <div class="modal-body">
             <div class="confirmation-message" id="confirmation-message">

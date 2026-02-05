@@ -70,22 +70,24 @@
   </flyout-panel>
 
   <main class="wrap" style="padding-top: var(--space-lg);">
+    <h1 class="visually-hidden">Rebalancing - SmartFolio</h1>
+
     <!-- Governance Panel (Decision Engine) -->
     <div id="governance-container"></div>
 
     <!-- Rebalancing Strategies -->
     <div id="proposed-targets" class="card" style="margin-bottom: 16px;">
-      <h3 style="display:flex; align-items:center; justify-content:space-between;">
-        <span style="cursor:pointer" onclick="toggleStrategiesSection()">🎯 Predefined Strategies</span>
+      <h2 style="display:flex; align-items:center; justify-content:space-between; font-size: 1.1rem;">
+        <button type="button" class="btn-reset" style="cursor:pointer" onclick="toggleStrategiesSection()" aria-expanded="true" aria-controls="strategies-content">🎯 Predefined Strategies</button>
         <span style="display:flex; align-items:center; gap:8px">
           <span class="small muted">View:</span>
           <button class="btn btn-sm btn-secondary" id="btnViewDetailed">Detailed</button>
           <button class="btn btn-sm" id="btnViewCompact"
             style="background: var(--theme-surface-elevated);">Compact</button>
-          <span id="strategies-toggle" style="cursor:pointer; transition: transform .3s; margin-left:8px"
-            onclick="toggleStrategiesSection()">▼</span>
+          <button type="button" id="strategies-toggle" class="btn-reset" style="cursor:pointer; transition: transform .3s; margin-left:8px"
+            onclick="toggleStrategiesSection()" aria-label="Réduire/Développer les stratégies">▼</button>
         </span>
-      </h3>
+      </h2>
       <div id="strategies-content">
         <div id="strategies-container" style="display: grid; gap: 12px; margin-top: 12px;">
           <div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">
@@ -98,7 +100,7 @@
             <!-- Paramètres compacts -->
             <div style="display: flex; align-items: center; gap: 6px; padding: 4px 8px; background: var(--theme-surface-elevated); border-radius: 4px; border: 1px solid var(--theme-border);">
               <label class="switch" style="margin: 0;">
-                <input type="checkbox" id="sub-allocation-toggle">
+                <input type="checkbox" id="sub-allocation-toggle" aria-labelledby="sub-allocation-label">
                 <span class="slider"></span>
               </label>
               <span id="sub-allocation-label" style="font-size: 12px; font-weight: 600; color: var(--brand-primary); white-space: nowrap;">
@@ -157,7 +159,7 @@
 
     <!-- Donuts -->
     <section class="card" style="margin-bottom: 16px;">
-      <h3>Répartition</h3>
+      <h2>Répartition</h2>
       <div class="grid g2">
         <div style="display: flex; flex-direction: column; align-items: center;">
           <div class="small muted">Actuelle</div>
@@ -173,28 +175,28 @@
 
     <!-- Résumé -->
     <section id="dca-schedule" class="card" style="margin-bottom: 16px;">
-      <h3>Résumé par groupe</h3>
+      <h2>Résumé par groupe</h2>
       <div id="summary" class="grid g3 mt8"></div>
     </section>
 
     <!-- Actions -->
     <section id="funding-plan" class="card" style="margin-bottom: 16px;">
       <div class="row" style="justify-content:space-between;align-items:flex-end">
-        <h3>Actions</h3>
+        <h2>Actions</h2>
         <div id="pricing-badge"></div>
       </div>
       <div style="overflow:auto;max-height:50vh;border:1px solid var(--theme-border);border-radius:var(--radius-md)">
         <table id="tblActions">
           <thead>
             <tr>
-              <th class="sortable" data-sort="group">group <span class="sort-arrow">⇅</span></th>
-              <th class="sortable" data-sort="alias">alias <span class="sort-arrow">⇅</span></th>
-              <th class="sortable" data-sort="symbol">symbol <span class="sort-arrow">⇅</span></th>
-              <th class="sortable" data-sort="action">action <span class="sort-arrow">⇅</span></th>
-              <th class="sortable right" data-sort="usd">usd <span class="sort-arrow">⇅</span></th>
-              <th class="sortable right" data-sort="est_quantity">est_quantity <span class="sort-arrow">⇅</span></th>
-              <th class="sortable right" data-sort="price_used">price_used <span class="sort-arrow">⇅</span></th>
-              <th class="sortable" data-sort="location">location <span class="sort-arrow">⇅</span></th>
+              <th scope="col" class="sortable" data-sort="group">group <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable" data-sort="alias">alias <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable" data-sort="symbol">symbol <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable" data-sort="action">action <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable right" data-sort="usd">usd <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable right" data-sort="est_quantity">est_quantity <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable right" data-sort="price_used">price_used <span class="sort-arrow" aria-hidden="true">⇅</span></th>
+              <th scope="col" class="sortable" data-sort="location">location <span class="sort-arrow" aria-hidden="true">⇅</span></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -206,12 +208,12 @@
     <section id="constraints" class="card" style="margin-bottom: 16px;">
       <div class="row" style="justify-content:space-between;align-items:flex-end">
         <div>
-          <h3>Unknown aliases</h3>
+          <h2>Unknown aliases</h2>
           <div class="small">Par défaut, <strong>Others</strong> est présélectionné.</div>
         </div>
         <div style="display:flex;gap:12px;align-items:flex-end">
           <div>
-            <label class="small">Tout vers</label><br />
+            <label class="small" for="bulk_group">Tout vers</label><br />
             <select id="bulk_group">
               <option value="BTC">BTC</option>
               <option value="ETH">ETH</option>
