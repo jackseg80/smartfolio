@@ -15,10 +15,27 @@ async function saveUnifiedDataForRebalance() {
       return;
     }
 
+    // Preserve iter1_targets from execution-plan-renderer's earlier write
+    // (Path 2 overwrites Path 1 — we must keep the capped targets computed by Path 1)
+    let preserved = {};
+    try {
+      const existing = JSON.parse(localStorage.getItem('unified_suggested_allocation') || 'null');
+      if (existing?.iter1_targets && typeof existing.iter1_targets === 'object') {
+        preserved = {
+          iter1_targets: existing.iter1_targets,
+          cap_percent: existing.cap_percent,
+          mode_name: existing.mode_name
+        };
+      }
+    } catch (e) { /* ignore parse errors */ }
+
     // Préparer les données au format attendu par rebalance.html
     const unifiedData = {
       targets: unifiedState.targets_by_group, // Les nouvelles targets dynamiques
+      iter1_targets: preserved.iter1_targets || null, // Governance-capped iteration-1 targets
       execution_plan: unifiedState.execution?.plan_iter1 || null,
+      cap_percent: preserved.cap_percent ?? null,
+      mode_name: preserved.mode_name ?? null,
       strategy: unifiedState.strategy?.template_used || 'Dynamic',
       methodology: unifiedState.risk?.budget?.methodology || 'unified_v2',
       timestamp: new Date().toISOString(),
@@ -37,6 +54,9 @@ async function saveUnifiedDataForRebalance() {
     debugLogger.debug('✅ Unified data saved for rebalance.html:', {
       targets_keys: Object.keys(unifiedData.targets),
       stables_pct: unifiedData.targets.Stablecoins,
+      has_iter1_targets: !!unifiedData.iter1_targets,
+      cap_percent: unifiedData.cap_percent,
+      mode_name: unifiedData.mode_name,
       has_execution_plan: !!unifiedData.execution_plan,
       timestamp: unifiedData.timestamp
     });

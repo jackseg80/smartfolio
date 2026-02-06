@@ -243,6 +243,18 @@ export async function renderAllocationBlock(u, options = {}) {
         entry.suggested = cappedEntries[i].suggested;
       });
 
+      // Compute iteration-1 governance-capped targets: { group: percentage }
+      const iter1Targets = {};
+      entries.forEach(entry => {
+        iter1Targets[entry.k] = Math.round((entry.cur + entry.suggested) * 10) / 10;
+      });
+
+      console.debug('🎯 ITER1 TARGETS computed (governance-capped):', {
+        iter1: Object.entries(iter1Targets).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
+        cap_used: mode.cap,
+        sum: Object.values(iter1Targets).reduce((a,b) => a+b, 0).toFixed(1) + '%'
+      });
+
       // HIÉRARCHIE STRICTE: seulement les groupes taxonomy autorisés
       const TOP_LEVEL_GROUPS = GROUP_ORDER.length > 0 ? GROUP_ORDER : ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
 
@@ -271,8 +283,10 @@ export async function renderAllocationBlock(u, options = {}) {
 
           const payload = {
             targets: targetAdj, // Final theoretical targets
-            execution_plan: executionPlan, // Iteration 1 targets with caps
+            iter1_targets: iter1Targets, // Governance-capped iteration-1 targets
+            execution_plan: executionPlan, // Metadata (estimated_iters, convergence_time)
             cap_percent: mode.cap,
+            mode_name: mode.name, // Frozen/Observe/Deploy/Rotate/Hedge
             strategy: 'Regime-Based Allocation',
             timestamp: new Date().toISOString(),
             source: 'analytics-unified'

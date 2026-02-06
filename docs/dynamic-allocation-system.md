@@ -66,40 +66,67 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats) {
 
 ## Synchronisation Analytics ↔ Rebalance
 
-### Flux de Données
-1. **Analytics-unified.html** → `getUnifiedState()` → calculs dynamiques
-2. **Sauvegarde automatique** → `saveUnifiedDataForRebalance()` → localStorage
-3. **Rebalance.html** → `syncUnifiedSuggestedTargets()` → lecture cohérente
+### Flux de Données (Fév 2026)
+
+```text
+analytics-unified.html
+  │
+  ├─ execution-plan-renderer.js (Path 1 — écrit en premier)
+  │   └─ Calcule iter1_targets via calculateZeroSumCappedMoves()
+  │      iter1_target[group] = current% + clamp(delta, -cap, +cap)
+  │
+  ├─ analytics-unified-main-controller.js (Path 2 — écrit en dernier)
+  │   └─ Préserve iter1_targets de Path 1, ajoute métadonnées unified
+  │
+  └─ localStorage['unified_suggested_allocation']
+       │
+       └─ rebalance.html
+            └─ syncUnifiedSuggestedTargets()
+                 └─ Lit iter1_targets si cap > 0, sinon fallback targets
+```
 
 ### Format localStorage
 ```javascript
 {
-  "targets": {                    // ← Allocations pour affichage
-    "Stablecoins": 25.0,
-    "BTC": 31.5,
-    "ETH": 21.0,
+  "targets": {                    // ← Objectifs théoriques (destination finale)
+    "Stablecoins": 18.0,
+    "BTC": 40.0,
+    "ETH": 22.0
     // ... autres groupes
   },
-  "execution_plan": {             // ← Métadonnées d'exécution
-    "estimated_iters": 2.0,
-    "cap_pct_per_iter": 7
+  "iter1_targets": {              // ← Cibles cappées itération 1 (ce que rebalance utilise)
+    "Stablecoins": 23.0,          //   current 30% + cap(-7%) = 23%
+    "BTC": 35.0,                  //   current 28% + cap(+7%) = 35%
+    "ETH": 22.0                   //   current 15% + delta(+7%) = 22% (dans le cap)
   },
+  "execution_plan": {             // ← Métadonnées d'exécution (PAS des allocations)
+    "estimated_iters": 2.0,
+    "convergence_time": "14 days"
+  },
+  "cap_percent": 7,               // ← Cap governance ±X% par itération
+  "mode_name": "Deploy",          // ← Mode governance (Frozen/Observe/Hedge/Rotate/Deploy)
   "source": "analytics_unified_v2",
   "methodology": "unified_v2",
-  "timestamp": "2025-09-17T00:12:00.000Z"
+  "timestamp": "2026-02-06T10:00:00.000Z"
 }
 ```
 
-### Correction Critique
+### Logique de sélection dans rebalance-controller
 ```javascript
-// AVANT (incorrect)
-const targetsSource = data.execution_plan || data.targets;
-// Problem: execution_plan contient des métadonnées, pas des allocations!
-
-// APRÈS (correct)
-const targetsSource = data.targets;
-// Solution: toujours utiliser targets pour les allocations
+// Préférer iter1_targets (cappées par governance) si disponibles et cap > 0
+if (data.iter1_targets && cap > 0) {
+  targetsSource = data.iter1_targets;  // Cibles cappées itération 1
+} else if (mode === 'Frozen' || cap === 0) {
+  targetsSource = data.targets;        // Pas de mouvement attendu
+} else {
+  targetsSource = data.targets;        // Rétrocompatibilité ancien format
+}
 ```
+
+### Historique des corrections
+
+- **v3.0** (Sep 2025): `execution_plan` contenait des métadonnées, pas des allocations. Fix: toujours utiliser `targets`.
+- **v3.1** (Fév 2026): `targets` = objectifs théoriques non cappés. Ajout `iter1_targets` = cibles cappées par governance. Rebalance utilise désormais `iter1_targets` pour respecter le cap de governance.
 
 ## Fichiers Modifiés
 
@@ -129,7 +156,8 @@ const targetsSource = data.targets;
 ## Bénéfices Mesurables
 
 ### Cohérence
-- ✅ Objectifs Analytics = Plan Rebalance (100%)
+- ✅ Rebalance utilise les cibles cappées (iter1_targets) d'Analytics
+- ✅ Le cap de governance est effectivement appliqué dans les trades
 - ✅ Plus de "Others 31%" aberrant
 - ✅ Source unique `u.targets_by_group`
 

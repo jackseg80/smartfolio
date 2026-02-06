@@ -147,9 +147,30 @@
           return null;
         }
 
-        // CORRECTION: Toujours utiliser data.targets pour les allocations
-        // data.execution_plan contient des métadonnées (estimated_iters, etc.) pas des allocations!
-        const targetsSource = data.targets;
+        // Select target source: prefer iter1_targets (governance-capped) over theoretical targets
+        let targetsSource;
+        let usingIter1 = false;
+        const capPercent = typeof data.cap_percent === 'number' ? data.cap_percent : null;
+        const modeName = data.mode_name || null;
+
+        if (data.iter1_targets
+            && typeof data.iter1_targets === 'object'
+            && Object.keys(data.iter1_targets).length > 0
+            && capPercent > 0) {
+          // Governance-capped iteration-1 targets (respects cap ±X%)
+          targetsSource = data.iter1_targets;
+          usingIter1 = true;
+          debugLogger.debug('🎯 Using ITER1 governance-capped targets (cap: ±' + capPercent + '%)');
+        } else if (modeName === 'Frozen' || capPercent === 0) {
+          // Frozen/Observe mode: no moves expected
+          targetsSource = data.targets;
+          debugLogger.debug('❄️ Frozen/Observe mode (cap=0) — using theoretical targets');
+        } else {
+          // Backward compatibility: no iter1_targets available
+          targetsSource = data.targets;
+          debugLogger.debug('📦 No iter1_targets available, falling back to theoretical targets');
+        }
+
         const cleanTargets = {};
         Object.entries(targetsSource).forEach(([key, value]) => {
           if (key !== 'model_version' && typeof value === 'number' && isFinite(value)) {
@@ -157,52 +178,50 @@
           }
         });
 
-        // Nom de stratégie amélioré pour le nouveau système dynamique
+        // Strategy name reflects which targets are used
         let strategyName;
-        if (data.source === 'analytics_unified_v2') {
-          // Nouveau système avec calculs dynamiques
-          const methodLabel = data.methodology === 'unified_v2' ? 'Calcul Dynamique' : data.strategy || 'Dynamic';
-          const capLabel = data.cap_percent != null ? `Cap ±${data.cap_percent}%` : 'Cap —';
-          strategyName = data.execution_plan ?
-            `${methodLabel} (Plan Exécution - ${capLabel})` :
-            `${methodLabel} (Objectifs Théoriques)`;
+        const methodLabel = data.methodology === 'unified_v2'
+          ? 'Calcul Dynamique'
+          : data.strategy || 'Dynamic';
+        const capLabel = capPercent != null ? `Cap ±${capPercent}%` : 'Cap —';
+
+        if (usingIter1) {
+          strategyName = `${methodLabel} (Itération 1 - ${capLabel})`;
+        } else if (modeName === 'Frozen' || capPercent === 0) {
+          strategyName = `${methodLabel} (Frozen/Observe)`;
         } else {
-          // Ancien système (compatibilité)
-          const capLabel = data.cap_percent != null ? `Cap ±${data.cap_percent}%` : 'Cap —';
-          strategyName = data.execution_plan ?
-            `${data.strategy} (Itération 1 - ${capLabel})` :
-            data.strategy || 'Regime-Based Allocation';
+          strategyName = `${methodLabel} (Objectifs Théoriques)`;
         }
 
         const result = {
           targets: cleanTargets,
           strategy: strategyName,
           timestamp: data.timestamp,
-          is_execution_plan: !!data.execution_plan,
-          // Métadonnées pour debug
+          is_execution_plan: usingIter1,
+          is_iter1: usingIter1,
+          cap_percent: capPercent,
           _debug: {
             source: data.source,
             methodology: data.methodology,
             stables_source: data.stables_source,
             cycle_score: data.cycle_score,
-            regime_name: data.regime_name
+            regime_name: data.regime_name,
+            mode_name: modeName,
+            using_iter1: usingIter1,
+            theoretical_targets: usingIter1 ? data.targets : null
           }
         };
 
         debugLogger.debug('✅ Unified targets synchronized from analytics:', {
           strategy: strategyName,
+          using_iter1: usingIter1,
           targets_count: Object.keys(cleanTargets).length,
           stables_pct: cleanTargets.Stablecoins,
           sum: Object.values(cleanTargets).reduce((a, b) => a + b, 0).toFixed(1),
           source: data.source,
-          has_plan: !!data.execution_plan
+          cap_percent: capPercent,
+          mode_name: modeName
         });
-
-        // DEBUG DÉTAILLÉ: Vérifier la structure des targets
-        console.debug('🔍 DEBUG cleanTargets détaillés:', cleanTargets);
-        console.debug('🔍 DEBUG targetsSource original:', targetsSource);
-        console.debug('🔍 DEBUG data.execution_plan:', data.execution_plan);
-        console.debug('🔍 DEBUG data.targets:', data.targets);
 
         return result;
       } catch (e) {
