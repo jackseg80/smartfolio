@@ -109,20 +109,24 @@ button {
 
 /* CLS Prevention: reserve space for dynamically-loaded sections */
 #governance-container {
-  min-height: 74px; /* collapsed governance panel header + margins */
+  min-height: 90px; /* collapsed governance panel header + margins */
 }
 
-#strategies-container {
-  min-height: 180px; /* prevent CLS when strategy cards load */
+#proposed-targets {
+  min-height: 500px; /* strategies card: header + grid + controls */
 }
 
 #donutCurrent,
 #donutTarget {
-  min-height: 200px; /* prevent CLS when charts render */
+  min-height: 260px; /* prevent CLS when charts render */
+}
+
+#legend {
+  min-height: 24px; /* legend row loaded dynamically */
 }
 
 #summary {
-  min-height: 80px; /* prevent CLS when summary grid loads */
+  min-height: 100px; /* prevent CLS when summary grid loads */
 }
 
 .muted {
