@@ -20,7 +20,7 @@
   border-bottom: 1px solid var(--theme-border);
 }
 
-.governance-header h3 {
+.governance-header h2 {
   margin: 0;
   color: var(--theme-text);
   font-size: 1rem;

@@ -317,7 +317,8 @@ tr:hover td {
   border-radius: 6px;
   background: var(--brand-primary-subtle);
   border: 1px solid var(--brand-primary);
-  color: var(--brand-primary);
+  /* WCAG AA: #60a5fa has 6.1:1 contrast ratio vs #3b82f6 (3.81:1) */
+  color: var(--color-primary-400, #60a5fa);
 }
 
 @media(min-width: 768px) {

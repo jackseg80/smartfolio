@@ -1,6 +1,6 @@
 # Lighthouse Accessibility Audit - SmartFolio
 
-> Date: 5 Février 2026
+> Date: 6 Février 2026
 
 ## Objectif
 
@@ -19,6 +19,7 @@ Score d'accessibilité WCAG AA **≥92%** sur toutes les pages.
 ### 1. Hiérarchie des titres (heading-order)
 - Ajout `<h1 class="visually-hidden">` pour le titre de page
 - Conversion des `<h3>` en `<h2>` pour respecter l'ordre h1→h2
+- **GovernancePanel.js**: `<h3>` → `<h2>` (heading-order invalide après h1)
 
 ### 2. Éléments interactifs accessibles
 - **rebalance.html**: `<span onclick>` → `<button>` avec `aria-expanded`, `aria-controls`
@@ -35,6 +36,7 @@ Score d'accessibilité WCAG AA **≥92%** sur toutes les pages.
 
 ### 5. Contraste de couleurs (color-contrast)
 - **nav.js**: Couleur lien actif `#3b82f6` → `#60a5fa` (ratio 4.29 → 6.1)
+- **rebalance.css**: `.allocation-pill` couleur `#3b82f6` → `#60a5fa` (ratio 3.81 → 6.1)
 
 ## Fichiers Modifiés
 
@@ -43,8 +45,10 @@ Score d'accessibilité WCAG AA **≥92%** sur toutes les pages.
 | `static/rebalance.html` | h1, h2, aria-*, scope, for |
 | `static/components/nav.js` | Couleur `.active` |
 | `static/components/flyout-panel.js` | div→button, aria-label |
-| `static/components/GovernancePanel.js` | aria-label, aria-expanded |
+| `static/components/GovernancePanel.js` | aria-label, aria-expanded, h3→h2 |
+| `static/components/governance-panel.css` | Sélecteur h3→h2 |
 | `static/css/tokens.css` | Classes `.visually-hidden`, `.btn-reset` |
+| `static/css/rebalance.css` | Contraste `.allocation-pill` |
 
 ## Classes Utilitaires Ajoutées
 

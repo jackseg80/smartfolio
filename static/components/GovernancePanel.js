@@ -46,7 +46,7 @@ class GovernancePanel {
     const html = `
       <div class="governance-panel" id="governance-panel">
         <div class="governance-header">
-          <h3>🏛️ Decision Engine</h3>
+          <h2>🏛️ Decision Engine</h2>
           <div class="header-badges">
             <div class="transparency-badge" id="transparency-badge" title="Transparency Level">
               <span class="badge-icon">🔍</span>
