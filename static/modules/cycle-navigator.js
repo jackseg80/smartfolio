@@ -339,28 +339,15 @@ export function getCurrentCycleMonths() {
   const lastHalvingDate = new Date('2024-04-20');
   const now = new Date();
 
-  // Calculate months difference
-  const yearDiff = now.getFullYear() - lastHalvingDate.getFullYear();
-  const monthDiff = now.getMonth() - lastHalvingDate.getMonth();
-  const dayDiff = now.getDate() - lastHalvingDate.getDate();
-
-  // Total months (with fraction for days)
-  let totalMonths = yearDiff * 12 + monthDiff;
-  if (dayDiff > 0) {
-    totalMonths += dayDiff / 30; // Approximate days to month fraction
-  }
-
-  // Ensure non-negative
-  totalMonths = Math.max(0, totalMonths);
+  // Calculate months using millisecond diff (same method as chart in risk-cycles-tab.js)
+  const diffTime = now.getTime() - lastHalvingDate.getTime();
+  const totalMonths = Math.max(0, diffTime / (1000 * 60 * 60 * 24 * 30.44));
 
   console.debug('🔍 DEBUG getCurrentCycleMonths:', {
     lastHalving: lastHalvingDate.toISOString(),
     now: now.toISOString(),
-    yearDiff,
-    monthDiff,
-    dayDiff,
-    totalMonths,
-    rounded: Math.round(totalMonths)
+    diffDays: (diffTime / (1000 * 60 * 60 * 24)).toFixed(1),
+    totalMonths: totalMonths.toFixed(2)
   });
 
   return {
