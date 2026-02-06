@@ -11,7 +11,7 @@ export let UNIFIED_ASSET_GROUPS = {};
 export let KNOWN_ASSET_MAPPING = {};
 export let GROUP_ORDER = [];
 
-// Fallback groups si API indisponible (must be before top-level await)
+// Fallback groups si API indisponible (must be before taxonomyReady init)
 const FALLBACK_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
 
 // Fallback pour classification automatique si API indisponible
@@ -34,8 +34,10 @@ function autoClassifySymbolFallback(symbol) {
   }
 }
 
-// Initialisation au chargement du module (top-level await, pas de XHR synchrone)
-await loadTaxonomyData()
+// Initialisation non-bloquante : la promesse charge les données en arrière-plan.
+// Les consommateurs peuvent await taxonomyReady si besoin de données garanties,
+// ou utiliser getAssetGroup() qui retourne un fallback si pas encore chargé.
+export const taxonomyReady = loadTaxonomyData()
   .then(data => {
     updateGlobalVariables(data);
     (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');

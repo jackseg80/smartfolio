@@ -1414,12 +1414,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 0) Force reload taxonomie pour éviter fallback "Others"
   try {
-    const { forceReloadTaxonomy, UNIFIED_ASSET_GROUPS } = await import('../shared-asset-groups.js');
-    await forceReloadTaxonomy();
-    if (!Object.keys(UNIFIED_ASSET_GROUPS || {}).length) {
+    const taxonomyModule = await import('../shared-asset-groups.js');
+    await taxonomyModule.forceReloadTaxonomy();
+    // Lire via module.* pour obtenir le live binding (pas de destructuration stale)
+    if (!Object.keys(taxonomyModule.UNIFIED_ASSET_GROUPS || {}).length) {
       debugLogger.warn('⚠️ Taxonomy non chargée – risque de "Others" gonflé. Vérifie API base_url.');
     } else {
-      debugLogger.debug('✅ Taxonomy forcée:', Object.keys(UNIFIED_ASSET_GROUPS).length, 'groupes chargés');
+      debugLogger.debug('✅ Taxonomy forcée:', Object.keys(taxonomyModule.UNIFIED_ASSET_GROUPS).length, 'groupes chargés');
     }
   } catch (taxonomyError) {
     debugLogger.warn('❌ Force reload taxonomy failed:', taxonomyError.message);

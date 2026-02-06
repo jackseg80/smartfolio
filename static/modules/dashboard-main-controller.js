@@ -924,7 +924,7 @@ async function loadDashboardData() {
 
         console.debug('✅ Dashboard data loaded successfully');
     } catch (e) {
-        log.error('Erreur chargement dashboard:', e);
+        console.error('Erreur chargement dashboard:', e);
         showError('Impossible de charger les données du dashboard. Vérifiez votre connexion.');
         showError('Erreur lors du chargement des données');
     } finally {
@@ -938,7 +938,7 @@ async function loadPortfolioData() {
         console.debug(`📊 Loading REAL portfolio data with source: ${currentSource}`);
         return await loadRealCSVPortfolioData();
     } catch (e) {
-        log.error('Erreur portfolio CSV non disponible:', e);
+        console.error('Erreur portfolio CSV non disponible:', e);
         showError('Fichier CSV du portfolio non accessible.');
         return null; // Pas de fallback hardcodé
     }
@@ -1007,7 +1007,7 @@ async function loadRealCSVPortfolioData() {
 
     if (!balanceResult || !balanceResult.success) {
         const msg = balanceResult?.error || 'Failed to load balance data';
-        log.error(msg);
+        console.error(msg);
         throw new Error(msg);
     }
 
@@ -1373,7 +1373,7 @@ async function updatePortfolioDisplay(data) {
     if ((metrics.total_value_usd || 0) > 0) { statusEl.className = 'status-badge status-active'; statusEl.textContent = 'Actif'; }
     else { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Vide'; }
 
-    log.debug('About to call updatePortfolioChart with:', data.balances);
+    console.debug('About to call updatePortfolioChart with:', data.balances);
     await updatePortfolioChart(data.balances);
     // N'appeler le breakdown que si le conteneur est présent dans le DOM
     if (document.getElementById('breakdown-list')) {
@@ -1640,7 +1640,7 @@ function formatTimeAgo(ts) {
     return `${Math.floor(dm / 1440)}j`;
 }
 function showError(m) {
-    log.error(m);
+    console.error(m);
     // Afficher l'erreur à l'utilisateur via UI
     const errorDiv = document.getElementById('error-display') || createErrorDisplay();
     errorDiv.textContent = m;
@@ -1689,13 +1689,14 @@ let ASSET_GROUPS = null;
 async function loadAssetGroups() {
     try {
         console.debug('🔄 [Dashboard] Force reloading taxonomy for proper asset classification...');
-        const { forceReloadTaxonomy, UNIFIED_ASSET_GROUPS } = await import('../shared-asset-groups.js');
-        await forceReloadTaxonomy();
+        const module = await import('../shared-asset-groups.js');
+        await module.forceReloadTaxonomy();
 
-        if (!Object.keys(UNIFIED_ASSET_GROUPS || {}).length) {
+        // Lire via module.* pour obtenir le live binding (pas de destructuration stale)
+        if (!Object.keys(module.UNIFIED_ASSET_GROUPS || {}).length) {
             debugLogger.warn('⚠️ [Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
         } else {
-            debugLogger.debug('✅ [Dashboard] Taxonomy loaded:', Object.keys(UNIFIED_ASSET_GROUPS).length, 'groupes');
+            debugLogger.debug('✅ [Dashboard] Taxonomy loaded:', Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
         }
     } catch (error) {
         debugLogger.error('❌ [Dashboard] Failed to load taxonomy:', error);
@@ -1873,7 +1874,7 @@ function autoClassifySymbol(symbol) {
 
 // Créer ou mettre à jour le graphique portfolio
 async function updatePortfolioChart(balancesData) {
-    log.debug('updatePortfolioChart - balancesData:', balancesData);
+    console.debug('updatePortfolioChart - balancesData:', balancesData);
 
     if (!balancesData || !balancesData.items) {
         console.debug('❌ No balances data or items');
@@ -1906,16 +1907,16 @@ async function updatePortfolioChart(balancesData) {
     }
 
     const ctx = canvas.getContext('2d');
-    log.debug('Number of items:', balancesData.items.length);
+    console.debug('Number of items:', balancesData.items.length);
 
     // Traiter les données pour le graphique avec regroupement par aliases
     const items = balancesData.items || [];
     const filteredItems = items.filter(item => parseFloat(item.value_usd || 0) > 0);
 
     // Regrouper par aliases
-    log.debug('Filtered items for chart:', filteredItems.length);
+    console.debug('Filtered items for chart:', filteredItems.length);
     const groupedData = await groupAssetsByAliases(filteredItems);
-    log.debug('Grouped data:', groupedData.length, 'groups');
+    console.debug('Grouped data:', groupedData.length, 'groups');
 
     // Trier par valeur et afficher TOUS les groupes (11 groupes canoniques)
     const sortedData = groupedData
@@ -1928,7 +1929,7 @@ async function updatePortfolioChart(balancesData) {
     const realTotal = groupedData.reduce((sum, item) => sum + item.value, 0);
     const total = realTotal;
 
-    log.debug('Chart data:', { labels, values, total: total.toFixed(2) });
+    console.debug('Chart data:', { labels, values, total: total.toFixed(2) });
 
     // Si aucune donnée, afficher un message explicatif
     if (labels.length === 0 || total === 0) {
@@ -2015,7 +2016,7 @@ async function updatePortfolioChart(balancesData) {
 
 // Créer ou mettre à jour le graphique Saxo (Bourse)
 async function updateSaxoChart(positions, cashBalance = 0) {
-    log.debug('updateSaxoChart - positions:', positions, 'cash:', cashBalance);
+    console.debug('updateSaxoChart - positions:', positions, 'cash:', cashBalance);
 
     if (!positions || positions.length === 0) {
         const container = document.getElementById('saxo-chart');
@@ -2066,7 +2067,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
     const values = sortedData.map(item => item.value);
     const total = values.reduce((sum, v) => sum + v, 0);
 
-    log.debug('Saxo chart data:', { labels, values, total: total.toFixed(2), cash: cashBalance });
+    console.debug('Saxo chart data:', { labels, values, total: total.toFixed(2), cash: cashBalance });
 
     if (total === 0) {
         document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune valeur</div>';
@@ -2138,7 +2139,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
 
 // Créer ou mettre à jour le graphique Patrimoine
 async function updatePatrimoineChart(breakdown, counts) {
-    log.debug('updatePatrimoineChart - breakdown:', breakdown, 'counts:', counts);
+    console.debug('updatePatrimoineChart - breakdown:', breakdown, 'counts:', counts);
 
     if (!breakdown || !counts) {
         const container = document.getElementById('patrimoine-chart');
@@ -2179,7 +2180,7 @@ async function updatePatrimoineChart(breakdown, counts) {
     const colors = nonZeroCategories.map(cat => cat.color);
     const total = values.reduce((sum, v) => sum + v, 0);
 
-    log.debug('Patrimoine chart data:', { labels, values, total: total.toFixed(2) });
+    console.debug('Patrimoine chart data:', { labels, values, total: total.toFixed(2) });
 
     if (total === 0 || nonZeroCategories.length === 0) {
         document.getElementById('patrimoine-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune valeur</div>';
@@ -2270,7 +2271,7 @@ async function updatePortfolioBreakdown(balancesData) {
     const sortedData = groupedData.sort((a, b) => b.value - a.value);
     const total = sortedData.reduce((sum, item) => sum + item.value, 0);
 
-    log.debug('updatePortfolioBreakdown - total:', total, 'groups:', sortedData.length);
+    console.debug('updatePortfolioBreakdown - total:', total, 'groups:', sortedData.length);
 
     const html = sortedData.map((group, index) => {
         const percentage = ((group.value / total) * 100).toFixed(1);
