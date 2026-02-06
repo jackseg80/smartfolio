@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script pour entraîner de nouveaux modèles ML pour le système crypto
-- Modèle de détection de régime de marché (Bull/Bear/Sideways/Distribution)
+- Modèle de détection de régime de marché (Bear Market/Correction/Bull Market/Expansion)
 - Modèles de prédiction de volatilité pour différents assets
 """
 
@@ -95,30 +95,30 @@ def generate_synthetic_market_data(n_samples=5000, sequence_length=30):
     # Reproductibilité légère (sans forcer determinism pour perf)
     set_deterministic_seeds(42, deterministic=False)
     
-    # Simuler différents régimes de marché
-    regimes = ['Bull', 'Bear', 'Sideways', 'Distribution']
+    # Canonical regime names (from regime_constants)
+    regimes = ['Bear Market', 'Correction', 'Bull Market', 'Expansion']
     regime_to_id = {regime: idx for idx, regime in enumerate(regimes)}
-    
+
     data = []
-    
+
     for i in range(n_samples):
         # Choisir un régime aléatoirement avec des probabilités différentes
-        regime_probs = [0.3, 0.2, 0.3, 0.2]  # Bull, Bear, Sideways, Distribution
+        regime_probs = [0.2, 0.3, 0.3, 0.2]  # Bear, Correction, Bull, Expansion
         regime = np.random.choice(regimes, p=regime_probs)
         regime_id = regime_to_id[regime]
-        
+
         # Générer des données selon le régime
-        if regime == 'Bull':
-            trend = np.random.normal(0.02, 0.01)  # Tendance haussière
-            volatility = np.random.uniform(0.15, 0.35)  # Volatilité modérée
-        elif regime == 'Bear':
+        if regime == 'Bear Market':
             trend = np.random.normal(-0.02, 0.015)  # Tendance baissière
             volatility = np.random.uniform(0.25, 0.6)  # Haute volatilité
-        elif regime == 'Sideways':
+        elif regime == 'Correction':
             trend = np.random.normal(0.0, 0.005)  # Pas de tendance
             volatility = np.random.uniform(0.1, 0.25)  # Faible volatilité
-        else:  # Distribution
-            trend = np.random.normal(-0.01, 0.02)  # Légèrement baissier
+        elif regime == 'Bull Market':
+            trend = np.random.normal(0.02, 0.01)  # Tendance haussière
+            volatility = np.random.uniform(0.15, 0.35)  # Volatilité modérée
+        else:  # Expansion
+            trend = np.random.normal(-0.01, 0.02)  # Momentum fort mais instable
             volatility = np.random.uniform(0.4, 0.8)  # Très haute volatilité
         
         # Générer une séquence de prix
@@ -294,14 +294,15 @@ def generate_real_market_data(
             bear = (ret_30 < -thr) and (trend_strength < 0)
             high_vol = vol_q >= vol_thresh
             side = (abs(ret_30) <= thr - 0.01) and (not high_vol)
-            if bull:
-                regime_label, regime_name = 0, 'Bull'
-            elif bear:
-                regime_label, regime_name = 1, 'Bear'
+            # Canonical regime IDs: 0=Bear Market, 1=Correction, 2=Bull Market, 3=Expansion
+            if bear:
+                regime_label, regime_name = 0, 'Bear Market'
             elif side:
-                regime_label, regime_name = 2, 'Sideways'
+                regime_label, regime_name = 1, 'Correction'
+            elif bull:
+                regime_label, regime_name = 2, 'Bull Market'
             else:
-                regime_label, regime_name = 3, 'Distribution'
+                regime_label, regime_name = 3, 'Expansion'
 
             # Probabilités de régime prédictives (teacher-student)
             proba_reg = None
@@ -565,7 +566,7 @@ def train_regime_model(data, epochs: int = 200, patience: int = 15):
         accuracy = accuracy_score(y_test, predicted.cpu().numpy())
         
     # Rapport détaillé (gérer classes manquantes en réel)
-    classes = ["Bull", "Bear", "Sideways", "Distribution"]
+    classes = ["Bear Market", "Correction", "Bull Market", "Expansion"]
     all_labels = [0, 1, 2, 3]
     report = classification_report(
         y_test,
@@ -602,7 +603,7 @@ def train_regime_model(data, epochs: int = 200, patience: int = 15):
         "version": "2.0.0",
         "accuracy": float(accuracy),
         "best_val_accuracy": float(best_val_acc),
-        "classes": ["Bull", "Bear", "Sideways", "Distribution"],
+        "classes": ["Bear Market", "Correction", "Bull Market", "Expansion"],
         "input_features": [
             "price_change_1d", "price_change_7d", "volatility_7d", "volatility_30d",
             "rsi", "price_position", "trend_strength", "volume_trend", 

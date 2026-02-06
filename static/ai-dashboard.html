@@ -868,7 +868,7 @@
                                     style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                     <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes
                                     </li>
-                                    <li><strong>States:</strong> Bull, Bear, Sideways, Distribution</li>
+                                    <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
                                     <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -20%, 60
                                         days)</li>
                                 </ul>
@@ -1429,7 +1429,7 @@
                 // Fallback intelligent
                 const fallbackCards = [
                     createMLCard('📊', 'Volatility Model', 'Available', '78.2%', 'Ready to load'),
-                    createMLCard('🎯', 'Regime Detection', 'Available', 'Sideways', '82% confidence'),
+                    createMLCard('🎯', 'Regime Detection', 'Available', 'Correction', '82% confidence'),
                     createMLCard('🔗', 'Correlations', 'Computing', '10 Assets', 'Rolling 30d'),
                     createMLCard('😊', 'Sentiment', 'Externe', '52/100', 'Neutral')
                 ];
@@ -1937,13 +1937,13 @@
                     if (signals.regime && Object.keys(signals.regime).length > 0) {
                         const regimeData = signals.regime;
                         if (regimeData.bull >= 0.6) {
-                            marketRegime = 'Bull';
+                            marketRegime = 'Bull Market';
                             regimeConfidence = regimeData.bull * 100;
                         } else if (regimeData.bear >= 0.6) {
-                            marketRegime = 'Bear';
+                            marketRegime = 'Bear Market';
                             regimeConfidence = regimeData.bear * 100;
                         } else {
-                            marketRegime = 'Sideways';
+                            marketRegime = 'Correction';
                             regimeConfidence = regimeData.neutral * 100;
                         }
                         debugLogger.debug('✅ Régime depuis Governance:', marketRegime, regimeConfidence + '%');
@@ -2101,7 +2101,7 @@
                 'HMM': {
                     architecture: 'Hidden Markov Model',
                     input_features: ['Price', 'Volume', 'RSI', 'MACD', 'Bollinger'],
-                    output: 'Market regime (Bull/Bear/Sideways)',
+                    output: 'Market regime (Bear Market/Correction/Bull Market/Expansion)',
                     accuracy: '75%',
                     training_data: '18 months multi-timeframe data',
                     last_retrain: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US'),

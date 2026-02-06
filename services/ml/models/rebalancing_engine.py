@@ -701,17 +701,22 @@ class RebalancingEngine:
                     target[asset] = target_weight
             
             elif signal.reason == RebalanceReason.REGIME_CHANGE:
-                # Adjust based on regime
+                # Adjust based on regime (uses canonical IDs from regime_constants)
+                from services.regime_constants import MarketRegime
                 regime = signal.metadata.get('predicted_regime', 0)
-                
-                if regime == 0:  # Accumulation - increase allocation to quality assets
+
+                if regime == MarketRegime.BEAR_MARKET:  # Bear Market - reduce risk exposure
+                    for asset in signal.affected_assets:
+                        target[asset] = max(target[asset] - adjustment_factor, 0.02)
+
+                elif regime == MarketRegime.CORRECTION:  # Correction - moderate reduction
+                    for asset in signal.affected_assets:
+                        target[asset] = max(target[asset] - adjustment_factor * 0.5, 0.02)
+
+                elif regime == MarketRegime.EXPANSION:  # Expansion - increase quality assets
                     for asset in ['BTC', 'ETH']:
                         if asset in target:
                             target[asset] = min(target[asset] + adjustment_factor, 0.40)
-                
-                elif regime == 2:  # Euphoria - reduce risk
-                    for asset in signal.affected_assets:
-                        target[asset] = max(target[asset] - adjustment_factor, 0.02)
             
             elif signal.reason == RebalanceReason.VOLATILITY_SPIKE:
                 # Reduce allocation to volatile assets

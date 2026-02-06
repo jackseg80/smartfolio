@@ -14,15 +14,11 @@ const debugLogger = {
     error: (...args) => console.error('[StockRegimeHistory]', ...args)
 };
 
-// Regime colors matching main dashboard
+// Regime colors - canonical 4 regimes
 const REGIME_COLORS = {
-    'Bull Market': 'rgb(34, 197, 94)',      // green
-    'Bull': 'rgb(34, 197, 94)',
     'Bear Market': 'rgb(220, 38, 38)',      // red
-    'Bear': 'rgb(220, 38, 38)',
     'Correction': 'rgb(234, 88, 12)',       // orange
-    'Sideways': 'rgb(107, 114, 128)',       // gray
-    'Distribution': 'rgb(139, 92, 246)',    // purple
+    'Bull Market': 'rgb(34, 197, 94)',      // green
     'Expansion': 'rgb(59, 130, 246)'        // blue
 };
 

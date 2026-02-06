@@ -53,7 +53,7 @@ class StocksMLAdapter:
 
     Provides high-level interface for:
     - Volatility forecasting (1d, 7d, 30d)
-    - Market regime detection (Bull/Bear/Sideways)
+    - Market regime detection (Bear Market/Correction/Bull Market/Expansion)
     - Multi-stock correlation forecasting
     - Technical signals aggregation
     """

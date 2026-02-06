@@ -690,7 +690,7 @@ class MLOrchestrator:
     async def _get_regime_predictions(self, symbols: List[str]) -> Dict[str, Any]:
         """Get market regime predictions"""
         return {
-            'current_regime': 'bull_market',
+            'current_regime': 'Bull Market',
             'regime_probability': 0.75,
             'regime_stability': 0.82,
             'expected_duration_days': 45
@@ -1014,17 +1014,16 @@ class MLOrchestrator:
                 regime = regime_data.get('current_regime', 'unknown')
                 regime_prob = regime_data.get('regime_probability', 0.5)
                 
-                # Map regimes to sentiment
+                # Map regimes to sentiment (canonical names from regime_constants)
+                from services.regime_constants import normalize_regime_name
+                regime = normalize_regime_name(regime)
                 regime_sentiment_map = {
-                    'bull_market': 'bullish',
-                    'accumulation': 'bullish',
-                    'expansion': 'bullish', 
-                    'bear_market': 'bearish',
-                    'distribution': 'bearish',
-                    'euphoria': 'neutral',  # High risk despite positive sentiment
-                    'sideways': 'neutral'
+                    'Bear Market': 'bearish',
+                    'Correction': 'neutral',
+                    'Bull Market': 'bullish',
+                    'Expansion': 'bullish',
                 }
-                
+
                 regime_sentiment = regime_sentiment_map.get(regime, 'neutral')
                 sentiment_signals.append((regime_sentiment, model_weights['regime'], f'regime_{regime}'))
                 

@@ -372,11 +372,11 @@ class BourseAlertsDetector:
     # === HELPERS ===
 
     def _get_regime_recommendation(self, regime: str) -> str:
-        """Get recommendation based on regime"""
+        """Get recommendation based on regime (canonical names from regime_constants)"""
         recommendations = {
-            'Bull Market': 'Maintenir exposition growth, envisager rotation vers cycliques',
-            'Bear Market': 'Réduire exposure growth, augmenter défensifs (healthcare, utilities, bonds)',
-            'Consolidation': 'Position neutre, attendre signal directionnel',
-            'Distribution': 'Préparer rotation, surveiller sortie distribution'
+            'Bear Market': 'Reduce growth exposure, increase defensives (healthcare, utilities, bonds)',
+            'Correction': 'Neutral positioning, wait for directional signal, selective accumulation',
+            'Bull Market': 'Maintain growth exposure, consider rotation to cyclicals',
+            'Expansion': 'Ride momentum but prepare for consolidation, watch for overheating',
         }
-        return recommendations.get(regime, 'Ajuster allocation selon profil risque')
+        return recommendations.get(regime, 'Adjust allocation based on risk profile')

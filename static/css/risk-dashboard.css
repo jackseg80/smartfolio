@@ -2468,12 +2468,7 @@
   border: 2px solid #3b82f6;
 }
 
-.regime-chip.sideways,
-.regime-chip.distribution {
-  background: rgba(156, 163, 175, 0.15);
-  color: #9ca3af;
-  border: 2px solid #9ca3af;
-}
+/* Legacy aliases removed - only canonical regimes: bear-market, correction, bull-market, expansion */
 
 .regime-chip.unknown {
   background: rgba(107, 114, 128, 0.15);

@@ -1130,12 +1130,12 @@ export function deriveRecommendations(u) {
     const cyclePhase = u.cycle.phase.phase;
     const blendedScore = u.scores?.blended ?? 50;
     const regimeKey = u.market?.regime?.key ||
-                      (blendedScore >= 85 ? 'distribution' :
-                       blendedScore >= 70 ? 'euphoria' :
-                       blendedScore >= 40 ? 'expansion' : 'accumulation');
+                      (blendedScore >= 76 ? 'expansion' :
+                       blendedScore >= 51 ? 'bull_market' :
+                       blendedScore >= 26 ? 'correction' : 'bear_market');
 
-    // Prendre profits SEULEMENT si cycle=peak ET (régime=euphoria OU distribution) ET DI>75
-    if (cyclePhase === 'peak' && u.decision.score > 75 && (regimeKey === 'euphoria' || regimeKey === 'distribution')) {
+    // Take profits ONLY if cycle=peak AND (regime=bull_market OR expansion) AND DI>75
+    if (cyclePhase === 'peak' && u.decision.score > 75 && (regimeKey === 'bull_market' || regimeKey === 'expansion')) {
       recos.push({
         key: 'reco:cycle:peak_profits',
         priority: 'high',
@@ -1145,8 +1145,8 @@ export function deriveRecommendations(u) {
         source: 'cycle-intelligence'
       });
     }
-    // Vigilance si cycle=peak mais régime pas encore euphorie (divergence)
-    else if (cyclePhase === 'peak' && u.decision.score > 75 && regimeKey === 'expansion') {
+    // Vigilance if cycle=peak but regime not yet bull_market (divergence)
+    else if (cyclePhase === 'peak' && u.decision.score > 75 && regimeKey === 'correction') {
       recos.push({
         key: 'reco:cycle:peak_but_expansion',
         priority: 'medium',

@@ -329,7 +329,7 @@ Le DI est toujours une moyenne pondérée continue 0-100.
 ### Score de Régime (concept documentaire)
 - **Nature**: Métrique composite pour communication (pas calculée en backend)
 - **Interprétation**: Combinaison qualitative des signaux Cycle/OnChain/Risk
-- **Régimes**: Accumulation (<40), Expansion (40-69), Euphorie (70-89), Contraction (≥90)
+- **Régimes**: Bear Market (0-25), Correction (26-50), Bull Market (51-75), Expansion (76-100)
 - ⚠️ Le DI utilise des poids adaptatifs DIFFÉRENTS de toute formule fixe
 
 ### ML Sentiment - Interprétation
@@ -343,7 +343,7 @@ Le DI est toujours une moyenne pondérée continue 0-100.
 
 ### Phase vs Régime - Distinction IMPORTANTE
 - **Phase**: Basée UNIQUEMENT sur Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
-- **Régime**: Basé sur Score de Régime (Accumulation, Expansion, Euphorie, Contraction)
+- **Régime**: Basé sur Score de Régime (Bear Market, Correction, Bull Market, Expansion)
 - ⚠️ Phase "bearish" + Régime "Expansion" est NORMAL et ne doit pas être forcé à converger!
 
 ### Overrides Contextuels (appliqués à l'allocation)
@@ -373,7 +373,7 @@ Le DI est toujours une moyenne pondérée continue 0-100.
 - **Decision Index**: 0-100 (moyenne pondérée adaptative des 4 piliers)
 - **ML Sentiment**: 0-100 (Fear/Neutral/Greed)
 - **Risk Score**: 0-100 (higher = safer)
-- **Régime**: Accumulation/Expansion/Euphorie/Contraction
+- **Régime**: Bear Market/Correction/Bull Market/Expansion
 
 Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécialisées.
 """,

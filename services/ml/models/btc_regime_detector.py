@@ -443,10 +443,9 @@ class BTCRegimeDetector:
             }
 
         # Rule 4: CORRECTION (fallback before HMM)
-        # Moderate drawdown (-50% < DD < -5%) AND elevated volatility (>40%)
-        # STRICTER: Both conditions required (changed from OR to AND)
-        # This prevents high-vol bull/expansion periods from being marked as Correction
-        if (-0.50 < drawdown < -0.05) and (volatility > 0.40):
+        # Moderate drawdown (-50% < DD < -10%) AND elevated volatility (>65%)
+        # Crypto vol threshold raised from 40% to 65% (BTC normally has 40-60% vol)
+        if (-0.50 < drawdown < -0.10) and (volatility > 0.65):
             confidence = 0.85
             # Higher confidence for deeper corrections
             if drawdown < -0.30:

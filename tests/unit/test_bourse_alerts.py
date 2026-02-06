@@ -287,7 +287,7 @@ class TestBourseAlertsDetector:
                 'confidence': 0.85,  # 85% (> 75% threshold)
                 'regime_probabilities': {
                     'Bear Market': 0.85,
-                    'Consolidation': 0.10,
+                    'Correction': 0.10,
                     'Bull Market': 0.05
                 }
             }

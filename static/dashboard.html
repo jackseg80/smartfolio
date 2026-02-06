@@ -334,11 +334,11 @@
             font-weight: 700;
         }
 
-        .regime-status.bull {
+        .regime-status.bull-market {
             color: var(--success);
         }
 
-        .regime-status.bear {
+        .regime-status.bear-market {
             color: var(--danger);
         }
 
@@ -346,7 +346,7 @@
             color: var(--info);
         }
 
-        .regime-status.consolidation {
+        .regime-status.correction {
             color: var(--warning);
         }
 
@@ -363,11 +363,11 @@
             transition: width 0.3s ease;
         }
 
-        .regime-progress-fill.bull {
+        .regime-progress-fill.bull-market {
             background: var(--success);
         }
 
-        .regime-progress-fill.bear {
+        .regime-progress-fill.bear-market {
             background: var(--danger);
         }
 
@@ -375,7 +375,7 @@
             background: var(--info);
         }
 
-        .regime-progress-fill.consolidation {
+        .regime-progress-fill.correction {
             background: var(--warning);
         }
 
@@ -779,10 +779,10 @@
                     <div class="regime-item">
                         <div class="regime-header">
                             <span class="regime-label">Bitcoin</span>
-                            <span class="regime-status bull" id="regime-btc-status">--</span>
+                            <span class="regime-status" id="regime-btc-status">--</span>
                         </div>
                         <div class="regime-progress-bar">
-                            <div class="regime-progress-fill bull" id="regime-btc-bar" style="width: 0%;"></div>
+                            <div class="regime-progress-fill" id="regime-btc-bar" style="width: 0%;"></div>
                         </div>
                         <div class="regime-confidence" id="regime-btc-conf">--</div>
                     </div>
@@ -790,10 +790,10 @@
                     <div class="regime-item">
                         <div class="regime-header">
                             <span class="regime-label">Ethereum</span>
-                            <span class="regime-status expansion" id="regime-eth-status">--</span>
+                            <span class="regime-status" id="regime-eth-status">--</span>
                         </div>
                         <div class="regime-progress-bar">
-                            <div class="regime-progress-fill expansion" id="regime-eth-bar" style="width: 0%;"></div>
+                            <div class="regime-progress-fill" id="regime-eth-bar" style="width: 0%;"></div>
                         </div>
                         <div class="regime-confidence" id="regime-eth-conf">--</div>
                     </div>
@@ -801,10 +801,10 @@
                     <div class="regime-item" style="margin-bottom: 0;">
                         <div class="regime-header">
                             <span class="regime-label">Stock Market</span>
-                            <span class="regime-status consolidation" id="regime-stock-status">--</span>
+                            <span class="regime-status" id="regime-stock-status">--</span>
                         </div>
                         <div class="regime-progress-bar">
-                            <div class="regime-progress-fill consolidation" id="regime-stock-bar" style="width: 0%;">
+                            <div class="regime-progress-fill" id="regime-stock-bar" style="width: 0%;">
                             </div>
                         </div>
                         <div class="regime-confidence" id="regime-stock-conf">--</div>

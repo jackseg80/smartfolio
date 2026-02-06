@@ -262,12 +262,10 @@ describe('computeExposureCap - Regime Floors', () => {
 
   test('Tous les régimes respectent leurs floors minimums', () => {
     const regimes = [
-      { name: 'euphorie', floor: 75 },
-      { name: 'expansion', floor: 60 },
-      { name: 'neutral', floor: 40 },
-      { name: 'accumulation', floor: 30 },
-      { name: 'bear', floor: 20 },
-      { name: 'capitulation', floor: 10 },
+      { name: 'expansion', floor: 75 },
+      { name: 'bull market', floor: 60 },
+      { name: 'correction', floor: 40 },
+      { name: 'bear market', floor: 20 },
     ];
 
     regimes.forEach(({ name, floor }) => {

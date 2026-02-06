@@ -383,32 +383,26 @@ export function computeExposureCap({ blendedScore, riskScore, decision_score, co
     base -= 15;
   }
 
-  // 5) Regime-based floor and cap (prevents absurd allocations)
+  // 5) Regime-based floor and cap (canonical names from regime-constants)
   const minByRegime = {
-    'euphorie': 75,      // French
-    'euphoria': 75,      // English fallback
-    'expansion': 60,
-    'neutral': 40,
-    'accumulation': 30,
-    'bear': 20,
-    'capitulation': 10,
+    'bear market': 20,
+    'correction': 40,
+    'bull market': 60,
+    'expansion': 75,
   };
 
   const maxByRegime = {
-    'euphorie': 95,
-    'euphoria': 95,
-    'expansion': 85,
-    'neutral': 55,      // Neutral shouldn't exceed 55%
-    'accumulation': 40,
-    'bear': 30,         // Bear market cap at 30% max
-    'capitulation': 20,
+    'bear market': 40,
+    'correction': 70,
+    'bull market': 85,
+    'expansion': 95,
   };
 
   const regimeKey = String(regime?.name || regime || '').toLowerCase();
   let regimeMin = minByRegime[regimeKey] ?? 40;
   let regimeMax = maxByRegime[regimeKey] ?? 95;
 
-  // Dynamic boost: If Expansion + high Risk Score (≥80), allow more aggressive allocation
+  // Dynamic boost: If Expansion + high Risk Score (>=80), allow more aggressive allocation
   if (regimeKey === 'expansion' && rs >= 80) {
     regimeMin = 65;  // Boost floor from 60% to 65%
   }

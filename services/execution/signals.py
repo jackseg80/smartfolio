@@ -238,14 +238,15 @@ class RealSignalExtractor:
             current_regime = regime_data.get('current_regime', 'unknown')
             regime_prob = regime_data.get('regime_probability', 0.5)
 
-            # Convert regime to our expected format
+            # Convert regime to our expected format (canonical names from regime_constants)
+            from services.regime_constants import normalize_regime_name
+            current_regime = normalize_regime_name(current_regime)
+
             regime_mapping = {
-                'bull_market': {'bull': 0.8, 'neutral': 0.15, 'bear': 0.05},
-                'bear_market': {'bull': 0.05, 'neutral': 0.15, 'bear': 0.8},
-                'accumulation': {'bull': 0.6, 'neutral': 0.3, 'bear': 0.1},
-                'distribution': {'bull': 0.1, 'neutral': 0.3, 'bear': 0.6},
-                'euphoria': {'bull': 0.9, 'neutral': 0.08, 'bear': 0.02},
-                'sideways': {'bull': 0.33, 'neutral': 0.34, 'bear': 0.33}
+                'Bear Market': {'bull': 0.05, 'neutral': 0.15, 'bear': 0.8},
+                'Correction': {'bull': 0.2, 'neutral': 0.4, 'bear': 0.4},
+                'Bull Market': {'bull': 0.7, 'neutral': 0.2, 'bear': 0.1},
+                'Expansion': {'bull': 0.85, 'neutral': 0.1, 'bear': 0.05},
             }
 
             if current_regime in regime_mapping:

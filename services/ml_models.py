@@ -23,11 +23,11 @@ from services.ml.safe_loader import safe_pickle_load
 logger = logging.getLogger(__name__)
 
 class MarketRegime(Enum):
-    """Market regime classifications"""
-    ACCUMULATION = "accumulation"
-    EXPANSION = "expansion" 
-    EUPHORIA = "euphoria"
-    DISTRIBUTION = "distribution"
+    """Market regime classifications (canonical names from regime_constants)"""
+    BEAR_MARKET = "Bear Market"
+    CORRECTION = "Correction"
+    BULL_MARKET = "Bull Market"
+    EXPANSION = "Expansion"
 
 @dataclass
 class RegimePrediction:
