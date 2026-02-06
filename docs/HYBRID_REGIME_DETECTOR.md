@@ -84,9 +84,11 @@ The **Hybrid Regime Detector** combines rule-based detection (for clear cases) w
 
 | Regime | Criteria | Confidence | When Used |
 |--------|----------|------------|-----------|
-| **Bear Market** | DD ≤ -20% sustained >60 days | 95% | Clear crashes |
-| **Expansion** | Recovery from DD >-20% at +15%/month for 3+ months | 90% | Post-crash rebounds |
-| **Bull Market** | DD > -5%, vol <20%, trend >5% | 88% | Stable uptrends |
+| **Bear Market** | DD ≤ -15% sustained >30 days | 95% | Clear crashes |
+| **Expansion** | Recovery from DD >-15% at +15%/month for 3+ months | 90% | Post-crash rebounds |
+| **Bull Market** | DD > -8%, vol <18%, trend >2% | 88% | Stable uptrends |
+
+> **Note:** Thresholds updated Feb 2026. See [REGIME_SYSTEM.md](REGIME_SYSTEM.md) for full reference.
 
 **Returns `None`** if no clear rule applies → defers to HMM.
 

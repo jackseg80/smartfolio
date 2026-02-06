@@ -44,15 +44,22 @@ async def endpoint(user: str = Depends(get_current_user_jwt)): pass
 **Docs:** [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md)
 
 ### 3. Système Dual de Scoring
+
 | Métrique | Formule | Range | Usage |
 |----------|---------|-------|-------|
 | **Score de Régime** | `0.5×CCS + 0.3×OnChain + 0.2×Risk` | 0-100 | Communication du régime marché |
 | **Decision Index** | `(C×w₁ + O×w₂ + R×w₃ + S×w₄) × phase_factor` | 0-100 | Score décisionnel stratégique |
 | **Allocation Validity** | `total_check.isValid ? 65 : 45` | 65 ou 45 | Check technique V2 allocation |
 
-**Règles:**
+**Régimes marché (4 canoniques):** Bear Market (0), Correction (1), Bull Market (2), Expansion (3)
+- Source de vérité: `services/regime_constants.py` + `static/core/regime-constants.js`
+- **Conditions** (DI panel) = blended sans Risk. **Regime** (Market Regimes page) = ML per-asset
+- **Docs:** [`docs/REGIME_SYSTEM.md`](docs/REGIME_SYSTEM.md)
+
+**Règles scoring:**
+
 - Phase basée UNIQUEMENT sur cycle (<70=bearish, 70-90=moderate, ≥90=bullish)
-- Régime "Expansion" (55) + Phase "bearish" (cycle 59<70) est NORMAL
+- Conditions "Correction" + Regime BTC "Bear Market" est NORMAL (concepts différents)
 - Risk Score = Positif (0-100), plus haut = plus robuste. NE JAMAIS inverser avec `100 - scoreRisk`
 - **Decision Index ≠ Allocation Validity**: DI est continu (0-100), Validity est binaire (65/45)
 - **Docs:** [`docs/DECISION_INDEX_V2.md`](docs/DECISION_INDEX_V2.md)
@@ -235,6 +242,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 
 | Feature | Doc |
 |---------|-----|
+| Regime System | [`docs/REGIME_SYSTEM.md`](docs/REGIME_SYSTEM.md) |
 | Allocation Engine V2 | [`docs/ALLOCATION_ENGINE_V2.md`](docs/ALLOCATION_ENGINE_V2.md) |
 | Portfolio Optimization | [`docs/PORTFOLIO_OPTIMIZATION_GUIDE.md`](docs/PORTFOLIO_OPTIMIZATION_GUIDE.md) |
 | Risk Semantics | [`docs/RISK_SEMANTICS.md`](docs/RISK_SEMANTICS.md) |

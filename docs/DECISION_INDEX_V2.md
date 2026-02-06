@@ -111,6 +111,29 @@ decision_score: float = Field(..., ge=0, le=100, description="Score décisionnel
 - Somme = 100% (ça c'est le check de validité)
 - Respect des contraintes hiérarchiques
 
+### Conditions vs Phase vs Regime (Fév 2026)
+
+Le DI panel affiche trois concepts distincts :
+
+| Concept | Source | Signification |
+| ------- | ------ | ------------- |
+| **Conditions** | Blended score SANS Risk (CCS + OnChain) | Market outlook composite |
+| **Phase** | Cycle score seul (<70=bearish, 70-90=moderate, ≥90=bullish) | Applied strategy |
+| **Regime** (page Market Regimes) | ML detection per asset (HMM + rules) | Actual asset drawdown/volatility |
+
+**Pourquoi Conditions ≠ Regime ?**
+
+- Conditions reflète un score composite multi-pilier (sans Risk qui mesure la robustesse portfolio, pas la direction marché)
+- Regime détecte le drawdown réel par asset (ex: BTC à -43% = Bear Market)
+- Il est normal que Conditions = "Correction" alors que Regime BTC = "Bear Market"
+
+**Calcul du regime score** (dans `getRegimeDisplayData()`):
+
+```javascript
+// Remove Risk influence: Risk measures portfolio health, not market direction
+regimeScore = Math.floor((blendedScore - riskScore * 0.20) / 0.80)
+```
+
 ### ✅ Allocation Validity Check (interne uniquement)
 
 **Note (Jan 2026)**: Le bug qui affichait 65/45 au lieu du vrai DI a été corrigé.

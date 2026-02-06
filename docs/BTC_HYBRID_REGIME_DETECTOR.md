@@ -12,11 +12,14 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 **Key Achievement:** Prevents false "Bear Market" detection on moderate corrections (-12%) by introducing a Correction rule that overrides poorly-trained HMM models.
 
-**Crypto-Specific Adaptations:**
-- Bear threshold: -50% (vs -20% equities)
-- Bull volatility: <60% (vs <20% equities)
-- Expansion recovery: +30%/month (vs +15% equities)
-- **NEW**: Correction fallback rule for -5% to -50% drawdowns
+**Crypto-Specific Adaptations (updated Feb 2026):**
+
+- Bear threshold: -30%, 20 days (vs -15%, 30d equities)
+- Bull volatility: <60% (vs <18% equities)
+- Expansion recovery: +30%/month from -30%+ drawdown (vs +15% equities)
+- Correction: -10% to -30% drawdown AND vol >65%
+
+> **Note:** See [REGIME_SYSTEM.md](REGIME_SYSTEM.md) for the unified regime reference.
 
 ---
 
@@ -120,10 +123,10 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 | Regime | Criteria (Bitcoin) | Criteria (Equities) | Confidence | Example |
 |--------|-------------------|---------------------|------------|---------|
-| **Bear Market** | DD ≤ -50% sustained >30 days | DD ≤ -20% sustained >60 days | 95% | 2022 Luna/FTX (-77%) |
-| **Expansion** | Recovery from DD >-50% at +30%/month | +15%/month | 90% | 2023 recovery (+150%) |
-| **Bull Market** | DD > -20%, vol <60%, trend >10% | DD > -5%, vol <20%, trend >5% | 88% | 2024 bull run |
-| **Correction** | -50% < DD < -5% OR vol >40% | -20% < DD < -5% OR vol >30% | 85% | Oct 2025 (-11.8%) |
+| **Bear Market** | DD ≤ -30% sustained >20 days | DD ≤ -15% sustained >30 days | 95% | 2022 Luna/FTX (-77%) |
+| **Expansion** | Recovery from DD >-30% at +30%/month | +15%/month | 90% | 2023 recovery (+150%) |
+| **Bull Market** | DD > -20%, vol <60%, trend >10% | DD > -8%, vol <18%, trend >2% | 88% | 2024 bull run |
+| **Correction** | -30% < DD < -10% AND vol >65% | Fallback (no clear rule) | 85% | Oct 2025 (-11.8%) |
 
 **Returns `None`** if no clear rule applies → defers to HMM.
 
@@ -131,11 +134,12 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 ```python
 # Rule 4: CORRECTION (fallback before HMM)
-# Prevents HMM from incorrectly labeling corrections as "Bear Market"
-if (-0.50 < drawdown < -0.05) or (volatility > 0.40):
+# Moderate drawdown (-30% < DD < -10%) AND elevated volatility (>65%)
+# Deeper than -30% is Bear Market (Rule 1), not correction
+if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
     confidence = 0.85
     # Higher confidence for deeper corrections
-    if drawdown < -0.30:
+    if drawdown < -0.20:
         confidence = 0.90
 
     return {
