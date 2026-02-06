@@ -11,8 +11,8 @@ export let UNIFIED_ASSET_GROUPS = {};
 export let KNOWN_ASSET_MAPPING = {};
 export let GROUP_ORDER = [];
 
-// Initialisation immédiate au chargement du module
-initializeTaxonomySync();
+// Initialisation au chargement du module (async, pas de XHR synchrone)
+initializeTaxonomyAsync();
 
 // Expose functions globally for debugging
 if (typeof window !== 'undefined') {
@@ -52,31 +52,21 @@ function autoClassifySymbolFallback(symbol) {
 // Fallback groups si API indisponible
 const FALLBACK_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
 
-// Initialisation synchrone au chargement du module
-function initializeTaxonomySync() {
-  // Essayer d'abord un chargement synchrone immédiat
-  try {
-    loadTaxonomyDataSync();
-    (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded synchronously on init:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
-  } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Sync load on init failed, trying async...', error.message);
-
-    // Fallback async si sync fail
-    loadTaxonomyData()
-      .then(data => {
-        updateGlobalVariables(data);
-        (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded asynchronously:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
-      })
-      .catch(error => {
-        (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy async load failed, using fallback:', error.message);
-        // Utiliser les fallback en cas d'erreur
-        const fallbackData = {
-          aliases: {},
-          groups: FALLBACK_GROUPS
-        };
-        updateGlobalVariables(fallbackData);
-      });
-  }
+// Initialisation async au chargement du module (pas de XHR synchrone)
+function initializeTaxonomyAsync() {
+  loadTaxonomyData()
+    .then(data => {
+      updateGlobalVariables(data);
+      (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
+    })
+    .catch(error => {
+      (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy load failed, using fallback:', error.message);
+      const fallbackData = {
+        aliases: {},
+        groups: FALLBACK_GROUPS
+      };
+      updateGlobalVariables(fallbackData);
+    });
 }
 
 // Charger les données taxonomy depuis l'API
@@ -122,51 +112,21 @@ async function loadTaxonomyData() {
   }
 }
 
-// Version synchrone pour les cas d'urgence
+// Version synchrone utilisant le cache uniquement (pas de XHR synchrone deprecated)
 export function loadTaxonomyDataSync() {
-  const now = Date.now();
-
-  // Utiliser le cache si valide
-  if (taxonomyCache && (now - cacheTimestamp) < CACHE_TTL) {
+  // Utiliser le cache si disponible
+  if (taxonomyCache) {
     updateGlobalVariables(taxonomyCache);
     return;
   }
 
-  try {
-    const apiBase = window.getApiBase();
-
-    // XMLHttpRequest synchrone (deprecated mais nécessaire ici)
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', `${apiBase}/taxonomy`, false); // false = synchrone
-    xhr.send();
-
-    if (xhr.status !== 200) {
-      throw new Error(`HTTP ${xhr.status}`);
-    }
-
-    const data = JSON.parse(xhr.responseText);
-
-    // Mettre en cache
-    taxonomyCache = {
-      aliases: data.aliases || {},
-      groups: data.groups || FALLBACK_GROUPS
-    };
-    cacheTimestamp = now;
-
-    updateGlobalVariables(taxonomyCache);
-
-    (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded sync from API:', Object.keys(taxonomyCache.aliases).length, 'aliases,', taxonomyCache.groups.length, 'groups');
-  } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy sync API failed, using fallback:', error.message);
-
-    // Fallback si API indisponible
-    taxonomyCache = {
-      aliases: {},
-      groups: FALLBACK_GROUPS
-    };
-    cacheTimestamp = now;
-    updateGlobalVariables(taxonomyCache);
-  }
+  // Pas de cache: utiliser les fallback (l'async chargera les vraies données)
+  (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy not yet loaded, using fallback');
+  const fallbackData = {
+    aliases: {},
+    groups: FALLBACK_GROUPS
+  };
+  updateGlobalVariables(fallbackData);
 }
 
 // Fonction helper pour mettre à jour les variables globales
@@ -303,8 +263,8 @@ export function forceReloadTaxonomy() {
   UNIFIED_ASSET_GROUPS = {};
   GROUP_ORDER = [];
 
-  // Reload synchronously
-  initializeTaxonomySync();
+  // Reload async
+  initializeTaxonomyAsync();
 
   (window.debugLogger?.info || console.log)('✅ Taxonomy reload completed');
 }

@@ -107,6 +107,24 @@ button {
   padding: var(--space-md)
 }
 
+/* CLS Prevention: reserve space for dynamically-loaded sections */
+#governance-container {
+  min-height: 74px; /* collapsed governance panel header + margins */
+}
+
+#strategies-container {
+  min-height: 180px; /* prevent CLS when strategy cards load */
+}
+
+#donutCurrent,
+#donutTarget {
+  min-height: 200px; /* prevent CLS when charts render */
+}
+
+#summary {
+  min-height: 80px; /* prevent CLS when summary grid loads */
+}
+
 .muted {
   color: var(--theme-text-muted)
 }
