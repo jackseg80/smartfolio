@@ -280,29 +280,32 @@ def generate_real_market_data(
                 r_1d, r_7d, vol_7d, vol_30d, rsi_val, price_pos, trend_strength, volume_trend, momentum, mdd
             ]
 
-            # Regime label heuristic (corrigé)
+            # Regime label heuristic — crypto-appropriate thresholds
+            # mdd = max drawdown within 30-day window (negative, e.g. -0.25 = 25% drop)
+            # For crypto: 15-20% swings in 30d are normal even in bull markets
+            # Order: Bear (clearest) → Expansion (strong signal) → Bull → Correction (fallback)
             ret_30 = np.sum(window_returns)
-            vol_q = vol_30d
-            # Historique de vol rolling 30j (uniquement passé)
-            hist_roll_vol = rolling_std(returns[:end_idx], 30)
-            # Fenêtre de référence (jusqu'à 180 derniers points si dispo)
-            ref_vol = hist_roll_vol[-180:] if len(hist_roll_vol) >= 180 else hist_roll_vol
-            pct = max(50, min(95, int(vol_pct)))
-            vol_thresh = np.percentile(ref_vol, pct) if len(ref_vol) > 0 else np.std(returns[:end_idx])
             thr = float(ret30_thr)
-            bull = (ret_30 > thr) and (trend_strength > 0)
-            bear = (ret_30 < -thr) and (trend_strength < 0)
-            high_vol = vol_q >= vol_thresh
-            side = (abs(ret_30) <= thr - 0.01) and (not high_vol)
+
             # Canonical regime IDs: 0=Bear Market, 1=Correction, 2=Bull Market, 3=Expansion
-            if bear:
+            if mdd <= -0.25 and (trend_strength < 0 or ret_30 < -thr):
+                # Severe 30d drawdown (≥25%) + negative momentum = Bear Market
                 regime_label, regime_name = 0, 'Bear Market'
-            elif side:
-                regime_label, regime_name = 1, 'Correction'
-            elif bull:
+            elif ret_30 < -thr * 1.5 and trend_strength < -0.3:
+                # Strong negative return + strong downtrend = early Bear Market
+                regime_label, regime_name = 0, 'Bear Market'
+            elif ret_30 > thr * 1.5 and trend_strength > 0.4:
+                # Very strong positive momentum + strong uptrend = Expansion
+                regime_label, regime_name = 3, 'Expansion'
+            elif trend_strength > 0 and ret_30 > 0 and mdd > -0.15:
+                # Positive trend + positive return + shallow DD = Bull Market
+                regime_label, regime_name = 2, 'Bull Market'
+            elif trend_strength > 0.2 and mdd > -0.20:
+                # Clear uptrend even with moderate DD = Bull Market
                 regime_label, regime_name = 2, 'Bull Market'
             else:
-                regime_label, regime_name = 3, 'Expansion'
+                # Everything else: moderate DD, flat market, unclear = Correction
+                regime_label, regime_name = 1, 'Correction'
 
             # Probabilités de régime prédictives (teacher-student)
             proba_reg = None
@@ -1005,7 +1008,7 @@ def parse_args():
     parser.add_argument('--only', choices=['regime', 'volatility'],
                        help='Train only specific model type')
     parser.add_argument('--real-data', action='store_true', help='Use real OHLCV data instead of synthetic')
-    parser.add_argument('--days', type=int, default=2000, help='Number of historical days when using real data')
+    parser.add_argument('--days', type=int, default=3650, help='Number of historical days when using real data (default: 10 years)')
     parser.add_argument('--epochs-regime', type=int, default=200, help='Epochs for regime model')
     parser.add_argument('--patience-regime', type=int, default=15, help='Patience for regime early stopping')
     parser.add_argument('--epochs-vol', type=int, default=200, help='Epochs for volatility model')

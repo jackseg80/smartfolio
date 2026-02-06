@@ -474,7 +474,7 @@
             text-align: center;
         }
 
-        .regime-chip.bear {
+        .regime-chip.bear-market {
             background: rgba(220, 38, 38, 0.15);
             color: #dc2626;
             border: 1px solid #dc2626;
@@ -486,7 +486,7 @@
             border: 1px solid #ea580c;
         }
 
-        .regime-chip.bull {
+        .regime-chip.bull-market {
             background: rgba(34, 197, 94, 0.15);
             color: #22c55e;
             border: 1px solid #22c55e;
@@ -857,7 +857,7 @@
                                 </div>
                                 <div class="status-item">
                                     <span class="status-label">Thresholds</span>
-                                    <span class="status-value" style="font-size: 0.85rem;">Bear: DD≤-20% (60d)</span>
+                                    <span class="status-value" style="font-size: 0.85rem;">Bear: DD≤-15% (30d)</span>
                                 </div>
                             </div>
 
@@ -869,7 +869,7 @@
                                     <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes
                                     </li>
                                     <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
-                                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -20%, 60
+                                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -15%, 30
                                         days)</li>
                                 </ul>
                             </div>
@@ -965,24 +965,24 @@
                         <div class="btc-regime-legend"
                             style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
                             <div class="legend-item">
-                                <span class="regime-chip bear"
+                                <span class="regime-chip bear-market"
                                     style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear
                                     Market</span>
                                 <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD ≤
-                                    -50%, 30d+</small>
+                                    -30%, 20d+</small>
                             </div>
                             <div class="legend-item">
                                 <span class="regime-chip correction"
                                     style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
                                 <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD
-                                    10-50% or Vol >60%</small>
+                                    -10% to -30% &amp; Vol &gt;65%</small>
                             </div>
                             <div class="legend-item">
-                                <span class="regime-chip bull"
+                                <span class="regime-chip bull-market"
                                     style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull
                                     Market</span>
-                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD >
-                                    -20%, Vol <60%< /small>
+                                <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD &gt;
+                                    -20%, Vol &lt;60%</small>
                             </div>
                             <div class="legend-item">
                                 <span class="regime-chip expansion"
@@ -1066,8 +1066,8 @@
                             <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                 <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as
                                     Bitcoin</li>
-                                <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -50% (30d+), Bull > -20% (vol
-                                    <60%), Expansion +30%/mo</li>
+                                <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -30% (20d+), Bull &gt; -20% (vol
+                                    &lt;60%), Expansion +30%/mo</li>
                                 <li><strong>Lightweight View:</strong> Summary only (full charts available in Bitcoin
                                     section)</li>
                             </ul>
@@ -1112,7 +1112,7 @@
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM
                                                 Only</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
-                                                -20%, 60d</td>
+                                                -15%, 30d</td>
                                         </tr>
                                         <tr>
                                             <td
@@ -1126,7 +1126,7 @@
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
                                                 id="comparison-btc-method">--</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
-                                                -50%, 30d</td>
+                                                -30%, 20d</td>
                                         </tr>
                                         <tr>
                                             <td
@@ -1140,7 +1140,7 @@
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);"
                                                 id="comparison-eth-method">--</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤
-                                                -50%, 30d</td>
+                                                -30%, 20d</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -1268,7 +1268,7 @@
                 const config = await fetchUserConfig();
 
                 let volatilityStatus = 'Ready', volatilityMetric = '82.3%', volatilitySource = 'Not loaded';
-                let regimeStatus = 'Simulated', regimeMetric = 'Bull', regimeSource = '75% confidence';
+                let regimeStatus = 'Loading', regimeMetric = '--', regimeSource = 'Checking...';
                 let correlationStatus = 'Simulated', correlationMetric = '15 Assets', correlationSource = 'Pearson';
                 let sentimentStatus = 'ML Sentiment', sentimentMetric = '--/100', sentimentSource = 'Pending';
 
@@ -1317,18 +1317,17 @@
                         debugLogger.debug('✅ Statut régime:', regimeStatus, '- Exists:', regimeModels?.model_exists, 'Loaded:', regimeModels?.model_loaded);
                     }
 
-                    // Obtenir le régime actuel via endpoint predict
-                    const currentRegimeResponse = await fetch(`${config.api_base_url}/api/ml/predict`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ assets: ['BTC'], include_regime: true, include_volatility: false })
-                    });
+                    // Obtenir le régime actuel via endpoint crypto regime (même que Market Regimes page)
+                    const currentRegimeResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
                     if (currentRegimeResponse.ok) {
-                        const currentRegime = await currentRegimeResponse.json();
-                        if (currentRegime.regime_prediction) {
-                            regimeMetric = currentRegime.regime_prediction.regime_name || currentRegime.regime_prediction.regime || 'Bull';
-                            debugLogger.debug('✅ Régime actuel chargé:', regimeMetric);
+                        const currentRegimeRaw = await currentRegimeResponse.json();
+                        // success_response() wraps data under .data key
+                        const currentRegime = currentRegimeRaw.data || currentRegimeRaw;
+                        regimeMetric = currentRegime.current_regime || '--';
+                        if (currentRegime.confidence) {
+                            regimeSource = `${(currentRegime.confidence * 100).toFixed(0)}% confidence`;
                         }
+                        debugLogger.debug('✅ Régime actuel chargé:', regimeMetric);
                     }
                 } catch (e) {
                     debugLogger.warn('⚠️ API régime non disponible');
@@ -1752,11 +1751,11 @@
                 const config = await fetchUserConfig();
 
                 let volatilityStatus = 'Ready', volatilityMetric = '82.3%', volatilitySource = 'Not loaded';
-                let regimeStatus = 'Simulated', regimeMetric = 'Bull', regimeSource = '75% confidence';
+                let regimeStatus = 'Loading', regimeMetric = '--', regimeSource = 'Checking...';
                 let correlationStatus = 'Simulated', correlationMetric = '15 Assets', correlationSource = 'Pearson';
                 let sentimentStatus = 'ML Sentiment', sentimentMetric = '--/100', sentimentSource = 'Pending';
 
-                // Charger statut régime
+                // Charger statut régime + régime actuel
                 try {
                     const mlStatusResponse = await fetch(`${config.api_base_url}/api/ml/status`);
                     if (mlStatusResponse.ok) {
@@ -1765,13 +1764,26 @@
 
                         if (regimeModels?.model_loaded) {
                             regimeStatus = 'Loaded';
-                            regimeSource = '78% accuracy (loaded in memory)';
+                            regimeSource = 'Loaded in memory';
                         } else if (regimeModels?.model_exists) {
                             regimeStatus = 'Trained';
                             regimeSource = 'Trained model, lazy loading';
                         } else {
-                            regimeStatus = 'Non disponible';
+                            regimeStatus = 'Not available';
                             regimeSource = 'No trained model';
+                        }
+                    }
+
+                    // Fetch actual current regime name
+                    const regimeResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
+                    if (regimeResponse.ok) {
+                        const regimeRaw = await regimeResponse.json();
+                        const regimeData = regimeRaw.data || regimeRaw;
+                        if (regimeData.current_regime) {
+                            regimeMetric = regimeData.current_regime;
+                            if (regimeData.confidence) {
+                                regimeSource = `${(regimeData.confidence * 100).toFixed(0)}% confidence`;
+                            }
                         }
                     }
                 } catch (e) {
@@ -2361,10 +2373,11 @@
                 }
 
                 // Update comparison table - Stock
-                // Response format: {current_regime, confidence, regime_probabilities}
-                if (stockData && stockData.current_regime && stockData.confidence !== undefined) {
-                    const regimeName = stockData.current_regime;
-                    const confidencePercent = (stockData.confidence * 100).toFixed(1);
+                // success_response() wraps data under .data key
+                const stockRegimeData = stockData?.data || stockData;
+                if (stockRegimeData && stockRegimeData.current_regime && stockRegimeData.confidence !== undefined) {
+                    const regimeName = stockRegimeData.current_regime;
+                    const confidencePercent = (stockRegimeData.confidence * 100).toFixed(1);
 
                     document.getElementById('comparison-stock-regime').textContent = regimeName;
                     document.getElementById('comparison-stock-confidence').textContent = confidencePercent + '%';

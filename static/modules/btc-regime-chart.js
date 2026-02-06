@@ -469,9 +469,9 @@ function createProbabilitiesChart(hmmProbabilities, currentRegime, confidence, d
  */
 function getRegimeClass(regime) {
     const classMap = {
-        'Bear Market': 'bear',
+        'Bear Market': 'bear-market',
         'Correction': 'correction',
-        'Bull Market': 'bull',
+        'Bull Market': 'bull-market',
         'Expansion': 'expansion'
     };
     return classMap[regime] || 'unknown';

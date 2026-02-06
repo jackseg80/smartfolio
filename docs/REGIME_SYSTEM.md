@@ -115,8 +115,9 @@ Four models, three training entry points:
 
 ### Training Entry Points
 
-1. **CLI Script**: `python scripts/train_models.py --real-data --days 730 --epochs-regime 200`
+1. **CLI Script**: `python scripts/train_models.py --real-data --days 3650 --epochs-regime 200`
    - Trains crypto models (btc_regime_detector, btc_regime_hmm, volatility_forecaster)
+   - Default: 3650 days (10 years) to capture multiple full market cycles
 
 2. **Admin Dashboard**: `POST /admin/ml/train/{model_name}`
    - Trains any model via background job (same underlying code)
@@ -126,6 +127,23 @@ Four models, three training entry points:
    - Volatility models: daily at midnight UTC
 
 All three entry points use the same training functions. No duplication.
+
+### Training Labeling Heuristic
+
+The Neural Network training uses a heuristic to label historical data points. The labeling
+is aligned with the production rule-based thresholds and uses **drawdown as the primary signal**:
+
+| Priority | Condition | Label |
+| -------- | --------- | ----- |
+| 1 | 30d drawdown ≤ -25% AND (downtrend OR negative return) | Bear Market |
+| 2 | 30d return < -1.5×threshold AND strong downtrend (corr < -0.3) | Bear Market |
+| 3 | 30d return > 1.5×threshold AND strong uptrend (corr > 0.4) | Expansion |
+| 4 | Positive trend + positive return + DD > -15% | Bull Market |
+| 5 | Clear uptrend (corr > 0.2) + DD > -20% | Bull Market |
+| 6 | Fallback (everything else) | Correction |
+
+Order matters: Bear (clearest signal) → Expansion (strong positive) → Bull → Correction (fallback).
+Thresholds are crypto-appropriate: 15-20% drawdowns in 30d are normal even in bull markets.
 
 ---
 
