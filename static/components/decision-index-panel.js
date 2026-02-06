@@ -755,10 +755,10 @@ function renderQuickContextBar(meta) {
 
   // Couleur du régime
   const regimeColor = {
-    'accumulation': '#3b82f6',
-    'expansion': '#10b981',
-    'euphorie': '#f59e0b',
-    'euphoria': '#f59e0b',
+    'bear market': '#dc2626',
+    'correction': '#ea580c',
+    'bull market': '#22c55e',
+    'expansion': '#3b82f6',
     'neutral': '#6b7280',
     'bearish': '#ef4444',
     'risk_off': '#ef4444'

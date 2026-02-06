@@ -3065,15 +3065,15 @@ async function loadMarketRegimes() {
             const conf = btcRes.data.confidence || 0;
 
             document.getElementById('regime-btc-status').textContent = regime;
-            document.getElementById('regime-btc-bar').style.width = `${conf * 100}%`;
             document.getElementById('regime-btc-conf').textContent = `${Math.round(conf * 100)}% confidence`;
 
-            // Update class based on regime
+            // Update class based on regime - canonical names
+            const regimeClass = regime.toLowerCase().replace(/\s+/g, '-');
             const statusEl = document.getElementById('regime-btc-status');
-            statusEl.className = 'regime-status';
-            if (regime.toLowerCase().includes('bull')) statusEl.classList.add('bull');
-            else if (regime.toLowerCase().includes('bear')) statusEl.classList.add('bear');
-            else statusEl.classList.add('consolidation');
+            statusEl.className = 'regime-status ' + regimeClass;
+            const barEl = document.getElementById('regime-btc-bar');
+            barEl.className = 'regime-progress-fill ' + regimeClass;
+            barEl.style.width = `${conf * 100}%`;
         } else {
             document.getElementById('regime-btc-status').textContent = 'Loading...';
             document.getElementById('regime-btc-conf').textContent = '--';
@@ -3085,14 +3085,14 @@ async function loadMarketRegimes() {
             const conf = ethRes.data.confidence || 0;
 
             document.getElementById('regime-eth-status').textContent = regime;
-            document.getElementById('regime-eth-bar').style.width = `${conf * 100}%`;
             document.getElementById('regime-eth-conf').textContent = `${Math.round(conf * 100)}% confidence`;
 
+            const regimeClassEth = regime.toLowerCase().replace(/\s+/g, '-');
             const statusEl = document.getElementById('regime-eth-status');
-            statusEl.className = 'regime-status';
-            if (regime.toLowerCase().includes('expansion')) statusEl.classList.add('expansion');
-            else if (regime.toLowerCase().includes('compression')) statusEl.classList.add('bear');
-            else statusEl.classList.add('consolidation');
+            statusEl.className = 'regime-status ' + regimeClassEth;
+            const barElEth = document.getElementById('regime-eth-bar');
+            barElEth.className = 'regime-progress-fill ' + regimeClassEth;
+            barElEth.style.width = `${conf * 100}%`;
         } else {
             document.getElementById('regime-eth-status').textContent = 'Loading...';
             document.getElementById('regime-eth-conf').textContent = '--';
@@ -3104,14 +3104,14 @@ async function loadMarketRegimes() {
             const conf = stockRes.confidence || 0;
 
             document.getElementById('regime-stock-status').textContent = regime;
-            document.getElementById('regime-stock-bar').style.width = `${conf * 100}%`;
             document.getElementById('regime-stock-conf').textContent = `${Math.round(conf * 100)}% confidence`;
 
-            const statusEl = document.getElementById('regime-stock-status');
-            statusEl.className = 'regime-status';
-            if (regime.toLowerCase().includes('bull')) statusEl.classList.add('bull');
-            else if (regime.toLowerCase().includes('bear')) statusEl.classList.add('bear');
-            else statusEl.classList.add('consolidation');
+            const regimeClassStock = regime.toLowerCase().replace(/\s+/g, '-');
+            const statusElStock = document.getElementById('regime-stock-status');
+            statusElStock.className = 'regime-status ' + regimeClassStock;
+            const barElStock = document.getElementById('regime-stock-bar');
+            barElStock.className = 'regime-progress-fill ' + regimeClassStock;
+            barElStock.style.width = `${conf * 100}%`;
         } else {
             // Fallback if stock regime endpoint not available
             document.getElementById('regime-stock-status').textContent = 'N/A';

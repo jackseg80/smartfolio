@@ -668,7 +668,7 @@ class OptimizedMLPipelineManager:
                         "model_type": "regime_classifier",
                         "version": "1.0.0",
                         "accuracy": 0.75,
-                        "classes": ["Bull", "Bear", "Sideways", "Distribution"]
+                        "classes": ["Bear Market", "Correction", "Bull Market", "Expansion"]
                     }
                     
                     class MockScaler:
@@ -681,7 +681,7 @@ class OptimizedMLPipelineManager:
                     
                     class MockRegimeModel:
                         def __init__(self):
-                            self.classes = ["Bull", "Bear", "Sideways", "Distribution"]
+                            self.classes = ["Bear Market", "Correction", "Bull Market", "Expansion"]
                         
                         def eval(self):
                             pass

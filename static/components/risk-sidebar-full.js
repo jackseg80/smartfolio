@@ -486,10 +486,10 @@ class RiskSidebarFull extends HTMLElement {
 
   _getRegimeClass(phase) {
     const p = (phase || '').toLowerCase();
-    if (p.includes('bull') || p.includes('expansion')) return 'healthy';
-    if (p.includes('bear') || p.includes('risk')) return 'error';
-    if (p.includes('neutral')) return '';
-    return 'warning';
+    if (p.includes('bull market') || p.includes('expansion')) return 'healthy';
+    if (p.includes('bear market')) return 'error';
+    if (p.includes('correction')) return 'warning';
+    return '';
   }
 
   _getSeverityColor(severity) {

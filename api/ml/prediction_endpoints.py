@@ -210,11 +210,11 @@ async def get_live_predictions():
 
     btc_volatility = 0.0734
     eth_volatility = 0.0892
-    market_regime = "Sideways"
+    market_regime = "Correction"
     fear_greed_index = 58
 
     if pipeline_status.get('pipeline_status', {}).get('regime_models', {}).get('model_loaded'):
-        market_regime = "Bull"
+        market_regime = "Bull Market"
 
     return {
         "success": True,

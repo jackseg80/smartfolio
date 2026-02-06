@@ -628,7 +628,7 @@ export function buildTheoreticalTargets(u) {
   };
 
   (window.debugLogger?.debug || console.log)('🎯 FALLBACK TARGETS (buildTheoreticalTargets):', artificialTargets);
-  console.debug('📊 buildTheoreticalTargets source: FALLBACK_REGIME_LOGIC', { blendedScore, regime: blendedScore >= 70 ? 'Euphoria' : blendedScore >= 50 ? 'Expansion' : 'Accumulation' });
+  console.debug('📊 buildTheoreticalTargets source: FALLBACK_REGIME_LOGIC', { blendedScore, regime: blendedScore >= 76 ? 'Expansion' : blendedScore >= 51 ? 'Bull Market' : blendedScore >= 26 ? 'Correction' : 'Bear Market' });
 
   return artificialTargets;
 }

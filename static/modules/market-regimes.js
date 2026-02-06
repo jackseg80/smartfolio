@@ -1,73 +1,76 @@
 /**
- * Market Regimes Module - Système de Régimes de Marché Intelligent
- * Détermine le régime actuel basé sur Blended Score et applique des règles de rebalancing
+ * Market Regimes Module - Unified Market Regime System
+ * Determines current regime based on Blended Score and applies rebalancing rules.
+ * Uses canonical regime names from core/regime-constants.js
  */
 
+import { REGIME_COLORS, REGIME_EMOJIS, scoreToRegime } from '../core/regime-constants.js';
+
 /**
- * Configuration des 4 régimes de marché
+ * Configuration of 4 canonical market regimes (0-100, 100 = best)
  */
 export const MARKET_REGIMES = {
-  accumulation: {
-    name: 'Accumulation',
-    emoji: '🔵',
-    range: [0, 39],
-    color: '#3b82f6',
-    description: 'Accumulation phase - Bearish/neutral market',
-    strategy: 'Mainly BTC/ETH, few alts, reduced stables',
+  bear_market: {
+    name: 'Bear Market',
+    emoji: REGIME_EMOJIS['Bear Market'],
+    range: [0, 25],
+    color: REGIME_COLORS['Bear Market'],
+    description: 'Bear Market - Severe downturn, capital preservation',
+    strategy: 'Mainly BTC + stables, no alts, no memes',
     allocation_bias: {
       btc_boost: 10,
-      eth_boost: 5,
-      alts_reduction: -15,
-      stables_target: 15,
+      eth_boost: 0,
+      alts_reduction: -20,
+      stables_target: 40,
       meme_cap: 0
     }
   },
-  
-  expansion: {
-    name: 'Expansion',
-    emoji: '🟢',
-    range: [40, 69],
-    color: '#10b981',
-    description: 'Expansion phase - Moderate bullish market',
-    strategy: 'ETH + progressive midcaps, balance',
+
+  correction: {
+    name: 'Correction',
+    emoji: REGIME_EMOJIS['Correction'],
+    range: [26, 50],
+    color: REGIME_COLORS['Correction'],
+    description: 'Correction - Moderate stress, selective opportunities',
+    strategy: 'BTC/ETH heavy, reduced alts, prepare for recovery',
+    allocation_bias: {
+      btc_boost: 5,
+      eth_boost: 5,
+      alts_reduction: -10,
+      stables_target: 25,
+      meme_cap: 0
+    }
+  },
+
+  bull_market: {
+    name: 'Bull Market',
+    emoji: REGIME_EMOJIS['Bull Market'],
+    range: [51, 75],
+    color: REGIME_COLORS['Bull Market'],
+    description: 'Bull Market - Positive trend, normal growth',
+    strategy: 'Balanced allocation, progressive midcaps, moderate memes',
     allocation_bias: {
       btc_boost: 0,
       eth_boost: 0,
       alts_reduction: 0,
-      stables_target: 20,
+      stables_target: 15,
       meme_cap: 5
     }
   },
-  
-  euphoria: {
-    name: 'Euphoria',
-    emoji: '🟡',
-    range: [70, 84],
-    color: '#f59e0b',
-    description: 'Euphoria phase - Bubble forming',
-    strategy: 'Alts boosted, memes allowed (max 15%)',
+
+  expansion: {
+    name: 'Expansion',
+    emoji: REGIME_EMOJIS['Expansion'],
+    range: [76, 100],
+    color: REGIME_COLORS['Expansion'],
+    description: 'Expansion - Strong growth, high confidence',
+    strategy: 'Ride momentum, alts boosted, manage exit strategy',
     allocation_bias: {
       btc_boost: -5,
       eth_boost: 5,
       alts_reduction: 10,
-      stables_target: 15,
-      meme_cap: 15
-    }
-  },
-  
-  distribution: {
-    name: 'Distribution',
-    emoji: '🔴',
-    range: [85, 100],
-    color: '#dc2626',
-    description: 'Distribution phase - Likely peak',
-    strategy: 'Return to stables + BTC, reduce alts',
-    allocation_bias: {
-      btc_boost: 5,
-      eth_boost: -5,
-      alts_reduction: -15,
-      stables_target: 30,
-      meme_cap: 0
+      stables_target: 10,
+      meme_cap: 10
     }
   }
 };
@@ -78,7 +81,7 @@ export const MARKET_REGIMES = {
 export function getMarketRegime(blendedScore) {
   if (typeof blendedScore !== 'number' || blendedScore < 0 || blendedScore > 100) {
     return {
-      ...MARKET_REGIMES.expansion, // Fallback neutre
+      ...MARKET_REGIMES.correction, // Fallback neutral
       score: blendedScore,
       confidence: 0.1,
       warning: 'Score invalide'
@@ -101,8 +104,8 @@ export function getMarketRegime(blendedScore) {
   
   // Fallback (ne devrait pas arriver)
   return {
-    ...MARKET_REGIMES.expansion,
-    key: 'expansion',
+    ...MARKET_REGIMES.correction,
+    key: 'correction',
     score: blendedScore,
     confidence: 0.3,
     warning: 'Regime not determined'
@@ -430,41 +433,41 @@ export function allocateRiskyBudget(riskyPercentage, regime) {
 export function generateRegimeRecommendations(regime, riskBudget) {
   const recommendations = [];
   
-  // Recommandations par régime
+  // Recommendations by regime (canonical names)
   switch (regime.key) {
-    case 'accumulation':
-      recommendations.push({
-        type: 'strategy',
-        priority: 'high',
-        message: 'Accumulation phase detected',
-        action: 'Increase BTC/ETH, reduce alts, prepare for next bull run'
-      });
-      break;
-      
-    case 'expansion':
-      recommendations.push({
-        type: 'strategy',
-        priority: 'medium',
-        message: 'Expansion in progress',
-        action: 'Maintain balance, progressive rotation towards ETH/midcaps'
-      });
-      break;
-      
-    case 'euphoria':
-      recommendations.push({
-        type: 'warning',
-        priority: 'high',
-        message: 'Euphoria detected - Watch out for the peak!',
-        action: 'Prepare exit strategy, limit new positions'
-      });
-      break;
-      
-    case 'distribution':
+    case 'bear_market':
       recommendations.push({
         type: 'alert',
         priority: 'critical',
-        message: 'Phase de distribution - Pic probable imminent',
-        action: 'Rotation to stables/BTC, aggressive alt reduction'
+        message: 'Bear Market detected - Capital preservation mode',
+        action: 'Rotate to stables/BTC, eliminate alts and memes'
+      });
+      break;
+
+    case 'correction':
+      recommendations.push({
+        type: 'strategy',
+        priority: 'high',
+        message: 'Correction phase - Selective accumulation',
+        action: 'Increase BTC/ETH on dips, reduce alts exposure'
+      });
+      break;
+
+    case 'bull_market':
+      recommendations.push({
+        type: 'strategy',
+        priority: 'medium',
+        message: 'Bull Market confirmed',
+        action: 'Balanced allocation, progressive midcap rotation'
+      });
+      break;
+
+    case 'expansion':
+      recommendations.push({
+        type: 'warning',
+        priority: 'high',
+        message: 'Expansion phase - Watch for overheating',
+        action: 'Ride momentum but prepare exit strategy'
       });
       break;
   }

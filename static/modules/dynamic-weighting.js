@@ -14,69 +14,56 @@ import { INDICATOR_CATEGORIES_V2 } from './indicator-categories-v2.js';
  * Market phases avec leurs caractéristiques de weighting
  */
 export const MARKET_PHASES = {
-  accumulation: {
-    name: 'Accumulation',
-    description: 'Bear market bottom, focus on fundamentals',
-    scoreRange: [0, 30],
+  bear_market: {
+    name: 'Bear Market',
+    description: 'Bear market, focus on fundamentals',
+    scoreRange: [0, 25],
     weights: {
-      onchain_pure: 0.50,     // +25% vs base (focus sur valeur)
-      cycle_technical: 0.35,   // Stable (timing important)
-      sentiment_social: 0.05,  // -67% (sentiment peu fiable)
-      market_context: 0.10     // Stable
+      onchain_pure: 0.50,
+      cycle_technical: 0.35,
+      sentiment_social: 0.05,
+      market_context: 0.10
     },
-    reasoning: 'En accumulation, les fondamentaux blockchain sont cruciaux'
+    reasoning: 'In bear markets, on-chain fundamentals are crucial'
   },
-  
-  early_expansion: {
-    name: 'Early Expansion',
-    description: 'Bull market start, balanced approach',
-    scoreRange: [30, 45],
+
+  correction: {
+    name: 'Correction',
+    description: 'Market correction, balanced approach',
+    scoreRange: [26, 50],
     weights: {
-      onchain_pure: 0.40,     // Base weights
+      onchain_pure: 0.40,
       cycle_technical: 0.35,
       sentiment_social: 0.15,
       market_context: 0.10
     },
     reasoning: 'Transition period, maintain standard balance'
   },
-  
-  expansion: {
-    name: 'Expansion',
+
+  bull_market: {
+    name: 'Bull Market',
     description: 'Bull market momentum, technical signals important',
-    scoreRange: [45, 70],
+    scoreRange: [51, 75],
     weights: {
-      onchain_pure: 0.35,     // -12% (moins critique)
-      cycle_technical: 0.40,   // +14% (momentum key)
-      sentiment_social: 0.15,  // Stable
+      onchain_pure: 0.35,
+      cycle_technical: 0.40,
+      sentiment_social: 0.15,
       market_context: 0.10
     },
-    reasoning: 'Momentum technique devient prioritaire'
+    reasoning: 'Technical momentum becomes priority'
   },
-  
-  euphoria: {
-    name: 'Euphoria',
-    description: 'Late bull market, sentiment crucial for top detection',
-    scoreRange: [70, 90],
+
+  expansion: {
+    name: 'Expansion',
+    description: 'Late bull/expansion, sentiment crucial for top detection',
+    scoreRange: [76, 100],
     weights: {
-      onchain_pure: 0.30,     // -25% (valeur moins importante)
-      cycle_technical: 0.30,   // -14% (technique saturée)
-      sentiment_social: 0.30,  // +100% (FOMO detection)
+      onchain_pure: 0.30,
+      cycle_technical: 0.30,
+      sentiment_social: 0.30,
       market_context: 0.10
     },
     reasoning: 'Extreme sentiment key signal for top detection'
-  },
-  
-  distribution: {
-    name: 'Distribution',
-    description: 'Early bear market, mixed signals',
-    scoreRange: [90, 100],
-    weights: {
-      onchain_pure: 0.35,
-      cycle_technical: 0.40,   // +14% (signaux de retournement)
-      sentiment_social: 0.15,  // Retour normal
-      market_context: 0.10
-    },
-    reasoning: 'Signaux techniques de retournement importants'
   }
 };
 
@@ -153,8 +140,8 @@ function determineMarketPhase(score) {
     }
   }
   
-  // Fallback to early_expansion if no match
-  return { ...MARKET_PHASES.early_expansion, key: 'early_expansion' };
+  // Fallback to correction if no match
+  return { ...MARKET_PHASES.correction, key: 'correction' };
 }
 
 /**

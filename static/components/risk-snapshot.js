@@ -167,7 +167,7 @@ class RiskSnapshot extends HTMLElement {
     this.$.fdot.className = 'dot ' + dot;
 
     this.$.trend.textContent = this._computeTrend(c01);
-    const regime = (c01 < 0.3 && cap >= 0.01) ? 'Euphoria' : (c01 > 0.7 ? 'Stress' : 'Neutral');
+    const regime = (c01 < 0.3 && cap >= 0.01) ? 'Expansion' : (c01 > 0.7 ? 'Bear Market' : 'Correction');
     this.$.regime.textContent = regime;
 
     // Sections étendues (si un jour on branche des scores additionnels)

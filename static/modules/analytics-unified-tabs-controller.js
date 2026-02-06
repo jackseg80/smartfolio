@@ -171,7 +171,8 @@ async function loadMLPredictions() {
       if (regimeData.regime_prediction) {
         const regime = regimeData.regime_prediction.regime_name || '--';
         regimeEl.textContent = regime;
-        regimeEl.className = `metric-value regime-${regime.toLowerCase() === 'sideways' ? 'neutral' : regime.toLowerCase()}`;
+        const regimeClass = regime.toLowerCase().replace(/\s+/g, '-');
+        regimeEl.className = `metric-value regime-${regimeClass}`;
       }
     }
 

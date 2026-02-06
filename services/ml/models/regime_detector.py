@@ -1155,42 +1155,41 @@ class RegimeDetector:
         volatility = latest['market_volatility']
 
         # Rule 1: BEAR MARKET (highest priority)
-        # Drawdown ≥ 20% sustained > 60 days
-        if drawdown <= -0.20 and days_since_peak >= 60:
+        # Drawdown >= 15% sustained > 30 days OR >= 20% sustained > 15 days
+        if (drawdown <= -0.15 and days_since_peak >= 30) or (drawdown <= -0.20 and days_since_peak >= 15):
             return {
                 'regime_id': 0,
                 'regime_name': 'Bear Market',
-                'confidence': min(0.95, 0.85 + abs(drawdown) * 0.5),  # More drawdown = more confident
+                'confidence': min(0.95, 0.85 + abs(drawdown) * 0.5),
                 'method': 'rule_based',
                 'reason': f'Drawdown {drawdown:.1%} sustained {int(days_since_peak)} days'
             }
 
         # Rule 2: EXPANSION (post-crash recovery)
-        # Coming from >20% drawdown + strong recovery (+15%/month for 3mo)
-        if drawdown >= -0.10 and days_since_peak >= 60:  # Recovered
-            # Check if there was a recent deep drawdown
+        # Coming from >15% drawdown + strong recovery (+10%/month)
+        if drawdown >= -0.10 and days_since_peak >= 30:
             lookback_dd = features.tail(126)['drawdown_from_peak'].min()  # Last 6 months
-            if lookback_dd <= -0.20 and trend_30d >= 0.15:  # Was deep + strong recovery
+            if lookback_dd <= -0.15 and trend_30d >= 0.10:
                 return {
                     'regime_id': 3,
                     'regime_name': 'Expansion',
-                    'confidence': 0.90,
+                    'confidence': 0.88,
                     'method': 'rule_based',
                     'reason': f'Recovery from {lookback_dd:.1%} at +{trend_30d:.1%}/30d'
                 }
 
         # Rule 3: BULL MARKET (clear uptrend)
-        # Low drawdown (<5%), low volatility (<20%), positive trend
-        if drawdown >= -0.05 and volatility < 0.20 and trend_30d > 0.05:
+        # Tighter thresholds: DD > -8%, vol < 18%, trend > 2%
+        if drawdown >= -0.08 and volatility < 0.18 and trend_30d > 0.02:
             return {
                 'regime_id': 2,
                 'regime_name': 'Bull Market',
-                'confidence': 0.88,
+                'confidence': 0.75,  # Lowered from 0.88 to let NN influence ambiguous cases
                 'method': 'rule_based',
                 'reason': f'Stable uptrend: DD={drawdown:.1%}, vol={volatility:.1%}'
             }
 
-        # No clear rule-based detection → defer to HMM
+        # No clear rule-based detection → defer to HMM/NN
         return None
 
     def _fuse_predictions(self, rule_based: Optional[Dict], hmm_result: Dict) -> Dict[str, Any]:
@@ -1338,7 +1337,7 @@ class RegimeDetector:
                     'current_regime': 'Expansion',
                     'confidence': 0.75,
                     'regime_duration_days': 15,
-                    'regime_info': self.regime_descriptions[1],  # Expansion
+                    'regime_info': self.regime_descriptions[3],  # Expansion (ID=3)
                     'prediction_date': datetime.now().isoformat(),
                     'model_status': 'demo'
                 }
@@ -1375,21 +1374,21 @@ class RegimeDetector:
         logger.info(f"Forecasting regime transitions over {horizon_days} days")
         
         try:
-            # Transition matrix (simplified for demo)
+            # Transition matrix (canonical regime names from regime_constants)
             transition_matrix = {
-                'Accumulation': {'Accumulation': 0.7, 'Expansion': 0.25, 'Euphoria': 0.03, 'Distribution': 0.02},
-                'Expansion': {'Accumulation': 0.1, 'Expansion': 0.6, 'Euphoria': 0.25, 'Distribution': 0.05},
-                'Euphoria': {'Accumulation': 0.05, 'Expansion': 0.15, 'Euphoria': 0.4, 'Distribution': 0.4},
-                'Distribution': {'Accumulation': 0.3, 'Expansion': 0.1, 'Euphoria': 0.05, 'Distribution': 0.55}
+                'Bear Market': {'Bear Market': 0.65, 'Correction': 0.25, 'Bull Market': 0.08, 'Expansion': 0.02},
+                'Correction': {'Bear Market': 0.15, 'Correction': 0.50, 'Bull Market': 0.30, 'Expansion': 0.05},
+                'Bull Market': {'Bear Market': 0.05, 'Correction': 0.20, 'Bull Market': 0.55, 'Expansion': 0.20},
+                'Expansion': {'Bear Market': 0.03, 'Correction': 0.15, 'Bull Market': 0.32, 'Expansion': 0.50}
             }
-            
+
             # Get current regime
             current_regime_result = self.get_current_regime()
             current_regime = current_regime_result['current_regime']
-            
+
             # Calculate transition probabilities
-            transition_probs = transition_matrix.get(current_regime, 
-                                                   {'Accumulation': 0.25, 'Expansion': 0.25, 'Euphoria': 0.25, 'Distribution': 0.25})
+            transition_probs = transition_matrix.get(current_regime,
+                                                   {'Bear Market': 0.25, 'Correction': 0.25, 'Bull Market': 0.25, 'Expansion': 0.25})
             
             # Expected transition date
             avg_duration = 20  # Average regime duration in days
