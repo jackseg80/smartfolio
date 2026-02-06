@@ -46,7 +46,7 @@ class FlyoutPanel extends HTMLElement {
           --flyout-border: var(--theme-border, #2a2f3b);
           --flyout-blur: var(--theme-blur, 8px);
           --flyout-width: ${this.state.width}px;
-          --flyout-handle-width: 48px;
+          --flyout-handle-width: 32px;
           --flyout-padding: 12px;
           --flyout-font-size: 0.95rem;
         }
@@ -55,7 +55,7 @@ class FlyoutPanel extends HTMLElement {
         @media (max-width: 768px) {
           :host {
             --flyout-width: 280px;
-            --flyout-handle-width: 36px;
+            --flyout-handle-width: 28px;
             --flyout-padding: 12px;
             --flyout-font-size: 0.875rem;
           }
@@ -81,7 +81,6 @@ class FlyoutPanel extends HTMLElement {
           grid-template-rows: auto 1fr;
           z-index: 25;
           font-size: var(--flyout-font-size);
-          overflow: hidden;
         }
 
         .flyout.right {
@@ -102,7 +101,7 @@ class FlyoutPanel extends HTMLElement {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          right: -48px;
+          right: calc(-1 * var(--flyout-handle-width));
           width: var(--flyout-handle-width);
           height: auto;
           padding: var(--space-md, 12px) var(--space-xs, 6px);
@@ -255,7 +254,7 @@ class FlyoutPanel extends HTMLElement {
     };
 
     // Bind events
-    this.$.handle.addEventListener('mouseenter', this._onEnter);
+    this.$.root.addEventListener('mouseenter', this._onEnter);
     this.$.root.addEventListener('mouseleave', this._onLeave);
     this.$.pin.addEventListener('click', this._onPin);
 
@@ -263,7 +262,7 @@ class FlyoutPanel extends HTMLElement {
   }
 
   _unbind() {
-    this.$?.handle.removeEventListener('mouseenter', this._onEnter);
+    this.$?.root.removeEventListener('mouseenter', this._onEnter);
     this.$?.root.removeEventListener('mouseleave', this._onLeave);
     this.$?.pin.removeEventListener('click', this._onPin);
   }

@@ -24,7 +24,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
-  transform: translateX(calc(-100% + 48px));
+  transform: translateX(calc(-100% + 32px));
   transition: transform 0.25s ease, opacity 0.25s ease;
   opacity: 0.5;
   z-index: 9999;
@@ -39,7 +39,7 @@
 
 .flyout-panel .flyout-handle {
   position: absolute;
-  right: -48px;
+  right: -32px;
   top: 50%;
   transform: translateY(-50%);
   background: var(--brand-primary);
@@ -136,11 +136,11 @@
 body.flyout-enabled .dashboard-layout,
 body.flyout-enabled #governance-container,
 body.flyout-enabled .controls {
-  margin-left: 40px;
+  margin-left: 32px;
   transition: margin-left 0.25s ease;
 }
 
 /* Ajuster la largeur du Decision Engine pour qu'il ne dépasse pas */
 body.flyout-enabled #governance-container {
-  max-width: calc(95vw - 40px);
+  max-width: calc(95vw - 32px);
 }

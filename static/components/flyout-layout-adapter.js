@@ -10,7 +10,7 @@
  */
 export function enableFlyoutLayoutAdapter(mainSelector = 'body', options = {}) {
   const {
-    offset = 20,
+    offset = 8,
     transition = '0.3s ease'
   } = options;
 
@@ -25,7 +25,7 @@ export function enableFlyoutLayoutAdapter(mainSelector = 'body', options = {}) {
 
     // Ajouter la transition CSS et un padding permanent à gauche pour la poignée du flyout
     mainEl.style.transition = `margin-left ${transition}, margin-right ${transition}`;
-    mainEl.style.paddingLeft = '48px'; // Espace pour la poignée du flyout (handle)
+    mainEl.style.paddingLeft = '32px'; // Espace pour la poignée du flyout (handle)
 
     // Écouter les changements d'état du flyout
     document.addEventListener('flyout-state-change', (e) => {
