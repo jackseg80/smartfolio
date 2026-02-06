@@ -11,8 +11,16 @@ export let UNIFIED_ASSET_GROUPS = {};
 export let KNOWN_ASSET_MAPPING = {};
 export let GROUP_ORDER = [];
 
-// Initialisation au chargement du module (async, pas de XHR synchrone)
-initializeTaxonomyAsync();
+// Initialisation au chargement du module (top-level await, pas de XHR synchrone)
+await loadTaxonomyData()
+  .then(data => {
+    updateGlobalVariables(data);
+    (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
+  })
+  .catch(error => {
+    (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy load failed, using fallback:', error.message);
+    updateGlobalVariables({ aliases: {}, groups: FALLBACK_GROUPS });
+  });
 
 // Expose functions globally for debugging
 if (typeof window !== 'undefined') {
@@ -51,23 +59,6 @@ function autoClassifySymbolFallback(symbol) {
 
 // Fallback groups si API indisponible
 const FALLBACK_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
-
-// Initialisation async au chargement du module (pas de XHR synchrone)
-function initializeTaxonomyAsync() {
-  loadTaxonomyData()
-    .then(data => {
-      updateGlobalVariables(data);
-      (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
-    })
-    .catch(error => {
-      (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy load failed, using fallback:', error.message);
-      const fallbackData = {
-        aliases: {},
-        groups: FALLBACK_GROUPS
-      };
-      updateGlobalVariables(fallbackData);
-    });
-}
 
 // Charger les données taxonomy depuis l'API
 async function loadTaxonomyData() {
@@ -253,7 +244,7 @@ export async function getGroupsFormat() {
 }
 
 // Force reload taxonomy data (clear cache)
-export function forceReloadTaxonomy() {
+export async function forceReloadTaxonomy() {
   (window.debugLogger?.debug || console.log)('🔄 Forcing taxonomy reload...');
   taxonomyCache = null;
   cacheTimestamp = 0;
@@ -264,7 +255,12 @@ export function forceReloadTaxonomy() {
   GROUP_ORDER = [];
 
   // Reload async
-  initializeTaxonomyAsync();
+  try {
+    const data = await loadTaxonomyData();
+    updateGlobalVariables(data);
+  } catch (error) {
+    updateGlobalVariables({ aliases: {}, groups: FALLBACK_GROUPS });
+  }
 
   (window.debugLogger?.info || console.log)('✅ Taxonomy reload completed');
 }
