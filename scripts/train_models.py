@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Script pour entraîner de nouveaux modèles ML pour le système crypto
-- Modèle de détection de régime de marché (Bull/Bear/Sideways/Distribution)
+- Modèle de détection de régime de marché (Bear Market/Correction/Bull Market/Expansion)
 - Modèles de prédiction de volatilité pour différents assets
 """
 

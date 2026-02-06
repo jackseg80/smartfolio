@@ -1,6 +1,6 @@
 """
 Market Regime Detection using Hybrid HMM + Neural Networks
-Detects 4 crypto market regimes: Accumulation, Expansion, Euphoria, Distribution
+Detects 4 market regimes: Bear Market, Correction, Bull Market, Expansion
 """
 
 import torch
