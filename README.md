@@ -1,6 +1,6 @@
 # SmartFolio
 
-Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 10+ specialized pages optimized for real-time decision making.
+Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 15+ specialized pages optimized for real-time decision making.
 
 Designed to simplify the management of large crypto portfolios (>200 assets) via a smart 11-group taxonomy, and currently specialized for CoinTracking (API & CSV) data sources.
 
@@ -23,7 +23,7 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 - **Intelligent Stop Loss**: 6 adaptive methods (Trailing, Volatility-based) to protect gains.
 - **Risk Analytics**: Specific beta and correlation analysis against S&P 500.
 
-### 🏛️ Wealth (Patrimoine & Banking)
+### 🏛️ Wealth & Banking
 
 - **P&L Today**: Real-time performance tracking with "Anchor Points" (Midnight/Session).
 - **Unified View**: Cross-asset aggregation (Crypto + Stocks + Bank) in your reference currency.
@@ -42,7 +42,7 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
   - **Monte Carlo**: 10,000 simulations with historical distributions (VaR/CVaR, loss probabilities)
   - **Stress Tests**: 6 crisis scenarios (2008, COVID-19, China ban, Tether collapse, Fed hike, Exchange hack)
   - Interactive charts with on-demand calculation (10-30 sec, sessionStorage cache)
-- **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Calcul: `50 + (sentiment_ml × 50)` où sentiment ∈ [-1, 1].
+- **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Formula: `50 + (sentiment_ml × 50)` where sentiment ∈ [-1, 1].
 - **Multi-Tenant**: Complete isolation of data and configurations per user.
 
 ## 📸 Gallery
@@ -169,14 +169,19 @@ This is the recommended method for running the application in a stable, producti
 | **Dashboard** | Global portfolio view + P&L Today | `/static/dashboard.html` |
 | **Analytics** | Real-time ML + Decision Index | `/static/analytics-unified.html` |
 | **Risk** | Risk management + Governance + Alerts | `/static/risk-dashboard.html` |
+| **Market Regimes** | Stock/BTC/ETH regime detection (HMM) | `/static/market-regimes.html` |
+| **Advanced Risk** | Monte Carlo, GRI, Stress Testing | `/static/advanced-risk.html` |
 | **Cycle Analysis** | Bitcoin cycle analysis + historical charts | `/static/cycle-analysis.html` |
 | **Rebalance** | Dynamic rebalancing plans | `/static/rebalance.html` |
 | **Execution** | Real-time execution with validation | `/static/execution.html` |
 | **Simulations** | Complete pipeline simulator | `/static/simulations.html` |
+| **DI Backtest** | Decision Index historical backtesting | `/static/di-backtest.html` |
 | **Wealth Dashboard** | Unified wealth (liquidities, assets, liabilities) | `/static/wealth-dashboard.html` |
 | **Monitoring** | System KPIs + Alerts History | `/static/monitoring.html` |
 | **Admin Dashboard** | User management, logs, cache, ML models (RBAC) | `/static/admin-dashboard.html` |
-| **Saxo Dashboard** | Stock Market (stocks, ETFs, funds) with intelligent stop-loss | `/static/saxo-dashboard.html` |
+| **Stock Dashboard** | Stocks, ETFs, funds overview (Saxo Bank) | `/static/saxo-dashboard.html` |
+| **Stock Analytics** | Stock risk analysis + advanced analytics | `/static/bourse-analytics.html` |
+| **Stock Recommendations** | Portfolio recommendations + market opportunities | `/static/bourse-recommendations.html` |
 
 ## Architecture
 
@@ -216,10 +221,10 @@ static/
 ```
 data/
 └── users/{user_id}/
+    ├── config.json                  # User configuration (API keys)
     ├── cointracking/data/           # Crypto CSV (auto versioning)
     ├── saxobank/data/               # Stock market CSV
-    ├── config/config.json           # User configuration
-    └── config/sources.json          # Active modules
+    └── wealth/wealth.json           # Unified wealth data (assets, liabilities)
 ```
 
 ## 🔒 Security
@@ -255,6 +260,7 @@ data/
 - **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 6 adaptive methods (Trailing Stop NEW Oct 2025)
 - **P&L Today**: [P&L Today](docs/PNL_TODAY.md) - Real-time tracking
 - **Redis**: [REDIS_SETUP.md](docs/REDIS_SETUP.md) - Cache & streaming
+- **Wealth Module**: [WEALTH_MODULE.md](docs/WEALTH_MODULE.md) - Unified wealth management (CRUD, migration)
 - **Logging**: [LOGGING.md](docs/LOGGING.md) - Rotating logs (5MB x3, AI-optimized)
 
 ### Development
@@ -264,6 +270,7 @@ data/
 - **[Runbooks](docs/runbooks.md)** - Operational procedures
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues resolution
 - **[Contributing](CONTRIBUTING.md)** - Contribution guidelines
+- **[I18N Migration](docs/I18N_MIGRATION.md)** - FR → EN translation report (Feb 2026)
 
 ### Complete Index
 
@@ -322,6 +329,11 @@ GET  /execution/governance/state                 # Governance state
 POST /execution/governance/approve               # Approve plan
 GET  /execution/monitoring/live                  # Real-time monitoring
 
+# Wealth
+GET  /api/wealth/items                           # List wealth items
+POST /api/wealth/items                           # Create wealth item
+GET  /api/wealth/summary                         # Net Worth summary
+
 # Sources
 GET  /api/sources/list                           # Available sources
 POST /api/sources/upload                         # Upload file
@@ -363,10 +375,10 @@ pytest --cov=services --cov=api --cov-report=html
 
 ```python
 # Backend: ALWAYS use dependency injection
-from api.deps import get_active_user
+from api.deps import get_required_user
 
 @router.get("/endpoint")
-async def endpoint(user: str = Depends(get_active_user)):
+async def endpoint(user: str = Depends(get_required_user)):
     pass
 ```
 
@@ -416,6 +428,6 @@ This project is a starter/template for personal or educational use.
 
 ---
 
-**Status**: ✅ Production Stable (Dec 2025)
-**Version**: 3.0
+**Status**: ✅ Production Stable (Feb 2026)
+**Version**: 4.0
 **Stack**: Python 3.10+ • FastAPI • Vanilla JS (ES6) • Redis (optional)
