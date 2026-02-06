@@ -2,7 +2,7 @@
 ML Training Scheduler - Contrôle quand réentraîner les modèles.
 
 Règles:
-- Regime detection: 1x par semaine (dimanche 3h)
+- Regime detection: 1x par jour (3h)
 - Volatility forecaster: 1x par jour (minuit)
 - Correlation forecaster: 1x par semaine
 
@@ -26,7 +26,7 @@ class MLTrainingScheduler:
     """
 
     TRAINING_INTERVALS = {
-        "regime": timedelta(days=7),      # Hebdomadaire
+        "regime": timedelta(days=1),      # Quotidien
         "volatility": timedelta(days=1),  # Quotidien
         "correlation": timedelta(days=7)  # Hebdomadaire
     }

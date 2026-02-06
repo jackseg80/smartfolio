@@ -1103,7 +1103,7 @@ async def start_auto_trainer(user: str = Depends(require_admin_role)):
         return success_response({
             "message": "ML Auto-Trainer started successfully",
             "schedule": {
-                "regime_models": "Every Sunday at 3am",
+                "regime_models": "Daily at 3am",
                 "volatility_models": "Daily at midnight",
                 "correlation_models": "Every Sunday at 4am"
             }
@@ -1152,7 +1152,7 @@ async def trigger_auto_trainer_job(
     Manually trigger a scheduled auto-trainer job immediately.
 
     Args:
-        job_id: Job ID (regime_training_weekly, volatility_training_daily, correlation_training_weekly)
+        job_id: Job ID (regime_training_daily, volatility_training_daily, correlation_training_weekly)
 
     Returns:
         dict: Success message
@@ -1160,7 +1160,7 @@ async def trigger_auto_trainer_job(
     try:
         from services.ml.auto_trainer import ml_auto_trainer
 
-        valid_jobs = ['regime_training_weekly', 'volatility_training_daily', 'correlation_training_weekly']
+        valid_jobs = ['regime_training_daily', 'volatility_training_daily', 'correlation_training_weekly']
         if job_id not in valid_jobs:
             return error_response(
                 f"Invalid job_id. Valid: {valid_jobs}",

@@ -2538,7 +2538,7 @@ class MLTrainingScheduler:
     Contrôle quand réentraîner les modèles ML basé sur l'âge du modèle.
 
     Règles:
-    - Regime detection: 1x par semaine (dimanche 3h)
+    - Regime detection: 1x par jour (3h)
     - Volatility forecaster: 1x par jour (minuit)
     - Correlation forecaster: 1x par semaine
 
@@ -2546,7 +2546,7 @@ class MLTrainingScheduler:
     """
 
     TRAINING_INTERVALS = {
-        "regime": timedelta(days=7),      # Hebdomadaire
+        "regime": timedelta(days=1),      # Quotidien
         "volatility": timedelta(days=1),  # Quotidien
         "correlation": timedelta(days=7)  # Hebdomadaire
     }
@@ -2577,26 +2577,26 @@ model_needs_training = (
 if model_needs_training:
     logger.info(f"Training regime model with 20 years data...")
 else:
-    logger.info(f"Using cached regime model (< 7 days old)")
+    logger.info(f"Using cached regime model (< 1 day old)")
 ```
 
-#### 3. Scheduler Hebdomadaire Automatique
+#### 3. Scheduler Quotidien Automatique
 
 **Fichier modifié:** `api/scheduler.py`
 
 ```python
-@scheduler.scheduled_job('cron', day_of_week='sun', hour=3, minute=0,
-                         id='weekly_ml_training')
-async def job_weekly_ml_training():
+@scheduler.scheduled_job('cron', hour=3, minute=0,
+                         id='daily_ml_training')
+async def job_daily_ml_training():
     """
-    Entraîne les modèles ML lourds chaque dimanche à 3h du matin.
+    Entraîne les modèles ML lourds chaque jour à 3h du matin.
 
     - Regime detection (20 ans, ~60-90s)
     - Correlation forecaster (20 ans, ~30-40s)
 
-    Total: ~2 minutes par semaine au lieu de chaque appel API.
+    Total: ~2 minutes par jour au lieu de chaque appel API.
     """
-    logger.info("🤖 Starting weekly ML training (20 years data)...")
+    logger.info("🤖 Starting daily ML training (20 years data)...")
 
     try:
         adapter = StocksMLAdapter()

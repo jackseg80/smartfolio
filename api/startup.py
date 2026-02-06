@@ -194,7 +194,7 @@ async def initialize_ml_auto_trainer():
         bool: True if auto-trainer started successfully
 
     Note:
-        - Trains regime models weekly (Sunday 3am)
+        - Trains regime models daily (3am)
         - Trains volatility models daily (midnight)
         - Uses MLTrainingScheduler rules to check if retraining is needed
         - Integrates with TrainingExecutor for background jobs

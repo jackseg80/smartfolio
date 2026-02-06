@@ -4,7 +4,7 @@ ML Auto-Trainer Service
 Automatic periodic training of ML models using APScheduler.
 
 Schedule:
-- Regime models (stock, btc): Weekly on Sunday at 3am
+- Regime models (stock, btc): Daily at 3am
 - Volatility models: Daily at midnight
 - Correlation models: Weekly on Sunday at 4am
 
@@ -64,12 +64,12 @@ class MLAutoTrainer:
             logger.warning("Auto-trainer already running")
             return
 
-        # Schedule regime models training (weekly - Sunday 3am)
+        # Schedule regime models training (daily - 3am)
         self.scheduler.add_job(
             func=self._train_regime_models,
-            trigger=CronTrigger(day_of_week='sun', hour=3, minute=0),
-            id='regime_training_weekly',
-            name='Weekly Regime Models Training',
+            trigger=CronTrigger(hour=3, minute=0),
+            id='regime_training_daily',
+            name='Daily Regime Models Training',
             replace_existing=True
         )
 
@@ -95,7 +95,7 @@ class MLAutoTrainer:
         self._is_running = True
 
         logger.info("🚀 ML Auto-Trainer started")
-        logger.info("   • Regime models: Every Sunday at 3am")
+        logger.info("   • Regime models: Daily at 3am")
         logger.info("   • Volatility models: Daily at midnight")
         logger.info("   • Correlation models: Every Sunday at 4am")
 
@@ -138,7 +138,7 @@ class MLAutoTrainer:
         Manually trigger a scheduled job immediately.
 
         Args:
-            job_id: Job ID to trigger (e.g., 'regime_training_weekly')
+            job_id: Job ID to trigger (e.g., 'regime_training_daily')
 
         Returns:
             Result dict with status
@@ -199,7 +199,7 @@ class MLAutoTrainer:
             except Exception as e:
                 logger.error(f"Error checking {model_name}: {e}", exc_info=True)
 
-        self._last_run['regime_training_weekly'] = datetime.now().isoformat()
+        self._last_run['regime_training_daily'] = datetime.now().isoformat()
 
     def _train_volatility_models(self):
         """
