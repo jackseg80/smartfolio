@@ -11,6 +11,29 @@ export let UNIFIED_ASSET_GROUPS = {};
 export let KNOWN_ASSET_MAPPING = {};
 export let GROUP_ORDER = [];
 
+// Fallback groups si API indisponible (must be before top-level await)
+const FALLBACK_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
+
+// Fallback pour classification automatique si API indisponible
+function autoClassifySymbolFallback(symbol) {
+  const upperSymbol = symbol.toUpperCase();
+
+  if (upperSymbol.includes('BTC') || upperSymbol.includes('WBTC')) {
+    return 'BTC';
+  } else if (upperSymbol.includes('ETH') || upperSymbol.includes('STETH') || upperSymbol.includes('RETH')) {
+    return 'ETH';
+  } else if (['USDT', 'USDC', 'DAI', 'USD', 'BUSD', 'TUSD', 'FDUSD'].includes(upperSymbol)) {
+    return 'Stablecoins';
+  } else if (['EUR', 'GBP', 'JPY', 'CHF'].includes(upperSymbol)) {
+    // Devises fiat classées dans Others (non-crypto)
+    return 'Others';
+  } else if (upperSymbol.includes('SOL')) {
+    return 'SOL';
+  } else {
+    return 'Others';
+  }
+}
+
 // Initialisation au chargement du module (top-level await, pas de XHR synchrone)
 await loadTaxonomyData()
   .then(data => {
@@ -36,29 +59,6 @@ if (typeof window !== 'undefined') {
     });
   }
 }
-
-// Fallback pour classification automatique si API indisponible
-function autoClassifySymbolFallback(symbol) {
-  const upperSymbol = symbol.toUpperCase();
-
-  if (upperSymbol.includes('BTC') || upperSymbol.includes('WBTC')) {
-    return 'BTC';
-  } else if (upperSymbol.includes('ETH') || upperSymbol.includes('STETH') || upperSymbol.includes('RETH')) {
-    return 'ETH';
-  } else if (['USDT', 'USDC', 'DAI', 'USD', 'BUSD', 'TUSD', 'FDUSD'].includes(upperSymbol)) {
-    return 'Stablecoins';
-  } else if (['EUR', 'GBP', 'JPY', 'CHF'].includes(upperSymbol)) {
-    // Devises fiat classées dans Others (non-crypto)
-    return 'Others';
-  } else if (upperSymbol.includes('SOL')) {
-    return 'SOL';
-  } else {
-    return 'Others';
-  }
-}
-
-// Fallback groups si API indisponible
-const FALLBACK_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
 
 // Charger les données taxonomy depuis l'API
 async function loadTaxonomyData() {
