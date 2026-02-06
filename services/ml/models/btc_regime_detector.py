@@ -44,8 +44,8 @@ class BTCRegimeDetector:
         self.num_regimes = num_regimes
         self.regime_names = ['Bear Market', 'Correction', 'Bull Market', 'Expansion']
         self.regime_descriptions = {
-            0: 'Violent market crash with sustained drawdown >50%',
-            1: 'Market pullback or high volatility period (10-50% drawdown)',
+            0: 'Sustained bear market with significant drawdown (>30%)',
+            1: 'Market pullback or high volatility period (10-30% drawdown)',
             2: 'Stable uptrend with low drawdown and moderate volatility',
             3: 'Strong post-crash recovery at +30%/month or higher'
         }
@@ -388,7 +388,7 @@ class BTCRegimeDetector:
         Detect regime using CRYPTO-ADAPTED rule-based criteria.
 
         Bitcoin thresholds (vs bourse):
-        - Bear: DD ≤ -50% (vs -20%), sustained 30 days (vs 60)
+        - Bear: DD ≤ -30% (vs -15%), sustained 20 days (vs 30)
         - Expansion: +30%/month (vs +15%)
         - Bull: DD > -20%, vol <60% (vs DD > -5%, vol <20%)
 
@@ -407,8 +407,9 @@ class BTCRegimeDetector:
         volatility = latest['market_volatility']
 
         # Rule 1: BEAR MARKET (highest priority)
-        # Crypto: DD ≤ -50%, sustained 30 days (vs bourse: -20%, 60 days)
-        if drawdown <= -0.50 and days_since_peak >= 30:
+        # Crypto: DD ≤ -30%, sustained 20 days (vs bourse: -15%, 30 days)
+        # -43% DD = bear market, not correction. Old -50% threshold was too late.
+        if drawdown <= -0.30 and days_since_peak >= 20:
             return {
                 'regime_id': 0,
                 'regime_name': 'Bear Market',
@@ -422,7 +423,7 @@ class BTCRegimeDetector:
         if drawdown >= -0.20 and days_since_peak >= 30:  # Recovered
             # Check if there was recent deep drawdown
             lookback_dd = features.tail(180)['drawdown_from_peak'].min()  # Last 6 months
-            if lookback_dd <= -0.50 and trend_30d >= 0.30:  # Was -50%+ deep + strong recovery
+            if lookback_dd <= -0.30 and trend_30d >= 0.30:  # Was -30%+ deep + strong recovery
                 return {
                     'regime_id': 3,
                     'regime_name': 'Expansion',
@@ -443,12 +444,12 @@ class BTCRegimeDetector:
             }
 
         # Rule 4: CORRECTION (fallback before HMM)
-        # Moderate drawdown (-50% < DD < -10%) AND elevated volatility (>65%)
-        # Crypto vol threshold raised from 40% to 65% (BTC normally has 40-60% vol)
-        if (-0.50 < drawdown < -0.10) and (volatility > 0.65):
+        # Moderate drawdown (-30% < DD < -10%) AND elevated volatility (>65%)
+        # Deeper than -30% is Bear Market (Rule 1), not correction
+        if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
             confidence = 0.85
             # Higher confidence for deeper corrections
-            if drawdown < -0.30:
+            if drawdown < -0.20:
                 confidence = 0.90
 
             return {

@@ -874,6 +874,7 @@ export async function getUnifiedState() {
     },
     regime: {
       name: regimeData.regime?.name,
+      key: regimeData.regime?.key,
       emoji: regimeData.regime?.emoji,
       confidence: regimeData.regime?.confidence,
       strategy: regimeData.regime?.strategy,
@@ -1129,7 +1130,8 @@ export function deriveRecommendations(u) {
   if (u.cycle?.phase?.phase) {
     const cyclePhase = u.cycle.phase.phase;
     const blendedScore = u.scores?.blended ?? 50;
-    const regimeKey = u.market?.regime?.key ||
+    const regimeKey = u.regime?.key ||
+                      u.market?.regime?.key ||
                       (blendedScore >= 76 ? 'expansion' :
                        blendedScore >= 51 ? 'bull_market' :
                        blendedScore >= 26 ? 'correction' : 'bear_market');
@@ -1145,13 +1147,13 @@ export function deriveRecommendations(u) {
         source: 'cycle-intelligence'
       });
     }
-    // Vigilance if cycle=peak but regime not yet bull_market (divergence)
+    // Vigilance if cycle=peak but regime is only correction (divergence)
     else if (cyclePhase === 'peak' && u.decision.score > 75 && regimeKey === 'correction') {
       recos.push({
-        key: 'reco:cycle:peak_but_expansion',
+        key: 'reco:cycle:peak_but_correction',
         priority: 'medium',
         title: 'Increased vigilance recommended',
-        reason: `Cycle at peak but market in expansion (blended: ${blendedScore}) - possible divergence`,
+        reason: `Cycle at peak but market in ${regimeKey.replace('_', ' ')} (blended: ${blendedScore}) - possible divergence`,
         icon: '⚠️',
         source: 'cycle-intelligence'
       });

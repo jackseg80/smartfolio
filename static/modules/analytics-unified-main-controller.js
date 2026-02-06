@@ -504,7 +504,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
       scores: { cycle: cycleScore, onchain: onchainScore, risk: riskScore },
       weights: { cycle: wCycle, onchain: wOnchain, risk: wRisk },
       meta: {
-        phase: (s?.regime?.name || regimeData?.name || actualPhase || 'neutral'),   // ✅ phase toujours renseignée
+        phase: (regimeData?.name || s?.regime?.name || actualPhase || 'neutral'),   // ✅ current calc > store cache
         source: u.decision?.source || window.globalConfig?.get('data_source') || 'allocation_engine_v2',
         live: s.ui?.apiStatus?.backend === 'healthy',
         backend: s.ui?.apiStatus?.backend === 'healthy',

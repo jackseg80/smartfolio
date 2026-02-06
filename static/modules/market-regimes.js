@@ -498,10 +498,26 @@ export function generateRegimeRecommendations(regime, riskBudget) {
 }
 
 /**
- * Exporte les données du régime pour l'interface avec base/adjusted/effective séparés
+ * Exporte les données du régime pour l'interface avec base/adjusted/effective séparés.
+ *
+ * REGIME SCORE: Uses only market-direction signals (CCS + OnChain), excluding Risk Score.
+ * Risk Score measures portfolio robustness (Sharpe, diversification), not market direction.
+ * A well-diversified portfolio in a bear market can have Risk=78, which would wrongly
+ * push the blended score into "Bull Market" territory.
+ *
+ * The full blendedScore (with Risk) is still used for calculateRiskBudget().
  */
 export function getRegimeDisplayData(blendedScore, onchainScore, riskScore) {
-  const base = getMarketRegime(blendedScore);
+  // Regime score: remove Risk influence to reflect actual market direction
+  // blendedScore = CCS×0.50 + OnChain×0.30 + Risk×0.20
+  // regimeScore = (CCS×0.50 + OnChain×0.30) / 0.80 = blended without Risk component
+  const riskContribution = (riskScore != null) ? riskScore * 0.20 : 0;
+  const marketWeight = (riskScore != null) ? 0.80 : 1.0;
+  const regimeScore = marketWeight > 0
+    ? Math.floor(Math.max(0, Math.min(100, (blendedScore - riskContribution) / marketWeight)))
+    : blendedScore;
+
+  const base = getMarketRegime(regimeScore);
   const adjusted = applyMarketOverrides(base, onchainScore, riskScore);
 
   // Recalculer le regime effectif après ajustements (en cas de changement de score)

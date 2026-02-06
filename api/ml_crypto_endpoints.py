@@ -234,10 +234,10 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
     Apply rule-based regime detection for a single row with historical context.
 
     Crypto-adapted thresholds:
-    - Bear: DD ≤ -50%, sustained 30 days
-    - Correction: -50% < DD < -5% AND vol > 40%
+    - Bear: DD ≤ -30%, sustained 20 days
+    - Correction: -30% < DD < -10% AND vol > 65%
     - Bull: DD > -20%, vol < 60%, trend > +10%
-    - Expansion: Recovery from -50%+ at +30%/month
+    - Expansion: Recovery from -30%+ at +30%/month
 
     Returns:
         Dict with regime info if clear rule match, else None (defer to HMM)
@@ -248,7 +248,7 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
     volatility = row.get('market_volatility', 0)
 
     # Rule 1: BEAR MARKET (highest priority)
-    if drawdown <= -0.50 and days_since_peak >= 30:
+    if drawdown <= -0.30 and days_since_peak >= 20:
         return {
             'regime_id': 0,
             'regime_name': 'Bear Market',
@@ -258,7 +258,7 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
     if drawdown >= -0.20 and days_since_peak >= 30:
         # Check if there was recent deep drawdown in last 180 days
         lookback_dd = features_context.tail(180)['drawdown_from_peak'].min() if len(features_context) > 0 else 0
-        if lookback_dd <= -0.50 and trend_30d >= 0.30:
+        if lookback_dd <= -0.30 and trend_30d >= 0.30:
             return {
                 'regime_id': 3,
                 'regime_name': 'Expansion',
@@ -272,7 +272,7 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
         }
 
     # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
-    if (-0.50 < drawdown < -0.05) and (volatility > 0.40):
+    if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
         return {
             'regime_id': 1,
             'regime_name': 'Correction',
@@ -303,12 +303,12 @@ def _detect_regime_rule_based_optimized(
         Dict with regime info if clear rule match, else None
     """
     # Rule 1: BEAR MARKET (highest priority)
-    if drawdown <= -0.50 and days_since_peak >= 30:
+    if drawdown <= -0.30 and days_since_peak >= 20:
         return {'regime_id': 0, 'regime_name': 'Bear Market'}
 
     # Rule 2: EXPANSION (post-crash recovery)
     if drawdown >= -0.20 and days_since_peak >= 30:
-        if lookback_180d_min_dd <= -0.50 and trend_30d >= 0.30:
+        if lookback_180d_min_dd <= -0.30 and trend_30d >= 0.30:
             return {'regime_id': 3, 'regime_name': 'Expansion'}
 
     # Rule 3: BULL MARKET (clear uptrend)
@@ -316,7 +316,7 @@ def _detect_regime_rule_based_optimized(
         return {'regime_id': 2, 'regime_name': 'Bull Market'}
 
     # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
-    if (-0.50 < drawdown < -0.05) and (volatility > 0.40):
+    if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
         return {'regime_id': 1, 'regime_name': 'Correction'}
 
     # No clear rule-based detection → defer to HMM
@@ -422,9 +422,9 @@ async def get_crypto_regime_forecast(
 
         # Scenario 2: If price -10%
         new_dd_down = current_drawdown - 0.10
-        if new_dd_down < -0.50:
+        if new_dd_down < -0.30:
             likely_regime_down = "Bear Market"
-        elif new_dd_down < -0.20:
+        elif new_dd_down < -0.10:
             likely_regime_down = "Correction"
         else:
             likely_regime_down = current_regime_name

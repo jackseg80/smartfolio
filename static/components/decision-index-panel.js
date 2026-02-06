@@ -767,7 +767,7 @@ function renderQuickContextBar(meta) {
   return `
     <div class="di-context-bar">
       <div class="ctx-item">
-        <span class="ctx-label">Regime</span>
+        <span class="ctx-label">Conditions</span>
         <span class="ctx-value" style="color: ${regimeColor};">${regimeEmoji} ${regime}</span>
       </div>
       <div class="ctx-divider"></div>
@@ -887,11 +887,11 @@ function renderHelpContent() {
           🔗 On-Chain: Fundamental blockchain metrics<br>
           🛡️ Risk: Portfolio robustness (higher = better)</p>
 
-          <p><strong>Phase vs Regime</strong><br>
-          May seem contradictory but this is intentional:<br>
-          • <strong>Regime</strong> (e.g. Expansion) = Theoretical position in cycle<br>
-          • <strong>Phase</strong> (e.g. bearish) = Applied strategy (cycle < 70)<br>
-          An "Expansion" regime + "bearish" phase is normal!</p>
+          <p><strong>Conditions vs Phase vs Regime</strong><br>
+          • <strong>Conditions</strong> = Composite market outlook (CCS + On-Chain, without Risk)<br>
+          • <strong>Phase</strong> = Applied strategy based on cycle score<br>
+          • <strong>Regime</strong> (on Market Regimes page) = ML detection per asset (BTC/ETH/Stock)<br>
+          Conditions and Regime may differ: Conditions reflects composite scores, Regime reflects actual drawdown.</p>
 
           <p><strong>Contributions</strong><br>
           Percentages = weights used to compute DI AND allocation.<br>

@@ -601,14 +601,17 @@ export function buildTheoreticalTargets(u) {
 
   let stablesTarget, btcTarget, ethTarget, altsTarget;
 
-  if (blendedScore >= 70) {
-    // Euphorie: moins de stables, plus d'alts
-    stablesTarget = 20; btcTarget = 35; ethTarget = 25; altsTarget = 20;
-  } else if (blendedScore >= 50) {
-    // Expansion: équilibré
-    stablesTarget = 30; btcTarget = 40; ethTarget = 20; altsTarget = 10;
+  if (blendedScore >= 76) {
+    // Expansion: less stables, more alts
+    stablesTarget = 15; btcTarget = 35; ethTarget = 25; altsTarget = 25;
+  } else if (blendedScore >= 51) {
+    // Bull Market: balanced
+    stablesTarget = 25; btcTarget = 40; ethTarget = 20; altsTarget = 15;
+  } else if (blendedScore >= 26) {
+    // Correction: more stables, selective
+    stablesTarget = 35; btcTarget = 35; ethTarget = 20; altsTarget = 10;
   } else {
-    // Accumulation: beaucoup de stables, BTC dominante
+    // Bear Market: capital preservation
     stablesTarget = 50; btcTarget = 30; ethTarget = 15; altsTarget = 5;
   }
 
