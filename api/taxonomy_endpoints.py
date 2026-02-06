@@ -128,7 +128,7 @@ def upsert_aliases(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     aliases = payload.get("aliases") or {}
     if not isinstance(aliases, dict) or not aliases:
-        raise HTTPException(status_code=400, detail="Body attendu: { aliases: { ALIAS: GROUP, ... } }")
+        raise HTTPException(status_code=400, detail="Expected body: { aliases: { ALIAS: GROUP, ... } }")
 
     groups = set(_all_groups())
     cur = _merged_aliases()
@@ -140,7 +140,7 @@ def upsert_aliases(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         alias = str(raw_alias).upper().strip()
         group = str(raw_group).strip()
         if group not in groups:
-            raise HTTPException(status_code=400, detail=f"Groupe inconnu: {group}")
+            raise HTTPException(status_code=400, detail=f"Unknown group: {group}")
         cur[alias] = group
         _MEM_ALIASES[alias] = group
         written.append(alias)
@@ -153,11 +153,11 @@ def upsert_aliases(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
 @router.delete("/aliases/{alias}")
 def delete_alias(alias: str) -> Dict[str, Any]:
     if not alias:
-        raise HTTPException(status_code=400, detail="Alias manquant")
+        raise HTTPException(status_code=400, detail="Missing alias")
     alias = alias.upper()
     cur = _merged_aliases()
     if alias not in cur:
-        raise HTTPException(status_code=404, detail="Alias introuvable")
+        raise HTTPException(status_code=404, detail="Alias not found")
 
     # Supprime en mémoire + disque
     if alias in _MEM_ALIASES:
@@ -173,7 +173,7 @@ def bulk_aliases(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     return upsert_aliases(payload)
 
 @router.get("/suggestions")
-def get_auto_classification_suggestions_get(sample_symbols: str = Query("", description="Symboles séparés par virgule pour test")) -> Dict[str, Any]:
+def get_auto_classification_suggestions_get(sample_symbols: str = Query("", description="Comma-separated symbols for testing")) -> Dict[str, Any]:
     """
     Retourne des suggestions de classification automatique pour les symboles inconnus (GET).
     Si sample_symbols est fourni, les utilise comme exemples.

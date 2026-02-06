@@ -186,11 +186,11 @@
         const capLabel = capPercent != null ? `Cap ±${capPercent}%` : 'Cap —';
 
         if (usingIter1) {
-          strategyName = `${methodLabel} (Itération 1 - ${capLabel})`;
+          strategyName = `${methodLabel} (Iteration 1 - ${capLabel})`;
         } else if (modeName === 'Frozen' || capPercent === 0) {
           strategyName = `${methodLabel} (Frozen/Observe)`;
         } else {
-          strategyName = `${methodLabel} (Objectifs Théoriques)`;
+          strategyName = `${methodLabel} (Theoretical Targets)`;
         }
 
         const result = {
@@ -250,7 +250,7 @@
             'conservative': {
               name: 'Conservative',
               icon: '🛡️',
-              description: 'Allocation conservative avec forte composante stablecoin - Idéal marché baissier',
+              description: 'Conservative allocation with strong stablecoin component - Ideal for bear market',
               risk_level: 'faible',
               allocations: {
                 'BTC': 25.0,
@@ -269,7 +269,7 @@
             'balanced': {
               name: 'Balanced',
               icon: '⚖️',
-              description: 'Répartition équilibrée - Approche classique pour marché stable',
+              description: 'Balanced distribution - Classic approach for stable market',
               risk_level: 'moyen',
               allocations: {
                 'BTC': 35.0,
@@ -289,7 +289,7 @@
               name: 'Aggressive',
               icon: '🚀',
               description: 'Forte exposition altcoins - Maximum rendement, maximum risque',
-              risk_level: 'élevé',
+              risk_level: 'high',
               allocations: {
                 'BTC': 30.0,
                 'ETH': 25.0,
@@ -308,7 +308,7 @@
               name: 'DeFi Focused',
               icon: '🦄',
               description: 'Exposition maximale DeFi et L2 - Pour bull market DeFi',
-              risk_level: 'élevé',
+              risk_level: 'high',
               allocations: {
                 'BTC': 20.0,
                 'ETH': 35.0,
@@ -326,8 +326,8 @@
             'bear_market': {
               name: 'Bear Protection',
               icon: '🐻',
-              description: 'Protection marché baissier - Stablecoins dominants avec BTC/ETH solides',
-              risk_level: 'très-faible',
+              description: 'Bear market protection - Dominant stablecoins with strong BTC/ETH',
+              risk_level: 'very-low',
               allocations: {
                 'BTC': 30.0,
                 'ETH': 15.0,
@@ -345,7 +345,7 @@
             'blend': {
               name: 'Blended Score',
               icon: '🎨',
-              description: 'Allocation basée sur le score composite (CCS + Cycle + On-Chain + Risk)',
+              description: 'Allocation based on composite score (CCS + Cycle + On-Chain + Risk)',
               risk_level: 'variable',
               _isTemplate: true,
               _mode: 'blend'
@@ -353,7 +353,7 @@
             'smart': {
               name: 'Smart Regime',
               icon: '🧠',
-              description: 'Allocation intelligente basée sur les régimes de marché avec analyse on-chain avancée',
+              description: 'Smart allocation based on market regimes with advanced on-chain analysis',
               risk_level: 'variable',
               _isTemplate: true,
               _mode: 'smart'
@@ -370,9 +370,9 @@
             const unified = syncUnifiedSuggestedTargets();
             if (unified) {
               availableStrategies['unified-suggested'] = {
-                name: 'Allocation Suggérée (Unified)',
+                name: 'Suggested Allocation (Unified)',
                 icon: '🧠',
-                description: `Allocation Suggérée - ${unified.strategy}`,
+                description: `Suggested Allocation - ${unified.strategy}`,
                 risk_level: 'Variable',
                 allocations: unified.targets,
                 _isUnified: true,
@@ -384,9 +384,9 @@
               console.debug('🔍 DEBUG allocations in strategy:', availableStrategies['unified-suggested'].allocations);
             } else {
               availableStrategies['unified-suggested-placeholder'] = {
-                name: 'Allocation Suggérée (Unified)',
+                name: 'Suggested Allocation (Unified)',
                 icon: '🧠',
-                description: 'Ouvrez Analytics Unified → Allocation Suggérée pour générer les données',
+                description: 'Open Analytics Unified → Suggested Allocation to generate data',
                 risk_level: 'N/A',
                 allocations: {},
                 _isPlaceholder: true
@@ -483,8 +483,8 @@
           availableStrategies['ccs-dynamic-error'] = {
             name: 'Strategic (Dynamic)',
             icon: '⚠️',
-            description: 'Erreur de synchronisation CCS - Cliquez "🎯 Sync CCS" pour réessayer',
-            risk_level: 'Erreur',
+            description: 'CCS sync error - Click "🎯 Sync CCS" to retry',
+            risk_level: 'Error',
             allocations: {},
             _isError: true
           };
@@ -571,7 +571,7 @@
             'balanced': {
               name: 'Balanced (Fallback)',
               icon: '⚖️',
-              description: 'Stratégie de secours - Répartition équilibrée',
+              description: 'Fallback strategy - Balanced distribution',
               risk_level: 'moyen',
               allocations: {
                 'BTC': 35.0,
@@ -585,7 +585,7 @@
         }
 
         renderStrategiesUI();
-        showNotification('❌ Erreur partielle chargement stratégies - Mode dégradé activé', 'warning', 5000);
+        showNotification('❌ Partial strategy loading error - Degraded mode activated', 'warning', 5000);
       }
 
       // Marquer comme chargé pour éviter double appel
@@ -679,12 +679,12 @@
       </div>
       <div class="strategy-desc" style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">
         ${strategy.description}
-        ${isDynamic ? '<div style="font-size: 11px; color: var(--warning); font-weight: 600; margin-top: 4px;">⏰ Données récentes du Risk Dashboard</div>' : ''}
-        ${isPlaceholder ? '<div style="font-size: 11px; color: var(--theme-text-muted); font-weight: 600; margin-top: 4px;">📭 En attente de synchronisation</div>' : ''}
-        ${isError ? '<div style="font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px;">⚠️ Synchronisation requise</div>' : ''}
+        ${isDynamic ? '<div style="font-size: 11px; color: var(--warning); font-weight: 600; margin-top: 4px;">⏰ Recent data from Risk Dashboard</div>' : ''}
+        ${isPlaceholder ? '<div style="font-size: 11px; color: var(--theme-text-muted); font-weight: 600; margin-top: 4px;">📭 Awaiting synchronization</div>' : ''}
+        ${isError ? '<div style="font-size: 11px; color: var(--danger); font-weight: 600; margin-top: 4px;">⚠️ Synchronization required</div>' : ''}
       </div>
       <div class="strategy-allocations">
-        ${entries.length ? badgesHtml : '<span style="font-size:11px;color:var(--theme-text-muted);">Aucune allocation disponible</span>'}
+        ${entries.length ? badgesHtml : '<span style="font-size:11px;color:var(--theme-text-muted);">No allocation available</span>'}
       </div>
     </div>
   `;
@@ -727,7 +727,7 @@
 
     async function applyStrategy() {
       if (!selectedStrategyId || !availableStrategies[selectedStrategyId]) {
-        showNotification('Aucune stratégie sélectionnée', 'warning');
+        showNotification('No strategy selected', 'warning');
         return;
       }
 
@@ -755,13 +755,13 @@
           }
         } catch (err) {
           debugLogger.warn('Failed to fetch strategy preview:', err);
-          showNotification("Impossible de récupérer l'allocation du template (preview)", 'warning');
+          showNotification("Unable to retrieve template allocation (preview)", 'warning');
         }
       }
 
       // Si aucune allocation n'est disponible (template sans preview), ne pas activer targets dynamiques
       if (!strategy.allocations || Object.keys(strategy.allocations).length === 0) {
-        showNotification('Aucune allocation disponible pour ce template', 'warning');
+        showNotification('No allocation available for this template', 'warning');
         return;
       }
 
@@ -771,12 +771,12 @@
         const governanceStatus = window.riskStore.getGovernanceStatus();
 
         if (governanceStatus.state === 'FROZEN') {
-          showNotification('❄️ Système gelé - Impossible d\'appliquer la stratégie', 'error');
+          showNotification('❄️ System frozen - Cannot apply strategy', 'error');
           return;
         }
 
         if (governanceStatus.needsAttention && governanceStatus.pendingCount > 0) {
-          showNotification(`⚠️ ${governanceStatus.pendingCount} décision(s) en attente d'approbation`, 'warning');
+          showNotification(`⚠️ ${governanceStatus.pendingCount} decision(s) pending approval`, 'warning');
         }
 
       } catch (error) {
@@ -802,7 +802,7 @@
       // Notification avec gouvernance
       const governanceStatus = window.riskStore.getGovernanceStatus();
       const govInfo = governanceStatus.mode !== 'manual' ? ` (mode: ${governanceStatus.mode})` : '';
-      showNotification(`✅ Stratégie "${strategy.name}" appliquée${govInfo}!`, 'success');
+      showNotification(`✅ Strategy "${strategy.name}" applied${govInfo}!`, 'success');
 
       // Régénérer automatiquement le plan
       setTimeout(() => {
@@ -830,7 +830,7 @@
         indicator.style.display = 'none';
       }
 
-      showNotification('Mode manuel activé', 'info');
+      showNotification('Manual mode enabled', 'info');
 
       // Régénérer le plan avec les targets par défaut
       setTimeout(() => {
@@ -878,7 +878,7 @@
 
         // Source et timestamp
         if (universeSource) {
-          const source = priorityMeta.universe_available ? 'Univers chargé' : 'Univers indisponible';
+          const source = priorityMeta.universe_available ? 'Universe loaded' : 'Universe unavailable';
           universeSource.textContent = source;
           universeSource.style.color = priorityMeta.universe_available ? 'var(--success)' : 'var(--danger)';
         }
@@ -917,7 +917,7 @@
       const v = (usd == null || isNaN(usd)) ? 0 : (usd * rate);
       try {
         const dec = (cur === 'BTC') ? 8 : 2;
-        const out = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
+        const out = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
         return (cur === 'USD') ? out.replace(/\s?US$/, '') : out;
       } catch (_) {
         return `${v.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`;
@@ -943,7 +943,7 @@
             indicator.textContent = `🎯 CCS ${metadata.ccs}`;
           }
         }
-        setStatus(`Targets dynamiques appliqués (CCS: ${metadata.ccs || 'N/A'})`);
+        setStatus(`Dynamic targets applied (CCS: ${metadata.ccs || 'N/A'})`);
 
         // Auto-run plan if requested
         if (metadata.autoRun) {
@@ -961,7 +961,7 @@
           indicator.style.display = 'none';
           indicator.textContent = '🎯 Targets dynamiques';
         }
-        setStatus('Mode targets manuel rétabli');
+        setStatus('Manual targets mode restored');
       },
 
       getCurrentTargets: function () {
@@ -1023,7 +1023,7 @@
         const totalDisp = totalValue * rate;
         try {
           const dec = (cur === 'BTC') ? 8 : 2;
-          debugLogger.debug(`🔍 Loaded ${balances.length} assets from CSV, total: ` + new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(totalDisp));
+          debugLogger.debug(`🔍 Loaded ${balances.length} assets from CSV, total: ` + new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(totalDisp));
         } catch (_) {
           debugLogger.debug(`🔍 Loaded ${balances.length} assets from CSV, total: ${totalDisp.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`);
         }
@@ -1610,7 +1610,7 @@
           let formatted;
           try {
             const dec = (cur === 'BTC') ? 8 : 2;
-            formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
+            formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
           } catch (_) {
             formatted = `${val.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`;
           }
@@ -1626,7 +1626,7 @@
           let formatted;
           try {
             const dec = (cur === 'BTC') ? 8 : 2;
-            formatted = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
+            formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
           } catch (_) {
             formatted = `${val.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`;
           }
@@ -1693,18 +1693,18 @@
           <h3 style="color: var(--danger); margin-bottom: 1rem;">⚠️ Configuration Requise</h3>
           <p style="margin-bottom: 1rem; color: var(--theme-text);">${message}</p>
           <p style="margin-bottom: 1.5rem; color: var(--theme-text-muted);">
-            Pour utiliser l'interface de rebalancing, vous devez configurer une source de données valide.
+            To use the rebalancing interface, you must configure a valid data source.
           </p>
           <button class="btn" onclick="window.open('settings.html', '_blank')" style="background: var(--brand-primary); margin-right: 0.5rem;">
-            🔧 Ouvrir Settings
+            🔧 Open Settings
           </button>
           <button class="btn secondary" onclick="location.reload()">
-            🔄 Recharger la page
+            🔄 Reload the page
           </button>
         </div>
       `;
 
-      showNotification('❌ Configuration de source de données requise - Voir Settings', 'error', 5000);
+      showNotification('❌ Data source configuration required - See Settings', 'error', 5000);
     }
     function setTotal(v) {
       const n = Number(v || 0);
@@ -1907,14 +1907,14 @@
       if (priceSource === "local") {
         badgeHtml = '<span class="pill" style="background:#16a34a;border-color:#16a34a;color:white;font-size:12px">Prix locaux</span>';
       } else if (priceSource === "market") {
-        badgeHtml = '<span class="pill" style="background:#dc2626;border-color:#dc2626;color:white;font-size:12px">Prix marché</span>';
+        badgeHtml = '<span class="pill" style="background:#dc2626;border-color:#dc2626;color:white;font-size:12px">Market price</span>';
       } else if (pricingMode === "hybrid") {
         // Fallback si aucune action n'a de prix encore
         badgeHtml = '<span class="pill" style="background:#f59e0b;border-color:#f59e0b;color:white;font-size:12px">Hybride</span>';
       } else if (pricingMode === "local") {
         badgeHtml = '<span class="pill" style="background:#16a34a;border-color:#16a34a;color:white;font-size:12px">Prix locaux</span>';
       } else if (pricingMode === "auto") {
-        badgeHtml = '<span class="pill" style="background:#dc2626;border-color:#dc2626;color:white;font-size:12px">Prix marché</span>';
+        badgeHtml = '<span class="pill" style="background:#dc2626;border-color:#dc2626;color:white;font-size:12px">Market price</span>';
       }
 
       badge.innerHTML = badgeHtml;
@@ -1937,19 +1937,19 @@
       <div class="small">Delta: <strong class="${cls}">${formatMoney(du)}</strong></div>
     </div>`;
       }).join("");
-      $("#summary").innerHTML = html || '<span class="muted">Aucun résumé disponible.</span>';
+      $("#summary").innerHTML = html || '<span class="muted">No summary available.</span>';
     }
 
     function renderUnknownAliases(list) {
       const container = el("unknownList");
-      if (!list || !list.length) { container.innerHTML = '<span class="muted">Aucun 🎉</span>'; return; }
+      if (!list || !list.length) { container.innerHTML = '<span class="muted">None 🎉</span>'; return; }
       const options = ["BTC", "ETH", "Stablecoins", "SOL", "L1/L0 majors", "L2/Scaling", "DeFi", "AI/Data", "Gaming/NFT", "Memecoins", "Others"]
         .map(g => `<option value="${g}" ${g === "Others" ? 'selected' : ''}>${g}</option>`).join("");
       container.innerHTML = list.map(a => `
     <div class="row">
       <div class="pill">${a}</div>
       <select class="u_group">${options}</select>
-      <button class="btn secondary small act-add" data-alias="${a}">Ajouter</button>
+      <button class="btn secondary small act-add" data-alias="${a}">Add</button>
     </div>
   `).join("");
 
@@ -1979,7 +1979,7 @@
 
             if (!response.ok) {
               const error = await response.json();
-              throw new Error(error.detail || `Erreur HTTP ${response.status}`);
+              throw new Error(error.detail || `HTTP Error ${response.status}`);
             }
           } catch (apiError) {
             debugLogger.warn('Taxonomy API unavailable for individual alias:', apiError);
@@ -1987,7 +1987,7 @@
           }
 
           await runPlan(); // Rafraîchit les données
-          showNotification(`✅ ${alias} assigné à ${group}`, 'success');
+          showNotification(`✅ ${alias} assigned to ${group}`, 'success');
 
         } catch (error) {
           debugLogger.error('Erreur:', error);
@@ -2002,15 +2002,15 @@
     async function addAliases(map) {
       try {
         const { api } = currentQuery();
-        setStatus("Écriture…");
+        setStatus("Writing…");
         const body = { aliases: map || {} };
         const res = await postJson(`${api}/taxonomy/aliases`, body);
         setStatus(`OK (${res?.written || Object.keys(map || {}).length} alias)`);
         return res;
       } catch (error) {
         debugLogger.warn('Taxonomy API unavailable:', error);
-        setStatus(`Simulation - ${Object.keys(map || {}).length} alias ajoutés (mode hors ligne)`);
-        showNotification(`📝 Aliases sauvegardés localement (mode hors ligne)`, 'info');
+        setStatus(`Simulation - ${Object.keys(map || {}).length} aliases added (offline mode)`);
+        showNotification(`📝 Aliases saved locally (offline mode)`, 'info');
         return { written: Object.keys(map || {}).length, mode: 'mock' };
       }
     }
@@ -2047,7 +2047,7 @@
             }
           }
         }
-        setStatus('Plan précédent disponible - Sélectionnez une stratégie pour actualiser');
+        setStatus('Previous plan available - Select a strategy to update');
         return false;
       }
 
@@ -2082,7 +2082,7 @@
         }
 
         const ageMin = Math.round(planAge / 60000);
-        setStatus(`Plan restauré (généré il y a ${ageMin}min)`);
+        setStatus(`Plan restored (generated ${ageMin}min ago)`);
         return true;
       } catch (error) {
         debugLogger.error('Erreur restauration plan:', error);
@@ -2157,7 +2157,7 @@
         // Ajouter infos pricing hybride si disponibles
         if (plan?.meta?.pricing_mode === 'hybrid' && plan?.meta?.pricing_hybrid) {
           const hybridInfo = plan.meta.pricing_hybrid;
-          statusText += ` • pricing=hybrid (âge=${Math.round(hybridInfo.data_age_min)}min, seuils=${hybridInfo.max_age_min}min/${hybridInfo.max_deviation_pct}%)`;
+          statusText += ` • pricing=hybrid (age=${Math.round(hybridInfo.data_age_min)}min, thresholds=${hybridInfo.max_age_min}min/${hybridInfo.max_deviation_pct}%)`;
         } else if (plan?.meta?.pricing_mode) {
           statusText += ` • pricing=${plan.meta.pricing_mode}`;
         }
@@ -2168,13 +2168,13 @@
         el("btnCopyJson").disabled = false;
       } catch (e) {
         debugLogger.error(e);
-        setStatus("Erreur: " + (e?.message || e));
+        setStatus("Error: " + (e?.message || e));
 
         // Afficher interface d'erreur si données non disponibles
         if (e.message && e.message.includes('Portfolio data unavailable')) {
           showDataSourceError(e.message);
         } else if (e.message && e.message.includes('No portfolio data available')) {
-          showDataSourceError('Configuration de source de données requise');
+          showDataSourceError('Data source configuration required');
         }
       } finally {
         // Plus de bouton btnRun à réactiver
@@ -2184,7 +2184,7 @@
     async function downloadCsv() {
       try {
         el("btnCsv").disabled = true;
-        setStatus("Génération CSV…");
+        setStatus("Generating CSV…");
         const { api, qs } = currentQuery();
 
         let blob;
@@ -2203,10 +2203,10 @@
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-        setStatus("CSV téléchargé.");
+        setStatus("CSV downloaded.");
       } catch (e) {
         debugLogger.error(e);
-        setStatus("Erreur CSV: " + (e?.message || e));
+        setStatus("CSV Error: " + (e?.message || e));
       } finally {
         el("btnCsv").disabled = false;
       }
@@ -2217,7 +2217,7 @@
 
     function exportJsonForExecution() {
       if (!lastPlanActions || lastPlanActions.length === 0) {
-        showNotification('❌ Aucun plan généré - Sélectionnez et appliquez d\'abord une stratégie', 'error');
+        showNotification('❌ No plan generated - Select and apply a strategy first', 'error');
         return;
       }
 
@@ -2236,17 +2236,17 @@
         a.remove();
         URL.revokeObjectURL(url);
 
-        showNotification(`✅ Plan d'exécution JSON téléchargé (${lastPlanActions.length} actions)`, 'success');
+        showNotification(`✅ Execution plan JSON downloaded (${lastPlanActions.length} actions)`, 'success');
 
       } catch (error) {
         debugLogger.error('Erreur export JSON:', error);
-        showNotification('❌ Erreur lors de l\'export JSON: ' + error.message, 'error');
+        showNotification('❌ JSON export error: ' + error.message, 'error');
       }
     }
 
     function copyJsonToClipboard() {
       if (!lastPlanActions || lastPlanActions.length === 0) {
-        showNotification('❌ Aucun plan généré - Sélectionnez et appliquez d\'abord une stratégie', 'error');
+        showNotification('❌ No plan generated - Select and apply a strategy first', 'error');
         return;
       }
 
@@ -2256,7 +2256,7 @@
 
         if (navigator.clipboard) {
           navigator.clipboard.writeText(jsonString).then(() => {
-            showNotification(`📋 JSON copié (${lastPlanActions.length} actions) - Collez dans l'interface d'exécution`, 'success');
+            showNotification(`📋 JSON copied (${lastPlanActions.length} actions) - Paste into the execution interface`, 'success');
           }).catch(() => {
             // Fallback pour les navigateurs sans clipboard API
             fallbackCopyTextToClipboard(jsonString);
@@ -2267,7 +2267,7 @@
 
       } catch (error) {
         debugLogger.error('Erreur copie JSON:', error);
-        showNotification('❌ Erreur lors de la copie JSON: ' + error.message, 'error');
+        showNotification('❌ JSON copy error: ' + error.message, 'error');
       }
     }
 
@@ -2285,7 +2285,7 @@
       try {
         const successful = document.execCommand('copy');
         if (successful) {
-          showNotification(`📋 JSON copié (${lastPlanActions.length} actions) - Collez dans l'interface d'exécution`, 'success');
+          showNotification(`📋 JSON copied (${lastPlanActions.length} actions) - Paste into the execution interface`, 'success');
         } else {
           showNotification('❌ Impossible de copier - utilisez Export JSON', 'error');
         }
@@ -2413,9 +2413,9 @@
       // Ne pas afficher le badge si module est 'all', 'crypto', undefined, ou 'undefined'
       if (module && module !== 'all' && module !== 'crypto' && module !== 'undefined') {
         const moduleNames = {
-          'bourse': 'Bourse (Saxo)',
-          'banque': 'Banque & Épargne',
-          'divers': 'Actifs Divers'
+          'bourse': 'Stocks (Saxo)',
+          'banque': 'Bank & Savings',
+          'divers': 'Miscellaneous Assets'
         };
 
         const moduleName = moduleNames[module];
@@ -2577,7 +2577,7 @@
           const isPriority = this.checked;
           debugLogger.debug('🔍 Toggle changed to:', isPriority ? 'priority' : 'proportional');
 
-          subAllocationLabel.textContent = isPriority ? 'Priorité' : 'Proportionnel';
+          subAllocationLabel.textContent = isPriority ? 'Priority' : 'Proportional';
           subAllocationLabel.style.color = isPriority ? 'var(--warning)' : 'var(--brand-primary)';
 
           if (priorityStatus) {
@@ -2623,7 +2623,7 @@
       // Ajouter une fonction pour rafraîchir la stratégie dynamique
       window.refreshDynamicStrategy = async function () {
         try {
-          showNotification('🔄 Génération des targets dynamiques...', 'info', 1000);
+          showNotification('🔄 Generating dynamic targets...', 'info', 1000);
 
           // Debug localStorage avant sync
           console.debug('refreshDynamicStrategy - localStorage keys:', Object.keys(localStorage));
@@ -2656,7 +2656,7 @@
                     timestamp: proposal.timestamp
                   };
 
-                  showNotification('🎯 Targets générés automatiquement (Blended Strategy)', 'success', 3000);
+                  showNotification('🎯 Targets generated automatically (Blended Strategy)', 'success', 3000);
                 }
               } catch (genError) {
                 debugLogger.error('Error auto-generating targets:', genError);
@@ -2682,7 +2682,7 @@
             };
             delete ccsTargets.targets.model_version;
 
-            showNotification('📊 Utilisation des targets macro par défaut', 'info', 3000);
+            showNotification('📊 Using default macro targets', 'info', 3000);
           }
 
           if (ccsTargets) {
@@ -2708,21 +2708,21 @@
             delete availableStrategies['ccs-dynamic-error'];
 
             renderStrategiesUI();
-            showNotification('🎯 Stratégie dynamique mise à jour!', 'success');
+            showNotification('🎯 Dynamic strategy updated!', 'success');
             debugLogger.debug('Dynamic strategy refreshed:', ccsTargets);
           } else {
-            showNotification('📭 Aucune donnée CCS récente trouvée. Générez des targets dans Risk Dashboard.', 'info', 4000);
+            showNotification('📭 No recent CCS data found. Generate targets in Risk Dashboard.', 'info', 4000);
           }
         } catch (error) {
           debugLogger.error('Error refreshing dynamic strategy:', error);
-          showNotification('❌ Erreur lors du rafraîchissement: ' + error.message, 'error');
+          showNotification('❌ Refresh error: ' + error.message, 'error');
 
           // Ajouter stratégie d'erreur
           availableStrategies['ccs-dynamic-error'] = {
             name: 'Strategic (Dynamic)',
             icon: '⚠️',
-            description: 'Erreur de synchronisation CCS - Vérifiez Risk Dashboard',
-            risk_level: 'Erreur',
+            description: 'CCS sync error - Check Risk Dashboard',
+            risk_level: 'Error',
             allocations: {},
             _isError: true
           };
@@ -2737,7 +2737,7 @@
 
       // Essayer de restaurer le dernier plan, sinon générer automatiquement
       if (!restoreLastPlan()) {
-        setStatus("Génération automatique du plan...");
+        setStatus("Auto-generating plan...");
         setTimeout(() => runPlan(), 500); // Délai pour laisser l'interface se charger
       }
     

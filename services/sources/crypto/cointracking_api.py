@@ -30,7 +30,7 @@ class CoinTrackingAPISource(SourceBase):
             name="CoinTracking API",
             category=SourceCategory.CRYPTO,
             mode=SourceMode.API,
-            description="Synchronisation temps r\u00e9el via API",
+            description="Real-time synchronization via API",
             icon="api",
             supports_transactions=True,
             requires_credentials=True,

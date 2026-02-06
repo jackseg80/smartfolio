@@ -30,14 +30,14 @@ router = APIRouter(prefix="/api/market", tags=["market"])
 
 class MarketPricesResponse(BaseModel):
     """Réponse des prix de marché avec force relative"""
-    prices: Dict[str, List[Dict[str, Any]]] = Field(description="Prix historiques par asset")
-    relative_strength: Dict[str, float] = Field(description="Force relative calculée")
-    meta: Dict[str, Any] = Field(description="Métadonnées")
+    prices: Dict[str, List[Dict[str, Any]]] = Field(description="Historical prices per asset")
+    relative_strength: Dict[str, float] = Field(description="Calculated relative strength")
+    meta: Dict[str, Any] = Field(description="Metadata")
 
 @router.get("/prices", response_model=MarketPricesResponse)
 async def get_market_prices(
-    days: int = Query(30, description="Nombre de jours d'historique", le=90),
-    symbols: Optional[str] = Query(None, description="Symboles séparés par virgule (par défaut: BTC,ETH,SOL,ADA,DOT)")
+    days: int = Query(30, description="Number of days of history", le=90),
+    symbols: Optional[str] = Query(None, description="Comma-separated symbols (default: BTC,ETH,SOL,ADA,DOT)")
 ):
     """
     Récupérer les prix de marché et calculer la force relative

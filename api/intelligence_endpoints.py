@@ -25,15 +25,15 @@ log = logging.getLogger(__name__)
 # Request/Response Models
 class ExplanationRequest(BaseModel):
     model_name: str = Field(..., description="Nom du modèle à expliquer")
-    prediction: Union[float, int, str] = Field(..., description="Prédiction du modèle")
+    prediction: Union[float, int, str] = Field(..., description="Model prediction")
     features: Dict[str, float] = Field(..., description="Features utilisées")
-    model_data: Optional[Dict[str, Any]] = Field(None, description="Données additionnelles du modèle")
+    model_data: Optional[Dict[str, Any]] = Field(None, description="Additional model data")
     explanation_types: Optional[List[str]] = Field(None, description="Types d'explications demandées")
 
 class DecisionRequest(BaseModel):
     decision_type: str = Field(..., description="Type de décision")
     original_decision: Any = Field(..., description="Décision originale ML")
-    prediction: Union[float, int, str] = Field(..., description="Prédiction associée")
+    prediction: Union[float, int, str] = Field(..., description="Associated prediction")
     features: Dict[str, float] = Field(..., description="Features de décision")
     context: Optional[Dict[str, Any]] = Field(None, description="Contexte de la décision")
     timeout_action: str = Field("approve", description="Action en cas de timeout")
@@ -45,8 +45,8 @@ class HumanDecisionResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     request_id: str = Field(..., description="ID de la demande de décision")
-    decision_quality: int = Field(..., ge=1, le=5, description="Qualité de la décision (1-5)")
-    explanation_clarity: int = Field(..., ge=1, le=5, description="Clarté de l'explication (1-5)")
+    decision_quality: int = Field(..., ge=1, le=5, description="Decision quality (1-5)")
+    explanation_clarity: int = Field(..., ge=1, le=5, description="Explanation clarity (1-5)")
     confidence_in_ai: int = Field(..., ge=1, le=5, description="Confiance dans l'IA (1-5)")
     feedback_text: str = Field(..., description="Feedback textuel")
     suggestions: Optional[List[str]] = Field(None, description="Suggestions d'amélioration")

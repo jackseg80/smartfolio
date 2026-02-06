@@ -458,19 +458,19 @@ class AlertFormatter:
 class AlertRule(BaseModel):
     """Règle de déclenchement pour un type d'alerte"""
     alert_type: AlertType
-    base_threshold: float = Field(..., description="Seuil de base")
-    adaptive_multiplier: float = Field(default=1.0, description="Multiplicateur adaptatif")
-    hysteresis_minutes: int = Field(default=5, ge=1, le=60, description="Persistance requise")
-    severity_thresholds: Dict[str, float] = Field(..., description="Seuils par gravité")
-    suggested_actions: Dict[str, Dict[str, Any]] = Field(..., description="Actions suggérées")
+    base_threshold: float = Field(..., description="Base threshold")
+    adaptive_multiplier: float = Field(default=1.0, description="Adaptive multiplier")
+    hysteresis_minutes: int = Field(default=5, ge=1, le=60, description="Required persistence")
+    severity_thresholds: Dict[str, float] = Field(..., description="Thresholds by severity")
+    suggested_actions: Dict[str, Dict[str, Any]] = Field(..., description="Suggested actions")
 
 class Alert(BaseModel):
     """Instance d'alerte générée"""
-    id: str = Field(..., description="ID unique alerte")
+    id: str = Field(..., description="Unique alert ID")
     alert_type: AlertType
     severity: AlertSeverity
     created_at: datetime = Field(default_factory=datetime.now)
-    data: Dict[str, Any] = Field(default_factory=dict, description="Données contextuelles")
+    data: Dict[str, Any] = Field(default_factory=dict, description="Contextual data")
     
     # État de l'alerte
     acknowledged_at: Optional[datetime] = None
@@ -484,8 +484,8 @@ class Alert(BaseModel):
     applied_by: Optional[str] = None
     
     # Escalade
-    escalation_sources: list[str] = Field(default_factory=list, description="IDs alertes sources")
-    escalation_count: int = Field(default=0, description="Nombre d'escalades")
+    escalation_sources: list[str] = Field(default_factory=list, description="Source alert IDs")
+    escalation_count: int = Field(default=0, description="Number of escalations")
     
     def format_unified_message(self) -> Dict[str, str]:
         """

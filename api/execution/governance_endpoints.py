@@ -769,7 +769,7 @@ async def get_cooldown_status():
 @router.post("/apply_policy")
 async def apply_policy_from_alert(
     request: ApplyPolicyRequest,
-    idempotency_key: str = Header(..., alias="Idempotency-Key", description="Cle idempotency UUID"),
+    idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
     current_user: User = Depends(require_role("approver"))
 ):
     """
@@ -868,7 +868,7 @@ async def apply_policy_from_alert(
 @router.post("/freeze")
 async def freeze_system_with_ttl(
     request: FreezeRequest,
-    idempotency_key: str = Header(..., alias="Idempotency-Key", description="Clé idempotency UUID"),
+    idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
     current_user: User = Depends(require_role("approver"))
 ):
     """

@@ -62,7 +62,22 @@ async def endpoint(user: str = Depends(get_current_user_jwt)): pass
 - Breakpoints: 768px (mobile), 1024px (tablet), 1400px (desktop), 2000px (XL)
 - Pas de largeur fixe type `max-width: 1200px`
 
-### 5. Autres Règles
+### 5. English-Only UI
+
+All user-visible text must be in English:
+
+- UI labels, buttons, error messages, ARIA labels, tooltips, placeholder text
+- Pydantic Field `description=` strings (visible in OpenAPI docs)
+- HTTPException `detail=` messages
+- Config/preset display names
+
+**Exceptions (stay in French):**
+
+- Code comments and log messages (`console.log`, `debugLogger`, `logger.info`)
+- Internal variable names
+- CLAUDE.md and developer documentation
+
+### 6. Autres Règles
 - Ne jamais committer `.env` ou clés
 - Pas d'URL API en dur → `static/global-config.js`
 - Windows: `.venv\Scripts\Activate.ps1` avant tout
@@ -85,21 +100,21 @@ rebalance.html         # Rebalancing + Optimization (6 algos Markowitz)
 execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
 di-backtest.html        # Backtest historique Decision Index
-wealth-dashboard.html   # Patrimoine unifié
+wealth-dashboard.html   # Unified wealth management
 monitoring.html        # KPIs système + Alerts History
 admin-dashboard.html    # Admin Dashboard (RBAC)
 
-# Bourse (Saxo Bank)
-saxo-dashboard.html     # Dashboard Bourse: Overview + Positions
-bourse-analytics.html   # Risk Analysis + Advanced Analytics
-bourse-recommendations.html  # Recommendations + Market Opportunities
+# Stocks (Saxo Bank)
+saxo-dashboard.html     # Stock Dashboard: Overview + Positions
+bourse-analytics.html   # Stock Risk Analysis + Advanced Analytics
+bourse-recommendations.html  # Stock Recommendations + Market Opportunities
 ```
 
 ### API Namespaces
 ```
 /balances/current, /portfolio/metrics    # Données portfolio
 /api/ml/*, /api/risk/*                   # ML + Risk
-/api/wealth/patrimoine/*, /api/wealth/*  # Patrimoine + Wealth
+/api/wealth/items/*, /api/wealth/*       # Wealth management (CRUD + summary)
 /api/sources/*                           # Sources System v2
 /execution/governance/*                  # Decision Engine
 /api/di-backtest/*                       # DI Backtest historique
@@ -177,7 +192,7 @@ data/users/{user_id}/
   config.json           # Config utilisateur (clés API)
   cointracking/data/    # CSV versionnés automatiquement
   saxobank/data/        # CSV Saxo
-  wealth/patrimoine.json # Patrimoine unifié
+  wealth/wealth.json     # Unified wealth data (fallback: patrimoine.json)
 ```
 
 - Versioning: `YYYYMMDD_HHMMSS_{filename}.csv`
@@ -230,7 +245,7 @@ redis-cli ping  # ou: wsl -d Ubuntu bash -c "sudo service redis-server start"
 | AI Chat Global | [`docs/AI_CHAT_GLOBAL.md`](docs/AI_CHAT_GLOBAL.md) |
 | Alerts System | [`docs/ML_ALERT_PREDICTOR_REAL_DATA_OCT_2025.md`](docs/ML_ALERT_PREDICTOR_REAL_DATA_OCT_2025.md) |
 | Governance Freeze | [`docs/GOVERNANCE_FIXES_OCT_2025.md`](docs/GOVERNANCE_FIXES_OCT_2025.md) |
-| Patrimoine | [`docs/PATRIMOINE_MODULE.md`](docs/PATRIMOINE_MODULE.md) |
+| Wealth Module | [`docs/WEALTH_MODULE.md`](docs/WEALTH_MODULE.md) |
 | Sources V2 | [`docs/SOURCES_V2.md`](docs/SOURCES_V2.md) |
 | Admin Dashboard | [`docs/ADMIN_DASHBOARD.md`](docs/ADMIN_DASHBOARD.md) |
 | Export System | [`docs/EXPORT_SYSTEM.md`](docs/EXPORT_SYSTEM.md) |

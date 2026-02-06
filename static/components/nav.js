@@ -206,7 +206,7 @@ const initUnifiedNav = () => {
 
             <!-- BOURSE (dropdown) -->
             <li class="has-submenu">
-              <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Bourse</a>
+              <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Stock Market</a>
               <div class="submenu">
                 <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">📊 Dashboard</a>
                 <a href="bourse-analytics.html" data-route="bourse-analytics.html">📈 Analytics</a>
@@ -215,14 +215,14 @@ const initUnifiedNav = () => {
             </li>
 
             <!-- PATRIMOINE -->
-            <li><a href="wealth-dashboard.html" data-route="wealth-dashboard.html">Patrimoine</a></li>
+            <li><a href="wealth-dashboard.html" data-route="wealth-dashboard.html">Wealth</a></li>
 
             <!-- SÉPARATEUR -->
             <li class="nav-separator" aria-hidden="true"></li>
 
             <!-- OUTILS (réduit) -->
             <li class="has-submenu">
-              <a href="settings.html" data-route="settings.html">Outils</a>
+              <a href="settings.html" data-route="settings.html">Tools</a>
               <div class="submenu">
                 <a href="settings.html" data-route="settings.html">⚙️ Settings</a>
                 <div class="menu-separator"></div>
@@ -248,10 +248,10 @@ const initUnifiedNav = () => {
           <div class="current-user" style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 0.85em; color: var(--theme-text-muted);">👤</span>
             <span id="current-user-display" style="font-size: 0.9em; font-weight: 500; color: var(--theme-text);">
-              Chargement...
+              Loading...
             </span>
           </div>
-          <button id="logout-btn" class="logout-btn" title="Déconnexion" style="padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-bg-secondary); color: var(--theme-text); font-size: 0.85em; cursor: pointer; transition: all 0.2s;">
+          <button id="logout-btn" class="logout-btn" title="Logout" style="padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-bg-secondary); color: var(--theme-text); font-size: 0.85em; cursor: pointer; transition: all 0.2s;">
             🚪 Logout
           </button>
         </div>
@@ -344,7 +344,7 @@ const initUnifiedNav = () => {
       logoutBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        if (!confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+        if (!confirm('Are you sure you want to log out?')) {
           return;
         }
 
@@ -389,7 +389,7 @@ const initUnifiedNav = () => {
       if (pendingCount > 0) {
         countElement.textContent = pendingCount;
         badge.style.display = 'flex';
-        badge.title = `${pendingCount} décision(s) IA en attente`;
+        badge.title = `${pendingCount} pending AI decision(s)`;
       } else {
         badge.style.display = 'none';
       }

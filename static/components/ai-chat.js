@@ -70,7 +70,7 @@ export class AIChatComponent {
 
         } catch (error) {
             console.error('AI chat error:', error);
-            this.addChatMessage('error', `Erreur: ${error.message}`);
+            this.addChatMessage('error', `Error: ${error.message}`);
         } finally {
             this.state.isLoading = false;
             this.updateUIState();
@@ -117,13 +117,13 @@ export class AIChatComponent {
         if (role === 'user') {
             messageDiv.innerHTML = `
                 <div class="ai-chat-message-content">
-                    <strong>Vous:</strong>
+                    <strong>You:</strong>
                     <div>${this.escapeHtml(content)}</div>
                 </div>
             `;
         } else if (role === 'assistant') {
             const formattedContent = this.formatMarkdown(content);
-            const usageInfo = usage ? `<small class="ai-chat-usage">✓ ${usage.total_tokens} tokens utilisés</small>` : '';
+            const usageInfo = usage ? `<small class="ai-chat-usage">✓ ${usage.total_tokens} tokens used</small>` : '';
 
             messageDiv.innerHTML = `
                 <div class="ai-chat-message-content">
@@ -135,7 +135,7 @@ export class AIChatComponent {
         } else if (role === 'error') {
             messageDiv.innerHTML = `
                 <div class="ai-chat-message-content ai-chat-error">
-                    <strong>⚠️ Erreur:</strong>
+                    <strong>⚠️ Error:</strong>
                     <div>${this.escapeHtml(content)}</div>
                 </div>
             `;
@@ -172,11 +172,11 @@ export class AIChatComponent {
         this.availableProviders.forEach(provider => {
             const option = document.createElement('option');
             option.value = provider.id;
-            option.textContent = `${provider.name} ${provider.free ? '(Gratuit)' : '(Premium)'}`;
+            option.textContent = `${provider.name} ${provider.free ? '(Free)' : '(Premium)'}`;
             option.disabled = !provider.configured;
 
             if (!provider.configured) {
-                option.textContent += ' - Non configuré';
+                option.textContent += ' - Not configured';
             }
 
             if (provider.id === this.provider) {
@@ -206,9 +206,9 @@ export class AIChatComponent {
         if (button) button.disabled = this.state.isLoading;
 
         if (this.state.isLoading) {
-            if (button) button.textContent = 'Envoi...';
+            if (button) button.textContent = 'Sending...';
         } else {
-            if (button) button.textContent = 'Envoyer';
+            if (button) button.textContent = 'Send';
         }
     }
 

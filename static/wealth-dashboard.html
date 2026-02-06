@@ -412,31 +412,31 @@
         <div class="net-worth-dashboard" id="overview">
             <div class="net-worth-header">
                 <div class="net-worth-value" id="netWorthValue">-</div>
-                <div class="net-worth-label">Patrimoine Net (Net Worth)</div>
+                <div class="net-worth-label">Net Worth</div>
             </div>
 
             <div class="net-worth-grid">
                 <div class="net-worth-card">
                     <div class="net-worth-card-value positive" id="assetsValue">-</div>
-                    <div class="net-worth-card-label">Total Actifs</div>
+                    <div class="net-worth-card-label">Total Assets</div>
                     <div class="net-worth-card-count" id="assetsCount">-</div>
                 </div>
 
                 <div class="net-worth-card">
                     <div class="net-worth-card-value negative" id="liabilitiesValue">-</div>
-                    <div class="net-worth-card-label">Total Passifs</div>
+                    <div class="net-worth-card-label">Total Liabilities</div>
                     <div class="net-worth-card-count" id="liabilitiesCount">-</div>
                 </div>
 
                 <div class="net-worth-card">
                     <div class="net-worth-card-value" id="liquidityValue">-</div>
-                    <div class="net-worth-card-label">Liquidités</div>
+                    <div class="net-worth-card-label">Liquidity</div>
                     <div class="net-worth-card-count" id="liquidityCount">-</div>
                 </div>
 
                 <div class="net-worth-card">
                     <div class="net-worth-card-value" id="tangibleValue">-</div>
-                    <div class="net-worth-card-label">Biens Réels</div>
+                    <div class="net-worth-card-label">Tangible Assets</div>
                     <div class="net-worth-card-count" id="tangibleCount">-</div>
                 </div>
             </div>
@@ -446,25 +446,25 @@
         <div class="tabs-container">
             <div class="tabs-header">
                 <button class="tab-button active" data-tab="liquidity" id="liquidity">
-                    💰 Liquidités
+                    💰 Liquidity
                 </button>
                 <button class="tab-button" data-tab="tangible" id="tangible">
-                    🏠 Biens Réels
+                    🏠 Tangible Assets
                 </button>
                 <button class="tab-button" data-tab="liability" id="liability">
-                    💳 Passifs
+                    💳 Liabilities
                 </button>
                 <button class="tab-button" data-tab="insurance" id="insurance">
-                    🛡️ Assurances
+                    🛡️ Insurance
                 </button>
             </div>
 
             <!-- Liquidity Tab -->
             <div class="tab-content active" data-tab-content="liquidity">
                 <div class="section-header">
-                    <h2 class="section-title">Comptes Bancaires</h2>
+                    <h2 class="section-title">Bank Accounts</h2>
                     <button class="btn" onclick="openItemModal('liquidity', 'bank_account')">
-                        + Ajouter un compte
+                        + Add Account
                     </button>
                 </div>
 
@@ -472,11 +472,11 @@
                     <table id="bankAccountsTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
+                                <th>Name</th>
                                 <th>Type</th>
-                                <th>Solde</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
+                                <th>Balance</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -484,7 +484,7 @@
                             <tr>
                                 <td colspan="6" class="empty-state">
                                     <div class="empty-state-icon">📭</div>
-                                    <div>Aucun compte bancaire</div>
+                                    <div>No bank accounts</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -492,9 +492,9 @@
                 </div>
 
                 <div class="section-header">
-                    <h2 class="section-title">Néobanques</h2>
+                    <h2 class="section-title">Neobanks</h2>
                     <button class="btn" onclick="openItemModal('liquidity', 'neobank')">
-                        + Ajouter une néobanque
+                        + Add Neobank
                     </button>
                 </div>
 
@@ -502,10 +502,10 @@
                     <table id="neobanksTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Solde</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
+                                <th>Name</th>
+                                <th>Balance</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -513,7 +513,7 @@
                             <tr>
                                 <td colspan="5" class="empty-state">
                                     <div class="empty-state-icon">📭</div>
-                                    <div>Aucune néobanque</div>
+                                    <div>No neobank</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -524,9 +524,9 @@
             <!-- Tangible Tab -->
             <div class="tab-content" data-tab-content="tangible">
                 <div class="section-header">
-                    <h2 class="section-title">Immobilier</h2>
+                    <h2 class="section-title">Real Estate</h2>
                     <button class="btn" onclick="openItemModal('tangible', 'real_estate')">
-                        + Ajouter un bien immobilier
+                        + Add Real Estate
                     </button>
                 </div>
 
@@ -534,11 +534,11 @@
                     <table id="realEstateTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Valeur</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
-                                <th>Date acquisition</th>
+                                <th>Name</th>
+                                <th>Value</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
+                                <th>Acquisition Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -546,7 +546,7 @@
                             <tr>
                                 <td colspan="6" class="empty-state">
                                     <div class="empty-state-icon">🏠</div>
-                                    <div>Aucun bien immobilier</div>
+                                    <div>No real estate</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -554,9 +554,9 @@
                 </div>
 
                 <div class="section-header">
-                    <h2 class="section-title">Véhicules</h2>
+                    <h2 class="section-title">Vehicles</h2>
                     <button class="btn" onclick="openItemModal('tangible', 'vehicle')">
-                        + Ajouter un véhicule
+                        + Add Vehicle
                     </button>
                 </div>
 
@@ -564,11 +564,11 @@
                     <table id="vehiclesTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Valeur</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
-                                <th>Date acquisition</th>
+                                <th>Name</th>
+                                <th>Value</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
+                                <th>Acquisition Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -576,7 +576,7 @@
                             <tr>
                                 <td colspan="6" class="empty-state">
                                     <div class="empty-state-icon">🚗</div>
-                                    <div>Aucun véhicule</div>
+                                    <div>No vehicles</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -587,9 +587,9 @@
             <!-- Liability Tab -->
             <div class="tab-content" data-tab-content="liability">
                 <div class="section-header">
-                    <h2 class="section-title">Prêts Immobiliers</h2>
+                    <h2 class="section-title">Mortgages</h2>
                     <button class="btn" onclick="openItemModal('liability', 'mortgage')">
-                        + Ajouter un prêt immobilier
+                        + Add Mortgage
                     </button>
                 </div>
 
@@ -597,11 +597,11 @@
                     <table id="mortgagesTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Restant dû</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
-                                <th>Mensualité</th>
+                                <th>Name</th>
+                                <th>Outstanding</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
+                                <th>Monthly Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -609,7 +609,7 @@
                             <tr>
                                 <td colspan="6" class="empty-state">
                                     <div class="empty-state-icon">🏦</div>
-                                    <div>Aucun prêt immobilier</div>
+                                    <div>No mortgages</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -617,9 +617,9 @@
                 </div>
 
                 <div class="section-header">
-                    <h2 class="section-title">Autres Prêts</h2>
+                    <h2 class="section-title">Other Loans</h2>
                     <button class="btn" onclick="openItemModal('liability', 'loan')">
-                        + Ajouter un prêt
+                        + Add Loan
                     </button>
                 </div>
 
@@ -627,10 +627,10 @@
                     <table id="loansTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Restant dû</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
+                                <th>Name</th>
+                                <th>Outstanding</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -638,7 +638,7 @@
                             <tr>
                                 <td colspan="5" class="empty-state">
                                     <div class="empty-state-icon">💸</div>
-                                    <div>Aucun autre prêt</div>
+                                    <div>No other loans</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -649,9 +649,9 @@
             <!-- Insurance Tab -->
             <div class="tab-content" data-tab-content="insurance">
                 <div class="section-header">
-                    <h2 class="section-title">Assurances Vie</h2>
+                    <h2 class="section-title">Life Insurance</h2>
                     <button class="btn" onclick="openItemModal('insurance', 'life_insurance')">
-                        + Ajouter une assurance vie
+                        + Add Life Insurance
                     </button>
                 </div>
 
@@ -659,10 +659,10 @@
                     <table id="lifeInsuranceTable">
                         <thead>
                             <tr>
-                                <th>Nom</th>
-                                <th>Valeur rachat</th>
-                                <th>Devise</th>
-                                <th>Valeur USD</th>
+                                <th>Name</th>
+                                <th>Surrender Value</th>
+                                <th>Currency</th>
+                                <th>USD Value</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -670,7 +670,7 @@
                             <tr>
                                 <td colspan="5" class="empty-state">
                                     <div class="empty-state-icon">🛡️</div>
-                                    <div>Aucune assurance vie</div>
+                                    <div>No life insurance</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -684,7 +684,7 @@
     <div class="modal" id="itemModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="modalTitle">Ajouter un item</h3>
+                <h3 class="modal-title" id="modalTitle">Add Item</h3>
                 <button class="modal-close" onclick="closeItemModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -694,18 +694,18 @@
                     <input type="hidden" id="itemType">
 
                     <div class="form-group">
-                        <label class="form-label">Nom *</label>
+                        <label class="form-label">Name *</label>
                         <input type="text" class="form-control" id="itemName" required>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Valeur *</label>
+                            <label class="form-label">Value *</label>
                             <input type="number" step="0.01" class="form-control" id="itemValue" required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Devise *</label>
+                            <label class="form-label">Currency *</label>
                             <select class="form-control" id="itemCurrency" required>
                                 <option value="USD">USD</option>
                                 <option value="EUR">EUR</option>
@@ -716,7 +716,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Date d'acquisition</label>
+                        <label class="form-label">Acquisition Date</label>
                         <input type="date" class="form-control" id="itemAcquisitionDate">
                     </div>
 
@@ -730,8 +730,8 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeItemModal()">Annuler</button>
-                <button class="btn" onclick="saveItem()">Enregistrer</button>
+                <button class="btn btn-secondary" onclick="closeItemModal()">Cancel</button>
+                <button class="btn" onclick="saveItem()">Save</button>
             </div>
         </div>
     </div>
@@ -794,7 +794,7 @@
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
 
                 // Load summary
-                const summaryRes = await fetch('/api/wealth/patrimoine/summary', {
+                const summaryRes = await fetch('/api/wealth/summary', {
                     headers: { 'X-User': activeUser }
                 });
                 const summary = await summaryRes.json();
@@ -802,13 +802,13 @@
 
                 // Load all items
                 // Fetch all items by setting a high limit. TODO: Implement pagination.
-                const itemsRes = await fetch('/api/wealth/patrimoine/items?limit=500', {
+                const itemsRes = await fetch('/api/wealth/items?limit=500', {
                     headers: { 'X-User': activeUser }
                 });
 
                 // Check HTTP status
                 if (!itemsRes.ok) {
-                    console.error(`Failed to load patrimoine items: HTTP ${itemsRes.status}`);
+                    console.error(`Failed to load wealth items: HTTP ${itemsRes.status}`);
                     allItems = [];
                     renderLiquidityTables();
                     renderTangibleTables();
@@ -829,11 +829,11 @@
                     allItems = data.items;
                 } else {
                     // Fallback: empty array
-                    console.warn('Unexpected patrimoine items response format:', data);
+                    console.warn('Unexpected wealth items response format:', data);
                     allItems = [];
                 }
 
-                console.log(`Loaded ${allItems.length} patrimoine items`);
+                console.log(`Loaded ${allItems.length} wealth items`);
 
                 // Render tables
                 renderLiquidityTables();
@@ -842,7 +842,7 @@
                 renderInsuranceTables();
 
             } catch (error) {
-                console.error('Error loading patrimoine data:', error);
+                console.error('Error loading wealth data:', error);
                 allItems = [];
             }
         }
@@ -908,7 +908,7 @@
                     <tr>
                         <td colspan="6" class="empty-state">
                             <div class="empty-state-icon">📭</div>
-                            <div>Aucune donnée</div>
+                            <div>No data</div>
                         </td>
                     </tr>
                 `;
@@ -919,7 +919,7 @@
 
         // ===== Row Renderers =====
         const formatCurrency = (value, currency) => {
-            return new Intl.NumberFormat('fr-FR', {
+            return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: currency
             }).format(Math.abs(value));
@@ -1053,15 +1053,15 @@
 
             // Set title
             const titles = {
-                'bank_account': 'Compte Bancaire',
-                'neobank': 'Néobanque',
-                'real_estate': 'Bien Immobilier',
-                'vehicle': 'Véhicule',
-                'mortgage': 'Prêt Immobilier',
-                'loan': 'Prêt',
-                'life_insurance': 'Assurance Vie'
+                'bank_account': 'Bank Account',
+                'neobank': 'Neobank',
+                'real_estate': 'Real Estate',
+                'vehicle': 'Vehicle',
+                'mortgage': 'Mortgage',
+                'loan': 'Loan',
+                'life_insurance': 'Life Insurance'
             };
-            document.getElementById('modalTitle').textContent = `Ajouter ${titles[type] || 'un item'}`;
+            document.getElementById('modalTitle').textContent = `Add ${titles[type] || 'Item'}`;
 
             // Clear dynamic fields
             document.getElementById('dynamicFields').innerHTML = '';
@@ -1083,13 +1083,13 @@
             if (type === 'bank_account') {
                 container.innerHTML = `
                     <div class="form-group">
-                        <label class="form-label">Type de compte</label>
+                        <label class="form-label">Account Type</label>
                         <select class="form-control" id="accountType">
-                            <option value="current">Compte courant</option>
-                            <option value="savings">Compte épargne</option>
+                            <option value="current">Current Account</option>
+                            <option value="savings">Savings Account</option>
                             <option value="pel">PEL</option>
                             <option value="livret_a">Livret A</option>
-                            <option value="other">Autre</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 `;
@@ -1101,16 +1101,16 @@
                             <input type="number" class="form-control" id="surface">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Mensualité prêt</label>
+                            <label class="form-label">Loan Monthly Payment</label>
                             <input type="number" step="0.01" class="form-control" id="monthlyPayment">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Adresse</label>
+                        <label class="form-label">Address</label>
                         <input type="text" class="form-control" id="address">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Prêt restant</label>
+                        <label class="form-label">Remaining Loan</label>
                         <input type="number" step="0.01" class="form-control" id="remainingLoan">
                     </div>
                 `;
@@ -1118,16 +1118,16 @@
                 container.innerHTML = `
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Marque</label>
+                            <label class="form-label">Brand</label>
                             <input type="text" class="form-control" id="brand">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Modèle</label>
+                            <label class="form-label">Model</label>
                             <input type="text" class="form-control" id="model">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Année</label>
+                        <label class="form-label">Year</label>
                         <input type="number" class="form-control" id="year">
                     </div>
                 `;
@@ -1135,11 +1135,11 @@
                 container.innerHTML = `
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Mensualité</label>
+                            <label class="form-label">Monthly Payment</label>
                             <input type="number" step="0.01" class="form-control" id="monthlyPayment">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Mois restants</label>
+                            <label class="form-label">Remaining Months</label>
                             <input type="number" class="form-control" id="remainingMonths">
                         </div>
                     </div>
@@ -1162,15 +1162,15 @@
             document.getElementById('itemNotes').value = item.notes || '';
 
             const titles = {
-                'bank_account': 'Compte Bancaire',
-                'neobank': 'Néobanque',
-                'real_estate': 'Bien Immobilier',
-                'vehicle': 'Véhicule',
-                'mortgage': 'Prêt Immobilier',
-                'loan': 'Prêt',
-                'life_insurance': 'Assurance Vie'
+                'bank_account': 'Bank Account',
+                'neobank': 'Neobank',
+                'real_estate': 'Real Estate',
+                'vehicle': 'Vehicle',
+                'mortgage': 'Mortgage',
+                'loan': 'Loan',
+                'life_insurance': 'Life Insurance'
             };
-            document.getElementById('modalTitle').textContent = `Modifier ${titles[item.type] || 'un item'}`;
+            document.getElementById('modalTitle').textContent = `Edit ${titles[item.type] || 'Item'}`;
 
             // Add dynamic fields and populate
             addDynamicFields(item.type);
@@ -1279,7 +1279,7 @@
                 let response;
                 if (itemId) {
                     // Update
-                    response = await fetch(`/api/wealth/patrimoine/items/${itemId}`, {
+                    response = await fetch(`/api/wealth/items/${itemId}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1289,7 +1289,7 @@
                     });
                 } else {
                     // Create
-                    response = await fetch('/api/wealth/patrimoine/items', {
+                    response = await fetch('/api/wealth/items', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1308,18 +1308,18 @@
 
             } catch (error) {
                 console.error('Error saving item:', error);
-                alert('Erreur lors de l\'enregistrement');
+                alert('Error saving item');
             }
         };
 
         window.deleteItem = async (itemId) => {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer cet item ?')) {
+            if (!confirm('Are you sure you want to delete this item?')) {
                 return;
             }
 
             try {
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
-                const response = await fetch(`/api/wealth/patrimoine/items/${itemId}`, {
+                const response = await fetch(`/api/wealth/items/${itemId}`, {
                     method: 'DELETE',
                     headers: {
                         'X-User': activeUser
@@ -1334,7 +1334,7 @@
 
             } catch (error) {
                 console.error('Error deleting item:', error);
-                alert('Erreur lors de la suppression');
+                alert('Error deleting item');
             }
         };
 

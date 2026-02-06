@@ -56,43 +56,43 @@ class SafetyValidator:
         return [
             SafetyRule(
                 name="testnet_mode",
-                description="Vérifier que nous sommes en mode testnet",
+                description="Verify that we are in testnet mode",
                 check_function=self._check_testnet_mode,
                 severity="error"
             ),
             SafetyRule(
                 name="order_amount_limit",
-                description="Vérifier les limites de montant par ordre",
+                description="Verify order amount limits",
                 check_function=self._check_order_amount_limit,
                 severity="error"
             ),
             SafetyRule(
                 name="daily_volume_limit", 
-                description="Vérifier les limites de volume quotidien",
+                description="Verify daily volume limits",
                 check_function=self._check_daily_volume_limit,
                 severity="error"
             ),
             SafetyRule(
                 name="symbol_whitelist",
-                description="Vérifier que le symbole est autorisé",
+                description="Verify that the symbol is allowed",
                 check_function=self._check_symbol_whitelist,
                 severity="warning"
             ),
             SafetyRule(
                 name="suspicious_quantity",
-                description="Détecter les quantités suspectes",
+                description="Detect suspicious quantities",
                 check_function=self._check_suspicious_quantity,
                 severity="warning"
             ),
             SafetyRule(
                 name="price_sanity",
-                description="Vérifier la cohérence du prix",
+                description="Verify price consistency",
                 check_function=self._check_price_sanity,
                 severity="warning"
             ),
             SafetyRule(
                 name="production_environment",
-                description="Détecter un environnement de production",
+                description="Detect production environment",
                 check_function=self._check_production_environment,
                 severity="error"
             )

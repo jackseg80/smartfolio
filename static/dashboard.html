@@ -593,15 +593,15 @@
                 </div>
 
                 <div class="portfolio-chart pro-only" id="portfolio-chart" style="height: 140px; margin-top: 12px;">
-                    <div id="crypto-chart-desc" class="sr-only">Graphique circulaire du portefeuille crypto. Description chargée dynamiquement.</div>
+                    <div id="crypto-chart-desc" class="sr-only">Crypto portfolio pie chart. Description loaded dynamically.</div>
                     <canvas id="portfolioChartCanvas" width="400" height="200"
-                        aria-label="Graphique circulaire du portefeuille crypto"
+                        aria-label="Crypto portfolio pie chart"
                         aria-describedby="crypto-chart-desc"
                         role="img"></canvas>
                 </div>
 
                 <!-- Export Button (Pro mode only) -->
-                <button id="crypto-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export Lists pour crypto">
+                <button id="crypto-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export Lists for crypto">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -642,9 +642,9 @@
                 </div>
 
                 <div class="portfolio-chart pro-only" id="saxo-chart" style="height: 140px; margin-top: 12px;">
-                    <div id="saxo-chart-desc" class="sr-only">Graphique circulaire du portefeuille actions. Description chargée dynamiquement.</div>
+                    <div id="saxo-chart-desc" class="sr-only">Stock portfolio pie chart. Description loaded dynamically.</div>
                     <canvas id="saxoChartCanvas" width="400" height="200"
-                        aria-label="Graphique circulaire du portefeuille actions"
+                        aria-label="Stock portfolio pie chart"
                         aria-describedby="saxo-chart-desc"
                         role="img"></canvas>
                 </div>
@@ -668,7 +668,7 @@
             <!-- Wealth Overview -->
             <div class="card level-1" id="banque" draggable="true"
                 data-tooltip="Overview of your wealth: cash, real estate, liabilities and insurance."
-                data-source="API /api/wealth/patrimoine/summary">
+                data-source="API /api/wealth/summary">
                 <div class="card-header">
                     <a href="wealth-dashboard.html" class="card-title" style="text-decoration: none; color: inherit;" aria-label="Navigate to Wealth dashboard">
                         <span class="card-icon" aria-hidden="true">💼</span>Wealth
@@ -677,29 +677,29 @@
 
                 <div class="metric">
                     <span class="metric-label">Net Worth</span>
-                    <span class="metric-value" id="patrimoine-net-worth">--</span>
+                    <span class="metric-value" id="wealth-net-worth">--</span>
                 </div>
 
                 <div class="metric">
                     <span class="metric-label">Assets / Liabilities</span>
-                    <span class="metric-value" id="patrimoine-assets-liabilities" style="font-size: 0.85rem;">--</span>
+                    <span class="metric-value" id="wealth-assets-liabilities" style="font-size: 0.85rem;">--</span>
                 </div>
 
                 <div class="metric">
                     <span class="metric-label">Items</span>
-                    <span class="metric-value" id="patrimoine-items-count">--</span>
+                    <span class="metric-value" id="wealth-items-count">--</span>
                 </div>
 
-                <div class="portfolio-chart" id="patrimoine-chart" style="height: 140px; margin-top: 12px;">
-                    <div id="wealth-chart-desc" class="sr-only">Graphique circulaire du patrimoine. Description chargée dynamiquement.</div>
-                    <canvas id="patrimoineChartCanvas" width="400" height="200"
-                        aria-label="Graphique circulaire du patrimoine"
+                <div class="portfolio-chart" id="wealth-chart" style="height: 140px; margin-top: 12px;">
+                    <div id="wealth-chart-desc" class="sr-only">Wealth doughnut chart. Description loaded dynamically.</div>
+                    <canvas id="wealthChartCanvas" width="400" height="200"
+                        aria-label="Wealth doughnut chart"
                         aria-describedby="wealth-chart-desc"
                         role="img"></canvas>
                 </div>
 
                 <!-- Export Button (Pro mode only) -->
-                <button id="patrimoine-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export Lists pour patrimoine">
+                <button id="wealth-export-btn" class="action-btn secondary pro-only" style="margin-top: 12px; width: 100%;" aria-label="Export wealth lists">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -708,7 +708,7 @@
                     Export Lists
                 </button>
 
-                <div id="patrimoine-empty-state" class="empty-state">
+                <div id="wealth-empty-state" class="empty-state">
                     No wealth assets.<br>
                     <a href="wealth-dashboard.html">Add one now</a>
                 </div>

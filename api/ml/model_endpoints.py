@@ -80,7 +80,7 @@ async def alias_volatility_models_status():
     fallback={"loaded_models": 0, "total_attempted": 0, "results": {}}
 )
 async def load_volatility_models(
-    symbols: Optional[List[str]] = Query(None, description="Symboles spécifiques à charger (None = tous)"),
+    symbols: Optional[List[str]] = Query(None, description="Specific symbols to load (None = all)"),
     background_tasks: BackgroundTasks = None
 ):
     """
@@ -151,7 +151,7 @@ async def load_regime_model():
 @router.post("/models/preload")
 @handle_api_errors(fallback={"preload_results": {}, "loaded_models": 0, "total_requested": 0})
 async def preload_priority_models(
-    symbols: List[str] = Query(default=["BTC", "ETH"], description="Symboles prioritaires à précharger")
+    symbols: List[str] = Query(default=["BTC", "ETH"], description="Priority symbols to preload")
 ):
     """
     Précharger des modèles prioritaires (BTC, ETH par défaut)

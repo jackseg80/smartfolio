@@ -26,7 +26,7 @@ export function createMigrationControls(container) {
       </div>
       
       <div class="template-selector">
-        <label for="default-template">Template par défaut:</label>
+        <label for="default-template">Default template:</label>
         <select id="default-template">
           <option value="balanced">Balanced</option>
           <option value="conservative">Conservative</option>

@@ -16,7 +16,7 @@ from typing import Dict, List, Any, Optional
 class ExecutionRequest(BaseModel):
     """Requête d'exécution d'un plan"""
     rebalance_actions: List[Dict[str, Any]] = Field(..., description="Actions de rebalancement")
-    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Métadonnées (CCS, etc.)")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Metadata (CCS, etc.)")
     dry_run: bool = Field(default=True, description="Mode simulation")
     max_parallel: int = Field(default=3, description="Ordres en parallèle max")
 
@@ -83,7 +83,7 @@ class CanonicalScores(BaseModel):
 class PhaseInfo(BaseModel):
     """Information sur la phase de rotation"""
     phase_now: str = Field(..., description="Phase actuelle (btc/eth/large/alt)")
-    phase_probs: Dict[str, float] = Field(..., description="Probabilités de chaque phase")
+    phase_probs: Dict[str, float] = Field(..., description="Probabilities per phase")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confiance dans la détection")
     explain: List[str] = Field(..., description="2-3 explications principales")
     next_likely: Optional[str] = Field(None, description="Phase suivante probable")
@@ -92,9 +92,9 @@ class PhaseInfo(BaseModel):
 class ExecutionPressure(BaseModel):
     """Pression d'exécution court-terme"""
     pressure: float = Field(..., ge=0.0, le=100.0, description="Pression d'exécution 0-100")
-    cost_estimate_bps: float = Field(..., description="Coût d'exécution estimé en bps")
+    cost_estimate_bps: float = Field(..., description="Estimated execution cost in bps")
     market_impact: str = Field(..., description="Impact marché estimé (low/medium/high)")
-    optimal_window_hours: int = Field(..., description="Fenêtre optimale d'exécution")
+    optimal_window_hours: int = Field(..., description="Optimal execution window")
 
 
 # ===========================
@@ -103,9 +103,9 @@ class ExecutionPressure(BaseModel):
 
 class MarketSignals(BaseModel):
     """Signaux de marché agrégés"""
-    volatility: Dict[str, float] = Field(default_factory=dict, description="Volatilité par asset")
-    regime: Dict[str, float] = Field(default_factory=dict, description="Probabilités de régime")
-    correlation: Dict[str, Any] = Field(default_factory=dict, description="Corrélations clés (avg_correlation: float, systemic_risk: str)")
+    volatility: Dict[str, float] = Field(default_factory=dict, description="Volatility per asset")
+    regime: Dict[str, float] = Field(default_factory=dict, description="Regime probabilities")
+    correlation: Dict[str, Any] = Field(default_factory=dict, description="Key correlations (avg_correlation: float, systemic_risk: str)")
     sentiment: Dict[str, float] = Field(default_factory=dict, description="Sentiment indicators")
 
 
@@ -145,7 +145,7 @@ class PortfolioMetrics(BaseModel):
     var_95_pct: Optional[float] = Field(None, description="VaR 95% en %")
     sharpe_ratio: Optional[float] = Field(None, description="Ratio de Sharpe")
     hhi_concentration: Optional[float] = Field(None, description="Index HHI de concentration")
-    avg_correlation: Optional[float] = Field(None, description="Corrélation moyenne pondérée")
+    avg_correlation: Optional[float] = Field(None, description="Weighted average correlation")
     beta_btc: Optional[float] = Field(None, description="Bêta vs BTC")
     exposures: Dict[str, float] = Field(default_factory=dict, description="Expositions par groupe")
 

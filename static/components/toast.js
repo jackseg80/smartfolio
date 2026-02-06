@@ -274,7 +274,7 @@ export class Toast {
         ${title ? `<div class="toast__title">${title}</div>` : ''}
         ${message ? `<div class="toast__message">${message}</div>` : ''}
       </div>
-      <button class="toast__close" aria-label="Fermer la notification" type="button">
+      <button class="toast__close" aria-label="Close notification" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -316,7 +316,7 @@ export class Toast {
    */
   static success(message, options = {}) {
     return Toast.show('success', message, {
-      title: options.title || 'Succès',
+      title: options.title || 'Success',
       ...options
     });
   }
@@ -329,7 +329,7 @@ export class Toast {
    */
   static error(message, options = {}) {
     return Toast.show('error', message, {
-      title: options.title || 'Erreur',
+      title: options.title || 'Error',
       ...options
     });
   }
@@ -342,7 +342,7 @@ export class Toast {
    */
   static warning(message, options = {}) {
     return Toast.show('warning', message, {
-      title: options.title || 'Attention',
+      title: options.title || 'Warning',
       ...options
     });
   }
@@ -368,7 +368,7 @@ export class Toast {
    */
   static loading(message, options = {}) {
     return Toast.show('loading', message, {
-      title: options.title || 'Chargement',
+      title: options.title || 'Loading',
       duration: 0, // No auto-dismiss
       ...options
     });

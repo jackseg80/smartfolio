@@ -35,7 +35,7 @@ class BitcoinCycleChart {
         this.placeholder.innerHTML = `
           <div style="text-align: center;">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
-            <div>Chargement de Chart.js...</div>
+            <div>Loading Chart.js...</div>
             <div class="lazy-loading" style="margin-top: 1rem;"></div>
           </div>
         `;
@@ -83,7 +83,7 @@ class BitcoinCycleChart {
         this.placeholder.innerHTML = `
           <div style="text-align: center; color: var(--theme-error, #dc3545);">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚠️</div>
-            <div>Erreur lors du chargement du graphique</div>
+            <div>Error loading chart</div>
             <div style="font-size: 0.8rem; margin-top: 0.5rem;">${error.message}</div>
           </div>
         `;

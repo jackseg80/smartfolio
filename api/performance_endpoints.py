@@ -382,7 +382,7 @@ async def precompute_matrices(
 @router.get("/summary")
 async def get_performance_summary(
     request: Request,
-    anchor: str = Query(default="prev_close", description="Point de référence temporel (prev_close, midnight, session)"),
+    anchor: str = Query(default="prev_close", description="Temporal reference point (prev_close, midnight, session)"),
     user: str = Depends(get_required_user),
     source: str = Query(default="cointracking", description="Data source")
 ):

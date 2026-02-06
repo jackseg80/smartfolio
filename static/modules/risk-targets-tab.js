@@ -92,7 +92,7 @@ export async function getCurrentPortfolioAllocation() {
         const val = realBalances.reduce((s, i) => s + i.value_usd, 0) * rate;
         try {
           const dec = (cur === 'BTC') ? 8 : 2;
-          debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total:', new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val));
+          debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total:', new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val));
         } catch (_) {
           debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total:', (val).toFixed(cur === 'BTC' ? 8 : 2), cur);
         }
@@ -402,7 +402,7 @@ export function renderExposureDelta(smart) {
         </div>
         ${backendStatus === 'error' ? `
           <div style="margin-top: var(--space-xs); font-size: 0.85rem; color: var(--warning);">
-            ⚠️ Backend risk budget indisponible — mode prudent (cap conservateur)
+            ⚠️ Backend risk budget unavailable — prudent mode (conservative cap)
           </div>
         ` : ''}
         ${hasOverflow ? `

@@ -20,9 +20,9 @@ function detectDefaultApiBase() {
 // Source de vérité centralisée des sources de données disponibles
 // Ajoutez/retirez des entrées ici pour les rendre disponibles partout
 window.DATA_SOURCES = {
-  stub_conservative: { label: 'Démo Conservative', icon: '🛡️', kind: 'stub' },
-  stub_balanced: { label: 'Démo Équilibrée', icon: '⚖️', kind: 'stub' },
-  stub_shitcoins: { label: 'Démo Risquée', icon: '🎲', kind: 'stub' },
+  stub_conservative: { label: 'Demo Conservative', icon: '🛡️', kind: 'stub' },
+  stub_balanced: { label: 'Demo Balanced', icon: '⚖️', kind: 'stub' },
+  stub_shitcoins: { label: 'Demo Risky', icon: '🎲', kind: 'stub' },
   cointracking: { label: 'CoinTracking CSV', icon: '📄', kind: 'csv' },
   cointracking_api: { label: 'CoinTracking API', icon: '🌐', kind: 'api' }
 };
@@ -390,13 +390,13 @@ class GlobalConfig {
       });
 
       return {
-        backend: health ? 'OK' : 'Erreur',
-        balances: balances?.items?.length > 0 ? `OK (${balances.items.length} assets)` : 'Vide',
+        backend: health ? 'OK' : 'Error',
+        balances: balances?.items?.length > 0 ? `OK (${balances.items.length} assets)` : 'Empty',
         source: balances?.source_used || currentSource
       };
     } catch (error) {
       return {
-        backend: `Erreur: ${error.message}`,
+        backend: `Error: ${error.message}`,
         balances: 'N/A',
         source: 'N/A'
       };
@@ -414,11 +414,11 @@ class GlobalConfig {
     }
 
     if (this.settings.data_source === 'cointracking_api' && (!this.settings.cointracking_api_key || !this.settings.cointracking_api_secret)) {
-      issues.push('Clé API + Secret CoinTracking requis pour la source API');
+      issues.push('CoinTracking API Key + Secret required for API source');
     }
 
     if (this.settings.min_usd_threshold < 0) {
-      issues.push('Seuil minimum USD doit être positif');
+      issues.push('Minimum USD threshold must be positive');
     }
 
     return {
@@ -455,10 +455,10 @@ class GlobalConfig {
           this.save();
           resolve(this.settings);
         } catch (error) {
-          reject(new Error(`Erreur import: ${error.message}`));
+          reject(new Error(`Import error: ${error.message}`));
         }
       };
-      reader.onerror = () => reject(new Error('Erreur lecture fichier'));
+      reader.onerror = () => reject(new Error('File read error'));
       reader.readAsText(file);
     });
   }

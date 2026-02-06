@@ -92,7 +92,7 @@ export class SimControls {
     this.container.innerHTML = `
       <div class="sim-controls-wrapper">
         <div class="controls-header">
-          <h3>🎛️ Contrôles de Simulation</h3>
+          <h3>🎛️ Simulation Controls</h3>
           <div class="preset-controls">
             <select id="sim-preset-select" class="preset-select">
               <option value="">Choisir un preset...</option>
@@ -103,7 +103,7 @@ export class SimControls {
         </div>
 
         <div class="controls-width">
-          <label for="sim-controls-width">Largeur panneau</label>
+          <label for="sim-controls-width">Panel width</label>
           <div class="controls-width-input">
             <input type="range" id="sim-controls-width" min="320" max="540" step="10" value="${this.controlsWidth}">
             <span id="sim-controls-width-value">${this.controlsWidth}px</span>
@@ -155,7 +155,7 @@ export class SimControls {
                 </select>
               </div>
               <div class="control-group">
-                <label>Phase forcée</label>
+                <label>Forced phase</label>
                 <select id="phase-forced">
                   <option value="">Auto-détection</option>
                   <option value="risk_off">Risk Off</option>
@@ -184,11 +184,11 @@ export class SimControls {
             <div class="controls-grid">
               <div class="control-group">
                 <label>
-                  <input type="checkbox" id="hysteresis-enabled" /> Hystérésis
+                  <input type="checkbox" id="hysteresis-enabled" /> Hysteresis
                 </label>
               </div>
-              ${this.renderSlider('hysteresis_up', 'Hystérésis Up (jours)', 1, 10, 1, 'j')}
-              ${this.renderSlider('hysteresis_down', 'Hystérésis Down (jours)', 1, 15, 1, 'j')}
+              ${this.renderSlider('hysteresis_up', 'Hysteresis Up (days)', 1, 10, 1, 'd')}
+              ${this.renderSlider('hysteresis_down', 'Hysteresis Down (days)', 1, 15, 1, 'd')}
             </div>
             <div class="controls-grid">
               ${this.renderSlider('cb_vol', 'CB Vol Z-Score', 1.5, 4, 0.1, 'σ')}
@@ -294,7 +294,7 @@ export class SimControls {
         <label for="sim-sentimentScore" style="display: flex; justify-content: space-between; align-items: center;">
           <span>
             ML Sentiment (Override)
-            <span class="sentiment-tooltip" title="Le sentiment n'est PAS une composante du DI. C'est un OVERRIDE contextuel qui modifie les targets d'allocation en cas de sentiment extrême (Fear<25 ou Greed>75).">ℹ️</span>
+            <span class="sentiment-tooltip" title="Sentiment is NOT a component of the DI. It is a contextual OVERRIDE that modifies allocation targets in case of extreme sentiment (Fear<25 or Greed>75).">ℹ️</span>
           </span>
           <span class="value-display" id="sim-sentimentScore-value">${value}%</span>
         </label>
@@ -818,8 +818,8 @@ export class SimControls {
     const exportData = {
       version: '1.0',
       created_with: 'simulator-ui-v1',
-      name: prompt('Nom du preset:') || 'Custom Preset',
-      desc: prompt('Description:') || 'Preset créé via UI',
+      name: prompt('Preset name:') || 'Custom Preset',
+      desc: prompt('Description:') || 'Preset created via UI',
       created_at: new Date().toISOString(),
       ...this.state
     };
@@ -837,7 +837,7 @@ export class SimControls {
   }
 
   resetToDefault() {
-    if (confirm('Remettre tous les contrôles par défaut ?')) {
+    if (confirm('Reset all controls to defaults?')) {
       this.state = this.getDefaultState();
       this.activePresetIndex = '';
       this.markCustomPreset(true);

@@ -135,7 +135,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
             🎯 Decision Index
           </div>
           <div style="font-size: 0.85rem; color: var(--theme-text-muted);">
-            Chargement des données en cours...
+            Loading data...
           </div>
         </div>
       </div>
@@ -168,7 +168,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         gap: 0.5rem;
       ">
         <span class="di-loading-spinner">⏳</span>
-        <span>Récupération des scores ML, cycles et on-chain...</span>
+        <span>Fetching ML scores, cycles and on-chain data...</span>
       </div>
     </div>
   `;
@@ -201,13 +201,13 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         <div style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-xl); text-align: center;">
           <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
           <div style="font-size: 1.2rem; font-weight: 600; color: var(--theme-text); margin-bottom: 0.5rem;">
-            Aucune donnée crypto disponible
+            No crypto data available
           </div>
           <div style="font-size: 0.9rem; color: var(--theme-text-muted); margin-bottom: 1.5rem;">
-            Configurez une source de données dans Settings pour afficher vos analytics
+            Configure a data source in Settings to display your analytics
           </div>
           <a href="settings.html#sources" style="display: inline-block; padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; text-decoration: none; border-radius: var(--radius-md); font-weight: 600;">
-            Configurer une source
+            Configure a source
           </a>
         </div>
       `;
@@ -573,10 +573,10 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     el.innerHTML = `
       <div style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-md);">
         <div style="color: var(--danger); text-align: center;">
-          <h3>⚠️ Erreur de Chargement (Corrigé)</h3>
-          <p>Impossible de charger les insights unifiés corrigés: ${error.message}</p>
+          <h3>⚠️ Loading Error (Fixed)</h3>
+          <p>Unable to load corrected unified insights: ${error.message}</p>
           <button onclick="location.reload()" style="background: var(--brand-primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); cursor: pointer;">
-            Recharger
+            Reload
           </button>
         </div>
       </div>
@@ -1557,16 +1557,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       await loadUnifiedData();
       await renderUnifiedInsightsOnce();
 
-      this.textContent = '✅ Actualisé';
+      this.textContent = '✅ Updated';
       setTimeout(() => {
-        this.textContent = '🔄 Actualiser';
+        this.textContent = '🔄 Refresh';
         this.disabled = false;
       }, 2000);
     } catch (error) {
       debugLogger.error('Manual refresh failed:', error);
-      this.textContent = '❌ Erreur';
+      this.textContent = '❌ Error';
       setTimeout(() => {
-        this.textContent = '🔄 Actualiser';
+        this.textContent = '🔄 Refresh';
         this.disabled = false;
       }, 3000);
     }

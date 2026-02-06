@@ -1,4 +1,4 @@
-"""Test script for Patrimoine Phase 1 implementation."""
+"""Test script for Wealth Phase 1 implementation."""
 import json
 import sys
 from pathlib import Path
@@ -6,9 +6,9 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from services.wealth.patrimoine_migration import migrate_user_data, migrate_all_users
-from services.wealth.patrimoine_service import list_items, create_item, get_summary
-from models.wealth import PatrimoineItemInput
+from services.wealth.wealth_migration import migrate_user_data, migrate_all_users
+from services.wealth.wealth_service import list_items, create_item, get_summary
+from models.wealth import WealthItemInput
 
 
 def test_migration():
@@ -19,21 +19,21 @@ def test_migration():
     result = migrate_user_data("jack", force=True)
     print(f"Migration result: {json.dumps(result, indent=2)}")
 
-    # Check if patrimoine.json exists
-    patrimoine_path = Path("data/users/jack/wealth/patrimoine.json")
-    if patrimoine_path.exists():
-        with patrimoine_path.open("r") as f:
+    # Check if wealth.json exists
+    wealth_path = Path("data/users/jack/wealth/wealth.json")
+    if wealth_path.exists():
+        with wealth_path.open("r") as f:
             data = json.load(f)
             print(f"Migrated items count: {len(data.get('items', []))}")
             print(f"First item: {json.dumps(data['items'][0] if data['items'] else {}, indent=2)}")
     else:
-        print("ERROR: patrimoine.json not created")
+        print("ERROR: wealth.json not created")
 
     print("[OK] Migration test completed")
 
 
 def test_list_items():
-    """Test listing patrimoine items."""
+    """Test listing wealth items."""
     print("\n=== Test 2: List Items ===")
 
     # List all items for jack
@@ -55,11 +55,11 @@ def test_list_items():
 
 
 def test_create_item():
-    """Test creating a new patrimoine item."""
+    """Test creating a new wealth item."""
     print("\n=== Test 3: Create Item ===")
 
     # Create a neobank account (Revolut)
-    new_item = PatrimoineItemInput(
+    new_item = WealthItemInput(
         name="Revolut (current)",
         category="liquidity",
         type="neobank",
@@ -85,7 +85,7 @@ def test_create_item():
 
 
 def test_summary():
-    """Test getting patrimoine summary."""
+    """Test getting wealth summary."""
     print("\n=== Test 4: Summary ===")
 
     summary = get_summary("jack")
@@ -110,7 +110,7 @@ def test_multi_user_isolation():
     print(f"Demo's items: {len(demo_items)}")
 
     # Create item for demo user
-    demo_item = PatrimoineItemInput(
+    demo_item = WealthItemInput(
         name="Demo Bank (current)",
         category="liquidity",
         type="bank_account",

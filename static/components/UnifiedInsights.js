@@ -179,23 +179,23 @@ function renderQuadrant(u) {
           ${Number.isFinite(u.onchain.confidence) ? `<span style="background: var(--info); color: white; padding: 1px 4px; border-radius: 3px; font-size: .65rem;">${Math.round((u.onchain.confidence || 0) * 100)}%</span>` : ''}
         </div>
         <div style="font-size:1.5rem; font-weight:800; color:${colorRisk(u.onchain.score ?? 50)}; line-height: 1.1;">${u.onchain.score ?? '—'}</div>
-        <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">Critiques: ${u.onchain.criticalCount}</div>
+        <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">Critical: ${u.onchain.criticalCount}</div>
         ${u.onchain.drivers && u.onchain.drivers.length ? `<div style="margin-top:.2rem; font-size:.7rem; color: var(--theme-text-muted);">Top: ${u.onchain.drivers.slice(0,1).map(d => `${d.key} (${d.score})`).join(', ')}</div>` : ''}
       `)}
       ${compactCard(`
-        <div style="font-weight:700; font-size: .85rem;">🛡️ Risque & Budget</div>
+        <div style="font-weight:700; font-size: .85rem;">🛡️ Risk & Budget</div>
         <div style="font-size:1.5rem; font-weight:800; color:${colorRisk(u.risk.score ?? 50)}; line-height: 1.1;">${u.risk.score ?? '—'}</div>
         <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">VaR95: ${u.risk.var95_1d != null ? (Math.round(Math.abs(u.risk.var95_1d)*1000)/10)+'%' : '—'}</div>
         ${u.risk.budget ? `<div style="font-size:.7rem; color: var(--theme-text); margin-top: .25rem; padding: .2rem; background: var(--theme-bg); border-radius: var(--radius-sm);">Risky: ${u.risk.budget.percentages?.risky}% • Stables: ${u.risk.budget.percentages?.stables}%</div>` : ''}
       `)}
       ${compactCard(`
-        <div style="font-weight:700; font-size: .85rem;">🤖 Régime & Sentiment</div>
+        <div style="font-weight:700; font-size: .85rem;">🤖 Regime & Sentiment</div>
         <div style="font-size:1.1rem; font-weight:800; display: flex; align-items: center; gap: .4rem; line-height: 1.1;">
           ${u.regime?.emoji || '🤖'} ${u.regime?.name || u.sentiment?.regime || '—'}
           ${u.regime?.confidence ? `<span style="background: var(--info); color: white; padding: 1px 4px; border-radius: 3px; font-size: .65rem;">${Math.round(u.regime.confidence * 100)}%</span>` : ''}
         </div>
         <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">F&G: ${u.sentiment?.fearGreed ?? '—'}</div>
-        <div style="font-size:.7rem; color: var(--theme-text-muted); margin-top: .15rem;">${u.sentiment?.interpretation || 'Neutre'}</div>
+        <div style="font-size:.7rem; color: var(--theme-text-muted); margin-top: .15rem;">${u.sentiment?.interpretation || 'Neutral'}</div>
       `)}
     </div>
   `;

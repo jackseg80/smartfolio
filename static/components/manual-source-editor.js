@@ -68,7 +68,7 @@ class ManualSourceEditor {
             return this.assets;
         } catch (error) {
             console.error(`[manual-source-editor] Error fetching ${this.category}:`, error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
             return [];
         }
     }
@@ -100,7 +100,7 @@ class ManualSourceEditor {
      * Build header section
      */
     buildHeader() {
-        const title = this.category === 'crypto' ? 'Crypto Assets' : 'Positions Bourse';
+        const title = this.category === 'crypto' ? 'Crypto Assets' : 'Stock Positions';
         const count = this.assets.length;
         const total = this.calculateTotal();
 
@@ -126,15 +126,15 @@ class ManualSourceEditor {
             return `
                 <div class="empty-state">
                     <div class="empty-icon">${this.category === 'crypto' ? '&#8383;' : '&#128200;'}</div>
-                    <p>Aucune saisie manuelle</p>
-                    <p class="hint">Ajoutez votre premier ${this.category === 'crypto' ? 'asset crypto' : 'position bourse'} ci-dessous</p>
+                    <p>No manual entries</p>
+                    <p class="hint">Add your first ${this.category === 'crypto' ? 'crypto asset' : 'bourse position'} below</p>
                 </div>
             `;
         }
 
         const headers = this.category === 'crypto'
-            ? ['Symbol', 'Quantite', 'Valeur USD', 'Location', 'Actions']
-            : ['Symbol', 'Nom', 'Quantite', 'Valeur', 'Devise', 'Actions'];
+            ? ['Symbol', 'Quantity', 'Value USD', 'Location', 'Actions']
+            : ['Symbol', 'Name', 'Quantity', 'Value', 'Currency', 'Actions'];
 
         return `
             <div class="table-container">
@@ -166,8 +166,8 @@ class ManualSourceEditor {
                     <td>$${this.formatNumber(asset.value_usd)}</td>
                     <td>${asset.location || '-'}</td>
                     <td class="actions">
-                        <button class="btn-icon edit-btn" data-id="${id}" title="Modifier">&#9998;</button>
-                        <button class="btn-icon delete-btn" data-id="${id}" title="Supprimer">&#128465;</button>
+                        <button class="btn-icon edit-btn" data-id="${id}" title="Edit">&#9998;</button>
+                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete">&#128465;</button>
                     </td>
                 </tr>
             `;
@@ -180,8 +180,8 @@ class ManualSourceEditor {
                     <td>${this.formatNumber(asset.value)}</td>
                     <td>${asset.currency || 'USD'}</td>
                     <td class="actions">
-                        <button class="btn-icon edit-btn" data-id="${id}" title="Modifier">&#9998;</button>
-                        <button class="btn-icon delete-btn" data-id="${id}" title="Supprimer">&#128465;</button>
+                        <button class="btn-icon edit-btn" data-id="${id}" title="Edit">&#9998;</button>
+                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete">&#128465;</button>
                     </td>
                 </tr>
             `;
@@ -198,11 +198,11 @@ class ManualSourceEditor {
 
         return `
             <div class="add-form">
-                <h5>Ajouter ${this.category === 'crypto' ? 'un asset' : 'une position'}</h5>
+                <h5>Add ${this.category === 'crypto' ? 'an asset' : 'a position'}</h5>
                 <form id="add-asset-form-${this.category}" class="form-grid">
                     ${fields}
                     <div class="form-actions">
-                        <button type="submit" class="btn primary">Ajouter</button>
+                        <button type="submit" class="btn primary">Add</button>
                         <button type="reset" class="btn secondary">Reset</button>
                     </div>
                 </form>
@@ -221,14 +221,14 @@ class ManualSourceEditor {
                        pattern="[A-Za-z0-9]+" maxlength="10">
             </div>
             <div class="form-group">
-                <label for="amount">Quantite *</label>
+                <label for="amount">Quantity *</label>
                 <input type="number" id="amount" name="amount" step="any" min="0" required
                        placeholder="0.00">
             </div>
             <div class="form-group">
-                <label for="value_usd">Valeur USD</label>
+                <label for="value_usd">Value USD</label>
                 <input type="number" id="value_usd" name="value_usd" step="0.01" min="0"
-                       placeholder="Auto si vide">
+                       placeholder="Auto if empty">
             </div>
             <div class="form-group">
                 <label for="location">Location</label>
@@ -237,7 +237,7 @@ class ManualSourceEditor {
             </div>
             <div class="form-group full-width">
                 <label for="notes">Notes</label>
-                <input type="text" id="notes" name="notes" placeholder="Notes optionnelles"
+                <input type="text" id="notes" name="notes" placeholder="Optional notes"
                        maxlength="500">
             </div>
         `;
@@ -254,22 +254,22 @@ class ManualSourceEditor {
                        maxlength="20">
             </div>
             <div class="form-group">
-                <label for="name">Nom</label>
+                <label for="name">Name</label>
                 <input type="text" id="name" name="name" placeholder="Apple Inc..."
                        maxlength="100">
             </div>
             <div class="form-group">
-                <label for="quantity">Quantite *</label>
+                <label for="quantity">Quantity *</label>
                 <input type="number" id="quantity" name="quantity" step="any" min="0" required
                        placeholder="0">
             </div>
             <div class="form-group">
-                <label for="value">Valeur *</label>
+                <label for="value">Value *</label>
                 <input type="number" id="value" name="value" step="0.01" min="0" required
                        placeholder="0.00">
             </div>
             <div class="form-group">
-                <label for="currency">Devise</label>
+                <label for="currency">Currency</label>
                 <select id="currency" name="currency">
                     <option value="USD">USD</option>
                     <option value="EUR">EUR</option>
@@ -280,10 +280,10 @@ class ManualSourceEditor {
             <div class="form-group">
                 <label for="asset_class">Type</label>
                 <select id="asset_class" name="asset_class">
-                    <option value="EQUITY">Action</option>
+                    <option value="EQUITY">Stock</option>
                     <option value="ETF">ETF</option>
-                    <option value="BOND">Obligation</option>
-                    <option value="FUND">Fonds</option>
+                    <option value="BOND">Bond</option>
+                    <option value="FUND">Fund</option>
                 </select>
             </div>
             <div class="form-group">
@@ -292,9 +292,9 @@ class ManualSourceEditor {
                        maxlength="100">
             </div>
             <div class="form-group">
-                <label for="avg_price">Prix moyen</label>
+                <label for="avg_price">Average price</label>
                 <input type="number" id="avg_price" name="avg_price" step="0.01" min="0"
-                       placeholder="Optionnel">
+                       placeholder="Optional">
             </div>
         `;
     }
@@ -307,15 +307,15 @@ class ManualSourceEditor {
             <div id="edit-modal-${this.category}" class="modal-overlay hidden">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4>Modifier ${this.category === 'crypto' ? "l'asset" : 'la position'}</h4>
+                        <h4>Edit ${this.category === 'crypto' ? 'asset' : 'position'}</h4>
                         <button class="close-modal">&times;</button>
                     </div>
                     <form id="edit-asset-form-${this.category}" class="form-grid">
                         <input type="hidden" id="edit-id" name="id">
                         ${this.category === 'crypto' ? this.cryptoFormFields() : this.bourseFormFields()}
                         <div class="form-actions">
-                            <button type="submit" class="btn primary">Sauvegarder</button>
-                            <button type="button" class="btn secondary close-modal">Annuler</button>
+                            <button type="submit" class="btn primary">Save</button>
+                            <button type="button" class="btn secondary close-modal">Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -398,15 +398,15 @@ class ManualSourceEditor {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
             e.target.reset();
-            this.showToast('Ajoute avec succes', 'success');
+            this.showToast('Added successfully', 'success');
             await this.render();
         } catch (error) {
             console.error('[manual-source-editor] Add error:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -485,15 +485,15 @@ class ManualSourceEditor {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
             this.closeEditModal();
-            this.showToast('Modifie avec succes', 'success');
+            this.showToast('Updated successfully', 'success');
             await this.render();
         } catch (error) {
             console.error('[manual-source-editor] Edit error:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -501,7 +501,7 @@ class ManualSourceEditor {
      * Handle delete
      */
     async handleDelete(id) {
-        if (!confirm('Supprimer cet element ?')) return;
+        if (!confirm('Delete this item?')) return;
 
         try {
             const endpoint = this.category === 'crypto'
@@ -515,14 +515,14 @@ class ManualSourceEditor {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
-            this.showToast('Supprime avec succes', 'success');
+            this.showToast('Deleted successfully', 'success');
             await this.render();
         } catch (error) {
             console.error('[manual-source-editor] Delete error:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 

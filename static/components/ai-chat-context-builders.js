@@ -63,14 +63,14 @@ export async function buildDashboardContext() {
             console.warn('[AI Chat] Failed to load Saxo positions:', err);
         }
 
-        // 3. Load Patrimoine/Wealth data
+        // 3. Load Wealth data
         try {
-            const wealthResponse = await fetch('/api/wealth/patrimoine/summary', {
+            const wealthResponse = await fetch('/api/wealth/summary', {
                 headers: { 'X-User': activeUser }
             });
             if (wealthResponse.ok) {
                 const wealthData = await wealthResponse.json();
-                context.patrimoine = {
+                context.wealth = {
                     net_worth: wealthData.net_worth || 0,
                     liquidity: wealthData.breakdown?.liquidity || 0,
                     tangible: wealthData.breakdown?.tangible || 0,
@@ -378,7 +378,7 @@ export async function buildAnalyticsContext() {
  */
 export async function buildSaxoContext() {
     const context = {
-        page: 'Saxo Dashboard - Portfolio Bourse',
+        page: 'Saxo Dashboard - Stock Portfolio',
         timestamp: new Date().toISOString()
     };
 
@@ -387,7 +387,7 @@ export async function buildSaxoContext() {
         const data = window.currentPortfolioData;
 
         if (!data) {
-            context.error = 'Aucune donnée de portefeuille chargée';
+            context.error = 'No portfolio data loaded';
             return context;
         }
 
@@ -510,14 +510,14 @@ export async function buildSaxoContext() {
  */
 export async function buildWealthContext() {
     const context = {
-        page: 'Wealth Dashboard - Patrimoine'
+        page: 'Wealth Dashboard - Net Worth'
     };
 
     try {
         const activeUser = localStorage.getItem('activeUser') || 'demo';
 
         // Fetch wealth summary
-        const response = await fetch('/api/wealth/patrimoine/summary', {
+        const response = await fetch('/api/wealth/summary', {
             headers: { 'X-User': activeUser }
         });
 

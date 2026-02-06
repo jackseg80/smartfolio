@@ -231,13 +231,13 @@ function normalizeSectorName(sector) {
         'fund': 'Fonds',
         'bond': 'Obligations',
         'bonds': 'Obligations',
-        'cash': 'Liquidités',
+        'cash': 'Cash',
         'option': 'Options',
         'options': 'Options',
         'warrant': 'Warrants',
         'certificate': 'Certificats',
-        'commodity': 'Matières Premières',
-        'forex': 'Devises',
+        'commodity': 'Commodities',
+        'forex': 'Currencies',
         'crypto': 'Crypto',
         'cryptocurrency': 'Crypto'
     };

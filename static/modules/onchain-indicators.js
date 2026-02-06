@@ -277,7 +277,7 @@ export const INDICATOR_CATEGORIES = {
   // Indicateurs On-Chain Fondamentaux (60% du score) - Données blockchain pures
   onchain_fundamentals: {
     weight: 0.60,
-    description: "Métriques blockchain fondamentales",
+    description: "Fundamental blockchain metrics",
     indicators: {
       // Évaluation de prix vs valeur intrinsèque
       'mvrv': { weight: 0.25, invert: true }, // High MVRV = overvalued = bearish
@@ -325,7 +325,7 @@ export const INDICATOR_CATEGORIES = {
   // Indicateurs de Sentiment (10% du score) - Psychologie de marché
   sentiment: {
     weight: 0.10,
-    description: "Sentiment et psychologie de marché",
+    description: "Market sentiment and psychology",
     indicators: {
       'fear_greed': { weight: 0.60, invert: true }, // High Fear & Greed = bearish
       'fear_greed_7d': { weight: 0.40, invert: true },
@@ -468,7 +468,7 @@ export const INDICATORS_CONFIG = {
 
   puell_multiple: {
     name: "Puell Multiple",
-    description: "Revenus miniers vs moyenne 365j",
+    description: "Mining revenue vs 365d average",
     thresholds: {
       extreme_high: 4.0,  // Pic minier - Vente probable
       high: 2.5,          // Zone de distribution
@@ -500,7 +500,7 @@ export const INDICATORS_CONFIG = {
 
   fear_greed: {
     name: "Fear & Greed Index",
-    description: "Sentiment de marché",
+    description: "Market sentiment",
     thresholds: {
       extreme_high: 90,   // Extrême cupidité - Vente
       high: 75,           // Cupidité
@@ -517,7 +517,7 @@ export const INDICATORS_CONFIG = {
 
   ahr999: {
     name: "Ahr999 Index",
-    description: "Indicateur d'achat Bitcoin à long terme",
+    description: "Long-term Bitcoin buy indicator",
     thresholds: {
       extreme_high: 4.0,  // Très surévalué
       high: 2.0,          // Surévalué  
@@ -534,7 +534,7 @@ export const INDICATORS_CONFIG = {
 
   nupl: {
     name: "NUPL (Net Unrealized Profit/Loss)",
-    description: "Profit/perte non réalisé du réseau",
+    description: "Network unrealized profit/loss",
     thresholds: {
       extreme_high: 90,   // Euphorie excessive
       high: 75,           // Euphorie/Cupidité
@@ -566,7 +566,7 @@ export const INDICATORS_CONFIG = {
 
   sopr: {
     name: "SOPR (Spent Output Profit Ratio)",
-    description: "Ratio de profit des sorties dépensées",
+    description: "Spent output profit ratio",
     thresholds: {
       extreme_high: 90,   // Très profitable
       high: 75,           // Profitable
@@ -582,7 +582,7 @@ export const INDICATORS_CONFIG = {
 
   stock_to_flow_deviation: {
     name: "Stock-to-Flow Deviation",
-    description: "Écart entre prix réel et modèle S2F",
+    description: "Deviation between actual price and S2F model",
     thresholds: {
       extreme_high: 200,  // Très au-dessus du modèle
       high: 100,          // Au-dessus du modèle
@@ -1601,17 +1601,17 @@ export function analyzeDivergence(sigmoidScore, indicators) {
   if (divergence > 30) {
     if (composite.score > sigmoidScore) {
       signal = 'onchain_bullish';
-      message = 'Indicateurs on-chain plus optimistes que le modèle de cycle';
+      message = 'On-chain indicators more optimistic than cycle model';
     } else {
       signal = 'onchain_bearish';
-      message = 'Indicateurs on-chain plus pessimistes que le modèle de cycle';
+      message = 'On-chain indicators more pessimistic than cycle model';
     }
   } else if (divergence > 15) {
     signal = 'moderate_divergence';
-    message = 'Divergence modérée entre modèle et indicateurs';
+    message = 'Moderate divergence between model and indicators';
   } else {
     signal = 'convergence';
-    message = 'Bonne convergence entre modèle et indicateurs';
+    message = 'Good convergence between model and indicators';
   }
 
   return {
@@ -1635,37 +1635,37 @@ export function generateRecommendations(enhancedData) {
   if (enhanced_score > 80) {
     recommendations.push({
       type: 'warning',
-      title: 'Zone de Distribution Probable',
-      message: 'Score élevé - Euphorie détectée, considérer la prise de profits',
-      action: 'Réduire l\'exposition aux altcoins, augmenter les stables'
+      title: 'Probable Distribution Zone',
+      message: 'High score - Euphoria detected, consider taking profits',
+      action: 'Reduce altcoin exposure, increase stables'
     });
   } else if (enhanced_score >= 60) {
     recommendations.push({
       type: 'info',
-      title: 'Marché Bull Confirmé',
-      message: 'Score bon - Momentum haussier présent mais pas d\'euphorie',
-      action: 'Maintenir l\'allocation actuelle, surveiller les signaux de pic'
+      title: 'Bull Market Confirmed',
+      message: 'Good score - Bullish momentum present but no euphoria',
+      action: 'Maintain current allocation, watch for peak signals'
     });
   } else if (enhanced_score >= 40) {
     recommendations.push({
       type: 'neutral',
-      title: 'Zone de Transition',
-      message: 'Score moyen - Phase d\'incertitude ou consolidation',
-      action: 'Prudence recommandée, attendre confirmation de tendance'
+      title: 'Transition Zone',
+      message: 'Average score - Uncertainty or consolidation phase',
+      action: 'Caution recommended, wait for trend confirmation'
     });
   } else if (enhanced_score >= 30) {
     recommendations.push({
       type: 'caution',
-      title: 'Momentum Faible Détecté',
-      message: 'Score faible - Indicateurs on-chain pessimistes',
-      action: 'Réduire progressivement l\'exposition risquée (altcoins), augmenter les stables'
+      title: 'Weak Momentum Detected',
+      message: 'Low score - Bearish on-chain indicators',
+      action: 'Gradually reduce risky exposure (altcoins), increase stables'
     });
   } else {
     recommendations.push({
       type: 'opportunity',
-      title: 'Zone d\'Accumulation Probable',
-      message: 'Score très faible - Opportunité d\'achat potentielle (capitulation/bear)',
-      action: 'Considérer l\'augmentation progressive de l\'allocation Bitcoin/ETH'
+      title: 'Probable Accumulation Zone',
+      message: 'Very low score - Potential buying opportunity (capitulation/bear)',
+      action: 'Consider gradually increasing Bitcoin/ETH allocation'
     });
   }
 
@@ -1676,18 +1676,18 @@ export function generateRecommendations(enhancedData) {
     if (topContributor.name === 'Fear & Greed Index' && topContributor.score > 80) {
       recommendations.push({
         type: 'contrarian',
-        title: 'Extrême Cupidité Détectée',
-        message: 'Sentiment très optimiste - Signal contrarian',
-        action: 'Prudence recommandée, pic potentiel proche'
+        title: 'Extreme Greed Detected',
+        message: 'Very optimistic sentiment - Contrarian signal',
+        action: 'Caution recommended, potential peak nearby'
       });
     }
 
     if (topContributor.name === 'MVRV Ratio' && topContributor.score > 85) {
       recommendations.push({
         type: 'technical',
-        title: 'MVRV en Zone de Danger',
-        message: 'Ratio MVRV élevé - Historiquement près des pics',
-        action: 'Surveiller étroitement, préparer stratégie de sortie'
+        title: 'MVRV in Danger Zone',
+        message: 'High MVRV ratio - Historically near peaks',
+        action: 'Monitor closely, prepare exit strategy'
       });
     }
   }
@@ -1696,9 +1696,9 @@ export function generateRecommendations(enhancedData) {
   if (confidence < 0.4) {
     recommendations.push({
       type: 'info',
-      title: 'Données Limitées',
-      message: 'Peu d\'indicateurs disponibles - Confiance réduite',
-      action: 'Intégrer plus de sources de données on-chain'
+      title: 'Limited Data',
+      message: 'Few indicators available - Reduced confidence',
+      action: 'Integrate more on-chain data sources'
     });
   }
 
@@ -1772,10 +1772,10 @@ export function getIndicatorSources() {
 export function getImplementationGuide() {
   return {
     priority_1_nvt: {
-      title: 'Intégrer NVT Ratio réel',
+      title: 'Integrate real NVT Ratio',
       steps: [
-        '1. Récupérer market cap Bitcoin via CoinGecko API gratuite',
-        '2. Récupérer volume transactions via Blockchain.info API',
+        '1. Retrieve Bitcoin market cap via free CoinGecko API',
+        '2. Retrieve transaction volume via Blockchain.info API',
         '3. Calculer: NVT = MarketCap / (VolumeUSD * 365)',
         '4. Remplacer simulateNVT() par fetchRealNVT()'
       ],
@@ -1783,22 +1783,22 @@ export function getImplementationGuide() {
       difficulty: 'Medium'
     },
     priority_2_mvrv: {
-      title: 'Intégrer MVRV Ratio via API payante',
+      title: 'Integrate MVRV Ratio via paid API',
       steps: [
-        '1. Souscrire à Glassnode API (plan Studio $39/mois)',
-        '2. Implémenter fetchGlassnodeMVRV() avec authentification',
-        '3. Gérer les limites de taux (rate limiting)',
+        '1. Subscribe to Glassnode API (Studio plan $39/month)',
+        '2. Implement fetchGlassnodeMVRV() with authentication',
+        '3. Handle rate limiting',
         '4. Fallback sur simulation si API indisponible'
       ],
       estimated_time: '6-8 heures',
       difficulty: 'Medium-High'
     },
     priority_3_puell: {
-      title: 'Calculer Puell Multiple réel',
+      title: 'Calculate real Puell Multiple',
       steps: [
-        '1. Récupérer données de blocs via Blockchain.info',
+        '1. Retrieve block data via Blockchain.info',
         '2. Calculer revenus miniers quotidiens',
-        '3. Implémenter moyenne mobile 365 jours',
+        '3. Implement 365-day moving average',
         '4. Optimiser pour performance (cache agressif)'
       ],
       estimated_time: '8-12 heures',

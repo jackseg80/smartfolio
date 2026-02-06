@@ -328,7 +328,7 @@ class PerformanceOptimizer {
         // Bouton précédent
         const prevBtn = document.createElement('button');
         prevBtn.className = 'btn btn-secondary pagination-prev';
-        prevBtn.textContent = '« Précédent';
+        prevBtn.textContent = '« Previous';
         prevBtn.disabled = true;
         
         // Indicateur de page
@@ -340,7 +340,7 @@ class PerformanceOptimizer {
         // Bouton suivant
         const nextBtn = document.createElement('button');
         nextBtn.className = 'btn btn-secondary pagination-next';
-        nextBtn.textContent = 'Suivant »';
+        nextBtn.textContent = 'Next »';
         nextBtn.disabled = totalPages <= 1;
         
         container.append(prevBtn, pageIndicator, nextBtn);
@@ -756,15 +756,15 @@ class PerformanceOptimizer {
         const recommendations = [];
         
         if (itemCount > this.thresholds.large_portfolio) {
-            recommendations.push('💡 Portfolio volumineux détecté - optimisations automatiques activées');
+            recommendations.push('💡 Large portfolio detected - automatic optimizations enabled');
         }
         
         if (itemCount > this.thresholds.worker_threshold) {
-            recommendations.push('⚡ Calculs lourds déplacés vers Web Workers');
+            recommendations.push('⚡ Heavy computations moved to Web Workers');
         }
         
         if (itemCount > this.thresholds.pagination_size * 2) {
-            recommendations.push('📄 Pagination automatique recommandée');
+            recommendations.push('📄 Automatic pagination recommended');
         }
         
         return recommendations;

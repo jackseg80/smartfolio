@@ -35,13 +35,13 @@ class InputValidator {
         this.errors = [];
         
         if (!targets || typeof targets !== 'object') {
-            this.errors.push('Les targets doivent être un objet valide');
+            this.errors.push('Targets must be a valid object');
             return false;
         }
         
         const entries = Object.entries(targets);
         if (entries.length === 0) {
-            this.errors.push('Au moins un groupe doit être spécifié');
+            this.errors.push('At least one group must be specified');
             return false;
         }
         
@@ -108,17 +108,17 @@ class InputValidator {
         if (config.min_trade_usd !== undefined) {
             const minTrade = parseFloat(config.min_trade_usd);
             if (isNaN(minTrade) || minTrade < this.limits.min_trade_usd) {
-                this.errors.push(`Montant minimum de trade invalide: ${config.min_trade_usd} (doit être >= ${this.limits.min_trade_usd})`);
+                this.errors.push(`Invalid minimum trade amount: ${config.min_trade_usd} (must be >= ${this.limits.min_trade_usd})`);
             }
         }
         
         // Validation clés API
         if (config.cointracking_api_key && !this.patterns.api_key.test(config.cointracking_api_key)) {
-            this.errors.push('Clé API CoinTracking invalide (caractères alphanumériques uniquement)');
+            this.errors.push('Invalid CoinTracking API key (alphanumeric characters only)');
         }
         
         if (config.coingecko_api_key && !this.patterns.api_key.test(config.coingecko_api_key)) {
-            this.errors.push('Clé API CoinGecko invalide (caractères alphanumériques uniquement)');
+            this.errors.push('Invalid CoinGecko API key (alphanumeric characters only)');
         }
         
         return this.errors.length === 0;
@@ -131,12 +131,12 @@ class InputValidator {
         this.errors = [];
         
         if (!Array.isArray(symbols)) {
-            this.errors.push('La liste des symboles doit être un tableau');
+            this.errors.push('The symbols list must be an array');
             return false;
         }
         
         if (symbols.length === 0) {
-            this.errors.push('Au moins un symbole doit être spécifié');
+            this.errors.push('At least one symbol must be specified');
             return false;
         }
         
@@ -162,7 +162,7 @@ class InputValidator {
     /**
      * Valide un montant en USD
      */
-    validateUSDAmount(amount, fieldName = 'Montant') {
+    validateUSDAmount(amount, fieldName = 'Amount') {
         this.errors = [];
         
         const usd = parseFloat(amount);

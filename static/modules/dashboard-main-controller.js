@@ -76,7 +76,7 @@ async function refreshGI() {
 
             // Add confidence tooltip if available
             if (unifiedState.decision.confidence) {
-                scoreEl.title = `Confiance: ${Math.round(unifiedState.decision.confidence * 100)}% | ${unifiedState.decision.reasoning || 'Calcul intelligent'}`;
+                scoreEl.title = `Confidence: ${Math.round(unifiedState.decision.confidence * 100)}% | ${unifiedState.decision.reasoning || 'Intelligent calculation'}`;
             }
         }
 
@@ -89,7 +89,7 @@ async function refreshGI() {
             if (typeof cycleScore === 'number') {
                 cycleEl.style.color = colorForScore(cycleScore);
             }
-            cycleEl.title = cyclePhase ? `Phase: ${cyclePhase.replace('_', ' ')} | Confiance: ${Math.round((unifiedState.cycle?.confidence || 0) * 100)}%` : '';
+            cycleEl.title = cyclePhase ? `Phase: ${cyclePhase.replace('_', ' ')} | Confidence: ${Math.round((unifiedState.cycle?.confidence || 0) * 100)}%` : '';
         }
 
         const onchainEl = document.getElementById('gi-onchain');
@@ -100,7 +100,7 @@ async function refreshGI() {
                 onchainEl.style.color = colorForScore(onchainScore);
             }
             if (unifiedState.onchain?.criticalCount > 0) {
-                onchainEl.title = `${unifiedState.onchain.criticalCount} indicateur(s) critique(s) détecté(s)`;
+                onchainEl.title = `${unifiedState.onchain.criticalCount} critical indicator(s) detected`;
                 onchainEl.style.fontWeight = '700';
             }
         }
@@ -113,7 +113,7 @@ async function refreshGI() {
                 riskEl.style.color = colorForScore(riskScore);
             }
             if (unifiedState.risk?.budget?.percentages?.stables) {
-                riskEl.title = `Budget recommandé - Stables: ${unifiedState.risk.budget.percentages.stables}%`;
+                riskEl.title = `Recommended budget - Stables: ${unifiedState.risk.budget.percentages.stables}%`;
             }
         }
 
@@ -124,7 +124,7 @@ async function refreshGI() {
                 const topReco = recommendations[0];
                 const urgencyIcon = topReco.priority === 'critical' ? '🚨' : topReco.priority === 'high' ? '⚠️' : topReco.priority === 'medium' ? '💡' : 'ℹ️';
                 recoEl.innerHTML = `${urgencyIcon} ${topReco.title}`;
-                recoEl.title = `${topReco.reason} | Source: ${topReco.source || 'Intelligence unifiée'}`;
+                recoEl.title = `${topReco.reason} | Source: ${topReco.source || 'Unified intelligence'}`;
 
                 // Color based on priority
                 const priorityColors = {
@@ -135,9 +135,9 @@ async function refreshGI() {
                 };
                 recoEl.style.color = priorityColors[topReco.priority] || 'var(--theme-text)';
             } else {
-                recoEl.innerHTML = '🧘 Aucune action urgente';
+                recoEl.innerHTML = '🧘 No urgent action';
                 recoEl.style.color = 'var(--success)';
-                recoEl.title = 'Tous les modules sont en accord - situation stable';
+                recoEl.title = 'All modules are in agreement - stable situation';
             }
         }
 
@@ -190,8 +190,8 @@ async function refreshGI() {
 
         const reco = document.getElementById('gi-reco');
         if (reco) {
-            reco.textContent = score >= 70 ? '⚠️ Alléger 10–20%' : score <= 35 ? '🟢 DCA prudent' : '⏸️ Neutre / Attente';
-            reco.title = 'Recommandation basique (système intelligent non disponible)';
+            reco.textContent = score >= 70 ? '⚠️ Reduce 10-20%' : score <= 35 ? '🟢 Cautious DCA' : '⏸️ Neutral / Wait';
+            reco.title = 'Basic recommendation (intelligent system unavailable)';
         }
 
         // Update meta badge even in fallback
@@ -384,7 +384,7 @@ function updateGlobalInsightMeta() {
 
         // Format ML signals timestamp
         const ts = ml?.timestamp ? new Date(ml.timestamp) : null;
-        const timeStr = ts ? ts.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+        const timeStr = ts ? ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
 
         // Get contradiction index (0-1 scale, convert to percentage)
         const contradiction = ml?.contradiction_index != null ? Math.round(ml.contradiction_index * 100) : null;
@@ -414,10 +414,10 @@ function updateGlobalInsightMeta() {
 
         // Add tooltip with detailed info
         if (scoresTimestamp) {
-            const calcTime = new Date(scoresTimestamp).toLocaleString('fr-FR');
+            const calcTime = new Date(scoresTimestamp).toLocaleString('en-US');
             const ageHours = Math.round((scoresAge / (60 * 60 * 1000)) * 10) / 10;
             const refreshAction = needsRefresh ? '⚠️ REFRESH RECOMMENDED' : 'ℹ️ Scores are fresh';
-            metaEl.title = `Scores calculés: ${calcTime} (il y a ${ageHours}h)\nML signals: ${ts ? ts.toLocaleString('fr-FR') : 'N/A'}\n\n${refreshAction}\nCliquez sur le bouton 🔄 pour recalculer`;
+            metaEl.title = `Scores calculated: ${calcTime} (${ageHours}h ago)\nML signals: ${ts ? ts.toLocaleString('en-US') : 'N/A'}\n\n${refreshAction}\nClick the 🔄 button to recalculate`;
         }
 
         console.debug('🏷️ Global Insight meta updated:', {
@@ -511,12 +511,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Show success toast
                 if (window.debugLogger?.success) {
-                    window.debugLogger.success('✅ Scores recalculés avec succès');
+                    window.debugLogger.success('✅ Scores recalculated successfully');
                 }
             } catch (error) {
                 console.error('❌ Failed to refresh scores:', error);
                 if (window.debugLogger?.error) {
-                    window.debugLogger.error('❌ Échec du recalcul des scores. Ouvrez Risk Dashboard manuellement.');
+                    window.debugLogger.error('❌ Score recalculation failed. Open Risk Dashboard manually.');
                 }
 
                 // Fallback: open risk-dashboard in new tab
@@ -583,15 +583,15 @@ function setupExportButtons() {
         console.debug('✅ Saxo export button initialized');
     }
 
-    // Patrimoine export button
-    const patrimoineExportBtn = document.getElementById('patrimoine-export-btn');
-    if (patrimoineExportBtn) {
-        patrimoineExportBtn.addEventListener('click', () => {
+    // Wealth export button
+    const wealthExportBtn = document.getElementById('wealth-export-btn');
+    if (wealthExportBtn) {
+        wealthExportBtn.addEventListener('click', () => {
             import('./export-button.js').then(({ openExportModal }) => {
-                openExportModal('patrimoine', '/api/wealth/patrimoine/export-lists', 'patrimoine-items');
+                openExportModal('wealth', '/api/wealth/export-lists', 'wealth-items');
             });
         });
-        console.debug('✅ Patrimoine export button initialized');
+        console.debug('✅ Wealth export button initialized');
     }
 }
 
@@ -925,8 +925,8 @@ async function loadDashboardData() {
         console.debug('✅ Dashboard data loaded successfully');
     } catch (e) {
         console.error('Erreur chargement dashboard:', e);
-        showError('Impossible de charger les données du dashboard. Vérifiez votre connexion.');
-        showError('Erreur lors du chargement des données');
+        showError('Unable to load dashboard data. Check your connection.');
+        showError('Error loading data');
     } finally {
         isLoadingDashboard = false;
     }
@@ -939,7 +939,7 @@ async function loadPortfolioData() {
         return await loadRealCSVPortfolioData();
     } catch (e) {
         console.error('Erreur portfolio CSV non disponible:', e);
-        showError('Fichier CSV du portfolio non accessible.');
+        showError('Portfolio CSV file not accessible.');
         return null; // Pas de fallback hardcodé
     }
 }
@@ -1370,8 +1370,8 @@ async function updatePortfolioDisplay(data) {
     });
 
     const statusEl = document.getElementById('portfolio-status');
-    if ((metrics.total_value_usd || 0) > 0) { statusEl.className = 'status-badge status-active'; statusEl.textContent = 'Actif'; }
-    else { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Vide'; }
+    if ((metrics.total_value_usd || 0) > 0) { statusEl.className = 'status-badge status-active'; statusEl.textContent = 'Active'; }
+    else { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Empty'; }
 
     console.debug('About to call updatePortfolioChart with:', data.balances);
     await updatePortfolioChart(data.balances);
@@ -1389,7 +1389,7 @@ function updateConnectionsDisplay(data) {
     }
 
     if (!data) {
-        container.innerHTML = '<div class="error">Erreur de chargement</div>';
+        container.innerHTML = '<div class="error">Loading error</div>';
         return;
     }
 
@@ -1411,8 +1411,8 @@ function updateRecentActivity(data) {
         container.innerHTML = `
           <div class="activity-item">
             <div>
-              <div>Aucune activité récente</div>
-              <div class="activity-desc">Les sessions d'exécution apparaîtront ici</div>
+              <div>No recent activity</div>
+              <div class="activity-desc">Execution sessions will appear here</div>
             </div>
             <div class="activity-time">--</div>
           </div>`;
@@ -1421,8 +1421,8 @@ function updateRecentActivity(data) {
     const html = data.sessions.slice(0, 5).map(s => `
         <div class="activity-item">
           <div>
-            <div>${s.total_orders || 0} ordres sur ${s.exchange || 'Exchange'}</div>
-            <div class="activity-desc">${s.successful_orders || 0} réussis, ${formatUSD(s.total_volume_usd || 0)} volume</div>
+            <div>${s.total_orders || 0} orders on ${s.exchange || 'Exchange'}</div>
+            <div class="activity-desc">${s.successful_orders || 0} successful, ${formatUSD(s.total_volume_usd || 0)} volume</div>
           </div>
           <div class="activity-time">${formatTimeAgo(s.timestamp)}</div>
         </div>`).join('');
@@ -1436,18 +1436,18 @@ function updateExecutionStatus(data) {
     const statusEl = document.getElementById('execution-status'); // Dashboard V2: may not exist
 
     if (!data || !data.recent_24h) {
-        if (lastExecEl) lastExecEl.textContent = 'Aucune';
+        if (lastExecEl) lastExecEl.textContent = 'None';
         if (successRateEl) successRateEl.textContent = '--';
         if (volumeEl) volumeEl.textContent = '$0.00';
         if (statusEl) {
             statusEl.className = 'status-badge status-warning';
-            statusEl.textContent = 'En attente';
+            statusEl.textContent = 'Pending';
         }
         return;
     }
 
     if (lastExecEl) {
-        lastExecEl.textContent = data.recent_24h?.total_orders > 0 ? 'Récent' : 'Aucune';
+        lastExecEl.textContent = data.recent_24h?.total_orders > 0 ? 'Recent' : 'None';
     }
 
     const sr = data.recent_24h?.success_rate;
@@ -1461,9 +1461,9 @@ function updateExecutionStatus(data) {
 
     if (statusEl) {
         if (sr >= 95) { statusEl.className = 'status-badge status-active'; statusEl.textContent = 'Excellent'; }
-        else if (sr >= 90) { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Bon'; }
-        else if (sr !== undefined) { statusEl.className = 'status-badge status-error'; statusEl.textContent = 'À améliorer'; }
-        else { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'En attente'; }
+        else if (sr >= 90) { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Good'; }
+        else if (sr !== undefined) { statusEl.className = 'status-badge status-error'; statusEl.textContent = 'Needs improvement'; }
+        else { statusEl.className = 'status-badge status-warning'; statusEl.textContent = 'Pending'; }
     }
 }
 
@@ -1475,8 +1475,8 @@ function updateSystemHealth() {
     const systemHealthEl = document.getElementById('system-health');
 
     if (apiStatusEl) apiStatusEl.textContent = 'Online';
-    if (dataFreshnessEl) dataFreshnessEl.textContent = 'Récente';
-    if (safetyStatusEl) safetyStatusEl.textContent = 'Actif';
+    if (dataFreshnessEl) dataFreshnessEl.textContent = 'Recent';
+    if (safetyStatusEl) safetyStatusEl.textContent = 'Active';
     if (systemHealthEl) {
         systemHealthEl.className = 'status-badge status-active';
         systemHealthEl.textContent = 'Healthy';
@@ -1499,17 +1499,17 @@ function updateScoresDisplay(scoresData) {
         container.innerHTML = `
                     <div style="text-align: center; padding: var(--space-lg); color: var(--theme-text-muted);">
                         <div style="font-size: 2rem; margin-bottom: var(--space-md);">📊</div>
-                        <div style="margin-bottom: var(--space-md);">Aucun score de risque disponible</div>
+                        <div style="margin-bottom: var(--space-md);">No risk scores available</div>
                         <a href="risk-dashboard.html"
                            class="action-btn"
                            style="text-decoration: none; display: inline-block; padding: 8px 16px; margin-top: 8px;">
-                            Calculer les scores
+                            Calculate scores
                         </a>
                     </div>
                 `;
         if (statusEl) {
             statusEl.className = 'status-badge status-warning';
-            statusEl.textContent = 'Données manquantes';
+            statusEl.textContent = 'Missing data';
         }
         return;
     }
@@ -1531,9 +1531,9 @@ function updateScoresDisplay(scoresData) {
     };
 
     const getScoreLabel = (score) => {
-        if (score > 70) return 'Robuste';  // Positif
-        if (score >= 40) return 'Moyen';
-        return 'Risqué';  // Négatif
+        if (score > 70) return 'Robust';  // Positive
+        if (score >= 40) return 'Medium';
+        return 'Risky';  // Negative
     };
 
     let scoresHTML = '';
@@ -1542,7 +1542,7 @@ function updateScoresDisplay(scoresData) {
     if (blended !== undefined && blended !== null) {
         scoresHTML += `
                     <div class="metric" style="margin: 6px 0;">
-                        <span class="metric-label">⚖️ Score Stratégique</span>
+                        <span class="metric-label">⚖️ Strategic Score</span>
                         <span class="metric-value" style="color: ${getScoreColor(blended)};">
                             ${Math.round(blended)}/100
                             <span style="font-size: 0.8em; color: var(--theme-text-muted);">(${getScoreLabel(blended)})</span>
@@ -1591,9 +1591,9 @@ function updateScoresDisplay(scoresData) {
     if (scoresHTML === '') {
         scoresHTML = `
                     <div style="text-align: center; color: var(--theme-text-muted); padding: var(--space-md);">
-                        <div>📊 Aucun score disponible</div>
+                        <div>📊 No scores available</div>
                         <div style="font-size: 0.9em; margin-top: var(--space-xs);">
-                            Visitez le risk dashboard pour générer des scores
+                            Visit the risk dashboard to generate scores
                         </div>
                     </div>
                 `;
@@ -1606,14 +1606,14 @@ function updateScoresDisplay(scoresData) {
                     <!-- Message informatif si scores partiels -->
                     ${availableScores > 0 && availableScores < 4 ? `
                     <div style="text-align: center; font-size: 0.75em; color: var(--theme-text-muted); margin-top: 6px; padding: 4px; background: var(--theme-surface-elevated); border-radius: 4px;">
-                        💡 Visitez <a href="risk-dashboard.html" style="color: var(--brand-primary);">Risk Dashboard</a> pour calculer tous les scores
+                        💡 Visit <a href="risk-dashboard.html" style="color: var(--brand-primary);">Risk Dashboard</a> to calculate all scores
                     </div>
                     ` : ''}
 
                     <!-- Timestamp -->
                     ${timestamp ? `
                     <div style="text-align: center; font-size: 0.8em; color: var(--theme-text-muted); margin-top: 6px;">
-                        Mis à jour: ${new Date(timestamp).toLocaleTimeString()}${isStale ? ` · <span class=\"status-badge status-warning\">Cache</span>` : ''}
+                        Updated: ${new Date(timestamp).toLocaleTimeString('en-US')}${isStale ? ` · <span class=\"status-badge status-warning\">Cache</span>` : ''}
                     </div>
                     ` : ''}
                 </div>
@@ -1625,7 +1625,7 @@ function updateScoresDisplay(scoresData) {
             statusEl.textContent = 'Cache';
         } else {
             statusEl.className = 'status-badge status-active';
-            statusEl.textContent = 'À jour';
+            statusEl.textContent = 'Up to date';
         }
     }
 }
@@ -1637,7 +1637,7 @@ function formatTimeAgo(ts) {
     const d = new Date(ts), now = new Date(), dm = Math.floor((now - d) / (1000 * 60));
     if (dm < 60) return `${dm}min`;
     if (dm < 1440) return `${Math.floor(dm / 60)}h`;
-    return `${Math.floor(dm / 1440)}j`;
+    return `${Math.floor(dm / 1440)}d`;
 }
 function showError(m) {
     console.error(m);
@@ -1878,7 +1878,7 @@ async function updatePortfolioChart(balancesData) {
 
     if (!balancesData || !balancesData.items) {
         console.debug('❌ No balances data or items');
-        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--warning);">⏳ Chargement des données...</div>';
+        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--warning);">⏳ Loading data...</div>';
         return;
     }
 
@@ -1902,7 +1902,7 @@ async function updatePortfolioChart(balancesData) {
     // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
         console.debug('❌ Chart.js not loaded, trying to reload...');
-        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js non chargé - rechargez la page</div>';
+        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded - reload the page</div>';
         return;
     }
 
@@ -1937,8 +1937,8 @@ async function updatePortfolioChart(balancesData) {
         document.getElementById('portfolio-chart').innerHTML = `
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--theme-text-muted);">
                         <div style="font-size: 2rem; margin-bottom: 12px;">📊</div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">Données en cours de chargement</div>
-                        <div style="font-size: 0.875rem;">Le graphique s'affichera quand les données seront disponibles</div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">Data loading in progress</div>
+                        <div style="font-size: 0.875rem;">The chart will display when data is available</div>
                     </div>
                 `;
         return;
@@ -2021,7 +2021,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
     if (!positions || positions.length === 0) {
         const container = document.getElementById('saxo-chart');
         if (container) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune position</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">No positions</div>';
         }
         return;
     }
@@ -2035,7 +2035,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
     // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
         console.debug('❌ Chart.js not loaded');
-        document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js non chargé</div>';
+        document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded</div>';
         return;
     }
 
@@ -2070,7 +2070,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
     console.debug('Saxo chart data:', { labels, values, total: total.toFixed(2), cash: cashBalance });
 
     if (total === 0) {
-        document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune valeur</div>';
+        document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">No data</div>';
         return;
     }
 
@@ -2137,42 +2137,39 @@ async function updateSaxoChart(positions, cashBalance = 0) {
     });
 }
 
-// Créer ou mettre à jour le graphique Patrimoine
-async function updatePatrimoineChart(breakdown, counts) {
-    console.debug('updatePatrimoineChart - breakdown:', breakdown, 'counts:', counts);
+// Create or update Wealth chart
+async function updateWealthChart(breakdown, counts) {
+    console.debug('updateWealthChart - breakdown:', breakdown, 'counts:', counts);
 
     if (!breakdown || !counts) {
-        const container = document.getElementById('patrimoine-chart');
+        const container = document.getElementById('wealth-chart');
         if (container) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune donnée</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">No data</div>';
         }
         return;
     }
 
-    let canvas = document.getElementById('patrimoineChartCanvas');
+    let canvas = document.getElementById('wealthChartCanvas');
     if (!canvas) {
-        console.debug('❌ Patrimoine canvas element not found');
+        console.debug('❌ Wealth canvas element not found');
         return;
     }
 
-    // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
         console.debug('❌ Chart.js not loaded');
-        document.getElementById('patrimoine-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js non chargé</div>';
+        document.getElementById('wealth-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded</div>';
         return;
     }
 
     const ctx = canvas.getContext('2d');
 
-    // Préparer les données pour le graphique (4 catégories)
     const categories = [
-        { key: 'liquidity', label: '💰 Liquidités', value: breakdown.liquidity || 0, color: '#3b82f6' },
-        { key: 'tangible', label: '🏠 Biens Réels', value: breakdown.tangible || 0, color: '#10b981' },
-        { key: 'insurance', label: '🛡️ Assurances', value: breakdown.insurance || 0, color: '#8b5cf6' },
-        { key: 'liability', label: '💳 Passifs', value: Math.abs(breakdown.liability || 0), color: '#ef4444' }
+        { key: 'liquidity', label: '💰 Liquidity', value: breakdown.liquidity || 0, color: '#3b82f6' },
+        { key: 'tangible', label: '🏠 Tangible Assets', value: breakdown.tangible || 0, color: '#10b981' },
+        { key: 'insurance', label: '🛡️ Insurance', value: breakdown.insurance || 0, color: '#8b5cf6' },
+        { key: 'liability', label: '💳 Liabilities', value: Math.abs(breakdown.liability || 0), color: '#ef4444' }
     ];
 
-    // Filtrer les catégories avec valeur > 0
     const nonZeroCategories = categories.filter(cat => cat.value > 0);
 
     const labels = nonZeroCategories.map(cat => cat.label);
@@ -2180,17 +2177,16 @@ async function updatePatrimoineChart(breakdown, counts) {
     const colors = nonZeroCategories.map(cat => cat.color);
     const total = values.reduce((sum, v) => sum + v, 0);
 
-    console.debug('Patrimoine chart data:', { labels, values, total: total.toFixed(2) });
+    console.debug('Wealth chart data:', { labels, values, total: total.toFixed(2) });
 
     if (total === 0 || nonZeroCategories.length === 0) {
-        document.getElementById('patrimoine-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">Aucune valeur</div>';
+        document.getElementById('wealth-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">No data</div>';
         return;
     }
 
-    // Détruire l'ancien graphique s'il existe
-    if (window.patrimoineChart) {
-        window.patrimoineChart.destroy();
-        window.patrimoineChart = null;
+    if (window.wealthChart) {
+        window.wealthChart.destroy();
+        window.wealthChart = null;
     }
 
     // Obtenir les couleurs du thème actuel
@@ -2200,7 +2196,7 @@ async function updatePatrimoineChart(breakdown, counts) {
     const tooltipBorder = isDark ? '#6b7280' : '#d1d5db';
 
     // Créer le nouveau graphique
-    window.patrimoineChart = new Chart(ctx, {
+    window.wealthChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
             labels: labels,
@@ -2259,7 +2255,7 @@ async function updatePortfolioBreakdown(balancesData) {
         return;
     }
     if (!balancesData || !balancesData.items) {
-        container.innerHTML = '<div style="color: var(--danger);">❌ Pas de données</div>';
+        container.innerHTML = '<div style="color: var(--danger);">❌ No data</div>';
         return;
     }
 
@@ -2571,14 +2567,14 @@ async function refreshSaxoTile() {
                 if (summary.needsConnection) {
                     // Utilisateur non connecté à Saxo API
                     emptyStateEl.innerHTML = `
-                        <span style="color: var(--warning);">⚠️ Non connecté à Saxo API</span><br>
-                        <a href="settings.html#sources">Se connecter dans Paramètres > Sources</a>
+                        <span style="color: var(--warning);">⚠️ Not connected to Saxo API</span><br>
+                        <a href="settings.html#sources">Connect in Settings > Sources</a>
                     `;
                 } else if (summary.error && summary.error !== 'unknown error') {
                     // Erreur API spécifique
                     emptyStateEl.innerHTML = `
-                        <span style="color: var(--danger);">❌ ${summary.asof || 'Erreur API'}</span><br>
-                        <a href="settings.html#sources">Vérifier la configuration</a>
+                        <span style="color: var(--danger);">❌ ${summary.asof || 'API Error'}</span><br>
+                        <a href="settings.html#sources">Check configuration</a>
                     `;
                 } else {
                     // Aucune donnée (état vide normal)
@@ -2717,14 +2713,14 @@ async function refreshPatrimoineTile() {
     isRefreshingBanks = true;
     debugLogger.debug('💼 Refreshing Patrimoine tile...');
 
-    const netWorthEl = document.getElementById('patrimoine-net-worth');
-    const assetsLiabilitiesEl = document.getElementById('patrimoine-assets-liabilities');
-    const itemsCountEl = document.getElementById('patrimoine-items-count');
-    const emptyStateEl = document.getElementById('patrimoine-empty-state');
+    const netWorthEl = document.getElementById('wealth-net-worth');
+    const assetsLiabilitiesEl = document.getElementById('wealth-assets-liabilities');
+    const itemsCountEl = document.getElementById('wealth-items-count');
+    const emptyStateEl = document.getElementById('wealth-empty-state');
 
     try {
         const activeUser = localStorage.getItem('activeUser') || 'demo';
-        const response = await fetch(`${window.location.origin}/api/wealth/patrimoine/summary`, {
+        const response = await fetch(`${window.location.origin}/api/wealth/summary`, {
             headers: {
                 'X-User': activeUser
             }
@@ -2749,7 +2745,7 @@ async function refreshPatrimoineTile() {
 
             if (emptyStateEl) emptyStateEl.style.display = 'block';
 
-            debugLogger.warn('[Patrimoine Tile] Empty state - no patrimoine items');
+            debugLogger.warn('[Wealth Tile] Empty state - no wealth items');
         } else {
             // Success with data
             if (netWorthEl) {
@@ -2775,7 +2771,7 @@ async function refreshPatrimoineTile() {
             });
 
             // Update chart with breakdown
-            await updatePatrimoineChart(summary.breakdown, summary.counts);
+            await updateWealthChart(summary.breakdown, summary.counts);
         }
 
     } catch (error) {
@@ -2914,13 +2910,13 @@ async function refreshGlobalTile() {
             // Format EUR value
             if (eurEl) {
                 const eurValue = totalValueUSD * eurRate;
-                eurEl.textContent = `${Math.round(eurValue).toLocaleString('fr-FR')} EUR`;
+                eurEl.textContent = `${Math.round(eurValue).toLocaleString('en-US')} EUR`;
             }
 
             // Format CHF value
             if (chfEl) {
                 const chfValue = totalValueUSD * chfRate;
-                chfEl.textContent = `${Math.round(chfValue).toLocaleString('fr-FR')} CHF`;
+                chfEl.textContent = `${Math.round(chfValue).toLocaleString('en-US')} CHF`;
             }
         }
 
@@ -2943,8 +2939,8 @@ async function refreshGlobalTile() {
         if (breakdownEl && data.total_value_usd > 0) {
             const modules = [
                 { name: 'Crypto', icon: '₿', value: data.breakdown.crypto, color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
-                { name: 'Bourse', icon: '📈', value: data.breakdown.saxo, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
-                { name: 'Patrimoine', icon: '💼', value: data.breakdown.patrimoine, color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' }
+                { name: 'Stocks', icon: '📈', value: data.breakdown.saxo, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
+                { name: 'Wealth', icon: '💼', value: data.breakdown.wealth, color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' }
             ].filter(m => m.value > 0);
 
             breakdownEl.innerHTML = modules.map(m => {
@@ -3012,11 +3008,11 @@ async function refreshGlobalTile() {
         console.debug(`GLOBAL BREAKDOWN DEBUG:`, {
             crypto: data.breakdown?.crypto,
             saxo: data.breakdown?.saxo,
-            patrimoine: data.breakdown?.patrimoine,
+            wealth: data.breakdown?.wealth,
             total: data.total_value_usd,
             cryptoPct: data.breakdown?.crypto ? ((data.breakdown.crypto / data.total_value_usd) * 100).toFixed(1) : 'N/A',
             saxoPct: data.breakdown?.saxo ? ((data.breakdown.saxo / data.total_value_usd) * 100).toFixed(1) : 'N/A',
-            patrimoinePct: data.breakdown?.patrimoine ? ((data.breakdown.patrimoine / data.total_value_usd) * 100).toFixed(1) : 'N/A'
+            wealthPct: data.breakdown?.wealth ? ((data.breakdown.wealth / data.total_value_usd) * 100).toFixed(1) : 'N/A'
         });
 
         debugLogger.debug('✅ Global tile updated:', data);
@@ -3025,10 +3021,10 @@ async function refreshGlobalTile() {
         debugLogger.error('[Global Tile] Error refreshing:', error);
 
         if (totalValueEl) totalValueEl.textContent = '--';
-        if (breakdownEl) breakdownEl.innerHTML = '<div style="text-align:center;color:var(--danger);font-size:0.85rem;padding:var(--space-lg);">❌ Erreur de chargement</div>';
+        if (breakdownEl) breakdownEl.innerHTML = '<div style="text-align:center;color:var(--danger);font-size:0.85rem;padding:var(--space-lg);">❌ Loading error</div>';
 
         if (statusEl) {
-            statusEl.textContent = 'Erreur';
+            statusEl.textContent = 'Error';
             statusEl.className = 'status-badge status-error';
         }
     } finally {

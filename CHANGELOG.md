@@ -5,7 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2025-11-09
+## [Unreleased] - 2026-02-06
+
+### 🌐 Full FR → EN Translation (Feb 2026)
+
+**Period:** February 6, 2026
+**Objective:** Translate all user-visible text from French to English
+**Result:** ✅ **COMPLETE** - ~300+ strings translated across ~50 files
+
+#### Changed - Backend
+
+- **Patrimoine → Wealth rename**: `PatrimoineItemInput` → `WealthItemInput`, services and migration files renamed
+- **API routes**: `/api/wealth/patrimoine/*` → `/api/wealth/items/*` (legacy routes still supported)
+- **Data storage**: `patrimoine.json` → `wealth.json` (fallback to patrimoine.json)
+- **HTTPException messages**: ~50 error messages translated to English across 15 API files
+- **Pydantic descriptions**: ~232 Field descriptions translated across 23 files
+
+#### Changed - Frontend
+
+- **Navigation**: "Bourse" → "Stock Market", "Patrimoine" → "Wealth", "Outils" → "Tools"
+- **Page titles & headings**: All 25 HTML pages updated
+- **UI labels**: Buttons, loading states, empty states, tooltips, ARIA labels
+- **Chart labels**: Axis titles, dataset names, metric interpretations
+- **Notifications**: `showNotification`, `showError`, `showToast` messages
+- **Risk dashboard**: Score interpretations, benchmark labels, time units (j→d)
+- **Decision Index panel**: Score levels, recommendations, help content
+- **Date/number locale**: `fr-FR` → `en-US` across 20 files
+
+#### Changed - Config
+
+- Strategy template descriptions translated
+- Simulation preset names/descriptions translated
+- User display names updated
+
+#### Added
+
+- **Rule 5 in CLAUDE.md**: "English-Only UI" enforcement rule
+- **Bilingual CSV parser**: Saxo Bank CSV parser accepts both FR and EN headers
+- **`docs/WEALTH_MODULE.md`**: Replaces PATRIMOINE_MODULE.md with updated references
+- **`docs/I18N_MIGRATION.md`**: Complete migration report with file lists
+
+#### Fixed
+
+- **`updatePatrimoineChart is not defined`**: Fixed call site in dashboard-main-controller.js (function was renamed to `updateWealthChart` but call site was missed)
+
+---
+
+## [1.0.0] - 2025-11-09
 
 ### 🔒 Security Audit & Production Readiness (Nov 2025)
 

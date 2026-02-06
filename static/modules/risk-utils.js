@@ -69,13 +69,13 @@ export function pickScoreColor(score) {
  * @returns {string} Interpretation text
  */
 export function getScoreInterpretation(score) {
-  if (score == null) return 'Métrique non disponible';
-  if (score >= 80) return 'Portfolio très robuste - excellent';
-  if (score >= 65) return 'Portfolio robuste - bien protégé';
-  if (score >= 50) return 'Robustesse modérée - surveiller';
+  if (score == null) return 'Metric not available';
+  if (score >= 80) return 'Very robust portfolio - excellent';
+  if (score >= 65) return 'Robust portfolio - well protected';
+  if (score >= 50) return 'Moderate robustness - monitor';
   if (score >= 35) return 'Portfolio fragile - attention requise';
-  if (score >= 20) return 'Portfolio très fragile - risque élevé';
-  return 'Portfolio critique - danger immédiat';
+  if (score >= 20) return 'Very fragile portfolio - high risk';
+  return 'Critical portfolio - immediate danger';
 }
 
 // ===== Metric Health Assessment =====
@@ -93,9 +93,9 @@ export function getMetricHealth(key, value) {
       warning: [0.04, 0.08], // 4% to 8%
       danger: [0.08, 1], // > 8%
       interpretation: {
-        good: "Perte journalière potentielle contenue",
-        warning: "Perte potentielle modérée",
-        danger: "Perte potentielle élevée - attention"
+        good: "Potential daily loss contained",
+        warning: "Moderate potential loss",
+        danger: "High potential loss - caution"
       }
     },
     'var_99_1d': {
@@ -103,9 +103,9 @@ export function getMetricHealth(key, value) {
       warning: [0.06, 0.12],
       danger: [0.12, 1],
       interpretation: {
-        good: "Perte extrême limitée",
-        warning: "Perte extrême modérée",
-        danger: "Perte extrême importante"
+        good: "Limited extreme loss",
+        warning: "Moderate extreme loss",
+        danger: "Significant extreme loss"
       }
     },
     'sharpe_ratio': {
@@ -113,9 +113,9 @@ export function getMetricHealth(key, value) {
       warning: [0.5, 1.0],
       good: [1.0, 5.0],
       interpretation: {
-        danger: "Rendement/risque insuffisant",
-        warning: "Rendement/risque acceptable",
-        good: "Excellent rendement ajusté au risque"
+        danger: "Insufficient return/risk",
+        warning: "Acceptable return/risk",
+        good: "Excellent risk-adjusted return"
       }
     },
     'sortino_ratio': {
@@ -123,9 +123,9 @@ export function getMetricHealth(key, value) {
       warning: [0.8, 1.2],
       good: [1.2, 5.0],
       interpretation: {
-        danger: "Protection baisse insuffisante",
-        warning: "Protection baisse correcte",
-        good: "Excellente protection contre les baisses"
+        danger: "Insufficient downside protection",
+        warning: "Adequate downside protection",
+        good: "Excellent downside protection"
       }
     },
     'volatility_annualized': {
@@ -133,9 +133,9 @@ export function getMetricHealth(key, value) {
       warning: [0.4, 0.8], // 40-80%
       danger: [0.8, 2.0], // >80%
       interpretation: {
-        good: "Volatilité faible",
-        warning: "Volatilité modérée",
-        danger: "Volatilité élevée"
+        good: "Low volatility",
+        warning: "Moderate volatility",
+        danger: "High volatility"
       }
     },
     'max_drawdown': {
@@ -143,9 +143,9 @@ export function getMetricHealth(key, value) {
       warning: [0.3, 0.6], // 30% to 60%
       danger: [0.6, 1.0], // > 60%
       interpretation: {
-        good: "Drawdown limité",
-        warning: "Drawdown crypto typique",
-        danger: "Drawdown extrême - diversifier"
+        good: "Limited drawdown",
+        warning: "Typical crypto drawdown",
+        danger: "Extreme drawdown - diversify"
       }
     },
     'diversification_ratio': {
@@ -153,9 +153,9 @@ export function getMetricHealth(key, value) {
       warning: [0.4, 0.7],
       good: [0.7, 2.0], // >1 possible si corrélations négatives
       interpretation: {
-        danger: "Très peu diversifié",
-        warning: "Diversification limitée",
-        good: "Bien diversifié (corrélations faibles ou négatives)"
+        danger: "Very poorly diversified",
+        warning: "Limited diversification",
+        good: "Well diversified (low or negative correlations)"
       }
     },
     'effective_assets': {
@@ -163,9 +163,9 @@ export function getMetricHealth(key, value) {
       warning: [10, 20],
       good: [20, 999],
       interpretation: {
-        danger: "Très peu d'actifs effectifs",
-        warning: "Diversification partielle",
-        good: "Bonne diversification"
+        danger: "Very few effective assets",
+        warning: "Partial diversification",
+        good: "Good diversification"
       }
     },
     'risk_score': {
@@ -173,15 +173,15 @@ export function getMetricHealth(key, value) {
       warning: [40, 65],   // 40-65: robustesse modérée
       good: [65, 100],     // 65-100: bonne robustesse
       interpretation: {
-        danger: "Portfolio fragile - risque élevé",
-        warning: "Robustesse modérée - surveiller",
-        good: "Portfolio robuste - bien protégé"
+        danger: "Portfolio fragile - high risk",
+        warning: "Moderate robustness - monitor",
+        good: "Robust portfolio - well protected"
       }
     }
   };
 
   const rule = healthRules[key];
-  if (!rule) return { level: 'unknown', color: '#6b7280', interpretation: 'Métrique non évaluée' };
+  if (!rule) return { level: 'unknown', color: '#6b7280', interpretation: 'Metric not evaluated' };
 
   // Check which range the value falls into
   for (const [level, range] of Object.entries(rule)) {
@@ -193,12 +193,12 @@ export function getMetricHealth(key, value) {
       return {
         level,
         color,
-        interpretation: rule.interpretation[level] || 'Pas d\'interprétation disponible'
+        interpretation: rule.interpretation[level] || 'No interpretation available'
       };
     }
   }
 
-  return { level: 'unknown', color: '#6b7280', interpretation: 'Valeur hors limites' };
+  return { level: 'unknown', color: '#6b7280', interpretation: 'Value out of bounds' };
 }
 
 // ===== Alert Formatting =====

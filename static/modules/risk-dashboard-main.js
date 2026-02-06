@@ -101,7 +101,7 @@ export async function refreshDashboard(forceRefresh = false) {
     // Update timestamp
     const timestamp = document.getElementById('last-update');
     if (timestamp) {
-      timestamp.textContent = `Last update: ${new Date().toLocaleTimeString('fr-FR')}`;
+      timestamp.textContent = `Last update: ${new Date().toLocaleTimeString('en-US')}`;
     }
 
     debugLogger.debug('✅ Dashboard refreshed successfully');

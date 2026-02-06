@@ -12,7 +12,7 @@ const algorithms = {
   risk_parity: { name: "Risk Parity", endpoint: "risk_parity" },
   max_diversification: { name: "Max Diversification", endpoint: "max_diversification" },
   cvar_optimization: { name: "CVaR Optimization", endpoint: "cvar_optimization" },
-  efficient_frontier: { name: "Frontière Efficiente", endpoint: "efficient_frontier" }
+  efficient_frontier: { name: "Efficient Frontier", endpoint: "efficient_frontier" }
 };
 
 // Utilitaires
@@ -31,12 +31,12 @@ function setLoadingState(isLoading) {
 
   if (isLoading) {
     runBtn.disabled = true;
-    runBtn.innerHTML = '⏳ Optimisation en cours...';
+    runBtn.innerHTML = '⏳ Optimization in progress...';
     compareBtn.disabled = true;
     resetBtn.disabled = true;
   } else {
     runBtn.disabled = false;
-    runBtn.innerHTML = '🚀 Optimiser';
+    runBtn.innerHTML = '🚀 Optimize';
     compareBtn.disabled = false;
     resetBtn.disabled = false;
   }
@@ -69,17 +69,17 @@ function validateParameters(algorithm) {
   // Validation inputs communs
   const lookback = parseInt(document.getElementById('lookback').value);
   if (isNaN(lookback) || lookback < 30 || lookback > 2000) {
-    errors.push("Historique doit être entre 30 et 2000 jours");
+    errors.push("History must be between 30 and 2000 days");
   }
 
   const minUsd = parseFloat(document.getElementById('minusd').value);
   if (isNaN(minUsd) || minUsd < 0 || minUsd > 100000) {
-    errors.push("Montant minimum doit être entre 0 et 100,000 USD");
+    errors.push("Minimum amount must be between 0 and 100,000 USD");
   }
 
   const riskFreeRate = parseFloat(document.getElementById('risk-free-rate').value);
   if (isNaN(riskFreeRate) || riskFreeRate < 0 || riskFreeRate > 10) {
-    errors.push("Taux sans risque doit être entre 0% et 10%");
+    errors.push("Risk-free rate must be between 0% and 10%");
   }
 
   // Validation spécifique Black-Litterman
@@ -89,22 +89,22 @@ function validateParameters(algorithm) {
       const confidence = JSON.parse(document.getElementById('view-confidence').value);
 
       if (Object.keys(views).length === 0) {
-        errors.push("Au moins une vue de marché est requise");
+        errors.push("At least one market view is required");
       }
 
       for (const [asset, ret] of Object.entries(views)) {
         if (typeof ret !== 'number' || ret < -1 || ret > 2) {
-          errors.push(`Rendement invalide pour ${asset}: ${ret}`);
+          errors.push(`Invalid return for ${asset}: ${ret}`);
         }
       }
 
       for (const [asset, conf] of Object.entries(confidence)) {
         if (typeof conf !== 'number' || conf < 0 || conf > 1) {
-          errors.push(`Confiance invalide pour ${asset}: ${conf}`);
+          errors.push(`Invalid confidence for ${asset}: ${conf}`);
         }
       }
     } catch (e) {
-      errors.push("Format JSON invalide pour les vues de marché");
+      errors.push("Invalid JSON format for market views");
     }
   }
 
@@ -119,14 +119,14 @@ async function runOptimization() {
   // Validation
   const errors = validateParameters(algorithm);
   if (errors.length > 0) {
-    setStatus('Erreur de validation');
+    setStatus('Validation error');
     showError(errors.join('; '));
     return;
   }
 
   // Loading state
   setLoadingState(true);
-  setStatus(`Optimisation ${algorithms[algorithm].name} en cours...`);
+  setStatus(`Optimization ${algorithms[algorithm].name} in progress...`);
 
   try {
     // Paramètres de base
@@ -193,7 +193,7 @@ async function runOptimization() {
 
     const result = await response.json();
     if (!result.success) {
-      throw new Error(result.error || 'Optimisation échouée');
+      throw new Error(result.error || 'Optimization failed');
     }
 
     currentResults[algorithm] = result;
@@ -204,12 +204,12 @@ async function runOptimization() {
       displayOptimizationResults(result, algorithm);
     }
 
-    setStatus('✅ Optimisation terminée avec succès');
+    setStatus('✅ Optimization completed successfully');
 
   } catch (error) {
     (window.debugLogger || console).error('Optimization error:', error);
-    setStatus('❌ Erreur d\'optimisation');
-    showError(`Erreur: ${error.message}`);
+    setStatus('❌ Optimization error');
+    showError(`Error: ${error.message}`);
   } finally {
     setLoadingState(false);
   }
@@ -220,14 +220,14 @@ function displayOptimizationResults(result, algorithm) {
   // Validation robuste des résultats
   if (!result || !result.weights || typeof result.weights !== 'object') {
     (window.debugLogger || console).error('Invalid optimization result: missing or invalid weights', result);
-    showError('Résultat d\'optimisation invalide : données de poids manquantes');
+    showError('Invalid optimization result: missing weight data');
     return;
   }
 
   // Vérifier que weights n'est pas vide
   if (Object.keys(result.weights).length === 0) {
     (window.debugLogger || console).warn('Optimization result has empty weights');
-    showError('L\'optimisation n\'a produit aucun poids (portfolio vide)');
+    showError('Optimization produced no weights (empty portfolio)');
     return;
   }
 
@@ -263,7 +263,7 @@ function renderWeightsChart(weights, currentWeights) {
   // Check Chart.js disponible
   if (typeof Chart === 'undefined') {
     console.error('Chart.js not loaded - cannot render chart');
-    showError('Bibliothèque Chart.js non chargée');
+    showError('Chart.js library not loaded');
     return;
   }
 
@@ -316,7 +316,7 @@ function renderWeightsChart(weights, currentWeights) {
         scales: {
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'Poids (%)' },
+            title: { display: true, text: 'Weight (%)' },
             grid: { color: 'var(--theme-border)' }
           },
           x: {
@@ -434,12 +434,12 @@ function renderWeightsTable(weights, currentWeights) {
 function renderKPIs(result, algorithm) {
   const kpis = document.getElementById('kpis');
   const baseKPIs = [
-    { label: 'Rendement Attendu', value: formatPct(result.expected_return) },
-    { label: 'Volatilité', value: formatPct(result.volatility) },
-    { label: 'Ratio de Sharpe', value: formatNum(result.sharpe_ratio) },
-    { label: 'Ratio Diversification', value: formatNum(result.diversification_ratio) },
-    { label: 'Score Optimisation', value: formatNum(result.optimization_score) },
-    { label: 'Contraintes OK', value: result.constraints_satisfied ? '✅' : '⚠️' }
+    { label: 'Expected Return', value: formatPct(result.expected_return) },
+    { label: 'Volatility', value: formatPct(result.volatility) },
+    { label: 'Sharpe Ratio', value: formatNum(result.sharpe_ratio) },
+    { label: 'Diversification Ratio', value: formatNum(result.diversification_ratio) },
+    { label: 'Optimization Score', value: formatNum(result.optimization_score) },
+    { label: 'Constraints OK', value: result.constraints_satisfied ? '✅' : '⚠️' }
   ];
 
   // KPIs spécifiques par algorithme
@@ -486,7 +486,7 @@ function renderKPIs(result, algorithm) {
 
   if (result.sector_exposures) {
     additionalHTML += `
-      <h4 style="margin: 1rem 0 0.5rem 0;">🏢 Expositions Sectorielles</h4>
+      <h4 style="margin: 1rem 0 0.5rem 0;">🏢 Sector Exposures</h4>
       <div class="grid-3">
         ${Object.entries(result.sector_exposures).map(([sector, expo]) =>
           `<div class="kpi">
@@ -504,7 +504,7 @@ function renderKPIs(result, algorithm) {
 function renderTrades(trades) {
   const table = document.getElementById('tradesTable');
   if (!trades || !trades.length) {
-    table.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--theme-text-muted);">Aucun rééquilibrage nécessaire</td></tr>';
+    table.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--theme-text-muted);">No rebalancing needed</td></tr>';
     return;
   }
 
@@ -532,7 +532,7 @@ function renderFrontierChart(frontierData) {
   // Check Chart.js disponible
   if (typeof Chart === 'undefined') {
     console.error('Chart.js not loaded - cannot render chart');
-    showError('Bibliothèque Chart.js non chargée');
+    showError('Chart.js library not loaded');
     return;
   }
 
@@ -543,7 +543,7 @@ function renderFrontierChart(frontierData) {
     type: 'scatter',
     data: {
       datasets: [{
-        label: 'Frontière Efficiente',
+        label: 'Efficient Frontier',
         data: frontierData.risks.map((risk, i) => ({
           x: risk * 100,
           y: frontierData.returns[i] * 100
@@ -559,11 +559,11 @@ function renderFrontierChart(frontierData) {
       maintainAspectRatio: false,
       scales: {
         x: {
-          title: { display: true, text: 'Volatilité (%)' },
+          title: { display: true, text: 'Volatility (%)' },
           grid: { color: 'var(--theme-border)' }
         },
         y: {
-          title: { display: true, text: 'Rendement Attendu (%)' },
+          title: { display: true, text: 'Expected Return (%)' },
           grid: { color: 'var(--theme-border)' }
         }
       },
@@ -589,11 +589,11 @@ async function compareAlgorithms() {
   const resetBtn = document.getElementById('resetBtn');
 
   compareBtn.disabled = true;
-  compareBtn.innerHTML = '⏳ Comparaison en cours...';
+  compareBtn.innerHTML = '⏳ Comparison in progress...';
   runBtn.disabled = true;
   resetBtn.disabled = true;
 
-  setStatus('Comparaison des algorithmes en cours...');
+  setStatus('Algorithm comparison in progress...');
   document.getElementById('comparison-container').style.display = 'block';
 
   const compareList = ['max_sharpe', 'risk_parity', 'max_diversification'];
@@ -640,11 +640,11 @@ async function compareAlgorithms() {
     }
 
     renderComparisonTable(results);
-    setStatus('✅ Comparaison terminée');
+    setStatus('✅ Comparison completed');
   } finally {
     // Réactiver boutons
     compareBtn.disabled = false;
-    compareBtn.innerHTML = '📊 Comparer Algorithmes';
+    compareBtn.innerHTML = '📊 Compare Algorithms';
     runBtn.disabled = false;
     resetBtn.disabled = false;
   }
@@ -657,7 +657,7 @@ function renderComparisonTable(results) {
   let html = `
     <thead>
       <tr>
-        <th>Métrique</th>
+        <th>Metric</th>
         ${Object.keys(results).map(algo => `<th>${algorithms[algo].name}</th>`).join('')}
       </tr>
     </thead>
@@ -683,10 +683,10 @@ function renderComparisonTable(results) {
 
 function getMetricLabel(metric) {
   const labels = {
-    expected_return: 'Rendement Attendu',
-    volatility: 'Volatilité',
-    sharpe_ratio: 'Ratio de Sharpe',
-    diversification_ratio: 'Ratio Diversification'
+    expected_return: 'Expected Return',
+    volatility: 'Volatility',
+    sharpe_ratio: 'Sharpe Ratio',
+    diversification_ratio: 'Diversification Ratio'
   };
   return labels[metric] || metric;
 }
@@ -698,7 +698,7 @@ function exportResults(format) {
   const result = currentResults[algorithm];
 
   if (!result) {
-    showError('Aucun résultat à exporter. Lancez d\'abord une optimisation.');
+    showError('No results to export. Run an optimization first.');
     return;
   }
 

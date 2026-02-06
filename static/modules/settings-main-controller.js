@@ -81,10 +81,10 @@ window.debouncedSaveSettings = function() {
   window.settingsSaveTimeout = setTimeout(async () => {
     try {
       await saveSettings();
-      showNotification('✓ Sauvegardé', 'success', 1500);
+      showNotification('✓ Saved', 'success', 1500);
     } catch (err) {
       debugLogger.error('Auto-save failed:', err);
-      showNotification('✗ Erreur sauvegarde', 'error', 2500);
+      showNotification('✗ Save error', 'error', 2500);
     }
   }, 800);
 };
@@ -137,7 +137,7 @@ async function initQuickSettings() {
           }
           await saveSettings(); // Auto-save immédiat pour changement de source
           updateStatusSummary();
-          showNotification('✓ Source changée et sauvegardée', 'success');
+          showNotification('✓ Source changed and saved', 'success');
           return;
         } else if (src && src.type === 'api') {
           // Mode API sélectionné
@@ -150,7 +150,7 @@ async function initQuickSettings() {
           }
           await saveSettings(); // Auto-save immédiat pour changement de source
           updateStatusSummary();
-          showNotification('✓ Source changée et sauvegardée', 'success');
+          showNotification('✓ Source changed and saved', 'success');
           return;
         }
       } catch (err) {
@@ -328,11 +328,11 @@ async function saveSettings() {
     } else {
       const error = await response.json();
       debugLogger.error('Failed to save user settings to backend:', error);
-      showNotification('⚠️ Sauvegardé localement uniquement', 'warning', 2000);
+      showNotification('⚠️ Saved locally only', 'warning', 2000);
     }
   } catch (error) {
     debugLogger.error('Error saving user settings to backend:', error);
-    showNotification('⚠️ Sauvegardé localement uniquement', 'warning', 2000);
+    showNotification('⚠️ Saved locally only', 'warning', 2000);
   }
 }
 
@@ -536,7 +536,7 @@ async function updateStatusSummary() {
   const globalSettings = window.userSettings || getDefaultSettings();
 
   // Récupérer le label de source depuis l'API utilisateur
-  let sourceLabel = 'Aucune source';
+  let sourceLabel = 'No source';
   try {
     const response = await fetch('/api/users/sources', {
       headers: { 'X-User': getActiveUser() }
@@ -551,7 +551,7 @@ async function updateStatusSummary() {
       if (currentSource) {
         sourceLabel = currentSource.label;
       } else if (data.sources.length === 0) {
-        sourceLabel = 'Aucune source';
+        sourceLabel = 'No source';
       } else {
         sourceLabel = globalSettings.data_source;
       }
@@ -567,8 +567,8 @@ async function updateStatusSummary() {
 
   const themeLabels = {
     'auto': '🌓 Auto',
-    'light': '☀️ Clair',
-    'dark': '🌙 Sombre'
+    'light': '☀️ Light',
+    'dark': '🌙 Dark'
   };
 
   summary.innerHTML = `
@@ -603,12 +603,12 @@ function updateStatusSummarySync() {
 
   const themeLabels = {
     'auto': '🌓 Auto',
-    'light': '☀️ Clair',
-    'dark': '🌙 Sombre'
+    'light': '☀️ Light',
+    'dark': '🌙 Dark'
   };
 
   // Use current data source label without API call
-  const sourceLabel = globalSettings.data_source || 'Non configurée';
+  const sourceLabel = globalSettings.data_source || 'Not configured';
 
   summary.innerHTML = `
   <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px;">
@@ -781,10 +781,10 @@ async function selectPricing(pricing) {
   // 🔧 FIX: Save immediately (not debounced) to ensure pricing mode persists
   try {
     await saveSettings();
-    showNotification('✓ Mode pricing sauvegardé', 'success', 1500);
+    showNotification('✓ Pricing mode saved', 'success', 1500);
   } catch (err) {
     debugLogger.error('Failed to save pricing mode:', err);
-    showNotification('✗ Erreur sauvegarde', 'error', 2500);
+    showNotification('✗ Save error', 'error', 2500);
   }
 }
 
@@ -905,13 +905,13 @@ async function saveAllSettings() {
   updateUI();
 
   // Notification
-  showNotification('⚙️ Configuration sauvegardée !', 'success');
+  showNotification('⚙️ Configuration saved!', 'success');
 }
 
 // Test de la source de données
 async function testDataSource() {
   const testDiv = document.getElementById('data-source-test');
-  testDiv.innerHTML = '<div class="test-result">🧪 Test en cours...</div>';
+  testDiv.innerHTML = '<div class="test-result">🧪 Testing...</div>';
 
   try {
     const balanceResult = await window.loadBalanceData(true);
@@ -922,24 +922,24 @@ async function testDataSource() {
     if (data.items && data.items.length > 0) {
       testDiv.innerHTML = `
     <div class="test-result" style="color: var(--pos);">
-      ✅ <strong>Succès</strong><br>
+      ✅ <strong>Success</strong><br>
       Source: ${data.source_used}<br>
-      Assets trouvés: ${data.items.length}<br>
+      Assets found: ${data.items.length}<br>
       Premier asset: ${data.items[0].symbol} (${data.items[0].value_usd || 0} USD)
     </div>
   `;
     } else {
       testDiv.innerHTML = `
     <div class="test-result" style="color: var(--warning);">
-      ⚠️ <strong>Aucune donnée</strong><br>
-      La source répond mais ne retourne pas d'assets
+      ⚠️ <strong>No data</strong><br>
+      Source responds but returns no assets
     </div>
   `;
     }
   } catch (error) {
     testDiv.innerHTML = `
   <div class="test-result" style="color: var(--danger);">
-    ❌ <strong>Erreur</strong><br>
+    ❌ <strong>Error</strong><br>
     ${error.message}
   </div>
 `;
@@ -976,8 +976,8 @@ async function autoDetectDebugToken() {
         if (!window.userSettings) window.userSettings = getDefaultSettings();
         window.userSettings.debug_token = token;
         document.getElementById('debug_token').value = maskApiKey(token);
-        console.debug('DEBUG_TOKEN auto-détecté et configuré');
-        showNotification('🔑 DEBUG_TOKEN auto-détecté', 'success');
+        console.debug('DEBUG_TOKEN auto-detected et configuré');
+        showNotification('🔑 DEBUG_TOKEN auto-detected', 'success');
         return;
       }
       // Rate limit les tentatives
@@ -1075,7 +1075,7 @@ async function autoDetectApiKeys() {
 
       if (foundKeys) {
         saveSettings(); // Sauvegarder les nouvelles clés
-        showNotification('🔑 Clés API détectées depuis .env', 'success');
+        showNotification('🔑 API Keys detected from .env', 'success');
       }
     }
   } catch (e) {
@@ -1094,10 +1094,10 @@ function updateApiKeyStatus(keyType, hasKey) {
   const statusEl = document.getElementById(`${keyType}_status`);
   if (statusEl) {
     if (hasKey) {
-      statusEl.textContent = 'Configurée';
+      statusEl.textContent = 'Configured';
       statusEl.className = 'status-indicator status-ok';
     } else {
-      statusEl.textContent = 'Vide';
+      statusEl.textContent = 'Empty';
       statusEl.className = 'status-indicator status-warning';
     }
   }
@@ -1186,15 +1186,15 @@ async function syncApiKeysFromEnv() {
 
       if (foundKeys) {
         saveSettings();
-        showNotification('📥 Clés rechargées depuis .env', 'success');
+        showNotification('📥 Keys reloaded from .env', 'success');
       } else {
-        showNotification('⚠️ Aucune clé trouvée dans .env', 'warning');
+        showNotification('⚠️ No keys found in .env', 'warning');
       }
     } else {
-      showNotification('❌ Erreur lecture .env', 'error');
+      showNotification('❌ Error reading .env', 'error');
     }
   } catch (e) {
-    showNotification(`❌ Erreur: ${e.message}`, 'error');
+    showNotification(`❌ Error: ${e.message}`, 'error');
   }
 }
 
@@ -1210,7 +1210,7 @@ async function syncApiKeysToEnv() {
   try {
     const debugToken = (window.userSettings || getDefaultSettings()).debug_token;
     if (!debugToken) {
-      showNotification('❌ DEBUG_TOKEN requis pour sauvegarder vers .env', 'error');
+      showNotification('❌ DEBUG_TOKEN required to save to .env', 'error');
       return;
     }
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/debug/api-keys?debug_token=${debugToken}`, {
@@ -1222,22 +1222,22 @@ async function syncApiKeysToEnv() {
     if (response.ok) {
       const result = await response.json();
       if (result.updated) {
-        showNotification('💾 Clés sauvées vers .env', 'success');
+        showNotification('💾 Keys saved to .env', 'success');
       } else {
-        showNotification('⚪ Aucune clé à sauvegarder', 'info');
+        showNotification('⚪ No keys to save', 'info');
       }
     } else {
       throw new Error(`HTTP ${response.status}`);
     }
   } catch (e) {
-    showNotification(`❌ Erreur sauvegarde: ${e.message}`, 'error');
+    showNotification(`❌ Save error: ${e.message}`, 'error');
   }
 }
 
 // Test des clés API
 async function testApiKeys() {
   const testDiv = document.getElementById('api-keys-test');
-  testDiv.innerHTML = '<div class="test-result">🧪 Test des APIs...</div>';
+  testDiv.innerHTML = '<div class="test-result">🧪 Testing APIs...</div>';
 
   let results = [];
   const globalSettings = window.userSettings || getDefaultSettings();
@@ -1249,7 +1249,7 @@ async function testApiKeys() {
         headers: { 'X-User': getActiveUser() }
       });
       const data = await response.json();
-      results.push(`🥷 CoinGecko: ${data.ok ? '✅ OK' : '❌ Erreur'}`);
+      results.push(`🥷 CoinGecko: ${data.ok ? '✅ OK' : '❌ Error'}`);
       if (!data.ok && data.message) {
         results.push(`   └─ ${data.message}`);
       }
@@ -1257,7 +1257,7 @@ async function testApiKeys() {
       results.push(`🥷 CoinGecko: ❌ ${e.message}`);
     }
   } else {
-    results.push(`🥷 CoinGecko: ⚪ Pas de clé configurée`);
+    results.push(`🥷 CoinGecko: ⚪ No key configured`);
   }
 
   // Test FRED via backend proxy
@@ -1267,7 +1267,7 @@ async function testApiKeys() {
         headers: { 'X-User': getActiveUser() }
       });
       const data = await response.json();
-      results.push(`🏛️ FRED: ${response.ok && data.success ? '✅ OK' : '❌ Erreur'}`);
+      results.push(`🏛️ FRED: ${response.ok && data.success ? '✅ OK' : '❌ Error'}`);
       if (!response.ok && data.detail) {
         results.push(`   └─ ${data.detail}`);
       } else if (!data.success && data.error) {
@@ -1277,7 +1277,7 @@ async function testApiKeys() {
       results.push(`🏛️ FRED: ❌ ${e.message}`);
     }
   } else {
-    results.push(`🏛️ FRED: ⚪ Pas de clé configurée`);
+    results.push(`🏛️ FRED: ⚪ No key configured`);
   }
 
   // Test CoinTracking API
@@ -1287,12 +1287,12 @@ async function testApiKeys() {
       globalConfig.set('data_source', 'cointracking_api');
       const result = await window.loadBalanceData(true);
       globalConfig.set('data_source', originalSource);
-      results.push(`📊 CoinTracking API: ${result.success && result.data?.items ? '✅ OK' : '❌ Erreur'}`);
+      results.push(`📊 CoinTracking API: ${result.success && result.data?.items ? '✅ OK' : '❌ Error'}`);
     } catch (e) {
       results.push(`📊 CoinTracking API: ❌ ${e.message}`);
     }
   } else {
-    results.push(`📊 CoinTracking API: ⚪ Clés manquantes`);
+    results.push(`📊 CoinTracking API: ⚪ Missing keys`);
   }
 
   // Test AI Chat Providers (Groq + Claude + Grok + OpenAI)
@@ -1310,7 +1310,7 @@ async function testApiKeys() {
         if (groq.configured) {
           results.push(`🤖 Groq AI: ✅ OK (${groq.model})`);
         } else {
-          results.push(`🤖 Groq AI: ⚪ Pas de clé configurée`);
+          results.push(`🤖 Groq AI: ⚪ No key configured`);
         }
       }
 
@@ -1320,7 +1320,7 @@ async function testApiKeys() {
         if (claude.configured) {
           results.push(`🧠 Claude AI: ✅ OK (${claude.model})`);
         } else {
-          results.push(`🧠 Claude AI: ⚪ Pas de clé configurée`);
+          results.push(`🧠 Claude AI: ⚪ No key configured`);
         }
       }
 
@@ -1330,7 +1330,7 @@ async function testApiKeys() {
         if (grok.configured) {
           results.push(`🚀 Grok AI: ✅ OK (${grok.model})`);
         } else {
-          results.push(`🚀 Grok AI: ⚪ Pas de clé configurée`);
+          results.push(`🚀 Grok AI: ⚪ No key configured`);
         }
       }
 
@@ -1340,11 +1340,11 @@ async function testApiKeys() {
         if (openai.configured) {
           results.push(`🤖 OpenAI: ✅ OK (${openai.model})`);
         } else {
-          results.push(`🤖 OpenAI: ⚪ Pas de clé configurée`);
+          results.push(`🤖 OpenAI: ⚪ No key configured`);
         }
       }
     } else {
-      results.push(`🤖 AI Chat: ❌ Service indisponible`);
+      results.push(`🤖 AI Chat: ❌ Service unavailable`);
     }
   } catch (e) {
     results.push(`🤖 AI Chat: ❌ ${e.message}`);
@@ -1355,14 +1355,14 @@ async function testApiKeys() {
     const response = await fetch(`${globalSettings.api_base_url}/health`, {
       headers: { 'X-User': getActiveUser() }
     });
-    results.push(`🏥 Backend: ${response.ok ? '✅ OK' : '❌ Indisponible'}`);
+    results.push(`🏥 Backend: ${response.ok ? '✅ OK' : '❌ Unavailable'}`);
   } catch (e) {
     results.push(`🏥 Backend: ❌ ${e.message}`);
   }
 
   testDiv.innerHTML = `
   <div class="test-result">
-    <strong>Résultats des tests:</strong><br>
+    <strong>Test results:</strong><br>
       ${results.join('<br>')}
   </div>
   `;
@@ -1371,14 +1371,14 @@ async function testApiKeys() {
 // Test complet du système (Enhanced Dec 2025)
 async function runFullSystemTest() {
   const testDiv = document.getElementById('full-system-test');
-  testDiv.innerHTML = '<div class="test-result">🚀 Test complet en cours... (peut prendre 10-15 secondes)</div>';
+  testDiv.innerHTML = '<div class="test-result">🚀 Full system test in progress... (may take 10-15 seconds)</div>';
 
   const startTime = performance.now();
   let results = [];
   const globalSettings = window.userSettings || getDefaultSettings();
 
   // === CORE SYSTEM ===
-  results.push('<strong>🔧 Système Principal</strong>');
+  results.push('<strong>🔧 Core System</strong>');
 
   // Backend Health
   try {
@@ -1387,7 +1387,7 @@ async function runFullSystemTest() {
       const data = await healthResponse.json();
       results.push(`&nbsp;&nbsp;🏥 Backend: ✅ OK (${data.version || 'v1.0'})`);
     } else {
-      results.push(`&nbsp;&nbsp;🏥 Backend: ❌ Erreur HTTP ${healthResponse.status}`);
+      results.push(`&nbsp;&nbsp;🏥 Backend: ❌ HTTP Error ${healthResponse.status}`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;🏥 Backend: ❌ ${e.message}`);
@@ -1398,13 +1398,13 @@ async function runFullSystemTest() {
     const healthResponse = await fetch(`${globalSettings.api_base_url}/health`, { headers: { 'X-User': getActiveUser() } });
     const data = await healthResponse.json();
     const redisOk = data.redis === 'connected' || data.redis?.status === 'ok';
-    results.push(`&nbsp;&nbsp;🔴 Redis: ${redisOk ? '✅ Connecté' : '⚠️ Non accessible (non critique)'}`);
+    results.push(`&nbsp;&nbsp;🔴 Redis: ${redisOk ? '✅ Connected' : '⚠️ Not accessible (non-critical)'}`);
   } catch (e) {
     results.push(`&nbsp;&nbsp;🔴 Redis: ❌ ${e.message}`);
   }
 
   // === DATA SOURCES ===
-  results.push('<br><strong>📊 Sources de Données</strong>');
+  results.push('<br><strong>📊 Data Sources</strong>');
 
   // Balance Data
   try {
@@ -1412,7 +1412,7 @@ async function runFullSystemTest() {
     const balanceData = balanceResult.csvText
       ? { items: parseCSVBalancesAuto(balanceResult.csvText) }
       : (balanceResult.data || { items: [] });
-    results.push(`&nbsp;&nbsp;💰 Balances: ${balanceData.items?.length > 0 ? '✅ ' + balanceData.items.length + ' assets' : '⚠️ Aucun asset'}`);
+    results.push(`&nbsp;&nbsp;💰 Balances: ${balanceData.items?.length > 0 ? '✅ ' + balanceData.items.length + ' assets' : '⚠️ No assets'}`);
   } catch (e) {
     results.push(`&nbsp;&nbsp;💰 Balances: ❌ ${e.message}`);
   }
@@ -1424,9 +1424,9 @@ async function runFullSystemTest() {
       const data = await response.json();
       const modules = data.modules || [];
       const activeCount = modules.filter(m => m.enabled).length;
-      results.push(`&nbsp;&nbsp;📁 Sources System: ✅ ${activeCount}/${modules.length} modules actifs`);
+      results.push(`&nbsp;&nbsp;📁 Sources System: ✅ ${activeCount}/${modules.length} active modules`);
     } else {
-      results.push(`&nbsp;&nbsp;📁 Sources System: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;📁 Sources System: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;📁 Sources System: ❌ ${e.message}`);
@@ -1445,7 +1445,7 @@ async function runFullSystemTest() {
       const totalValue = metricsData.data?.total_value || metricsData.total_value || 0;
       results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ✅ OK ($${totalValue.toLocaleString()})`);
     } else {
-      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ Pas de données`);
+      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ No data`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ ${e.message}`);
@@ -1454,9 +1454,9 @@ async function runFullSystemTest() {
   // Taxonomy
   try {
     const taxData = await globalConfig.apiRequest('/taxonomy/suggestions');
-    results.push(`&nbsp;&nbsp;🏷️ Taxonomie: ${taxData ? '✅ OK' : '❌ Erreur'}`);
+    results.push(`&nbsp;&nbsp;🏷️ Taxonomy: ${taxData ? '✅ OK' : '❌ Error'}`);
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🏷️ Taxonomie: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp;🏷️ Taxonomy: ❌ ${e.message}`);
   }
 
   // === RISK & ML ===
@@ -1470,7 +1470,7 @@ async function runFullSystemTest() {
       const riskScore = data.data?.risk_score || data.risk_score || 0;
       results.push(`&nbsp;&nbsp;🛡️ Risk API: ✅ OK (Score: ${riskScore})`);
     } else {
-      results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ ${e.message}`);
@@ -1483,9 +1483,9 @@ async function runFullSystemTest() {
       const data = await response.json();
       const models = data.data?.models || [];
       const trainedCount = models.filter(m => m.status === 'TRAINED').length;
-      results.push(`&nbsp;&nbsp;🤖 ML Models: ✅ ${trainedCount}/${models.length} modèles entraînés`);
+      results.push(`&nbsp;&nbsp;🤖 ML Models: ✅ ${trainedCount}/${models.length} models trained`);
     } else {
-      results.push(`&nbsp;&nbsp;🤖 ML Models: ⚠️ Accès non autorisé (admin requis)`);
+      results.push(`&nbsp;&nbsp;🤖 ML Models: ⚠️ Unauthorized access (admin required)`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;🤖 ML Models: ❌ ${e.message}`);
@@ -1500,9 +1500,9 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const alerts = data.data?.alerts || data.alerts || [];
-      results.push(`&nbsp;&nbsp;🔔 Alerts System: ✅ ${alerts.length} alerte(s) active(s)`);
+      results.push(`&nbsp;&nbsp;🔔 Alerts System: ✅ ${alerts.length} active alert(s)`);
     } else {
-      results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ ${e.message}`);
@@ -1519,14 +1519,14 @@ async function runFullSystemTest() {
       const icon = isActive ? '⚙️' : '✅';
       results.push(`&nbsp;&nbsp;⚙️ Governance: ${icon} Mode=${mode}, State=${currentState}`);
     } else {
-      results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ ${e.message}`);
   }
 
   // === INTEGRATIONS ===
-  results.push('<br><strong>🔗 Intégrations</strong>');
+  results.push('<br><strong>🔗 Integrations</strong>');
 
   // Saxo
   try {
@@ -1534,9 +1534,9 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const portfolios = data.data?.portfolios || data.portfolios || [];
-      results.push(`&nbsp;&nbsp;📊 Saxo: ${portfolios.length > 0 ? '✅ ' + portfolios.length + ' portfolio(s)' : '⚠️ Aucun portfolio'}`);
+      results.push(`&nbsp;&nbsp;📊 Saxo: ${portfolios.length > 0 ? '✅ ' + portfolios.length + ' portfolio(s)' : '⚠️ No portfolios'}`);
     } else {
-      results.push(`&nbsp;&nbsp;📊 Saxo: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;📊 Saxo: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;📊 Saxo: ❌ ${e.message}`);
@@ -1544,13 +1544,13 @@ async function runFullSystemTest() {
 
   // Wealth/Patrimoine
   try {
-    const response = await fetch(`${globalSettings.api_base_url}/api/wealth/patrimoine/summary`, { headers: { 'X-User': getActiveUser() } });
+    const response = await fetch(`${globalSettings.api_base_url}/api/wealth/summary`, { headers: { 'X-User': getActiveUser() } });
     if (response.ok) {
       const data = await response.json();
       const netWorth = data.data?.net_worth || data.net_worth || 0;
       results.push(`&nbsp;&nbsp;💰 Wealth: ✅ Net Worth $${netWorth.toLocaleString()}`);
     } else {
-      results.push(`&nbsp;&nbsp;💰 Wealth: ❌ Erreur`);
+      results.push(`&nbsp;&nbsp;💰 Wealth: ❌ Error`);
     }
   } catch (e) {
     results.push(`&nbsp;&nbsp;💰 Wealth: ❌ ${e.message}`);
@@ -1561,18 +1561,18 @@ async function runFullSystemTest() {
 
   testDiv.innerHTML = `
   <div class="test-result">
-    <strong>🧪 Résultats du Test Complet du Système</strong><br>
+    <strong>🧪 Full System Test Results</strong><br>
     <div style="margin-top: 12px;">
       ${results.join('<br>')}
     </div>
     <br>
     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--theme-border);">
-      <strong>📋 Configuration Testée</strong><br>
+      <strong>📋 Tested Configuration</strong><br>
       &nbsp;&nbsp;User: ${getActiveUser()}<br>
       &nbsp;&nbsp;Source: ${globalSettings.data_source}<br>
       &nbsp;&nbsp;Pricing: ${globalSettings.pricing}<br>
       &nbsp;&nbsp;API: ${globalSettings.api_base_url}<br>
-      &nbsp;&nbsp;⏱️ Durée: ${duration}s
+      &nbsp;&nbsp;⏱️ Duration: ${duration}s
     </div>
   </div>
   `;
@@ -1580,7 +1580,7 @@ async function runFullSystemTest() {
 
 // Utilitaires
 function resetToDefaults() {
-  if (confirm('Restaurer la configuration par défaut ?')) {
+  if (confirm('Restore default configuration?')) {
     globalConfig.reset();
     location.reload();
   }
@@ -1601,7 +1601,7 @@ async function importSettings() {
         await globalConfig.importFromFile(file);
         location.reload();
       } catch (err) {
-        alert('Erreur import: ' + err.message);
+        alert('Import error: ' + err.message);
       }
     }
   };
@@ -1611,9 +1611,9 @@ async function importSettings() {
 // Legacy clearCache() function removed - replaced by clearLocalCache() (Dec 2025)
 
 function resetAllData() {
-  if (confirm('⚠️ ATTENTION: Supprimer TOUTES les données et configurations ?')) {
+  if (confirm('⚠️ WARNING: Delete ALL data and configurations?')) {
     localStorage.clear();
-    showNotification('⚠️ Toutes les données supprimées !', 'warning');
+    showNotification('⚠️ All data deleted!', 'warning');
     setTimeout(() => location.reload(), 1000);
   }
 }
@@ -1748,12 +1748,12 @@ async function downloadCSVFiles() {
   const apiSecret = userSettings.cointracking_api_secret;
 
   if (!apiKey || !apiSecret) {
-    statusDiv.innerHTML = '<div class="error">❌ Clés API CoinTracking requises pour le téléchargement automatique.</div>';
+    statusDiv.innerHTML = '<div class="error">❌ CoinTracking API keys required for automatic download.</div>';
     return;
   }
 
-  downloadBtn.textContent = '⏳ Téléchargement...';
-  statusDiv.innerHTML = '<div class="info">🔄 Téléchargement en cours...</div>';
+  downloadBtn.textContent = '⏳ Downloading...';
+  statusDiv.innerHTML = '<div class="info">🔄 Download in progress...</div>';
 
   try {
     const selectedFiles = getSelectedFiles();
@@ -1777,9 +1777,9 @@ async function downloadCSVFiles() {
     displayDownloadResults(results);
 
   } catch (error) {
-    statusDiv.innerHTML = `<div class="error">❌ Erreur téléchargement: ${error.message}</div>`;
+    statusDiv.innerHTML = `<div class="error">❌ Download error: ${error.message}</div>`;
   } finally {
-    downloadBtn.textContent = '📥 Télécharger Maintenant';
+    downloadBtn.textContent = '📥 Download Now';
   }
 }
 
@@ -1817,13 +1817,13 @@ async function downloadSingleCSV(fileType, downloadPath) {
       size: response.size
     };
   } else {
-    throw new Error(response.error || 'Téléchargement échoué');
+    throw new Error(response.error || 'Download failed');
   }
 }
 
 function displayDownloadResults(results) {
   const statusDiv = document.getElementById('csv-download-status');
-  let html = '<div style="margin-top: 16px;"><h4>Résultats du téléchargement:</h4><ul>';
+  let html = '<div style="margin-top: 16px;"><h4>Download results:</h4><ul>';
 
   results.forEach(result => {
     const icon = result.success ? '✅' : '❌';
@@ -1873,10 +1873,10 @@ async function checkCSVStatus() {
     if (response.success) {
       displayCSVStatus(response.files);
     } else {
-      statusDiv.innerHTML = '<div class="error">❌ Impossible de vérifier le status des fichiers CSV.</div>';
+      statusDiv.innerHTML = '<div class="error">❌ Unable to check CSV files status.</div>';
     }
   } catch (error) {
-    statusDiv.innerHTML = `<div class="error">❌ Erreur vérification: ${error.message}</div>`;
+    statusDiv.innerHTML = `<div class="error">❌ Verification error: ${error.message}</div>`;
   }
 }
 
@@ -1884,11 +1884,11 @@ function displayCSVStatus(files) {
   const statusDiv = document.getElementById('csv-download-status');
 
   if (!files || files.length === 0) {
-    statusDiv.innerHTML = '<div class="warning">⚠️ Aucun fichier CSV trouvé pour ce profil</div>';
+    statusDiv.innerHTML = '<div class="warning">⚠️ No CSV files found for this profile</div>';
     return;
   }
 
-  let html = '<div style="margin-top: 16px;"><h4>Fichiers CSV disponibles:</h4><ul>';
+  let html = '<div style="margin-top: 16px;"><h4>Available CSV files:</h4><ul>';
 
   files.forEach(file => {
     const age = getFileAge(file.modified);
@@ -1913,7 +1913,7 @@ function getFileAge(modifiedTimestamp) {
   const diffDays = Math.floor(diffHours / 24);
 
   if (diffDays > 0) {
-    return { days: diffDays, hours: diffHours, text: `${diffDays}j` };
+    return { days: diffDays, hours: diffHours, text: `${diffDays}d` };
   } else if (diffHours > 0) {
     return { days: 0, hours: diffHours, text: `${diffHours}h` };
   } else {
@@ -1926,7 +1926,7 @@ function browseDownloadFolder() {
   // Pour l'instant, juste permettre de saisir manuellement
   // Dans une vraie application, on utiliserait l'API File System
   const currentPath = document.getElementById('csv_download_path').value;
-  const newPath = prompt('Chemin du dossier de téléchargement:', currentPath);
+  const newPath = prompt('Download folder path:', currentPath);
   if (newPath) {
     document.getElementById('csv_download_path').value = newPath;
   }
@@ -1964,7 +1964,7 @@ async function loadSaxoIntegrationStatus() {
     // Fallback graceful avec état vide
     updateSaxoStatus({
       portfolios: [],
-      error: 'Service temporairement indisponible',
+      error: 'Service temporarily unavailable',
       status: 'unavailable'
     });
   }
@@ -1996,7 +1996,7 @@ function updateSaxoStatus(data) {
 
   } else {
     if (countSpan) {
-      countSpan.textContent = 'Aucun portfolio importé';
+      countSpan.textContent = 'No portfolio imported';
       countSpan.style.color = 'var(--theme-text-muted)';
     }
 
@@ -2038,7 +2038,7 @@ async function handleSaxoUpload(event) {
       // Success
       resultDiv.innerHTML = `
         <div style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-md); color: var(--success);">
-          <strong>✅ Upload réussi!</strong><br>
+          <strong>✅ Upload successful!</strong><br>
           ${result.portfolios_count || 1} portfolio(s) importé(s) • ${result.positions_count || 0} positions
         </div>
       `;
@@ -2048,7 +2048,7 @@ async function handleSaxoUpload(event) {
 
       // Show success toast (if available)
       if (window.showToast) {
-        window.showToast('Portfolio Saxo importé avec succès!', 'success');
+        window.showToast('Saxo Portfolio imported successfully!', 'success');
       }
 
 
@@ -2061,7 +2061,7 @@ async function handleSaxoUpload(event) {
 
     resultDiv.innerHTML = `
       <div style="padding: 1rem; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius-md); color: var(--danger);">
-        <strong>❌ Erreur d'upload</strong><br>
+        <strong>❌ Upload error</strong><br>
         ${error.message}
       </div>
     `;
@@ -2084,7 +2084,7 @@ async function refreshSaxoStatus() {
   const statusSpan = document.getElementById('saxo-status-display');
   const dashboardBtn = document.getElementById('saxo-dashboard-btn');
 
-  if (statusSpan) statusSpan.textContent = '🔄 Vérification...';
+  if (statusSpan) statusSpan.textContent = '🔄 Checking...';
 
   try {
     // Use the wealth store utility
@@ -2093,7 +2093,7 @@ async function refreshSaxoStatus() {
 
     if (summary.isEmpty || summary.error) {
       if (statusSpan) {
-        statusSpan.textContent = '📂 Aucun portfolio importé';
+        statusSpan.textContent = '📂 No portfolio imported';
         statusSpan.style.color = 'var(--theme-text-muted)';
       }
       if (dashboardBtn) {
@@ -2115,10 +2115,10 @@ async function refreshSaxoStatus() {
     console.debug('[Settings Saxo] Error refreshing status:', error.message);
     if (statusSpan) {
       if (error.message?.includes('Failed to import')) {
-        statusSpan.textContent = '⚠️ Module non disponible';
+        statusSpan.textContent = '⚠️ Module not available';
         statusSpan.style.color = 'var(--theme-text-muted)';
       } else {
-        statusSpan.textContent = '❌ Service temporairement indisponible';
+        statusSpan.textContent = '❌ Service temporarily unavailable';
         statusSpan.style.color = 'var(--danger)';
       }
     }
@@ -2138,7 +2138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === Cache Management ===
 function clearLocalCache() {
-  if (confirm('Vider tout le cache local (localStorage) ?')) {
+  if (confirm('Clear all local cache (localStorage)?')) {
     const keysToRemove = [];
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('cache:') || key.includes('risk_score') || key.includes('balance_') || key.includes('ml_')) {
@@ -2146,13 +2146,13 @@ function clearLocalCache() {
       }
     });
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    showNotification(`🗑️ ${keysToRemove.length} clés de cache supprimées !`, 'success');
+    showNotification(`🗑️ ${keysToRemove.length} cache keys deleted!`, 'success');
     updateCacheStatsDisplay();
   }
 }
 
 async function clearBackendCache() {
-  if (confirm('Vider le cache backend (Redis) ? Cette action peut impacter les performances temporairement.')) {
+  if (confirm('Clear backend cache (Redis)? This may temporarily impact performance.')) {
     try {
       const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/cache/clear`, {
         method: 'DELETE',
@@ -2160,20 +2160,20 @@ async function clearBackendCache() {
       });
       if (response.ok) {
         const data = await response.json();
-        showNotification(`✅ Cache backend vidé : ${data.cleared_count || 'multiple'} entrées`, 'success');
+        showNotification(`✅ Backend cache cleared: ${data.cleared_count || 'multiple'} entries`, 'success');
       } else {
         const error = await response.json();
-        showNotification(`❌ Erreur: ${error.error || 'Accès refusé'}`, 'error');
+        showNotification(`❌ Error: ${error.error || 'Access denied'}`, 'error');
       }
     } catch (e) {
-      showNotification(`❌ Erreur: ${e.message}`, 'error');
+      showNotification(`❌ Error: ${e.message}`, 'error');
     }
   }
 }
 
 async function showCacheStats() {
   const displayDiv = document.getElementById('cache-stats-display');
-  displayDiv.innerHTML = '🔄 Chargement...';
+  displayDiv.innerHTML = '🔄 Loading...';
 
   try {
     // Local storage stats
@@ -2196,10 +2196,10 @@ async function showCacheStats() {
     }
 
     let html = `
-      <strong>📊 Statistiques Cache</strong><br>
+      <strong>📊 Cache Statistics</strong><br>
       <div style="margin-top: 8px;">
         <strong>Local (localStorage):</strong><br>
-        - ${localKeys.length} clés<br>
+        - ${localKeys.length} keys<br>
         - ~${(localSize / 1024).toFixed(1)} KB<br>
     `;
 
@@ -2207,18 +2207,18 @@ async function showCacheStats() {
       const stats = backendStats.data;
       html += `
         <br><strong>Backend (Redis):</strong><br>
-        - ${stats.total_keys || 0} clés<br>
+        - ${stats.total_keys || 0} keys<br>
         - ${stats.memory_used || 'N/A'}<br>
       `;
     } else {
-      html += `<br><strong>Backend:</strong> Non accessible (admin requis)<br>`;
+      html += `<br><strong>Backend:</strong> Not accessible (admin required)<br>`;
     }
 
     html += `</div>`;
     displayDiv.innerHTML = html;
 
   } catch (e) {
-    displayDiv.innerHTML = `❌ Erreur: ${e.message}`;
+    displayDiv.innerHTML = `❌ Error: ${e.message}`;
   }
 }
 
@@ -2233,7 +2233,7 @@ function updateCacheStatsDisplay() {
 async function viewRecentLogs() {
   const logsDiv = document.getElementById('logs-display');
   logsDiv.style.display = 'block';
-  logsDiv.innerHTML = '🔄 Chargement des logs...';
+  logsDiv.innerHTML = '🔄 Loading logs...';
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/logs/read?limit=100&sort_order=desc`, {
@@ -2245,7 +2245,7 @@ async function viewRecentLogs() {
       const logs = data.data || [];
 
       if (logs.length === 0) {
-        logsDiv.innerHTML = '<em style="color: var(--theme-text-muted);">Aucun log récent</em>';
+        logsDiv.innerHTML = '<em style="color: var(--theme-text-muted);">No recent logs</em>';
       } else {
         logsDiv.innerHTML = logs.map(logEntry => {
           // Les logs sont des objets: {timestamp, level, module, message, line_num}
@@ -2272,10 +2272,10 @@ async function viewRecentLogs() {
       }
     } else {
       const error = await response.json();
-      logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${error.error || 'Accès refusé (admin requis)'}</span>`;
+      logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${error.error || 'Access denied (admin required)'}</span>`;
     }
   } catch (e) {
-    logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${e.message}</span>`;
+    logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${e.message}</span>`;
   }
 }
 
@@ -2305,18 +2305,18 @@ async function downloadLogs() {
       a.download = `smartfolio-logs-${new Date().toISOString().split('T')[0]}.log`;
       a.click();
       URL.revokeObjectURL(url);
-      showNotification('📥 Logs téléchargés', 'success');
+      showNotification('📥 Logs downloaded', 'success');
     } else {
-      showNotification('❌ Erreur: Accès refusé (admin requis)', 'error');
+      showNotification('❌ Error: Access denied (admin required)', 'error');
     }
   } catch (e) {
-    showNotification(`❌ Erreur: ${e.message}`, 'error');
+    showNotification(`❌ Error: ${e.message}`, 'error');
   }
 }
 
 async function pingBackend() {
   const resultsDiv = document.getElementById('ping-results');
-  resultsDiv.innerHTML = '🏓 Test en cours...';
+  resultsDiv.innerHTML = '🏓 Test in progress...';
 
   const pings = [];
   const apiBaseUrl = (window.userSettings || getDefaultSettings()).api_base_url;
@@ -2356,10 +2356,10 @@ async function pingBackend() {
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Échec du ping</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Ping failed</span>';
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Erreur: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${e.message}</span>`;
   }
 }
 
@@ -2379,7 +2379,7 @@ async function testRedis() {
     const redisKeys = data.data?.keys;
 
     if (redisStatus === 'connected') {
-      resultsDiv.innerHTML = `<span style="color: var(--success);">✅ Redis: Connecté (${redisKeys} clés)</span>`;
+      resultsDiv.innerHTML = `<span style="color: var(--success);">✅ Redis: Connected (${redisKeys} keys)</span>`;
     } else {
       resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ Redis: Non accessible (non critique)</span>';
     }
@@ -2405,11 +2405,11 @@ async function testMLModels() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ ML Models: ${trainedCount}/${models.length} modèles entraînés
+          ✅ ML Models: ${trainedCount}/${models.length} models trained
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ ML Models: Accès refusé (admin requis)</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ ML Models: Access denied (admin required)</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ ML Models: ${e.message}</span>`;
@@ -2431,10 +2431,10 @@ async function testRiskAPI() {
       const hasData = data.success === true || data.risk_metrics !== undefined;
 
       resultsDiv.innerHTML = hasData
-        ? '<span style="color: var(--success);">✅ Risk API: Données disponibles</span>'
-        : '<span style="color: var(--warning);">⚠️ Risk API: Aucune donnée</span>';
+        ? '<span style="color: var(--success);">✅ Risk API: Data available</span>'
+        : '<span style="color: var(--warning);">⚠️ Risk API: No data</span>';
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Risk API: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Risk API: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Risk API: ${e.message}</span>`;
@@ -2456,11 +2456,11 @@ async function testAlerts() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ Alerts: ${alerts.length} alerte(s) active(s)
+          ✅ Alerts: ${alerts.length} active alert(s)
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Alerts: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Alerts: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Alerts: ${e.message}</span>`;
@@ -2482,9 +2482,9 @@ async function testSaxo() {
 
       resultsDiv.innerHTML = portfolios.length > 0
         ? `<span style="color: var(--success);">✅ Saxo: ${portfolios.length} portfolio(s)</span>`
-        : '<span style="color: var(--warning);">⚠️ Saxo: Aucun portfolio importé</span>';
+        : '<span style="color: var(--warning);">⚠️ Saxo: No portfolio imported</span>';
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Saxo: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Saxo: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Saxo: ${e.message}</span>`;
@@ -2496,7 +2496,7 @@ async function testWealth() {
   resultsDiv.innerHTML = '💰 Test Wealth...';
 
   try {
-    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/wealth/patrimoine/summary`, {
+    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/wealth/summary`, {
       headers: { 'X-User': getActiveUser() }
     });
 
@@ -2510,7 +2510,7 @@ async function testWealth() {
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Wealth: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Wealth: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Wealth: ${e.message}</span>`;
@@ -2533,11 +2533,11 @@ async function testSources() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ Sources: ${activeCount}/${modules.length} modules actifs
+          ✅ Sources: ${activeCount}/${modules.length} active modules
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Sources: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Sources: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Sources: ${e.message}</span>`;
@@ -2568,7 +2568,7 @@ async function testGovernance() {
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Governance: Erreur</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Governance: Error</span>';
     }
   } catch (e) {
     resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Governance: ${e.message}</span>`;

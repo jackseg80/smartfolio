@@ -25,7 +25,7 @@ from typing import Dict, List, Any, Literal
 
 logger = logging.getLogger(__name__)
 
-ModuleType = Literal['crypto', 'saxo', 'banks', 'patrimoine']
+ModuleType = Literal['crypto', 'saxo', 'banks', 'wealth']
 
 
 class ExportFormatter:
@@ -83,8 +83,8 @@ class ExportFormatter:
             return self._saxo_to_csv(data)
         elif self.module == 'banks':
             return self._banks_to_csv(data)
-        elif self.module == 'patrimoine':
-            return self._patrimoine_to_csv(data)
+        elif self.module == 'wealth':
+            return self._wealth_to_csv(data)
         else:
             raise ValueError(f"Unknown module: {self.module}")
 
@@ -104,8 +104,8 @@ class ExportFormatter:
             return self._saxo_to_markdown(data)
         elif self.module == 'banks':
             return self._banks_to_markdown(data)
-        elif self.module == 'patrimoine':
-            return self._patrimoine_to_markdown(data)
+        elif self.module == 'wealth':
+            return self._wealth_to_markdown(data)
         else:
             raise ValueError(f"Unknown module: {self.module}")
 
@@ -374,8 +374,8 @@ class ExportFormatter:
 
     # ===== PATRIMOINE FORMATTERS =====
 
-    def _patrimoine_to_csv(self, data: Dict[str, Any]) -> str:
-        """Format patrimoine data as CSV."""
+    def _wealth_to_csv(self, data: Dict[str, Any]) -> str:
+        """Format wealth data as CSV."""
         lines = []
 
         # Header
@@ -431,8 +431,8 @@ class ExportFormatter:
 
         return "\n".join(lines)
 
-    def _patrimoine_to_markdown(self, data: Dict[str, Any]) -> str:
-        """Format patrimoine data as Markdown."""
+    def _wealth_to_markdown(self, data: Dict[str, Any]) -> str:
+        """Format wealth data as Markdown."""
         lines = []
 
         # Header

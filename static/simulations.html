@@ -59,16 +59,16 @@
     <!-- En-tête principal -->
     <div class="sim-header">
       <div>
-        <h1>🎭 Simulateur de Rebalancing</h1>
+        <h1>🎭 Rebalancing Simulator</h1>
         <p style="color: var(--theme-text-muted); margin: 0;">
-          Testez le pipeline complet en temps réel sans écriture backend
+          Test the full pipeline in real-time without backend writes
         </p>
       </div>
 
       <div class="source-controls">
         <view-toggle></view-toggle>
         <a href="analytics-unified.html" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-          📊 Voir les Données Live
+          📊 View Live Data
         </a>
 
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -85,20 +85,20 @@
     <!-- Navigation contextuelle Analytics Domain (Feb 2026) -->
     <domain-nav domain="analytics"></domain-nav>
 
-    <!-- Contrôles flottants -->
-    <div id="controls" class="controls-flyout" role="complementary" aria-label="Contrôles de simulation" tabindex="-1">
-      <div class="flyout-handle">🎛️ Contrôles</div>
+    <!-- Controls flottants -->
+    <div id="controls" class="controls-flyout" role="complementary" aria-label="Controls de simulation" tabindex="-1">
+      <div class="flyout-handle">🎛️ Controls</div>
       <div class="flyout-header">
-        <h2>🎛️ Contrôles</h2>
+        <h2>🎛️ Controls</h2>
         <div class="flyout-actions">
-          <button id="controls-pin-btn" class="btn secondary pin-btn" type="button" aria-pressed="false" title="Épingler le panneau">
-            📌 Épingler
+          <button id="controls-pin-btn" class="btn secondary pin-btn" type="button" aria-pressed="false" title="Pin the panel">
+            📌 Pin
           </button>
         </div>
       </div>
       <div class="flyout-content">
         <div id="sim-controls" class="controls-content">
-          <!-- Contrôles générés par SimControls.js -->
+          <!-- Controls générés par SimControls.js -->
         </div>
       </div>
     </div>
@@ -108,10 +108,10 @@
       <!-- Résultats -->
       <div id="results" class="sim-panel">
         <div class="sim-header">
-          <h3>📊 Résultats de Simulation</h3>
+          <h3>📊 Simulation Results</h3>
           <div style="display: flex; align-items: center; gap: var(--space-md);">
             <div id="simulation-status">
-              <span class="status-badge info">Prêt</span>
+              <span class="status-badge info">Ready</span>
             </div>
             <div id="badges-sim"></div>
           </div>
@@ -120,20 +120,20 @@
           <!-- États -->
           <div id="loading-state" class="loading-spinner">
             <div class="spinner"></div>
-            <p>Simulation en cours...</p>
+            <p>Simulation in progress...</p>
           </div>
 
           <div id="error-state" class="error-state">
             <div style="font-size: 2rem;">⚠️</div>
-            <h4>Erreur de Simulation</h4>
-            <p id="error-message">Une erreur s'est produite</p>
-            <button id="retry-btn" class="btn secondary">🔄 Réessayer</button>
+            <h4>Simulation Error</h4>
+            <p id="error-message">An error occurred</p>
+            <button id="retry-btn" class="btn secondary">🔄 Retry</button>
           </div>
 
           <div id="empty-state" class="empty-state">
             <div class="empty-icon">🎭</div>
-            <h4>Simulateur Prêt</h4>
-            <p>Ajustez les contrôles pour lancer la simulation</p>
+            <h4>Simulator Ready</h4>
+            <p>Adjust the controls to run the simulation</p>
           </div>
 
           <!-- Résultats -->
@@ -172,13 +172,13 @@
             <div class="result-card">
               <h4>🎯 Allocation par Groupes</h4>
               <div id="sim-allocation-chart" class="allocation-chart">
-                Chargement de l'allocation...
+                Loading allocation...
               </div>
             </div>
 
-            <!-- Plan d'Exécution -->
+            <!-- Execution Plan -->
             <div class="result-card">
-              <h4>⚡ Plan d'Exécution</h4>
+              <h4>⚡ Execution Plan</h4>
               <div style="margin-bottom: var(--space-md);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
                   <span>Delta Total:</span>
@@ -198,11 +198,11 @@
               </div>
             </div>
 
-            <!-- Résumé NL -->
+            <!-- Summary NL -->
             <div class="result-card">
-              <h4>📝 Résumé</h4>
+              <h4>📝 Summary</h4>
               <div id="sim-summary-nl" style="line-height: 1.6; color: var(--theme-text);">
-                Résumé en langage naturel...
+                Summary en langage naturel...
               </div>
             </div>
           </div>
@@ -428,17 +428,17 @@
           }, 0);
 
           alert(`✅ Source "${sourceUsed}" OK\n\n` +
-                `${balances.length} assets trouvés\n` +
-                `Valeur totale: $${totalValue.toFixed(2)}\n` +
+                `${balances.length} assets found\n` +
+                `Total value: $${totalValue.toFixed(2)}\n` +
                 `User: ${userId}`);
         } else {
-          alert(`⚠️ Source "${sourceUsed}" accessible mais vide\n\n` +
-                `Aucun asset trouvé.\n` +
-                `Vérifiez que la source contient des données pour l'utilisateur ${userId}.`);
+          alert(`⚠️ Source "${sourceUsed}" accessible but empty\n\n` +
+                `No assets found.\n` +
+                `Verify that the source contains data for user ${userId}.`);
         }
       } catch (error) {
         debugLogger.error('🧪 Test source failed:', error);
-        alert(`❌ Erreur test source "${source}":\n${error.message}`);
+        alert(`❌ Error testing source "${source}":\n${error.message}`);
       }
     }
 
@@ -454,7 +454,7 @@
         setInitialState();
       } catch (error) {
         debugLogger.error('🎭 SIM: Initialization failed:', error);
-        showError('Échec de l\'initialisation du simulateur: ' + error.message);
+        showError('Simulator initialization failed: ' + error.message);
       }
     });
 
@@ -482,7 +482,7 @@
 
       controlsPanel.classList.toggle('is-pinned', pinned);
       pinButton.setAttribute('aria-pressed', String(pinned));
-      pinButton.textContent = pinned ? '📌 Épinglé' : '📌 Épingler';
+      pinButton.textContent = pinned ? '📌 Pinned' : '📌 Pin';
     }
 
     function attachEventListeners() {
@@ -610,7 +610,7 @@
 
       } catch (error) {
         debugLogger.error('🎭 SIM: Simulation failed:', error);
-        showError('Erreur de simulation: ' + error.message);
+        showError('Simulation error: ' + error.message);
       } finally {
         appState.isRunning = false;
       }
@@ -760,7 +760,7 @@
 
       const statusEl = document.getElementById('sim-exec-status');
       if (orders.summary.shouldExecute) {
-        statusEl.textContent = 'Exécuter';
+        statusEl.textContent = 'Execute';
         statusEl.className = 'status-badge success';
       } else {
         statusEl.textContent = 'Attendre';
@@ -770,7 +770,7 @@
       // Orders list
       displayOrdersList(orders.orders);
 
-      // Résumé NL
+      // Summary NL
       document.getElementById('sim-summary-nl').textContent = explanation.summaryNL;
     }
 
@@ -829,7 +829,7 @@
       if (!listEl) return;
 
       if (!orders || orders.length === 0) {
-        listEl.innerHTML = '<div style="text-align: center; color: var(--theme-text-muted); padding: var(--space-md);">Aucun ordre généré</div>';
+        listEl.innerHTML = '<div style="text-align: center; color: var(--theme-text-muted); padding: var(--space-md);">No orders generated</div>';
         return;
       }
 
@@ -876,7 +876,7 @@
 
       } catch (error) {
         debugLogger.error('🎭 SIM: Reinitialization failed:', error);
-        showError('Échec du changement de source: ' + error.message);
+        showError('Source change failed: ' + error.message);
       }
     }
 

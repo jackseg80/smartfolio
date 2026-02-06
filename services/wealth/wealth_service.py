@@ -1,4 +1,4 @@
-"""Patrimoine service - CRUD operations for unified wealth items - Multi-tenant."""
+"""Wealth service - CRUD operations for unified wealth items - Multi-tenant."""
 from __future__ import annotations
 
 import json
@@ -7,16 +7,27 @@ import uuid
 from pathlib import Path
 from typing import List, Optional
 
-from models.wealth import PatrimoineItemInput, PatrimoineItemOutput
+from models.wealth import WealthItemInput, WealthItemOutput
 from services.fx_service import convert as fx_convert
-from services.wealth.patrimoine_migration import migrate_user_data
+from services.wealth.wealth_migration import migrate_user_data
 
 logger = logging.getLogger(__name__)
 
 
 def _get_storage_path(user_id: str) -> Path:
-    """Return user-specific storage path for patrimoine data."""
-    return Path(f"data/users/{user_id}/wealth/patrimoine.json")
+    """Return user-specific storage path for wealth data.
+
+    Uses wealth.json as primary, falls back to patrimoine.json for backward compat.
+    """
+    wealth_path = Path(f"data/users/{user_id}/wealth/wealth.json")
+    if wealth_path.exists():
+        return wealth_path
+    # Fallback to legacy path
+    legacy_path = Path(f"data/users/{user_id}/wealth/patrimoine.json")
+    if legacy_path.exists():
+        return legacy_path
+    # Default to new path for creation
+    return wealth_path
 
 
 def _ensure_storage(user_id: str) -> None:
@@ -25,7 +36,7 @@ def _ensure_storage(user_id: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
         # Try migration first
-        logger.info(f"[patrimoine] storage not found for user={user_id}, attempting migration")
+        logger.info(f"[wealth] storage not found for user={user_id}, attempting migration")
         migrate_user_data(user_id)
         # If still doesn't exist, create empty
         if not path.exists():
@@ -33,7 +44,7 @@ def _ensure_storage(user_id: str) -> None:
 
 
 def _load_snapshot(user_id: str) -> dict:
-    """Load patrimoine snapshot for specific user."""
+    """Load wealth snapshot for specific user."""
     _ensure_storage(user_id)
     path = _get_storage_path(user_id)
     try:
@@ -43,12 +54,12 @@ def _load_snapshot(user_id: str) -> dict:
                 data.setdefault("items", [])
                 return data
     except Exception as exc:
-        logger.warning(f"[patrimoine] failed to load snapshot for user={user_id}: {exc}")
+        logger.warning(f"[wealth] failed to load snapshot for user={user_id}: {exc}")
     return {"items": []}
 
 
 def _save_snapshot(data: dict, user_id: str) -> None:
-    """Save patrimoine snapshot for specific user (atomic write)."""
+    """Save wealth snapshot for specific user (atomic write)."""
     _ensure_storage(user_id)
     path = _get_storage_path(user_id)
 
@@ -59,10 +70,10 @@ def _save_snapshot(data: dict, user_id: str) -> None:
             json.dump(data, handle, indent=2, ensure_ascii=False)
         temp_path.replace(path)
         logger.info(
-            f"[patrimoine] snapshot saved for user={user_id} with {len(data.get('items', []))} items"
+            f"[wealth] snapshot saved for user={user_id} with {len(data.get('items', []))} items"
         )
     except Exception as exc:
-        logger.error(f"[patrimoine] failed to save snapshot for user={user_id}: {exc}")
+        logger.error(f"[wealth] failed to save snapshot for user={user_id}: {exc}")
         if temp_path.exists():
             temp_path.unlink()
         raise
@@ -72,9 +83,9 @@ def list_items(
     user_id: str,
     category: Optional[str] = None,
     type: Optional[str] = None,
-) -> List[PatrimoineItemOutput]:
+) -> List[WealthItemOutput]:
     """
-    List patrimoine items for user with optional filters.
+    List wealth items for user with optional filters.
 
     Args:
         user_id: User identifier
@@ -82,7 +93,7 @@ def list_items(
         type: Optional type filter (bank_account, real_estate, etc.)
 
     Returns:
-        List of PatrimoineItemOutput with USD conversions
+        List of WealthItemOutput with USD conversions
     """
     snapshot = _load_snapshot(user_id)
     items = snapshot.get("items", [])
@@ -101,7 +112,7 @@ def list_items(
         value_usd = fx_convert(value, currency, "USD")
 
         result.append(
-            PatrimoineItemOutput(
+            WealthItemOutput(
                 id=item.get("id"),
                 name=item.get("name"),
                 category=item.get("category"),
@@ -116,21 +127,21 @@ def list_items(
         )
 
     logger.info(
-        f"[patrimoine] listed {len(result)} items for user={user_id} (category={category}, type={type})"
+        f"[wealth] listed {len(result)} items for user={user_id} (category={category}, type={type})"
     )
     return result
 
 
-def get_item(user_id: str, item_id: str) -> Optional[PatrimoineItemOutput]:
+def get_item(user_id: str, item_id: str) -> Optional[WealthItemOutput]:
     """
-    Get a specific patrimoine item by ID.
+    Get a specific wealth item by ID.
 
     Args:
         user_id: User identifier
         item_id: Item identifier
 
     Returns:
-        PatrimoineItemOutput or None if not found
+        WealthItemOutput or None if not found
     """
     snapshot = _load_snapshot(user_id)
     items = snapshot.get("items", [])
@@ -141,7 +152,7 @@ def get_item(user_id: str, item_id: str) -> Optional[PatrimoineItemOutput]:
             currency = item.get("currency", "USD").upper()
             value_usd = fx_convert(value, currency, "USD")
 
-            return PatrimoineItemOutput(
+            return WealthItemOutput(
                 id=item.get("id"),
                 name=item.get("name"),
                 category=item.get("category"),
@@ -154,20 +165,20 @@ def get_item(user_id: str, item_id: str) -> Optional[PatrimoineItemOutput]:
                 metadata=item.get("metadata", {}),
             )
 
-    logger.warning(f"[patrimoine] item not found id={item_id} user={user_id}")
+    logger.warning(f"[wealth] item not found id={item_id} user={user_id}")
     return None
 
 
-def create_item(user_id: str, item: PatrimoineItemInput) -> PatrimoineItemOutput:
+def create_item(user_id: str, item: WealthItemInput) -> WealthItemOutput:
     """
-    Create a new patrimoine item for user.
+    Create a new wealth item for user.
 
     Args:
         user_id: User identifier
         item: Item data to create
 
     Returns:
-        PatrimoineItemOutput with generated ID and USD conversion
+        WealthItemOutput with generated ID and USD conversion
     """
     snapshot = _load_snapshot(user_id)
     items = snapshot.get("items", [])
@@ -196,10 +207,10 @@ def create_item(user_id: str, item: PatrimoineItemInput) -> PatrimoineItemOutput
     value_usd = fx_convert(item.value, item.currency.upper(), "USD")
 
     logger.info(
-        f"[patrimoine] item created id={item_id} user={user_id} category={item.category} type={item.type}"
+        f"[wealth] item created id={item_id} user={user_id} category={item.category} type={item.type}"
     )
 
-    return PatrimoineItemOutput(
+    return WealthItemOutput(
         id=item_id,
         name=item.name,
         category=item.category,
@@ -213,9 +224,9 @@ def create_item(user_id: str, item: PatrimoineItemInput) -> PatrimoineItemOutput
     )
 
 
-def update_item(user_id: str, item_id: str, item: PatrimoineItemInput) -> Optional[PatrimoineItemOutput]:
+def update_item(user_id: str, item_id: str, item: WealthItemInput) -> Optional[WealthItemOutput]:
     """
-    Update an existing patrimoine item.
+    Update an existing wealth item.
 
     Args:
         user_id: User identifier
@@ -223,7 +234,7 @@ def update_item(user_id: str, item_id: str, item: PatrimoineItemInput) -> Option
         item: Updated item data
 
     Returns:
-        Updated PatrimoineItemOutput or None if not found
+        Updated WealthItemOutput or None if not found
     """
     snapshot = _load_snapshot(user_id)
     items = snapshot.get("items", [])
@@ -247,7 +258,7 @@ def update_item(user_id: str, item_id: str, item: PatrimoineItemInput) -> Option
             break
 
     if not found:
-        logger.warning(f"[patrimoine] item not found for update id={item_id} user={user_id}")
+        logger.warning(f"[wealth] item not found for update id={item_id} user={user_id}")
         return None
 
     # Save updated snapshot
@@ -256,9 +267,9 @@ def update_item(user_id: str, item_id: str, item: PatrimoineItemInput) -> Option
     # Calculate USD value for response
     value_usd = fx_convert(item.value, item.currency.upper(), "USD")
 
-    logger.info(f"[patrimoine] item updated id={item_id} user={user_id}")
+    logger.info(f"[wealth] item updated id={item_id} user={user_id}")
 
-    return PatrimoineItemOutput(
+    return WealthItemOutput(
         id=item_id,
         name=item.name,
         category=item.category,
@@ -274,7 +285,7 @@ def update_item(user_id: str, item_id: str, item: PatrimoineItemInput) -> Option
 
 def delete_item(user_id: str, item_id: str) -> bool:
     """
-    Delete a patrimoine item.
+    Delete a wealth item.
 
     Args:
         user_id: User identifier
@@ -291,19 +302,19 @@ def delete_item(user_id: str, item_id: str) -> bool:
     filtered_items = [item for item in items if item.get("id") != item_id]
 
     if len(filtered_items) == initial_count:
-        logger.warning(f"[patrimoine] item not found for deletion id={item_id} user={user_id}")
+        logger.warning(f"[wealth] item not found for deletion id={item_id} user={user_id}")
         return False
 
     # Save updated snapshot
     _save_snapshot({"items": filtered_items}, user_id)
 
-    logger.info(f"[patrimoine] item deleted id={item_id} user={user_id}")
+    logger.info(f"[wealth] item deleted id={item_id} user={user_id}")
     return True
 
 
 def get_summary(user_id: str) -> dict:
     """
-    Get patrimoine summary for user.
+    Get wealth summary for user.
 
     Returns breakdown by category with total values in USD.
 
@@ -343,7 +354,7 @@ def get_summary(user_id: str) -> dict:
     total_liabilities = abs(breakdown["liability"])
     net_worth = total_assets - total_liabilities
 
-    logger.info(f"[patrimoine] summary generated for user={user_id} net_worth={net_worth:.2f} USD")
+    logger.info(f"[wealth] summary generated for user={user_id} net_worth={net_worth:.2f} USD")
 
     return {
         "net_worth": net_worth,

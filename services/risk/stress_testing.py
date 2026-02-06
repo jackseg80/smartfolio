@@ -42,14 +42,14 @@ class StressScenario:
 PREDEFINED_SCENARIOS = {
     "crisis_2008": StressScenario(
         id="crisis_2008",
-        name="📉 Crise Financière 2008",
-        description="Réplique la chute des marchés de septembre-novembre 2008",
+        name="📉 2008 Financial Crisis",
+        description="Replicates the market crash of September-November 2008",
         impact_min_pct=-45,
         impact_max_pct=-60,
         probability_10y=0.02,  # 2% chance sur 10 ans
         duration_months_min=6,
         duration_months_max=12,
-        context="Effondrement Lehman Brothers, crise des subprimes",
+        context="Lehman Brothers collapse, subprime crisis",
         group_shocks={
             # Crypto n'existait pas en 2008, mais on peut extrapoler
             "BTC": -0.50,  # -50% (flight to quality, mais nouvelle tech)
@@ -68,14 +68,14 @@ PREDEFINED_SCENARIOS = {
 
     "covid_2020": StressScenario(
         id="covid_2020",
-        name="🦠 Crash COVID-19 Mars 2020",
-        description="Chute brutale liée à la pandémie mondiale",
+        name="🦠 COVID-19 Crash March 2020",
+        description="Sharp decline linked to the global pandemic",
         impact_min_pct=-35,
         impact_max_pct=-50,
         probability_10y=0.05,  # 5% chance
         duration_months_min=2,
         duration_months_max=6,
-        context="Confinements mondiaux, arrêt économique brutal",
+        context="Global lockdowns, sudden economic shutdown",
         group_shocks={
             "BTC": -0.40,  # -40% (Mars 2020: BTC -50% en 2 jours)
             "ETH": -0.45,  # -45%
@@ -93,14 +93,14 @@ PREDEFINED_SCENARIOS = {
 
     "china_ban": StressScenario(
         id="china_ban",
-        name="🇨🇳 Interdiction Crypto Chine",
-        description="Bannissement complet des cryptos par autorités chinoises",
+        name="🇨🇳 China Crypto Ban",
+        description="Complete crypto ban by Chinese authorities",
         impact_min_pct=-25,
         impact_max_pct=-40,
         probability_10y=0.10,  # 10% chance
         duration_months_min=3,
         duration_months_max=9,
-        context="Fermeture exchanges, interdiction mining",
+        context="Exchange closures, mining ban",
         group_shocks={
             "BTC": -0.35,  # -35% (mining concentration)
             "ETH": -0.30,  # -30%
@@ -118,14 +118,14 @@ PREDEFINED_SCENARIOS = {
 
     "tether_collapse": StressScenario(
         id="tether_collapse",
-        name="💰 Effondrement Tether",
-        description="Perte de confiance totale dans USDT",
+        name="💰 Tether Collapse",
+        description="Total loss of confidence in USDT",
         impact_min_pct=-30,
         impact_max_pct=-55,
         probability_10y=0.08,  # 8% chance
         duration_months_min=1,
         duration_months_max=4,
-        context="Découverte de sous-collatéralisation massive",
+        context="Discovery of massive under-collateralization",
         group_shocks={
             "BTC": -0.35,  # -35% (flight to fiat)
             "ETH": -0.40,  # -40%
@@ -143,14 +143,14 @@ PREDEFINED_SCENARIOS = {
 
     "fed_emergency": StressScenario(
         id="fed_emergency",
-        name="🏦 Hausse Taux Fed d'Urgence",
-        description="Remontée brutale des taux pour lutter contre l'inflation",
+        name="🏦 Fed Emergency Rate Hike",
+        description="Sharp rate increase to combat inflation",
         impact_min_pct=-20,
         impact_max_pct=-35,
         probability_10y=0.15,  # 15% chance
         duration_months_min=6,
         duration_months_max=18,
-        context="Taux directeur à 8-10%, fuite des capitaux risqués",
+        context="Key rate at 8-10%, flight from risk capital",
         group_shocks={
             "BTC": -0.25,  # -25%
             "ETH": -0.30,  # -30%
@@ -168,14 +168,14 @@ PREDEFINED_SCENARIOS = {
 
     "exchange_hack": StressScenario(
         id="exchange_hack",
-        name="🔓 Hack Exchange Majeur",
-        description="Piratage d'un exchange de premier plan (Binance/Coinbase)",
+        name="🔓 Major Exchange Hack",
+        description="Hack of a major exchange (Binance/Coinbase)",
         impact_min_pct=-15,
         impact_max_pct=-30,
         probability_10y=0.20,  # 20% chance
         duration_months_min=1,
         duration_months_max=3,
-        context="Vol de plusieurs milliards, panique générale",
+        context="Multi-billion theft, general panic",
         group_shocks={
             "BTC": -0.20,  # -20%
             "ETH": -0.25,  # -25%

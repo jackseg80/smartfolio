@@ -244,7 +244,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
       base['L2/Scaling'] *= 1.20;
       base.DeFi *= 1.10;
       base.Memecoins = Math.max(base.Memecoins * 1.5, 0.02);
-      overrideReason = `🐂 Bull Market + Extreme Fear (${mlSentiment}) → Opportunité d'achat`;
+      overrideReason = `🐂 Bull Market + Extreme Fear (${mlSentiment}) → Buying opportunity`;
       console.debug('💎 LEVEL 1 OVERRIDE: Opportunistic allocation (Bull + Fear)');
     }
     else if (extremeFear && bearContext) {
@@ -1117,7 +1117,7 @@ export function deriveRecommendations(u) {
         value: isStablesReco && stablesMatch ? parseInt(stablesMatch[1]) : undefined,
         priority: rec.priority || 'medium',
         title: rec.message || rec.title || rec.action,
-        reason: rec.action || rec.message || 'Recommandation du régime de marché',
+        reason: rec.action || rec.message || 'Market regime recommendation',
         icon: rec.type === 'warning' ? '⚠️' : rec.type === 'alert' ? '🚨' : '💡',
         source: 'regime-intelligence'
       });
@@ -1139,8 +1139,8 @@ export function deriveRecommendations(u) {
       recos.push({
         key: 'reco:cycle:peak_profits',
         priority: 'high',
-        title: 'Prendre des profits progressifs',
-        reason: `Cycle peak + Régime ${regimeKey} + DI élevé (${u.decision.score})`,
+        title: 'Take progressive profits',
+        reason: `Cycle peak + Regime ${regimeKey} + High DI (${u.decision.score})`,
         icon: '📈',
         source: 'cycle-intelligence'
       });
@@ -1150,8 +1150,8 @@ export function deriveRecommendations(u) {
       recos.push({
         key: 'reco:cycle:peak_but_expansion',
         priority: 'medium',
-        title: 'Vigilance accrue recommandée',
-        reason: `Cycle au peak mais marché en expansion (blended: ${blendedScore}) - divergence possible`,
+        title: 'Increased vigilance recommended',
+        reason: `Cycle at peak but market in expansion (blended: ${blendedScore}) - possible divergence`,
         icon: '⚠️',
         source: 'cycle-intelligence'
       });
@@ -1161,7 +1161,7 @@ export function deriveRecommendations(u) {
       recos.push({
         key: 'reco:cycle:accumulation',
         priority: 'medium',
-        title: 'Accumuler positions de qualité',
+        title: 'Accumulate quality positions',
         reason: `Cycle accumulation + DI bas (${u.decision.score})`,
         icon: '🔵',
         source: 'cycle-intelligence'
@@ -1176,8 +1176,8 @@ export function deriveRecommendations(u) {
       recos.push({
         key: 'reco:policy:slow',
         priority: 'medium',
-        title: 'Approche prudente recommandée',
-        reason: 'Signaux contradictoires ou confiance faible détectée',
+        title: 'Cautious approach recommended',
+        reason: 'Contradictory signals or low confidence detected',
         icon: '🐌',
         source: 'strategy-api-policy'
       });
@@ -1185,8 +1185,8 @@ export function deriveRecommendations(u) {
       recos.push({
         key: 'reco:policy:aggressive',
         priority: 'high',
-        title: 'Opportunité d\'allocation agressive',
-        reason: 'Score élevé et signaux cohérents',
+        title: 'Aggressive allocation opportunity',
+        reason: 'High score and coherent signals',
         icon: '⚡',
         source: 'strategy-api-policy'
       });
@@ -1214,8 +1214,8 @@ export function deriveRecommendations(u) {
       priority: isVeryHigh ? 'high' : 'medium',
       title: `Signaux contradictoires: ${Math.round(governanceContradiction * 100)}%`,
       reason: isVeryHigh ?
-        'Forte contradiction détectée - approche prudente recommandée' :
-        'Contradiction modérée détectée entre sources',
+        'Strong contradiction detected - cautious approach recommended' :
+        'Moderate contradiction detected between sources',
       icon: isVeryHigh ? '🚨' : '⚡',
       source: 'governance-contradiction'
     });
@@ -1224,7 +1224,7 @@ export function deriveRecommendations(u) {
     recos.push({
       key: 'reco:onchain:contradiction',
       priority: 'medium',
-      title: 'Signaux on-chain contradictoires détectés',
+      title: 'Contradictory on-chain signals detected',
       reason: `${onchainContradictions} divergence(s) entre indicateurs`,
       icon: '⚡',
       source: 'onchain-contradiction'
@@ -1242,9 +1242,9 @@ export function deriveRecommendations(u) {
     // Generate tactical action based on risk profile
     let tacticalAction = '';
     if (targetStables >= 40) {
-      tacticalAction = `Objectif: ${targetStables}% stables - Sécuriser progressivement`;
+      tacticalAction = `Target: ${targetStables}% stables - Secure progressively`;
     } else if (targetStables >= 25) {
-      tacticalAction = `Objectif: ${targetStables}% stables - Réduire exposition risque`;
+      tacticalAction = `Target: ${targetStables}% stables - Reduce risk exposure`;
     }
 
     recos.push({
@@ -1252,8 +1252,8 @@ export function deriveRecommendations(u) {
       topic: 'stables_allocation',
       value: targetStables,
       priority: 'medium',
-      title: `Budget risque élevé détecté`,
-      reason: `Allocation stables recommandée: ${targetStables}%`,
+      title: `High risk budget detected`,
+      reason: `Recommended stables allocation: ${targetStables}%`,
       tacticalAction: tacticalAction,
       icon: '💡',
       source: 'risk-budget'
@@ -1341,8 +1341,8 @@ export function deriveRecommendations(u) {
       topic: 'stables_allocation',
       value: value,
       priority: topPriority,
-      title: `Allocation stables: ${value}%`,
-      subtitle: `Consensus confirmé par ${sources.length} sources`,
+      title: `Stables allocation: ${value}%`,
+      subtitle: `Consensus confirmed by ${sources.length} sources`,
       reason: stablesRecs.map(r => {
         const sourceLabel = sourceLabels[r.source] || r.source;
         return `• ${sourceLabel}: ${r.reason || r.title}`;

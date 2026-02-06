@@ -431,10 +431,10 @@ class RiskSidebarFull extends HTMLElement {
 
   _getScoreLabel(score) {
     if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Bon';
-    if (score >= 40) return 'Neutre';
-    if (score >= 20) return 'Faible';
-    return 'Critique';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Neutral';
+    if (score >= 20) return 'Low';
+    return 'Critical';
   }
 
   _applyScoreClass(el, score, parentContainer) {
@@ -701,7 +701,7 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- Market Regime -->
       <div class="sidebar-section" id="section-regime">
-        <div class="sidebar-title">📊 Régime de Marché</div>
+        <div class="sidebar-title">📊 Market Regime</div>
         <div class="status-indicator">
           <div class="status-dot" id="regime-dot"></div>
           <div class="status-text" id="regime-text">Loading...</div>

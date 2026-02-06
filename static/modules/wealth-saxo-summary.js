@@ -84,7 +84,7 @@ function convertV2BalancesToSaxoSummary(items, userId) {
         return {
             total_value: 0,
             positions_count: 0,
-            asof: 'Manuel (vide)',
+            asof: 'Manual (empty)',
             isEmpty: true,
             source: 'manual'
         };
@@ -104,7 +104,7 @@ function convertV2BalancesToSaxoSummary(items, userId) {
         ? Math.max(...timestamps.map(t => new Date(t).getTime()))
         : Date.now();
 
-    const asof = new Date(latestTimestamp).toLocaleString('fr-FR', {
+    const asof = new Date(latestTimestamp).toLocaleString('en-US', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -115,7 +115,7 @@ function convertV2BalancesToSaxoSummary(items, userId) {
     return {
         total_value: totalValue,
         positions_count: items.length,
-        asof: asof || 'Manuel',
+        asof: asof || 'Manual',
         isEmpty: items.length === 0,
         source: 'manual',
         cash_balance: 0, // Manual entries don't track cash separately
@@ -237,7 +237,7 @@ export async function fetchSaxoSummary() {
                 const emptySummary = {
                     total_value: 0,
                     positions_count: 0,
-                    asof: 'Erreur V2',
+                    asof: 'V2 Error',
                     isEmpty: true,
                     error: error.message
                 };
@@ -321,13 +321,13 @@ export async function fetchSaxoSummary() {
 
         if (!ok || !data) {
             // Différencier les types d'erreur pour un meilleur message utilisateur
-            let errorMessage = 'API Saxo temporairement indisponible';
+            let errorMessage = 'Saxo API temporarily unavailable';
             let errorDetail = data?.error || 'unknown error';
 
             // Cas spécifique: utilisateur non connecté (401)
             if (data?.error && (data.error.includes('Not connected') || data.error.includes('tokens expired'))) {
-                errorMessage = 'Non connecté à Saxo API';
-                errorDetail = 'Veuillez vous connecter dans Paramètres > Sources > SaxoBank API';
+                errorMessage = 'Not connected to Saxo API';
+                errorDetail = 'Please connect in Settings > Sources > SaxoBank API';
                 (window.debugLogger?.warn || console.warn)(`[Saxo Summary] User not connected to Saxo API: ${data.error}`);
             } else {
                 (window.debugLogger?.warn || console.warn)(`[Saxo Summary] API returned error: ${errorDetail}`);
@@ -366,7 +366,7 @@ export async function fetchSaxoSummary() {
             const summary = {
                 total_value: 0,
                 positions_count: 0,
-                asof: 'Aucune donnée',
+                asof: 'No data',
                 isEmpty: true
             };
             _cachedSummary = summary;
@@ -427,13 +427,13 @@ export async function fetchSaxoSummary() {
         }
 
         // Trouver la date la plus récente (asof)
-        let latestDate = 'Date inconnue';
+        let latestDate = 'Unknown date';
         try {
             // ✅ PRIORITY 1: Use asof from API response (backend now returns this for CSV mode)
             if (data.data?.asof || data.asof) {
                 const apiAsof = data.data?.asof || data.asof;
                 const date = new Date(apiAsof);
-                latestDate = date.toLocaleDateString('fr-FR', {
+                latestDate = date.toLocaleDateString('en-US', {
                     day: '2-digit',
                     month: '2-digit',
                     year: 'numeric',
@@ -450,7 +450,7 @@ export async function fetchSaxoSummary() {
 
                 if (dates.length > 0) {
                     const date = new Date(dates[0]);
-                    latestDate = date.toLocaleDateString('fr-FR', {
+                    latestDate = date.toLocaleDateString('en-US', {
                         day: '2-digit',
                         month: '2-digit',
                         year: 'numeric',
@@ -461,7 +461,7 @@ export async function fetchSaxoSummary() {
             }
         } catch (e) {
             (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to extract date:', e);
-            latestDate = 'Date inconnue';
+            latestDate = 'Unknown date';
         }
 
         const summary = {
@@ -499,7 +499,7 @@ export async function fetchSaxoSummary() {
         const errorSummary = {
             total_value: 0,
             positions_count: 0,
-            asof: 'Erreur',
+            asof: 'Error',
             error: error?.message || String(error) || 'unknown error',
             isEmpty: true
         };

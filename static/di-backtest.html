@@ -509,7 +509,7 @@
     <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
       <div>
         <h1>Decision Index Backtest</h1>
-        <p>Validez rétrospectivement les performances du Decision Index sur des périodes historiques (2017+)</p>
+        <p>Retrospectively validate the Decision Index performance over historical periods (2017+)</p>
       </div>
       <view-toggle></view-toggle>
     </div>
@@ -521,9 +521,9 @@
     <div class="controls-panel">
       <div class="controls-grid">
         <div class="control-group">
-          <label for="strategy">Stratégie</label>
+          <label for="strategy">Strategy</label>
           <select id="strategy">
-            <option value="di_smartfolio_replica">SmartFolio Replica (Recommandé)</option>
+            <option value="di_smartfolio_replica">SmartFolio Replica (Recommended)</option>
             <option value="di_threshold">DI Threshold (Seuils)</option>
             <option value="di_momentum">DI Momentum</option>
             <option value="di_contrarian">DI Contrarian</option>
@@ -533,7 +533,7 @@
         </div>
 
         <div class="control-group">
-          <label for="startDate">Date Début</label>
+          <label for="startDate">Start Date</label>
           <input type="date" id="startDate" value="2020-01-01">
         </div>
 
@@ -552,13 +552,13 @@
         </div>
 
         <div class="control-group">
-          <label for="initialCapital">Capital Initial ($)</label>
+          <label for="initialCapital">Initial Capital ($)</label>
           <input type="number" id="initialCapital" value="10000" min="100">
         </div>
 
         <div class="control-group">
           <button class="btn-primary" id="runBacktest">
-            Exécuter Backtest
+            Run Backtest
           </button>
         </div>
       </div>
@@ -567,13 +567,13 @@
       <div class="strategy-info" id="strategyInfo">
         <div class="strategy-info-header">
           <span class="strategy-info-title" id="strategyTitle">SmartFolio Replica</span>
-          <button class="strategy-info-toggle" id="strategyToggle">Voir détails</button>
+          <button class="strategy-info-toggle" id="strategyToggle">Show details</button>
         </div>
         <p class="strategy-description" id="strategyDescription">
-          Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio.
+          Replicates the actual logic of SmartFolio's Allocation Engine V2.
         </p>
         <div class="strategy-rules" id="strategyDetails">
-          <h4>Règles</h4>
+          <h4>Rules</h4>
           <ul id="strategyRules"></ul>
           <div class="strategy-pros-cons">
             <div class="pros">
@@ -581,7 +581,7 @@
               <ul id="strategyPros"></ul>
             </div>
             <div class="cons">
-              <h4>Inconvénients</h4>
+              <h4>Drawbacks</h4>
               <ul id="strategyCons"></ul>
             </div>
           </div>
@@ -591,7 +591,7 @@
 
       <!-- Period Presets -->
       <div class="period-presets">
-        <span style="font-size: 0.85rem; color: var(--theme-text-muted);">Périodes:</span>
+        <span style="font-size: 0.85rem; color: var(--theme-text-muted);">Periods:</span>
         <button class="preset-btn" data-start="2017-01-01" data-end="2017-12-31">Bull 2017</button>
         <button class="preset-btn" data-start="2018-01-01" data-end="2018-12-31">Crash 2018</button>
         <button class="preset-btn" data-start="2020-02-01" data-end="2020-05-01">COVID</button>
@@ -622,7 +622,7 @@
 
       <!-- DI History -->
       <div class="result-card">
-        <h3>Decision Index Historique</h3>
+        <h3>Decision Index History</h3>
         <div class="chart-container">
           <canvas id="diHistoryChart"></canvas>
         </div>
@@ -638,7 +638,7 @@
 
       <!-- Monthly Returns -->
       <div class="result-card">
-        <h3>Rendements Mensuels</h3>
+        <h3>Monthly Returns</h3>
         <div class="chart-container">
           <canvas id="monthlyReturnsChart"></canvas>
         </div>
@@ -646,7 +646,7 @@
 
       <!-- DI Metrics -->
       <div class="result-card" style="grid-column: 1 / -1;">
-        <h3>Métriques Decision Index</h3>
+        <h3>Decision Index Metrics</h3>
         <div class="kpi-grid" id="diMetricsGrid">
           <!-- DI metrics injectés dynamiquement -->
         </div>
@@ -655,10 +655,10 @@
 
     <!-- Placeholder when no results -->
     <div class="result-card" id="placeholder" style="text-align: center; padding: var(--space-xl);">
-      <h3 style="margin-bottom: var(--space-md);">Sélectionnez une période et lancez le backtest</h3>
+      <h3 style="margin-bottom: var(--space-md);">Select a period and run the backtest</h3>
       <p style="color: var(--theme-text-muted);">
-        Le backtest reconstruit le Decision Index historique et simule une stratégie de trading
-        pour évaluer les performances sur la période sélectionnée.
+        The backtest reconstructs the historical Decision Index and simulates a trading strategy
+        to evaluate performance over the selected period.
       </p>
     </div>
   </div>
@@ -692,9 +692,9 @@
     // Chart modal functions
     const chartConfigs = {
       equityChart: { title: 'Equity Curve', getChart: () => equityChart },
-      diHistoryChart: { title: 'Decision Index Historique', getChart: () => diHistoryChart },
+      diHistoryChart: { title: 'Decision Index History', getChart: () => diHistoryChart },
       drawdownChart: { title: 'Drawdown', getChart: () => drawdownChart },
-      monthlyReturnsChart: { title: 'Rendements Mensuels', getChart: () => monthlyReturnsChart }
+      monthlyReturnsChart: { title: 'Monthly Returns', getChart: () => monthlyReturnsChart }
     };
 
     /**
@@ -885,7 +885,7 @@
         const details = document.getElementById('strategyDetails');
         const toggle = document.getElementById('strategyToggle');
         const isExpanded = details.classList.toggle('expanded');
-        toggle.textContent = isExpanded ? 'Masquer détails' : 'Voir détails';
+        toggle.textContent = isExpanded ? 'Hide details' : 'Show details';
       });
 
       // Period presets
@@ -952,7 +952,7 @@
       // Best for
       const bestForEl = document.getElementById('strategyBestFor');
       if (details.best_for) {
-        bestForEl.innerHTML = `<strong>Idéal pour:</strong> ${details.best_for}`;
+        bestForEl.innerHTML = `<strong>Ideal for:</strong> ${details.best_for}`;
         bestForEl.style.display = 'block';
       } else {
         bestForEl.style.display = 'none';
@@ -963,30 +963,30 @@
       const fallbacks = {
         'di_smartfolio_replica': {
           name: 'SmartFolio Replica',
-          description: 'Réplique la logique réelle de l\'Allocation Engine V2 de SmartFolio. Utilise le cycle score pour déterminer la phase de marché (bullish/moderate/bearish) et l\'allocation stables correspondante.'
+          description: 'Replicates the real logic of SmartFolio\'s Allocation Engine V2. Uses the cycle score to determine the market phase (bullish/moderate/bearish) and the corresponding stables allocation.'
         },
         'di_threshold': {
           name: 'DI Threshold',
-          description: 'Allocation basée sur des seuils de Decision Index. Plus le DI est élevé, plus l\'exposition aux actifs risqués augmente.'
+          description: 'Allocation based on Decision Index thresholds. The higher the DI, the greater the exposure to risky assets.'
         },
         'di_momentum': {
           name: 'DI Momentum',
-          description: 'Suit la tendance du DI. Augmente l\'exposition quand le DI monte fortement, réduit quand il baisse.'
+          description: 'Follows the DI trend. Increases exposure when the DI rises sharply, reduces when it falls.'
         },
         'di_contrarian': {
           name: 'DI Contrarian',
-          description: 'Stratégie à contre-courant. Accumule en extreme fear (DI<20), prend des profits en extreme greed (DI>80).'
+          description: 'Contrarian strategy. Accumulates in extreme fear (DI<20), takes profits in extreme greed (DI>80).'
         },
         'di_risk_parity': {
           name: 'DI Risk Parity',
-          description: 'Combine Risk Parity (allocation inversement proportionnelle à la volatilité) avec un scaling basé sur le DI.'
+          description: 'Combines Risk Parity (allocation inversely proportional to volatility) with DI-based scaling.'
         },
         'di_signal': {
           name: 'DI Signal',
-          description: 'Signaux de trading purs. BUY quand DI croise 40 à la hausse, SELL quand il croise 60 à la baisse.'
+          description: 'Pure trading signals. BUY when DI crosses 40 upward, SELL when it crosses 60 downward.'
         }
       };
-      return fallbacks[key] || { name: key, description: 'Stratégie basée sur le Decision Index' };
+      return fallbacks[key] || { name: key, description: 'Strategy based on the Decision Index' };
     }
 
     async function runBacktest() {
@@ -997,7 +997,7 @@
       const initialCapital = parseFloat(document.getElementById('initialCapital').value);
 
       if (!startDate || !endDate) {
-        alert('Veuillez sélectionner une période');
+        alert('Please select a period');
         return;
       }
 
@@ -1032,7 +1032,7 @@
 
       } catch (error) {
         console.error('Backtest error:', error);
-        alert(`Erreur: ${error.message}`);
+        alert(`Error: ${error.message}`);
       } finally {
         document.getElementById('loadingOverlay').classList.remove('active');
         document.getElementById('runBacktest').disabled = false;
@@ -1059,7 +1059,7 @@
           <div class="kpi-value ${metrics.annualized_return_pct >= 0 ? 'positive' : 'negative'}">
             ${metrics.annualized_return_pct >= 0 ? '+' : ''}${metrics.annualized_return_pct?.toFixed(1) || '0'}%
           </div>
-          <div class="kpi-label">Return Annualisé</div>
+          <div class="kpi-label">Annualized Return</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value negative">${metrics.max_drawdown_pct?.toFixed(1) || '0'}%</div>
@@ -1098,7 +1098,7 @@
       diMetricsGrid.innerHTML = `
         <div class="kpi-card">
           <div class="kpi-value neutral">${diMetrics.di_btc_correlation_30d?.toFixed(2) || 'N/A'}</div>
-          <div class="kpi-label">Correlation DI-BTC 30j</div>
+          <div class="kpi-label">DI-BTC Correlation 30d</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value ${diMetrics.di_accuracy_pct > 55 ? 'positive' : 'neutral'}">
@@ -1108,7 +1108,7 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-value neutral">${diMetrics.di_mean?.toFixed(1) || '50'}</div>
-          <div class="kpi-label">DI Moyen</div>
+          <div class="kpi-label">Average DI</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value neutral">${diMetrics.avg_di_during_gains?.toFixed(1) || 'N/A'}</div>
@@ -1332,7 +1332,7 @@
         data: {
           labels,
           datasets: [{
-            label: 'Rendement Mensuel %',
+            label: 'Monthly Return %',
             data: returns,
             backgroundColor: colors,
             borderRadius: 4

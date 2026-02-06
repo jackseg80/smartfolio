@@ -58,7 +58,7 @@ class DIWeightsModel(BaseModel):
 
 class DIBacktestRequest(BaseModel):
     """Requête pour exécuter un backtest DI"""
-    strategy: str = Field(..., description="Stratégie: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal")
+    strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal")
     start_date: str = Field(..., description="Date début YYYY-MM-DD (min: 2017-01-01)")
     end_date: str = Field(..., description="Date fin YYYY-MM-DD")
     initial_capital: float = Field(10000.0, gt=0)
@@ -151,7 +151,7 @@ MARKET_EVENTS = [
 
 @router.get("/strategies")
 async def list_di_strategies(
-    details: bool = Query(False, description="Inclure descriptions détaillées")
+    details: bool = Query(False, description="Include detailed descriptions")
 ):
     """
     Liste les stratégies DI disponibles pour le backtest

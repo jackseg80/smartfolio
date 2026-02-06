@@ -159,7 +159,7 @@ async def add_portfolio_snapshot(
     session_id: str,
     request: PortfolioSnapshotRequest,
     user: str = Depends(get_required_user),
-    is_before: bool = Query(default=True, description="Snapshot avant rebalancement")
+    is_before: bool = Query(default=True, description="Snapshot before rebalancing")
 ):
     """
     Ajouter un snapshot de portfolio à une session
@@ -200,7 +200,7 @@ async def add_portfolio_snapshot(
 async def add_rebalance_actions(
     session_id: str,
     user: str = Depends(get_required_user),
-    actions: List[Dict[str, Any]] = Body(..., description="Actions de rebalancement")
+    actions: List[Dict[str, Any]] = Body(..., description="Rebalancing actions")
 ):
     """
     Ajouter les actions de rebalancement à une session
@@ -255,8 +255,8 @@ async def update_execution_results(
 async def complete_session(
     session_id: str,
     user: str = Depends(get_required_user),
-    status: str = Body(default="completed", description="Statut final"),
-    error_message: Optional[str] = Body(default=None, description="Message d'erreur")
+    status: str = Body(default="completed", description="Final status"),
+    error_message: Optional[str] = Body(default=None, description="Error message")
 ):
     """
     Marquer une session comme terminée
@@ -286,9 +286,9 @@ async def complete_session(
 
 @router.get("/sessions")
 async def get_sessions(
-    limit: int = Query(default=50, le=100, description="Nombre maximum de sessions"),
-    days_back: Optional[int] = Query(default=None, description="Nombre de jours en arrière"),
-    status: Optional[str] = Query(default=None, description="Filtrer par statut"),
+    limit: int = Query(default=50, le=100, description="Maximum number of sessions"),
+    days_back: Optional[int] = Query(default=None, description="Number of days back"),
+    status: Optional[str] = Query(default=None, description="Filter by status"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -341,7 +341,7 @@ async def get_sessions(
 
 @router.get("/performance/summary")
 async def get_performance_summary(
-    days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse en jours"),
+    days_back: int = Query(default=30, ge=1, le=365, description="Analysis period in days"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -416,8 +416,8 @@ async def get_detailed_performance_analysis(
 
 @router.post("/performance/calculate")
 async def calculate_portfolio_performance(
-    value_history: List[Tuple[str, float]] = Body(..., description="Historique valeur portfolio [(timestamp, valeur)]"),
-    benchmark_history: Optional[List[Tuple[str, float]]] = Body(default=None, description="Historique benchmark")
+    value_history: List[Tuple[str, float]] = Body(..., description="Portfolio value history [(timestamp, value)]"),
+    benchmark_history: Optional[List[Tuple[str, float]]] = Body(default=None, description="Benchmark history")
 ):
     """
     Calculer les métriques de performance d'un portfolio
@@ -464,8 +464,8 @@ async def calculate_portfolio_performance(
 
 @router.get("/reports/comprehensive")
 async def generate_comprehensive_report(
-    days_back: int = Query(default=30, ge=1, le=365, description="Période d'analyse"),
-    include_portfolio_history: bool = Query(default=False, description="Inclure l'historique portfolio"),
+    days_back: int = Query(default=30, ge=1, le=365, description="Analysis period"),
+    include_portfolio_history: bool = Query(default=False, description="Include portfolio history"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -590,7 +590,7 @@ class MarketBreadthResponse(BaseModel):
     new_highs_count: int = Field(description="Nombre de nouveaux ATH récents")
     volume_concentration: float = Field(description="Concentration du volume [0-1]")
     momentum_dispersion: float = Field(description="Dispersion du momentum [0-1]")
-    meta: Dict[str, Any] = Field(description="Métadonnées")
+    meta: Dict[str, Any] = Field(description="Metadata")
 
 
 async def _fetch_global_market_data(limit: int = 100) -> List[Dict[str, Any]]:

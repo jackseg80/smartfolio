@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
@@ -279,7 +279,7 @@
   <div class="wrap" style="margin-top: 20px;">
     <div class="card">
       <div class="row">
-        <button class="btn small" onclick="loadData()">🔄 Actualiser</button>
+        <button class="btn small" onclick="loadData()">🔄 Refresh</button>
         <button class="btn small" onclick="getSuggestions()">🔍 Suggestions</button>
         <button class="btn small" onclick="autoClassify()">🚀 Auto-classifier</button>
       </div>
@@ -299,47 +299,47 @@
       </div>
       <div class="stat">
         <div class="stat-value" id="memory-count">-</div>
-        <div class="stat-label">En mémoire</div>
+        <div class="stat-label">In memory</div>
       </div>
     </div>
 
     <div class="grid g2">
       <div class="card">
-        <h3>🔍 Recherche & Filtres</h3>
+        <h3>🔍 Search & Filters</h3>
         <div class="filters">
           <div>
-            <label>Rechercher</label><br />
-            <input type="text" id="search" class="search-box" placeholder="Nom d'alias..." oninput="filterAliases()">
+            <label>Search</label><br />
+            <input type="text" id="search" class="search-box" placeholder="Alias name..." oninput="filterAliases()">
           </div>
           <div>
-            <label>Groupe</label><br />
+            <label>Group</label><br />
             <select id="group-filter" onchange="filterAliases()">
-              <option value="">Tous les groupes</option>
+              <option value="">All groups</option>
             </select>
           </div>
           <label style="display:flex;align-items:center;gap:8px;font-weight:normal;margin-left:auto">
-            <input type="checkbox" id="coingecko-enabled" checked>CoinGecko activé
+            <input type="checkbox" id="coingecko-enabled" checked>CoinGecko enabled
           </label>
         </div>
         <div class="row">
-          <button class="btn secondary small" onclick="clearFilters()">Effacer filtres</button>
-          <button class="btn warning small" onclick="showOnlyUnassigned()">Voir non-assignés</button>
-          <button class="btn small" onclick="showOnlyNewAliases()" style="background: #f59e0b; color: white;">🆕 Voir
-            nouveaux</button>
+          <button class="btn secondary small" onclick="clearFilters()">Clear Filters</button>
+          <button class="btn warning small" onclick="showOnlyUnassigned()">Show Unassigned</button>
+          <button class="btn small" onclick="showOnlyNewAliases()" style="background: #f59e0b; color: white;">🆕 Show
+            New</button>
         </div>
       </div>
 
       <div class="card">
-        <h3>⚡ Actions rapides</h3>
+        <h3>⚡ Quick Actions</h3>
         <div class="row">
           <div>
-            <label>Nouveau groupe</label><br />
+            <label>New Group</label><br />
             <select id="batch-group">
-              <option value="">Sélectionner groupe...</option>
+              <option value="">Select group...</option>
             </select>
           </div>
           <div>
-            <button class="btn" onclick="assignFiltered()">Assigner les filtrés</button>
+            <button class="btn" onclick="assignFiltered()">Assign Filtered</button>
           </div>
         </div>
         <div class="row" style="margin-top:8px">
@@ -352,10 +352,10 @@
     <div class="card" style="margin-top:16px">
       <div class="row">
         <h3>🏷️ Liste des Alias</h3>
-        <div class="pill"><span id="filtered-count">0</span> / <span id="total-count">0</span> affichés</div>
+        <div class="pill"><span id="filtered-count">0</span> / <span id="total-count">0</span> shown</div>
       </div>
 
-      <div id="loading" class="loading">Chargement des données...</div>
+      <div id="loading" class="loading">Loading data...</div>
 
       <div id="aliases-container" style="display:none">
         <table>
@@ -572,7 +572,7 @@
 
       } catch (e) {
         debugLogger.error('Critical error in loadData:', e);
-        document.getElementById('loading').innerHTML = `❌ Erreur: ${e.message}`;
+        document.getElementById('loading').innerHTML = `❌ Error: ${e.message}`;
         
         // Fallback to ensure basic functionality
         try {
@@ -589,7 +589,7 @@
           document.getElementById('stats').style.display = 'flex';
         } catch (fallbackError) {
           debugLogger.error('Even fallback failed:', fallbackError);
-          document.getElementById('loading').innerHTML = `❌ Erreur critique: ${fallbackError.message}`;
+          document.getElementById('loading').innerHTML = `❌ Critical error: ${fallbackError.message}`;
         }
       }
     }
@@ -604,7 +604,7 @@
       ['group-filter', 'batch-group'].forEach(id => {
         const select = document.getElementById(id);
         const current = select.value;
-        select.innerHTML = id === 'group-filter' ? '<option value="">Tous les groupes</option>' : '<option value="">Sélectionner groupe...</option>';
+        select.innerHTML = id === 'group-filter' ? '<option value="">All groups</option>' : '<option value="">Select group...</option>';
         allGroups.forEach(g => {
           const opt = document.createElement('option'); opt.value = g; opt.textContent = g; select.appendChild(opt);
         });
@@ -663,32 +663,32 @@
         debugLogger.warn('Taxonomy API unavailable, simulating change:', e);
         allAliases[alias] = newGroup; 
         filterAliases();
-        showNotification(`📝 ${alias} → ${newGroup} (mode hors ligne)`, 'info');
+        showNotification(`📝 ${alias} → ${newGroup} (offline mode)`, 'info');
       }
     }
 
     async function deleteAlias(alias) {
-      if (!confirm(`Supprimer l'alias "${alias}" ?`)) return;
+      if (!confirm(`Delete alias "${alias}"?`)) return;
       try {
         const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
         const resp = await fetch(`${apiBase}/taxonomy/aliases/${alias}`, { method: 'DELETE' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         delete allAliases[alias]; filterAliases();
-        showNotification(`🗑️ ${alias} supprimé`, 'success');
+        showNotification(`🗑️ ${alias} deleted`, 'success');
       } catch (e) { 
         debugLogger.warn('Delete API unavailable, simulating deletion:', e);
         delete allAliases[alias]; 
         filterAliases();
-        showNotification(`🗑️ ${alias} supprimé (mode hors ligne)`, 'info');
+        showNotification(`🗑️ ${alias} deleted (offline mode)`, 'info');
       }
     }
 
     async function assignFiltered() {
       const group = document.getElementById('batch-group').value;
-      if (!group) return alert('Sélectionnez un groupe de destination');
+      if (!group) return alert('Select a destination group');
       const aliases = Object.keys(filteredAliases);
-      if (aliases.length === 0) return alert('Aucun alias à assigner');
-      if (!confirm(`Assigner ${aliases.length} aliases au groupe "${group}" ?`)) return;
+      if (aliases.length === 0) return alert('No aliases to assign');
+      if (!confirm(`Assign ${aliases.length} aliases to group "${group}"?`)) return;
       try {
         const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
         const payload = {}; aliases.forEach(a => payload[a] = group);
@@ -700,25 +700,25 @@
         debugLogger.warn('Batch assign API unavailable:', e);
         aliases.forEach(a => allAliases[a] = group); 
         filterAliases();
-        showNotification(`📝 ${aliases.length} aliases → ${group} (mode hors ligne)`, 'info');
+        showNotification(`📝 ${aliases.length} aliases → ${group} (offline mode)`, 'info');
       }
     }
 
     async function assignAllToOthers() {
       const aliases = Object.keys(allAliases);
-      if (!confirm(`Assigner TOUS les ${aliases.length} aliases au groupe "Others" ?`)) return;
+      if (!confirm(`Assign ALL ${aliases.length} aliases to group "Others"?`)) return;
       try {
         const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
         const payload = {}; aliases.forEach(a => payload[a] = 'Others');
         const resp = await fetch(`${apiBase}/taxonomy/aliases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aliases: payload }) });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         Object.keys(allAliases).forEach(a => allAliases[a] = 'Others'); filterAliases();
-        showNotification(`✅ Tous les aliases → Others`, 'success');
+        showNotification(`✅ All aliases → Others`, 'success');
       } catch (e) { 
         debugLogger.warn('Assign all API unavailable:', e);
         Object.keys(allAliases).forEach(a => allAliases[a] = 'Others'); 
         filterAliases();
-        showNotification(`📝 Tous les aliases → Others (mode hors ligne)`, 'info');
+        showNotification(`📝 All aliases → Others (offline mode)`, 'info');
       }
     }
 
@@ -746,34 +746,34 @@
         const resp = await fetch(`${apiBase}${ep}`); if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
         const { suggestions, auto_classified_count, unknown_count, coverage } = data;
-        if ((auto_classified_count || 0) === 0) { showNotification('Aucune suggestion automatique trouvée', 'info'); return; }
+        if ((auto_classified_count || 0) === 0) { showNotification('No automatic suggestions found', 'info'); return; }
         const cov = Math.round((coverage || 0) * 100);
         const list = Object.entries(suggestions).map(([s, g]) => `${s} → ${g}`).slice(0, 5).join(', ');
         const icon = useCG ? '🚀' : '🔍'; const label = useCG ? 'Mode intelligent (regex + CoinGecko)' : 'Mode regex seul';
         showNotification(`${icon} ${auto_classified_count}/${unknown_count} suggestions (${cov}%)\n📊 ${label}\n💡 ${list}`, 'info', 10000);
       } catch (e) { 
         debugLogger.warn('Suggestions API unavailable:', e);
-        showNotification(`🔍 Suggestions non disponibles en mode hors ligne`, 'info');
+        showNotification(`🔍 Suggestions not available in offline mode`, 'info');
       }
     }
 
     async function autoClassify() {
-      if (!confirm('Appliquer automatiquement la classification intelligente aux symboles inconnus ?')) return;
+      if (!confirm('Automatically apply smart classification to unknown symbols?')) return;
       try {
         const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
         const useCG = document.getElementById('coingecko-enabled').checked;
         const ep = useCG ? '/taxonomy/auto-classify-enhanced' : '/taxonomy/auto-classify';
         const resp = await fetch(`${apiBase}${ep}`, { method: 'POST' }); if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
-        if ((data.classified || 0) === 0) { showNotification(data.message || 'Aucune classification automatique appliquée', 'info'); }
+        if ((data.classified || 0) === 0) { showNotification(data.message || 'No automatic classification applied', 'info'); }
         else {
           const label = useCG ? '(avec CoinGecko)' : '(regex seul)';
-          showNotification(`✅ ${data.classified} aliases classifiés automatiquement ${label}`, 'success');
+          showNotification(`✅ ${data.classified} aliases auto-classified ${label}`, 'success');
           await loadData();
         }
       } catch (e) { 
         debugLogger.warn('Auto-classify API unavailable:', e);
-        showNotification(`🚀 Classification automatique non disponible en mode hors ligne`, 'info');
+        showNotification(`🚀 Automatic classification not available in offline mode`, 'info');
       }
     }
 

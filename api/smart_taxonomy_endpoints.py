@@ -23,9 +23,9 @@ router = APIRouter(prefix="/taxonomy", tags=["smart_taxonomy"])
 
 @router.post("/classify")
 async def classify_symbols(
-    symbols: List[str] = Body(..., description="Liste des symboles à classifier"),
-    confidence_threshold: float = Query(50.0, ge=0, le=100, description="Seuil minimum de confiance"),
-    use_cache: bool = Query(True, description="Utiliser le cache de résultats")
+    symbols: List[str] = Body(..., description="List of symbols to classify"),
+    confidence_threshold: float = Query(50.0, ge=0, le=100, description="Minimum confidence threshold"),
+    use_cache: bool = Query(True, description="Use results cache")
 ):
     """
     Classification intelligente de symboles avec scoring de confiance
@@ -46,15 +46,15 @@ async def classify_symbols(
     """
     try:
         if not symbols:
-            raise HTTPException(status_code=400, detail="Liste de symboles vide")
+            raise HTTPException(status_code=400, detail="Empty symbol list")
         
         # Validation des symboles
         clean_symbols = [s.strip().upper() for s in symbols if s and s.strip()]
         if not clean_symbols:
-            raise HTTPException(status_code=400, detail="Aucun symbole valide fourni")
+            raise HTTPException(status_code=400, detail="No valid symbol provided")
         
         if len(clean_symbols) > 100:
-            raise HTTPException(status_code=400, detail="Trop de symboles (max 100)")
+            raise HTTPException(status_code=400, detail="Too many symbols (max 100)")
         
         # Classification batch
         results = await smart_classification_service.classify_symbols_batch(
@@ -98,7 +98,7 @@ async def classify_symbols(
 
 @router.get("/duplicates")
 async def detect_portfolio_duplicates(
-    symbols: List[str] = Query(..., description="Symboles du portfolio à analyser")
+    symbols: List[str] = Query(..., description="Portfolio symbols to analyze")
 ):
     """
     Détection de doublons et dérivés dans un portfolio
@@ -123,7 +123,7 @@ async def detect_portfolio_duplicates(
     """
     try:
         if not symbols:
-            raise HTTPException(status_code=400, detail="Aucun symbole fourni")
+            raise HTTPException(status_code=400, detail="No symbol provided")
         
         duplicates = smart_classification_service.detect_duplicates_in_portfolio(symbols)
         
@@ -139,8 +139,8 @@ async def detect_portfolio_duplicates(
                 "derivatives": derivatives,
                 "consolidation_suggestion": {
                     "action": "consider_consolidation",
-                    "reasoning": f"Multiple dérivés de {base_symbol} détectés, considérer consolidation vers {base_symbol}",
-                    "impact": f"Simplification portfolio, groupe {base_group}"
+                    "reasoning": f"Multiple derivatives of {base_symbol} detected, consider consolidation into {base_symbol}",
+                    "impact": f"Portfolio simplification, group {base_group}"
                 }
             }
         
@@ -159,7 +159,7 @@ async def detect_portfolio_duplicates(
             "portfolio_analysis": {
                 "complexity_score": round(complexity_score, 1),
                 "complexity_level": "High" if complexity_score > 30 else "Medium" if complexity_score > 10 else "Low",
-                "consolidation_potential": f"{len(duplicates)} groupes de consolidation identifiés"
+                "consolidation_potential": f"{len(duplicates)} consolidation groups identified"
             }
         }
         
@@ -198,12 +198,12 @@ async def human_feedback_learning(
         required_fields = ["symbol", "human_classification"]
         for field in required_fields:
             if field not in feedback_data:
-                raise HTTPException(status_code=400, detail=f"Champ requis manquant: {field}")
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
         
         symbol = feedback_data["symbol"].strip().upper()
         human_group = feedback_data["human_classification"].strip()
         confidence = float(feedback_data.get("confidence", 95.0))
-        reasoning = feedback_data.get("reasoning", f"Classification manuelle par utilisateur")
+        reasoning = feedback_data.get("reasoning", f"Manual classification by user")
         metadata = feedback_data.get("metadata", {})
         
         # Validation du groupe
@@ -212,7 +212,7 @@ async def human_feedback_learning(
         if human_group not in valid_groups:
             raise HTTPException(
                 status_code=400, 
-                detail=f"Groupe invalide. Groupes valides: {valid_groups}"
+                detail=f"Invalid group. Valid groups: {valid_groups}"
             )
         
         # Vérifier s'il y a conflit avec classification automatique
@@ -256,24 +256,24 @@ async def human_feedback_learning(
             } if existing_result else None,
             "conflict_detected": conflict_detected,
             "actions_taken": [
-                "Taxonomie mise à jour",
-                "Cache invalidé", 
-                "Nouveau résultat mis en cache"
+                "Taxonomy updated",
+                "Cache invalidated",
+                "New result cached"
             ]
         }
         
         if conflict_detected:
             response["conflict_info"] = {
-                "message": f"Conflit détecté: classification auto suggérait {existing_result.suggested_group} "
-                          f"(confiance {existing_result.confidence_score}%) vs humain {human_group}",
-                "recommendation": "Classification humaine appliquée, vérifier si pattern peut être amélioré"
+                "message": f"Conflict detected: auto classification suggested {existing_result.suggested_group} "
+                          f"(confidence {existing_result.confidence_score}%) vs human {human_group}",
+                "recommendation": "Human classification applied, check if pattern can be improved"
             }
         
         logger.info(f"Apprentissage appliqué: {symbol} → {human_group} (conflit: {conflict_detected})")
         return response
         
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Erreur validation: {e}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {e}")
     except Exception as e:
         logger.error(f"Erreur apprentissage: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -341,7 +341,7 @@ async def clear_classification_cache():
 
 @router.get("/suggest-improvements")
 async def suggest_taxonomy_improvements(
-    min_confidence: float = Query(30.0, description="Seuil minimum de confiance pour suggestions")
+    min_confidence: float = Query(30.0, description="Minimum confidence threshold for suggestions")
 ):
     """
     Suggestions d'améliorations pour la taxonomie basées sur l'analyse des classifications

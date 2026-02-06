@@ -272,12 +272,12 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
     const criticalRatio = criticalZoneCount / totalIndicators;
 
     if (criticalRatio > 0.3) { // Plus de 30% en zone critique
-      adjustments.push('🚨 Zone critique détectée');
+      adjustments.push('🚨 Critical zone detected');
 
       // Force defensive allocation
       adjustedRegime.risk_tolerance = Math.min(adjustedRegime.risk_tolerance, 0.4);
       adjustedRegime.name += ' (Crit)';
-      adjustedRegime.description += ` ${criticalZoneCount}/${totalIndicators} indicateurs en zone critique.`;
+      adjustedRegime.description += ` ${criticalZoneCount}/${totalIndicators} indicators in critical zone.`;
     }
   }
 
@@ -288,11 +288,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const onchainScore = categoryBreakdown.onchain_fundamentals.score;
 
       if (onchainScore < 30) { // Fondamentaux très bullish (scores inversés)
-        adjustments.push('🔗 Fondamentaux bullish');
+        adjustments.push('🔗 Bullish fundamentals');
         adjustedRegime.confidence += 0.1;
 
       } else if (onchainScore > 70) { // Fondamentaux très bearish
-        adjustments.push('🔗 Fondamentaux bearish');
+        adjustments.push('🔗 Bearish fundamentals');
         adjustedRegime.risk_tolerance *= 0.8; // Réduire le risque
       }
     }
@@ -302,11 +302,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const cycleScore = categoryBreakdown.cycle_technical.score;
 
       if (cycleScore > 75) { // Signaux de cycle bearish
-        adjustments.push('📊 Signaux de top');
+        adjustments.push('📊 Top signals');
         adjustedRegime.risk_tolerance *= 0.7; // Très défensif
 
       } else if (cycleScore < 25) { // Signaux de cycle bullish  
-        adjustments.push('📊 Signaux de bottom');
+        adjustments.push('📊 Bottom signals');
         adjustedRegime.confidence += 0.15;
       }
     }
@@ -316,11 +316,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const sentimentScore = categoryBreakdown.sentiment.score;
 
       if (sentimentScore > 80) { // Fear extreme = contrarian bullish
-        adjustments.push('😨 Fear extrême');
+        adjustments.push('😨 Extreme fear');
         adjustedRegime.confidence += 0.05;
 
       } else if (sentimentScore < 20) { // Greed extreme = bearish
-        adjustments.push('🤑 Greed extrême');
+        adjustments.push('🤑 Extreme greed');
         adjustedRegime.risk_tolerance *= 0.9;
       }
     }

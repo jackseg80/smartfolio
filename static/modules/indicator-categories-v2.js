@@ -13,7 +13,7 @@ export const INDICATOR_CATEGORIES_V2 = {
   // Indicateurs On-Chain PURS (40% du score) - Uniquement données blockchain
   onchain_pure: {
     weight: 0.40,
-    description: "Métriques blockchain fondamentales",
+    description: "Fundamental blockchain metrics",
     color: "#3b82f6", // Bleu
     indicators: {
       // Évaluation prix/valeur (corrélés - éviter double comptage)
@@ -111,7 +111,7 @@ export const INDICATOR_CATEGORIES_V2 = {
   // Indicateurs Temporels/Market Structure (10% du score) - Contexte marché
   market_context: {
     weight: 0.10,
-    description: "Contexte et structure de marché",
+    description: "Market context and structure",
     color: "#8b5cf6", // Violet
     indicators: {
       'altcoin_season': { weight: 0.20, invert: false },

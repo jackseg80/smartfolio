@@ -141,7 +141,7 @@ class AlertManager:
         # Dérive de portfolio > 5%
         drift_rule = AlertRule(
             name="Portfolio Drift Alert",
-            description="Alerte quand la dérive du portfolio dépasse 5%",
+            description="Alert when portfolio drift exceeds 5%",
             alert_type=AlertType.PORTFOLIO_DRIFT,
             level=AlertLevel.WARNING,
             metric="portfolio_drift_pct",
@@ -155,7 +155,7 @@ class AlertManager:
         # Taux d'échec d'exécution > 20%
         execution_rule = AlertRule(
             name="Execution Failure Rate",
-            description="Alerte quand le taux d'échec d'exécution dépasse 20%",
+            description="Alert when execution failure rate exceeds 20%",
             alert_type=AlertType.EXECUTION_FAILURE,
             level=AlertLevel.ERROR,
             metric="execution_failure_rate",
@@ -169,7 +169,7 @@ class AlertManager:
         # Performance anormalement basse
         performance_rule = AlertRule(
             name="Low Performance Alert",
-            description="Alerte quand la performance est anormalement basse",
+            description="Alert when performance is abnormally low",
             alert_type=AlertType.PERFORMANCE_ANOMALY,
             level=AlertLevel.WARNING,
             metric="portfolio_performance_24h",

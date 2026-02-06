@@ -85,7 +85,7 @@ async function loadMLPredictions() {
 
       // Dernière mise à jour depuis source centralisée
       document.getElementById('ml-last-update').textContent =
-        mlStatus.timestamp ? new Date(mlStatus.timestamp).toLocaleTimeString('fr-FR') : '--';
+        mlStatus.timestamp ? new Date(mlStatus.timestamp).toLocaleTimeString('en-US') : '--';
 
       // Statuts des modèles individuels depuis source centralisée
       const individual = mlStatus.individual;
@@ -99,7 +99,7 @@ async function loadMLPredictions() {
       if (volStatusEl && volDetailsEl) {
         const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
         volStatusEl.textContent = `${icons[volStatus]} ${volStatus.charAt(0).toUpperCase() + volStatus.slice(1)}`;
-        volDetailsEl.textContent = `${volModelsLoaded} modèles • ${volSymbols} symboles`;
+        volDetailsEl.textContent = `${volModelsLoaded} models • ${volSymbols} symbols`;
       }
 
       // Regime HMM depuis source centralisée
@@ -109,7 +109,7 @@ async function loadMLPredictions() {
       if (regimeStatusEl && regimeDetailsEl) {
         const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
         regimeStatusEl.textContent = `${icons[regimeStatus]} ${regimeStatus.charAt(0).toUpperCase() + regimeStatus.slice(1)}`;
-        regimeDetailsEl.textContent = individual.regime.available ? 'Modèle disponible' : 'Non disponible';
+        regimeDetailsEl.textContent = individual.regime.available ? 'Model available' : 'Not available';
       }
 
       // Correlation Transformer depuis source centralisée
@@ -120,7 +120,7 @@ async function loadMLPredictions() {
       if (corrStatusEl && corrDetailsEl) {
         const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
         corrStatusEl.textContent = `${icons[corrStatus]} ${corrStatus.charAt(0).toUpperCase() + corrStatus.slice(1)}`;
-        corrDetailsEl.textContent = `${corrModelsLoaded} modèles chargés`;
+        corrDetailsEl.textContent = `${corrModelsLoaded} models loaded`;
       }
 
       // Sentiment Composite depuis source centralisée
@@ -130,7 +130,7 @@ async function loadMLPredictions() {
         const sentStatus = individual.sentiment.loaded > 0 ? 'active' : 'inactive';
         const icons = { 'active': '🟢', 'inactive': '⚪' };
         sentStatusEl.textContent = `${icons[sentStatus]} ${sentStatus.charAt(0).toUpperCase() + sentStatus.slice(1)}`;
-        sentDetailsEl.textContent = individual.sentiment.available ? 'API composite disponible' : 'Non disponible';
+        sentDetailsEl.textContent = individual.sentiment.available ? 'Composite API available' : 'Not available';
       }
 
       debugLogger.debug(`✅ ML Status chargé depuis source centralisée: ${mlStatus.source}`);
@@ -221,7 +221,7 @@ async function loadMLPredictionsFallback() {
 
       const lastUpdate = pipeline.timestamp || statusData.timestamp;
       document.getElementById('ml-last-update').textContent =
-        lastUpdate ? new Date(lastUpdate).toLocaleTimeString('fr-FR') : '--';
+        lastUpdate ? new Date(lastUpdate).toLocaleTimeString('en-US') : '--';
 
       debugLogger.debug('⚠️ Using ML fallback system');
     }
@@ -262,7 +262,7 @@ async function loadMLPipelineStatus() {
 
 // Actions Admin ML - Event Handlers
 async function triggerMLRetraining() {
-  if (!confirm('Déclencher le re-entrainement des modèles ML ? (Peut prendre plusieurs minutes)')) return;
+  if (!confirm('Trigger ML model retraining? (This may take several minutes)')) return;
 
   try {
     const response = await fetch('/api/ml/train', {
@@ -271,17 +271,17 @@ async function triggerMLRetraining() {
     });
 
     if (response.ok) {
-      alert('✅ Re-entrainement démarré en arrière-plan');
+      alert('✅ Retraining started in the background');
     } else {
-      alert('❌ Erreur lors du démarrage: ' + response.statusText);
+      alert('❌ Error during startup: ' + response.statusText);
     }
   } catch (error) {
-    alert('❌ Erreur: ' + error.message);
+    alert('❌ Error: ' + error.message);
   }
 }
 
 async function clearMLCache() {
-  if (!confirm('Vider le cache ML ?')) return;
+  if (!confirm('Clear ML cache?')) return;
 
   try {
     const response = await fetch('/api/ml/cache/clear', {
@@ -290,13 +290,13 @@ async function clearMLCache() {
     });
 
     if (response.ok) {
-      alert('✅ Cache ML vidé');
+      alert('✅ ML cache cleared');
       location.reload();
     } else {
-      alert('❌ Erreur: ' + response.statusText);
+      alert('❌ Error: ' + response.statusText);
     }
   } catch (error) {
-    alert('❌ Erreur: ' + error.message);
+    alert('❌ Error: ' + error.message);
   }
 }
 
@@ -329,7 +329,7 @@ async function showMLDebug() {
       alert('❌ Admin access required');
     }
   } catch (error) {
-    alert('❌ Erreur: ' + error.message);
+    alert('❌ Error: ' + error.message);
   }
 }
 

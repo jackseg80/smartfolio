@@ -587,7 +587,7 @@ export function applySentimentOverride(targets, sentimentScore, regime = 'neutra
       if (modified['L2/Scaling']) modified['L2/Scaling'] *= 1.20;
       if (modified.DeFi) modified.DeFi *= 1.10;
       if (modified.Memecoins) modified.Memecoins = Math.max(modified.Memecoins * 1.5, 2);
-      overrideReason = `🐂 Bull + Extreme Fear (${sentimentScore}) → Opportunité d'achat`;
+      overrideReason = `🐂 Bull + Extreme Fear (${sentimentScore}) → Buying opportunity`;
       console.debug('💎 SIM OVERRIDE: Opportunistic allocation (Bull + Fear)');
     } else if (bearContext) {
       // 🐻 Bear + Fear = DANGER (capitulation)
@@ -976,7 +976,7 @@ export function explainPipeline(context, steps) {
             scores: context.scores,
             sentimentScore: context.sentimentScore ?? 50,
             confidences: context.confidences,
-            overrides: context.backendDecision ? 'Backend forcé' : 'DI V2 (4 comp.)'
+            overrides: context.backendDecision ? 'Backend forced' : 'DI V2 (4 comp.)'
           }
         },
 
@@ -1052,11 +1052,11 @@ function generateNaturalLanguageSummary(context, steps) {
   summary += `Budget risk recommande ${riskBudget.target_stables_pct}% en stables `;
 
   if (riskBudget.flags.hysteresis) {
-    summary += `(hystérésis appliquée) `;
+    summary += `(hysteresis applied) `;
   }
 
   if (riskBudget.flags.cb_vol || riskBudget.flags.cb_dd) {
-    summary += `(circuit-breakers déclenchés) `;
+    summary += `(circuit-breakers triggered) `;
   }
 
   summary += `. Plan d'exécution: `;

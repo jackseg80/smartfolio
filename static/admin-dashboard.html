@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +24,7 @@
                 <span>🔧</span>
                 Admin Dashboard
             </h1>
-            <p class="subtitle">Gestion système - User management, Logs, Cache, ML models, API keys</p>
+            <p class="subtitle">System management - User management, Logs, Cache, ML models, API keys</p>
         </div>
 
         <!-- System Stats Overview -->
@@ -74,8 +74,8 @@
             </div>
 
             <div class="placeholder">
-                <h3>Bienvenue dans le dashboard</h3>
-                <p>Sélectionnez un module dans les onglets ci-dessus pour gérer le système.</p>
+                <h3>Welcome to the dashboard</h3>
+                <p>Select a module from the tabs above to manage the system.</p>
             </div>
         </div>
 
@@ -234,7 +234,7 @@
             <h2>API Keys Management</h2>
             <div class="placeholder">
                 <h3>🔑 API Keys</h3>
-                <p>Phase 4 - À implémenter</p>
+                <p>Phase 4 - To implement</p>
             </div>
         </div>
     </div>
@@ -911,7 +911,7 @@
         function formatDate(dateStr) {
             if (!dateStr) return '-';
             const date = new Date(dateStr);
-            return date.toLocaleDateString('fr-FR');
+            return date.toLocaleDateString('en-US');
         }
 
         // Load logs tab
@@ -1729,7 +1729,7 @@
                             <td><span class="badge">${model.model_type || 'unknown'}</span></td>
                             <td>${model.version || 'N/A'}</td>
                             <td>${statusBadge}</td>
-                            <td>${model.updated_at ? new Date(model.updated_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'}</td>
+                            <td>${model.updated_at ? new Date(model.updated_at).toLocaleString('en-US', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'N/A'}</td>
                             <td>${trainingStatus}</td>
                             <td style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
                                 <button class="btn btn-small btn-secondary" onclick="showModelInfo('${model.name}')" title="View detailed information">
@@ -1835,8 +1835,8 @@
                             <td><strong>${job.model_name}</strong></td>
                             <td>${statusBadge}</td>
                             <td>${job.triggered_by}</td>
-                            <td>${new Date(job.created_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
-                            <td>${job.completed_at ? new Date(job.completed_at).toLocaleString('fr-FR', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}</td>
+                            <td>${new Date(job.created_at).toLocaleString('en-US', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
+                            <td>${job.completed_at ? new Date(job.completed_at).toLocaleString('en-US', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}</td>
                             <td>
                                 ${job.status === 'running' || job.status === 'pending' ?
                                     `<button class="btn btn-small btn-danger" onclick="cancelJob('${job.job_id}')">Cancel</button>` :
@@ -2015,9 +2015,9 @@
 
             // Dates
             document.getElementById('model-info-created').textContent =
-                manifest.created_at ? new Date(manifest.created_at).toLocaleString('fr-FR') : 'N/A';
+                manifest.created_at ? new Date(manifest.created_at).toLocaleString('en-US') : 'N/A';
             document.getElementById('model-info-updated').textContent =
-                manifest.updated_at ? new Date(manifest.updated_at).toLocaleString('fr-FR') : 'N/A';
+                manifest.updated_at ? new Date(manifest.updated_at).toLocaleString('en-US') : 'N/A';
 
             // Training configuration
             if (manifest.hyperparameters || manifest.training_config) {
@@ -2168,7 +2168,7 @@
 
             tbody.innerHTML = data.versions.map(version => {
                 const sizeMB = version.file_size ? (version.file_size / (1024 * 1024)).toFixed(2) + ' MB' : 'N/A';
-                const createdDate = version.created_at ? new Date(version.created_at).toLocaleString('fr-FR') : 'N/A';
+                const createdDate = version.created_at ? new Date(version.created_at).toLocaleString('en-US') : 'N/A';
 
                 // Format metrics
                 let metricsHtml = '-';

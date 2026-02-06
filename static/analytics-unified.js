@@ -154,7 +154,7 @@ function refreshScoresFromLocalStorage() {
         updateMetric('risk-kpi-onchain', Math.round(scores.onchain), 'Fondamentaux on-chain');
     }
     if (scores.blended != null) {
-        updateMetric('risk-kpi-blended', Math.round(scores.blended), 'CCS × Cycle (synthèse)');
+        updateMetric('risk-kpi-blended', Math.round(scores.blended), 'CCS × Cycle (synthesis)');
     }
 }
 
@@ -278,12 +278,12 @@ async function loadRiskData() {
     // Diversification metrics
     const corr = riskData.correlation_metrics || {};
     if (typeof corr.diversification_ratio === 'number') {
-        updateMetric('risk-kpi-diversification', (corr.diversification_ratio).toFixed(2), 'Corrélation de portefeuille');
+        updateMetric('risk-kpi-diversification', (corr.diversification_ratio).toFixed(2), 'Portfolio correlation');
     } else {
         updateMetric('risk-kpi-diversification', '--', 'Indisponible');
     }
     if (typeof corr.effective_assets === 'number') {
-        updateMetric('risk-kpi-effective-assets', Math.round(corr.effective_assets), 'Actifs non-redondants');
+        updateMetric('risk-kpi-effective-assets', Math.round(corr.effective_assets), 'Non-redundant assets');
     } else {
         updateMetric('risk-kpi-effective-assets', '--', 'Indisponible');
     }
@@ -293,12 +293,12 @@ async function loadRiskData() {
     if (ls.onchain != null) {
         updateMetric('risk-kpi-onchain', Math.round(ls.onchain), 'Fondamentaux on-chain');
     } else {
-        updateMetric('risk-kpi-onchain', '--', 'Fondamentaux on-chain (bientôt)');
+        updateMetric('risk-kpi-onchain', '--', 'On-chain fundamentals (coming soon)');
     }
     if (ls.blended != null) {
-        updateMetric('risk-kpi-blended', Math.round(ls.blended), 'CCS × Cycle (synthèse)');
+        updateMetric('risk-kpi-blended', Math.round(ls.blended), 'CCS × Cycle (synthesis)');
     } else {
-        updateMetric('risk-kpi-blended', '--', 'Synthèse indisponible (ouvrez le Risk Dashboard)');
+        updateMetric('risk-kpi-blended', '--', 'Synthesis unavailable (open the Risk Dashboard)');
     }
 
     // Timestamp (si dispo) au bas du panneau
@@ -313,7 +313,7 @@ async function loadRiskData() {
                 info.style.cssText = 'text-align:center; font-size:12px; color: var(--theme-text-muted); margin-top:.25rem;';
                 panel.appendChild(info);
             }
-            info.textContent = `Mis à jour: ${ts}`;
+            info.textContent = `Updated: ${ts}`;
         }
     } catch { }
 } async function loadPerformanceData() {
@@ -415,10 +415,10 @@ async function loadMonitoringData() {
         const data = await response.json();
 
         // Update 4 KPIs
-        updateMetric('monitor-total-return', `${(data.total_return_pct).toFixed(1)}%`, 'Sur la période');
-        updateMetric('monitor-sharpe', (data.sharpe_ratio).toFixed(2), 'Risque ajusté');
-        updateMetric('monitor-volatility', `${(data.volatility_pct).toFixed(1)}%`, 'Risque de marché');
-        updateMetric('monitor-drawdown', `${Math.abs(data.max_drawdown_pct).toFixed(1)}%`, 'Pire baisse');
+        updateMetric('monitor-total-return', `${(data.total_return_pct).toFixed(1)}%`, 'Over the period');
+        updateMetric('monitor-sharpe', (data.sharpe_ratio).toFixed(2), 'Risk-adjusted');
+        updateMetric('monitor-volatility', `${(data.volatility_pct).toFixed(1)}%`, 'Market risk');
+        updateMetric('monitor-drawdown', `${Math.abs(data.max_drawdown_pct).toFixed(1)}%`, 'Worst drawdown');
 
         // Breakdown panel
         const breakdown = document.getElementById('advanced-metrics-breakdown');
@@ -707,7 +707,7 @@ function renderCycleMultipliers(cycleData, phase) {
         `;
     }).join('');
 
-    container.innerHTML = multipliersHTML || '<div style="text-align: center; color: var(--theme-text-muted);">Multiplicateurs non disponibles</div>';
+    container.innerHTML = multipliersHTML || '<div style="text-align: center; color: var(--theme-text-muted);">Multipliers not available</div>';
 }
 
 /**

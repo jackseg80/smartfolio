@@ -591,7 +591,7 @@ function calculateExecutionPlan(targetAllocation, currentPositions, executionCon
       iterations: 0,
       estimated_days: 0,
       cap_unavailable: true,
-      message: 'Cap non disponible, exécution ignorée ce tick'
+      message: 'Cap not available, execution skipped this tick'
     };
   }
 

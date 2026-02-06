@@ -126,7 +126,7 @@ class SourcesManagerV2 {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
             const data = await response.json();
@@ -230,7 +230,7 @@ class SourcesManagerV2 {
         const activeSource = status?.active_source || `manual_${category}`;
         const sourceStatus = status?.status || 'not_configured';
 
-        const title = category === 'crypto' ? 'Crypto Assets' : 'Bourse (Actions, ETF)';
+        const title = category === 'crypto' ? 'Crypto Assets' : 'Stocks (Equities, ETF)';
         const icon = category === 'crypto' ? '&#8383;' : '&#128200;';
 
         // Get sources by mode
@@ -248,10 +248,10 @@ class SourcesManagerV2 {
                         <button class="btn-icon-small" onclick="sourcesManagerV2.showSourceComparison('${category}')" title="Comparer les sources">
                             📊
                         </button>
-                        <button class="btn-icon-small" onclick="sourcesManagerV2.showSourceHistory('${category}')" title="Historique des changements">
+                        <button class="btn-icon-small" onclick="sourcesManagerV2.showSourceHistory('${category}')" title="Change history">
                             📜
                         </button>
-                        <button class="btn-icon-small" onclick="sourcesManagerV2.showRecommendations('${category}')" title="Recommandations">
+                        <button class="btn-icon-small" onclick="sourcesManagerV2.showRecommendations('${category}')" title="Recommendations">
                             💡
                         </button>
                     </div>
@@ -325,7 +325,7 @@ class SourcesManagerV2 {
                 <div class="csv-config">
                     <div class="csv-file-manager" id="${category}-csv-manager">
                         <p style="text-align: center; color: var(--theme-text-muted);">
-                            Chargement des fichiers...
+                            Loading files...
                         </p>
                     </div>
                 </div>
@@ -336,7 +336,7 @@ class SourcesManagerV2 {
         if (activeSource.includes('api')) {
             return `
                 <div class="api-config">
-                    <p>Configuration API dans l'onglet Clés API</p>
+                    <p>API configuration in the API Keys tab</p>
                     <button class="btn secondary" onclick="switchToTab('api')">
                         Configurer API
                     </button>
@@ -384,7 +384,7 @@ class SourcesManagerV2 {
 
                     this.showToast(`Source ${category} changee`, 'success');
                 } catch (error) {
-                    this.showToast(`Erreur: ${error.message}`, 'error');
+                    this.showToast(`Error: ${error.message}`, 'error');
                     // Revert radio selection
                     e.target.checked = false;
                 }
@@ -447,7 +447,7 @@ class SourcesManagerV2 {
             console.error('[SourcesManagerV2] Error loading CSV files:', error);
             container.innerHTML = `
                 <div style="padding: 16px; color: var(--danger); text-align: center;">
-                    ❌ Erreur: ${error.message}
+                    ❌ Error: ${error.message}
                 </div>
             `;
         }
@@ -477,17 +477,17 @@ class SourcesManagerV2 {
                                 </div>
                             </div>
                             <div class="file-actions">
-                                <button class="btn-icon" onclick="sourcesManagerV2.previewCSV('${category}', '${activeFile.filename}')" title="Aperçu">
+                                <button class="btn-icon" onclick="sourcesManagerV2.previewCSV('${category}', '${activeFile.filename}')" title="Preview">
                                     👁️
                                 </button>
-                                <button class="btn-icon" onclick="sourcesManagerV2.downloadCSV('${category}', '${activeFile.filename}')" title="Télécharger">
+                                <button class="btn-icon" onclick="sourcesManagerV2.downloadCSV('${category}', '${activeFile.filename}')" title="Download">
                                     📥
                                 </button>
                             </div>
                         </div>
                     ` : `
                         <div class="empty-state-small">
-                            <p>Aucun fichier CSV disponible</p>
+                            <p>No CSV file available</p>
                         </div>
                     `}
                 </div>
@@ -496,7 +496,7 @@ class SourcesManagerV2 {
                 ${files.length > 1 ? `
                     <div class="other-files-section">
                         <button class="dropdown-toggle" onclick="sourcesManagerV2.toggleCSVDropdown('${category}')">
-                            <span>📂 Autres fichiers (${otherFiles.length})</span>
+                            <span>📂 Other files (${otherFiles.length})</span>
                             <span class="dropdown-icon" id="${category}-dropdown-icon">▼</span>
                         </button>
                         <div class="dropdown-content hidden" id="${category}-dropdown-content">
@@ -512,16 +512,16 @@ class SourcesManagerV2 {
                                         </div>
                                     </div>
                                     <div class="file-actions-small">
-                                        <button class="btn-icon-small activate-btn" onclick="sourcesManagerV2.selectCSVFile('${category}', '${file.filename}')" title="Activer ce fichier">
+                                        <button class="btn-icon-small activate-btn" onclick="sourcesManagerV2.selectCSVFile('${category}', '${file.filename}')" title="Activate this file">
                                             ✅
                                         </button>
-                                        <button class="btn-icon-small" onclick="sourcesManagerV2.previewCSV('${category}', '${file.filename}')" title="Aperçu">
+                                        <button class="btn-icon-small" onclick="sourcesManagerV2.previewCSV('${category}', '${file.filename}')" title="Preview">
                                             👁️
                                         </button>
-                                        <button class="btn-icon-small" onclick="sourcesManagerV2.downloadCSV('${category}', '${file.filename}')" title="Télécharger">
+                                        <button class="btn-icon-small" onclick="sourcesManagerV2.downloadCSV('${category}', '${file.filename}')" title="Download">
                                             📥
                                         </button>
-                                        <button class="btn-icon-small danger" onclick="sourcesManagerV2.deleteCSV('${category}', '${file.filename}')" title="Supprimer">
+                                        <button class="btn-icon-small danger" onclick="sourcesManagerV2.deleteCSV('${category}', '${file.filename}')" title="Delete">
                                             🗑️
                                         </button>
                                     </div>
@@ -615,11 +615,11 @@ class SourcesManagerV2 {
      */
     formatStatus(status) {
         const statusMap = {
-            'active': 'Actif',
-            'inactive': 'Inactif',
-            'error': 'Erreur',
-            'not_configured': 'Non configure',
-            'not_found': 'Non trouve'
+            'active': 'Active',
+            'inactive': 'Inactive',
+            'error': 'Error',
+            'not_configured': 'Not configured',
+            'not_found': 'Not found'
         };
         return statusMap[status] || status;
     }
@@ -679,7 +679,7 @@ class SourcesManagerV2 {
                         <button class="close-modal" onclick="document.getElementById('uploadModalV2').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p>Extensions autorisées: <strong>.csv</strong></p>
+                        <p>Allowed extensions: <strong>.csv</strong></p>
                         <p>Taille max: <strong>10MB par fichier</strong></p>
 
                         <div class="upload-area" id="uploadAreaV2" style="border: 2px dashed var(--theme-border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin: 16px 0;">
@@ -693,11 +693,11 @@ class SourcesManagerV2 {
                             <div style="background: var(--theme-surface); border-radius: 4px; height: 8px; overflow: hidden;">
                                 <div id="progressFillV2" style="background: var(--brand-primary); height: 100%; width: 0%; transition: width 0.3s;"></div>
                             </div>
-                            <div id="progressTextV2" style="text-align: center; margin-top: 8px; font-size: 12px;">Préparation...</div>
+                            <div id="progressTextV2" style="text-align: center; margin-top: 8px; font-size: 12px;">Preparing...</div>
                         </div>
                     </div>
                     <div class="modal-footer" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;">
-                        <button class="btn secondary" onclick="document.getElementById('uploadModalV2').remove()">Annuler</button>
+                        <button class="btn secondary" onclick="document.getElementById('uploadModalV2').remove()">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -766,7 +766,7 @@ class SourcesManagerV2 {
     async processUpload(category, module, file) {
         // Validate file type
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            this.showToast('Veuillez sélectionner un fichier CSV', 'error');
+            this.showToast('Please select a CSV file', 'error');
             return;
         }
 
@@ -777,7 +777,7 @@ class SourcesManagerV2 {
         }
 
         try {
-            this.showToast('Upload en cours...', 'info');
+            this.showToast('Upload in progress...', 'info');
 
             const formData = new FormData();
             formData.append('module', module);
@@ -793,10 +793,10 @@ class SourcesManagerV2 {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || error.error || 'Erreur upload');
+                throw new Error(error.message || error.error || 'Upload error');
             }
 
-            this.showToast('✅ Fichier uploadé avec succès', 'success');
+            this.showToast('✅ File uploaded successfully', 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${module}_csv`);
@@ -808,7 +808,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error uploading file:', error);
-            this.showToast(`Erreur upload: ${error.message}`, 'error');
+            this.showToast(`Upload error: ${error.message}`, 'error');
         }
     }
 
@@ -862,7 +862,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error previewing CSV:', error);
-            this.showToast(`Erreur preview: ${error.message}`, 'error');
+            this.showToast(`Preview error: ${error.message}`, 'error');
         }
     }
 
@@ -889,11 +889,11 @@ class SourcesManagerV2 {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(downloadUrl);
 
-            this.showToast('Fichier téléchargé', 'success');
+            this.showToast('File downloaded', 'success');
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error downloading CSV:', error);
-            this.showToast(`Erreur téléchargement: ${error.message}`, 'error');
+            this.showToast(`Download error: ${error.message}`, 'error');
         }
     }
 
@@ -901,7 +901,7 @@ class SourcesManagerV2 {
      * Delete CSV file
      */
     async deleteCSV(category, filename) {
-        if (!confirm(`Supprimer ${filename} ?\n\nCette action est irréversible.`)) {
+        if (!confirm(`Delete ${filename}?\n\nThis action cannot be undone.`)) {
             return;
         }
 
@@ -913,17 +913,17 @@ class SourcesManagerV2 {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
-            this.showToast('Fichier supprimé', 'success');
+            this.showToast('File deleted', 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${category === 'crypto' ? 'cointracking' : 'saxobank'}_csv`);
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error deleting CSV:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -942,10 +942,10 @@ class SourcesManagerV2 {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur serveur');
+                throw new Error(error.message || 'Server error');
             }
 
-            this.showToast(`Fichier ${filename} activé`, 'success');
+            this.showToast(`File ${filename} activated`, 'success');
 
             // Refresh file list to update active badges
             await this.loadCSVFileList(category, `${category === 'crypto' ? 'cointracking' : 'saxobank'}_csv`);
@@ -964,7 +964,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error selecting CSV:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -972,7 +972,7 @@ class SourcesManagerV2 {
      * Clean old CSV files (keep only 3 most recent)
      */
     async cleanOldFiles(category) {
-        if (!confirm('Supprimer tous les fichiers sauf les 3 plus récents ?')) {
+        if (!confirm('Delete all files except the 3 most recent?')) {
             return;
         }
 
@@ -991,7 +991,7 @@ class SourcesManagerV2 {
             const filesToDelete = files.slice(3);
 
             if (filesToDelete.length === 0) {
-                this.showToast('Aucun fichier à nettoyer', 'info');
+                this.showToast('No files to clean up', 'info');
                 return;
             }
 
@@ -1012,14 +1012,14 @@ class SourcesManagerV2 {
                 }
             }
 
-            this.showToast(`${deleted} fichier(s) supprimé(s)`, 'success');
+            this.showToast(`${deleted} file(s) deleted`, 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${category === 'crypto' ? 'cointracking' : 'saxobank'}_csv`);
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error cleaning files:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -1029,7 +1029,7 @@ class SourcesManagerV2 {
     async handleFileUpload(category, file) {
         // Validate file type
         if (!file.name.toLowerCase().endsWith('.csv')) {
-            this.showToast('Veuillez sélectionner un fichier CSV', 'error');
+            this.showToast('Please select a CSV file', 'error');
             return;
         }
 
@@ -1042,7 +1042,7 @@ class SourcesManagerV2 {
 
         try {
             // Show uploading toast
-            this.showToast('Upload en cours...', 'info');
+            this.showToast('Upload in progress...', 'info');
 
             // Map category to module name
             const moduleMap = {
@@ -1066,17 +1066,17 @@ class SourcesManagerV2 {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.message || 'Erreur upload');
+                throw new Error(error.message || 'Upload error');
             }
 
-            this.showToast('✅ Fichier uploadé avec succès', 'success');
+            this.showToast('✅ File uploaded successfully', 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${module}_csv`);
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error uploading file:', error);
-            this.showToast(`Erreur upload: ${error.message}`, 'error');
+            this.showToast(`Upload error: ${error.message}`, 'error');
         }
     }
 
@@ -1089,7 +1089,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay csv-preview-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 900px;">
                     <div class="modal-header">
-                        <h3>📄 Aperçu: ${preview.filename}</h3>
+                        <h3>📄 Preview: ${preview.filename}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1200,7 +1200,7 @@ class SourcesManagerV2 {
             return `
                 <div class="health-bar error">
                     <span class="health-icon">⚠️</span>
-                    <span class="health-text">Erreur de chargement des données</span>
+                    <span class="health-text">Error loading data</span>
                 </div>
             `;
         }
@@ -1209,7 +1209,7 @@ class SourcesManagerV2 {
             return `
                 <div class="health-bar warning">
                     <span class="health-icon">📭</span>
-                    <span class="health-text">Aucune donnée disponible</span>
+                    <span class="health-text">No data available</span>
                 </div>
             `;
         }
@@ -1219,17 +1219,17 @@ class SourcesManagerV2 {
                 <div class="health-metric">
                     <span class="metric-icon">📈</span>
                     <span class="metric-value">${metrics.totalAssets}</span>
-                    <span class="metric-label">actifs</span>
+                    <span class="metric-label">assets</span>
                 </div>
                 <div class="health-metric">
                     <span class="metric-icon">💰</span>
                     <span class="metric-value">$${this.formatLargeNumber(metrics.totalValue)}</span>
-                    <span class="metric-label">valeur totale</span>
+                    <span class="metric-label">total value</span>
                 </div>
                 <div class="health-metric">
                     <span class="metric-icon">🕒</span>
                     <span class="metric-value">${this.formatDateTime(metrics.lastUpdate)}</span>
-                    <span class="metric-label">dernière MAJ</span>
+                    <span class="metric-label">last update</span>
                 </div>
             </div>
         `;
@@ -1284,7 +1284,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error comparing sources:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -1296,7 +1296,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay comparison-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>📊 Comparaison des Sources - ${category === 'crypto' ? 'Crypto' : 'Bourse'}</h3>
+                        <h3>📊 Source Comparison - ${category === 'crypto' ? 'Crypto' : 'Stocks'}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1306,8 +1306,8 @@ class SourcesManagerV2 {
                                     <div class="comparison-header">
                                         <h4>${comp.name}</h4>
                                         ${comp.available ?
-                                            '<span class="status-badge success">Disponible</span>' :
-                                            '<span class="status-badge disabled">Non configuré</span>'
+                                            '<span class="status-badge success">Available</span>' :
+                                            '<span class="status-badge disabled">Not configured</span>'
                                         }
                                     </div>
                                     ${comp.available ? `
@@ -1323,7 +1323,7 @@ class SourcesManagerV2 {
                                         </div>
                                     ` : `
                                         <div class="empty-comparison">
-                                            <p>Source non configurée ou aucune donnée disponible</p>
+                                            <p>Source not configured or no data available</p>
                                         </div>
                                     `}
                                 </div>
@@ -1351,7 +1351,7 @@ class SourcesManagerV2 {
             return `
                 <div class="insights-section">
                     <h5>💡 Recommandation</h5>
-                    <p>Aucune source n'est actuellement configurée. Configurez au moins une source pour voir vos données.</p>
+                    <p>No source is currently configured. Set up at least one source to view your data.</p>
                 </div>
             `;
         }
@@ -1360,7 +1360,7 @@ class SourcesManagerV2 {
             return `
                 <div class="insights-section">
                     <h5>💡 Recommandation</h5>
-                    <p>Vous utilisez uniquement <strong>${available[0].name}</strong>. Envisagez de configurer une source supplémentaire pour redondance et comparaison.</p>
+                    <p>You are only using <strong>${available[0].name}</strong>. Consider setting up an additional source for redundancy and comparison.</p>
                 </div>
             `;
         }
@@ -1376,16 +1376,16 @@ class SourcesManagerV2 {
         if (divergencePercent > 10) {
             return `
                 <div class="insights-section warning">
-                    <h5>⚠️ Divergence Détectée</h5>
-                    <p>Différence importante entre les sources (${divergencePercent.toFixed(1)}%). Vérifiez la cohérence de vos données.</p>
+                    <h5>⚠️ Divergence Detected</h5>
+                    <p>Significant difference between sources (${divergencePercent.toFixed(1)}%). Check your data consistency.</p>
                 </div>
             `;
         }
 
         return `
             <div class="insights-section success">
-                <h5>✅ Sources Cohérentes</h5>
-                <p>Les données sont cohérentes entre vos sources (divergence < 10%).</p>
+                <h5>✅ Sources Consistent</h5>
+                <p>Data is consistent across your sources (divergence < 10%).</p>
             </div>
         `;
     }
@@ -1412,12 +1412,12 @@ class SourcesManagerV2 {
         const diffHours = Math.floor(diffMs / 3600000);
         const diffDays = Math.floor(diffMs / 86400000);
 
-        if (diffMins < 1) return 'à l\'instant';
-        if (diffMins < 60) return `il y a ${diffMins}min`;
-        if (diffHours < 24) return `il y a ${diffHours}h`;
-        if (diffDays < 7) return `il y a ${diffDays}j`;
+        if (diffMins < 1) return 'just now';
+        if (diffMins < 60) return `${diffMins}min ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
 
-        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        return date.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     }
 
     /**
@@ -1435,9 +1435,9 @@ class SourcesManagerV2 {
      */
     getSourceTypeName(type) {
         const names = {
-            'manual': 'Saisie Manuelle',
-            'csv': 'Import CSV',
-            'api': 'API Temps Réel'
+            'manual': 'Manual Entry',
+            'csv': 'CSV Import',
+            'api': 'Real-Time API'
         };
         return names[type] || type;
     }
@@ -1465,7 +1465,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error loading history:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -1473,19 +1473,19 @@ class SourcesManagerV2 {
      * Render history modal
      */
     renderHistoryModal(category, history) {
-        const categoryName = category === 'crypto' ? 'Crypto Assets' : 'Bourse';
+        const categoryName = category === 'crypto' ? 'Crypto Assets' : 'Stocks';
 
         const modalHTML = `
             <div class="modal-overlay history-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>📜 Historique des Changements - ${categoryName}</h3>
+                        <h3>📜 Change History - ${categoryName}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
                         ${history.length === 0 ? `
                             <div class="empty-state">
-                                <p>Aucun changement de source enregistré</p>
+                                <p>No source changes recorded</p>
                             </div>
                         ` : `
                             <div class="history-timeline">
@@ -1528,10 +1528,10 @@ class SourcesManagerV2 {
      * Format source ID for display
      */
     formatSourceId(sourceId) {
-        if (sourceId === 'none') return 'Aucune source';
-        if (sourceId.includes('manual')) return '✍️ Saisie Manuelle';
-        if (sourceId.includes('csv')) return '📄 Import CSV';
-        if (sourceId.includes('api')) return '🔌 API Temps Réel';
+        if (sourceId === 'none') return 'No source';
+        if (sourceId.includes('manual')) return '✍️ Manual Entry';
+        if (sourceId.includes('csv')) return '📄 CSV Import';
+        if (sourceId.includes('api')) return '🔌 Real-Time API';
         return sourceId;
     }
 
@@ -1569,7 +1569,7 @@ class SourcesManagerV2 {
 
         } catch (error) {
             console.error('[SourcesManagerV2] Error generating recommendations:', error);
-            this.showToast(`Erreur: ${error.message}`, 'error');
+            this.showToast(`Error: ${error.message}`, 'error');
         }
     }
 
@@ -1596,9 +1596,9 @@ class SourcesManagerV2 {
         if (assetCount > 20 && assetCount <= 50 && activeSource?.id.includes('manual')) {
             recommendations.push({
                 type: 'info',
-                title: 'Import CSV recommandé',
-                message: `Avec ${assetCount} actifs, l'import CSV pourrait vous faire gagner du temps lors des mises à jour.`,
-                action: 'En savoir plus',
+                title: 'CSV Import Recommended',
+                message: `With ${assetCount} assets, CSV import could save you time during updates.`,
+                action: 'Learn more',
                 priority: 'medium'
             });
         }
@@ -1607,8 +1607,8 @@ class SourcesManagerV2 {
         if (assetCount < 10 && activeSource?.id.includes('api')) {
             recommendations.push({
                 type: 'info',
-                title: 'Saisie manuelle suffisante',
-                message: `Avec seulement ${assetCount} actifs, la saisie manuelle pourrait être plus simple et éviter la dépendance à une API.`,
+                title: 'Manual entry sufficient',
+                message: `With only ${assetCount} assets, manual entry could be simpler and avoid API dependency.`,
                 action: null,
                 priority: 'low'
             });
@@ -1618,9 +1618,9 @@ class SourcesManagerV2 {
         if (assetCount === 0) {
             recommendations.push({
                 type: 'warning',
-                title: 'Aucune donnée configurée',
-                message: `Commencez par configurer une source de données pour suivre votre portefeuille ${category === 'crypto' ? 'crypto' : 'boursier'}.`,
-                action: 'Configurer maintenant',
+                title: 'No data configured',
+                message: `Start by configuring a data source to track your ${category === 'crypto' ? 'crypto' : 'stock'} portfolio.`,
+                action: 'Configure now',
                 priority: 'high'
             });
         }
@@ -1633,9 +1633,9 @@ class SourcesManagerV2 {
             if (daysSince > 7) {
                 recommendations.push({
                     type: 'warning',
-                    title: 'Données potentiellement obsolètes',
-                    message: `Votre dernier import CSV date de ${Math.floor(daysSince)} jours. Pensez à mettre à jour vos données.`,
-                    action: 'Uploader un nouveau fichier',
+                    title: 'Potentially outdated data',
+                    message: `Your last CSV import was ${Math.floor(daysSince)} days ago. Consider updating your data.`,
+                    action: 'Upload a new file',
                     priority: 'medium'
                 });
             }
@@ -1652,21 +1652,21 @@ class SourcesManagerV2 {
      * Render recommendations modal
      */
     renderRecommendationsModal(category, recommendations) {
-        const categoryName = category === 'crypto' ? 'Crypto Assets' : 'Bourse';
+        const categoryName = category === 'crypto' ? 'Crypto Assets' : 'Stocks';
 
         const modalHTML = `
             <div class="modal-overlay recommendations-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>💡 Recommandations - ${categoryName}</h3>
+                        <h3>💡 Recommendations - ${categoryName}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
                         ${recommendations.length === 0 ? `
                             <div class="empty-state">
-                                <p>✅ Tout est bien configuré !</p>
+                                <p>✅ Everything is well configured!</p>
                                 <p style="font-size: 13px; color: var(--theme-text-muted); margin-top: 8px;">
-                                    Aucune recommandation particulière pour le moment.
+                                    No particular recommendation at this time.
                                 </p>
                             </div>
                         ` : `

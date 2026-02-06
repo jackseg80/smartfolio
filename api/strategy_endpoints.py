@@ -155,7 +155,7 @@ async def preview_strategy(request: PreviewRequest):
 
 
 @router.get("/current", response_model=StrategyResultResponse)
-async def get_current_strategy(template_id: str = Query("balanced", description="Template à utiliser")):
+async def get_current_strategy(template_id: str = Query("balanced", description="Template to use")):
     """Retourne l'état stratégie courante (cache autorisé)"""
     try:
         registry = get_strategy_registry()
@@ -208,7 +208,7 @@ async def strategy_health():
 # Endpoint bonus: comparaison templates
 @router.post("/compare")
 async def compare_templates(
-    template_ids: List[str] = Body(..., description="IDs templates à comparer", max_items=5)
+    template_ids: List[str] = Body(..., description="Template IDs to compare", max_items=5)
 ):
     """Compare plusieurs templates côte à côte"""
     try:

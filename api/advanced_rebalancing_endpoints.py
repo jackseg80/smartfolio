@@ -69,22 +69,22 @@ async def create_advanced_rebalancing_plan(
         required_fields = ["holdings", "target_allocations"]
         for field in required_fields:
             if field not in request_data:
-                raise HTTPException(status_code=400, detail=f"Champ requis manquant: {field}")
-        
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
+
         holdings = request_data["holdings"]
         target_allocations = request_data["target_allocations"]
         strategy_name = request_data.get("strategy", "smart_consolidation")
         constraints_data = request_data.get("constraints", {})
-        
+
         # Validation holdings
         if not holdings or not isinstance(holdings, list):
-            raise HTTPException(status_code=400, detail="Holdings doit être une liste non-vide")
-        
+            raise HTTPException(status_code=400, detail="Holdings must be a non-empty list")
+
         for holding in holdings:
             if not isinstance(holding, dict):
-                raise HTTPException(status_code=400, detail="Chaque holding doit être un objet")
+                raise HTTPException(status_code=400, detail="Each holding must be an object")
             if "symbol" not in holding or "value_usd" not in holding:
-                raise HTTPException(status_code=400, detail="Holdings doivent contenir 'symbol' et 'value_usd'")
+                raise HTTPException(status_code=400, detail="Holdings must contain 'symbol' and 'value_usd'")
             
             # Validation montants
             try:
@@ -93,17 +93,17 @@ async def create_advanced_rebalancing_plan(
                     raise ValueError("value_usd doit être positif")
                 holding["value_usd"] = value_usd
             except ValueError:
-                raise HTTPException(status_code=400, detail=f"value_usd invalide pour {holding.get('symbol', 'unknown')}")
+                raise HTTPException(status_code=400, detail=f"Invalid value_usd for {holding.get('symbol', 'unknown')}")
         
         # Validation target_allocations
         if not isinstance(target_allocations, dict):
-            raise HTTPException(status_code=400, detail="target_allocations doit être un objet")
+            raise HTTPException(status_code=400, detail="target_allocations must be an object")
         
         total_allocation = sum(float(v) for v in target_allocations.values())
         if abs(total_allocation - 100.0) > 1.0:  # Tolérance 1%
             raise HTTPException(
                 status_code=400, 
-                detail=f"Les allocations cibles doivent totaliser 100%, actuellement: {total_allocation}%"
+                detail=f"Target allocations must total 100%, currently: {total_allocation}%"
             )
         
         # Validation et parsing de la stratégie
@@ -113,7 +113,7 @@ async def create_advanced_rebalancing_plan(
             valid_strategies = [s.value for s in RebalancingStrategy]
             raise HTTPException(
                 status_code=400, 
-                detail=f"Stratégie invalide '{strategy_name}'. Stratégies valides: {valid_strategies}"
+                detail=f"Invalid strategy '{strategy_name}'. Valid strategies: {valid_strategies}"
             )
         
         # Construction des contraintes
@@ -171,7 +171,7 @@ async def create_advanced_rebalancing_plan(
         raise
     except Exception as e:
         logger.error(f"Erreur génération plan avancé: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @router.post("/simulate")
 async def simulate_rebalancing_strategies(
@@ -205,7 +205,7 @@ async def simulate_rebalancing_strategies(
         required_fields = ["holdings", "target_allocations"]
         for field in required_fields:
             if field not in request_data:
-                raise HTTPException(status_code=400, detail=f"Champ requis manquant: {field}")
+                raise HTTPException(status_code=400, detail=f"Missing required field: {field}")
         
         holdings = request_data["holdings"]
         target_allocations = request_data["target_allocations"]
@@ -255,7 +255,7 @@ async def simulate_rebalancing_strategies(
                 }
         
         if not simulation_results:
-            raise HTTPException(status_code=400, detail="Aucune stratégie valide à simuler")
+            raise HTTPException(status_code=400, detail="No valid strategy to simulate")
         
         # Analyse comparative
         valid_results = {k: v for k, v in simulation_results.items() if "error" not in v}
@@ -297,7 +297,7 @@ async def simulate_rebalancing_strategies(
                     "simplest_execution": lowest_complexity if valid_results else None
                 } if valid_results else {},
                 "recommended_strategy": recommended_strategy,
-                "recommendation_reasoning": f"Score composite le plus élevé ({composite_scores.get(recommended_strategy, 0):.1f})" if recommended_strategy else "Aucune simulation réussie"
+                "recommendation_reasoning": f"Highest composite score ({composite_scores.get(recommended_strategy, 0):.1f})" if recommended_strategy else "No successful simulation"
             },
             "meta": {
                 "timestamp": datetime.now().isoformat(),
@@ -313,7 +313,7 @@ async def simulate_rebalancing_strategies(
         raise
     except Exception as e:
         logger.error(f"Erreur simulation stratégies: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur serveur: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @router.get("/strategies")
 async def get_available_strategies():
@@ -532,4 +532,4 @@ async def validate_constraints(
         
     except Exception as e:
         logger.error(f"Erreur validation contraintes: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur validation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Validation error: {str(e)}")

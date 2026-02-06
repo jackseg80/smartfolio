@@ -1,5 +1,5 @@
 {
-  "comment": "Configuration pour l'allocation intra-groupe priority mode",
+  "comment": "Configuration for intra-group priority mode allocation",
   "version": "1.0",
 
   "features": {
@@ -9,7 +9,7 @@
   },
 
   "scoring": {
-    "comment": "Poids pour le calcul du score composite",
+    "comment": "Weights for composite score calculation",
     "weights": {
       "w_cap_rank_inv": 0.30,
       "w_liquidity": 0.25,
@@ -25,7 +25,7 @@
   },
 
   "allocation": {
-    "comment": "Règles d'allocation intra-groupe",
+    "comment": "Intra-group allocation rules",
     "top_n": 3,
     "distribution_mode": "decay",
     "decay": [0.50, 0.30, 0.20],
@@ -35,7 +35,7 @@
   },
 
   "guardrails": {
-    "comment": "Garde-fous pour éviter les allocations risquées",
+    "comment": "Guardrails to prevent risky allocations",
     "min_liquidity_usd": 50000,
     "max_weight_per_coin": 0.40,
     "min_trade_usd_default": 25.0,
@@ -44,7 +44,7 @@
   },
 
   "lists": {
-    "comment": "Listes de contrôle par symbol/alias (uppercase)",
+    "comment": "Control lists by symbol/alias (uppercase)",
     "global_blacklist": [
       "LUNA",
       "UST",
@@ -58,7 +58,7 @@
       "Stablecoins": ["USDC", "USDT"]
     },
     "priority_boosts": {
-      "comment": "Bonus de score pour certains assets",
+      "comment": "Score bonus for specific assets",
       "BTC": 0.1,
       "ETH": 0.1,
       "SOL": 0.05
@@ -66,7 +66,7 @@
   },
 
   "cache": {
-    "comment": "Configuration du cache disque",
+    "comment": "Disk cache configuration",
     "ttl_seconds": 3600,
     "mode": "prefer_cache",
     "max_age_fallback": 7200,
@@ -74,7 +74,7 @@
   },
 
   "api": {
-    "comment": "Configuration des connecteurs externes",
+    "comment": "External connector configuration",
     "coingecko": {
       "rate_limit_delay": 1.1,
       "timeout": 10.0,
@@ -84,7 +84,7 @@
   },
 
   "logging": {
-    "comment": "Contrôle des logs pour debugging",
+    "comment": "Log control for debugging",
     "log_score_details": true,
     "log_fallbacks": true,
     "log_cache_hits": false,
@@ -92,7 +92,7 @@
   },
 
   "experimental": {
-    "comment": "Features expérimentales - utiliser avec précaution",
+    "comment": "Experimental features - use with caution",
     "use_categories_expansion": false,
     "sentiment_scoring": false,
     "ml_ranking": false

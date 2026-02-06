@@ -122,7 +122,7 @@ export async function fetchBitcoinHistoricalData() {
 
   // 4) Rien trouvé → renvoyer vide (pas de courbe prix)
   debugLogger.warn('❌ Aucune source d\'historique Bitcoin disponible');
-  return { data: [], source: 'Aucune (toutes les APIs ont échoué)' };
+  return { data: [], source: 'None (all APIs failed)' };
 }
 
 // ====== Bitcoin Cycle Chart Creator ======
@@ -359,7 +359,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
             callbacks: {
               title: function (context) {
                 const date = new Date(context[0].parsed.x);
-                return date.toLocaleDateString('fr-FR');
+                return date.toLocaleDateString('en-US');
               },
               label: function (context) {
                 const dataset = context.dataset;
@@ -394,7 +394,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
             position: 'left',
             title: {
               display: true,
-              text: 'Prix Bitcoin (USD, échelle log)'
+              text: 'Bitcoin Price (USD, log scale)'
             },
             ticks: {
               callback: function (value) {
@@ -616,7 +616,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
               ctx.font = 'bold 11px sans-serif';
               ctx.textAlign = 'center';
               ctx.fillText(
-                `${daysSinceHalving} jours (en cours)`,
+                `${daysSinceHalving} days (ongoing)`,
                 midX,
                 arrowY - 8
               );
@@ -654,7 +654,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
 
             // Add current date info
             ctx.font = '10px sans-serif';
-            const currentDateStr = new Date(currentTimestamp).toLocaleDateString('fr-FR');
+            const currentDateStr = new Date(currentTimestamp).toLocaleDateString('en-US');
             ctx.fillText(
               currentDateStr,
               currentX,
@@ -749,9 +749,9 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     if (container) {
       container.innerHTML = `
         <div style="text-align: center; padding: 2rem; color: var(--theme-text-muted);">
-          <div style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Impossible de charger le graphique des cycles</div>
-          <div style="font-size: 0.9rem;">Erreur: ${error.message}</div>
-          <div style="font-size: 0.8rem; margin-top: 0.5rem;">Essayez de rafraîchir la page ou vérifiez votre connexion.</div>
+          <div style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Unable to load cycles chart</div>
+          <div style="font-size: 0.9rem;">Error: ${error.message}</div>
+          <div style="font-size: 0.8rem; margin-top: 0.5rem;">Try refreshing the page or check your connection.</div>
         </div>
       `;
     } else {
@@ -947,7 +947,7 @@ export async function loadOnChainIndicators() {
 
     // Recommendations HTML
     const recosHtml = recos.length > 0 ? card(`
-      <h5 style="margin: 0 0 1rem 0; color: var(--info);">💡 Recommandations tactiques</h5>
+      <h5 style="margin: 0 0 1rem 0; color: var(--info);">💡 Tactical Recommendations</h5>
       ${recos.map(r => `
         <div style="margin: 0.5rem 0; padding: 0.5rem; background: var(--theme-surface-alt); border-radius: 4px; border-left: 3px solid var(--info);">
           <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 0.25rem;">${r.title}</div>
@@ -963,12 +963,12 @@ export async function loadOnChainIndicators() {
     if (lastUpdated) {
       try {
         const updateDate = new Date(lastUpdated);
-        const formattedDate = updateDate.toLocaleDateString('fr-FR', {
+        const formattedDate = updateDate.toLocaleDateString('en-US', {
           day: '2-digit',
           month: '2-digit',
           year: 'numeric'
         });
-        const formattedTime = updateDate.toLocaleTimeString('fr-FR', {
+        const formattedTime = updateDate.toLocaleTimeString('en-US', {
           hour: '2-digit',
           minute: '2-digit'
         });
@@ -1024,7 +1024,7 @@ export async function loadOnChainIndicators() {
     if (container) {
       container.innerHTML = `
         <div style="padding: 1rem; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 6px; color: var(--danger);">
-          ⚠️ Erreur lors du chargement des indicateurs: ${error.message}
+          ⚠️ Error loading indicators: ${error.message}
         </div>
       `;
     }
@@ -1148,19 +1148,19 @@ export async function renderCyclesContentUncached() {
       <div style="display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem;">
         <h3 style="margin: 0;">🔗 Indicateurs On-Chain</h3>
         <div style="display:flex; align-items:center; gap:.75rem;">
-          <button onclick="toggleSection('onchain-indicators')" style="background: none; border: 1px solid var(--theme-border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--theme-text); font-size: 0.8rem;" title="Réduire/Agrandir">
+          <button onclick="toggleSection('onchain-indicators')" style="background: none; border: 1px solid var(--theme-border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--theme-text); font-size: 0.8rem;" title="Collapse/Expand">
             <span id="onchain-indicators-arrow">▼</span>
           </button>
         </div>
       </div>
       <div id="onchain-indicators-content" style="margin: 1rem 0;">
-        <div class="loading">Chargement des indicateurs...</div>
+        <div class="loading">Loading indicators...</div>
       </div>
     </div>
 
     <!-- Note: Le graphique Bitcoin historique a été déplacé vers cycle-analysis.html -->
     <div class="info-banner" style="margin-bottom: 2rem; padding: 12px 16px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text); font-size: 14px;">
-      📈 <strong>Graphique Bitcoin historique</strong> disponible dans <a href="cycle-analysis.html" style="color: var(--brand-primary); text-decoration: underline;">Cycle Analysis</a>
+      📈 <strong>Historical Bitcoin Chart</strong> available in <a href="cycle-analysis.html" style="color: var(--brand-primary); text-decoration: underline;">Cycle Analysis</a>
     </div>
 
     <div class="risk-grid">
@@ -1216,7 +1216,7 @@ export async function renderCyclesContentUncached() {
 
       <!-- Blended Analysis -->
       <div class="risk-card">
-        <h3>⚖️ Stratégie Hybride</h3>
+        <h3>⚖️ Hybrid Strategy</h3>
         <div class="metric-row">
           <span class="metric-label">CCS Original:</span>
           <span class="metric-value">${Math.round(ccsData.score)}</span>
@@ -1232,7 +1232,7 @@ export async function renderCyclesContentUncached() {
           </span>
         </div>
         <div class="metric-row">
-          <span class="metric-label">Stratégie:</span>
+          <span class="metric-label">Strategy:</span>
           <span class="metric-value">${interpretation.label}</span>
         </div>
       </div>
@@ -1240,16 +1240,16 @@ export async function renderCyclesContentUncached() {
 
     <!-- Cycle Multipliers -->
     <div class="risk-card">
-      <h3>🎯 Multiplicateurs par Classe d'Actifs</h3>
+      <h3>🎯 Asset Class Multipliers</h3>
       <div style="font-size: 0.875rem; color: var(--theme-text-muted); margin-bottom: var(--space-sm);">
-        Basé sur la phase de cycle actuelle: <strong>${cycleData.phase?.phase?.replace('_', ' ')}</strong>
+        Based on current cycle phase: <strong>${cycleData.phase?.phase?.replace('_', ' ')}</strong>
       </div>
       <div class="risk-grid">
         ${Object.entries(cycleData.multipliers || {}).map(([asset, multiplier]) => {
           const color = multiplier > 1.1 ? 'var(--success)' :
             multiplier < 0.9 ? 'var(--danger)' : 'var(--theme-text)';
-          const recommendation = multiplier > 1.1 ? 'Surpondérer' :
-            multiplier < 0.9 ? 'Sous-pondérer' : 'Neutre';
+          const recommendation = multiplier > 1.1 ? 'Overweight' :
+            multiplier < 0.9 ? 'Underweight' : 'Neutral';
           return `
             <div class="metric-row">
               <span class="metric-label">${asset}:</span>
@@ -1365,10 +1365,10 @@ window.forceCycleRefresh = async function () {
       console.debug('Cycles tab not active, cache cleared for next access');
     }
 
-    window.showToast?.('Cache cycles vidé et contenu rafraîchi', 'success');
+    window.showToast?.('Cycles cache cleared and content refreshed', 'success');
 
   } catch (error) {
     debugLogger.error('Failed to force refresh cycles:', error);
-    window.showToast?.('Erreur lors du refresh cycles', 'error');
+    window.showToast?.('Error refreshing cycles', 'error');
   }
 };

@@ -115,11 +115,11 @@ class BankAccountOutput(WealthBaseModel):
     balance_usd: Optional[float] = Field(default=None, description="Balance converted to USD")
 
 
-# ===== Patrimoine Models (Phase 1 - Oct 2025) =====
+# ===== Wealth Item Models (Phase 1 - Oct 2025) =====
 
 
-class PatrimoineItemInput(BaseModel):
-    """Input model for creating/updating patrimoine items (mutable for forms)."""
+class WealthItemInput(BaseModel):
+    """Input model for creating/updating wealth items (mutable for forms)."""
 
     model_config = ConfigDict(strict=True, extra="forbid")
 
@@ -147,8 +147,8 @@ class PatrimoineItemInput(BaseModel):
     metadata: Optional[dict] = Field(default_factory=dict, description="Type-specific metadata (JSON)")
 
 
-class PatrimoineItemOutput(WealthBaseModel):
-    """Output model for patrimoine items with computed fields."""
+class WealthItemOutput(WealthBaseModel):
+    """Output model for wealth items with computed fields."""
 
     id: str = Field(..., description="Unique item identifier")
     name: str = Field(..., description="Item name")
@@ -162,6 +162,10 @@ class PatrimoineItemOutput(WealthBaseModel):
     metadata: dict = Field(default_factory=dict, description="Type-specific metadata")
 
 
+# Backward compat aliases
+PatrimoineItemInput = WealthItemInput
+PatrimoineItemOutput = WealthItemOutput
+
 __all__ = [
     "AccountModel",
     "InstrumentModel",
@@ -171,6 +175,8 @@ __all__ = [
     "ProposedTrade",
     "BankAccountInput",
     "BankAccountOutput",
+    "WealthItemInput",
+    "WealthItemOutput",
     "PatrimoineItemInput",
     "PatrimoineItemOutput",
 ]

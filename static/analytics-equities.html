@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics Bourse (Beta) - Crypto Rebalancer</title>
+    <title>Stock Analytics (Beta) - Crypto Rebalancer</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
@@ -15,9 +15,9 @@
         import { initDeepLinks } from './components/deep-links.js';
         // Ancres pour analytics-equities.html
         initDeepLinks({
-            'overview': 'Vue d\'ensemble',
+            'overview': 'Overview',
             'positions': 'Positions',
-            'breakdown': 'Répartition'
+            'breakdown': 'Breakdown'
         });
     </script>
 
@@ -298,10 +298,10 @@
     <div class="info-banner" style="background: var(--info-bg); border: 1px solid var(--info); color: var(--info); padding: 12px 16px; margin: 16px auto; max-width: 1200px; border-radius: var(--radius-md); display: flex; align-items: center; gap: 12px;">
         <span style="font-size: 18px;">ℹ️</span>
         <span>
-            <strong>Nouveau système Sources :</strong>
-            Les imports de données se font maintenant depuis
-            <a href="settings.html#tab-sources" style="color: var(--info); text-decoration: underline;">Configuration → Sources</a>.
-            Cette page affiche les données déjà importées.
+            <strong>New Sources system:</strong>
+            Data imports are now done from
+            <a href="settings.html#tab-sources" style="color: var(--info); text-decoration: underline;">Settings → Sources</a>.
+            This page displays already imported data.
         </span>
     </div>
 
@@ -314,19 +314,19 @@
         <!-- En-tête avec actions -->
         <div class="page-header">
             <div>
-                <h1>🏦 Analytics Bourse
+                <h1>🏦 Stock Analytics
                     <span class="beta-badge">BETA</span>
                 </h1>
                 <p style="margin: 0; color: var(--theme-text-muted); font-size: 0.9rem;">
-                    Analyse détaillée du portefeuille Saxo (lecture legacy)
+                    Detailed analysis of your Saxo portfolio (legacy reader)
                 </p>
             </div>
             <div class="action-bar">
                 <button class="btn" onclick="refreshData()">
-                    🔄 Rafraîchir
+                    🔄 Refresh
                 </button>
                 <a href="settings.html#tab-sources" target="_blank" class="btn btn-primary">
-                    📁 Gérer Sources
+                    📁 Manage Sources
                 </a>
             </div>
         </div>
@@ -334,9 +334,9 @@
         <!-- KPIs en-tête -->
         <div id="overview" class="kpi-row">
             <div class="kpi-card">
-                <div class="kpi-label">Valeur Totale</div>
+                <div class="kpi-label">Total Value</div>
                 <div class="kpi-value" id="total-value">$0</div>
-                <div class="kpi-subtitle">Portefeuille Bourse</div>
+                <div class="kpi-subtitle">Stock Portfolio</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Positions</div>
@@ -344,9 +344,9 @@
                 <div class="kpi-subtitle">Instruments</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">Dernier Import</div>
+                <div class="kpi-label">Last Import</div>
                 <div class="kpi-value" id="last-import" style="font-size: 1.2rem;">n/a</div>
-                <div class="kpi-subtitle">Date et heure</div>
+                <div class="kpi-subtitle">Date and time</div>
             </div>
         </div>
 
@@ -358,16 +358,16 @@
                     <div class="panel-title" id="positions">📊 Positions</div>
                     <div>
                         <select id="sort-select" class="btn" onchange="sortPositions()">
-                            <option value="value">Trier par Valeur</option>
-                            <option value="quantity">Trier par Quantité</option>
-                            <option value="ticker">Trier par Ticker</option>
+                            <option value="value">Sort by Value</option>
+                            <option value="quantity">Sort by Quantity</option>
+                            <option value="ticker">Sort by Ticker</option>
                         </select>
                     </div>
                 </div>
                 <div class="panel-content" id="positions-content">
                     <div class="loading-state">
                         <div class="loading-spinner"></div>
-                        Chargement des positions...
+                        Loading positions...
                     </div>
                 </div>
             </div>
@@ -375,18 +375,18 @@
             <!-- Répartition -->
             <div class="panel">
                 <div class="panel-header">
-                    <div class="panel-title" id="breakdown">📈 Répartition</div>
+                    <div class="panel-title" id="breakdown">📈 Breakdown</div>
                     <div>
                         <select id="breakdown-type" class="btn" onchange="updateBreakdown()">
-                            <option value="currency">Par Devise</option>
-                            <option value="sector">Par Secteur</option>
+                            <option value="currency">By Currency</option>
+                            <option value="sector">By Sector</option>
                         </select>
                     </div>
                 </div>
                 <div class="panel-content" id="breakdown-content">
                     <div class="loading-state">
                         <div class="loading-spinner"></div>
-                        Chargement...
+                        Loading...
                     </div>
                 </div>
             </div>
@@ -469,15 +469,15 @@
                                 Ticker
                                 <span class="sort-indicator ${currentSort === 'ticker' ? 'sort-active' : ''}">↕</span>
                             </th>
-                            <th onclick="changeSortAndRender('instrument')">Nom</th>
+                            <th onclick="changeSortAndRender('instrument')">Name</th>
                             <th onclick="changeSortAndRender('isin')">ISIN</th>
                             <th onclick="changeSortAndRender('quantity')">
-                                Quantité
+                                Quantity
                                 <span class="sort-indicator ${currentSort === 'quantity' ? 'sort-active' : ''}">↕</span>
                             </th>
-                            <th onclick="changeSortAndRender('price')">Prix</th>
+                            <th onclick="changeSortAndRender('price')">Price</th>
                             <th onclick="changeSortAndRender('value')">
-                                Valeur
+                                Value
                                 <span class="sort-indicator ${currentSort === 'value' ? 'sort-active' : ''}">↕</span>
                             </th>
                         </tr>
@@ -486,7 +486,7 @@
                         ${sortedPositions.map(pos => `
                             <tr>
                                 <td><strong>${pos.instrument_symbol || pos.ticker || 'N/A'}</strong></td>
-                                <td>${pos.instrument_name || pos.name || 'Instrument inconnu'}</td>
+                                <td>${pos.instrument_name || pos.name || 'Unknown instrument'}</td>
                                 <td style="font-family: monospace; font-size: 0.8rem;">
                                     ${pos.isin || 'N/A'}
                                 </td>
@@ -508,7 +508,7 @@
             const content = document.getElementById('breakdown-content');
 
             if (currentPositions.length === 0) {
-                content.innerHTML = '<div class="empty-state">Aucune donnée disponible</div>';
+                content.innerHTML = '<div class="empty-state">No data available</div>';
                 return;
             }
 
@@ -518,12 +518,12 @@
             } else if (type === 'sector') {
                 grouped = groupBySector(currentPositions);
             } else {
-                content.innerHTML = '<div class="empty-state">Type de répartition non supporté</div>';
+                content.innerHTML = '<div class="empty-state">Unsupported breakdown type</div>';
                 return;
             }
 
             if (Object.keys(grouped).length === 0) {
-                content.innerHTML = '<div class="empty-state">Données non disponibles pour ce type de répartition</div>';
+                content.innerHTML = '<div class="empty-state">Data not available for this breakdown type</div>';
                 return;
             }
 
@@ -558,14 +558,14 @@
 
             const emptyHTML = `
                 <div class="empty-state">
-                    <h3>Aucune position trouvée</h3>
-                    <p>Importez un fichier Saxo pour voir vos positions</p>
-                    <a href="settings.html#tab-sources" target="_blank" class="btn btn-primary">📁 Configurer Sources</a>
+                    <h3>No positions found</h3>
+                    <p>Import a Saxo file to view your positions</p>
+                    <a href="settings.html#tab-sources" target="_blank" class="btn btn-primary">📁 Configure Sources</a>
                 </div>
             `;
 
             positionsContent.innerHTML = emptyHTML;
-            breakdownContent.innerHTML = '<div class="empty-state">Aucune donnée à analyser</div>';
+            breakdownContent.innerHTML = '<div class="empty-state">No data to analyze</div>';
         }
 
         // État d'erreur
@@ -573,16 +573,16 @@
             const positionsContent = document.getElementById('positions-content');
             positionsContent.innerHTML = `
                 <div class="empty-state">
-                    <h3>⚠️ Erreur de chargement</h3>
+                    <h3>⚠️ Loading error</h3>
                     <p>${message}</p>
-                    <button class="btn" onclick="refreshData()">🔄 Réessayer</button>
+                    <button class="btn" onclick="refreshData()">🔄 Retry</button>
                 </div>
             `;
         }
 
         // Helpers
         function formatQuantity(qty) {
-            return new Intl.NumberFormat('fr-FR', {
+            return new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 4
             }).format(qty);

@@ -3,45 +3,45 @@
 
 const pageAnchors = {
   'dashboard.html': {
-    'overview': 'Vue d\'ensemble',
+    'overview': 'Overview',
     'crypto': 'Crypto Portfolio',
-    'bourse': 'Actions & ETF',
-    'banque': 'Comptes bancaires',
-    'divers': 'Actifs divers',
-    'fx': 'Devises & Changes'
+    'bourse': 'Stocks & ETF',
+    'banque': 'Bank Accounts',
+    'divers': 'Miscellaneous Assets',
+    'fx': 'Currencies & Forex'
   },
   'analytics-unified.html': {
-    'unified': 'Analytics Unifiés',
+    'unified': 'Unified Analytics',
     'ml': 'Machine Learning',
-    'cycles': 'Analyse des Cycles',
+    'cycles': 'Cycle Analysis',
     'performance': 'Performance',
     'monitoring': 'Monitoring'
   },
   'risk-dashboard.html': {
-    'governance': 'Gouvernance',
-    'stress': 'Tests de Stress',
-    'risk-attribution': 'Attribution des Risques',
-    'limits': 'Limites & Contrôles'
+    'governance': 'Governance',
+    'stress': 'Stress Tests',
+    'risk-attribution': 'Risk Attribution',
+    'limits': 'Limits & Controls'
   },
   'rebalance.html': {
-    'proposed-targets': 'Objectifs Proposés',
-    'bourse': 'Rebalance Bourse',
-    'funding-plan': 'Plan de Financement',
-    'dca-schedule': 'Planning DCA',
-    'constraints': 'Contraintes'
+    'proposed-targets': 'Proposed Targets',
+    'bourse': 'Rebalance Stocks',
+    'funding-plan': 'Funding Plan',
+    'dca-schedule': 'DCA Schedule',
+    'constraints': 'Constraints'
   },
   'execution.html': {
-    'orders': 'Ordres',
-    'history': 'Historique',
-    'costs': 'Coûts',
-    'venues': 'Plateformes'
+    'orders': 'Orders',
+    'history': 'History',
+    'costs': 'Costs',
+    'venues': 'Platforms'
   },
   'settings.html': {
-    'integrations': 'Intégrations',
-    'security': 'Sécurité',
+    'integrations': 'Integrations',
+    'security': 'Security',
     'logs': 'Logs',
     'monitoring': 'Monitoring',
-    'tools': 'Outils'
+    'tools': 'Tools'
   }
 };
 

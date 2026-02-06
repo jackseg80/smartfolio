@@ -41,19 +41,19 @@ class StreamStatsResponse(BaseModel):
     stream_name: str
     length: int = Field(..., description="Nombre de messages dans le stream")
     consumers: int = Field(..., description="Nombre de consumers actifs")
-    last_activity: Optional[datetime] = Field(None, description="Dernière activité")
+    last_activity: Optional[datetime] = Field(None, description="Last activity")
 
 class PublishEventRequest(BaseModel):
     event_type: str = Field(..., description="Type d'événement")
-    data: Dict[str, Any] = Field(..., description="Données de l'événement")
+    data: Dict[str, Any] = Field(..., description="Event data")
     source: str = Field(default="api", description="Source de l'événement")
 
 # WebSocket endpoint principal
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    client_id: Optional[str] = Query(None, description="Identifiant client"),
-    subscriptions: Optional[str] = Query("all", description="Souscriptions (comma-separated)"),
+    client_id: Optional[str] = Query(None, description="Client identifier"),
+    subscriptions: Optional[str] = Query("all", description="Subscriptions (comma-separated)"),
     token: Optional[str] = Query(None, description="Auth token (required in production)")
 ):
     """

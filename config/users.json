@@ -9,7 +9,7 @@
   "users": [
     {
       "id": "demo",
-      "label": "Démo",
+      "label": "Demo",
       "roles": [
         "viewer"
       ],
@@ -61,7 +61,7 @@
     },
     {
       "id": "clea",
-      "label": "Cléa",
+      "label": "Clea",
       "roles": [
         "viewer"
       ],

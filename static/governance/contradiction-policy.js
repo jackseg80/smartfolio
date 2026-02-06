@@ -19,14 +19,14 @@ export function classifyContradiction(state) {
       level: 'high',
       priority: 'high',
       severity: 'critical',
-      message: `Signaux contradictoires élevés (${pct}%) — approche prudente recommandée.`,
+      message: `High contradictory signals (${pct}%) — prudent approach recommended.`,
       color: 'var(--danger)',
       bgColor: 'var(--danger-bg)',
       recommendations: [
-        'Réduire l\'exposition aux actifs risqués',
-        'Privilégier les stablecoins et majors (BTC/ETH)',
-        'Reporter les décisions d\'investissement non-urgentes',
-        'Surveiller les signaux de marché de près'
+        'Reduce exposure to risky assets',
+        'Prioritize stablecoins and majors (BTC/ETH)',
+        'Postpone non-urgent investment decisions',
+        'Monitor market signals closely'
       ]
     };
   }
@@ -36,14 +36,14 @@ export function classifyContradiction(state) {
       level: 'medium',
       priority: 'medium',
       severity: 'warning',
-      message: `Signaux contradictoires modérés (${pct}%) — vigilance recommandée.`,
+      message: `Moderate contradictory signals (${pct}%) — vigilance recommended.`,
       color: 'var(--warning)',
       bgColor: 'var(--warning-bg)',
       recommendations: [
-        'Maintenir une allocation équilibrée',
-        'Éviter les positions spéculatives importantes',
-        'Surveiller les développements du marché',
-        'Préparer des scenarios de contingence'
+        'Maintain a balanced allocation',
+        'Avoid large speculative positions',
+        'Monitor market developments',
+        'Prepare contingency scenarios'
       ]
     };
   }
@@ -52,13 +52,13 @@ export function classifyContradiction(state) {
     level: 'low',
     priority: 'low',
     severity: 'info',
-    message: `Contradiction faible (${pct}%) — signaux alignés.`,
+    message: `Low contradiction (${pct}%) — signals aligned.`,
     color: 'var(--success)',
     bgColor: 'var(--success-bg)',
     recommendations: [
-      'Conditions favorables pour les stratégies actives',
-      'Opportunité d\'optimiser l\'allocation',
-      'Considérer des positions tactiques',
+      'Favorable conditions for active strategies',
+      'Opportunity to optimize allocation',
+      'Consider tactical positions',
       'Exploiter les signaux de momentum'
     ]
   };

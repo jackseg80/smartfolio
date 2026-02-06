@@ -16,6 +16,64 @@ from services.sources.category import SourceCategory, SourceMode, SourceStatus
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Bilingual header mapping (French Saxo Bank CSV exports → canonical English)
+# Keys = French column names, Values = canonical English equivalents.
+# English headers map to themselves so the dict is idempotent.
+# ---------------------------------------------------------------------------
+HEADER_ALIASES: dict[str, str] = {
+    # --- identity / instrument ---
+    "Instruments": "Instruments",
+    "Instrument": "Instrument",
+    "Symbole": "Symbol",
+    "Symbol": "Symbol",
+    "Ticker": "Ticker",
+    "ISIN": "ISIN",
+    "Isin": "Isin",
+    "Description": "Description",
+    "Name": "Name",
+    "Émetteur": "Issuer",
+    "Issuer": "Issuer",
+    # --- status ---
+    "Statut": "Status",
+    "Status": "Status",
+    # --- quantities & prices ---
+    "Quantité": "Quantity",
+    "Quantity": "Quantity",
+    "Qty": "Qty",
+    "Amount": "Amount",
+    "Prix entrée": "Entry Price",
+    "Entry Price": "Entry Price",
+    # --- values ---
+    "Valeur actuelle (EUR)": "Current Value (EUR)",
+    "Current Value (EUR)": "Current Value (EUR)",
+    "Valeur actuelle (USD)": "Current Value (USD)",
+    "Current Value (USD)": "Current Value (USD)",
+    "Val. actuelle": "Current Value",
+    "Current Value": "Current Value",
+    "Market Value": "Market Value",
+    "MarketValue": "MarketValue",
+    "Value": "Value",
+    "Valeur": "Value",
+    # --- currency ---
+    "Devise": "Currency",
+    "Currency": "Currency",
+    # --- interest ---
+    "Intérêts courus": "Accrued Interest",
+    "Accrued Interest": "Accrued Interest",
+    # --- asset type ---
+    "AssetType": "AssetType",
+    "Type": "Type",
+}
+
+
+def _normalize_headers(row: dict) -> dict:
+    """Normalize CSV row keys: accept both French and English headers.
+
+    Unknown keys are passed through unchanged so that no data is lost.
+    """
+    return {HEADER_ALIASES.get(k, k): v for k, v in row.items()}
+
 
 class SaxoBankCSVSource(SourceBase):
     """
@@ -33,7 +91,7 @@ class SaxoBankCSVSource(SourceBase):
             name="Saxo Bank CSV",
             category=SourceCategory.BOURSE,
             mode=SourceMode.CSV,
-            description="Import depuis fichier Saxo Bank",
+            description="Import from Saxo Bank file",
             icon="upload",
             supports_transactions=False,
             requires_credentials=False,
@@ -154,11 +212,13 @@ class SaxoBankCSVSource(SourceBase):
             dialect = csv.Sniffer().sniff(sample, delimiters=",;\t")
             reader = csv.DictReader(f, dialect=dialect)
 
-            for row in reader:
-                # Handle various CSV column names
+            for raw_row in reader:
+                # Normalize headers: translate French → canonical English
+                row = _normalize_headers(raw_row)
+
+                # Handle various CSV column names (now all in canonical English)
                 symbol = (
                     row.get("Symbol")
-                    or row.get("Symbole")
                     or row.get("Ticker")
                     or row.get("ISIN", "???")
                 )
@@ -171,19 +231,17 @@ class SaxoBankCSVSource(SourceBase):
                 quantity_str = (
                     row.get("Amount")
                     or row.get("Quantity")
-                    or row.get("Quantité")
                     or row.get("Qty")
                     or "0"
                 )
                 # Get value and detect currency from column name
-                value_column_eur = row.get("Valeur actuelle (EUR)")
-                value_column_usd = row.get("Valeur actuelle (USD)")
+                value_column_eur = row.get("Current Value (EUR)")
+                value_column_usd = row.get("Current Value (USD)")
                 value_column_generic = (
-                    row.get("Val. actuelle")
+                    row.get("Current Value")
                     or row.get("Market Value")
                     or row.get("MarketValue")
                     or row.get("Value")
-                    or row.get("Valeur")
                 )
 
                 # Determine value and currency based on which column has data
@@ -195,8 +253,8 @@ class SaxoBankCSVSource(SourceBase):
                     value_currency = "USD"
                 else:
                     value_str = value_column_generic or "0"
-                    # Fallback to Currency/Devise column for generic value columns
-                    value_currency = row.get("Currency") or row.get("Devise") or "USD"
+                    # Fallback to Currency column for generic value columns
+                    value_currency = row.get("Currency") or "USD"
 
                 # Parse numeric values (handle European number format)
                 quantity = self._parse_number(quantity_str)
@@ -207,7 +265,7 @@ class SaxoBankCSVSource(SourceBase):
 
                 if quantity != 0:  # Skip zero positions
                     # Get instrument currency (different from value currency)
-                    instrument_currency = row.get("Currency") or row.get("Devise") or value_currency
+                    instrument_currency = row.get("Currency") or value_currency
 
                     items.append(
                         BalanceItem(

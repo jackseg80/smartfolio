@@ -57,7 +57,7 @@ class GovernancePanel {
               <span class="badge-text" id="alerts-count">0</span>
             </div>
           </div>
-          <button class="governance-toggle" id="governance-toggle" aria-label="Réduire/Développer le panneau de gouvernance" aria-expanded="true">
+          <button class="governance-toggle" id="governance-toggle" aria-label="Collapse/Expand governance panel" aria-expanded="true">
             <span class="toggle-icon" aria-hidden="true">▲</span>
           </button>
         </div>
@@ -174,7 +174,7 @@ class GovernancePanel {
           <div class="governance-section">
             <h4>🎛️ Governance Mode</h4>
             <div class="mode-selector" id="mode-selector">
-              <select class="gov-select" id="governance-mode-select" aria-label="Mode de gouvernance">
+              <select class="gov-select" id="governance-mode-select" aria-label="Governance mode">
                 <option value="manual">🤝 Manual</option>
                 <option value="ai_assisted">🤖 AI Assisted</option>
                 <option value="full_ai">🚀 Full AI</option>
@@ -265,7 +265,7 @@ class GovernancePanel {
         <div class="modal-content">
           <div class="modal-header">
             <h3>📋 Decision Approval</h3>
-            <button class="modal-close" id="modal-close" aria-label="Fermer">&times;</button>
+            <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="modal-body" id="modal-body">
             <!-- Dynamic content -->
@@ -283,7 +283,7 @@ class GovernancePanel {
         <div class="modal-content">
           <div class="modal-header">
             <h3><span id="confirmation-icon">⚠️</span> <span id="confirmation-title">Confirm Action</span></h3>
-            <button class="modal-close" id="confirmation-close" aria-label="Fermer">&times;</button>
+            <button class="modal-close" id="confirmation-close" aria-label="Close">&times;</button>
           </div>
           <div class="modal-body">
             <div class="confirmation-message" id="confirmation-message">

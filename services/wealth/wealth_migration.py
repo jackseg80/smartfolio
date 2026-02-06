@@ -1,4 +1,4 @@
-"""Migration service for banks.json → patrimoine.json - Multi-tenant."""
+"""Migration service for banks.json → wealth.json - Multi-tenant."""
 from __future__ import annotations
 
 import json
@@ -14,14 +14,19 @@ def _get_banks_path(user_id: str) -> Path:
     return Path(f"data/users/{user_id}/banks/snapshot.json")
 
 
-def _get_patrimoine_path(user_id: str) -> Path:
-    """Return path to new patrimoine storage."""
+def _get_wealth_path(user_id: str) -> Path:
+    """Return path to wealth storage."""
+    return Path(f"data/users/{user_id}/wealth/wealth.json")
+
+
+def _get_legacy_patrimoine_path(user_id: str) -> Path:
+    """Return path to legacy patrimoine storage (for backward compat)."""
     return Path(f"data/users/{user_id}/wealth/patrimoine.json")
 
 
 def _migrate_account_to_item(account: dict) -> dict:
     """
-    Migrate a legacy bank account to patrimoine item format.
+    Migrate a legacy bank account to wealth item format.
 
     Legacy format:
         {
@@ -69,28 +74,29 @@ def _migrate_account_to_item(account: dict) -> dict:
 
 def migrate_user_data(user_id: str, force: bool = False) -> dict:
     """
-    Migrate user's banks data to patrimoine format.
+    Migrate user's banks data to wealth format.
 
     Args:
         user_id: User identifier
-        force: If True, re-migrate even if patrimoine.json already exists
+        force: If True, re-migrate even if wealth.json already exists
 
     Returns:
         Migration result dict with status and counts
 
     Migration strategy:
-        1. Check if patrimoine.json already exists (skip unless force=True)
+        1. Check if wealth.json or patrimoine.json already exists (skip unless force=True)
         2. Load banks/snapshot.json if exists
-        3. Transform accounts → patrimoine items (category=liquidity, type=bank_account)
-        4. Write to wealth/patrimoine.json
+        3. Transform accounts → wealth items (category=liquidity, type=bank_account)
+        4. Write to wealth/wealth.json
         5. Keep original banks/snapshot.json (read-only, no deletion)
     """
     banks_path = _get_banks_path(user_id)
-    patrimoine_path = _get_patrimoine_path(user_id)
+    wealth_path = _get_wealth_path(user_id)
+    legacy_path = _get_legacy_patrimoine_path(user_id)
 
-    # Check if already migrated
-    if patrimoine_path.exists() and not force:
-        logger.info(f"[migration] patrimoine.json already exists for user={user_id}, skipping")
+    # Check if already migrated (either new or legacy file exists)
+    if (wealth_path.exists() or legacy_path.exists()) and not force:
+        logger.info(f"[migration] wealth data already exists for user={user_id}, skipping")
         return {
             "status": "skipped",
             "reason": "already_migrated",
@@ -99,9 +105,9 @@ def migrate_user_data(user_id: str, force: bool = False) -> dict:
 
     # Check if legacy data exists
     if not banks_path.exists():
-        logger.info(f"[migration] no banks data found for user={user_id}, creating empty patrimoine")
-        patrimoine_path.parent.mkdir(parents=True, exist_ok=True)
-        patrimoine_path.write_text(json.dumps({"items": []}, indent=2), encoding="utf-8")
+        logger.info(f"[migration] no banks data found for user={user_id}, creating empty wealth")
+        wealth_path.parent.mkdir(parents=True, exist_ok=True)
+        wealth_path.write_text(json.dumps({"items": []}, indent=2), encoding="utf-8")
         return {
             "status": "success",
             "reason": "no_legacy_data",
@@ -128,11 +134,11 @@ def migrate_user_data(user_id: str, force: bool = False) -> dict:
 
     # Write new format
     try:
-        patrimoine_path.parent.mkdir(parents=True, exist_ok=True)
-        with patrimoine_path.open("w", encoding="utf-8") as f:
+        wealth_path.parent.mkdir(parents=True, exist_ok=True)
+        with wealth_path.open("w", encoding="utf-8") as f:
             json.dump({"items": migrated_items}, f, indent=2, ensure_ascii=False)
         logger.info(
-            f"[migration] migrated {len(migrated_items)} accounts to patrimoine for user={user_id}"
+            f"[migration] migrated {len(migrated_items)} accounts to wealth for user={user_id}"
         )
         return {
             "status": "success",
@@ -141,7 +147,7 @@ def migrate_user_data(user_id: str, force: bool = False) -> dict:
             "migrated_count": len(migrated_items),
         }
     except Exception as exc:
-        logger.error(f"[migration] failed to write patrimoine data for user={user_id}: {exc}")
+        logger.error(f"[migration] failed to write wealth data for user={user_id}: {exc}")
         return {
             "status": "error",
             "reason": "write_failed",

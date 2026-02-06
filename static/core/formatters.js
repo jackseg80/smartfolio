@@ -37,7 +37,7 @@ export function formatCurrency(value, currency, decimals = 2) {
     const dec = (cur === 'BTC') ? 8 : decimals;
 
     try {
-        const out = new Intl.NumberFormat('fr-FR', {
+        const out = new Intl.NumberFormat('en-US', {
             style: 'currency',
             currency: cur,
             minimumFractionDigits: dec,
@@ -101,7 +101,7 @@ export function formatDate(date, options = {
 }) {
     if (!date) return 'N/A';
     try {
-        return new Intl.DateTimeFormat('fr-FR', options).format(new Date(date));
+        return new Intl.DateTimeFormat('en-US', options).format(new Date(date));
     } catch (_) {
         return 'N/A';
     }

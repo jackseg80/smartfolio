@@ -238,7 +238,7 @@
               </div>
               <div class="gri-groups">
                 <h5 class="hinted" data-key="gri_groups_header">
-                  Exposition & Risque par Groupe
+                  Exposure & Risk by Group
                 </h5>
                 ${topGroups.map(group => {
                   const riskLevel = GROUP_RISK_LEVELS[group.name] || 5;
@@ -273,9 +273,9 @@
               </div>
               <div class="gri-interpretation">
                 <div class="metric-interpretation hinted" data-key="gri_interpretation">
-                  ${gri < 3 ? '✅ Portfolio faible risque' :
-              gri < 6 ? '⚠️ Portfolio risque modéré' :
-                '🚨 Portfolio haut risque - Considérer diversifier'}
+                  ${gri < 3 ? '✅ Low portfolio risk' :
+              gri < 6 ? '⚠️ Moderate portfolio risk' :
+                '🚨 High portfolio risk - Consider diversifying'}
                 </div>
               </div>
             `;
@@ -303,57 +303,57 @@
           const scenarios = [
             {
               id: "crisis_2008",
-              name: "📉 Crise Financière 2008",
-              description: "Réplique la chute des marchés de septembre-novembre 2008",
+              name: "📉 2008 Financial Crisis",
+              description: "Replicates the September-November 2008 market crash",
               impact: { min: -45, max: -60 },
               probability: 0.02, // 2% sur 10 ans
-              duration: "6-12 mois",
-              context: "Effondrement Lehman Brothers, crise des subprimes"
+              duration: "6-12 months",
+              context: "Lehman Brothers collapse, subprime crisis"
             },
             {
               id: "covid_2020",
               name: "🦠 Crash COVID-19 Mars 2020",
-              description: "Chute brutale liée à la pandémie mondiale",
+              description: "Sudden crash due to the global pandemic",
               impact: { min: -35, max: -50 },
               probability: 0.05, // 5% sur 10 ans (pandémie)
-              duration: "2-6 mois",
-              context: "Confinements mondiaux, arrêt économique brutal"
+              duration: "2-6 months",
+              context: "Global lockdowns, brutal economic halt"
             },
             {
               id: "china_ban",
-              name: "🇨🇳 Interdiction Crypto Chine",
-              description: "Bannissement complet des cryptos par autorités chinoises",
+              name: "🇨🇳 China Crypto Ban",
+              description: "Complete crypto ban by Chinese authorities",
               impact: { min: -25, max: -40 },
               probability: 0.10, // 10% sur 10 ans (régulation)
-              duration: "3-9 mois",
-              context: "Fermeture exchanges, interdiction mining"
+              duration: "3-9 months",
+              context: "Exchange closures, mining ban"
             },
             {
               id: "tether_collapse",
-              name: "💰 Effondrement Tether",
-              description: "Perte de confiance totale dans USDT",
+              name: "💰 Tether Collapse",
+              description: "Total loss of confidence in USDT",
               impact: { min: -30, max: -55 },
               probability: 0.08, // 8% sur 10 ans (risque stablecoin)
-              duration: "1-4 mois",
-              context: "Découverte de sous-collatéralisation massive"
+              duration: "1-4 months",
+              context: "Discovery of massive under-collateralization"
             },
             {
               id: "fed_emergency",
-              name: "🏦 Hausse Taux Fed d'Urgence",
-              description: "Remontée brutale des taux pour lutter contre l'inflation",
+              name: "🏦 Emergency Fed Rate Hike",
+              description: "Sudden rate hike to combat inflation",
               impact: { min: -20, max: -35 },
               probability: 0.15, // 15% sur 10 ans (politique monétaire)
-              duration: "6-18 mois",
-              context: "Taux directeur à 8-10%, fuite des capitaux risqués"
+              duration: "6-18 months",
+              context: "Key rate at 8-10%, flight from risky assets"
             },
             {
               id: "exchange_hack",
-              name: "🔓 Hack Exchange Majeur",
-              description: "Piratage d'un exchange de premier plan (Binance/Coinbase)",
+              name: "🔓 Major Exchange Hack",
+              description: "Hack of a leading exchange (Binance/Coinbase)",
               impact: { min: -15, max: -30 },
               probability: 0.20, // 20% sur 10 ans (sécurité)
-              duration: "1-3 mois",
-              context: "Vol de plusieurs milliards, panique générale"
+              duration: "1-3 months",
+              context: "Multi-billion theft, general panic"
             }
           ];
 
@@ -361,13 +361,13 @@
               <div class="scenario-card" onclick="showScenarioDetails('${scenario.id}')">
                 <div class="scenario-header">
                   <h5>${scenario.name}</h5>
-                  <span class="scenario-probability">${(scenario.probability * 100).toFixed(0)}% / 10 ans</span>
+                  <span class="scenario-probability">${(scenario.probability * 100).toFixed(0)}% / 10 yrs</span>
                 </div>
                 <div class="scenario-impact">
-                  Impact: ${scenario.impact.min}% à ${scenario.impact.max}%
+                  Impact: ${scenario.impact.min}% to ${scenario.impact.max}%
                 </div>
                 <div class="scenario-duration">
-                  Durée: ${scenario.duration}
+                  Duration: ${scenario.duration}
                 </div>
                 <div class="scenario-context">
                   ${scenario.context}
@@ -385,16 +385,16 @@
               <div class="stress-scenarios">
                 <div class="scenarios-header">
                   <p class="scenarios-description">
-                    Scénarios historiques et hypothétiques pour évaluer la résilience du portefeuille
+                    Historical and hypothetical scenarios to assess portfolio resilience
                   </p>
                 </div>
                 ${scenariosHtml}
                 <div class="scenarios-footer">
                   <button class="btn-secondary" onclick="runAllStressTests()">
-                    🧪 Lancer tous les tests
+                    🧪 Run all tests
                   </button>
                   <button class="btn-secondary" onclick="createCustomScenario()">
-                    ⚙️ Scénario personnalisé
+                    ⚙️ Custom scenario
                   </button>
                 </div>
               </div>
@@ -407,7 +407,7 @@
           debugLogger.error('Error loading stress test scenarios:', error);
           const stressContainer = document.getElementById('stress-test-content');
           if (stressContainer) {
-            stressContainer.innerHTML = '<div class="error">Erreur de chargement des scénarios de stress</div>';
+            stressContainer.innerHTML = '<div class="error">Error loading stress test scenarios</div>';
           }
         }
       }
@@ -418,21 +418,21 @@
         if (!scenario) return;
 
         // Show modal or detailed view (for now, just alert)
-        alert(`${scenario.name}\\n\\n${scenario.description}\\n\\nImpact estimé: ${scenario.impact.min}% à ${scenario.impact.max}%\\nProbabilité sur 10 ans: ${(scenario.probability * 100).toFixed(1)}%\\nDurée typique: ${scenario.duration}`);
+        alert(`${scenario.name}\\n\\n${scenario.description}\\n\\nEstimated impact: ${scenario.impact.min}% to ${scenario.impact.max}%\\n10-year probability: ${(scenario.probability * 100).toFixed(1)}%\\nTypical duration: ${scenario.duration}`);
       };
 
       window.runAllStressTests = async function () {
-        showToast('Lancement des tests de stress en cours...', 'info');
+        showToast('Running stress tests...', 'info');
         // In a real implementation, this would call the Phase 3A API
         // For now, simulate loading
         setTimeout(() => {
-          showToast('Tests de stress terminés. Résultats mis à jour.', 'success');
+          showToast('Stress tests completed. Results updated.', 'success');
         }, 2000);
       };
 
       window.createCustomScenario = function () {
         // In a real implementation, this would open a modal for custom scenario creation
-        showToast('Fonctionnalité de scénarios personnalisés à venir', 'info');
+        showToast('Custom scenarios feature coming soon', 'info');
       };
 
       async function loadMonteCarloResults() {
@@ -444,8 +444,8 @@
 
         monteCarloContainer.innerHTML = `
             <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 1rem; font-style: italic;">
-              Simulation de 10 000 scénarios aléatoires basée sur la distribution historique de rendements.
-              Fournit une évaluation probabiliste du risque extrême.
+              Simulation of 10,000 random scenarios based on the historical return distribution.
+              Provides a probabilistic assessment of extreme risk.
             </p>
             <div class="monte-carlo-summary">
               <div class="sim-stat hinted" data-key="mc_simulations">
@@ -453,11 +453,11 @@
                 <span class="stat-value">10,000</span>
               </div>
               <div class="sim-stat hinted" data-key="mc_worst_case">
-                <span class="stat-label">Pire scénario</span>
+                <span class="stat-label">Worst case</span>
                 <span class="stat-value text-danger">-68.5%</span>
               </div>
               <div class="sim-stat hinted" data-key="mc_loss_prob">
-                <span class="stat-label">Probabilité perte >20%</span>
+                <span class="stat-label">Loss probability >20%</span>
                 <span class="stat-value">12.3%</span>
               </div>
             </div>
@@ -501,7 +501,7 @@
 
           el.innerHTML = `
               <p style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: 1rem; font-style: italic;">
-                Analyse de la structure du risque et de la diversification du portefeuille.
+                Analysis of the risk structure and portfolio diversification.
               </p>
               <div class="var-methods">
                 <div class="sim-stat hinted" data-key="diversification_ratio" data-value="${correlationMetrics.diversification_ratio || 0}" style="justify-content:space-between;">
@@ -522,7 +522,7 @@
 
         } catch (e) {
           debugLogger.warn('Risk attribution load failed:', e);
-          el.innerHTML = `<div class="warning">Erreur lors du calcul d'attribution: ${e.message}</div>`;
+          el.innerHTML = `<div class="warning">Error in attribution calculation: ${e.message}</div>`;
         }
       }
 

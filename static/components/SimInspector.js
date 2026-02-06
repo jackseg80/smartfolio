@@ -32,20 +32,20 @@ export class SimInspector {
           <div id="pipeline-tree" class="pipeline-tree">
             <div class="empty-state">
               <div class="empty-icon">🎭</div>
-              <p>Aucune simulation en cours</p>
-              <small>Ajustez les contrôles pour voir le pipeline s'exécuter</small>
+              <p>No simulation in progress</p>
+              <small>Adjust the controls to see the pipeline execute</small>
             </div>
           </div>
 
           <div id="natural-language" class="natural-language">
-            <h4>📝 Résumé</h4>
+            <h4>📝 Summary</h4>
             <div class="summary-content">
-              <p class="empty-summary">En attente de simulation...</p>
+              <p class="empty-summary">Waiting for simulation...</p>
             </div>
           </div>
 
           <div id="delta-comparison" class="delta-comparison">
-            <h4>🔄 Alignement & Comparaison</h4>
+            <h4>🔄 Alignment & Comparison</h4>
             <div class="delta-content">
               <!-- Sera rempli dynamiquement -->
             </div>
@@ -198,7 +198,7 @@ export class SimInspector {
     if (summaryNL) {
       container.innerHTML = `<p class="summary-text">${summaryNL}</p>`;
     } else {
-      container.innerHTML = '<p class="empty-summary">Résumé non disponible</p>';
+      container.innerHTML = '<p class="empty-summary">Summary not available</p>';
     }
   }
 
@@ -211,15 +211,15 @@ export class SimInspector {
     const sections = [];
 
     const alignmentHtml = this.createTargetComparison(currentAllocation, cappedTargets, {
-      baseLabel: 'Actuel',
-      targetLabel: 'Cible',
-      emptyMessage: '<p class="no-data">Allocation actuelle indisponible</p>'
+      baseLabel: 'Current',
+      targetLabel: 'Target',
+      emptyMessage: '<p class="no-data">Current allocation unavailable</p>'
     });
 
     if (alignmentHtml) {
       sections.push(`
         <div class="comparison-section">
-          <h5>🎯 Alignement Actuel → Cible</h5>
+          <h5>🎯 Current → Target Alignment</h5>
           ${alignmentHtml}
         </div>
       `);
@@ -229,7 +229,7 @@ export class SimInspector {
       baseLabel: 'Base',
       targetLabel: 'Post-tilts',
       skipIfZero: true,
-      onZero: '<p class="no-data">Aucun ajustement sur les targets de base</p>'
+      onZero: '<p class="no-data">No adjustments on base targets</p>'
     });
 
     if (pipelineHtml) {
@@ -244,7 +244,7 @@ export class SimInspector {
     const ordersSummary = this.createOrdersSummary(orders);
     sections.push(`
       <div class="comparison-section">
-        <h5>⚡ Plan d'Exécution</h5>
+        <h5>⚡ Execution Plan</h5>
         ${ordersSummary}
       </div>
     `);
@@ -256,7 +256,7 @@ export class SimInspector {
     const {
       baseLabel = 'Initial',
       targetLabel = 'Final',
-      emptyMessage = '<p class="no-data">Données de comparaison non disponibles</p>',
+      emptyMessage = '<p class="no-data">Comparison data not available</p>',
       skipIfZero = false,
       onZero = '',
       deltaThreshold = 0.1
@@ -324,7 +324,7 @@ export class SimInspector {
 
   createOrdersSummary(orders) {
     if (!orders || !orders.orders) {
-      return '<p class="no-data">Aucune donnée d\'exécution</p>';
+      return '<p class="no-data">No execution data</p>';
     }
 
     const { summary, orders: ordersList } = orders;
@@ -337,13 +337,13 @@ export class SimInspector {
             <span class="stat-value">${summary.totalDelta}%</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Seuil:</span>
+            <span class="stat-label">Threshold:</span>
             <span class="stat-value">${summary.globalThreshold}%</span>
           </div>
           <div class="stat-item">
-            <span class="stat-label">Statut:</span>
+            <span class="stat-label">Status:</span>
             <span class="stat-value ${summary.shouldExecute ? 'execute' : 'idle'}">
-              ${summary.shouldExecute ? '🟢 Exécuter' : '🔴 Attendre'}
+              ${summary.shouldExecute ? '🟢 Execute' : '🔴 Wait'}
             </span>
           </div>
         </div>
@@ -367,7 +367,7 @@ export class SimInspector {
       });
       html += '</div>';
     } else if (summary.shouldExecute) {
-      html += '<p class="no-orders">Aucun ordre généré (seuils non atteints)</p>';
+      html += '<p class="no-orders">No orders generated (thresholds not reached)</p>';
     }
 
     return html;
@@ -388,7 +388,7 @@ export class SimInspector {
 
   exportLog() {
     if (!this.currentData) {
-      alert('Aucune donnée de simulation à exporter');
+      alert('No simulation data to export');
       return;
     }
 
@@ -422,15 +422,15 @@ export class SimInspector {
       treeContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🎭</div>
-          <p>Aucune simulation en cours</p>
-          <small>Ajustez les contrôles pour voir le pipeline s'exécuter</small>
+          <p>No simulation in progress</p>
+          <small>Adjust the controls to see the pipeline execute</small>
         </div>
       `;
     }
 
     const summaryContainer = document.querySelector('.summary-content');
     if (summaryContainer) {
-      summaryContainer.innerHTML = '<p class="empty-summary">En attente de simulation...</p>';
+      summaryContainer.innerHTML = '<p class="empty-summary">Waiting for simulation...</p>';
     }
 
     const deltaContainer = document.querySelector('.delta-content');

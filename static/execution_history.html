@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique Exécutions - Crypto Rebalancer</title>
+    <title>Execution History - Crypto Rebalancer</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
@@ -467,12 +467,12 @@
             <div
                 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
                 <div>
-                    <span id="performanceBadge" class="badge badge-success">CHARGEMENT...</span>
+                    <span id="performanceBadge" class="badge badge-success">LOADING...</span>
                 </div>
                 <div style="display: flex; gap: var(--space-sm);">
-                    <button class="btn btn-primary" onclick="refreshAll()">Actualiser</button>
+                    <button class="btn btn-primary" onclick="refreshAll()">Refresh</button>
                     <button class="btn btn-secondary" onclick="exportData()">Export CSV</button>
-                    <button class="btn btn-secondary" onclick="showFilters()">Filtres</button>
+                    <button class="btn btn-secondary" onclick="showFilters()">Filters</button>
                     <div style="display: flex; align-items: center; gap: var(--space-sm);">
                         <label style="font-size: 0.875rem; color: var(--theme-text-muted);">Auto-refresh:</label>
                         <input type="checkbox" id="autoRefresh" checked>
@@ -480,43 +480,43 @@
                 </div>
             </div>
 
-            <!-- Filtres -->
+            <!-- Filters -->
             <div id="filtersPanel" class="card" style="display: none; margin-bottom: 30px;">
-                <h2>Filtres</h2>
+                <h2>Filters</h2>
                 <div class="filters">
                     <div class="filter-group">
-                        <label>Période (jours)</label>
+                        <label>Period (days)</label>
                         <select id="periodFilter">
-                            <option value="7">7 jours</option>
-                            <option value="30" selected>30 jours</option>
-                            <option value="90">90 jours</option>
+                            <option value="7">7 days</option>
+                            <option value="30" selected>30 days</option>
+                            <option value="90">90 days</option>
                         </select>
                     </div>
                     <div class="filter-group">
                         <label>Exchange</label>
                         <select id="exchangeFilter">
-                            <option value="">Tous</option>
+                            <option value="">All</option>
                             <option value="enhanced_simulator">Enhanced Simulator</option>
                             <option value="simulator">Simulator</option>
                             <option value="binance">Binance</option>
                         </select>
                     </div>
                     <div class="filter-group">
-                        <label>Limite</label>
+                        <label>Limit</label>
                         <select id="limitFilter">
                             <option value="20">20</option>
                             <option value="50" selected>50</option>
                             <option value="100">100</option>
                         </select>
                     </div>
-                    <button class="btn btn-primary" onclick="applyFilters()">Appliquer</button>
+                    <button class="btn btn-primary" onclick="applyFilters()">Apply</button>
                 </div>
             </div>
 
             <!-- Métriques Principales -->
             <div class="dashboard-grid">
                 <div class="card">
-                    <h2>Métriques de Performance</h2>
+                    <h2>Performance Metrics</h2>
                     <div id="performanceMetrics" class="metrics-grid">
                         <div class="metric-item">
                             <div class="metric-value" id="totalSessions">-</div>
@@ -528,19 +528,19 @@
                         </div>
                         <div class="metric-item">
                             <div class="metric-value" id="avgSuccessRate">-</div>
-                            <div class="metric-label">Taux Succès</div>
+                            <div class="metric-label">Success Rate</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value" id="totalFees">-</div>
-                            <div class="metric-label">Frais Total</div>
+                            <div class="metric-label">Total Fees</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <h2>Résumé Récent</h2>
+                    <h2>Recent Summary</h2>
                     <div id="recentStats">
-                        <div class="loading">Chargement des statistiques...</div>
+                        <div class="loading">Loading statistics...</div>
                     </div>
                 </div>
             </div>
@@ -551,34 +551,34 @@
                     <div class="tab-container">
                         <div class="tab-buttons">
                             <button class="tab-button active" onclick="showTab('sessions')">Sessions</button>
-                            <button class="tab-button" onclick="showTab('trends')">Tendances</button>
+                            <button class="tab-button" onclick="showTab('trends')">Trends</button>
                             <button class="tab-button" onclick="showTab('insights')">Insights</button>
                         </div>
 
                         <!-- Onglet Sessions -->
                         <div id="sessions-tab" class="tab-content active">
-                            <h2>Sessions Récentes</h2>
+                            <h2>Recent Sessions</h2>
                             <div id="sessionsList" class="sessions-list">
-                                <div class="loading">Chargement des sessions...</div>
+                                <div class="loading">Loading sessions...</div>
                             </div>
                         </div>
 
                         <!-- Onglet Tendances -->
                         <div id="trends-tab" class="tab-content">
-                            <h2>Tendances d'Exécution</h2>
+                            <h2>Execution Trends</h2>
                             <div id="trendsChart" class="chart-container">
                                 <canvas id="trendsCanvas"></canvas>
                             </div>
                             <div id="trendsData">
-                                <div class="loading">Chargement des tendances...</div>
+                                <div class="loading">Loading trends...</div>
                             </div>
                         </div>
 
                         <!-- Onglet Insights -->
                         <div id="insights-tab" class="tab-content">
-                            <h2>Insights Automatiques</h2>
+                            <h2>Automatic Insights</h2>
                             <ul id="insightsList" class="insights-list">
-                                <li class="loading">Chargement des insights...</li>
+                                <li class="loading">Loading insights...</li>
                             </ul>
                         </div>
                     </div>
@@ -590,11 +590,11 @@
         <div id="sessionModal" class="session-modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalTitle">Détails de la Session</h2>
+                    <h2 id="modalTitle">Session Details</h2>
                     <button class="close-modal" onclick="closeModal()">&times;</button>
                 </div>
                 <div id="modalContent">
-                    <div class="loading">Chargement...</div>
+                    <div class="loading">Loading...</div>
                 </div>
             </div>
         </div>
@@ -715,10 +715,10 @@
                         currentTab === 'insights' ? loadInsights() : Promise.resolve()
                     ]);
 
-                    showNotification('Données mises à jour', 'success');
+                    showNotification('Data updated', 'success');
                 } catch (error) {
                     log.error('Error refreshing data:', error);
-                    showNotification('Erreur lors de la mise à jour', 'error');
+                    showNotification('Error updating data', 'error');
                 }
             }
 
@@ -729,7 +729,7 @@
                 const v = (usd == null || isNaN(usd)) ? 0 : (usd * rate);
                 try {
                     const dec = (cur === 'BTC') ? 8 : 2;
-                    const out = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
+                    const out = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
                     return (cur === 'USD') ? out.replace(/\s?US$/, '') : out;
                 } catch (_) {
                     return `${v.toFixed(cur==='BTC'?8:2)} ${cur}`;
@@ -768,12 +768,12 @@
                     <div class="metrics-grid" style="grid-template-columns: 1fr;">
                         <div class="metric-item" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
                             <div class="metric-value">${stats.exchanges ? Object.keys(stats.exchanges).length : 0}</div>
-                            <div class="metric-label">Exchanges Actifs</div>
+                            <div class="metric-label">Active Exchanges</div>
                         </div>
                     </div>
                     <div style="margin-top: 15px; padding: 15px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text);">
-                        <p><strong>Dernière session:</strong> ${stats.last_session ? new Date(stats.last_session).toLocaleString('fr-FR') : 'Aucune'}</p>
-                        <p><strong>Cache période:</strong> ${stats.cache_period_hours || 24}h</p>
+                        <p><strong>Last session:</strong> ${stats.last_session ? new Date(stats.last_session).toLocaleString('en-US') : 'None'}</p>
+                        <p><strong>Cache period:</strong> ${stats.cache_period_hours || 24}h</p>
                     </div>
                 `;
 
@@ -782,7 +782,7 @@
 
                 } catch (error) {
                     log.error('Error loading dashboard data:', error);
-                    showNotification('API non disponible - Données simulées', 'warning');
+                    showNotification('API not available - Simulated data', 'warning');
 
                     // Afficher erreur au lieu de données mockées
                     showApiError(error);
@@ -804,13 +804,13 @@
                 const recentStatsContainer = document.getElementById('recentStats');
                 recentStatsContainer.innerHTML = `
                     <div style="padding: 15px; background: var(--theme-surface-elevated); border: 1px solid var(--danger); border-radius: var(--radius-md); color: var(--danger);">
-                        <p><strong>Erreur API:</strong> ${error.message}</p>
-                        <p><strong>Solution:</strong> Configurer source de données dans settings</p>
+                        <p><strong>API Error:</strong> ${error.message}</p>
+                        <p><strong>Solution:</strong> Configure data source in settings</p>
                     </div>
                 `;
 
                 const container = document.getElementById('sessionsList');
-                container.innerHTML = '<div style="color: var(--danger);">API non disponible - Configurer source de données</div>';
+                container.innerHTML = '<div style="color: var(--danger);">API not available - Configure data source</div>';
             }
 
             // SUPPRIMÉ: loadMockSessions() - utiliser données réelles uniquement
@@ -867,17 +867,17 @@
                     item.className = `session-item ${statusClass}`;
                     item.onclick = () => showSessionDetails(session.id);
 
-                    const timestamp = new Date(session.timestamp).toLocaleString('fr-FR');
+                    const timestamp = new Date(session.timestamp).toLocaleString('en-US');
 
                     item.innerHTML = `
                         <div class="session-info">
                             <h3>${session.exchange.toUpperCase()} - ${timestamp}</h3>
-                            <p>${session.total_orders} ordres • ${session.successful_orders} succès • ${session.failed_orders} échecs</p>
+                            <p>${session.total_orders} orders • ${session.successful_orders} successful • ${session.failed_orders} failed</p>
                         </div>
                         <div class="session-metrics">
                             <div class="session-metric">
                                 <div class="value">${successRate.toFixed(1)}%</div>
-                                <div class="label">Succès</div>
+                                <div class="label">Success</div>
                             </div>
                             <div class="session-metric">
                             <div class="value">${formatMoney(session.total_volume_usd)}</div>
@@ -885,7 +885,7 @@
                             </div>
                             <div class="session-metric">
                             <div class="value">${formatMoney(session.total_fees)}</div>
-                                <div class="label">Frais</div>
+                                <div class="label">Fees</div>
                             </div>
                             <div class="session-metric">
                                 <div class="value">${session.avg_slippage_bps.toFixed(1)}bps</div>
@@ -916,7 +916,7 @@
                     container.innerHTML = '';
 
                     if (!data.sessions || data.sessions.length === 0) {
-                        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--theme-text-muted);">Aucune session trouvée pour la période sélectionnée</div>';
+                        container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--theme-text-muted);">No sessions found for the selected period</div>';
                         return;
                     }
 
@@ -933,17 +933,17 @@
                         item.className = `session-item ${statusClass}`;
                         item.onclick = () => showSessionDetails(session.id);
 
-                        const timestamp = new Date(session.timestamp).toLocaleString('fr-FR');
+                        const timestamp = new Date(session.timestamp).toLocaleString('en-US');
 
                         item.innerHTML = `
                         <div class="session-info">
                             <h3>${session.exchange.toUpperCase()} - ${timestamp}</h3>
-                            <p>${session.total_orders} ordres • ${session.successful_orders} succès • ${session.failed_orders} échecs</p>
+                            <p>${session.total_orders} orders • ${session.successful_orders} successful • ${session.failed_orders} failed</p>
                         </div>
                         <div class="session-metrics">
                             <div class="session-metric">
                                 <div class="value">${successRate.toFixed(1)}%</div>
-                                <div class="label">Succès</div>
+                                <div class="label">Success</div>
                             </div>
                             <div class="session-metric">
                             <div class="value">${formatMoney(session.total_volume_usd)}</div>
@@ -951,7 +951,7 @@
                             </div>
                             <div class="session-metric">
                             <div class="value">${formatMoney(session.total_fees)}</div>
-                                <div class="label">Frais</div>
+                                <div class="label">Fees</div>
                             </div>
                             <div class="session-metric">
                                 <div class="value">${session.avg_slippage_bps.toFixed(1)}bps</div>
@@ -966,7 +966,7 @@
                 } catch (error) {
                     log.error('Error loading sessions:', error);
                     document.getElementById('sessionsList').innerHTML =
-                        '<div style="color: var(--danger);">Erreur de chargement des sessions</div>';
+                        '<div style="color: var(--danger);">Error loading sessions</div>';
                 }
             }
 
@@ -993,7 +993,7 @@
                     chartData = [];
                 }
 
-                const labels = chartData.map(item => new Date(item.date).toLocaleDateString('fr-FR', {
+                const labels = chartData.map(item => new Date(item.date).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric'
                 }));
@@ -1004,7 +1004,7 @@
                         labels,
                         datasets: [
                             {
-                                label: 'Taux de Succès (%)',
+                                label: 'Success Rate (%)',
                                 data: chartData.map(item => item.success_rate || 0),
                                 borderColor: theme.successColor,
                                 backgroundColor: theme.successColor + '20',
@@ -1043,7 +1043,7 @@
 
                                         if (label.includes('Volume')) {
                                             return `${label}: ${formatMoney(value)}`;
-                                        } else if (label.includes('Taux')) {
+                                        } else if (label.includes('Rate')) {
                                             return `${label}: ${value.toFixed(1)}%`;
                                         }
                                         return `${label}: ${value}`;
@@ -1069,7 +1069,7 @@
                                 },
                                 title: {
                                     display: true,
-                                    text: 'Taux de Succès (%)',
+                                    text: 'Success Rate (%)',
                                     color: theme.textColor
                                 }
                             },
@@ -1102,7 +1102,7 @@
 
                     if (trends.error) {
                         document.getElementById('trendsData').innerHTML =
-                            `<div style="color: var(--danger);">Erreur: ${trends.error}</div>`;
+                            `<div style="color: var(--danger);">Error: ${trends.error}</div>`;
                         return;
                     }
 
@@ -1117,19 +1117,19 @@
                     <div class="metrics-grid">
                         <div class="metric-item">
                             <div class="metric-value">${trendInfo.total_sessions || 0}</div>
-                            <div class="metric-label">Sessions Analysées</div>
+                            <div class="metric-label">Analyzed Sessions</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${trendInfo.volume_trend || 'stable'}</div>
-                            <div class="metric-label">Tendance Volume</div>
+                            <div class="metric-label">Volume Trend</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${trendInfo.success_trend || 'stable'}</div>
-                            <div class="metric-label">Tendance Succès</div>
+                            <div class="metric-label">Success Trend</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${(trendInfo.overall_success_rate || 0).toFixed(1)}%</div>
-                            <div class="metric-label">Taux Global</div>
+                            <div class="metric-label">Overall Rate</div>
                         </div>
                     </div>
                 `;
@@ -1137,7 +1137,7 @@
                 } catch (error) {
                     log.error('Error loading trends:', error);
                     document.getElementById('trendsData').innerHTML =
-                        '<div style="color: var(--danger);">Erreur de chargement des tendances</div>';
+                        '<div style="color: var(--danger);">Error loading trends</div>';
                 }
             }
 
@@ -1166,13 +1166,13 @@
                             container.appendChild(li);
                         });
                     } else {
-                        container.innerHTML = '<li class="info">Aucun insight disponible pour la période sélectionnée</li>';
+                        container.innerHTML = '<li class="info">No insights available for the selected period</li>';
                     }
 
                 } catch (error) {
                     log.error('Error loading insights:', error);
                     document.getElementById('insightsList').innerHTML =
-                        '<li style="color: var(--danger);">Erreur de chargement des insights</li>';
+                        '<li style="color: var(--danger);">Error loading insights</li>';
                 }
             }
 
@@ -1185,7 +1185,7 @@
                     const modalTitle = document.getElementById('modalTitle');
                     const modalContent = document.getElementById('modalContent');
 
-                    modalTitle.textContent = `Session ${session.exchange.toUpperCase()} - ${new Date(session.timestamp).toLocaleString('fr-FR')}`;
+                    modalTitle.textContent = `Session ${session.exchange.toUpperCase()} - ${new Date(session.timestamp).toLocaleString('en-US')}`;
 
                     // Analytics de la session
                     const analytics = session.analytics || {};
@@ -1196,11 +1196,11 @@
                     <div class="metrics-grid" style="margin-bottom: 20px;">
                         <div class="metric-item">
                             <div class="metric-value">${session.total_orders}</div>
-                            <div class="metric-label">Total Ordres</div>
+                            <div class="metric-label">Total Orders</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${session.successful_orders}</div>
-                            <div class="metric-label">Succès</div>
+                            <div class="metric-label">Success</div>
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${formatMoney(session.total_volume_usd)}</div>
@@ -1208,21 +1208,21 @@
                         </div>
                         <div class="metric-item">
                             <div class="metric-value">${costAnalysis.cost_percentage ? costAnalysis.cost_percentage.toFixed(3) : 0}%</div>
-                            <div class="metric-label">Coût Total</div>
+                            <div class="metric-label">Total Cost</div>
                         </div>
                     </div>
                     
-                    <h3>Ordres Détaillés</h3>
+                    <h3>Detailed Orders</h3>
                     <table class="order-table">
                         <thead>
                             <tr>
-                                <th>Symbole</th>
+                                <th>Symbol</th>
                                 <th>Action</th>
-                                <th>Quantité</th>
+                                <th>Quantity</th>
                                 <th>Volume USD</th>
-                                <th>Prix Moy.</th>
-                                <th>Frais</th>
-                                <th>Statut</th>
+                                <th>Avg. Price</th>
+                                <th>Fees</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1253,7 +1253,7 @@
 
                 } catch (error) {
                     log.error('Error loading session details:', error);
-                    showNotification('Erreur chargement détails session', 'error');
+                    showNotification('Error loading session details', 'error');
                 }
             }
 
@@ -1295,7 +1295,7 @@
                 currentFilters.limit = parseInt(document.getElementById('limitFilter').value);
 
                 refreshAll();
-                showNotification('Filtres appliqués', 'success');
+                showNotification('Filters applied', 'success');
             }
 
             async function exportData() {
@@ -1311,11 +1311,11 @@
                     const url = `${config.apiBase}/export/sessions?${params}`;
                     window.open(url, '_blank');
 
-                    showNotification('Export en cours...', 'success');
+                    showNotification('Exporting...', 'success');
 
                 } catch (error) {
                     log.error('Error exporting data:', error);
-                    showNotification('Erreur lors de l\'export', 'error');
+                    showNotification('Error during export', 'error');
                 }
             }
 

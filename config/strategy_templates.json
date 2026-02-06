@@ -22,7 +22,7 @@
       },
       "confidence_threshold": 0.6,
       "rebalance_threshold_pct": 0.08,
-      "description": "Favorise la stabilité et la préservation du capital avec allocation majoritaire BTC/stables"
+      "description": "Prioritizes stability and capital preservation with majority BTC/stablecoin allocation"
     },
     "balanced": {
       "name": "Balanced",
@@ -46,7 +46,7 @@
       },
       "confidence_threshold": 0.5,
       "rebalance_threshold_pct": 0.05,
-      "description": "Équilibre entre croissance et sécurité - correspond au comportement frontend par défaut"
+      "description": "Balances growth and security - matches default frontend behavior"
     },
     "aggressive": {
       "name": "Aggressive",
@@ -70,7 +70,7 @@
       },
       "confidence_threshold": 0.4,
       "rebalance_threshold_pct": 0.03,
-      "description": "Maximise l'alpha avec forte pondération cycle/onchain et surpoids phases ALT"
+      "description": "Maximizes alpha with heavy cycle/onchain weighting and ALT phase overweight"
     },
     "phase_follower": {
       "name": "Phase Follower",
@@ -94,7 +94,7 @@
       },
       "confidence_threshold": 0.3,
       "rebalance_threshold_pct": 0.02,
-      "description": "Suit agressivement les rotations de phase BTC→ETH→Large→Alt avec allocation dynamique"
+      "description": "Aggressively follows BTC→ETH→Large→Alt phase rotations with dynamic allocation"
     },
     "contradiction_averse": {
       "name": "Contradiction Averse",
@@ -118,7 +118,7 @@
       },
       "confidence_threshold": 0.7,
       "rebalance_threshold_pct": 0.1,
-      "description": "Privilégie la cohérence des signaux - réduit allocation si contradictions élevées"
+      "description": "Prioritizes signal consistency - reduces allocation when contradictions are high"
     }
   },
   "version": "1.0",

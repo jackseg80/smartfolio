@@ -605,7 +605,7 @@ async def proxy_fred_vix(
 @app.get("/proxy/fred/macro-stress")
 async def proxy_fred_macro_stress(
     user: str = Depends(get_required_user),
-    force_refresh: bool = Query(False, description="Force le rafraîchissement du cache")
+    force_refresh: bool = Query(False, description="Force cache refresh")
 ):
     """
     Endpoint combiné pour évaluer le stress macro et calculer la pénalité Decision Index.

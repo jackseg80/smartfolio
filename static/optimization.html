@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -361,17 +361,17 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-          🧮 Portfolio Optimization Avancé
+          🧮 Advanced Portfolio Optimization
         </div>
         <p style="margin: 0.5rem 0 0 0; color: var(--theme-text-muted); font-size: 0.95rem;">
-          Algorithmes sophistiqués d'allocation optimale : Markowitz, Black-Litterman, Risk Parity, CVaR, et plus
+          Sophisticated optimal allocation algorithms: Markowitz, Black-Litterman, Risk Parity, CVaR, and more
         </p>
       </div>
 
       <!-- Configuration de base -->
       <div class="controls">
         <div>
-          <label for="source">Source des données</label>
+          <label for="source">Data source</label>
           <select id="source">
             <option value="cointracking">CoinTracking CSV</option>
             <option value="cointracking_api">CoinTracking API</option>
@@ -380,23 +380,23 @@
         </div>
         <div>
           <label for="lookback">
-            Historique (jours)
-            <span class="tooltip-icon" data-tooltip="Période historique pour calculer rendements et volatilité. Court (90j) = réactif aux tendances, Long (730j) = plus stable">ℹ</span>
+            History (days)
+            <span class="tooltip-icon" data-tooltip="Historical period for computing returns and volatility. Short (90d) = trend-reactive, Long (730d) = more stable">ℹ</span>
           </label>
           <input id="lookback" type="number" min="30" max="2000" value="365" />
-          <div class="help-text">Plus long = plus stable, plus court = plus réactif</div>
+          <div class="help-text">Longer = more stable, shorter = more reactive</div>
         </div>
         <div>
-          <label for="minusd">Montant min. par asset ($)</label>
+          <label for="minusd">Min. amount per asset ($)</label>
           <input id="minusd" type="number" min="0" max="100000" step="10" value="100" />
         </div>
         <div>
           <label for="risk-free-rate">
-            Taux sans risque (%)
-            <span class="tooltip-icon" data-tooltip="Taux de rendement d'un actif sans risque (ex: obligations d'État). Utilisé dans le calcul du ratio de Sharpe = (Rendement - Taux sans risque) / Volatilité">ℹ</span>
+            Risk-free rate (%)
+            <span class="tooltip-icon" data-tooltip="Return rate of a risk-free asset (e.g., government bonds). Used in the Sharpe ratio calculation = (Return - Risk-free rate) / Volatility">ℹ</span>
           </label>
           <input id="risk-free-rate" type="number" min="0" max="10" step="0.1" value="2.0" />
-          <div class="help-text">Utilisé pour le calcul du Sharpe ratio</div>
+          <div class="help-text">Used for Sharpe ratio calculation</div>
         </div>
       </div>
 
@@ -407,24 +407,24 @@
         <button class="tab-btn" data-algorithm="risk_parity">Risk Parity</button>
         <button class="tab-btn" data-algorithm="max_diversification">Max Diversification</button>
         <button class="tab-btn" data-algorithm="cvar_optimization">CVaR Optimization</button>
-        <button class="tab-btn" data-algorithm="efficient_frontier">Frontière Efficiente</button>
+        <button class="tab-btn" data-algorithm="efficient_frontier">Efficient Frontier</button>
       </div>
 
       <!-- Configuration Max Sharpe -->
       <div id="config-max_sharpe" class="algorithm-config active">
-        <h4>📈 Maximisation du Ratio de Sharpe</h4>
+        <h4>📈 Sharpe Ratio Maximization</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Optimise le ratio rendement/risque. Algorithme classique de Markowitz.
+          Optimizes the return/risk ratio. Classic Markowitz algorithm.
         </p>
         <div class="param-group">
-          <h4>Contraintes</h4>
+          <h4>Constraints</h4>
           <div class="controls">
             <div>
-              <label for="max-weight-sharpe">Poids max par asset (%)</label>
+              <label for="max-weight-sharpe">Max weight per asset (%)</label>
               <input id="max-weight-sharpe" type="number" min="1" max="100" value="35" />
             </div>
             <div>
-              <label for="max-sector-sharpe">Poids max par secteur (%)</label>
+              <label for="max-sector-sharpe">Max weight per sector (%)</label>
               <input id="max-sector-sharpe" type="number" min="1" max="100" value="60" />
             </div>
           </div>
@@ -433,22 +433,22 @@
 
       <!-- Configuration Black-Litterman -->
       <div id="config-black_litterman" class="algorithm-config">
-        <h4>🔮 Black-Litterman avec Vues de Marché</h4>
+        <h4>🔮 Black-Litterman with Market Views</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Intègre vos opinions sur les rendements futurs avec l'équilibre du marché.
+          Integrates your views on future returns with market equilibrium.
         </p>
         <div class="param-group">
-          <h4>Vues de Marché</h4>
+          <h4>Market Views</h4>
           <div class="controls">
             <div style="grid-column: 1 / -1;">
-              <label for="market-views">Vues sur les rendements annuels (JSON)</label>
+              <label for="market-views">Views on annual returns (JSON)</label>
               <textarea id="market-views" placeholder='{"BTC": 0.15, "ETH": 0.12, "SOL": 0.20}'>{"BTC": 0.15, "ETH": 0.12, "SOL": 0.20}</textarea>
-              <div class="help-text">Format: {"SYMBOL": rendement_annuel}. Ex: 0.15 = 15% par an</div>
+              <div class="help-text">Format: {"SYMBOL": annual_return}. E.g., 0.15 = 15% per year</div>
             </div>
             <div style="grid-column: 1 / -1;">
-              <label for="view-confidence">Confiance dans les vues (JSON)</label>
+              <label for="view-confidence">Confidence in views (JSON)</label>
               <textarea id="view-confidence" placeholder='{"BTC": 0.8, "ETH": 0.6, "SOL": 0.7}'>{"BTC": 0.8, "ETH": 0.6, "SOL": 0.7}</textarea>
-              <div class="help-text">0 = aucune confiance, 1 = confiance totale</div>
+              <div class="help-text">0 = no confidence, 1 = full confidence</div>
             </div>
           </div>
         </div>
@@ -458,18 +458,18 @@
       <div id="config-risk_parity" class="algorithm-config">
         <h4>⚖️ Risk Parity</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Égalise la contribution au risque de chaque asset. Diversification optimale.
+          Equalizes each asset's risk contribution. Optimal diversification.
         </p>
         <div class="param-group">
-          <h4>Paramètres</h4>
+          <h4>Parameters</h4>
           <div class="controls">
             <div>
               <label for="target-vol-rp">
-                Volatilité cible (%)
-                <span class="tooltip-icon" data-tooltip="Risk Parity égalise la contribution au risque de chaque asset (pas les poids). Définir une volatilité cible permet de contrôler le risque total du portfolio">ℹ</span>
+                Target volatility (%)
+                <span class="tooltip-icon" data-tooltip="Risk Parity equalizes each asset's risk contribution (not weights). Setting a target volatility controls the total portfolio risk">ℹ</span>
               </label>
               <input id="target-vol-rp" type="number" min="5" max="50" step="1" value="15" />
-              <div class="help-text">Laissez vide pour optimisation libre</div>
+              <div class="help-text">Leave empty for unconstrained optimization</div>
             </div>
           </div>
         </div>
@@ -477,19 +477,19 @@
 
       <!-- Configuration Max Diversification -->
       <div id="config-max_diversification" class="algorithm-config">
-        <h4>🌐 Maximisation de la Diversification</h4>
+        <h4>🌐 Diversification Maximization</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Maximise le ratio de diversification (volatilités individuelles pondérées / volatilité portfolio).
+          Maximizes the diversification ratio (weighted individual volatilities / portfolio volatility).
         </p>
         <div class="param-group">
-          <h4>Contraintes</h4>
+          <h4>Constraints</h4>
           <div class="controls">
             <div>
-              <label for="min-div-ratio">Ratio diversification min</label>
+              <label for="min-div-ratio">Min diversification ratio</label>
               <input id="min-div-ratio" type="number" min="1" max="5" step="0.1" value="1.5" />
             </div>
             <div>
-              <label for="max-corr-exp">Exposition corrélation max</label>
+              <label for="max-corr-exp">Max correlation exposure</label>
               <input id="max-corr-exp" type="number" min="0.1" max="1" step="0.05" value="0.7" />
             </div>
           </div>
@@ -500,23 +500,23 @@
       <div id="config-cvar_optimization" class="algorithm-config">
         <h4>📉 Conditional Value at Risk (CVaR)</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Minimise les pertes extrêmes. Optimisation pour la queue de distribution.
+          Minimizes extreme losses. Tail distribution optimization.
         </p>
         <div class="param-group">
-          <h4>Paramètres de Risque</h4>
+          <h4>Risk Parameters</h4>
           <div class="controls">
             <div>
               <label for="confidence-level">
-                Niveau de confiance (%)
-                <span class="tooltip-icon" data-tooltip="CVaR (Conditional Value at Risk) mesure la perte moyenne dans les pires scénarios. 95% = optimise pour limiter les pertes dans les 5% pires cas">ℹ</span>
+                Confidence level (%)
+                <span class="tooltip-icon" data-tooltip="CVaR (Conditional Value at Risk) measures the average loss in worst-case scenarios. 95% = optimizes to limit losses in the worst 5% of cases">ℹ</span>
               </label>
               <input id="confidence-level" type="number" min="90" max="99" value="95" />
-              <div class="help-text">95% = optimise pour les 5% pires scénarios</div>
+              <div class="help-text">95% = optimizes for the worst 5% scenarios</div>
             </div>
             <div>
               <label for="cvar-weight">
-                Poids CVaR vs Sharpe
-                <span class="tooltip-icon" data-tooltip="Balance entre minimisation risque extrême (CVaR) et maximisation rendement/risque (Sharpe). 1.0 = 100% focus protection, 0.0 = 100% focus performance">ℹ</span>
+                CVaR vs Sharpe weight
+                <span class="tooltip-icon" data-tooltip="Balance between extreme risk minimization (CVaR) and return/risk maximization (Sharpe). 1.0 = 100% focus on protection, 0.0 = 100% focus on performance">ℹ</span>
               </label>
               <input id="cvar-weight" type="number" min="0" max="1" step="0.1" value="0.7" />
               <div class="help-text">1.0 = 100% CVaR, 0.0 = 100% Sharpe</div>
@@ -525,24 +525,24 @@
         </div>
       </div>
 
-      <!-- Configuration Frontière Efficiente -->
+      <!-- Configuration Efficient Frontier -->
       <div id="config-efficient_frontier" class="algorithm-config">
-        <h4>📊 Frontière Efficiente</h4>
+        <h4>📊 Efficient Frontier</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
-          Calcule l'ensemble des portfolios optimaux pour différents niveaux de risque.
+          Computes the set of optimal portfolios for different risk levels.
         </p>
         <div class="param-group">
-          <h4>Paramètres de Calcul</h4>
+          <h4>Computation Parameters</h4>
           <div class="controls">
             <div>
-              <label for="frontier-points">Nombre de points</label>
+              <label for="frontier-points">Number of points</label>
               <input id="frontier-points" type="number" min="10" max="100" value="30" />
             </div>
             <div>
-              <label for="show-current">Afficher portfolio actuel</label>
+              <label for="show-current">Show current portfolio</label>
               <select id="show-current">
-                <option value="true">Oui</option>
-                <option value="false">Non</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             </div>
           </div>
@@ -550,9 +550,9 @@
       </div>
 
       <div class="actions">
-        <button class="btn" id="runBtn">🚀 Optimiser</button>
-        <button class="btn secondary" id="compareBtn">📊 Comparer Algorithmes</button>
-        <button class="btn secondary" id="resetBtn">🔄 Réinitialiser</button>
+        <button class="btn" id="runBtn">🚀 Optimize</button>
+        <button class="btn secondary" id="compareBtn">📊 Compare Algorithms</button>
+        <button class="btn secondary" id="resetBtn">🔄 Reset</button>
         <span id="status" style="margin-left: auto; color: var(--theme-text-muted); font-size: 0.9rem;"></span>
       </div>
     </div>
@@ -560,7 +560,7 @@
     <!-- Résultats -->
     <div class="grid" id="results-container" style="display: none;">
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">📈 Allocation Optimale</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);">📈 Optimal Allocation</div>
         <div class="chart-container">
           <canvas id="weightsChart"></canvas>
         </div>
@@ -568,13 +568,13 @@
       </div>
 
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">📊 Métriques de Performance</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);">📊 Performance Metrics</div>
         <div class="kpis" id="kpis"></div>
         <div id="additional-metrics"></div>
       </div>
 
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">🔄 Plan de Rééquilibrage</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);">🔄 Rebalancing Plan</div>
         <table id="tradesTable"></table>
       </div>
 
@@ -587,9 +587,9 @@
       </div>
     </div>
 
-    <!-- Frontière Efficiente -->
+    <!-- Efficient Frontier -->
     <div class="card" id="frontier-container" style="display: none;">
-      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Frontière Efficiente</div>
+      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Efficient Frontier</div>
       <div class="chart-container">
         <canvas id="frontierChart"></canvas>
       </div>
@@ -598,7 +598,7 @@
 
     <!-- Comparaison d'algorithmes -->
     <div class="card" id="comparison-container" style="display: none;">
-      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Comparaison d'Algorithmes</div>
+      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Algorithm Comparison</div>
       <table id="comparisonTable" class="comparison-table"></table>
     </div>
   </div>

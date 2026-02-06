@@ -31,7 +31,7 @@ class CoinTrackingCSVSource(SourceBase):
             name="CoinTracking CSV",
             category=SourceCategory.CRYPTO,
             mode=SourceMode.CSV,
-            description="Import depuis fichier CoinTracking",
+            description="Import from CoinTracking file",
             icon="upload",
             supports_transactions=True,
             requires_credentials=False,

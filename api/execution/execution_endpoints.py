@@ -21,9 +21,9 @@ order_manager = execution_engine.order_manager
 
 @router.post("/execute-plan", response_model=ExecutionResponse)
 async def execute_plan(
-    plan_id: str = Query(..., description="ID du plan à exécuter"),
-    dry_run: bool = Query(default=True, description="Mode simulation"),
-    max_parallel: int = Query(default=3, description="Ordres en parallèle max"),
+    plan_id: str = Query(..., description="Plan ID to execute"),
+    dry_run: bool = Query(default=True, description="Simulation mode"),
+    max_parallel: int = Query(default=3, description="Maximum parallel orders"),
     background_tasks: BackgroundTasks = None
 ):
     """

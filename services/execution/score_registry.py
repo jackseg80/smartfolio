@@ -20,18 +20,18 @@ logger = logging.getLogger(__name__)
 
 class ScoreComponents(BaseModel):
     """Composants du score décisionnel"""
-    trend_regime: float = Field(default=50.0, ge=0.0, le=100.0, description="Tendance et régime")
-    risk: float = Field(default=50.0, ge=0.0, le=100.0, description="Métriques de risque")
-    breadth_rotation: float = Field(default=50.0, ge=0.0, le=100.0, description="Largeur de marché et rotation")
-    sentiment: float = Field(default=50.0, ge=0.0, le=100.0, description="Sentiment de marché")
+    trend_regime: float = Field(default=50.0, ge=0.0, le=100.0, description="Trend and regime")
+    risk: float = Field(default=50.0, ge=0.0, le=100.0, description="Risk metrics")
+    breadth_rotation: float = Field(default=50.0, ge=0.0, le=100.0, description="Market breadth and rotation")
+    sentiment: float = Field(default=50.0, ge=0.0, le=100.0, description="Market sentiment")
 
 class CanonicalScores(BaseModel):
     """Score canonique avec sous-scores explicatifs"""
-    decision: float = Field(..., ge=0.0, le=100.0, description="Score décisionnel principal 0-100")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confiance dans la décision")
-    contradiction: float = Field(..., ge=0.0, le=1.0, description="Index de contradiction")
-    components: ScoreComponents = Field(..., description="Sous-scores explicatifs")
-    as_of: datetime = Field(default_factory=datetime.now, description="Timestamp de calcul")
+    decision: float = Field(..., ge=0.0, le=100.0, description="Main decision score 0-100")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Decision confidence")
+    contradiction: float = Field(..., ge=0.0, le=1.0, description="Contradiction index")
+    components: ScoreComponents = Field(..., description="Explanatory sub-scores")
+    as_of: datetime = Field(default_factory=datetime.now, description="Calculation timestamp")
 
 class ScoreWeights(BaseModel):
     """Poids configurables pour le calcul du score"""
@@ -48,10 +48,10 @@ class ScoreWeights(BaseModel):
 class ScoreConfig(BaseModel):
     """Configuration complète du Score Registry"""
     weights: ScoreWeights = Field(default_factory=ScoreWeights)
-    contradiction_penalty_cap: float = Field(default=0.30, ge=0.0, le=0.5, description="Cap de pénalité contradiction")
-    volatility_window_days: int = Field(default=30, ge=7, le=90, description="Fenêtre volatilité")
-    correlation_window_days: int = Field(default=90, ge=30, le=180, description="Fenêtre corrélation")
-    sentiment_smoothing_days: int = Field(default=7, ge=1, le=30, description="Lissage sentiment")
+    contradiction_penalty_cap: float = Field(default=0.30, ge=0.0, le=0.5, description="Contradiction penalty cap")
+    volatility_window_days: int = Field(default=30, ge=7, le=90, description="Volatility window")
+    correlation_window_days: int = Field(default=90, ge=30, le=180, description="Correlation window")
+    sentiment_smoothing_days: int = Field(default=7, ge=1, le=30, description="Sentiment smoothing")
     
     # Bandes avec hystérésis
     bands: Dict[str, Tuple[float, float]] = Field(
@@ -61,9 +61,9 @@ class ScoreConfig(BaseModel):
             "aggressive": (60, 79),
             "high_conviction": (80, 100)
         },
-        description="Bandes décisionnelles"
+        description="Decision bands"
     )
-    band_hysteresis: float = Field(default=3.0, ge=1.0, le=10.0, description="Delta min pour changer de bande")
+    band_hysteresis: float = Field(default=3.0, ge=1.0, le=10.0, description="Minimum delta to change band")
     
     # Facteurs de phase pour alertes
     phase_factors: Dict[str, Dict[str, float]] = Field(
@@ -72,10 +72,10 @@ class ScoreConfig(BaseModel):
             "correlation": {"btc": 1.0, "eth": 1.0, "large": 1.1, "alt": 1.2},
             "regime_flip": {"btc": 1.0, "eth": 1.1, "large": 1.2, "alt": 1.3}
         },
-        description="Facteurs multiplicateurs par phase pour alertes"
+        description="Multiplier factors per phase for alerts"
     )
     
-    version: str = Field(default="1.0", description="Version de la configuration")
+    version: str = Field(default="1.0", description="Configuration version")
     last_updated: datetime = Field(default_factory=datetime.now)
 
 class ScoreRegistry:

@@ -21,20 +21,20 @@ logger = logging.getLogger(__name__)
 
 class MLSignals(BaseModel):
     """Signaux ML agrégés pour la prise de décision"""
-    as_of: datetime = Field(default_factory=datetime.now, description="Timestamp des signaux")
+    as_of: datetime = Field(default_factory=datetime.now, description="Signals timestamp")
 
     # Signaux individuels - with sensible defaults to avoid 0% display issues
     volatility: Dict[str, float] = Field(
         default_factory=lambda: {"BTC": 0.35, "ETH": 0.45},
-        description="Vol forecast par asset"
+        description="Volatility forecast per asset"
     )
     regime: Dict[str, float] = Field(
         default_factory=lambda: {"bull": 0.5, "bear": 0.25, "neutral": 0.25},
-        description="Régime probabilities"
+        description="Regime probabilities"
     )
     correlation: Dict[str, Any] = Field(
         default_factory=lambda: {"avg_correlation": 0.5, "systemic_risk": "medium"},
-        description="Corrélation metrics - avg_correlation should be 0.4-0.7 for crypto"
+        description="Correlation metrics - avg_correlation should be 0.4-0.7 for crypto"
     )
     sentiment: Dict[str, float] = Field(
         default_factory=lambda: {"fear_greed": 50, "sentiment_score": 0.0},
@@ -42,14 +42,14 @@ class MLSignals(BaseModel):
     )
 
     # Signaux dérivés
-    decision_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Score décisionnel global")
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Confiance dans la décision")
-    contradiction_index: float = Field(default=0.0, ge=0.0, le=1.0, description="Index de contradiction")
-    blended_score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Blended Decision Score (0-100) si disponible")
+    decision_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Global decision score")
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Decision confidence")
+    contradiction_index: float = Field(default=0.0, ge=0.0, le=1.0, description="Contradiction index")
+    blended_score: Optional[float] = Field(default=None, ge=0.0, le=100.0, description="Blended Decision Score (0-100) if available")
 
     # Metadata
-    ttl_seconds: int = Field(default=1800, ge=60, description="TTL des signaux")
-    sources_used: List[str] = Field(default_factory=list, description="Sources ML utilisées")
+    ttl_seconds: int = Field(default=1800, ge=60, description="Signals TTL")
+    sources_used: List[str] = Field(default_factory=list, description="ML sources used")
 
 
 class SignalExtractor:

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -171,23 +171,23 @@
 
         <!-- Alert Banner -->
         <div id="alert-banner" class="alert-banner">
-            <strong>⚠️ Alerte Système:</strong> <span id="alert-message"></span>
+            <strong>⚠️ System Alert:</strong> <span id="alert-message"></span>
         </div>
 
             <!-- KPIs Grid -->
         <div class="monitoring-grid">
-            <!-- KPI 1: p95 Latence API -->
+            <!-- KPI 1: API p95 Latency -->
             <div class="kpi-card">
                 <div class="kpi-header">
                     <div class="kpi-icon">⚡</div>
-                    <div class="kpi-title">p95 Latence API</div>
+                    <div class="kpi-title">API p95 Latency</div>
                     <div id="latency-trend" class="kpi-trend"></div>
                 </div>
                 <div id="latency-value" class="kpi-value status-healthy">--</div>
                 <div class="kpi-details">
-                    <div>Objectif: &lt; 300ms</div>
-                    <div>Échantillons: <span id="latency-samples">0</span></div>
-                    <div>Dernière mesure: <span id="latency-timestamp">--</span></div>
+                    <div>Target: &lt; 300ms</div>
+                    <div>Samples: <span id="latency-samples">0</span></div>
+                    <div>Last measurement: <span id="latency-timestamp">--</span></div>
                 </div>
             </div>
 
@@ -195,14 +195,14 @@
             <div class="kpi-card">
                 <div class="kpi-header">
                     <div class="kpi-icon">🤖</div>
-                    <div class="kpi-title">Taux d'Erreur ML</div>
+                    <div class="kpi-title">ML Error Rate</div>
                     <div id="ml-trend" class="kpi-trend"></div>
                 </div>
                 <div id="ml-error-value" class="kpi-value status-healthy">--</div>
                 <div class="kpi-details">
-                    <div>Objectif: &lt; 0.5%</div>
+                    <div>Target: &lt; 0.5%</div>
                     <div>Backend Status: <span id="ml-backend-status">--</span></div>
-                    <div>Modèles Actifs: <span id="ml-active-models">--</span></div>
+                    <div>Active Models: <span id="ml-active-models">--</span></div>
                 </div>
             </div>
 
@@ -210,13 +210,13 @@
             <div class="kpi-card">
                 <div class="kpi-header">
                     <div class="kpi-icon">⏰</div>
-                    <div class="kpi-title">Staleness Données</div>
+                    <div class="kpi-title">Data Staleness</div>
                     <div id="stale-trend" class="kpi-trend"></div>
                 </div>
                 <div id="stale-value" class="kpi-value status-healthy">--</div>
                 <div class="kpi-details">
                     <div>🟢 &lt;10min | 🟡 10-30min | 🔴 &gt;30min</div>
-                    <div>Dernière MAJ: <span id="stale-timestamp">--</span></div>
+                    <div>Last update: <span id="stale-timestamp">--</span></div>
                     <div>Source: <span id="stale-source">ML Signals</span></div>
                 </div>
             </div>
@@ -230,9 +230,9 @@
                 </div>
                 <div id="var-value" class="kpi-value status-healthy">--</div>
                 <div class="kpi-details">
-                    <div>Seuil critique: &gt; 4%</div>
+                    <div>Critical threshold: &gt; 4%</div>
                     <div>Portfolio VaR: <span id="var-portfolio">--</span></div>
-                    <div>Confiance: <span id="var-confidence">95%</span></div>
+                    <div>Confidence: <span id="var-confidence">95%</span></div>
                 </div>
             </div>
         </div>
@@ -288,8 +288,8 @@
 
         <!-- Global Update Info -->
         <div class="last-update">
-            Dernière mise à jour: <span id="global-timestamp">--</span> |
-            Auto-refresh: <span id="auto-refresh-status">Actif (30s)</span>
+            Last updated: <span id="global-timestamp">--</span> |
+            Auto-refresh: <span id="auto-refresh-status">Active (30s)</span>
         </div>
     </div>
 
@@ -313,7 +313,7 @@
             var: { value: null, status: 'unknown', trend: null }
         };
 
-        // KPI 1: p95 Latence API
+        // KPI 1: API p95 Latency
         async function measureLatency() {
             const start = performance.now();
             try {
@@ -468,7 +468,7 @@
                 latencyEl.textContent = `${Math.round(latencyData.value)}ms`;
                 latencyEl.className = `kpi-value status-${latencyData.status}`;
                 document.getElementById('latency-samples').textContent = latencyData.samples || 0;
-                document.getElementById('latency-timestamp').textContent = now.toLocaleTimeString('fr-FR');
+                document.getElementById('latency-timestamp').textContent = now.toLocaleTimeString('en-US');
             } else {
                 latencyEl.textContent = latencyData.error || '--';
                 latencyEl.className = `kpi-value status-${latencyData.status}`;
@@ -493,7 +493,7 @@
             if (staleData.value !== null) {
                 staleEl.textContent = `${staleData.value}min`;
                 staleEl.className = `kpi-value status-${staleData.status}`;
-                const timestamp = staleData.timestamp ? new Date(staleData.timestamp).toLocaleTimeString('fr-FR') : '--';
+                const timestamp = staleData.timestamp ? new Date(staleData.timestamp).toLocaleTimeString('en-US') : '--';
                 document.getElementById('stale-timestamp').textContent = timestamp;
             } else {
                 staleEl.textContent = staleData.error || '--';
@@ -515,10 +515,10 @@
             // Alertes
             const criticalAlerts = [];
             if (metricsStore.staleness.status === 'critical' && metricsStore.staleness.value > 30) {
-                criticalAlerts.push(`Données stales depuis ${metricsStore.staleness.value}min`);
+                criticalAlerts.push(`Stale data for ${metricsStore.staleness.value}min`);
             }
             if (metricsStore.var.status === 'critical' && metricsStore.var.value > 4) {
-                criticalAlerts.push(`VaR95 critique: ${metricsStore.var.value.toFixed(2)}%`);
+                criticalAlerts.push(`VaR95 critical: ${metricsStore.var.value.toFixed(2)}%`);
             }
 
             const alertBanner = document.getElementById('alert-banner');
@@ -530,7 +530,7 @@
             }
 
             // Timestamp global
-            document.getElementById('global-timestamp').textContent = now.toLocaleTimeString('fr-FR');
+            document.getElementById('global-timestamp').textContent = now.toLocaleTimeString('en-US');
         }
 
         // Refresh de toutes les métriques
@@ -611,24 +611,24 @@
         function formatAlertClientSide(alert) {
             const templates = {
                 'VOL_Q90_CROSS': {
-                    'S1': { action: 'Surveillance volatilité', impact_base: 0.5 },
-                    'S2': { action: 'Réduction exposition (mode Slow)', impact_base: 2.0 },
-                    'S3': { action: 'Arrêt immédiat trading (Freeze)', impact_base: 8.0 }
+                    'S1': { action: 'Volatility monitoring', impact_base: 0.5 },
+                    'S2': { action: 'Exposure reduction (Slow mode)', impact_base: 2.0 },
+                    'S3': { action: 'Immediate trading halt (Freeze)', impact_base: 8.0 }
                 },
                 'EXEC_COST_SPIKE': {
-                    'S1': { action: 'Surveillance coûts exécution', impact_base: 0.2 },
-                    'S2': { action: 'Ralentissement trading (mode Slow)', impact_base: 1.5 },
-                    'S3': { action: 'Arrêt trading (mode Freeze)', impact_base: 4.0 }
+                    'S1': { action: 'Execution cost monitoring', impact_base: 0.2 },
+                    'S2': { action: 'Trading slowdown (Slow mode)', impact_base: 1.5 },
+                    'S3': { action: 'Trading halt (Freeze mode)', impact_base: 4.0 }
                 },
                 'DECISION_DROP': {
-                    'S1': { action: 'Monitoring confiance décision', impact_base: 0.4 },
-                    'S2': { action: 'Mode prudent allocation', impact_base: 2.2 },
-                    'S3': { action: 'Mode ultra-conservateur (Freeze)', impact_base: 9.0 }
+                    'S1': { action: 'Decision confidence monitoring', impact_base: 0.4 },
+                    'S2': { action: 'Cautious allocation mode', impact_base: 2.2 },
+                    'S3': { action: 'Ultra-conservative mode (Freeze)', impact_base: 9.0 }
                 }
             };
 
             const template = templates[alert.alert_type]?.[alert.severity] ||
-                { action: `Alerte ${alert.alert_type}`, impact_base: 1.0 };
+                { action: `Alert ${alert.alert_type}`, impact_base: 1.0 };
 
             const impact_euro = 100000 * template.impact_base / 100;
 

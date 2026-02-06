@@ -25,9 +25,9 @@ export async function loadRiskAlerts() {
     // If no alerts, show positive messages
     if (alerts.length === 0) {
       container.innerHTML = `
-        <div class="info-list-item">• Concentration du portefeuille dans les limites acceptables</div>
-        <div class="info-list-item">• Risque de corrélation modéré pour les conditions actuelles</div>
-        <div class="info-list-item">• Aucune alerte d'exposition significative</div>
+        <div class="info-list-item">• Portfolio concentration within acceptable limits</div>
+        <div class="info-list-item">• Moderate correlation risk for current conditions</div>
+        <div class="info-list-item">• No significant exposure alerts</div>
       `;
       return;
     }
@@ -45,8 +45,8 @@ export async function loadRiskAlerts() {
     console.warn('Failed to load risk alerts:', error);
     // Fallback to static messages on error
     container.innerHTML = `
-      <div class="info-list-item">• Chargement des alertes...</div>
-      <div class="info-list-item text-subtle">• Connexion au système d'alertes...</div>
+      <div class="info-list-item">• Loading alerts...</div>
+      <div class="info-list-item text-subtle">• Connecting to alerts system...</div>
     `;
   }
 }

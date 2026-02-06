@@ -37,7 +37,7 @@ export const MARKET_PHASES = {
       sentiment_social: 0.15,
       market_context: 0.10
     },
-    reasoning: 'Période de transition, garder équilibre standard'
+    reasoning: 'Transition period, maintain standard balance'
   },
   
   expansion: {
@@ -63,7 +63,7 @@ export const MARKET_PHASES = {
       sentiment_social: 0.30,  // +100% (FOMO detection)
       market_context: 0.10
     },
-    reasoning: 'Sentiment extrême signal clé pour détection tops'
+    reasoning: 'Extreme sentiment key signal for top detection'
   },
   
   distribution: {
@@ -234,13 +234,13 @@ function generateWeightingReasoning(phase, marketContext) {
   let reasoning = [phase.reasoning];
   
   if (marketContext.volatility === 'high' || marketContext.volatility === 'extreme') {
-    reasoning.push('Haute volatilité → Réduction poids sentiment, augmentation technique');
+    reasoning.push('High volatility → Reduce sentiment weight, increase technical');
   }
   
   if (marketContext.trend === 'strong_bullish') {
-    reasoning.push('Forte tendance haussière → Augmentation poids sentiment (FOMO detection)');
+    reasoning.push('Strong bullish trend → Increase sentiment weight (FOMO detection)');
   } else if (marketContext.trend === 'strong_bearish') {
-    reasoning.push('Forte tendance baissière → Focus sur fondamentaux on-chain');
+    reasoning.push('Strong bearish trend → Focus on on-chain fundamentals');
   }
   
   if (marketContext.contradictions && marketContext.contradictions.length > 0) {

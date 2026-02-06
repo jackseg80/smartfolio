@@ -38,7 +38,7 @@ class CreateUserRequest(BaseModel):
     """Request model pour création utilisateur"""
     user_id: str = Field(..., min_length=1, max_length=50, description="User ID (alphanumeric + underscore)")
     label: str = Field(..., min_length=1, max_length=100, description="Display label")
-    password: Optional[str] = Field(None, min_length=8, description="Initial password (optional, min 8 caractères)")
+    password: Optional[str] = Field(None, min_length=8, description="Initial password (optional, min 8 characters)")
     roles: List[str] = Field(default=["viewer"], description="User roles")
 
 
@@ -51,7 +51,7 @@ class UpdateUserRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     """Request model pour reset password (admin uniquement)"""
-    new_password: str = Field(..., min_length=8, description="Nouveau password (min 8 caractères)")
+    new_password: str = Field(..., min_length=8, description="New password (min 8 characters)")
 
 
 class AssignRolesRequest(BaseModel):
@@ -62,11 +62,11 @@ class AssignRolesRequest(BaseModel):
 class TrainingConfig(BaseModel):
     """Configuration pour training ML models (Phase 2)"""
     # Data configuration
-    days: int = Field(730, ge=90, le=7300, description="Historique données (jours): 90-7300 (20 years max)")
+    days: int = Field(730, ge=90, le=7300, description="Data history (days): 90-7300 (20 years max)")
     train_val_split: float = Field(0.8, ge=0.6, le=0.9, description="Train/Val split: 0.6-0.9")
 
     # Common hyperparameters
-    epochs: int = Field(100, ge=10, le=500, description="Nombre epochs: 10-500")
+    epochs: int = Field(100, ge=10, le=500, description="Number of epochs: 10-500")
     patience: int = Field(15, ge=5, le=50, description="Early stopping patience: 5-50")
     batch_size: int = Field(32, ge=8, le=256, description="Batch size: 8-256")
     learning_rate: float = Field(0.001, ge=0.0001, le=0.1, description="Learning rate: 0.0001-0.1")
@@ -304,7 +304,7 @@ async def update_user(
 @router.delete("/users/{user_id}")
 async def delete_user(
     user_id: str,
-    hard_delete: bool = Query(False, description="Si True, suppression complète (hard delete). Si False, soft delete (défaut)"),
+    hard_delete: bool = Query(False, description="If True, permanent deletion (hard delete). If False, soft delete (default)"),
     user: str = Depends(require_admin_role)
 ):
     """

@@ -206,7 +206,7 @@ async def list_sources(
 
     except Exception as e:
         logger.error(f"Error listing sources: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du chargement des sources: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error loading sources: {str(e)}")
 
 @router.get("/scan", response_model=SourcesScanResponse)
 async def scan_sources(
@@ -273,7 +273,7 @@ async def scan_sources(
 
     except Exception as e:
         logger.error(f"Error scanning sources: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors du scan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error scanning sources: {str(e)}")
 
 @router.post("/refresh-api", response_model=RefreshApiResponse)
 async def refresh_api(
@@ -288,12 +288,12 @@ async def refresh_api(
         config = config_migrator.load_sources_config()
 
         if request.module not in config["modules"]:
-            raise HTTPException(status_code=404, detail=f"Module {request.module} non trouvé")
+            raise HTTPException(status_code=404, detail=f"Module {request.module} not found")
 
         module_config = config["modules"][request.module]
 
         if "api" not in module_config.get("modes", []):
-            raise HTTPException(status_code=400, detail=f"Module {request.module} n'a pas de mode API")
+            raise HTTPException(status_code=400, detail=f"Module {request.module} does not support API mode")
 
         # Résoudre les credentials
         api_config = module_config.get("api", {})
@@ -305,7 +305,7 @@ async def refresh_api(
                 success=False,
                 module=request.module,
                 snapshot_updated=False,
-                message="Credentials API non configurées",
+                message="API credentials not configured",
                 error="MISSING_CREDENTIALS"
             )
 
@@ -319,7 +319,7 @@ async def refresh_api(
                 success=False,
                 module=request.module,
                 snapshot_updated=False,
-                message=f"Refresh API non supporté pour {request.module}",
+                message=f"API refresh not supported for {request.module}",
                 error="NOT_SUPPORTED"
             )
 
@@ -328,7 +328,7 @@ async def refresh_api(
                 success=False,
                 module=request.module,
                 snapshot_updated=False,
-                message="Échec du refresh API",
+                message="API refresh failed",
                 error="API_ERROR"
             )
 
@@ -341,14 +341,14 @@ async def refresh_api(
             module=request.module,
             records_fetched=records_fetched,
             snapshot_updated=True,  # Les données sont directement dans data/
-            message=f"API rafraîchie, {records_fetched} enregistrements sauvegardés dans data/"
+            message=f"API refreshed, {records_fetched} records saved to data/"
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error refreshing API for {request.module}: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur refresh API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"API refresh error: {str(e)}")
 
 # Fonctions utilitaires
 

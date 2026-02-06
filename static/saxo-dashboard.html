@@ -66,8 +66,8 @@
         <div class="dashboard-header">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <div>
-                    <h1>📈 Dashboard Bourse (Saxo Bank)</h1>
-                    <p style="color: var(--theme-text-muted); margin: 0;">Analyse de votre portefeuille actions</p>
+                    <h1>📈 Stock Dashboard (Saxo Bank)</h1>
+                    <p style="color: var(--theme-text-muted); margin: 0;">Analysis of your stock portfolio</p>
                 </div>
                 <span
                     id="cacheIndicator"
@@ -81,8 +81,8 @@
                     id="btnForceRefresh"
                     onclick="loadCurrentSaxoData(true)"
                     style="padding: 0.75rem 1.25rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;"
-                    title="Forcer le rechargement des données (bypass cache)">
-                    🔄 Actualiser
+                    title="Force data reload (bypass cache)">
+                    🔄 Refresh
                 </button>
             </div>
         </div>
@@ -93,7 +93,7 @@
 
         <!-- Main Content (initially empty, filled by loadCurrentSaxoData) -->
         <div id="mainContent">
-            <div class="loading">📊 Chargement initial...</div>
+            <div class="loading">📊 Loading...</div>
         </div>
 
         <!-- Dashboard Content (hidden by default) -->
@@ -369,7 +369,7 @@
 
                 // Show loading state
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Chargement des données Bourse...</div>';
+                document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Loading stock data...</div>';
                 document.getElementById('dashboardContent').style.display = 'none';
 
                 const activeUser = localStorage.getItem('activeUser') || 'demo';
@@ -510,7 +510,7 @@
                         // Format portfolioData same as API mode (with positions property)
                         portfolioData = {
                             portfolio_id: 'manual_bourse',
-                            name: 'Manual Bourse Entry',
+                            name: 'Manual Stock Entry',
                             positions: positions,
                             source: 'manual',
                             timestamp: new Date().toISOString(),
@@ -525,7 +525,7 @@
 
                     } catch (error) {
                         debugLogger.error('Erreur lors du chargement depuis Sources V2:', error);
-                        showNoDataState(`❌ Erreur Sources V2: ${error.message}`);
+                        showNoDataState(`❌ Sources V2 Error: ${error.message}`);
                         return;
                     }
 
@@ -544,7 +544,7 @@
 
                     if (!apiResponse.ok) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
-                        showNoDataState('❌ Erreur lors du chargement depuis l\'API Saxo');
+                        showNoDataState('❌ Error loading from Saxo API');
                         return;
                     }
 
@@ -554,7 +554,7 @@
 
                     if (!apiOk || !apiData) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
-                        showNoDataState('❌ Erreur lors du chargement depuis l\'API Saxo');
+                        showNoDataState('❌ Error loading from Saxo API');
                         return;
                     }
 
@@ -652,7 +652,7 @@
 
                     if (!listResponse.ok) {
                         debugLogger.warn(`❌ HTTP ${listResponse.status}: ${listResponse.statusText}`);
-                        showNoDataState(`❌ Erreur HTTP ${listResponse.status}: ${listResponse.statusText}`);
+                        showNoDataState(`❌ HTTP Error ${listResponse.status}: ${listResponse.statusText}`);
                         return;
                     }
 
@@ -671,7 +671,7 @@
 
                     if (!portfolios || portfolios.length === 0) {
                         debugLogger.warn('⚠️ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
-                        showNoDataState('📂 Aucun CSV Saxo trouvé. Veuillez importer un fichier CSV Saxo Bank.');
+                        showNoDataState('📂 No Saxo CSV found. Please import a Saxo Bank CSV file.');
                         return;
                     }
 
@@ -681,7 +681,7 @@
 
                     if (!portfolioId) {
                         debugLogger.warn('Portfolio ID manquant.');
-                        showNoDataState('❌ Erreur: Portfolio ID manquant');
+                        showNoDataState('❌ Error: Portfolio ID missing');
                         return;
                     }
 
@@ -697,8 +697,8 @@
                     });
 
                     if (!detailResponse.ok) {
-                        debugLogger.warn('Erreur lors du chargement du portfolio.');
-                        showNoDataState('❌ Erreur lors du chargement du portfolio');
+                        debugLogger.warn('Error loading portfolio.');
+                        showNoDataState('❌ Error loading portfolio');
                         return;
                     }
 
@@ -706,8 +706,8 @@
                     portfolioData = await detailResponse.json();
 
                     if (!portfolioData || !portfolioData.portfolio_id) {
-                        debugLogger.warn('Erreur lors du chargement du portfolio.');
-                        showNoDataState('❌ Erreur lors du chargement du portfolio');
+                        debugLogger.warn('Error loading portfolio.');
+                        showNoDataState('❌ Error loading portfolio');
                         return;
                     }
 
@@ -772,7 +772,7 @@
 
             } catch (error) {
                 debugLogger.error('Error loading Saxo data:', error);
-                showError('❌ Erreur lors du chargement des données: ' + error.message);
+                showError('❌ Error loading data: ' + error.message);
             }
         }
 
@@ -885,7 +885,7 @@
                         `).join('')}
                     </div>
                 </div>
-            ` : '<div class="no-data">Aucune donnée d\'allocation disponible</div>';
+            ` : '<div class="no-data">No allocation data available</div>';
             document.getElementById('assetAllocationCurrency').innerHTML = allocationHtml;
 
             // Create allocation chart
@@ -924,7 +924,7 @@
                         `}).join('')}
                     </tbody>
                 </table>
-            ` : '<div class="no-data">Aucune position trouvée</div>';
+            ` : '<div class="no-data">No positions found</div>';
             document.getElementById('topHoldings').innerHTML = holdingsHtml;
         }
 
@@ -995,12 +995,12 @@
             modal.innerHTML = `
                 <div style="background: var(--theme-surface); border-radius: var(--radius-lg); padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">💵 Éditer Liquidités</h3>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">💵 Edit Cash</h3>
                         <button onclick="closeCashModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--theme-text-muted);">×</button>
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Devise:</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Currency:</label>
                         <select id="currencySelect"
                             style="width: 100%; padding: 0.75rem; border: 1px solid var(--theme-border); border-radius: var(--radius-md); background: var(--theme-bg); color: var(--theme-text); font-size: 1rem; cursor: pointer;">
                             <option value="EUR" ${savedCurrency === 'EUR' ? 'selected' : ''}>EUR (Euro)</option>
@@ -1010,14 +1010,14 @@
                     </div>
 
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Montant:</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Amount:</label>
                         <input type="number" id="cashInput" value="${currentCash}" step="100" min="0"
                             style="width: 100%; padding: 0.75rem; border: 1px solid var(--theme-border); border-radius: var(--radius-md); background: var(--theme-bg); color: var(--theme-text); font-size: 1rem;"
                         />
                     </div>
 
                     <div id="conversionDisplay" style="padding: 1rem; background: var(--brand-primary-alpha); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.875rem;">
-                        <strong>💱 Équivalent USD:</strong> <span id="usdEquivalent">Chargement des taux de change...</span>
+                        <strong>💱 USD Equivalent:</strong> <span id="usdEquivalent">Loading exchange rates...</span>
                     </div>
 
                     <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--theme-text-muted);">
@@ -1026,10 +1026,10 @@
 
                     <div style="display: flex; gap: 1rem; justify-content: flex-end;">
                         <button onclick="closeCashModal()" style="padding: 0.75rem 1.5rem; background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: var(--radius-md); cursor: pointer; font-weight: 600;">
-                            Annuler
+                            Cancel
                         </button>
                         <button id="saveCashBtn" onclick="saveCashAmount()" disabled style="padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-md); cursor: not-allowed; font-weight: 600; opacity: 0.5;">
-                            ⏳ Chargement...
+                            ⏳ Loading...
                         </button>
                     </div>
                 </div>
@@ -1051,7 +1051,7 @@
                         const usdAmount = amount / rate;
                         usdSpan.textContent = `$${usdAmount.toFixed(2)} USD (taux: ${rate.toFixed(4)})`;
                     } else {
-                        usdSpan.textContent = 'Chargement du taux...';
+                        usdSpan.textContent = 'Loading rate...';
                     }
                 }
             }
@@ -1067,7 +1067,7 @@
                     saveBtn.disabled = false;
                     saveBtn.style.cursor = 'pointer';
                     saveBtn.style.opacity = '1';
-                    saveBtn.textContent = '💾 Enregistrer';
+                    saveBtn.textContent = '💾 Save';
                 }
                 updateConversion();
                 document.getElementById('cashInput')?.focus();
@@ -1079,7 +1079,7 @@
                     saveBtn.disabled = false;
                     saveBtn.style.cursor = 'pointer';
                     saveBtn.style.opacity = '1';
-                    saveBtn.textContent = '💾 Enregistrer';
+                    saveBtn.textContent = '💾 Save';
                 }
                 updateConversion();
                 document.getElementById('cashInput')?.focus();
@@ -1110,7 +1110,7 @@
             const currency = currencySelect?.value || 'EUR';
 
             if (cashAmount < 0) {
-                alert('Le montant ne peut pas être négatif');
+                alert('Amount cannot be negative');
                 return;
             }
 
@@ -1131,7 +1131,7 @@
                         cashAmountUSD = cashAmount / rate;
                         debugLogger.info(`💱 Converting ${cashAmount} ${currency} to USD using rate ${rate.toFixed(4)}`);
                     } else {
-                        throw new Error(`Taux de change ${currency}/USD non disponible. Veuillez vérifier votre connexion internet.`);
+                        throw new Error(`Exchange rate ${currency}/USD not available. Please check your internet connection.`);
                     }
                 }
 
@@ -1200,7 +1200,7 @@
 
             } catch (error) {
                 debugLogger.error('Failed to save cash amount', error);
-                alert('Erreur lors de la sauvegarde: ' + error.message);
+                alert('Error saving: ' + error.message);
                 cashInput.disabled = false;
                 currencySelect.disabled = false;
             }
@@ -1274,7 +1274,7 @@
 
                         const lotsCount = position.lots_count || 0;
                         const fragmentationBadge = lotsCount > 1 ?
-                            `<span style="display: inline-block; margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.4rem; background: #ef4444; color: white; border-radius: 3px; font-weight: 600;" title="${lotsCount} lots détectés - Considérer consolidation pour réduire frais">⚠️ ${lotsCount} lots</span>` : '';
+                            `<span style="display: inline-block; margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.4rem; background: #ef4444; color: white; border-radius: 3px; font-weight: 600;" title="${lotsCount} lots detected - Consider consolidation to reduce fees">⚠️ ${lotsCount} lots</span>` : '';
 
                         return `
                                 <tr
@@ -1499,7 +1499,7 @@
         function showNoDataState(message) {
             document.getElementById('mainContent').innerHTML = `
                 <div class="no-data">
-                    <h3>📂 Aucune donnée disponible</h3>
+                    <h3>📂 No data available</h3>
                     <p>${message}</p>
                 </div>
             `;

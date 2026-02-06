@@ -25,21 +25,21 @@ ExecMode = Literal["Freeze", "Slow", "Normal", "Aggressive"]
 
 class Policy(BaseModel):
     """Politique d'exécution dérivée des signaux ML + gouvernance"""
-    mode: ExecMode = Field(default="Normal", description="Mode d'exécution")
-    cap_daily: float = Field(default=0.08, ge=0.01, le=0.50, description="Cap quotidien [1-50%]")
-    ramp_hours: int = Field(default=12, ge=1, le=72, description="Ramping sur N heures")
-    min_trade: float = Field(default=100.0, ge=10.0, description="Trade minimum en USD")
-    slippage_limit_bps: int = Field(default=50, ge=1, le=500, description="Limite slippage [1-500 bps]")
+    mode: ExecMode = Field(default="Normal", description="Execution mode")
+    cap_daily: float = Field(default=0.08, ge=0.01, le=0.50, description="Daily cap [1-50%]")
+    ramp_hours: int = Field(default=12, ge=1, le=72, description="Ramping over N hours")
+    min_trade: float = Field(default=100.0, ge=10.0, description="Minimum trade in USD")
+    slippage_limit_bps: int = Field(default=50, ge=1, le=500, description="Slippage limit [1-500 bps]")
 
-    # TTL vs Cooldown separation (critique essentielle)
-    signals_ttl_seconds: int = Field(default=3600, ge=60, le=7200, description="TTL des signaux ML [1min-2h] - optimized to 1h")
-    plan_cooldown_hours: int = Field(default=24, ge=1, le=168, description="Cooldown publication plans [1-168h]")
+    # TTL vs Cooldown separation (essential)
+    signals_ttl_seconds: int = Field(default=3600, ge=60, le=7200, description="ML signals TTL [1min-2h] - optimized to 1h")
+    plan_cooldown_hours: int = Field(default=24, ge=1, le=168, description="Plan publication cooldown [1-168h]")
 
-    # No-trade zone et coûts
-    no_trade_threshold_pct: float = Field(default=0.02, ge=0.0, le=0.10, description="Zone no-trade [0-10%]")
-    execution_cost_bps: int = Field(default=15, ge=0, le=100, description="Cout d'execution estime [0-100 bps]")
+    # No-trade zone and costs
+    no_trade_threshold_pct: float = Field(default=0.02, ge=0.0, le=0.10, description="No-trade zone [0-10%]")
+    execution_cost_bps: int = Field(default=15, ge=0, le=100, description="Estimated execution cost [0-100 bps]")
 
-    notes: Optional[str] = Field(default=None, description="Notes explicatives")
+    notes: Optional[str] = Field(default=None, description="Explanatory notes")
 
 
 class PolicyEngine:

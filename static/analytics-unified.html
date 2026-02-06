@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Unified Analytics Dashboard - Analyse ML temps réel, métriques de risque, performance, cycles de marché et intelligence décisionnelle pour votre portefeuille SmartFolio">
+  <meta name="description" content="Unified Analytics Dashboard - Real-time ML analysis, risk metrics, performance, market cycles and decision intelligence for your SmartFolio portfolio">
   <title>Unified Analytics - SmartFolio</title>
 
   <!-- Preconnect to CDNs for better performance -->
@@ -194,7 +194,7 @@
               🎯 Decision Index
             </div>
             <div style="font-size: 0.85rem; color: var(--theme-text-muted, #6b7280);">
-              Chargement des données en cours...
+              Loading data...
             </div>
           </div>
         </div>
@@ -214,7 +214,7 @@
 
         <div style="position: absolute; bottom: 1rem; right: 1rem; font-size: 0.75rem; color: var(--theme-text-muted, #6b7280); display: flex; align-items: center; gap: 0.5rem;">
           <span style="animation: di-pulse 1.2s ease-in-out infinite;">⏳</span>
-          <span>Récupération des scores ML, cycles et on-chain...</span>
+          <span>Fetching ML scores, cycles and on-chain data...</span>
         </div>
 
         <style>
@@ -244,22 +244,22 @@
         <div class="metric-card" data-metric="risk-var">
           <h3>VaR Portfolio</h3>
           <div class="metric-value skeleton" id="risk-var-value" aria-busy="true">Loading</div>
-          <small>Niveau de confiance 95%</small>
+          <small>95% confidence level</small>
         </div>
         <div class="metric-card" data-metric="risk-drawdown">
-          <h3>Drawdown Maximum</h3>
+          <h3>Maximum Drawdown</h3>
           <div class="metric-value skeleton" id="risk-drawdown-value" aria-busy="true">Loading</div>
-          <small>Cycle actuel</small>
+          <small>Current cycle</small>
         </div>
         <div class="metric-card" data-metric="risk-volatility">
-          <h3>Volatilité</h3>
+          <h3>Volatility</h3>
           <div class="metric-value skeleton" id="risk-volatility-value" aria-busy="true">Loading</div>
-          <small>Annualisée 30 jours</small>
+          <small>Annualized 30 days</small>
         </div>
         <div class="metric-card" data-metric="risk-score">
-          <h3>Score de Risque</h3>
+          <h3>Risk Score</h3>
           <div class="metric-value skeleton" id="risk-score-value" aria-busy="true">Loading</div>
-          <small>Inconnu</small>
+          <small>Unknown</small>
         </div>
       </div>
       <!-- Scores clés du Risk Dashboard (version complète) - Pro only -->
@@ -267,17 +267,17 @@
         <div class="metric-card" data-metric="risk-kpi-diversification">
           <h3>Diversification Ratio</h3>
           <div class="metric-value">--</div>
-          <small>Corrélation de portefeuille</small>
+          <small>Portfolio correlation</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-effective-assets">
           <h3>Effective Assets</h3>
           <div class="metric-value">--</div>
-          <small>Actifs non-redondants</small>
+          <small>Non-redundant assets</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-blended">
           <h3>Blended Score</h3>
           <div class="metric-value">--</div>
-          <small>Score de régime (0-100)</small>
+          <small>Regime score (0-100)</small>
         </div>
         <div class="metric-card" data-metric="risk-kpi-onchain">
           <h3>On-Chain Composite</h3>
@@ -289,15 +289,15 @@
         <h3>Alertes Risque</h3>
         <div class="info-section-content" id="risk-alerts-container" aria-live="polite">
           <!-- Alerts populated dynamically by analytics-unified.js -->
-          <div class="info-list-item">• Chargement des alertes...</div>
+          <div class="info-list-item">• Loading alerts...</div>
         </div>
       </div>
       <div class="actions-row">
         <a href="risk-dashboard.html?nav=off" target="_blank" class="action-link">
-          📊 Version complète du Risk Dashboard
+          📊 Full Risk Dashboard
         </a>
         <a href="simulations.html?nav=off" target="_blank" class="action-link action-link--success">
-          🧪 Simulateur Pipeline Complet
+          🧪 Full Pipeline Simulator
         </a>
       </div>
       </div>
@@ -307,9 +307,9 @@
       <h2>📊 Performance Monitor</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="perf-cache-size">
-          <h3>Taille Cache Mémoire</h3>
+          <h3>Memory Cache Size</h3>
           <div class="metric-value">--</div>
-          <small>Entrées en cache</small>
+          <small>Cache entries</small>
         </div>
         <div class="metric-card" data-metric="perf-disk-cache">
           <h3>Utilisation Cache Disque</h3>
@@ -317,27 +317,27 @@
           <small>Usage disque</small>
         </div>
         <div class="metric-card" data-metric="perf-memory">
-          <h3>Mémoire Processus</h3>
+          <h3>Process Memory</h3>
           <div class="metric-value">-- MB</div>
-          <small>Mémoire processus</small>
+          <small>Process memory</small>
         </div>
         <div class="metric-card" data-metric="perf-system-memory">
-          <h3>Utilisation Mémoire Système</h3>
+          <h3>System Memory Usage</h3>
           <div class="metric-value">--%</div>
-          <small>Mémoire système</small>
+          <small>System memory</small>
         </div>
       </div>
       <div class="info-section">
-        <h3>Performance Système</h3>
+        <h3>System Performance</h3>
         <div class="info-section-content">
-          <div class="info-item"><span>Taux de réussite cache:</span><span class="text-positive">--%</span></div>
-          <div class="info-item"><span>Mémoire disponible:</span><span>-- GB</span></div>
-          <div class="info-item"><span>Efficacité processus:</span><span>--</span></div>
+          <div class="info-item"><span>Cache hit rate:</span><span class="text-positive">--%</span></div>
+          <div class="info-item"><span>Available memory:</span><span>-- GB</span></div>
+          <div class="info-item"><span>Process efficiency:</span><span>--</span></div>
         </div>
       </div>
       <div class="actions-row">
         <a href="performance-monitor-unified.html" target="_blank" class="action-link">
-          📈 Performance Monitor Unifié (Nouveau)
+          📈 Unified Performance Monitor (New)
         </a>
       </div>
       </div>
@@ -349,22 +349,22 @@
         <div class="metric-card" data-metric="cycle-phase">
           <h3>Phase Actuelle</h3>
           <div class="metric-value">--</div>
-          <small>Phase courante</small>
+          <small>Current phase</small>
         </div>
         <div class="metric-card" data-metric="cycle-progress">
-          <h3>Progrès Post-Halving</h3>
-          <div class="metric-value">-- mois</div>
-          <small>Progression depuis halving</small>
+          <h3>Post-Halving Progress</h3>
+          <div class="metric-value">-- months</div>
+          <small>Progress since halving</small>
         </div>
         <div class="metric-card" data-metric="cycle-score">
-          <h3>Score de Cycle</h3>
+          <h3>Cycle Score</h3>
           <div class="metric-value">--</div>
-          <small>Position dans le cycle</small>
+          <small>Position in cycle</small>
         </div>
         <div class="metric-card" data-metric="cycle-confidence">
           <h3>Confiance</h3>
           <div class="metric-value">--%</div>
-          <small>Certitude du modèle</small>
+          <small>Model certainty</small>
         </div>
       </div>
       <!-- Timeline visuelle du cycle Bitcoin -->
@@ -373,14 +373,14 @@
       </div>
 
       <div class="info-section">
-        <h3>Multiplicateurs d'Allocation par Phase</h3>
+        <h3>Allocation Multipliers by Phase</h3>
         <div class="info-section-content" id="cycle-multipliers-container">
           <!-- Rendu dynamiquement -->
         </div>
       </div>
       <div class="actions-row">
         <a href="cycle-analysis.html?nav=off" target="_blank" class="action-link">
-          🔄 Version complète du Cycle Analysis
+          🔄 Full Cycle Analysis
         </a>
       </div>
       </div>
@@ -390,33 +390,33 @@
       <h2>📈 Advanced Analytics</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="monitor-total-return">
-          <h3>Rendement Total</h3>
+          <h3>Total Return</h3>
           <div class="metric-value">--%</div>
-          <small>Sur la période</small>
+          <small>Over the period</small>
         </div>
         <div class="metric-card" data-metric="monitor-sharpe">
-          <h3>Ratio de Sharpe</h3>
+          <h3>Sharpe Ratio</h3>
           <div class="metric-value">--</div>
-          <small>Risque ajusté</small>
+          <small>Risk-adjusted</small>
         </div>
         <div class="metric-card" data-metric="monitor-volatility">
-          <h3>Volatilité</h3>
+          <h3>Volatility</h3>
           <div class="metric-value">--%</div>
-          <small>Risque de marché</small>
+          <small>Market risk</small>
         </div>
         <div class="metric-card" data-metric="monitor-drawdown">
           <h3>Drawdown Max</h3>
           <div class="metric-value">--%</div>
-          <small>Pire baisse</small>
+          <small>Worst drawdown</small>
         </div>
       </div>
       <div class="info-section">
-        <h3>Métriques Avancées</h3>
+        <h3>Advanced Metrics</h3>
         <div id="advanced-metrics-breakdown" class="info-section-content"></div>
       </div>
       <div class="actions-row">
         <a href="performance-monitor-unified.html" target="_blank" class="action-link">
-          📊 Performance Monitor Unifié
+          📊 Unified Performance Monitor
         </a>
       </div>
       </div>
@@ -425,9 +425,9 @@
     <!-- Intelligence ML Tab Panel -->
     <section class="tab-panel" id="tab-intelligence-ml" role="tabpanel" aria-labelledby="tab-btn-intelligence-ml">
     <div class="panel-card">
-      <h2>🤖 Intelligence ML - Vue Analyse Complète</h2>
+      <h2>🤖 ML Intelligence - Full Analysis View</h2>
       <p>
-        Analyse détaillée des modèles ML, prédictions temps réel et administration avancée
+        Detailed ML model analysis, real-time predictions and advanced administration
       </p>
 
       <!-- Stats ML Globales -->
@@ -435,17 +435,17 @@
         <h3>📊 Statistiques ML Globales</h3>
         <div class="metrics-grid-200" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
-            <h4>Modèles Actifs</h4>
+            <h4>Active Models</h4>
             <div class="metric-value" id="ml-active-models">--/4</div>
-            <small>Modèles chargés</small>
+            <small>Models loaded</small>
           </div>
           <div class="metric-card">
-            <h4>Confiance Moyenne</h4>
+            <h4>Average Confidence</h4>
             <div class="metric-value" id="ml-avg-confidence">--%</div>
-            <small>Niveau de confiance</small>
+            <small>Confidence level</small>
           </div>
           <div class="metric-card">
-            <h4>Dernière Mise à Jour</h4>
+            <h4>Last Update</h4>
             <div class="metric-value" id="ml-last-update">--</div>
             <small>Status ML</small>
           </div>
@@ -454,50 +454,50 @@
 
       <!-- Vue Modèles Détaillée -->
       <div class="ml-models-section">
-        <h3>🧠 Santé des Modèles</h3>
+        <h3>🧠 Model Health</h3>
         <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
             <h4>🌊 Volatility LSTM</h4>
             <div class="metric-value" id="ml-vol-model-status">⚪ Unknown</div>
-            <small id="ml-vol-model-details">Statut du modèle</small>
+            <small id="ml-vol-model-details">Model status</small>
           </div>
           <div class="metric-card">
             <h4>🔄 Regime HMM</h4>
             <div class="metric-value" id="ml-regime-model-status">⚪ Unknown</div>
-            <small id="ml-regime-model-details">Statut du modèle</small>
+            <small id="ml-regime-model-details">Model status</small>
           </div>
           <div class="metric-card">
             <h4>🔗 Correlation Transformer</h4>
             <div class="metric-value" id="ml-corr-model-status">⚪ Unknown</div>
-            <small id="ml-corr-model-details">Statut du modèle</small>
+            <small id="ml-corr-model-details">Model status</small>
           </div>
           <div class="metric-card">
             <h4>💭 Sentiment Composite</h4>
             <div class="metric-value" id="ml-sent-model-status">⚪ Unknown</div>
-            <small id="ml-sent-model-details">Statut du modèle</small>
+            <small id="ml-sent-model-details">Model status</small>
           </div>
         </div>
       </div>
 
       <!-- Prédictions Temps Réel -->
       <div class="ml-predictions-section">
-        <h3>🔮 Prédictions Temps Réel</h3>
+        <h3>🔮 Real-Time Predictions</h3>
         <div id="ml-predictions-container" aria-live="polite">
           <div class="prediction-grid metrics-grid-250" aria-atomic="false">
             <!-- Volatilité -->
             <div class="metric-card" data-metric="ml-volatility-btc">
-              <h4>BTC Volatilité 24h</h4>
+              <h4>BTC 24h Volatility</h4>
               <div class="metric-value" id="ml-vol-btc">--</div>
-              <small>Prédiction LSTM</small>
+              <small>LSTM Prediction</small>
             </div>
             <div class="metric-card" data-metric="ml-volatility-eth">
-              <h4>ETH Volatilité 24h</h4>
+              <h4>ETH 24h Volatility</h4>
               <div class="metric-value" id="ml-vol-eth">--</div>
-              <small>Prédiction LSTM</small>
+              <small>LSTM Prediction</small>
             </div>
             <!-- Régimes -->
             <div class="metric-card" data-metric="ml-regime">
-              <h4>Régime Marché</h4>
+              <h4>Market Regime</h4>
               <div class="metric-value" id="ml-regime">--</div>
               <small>Classification HMM</small>
             </div>
@@ -505,7 +505,7 @@
             <div class="metric-card" data-metric="ml-sentiment">
               <h4>ML Sentiment</h4>
               <div class="metric-value" id="ml-sentiment">--</div>
-              <small>Sentiment ML Agrégé</small>
+              <small>Aggregated ML Sentiment</small>
             </div>
           </div>
         </div>
@@ -548,7 +548,7 @@
       <!-- Lien vers Command Center -->
       <div class="actions-row">
         <a href="ai-dashboard.html" target="_blank" class="action-link">
-          🤖 Ouvrir ML Command Center (Vue Ops)
+          🤖 Open ML Command Center (Ops View)
         </a>
       </div>
 

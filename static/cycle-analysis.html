@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Bitcoin Cycle Analysis - Modèle de Précision</title>
+  <title>Bitcoin Cycle Analysis - Precision Model</title>
 
   <!-- Thème & apparence unifiés -->
   <link rel="stylesheet" href="css/tokens.css">
@@ -278,32 +278,32 @@
     <!-- Contrôles -->
     <div class="card controls-card">
       <div class="controls-header">
-        <h2>🔧 Contrôles d'Analyse</h2>
-        <p>Gérez l'exécution et la calibration du modèle de cycle</p>
+        <h2>🔧 Analysis Controls</h2>
+        <p>Manage execution and calibration of the cycle model</p>
       </div>
       <div class="controls-actions">
         <button class="btn-primary control-btn" onclick="runFullAnalysis()">
           <span class="icon">🚀</span>
-          <span>Analyse Complète</span>
+          <span>Full Analysis</span>
         </button>
         <button class="btn-success control-btn" onclick="calibrateModel()">
           <span class="icon">⚙️</span>
-          <span>Calibrer Modèle</span>
+          <span>Calibrate Model</span>
         </button>
         <button class="btn-warning control-btn" onclick="testAlternatives()">
           <span class="icon">🧪</span>
-          <span>Tester Alternatives</span>
+          <span>Test Alternatives</span>
         </button>
         <button class="btn-primary control-btn" onclick="generateReport()">
           <span class="icon">📊</span>
-          <span>Rapport Détaillé</span>
+          <span>Detailed Report</span>
         </button>
       </div>
     </div>
 
     <!-- Métriques de Précision -->
     <div class="card">
-      <h2>📊 Métriques de Précision du Modèle</h2>
+      <h2>📊 Model Precision Metrics</h2>
       <div id="precision-metrics" class="metrics-grid"></div>
     </div>
 
@@ -311,21 +311,21 @@
     <div class="card">
       <h2>📈 Bitcoin Historical Price & Cycle Score</h2>
       <p style="color: var(--theme-text-muted); font-size: 0.9em; margin-bottom: 1rem;">
-        Prix historique de Bitcoin (échelle log) avec le score de cycle calculé.
-        Les lignes verticales indiquent les halvings.
+        Bitcoin historical price (log scale) with computed cycle score.
+        Vertical lines indicate halvings.
       </p>
       <div class="chart-container" style="height: 500px;">
         <canvas id="bitcoin-cycle-chart"></canvas>
       </div>
       <div id="bitcoin-chart-status"
         style="text-align: center; margin-top: 0.5rem; color: var(--theme-text-muted); font-size: 0.85em;">
-        Chargement du graphique...
+        Loading chart...
       </div>
     </div>
 
     <!-- Graphique de Validation -->
     <div class="card">
-      <h2>📊 Validation Visuelle - Prédictions vs Réalité</h2>
+      <h2>📊 Visual Validation - Predictions vs Reality</h2>
       <div class="chart-container">
         <canvas id="validation-chart"></canvas>
       </div>
@@ -333,18 +333,18 @@
 
     <!-- Analyse des Erreurs -->
     <div class="card">
-      <h2>🔍 Analyse des Erreurs par Cycle</h2>
+      <h2>🔍 Error Analysis by Cycle</h2>
       <table id="error-analysis-table">
         <thead>
           <tr>
             <th scope="col">Cycle</th>
             <th scope="col">Halving</th>
-            <th scope="col">Peak Réel</th>
-            <th scope="col">Peak Prédit</th>
-            <th scope="col">Erreur</th>
-            <th scope="col">Score Réel</th>
-            <th scope="col">Score Modèle</th>
-            <th scope="col">Précision</th>
+            <th scope="col">Actual Peak</th>
+            <th scope="col">Predicted Peak</th>
+            <th scope="col">Error</th>
+            <th scope="col">Actual Score</th>
+            <th scope="col">Model Score</th>
+            <th scope="col">Accuracy</th>
           </tr>
         </thead>
         <tbody id="error-table-body"></tbody>
@@ -353,13 +353,13 @@
 
     <!-- Indicateurs Complémentaires -->
     <div class="card">
-      <h2>🌟 Indicateurs On-Chain Recommandés</h2>
+      <h2>🌟 Recommended On-Chain Indicators</h2>
       <div id="indicators-suggestions" class="metrics-grid"></div>
     </div>
 
     <!-- Résultats -->
     <div class="card">
-      <h2>📋 Résultats d'Analyse</h2>
+      <h2>📋 Analysis Results</h2>
       <div id="analysis-results"></div>
     </div>
   </main>
@@ -412,13 +412,13 @@
 
         await createBitcoinCycleChart('bitcoin-cycle-chart', true);
         if (statusEl) {
-          statusEl.textContent = '✅ Graphique chargé avec succès';
+          statusEl.textContent = '✅ Chart loaded successfully';
           statusEl.style.color = 'var(--success)';
         }
       } catch (error) {
         console.error('Failed to create Bitcoin cycle chart:', error);
         if (statusEl) {
-          statusEl.textContent = `❌ Erreur: ${error.message}`;
+          statusEl.textContent = `❌ Error: ${error.message}`;
           statusEl.style.color = 'var(--danger)';
         }
       }
@@ -474,7 +474,7 @@
     // Double-sigmoïde (cohérente avec cycle-navigator.js) - cloche 0→100
     function _fallbackCycleScoreFromMonths(m) {
       // Paramètres CALIBRÉS IDENTIQUES au module principal (synchronisés)
-      // Ces valeurs sont le résultat de la calibration sur les 3 cycles complets
+      // Ces valeurs sont le résultat de la calibration sur les 3 complete cycles
       const m48 = m % 48;
       const m_rise_center = 5.0;  // Calibré (depuis 7.0)
       const m_fall_center = 24.0; // Calibré (depuis 30.0)
@@ -564,7 +564,7 @@
         const savedParams = loadCalibrationParams();
         if (savedParams) {
           module.setCycleParams(savedParams);
-          addResult('🔄 Auto-Chargement', 'Paramètres calibrés précédents appliqués', 'good');
+          addResult('🔄 Auto-Load', 'Previous calibrated parameters applied', 'good');
         }
 
         moduleLoaded = true;
@@ -578,7 +578,7 @@
         calibrateCycleParams = _fallbackCalibrate;
         getCurrentCycleMonths = _fallbackGetCurrentCycleMonths;
         moduleLoaded = true; // on passe à true pour ne pas bloquer la suite
-        addResult('⚠️ Mode dégradé', 'Module non chargé — utilisation d\'un modèle local par défaut', 'warning');
+        addResult('⚠️ Degraded mode', 'Module non chargé — utilisation d\'un modèle local par défaut', 'warning');
         console.debug('🔄 Utilisation du fallback, test:', _fallbackCycleScoreFromMonths(18));
         return true;
       }
@@ -670,7 +670,7 @@
       results.appendChild(div);
     }
 
-    // Calcul des métriques de précision
+    // Calcul des métriques accuracy
     function calculatePrecisionMetrics() {
       if (!moduleLoaded || !cycleScoreFromMonths) {
         debugLogger.error('cycleScoreFromMonths function not available');
@@ -715,33 +715,33 @@
       const currentCycleData = getCurrentCycleMonths();
       const currentMonths = typeof currentCycleData === 'object' ? currentCycleData.months : currentCycleData;
       const currentScore = cycleScoreFromMonths(currentMonths);
-      const today = new Date().toLocaleDateString('fr-FR');
+      const today = new Date().toLocaleDateString('en-US');
 
       // Affichage des métriques
       metrics.innerHTML = `
         <div class="metric good" style="background: linear-gradient(135deg, var(--success-bg) 0%, var(--info-bg) 100%); border: 2px solid var(--success);">
-          <span style="font-weight: 700;">Score Actuel (${today}):</span>
+          <span style="font-weight: 700;">Current Score (${today}):</span>
           <span style="font-size: 1.3em; font-weight: 800;">${currentScore.toFixed(1)}/100</span>
         </div>
         <div class="metric good" style="border-left: 4px solid var(--info);">
-          <span>Mois depuis Halving:</span>
-          <span>${currentMonths.toFixed(1)} mois (depuis 20 avril 2024)</span>
+          <span>Months since Halving:</span>
+          <span>${currentMonths.toFixed(1)} months (since April 20, 2024)</span>
         </div>
         <div class="metric ${avgPeakError < 15 ? 'good' : avgPeakError < 30 ? 'warning' : 'error'}">
-          <span>Erreur Moyenne Pics:</span>
+          <span>Avg Peak Error:</span>
           <span>${avgPeakError.toFixed(1)} points</span>
         </div>
         <div class="metric ${avgBottomError < 20 ? 'good' : avgBottomError < 35 ? 'warning' : 'error'}">
-          <span>Erreur Moyenne Creux:</span>
+          <span>Average Bottom Error:</span>
           <span>${avgBottomError.toFixed(1)} points</span>
         </div>
         <div class="metric ${overallAccuracy > 80 ? 'good' : overallAccuracy > 60 ? 'warning' : 'error'}">
-          <span>Précision Globale:</span>
+          <span>Overall Accuracy:</span>
           <span>${overallAccuracy.toFixed(1)}%</span>
         </div>
         <div class="metric good">
-          <span>Cycles Analysés:</span>
-          <span>${completedCycles.length}/3 cycles complets</span>
+          <span>Cycles Analyzed:</span>
+          <span>${completedCycles.length}/3 complete cycles</span>
         </div>
       `;
 
@@ -806,7 +806,7 @@
             historicalPoints.push({
               x: Number(mNow),
               y: cycleScoreFromMonths(Number(mNow)),
-              label: 'Cycle 4 Actuel',
+              label: 'Cycle 4 Current',
               color: '#0ea5e9'
             });
           }
@@ -824,7 +824,7 @@
         data: {
           datasets: [
             {
-              label: 'Modèle Sigmoïde',
+              label: 'Sigmoid Model',
               data: modelData,
               borderColor: '#3b82f6',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -833,7 +833,7 @@
               pointRadius: 0
             },
             {
-              label: 'Points Historiques Réels',
+              label: 'Actual Historical Points',
               data: historicalPoints,
               pointBackgroundColor: historicalPoints.map(p => p.color),
               pointBorderColor: historicalPoints.map(p => p.color),
@@ -849,13 +849,13 @@
           scales: {
             x: {
               type: 'linear',
-              title: { display: true, text: 'Mois après Halving' },
+              title: { display: true, text: 'Months after Halving' },
               min: 0,
               max: 48,
               ticks: { stepSize: 6 }
             },
             y: {
-              title: { display: true, text: 'Score de Cycle (0-100)' },
+              title: { display: true, text: 'Cycle Score (0-100)' },
               min: 0,
               max: 100
             }
@@ -900,8 +900,8 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td>Cycle ${cycle.id}</td>
-          <td>${new Date(cycle.halving).toLocaleDateString('fr-FR')}</td>
-          <td>${new Date(cycle.peak).toLocaleDateString('fr-FR')}</td>
+          <td>${new Date(cycle.halving).toLocaleDateString('en-US')}</td>
+          <td>${new Date(cycle.peak).toLocaleDateString('en-US')}</td>
           <td>${monthsToPeak.toFixed(1)} mois</td>
           <td class="score-cell ${error < 15 ? 'good' : error < 30 ? 'warning' : 'error'}">${error.toFixed(1)}</td>
           <td>100 (pic)</td>
@@ -919,45 +919,45 @@
       const indicators = [
         {
           name: "MVRV Ratio",
-          description: "Market Value to Realized Value - Détecte la sur/sous-évaluation",
+          description: "Market Value to Realized Value - Detects over/undervaluation",
           api: "Glassnode, CoinMetrics",
           priority: "🔥 Haute",
-          reason: "Corrèle fortement avec les cycles de marché"
+          reason: "Strongly correlates with market cycles"
         },
         {
           name: "NVT Ratio",
-          description: "Network Value to Transactions - P/E ratio du Bitcoin",
+          description: "Network Value to Transactions - Bitcoin P/E ratio",
           api: "Blockchain.info, Messari",
-          priority: "🔥 Haute",
-          reason: "Indique l'utilisation réelle vs spéculation"
+          priority: "🔥 High",
+          reason: "Indicates real usage vs speculation"
         },
         {
           name: "Puell Multiple",
-          description: "Revenus miniers vs moyenne 365j - Timing historique précis",
+          description: "Mining revenue vs 365d average - Precise historical timing",
           api: "Glassnode",
-          priority: "🟡 Moyenne",
-          reason: "Révèle les zones d'accumulation/distribution"
+          priority: "🟡 Medium",
+          reason: "Reveals accumulation/distribution zones"
         },
         {
           name: "RHODL Ratio",
-          description: "Realized HODL Ratio - Comportement des HODLers",
+          description: "Realized HODL Ratio - HODLer behavior",
           api: "Glassnode",
-          priority: "🔥 Haute",
-          reason: "Prédit les mouvements de marché via analyse de cohortes"
+          priority: "🔥 High",
+          reason: "Predicts market movements via cohort analysis"
         },
         {
           name: "Stock-to-Flow Deviation",
-          description: "Écart entre prix réel et modèle S2F",
+          description: "Deviation between actual price and S2F model",
           api: "Custom calculation",
-          priority: "🟡 Moyenne",
-          reason: "Complément au modèle de rareté"
+          priority: "🟡 Medium",
+          reason: "Complement to the scarcity model"
         },
         {
           name: "Fear & Greed Index",
-          description: "Sentiment de marché agrégé",
+          description: "Aggregated market sentiment",
           api: "Alternative.me",
-          priority: "🟢 Faible",
-          reason: "Indicateur contrarian pour les extrêmes"
+          priority: "🟢 Low",
+          reason: "Contrarian indicator for extremes"
         }
       ];
 
@@ -979,7 +979,7 @@
 
     // Fonctions principales
     window.runFullAnalysis = async function () {
-      document.getElementById('analysis-results').innerHTML = '<div class="metric good"><strong>🚀 Lancement de l\'analyse complète...</strong></div>';
+      document.getElementById('analysis-results').innerHTML = '<div class="metric good"><strong>🚀 Starting full analysis...</strong></div>';
 
       // Charger les modules si pas encore fait
       if (!moduleLoaded) {
@@ -994,7 +994,7 @@
           try {
             const prec = Math.max(0, Math.min(100, metrics.overallAccuracy || 0)) / 100;
             localStorage.setItem('cycle_model_precision', String(prec.toFixed(3)));
-            addResult('💾 Précision Cycle Sauvegardée', `${(prec * 100).toFixed(1)}%`, 'good');
+            addResult('💾 Cycle Precision Saved', `${(prec * 100).toFixed(1)}%`, 'good');
           } catch (e) {
             debugLogger.warn('Failed to persist cycle_model_precision:', e);
           }
@@ -1002,23 +1002,23 @@
           populateErrorTable();
           showIndicatorsSuggestions();
 
-          addResult('✅ Analyse Terminée', 'Toutes les métriques calculées', 'good');
-          addResult('🎯 Précision Globale', `${metrics.overallAccuracy.toFixed(1)}%`,
+          addResult('✅ Analysis Complete', 'All metrics computed', 'good');
+          addResult('🎯 Overall Accuracy', `${metrics.overallAccuracy.toFixed(1)}%`,
             metrics.overallAccuracy > 75 ? 'good' : 'warning');
-          addResult('📊 Cycles Validés', `${metrics.completedCycles.length} cycles historiques analysés`, 'good');
+          addResult('📊 Cycles Validated', `${metrics.completedCycles.length} historical cycles analyzed`, 'good');
 
           if (metrics.overallAccuracy < 70) {
-            addResult('⚠️ Recommandation', 'Précision faible - Considérer une recalibration', 'warning');
+            addResult('⚠️ Recommendation', 'Low accuracy - Consider recalibration', 'warning');
           }
         } catch (error) {
           debugLogger.error('Error in runFullAnalysis:', error);
-          addResult('❌ Erreur', `Erreur d'analyse: ${error.message}`, 'error');
+          addResult('❌ Error', `Analysis error: ${error.message}`, 'error');
         }
       }, 500);
     };
 
     window.calibrateModel = async function () {
-      addResult('⚙️ Calibration', 'Recalibration du modèle en cours...', 'warning');
+      addResult('⚙️ Calibration', 'Model recalibration in progress...', 'warning');
 
       if (!moduleLoaded) {
         const loaded = await loadModules();
@@ -1028,20 +1028,20 @@
       setTimeout(() => {
         try {
           const result = calibrateCycleParams();
-          addResult('✅ Calibration OK', `Score d'erreur: ${result.score.toFixed(2)}`, 'good');
+          addResult('✅ Calibration OK', `Error score: ${result.score.toFixed(2)}`, 'good');
 
-          // Sauvegarder les nouveaux paramètres
+          // Saver les nouveaux paramètres
           saveCalibrationParams(result.params);
-          addResult('💾 Sauvegarde', 'Paramètres calibrés sauvegardés automatiquement', 'good');
+          addResult('💾 Save', 'Calibrated parameters saved automatically', 'good');
 
           // Recalculer les métriques après calibration
           const metrics = calculatePrecisionMetrics();
-          addResult('📈 Nouvelle Précision', `${metrics.overallAccuracy.toFixed(1)}%`, 'good');
+          addResult('📈 New Accuracy', `${metrics.overallAccuracy.toFixed(1)}%`, 'good');
           // Mettre à jour la précision persistée
           try {
             const prec = Math.max(0, Math.min(100, metrics.overallAccuracy || 0)) / 100;
             localStorage.setItem('cycle_model_precision', String(prec.toFixed(3)));
-            addResult('💾 Précision Cycle Mise à Jour', `${(prec * 100).toFixed(1)}%`, 'good');
+            addResult('💾 Cycle Precision Updated', `${(prec * 100).toFixed(1)}%`, 'good');
           } catch (e) {
             debugLogger.warn('Failed to persist cycle_model_precision after calibration:', e);
           }
@@ -1058,13 +1058,13 @@
           }, '*');
 
         } catch (error) {
-          addResult('❌ Erreur', `Erreur de calibration: ${error.message}`, 'error');
+          addResult('❌ Error', `Calibration error: ${error.message}`, 'error');
         }
       }, 1000);
     };
 
     window.testAlternatives = function () {
-      addResult('🧪 Test Alternatives', 'Test de fonctions alternatives en cours...', 'warning');
+      addResult('🧪 Test Alternatives', 'Testing alternative functions...', 'warning');
 
       // Simuler le test d'alternatives (Gompertz, Logistique modifiée, etc.)
       setTimeout(() => {
@@ -1072,7 +1072,7 @@
           { name: 'Gompertz', precision: 78.5, params: 'a=100, b=0.8, c=0.15' },
           { name: 'Logistique Double', precision: 82.1, params: 'k1=1.2, k2=0.9, x0=18' },
           { name: 'Weibull Modifiée', precision: 79.3, params: 'α=2.1, β=24, γ=0.1' },
-          { name: 'Sigmoïde Actuel', precision: moduleLoaded ? calculatePrecisionMetrics().overallAccuracy : 75.0, params: 'Paramètres actuels' }
+          { name: 'Sigmoïde Actuel', precision: moduleLoaded ? calculatePrecisionMetrics().overallAccuracy : 75.0, params: 'Current parameters' }
         ];
 
         const best = alternatives.reduce((a, b) => a.precision > b.precision ? a : b);
@@ -1082,30 +1082,30 @@
             alt === best ? 'good' : 'info');
         });
 
-        addResult('🏆 Meilleur Modèle', `${best.name} avec ${best.precision.toFixed(1)}% de précision`, 'good');
+        addResult('🏆 Best Model', `${best.name} avec ${best.precision.toFixed(1)}% accuracy`, 'good');
       }, 1500);
     };
 
     window.generateReport = function () {
       const metrics = moduleLoaded ? calculatePrecisionMetrics() : { overallAccuracy: 0, completedCycles: [], avgPeakError: 0, avgBottomError: 0 };
       const report = `
-# 📊 Rapport d'Analyse Bitcoin Cycle Model
+# 📊 Bitcoin Cycle Model Analysis Report
 
-## Résumé Exécutif
-- **Précision Globale**: ${metrics.overallAccuracy.toFixed(1)}%
-- **Cycles Analysés**: ${metrics.completedCycles.length}/3 cycles complets
-- **Erreur Moyenne Pics**: ${metrics.avgPeakError.toFixed(1)} points
-- **Erreur Moyenne Creux**: ${metrics.avgBottomError.toFixed(1)} points
+## Executive Summary
+- **Overall Accuracy**: ${metrics.overallAccuracy.toFixed(1)}%
+- **Cycles Analyzed**: ${metrics.completedCycles.length}/3 complete cycles
+- **Average Peak Error**: ${metrics.avgPeakError.toFixed(1)} points
+- **Average Bottom Error**: ${metrics.avgBottomError.toFixed(1)} points
 
-## Recommandations
-${metrics.overallAccuracy > 80 ? '✅ Modèle performant - Maintenir paramètres actuels' : '⚠️ Précision insuffisante - Recalibration recommandée'}
+## Recommendations
+${metrics.overallAccuracy > 80 ? '✅ Model performing well - Maintain current parameters' : '⚠️ Insufficient accuracy - Recalibration recommended'}
 
-## Indicateurs Complémentaires Suggérés
-1. MVRV Ratio (Haute priorité)
-2. NVT Ratio (Haute priorité) 
-3. RHODL Ratio (Haute priorité)
+## Suggested Complementary Indicators
+1. MVRV Ratio (High priority)
+2. NVT Ratio (High priority) 
+3. RHODL Ratio (High priority)
 
-Rapport généré le ${new Date().toLocaleString('fr-FR')}
+Report generated on ${new Date().toLocaleString('en-US')}
       `;
 
       // Créer et télécharger le rapport
@@ -1117,7 +1117,7 @@ Rapport généré le ${new Date().toLocaleString('fr-FR')}
       a.click();
       URL.revokeObjectURL(url);
 
-      addResult('📋 Rapport Généré', 'Rapport téléchargé avec succès', 'good');
+      addResult('📋 Report Generated', 'Report downloaded successfully', 'good');
     };
 
     // Initialisation

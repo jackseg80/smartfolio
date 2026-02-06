@@ -82,15 +82,15 @@ const num = v => (v == null || isNaN(v) ? 'N/A' : Number(v).toFixed(2));
 
 function rate(key, value) {
   const r = RISK_RULES[key];
-  if (!r || value == null || isNaN(value)) return { dot: 'orange', verdict: 'Indisponible', body: 'Donnée indisponible.' };
+  if (!r || value == null || isNaN(value)) return { dot: 'orange', verdict: 'Unavailable', body: 'Data unavailable.' };
   const signed = value;
   let v = signed;
   // Pour ces métriques, on évalue la magnitude (valeur absolue) :
   if (['volatility', 'max_drawdown', 'var95_1d', 'var99_1d', 'cvar95_1d', 'cvar99_1d'].includes(key)) v = Math.abs(signed);
   const inR = ([a, b]) => v >= a && v < b;
-  let dot = 'red', verdict = 'Élevé / risqué';
-  if (inR(r.good)) { dot = 'green'; verdict = 'Plutôt bas / maîtrisé'; }
-  else if (inR(r.warn)) { dot = 'orange'; verdict = 'Intermédiaire / à surveiller'; }
+  let dot = 'red', verdict = 'High / risky';
+  if (inR(r.good)) { dot = 'green'; verdict = 'Rather low / controlled'; }
+  else if (inR(r.warn)) { dot = 'orange'; verdict = 'Intermediate / to monitor'; }
   return { dot, verdict, body: '', label: key };
 }
 
@@ -170,7 +170,7 @@ async function fetchRiskData() {
     debugLogger.warn('Risk API unavailable:', error);
     return {
       success: false,
-      message: 'Backend de risque indisponible. Assurez-vous que le serveur backend est démarré.',
+      message: 'Risk backend unavailable. Make sure the backend server is running.',
       error_type: 'connection_error'
     };
   }
@@ -186,16 +186,16 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     const riskBudget = fullData?.risk_budget || fullData?.regime?.risk_budget;
     const targetStables = riskBudget?.target_stables_pct;
 
-    let action = 'Augmentez la part de stablecoins ou Bitcoin pour réduire la volatilité';
+    let action = 'Increase the share of stablecoins or Bitcoin to reduce volatility';
     if (typeof targetStables === 'number') {
-      action = `Allocation stables recommandée: ${targetStables}% (calculée selon votre profil de risque)`;
+      action = `Recommended stables allocation: ${targetStables}% (calculated according to your risk profile)`;
     }
 
     recommendations.push({
       priority: 'high',
       icon: '🛡️',
-      title: 'Réduire le risque de perte journalière',
-      description: 'Votre VaR de ' + formatPercent(metrics.var_95_1d) + ' est élevé.',
+      title: 'Reduce daily loss risk',
+      description: 'Your VaR of ' + formatPercent(metrics.var_95_1d) + ' is high.',
       action: action
     });
   }
@@ -205,9 +205,9 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     recommendations.push({
       priority: 'medium',
       icon: '📈',
-      title: 'Améliorer le rendement ajusté au risque',
-      description: 'Sharpe ratio de ' + safeFixed(metrics.sharpe_ratio) + ' - cherchez des actifs avec meilleur ratio risque/rendement.',
-      action: 'Considérez réduire les memecoins, augmenter BTC/ETH'
+      title: 'Improve risk-adjusted return',
+      description: 'Sharpe ratio of ' + safeFixed(metrics.sharpe_ratio) + ' - look for assets with a better risk/return ratio.',
+      action: 'Consider reducing memecoins, increasing BTC/ETH'
     });
   }
 
@@ -216,17 +216,17 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     recommendations.push({
       priority: 'high',
       icon: '🔄',
-      title: 'Améliorer la diversification',
-      description: 'Ratio de diversification très faible (' + safeFixed(correlations.diversification_ratio) + '). Portfolio trop corrélé.',
-      action: 'Ajoutez des actifs décorrélés: privacy coins, stablecoins, secteurs différents'
+      title: 'Improve diversification',
+      description: 'Very low diversification ratio (' + safeFixed(correlations.diversification_ratio) + '). Portfolio too correlated.',
+      action: 'Add uncorrelated assets: privacy coins, stablecoins, different sectors'
     });
   } else if (correlations.diversification_ratio < 0.7) {
     recommendations.push({
       priority: 'medium',
       icon: '🔄',
-      title: 'Améliorer la diversification',
-      description: 'Diversification limitée (' + safeFixed(correlations.diversification_ratio) + ').',
-      action: 'Élargissez les secteurs et réduisez les paires très corrélées'
+      title: 'Improve diversification',
+      description: 'Limited diversification (' + safeFixed(correlations.diversification_ratio) + ').',
+      action: 'Broaden sectors and reduce highly correlated pairs'
     });
   }
 
@@ -235,9 +235,9 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     recommendations.push({
       priority: 'medium',
       icon: '⚖️',
-      title: 'Réduire la concentration',
+      title: 'Reduce concentration',
       description: 'Portfolio se comporte comme ' + safeFixed(correlations.effective_assets, 1) + ' actifs seulement.',
-      action: 'Rééquilibrez: limitez tout actif à <20% du portfolio'
+      action: 'Rebalance: limit any asset to <20% of portfolio'
     });
   }
 
@@ -246,9 +246,9 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     recommendations.push({
       priority: 'high',
       icon: '📉',
-      title: 'Protéger contre les chutes extrêmes',
-      description: 'Max drawdown de ' + formatPercent(metrics.max_drawdown) + ' très élevé.',
-      action: 'Stratégie défensive: DCA, stop-loss, ou hedging avec stablecoins'
+      title: 'Protect against extreme drops',
+      description: 'Max drawdown of ' + formatPercent(metrics.max_drawdown) + ' very high.',
+      action: 'Defensive strategy: DCA, stop-loss, or hedging with stablecoins'
     });
   }
 
@@ -259,9 +259,9 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
       recommendations.push({
         priority: 'medium',
         icon: '🔗',
-        title: 'Réduire les corrélations élevées',
-        description: 'Corrélations >75% détectées entre ' + highCorrels.map(c => c.asset1 + '-' + c.asset2).join(', '),
-        action: 'Diversifiez vers des secteurs moins corrélés (BTC vs ETH vs secteurs niche)'
+        title: 'Reduce high correlations',
+        description: 'Correlations >75% detected between ' + highCorrels.map(c => c.asset1 + '-' + c.asset2).join(', '),
+        action: 'Diversify towards less correlated sectors (BTC vs ETH vs niche sectors)'
       });
     }
   }
@@ -271,9 +271,9 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     recommendations.push({
       priority: 'low',
       icon: '✅',
-      title: 'Portfolio bien équilibré',
-      description: 'Vos métriques de risque sont dans les normes crypto acceptables.',
-      action: 'Continuez le monitoring et ajustez selon les conditions de marché'
+      title: 'Well-balanced portfolio',
+      description: 'Your risk metrics are within acceptable crypto standards.',
+      action: 'Continue monitoring and adjust according to market conditions'
     });
   }
 
@@ -314,9 +314,9 @@ function renderRiskDashboard(container, data) {
   if (data.test_mode) {
     testModeBanner = `
       <div style="background: var(--info-bg); border: 1px solid var(--info); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
-        <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;">🧪 MODE TEST - Données Réelles</div>
+        <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;">🧪 TEST MODE - Real Data</div>
         <div style="color: var(--theme-text-muted); font-size: 0.9rem;">
-          Portfolio de démonstration utilisant le cache d'historique de prix réel (${data.test_holdings?.length || 0} assets, ${formatMoney(data.portfolio_summary.total_value)})
+          Demo portfolio using the real price history cache (${data.test_holdings?.length || 0} assets, ${formatMoney(data.portfolio_summary.total_value)})
         </div>
       </div>
     `;
@@ -348,7 +348,7 @@ function renderRiskDashboard(container, data) {
     return { top5Share, hhi, stableShare };
   })();
 
-  // Prépare: HTML recommandations et alertes pour la section top-summary
+  // Prépare: HTML recommandations et alerts pour la section top-summary
   const recos = generateRecommendations(m, c, p.groups || {}, data);
   const recommendationsHtml = (() => {
     return recos.map(rec => `
@@ -398,9 +398,9 @@ function renderRiskDashboard(container, data) {
     <!-- Top Summary: Collapsible container -->
     <details class="top-collapsible" ${hasSevere ? 'open' : ''}>
       <summary>
-        <div>Vue d'ensemble risques & recommandations</div>
+        <div>Risk overview & recommendations</div>
         <div class="summary-right">
-          <span class="badge badge-alerts">⚠️ ${alertCount} alertes${breakdown}</span>
+          <span class="badge badge-alerts">⚠️ ${alertCount} alerts${breakdown}</span>
           <span class="badge badge-recos">💡 ${recos.length} recos</span>
           <span class="chevron">›</span>
         </div>
@@ -408,17 +408,17 @@ function renderRiskDashboard(container, data) {
       <div class="top-summary">
       <!-- Points clés -->
       <div class="risk-card">
-        <h3>📋 Points clés de votre portfolio</h3>
+        <h3>📋 Key points of your portfolio</h3>
         <div class="insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem;">
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">🎯 Niveau de risque</div>
+            <div style="font-weight: 600; color: var(--theme-text);">🎯 Risk Level</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const riskScore = m.risk_score || 0;
                 // IMPORTANT: Risk Score positif - plus haut = meilleur (plus robuste)
-                if (riskScore > 70) return 'Excellent - Portfolio très robuste';
-                if (riskScore > 50) return 'Bon - Équilibre robustesse/rendement';
-                return 'Faible - Attention aux fortes volatilités';
+                if (riskScore > 70) return 'Excellent - Very robust portfolio';
+                if (riskScore > 50) return 'Good - Robustness/return balance';
+                return 'Low - Watch out for high volatility';
               })()}
             </div>
           </div>
@@ -427,20 +427,20 @@ function renderRiskDashboard(container, data) {
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const div = c.diversification_ratio || 0;
-                if (div > 0.7) return 'Excellente - Portfolio bien réparti';
-                if (div > 0.4) return 'Limitée - Possibilité d\'amélioration';
-                return 'Faible - Trop corrélé, diversifiez';
+                if (div > 0.7) return 'Excellent - Well-distributed portfolio';
+                if (div > 0.4) return 'Limited - Room for improvement';
+                return 'Low - Too correlated, diversify';
               })()}
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">⚡ Performance/Risque</div>
+            <div style="font-weight: 600; color: var(--theme-text);">⚡ Performance/Risk</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const sharpe = m.sharpe_ratio || 0;
-                if (sharpe > 1.2) return 'Excellent - Rendement supérieur pour le risque pris';
-                if (sharpe > 0.8) return 'Bon - Rendement acceptable pour le risque';
-                return 'À améliorer - Risque élevé vs rendement';
+                if (sharpe > 1.2) return 'Excellent - Superior return for the risk taken';
+                if (sharpe > 0.8) return 'Good - Acceptable return for the risk';
+                return 'Needs improvement - High risk vs return';
               })()}
             </div>
           </div>
@@ -460,14 +460,14 @@ function renderRiskDashboard(container, data) {
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const s = insights.stableShare;
-                return (s == null) ? 'N/A' : `${(s * 100).toFixed(1)}% du portefeuille`;
+                return (s == null) ? 'N/A' : `${(s * 100).toFixed(1)}% of portfolio`;
               })()}
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">🧪 Données de calcul</div>
+            <div style="font-weight: 600; color: var(--theme-text);">🧪 Calculation Data</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
-              ${p.num_assets || (balances?.length || 'N/A')} actifs utilisés
+              ${p.num_assets || (balances?.length || 'N/A')} assets used
             </div>
           </div>
         </div>
@@ -481,7 +481,7 @@ function renderRiskDashboard(container, data) {
 
       <!-- Recommandations d'amélioration -->
       <div class="risk-card">
-        <h3>💡 Recommandations d'amélioration</h3>
+        <h3>💡 Improvement Recommendations</h3>
         ${recommendationsHtml}
       </div>
       </div>
@@ -515,20 +515,20 @@ function renderRiskDashboard(container, data) {
           <span class="metric-value hinted" data-key="risk_score" data-value="${m.risk_score}" data-score="risk-display" style="color: ${pickScoreColor(m.risk_score)}">
             ${safeFixed(m.risk_score, 1)}/100
           </span>
-          <button class="btn-breakdown-toggle" onclick="window.toggleBreakdown?.('risk-score-breakdown')" title="Voir détail des pénalités" aria-label="Afficher le détail du calcul du Risk Score" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75em; background: rgba(125, 207, 255, 0.15); border: 1px solid var(--brand-primary); border-radius: 4px; color: var(--brand-primary); cursor: pointer;">
-            🔍 Détail
+          <button class="btn-breakdown-toggle" onclick="window.toggleBreakdown?.('risk-score-breakdown')" title="View penalty details" aria-label="Show Risk Score calculation details" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75em; background: rgba(125, 207, 255, 0.15); border: 1px solid var(--brand-primary); border-radius: 4px; color: var(--brand-primary); cursor: pointer;">
+            🔍 Details
           </button>
         </div>
 
         <!-- Breakdown Panel -->
         <div id="risk-score-breakdown" class="breakdown-panel" style="display: none; margin: 8px 0; padding: 12px; background: rgba(30, 30, 46, 0.6); border-radius: 8px; border: 1px solid rgba(125, 207, 255, 0.2); font-size: 0.85em;">
           <div class="breakdown-header" style="font-weight: 600; color: var(--brand-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span>📊 Détail du calcul (Base = 50) ${m.risk_version_info ? `— ${m.risk_version_info.active_version === 'v2' ? 'V2' : 'Legacy'}` : ''}</span>
-            <button onclick="window.toggleBreakdown?.('risk-score-breakdown')" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2em;" aria-label="Fermer">×</button>
+            <span>📊 Calculation Detail (Base = 50) ${m.risk_version_info ? `— ${m.risk_version_info.active_version === 'v2' ? 'V2' : 'Legacy'}` : ''}</span>
+            <button onclick="window.toggleBreakdown?.('risk-score-breakdown')" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2em;" aria-label="Close">×</button>
           </div>
           <div class="breakdown-table" style="display: flex; flex-direction: column; gap: 4px;">
             <div class="breakdown-row breakdown-base" style="display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding: 4px; background: rgba(125, 207, 255, 0.05); border-radius: 4px;">
-              <span class="breakdown-label" style="color: var(--text-secondary);">Base neutre</span>
+              <span class="breakdown-label" style="color: var(--text-secondary);">Neutral base</span>
               <span class="breakdown-value" style="color: var(--text-primary); font-weight: 600;">+50.0</span>
               <span class="breakdown-cumul" style="color: var(--brand-primary); font-weight: 600; min-width: 50px; text-align: right;">50.0</span>
             </div>
@@ -541,7 +541,7 @@ function renderRiskDashboard(container, data) {
                 var_95: 'VaR 95%',
                 sharpe: 'Sharpe Ratio',
                 drawdown: 'Max Drawdown',
-                volatility: 'Volatilité',
+                volatility: 'Volatility',
                 memecoins: 'Memecoins %',
                 concentration: 'Concentration (HHI)',
                 group_risk: 'Group Risk Index',
@@ -581,7 +581,7 @@ function renderRiskDashboard(container, data) {
         <div style="margin: 8px 0; padding: 8px; background: rgba(122, 162, 247, 0.1); border-radius: 6px; border-left: 3px solid var(--brand-primary);">
           ${m.dual_window.long_term?.available ? `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Fenêtre Long-Term : Calcule le Risk Score sur ${m.dual_window.long_term.window_days} jours d'historique en excluant les assets récents. Couvre ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}% de la valeur du portfolio avec ${m.dual_window.long_term.asset_count} assets ayant un historique suffisant. Métriques plus stables et fiables que l'intersection complète.">
+              <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Long-Term window : Computes the Risk Score over ${m.dual_window.long_term.window_days} days of history excluding recent assets. Covers ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}% of portfolio value with ${m.dual_window.long_term.asset_count} assets with sufficient history. More stable and reliable metrics than full intersection.">
                 📈 Long-Term (${m.dual_window.long_term.window_days}d, ${m.dual_window.long_term.asset_count} assets, ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}%) <span style="color: var(--brand-primary); opacity: 0.6;">ℹ️</span>
               </span>
               <span style="font-size: 0.85em; font-weight: 600; color: var(--brand-primary);">
@@ -589,7 +589,7 @@ function renderRiskDashboard(container, data) {
               </span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Fenêtre Full Intersection : Période commune minimale incluant TOUS les assets (${m.dual_window.full_intersection.asset_count} assets). Sur ${m.dual_window.full_intersection.window_days} jours seulement car les assets récents limitent l'historique. Métriques peuvent être instables si fenêtre courte. Utilisé pour comparaison et détection de divergences.">
+              <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Full Intersection window: Minimum common period including ALL assets (${m.dual_window.full_intersection.asset_count} assets). Over ${m.dual_window.full_intersection.window_days} days only because recent assets limit the history. Metrics may be unstable if window is short. Used for comparison and divergence detection.">
                 🔍 Full Intersection (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets) <span style="color: var(--text-secondary); opacity: 0.6;">ℹ️</span>
               </span>
               <span style="font-size: 0.85em; color: ${Math.abs(m.dual_window.full_intersection.metrics?.sharpe_ratio - m.dual_window.long_term.metrics?.sharpe_ratio) > 0.5 ? 'var(--theme-error)' : 'var(--text-secondary)'};">
@@ -597,14 +597,14 @@ function renderRiskDashboard(container, data) {
               </span>
             </div>
             ${m.dual_window.exclusions?.excluded_pct > 0.2 ? `
-            <div style="margin-top: 6px; padding: 4px 8px; background: rgba(247, 118, 142, 0.15); border-radius: 4px; cursor: help;" title="Assets exclus de la fenêtre Long-Term car historique < ${m.dual_window.long_term.window_days}j : ${m.dual_window.exclusions.excluded_assets.map(a => a.symbol).join(', ')}. Représentent ${(m.dual_window.exclusions.excluded_pct * 100).toFixed(1)}% de la valeur totale. Le Risk Score est calculé uniquement sur les ${m.dual_window.long_term.asset_count} assets avec historique suffisant pour plus de stabilité.">
+            <div style="margin-top: 6px; padding: 4px 8px; background: rgba(247, 118, 142, 0.15); border-radius: 4px; cursor: help;" title="Assets excluded from Long-Term window due to history < ${m.dual_window.long_term.window_days}j : ${m.dual_window.exclusions.excluded_assets.map(a => a.symbol).join(', ')}. Represent ${(m.dual_window.exclusions.excluded_pct * 100).toFixed(1)}% of total value. The Risk Score is calculated only on the ${m.dual_window.long_term.asset_count} assets with sufficient history for more stability.">
               <span style="font-size: 0.8em; color: var(--theme-error);">
-                ⚠️ ${m.dual_window.exclusions.excluded_assets.length} assets exclus (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% valeur) - historique court <span style="opacity: 0.6;">ℹ️</span>
+                ⚠️ ${m.dual_window.exclusions.excluded_assets.length} assets excluded (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% value) - short history <span style="opacity: 0.6;">ℹ️</span>
               </span>
             </div>
             ` : ''}
             <div style="margin-top: 6px; font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-              ✓ Score autoritaire basé sur Long-Term (stable)
+              ✓ Authoritative score based on Long-Term (stable)
             </div>
           ` : `
             <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -617,7 +617,7 @@ function renderRiskDashboard(container, data) {
             </div>
             <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255, 158, 100, 0.15); border-radius: 4px;">
               <span style="font-size: 0.8em; color: var(--theme-warning);">
-                ⚠️ Cohorte long-term indisponible - métriques sur fenêtre courte (${m.dual_window.exclusions?.reason || 'unknown'})
+                ⚠️ Long-term cohort unavailable - metrics on short window (${m.dual_window.exclusions?.reason || 'unknown'})
               </span>
             </div>
           `}
@@ -631,13 +631,13 @@ function renderRiskDashboard(container, data) {
         </div>
 
         <div class="metric-benchmark">
-          📊 <strong>Benchmarks:</strong> Très robuste (≥80), Robuste (≥65), Modéré (≥50), Fragile (≥35)
+          📊 <strong>Benchmarks:</strong> Very robust (≥80), Robust (≥65), Moderate (≥50), Fragile (≥35)
         </div>
       </div>
 
       <!-- VaR/CVaR -->
       <div class="risk-card">
-        <h3>📉 Value at Risk (VaR) <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 30j (VaR), 60j (CVaR)</span></h3>
+        <h3>📉 Value at Risk (VaR) <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 30d (VaR), 60d (CVaR)</span></h3>
         <div class="metric-row">
           <span class="metric-label">VaR 95% (1 day)</span>
           <span class="metric-value hinted" data-key="var95_1d" data-value="${m.var_95_1d}" style="color: ${getMetricHealth('var_95_1d', m.var_95_1d).color}">
@@ -671,7 +671,7 @@ function renderRiskDashboard(container, data) {
 
       <!-- Performance -->
       <div class="risk-card">
-        <h3>📈 Risk-Adjusted Performance <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Vol 45j • Sharpe 90j • Sortino 120j • Calmar 365j</span></h3>
+        <h3>📈 Risk-Adjusted Performance <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Vol 45d • Sharpe 90d • Sortino 120d • Calmar 365d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Volatility (Annual)</span>
           <span class="metric-value hinted" data-key="volatility_ann" data-value="${m.volatility_annualized}" style="color: ${getMetricHealth('volatility_annualized', m.volatility_annualized).color}">
@@ -704,13 +704,13 @@ function renderRiskDashboard(container, data) {
           <span class="metric-value">${safeFixed(m.calmar_ratio)}</span>
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Benchmarks crypto:</strong> Excellent: >1.5, Bon: >1.0, Acceptable: >0.5 (Sharpe)
+          📊 <strong>Benchmarks crypto:</strong> Excellent: >1.5, Good: >1.0, Acceptable: >0.5 (Sharpe)
         </div>
       </div>
 
       <!-- Drawdowns -->
       <div class="risk-card">
-        <h3>📊 Drawdown Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 180j</span></h3>
+        <h3>📊 Drawdown Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 180d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Max Drawdown</span>
           <span class="metric-value hinted" data-key="max_drawdown" data-value="${m.max_drawdown}" style="color: ${getMetricHealth('max_drawdown', m.max_drawdown).color}">
@@ -725,13 +725,13 @@ function renderRiskDashboard(container, data) {
           <span class="metric-value hinted" data-key="current_drawdown" data-value="${m.current_drawdown}">${formatPercent(m.current_drawdown)}</span>
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Crypto historique:</strong> Bon: -30%, Typique: -50%, Extrême: -70%+
+          📊 <strong>Crypto historical:</strong> Good: -30%, Typical: -50%, Extreme: -70%+
         </div>
       </div>
 
       <!-- Diversification -->
       <div class="risk-card">
-        <h3>🔗 Diversification Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;">corr 90j</span></h3>
+        <h3>🔗 Diversification Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;">corr 90d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Diversification Ratio</span>
           <span class="metric-value hinted" data-key="diversification_ratio" data-value="${c.diversification_ratio}" style="color: ${getMetricHealth('diversification_ratio', c.diversification_ratio).color}">
@@ -751,7 +751,7 @@ function renderRiskDashboard(container, data) {
           💡 ${getMetricHealth('effective_assets', c.effective_assets).interpretation}
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Diversification:</strong> Excellent: >0.7, Limité: 0.4-0.7, Faible: <0.4
+          📊 <strong>Diversification:</strong> Excellent: >0.7, Limited: 0.4-0.7, Low: <0.4
         </div>
 
         ${c.top_correlations && c.top_correlations.length ? `
@@ -805,7 +805,7 @@ function decorateRiskTooltips(container) {
       const fmt = (key === 'sharpe' || key === 'sortino') ? num : pct;
       let body = `Valeur actuelle : ${isNaN(val) ? 'N/A' : fmt(val)}\nLecture : ${rating.verdict}`;
       if (key === 'diversification_ratio') {
-        body += `\nNote: DR≈1 = neutre; >1 suggère corrélations négatives; <1 corrélations positives.\nSeuils: bon ≥0.7, limité 0.4–0.7, faible <0.4.`;
+        body += `\nNote: DR≈1 = neutral; >1 suggests negative correlations; <1 positive correlations.\nThresholds: good ≥0.7, limited 0.4–0.7, weak <0.4.`;
       }
 
       showTip(title, body, e.clientX, e.clientY);

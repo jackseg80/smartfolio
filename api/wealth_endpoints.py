@@ -18,8 +18,8 @@ from models.wealth import (
     ProposedTrade,
     BankAccountInput,
     BankAccountOutput,
-    PatrimoineItemInput,
-    PatrimoineItemOutput,
+    WealthItemInput,
+    WealthItemOutput,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ _SUPPORTED_MODULES = {"crypto", "saxo", "banks"}
 
 
 async def _module_available(module: str, user_id: Optional[str] = None) -> bool:
-    """Vérifie si un module wealth a des données disponibles pour l'utilisateur."""
+    """Check if a wealth module has data available for the user."""
     try:
         if module == "crypto":
             return await crypto_adapter.has_data(user_id)
@@ -48,11 +48,11 @@ def _ensure_module(module: str) -> None:
         raise HTTPException(status_code=404, detail="unknown_module")
 
 
-# ===== Patrimoine CRUD Endpoints (NEW - Oct 2025) =====
+# ===== Wealth Item CRUD Endpoints =====
 
 
-@router.get("/patrimoine/items")
-async def list_patrimoine_items(
+@router.get("/items")
+async def list_wealth_items(
     user: str = Depends(get_required_user),
     category: Optional[str] = Query(None, regex="^(liquidity|tangible|liability|insurance)$"),
     type: Optional[str] = Query(None, description="Item type filter"),
@@ -60,7 +60,7 @@ async def list_patrimoine_items(
     offset: int = Query(0, ge=0, description="Number of items to skip")
 ):
     """
-    List patrimoine items for user with optional filters and pagination.
+    List wealth items for user with optional filters and pagination.
 
     PERFORMANCE FIX: Added pagination (limit/offset) to prevent loading all items.
 
@@ -74,7 +74,7 @@ async def list_patrimoine_items(
     Returns:
         Paginated response with items and metadata
     """
-    from services.wealth.patrimoine_service import list_items
+    from services.wealth.wealth_service import list_items
 
     items = list_items(user, category=category, type=type)
 
@@ -82,7 +82,7 @@ async def list_patrimoine_items(
     total_count = len(items)
     paginated_items = items[offset:offset + limit]
 
-    logger.info(f"[wealth][patrimoine] listed {len(paginated_items)}/{total_count} items for user={user}")
+    logger.info(f"[wealth] listed {len(paginated_items)}/{total_count} items for user={user}")
 
     # Convert Pydantic models to dicts for proper JSON serialization
     items_as_dicts = [item.model_dump() for item in paginated_items]
@@ -102,54 +102,54 @@ async def list_patrimoine_items(
     }
 
 
-@router.get("/patrimoine/items/{item_id}")
-async def get_patrimoine_item(
+@router.get("/items/{item_id}")
+async def get_wealth_item(
     item_id: str,
     user: str = Depends(get_required_user)
 ):
-    """Get a specific patrimoine item by ID."""
-    from services.wealth.patrimoine_service import get_item
+    """Get a specific wealth item by ID."""
+    from services.wealth.wealth_service import get_item
 
     item = get_item(user, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="item_not_found")
 
-    logger.info(f"[wealth][patrimoine] retrieved item id={item_id} user={user}")
+    logger.info(f"[wealth] retrieved item id={item_id} user={user}")
     return item
 
 
-@router.post("/patrimoine/items", status_code=201)
-async def create_patrimoine_item(
-    item: "PatrimoineItemInput",
+@router.post("/items", status_code=201)
+async def create_wealth_item(
+    item: "WealthItemInput",
     user: str = Depends(get_required_user)
 ):
     """
-    Create a new patrimoine item for the user.
+    Create a new wealth item for the user.
 
     Args:
-        item: Patrimoine item data
+        item: Wealth item data
         user: Active user ID (injected via Depends)
 
     Returns:
-        PatrimoineItemOutput with generated ID and USD conversion
+        WealthItemOutput with generated ID and USD conversion
     """
-    from services.wealth.patrimoine_service import create_item
+    from services.wealth.wealth_service import create_item
 
     new_item = create_item(user, item)
     logger.info(
-        f"[wealth][patrimoine] item created id={new_item.id} user={user} category={item.category}"
+        f"[wealth] item created id={new_item.id} user={user} category={item.category}"
     )
     return new_item
 
 
-@router.put("/patrimoine/items/{item_id}")
-async def update_patrimoine_item(
+@router.put("/items/{item_id}")
+async def update_wealth_item(
     item_id: str,
-    item: "PatrimoineItemInput",
+    item: "WealthItemInput",
     user: str = Depends(get_required_user)
 ):
     """
-    Update an existing patrimoine item.
+    Update an existing wealth item.
 
     Args:
         item_id: Item ID to update
@@ -157,29 +157,29 @@ async def update_patrimoine_item(
         user: Active user ID (injected via Depends)
 
     Returns:
-        Updated PatrimoineItemOutput
+        Updated WealthItemOutput
 
     Raises:
         HTTPException 404 if item not found
     """
-    from services.wealth.patrimoine_service import update_item
+    from services.wealth.wealth_service import update_item
 
     updated_item = update_item(user, item_id, item)
     if not updated_item:
-        logger.warning(f"[wealth][patrimoine] item not found id={item_id} user={user}")
+        logger.warning(f"[wealth] item not found id={item_id} user={user}")
         raise HTTPException(status_code=404, detail="item_not_found")
 
-    logger.info(f"[wealth][patrimoine] item updated id={item_id} user={user}")
+    logger.info(f"[wealth] item updated id={item_id} user={user}")
     return updated_item
 
 
-@router.delete("/patrimoine/items/{item_id}", status_code=204)
-async def delete_patrimoine_item(
+@router.delete("/items/{item_id}", status_code=204)
+async def delete_wealth_item(
     item_id: str,
     user: str = Depends(get_required_user)
 ):
     """
-    Delete a patrimoine item.
+    Delete a wealth item.
 
     Args:
         item_id: Item ID to delete
@@ -191,22 +191,22 @@ async def delete_patrimoine_item(
     Raises:
         HTTPException 404 if item not found
     """
-    from services.wealth.patrimoine_service import delete_item
+    from services.wealth.wealth_service import delete_item
 
     deleted = delete_item(user, item_id)
     if not deleted:
-        logger.warning(f"[wealth][patrimoine] item not found for deletion id={item_id} user={user}")
+        logger.warning(f"[wealth] item not found for deletion id={item_id} user={user}")
         raise HTTPException(status_code=404, detail="item_not_found")
 
-    logger.info(f"[wealth][patrimoine] item deleted id={item_id} user={user}")
+    logger.info(f"[wealth] item deleted id={item_id} user={user}")
 
 
-@router.get("/patrimoine/summary")
-async def get_patrimoine_summary(
+@router.get("/summary")
+async def get_wealth_summary(
     user: str = Depends(get_required_user)
 ):
     """
-    Get patrimoine summary for user.
+    Get wealth summary for user.
 
     Returns breakdown by category with total net worth in USD.
 
@@ -216,18 +216,18 @@ async def get_patrimoine_summary(
     Returns:
         Dict with net_worth, breakdown by category, and counts
     """
-    from services.wealth.patrimoine_service import get_summary
+    from services.wealth.wealth_service import get_summary
 
     summary = get_summary(user)
-    logger.info(f"[wealth][patrimoine] summary generated for user={user} net_worth={summary['net_worth']:.2f}")
+    logger.info(f"[wealth] summary generated for user={user} net_worth={summary['net_worth']:.2f}")
     return summary
 
 
-# ===== Banks CRUD Endpoints (RETROCOMPAT - redirects to patrimoine) =====
+# ===== Banks CRUD Endpoints (RETROCOMPAT - redirects to wealth service) =====
 
 
-def _patrimoine_to_bank_account(item: PatrimoineItemOutput) -> BankAccountOutput:
-    """Convert PatrimoineItemOutput to BankAccountOutput for retrocompat."""
+def _wealth_item_to_bank_account(item: WealthItemOutput) -> BankAccountOutput:
+    """Convert WealthItemOutput to BankAccountOutput for retrocompat."""
     # Extract bank_name and account_type from metadata
     metadata = item.metadata or {}
     bank_name = metadata.get("bank_name", "Unknown Bank")
@@ -250,7 +250,7 @@ async def list_bank_accounts(
     """
     List all bank accounts for user with balance_usd calculated.
 
-    RETROCOMPAT: This endpoint now redirects to patrimoine service internally.
+    RETROCOMPAT: This endpoint now redirects to wealth service internally.
 
     Args:
         user: Active user ID (injected via Depends)
@@ -258,13 +258,13 @@ async def list_bank_accounts(
     Returns:
         List of BankAccountOutput with USD conversions
     """
-    from services.wealth.patrimoine_service import list_items
+    from services.wealth.wealth_service import list_items
 
-    # Get patrimoine items filtered by category=liquidity and type=bank_account
+    # Get wealth items filtered by category=liquidity and type=bank_account
     items = list_items(user, category="liquidity", type="bank_account")
 
     # Convert to BankAccountOutput format
-    result = [_patrimoine_to_bank_account(item) for item in items]
+    result = [_wealth_item_to_bank_account(item) for item in items]
 
     logger.info("[wealth][banks][retrocompat] listed %s accounts for user=%s", len(result), user)
     return result
@@ -278,7 +278,7 @@ async def create_bank_account(
     """
     Create a new bank account for the user.
 
-    RETROCOMPAT: This endpoint now redirects to patrimoine service internally.
+    RETROCOMPAT: This endpoint now redirects to wealth service internally.
 
     Args:
         account: Bank account data (bank_name, account_type, balance, currency)
@@ -296,10 +296,10 @@ async def create_bank_account(
             "currency": "CHF"
         }
     """
-    from services.wealth.patrimoine_service import create_item
+    from services.wealth.wealth_service import create_item
 
-    # Convert BankAccountInput to PatrimoineItemInput
-    patrimoine_item = PatrimoineItemInput(
+    # Convert BankAccountInput to WealthItemInput
+    wealth_item = WealthItemInput(
         name=f"{account.bank_name} ({account.account_type})",
         category="liquidity",
         type="bank_account",
@@ -313,8 +313,8 @@ async def create_bank_account(
         },
     )
 
-    # Create using patrimoine service
-    new_item = create_item(user, patrimoine_item)
+    # Create using wealth service
+    new_item = create_item(user, wealth_item)
 
     logger.info(
         "[wealth][banks][retrocompat] account created id=%s user=%s bank=%s",
@@ -324,7 +324,7 @@ async def create_bank_account(
     )
 
     # Convert back to BankAccountOutput
-    return _patrimoine_to_bank_account(new_item)
+    return _wealth_item_to_bank_account(new_item)
 
 
 @router.put("/banks/accounts/{account_id}", response_model=BankAccountOutput)
@@ -336,7 +336,7 @@ async def update_bank_account(
     """
     Update an existing bank account.
 
-    RETROCOMPAT: This endpoint now redirects to patrimoine service internally.
+    RETROCOMPAT: This endpoint now redirects to wealth service internally.
 
     Args:
         account_id: Account ID to update
@@ -349,10 +349,10 @@ async def update_bank_account(
     Raises:
         HTTPException 404 if account not found
     """
-    from services.wealth.patrimoine_service import update_item
+    from services.wealth.wealth_service import update_item
 
-    # Convert BankAccountInput to PatrimoineItemInput
-    patrimoine_item = PatrimoineItemInput(
+    # Convert BankAccountInput to WealthItemInput
+    wealth_item = WealthItemInput(
         name=f"{account.bank_name} ({account.account_type})",
         category="liquidity",
         type="bank_account",
@@ -366,8 +366,8 @@ async def update_bank_account(
         },
     )
 
-    # Update using patrimoine service
-    updated_item = update_item(user, account_id, patrimoine_item)
+    # Update using wealth service
+    updated_item = update_item(user, account_id, wealth_item)
 
     if not updated_item:
         logger.warning("[wealth][banks][retrocompat] account not found id=%s user=%s", account_id, user)
@@ -381,7 +381,7 @@ async def update_bank_account(
     )
 
     # Convert back to BankAccountOutput
-    return _patrimoine_to_bank_account(updated_item)
+    return _wealth_item_to_bank_account(updated_item)
 
 
 @router.delete("/banks/accounts/{account_id}", status_code=204)
@@ -392,7 +392,7 @@ async def delete_bank_account(
     """
     Delete a bank account.
 
-    RETROCOMPAT: This endpoint now redirects to patrimoine service internally.
+    RETROCOMPAT: This endpoint now redirects to wealth service internally.
 
     Args:
         account_id: Account ID to delete
@@ -404,9 +404,9 @@ async def delete_bank_account(
     Raises:
         HTTPException 404 if account not found
     """
-    from services.wealth.patrimoine_service import delete_item
+    from services.wealth.wealth_service import delete_item
 
-    # Delete using patrimoine service
+    # Delete using wealth service
     deleted = delete_item(user, account_id)
 
     if not deleted:
@@ -421,7 +421,7 @@ async def delete_bank_account(
 
 @router.get("/modules", response_model=List[str])
 async def list_modules(user: str = Depends(get_required_user)) -> List[str]:
-    """Liste les modules wealth disponibles pour l'utilisateur."""
+    """List available wealth modules for the user."""
     discovered = []
     for module in _SUPPORTED_MODULES:
         if await _module_available(module, user):
@@ -439,10 +439,10 @@ async def get_accounts(
     source: str = Query("auto", description="Crypto source resolver"),
     file_key: Optional[str] = Query(None, description="Specific file to load (for Saxo)"),
 ) -> List[AccountModel]:
-    """Liste les comptes pour un module (lecture seule depuis sources)."""
+    """List accounts for a module (read-only from sources)."""
     _ensure_module(module)
 
-    # Vérifier que l'utilisateur a des données pour ce module
+    # Check user has data for this module
     if not await _module_available(module, user):
         logger.warning("[wealth] no data available for module=%s user=%s", module, user)
         return []
@@ -577,17 +577,17 @@ async def global_summary(
     bourse_source: Optional[str] = Query(None, description="Bourse source (api:saxobank_api or saxo:file_key)")
 ) -> dict:
     """
-    Agrégation globale de tous les modules wealth (crypto + saxo + patrimoine).
+    Global aggregation of all wealth modules (crypto + saxo + wealth items).
 
-    Retourne un summary unifié avec total_value_usd et breakdown par module.
+    Returns unified summary with total_value_usd and breakdown by module.
 
     Args:
-        user: ID utilisateur (from authenticated context)
-        source: Source resolver pour crypto
+        user: User ID (from authenticated context)
+        source: Source resolver for crypto
         bourse_file_key: Optional file key for specific Bourse CSV selection
 
     Returns:
-        Dict avec total_value_usd, breakdown, et metadata
+        Dict with total_value_usd, breakdown, and metadata
 
     Example:
         GET /api/wealth/global/summary?source=auto&bourse_file_key=saxo_25-09-2025.csv
@@ -596,7 +596,7 @@ async def global_summary(
             "breakdown": {
                 "crypto": 133100.0,
                 "saxo": 423000.0,
-                "patrimoine": 0.0
+                "wealth": 0.0
             },
             "user_id": "jack",
             "timestamp": "2025-10-12T..."
@@ -607,37 +607,36 @@ async def global_summary(
     breakdown = {
         "crypto": 0.0,
         "saxo": 0.0,
-        "patrimoine": 0.0
+        "wealth": 0.0
     }
 
     # 1) Crypto
     try:
-        logger.info(f"[wealth][global] 🔍 Checking Crypto availability for user={user}")
+        logger.info(f"[wealth][global] Checking Crypto availability for user={user}")
         crypto_available = await _module_available("crypto", user)
-        logger.info(f"[wealth][global] 💰 Crypto available: {crypto_available}")
+        logger.info(f"[wealth][global] Crypto available: {crypto_available}")
 
         if crypto_available:
-            logger.info(f"[wealth][global] 📂 Loading Crypto positions with source={source}")
+            logger.info(f"[wealth][global] Loading Crypto positions with source={source}")
             crypto_positions = await crypto_adapter.list_positions(user_id=user, source=source, min_usd_threshold=min_usd_threshold)
-            logger.info(f"[wealth][global] 📋 Got {len(crypto_positions)} Crypto positions")
+            logger.info(f"[wealth][global] Got {len(crypto_positions)} Crypto positions")
             breakdown["crypto"] = sum((p.market_value or 0.0) for p in crypto_positions)
-            logger.info(f"[wealth][global] ✅ crypto={breakdown['crypto']:.2f} USD for user={user} (threshold={min_usd_threshold})")
+            logger.info(f"[wealth][global] crypto={breakdown['crypto']:.2f} USD for user={user} (threshold={min_usd_threshold})")
         else:
-            logger.warning(f"[wealth][global] ⚠️ Crypto module not available for user={user}")
+            logger.warning(f"[wealth][global] Crypto module not available for user={user}")
     except Exception as e:
-        logger.error(f"[wealth][global] ❌ crypto failed for user={user}: {e}", exc_info=True)
+        logger.error(f"[wealth][global] crypto failed for user={user}: {e}", exc_info=True)
 
     # 2) Saxo (with API and file_key support + cash)
     try:
-        logger.info(f"[wealth][global] 🔍 Checking Saxo availability for user={user}")
+        logger.info(f"[wealth][global] Checking Saxo availability for user={user}")
         saxo_available = await _module_available("saxo", user)
-        logger.info(f"[wealth][global] 📊 Saxo available: {saxo_available}")
+        logger.info(f"[wealth][global] Saxo available: {saxo_available}")
 
         if saxo_available:
-            logger.info(f"[wealth][global] 📌 Bourse source param: {bourse_source}, file_key param: {bourse_file_key}")
-            # ✅ Check if Manual mode (manual_bourse)
+            logger.info(f"[wealth][global] Bourse source param: {bourse_source}, file_key param: {bourse_file_key}")
             if bourse_source == "manual_bourse":
-                logger.info(f"[wealth][global] ✍️ Loading Saxo via Manual mode: {bourse_source}")
+                logger.info(f"[wealth][global] Loading Saxo via Manual mode: {bourse_source}")
                 try:
                     from services.sources import source_registry
 
@@ -646,53 +645,47 @@ async def global_summary(
 
                     if manual_source:
                         items = await manual_source.get_balances()
-                        # Calculate total from BalanceItem list
                         total_value = sum(float(item.value_usd or 0) for item in items)
                         breakdown["saxo"] = total_value
-                        logger.info(f"[wealth][global] ✅ Manual bourse: {len(items)} positions, total=${total_value:.2f} USD")
+                        logger.info(f"[wealth][global] Manual bourse: {len(items)} positions, total=${total_value:.2f} USD")
                     else:
-                        logger.warning(f"[wealth][global] ⚠️ Manual bourse source not available for user {user}")
+                        logger.warning(f"[wealth][global] Manual bourse source not available for user {user}")
                         breakdown["saxo"] = 0.0
                 except Exception as manual_error:
-                    logger.error(f"[wealth][global] ❌ Manual bourse load failed: {manual_error}", exc_info=True)
+                    logger.error(f"[wealth][global] Manual bourse load failed: {manual_error}", exc_info=True)
                     breakdown["saxo"] = 0.0
-            # ✅ Check if API mode (bourse_source starts with 'api:')
             elif bourse_source and bourse_source.startswith('api:'):
-                logger.info(f"[wealth][global] 🌐 Loading Saxo via API mode: {bourse_source}")
-                # ✅ OPTIMIZED: Use cached data directly (FAST, no HTTP call, instant response)
+                logger.info(f"[wealth][global] Loading Saxo via API mode: {bourse_source}")
                 try:
                     from services.saxo_auth_service import SaxoAuthService
 
                     auth_service = SaxoAuthService(user)
 
-                    # Check if user is connected
                     if not auth_service.is_connected():
-                        logger.warning(f"[wealth][global] ⚠️ User {user} not connected to Saxo API")
+                        logger.warning(f"[wealth][global] User {user} not connected to Saxo API")
                         breakdown["saxo"] = 0.0
                     else:
-                        # ✅ CRITICAL: Use cached data (FAST, no API call, includes cash+total)
                         cached_data = await auth_service.get_cached_positions(max_age_hours=24)
 
                         if cached_data and cached_data.get("total_value", 0) > 0:
-                            # ✅ Use pre-calculated total_value from cache (includes positions + cash)
                             total_value = cached_data.get("total_value", 0.0)
                             cash_balance = cached_data.get("cash_balance", 0.0)
                             positions_count = len(cached_data.get("positions", []))
 
                             breakdown["saxo"] = total_value
-                            logger.info(f"[wealth][global] ✅ Saxo (cached): {positions_count} positions, total=${total_value:.2f} USD (cash=${cash_balance:.2f})")
+                            logger.info(f"[wealth][global] Saxo (cached): {positions_count} positions, total=${total_value:.2f} USD (cash=${cash_balance:.2f})")
                         else:
-                            logger.warning(f"[wealth][global] ⚠️ No cached Saxo data available for user {user}")
+                            logger.warning(f"[wealth][global] No cached Saxo data available for user {user}")
                             breakdown["saxo"] = 0.0
 
                 except Exception as api_error:
-                    logger.error(f"[wealth][global] ❌ Saxo cache read failed: {api_error}", exc_info=True)
+                    logger.error(f"[wealth][global] Saxo cache read failed: {api_error}", exc_info=True)
                     breakdown["saxo"] = 0.0
             else:
                 # CSV mode: use file_key
-                logger.info(f"[wealth][global] 📂 Loading Saxo positions with file_key={bourse_file_key}")
+                logger.info(f"[wealth][global] Loading Saxo positions with file_key={bourse_file_key}")
                 saxo_positions = await saxo_adapter.list_positions(user_id=user, file_key=bourse_file_key)
-                logger.info(f"[wealth][global] 📋 Got {len(saxo_positions)} Saxo positions")
+                logger.info(f"[wealth][global] Got {len(saxo_positions)} Saxo positions")
                 breakdown["saxo"] = sum((p.market_value or 0.0) for p in saxo_positions)
 
                 # Add cash/liquidities if available
@@ -707,28 +700,28 @@ async def global_summary(
                             cash_data = json.load(f)
                             cash_amount = float(cash_data.get("cash_amount", 0.0))
                             breakdown["saxo"] += cash_amount
-                            logger.info(f"[wealth][global] 💵 Added cash ${cash_amount:.2f} to Saxo total")
+                            logger.info(f"[wealth][global] Added cash ${cash_amount:.2f} to Saxo total")
                 except Exception as cash_error:
                     logger.debug(f"[wealth][global] Cash file not found or error (non-blocking): {cash_error}")
 
-                logger.info(f"[wealth][global] ✅ saxo={breakdown['saxo']:.2f} USD for user={user} file_key={bourse_file_key}")
+                logger.info(f"[wealth][global] saxo={breakdown['saxo']:.2f} USD for user={user} file_key={bourse_file_key}")
         else:
-            logger.warning(f"[wealth][global] ⚠️ Saxo module not available for user={user}")
+            logger.warning(f"[wealth][global] Saxo module not available for user={user}")
     except Exception as e:
-        logger.error(f"[wealth][global] ❌ saxo failed for user={user}: {e}", exc_info=True)
+        logger.error(f"[wealth][global] saxo failed for user={user}: {e}", exc_info=True)
 
-    # 3) Patrimoine (net worth: actifs - passifs)
+    # 3) Wealth items (net worth: assets - liabilities)
     try:
-        from services.wealth import patrimoine_service
+        from services.wealth import wealth_service
 
-        logger.info(f"[wealth][global] 🔍 Loading Patrimoine summary for user={user}")
-        patrimoine_summary = patrimoine_service.get_summary(user_id=user)
+        logger.info(f"[wealth][global] Loading Wealth summary for user={user}")
+        wealth_summary = wealth_service.get_summary(user_id=user)
 
         # Use net_worth (assets - liabilities) for accurate wealth representation
-        breakdown["patrimoine"] = patrimoine_summary.get("net_worth", 0.0)
-        logger.info(f"[wealth][global] ✅ patrimoine={breakdown['patrimoine']:.2f} USD (net worth) for user={user}")
+        breakdown["wealth"] = wealth_summary.get("net_worth", 0.0)
+        logger.info(f"[wealth][global] wealth={breakdown['wealth']:.2f} USD (net worth) for user={user}")
     except Exception as e:
-        logger.warning(f"[wealth][global] ⚠️ patrimoine failed for user={user}: {e}")
+        logger.warning(f"[wealth][global] wealth items failed for user={user}: {e}")
 
     total_value_usd = sum(breakdown.values())
 
@@ -752,9 +745,9 @@ async def global_summary(
                 )
                 if crypto_perf.get("performance_available"):
                     pnl_today += crypto_perf.get("absolute_change_usd", 0.0)
-                    logger.debug(f"[wealth][global] 💰 Crypto P&L: {crypto_perf.get('absolute_change_usd', 0.0):.2f} USD")
+                    logger.debug(f"[wealth][global] Crypto P&L: {crypto_perf.get('absolute_change_usd', 0.0):.2f} USD")
             except Exception as e:
-                logger.debug(f"[wealth][global] ⚠️ Crypto P&L calculation skipped: {e}")
+                logger.debug(f"[wealth][global] Crypto P&L calculation skipped: {e}")
 
         # Calculate P&L for saxo module (use 'saxobank' as source)
         if breakdown["saxo"] > 0:
@@ -769,26 +762,26 @@ async def global_summary(
                 )
                 if saxo_perf.get("performance_available"):
                     pnl_today += saxo_perf.get("absolute_change_usd", 0.0)
-                    logger.debug(f"[wealth][global] 📊 Saxo P&L: {saxo_perf.get('absolute_change_usd', 0.0):.2f} USD")
+                    logger.debug(f"[wealth][global] Saxo P&L: {saxo_perf.get('absolute_change_usd', 0.0):.2f} USD")
             except Exception as e:
-                logger.debug(f"[wealth][global] ⚠️ Saxo P&L calculation skipped: {e}")
+                logger.debug(f"[wealth][global] Saxo P&L calculation skipped: {e}")
 
-        # Calculate P&L for patrimoine module (use 'patrimoine' as source)
-        if breakdown["patrimoine"] > 0:
+        # Calculate P&L for wealth module
+        if breakdown["wealth"] > 0:
             try:
-                patrimoine_metrics = {"total_value_usd": breakdown["patrimoine"]}
-                patrimoine_perf = portfolio_analytics.calculate_performance_metrics(
-                    patrimoine_metrics,
+                wealth_metrics = {"total_value_usd": breakdown["wealth"]}
+                wealth_perf = portfolio_analytics.calculate_performance_metrics(
+                    wealth_metrics,
                     user_id=user,
-                    source="patrimoine",
+                    source="wealth",
                     anchor="prev_snapshot",
                     window="24h"
                 )
-                if patrimoine_perf.get("performance_available"):
-                    pnl_today += patrimoine_perf.get("absolute_change_usd", 0.0)
-                    logger.debug(f"[wealth][global] 💼 Patrimoine P&L: {patrimoine_perf.get('absolute_change_usd', 0.0):.2f} USD")
+                if wealth_perf.get("performance_available"):
+                    pnl_today += wealth_perf.get("absolute_change_usd", 0.0)
+                    logger.debug(f"[wealth][global] Wealth P&L: {wealth_perf.get('absolute_change_usd', 0.0):.2f} USD")
             except Exception as e:
-                logger.debug(f"[wealth][global] ⚠️ Patrimoine P&L calculation skipped: {e}")
+                logger.debug(f"[wealth][global] Wealth P&L calculation skipped: {e}")
 
         # Calculate percentage if we have historical data
         if total_value_usd > 0:
@@ -796,9 +789,9 @@ async def global_summary(
             if historical_value > 0:
                 pnl_today_pct = (pnl_today / historical_value) * 100
 
-        logger.info(f"[wealth][global] 📈 Total P&L Today: {pnl_today:.2f} USD ({pnl_today_pct:.2f}%)")
+        logger.info(f"[wealth][global] Total P&L Today: {pnl_today:.2f} USD ({pnl_today_pct:.2f}%)")
     except Exception as e:
-        logger.warning(f"[wealth][global] ⚠️ P&L Today calculation failed: {e}")
+        logger.warning(f"[wealth][global] P&L Today calculation failed: {e}")
         # Set to 0 on error (non-blocking)
         pnl_today = 0.0
         pnl_today_pct = 0.0
@@ -824,8 +817,8 @@ async def export_bank_lists(
     Export bank accounts list in multiple formats.
 
     Args:
-        user: ID utilisateur (from authenticated context)
-        format: Format de sortie (json, csv, markdown)
+        user: User ID (from authenticated context)
+        format: Output format (json, csv, markdown)
 
     Returns:
         Exported data in requested format with Content-Type header
@@ -835,11 +828,9 @@ async def export_bank_lists(
         from services.fx_service import convert as fx_convert
         from fastapi.responses import PlainTextResponse
 
-        # Récupérer les comptes bancaires
         snapshot = banks_adapter.load_snapshot(user)
         accounts = snapshot.get("accounts", [])
 
-        # Enrichir avec conversions USD
         accounts_list = []
         total_value_usd = 0
 
@@ -858,7 +849,6 @@ async def export_bank_lists(
 
             total_value_usd += balance_usd
 
-        # Structure finale
         export_data = {
             "accounts": accounts_list,
             "summary": {
@@ -867,7 +857,6 @@ async def export_bank_lists(
             }
         }
 
-        # Formater selon le format demandé
         formatter = ExportFormatter('banks')
 
         if format == 'json':
@@ -885,32 +874,30 @@ async def export_bank_lists(
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
 
 
-@router.get("/patrimoine/export-lists")
-async def export_patrimoine_lists(
+@router.get("/export-lists")
+async def export_wealth_lists(
     user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$")
 ):
     """
-    Export patrimoine items list in multiple formats.
-    Includes all categories: liquidités, biens, passifs, assurances.
+    Export wealth items list in multiple formats.
+    Includes all categories: liquidity, tangible, liability, insurance.
 
     Args:
-        user: ID utilisateur (from authenticated context)
-        format: Format de sortie (json, csv, markdown)
+        user: User ID (from authenticated context)
+        format: Output format (json, csv, markdown)
 
     Returns:
         Exported data in requested format with Content-Type header
     """
     try:
         from services.export_formatter import ExportFormatter
-        from services.wealth.patrimoine_service import list_items, get_summary
+        from services.wealth.wealth_service import list_items, get_summary
         from fastapi.responses import PlainTextResponse
 
-        # Récupérer tous les items patrimoine
         all_items = list_items(user)
         summary = get_summary(user)
 
-        # Grouper par catégorie
         items_by_category = {
             "liquidity": [],
             "tangible": [],
@@ -931,7 +918,6 @@ async def export_patrimoine_lists(
                 "notes": item.notes
             })
 
-        # Structure finale
         export_data = {
             "items_by_category": items_by_category,
             "summary": {
@@ -943,8 +929,7 @@ async def export_patrimoine_lists(
             }
         }
 
-        # Formater selon le format demandé
-        formatter = ExportFormatter('patrimoine')
+        formatter = ExportFormatter('wealth')
 
         if format == 'json':
             content = formatter.to_json(export_data)
@@ -957,5 +942,5 @@ async def export_patrimoine_lists(
             return PlainTextResponse(content, media_type="text/markdown")
 
     except Exception as e:
-        logger.exception("Error exporting patrimoine lists")
+        logger.exception("Error exporting wealth lists")
         raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")

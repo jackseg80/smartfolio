@@ -67,9 +67,9 @@ class QualityMetrics(BaseModel):
     model_config = {"protected_namespaces": ()}
 
     confidence: float = Field(ge=0, le=1, description="Confiance globale [0,1]")
-    data_freshness: Optional[float] = Field(None, description="Fraîcheur données (heures)")
+    data_freshness: Optional[float] = Field(None, description="Data freshness (hours)")
     feature_coverage: Optional[float] = Field(None, ge=0, le=1, description="Couverture features [0,1]")
-    model_health: Optional[float] = Field(None, ge=0, le=1, description="Santé modèle [0,1]")
+    model_health: Optional[float] = Field(None, ge=0, le=1, description="Model health [0,1]")
 
 
 # === REQUETES UNIFIEES ===
@@ -95,7 +95,7 @@ class UnifiedMLRequest(BaseModel):
 class BatchMLRequest(BaseModel):
     """Requête ML batch pour multiple modèles/horizons"""
     assets: List[str] = Field(max_items=20, description="Actifs à analyser")
-    requests: List[Dict[str, Any]] = Field(max_items=10, description="Requêtes multiples")
+    requests: List[Dict[str, Any]] = Field(max_items=10, description="Multiple requests")
     global_options: Optional[Dict[str, Any]] = Field(None, description="Options globales")
 
 
@@ -125,7 +125,7 @@ class UnifiedMLResponse(BaseModel):
     horizon: Optional[Horizon] = Field(None, description="Horizon prédit")
 
     # Données principales
-    predictions: List[UnifiedPrediction] = Field(description="Prédictions par actif")
+    predictions: List[UnifiedPrediction] = Field(description="Predictions per asset")
 
     # Agrégations (optionnel)
     aggregated: Optional[Dict[str, float]] = Field(None, description="Métriques agrégées")
@@ -142,9 +142,9 @@ class UnifiedMLResponse(BaseModel):
 
 class BatchMLResponse(BaseModel):
     """Réponse ML batch"""
-    success: bool = Field(True, description="Succès global")
+    success: bool = Field(True, description="Global success")
     responses: Dict[str, UnifiedMLResponse] = Field(description="Réponses par requête")
-    global_metadata: Dict[str, Any] = Field(default_factory=dict, description="Métadonnées globales")
+    global_metadata: Dict[str, Any] = Field(default_factory=dict, description="Global metadata")
     total_processing_time_ms: Optional[float] = Field(None, description="Temps total")
 
 
@@ -152,7 +152,7 @@ class BatchMLResponse(BaseModel):
 
 class VolatilityPrediction(UnifiedPrediction):
     """Prédiction de volatilité avec spécificités"""
-    annualized_vol: Optional[float] = Field(None, description="Volatilité annualisée")
+    annualized_vol: Optional[float] = Field(None, description="Annualized volatility")
     regime_context: Optional[str] = Field(None, description="Contexte de régime")
 
 
@@ -165,7 +165,7 @@ class SentimentPrediction(UnifiedPrediction):
 class RiskScorePrediction(UnifiedPrediction):
     """Score de risque avec composantes"""
     components: Optional[Dict[str, float]] = Field(None, description="Composantes du score")
-    risk_category: Optional[str] = Field(None, description="Catégorie de risque")
+    risk_category: Optional[str] = Field(None, description="Risk category")
 
 
 # === SCHEMAS DE MONITORING ===
@@ -177,7 +177,7 @@ class ModelHealth(BaseModel):
     model_name: str = Field(description="Nom du modèle")
     version: str = Field(description="Version")
     is_healthy: bool = Field(description="État de santé")
-    last_prediction: Optional[datetime] = Field(None, description="Dernière prédiction")
+    last_prediction: Optional[datetime] = Field(None, description="Last prediction")
     error_rate_24h: Optional[float] = Field(None, description="Taux d'erreur 24h")
     avg_confidence: Optional[float] = Field(None, description="Confiance moyenne")
     drift_score: Optional[float] = Field(None, description="Score de drift")
@@ -185,10 +185,10 @@ class ModelHealth(BaseModel):
 
 class MLSystemHealth(BaseModel):
     """Santé globale du système ML"""
-    overall_health: float = Field(ge=0, le=1, description="Santé globale [0,1]")
+    overall_health: float = Field(ge=0, le=1, description="Overall health [0,1]")
     models_status: List[ModelHealth] = Field(description="Statut par modèle")
     system_metrics: Dict[str, Any] = Field(default_factory=dict, description="Métriques système")
-    last_check: datetime = Field(default_factory=datetime.now, description="Dernière vérification")
+    last_check: datetime = Field(default_factory=datetime.now, description="Last check")
 
 
 # === UTILITY FUNCTIONS ===

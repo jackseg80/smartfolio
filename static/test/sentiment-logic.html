@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -88,17 +88,17 @@
     </style>
 </head>
 <body>
-    <h1>🧪 Test Logique Contextuelle ML Sentiment + Régime (Option 1)</h1>
-    <p>Ce test valide la <strong>hiérarchie de priorités</strong>: Sentiments Extrêmes (Niveau 1) → Phase Engine (Niveau 2) → Modulateurs de base (Niveau 3)</p>
-    <p>5 scénarios testés dont 1 nouveau avec Phase Engine actif.</p>
+    <h1>🧪 ML Sentiment + Regime Contextual Logic Test (Option 1)</h1>
+    <p>This test validates the <strong>priority hierarchy</strong>: Extreme Sentiments (Level 1) → Phase Engine (Level 2) → Base Modulators (Level 3)</p>
+    <p>5 scenarios tested including 1 new one with active Phase Engine.</p>
 
     <div class="summary" id="summary">
-        <h2>Résultats des Tests</h2>
-        <p>Cliquez sur "Exécuter Tous les Tests" pour commencer</p>
+        <h2>Test Results</h2>
+        <p>Click "Run All Tests" to begin</p>
     </div>
 
-    <button onclick="runAllTests()">Exécuter Tous les Tests</button>
-    <button onclick="clearResults()">Effacer les Résultats</button>
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
 
     <div id="results"></div>
 
@@ -146,10 +146,10 @@
 
             const riskyAssets = ['ETH', 'SOL', 'L2/Scaling', 'DeFi', 'Memecoins'];
             const checks = [
-                { name: 'ETH augmenté', pass: targets.ETH > 20 },
-                { name: 'SOL augmenté', pass: targets.SOL > 4 },
-                { name: 'L2/Scaling augmenté', pass: targets['L2/Scaling'] > 4 },
-                { name: 'Memecoins réduit ou stable', pass: targets.Memecoins <= 1 }
+                { name: 'ETH increased', pass: targets.ETH > 20 },
+                { name: 'SOL increased', pass: targets.SOL > 4 },
+                { name: 'L2/Scaling increased', pass: targets['L2/Scaling'] > 4 },
+                { name: 'Memecoins reduced or stable', pass: targets.Memecoins <= 1 }
             ];
 
             return {
@@ -182,19 +182,19 @@
             const targets = computeMacroTargetsDynamic(ctx, rb, {}, null);
 
             const checks = [
-                { name: 'Memecoins fortement réduit', pass: targets.Memecoins < 0.5 },
-                { name: 'Gaming/NFT réduit', pass: targets['Gaming/NFT'] < 1.5 },
-                { name: 'DeFi réduit', pass: targets.DeFi < 4 },
-                { name: 'Override reason présent', pass: !!ctx.allocation_override_reason }
+                { name: 'Memecoins strongly reduced', pass: targets.Memecoins < 0.5 },
+                { name: 'Gaming/NFT reduced', pass: targets['Gaming/NFT'] < 1.5 },
+                { name: 'DeFi reduced', pass: targets.DeFi < 4 },
+                { name: 'Override reason present', pass: !!ctx.allocation_override_reason }
             ];
 
             return {
-                name: 'Scénario 2: Bear + Fear (Défensif)',
+                name: 'Scénario 2: Bear + Fear (Defensive)',
                 input: ctx,
                 targets,
                 checks,
                 pass: checks.every(c => c.pass),
-                expected: 'Protection max: réduction agressive des risky assets',
+                expected: 'Max protection: aggressive reduction of risky assets',
                 overrideReason: ctx.allocation_override_reason
             };
         }
@@ -219,15 +219,15 @@
             const targets = computeMacroTargetsDynamic(ctx, rb, {}, null);
 
             const checks = [
-                { name: 'ETH augmenté (opportunité)', pass: targets.ETH > 22 },
-                { name: 'SOL augmenté (opportunité)', pass: targets.SOL > 4.5 },
-                { name: 'L2/Scaling augmenté', pass: targets['L2/Scaling'] > 4.5 },
-                { name: 'DeFi augmenté', pass: targets.DeFi > 3.5 },
-                { name: 'Override reason opportuniste', pass: ctx.allocation_override_reason?.includes('Opportunité') }
+                { name: 'ETH increased (opportunité)', pass: targets.ETH > 22 },
+                { name: 'SOL increased (opportunité)', pass: targets.SOL > 4.5 },
+                { name: 'L2/Scaling increased', pass: targets['L2/Scaling'] > 4.5 },
+                { name: 'DeFi increased', pass: targets.DeFi > 3.5 },
+                { name: 'Opportunistic override reason', pass: ctx.allocation_override_reason?.includes('Opportunité') }
             ];
 
             return {
-                name: 'Scénario 3: Bull + Fear (OPPORTUNISTE)',
+                name: 'Scénario 3: Bull + Fear (OPPORTUNISTIC)',
                 input: ctx,
                 targets,
                 checks,
@@ -257,9 +257,9 @@
             const targets = computeMacroTargetsDynamic(ctx, rb, {}, null);
 
             const checks = [
-                { name: 'Memecoins fortement réduit', pass: targets.Memecoins < 0.5 },
-                { name: 'Gaming/NFT réduit', pass: targets['Gaming/NFT'] < 1.5 },
-                { name: 'AI/Data réduit', pass: targets['AI/Data'] < 3 },
+                { name: 'Memecoins strongly reduced', pass: targets.Memecoins < 0.5 },
+                { name: 'Gaming/NFT reduced', pass: targets['Gaming/NFT'] < 1.5 },
+                { name: 'AI/Data reduced', pass: targets['AI/Data'] < 3 },
                 { name: 'Override reason greed', pass: ctx.allocation_override_reason?.includes('Greed') }
             ];
 
@@ -269,7 +269,7 @@
                 targets,
                 checks,
                 pass: checks.every(c => c.pass),
-                expected: 'Prise de profits: réduction risky assets malgré bull',
+                expected: 'Profit taking: risky assets reduction despite bull',
                 overrideReason: ctx.allocation_override_reason
             };
         }
@@ -294,20 +294,20 @@
             const targets = computeMacroTargetsDynamic(ctx, rb, {}, null);
 
             const checks = [
-                { name: 'ETH augmenté (opportunité)', pass: targets.ETH > 22 },
-                { name: 'SOL augmenté (opportunité)', pass: targets.SOL > 4.5 },
-                { name: 'L2/Scaling augmenté', pass: targets['L2/Scaling'] > 4.5 },
-                { name: 'Override reason opportuniste', pass: ctx.allocation_override_reason?.includes('Opportunité') },
-                { name: 'Phase Engine respecté', pass: ctx.flags.phase_engine === 'apply' }
+                { name: 'ETH increased (opportunité)', pass: targets.ETH > 22 },
+                { name: 'SOL increased (opportunité)', pass: targets.SOL > 4.5 },
+                { name: 'L2/Scaling increased', pass: targets['L2/Scaling'] > 4.5 },
+                { name: 'Opportunistic override reason', pass: ctx.allocation_override_reason?.includes('Opportunité') },
+                { name: 'Phase Engine respected', pass: ctx.flags.phase_engine === 'apply' }
             ];
 
             return {
-                name: 'Scénario 5: Bull + Fear + Phase Engine (Hiérarchie)',
+                name: 'Scénario 5: Bull + Fear + Phase Engine (Hierarchy)',
                 input: ctx,
                 targets,
                 checks,
                 pass: checks.every(c => c.pass),
-                expected: 'Sentiment extrême override Phase Engine (priorité absolue)',
+                expected: 'Extreme sentiment overrides Phase Engine (absolute priority)',
                 overrideReason: ctx.allocation_override_reason
             };
         }
@@ -315,7 +315,7 @@
         // Exécuter tous les tests
         window.runAllTests = async function() {
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '<h2>Tests en cours...</h2>';
+            resultsDiv.innerHTML = '<h2>Tests running...</h2>';
 
             const tests = [
                 await testBullNeutral(),
@@ -352,7 +352,7 @@
                     </div>` : ''}
 
                     <div class="output">
-                        <strong class="actual">Targets calculés:</strong>
+                        <strong class="actual">Computed targets:</strong>
                         ${Object.entries(test.targets)
                             .filter(([k, v]) => v > 0.5)
                             .sort((a, b) => b[1] - a[1])
@@ -373,14 +373,14 @@
             const summaryDiv = document.getElementById('summary');
             summaryDiv.className = `summary ${failCount === 0 ? 'all-pass' : 'has-fail'}`;
             summaryDiv.innerHTML = `
-                <h2>Résultats des Tests</h2>
+                <h2>Test Results</h2>
                 <p style="font-size: 24px; margin: 20px 0;">
                     ${passCount === tests.length ? '🎉' : '⚠️'}
-                    <strong>${passCount}/${tests.length}</strong> tests passés
+                    <strong>${passCount}/${tests.length}</strong> tests passed
                 </p>
                 ${failCount === 0 ?
-                    '<p style="color: #66bb6a;">✅ Tous les scénarios fonctionnent correctement!</p>' :
-                    '<p style="color: #ef5350;">❌ Certains scénarios ont échoué. Vérifiez les détails ci-dessous.</p>'
+                    '<p style="color: #66bb6a;">✅ All scenarios are working correctly!</p>' :
+                    '<p style="color: #ef5350;">❌ Some scenarios failed. Check the details below.</p>'
                 }
             `;
         };
@@ -389,13 +389,13 @@
             document.getElementById('results').innerHTML = '';
             document.getElementById('summary').className = 'summary';
             document.getElementById('summary').innerHTML = `
-                <h2>Résultats des Tests</h2>
-                <p>Cliquez sur "Exécuter Tous les Tests" pour commencer</p>
+                <h2>Test Results</h2>
+                <p>Click "Run All Tests" to begin</p>
             `;
         };
 
         // Auto-run on load
-        console.log('🧪 Test suite loaded. Click "Exécuter Tous les Tests" to run.');
+        console.log('🧪 Test suite loaded. Click "Run All Tests" to run.');
     </script>
 </body>
 </html>

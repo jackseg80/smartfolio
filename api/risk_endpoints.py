@@ -271,7 +271,7 @@ async def get_risk_system_status():
 
 @router.get("/metrics", response_model=RiskMetricsResponse)
 async def get_portfolio_risk_metrics(
-    price_history_days: int = Query(30, ge=10, le=365, description="Nombre de jours d'historique"),
+    price_history_days: int = Query(30, ge=10, le=365, description="Number of days of history"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -366,8 +366,8 @@ async def get_portfolio_risk_metrics(
 
 @router.get("/correlation", response_model=CorrelationResponse)
 async def get_correlation_matrix(
-    lookback_days: int = Query(30, ge=10, le=365, description="Nombre de jours pour calcul corrélation"),
-    source: str = Query("cointracking", description="Source de données: stub_balanced, cointracking, ou cointracking_api"),
+    lookback_days: int = Query(30, ge=10, le=365, description="Number of days for correlation calculation"),
+    source: str = Query("cointracking", description="Data source: stub_balanced, cointracking, or cointracking_api"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -584,19 +584,17 @@ async def run_custom_stress_test(
 
 @router.get("/dashboard")
 async def get_risk_dashboard(
-    source: str = Query("cointracking", description="Source de données: cointracking ou cointracking_api"),
-    pricing: str = Query("local", description="Source de prix: local ou coingecko"),
-    min_usd: float = Query(1.0, description="Seuil minimum en USD"),
-    price_history_days: int = Query(30, ge=10, le=365, description="Fenêtre d'historique pour métriques (jours)"),
-    lookback_days: int = Query(30, ge=10, le=365, description="Fenêtre pour corrélations (jours)"),
+    source: str = Query("cointracking", description="Data source: cointracking or cointracking_api"),
+    pricing: str = Query("local", description="Price source: local or coingecko"),
+    min_usd: float = Query(1.0, description="Minimum USD threshold"),
+    price_history_days: int = Query(30, ge=10, le=365, description="History window for metrics (days)"),
+    lookback_days: int = Query(30, ge=10, le=365, description="Window for correlations (days)"),
     user: str = Depends(get_required_user),
-    # 🆕 Risk Version (Phase 5 - V2 Active)
-    risk_version: str = Query("v2_active", description="Version Risk Score: legacy | v2_shadow | v2_active"),
-    # 🆕 Dual Window System parameters
-    use_dual_window: bool = Query(True, description="Activer système dual-window (long-term + full intersection)"),
-    min_history_days: int = Query(180, ge=90, le=365, description="Jours minimum pour cohorte long-term"),
+    risk_version: str = Query("v2_active", description="Risk Score version: legacy | v2_shadow | v2_active"),
+    use_dual_window: bool = Query(True, description="Enable dual-window system (long-term + full intersection)"),
+    min_history_days: int = Query(180, ge=90, le=365, description="Minimum days for long-term cohort"),
     min_coverage_pct: float = Query(0.80, ge=0.5, le=1.0, description="% minimum de valeur couverte pour cohorte"),
-    min_asset_count: int = Query(5, ge=3, le=20, description="Nombre minimum d'assets dans cohorte"),
+    min_asset_count: int = Query(5, ge=3, le=20, description="Minimum number of assets in cohort"),
     # 🔧 FIX: CSV hint for cache invalidation (Oct 2025)
     _csv_hint: Optional[str] = Query(None, description="Hint for cache invalidation when CSV changes (filename or timestamp)")
 ):
@@ -1320,7 +1318,7 @@ def _get_top_correlations(correlations: Dict[str, Dict[str, float]], top_n: int 
 
 @router.get("/attribution")
 async def get_performance_attribution(
-    analysis_days: int = Query(30, ge=7, le=365, description="Période d'analyse en jours")
+    analysis_days: int = Query(30, ge=7, le=365, description="Analysis period in days")
 ):
     """
     Calcule l'attribution de performance détaillée du portfolio
@@ -1507,7 +1505,7 @@ async def run_strategy_backtest(
 
 @router.get("/alerts")
 async def get_risk_alerts(
-    severity_filter: Optional[str] = Query(None, description="Filtrer par sévérité (info/low/medium/high/critical)")
+    severity_filter: Optional[str] = Query(None, description="Filter by severity (info/low/medium/high/critical)")
 ):
     """
     Récupère les alertes de risque actives
@@ -1595,7 +1593,7 @@ async def get_risk_alerts(
 
 @router.get("/alerts/history")
 async def get_alerts_history(
-    limit: int = Query(50, ge=1, le=500, description="Nombre d'alertes à retourner")
+    limit: int = Query(50, ge=1, le=500, description="Number of alerts to return")
 ):
     """
     Récupère l'historique des alertes

@@ -78,24 +78,24 @@ function formatAlertClientSide(alert) {
   // Templates simplifiés
   const templates = {
     'VOL_Q90_CROSS': {
-      'S1': { action: 'Surveillance volatilité', impact_base: 0.5, reasons: ['Volatilité Q90 dépassée', 'Conditions de marché agitées'] },
-      'S2': { action: 'Réduction exposition (mode Slow)', impact_base: 2.0, reasons: ['Volatilité critique détectée', 'Risque de drawdown majoré'] },
-      'S3': { action: 'Arrêt immédiat trading (Freeze)', impact_base: 8.0, reasons: ['Volatilité extrême mesurée', 'Protection capital prioritaire'] }
+      'S1': { action: 'Volatility monitoring', impact_base: 0.5, reasons: ['Q90 volatility exceeded', 'Volatile market conditions'] },
+      'S2': { action: 'Exposure reduction (Slow mode)', impact_base: 2.0, reasons: ['Critical volatility detected', 'Increased drawdown risk'] },
+      'S3': { action: 'Immediate trading halt (Freeze)', impact_base: 8.0, reasons: ['Extreme volatility measured', 'Priority capital protection'] }
     },
     'EXEC_COST_SPIKE': {
-      'S1': { action: 'Surveillance coûts exécution', impact_base: 0.2, reasons: ['Coûts trading légèrement élevés', 'Conditions liquidité moyennes'] },
-      'S2': { action: 'Ralentissement trading (mode Slow)', impact_base: 1.5, reasons: ['Coûts exécution anormalement hauts', 'Liquidité marché dégradée'] },
-      'S3': { action: 'Arrêt trading (mode Freeze)', impact_base: 4.0, reasons: ['Coûts exécution prohibitifs', 'Liquidité marché très dégradée'] }
+      'S1': { action: 'Execution costs monitoring', impact_base: 0.2, reasons: ['Slightly elevated trading costs', 'Average liquidity conditions'] },
+      'S2': { action: 'Trading slowdown (Slow mode)', impact_base: 1.5, reasons: ['Abnormally high execution costs', 'Degraded market liquidity'] },
+      'S3': { action: 'Trading halt (Freeze mode)', impact_base: 4.0, reasons: ['Prohibitive execution costs', 'Severely degraded market liquidity'] }
     },
     'DECISION_DROP': {
-      'S1': { action: 'Monitoring confiance décision', impact_base: 0.4, reasons: ['Score décision en baisse', 'Confiance allocation réduite'] },
-      'S2': { action: 'Mode prudent allocation', impact_base: 2.2, reasons: ['Chute confiance décision significative', 'Qualité allocation dégradée'] },
-      'S3': { action: 'Mode ultra-conservateur (Freeze)', impact_base: 9.0, reasons: ['Effondrement confiance décision', 'Allocations potentiellement erronées'] }
+      'S1': { action: 'Decision confidence monitoring', impact_base: 0.4, reasons: ['Declining decision score', 'Reduced allocation confidence'] },
+      'S2': { action: 'Cautious allocation mode', impact_base: 2.2, reasons: ['Significant decision confidence drop', 'Degraded allocation quality'] },
+      'S3': { action: 'Ultra-conservative mode (Freeze)', impact_base: 9.0, reasons: ['Decision confidence collapse', 'Potentially erroneous allocations'] }
     }
   };
 
   const template = templates[alertType]?.[severity] ||
-    { action: `Alerte ${alertType}`, impact_base: 1.0, reasons: ['Situation détectée', 'Action recommandée'] };
+    { action: `Alerte ${alertType}`, impact_base: 1.0, reasons: ['Situation detected', 'Recommended action'] };
 
   const impact_euro = portfolioValue * template.impact_base / 100;
 

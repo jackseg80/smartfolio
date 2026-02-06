@@ -12,8 +12,8 @@ export const MARKET_REGIMES = {
     emoji: '🔵',
     range: [0, 39],
     color: '#3b82f6',
-    description: 'Phase d\'accumulation - Marché bearish/neutre',
-    strategy: 'BTC/ETH principalement, peu d\'alts, stables réduits',
+    description: 'Accumulation phase - Bearish/neutral market',
+    strategy: 'Mainly BTC/ETH, few alts, reduced stables',
     allocation_bias: {
       btc_boost: 10,
       eth_boost: 5,
@@ -28,8 +28,8 @@ export const MARKET_REGIMES = {
     emoji: '🟢',
     range: [40, 69],
     color: '#10b981',
-    description: 'Phase d\'expansion - Marché haussier modéré',
-    strategy: 'ETH + midcaps progressifs, équilibre',
+    description: 'Expansion phase - Moderate bullish market',
+    strategy: 'ETH + progressive midcaps, balance',
     allocation_bias: {
       btc_boost: 0,
       eth_boost: 0,
@@ -40,12 +40,12 @@ export const MARKET_REGIMES = {
   },
   
   euphoria: {
-    name: 'Euphorie',
+    name: 'Euphoria',
     emoji: '🟡',
     range: [70, 84],
     color: '#f59e0b',
-    description: 'Phase d\'euphorie - Bulle en formation',
-    strategy: 'Alts boostés, memes autorisés (max 15%)',
+    description: 'Euphoria phase - Bubble forming',
+    strategy: 'Alts boosted, memes allowed (max 15%)',
     allocation_bias: {
       btc_boost: -5,
       eth_boost: 5,
@@ -60,8 +60,8 @@ export const MARKET_REGIMES = {
     emoji: '🔴',
     range: [85, 100],
     color: '#dc2626',
-    description: 'Phase de distribution - Pic probable',
-    strategy: 'Retour stables + BTC, réduction alts',
+    description: 'Distribution phase - Likely peak',
+    strategy: 'Return to stables + BTC, reduce alts',
     allocation_bias: {
       btc_boost: 5,
       eth_boost: -5,
@@ -105,7 +105,7 @@ export function getMarketRegime(blendedScore) {
     key: 'expansion',
     score: blendedScore,
     confidence: 0.3,
-    warning: 'Régime non déterminé'
+    warning: 'Regime not determined'
   };
 }
 
@@ -178,7 +178,7 @@ export function applyMarketOverrides(regime, onchainScore, riskScore) {
       adjustedRegime.allocation_bias.stables_target += 10;
       overrides.push({
         type: 'onchain_divergence',
-        message: `Divergence On-Chain détectée (${divergence.toFixed(1)} pts)`,
+        message: `On-Chain divergence detected (${divergence.toFixed(1)} pts)`,
         adjustment: '+10% stables'
       });
     }
@@ -192,8 +192,8 @@ export function applyMarketOverrides(regime, onchainScore, riskScore) {
     adjustedRegime.allocation_bias.meme_cap = 0; // Couper memes
     overrides.push({
       type: 'low_robustness',
-      message: `Risk Score faible / Portfolio fragile (${riskScore})`,
-      adjustment: 'Protection: Stables ≥50%, Alts réduits'
+      message: `Low Risk Score / Fragile portfolio (${riskScore})`,
+      adjustment: 'Protection: Stables ≥50%, Alts reduced'
     });
   }
   
@@ -204,8 +204,8 @@ export function applyMarketOverrides(regime, onchainScore, riskScore) {
     adjustedRegime.allocation_bias.meme_cap += 5; // Plus de memes
     overrides.push({
       type: 'high_robustness',
-      message: `Risk Score élevé / Portfolio robuste (${riskScore})`,
-      adjustment: 'Boost: +5% alts/memes autorisés'
+      message: `High Risk Score / Robust portfolio (${riskScore})`,
+      adjustment: 'Boost: +5% alts/memes allowed'
     });
   }
   
@@ -436,8 +436,8 @@ export function generateRegimeRecommendations(regime, riskBudget) {
       recommendations.push({
         type: 'strategy',
         priority: 'high',
-        message: 'Phase d\'accumulation détectée',
-        action: 'Augmenter BTC/ETH, réduire alts, préparer next bull run'
+        message: 'Accumulation phase detected',
+        action: 'Increase BTC/ETH, reduce alts, prepare for next bull run'
       });
       break;
       
@@ -445,8 +445,8 @@ export function generateRegimeRecommendations(regime, riskBudget) {
       recommendations.push({
         type: 'strategy',
         priority: 'medium',
-        message: 'Expansion en cours',
-        action: 'Maintenir équilibre, rotation progressive vers ETH/midcaps'
+        message: 'Expansion in progress',
+        action: 'Maintain balance, progressive rotation towards ETH/midcaps'
       });
       break;
       
@@ -454,8 +454,8 @@ export function generateRegimeRecommendations(regime, riskBudget) {
       recommendations.push({
         type: 'warning',
         priority: 'high',
-        message: 'Euphorie détectée - Attention au pic !',
-        action: 'Préparer strategy de sortie, limiter nouvelles positions'
+        message: 'Euphoria detected - Watch out for the peak!',
+        action: 'Prepare exit strategy, limit new positions'
       });
       break;
       
@@ -464,7 +464,7 @@ export function generateRegimeRecommendations(regime, riskBudget) {
         type: 'alert',
         priority: 'critical',
         message: 'Phase de distribution - Pic probable imminent',
-        action: 'Rotation vers stables/BTC, réduction aggressive des alts'
+        action: 'Rotation to stables/BTC, aggressive alt reduction'
       });
       break;
   }
@@ -486,7 +486,7 @@ export function generateRegimeRecommendations(regime, riskBudget) {
     recommendations.push({
       type: 'risk',
       priority: 'medium',
-      message: 'Budget risque élevé détecté',
+      message: 'High risk budget detected',
       action: `Allocation stables recommandée: ${riskBudget.percentages.stables}%`
     });
   }

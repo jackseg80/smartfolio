@@ -133,9 +133,9 @@ export function validateAllocationCaps(allocation, state) {
     contradiction_level: contradictionPct,
     adaptive_mode: contradictionPct >= 40,
     recommendations: violations.length > 0 ? [
-      'Réduire l\'exposition aux segments violant les caps',
-      'Privilégier les majors (BTC/ETH) et stablecoins',
-      'Considérer l\'augmentation de la prudence'
+      'Reduce exposure to segments violating caps',
+      'Prioritize majors (BTC/ETH) and stablecoins',
+      'Consider increasing caution'
     ] : []
   };
 }

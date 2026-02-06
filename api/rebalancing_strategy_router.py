@@ -163,7 +163,7 @@ async def get_backtesting_strategies(if_none_match: str | None = Header(default=
 async def get_strategy_details(strategy_id: str) -> StrategyDetailResponse:
     """Détails d'une stratégie spécifique"""
     if strategy_id not in REBALANCING_STRATEGIES:
-        raise HTTPException(status_code=404, detail="Stratégie non trouvée")
+        raise HTTPException(status_code=404, detail="Strategy not found")
     return StrategyDetailResponse(strategy=Strategy(**REBALANCING_STRATEGIES[strategy_id]))
 
 @router.get("/api/strategies/{strategy_id}")

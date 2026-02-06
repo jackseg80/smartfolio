@@ -61,7 +61,7 @@ class FreezeRequest(BaseModel):
 
 class SnoozeRequest(BaseModel):
     """Requête de snooze d'alerte"""
-    minutes: int = Field(..., ge=5, le=1440, description="Durée snooze [5min-24h]")
+    minutes: int = Field(..., ge=5, le=1440, description="Snooze duration [5min-24h]")
     
 class AckRequest(BaseModel):
     """Requête d'acquittement (optionnel body)"""
@@ -158,9 +158,9 @@ def ensure_test_endpoints_enabled(request: Request):
 
 @router.get("/active", response_model=List[AlertResponse])
 async def get_active_alerts(
-    include_snoozed: bool = Query(default=False, description="Inclure alertes snoozées"),
-    severity_filter: Optional[str] = Query(default=None, description="Filtrer par gravité"),
-    type_filter: Optional[str] = Query(default=None, description="Filtrer par type"),
+    include_snoozed: bool = Query(default=False, description="Include snoozed alerts"),
+    severity_filter: Optional[str] = Query(default=None, description="Filter by severity"),
+    type_filter: Optional[str] = Query(default=None, description="Filter by type"),
     engine: AlertEngine = Depends(get_alert_engine),
     current_user: User = Depends(get_current_user)
 ):
@@ -284,10 +284,10 @@ async def list_alerts(
 
 @router.get("/formatted")
 async def get_formatted_alerts(
-    include_snoozed: bool = Query(default=False, description="Inclure alertes snoozées"),
-    severity_filter: Optional[str] = Query(default=None, description="Filtrer par gravité"),
-    type_filter: Optional[str] = Query(default=None, description="Filtrer par type"),
-    portfolio_value: Optional[float] = Query(default=None, description="Valeur portfolio pour calcul impact €"),
+    include_snoozed: bool = Query(default=False, description="Include snoozed alerts"),
+    severity_filter: Optional[str] = Query(default=None, description="Filter by severity"),
+    type_filter: Optional[str] = Query(default=None, description="Filter by type"),
+    portfolio_value: Optional[float] = Query(default=None, description="Portfolio value for impact calculation"),
     engine: AlertEngine = Depends(get_alert_engine),
     current_user: User = Depends(get_current_user)
 ):
@@ -492,9 +492,9 @@ async def get_alert_types():
 
 @router.get("/history")
 async def get_alert_history(
-    limit: int = Query(default=50, ge=1, le=200, description="Limite résultats"),
-    offset: int = Query(default=0, ge=0, description="Offset pagination"),
-    days: int = Query(default=7, ge=1, le=90, description="Période en jours"),
+    limit: int = Query(default=50, ge=1, le=200, description="Results limit"),
+    offset: int = Query(default=0, ge=0, description="Pagination offset"),
+    days: int = Query(default=7, ge=1, le=90, description="Period in days"),
     current_user: User = Depends(get_current_user)
 ):
     """

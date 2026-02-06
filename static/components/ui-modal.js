@@ -42,8 +42,8 @@ export class UIModal {
     this.closable = options.closable !== false;
     this.onClose = options.onClose || null;
     this.onConfirm = options.onConfirm || null;
-    this.confirmText = options.confirmText || 'Confirmer';
-    this.cancelText = options.cancelText || 'Annuler';
+    this.confirmText = options.confirmText || 'Confirm';
+    this.cancelText = options.cancelText || 'Cancel';
     this.showFooter = options.showFooter !== false;
 
     this.previousActiveElement = null;
@@ -204,7 +204,7 @@ export class UIModal {
       <header class="ui-modal__header">
         <h2 class="ui-modal__title" id="${this.id}-title">${this.title}</h2>
         ${this.closable ? `
-          <button class="ui-modal__close" aria-label="Fermer" type="button">
+          <button class="ui-modal__close" aria-label="Close" type="button">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
@@ -376,8 +376,8 @@ export class UIModal {
         size: 'small',
         onConfirm: () => resolve(true),
         onClose: () => resolve(false),
-        confirmText: 'Confirmer',
-        cancelText: 'Annuler'
+        confirmText: 'Confirm',
+        cancelText: 'Cancel'
       });
     });
   }

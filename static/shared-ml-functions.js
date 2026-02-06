@@ -6,7 +6,7 @@
 // Configuration API - uses centralized window.getApiBase() from global-config.js
 
 // Utilitaires UI communes
-export function showLoading(elementId, message = 'Chargement...') {
+export function showLoading(elementId, message = 'Loading...') {
     const element = document.getElementById(elementId);
     if (element) {
         element.innerHTML = `<span class="loading-spinner"></span> ${message}`;
@@ -147,9 +147,9 @@ export function setupActionButton(buttonId, actionFn, loadingText = 'Traitement.
 
         try {
             await actionFn(e);
-            showSuccess('Opération terminée avec succès');
+            showSuccess('Operation completed successfully');
         } catch (error) {
-            showError(`Erreur: ${error.message}`);
+            showError(`Error: ${error.message}`);
         } finally {
             btn.disabled = false;
             btn.textContent = originalText;

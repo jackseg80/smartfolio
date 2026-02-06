@@ -80,8 +80,8 @@ class TimeSeriesData(BaseModel):
 @router.get("/metrics", response_model=AdvancedMetrics)
 async def get_advanced_metrics(
     user: str = Depends(get_required_user),
-    days: int = Query(365, description="Nombre de jours d'historique"),
-    benchmark: Optional[str] = Query(None, description="Symbol de benchmark (BTC, ETH, etc.)")
+    days: int = Query(365, description="Number of days of history"),
+    benchmark: Optional[str] = Query(None, description="Benchmark symbol (BTC, ETH, etc.)")
 ):
     """
     Calculer les métriques de performance avancées
@@ -183,8 +183,8 @@ async def get_advanced_metrics(
 @router.get("/timeseries", response_model=TimeSeriesData)
 async def get_timeseries_data(
     user: str = Depends(get_required_user),
-    days: int = Query(365, description="Nombre de jours d'historique"),
-    granularity: str = Query("daily", description="Granularité: daily, weekly, monthly")
+    days: int = Query(365, description="Number of days of history"),
+    granularity: str = Query("daily", description="Granularity: daily, weekly, monthly")
 ):
     """
     Récupérer les données de série temporelle pour les graphiques
@@ -279,8 +279,8 @@ async def get_timeseries_data(
 @router.get("/drawdown-analysis")
 async def analyze_drawdowns(
     user: str = Depends(get_required_user),
-    days: int = Query(365, description="Nombre de jours d'historique"),
-    min_duration: int = Query(5, description="Durée minimum en jours")
+    days: int = Query(365, description="Number of days of history"),
+    min_duration: int = Query(5, description="Minimum duration in days")
 ):
     """
     Analyser les périodes de drawdown en détail
@@ -317,8 +317,8 @@ async def analyze_drawdowns(
 @router.get("/strategy-comparison")
 async def compare_strategies(
     user: str = Depends(get_required_user),
-    strategies: List[str] = Query(["rebalancing", "buy_hold", "momentum"], description="Stratégies à comparer"),
-    days: int = Query(365, description="Période d'analyse")
+    strategies: List[str] = Query(["rebalancing", "buy_hold", "momentum"], description="Strategies to compare"),
+    days: int = Query(365, description="Analysis period")
 ):
     """
     Comparer les performances de différentes stratégies
@@ -369,8 +369,8 @@ async def compare_strategies(
 @router.get("/risk-metrics")
 async def get_risk_metrics(
     user: str = Depends(get_required_user),
-    days: int = Query(365, description="Période d'analyse"),
-    confidence_level: float = Query(0.95, description="Niveau de confiance pour VaR")
+    days: int = Query(365, description="Analysis period"),
+    confidence_level: float = Query(0.95, description="Confidence level for VaR")
 ):
     """
     Calculer les métriques de risque avancées

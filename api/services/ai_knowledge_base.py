@@ -430,7 +430,7 @@ Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécial
 ### Analyse Balance Sheet
 - Équilibre actifs vs passifs
 - Liquidité disponible pour urgences
-- Diversification du patrimoine
+- Wealth diversification
 """,
 
     "settings": """

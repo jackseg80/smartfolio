@@ -125,7 +125,7 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
       criticalZoneCount: 0,
       correlationAnalysis: {},
       consensusSignals: {},
-      message: 'Aucun indicateur disponible'
+      message: 'No indicators available'
     };
   }
   
@@ -299,7 +299,7 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
       criticalZoneCount: 0,
       correlationAnalysis: {},
       consensusSignals: {},
-      message: 'Aucun indicateur réel disponible pour calculer le score composite'
+      message: 'No real indicators available to compute the composite score'
     };
   }
   
@@ -334,12 +334,12 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
     consensusSignals: consensusSignals,
     version: useDynamicWeighting ? 'V2-Dynamic' : 'V2',
     improvements: [
-      'Gestion des corrélations',
-      'Consensus voting par catégorie',
-      'Réduction de surpondération',
-      'Confiance composite avancée'
+      'Correlation management',
+      'Category consensus voting',
+      'Overweighting reduction',
+      'Advanced composite confidence'
     ],
-    message: `Score composite V2: ${totalIndicators} indicateurs dans ${activeCategories} catégories (${totalCriticalZone} critiques)`
+    message: `Composite Score V2: ${totalIndicators} indicators in ${activeCategories} categories (${totalCriticalZone} critical)`
   };
   
   // Ajouter les informations de pondération dynamique si utilisée
@@ -352,7 +352,7 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
       weightComparison: compareWeightingMethods(compositeScore, marketContext || {})
     };
     
-    result.improvements.push('Pondération dynamique contextuelle');
+    result.improvements.push('Contextual dynamic weighting');
     result.message += ` | Phase: ${dynamicWeightingResult.phase.name}`;
   }
   
@@ -383,7 +383,7 @@ export function analyzeContradictorySignals(categoryBreakdown) {
           category1: { name: cat1Name, signal: consensus1, confidence: cat1Data.consensus.confidence },
           category2: { name: cat2Name, signal: consensus2, confidence: cat2Data.consensus.confidence },
           severity: Math.abs(cat1Data.score - cat2Data.score),
-          recommendation: 'Attendre confirmation ou privilégier la catégorie avec plus haute confiance'
+          recommendation: 'Wait for confirmation or prioritize the category with highest confidence'
         });
       }
     }

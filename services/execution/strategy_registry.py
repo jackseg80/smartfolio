@@ -110,7 +110,7 @@ class StrategyRegistry:
                 phase_adjustments={"btc": 1.05, "eth": 1.0, "large": 0.95, "alt": 0.85, "bearish": 0.80},
                 confidence_threshold=0.6,
                 rebalance_threshold_pct=0.08,
-                description="Favorise la stabilité et la préservation du capital"
+                description="Favors stability and capital preservation"
             ),
             "balanced": StrategyConfig(
                 name="Balanced",
@@ -120,7 +120,7 @@ class StrategyRegistry:
                 phase_adjustments={"btc": 1.0, "eth": 1.0, "large": 1.0, "alt": 1.0, "bearish": 0.85},
                 confidence_threshold=0.5,
                 rebalance_threshold_pct=0.05,
-                description="Équilibre entre croissance et sécurité (défaut frontend)"
+                description="Balance between growth and safety (frontend default)"
             ),
             # ============================================================================
             # CRITICAL FIX (Feb 2026): Calibration des phase_adjustments
@@ -136,7 +136,7 @@ class StrategyRegistry:
                 phase_adjustments={"btc": 1.0, "eth": 1.02, "large": 1.05, "alt": 1.05, "bearish": 0.85},
                 confidence_threshold=0.4,
                 rebalance_threshold_pct=0.03,
-                description="Maximise l'alpha avec tolérance aux fluctuations"
+                description="Maximizes alpha with tolerance for fluctuations"
             )
         }
     

@@ -37,10 +37,10 @@ class ManualBourseSource(SourceBase):
     def get_source_info(cls) -> SourceInfo:
         return SourceInfo(
             id="manual_bourse",
-            name="Saisie manuelle",
+            name="Manual entry",
             category=SourceCategory.BOURSE,
             mode=SourceMode.MANUAL,
-            description="Entrez manuellement vos positions bourse",
+            description="Manually enter your stock positions",
             icon="pencil",
             supports_transactions=False,
             requires_credentials=False,

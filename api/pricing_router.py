@@ -17,10 +17,10 @@ router = APIRouter(tags=["pricing"])
     summary="Pricing diagnostic (local vs market)",
 )
 async def pricing_diagnostic(
-    source: str = Query("cointracking", description="Source des balances (cointracking|stub|cointracking_api)"),
-    min_usd: float = Query(1.0, description="Seuil minimum en USD pour filtrer les lignes"),
-    mode: str = Query("auto", description="Mode pricing à diagnostiquer: local|auto"),
-    limit: int = Query(50, ge=1, le=500, description="Nombre max de symboles à analyser")
+    source: str = Query("cointracking", description="Balance source (cointracking|stub|cointracking_api)"),
+    min_usd: float = Query(1.0, description="Minimum USD threshold to filter rows"),
+    mode: str = Query("auto", description="Pricing mode to diagnose: local|auto"),
+    limit: int = Query(50, ge=1, le=500, description="Maximum number of symbols to analyze")
 ):
     """Diagnostique la source de prix retenue par symbole selon la logique actuelle.
 

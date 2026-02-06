@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
   <meta charset="utf-8" />
@@ -378,48 +378,48 @@
 
     <!-- Tab header -->
     <div class="tabs" id="settings-tabs">
-      <button class="tab-btn active" data-target="#tab-overview">Résumé</button>
+      <button class="tab-btn active" data-target="#tab-overview">Summary</button>
       <!-- <button class="tab-btn" data-target="#tab-data">Source</button> Ancien onglet masqué - utiliser Sources -->
       <button class="tab-btn" data-target="#tab-pricing">Pricing</button>
-      <button class="tab-btn" data-target="#tab-api">Clés API</button>
+      <button class="tab-btn" data-target="#tab-api">API Keys</button>
       <button class="tab-btn" data-target="#tab-sources">Sources</button>
       <button class="tab-btn" data-target="#tab-interface">Interface</button>
-      <button class="tab-btn" data-target="#tab-advanced">Avancé</button>
+      <button class="tab-btn" data-target="#tab-advanced">Advanced</button>
     </div>
 
 
     <!-- Overview Tab -->
     <section class="tab-panel active" id="tab-overview">
       <div class="card" id="global-status"
-        data-tooltip="Statut global du système avec indicateurs de santé des connexions API et services."
-        data-source="Tests de connectivité en temps réel">
+        data-tooltip="Global system status with API and service connection health indicators."
+        data-source="Real-time connectivity tests">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div>
-            <h3>📊 Statut Global</h3>
-            <div id="status-summary">Chargement de la configuration...</div>
+            <h3>📊 Global Status</h3>
+            <div id="status-summary">Loading configuration...</div>
           </div>
           <div>
-            <button class="btn secondary small" onclick="resetToDefaults()">🔄 Réinitialiser</button>
+            <button class="btn secondary small" onclick="resetToDefaults()">🔄 Reset</button>
           </div>
         </div>
       </div>
 
       <!-- Quick Settings: options les plus utilisées -->
-      <div class="card" data-tooltip="Réglages rapides les plus courants" data-source="globalConfig">
-        <h3>⚙️ Réglages Rapides</h3>
+      <div class="card" data-tooltip="Most common quick settings" data-source="globalConfig">
+        <h3>⚙️ Quick Settings</h3>
         <div class="form-row">
           <div style="flex:1; min-width: 240px;">
-            <label for="quick_data_source">Source de données</label>
-            <select id="quick_data_source" aria-label="Source de données"></select>
-            <div class="help">Impacte tous les dashboards (balances, analytics et rebalancing)</div>
+            <label for="quick_data_source">Data source</label>
+            <select id="quick_data_source" aria-label="Data source"></select>
+            <div class="help">Affects all dashboards (balances, analytics and rebalancing)</div>
           </div>
           <div style="flex:1; min-width: 240px;">
-            <label for="quick_pricing">Mode de pricing</label>
-            <select id="quick_pricing" aria-label="Mode de pricing">
+            <label for="quick_pricing">Pricing mode</label>
+            <select id="quick_pricing" aria-label="Pricing mode">
               <option value="local">🏠 Local</option>
               <option value="auto">🚀 Auto</option>
             </select>
-            <div class="help">Local = prix depuis données, Auto = prix marché</div>
+            <div class="help">Local = prices from data, Auto = market prices</div>
           </div>
         </div>
         <div class="form-row">
@@ -428,8 +428,8 @@
             <input type="number" id="quick_min_usd" aria-label="Seuil minimum USD" min="0" step="0.01">
           </div>
           <div style="flex:1; min-width: 240px;">
-            <label for="quick_currency">Devise d'affichage</label>
-            <select id="quick_currency" aria-label="Devise d'affichage">
+            <label for="quick_currency">Display currency</label>
+            <select id="quick_currency" aria-label="Display currency">
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
               <option value="BTC">BTC (₿)</option>
@@ -438,9 +438,9 @@
         </div>
         <div class="form-row">
           <div style="flex:1; min-width: 240px;">
-            <label for="quick_theme">Thème</label>
-            <select id="quick_theme" aria-label="Thème">
-              <option value="auto">🌓 Automatique</option>
+            <label for="quick_theme">Theme</label>
+            <select id="quick_theme" aria-label="Theme">
+              <option value="auto">🌓 Automatic</option>
               <option value="light">☀️ Clair</option>
               <option value="dark">🌙 Sombre</option>
             </select>
@@ -452,7 +452,7 @@
           </div>
         </div>
         <div style="display:flex; gap:8px; margin-top: 8px; align-items: center;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Modifications sauvegardées automatiquement</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
         </div>
       </div>
     </section>
@@ -460,28 +460,28 @@
     <!-- Pricing Tab -->
     <section class="tab-panel" id="tab-pricing">
       <div class="card"
-        data-tooltip="Configuration des prix de référence et devises pour les calculs de valeur du portefeuille."
-        data-source="CoinGecko, CoinGlass, ou prix manuels">
-        <h3>💰 Pricing & Devises</h3>
+        data-tooltip="Reference pricing and currency configuration for portfolio value calculations."
+        data-source="CoinGecko, CoinGlass, or manual prices">
+        <h3>💰 Pricing & Currencies</h3>
         <div class="form-group">
-          <label>Mode de pricing</label>
+          <label>Pricing mode</label>
           <div class="radio-group">
             <div class="radio-option" onclick="selectPricing('local')">
               <input type="radio" name="pricing" value="local" id="pricing_local">
-              <label for="pricing_local">🏠 <strong>Local</strong> - Prix depuis les données</label>
+              <label for="pricing_local">🏠 <strong>Local</strong> - Prices from data</label>
             </div>
             <div class="radio-option" onclick="selectPricing('auto')">
               <input type="radio" name="pricing" value="auto" id="pricing_auto">
               <label for="pricing_auto">🚀 <strong>Auto</strong> - Prix automatiques</label>
             </div>
           </div>
-          <div class="help">Local utilise les prix dans vos données, Auto récupère les prix actuels via API.</div>
+          <div class="help">Local uses prices in your data, Auto fetches current prices via API.</div>
         </div>
 
         <div class="form-row">
           <div style="flex: 1;">
-            <label for="display_currency">Devise d'affichage</label>
-            <select id="display_currency" aria-label="Devise d'affichage">
+            <label for="display_currency">Display currency</label>
+            <select id="display_currency" aria-label="Display currency">
               <option value="USD">USD ($)</option>
               <option value="EUR">EUR (€)</option>
               <option value="BTC">BTC (₿)</option>
@@ -493,7 +493,7 @@
           </div>
         </div>
         <div style="margin-top: 12px;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Modifications sauvegardées automatiquement</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
         </div>
       </div>
     </section>
@@ -501,16 +501,16 @@
     <!-- API Keys Tab -->
     <section class="tab-panel" id="tab-api">
       <div class="card"
-        data-tooltip="Gestion sécurisée des clés API pour les exchanges et services de données (stockage local chiffré)."
-        data-source="Stockage local sécurisé + validation API">
-        <h3>🔑 Clés API</h3>
+        data-tooltip="Secure API key management for exchanges and data services (encrypted local storage)."
+        data-source="Secure local storage + API validation">
+        <h3>🔑 API Keys</h3>
 
         <!-- Grid responsive pour les sections de clés API -->
         <div class="api-keys-grid">
 
         <!-- ========== DATA SOURCES CRYPTO ========== -->
         <div style="margin-top: 24px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📊 Sources de Données Crypto</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📊 Crypto Data Sources</h4>
 
           <!-- CoinTracking API Keys (groupées ensemble) -->
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
@@ -522,90 +522,90 @@
             <div class="form-group" style="margin-bottom: 12px;">
               <label>CoinTracking API Key</label>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="password" id="cointracking_api_key" placeholder="Obligatoire pour source API" style="flex: 1;">
+                <input type="password" id="cointracking_api_key" placeholder="Required for API source" style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_key')"
                   style="min-width: 60px;">👁️</button>
                 <span id="cointracking_key_status" class="status-indicator status-warning"
-                  style="font-size: 10px;">Vide</span>
+                  style="font-size: 10px;">Empty</span>
               </div>
-              <div class="help">Clé API CoinTracking pour accès temps réel à vos balances.</div>
+              <div class="help">CoinTracking API key for real-time balance access.</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
               <label>CoinTracking API Secret</label>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="password" id="cointracking_api_secret" placeholder="Obligatoire pour source API"
+                <input type="password" id="cointracking_api_secret" placeholder="Required for API source"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_secret')"
                   style="min-width: 60px;">👁️</button>
                 <span id="cointracking_secret_status" class="status-indicator status-warning"
-                  style="font-size: 10px;">Vide</span>
+                  style="font-size: 10px;">Empty</span>
               </div>
-              <div class="help">Clé secrète CoinTracking (générée avec la clé API).</div>
+              <div class="help">CoinTracking secret key (generated with API key).</div>
             </div>
           </div>
         </div>
 
         <!-- ========== MARKET DATA ========== -->
         <div style="margin-top: 32px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📉 Données de Marché</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📉 Market Data</h4>
 
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <div class="form-group" style="margin-bottom: 12px;">
               <label>CoinGecko API Key</label>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="password" id="coingecko_api_key" placeholder="Optionnel - pour plus de requêtes"
+                <input type="password" id="coingecko_api_key" placeholder="Optional - for more requests"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('coingecko_api_key')"
                   style="min-width: 60px;">👁️</button>
-                <span id="coingecko_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                <span id="coingecko_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
-              <div class="help">Clé Demo API CoinGecko pour classification automatique et prix crypto temps réel.</div>
+              <div class="help">CoinGecko Demo API key for automatic classification and real-time crypto prices.</div>
             </div>
 
             <div class="form-group" style="margin-bottom: 0;">
               <label>FRED API Key (Federal Reserve Economic Data)</label>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="password" id="fred_api_key" placeholder="Clé pour données Bitcoin historiques"
+                <input type="password" id="fred_api_key" placeholder="Key for historical Bitcoin data"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('fred_api_key')"
                   style="min-width: 60px;">👁️</button>
-                <span id="fred_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                <span id="fred_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
-              <div class="help">Clé API gratuite FRED pour historique Bitcoin complet depuis 2014 (vs 365j CoinGecko).</div>
+              <div class="help">Free FRED API key for complete Bitcoin history since 2014 (vs 365d CoinGecko).</div>
             </div>
           </div>
         </div>
 
         <!-- ========== AI CHAT ASSISTANTS ========== -->
         <div style="margin-top: 32px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">🤖 Assistants IA (Choisissez-en un)</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">🤖 AI Assistants (Choose one)</h4>
 
           <!-- AI Chat Keys (groupées ensemble comme alternatives) -->
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <div style="margin-bottom: 12px;">
               <strong style="color: var(--brand-primary);">💬 AI Chat Assistants</strong>
-              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Choisissez-en un ou plusieurs)</span>
+              <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Choose one or more)</span>
             </div>
 
             <!-- Groq API Key (FREE) -->
             <div class="form-group" style="margin-bottom: 12px;">
-              <label>🤖 Groq API Key (Gratuit - Recommandé)</label>
+              <label>🤖 Groq API Key (Free - Recommended)</label>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="password" id="groq_api_key" placeholder="gsk_... (obtenez votre clé sur console.groq.com)"
+                <input type="password" id="groq_api_key" placeholder="gsk_... (get your key at console.groq.com)"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('groq_api_key')"
                   style="min-width: 60px;">👁️</button>
-                <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
-              <div class="help">Clé API gratuite Groq pour le chat IA (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé gratuite →</a></div>
+              <div class="help">Free Groq API key for AI chat (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Get a free key →</a></div>
             </div>
 
             <!-- Séparation FREE / PREMIUM -->
             <div style="margin: 20px 0; padding-top: 16px; border-top: 2px solid var(--theme-border);">
               <button id="toggle-premium-keys-btn" class="btn secondary" onclick="togglePremiumKeys()"
                 style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px;">
-                <span>💎 Clés API Premium (Payantes)</span>
+                <span>💎 API Keys Premium (Payantes)</span>
                 <span id="premium-keys-icon">▼</span>
               </button>
             </div>
@@ -615,37 +615,37 @@
               <div class="form-group" style="margin-bottom: 12px;">
                 <label>🧠 Claude API Key (Premium - Plus intelligent)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="password" id="claude_api_key" placeholder="sk-ant-... (obtenez votre clé sur console.anthropic.com)"
+                  <input type="password" id="claude_api_key" placeholder="sk-ant-... (get your key at console.anthropic.com)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('claude_api_key')"
                     style="min-width: 60px;">👁️</button>
-                  <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                  <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
-                <div class="help">Clé API Claude (payant) pour le chat IA premium (Sonnet 3.5, plus intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+                <div class="help">Claude API key (paid) for premium AI chat (Sonnet 3.5, more intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
               </div>
 
               <div class="form-group" style="margin-bottom: 12px;">
                 <label>🚀 Grok API Key (xAI - Premium)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="password" id="grok_api_key" placeholder="xai-... (obtenez votre clé sur console.x.ai)"
+                  <input type="password" id="grok_api_key" placeholder="xai-... (get your key at console.x.ai)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('grok_api_key')"
                     style="min-width: 60px;">👁️</button>
-                  <span id="grok_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                  <span id="grok_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
-                <div class="help">Clé API Grok (xAI) pour le chat IA (Grok Beta). <a href="https://console.x.ai" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+                <div class="help">Grok API key (xAI) for AI chat (Grok Beta). <a href="https://console.x.ai" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
               </div>
 
               <div class="form-group" style="margin-bottom: 0;">
                 <label>🤖 OpenAI API Key (Premium - GPT)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                  <input type="password" id="openai_api_key" placeholder="sk-... (obtenez votre clé sur platform.openai.com)"
+                  <input type="password" id="openai_api_key" placeholder="sk-... (get your key at platform.openai.com)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('openai_api_key')"
                     style="min-width: 60px;">👁️</button>
-                  <span id="openai_status" class="status-indicator status-warning" style="font-size: 10px;">Vide</span>
+                  <span id="openai_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
-                <div class="help">Clé API OpenAI (payant) pour le chat IA (GPT-4o). <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--brand-primary);">Obtenir une clé →</a></div>
+                <div class="help">OpenAI API key (paid) for AI chat (GPT-4o). <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
               </div>
             </div>
           </div>
@@ -659,37 +659,37 @@
 
           <div id="saxo-status-banner" class="status-indicator" style="margin-bottom: 16px;">
             <!-- Dynamically populated by JavaScript -->
-            <span id="saxo-status-text">Chargement du statut...</span>
+            <span id="saxo-status-text">Loading status...</span>
           </div>
 
           <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
             <button id="saxo-connect-btn" class="btn" onclick="initSaxoLogin()">
-              🔐 Se connecter à Saxo
+              🔐 Connect to Saxo
             </button>
             <button id="saxo-disconnect-btn" class="btn danger" onclick="disconnectSaxo()" style="display: none;">
-              🔓 Déconnecter
+              🔓 Disconnect
             </button>
             <button id="saxo-refresh-btn" class="btn secondary" onclick="refreshSaxoToken()" style="display: none;">
-              🔄 Rafraîchir
+              🔄 Refresh
             </button>
           </div>
 
           <div id="saxo-info" class="card" style="display: none; background: var(--theme-surface-elevated); padding: 12px;">
             <p style="margin: 4px 0;"><strong>Environnement:</strong> <span id="saxo-env">--</span></p>
             <p style="margin: 4px 0;"><strong>Token expire:</strong> <span id="saxo-expires">--</span></p>
-            <p style="margin: 4px 0;"><strong>Dernière mise à jour:</strong> <span id="saxo-last-update">--</span></p>
+            <p style="margin: 4px 0;"><strong>Last update:</strong> <span id="saxo-last-update">--</span></p>
           </div>
 
           <div class="help" style="margin-top: 8px;">
-            ⚠️ Reconnexion requise toutes les 24h (limitation comptes Self-Developer)
+            ⚠️ Reconnection required every 24h (Self-Developer account limitation)
           </div>
         </div>
 
-        <!-- Actions spécifiques Clés API -->
+        <!-- Actions spécifiques API Keys -->
         <div style="display:flex; flex-direction: column; gap:8px; margin: 8px 0 12px 0;">
-          <button class="btn" onclick="saveAllSettings()">💾 Sauvegarder les clés API</button>
+          <button class="btn" onclick="saveAllSettings()">💾 Save API Keys</button>
           <span style="color: var(--theme-text-muted); font-size: 13px;">
-            ⚠️ Les clés API nécessitent une sauvegarde manuelle pour des raisons de sécurité
+            ⚠️ API keys require manual save for security reasons
           </span>
         </div>
 
@@ -707,16 +707,16 @@
 
       <!-- Préférences Interface -->
       <div class="card"
-        data-tooltip="Personnalisation de l'interface utilisateur : thèmes, langue, format des nombres et raccourcis."
-        data-source="Préférences utilisateur locales">
-        <h3>🎨 Interface & Préférences</h3>
+        data-tooltip="User interface customization: themes, language, number format and shortcuts."
+        data-source="Local user preferences">
+        <h3>🎨 Interface & Preferences</h3>
 
         <div class="form-group">
-          <label>Thème de l'interface</label>
+          <label>Interface theme</label>
           <div class="radio-group">
             <div class="radio-option" onclick="selectTheme('auto')">
               <input type="radio" name="theme" value="auto" id="theme_auto">
-              <label for="theme_auto">🌓 <strong>Automatique</strong> - Suit les préférences système</label>
+              <label for="theme_auto">🌓 <strong>Automatic</strong> - Follows system preferences</label>
             </div>
             <div class="radio-option" onclick="selectTheme('light')">
               <input type="radio" name="theme" value="light" id="theme_light">
@@ -727,7 +727,7 @@
               <label for="theme_dark">🌙 <strong>Sombre</strong> - Mode nuit</label>
             </div>
           </div>
-          <div class="help">Le thème s'applique automatiquement sur toutes les pages de l'application.</div>
+          <div class="help">The theme applies automatically on all pages of the application.</div>
         </div>
 
         <!-- ====== Apparence / Style UI ====== -->
@@ -753,7 +753,7 @@
                 <input type="radio" name="ui-style" value="minimal"> Minimal
               </label>
             </div>
-            <div class="help">Change uniquement l’habillage (coins/ombres/surfaces). Aucune incidence sur la logique.
+            <div class="help">Only changes the appearance (corners/shadows/surfaces). No impact on logic.
             </div>
           </div>
         </div>
@@ -780,13 +780,13 @@
             <div class="help">Configuration serveur (.env: API_BASE_URL) - lecture seule</div>
           </div>
           <div style="flex: 1;">
-            <label>Fréquence auto-refresh (min)</label>
+            <label>Auto-refresh frequency (min)</label>
             <input type="number" id="refresh_interval" min="1" max="60" value="5">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Fonctionnalités actives</label>
+          <label>Active features</label>
           <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
             <label style="display: flex; align-items: center; gap: 8px; font-weight: normal;">
               <input type="checkbox" id="enable_coingecko_classification" checked>
@@ -803,25 +803,25 @@
           </div>
         </div>
         <div style="margin-top: 12px;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Modifications sauvegardées automatiquement</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
         </div>
       </div>
     </section>
 
 <!-- Sources Tab V2 - Category-based Sources Management -->
 <section class="tab-panel" id="tab-sources">
-  <div class="card" data-tooltip="Gérez vos sources de données par catégorie (Crypto, Bourse)"
-    data-source="Système sources modulaire V2">
-    <h3>📊 Sources de Données</h3>
+  <div class="card" data-tooltip="Manage your data sources by category (Crypto, Stock)"
+    data-source="Modular sources system V2">
+    <h3>📊 Data Sources</h3>
     <div class="help" style="margin-bottom: 16px;">
-      Gérez vos sources crypto et bourse de manière indépendante. Chaque catégorie peut utiliser une source différente (saisie manuelle, import CSV, API temps réel).
+      Manage your crypto and stock sources independently. Each category can use a different source (manual entry, CSV import, real-time API).
     </div>
 
     <!-- Container for Sources V2 UI (dynamically rendered) -->
     <div id="sources-v2-container">
       <div class="loading-placeholder">
         <div class="spinner"></div>
-        <span>Chargement des sources...</span>
+        <span>Loading sources...</span>
       </div>
     </div>
 
@@ -2117,48 +2117,48 @@
 
       <!-- Configuration & Données -->
       <div class="card"
-        data-tooltip="Sauvegarde et restauration de la configuration utilisateur."
-        data-source="Fonctions système internes">
-        <h3>💾 Configuration & Données</h3>
+        data-tooltip="User configuration backup and restore."
+        data-source="Internal system functions">
+        <h3>💾 Configuration & Data</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="btn secondary" onclick="exportSettings()">📤 Exporter Config</button>
-          <button class="btn secondary" onclick="importSettings()">📥 Importer Config</button>
-          <button class="btn danger" onclick="resetAllData()">⚠️ Reset Complet</button>
+          <button class="btn secondary" onclick="exportSettings()">📤 Export Config</button>
+          <button class="btn secondary" onclick="importSettings()">📥 Import Config</button>
+          <button class="btn danger" onclick="resetAllData()">⚠️ Full Reset</button>
         </div>
       </div>
 
-      <!-- Gestion du Cache -->
+      <!-- Cache Management -->
       <div class="card"
-        data-tooltip="Gestion avancée du cache local et backend pour optimiser les performances."
+        data-tooltip="Advanced local and backend cache management to optimize performance."
         data-source="Redis + LocalStorage">
-        <h3>🗄️ Gestion du Cache</h3>
+        <h3>🗄️ Cache Management</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-          <button class="btn secondary" onclick="clearLocalCache()">🗑️ Vider Cache Local</button>
-          <button class="btn secondary" onclick="clearBackendCache()">🔄 Vider Cache Backend</button>
-          <button class="btn secondary" onclick="showCacheStats()">📊 Statistiques Cache</button>
+          <button class="btn secondary" onclick="clearLocalCache()">🗑️ Clear Local Cache</button>
+          <button class="btn secondary" onclick="clearBackendCache()">🔄 Clear Backend Cache</button>
+          <button class="btn secondary" onclick="showCacheStats()">📊 Cache Statistics</button>
         </div>
         <div id="cache-stats-display" style="font-size: 13px; color: var(--theme-text-muted);"></div>
       </div>
 
       <!-- Logs & Diagnostics -->
       <div class="card"
-        data-tooltip="Visualisation des logs système et diagnostics réseau."
+        data-tooltip="System log viewer and network diagnostics."
         data-source="Logs backend + API health checks">
         <h3>📋 Logs & Diagnostics</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-          <button class="btn secondary" onclick="viewRecentLogs()">👁️ Voir Logs Récents</button>
-          <button class="btn secondary" onclick="downloadLogs()">📥 Télécharger Logs</button>
-          <button class="btn secondary" onclick="pingBackend()">🏓 Test Latence</button>
+          <button class="btn secondary" onclick="viewRecentLogs()">👁️ View Recent Logs</button>
+          <button class="btn secondary" onclick="downloadLogs()">📥 Download Logs</button>
+          <button class="btn secondary" onclick="pingBackend()">🏓 Latency Test</button>
         </div>
         <div id="logs-display" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; background: var(--theme-surface-elevated); padding: 8px; border-radius: 6px; display: none;"></div>
         <div id="ping-results" style="margin-top: 8px; font-size: 13px;"></div>
       </div>
 
-      <!-- Diagnostics Détaillés -->
+      <!-- Detailed Diagnostics -->
       <div class="card"
-        data-tooltip="Tests individuels par composant pour diagnostic précis."
+        data-tooltip="Individual component tests for precise diagnostics."
         data-source="Tests API granulaires">
-        <h3>🔍 Diagnostics Détaillés</h3>
+        <h3>🔍 Detailed Diagnostics</h3>
         <div class="test-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 12px;">
           <button class="btn small secondary" onclick="testRedis()">🔴 Redis</button>
           <button class="btn small secondary" onclick="testMLModels()">🤖 ML Models</button>
@@ -2172,13 +2172,13 @@
         <div id="detailed-test-results" class="test-result" style="margin-top: 12px;"></div>
       </div>
 
-      <!-- Test Complet du Système -->
+      <!-- Complete System Test -->
       <div class="card"
-        data-tooltip="Test global de tous les composants critiques du système."
+        data-tooltip="Global test of all critical system components."
         data-source="Tests API complets">
-        <h3>🧪 Test Complet du Système</h3>
+        <h3>🧪 Complete System Test</h3>
         <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
-          Lance une batterie complète de tests couvrant tous les composants : Backend, Redis, ML, Risk, Alerts, Saxo, Wealth, Sources, Governance, et plus.
+          Runs a complete battery of tests covering all components: Backend, Redis, ML, Risk, Alerts, Saxo, Wealth, Sources, Governance, and more.
         </p>
         <button class="btn" onclick="runFullSystemTest()">🚀 Lancer Test Complet</button>
         <div id="full-system-test"></div>
@@ -2186,14 +2186,14 @@
 
       <!-- Admin Quick Access (conditional) -->
       <div class="card" id="admin-quick-access" style="display: none;"
-        data-tooltip="Accès rapide au dashboard admin (réservé aux administrateurs)."
-        data-source="RBAC - Rôle admin requis">
+        data-tooltip="Quick access to admin dashboard (administrators only)."
+        data-source="RBAC - Admin role required">
         <h3>👑 Administration</h3>
         <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
-          Accès rapide aux fonctions d'administration système.
+          Quick access to system administration functions.
         </p>
         <button class="btn" onclick="location.href='admin-dashboard.html'">
-          🎛️ Ouvrir Admin Dashboard
+          🎛️ Open Admin Dashboard
         </button>
       </div>
 
@@ -2225,8 +2225,8 @@
 
       if (status === 'error' && window.opener) {
         // Connection failed in popup
-        const message = urlParams.get('message') || 'Erreur inconnue';
-        alert('❌ Erreur OAuth: ' + decodeURIComponent(message));
+        const message = urlParams.get('message') || 'Unknown error';
+        alert('❌ OAuth Error: ' + decodeURIComponent(message));
         window.close();
         return;
       }
@@ -2288,7 +2288,7 @@
         if (connectionState === 'connected') {
           // Connected state
           statusBanner.className = 'status-indicator status-ok';
-          statusText.textContent = '✅ Connecté à Saxo Bank API';
+          statusText.textContent = '✅ Connected to Saxo Bank API';
 
           connectBtn.style.display = 'none';
           disconnectBtn.style.display = 'inline-block';
@@ -2297,8 +2297,8 @@
 
           // Update info
           document.getElementById('saxo-env').textContent = status.environment === 'sim' ? 'Simulation' : 'Production (Live)';
-          document.getElementById('saxo-expires').textContent = new Date(status.expires_at).toLocaleString('fr-FR');
-          document.getElementById('saxo-last-update').textContent = new Date(status.last_update).toLocaleString('fr-FR');
+          document.getElementById('saxo-expires').textContent = new Date(status.expires_at).toLocaleString('en-US');
+          document.getElementById('saxo-last-update').textContent = new Date(status.last_update).toLocaleString('en-US');
         } else if (connectionState === 'expired') {
           // Token expired state - Auto-disconnect silencieusement
           try {
@@ -2312,7 +2312,7 @@
 
           // Afficher comme déconnecté
           statusBanner.className = 'status-indicator status-warning';
-          statusText.textContent = '⚠️ Session expirée - Veuillez vous reconnecter';
+          statusText.textContent = '⚠️ Session expired - Please reconnect';
 
           connectBtn.style.display = 'inline-block';
           disconnectBtn.style.display = 'none';  // Déjà déconnecté
@@ -2321,7 +2321,7 @@
         } else {
           // Disconnected state (no tokens)
           statusBanner.className = 'status-indicator status-warning';
-          statusText.textContent = '⚠️ Non connecté';
+          statusText.textContent = '⚠️ Not connected';
 
           connectBtn.style.display = 'inline-block';
           disconnectBtn.style.display = 'none';
@@ -2333,7 +2333,7 @@
         const statusBanner = document.getElementById('saxo-status-banner');
         const statusText = document.getElementById('saxo-status-text');
         statusBanner.className = 'status-indicator status-error';
-        statusText.textContent = '❌ Erreur lors de la récupération du statut';
+        statusText.textContent = '❌ Error retrieving status';
       }
     }
 
@@ -2368,18 +2368,18 @@
             await updateSaxoOAuthStatus();
             const banner = document.getElementById('saxo-status-banner');
             if (banner.className.includes('status-ok')) {
-              alert('✅ Connexion à Saxo réussie!');
+              alert('✅ Saxo connection successful!');
             }
           }
         }, 2000);
       } catch (error) {
         console.error('Error initiating Saxo login:', error);
-        alert('❌ Erreur lors de la connexion à Saxo: ' + error.message);
+        alert('❌ Error connecting to Saxo: ' + error.message);
       }
     }
 
     async function disconnectSaxo() {
-      if (!confirm('Voulez-vous vraiment vous déconnecter de Saxo Bank API?')) {
+      if (!confirm('Do you really want to disconnect from Saxo Bank API?')) {
         return;
       }
 
@@ -2394,17 +2394,17 @@
         await updateSaxoOAuthStatus();
 
         if (response.ok) {
-          alert('✅ Déconnexion réussie');
+          alert('✅ Successfully disconnected');
         } else {
           // Disconnect endpoint is now graceful, but show warning if unexpected error
           console.warn('Disconnect returned non-ok status, but state cleared');
-          alert('⚠️ Tokens supprimés (session était peut-être déjà expirée)');
+          alert('⚠️ Tokens deleted (session may have already expired)');
         }
       } catch (error) {
         console.error('Error disconnecting from Saxo:', error);
         // Still try to update status
         await updateSaxoOAuthStatus();
-        alert('⚠️ Erreur réseau, mais tokens locaux supprimés');
+        alert('⚠️ Network error, but local tokens removed');
       }
     }
 
@@ -2419,7 +2419,7 @@
         if (!response.ok) {
           const data = await response.json();
           if (response.status === 401) {
-            alert('⚠️ Token expiré - veuillez vous reconnecter');
+            alert('⚠️ Token expired - please reconnect');
             await updateSaxoOAuthStatus();
             return;
           }
@@ -2427,10 +2427,10 @@
         }
 
         await updateSaxoOAuthStatus();
-        alert('✅ Token rafraîchi avec succès');
+        alert('✅ Token refreshed successfully');
       } catch (error) {
         console.error('Error refreshing Saxo token:', error);
-        alert('❌ Erreur lors du rafraîchissement: ' + error.message);
+        alert('❌ Error refreshing: ' + error.message);
       }
     }
 
@@ -2457,10 +2457,10 @@
           container.innerHTML = `
             <div class="error-state" style="text-align: center; padding: 40px 20px; color: var(--danger);">
               <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
-              <div style="font-size: 16px; font-weight: 600;">Erreur de chargement</div>
+              <div style="font-size: 16px; font-weight: 600;">Loading Error</div>
               <div style="font-size: 13px; margin-top: 8px; color: var(--theme-text-muted);">${error.message}</div>
               <button class="btn secondary" onclick="initializeSourcesV2()" style="margin-top: 16px;">
-                🔄 Réessayer
+                🔄 Retry
               </button>
             </div>
           `;

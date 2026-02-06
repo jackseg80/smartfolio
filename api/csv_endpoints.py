@@ -140,7 +140,7 @@ def get_csv_export_url(file_type: str) -> str:
     }
     
     if file_type not in urls:
-        raise HTTPException(status_code=400, detail=f"Type de fichier non supporté: {file_type}")
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {file_type}")
     
     return urls[file_type]
 

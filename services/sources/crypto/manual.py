@@ -37,10 +37,10 @@ class ManualCryptoSource(SourceBase):
     def get_source_info(cls) -> SourceInfo:
         return SourceInfo(
             id="manual_crypto",
-            name="Saisie manuelle",
+            name="Manual entry",
             category=SourceCategory.CRYPTO,
             mode=SourceMode.MANUAL,
-            description="Entrez manuellement vos soldes crypto",
+            description="Manually enter your crypto balances",
             icon="pencil",
             supports_transactions=False,
             requires_credentials=False,

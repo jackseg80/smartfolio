@@ -64,66 +64,66 @@ PlanStatus = Literal["DRAFT", "REVIEWED", "APPROVED", "ACTIVE", "EXECUTED", "CAN
 
 class Target(BaseModel):
     """Cible d'allocation pour un groupe/asset"""
-    symbol: str = Field(..., description="Symbole ou groupe (BTC, ETH, Stablecoins, etc.)")
-    weight: float = Field(..., ge=0.0, le=1.0, description="Poids d'allocation [0-1]")
+    symbol: str = Field(..., description="Symbol or group (BTC, ETH, Stablecoins, etc.)")
+    weight: float = Field(..., ge=0.0, le=1.0, description="Allocation weight [0-1]")
 
 
 class DecisionPlan(BaseModel):
     """Plan de décision avec targets et métadonnées"""
-    plan_id: str = Field(..., description="ID unique du plan")
-    created_at: datetime = Field(default_factory=datetime.now, description="Date de création")
-    status: PlanStatus = Field(default="DRAFT", description="Statut du plan")
-    version: int = Field(default=1, ge=1, description="Version pour concurrency")
-    etag: str = Field(..., description="ETag pour optimistic concurrency")
+    plan_id: str = Field(..., description="Unique plan ID")
+    created_at: datetime = Field(default_factory=datetime.now, description="Creation date")
+    status: PlanStatus = Field(default="DRAFT", description="Plan status")
+    version: int = Field(default=1, ge=1, description="Version for concurrency")
+    etag: str = Field(..., description="ETag for optimistic concurrency")
 
     # State transition timestamps
-    reviewed_at: Optional[datetime] = Field(default=None, description="Date de review")
-    approved_at: Optional[datetime] = Field(default=None, description="Date d'approbation")
-    activated_at: Optional[datetime] = Field(default=None, description="Date d'activation")
-    executed_at: Optional[datetime] = Field(default=None, description="Date d'exécution")
-    cancelled_at: Optional[datetime] = Field(default=None, description="Date d'annulation")
+    reviewed_at: Optional[datetime] = Field(default=None, description="Review date")
+    approved_at: Optional[datetime] = Field(default=None, description="Approval date")
+    activated_at: Optional[datetime] = Field(default=None, description="Activation date")
+    executed_at: Optional[datetime] = Field(default=None, description="Execution date")
+    cancelled_at: Optional[datetime] = Field(default=None, description="Cancellation date")
 
-    # Contenu du plan
-    targets: List[Target] = Field(..., description="Cibles d'allocation")
-    governance_mode: GovernanceMode = Field(..., description="Mode de gouvernance")
+    # Plan content
+    targets: List[Target] = Field(..., description="Allocation targets")
+    governance_mode: GovernanceMode = Field(..., description="Governance mode")
 
-    # Constraints et validation
-    total_weight: float = Field(default=1.0, description="Somme des poids (doit = 1.0)")
-    risk_budget: Optional[float] = Field(default=None, description="Budget de risque")
-    non_removable: List[str] = Field(default_factory=list, description="Assets non supprimables")
+    # Constraints and validation
+    total_weight: float = Field(default=1.0, description="Sum of weights (must = 1.0)")
+    risk_budget: Optional[float] = Field(default=None, description="Risk budget")
+    non_removable: List[str] = Field(default_factory=list, description="Non-removable assets")
 
     # State transition metadata
-    created_by: str = Field(default="system", description="Créateur du plan")
-    reviewed_by: Optional[str] = Field(default=None, description="Reviewer du plan")
-    approved_by: Optional[str] = Field(default=None, description="Approbateur")
-    notes: Optional[str] = Field(default=None, description="Notes du plan")
-    review_notes: Optional[str] = Field(default=None, description="Notes de review")
-    approval_notes: Optional[str] = Field(default=None, description="Notes d'approbation")
+    created_by: str = Field(default="system", description="Plan creator")
+    reviewed_by: Optional[str] = Field(default=None, description="Plan reviewer")
+    approved_by: Optional[str] = Field(default=None, description="Approver")
+    notes: Optional[str] = Field(default=None, description="Plan notes")
+    review_notes: Optional[str] = Field(default=None, description="Review notes")
+    approval_notes: Optional[str] = Field(default=None, description="Approval notes")
 
 
 class DecisionState(BaseModel):
     """État global du Decision Engine"""
     # Plan actuel
-    current_plan: Optional[DecisionPlan] = Field(default=None, description="Plan actuellement actif")
-    proposed_plan: Optional[DecisionPlan] = Field(default=None, description="Plan proposé en attente")
+    current_plan: Optional[DecisionPlan] = Field(default=None, description="Currently active plan")
+    proposed_plan: Optional[DecisionPlan] = Field(default=None, description="Pending proposed plan")
 
     # Governance
-    governance_mode: GovernanceMode = Field(default="manual", description="Mode de gouvernance global")
-    execution_policy: Policy = Field(default_factory=Policy, description="Politique d'exécution")
-    last_applied_policy: Optional[Policy] = Field(default=None, description="Derniere policy appliquee manuellement")
-    last_manual_policy_update: Optional[datetime] = Field(default=None, description="Timestamp derniere activation manuelle")
+    governance_mode: GovernanceMode = Field(default="manual", description="Global governance mode")
+    execution_policy: Policy = Field(default_factory=Policy, description="Execution policy")
+    last_applied_policy: Optional[Policy] = Field(default=None, description="Last manually applied policy")
+    last_manual_policy_update: Optional[datetime] = Field(default=None, description="Last manual activation timestamp")
 
-    # Signaux ML
-    signals: MLSignals = Field(default_factory=MLSignals, description="Signaux ML actuels")
-    raw_signals: Dict[str, Any] = Field(default_factory=dict, description="Signaux ML bruts pour XAI (structure orchestrator)")
+    # ML Signals
+    signals: MLSignals = Field(default_factory=MLSignals, description="Current ML signals")
+    raw_signals: Dict[str, Any] = Field(default_factory=dict, description="Raw ML signals for XAI (orchestrator structure)")
 
-    # Métadonnées
-    last_update: datetime = Field(default_factory=datetime.now, description="Dernière MAJ")
-    system_status: str = Field(default="operational", description="Statut système")
-    auto_unfreeze_at: Optional[datetime] = Field(default=None, description="Auto-unfreeze programmé")
+    # Metadata
+    last_update: datetime = Field(default_factory=datetime.now, description="Last update")
+    system_status: str = Field(default="operational", description="System status")
+    auto_unfreeze_at: Optional[datetime] = Field(default=None, description="Scheduled auto-unfreeze")
 
-    # Phase 1C: Type de freeze avec sémantique claire
-    freeze_type: Optional[str] = Field(default=None, description="Type de freeze actuel (s3_freeze, error_freeze, full_freeze)")
+    # Phase 1C: Freeze type with clear semantics
+    freeze_type: Optional[str] = Field(default=None, description="Current freeze type (s3_freeze, error_freeze, full_freeze)")
 
 
 class GovernanceEngine:

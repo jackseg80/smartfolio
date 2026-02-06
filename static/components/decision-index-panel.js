@@ -2,7 +2,7 @@
  * Decision Index Panel v7.1 - Actionnable Design with Smart Recommendations
  *
  * Layout 2 colonnes équilibré avec recommandations contextuelles
- * - Colonne gauche: Score DI + Barre + Contributions annotées + Métadonnées
+ * - Colonne gauche: Score DI + Barre + Contributions annotées + Metadata
  * - Colonne droite: Recommandation intelligente + 3 piliers (Cycle, On-Chain, Risk) + Footer stats
  * - Design gaming compact et moderne
  * - Focus sur l'actionnable (suppression trend/régime redondants)
@@ -16,7 +16,7 @@
  * Changements v7.0:
  * - ✅ Contributions annotées (scores alignés avec barres)
  * - ✅ Recommandation actionnable basée sur le DI (déplacée à droite pour équilibrage)
- * - ✅ Métadonnées utiles (confiance, mode, freshness)
+ * - ✅ Metadata utiles (confiance, mode, freshness)
  * - ❌ Supprimé: Trend 7j + sparkline (jamais visible)
  * - ❌ Supprimé: Régime ribbon (redondant avec piliers droite)
  *
@@ -134,10 +134,10 @@ function getLevelText(score) {
   const level = getScoreLevel(score);
   switch(level) {
     case 'excellent': return 'Excellent';
-    case 'good': return 'Bon';
-    case 'medium': return 'Moyen';
-    case 'warning': return 'Faible';
-    case 'danger': return 'Critique';
+    case 'good': return 'Good';
+    case 'medium': return 'Average';
+    case 'warning': return 'Low';
+    case 'danger': return 'Critical';
     default: return 'N/A';
   }
 }
@@ -269,7 +269,7 @@ function renderScoresAndContributions(scores, contributions) {
 function renderRecommendation(score, meta, scores = {}) {
   let icon = '💡';
   let title = 'Position neutre';
-  let action = 'Surveillance recommandée';
+  let action = 'Monitoring recommended';
   let details = '';
   let colorClass = 'neutral';
 
@@ -290,68 +290,68 @@ function renderRecommendation(score, meta, scores = {}) {
     colorClass = 'bullish';
 
     if (strongCycle && onchain >= 50) {
-      action = 'Allouer 15-20% vers actifs risqués';
-      details = 'Cycle expansion + On-Chain favorable → Opportunité d\'accumulation';
+      action = 'Allocate 15-20% to risky assets';
+      details = 'Cycle expansion + On-Chain favorable → Accumulation opportunity';
     } else if (criticalOnchain) {
-      action = 'Allouer avec prudence (10-15%)';
-      details = 'Malgré DI élevé, signaux on-chain faibles → Vigilance requise';
+      action = 'Allocate with caution (10-15%)';
+      details = 'Despite high DI, weak on-chain signals → Vigilance required';
     } else {
-      action = 'Augmenter exposition risque progressivement';
-      details = 'Conditions favorables → Réduire stables à 10-15%';
+      action = 'Gradually increase risk exposure';
+      details = 'Favorable conditions → Reduce stables to 10-15%';
     }
 
   } else if (score >= 60) {
     icon = '✅';
-    title = 'Position favorable';
+    title = 'Favorable position';
     colorClass = 'positive';
 
     if (cycle >= 60 && risk >= 50) {
-      action = 'Maintenir allocation actuelle';
-      details = `Cycle ${Math.round(cycle)} + Risk ${Math.round(risk)} → Équilibre stable`;
+      action = 'Maintain current allocation';
+      details = `Cycle ${Math.round(cycle)} + Risk ${Math.round(risk)} → Stable balance`;
     } else if (criticalOnchain) {
-      action = 'Conserver mais surveiller on-chain';
-      details = 'Signaux on-chain dégradés → Préparer ajustements si nécessaire';
+      action = 'Hold but monitor on-chain';
+      details = 'Degraded on-chain signals → Prepare adjustments if needed';
     } else {
-      action = 'Maintenir allocation, ajustements mineurs OK';
-      details = 'Position solide → Rééquilibrage opportuniste possible';
+      action = 'Maintain allocation, minor adjustments OK';
+      details = 'Solid position → Opportunistic rebalancing possible';
     }
 
   } else if (score >= 45) {
     icon = '⚠️';
-    title = 'Position mitigée';
+    title = 'Mixed position';
     colorClass = 'warning';
 
     if (lowRisk) {
-      action = 'Réduire exposition, sécuriser gains';
-      details = `Risk faible (${Math.round(risk)}) → Augmenter stables à 25-30%`;
+      action = 'Reduce exposure, secure gains';
+      details = `Low risk (${Math.round(risk)}) → Increase stables to 25-30%`;
     } else if (criticalOnchain) {
-      action = 'Privilégier la prudence absolue';
-      details = 'Signaux on-chain critiques → Éviter nouvelles positions risquées';
+      action = 'Prioritize absolute caution';
+      details = 'Critical on-chain signals → Avoid new risky positions';
     } else {
-      action = 'Attente et surveillance renforcée';
-      details = 'Contexte incertain → Éviter changements majeurs';
+      action = 'Wait and enhanced monitoring';
+      details = 'Uncertain context → Avoid major changes';
     }
 
   } else if (score >= 30) {
     icon = '🛡️';
-    title = 'Position défavorable';
+    title = 'Unfavorable position';
     colorClass = 'defensive';
 
     if (lowRisk && criticalOnchain) {
-      action = 'Réduire exposition immédiatement';
-      details = 'Risk + On-Chain faibles → Sécuriser 40-50% en stables';
+      action = 'Reduce exposure immediately';
+      details = 'Risk + On-Chain weak → Secure 40-50% in stables';
     } else {
-      action = 'Réduire actifs risqués à 30-40%';
-      details = 'Conditions dégradées → Protéger le capital';
+      action = 'Reduce risky assets to 30-40%';
+      details = 'Degraded conditions → Protect capital';
     }
 
   } else {
     icon = '🚨';
-    title = 'ALERTE - Position critique';
+    title = 'ALERT - Critical position';
     colorClass = 'critical';
 
-    action = 'Sécuriser le portefeuille immédiatement';
-    details = `DI ${score} → Passer 60-70% en stables, réduire levier`;
+    action = 'Secure the portfolio immediately';
+    details = `DI ${score} → Move 60-70% to stables, reduce leverage`;
   }
 
   return `
@@ -433,10 +433,10 @@ function renderMetadata(meta) {
       </div>
       <div class="meta-row">
         <span class="meta-label">Blended</span>
-        <span class="meta-value" title="Score de régime utilisé dans les recommandations">${blendedDisplay}</span>
+        <span class="meta-value" title="Regime score used in recommendations">${blendedDisplay}</span>
       </div>
       <div class="meta-row">
-        <span class="meta-label">Mise à jour</span>
+        <span class="meta-label">Updated</span>
         <span class="meta-value">${freshness}</span>
       </div>
       ${overrideBadge}
@@ -646,7 +646,7 @@ function renderAllocationBar(allocation) {
   const total = btc + eth + stables + alts;
 
   if (total === 0) {
-    return '<div class="alloc-bar-placeholder">Pas de données</div>';
+    return '<div class="alloc-bar-placeholder">No data</div>';
   }
 
   // Normaliser à 100%
@@ -715,15 +715,15 @@ function renderKeyMetrics(meta) {
     <div class="di-key-metrics">
       <div class="metric-mini">
         <span class="metric-mini-label">VaR 95%</span>
-        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk à 95%">${var95Display}</span>
+        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk at 95%">${var95Display}</span>
       </div>
       <div class="metric-mini">
         <span class="metric-mini-label">Sharpe</span>
-        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Ratio de Sharpe">${sharpeDisplay}</span>
+        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Sharpe Ratio">${sharpeDisplay}</span>
       </div>
       <div class="metric-mini">
         <span class="metric-mini-label">Risk %</span>
-        <span class="metric-mini-value" style="color: ${riskBudgetColor};" title="Allocation actifs risqués">${riskBudgetDisplay}</span>
+        <span class="metric-mini-value" style="color: ${riskBudgetColor};" title="Risky assets allocation">${riskBudgetDisplay}</span>
       </div>
     </div>
   `;
@@ -767,7 +767,7 @@ function renderQuickContextBar(meta) {
   return `
     <div class="di-context-bar">
       <div class="ctx-item">
-        <span class="ctx-label">Régime</span>
+        <span class="ctx-label">Regime</span>
         <span class="ctx-value" style="color: ${regimeColor};">${regimeEmoji} ${regime}</span>
       </div>
       <div class="ctx-divider"></div>
@@ -820,7 +820,7 @@ function renderRightColumn(data) {
 
   const onchainBar = renderCompactPillarBar(
     'On-Chain', '🔗', s.onchain || 0,
-    `${onchainCritiques} signaux critiques`,
+    `${onchainCritiques} critical signals`,
     onchainConf,
     '#8b5cf6'
   );
@@ -864,68 +864,68 @@ function renderHelpContent() {
       <div class="di-help-content">
         <div class="di-help-header">
           <h3 id="di-help-title">📊 Decision Index</h3>
-          <button class="di-help-close" aria-label="Fermer" type="button">×</button>
+          <button class="di-help-close" aria-label="Close" type="button">×</button>
         </div>
         <div class="di-help-body">
-          <p><strong>Decision Index (DI) - Score Stratégique</strong><br>
-          Score continu <strong>0-100</strong> calculé par pondération des piliers:<br>
+          <p><strong>Decision Index (DI) - Strategic Score</strong><br>
+          Continuous score <strong>0-100</strong> computed by weighted pillars:<br>
           <code>DI = (Cycle × w₁ + OnChain × w₂ + Risk × w₃) × phase_factor</code><br>
           <br>
-          ⚠️ <strong>Important:</strong> Le DI EST une somme pondérée!<br>
-          • Poids adaptatifs selon contexte (cycle fort → boost wCycle)<br>
-          • Ajustement par phase de marché (bullish/bearish)</p>
+          ⚠️ <strong>Important:</strong> DI IS a weighted sum!<br>
+          • Adaptive weights based on context (strong cycle → boost wCycle)<br>
+          • Adjustment by market phase (bullish/bearish)</p>
 
-          <p><strong>Échelle</strong><br>
-          75+ = Conditions favorables (allocation agressive OK)<br>
-          60-74 = Neutre (maintenir position)<br>
-          45-59 = Prudence (surveillance renforcée)<br>
-          30-44 = Défensif (réduire exposition)<br>
-          &lt;30 = Sécuriser (max stables)</p>
+          <p><strong>Scale</strong><br>
+          75+ = Favorable conditions (aggressive allocation OK)<br>
+          60-74 = Neutral (hold position)<br>
+          45-59 = Cautious (enhanced monitoring)<br>
+          30-44 = Defensive (reduce exposure)<br>
+          &lt;30 = Secure (max stables)</p>
 
-          <p><strong>Piliers (colonne droite)</strong><br>
-          🔄 Cycle: CCS Mixte (CCS blendé avec position cycle)<br>
-          🔗 On-Chain: Métriques blockchain fondamentales<br>
-          🛡️ Risk: Robustesse portfolio (plus haut = mieux)</p>
+          <p><strong>Pillars (right column)</strong><br>
+          🔄 Cycle: Blended CCS (CCS blended with cycle position)<br>
+          🔗 On-Chain: Fundamental blockchain metrics<br>
+          🛡️ Risk: Portfolio robustness (higher = better)</p>
 
-          <p><strong>Phase vs Régime</strong><br>
-          Peut sembler contradictoire mais c'est intentionnel:<br>
-          • <strong>Régime</strong> (ex: Expansion) = Position théorique dans cycle<br>
-          • <strong>Phase</strong> (ex: bearish) = Stratégie appliquée (cycle < 70)<br>
-          Un régime "Expansion" + phase "bearish" est normal!</p>
+          <p><strong>Phase vs Regime</strong><br>
+          May seem contradictory but this is intentional:<br>
+          • <strong>Regime</strong> (e.g. Expansion) = Theoretical position in cycle<br>
+          • <strong>Phase</strong> (e.g. bearish) = Applied strategy (cycle < 70)<br>
+          An "Expansion" regime + "bearish" phase is normal!</p>
 
           <p><strong>Contributions</strong><br>
-          Pourcentages = poids utilisés pour calculer le DI ET l'allocation.<br>
-          Poids adaptatifs selon contexte marché:<br>
+          Percentages = weights used to compute DI AND allocation.<br>
+          Adaptive weights based on market context:<br>
           • Cycle ≥70 → boost cycle (55-65%)<br>
-          • Cycle ≥90 → fort boost (65% cycle, 25% onchain, 10% risk)<br>
-          • Contradiction >50% → pénalise OnChain/Risk<br>
-          • Phase bullish/bearish → ajuste score final (±5%)</p>
+          • Cycle ≥90 → strong boost (65% cycle, 25% onchain, 10% risk)<br>
+          • Contradiction >50% → penalizes OnChain/Risk<br>
+          • Phase bullish/bearish → adjusts final score (±5%)</p>
 
-          <p><strong>Recommandation Intelligente</strong><br>
-          Conseil contextuel basé sur DI + analyse des 3 piliers:<br>
-          • 75+ : Alloquer vers risque (15-20% stables)<br>
-          • 60-74 : Maintenir allocation, ajustements mineurs OK<br>
-          • 45-59 : Attente et surveillance renforcée<br>
-          • 30-44 : Réduire exposition (30-40% actifs risqués)<br>
-          • <30 : Sécuriser immédiatement (60-70% stables)</p>
+          <p><strong>Smart Recommendation</strong><br>
+          Contextual advice based on DI + 3-pillar analysis:<br>
+          • 75+ : Allocate towards risk (15-20% stables)<br>
+          • 60-74 : Hold allocation, minor adjustments OK<br>
+          • 45-59 : Wait and enhanced monitoring<br>
+          • 30-44 : Reduce exposure (30-40% risky assets)<br>
+          • <30 : Secure immediately (60-70% stables)</p>
 
-          <p><strong>Adaptations Contextuelles</strong><br>
-          • On-Chain critique → Alertes spécifiques<br>
-          • Risk faible → Augmentation stables recommandée<br>
-          • Cycle fort → Opportunités d'accumulation<br>
-          • <strong>ML Sentiment extrême (<25)</strong> → Override défensif appliqué</p>
+          <p><strong>Contextual Adaptations</strong><br>
+          • Critical On-Chain → Specific alerts<br>
+          • Low Risk → Increased stables recommended<br>
+          • Strong Cycle → Accumulation opportunities<br>
+          • <strong>ML Extreme Sentiment (<25)</strong> → Defensive override applied</p>
 
-          <p><strong>Overrides Actifs</strong><br>
-          Des facteurs externes peuvent modifier l'allocation:<br>
-          • ML Sentiment <25 → Force allocation défensive<br>
-          • Contradiction >50% → Pénalise On-Chain/Risk<br>
-          • 🌍 Macro Stress (VIX>30 ou DXY+5%) → Pénalité -15 pts sur DI<br>
+          <p><strong>Active Overrides</strong><br>
+          External factors can modify the allocation:<br>
+          • ML Sentiment <25 → Forces defensive allocation<br>
+          • Contradiction >50% → Penalizes On-Chain/Risk<br>
+          • 🌍 Macro Stress (VIX>30 or DXY+5%) → -15 pts penalty on DI<br>
           • Structure Score <50 → +10pts stables</p>
 
-          <p><strong>Métadonnées</strong><br>
-          Confiance : Niveau de certitude du modèle<br>
-          Mode : Méthode de calcul (Manual/Standard/Priority)<br>
-          Mise à jour : Fraîcheur des données</p>
+          <p><strong>Metadata</strong><br>
+          Confidence: Model certainty level<br>
+          Mode: Calculation method (Manual/Standard/Priority)<br>
+          Last Update: Data freshness</p>
         </div>
       </div>
     </div>
@@ -1380,7 +1380,7 @@ function injectStyles() {
       background: rgba(153, 27, 27, 0.1);
     }
 
-    /* Métadonnées */
+    /* Metadata */
     .di-metadata {
       background: rgba(30, 41, 59, 0.3);
       border-radius: 6px;

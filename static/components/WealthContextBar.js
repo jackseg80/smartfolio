@@ -192,10 +192,10 @@ class WealthContextBar {
       .filter(s => s.type === 'csv' && s.module === 'cointracking')
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    let html = '<option value="all">Tous</option>';
+    let html = '<option value="all">All</option>';
 
     // Ajouter option Manuel (Sources V2)
-    html += '<option value="manual_crypto" data-type="manual">📝 Saisie Manuelle</option>';
+    html += '<option value="manual_crypto" data-type="manual">📝 Manual Entry</option>';
 
     if (apis.length > 0) {
       html += '<option disabled>──── API ────</option>';
@@ -217,7 +217,7 @@ class WealthContextBar {
   }
 
   buildFallbackAccountOptions() {
-    return '<option value="all">Tous</option>';
+    return '<option value="all">All</option>';
   }
 
   async loadBourseSources() {
@@ -274,7 +274,7 @@ class WealthContextBar {
         return null;
       }
       debugLogger.warn('Failed to load bourse sources, using fallback:', error);
-      return '<option value="all">Tous</option>';
+      return '<option value="all">All</option>';
     } finally {
       this.bourseAbortController = null;
     }
@@ -290,10 +290,10 @@ class WealthContextBar {
       .filter(s => s.type === 'api' && s.module === 'saxobank')
       .sort((a, b) => a.label.localeCompare(b.label));
 
-    let html = '<option value="all">Tous</option>';
+    let html = '<option value="all">All</option>';
 
     // Ajouter option Manuel (Sources V2)
-    html += '<option value="manual_bourse" data-type="manual">📝 Saisie Manuelle</option>';
+    html += '<option value="manual_bourse" data-type="manual">📝 Manual Entry</option>';
 
     // Section API (en premier pour visibilité)
     if (saxoAPIs.length > 0) {
@@ -416,7 +416,7 @@ class WealthContextBar {
       }
 
       if (!skipNotification && typeof window.showNotification === 'function') {
-        window.showNotification('✅ Mode Manuel activé pour Crypto. Gérez vos assets dans Settings → Sources', 'info');
+        window.showNotification('✅ Manual mode activated for Crypto. Manage your assets in Settings → Sources', 'info');
       }
 
       // Déclencher le reload automatique comme pour les autres sources
@@ -669,7 +669,7 @@ class WealthContextBar {
 
         // Notification erreur
         if (typeof window.showNotification === 'function') {
-          window.showNotification(`❌ Échec changement source: ${persistResult.error?.message || 'Erreur réseau'}`, 'error');
+          window.showNotification(`❌ Source change failed: ${persistResult.error?.message || 'Network error'}`, 'error');
         }
 
         return; // Arrêter ici, pas de reload
@@ -694,7 +694,7 @@ class WealthContextBar {
       if (persistResult.ok && !persistResult.skipped && !skipNotification) {
         // Notification visuelle avec reload automatique
         if (typeof window.showNotification === 'function') {
-          window.showNotification(`✅ Source changée: ${source.label}`, 'success');
+          window.showNotification(`✅ Source changed: ${source.label}`, 'success');
         }
 
         // Reload conditionnel (intelligent)
@@ -747,7 +747,7 @@ class WealthContextBar {
       }
 
       if (!skipNotification && typeof window.showNotification === 'function') {
-        window.showNotification('✅ Mode Manuel activé pour Bourse. Gérez vos positions dans Settings → Sources', 'info');
+        window.showNotification('✅ Manual mode activated for Stocks. Manage your positions in Settings → Sources', 'info');
       }
 
       // Attendre un peu pour que le backend persiste le config et que les listeners se registrent
@@ -876,7 +876,7 @@ class WealthContextBar {
 
     // Notification visuelle
     if (!skipNotification && typeof window.showNotification === 'function') {
-      window.showNotification(`✅ Source Bourse changée: ${source.label}`, 'success');
+      window.showNotification(`✅ Stock source changed: ${source.label}`, 'success');
     }
   }
 
@@ -924,7 +924,7 @@ class WealthContextBar {
       if (accountSelect) {
         // Afficher état de chargement
         accountSelect.setAttribute('aria-busy', 'true');
-        accountSelect.innerHTML = '<option>Chargement…</option>';
+        accountSelect.innerHTML = '<option>Loading…</option>';
 
         const accountHTML = await this.loadAccountSources();
 
@@ -962,7 +962,7 @@ class WealthContextBar {
       const bourseSelect = document.getElementById('wealth-bourse');
       if (bourseSelect) {
         bourseSelect.setAttribute('aria-busy', 'true');
-        bourseSelect.innerHTML = '<option>Chargement…</option>';
+        bourseSelect.innerHTML = '<option>Loading…</option>';
 
         const bourseHTML = await this.loadBourseSources();
 
@@ -1071,21 +1071,21 @@ class WealthContextBar {
     bar.innerHTML = `
       <div class="context-group">
         <label for="wealth-account" class="context-label">Crypto:</label>
-        <select id="wealth-account" aria-label="Source crypto" aria-busy="true">
-          <option>Chargement…</option>
+        <select id="wealth-account" aria-label="Crypto source" aria-busy="true">
+          <option>Loading…</option>
         </select>
       </div>
 
       <div class="context-group">
-        <label for="wealth-bourse" class="context-label">Bourse:</label>
-        <select id="wealth-bourse" aria-label="Source bourse" aria-busy="true">
-          <option>Chargement…</option>
+        <label for="wealth-bourse" class="context-label">Stocks:</label>
+        <select id="wealth-bourse" aria-label="Stock source" aria-busy="true">
+          <option>Loading…</option>
         </select>
       </div>
 
       <div class="context-group">
-        <label for="wealth-currency" class="context-label">Devise:</label>
-        <select id="wealth-currency" aria-label="Devise d'affichage">
+        <label for="wealth-currency" class="context-label">Currency:</label>
+        <select id="wealth-currency" aria-label="Display currency">
           <option value="USD">USD</option>
           <option value="EUR">EUR</option>
           <option value="CHF">CHF</option>
@@ -1145,8 +1145,8 @@ class WealthContextBar {
    */
   getSourceLabel(sourceId) {
     const labels = {
-      'manual_crypto': 'Manuel',
-      'manual_bourse': 'Manuel',
+      'manual_crypto': 'Manual',
+      'manual_bourse': 'Manual',
       'cointracking_csv': 'CoinTracking CSV',
       'cointracking_api': 'CoinTracking API',
       'saxobank_csv': 'Saxo CSV',

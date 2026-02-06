@@ -50,7 +50,7 @@ class NetworkStateManager {
     this.isRecovering = true;
 
     this._notifyListeners('online');
-    this._showNotification('✅ Connexion réseau rétablie', 'success');
+    this._showNotification('✅ Network connection restored', 'success');
 
     // Attendre 1s avant de reprendre (laisser la connexion se stabiliser)
     setTimeout(() => {
@@ -64,7 +64,7 @@ class NetworkStateManager {
     this.isOnline = false;
 
     this._notifyListeners('offline');
-    this._showNotification('⚠️ Connexion réseau perdue', 'warning');
+    this._showNotification('⚠️ Network connection lost', 'warning');
     this._pauseIntervals();
   }
 
@@ -226,7 +226,7 @@ class NetworkStateManager {
 
     // Toutes les tentatives ont échoué
     if (this.consecutiveFailures >= 3) {
-      this._showNotification('⚠️ Problèmes de connexion détectés', 'warning');
+      this._showNotification('⚠️ Connection issues detected', 'warning');
     }
 
     throw lastError;

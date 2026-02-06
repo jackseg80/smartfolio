@@ -572,7 +572,7 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
 
     # Risk metrics
     if "risk_score" in context:
-        lines.append(f"⚠️ Score de risque: {context['risk_score']}/100 (higher = more robust)")
+        lines.append(f"⚠️ Risk score: {context['risk_score']}/100 (higher = more robust)")
 
     if "var_95" in context:
         lines.append(f"📊 VaR 95%: ${context['var_95']:,.2f} (max expected loss)")
@@ -594,7 +594,7 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
     # Active alerts
     if "alerts" in context and context["alerts"]:
         lines.append("")
-        lines.append(f"🚨 Alertes actives ({len(context['alerts'])}):")
+        lines.append(f"🚨 Active alerts ({len(context['alerts'])}):")
         for alert in context["alerts"][:5]:  # Top 5 alerts
             severity = alert.get("severity", "info")
             message = alert.get("message", "")
@@ -603,19 +603,19 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
     # Market cycles
     if "cycle_score" in context:
         lines.append("")
-        lines.append("🔄 Analyse des cycles:")
+        lines.append("🔄 Cycle Analysis:")
         lines.append(f"  - Cycle Score: {context['cycle_score']:.1f}/100")
 
         if "market_phase" in context:
             phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(context["market_phase"], "❓")
-            lines.append(f"  - Phase de marché: {phase_emoji} {context['market_phase'].capitalize()}")
+            lines.append(f"  - Market phase: {phase_emoji} {context['market_phase'].capitalize()}")
 
         if "dominance_phase" in context:
             dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(context["dominance_phase"], "❓")
             lines.append(f"  - Dominance: {dom_emoji} {context['dominance_phase'].upper()}")
 
         if "phase_confidence" in context:
-            lines.append(f"  - Confiance: {context['phase_confidence']:.1%}")
+            lines.append(f"  - Confidence: {context['phase_confidence']:.1%}")
 
     return lines
 
@@ -654,13 +654,13 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
     if "regime" in context:
         regime_name = context["regime"]
         confidence = context.get("regime_confidence", 0)
-        lines.append(f"🎯 Régime marché: {regime_name} (confiance: {confidence:.0%})")
+        lines.append(f"🎯 Market regime: {regime_name} (confidence: {confidence:.0%})")
 
     # Market phase (bearish/moderate/bullish)
     if "market_phase" in context:
         phase = context["market_phase"]
         phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(phase, "❓")
-        lines.append(f"📈 Phase de marché: {phase_emoji} {phase.capitalize()}")
+        lines.append(f"📈 Market phase: {phase_emoji} {phase.capitalize()}")
 
     # Cycle score
     if "cycle_score" in context:
@@ -676,7 +676,7 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
     # Regime components (dict with cycle/onchain/risk)
     if "regime_components" in context:
         components = context["regime_components"]
-        lines.append("🎯 Scores Régime (composantes):")
+        lines.append("🎯 Regime Scores (components):")
 
         if "cycle" in components:
             lines.append(f"  - CCS (Cycle): {components['cycle']:.1f}/100")
@@ -694,7 +694,7 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
     # Volatility forecasts
     if "volatility_forecasts" in context:
         lines.append("")
-        lines.append("📊 Prévisions volatilité:")
+        lines.append("📊 Volatility forecasts:")
         for asset, forecast in context["volatility_forecasts"].items():
             lines.append(f"  - {asset}: {forecast:.2%}")
 
@@ -707,43 +707,43 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
 
     # Net worth
     if "net_worth" in context:
-        lines.append(f"💰 Patrimoine net: ${context['net_worth']:,.2f}")
+        lines.append(f"💰 Net Worth: ${context['net_worth']:,.2f}")
         lines.append("")
 
     # Total assets and liabilities
     if "total_assets" in context:
-        lines.append(f"📊 Total Actifs: ${context['total_assets']:,.2f}")
+        lines.append(f"📊 Total Assets: ${context['total_assets']:,.2f}")
 
     if "total_liabilities" in context and context["total_liabilities"] > 0:
-        lines.append(f"📊 Total Passifs: ${context['total_liabilities']:,.2f}")
+        lines.append(f"📊 Total Liabilities: ${context['total_liabilities']:,.2f}")
         lines.append("")
 
     # Asset breakdown
-    lines.append("🏠 Répartition Actifs:")
+    lines.append("🏠 Asset Breakdown:")
     if "liquidity" in context:
-        lines.append(f"  - Liquidités: ${context['liquidity']:,.2f}")
+        lines.append(f"  - Liquidity: ${context['liquidity']:,.2f}")
 
     if "tangible" in context:
-        lines.append(f"  - Biens tangibles: ${context['tangible']:,.2f}")
+        lines.append(f"  - Tangible assets: ${context['tangible']:,.2f}")
 
     if "insurance" in context and context["insurance"] > 0:
-        lines.append(f"  - Assurances: ${context['insurance']:,.2f}")
+        lines.append(f"  - Insurance: ${context['insurance']:,.2f}")
 
     # Liabilities (from breakdown, not dict)
     if "liabilities" in context and context["liabilities"] > 0:
         lines.append("")
-        lines.append(f"💳 Passifs: ${context['liabilities']:,.2f}")
+        lines.append(f"💳 Liabilities: ${context['liabilities']:,.2f}")
 
     # Item counts
     if "counts" in context:
         counts = context["counts"]
         lines.append("")
-        lines.append("📋 Nombre d'items:")
-        lines.append(f"  - Liquidités: {counts.get('liquidity', 0)}")
-        lines.append(f"  - Biens tangibles: {counts.get('tangible', 0)}")
-        lines.append(f"  - Passifs: {counts.get('liability', 0)}")
+        lines.append("📋 Item counts:")
+        lines.append(f"  - Liquidity: {counts.get('liquidity', 0)}")
+        lines.append(f"  - Tangible assets: {counts.get('tangible', 0)}")
+        lines.append(f"  - Liabilities: {counts.get('liability', 0)}")
         if counts.get('insurance', 0) > 0:
-            lines.append(f"  - Assurances: {counts.get('insurance', 0)}")
+            lines.append(f"  - Insurance: {counts.get('insurance', 0)}")
 
     # Debt ratio
     total_assets = context.get("total_assets", 0)
@@ -751,21 +751,21 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
     if total_assets > 0 and total_liabilities > 0:
         debt_ratio = (total_liabilities / total_assets) * 100
         lines.append("")
-        lines.append(f"📊 Ratio d'endettement: {debt_ratio:.1f}%")
+        lines.append(f"📊 Debt ratio: {debt_ratio:.1f}%")
 
     return lines
 
 
 def _format_dashboard_context(context: Dict[str, Any]) -> list:
-    """Format global dashboard context (crypto + bourse + patrimoine)"""
+    """Format global dashboard context (crypto + bourse + wealth)"""
     lines = []
 
     # Crypto portfolio
     if "crypto" in context:
         crypto = context["crypto"]
-        lines.append("💰 Portefeuille Crypto:")
-        lines.append(f"  - Valeur totale: ${crypto.get('total_value', 0):,.2f}")
-        lines.append(f"  - Nombre de positions: {crypto.get('positions_count', 0)}")
+        lines.append("💰 Crypto Portfolio:")
+        lines.append(f"  - Total value: ${crypto.get('total_value', 0):,.2f}")
+        lines.append(f"  - Number of positions: {crypto.get('positions_count', 0)}")
 
         if crypto.get("top_positions"):
             lines.append("  - Top 5 positions:")
@@ -781,9 +781,9 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Bourse/Saxo portfolio
     if "bourse" in context:
         bourse = context["bourse"]
-        lines.append("📈 Portefeuille Bourse:")
-        lines.append(f"  - Valeur totale: ${bourse.get('total_value', 0):,.2f}")
-        lines.append(f"  - Nombre de positions: {bourse.get('positions_count', 0)}")
+        lines.append("📈 Stock Portfolio:")
+        lines.append(f"  - Total value: ${bourse.get('total_value', 0):,.2f}")
+        lines.append(f"  - Number of positions: {bourse.get('positions_count', 0)}")
 
         if bourse.get("top_positions"):
             lines.append("  - Top 5 positions:")
@@ -794,20 +794,20 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
                 lines.append(f"    • {symbol}: ${value:,.0f} ({weight:.1f}%)")
         lines.append("")
 
-    # Patrimoine
-    if "patrimoine" in context:
-        patri = context["patrimoine"]
-        lines.append("🏦 Patrimoine:")
+    # Wealth items
+    if "wealth" in context:
+        patri = context["wealth"]
+        lines.append("🏦 Wealth:")
         lines.append(f"  - Net Worth: ${patri.get('net_worth', 0):,.2f}")
-        lines.append(f"  - Liquidités: ${patri.get('liquidity', 0):,.2f}")
-        lines.append(f"  - Actifs tangibles: ${patri.get('tangible', 0):,.2f}")
+        lines.append(f"  - Liquidity: ${patri.get('liquidity', 0):,.2f}")
+        lines.append(f"  - Tangible assets: ${patri.get('tangible', 0):,.2f}")
         if patri.get('liabilities', 0) > 0:
-            lines.append(f"  - Passifs: ${patri.get('liabilities', 0):,.2f}")
+            lines.append(f"  - Liabilities: ${patri.get('liabilities', 0):,.2f}")
         lines.append("")
 
     # Market analytics
     if "decision_index" in context or "ml_sentiment" in context or "regime" in context:
-        lines.append("📊 Analyse de Marché:")
+        lines.append("📊 Market Analysis:")
 
         if "decision_index" in context:
             di = context["decision_index"]
@@ -821,17 +821,17 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
             lines.append(f"  - ML Sentiment: {sentiment_pct:.0f}/100 ({sentiment_label})")
 
         if "regime" in context:
-            lines.append(f"  - Régime marché: {context['regime']}")
+            lines.append(f"  - Market regime: {context['regime']}")
 
         if "phase" in context:
-            lines.append(f"  - Phase actuelle: {context['phase']}")
+            lines.append(f"  - Current phase: {context['phase']}")
 
         lines.append("")
 
     # Risk score
     if "risk_score" in context:
         risk = context["risk_score"]
-        lines.append(f"⚠️ Score de Risque: {risk:.1f}/100")
+        lines.append(f"⚠️ Risk Score: {risk:.1f}/100")
         lines.append("")
 
     return lines
@@ -843,13 +843,13 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
 
     # Portfolio summary
     if "total_value" in context:
-        lines.append(f"💰 Valeur totale portefeuille: ${context['total_value']:,.2f}")
+        lines.append(f"💰 Total portfolio value: ${context['total_value']:,.2f}")
 
     if "total_positions" in context:
-        lines.append(f"📊 Nombre de positions: {context['total_positions']}")
+        lines.append(f"📊 Number of positions: {context['total_positions']}")
 
     if "cash" in context and context.get("cash", 0) > 0:
-        lines.append(f"💵 Liquidités: ${context['cash']:,.2f}")
+        lines.append(f"💵 Cash: ${context['cash']:,.2f}")
 
     # P&L
     if "total_pnl" in context:
@@ -891,7 +891,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
 
     # Sector allocation
     if "sectors" in context and context["sectors"]:
-        lines.append("📊 Répartition sectorielle:")
+        lines.append("📊 Sector allocation:")
         sorted_sectors = sorted(context["sectors"].items(), key=lambda x: x[1], reverse=True)
         for sector, weight in sorted_sectors:
             if isinstance(weight, (int, float)) and weight > 0:
@@ -900,7 +900,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Asset allocation
     if "asset_allocation" in context and context["asset_allocation"]:
         lines.append("")
-        lines.append("🎯 Allocation par classe d'actifs:")
+        lines.append("🎯 Asset class allocation:")
         sorted_assets = sorted(context["asset_allocation"].items(), key=lambda x: x[1], reverse=True)
         for asset, weight in sorted_assets:
             if isinstance(weight, (int, float)) and weight > 0:
@@ -909,7 +909,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Currency exposure
     if "currencies" in context and context["currencies"]:
         lines.append("")
-        lines.append("💱 Exposition devises:")
+        lines.append("💱 Currency exposure:")
         sorted_currencies = sorted(context["currencies"].items(), key=lambda x: x[1], reverse=True)
         for currency, weight in sorted_currencies[:5]:  # Top 5 currencies
             if isinstance(weight, (int, float)) and weight > 0:
@@ -918,16 +918,16 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Risk metrics
     if "risk_score" in context:
         lines.append("")
-        lines.append(f"⚠️ Score de risque: {context['risk_score']}/100")
+        lines.append(f"⚠️ Risk score: {context['risk_score']}/100")
 
     if "volatility" in context:
-        lines.append(f"📊 Volatilité: {context['volatility']:.2%}")
+        lines.append(f"📊 Volatility: {context['volatility']:.2%}")
 
     # Detailed risk metrics
     if "risk_metrics_detailed" in context:
         rm = context["risk_metrics_detailed"]
         lines.append("")
-        lines.append("📊 Métriques de risque détaillées:")
+        lines.append("📊 Detailed risk metrics:")
         if rm.get("sharpe_ratio") is not None:
             lines.append(f"  - Sharpe Ratio: {rm['sharpe_ratio']:.2f}")
         if rm.get("sortino_ratio") is not None:
@@ -950,18 +950,18 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
         # Gaps
         if opps.get("gaps"):
             lines.append("")
-            lines.append("  📉 Secteurs sous-représentés (Gaps):")
+            lines.append("  📉 Under-represented sectors (Gaps):")
             for gap in opps["gaps"][:5]:  # Top 5 gaps
                 sector = gap.get("sector", "?")
                 current = gap.get("current", 0)
                 target = gap.get("target", 0)
                 gap_pct = gap.get("gap_pct", 0)
-                lines.append(f"    • {sector}: {current:.1f}% actuel vs {target:.1f}% cible → GAP: {gap_pct:+.1f}%")
+                lines.append(f"    • {sector}: {current:.1f}% current vs {target:.1f}% target → GAP: {gap_pct:+.1f}%")
 
         # Top opportunities
         if opps.get("top_opportunities"):
             lines.append("")
-            lines.append("  💡 Top 10 opportunités recommandées:")
+            lines.append("  💡 Top 10 recommended opportunities:")
             for i, opp in enumerate(opps["top_opportunities"][:10], 1):
                 symbol = opp.get("symbol", "?")
                 name = opp.get("name", "")
@@ -979,13 +979,13 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
         # Suggested sales
         if opps.get("suggested_sales"):
             lines.append("")
-            lines.append("  🔻 Ventes suggérées (rééquilibrage):")
+            lines.append("  🔻 Suggested sales (rebalancing):")
             for sale in opps["suggested_sales"][:5]:  # Top 5 sales
                 symbol = sale.get("symbol", "?")
                 current = sale.get("current_weight", 0)
                 reduction = sale.get("suggested_reduction", 0)
                 reason = sale.get("reason", "")
-                lines.append(f"    • {symbol}: {current:.1f}% → réduire de {reduction:.1f}% ({reason})")
+                lines.append(f"    • {symbol}: {current:.1f}% → reduce by {reduction:.1f}% ({reason})")
 
     return lines
 
@@ -1012,10 +1012,10 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
     # Route to appropriate formatter based on page type and context structure
     page = context.get("page", "").lower()
 
-    # Check for hierarchical dashboard context (crypto + bourse + patrimoine)
+    # Check for hierarchical dashboard context (crypto + bourse + wealth)
     has_hierarchical_context = (
         "crypto" in context and
-        ("bourse" in context or "patrimoine" in context or "decision_index" in context)
+        ("bourse" in context or "wealth" in context or "patrimoine" in context or "decision_index" in context)
     )
 
     if "risk" in page:
@@ -1024,7 +1024,7 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
     elif "analytics" in page or "unified" in page:
         # Analytics Unified
         lines.extend(_format_analytics_context(context))
-    elif "wealth" in page or "patrimoine" in page:
+    elif "wealth" in page:
         # Wealth Dashboard
         lines.extend(_format_wealth_context(context))
     elif has_hierarchical_context:
@@ -1049,48 +1049,48 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
 # Predefined questions for quick access - Page-specific
 PAGE_QUICK_QUESTIONS = {
     "saxo-dashboard": [
-        {"id": "analysis", "label": "Analyse générale", "prompt": "Analyse mon portefeuille de manière générale. Quels sont les points forts et les points faibles?"},
-        {"id": "opportunities", "label": "Market Opportunities", "prompt": "Analyse les opportunités de marché recommandées. Quelles sont les meilleures suggestions d'investissement? Que penses-tu des gaps sectoriels détectés?"},
-        {"id": "risk", "label": "Évaluation risque", "prompt": "Évalue le niveau de risque de mon portefeuille. Est-il bien diversifié?"},
-        {"id": "concentration", "label": "Concentration", "prompt": "Y a-t-il des problèmes de concentration dans mon portefeuille? Quelles positions sont trop importantes?"},
-        {"id": "sectors", "label": "Secteurs", "prompt": "Comment est répartie mon exposition sectorielle? Y a-t-il des secteurs surreprésentés ou sous-représentés?"},
-        {"id": "performance", "label": "Performance", "prompt": "Analyse la performance de mes positions. Lesquelles performent bien et lesquelles sous-performent?"}
+        {"id": "analysis", "label": "General Analysis", "prompt": "Analyze my portfolio overall. What are the strengths and weaknesses?"},
+        {"id": "opportunities", "label": "Market Opportunities", "prompt": "Analyze the recommended market opportunities. What are the best investment suggestions? What do you think of the detected sector gaps?"},
+        {"id": "risk", "label": "Risk Assessment", "prompt": "Evaluate the risk level of my portfolio. Is it well diversified?"},
+        {"id": "concentration", "label": "Concentration", "prompt": "Are there concentration issues in my portfolio? Which positions are too large?"},
+        {"id": "sectors", "label": "Sectors", "prompt": "How is my sector exposure distributed? Are any sectors over- or under-represented?"},
+        {"id": "performance", "label": "Performance", "prompt": "Analyze the performance of my positions. Which ones are performing well and which are underperforming?"}
     ],
     "dashboard": [
-        {"id": "summary", "label": "Résumé portefeuille", "prompt": "Fais-moi un résumé complet de mon portefeuille crypto et bourse."},
-        {"id": "pnl", "label": "P&L Today", "prompt": "Analyse mon P&L du jour. Quelles sont les principales variations?"},
-        {"id": "allocation", "label": "Allocation globale", "prompt": "Comment est répartie mon allocation entre crypto, actions et liquidités?"},
-        {"id": "regime", "label": "Régime marché", "prompt": "Explique-moi le régime de marché actuel et ce que ça implique pour mon portefeuille."}
+        {"id": "summary", "label": "Portfolio Summary", "prompt": "Give me a complete summary of my crypto and stock portfolio."},
+        {"id": "pnl", "label": "P&L Today", "prompt": "Analyze my P&L for today. What are the main changes?"},
+        {"id": "allocation", "label": "Global Allocation", "prompt": "How is my allocation distributed between crypto, stocks and cash?"},
+        {"id": "regime", "label": "Market Regime", "prompt": "Explain the current market regime and what it implies for my portfolio."}
     ],
     "risk-dashboard": [
-        {"id": "risk_score", "label": "Score de risque", "prompt": "Explique-moi mon score de risque actuel. Qu'est-ce que ça signifie?"},
-        {"id": "var", "label": "VaR & Max Drawdown", "prompt": "Analyse mes métriques de risque (VaR, Max Drawdown). Sont-elles préoccupantes?"},
-        {"id": "alerts", "label": "Alertes actives", "prompt": "Analyse les alertes actives. Que dois-je faire en priorité?"},
-        {"id": "cycles", "label": "Cycles de marché", "prompt": "Explique-moi les cycles de marché actuels (BTC, ETH, SPY)."}
+        {"id": "risk_score", "label": "Risk Score", "prompt": "Explain my current risk score. What does it mean?"},
+        {"id": "var", "label": "VaR & Max Drawdown", "prompt": "Analyze my risk metrics (VaR, Max Drawdown). Are they concerning?"},
+        {"id": "alerts", "label": "Active Alerts", "prompt": "Analyze active alerts. What should I prioritize?"},
+        {"id": "cycles", "label": "Market Cycles", "prompt": "Explain the current market cycles (BTC, ETH, SPY)."}
     ],
     "analytics-unified": [
-        {"id": "decision_index", "label": "Decision Index", "prompt": "Explique-moi le Decision Index. Que signifie le score actuel?"},
-        {"id": "ml_sentiment", "label": "ML Sentiment", "prompt": "Analyse le sentiment ML actuel. Est-ce le moment d'être prudent ou agressif?"},
-        {"id": "phase", "label": "Phase Engine", "prompt": "Quelle est la phase de marché actuelle? Que recommandes-tu?"},
-        {"id": "regime", "label": "Régimes", "prompt": "Explique-moi les différents régimes détectés (CCS, On-Chain, Risk)."}
+        {"id": "decision_index", "label": "Decision Index", "prompt": "Explain the Decision Index. What does the current score mean?"},
+        {"id": "ml_sentiment", "label": "ML Sentiment", "prompt": "Analyze the current ML sentiment. Is it time to be cautious or aggressive?"},
+        {"id": "phase", "label": "Phase Engine", "prompt": "What is the current market phase? What do you recommend?"},
+        {"id": "regime", "label": "Regimes", "prompt": "Explain the different detected regimes (CCS, On-Chain, Risk)."}
     ],
     "wealth-dashboard": [
-        {"id": "net_worth", "label": "Patrimoine net", "prompt": "Analyse mon patrimoine global. Quelle est ma situation financière?"},
-        {"id": "diversification", "label": "Diversification", "prompt": "Mon patrimoine est-il bien diversifié entre liquidités, actifs et investissements?"},
-        {"id": "liabilities", "label": "Passifs", "prompt": "Analyse mes passifs. Ai-je une exposition excessive?"}
+        {"id": "net_worth", "label": "Net Worth", "prompt": "Analyze my overall wealth. What is my financial situation?"},
+        {"id": "diversification", "label": "Diversification", "prompt": "Is my wealth well diversified between liquidity, tangible assets and investments?"},
+        {"id": "liabilities", "label": "Liabilities", "prompt": "Analyze my liabilities. Do I have excessive exposure?"}
     ],
     "settings": [
-        {"id": "config", "label": "Configuration actuelle", "prompt": "Quelle est ma configuration actuelle? Quels sont mes paramètres?"},
-        {"id": "api_keys", "label": "Clés API", "prompt": "Quelles clés API sont configurées? Lesquelles manquent?"},
-        {"id": "saxo_oauth", "label": "Saxo OAuth", "prompt": "Quel est le statut de ma connexion Saxo Bank? Est-elle valide?"},
-        {"id": "recommendations", "label": "Recommandations", "prompt": "Que me recommandes-tu de configurer pour optimiser l'application?"}
+        {"id": "config", "label": "Current Config", "prompt": "What is my current configuration? What are my settings?"},
+        {"id": "api_keys", "label": "API Keys", "prompt": "Which API keys are configured? Which ones are missing?"},
+        {"id": "saxo_oauth", "label": "Saxo OAuth", "prompt": "What is the status of my Saxo Bank connection? Is it valid?"},
+        {"id": "recommendations", "label": "Recommendations", "prompt": "What do you recommend configuring to optimize the application?"}
     ]
 }
 
 # Generic questions for unknown pages
 GENERIC_QUICK_QUESTIONS = [
-    {"id": "help", "label": "Comment m'aider?", "prompt": "Que peux-tu m'aider à analyser sur cette page?"},
-    {"id": "summary", "label": "Résumé", "prompt": "Fais-moi un résumé des informations affichées sur cette page."}
+    {"id": "help", "label": "How can you help?", "prompt": "What can you help me analyze on this page?"},
+    {"id": "summary", "label": "Summary", "prompt": "Give me a summary of the information displayed on this page."}
 ]
 
 # Backward compatibility - default to Saxo questions

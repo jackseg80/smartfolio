@@ -208,11 +208,11 @@ class FlyoutPanel extends HTMLElement {
       </style>
 
       <div class="flyout" role="complementary" aria-label="Flyout panel" aria-expanded="false">
-        <button class="handle" aria-label="Ouvrir le panneau Risk Dashboard" title="Ouvrir">≡</button>
+        <button class="handle" aria-label="Open Risk Dashboard panel" title="Open">≡</button>
         <header>
           <div class="title"><slot name="title">Panel</slot></div>
           <div class="actions">
-            <button id="pin" title="Épingler" aria-label="Épingler le panneau" aria-pressed="false"><span aria-hidden="true">📍</span></button>
+            <button id="pin" title="Pin" aria-label="Pin the panel" aria-pressed="false"><span aria-hidden="true">📍</span></button>
           </div>
         </header>
         <main>

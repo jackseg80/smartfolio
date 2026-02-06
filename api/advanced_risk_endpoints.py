@@ -41,11 +41,11 @@ class MonteCarloResponse(BaseModel):
     simulations: int = Field(..., description="Nombre de simulations")
     var_estimates: Dict[str, float] = Field(..., description="Estimations VaR par niveau de confiance")
     expected_return: float = Field(..., description="Retour espéré")
-    volatility: float = Field(..., description="Volatilité estimée")
-    skewness: float = Field(..., description="Asymétrie")
+    volatility: float = Field(..., description="Estimated volatility")
+    skewness: float = Field(..., description="Skewness")
     kurtosis: float = Field(..., description="Kurtosis")
-    extreme_scenarios: Dict[str, float] = Field(..., description="Scénarios extrêmes (percentiles)")
-    tail_expectation: float = Field(..., description="Espérance de queue")
+    extreme_scenarios: Dict[str, float] = Field(..., description="Extreme scenarios (percentiles)")
+    tail_expectation: float = Field(..., description="Tail expectation")
     timestamp: datetime = Field(..., description="Timestamp du calcul")
 
 class RiskAttributionResponse(BaseModel):
@@ -97,8 +97,8 @@ def get_risk_engine() -> AdvancedRiskEngine:
 @router.post("/var/calculate", response_model=VaRResponse)
 async def calculate_var(
     portfolio: PortfolioRequest,
-    method: str = Query("parametric", description="Méthode: parametric, historical, monte_carlo"),
-    confidence_level: float = Query(0.95, ge=0.9, le=0.999, description="Niveau de confiance"),
+    method: str = Query("parametric", description="Method: parametric, historical, monte_carlo"),
+    confidence_level: float = Query(0.95, ge=0.9, le=0.999, description="Confidence level"),
     horizon: str = Query("daily", description="Horizon: daily, weekly, monthly"),
     risk_engine: AdvancedRiskEngine = Depends(get_risk_engine)
 ):
@@ -137,7 +137,7 @@ async def calculate_var(
 @router.post("/stress-test/run", response_model=StressTestResponse)
 async def run_stress_test(
     portfolio: PortfolioRequest,
-    scenario: str = Query(..., description="Scénario: crisis_2008, covid_2020, china_ban, tether_collapse, fed_emergency"),
+    scenario: str = Query(..., description="Scenario: crisis_2008, covid_2020, china_ban, tether_collapse, fed_emergency"),
     risk_engine: AdvancedRiskEngine = Depends(get_risk_engine)
 ):
     """Execute un test de stress sur le portefeuille"""
@@ -172,8 +172,8 @@ async def run_stress_test(
 @router.post("/monte-carlo/simulate", response_model=MonteCarloResponse)
 async def monte_carlo_simulation(
     portfolio: PortfolioRequest,
-    simulations: int = Query(10000, ge=1000, le=100000, description="Nombre de simulations"),
-    horizon_days: int = Query(30, ge=1, le=365, description="Horizon en jours"),
+    simulations: int = Query(10000, ge=1000, le=100000, description="Number of simulations"),
+    horizon_days: int = Query(30, ge=1, le=365, description="Horizon in days"),
     distribution: str = Query("student_t", description="Distribution: normal, student_t"),
     risk_engine: AdvancedRiskEngine = Depends(get_risk_engine)
 ):
@@ -233,8 +233,8 @@ async def analyze_risk_attribution(
 @router.post("/summary", response_model=AdvancedRiskSummaryResponse)
 async def get_risk_summary(
     portfolio: PortfolioRequest,
-    include_stress_tests: bool = Query(True, description="Inclure les tests de stress"),
-    include_monte_carlo: bool = Query(True, description="Inclure Monte Carlo"),
+    include_stress_tests: bool = Query(True, description="Include stress tests"),
+    include_monte_carlo: bool = Query(True, description="Include Monte Carlo"),
     risk_engine: AdvancedRiskEngine = Depends(get_risk_engine)
 ):
     """Résumé complet des métriques de risque avancées"""

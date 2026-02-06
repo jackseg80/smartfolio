@@ -115,7 +115,7 @@ class RiskSnapshot extends HTMLElement {
     this._setLoading(false);
 
     if (!j) {
-      this._setError('API indisponible');
+      this._setError('API unavailable');
       return;
     }
 
@@ -160,14 +160,14 @@ class RiskSnapshot extends HTMLElement {
     if (ts) {
       const t = new Date(ts).getTime();
       const min = (Date.now() - t) / 60000;
-      freshTxt = min < 2 ? 'Temps réel' : `${min.toFixed(0)} min`;
+      freshTxt = min < 2 ? 'Real-time' : `${min.toFixed(0)} min`;
       dot = min < 5 ? 'ok' : (min < 60 ? 'warn' : 'danger');
     }
     this.$.fresh.textContent = freshTxt;
     this.$.fdot.className = 'dot ' + dot;
 
     this.$.trend.textContent = this._computeTrend(c01);
-    const regime = (c01 < 0.3 && cap >= 0.01) ? 'Euphorie' : (c01 > 0.7 ? 'Stress' : 'Neutre');
+    const regime = (c01 < 0.3 && cap >= 0.01) ? 'Euphoria' : (c01 > 0.7 ? 'Stress' : 'Neutral');
     this.$.regime.textContent = regime;
 
     // Sections étendues (si un jour on branche des scores additionnels)
@@ -315,7 +315,7 @@ class RiskSnapshot extends HTMLElement {
           </div>
           <div class="row">
             <div class="kv">
-              <div class="k">Fraîcheur</div>
+              <div class="k">Freshness</div>
               <div class="v"><i class="dot" id="fdot"></i><span id="fresh">—</span></div>
             </div>
           </div>

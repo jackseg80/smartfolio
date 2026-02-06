@@ -246,10 +246,10 @@ export class GroupRiskIndex {
             recommendations.push({
                 type: 'concentration_warning',
                 priority: 'high',
-                title: `Concentration élevée en ${concentrationRisk.dominant_group}`,
-                description: `${Math.round(concentrationRisk.top_group_weight * 100)}% du portfolio concentré dans un seul groupe`,
-                action: 'Diversifier vers d\'autres groupes d\'assets',
-                impact: 'Réduction du risque non-systématique'
+                title: `High concentration in ${concentrationRisk.dominant_group}`,
+                description: `${Math.round(concentrationRisk.top_group_weight * 100)}% of portfolio concentrated in a single group`,
+                action: 'Diversify to other asset groups',
+                impact: 'Reduction of non-systematic risk'
             });
         }
 
@@ -259,10 +259,10 @@ export class GroupRiskIndex {
                 recommendations.push({
                     type: 'group_diversification',
                     priority: 'medium',
-                    title: `Diversification limitée dans ${group.primary_layer}`,
-                    description: `Seulement ${group.asset_count} assets, concentration interne élevée`,
-                    action: `Ajouter plus d'assets dans le groupe ${group.primary_layer}`,
-                    impact: 'Réduction du risque spécifique au groupe'
+                    title: `Limited diversification in ${group.primary_layer}`,
+                    description: `Only ${group.asset_count} assets, high internal concentration`,
+                    action: `Add more assets to the ${group.primary_layer} group`,
+                    impact: 'Reduction of group-specific risk'
                 });
             }
         }
@@ -273,10 +273,10 @@ export class GroupRiskIndex {
                 recommendations.push({
                     type: 'high_risk_group',
                     priority: 'medium',
-                    title: `Groupe à haut risque: ${group.primary_layer}`,
-                    description: `Volatilité de ${Math.round(group.weighted_volatility * 100)}% avec ${Math.round(group.weight * 100)}% du portfolio`,
-                    action: 'Considérer réduire l\'exposition ou ajouter des hedges',
-                    impact: 'Réduction de la volatilité du portfolio'
+                    title: `High risk group: ${group.primary_layer}`,
+                    description: `Volatility of ${Math.round(group.weighted_volatility * 100)}% with ${Math.round(group.weight * 100)}% of portfolio`,
+                    action: 'Consider reducing exposure or adding hedges',
+                    impact: 'Reduction of portfolio volatility'
                 });
             }
         }

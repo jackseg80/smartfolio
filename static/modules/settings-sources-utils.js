@@ -39,12 +39,12 @@ async function saveSourcesConfiguration() {
     // Backup localStorage pour compatibilité
     localStorage.setItem('sources_auto_refresh', autoRefresh);
 
-    showNotification('✅ Configuration sources sauvegardée', 'success');
+    showNotification('✅ Sources configuration saved', 'success');
   } catch (error) {
     debugLogger.error('Failed to save sources settings:', error);
     // Fallback localStorage
     localStorage.setItem('sources_auto_refresh', autoRefresh);
-    showNotification('⚠️ Sauvegarde locale uniquement (API indisponible)', 'warning');
+    showNotification('⚠️ Local save only (API unavailable)', 'warning');
   }
 }
 

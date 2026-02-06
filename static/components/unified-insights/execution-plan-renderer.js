@@ -108,7 +108,7 @@ export async function renderAllocationBlock(u, options = {}) {
     // Allocation fournie par u.targets_by_group (calcul dynamique) - vérification
     if (!allocation || Object.keys(allocation).length === 0) {
       (window.debugLogger?.error || console.error)('🚨 ERREUR CRITIQUE: targets_by_group vide', { u, allocation });
-      return '<div class="error-message">❌ Erreur: calculs dynamiques indisponibles</div>';
+      return '<div class="error-message">❌ Error: dynamic calculations unavailable</div>';
     }
 
     // GARDE-FOUS - Checksum et validation
@@ -346,7 +346,7 @@ export async function renderAllocationBlock(u, options = {}) {
       return `
         ${card(`
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem;">
-            <div style="font-weight:700;">💡 Objectifs Théoriques</div>
+            <div style="font-weight:700;">💡 Theoretical Targets</div>
             <div style="font-size:.75rem; color:var(--theme-text-muted); background: var(--theme-bg); border:1px solid var(--theme-border); padding:.2rem .6rem; border-radius: 999px;">
               Budget Risque: ${riskBudget.methodology || 'regime_based'}
             </div>
@@ -390,7 +390,7 @@ export async function renderAllocationBlock(u, options = {}) {
 
         ${card(`
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem;">
-            <div style="font-weight:700;">🎯 Plan d'Exécution (Itération ${execution.current_iteration || 1})</div>
+            <div style="font-weight:700;">🎯 Execution Plan (Iteration ${execution.current_iteration || 1})</div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
               ${activePolicy ? `<div style="font-size:.7rem; color: var(--success); background: var(--theme-bg); border:1px solid var(--success); padding:.1rem .4rem; border-radius: 999px;">🏛️ Governance</div>` : ''}
               <div style="font-size:.75rem; color:var(--theme-text-muted); background: var(--theme-bg); border:1px solid var(--theme-border); padding:.2rem .6rem; border-radius: 999px;">
@@ -421,7 +421,7 @@ export async function renderAllocationBlock(u, options = {}) {
                   </div>
                   <div style="font-size:.7rem; color:var(--theme-text-muted); margin-bottom:.35rem; font-weight:500;">${curUsdStr}</div>
                   <div style="display:flex; justify-content:space-between; color: var(--theme-text-muted); font-size:.85rem;">
-                    <span>Itération 1</span><span>${suggestedTgt.toFixed(1)}%</span>
+                    <span>Iteration 1</span><span>${suggestedTgt.toFixed(1)}%</span>
                   </div>
                   <div style="height:4px; background: var(--theme-border); border-radius:3px; overflow:hidden; margin-bottom:.15rem;">
                     <div style="width:${suggestedW}%; height:100%; background: var(--warning);"></div>
@@ -435,7 +435,7 @@ export async function renderAllocationBlock(u, options = {}) {
           <div style="margin-top:.6rem; font-size:.75rem; color:var(--theme-text-muted); padding:.4rem; background: var(--theme-bg); border-radius: 6px; border: 1px solid var(--theme-border);">
             ⏱️ Convergence estimée: <b>${estimatedIters} rebalances</b> pour atteindre les objectifs théoriques
           </div>
-        `, { title: 'Exécution Cap ±' + mode.cap + '%' })}
+        `, { title: 'Execution Cap ±' + mode.cap + '%' })}
       `;
     }
 
