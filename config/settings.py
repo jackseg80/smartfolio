@@ -74,7 +74,8 @@ class SecurityConfig(BaseSettings):
             "https://api.alternative.me",
             "https://crypto-toolbox.vercel.app",
             "https://cdn.jsdelivr.net",  # Chart.js sourcemaps
-            "https://fapi.binance.com"  # Funding rate API
+            "https://fapi.binance.com",  # Funding rate API
+            "https://api.binance.com"  # Spot API (klines, ticker)
         ],
         description="Allowed sources for network connections"
     )
