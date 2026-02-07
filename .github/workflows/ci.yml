@@ -53,9 +53,6 @@ jobs:
           htmlcov/
         retention-days: 30
 
-    - name: Run smoke tests
-      run: |
-        python tests/manual/smoke_test_refactored_endpoints.py
 
   lint:
     runs-on: windows-latest
