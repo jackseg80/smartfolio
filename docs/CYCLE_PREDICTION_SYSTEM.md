@@ -203,6 +203,25 @@ Le graphique principal ([cycle-analysis.html](../static/cycle-analysis.html)) af
 - Si `enable_dynamic_weighting = true`, la ligne de cycle change de couleur selon la phase
 - Couleurs phases: Accumulation (🟡), Bull (🟢), Peak (🟣), Bear (🔴), Pré-Acc (⚫)
 
+### Cycle Position Indicator (Feb 2026)
+
+Timeline visuelle montrant la position actuelle dans le cycle 4 (7 phases):
+Pre-halving Rally → Post-halving Consolidation → Bull Run → Distribution → Bear Capitulation → Bottom → Re-accumulation
+
+La phase active est détectée dynamiquement à partir du drawdown, trend 30d, cycle score et mois depuis le halving.
+
+### Cycle-over-Cycle Comparison (Feb 2026)
+
+Deux onglets de comparaison inter-cycles (cycles 2, 3, 4):
+- **Normalized**: Performance base 100 au halving (rendements décroissants: x30 → x8 → x2)
+- **Drawdown**: Chute depuis le peak de chaque cycle
+
+**Données dynamiques**: Le cycle 4 est alimenté en temps réel via l'API CoinGecko (cache localStorage 1h). Les cycles 2-3 sont des données historiques fixes.
+
+### Cycle Anatomy Table (Feb 2026)
+
+Tableau comparatif des métriques-clé par cycle (halving date/price, peak date/price, return, drawdown, bottom). Le cycle 4 est mis à jour automatiquement avec les données live.
+
 ---
 
 ## ⚙️ Configuration et Réglages

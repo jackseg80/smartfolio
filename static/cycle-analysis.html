@@ -253,6 +253,42 @@
         grid-template-columns: 1fr 1fr;
       }
     }
+
+    /* Cycle Position Timeline */
+    .phase-timeline { display: flex; flex-direction: column; gap: 0.5rem; }
+    .phase-item { display: flex; align-items: center; gap: 0.75rem; }
+    .phase-dot {
+      width: 22px; height: 22px; border-radius: 50%; display: flex;
+      align-items: center; justify-content: center; font-size: 0.65rem;
+      font-weight: 700; flex-shrink: 0; border: 2px solid;
+    }
+    .phase-dot.done { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); border-color: var(--success); }
+    .phase-dot.active { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); border-color: var(--danger); }
+    .phase-dot.future { color: var(--theme-text-muted); border-color: var(--theme-border); }
+    .phase-info { flex: 1; }
+    .phase-label { font-size: 0.85rem; }
+    .phase-label.done { color: var(--success); }
+    .phase-label.active { color: var(--danger); font-weight: 700; }
+    .phase-label.future { color: var(--theme-text-muted); }
+    .phase-time { font-size: 0.75rem; color: var(--theme-text-muted); }
+    .phase-bar { height: 3px; background: var(--theme-border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+    .phase-fill { height: 100%; border-radius: 2px; }
+    .phase-fill.done { background: var(--success); }
+    .phase-fill.active { background: linear-gradient(90deg, var(--danger), transparent); }
+
+    /* Cycle Chart Tabs */
+    .cycle-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .cycle-tab {
+      padding: 0.5rem 1rem; border-radius: var(--radius-md);
+      border: 1px solid var(--theme-border); background: var(--theme-surface);
+      color: var(--theme-text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 600;
+    }
+    .cycle-tab:hover { background: var(--theme-surface-hover); }
+    .cycle-tab.active { background: var(--brand-primary); color: var(--on-primary); border-color: var(--brand-primary); }
+
+    /* Anatomy Table */
+    #cycle-anatomy-table td:first-child { font-weight: 600; color: var(--theme-text-muted); font-size: 0.85em; white-space: nowrap; }
+    #cycle-anatomy-table td:last-child { color: var(--warning); font-weight: 600; }
   </style>
   <!-- Navigation unifiée (conditionnelle) -->
   <!-- Note: navigation is conditionally loaded above; avoid duplicate wrong path -->
@@ -307,6 +343,15 @@
       <div id="precision-metrics" class="metrics-grid"></div>
     </div>
 
+    <!-- Cycle Position Indicator -->
+    <div class="card">
+      <h2>📍 Position in Cycle 4</h2>
+      <p style="color: var(--theme-text-muted); font-size: 0.85em; margin-bottom: 1rem;">
+        Based on the ~4-year halving cycle. Historical pattern: halving → peak ≈ 546 days, peak → bottom ≈ 12 months.
+      </p>
+      <div id="cycle-position" class="phase-timeline"></div>
+    </div>
+
     <!-- Graphique Historique Bitcoin avec Halvings -->
     <div class="card">
       <h2>📈 Bitcoin Historical Price & Cycle Score</h2>
@@ -321,6 +366,61 @@
         style="text-align: center; margin-top: 0.5rem; color: var(--theme-text-muted); font-size: 0.85em;">
         Loading chart...
       </div>
+    </div>
+
+    <!-- Cycle Comparison Charts -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+        <h2 style="margin: 0;">📊 Cycle-over-Cycle Comparison</h2>
+        <div class="cycle-tabs">
+          <button class="cycle-tab active" onclick="switchCycleTab('compare')" aria-label="Normalized performance view">🔄 Normalized</button>
+          <button class="cycle-tab" onclick="switchCycleTab('drawdown')" aria-label="Drawdown comparison view">📉 Drawdown</button>
+        </div>
+      </div>
+      <div id="compare-panel">
+        <p style="color: var(--theme-text-muted); font-size: 0.85em; margin-bottom: 0.5rem;">
+          Performance normalized to 100 at halving. Diminishing returns pattern: Cycle 2 x30, Cycle 3 x8, Cycle 4 x2.
+        </p>
+        <div class="chart-container"><canvas id="comparison-chart"></canvas></div>
+      </div>
+      <div id="drawdown-panel" style="display: none;">
+        <p style="color: var(--theme-text-muted); font-size: 0.85em; margin-bottom: 0.5rem;">
+          Drawdown from cycle peak. Previous bears bottomed at M+12 around -78% to -84%.
+        </p>
+        <div class="chart-container"><canvas id="drawdown-chart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Cycle Anatomy Table -->
+    <div class="card">
+      <h2>⏱ Cycle Anatomy — Historical Comparison</h2>
+      <div style="overflow-x: auto;">
+        <table id="cycle-anatomy-table">
+          <thead>
+            <tr>
+              <th scope="col"></th>
+              <th scope="col">Cycle 2</th>
+              <th scope="col">Cycle 3</th>
+              <th scope="col">Cycle 4 (current)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Halving</td><td>Jul 2016</td><td>May 2020</td><td>Apr 2024</td></tr>
+            <tr><td>Halving price</td><td>$650</td><td>$9,500</td><td>$64,000</td></tr>
+            <tr><td>Peak</td><td>Dec 2017</td><td>Nov 2021</td><td>TBD</td></tr>
+            <tr><td>Peak price</td><td>$19,700</td><td>$69,000</td><td>TBD</td></tr>
+            <tr><td>Return halving→peak</td><td>+2,930%</td><td>+702%</td><td>TBD</td></tr>
+            <tr><td>Halving → Peak</td><td>526 days</td><td>546 days</td><td>~546 days?</td></tr>
+            <tr><td>Bottom</td><td>Dec 2018</td><td>Nov 2022</td><td>?</td></tr>
+            <tr><td>Bottom price</td><td>$3,200</td><td>$16,500</td><td>?</td></tr>
+            <tr><td>Max drawdown</td><td>-84%</td><td>-78%</td><td>In progress</td></tr>
+            <tr><td>Peak → Bottom</td><td>~12 months</td><td>~12 months</td><td>?</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color: var(--theme-text-muted); font-size: 0.8em; margin-top: 0.5rem;">
+        Cycle 4 peak/bottom not yet confirmed. Approximate monthly prices used for comparison charts.
+      </p>
     </div>
 
     <!-- Graphique de Validation -->
@@ -977,6 +1077,358 @@
       `).join('');
     }
 
+    // ========== CYCLE COMPARISON DATA ==========
+    // Cycles 2 & 3: historical (fixed). Cycle 4: loaded dynamically from CoinGecko.
+    const CYCLE_COMPARE = {
+      months: [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30],
+      cycle2: {
+        label: 'Cycle 2 (Jul 2016)',
+        halvingPrice: 650,
+        prices: [650, 700, 780, 970, 1250, 2500, 4700, 8200, 14000, 19700, 10000, 7000, 6400, 4000, 3500, 3800],
+        color: '#a855f7'
+      },
+      cycle3: {
+        label: 'Cycle 3 (May 2020)',
+        halvingPrice: 9500,
+        prices: [9500, 9100, 10800, 19700, 33000, 59000, 37000, 42000, 61000, 69000, 38000, 40000, 20000, 19300, 16500, 23000],
+        color: '#3b82f6'
+      },
+      cycle4: {
+        label: 'Cycle 4 CURRENT (Apr 2024)',
+        halvingPrice: 64000,
+        prices: [], // Filled dynamically
+        color: '#f59e0b'
+      }
+    };
+
+    const DRAWDOWN_COMPARE = {
+      months: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      cycle2: {
+        label: 'Cycle 2 (bottom -84%)',
+        peakPrice: 19700,
+        prices: [19700, 10000, 10500, 6900, 9200, 7500, 6400, 8200, 7000, 6600, 6300, 4000, 3200],
+        color: '#a855f7'
+      },
+      cycle3: {
+        label: 'Cycle 3 (bottom -76%)',
+        peakPrice: 69000,
+        prices: [69000, 47000, 38000, 44000, 45000, 40000, 31800, 20000, 23000, 20000, 19300, 20500, 16500],
+        color: '#3b82f6'
+      },
+      cycle4: {
+        label: 'Cycle 4 (loading...)',
+        peakPrice: 0,
+        prices: [], // Filled dynamically
+        color: '#f43f5e'
+      }
+    };
+
+    // Dynamic state for cycle 4 — updated from live data
+    let cycle4State = {
+      currentPrice: 0, ath: 0, athDate: null,
+      drawdown: 0, trend30d: 0, monthsSinceHalving: 0,
+      cycleScore: 50, currentPhase: 4
+    };
+
+    const HALVING_DATE = new Date('2024-04-20');
+
+    // ========== DYNAMIC DATA LOADING ==========
+    async function fetchBTCPriceHistory() {
+      const cacheKey = 'btc_cycle_history';
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (Date.now() - data.ts < 3600000) { // 1h cache
+            console.debug('✅ BTC cycle prices from cache');
+            return data.prices;
+          }
+        }
+      } catch (e) { /* ignore */ }
+
+      try {
+        const days = Math.ceil((Date.now() - HALVING_DATE.getTime()) / 86400000) + 30;
+        const resp = await fetch(
+          `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${days}`
+        );
+        if (!resp.ok) throw new Error(`CoinGecko ${resp.status}`);
+        const data = await resp.json();
+        if (!data.prices?.length) throw new Error('No price data');
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ prices: data.prices, ts: Date.now() }));
+        } catch (e) { /* full */ }
+        console.debug(`✅ BTC price history: ${data.prices.length} points`);
+        return data.prices;
+      } catch (e) {
+        console.warn('CoinGecko historical fetch failed:', e);
+        return null;
+      }
+    }
+
+    function processHistoricalData(rawPrices) {
+      const halvingTs = HALVING_DATE.getTime();
+      const cyclePrices = rawPrices.filter(([ts]) => ts >= halvingTs - 86400000 * 7);
+      if (cyclePrices.length < 10) return null;
+
+      const allP = cyclePrices.map(([_, p]) => p);
+      const currentPrice = allP[allP.length - 1];
+      const ath = Math.max(...allP);
+      const athIdx = allP.indexOf(ath);
+      const athDate = new Date(cyclePrices[athIdx][0]);
+      const drawdown = (currentPrice - ath) / ath;
+      const idx30d = Math.max(0, allP.length - 30);
+      const trend30d = (currentPrice - allP[idx30d]) / allP[idx30d];
+      const now = new Date();
+      const monthsSinceHalving = (now - HALVING_DATE) / (1000 * 60 * 60 * 24 * 30.44);
+
+      // Extract bimonthly closes from halving (for comparison chart)
+      const bimonthly = [];
+      for (let m = 0; m <= 30; m += 2) {
+        const targetDate = new Date(HALVING_DATE);
+        targetDate.setMonth(targetDate.getMonth() + m);
+        if (targetDate > now) break;
+        const targetTs = targetDate.getTime();
+        let closest = cyclePrices[0], minDist = Infinity;
+        for (const dp of cyclePrices) {
+          const dist = Math.abs(dp[0] - targetTs);
+          if (dist < minDist) { minDist = dist; closest = dp; }
+        }
+        bimonthly.push(Math.round(closest[1]));
+      }
+
+      // Extract monthly closes from peak (for drawdown chart)
+      const postPeak = cyclePrices.filter(([ts]) => ts >= cyclePrices[athIdx][0]);
+      const peakMonthly = [];
+      for (let m = 0; m <= 12; m++) {
+        const targetDate = new Date(athDate);
+        targetDate.setMonth(targetDate.getMonth() + m);
+        if (targetDate > now) break;
+        const targetTs = targetDate.getTime();
+        let closest = postPeak[0], minDist = Infinity;
+        for (const dp of postPeak) {
+          const dist = Math.abs(dp[0] - targetTs);
+          if (dist < minDist) { minDist = dist; closest = dp; }
+        }
+        peakMonthly.push(Math.round(closest[1]));
+      }
+
+      return {
+        currentPrice: Math.round(currentPrice), ath: Math.round(ath), athDate,
+        drawdown, trend30d, monthsSinceHalving, bimonthly, peakMonthly
+      };
+    }
+
+    function detectCyclePhase(data, cycleScore) {
+      const { drawdown, trend30d, monthsSinceHalving } = data;
+      // Phase 6: Bottom / Re-accumulation
+      if (cycleScore < 15 && trend30d > 0.02) return 6;
+      // Phase 5: Bear Market / Capitulation
+      if (drawdown < -0.40 && trend30d < -0.05) return 5;
+      // Phase 4: Distribution / Early Bear
+      if (drawdown < -0.15 && trend30d < 0) return 4;
+      // Phase 3: Bull Run / Blow-off Top
+      if (cycleScore > 50 && trend30d > 0.03) return 3;
+      // Phase 2: Post-halving Consolidation
+      if (monthsSinceHalving >= 0 && monthsSinceHalving < 8 && Math.abs(trend30d) < 0.10) return 2;
+      // Phase 1: Pre-halving Rally
+      if (monthsSinceHalving < 0 && trend30d > 0) return 1;
+      // Phase 0: Accumulation
+      return 0;
+    }
+
+    async function loadDynamicCycleData() {
+      const raw = await fetchBTCPriceHistory();
+      if (!raw) {
+        console.warn('⚠️ Using empty cycle 4 data (API unavailable)');
+        return false;
+      }
+      const data = processHistoricalData(raw);
+      if (!data) return false;
+
+      // Update comparison data
+      CYCLE_COMPARE.cycle4.prices = data.bimonthly;
+      CYCLE_COMPARE.cycle4.halvingPrice = data.bimonthly[0] || 64000;
+
+      // Update drawdown data
+      DRAWDOWN_COMPARE.cycle4.peakPrice = data.ath;
+      DRAWDOWN_COMPARE.cycle4.prices = data.peakMonthly;
+      DRAWDOWN_COMPARE.cycle4.label = `Cycle 4 (${Math.round(data.drawdown * 100)}% so far)`;
+
+      // Compute cycle score
+      const score = moduleLoaded ? cycleScoreFromMonths(data.monthsSinceHalving) : 50;
+      const phase = detectCyclePhase(data, score);
+
+      cycle4State = { ...data, cycleScore: score, currentPhase: phase };
+
+      // Update anatomy table with live data
+      updateAnatomyTable(data);
+
+      console.debug('✅ Dynamic cycle 4 loaded', {
+        price: `$${data.currentPrice.toLocaleString()}`,
+        ath: `$${data.ath.toLocaleString()}`,
+        dd: `${(data.drawdown * 100).toFixed(1)}%`,
+        trend: `${(data.trend30d * 100).toFixed(1)}%`,
+        phase, months: data.monthsSinceHalving.toFixed(1)
+      });
+      return true;
+    }
+
+    function updateAnatomyTable(data) {
+      const tbody = document.querySelector('#cycle-anatomy-table tbody');
+      if (!tbody) return;
+      const fmtDate = d => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      const daysToATH = Math.round((data.athDate - HALVING_DATE) / 86400000);
+      const retHalvPeak = Math.round((data.ath / (data.bimonthly[0] || 64000) - 1) * 100);
+      const monthsPostPeak = ((Date.now() - data.athDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)).toFixed(0);
+
+      tbody.innerHTML = `
+        <tr><td>Halving</td><td>Jul 2016</td><td>May 2020</td><td>Apr 2024</td></tr>
+        <tr><td>Halving price</td><td>$650</td><td>$9,500</td><td>$${(data.bimonthly[0] || 64000).toLocaleString()}</td></tr>
+        <tr><td>Peak</td><td>Dec 2017</td><td>Nov 2021</td><td>${fmtDate(data.athDate)}</td></tr>
+        <tr><td>Peak price</td><td>$19,700</td><td>$69,000</td><td>$${data.ath.toLocaleString()}</td></tr>
+        <tr><td>Return halving→peak</td><td>+2,930%</td><td>+702%</td><td>+${retHalvPeak}%</td></tr>
+        <tr><td>Halving → Peak</td><td>526 days</td><td>546 days</td><td>${daysToATH} days</td></tr>
+        <tr><td>Current price</td><td>—</td><td>—</td><td>$${data.currentPrice.toLocaleString()}</td></tr>
+        <tr><td>Drawdown from peak</td><td>-84% (final)</td><td>-76% (final)</td><td>${Math.round(data.drawdown * 100)}% (M+${monthsPostPeak})</td></tr>
+        <tr><td>Bottom</td><td>Dec 2018</td><td>Nov 2022</td><td style="color: var(--theme-text-muted);">?</td></tr>
+        <tr><td>Peak → Bottom</td><td>~12 months</td><td>~12 months</td><td style="color: var(--theme-text-muted);">In progress</td></tr>
+      `;
+    }
+
+    // ========== CYCLE COMPARISON RENDERING ==========
+    function renderCyclePosition() {
+      const container = document.getElementById('cycle-position');
+      if (!container) return;
+
+      const fmtDate = d => d ? d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '?';
+      const athDate = cycle4State.athDate || new Date();
+      // Estimate future phases based on historical pattern (bottom ~12 months post-peak)
+      const estBearEnd = new Date(athDate); estBearEnd.setMonth(estBearEnd.getMonth() + 10);
+      const estBottom = new Date(athDate); estBottom.setMonth(estBottom.getMonth() + 12);
+      const estReaccum = new Date(athDate); estReaccum.setMonth(estReaccum.getMonth() + 15);
+
+      const phases = [
+        { phase: 'Accumulation', time: 'Nov 2022 → Mar 2024' },
+        { phase: 'Pre-halving Rally', time: 'Jan → Apr 2024' },
+        { phase: 'Post-halving Consolidation', time: 'Apr → Oct 2024' },
+        { phase: 'Bull Run / Blow-off Top', time: `Nov 2024 → ${fmtDate(athDate)}` },
+        { phase: 'Distribution / Early Bear', time: `${fmtDate(athDate)} → now` },
+        { phase: 'Bear Market / Capitulation', time: `est. → ~${fmtDate(estBearEnd)}` },
+        { phase: 'Bottom / Re-accumulation', time: `est. ~${fmtDate(estBottom)} → ${fmtDate(estReaccum)}` },
+      ];
+
+      const active = cycle4State.currentPhase;
+
+      container.innerHTML = phases.map((p, i) => {
+        const status = i < active ? 'done' : i === active ? 'active' : 'future';
+        const icon = status === 'done' ? '✓' : status === 'active' ? '▸' : '○';
+        const suffix = status === 'active' ? ' ← HERE' : '';
+        const pct = status === 'done' ? 100 : status === 'active' ? 50 : 0;
+        return `
+          <div class="phase-item">
+            <div class="phase-dot ${status}">${icon}</div>
+            <div class="phase-info">
+              <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.25rem;">
+                <span class="phase-label ${status}">${p.phase}${suffix}</span>
+                <span class="phase-time">${p.time}</span>
+              </div>
+              <div class="phase-bar">
+                <div class="phase-fill ${status}" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function createComparisonChart() {
+      const ctx = document.getElementById('comparison-chart');
+      if (!ctx) return;
+      const existing = Chart.getChart(ctx);
+      if (existing) existing.destroy();
+
+      const datasets = ['cycle2', 'cycle3', 'cycle4'].map(key => {
+        const c = CYCLE_COMPARE[key];
+        if (!c.prices.length) return null;
+        return {
+          label: c.label,
+          data: c.prices.map((p, i) => ({ x: CYCLE_COMPARE.months[i], y: Math.round(p / c.halvingPrice * 100) })),
+          borderColor: c.color,
+          borderWidth: key === 'cycle4' ? 3 : 2,
+          pointRadius: key === 'cycle4' ? 4 : 3,
+          pointBackgroundColor: c.color,
+          fill: false, tension: 0.3
+        };
+      }).filter(Boolean);
+
+      new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type: 'linear', title: { display: true, text: 'Months after Halving' }, min: 0, max: 30, ticks: { stepSize: 2, callback: v => `M+${v}` } },
+            y: { title: { display: true, text: 'Performance (base 100 at halving)' }, min: 0 }
+          },
+          plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}%` } } }
+        }
+      });
+    }
+
+    function createDrawdownComparisonChart() {
+      const ctx = document.getElementById('drawdown-chart');
+      if (!ctx) return;
+      const existing = Chart.getChart(ctx);
+      if (existing) existing.destroy();
+
+      const datasets = ['cycle2', 'cycle3', 'cycle4'].map(key => {
+        const c = DRAWDOWN_COMPARE[key];
+        if (!c.prices.length) return null;
+        return {
+          label: c.label,
+          data: c.prices.map((p, i) => ({ x: DRAWDOWN_COMPARE.months[i], y: Math.round((p - c.peakPrice) / c.peakPrice * 100) })),
+          borderColor: c.color,
+          borderWidth: key === 'cycle4' ? 3 : 2,
+          pointRadius: key === 'cycle4' ? 4 : 3,
+          pointBackgroundColor: c.color,
+          fill: false, tension: 0.3
+        };
+      }).filter(Boolean);
+
+      new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: { type: 'linear', title: { display: true, text: 'Months after Peak' }, min: 0, max: 12, ticks: { stepSize: 1, callback: v => v === 0 ? 'Peak' : `M+${v}` } },
+            y: { title: { display: true, text: 'Drawdown from Peak (%)' }, min: -90, max: 5 }
+          },
+          plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y}%` } } }
+        }
+      });
+    }
+
+    window.switchCycleTab = function(tab) {
+      document.querySelectorAll('.cycle-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`[onclick="switchCycleTab('${tab}')"]`)?.classList.add('active');
+      document.getElementById('compare-panel').style.display = tab === 'compare' ? '' : 'none';
+      document.getElementById('drawdown-panel').style.display = tab === 'drawdown' ? '' : 'none';
+      if (tab === 'drawdown' && !Chart.getChart(document.getElementById('drawdown-chart'))) {
+        createDrawdownComparisonChart();
+      }
+    };
+
+    async function initCycleComparisons() {
+      // Show loading state
+      const posEl = document.getElementById('cycle-position');
+      if (posEl) posEl.innerHTML = '<div style="color: var(--theme-text-muted); font-size: 0.85em;">Loading live BTC data...</div>';
+
+      // Fetch live data, then render
+      await loadDynamicCycleData();
+      renderCyclePosition();
+      createComparisonChart();
+    }
+
     // Fonctions principales
     window.runFullAnalysis = async function () {
       document.getElementById('analysis-results').innerHTML = '<div class="metric good"><strong>🚀 Starting full analysis...</strong></div>';
@@ -1147,6 +1599,9 @@ Report generated on ${new Date().toLocaleString('en-US')}
 
       // Initialiser le graphique Bitcoin historique
       initBitcoinCycleChart();
+
+      // Initialiser les comparaisons de cycles (position, charts)
+      initCycleComparisons();
 
       // Puis lancer l'analyse si les modules sont chargés
       if (moduleLoaded) {
