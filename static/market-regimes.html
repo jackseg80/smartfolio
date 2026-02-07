@@ -43,6 +43,17 @@
   <!-- Risk Dashboard CSS (reuse existing styles) -->
   <link rel="stylesheet" href="css/risk-dashboard.css">
 
+  <style>
+    .main-content.refreshing {
+      opacity: 0.4;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .main-content {
+      transition: opacity 0.3s;
+    }
+  </style>
+
   <!-- View Mode System (Feb 2026) -->
   <script type="module" src="components/view-toggle.js"></script>
   <script type="module" src="components/domain-nav.js"></script>
@@ -67,10 +78,12 @@
   <script type="module">
     import { initializeBTCRegimeChart } from './modules/btc-regime-chart.js';
     import { initializeETHRegimeChart } from './modules/eth-regime-chart.js';
+    import { initializeStockRegimeChart } from './modules/stock-regime-chart.js';
     import { initializeStockRegimeHistory, openStockRegimeHistory, closeStockRegimeHistory } from './modules/stock-regime-history.js';
 
     window.initializeBTCRegimeChart = initializeBTCRegimeChart;
     window.initializeETHRegimeChart = initializeETHRegimeChart;
+    window.initializeStockRegimeChart = initializeStockRegimeChart;
     window.openStockRegimeHistory = openStockRegimeHistory;
     window.closeStockRegimeHistory = closeStockRegimeHistory;
   </script>
@@ -89,11 +102,6 @@
       <div class="header-controls">
         <view-toggle></view-toggle>
         <div class="timestamp" id="last-update">Loading...</div>
-        <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13.65 2.35C12.2 0.9 10.21 0 8 0 3.58 0 0.01 3.58 0.01 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
-          </svg>
-        </button>
       </div>
     </div>
 
@@ -107,46 +115,162 @@
           <div class="tab-pane active" id="regimes-tab" role="tabpanel">
             <div id="regimes-badge-container" class="badge-container"></div>
 
-            <!-- Section 1: Stock Market Regime -->
+            <!-- Section 1: Cross-Asset Regime Comparison (Quick Overview) -->
             <div class="ml-card" style="margin-bottom: 2rem;">
               <div class="card-header">
                 <div class="card-title">
-                  <span class="card-icon" aria-hidden="true">📈</span>
-                  Stock Market Regime Detection (HMM)
+                  <span class="card-icon" aria-hidden="true">📊</span>
+                  Cross-Asset Regime Comparison
                 </div>
                 <div class="card-actions">
-                  <button id="refresh-stock-regime" class="btn primary">🔄 Refresh</button>
-                  <button id="view-stock-history" class="btn secondary pro-only">📊 View Probabilities</button>
+                  <button id="refresh-comparison" class="btn primary">🔄 Refresh All</button>
+                  <button id="export-comparison" class="btn secondary">💾 Export Data</button>
                 </div>
               </div>
               <div class="card-content">
-                <div class="status-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                  <div class="status-item">
-                    <span class="status-label">Current Regime</span>
-                    <span class="status-value" id="stock-regime-name">Loading...</span>
-                  </div>
-                  <div class="status-item">
-                    <span class="status-label">Confidence</span>
-                    <span class="status-value" id="stock-regime-confidence">--</span>
-                  </div>
-                  <div class="status-item">
-                    <span class="status-label">Model</span>
-                    <span class="status-value">Hidden Markov Model</span>
-                  </div>
-                  <div class="status-item">
-                    <span class="status-label">Thresholds</span>
-                    <span class="status-value" style="font-size: 0.85rem;">Bear: DD&le;-15% (30d)</span>
-                  </div>
+                <div style="overflow-x: auto;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="background: var(--theme-surface-elevated); text-align: left;">
+                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset</th>
+                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current Regime</th>
+                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Confidence</th>
+                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Detection Method</th>
+                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear Threshold</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">📈 Stock Market</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
+                          <span id="comparison-stock-regime" class="regime-chip">--</span>
+                        </td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-confidence">--</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM Only</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD &le; -15%, 30d</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">₿ Bitcoin</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
+                          <span id="comparison-btc-regime" class="regime-chip">--</span>
+                        </td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-confidence">--</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-method">--</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">⟠ Ethereum</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
+                          <span id="comparison-eth-regime" class="regime-chip">--</span>
+                        </td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-confidence">--</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-method">--</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
-                <div class="pro-only" style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
-                  <strong>ℹ️ Stock Market Detection:</strong>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
+                  <strong>📌 Key Differences:</strong>
                   <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                    <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
-                    <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
-                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD &le; -15%, 30 days)</li>
+                    <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional thresholds</li>
+                    <li><strong>Bitcoin & Ethereum:</strong> Hybrid Rule-Based + HMM, crypto-adjusted thresholds (3x higher volatility)</li>
+                    <li><strong>Why Different?</strong> Crypto volatility (60-100% annual) vs Stocks (15-25%) requires distinct detection logic</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+
+            <!-- Section 2: Stock Market Regime Detection -->
+            <div class="ml-card" style="margin-bottom: 2rem;" id="stock-regime-section">
+              <div class="card-header" style="margin-bottom: 1.5rem;">
+                <div class="card-title">
+                  <span class="card-icon" aria-hidden="true">📈</span>
+                  Stock Market Regime Detection (HMM)
+                  <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
+                    Hidden Markov Model
+                  </small>
+                </div>
+              </div>
+
+              <!-- Current Regime Summary Cards -->
+              <div class="stock-regime-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div class="metric-card">
+                  <h5>Current Regime</h5>
+                  <div class="metric-value">
+                    <span id="stock-regime-name" class="regime-chip">Loading...</span>
+                  </div>
+                  <small>HMM Detection</small>
+                </div>
+
+                <div class="metric-card">
+                  <h5>Confidence</h5>
+                  <div class="metric-value" id="stock-regime-confidence">--</div>
+                  <small>Detection Certainty</small>
+                </div>
+
+                <div class="metric-card">
+                  <h5>Model</h5>
+                  <div class="metric-value">HMM</div>
+                  <small>Hidden Markov Model</small>
+                </div>
+
+                <div class="metric-card">
+                  <h5>Bear Threshold</h5>
+                  <div class="metric-value" style="font-size: 0.85rem;">DD &le; -15% (30d)</div>
+                  <small>Traditional Stock Parameters</small>
+                </div>
+              </div>
+
+              <!-- Timeframe Selector -->
+              <div class="stock-regime-timeframe-selector" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button data-days="365" class="timeframe-btn active">1 Year</button>
+                <button data-days="730" class="timeframe-btn">2 Years</button>
+                <button data-days="1825" class="timeframe-btn">5 Years</button>
+                <button data-days="3650" class="timeframe-btn">10 Years</button>
+              </div>
+
+              <!-- Timeline Chart -->
+              <div id="stock-regime-chart-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem; min-height: 550px;">
+                <canvas id="stock-regime-timeline-chart" style="height: 500px; width: 100%;"></canvas>
+              </div>
+              <div id="stock-regime-error-message" class="error-state" style="display: none;"></div>
+
+              <!-- Regime Probabilities Chart -->
+              <div class="pro-only" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem;">
+                <canvas id="stock-regime-probabilities-chart" style="max-height: 300px;"></canvas>
+              </div>
+
+              <!-- Regime Legend -->
+              <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
+                <div class="legend-item">
+                  <span class="regime-chip bear-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear Market</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD &le; -15%, 30d+</small>
+                </div>
+                <div class="legend-item">
+                  <span class="regime-chip correction" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD 10-15% + Vol &gt;30%</small>
+                </div>
+                <div class="legend-item">
+                  <span class="regime-chip bull-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull Market</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Price &gt; MA200, Vol &lt;25%</small>
+                </div>
+                <div class="legend-item">
+                  <span class="regime-chip expansion" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery +15%/mo</small>
+                </div>
+              </div>
+
+              <!-- Info Footer -->
+              <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--info); border-radius: var(--radius-sm);">
+                <strong>ℹ️ About Stock Market Detection:</strong>
+                <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
+                  <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
+                  <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
+                  <li><strong>Thresholds:</strong> Traditional stock market parameters (DD &le; -15%, 30 days)</li>
+                  <li><strong>Events:</strong> COVID crash, Fed policy changes annotated for context</li>
+                </ul>
               </div>
             </div>
 
@@ -319,72 +443,6 @@
               </div>
             </div>
 
-            <!-- Section 3: Cross-Asset Comparison -->
-            <div class="ml-card">
-              <div class="card-header">
-                <div class="card-title">
-                  <span class="card-icon" aria-hidden="true">📊</span>
-                  Cross-Asset Regime Comparison
-                </div>
-              </div>
-              <div class="card-content">
-                <div style="overflow-x: auto;">
-                  <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                      <tr style="background: var(--theme-surface-elevated); text-align: left;">
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current Regime</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Confidence</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Detection Method</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear Threshold</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">📈 Stock Market</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
-                          <span id="comparison-stock-regime" class="regime-chip">--</span>
-                        </td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-confidence">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM Only</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD &le; -15%, 30d</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">₿ Bitcoin</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
-                          <span id="comparison-btc-regime" class="regime-chip">--</span>
-                        </td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-confidence">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-method">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
-                      </tr>
-                      <tr>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">⟠ Ethereum</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
-                          <span id="comparison-eth-regime" class="regime-chip">--</span>
-                        </td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-confidence">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-method">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
-                  <strong>📌 Key Differences:</strong>
-                  <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                    <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional thresholds</li>
-                    <li><strong>Bitcoin & Ethereum:</strong> Hybrid Rule-Based + HMM, crypto-adjusted thresholds (3x higher volatility)</li>
-                    <li><strong>Why Different?</strong> Crypto volatility (60-100% annual) vs Stocks (15-25%) requires distinct detection logic</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="card-actions">
-                <button id="refresh-comparison" class="btn primary">🔄 Refresh Comparison</button>
-                <button id="export-comparison" class="btn secondary">💾 Export Data</button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -409,51 +467,6 @@
       return { api_base_url: window.location.origin };
     }
 
-    // Load Stock Market regime data
-    async function loadStockRegimeData() {
-      try {
-        const config = await fetchUserConfig();
-        const endpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
-        debugLogger.debug('Fetching stock regime from:', endpoint);
-
-        const response = await fetch(endpoint);
-        debugLogger.debug('Stock regime response status:', response.status);
-
-        if (response.ok) {
-          const data = await response.json();
-          debugLogger.debug('Stock regime data received:', data);
-
-          if (data.current_regime && data.confidence !== undefined) {
-            const regimeName = data.current_regime;
-            const confidencePercent = (data.confidence * 100).toFixed(1);
-
-            const regimeEl = document.getElementById('stock-regime-name');
-            regimeEl.textContent = regimeName;
-            regimeEl.className = 'regime-chip ' + regimeName.toLowerCase().replace(' ', '-').replace('_', '-');
-
-            const confidenceEl = document.getElementById('stock-regime-confidence');
-            confidenceEl.textContent = confidencePercent + '%';
-            const conf = data.confidence;
-            confidenceEl.style.color = conf >= 0.8 ? 'var(--success)' : conf >= 0.6 ? 'var(--warning)' : 'var(--danger)';
-
-            debugLogger.debug('Stock regime loaded:', regimeName, confidencePercent + '%');
-          } else {
-            debugLogger.warn('No current_regime in response');
-            document.getElementById('stock-regime-name').textContent = 'N/A';
-            document.getElementById('stock-regime-confidence').textContent = 'N/A';
-          }
-        } else {
-          const errorText = await response.text();
-          debugLogger.error('Stock regime API error:', response.status, errorText);
-          document.getElementById('stock-regime-name').textContent = 'API Error';
-          document.getElementById('stock-regime-confidence').textContent = '--';
-        }
-      } catch (error) {
-        debugLogger.error('Failed to load stock regime:', error);
-        document.getElementById('stock-regime-name').textContent = 'Error';
-        document.getElementById('stock-regime-confidence').textContent = '--';
-      }
-    }
 
     // Load Ethereum regime data
     async function loadEthereumRegimeData() {
@@ -635,66 +648,76 @@
       if (window.toast) window.toast.showSuccess(`Exported as ${filename}`);
     }
 
-    // Setup button event listeners
-    function setupRegimesPageButtons() {
-      document.getElementById('refresh-stock-regime')?.addEventListener('click', async () => {
-        await loadStockRegimeData();
-        if (window.toast) window.toast.showSuccess('Stock regime data refreshed');
-      });
+    // Refresh all regime data (called by refresh button and on init)
+    async function refreshAllRegimes({ visualFeedback = false } = {}) {
+      debugLogger.debug('Refreshing all regime data...');
 
-      document.getElementById('view-stock-history')?.addEventListener('click', () => {
-        if (window.openStockRegimeHistory) {
-          window.openStockRegimeHistory();
-        } else {
-          if (window.toast) window.toast.showError('Stock regime history module not loaded');
-        }
-      });
+      const mainContent = document.querySelector('.main-content');
 
-      document.getElementById('refresh-comparison')?.addEventListener('click', async () => {
-        await loadCrossAssetComparison();
-        if (window.toast) window.toast.showSuccess('Comparison data refreshed');
-      });
+      // Visual dimming during refresh
+      if (visualFeedback && mainContent) {
+        mainContent.classList.add('refreshing');
+      }
 
-      document.getElementById('export-comparison')?.addEventListener('click', () => {
-        const format = confirm('Click OK for JSON, Cancel for CSV') ? 'json' : 'csv';
-        exportCrossAssetComparison(format);
-      });
+      document.getElementById('last-update').textContent = 'Refreshing...';
 
-      document.getElementById('refresh-btn')?.addEventListener('click', async () => {
-        await initializeAllRegimes();
-        if (window.toast) window.toast.showSuccess('All regime data refreshed');
-      });
-    }
+      const results = await Promise.allSettled([
+        loadCrossAssetComparison(),
+        window.initializeStockRegimeChart ? window.initializeStockRegimeChart() : Promise.resolve(),
+        window.initializeBTCRegimeChart ? window.initializeBTCRegimeChart('btc-regime-section') : Promise.resolve(),
+        window.initializeETHRegimeChart ? window.initializeETHRegimeChart() : Promise.resolve(),
+        loadEthereumRegimeData()
+      ]);
 
-    // Initialize all regimes on page load
-    async function initializeAllRegimes() {
-      debugLogger.debug('Initializing Market Regimes page...');
+      const failed = results.filter(r => r.status === 'rejected');
+      if (failed.length > 0) {
+        failed.forEach(r => debugLogger.error('Regime load error:', r.reason));
+      }
 
-      // Update timestamp
       document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
 
-      try {
-        // Initialize BTC regime chart
-        if (window.initializeBTCRegimeChart) {
-          await window.initializeBTCRegimeChart('btc-regime-section');
-        }
-        // Initialize ETH regime chart
-        if (window.initializeETHRegimeChart) {
-          await window.initializeETHRegimeChart();
-        }
-        // Load other data
-        await loadStockRegimeData();
-        await loadEthereumRegimeData();
-        await loadCrossAssetComparison();
-        setupRegimesPageButtons();
-        debugLogger.debug('Market Regimes page fully initialized');
-      } catch (error) {
-        debugLogger.error('Error initializing Market Regimes page:', error);
+      // Restore content
+      if (visualFeedback && mainContent) {
+        mainContent.classList.remove('refreshing');
       }
+
+      debugLogger.debug('Market Regimes page refresh complete');
     }
 
+    // Event delegation with CAPTURE phase - bypasses stopPropagation from other handlers
+    let isRefreshing = false;
+    document.addEventListener('click', async (e) => {
+      const comparisonBtn = e.target.closest('#refresh-comparison');
+      if (comparisonBtn) {
+        if (isRefreshing) return;
+        isRefreshing = true;
+        comparisonBtn.disabled = true;
+        comparisonBtn.textContent = '⏳ Refreshing...';
+        try {
+          await refreshAllRegimes({ visualFeedback: true });
+          if (window.toast) window.toast.showSuccess('All regime data refreshed');
+        } catch (error) {
+          debugLogger.error('Refresh failed:', error);
+          if (window.toast) window.toast.showError('Refresh failed');
+        } finally {
+          comparisonBtn.textContent = '🔄 Refresh All';
+          comparisonBtn.disabled = false;
+          isRefreshing = false;
+        }
+        return;
+      }
+
+      const exportBtn = e.target.closest('#export-comparison');
+      if (exportBtn) {
+        const format = confirm('Click OK for JSON, Cancel for CSV') ? 'json' : 'csv';
+        exportCrossAssetComparison(format);
+      }
+    }, true); // capture phase - fires before any stopPropagation
+
     // Initialize on DOM ready
-    document.addEventListener('DOMContentLoaded', initializeAllRegimes);
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshAllRegimes();
+    });
   </script>
 
   <!-- AI Chat Components -->

@@ -2433,14 +2433,6 @@
   transition: all var(--transition-fast);
 }
 
-/* Stock Market Regime - Larger display */
-.status-grid .status-value .regime-chip,
-#stock-regime-name {
-  font-size: 1.25rem;
-  padding: 0.5rem 1.25rem;
-  font-weight: 700;
-}
-
 /* Regime colors */
 .regime-chip.bear,
 .regime-chip.bear-market {
@@ -2476,19 +2468,6 @@
   border: 2px solid #6b7280;
 }
 
-/* Stock Market Regime Section Enhanced Styling */
-#stock-regime-name {
-  display: inline-block;
-  min-width: 140px;
-  text-align: center;
-}
-
-#stock-regime-confidence {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--brand-primary);
-}
-
 /* Detection method badges */
 .detection-method {
   display: inline-block;
@@ -2513,6 +2492,7 @@
 }
 
 /* Metric cards in regime sections */
+.stock-regime-summary .metric-card,
 .btc-regime-summary .metric-card,
 .eth-regime-summary .metric-card {
   background: var(--theme-surface);
@@ -2523,12 +2503,14 @@
   transition: all var(--transition-fast);
 }
 
+.stock-regime-summary .metric-card:hover,
 .btc-regime-summary .metric-card:hover,
 .eth-regime-summary .metric-card:hover {
   border-color: var(--brand-primary);
   box-shadow: var(--shadow-sm);
 }
 
+.stock-regime-summary .metric-card h5,
 .btc-regime-summary .metric-card h5,
 .eth-regime-summary .metric-card h5 {
   margin: 0 0 var(--space-sm) 0;
@@ -2539,6 +2521,7 @@
   font-weight: 600;
 }
 
+.stock-regime-summary .metric-card .metric-value,
 .btc-regime-summary .metric-card .metric-value,
 .eth-regime-summary .metric-card .metric-value {
   font-size: 1.5rem;
@@ -2547,6 +2530,7 @@
   margin-bottom: var(--space-xs);
 }
 
+.stock-regime-summary .metric-card small,
 .btc-regime-summary .metric-card small,
 .eth-regime-summary .metric-card small {
   font-size: 0.7rem;
@@ -2554,6 +2538,7 @@
 }
 
 /* Timeframe buttons */
+.stock-regime-timeframe-selector .timeframe-btn,
 .btc-regime-timeframe-selector .timeframe-btn,
 .eth-regime-timeframe-selector .timeframe-btn {
   padding: 0.5rem 1rem;
@@ -2567,12 +2552,14 @@
   transition: all var(--transition-fast);
 }
 
+.stock-regime-timeframe-selector .timeframe-btn:hover,
 .btc-regime-timeframe-selector .timeframe-btn:hover,
 .eth-regime-timeframe-selector .timeframe-btn:hover {
   border-color: var(--brand-primary);
   color: var(--brand-primary);
 }
 
+.stock-regime-timeframe-selector .timeframe-btn.active,
 .btc-regime-timeframe-selector .timeframe-btn.active,
 .eth-regime-timeframe-selector .timeframe-btn.active {
   background: var(--brand-primary);
@@ -2589,6 +2576,7 @@
 }
 
 /* ===== Loading State for BTC & ETH Regime Charts ===== */
+#stock-regime-chart-container.loading,
 #btc-regime-chart-container.loading,
 #eth-regime-chart-container.loading {
   opacity: 0.6;
@@ -2597,6 +2585,7 @@
   transition: opacity var(--transition-normal);
 }
 
+#stock-regime-chart-container.loading::after,
 #btc-regime-chart-container.loading::after,
 #eth-regime-chart-container.loading::after {
   content: '';
@@ -2621,18 +2610,22 @@
 
 /* ===== Responsive Mobile for Bitcoin & Ethereum Charts ===== */
 @media (max-width: 768px) {
+  .stock-regime-summary,
   .btc-regime-summary,
   .eth-regime-summary {
     grid-template-columns: 1fr !important;
     gap: 1rem;
   }
 
+  .stock-regime-timeframe-selector,
   .btc-regime-timeframe-selector,
   .eth-regime-timeframe-selector {
     flex-direction: column;
     gap: 0.5rem;
   }
 
+  .stock-regime-timeframe-selector .timeframe-btn,
+  .stock-regime-timeframe-selector button,
   .btc-regime-timeframe-selector .timeframe-btn,
   .btc-regime-timeframe-selector button,
   .eth-regime-timeframe-selector .timeframe-btn,
@@ -2654,6 +2647,7 @@
   }
 
   /* Adjust chart container padding on mobile */
+  #stock-regime-chart-container,
   #btc-regime-chart-container,
   #eth-regime-chart-container {
     padding: 1rem;

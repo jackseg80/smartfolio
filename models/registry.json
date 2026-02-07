@@ -218,7 +218,7 @@
       "model_type": "volatility",
       "status": "trained",
       "created_at": "2024-09-15T08:53:00+00:00",
-      "updated_at": "2026-02-06T15:32:49.990332",
+      "updated_at": "2026-02-07T00:00:12.127649",
       "file_path": "models/volatility/volatility_model_v2.1.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -241,9 +241,9 @@
         "distribution": "normal"
       },
       "validation_metrics": {
-        "test_mse": 0.028034913043181103,
-        "best_val_mse": 0.01829646434634924,
-        "r2": 0.45665979385375977,
+        "test_mse": 0.024579682076970737,
+        "best_val_mse": 0.025971845102806885,
+        "r2": 0.5009300311406454,
         "data_source": "real_crypto_365d",
         "assets": "BTC,ETH,SOL",
         "models_trained": 3,
@@ -266,19 +266,19 @@
           },
           {
             "symbol": "SOL",
-            "test_mse": 0.03718771040439606,
-            "best_val_mse": 0.02470022439956665,
-            "r2": 0.3746095895767212,
-            "train_samples": 213,
-            "test_samples": 71
+            "test_mse": 0.02682201750576496,
+            "best_val_mse": 0.04772636666893959,
+            "r2": 0.5074203014373779,
+            "train_samples": 195,
+            "test_samples": 65
           }
         ],
-        "training_time_seconds": 34.512388706207275
+        "training_time_seconds": 12.114243507385254
       },
       "test_metrics": {
-        "test_mse": 0.028034913043181103,
-        "best_val_mse": 0.01829646434634924,
-        "r2": 0.45665979385375977,
+        "test_mse": 0.024579682076970737,
+        "best_val_mse": 0.025971845102806885,
+        "r2": 0.5009300311406454,
         "data_source": "real_crypto_365d",
         "assets": "BTC,ETH,SOL",
         "models_trained": 3,
@@ -301,14 +301,14 @@
           },
           {
             "symbol": "SOL",
-            "test_mse": 0.03718771040439606,
-            "best_val_mse": 0.02470022439956665,
-            "r2": 0.3746095895767212,
-            "train_samples": 213,
-            "test_samples": 71
+            "test_mse": 0.02682201750576496,
+            "best_val_mse": 0.04772636666893959,
+            "r2": 0.5074203014373779,
+            "train_samples": 195,
+            "test_samples": 65
           }
         ],
-        "training_time_seconds": 34.512388706207275
+        "training_time_seconds": 12.114243507385254
       },
       "target_assets": [
         "BTC",
