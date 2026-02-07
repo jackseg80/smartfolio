@@ -88,10 +88,25 @@ Market Data (OHLCV)
 
 | Rule | Crypto (BTC/ETH) | Stocks (SPY) |
 | ---- | ----------------- | ------------ |
-| **Bear Market** | DD ≤ -30%, sustained 20d | DD ≤ -15%, sustained 30d |
-| **Expansion** | Recovery from -30%+ at +30%/month | Recovery from -15%+ at +15%/month |
+| **Bear Market** | DD ≤ -30% + trend ≤ -10%, sustained 20d | DD ≤ -15%, sustained 30d |
+| **Expansion** | Lookback DD ≤ -30% + trend ≥ +15%/month + DD < -15% | Recovery from -15%+ at +10%/month |
 | **Bull Market** | DD > -20%, vol < 60%, trend > +10% | DD > -8%, vol < 18%, trend > +2% |
-| **Correction** | -30% < DD < -10% AND vol > 65% | Fallback (no clear rule match) |
+| **Bull (recovery)** | trend > +5%, vol < 65%, DD > -50% | N/A |
+| **Correction** | (DD < -10% AND vol > 65%) OR (DD < -20% AND \|trend\| < 10%) | Fallback (no clear rule match) |
+
+**Important**: Bear Market requires a **negative trend** (price actively declining), not just deep
+drawdown from ATH. Without this, recovery rallies (e.g., BTC $16k→$70k in 2023-2024) were
+misclassified as Bear Market because the drawdown from ATH ($69k) was still >30%.
+
+### Regime History Smoothing
+
+Both crypto and stock regime-history endpoints apply **minimum duration smoothing** after detection:
+
+- **Crypto**: min 7 days (higher volatility allows faster regime changes)
+- **Stocks**: min 14 days (regimes are inherently more stable)
+
+Short-lived transitions (< min_duration) are absorbed by the longer neighboring regime.
+This is implemented by `smooth_regime_sequence()` in `services/regime_constants.py`.
 
 See also:
 

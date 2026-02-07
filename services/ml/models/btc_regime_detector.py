@@ -2,9 +2,10 @@
 Bitcoin Market Regime Detection using Hybrid Rule-Based + HMM System
 
 Adapté du système bourse avec thresholds crypto:
-- Bear Market: Drawdown ≤ -50% (vs -20% bourse), sustained 30 days (vs 60)
-- Expansion: Recovery +30%/month (vs +15% bourse)
-- Bull Market: DD > -20%, vol <60% (vs DD > -5%, vol <20%)
+- Bear Market: Drawdown ≤ -30% (vs -15% bourse), sustained 20 days (vs 30)
+- Expansion: Recovery +30%/month (vs +10% bourse)
+- Bull Market: DD > -20%, vol <60% (vs DD > -8%, vol <18%)
+- Correction: DD 10-30% + vol >65% (fallback to HMM otherwise)
 
 Résout le problème de temporal blindness du HMM seul (0% recall sur bear markets).
 """
@@ -29,14 +30,14 @@ logger = logging.getLogger(__name__)
 class BTCRegimeDetector:
     """
     Bitcoin Regime Detection using Hybrid approach:
-    - Rule-based detection for clear cases (bear >50% DD, bull stable)
-    - HMM for nuanced cases (corrections 10-50%, consolidations)
+    - Rule-based detection for clear cases (bear >30% DD, bull stable)
+    - HMM for nuanced cases (corrections 10-30%, consolidations)
     - Fusion with confidence threshold 85%
 
     Detects 4 regimes:
-    - 0: Bear Market (violent crashes -50% to -85%)
-    - 1: Correction (pullbacks -10% to -50%, or high volatility)
-    - 2: Bull Market (stable uptrend, low drawdown)
+    - 0: Bear Market (sustained crashes, DD ≤ -30% for 20+ days)
+    - 1: Correction (pullbacks -10% to -30% + elevated volatility >65%)
+    - 2: Bull Market (stable uptrend, DD > -20%, vol <60%)
     - 3: Expansion (post-crash recovery +30%/month)
     """
 
@@ -253,8 +254,8 @@ class BTCRegimeDetector:
 
         logger.info(f"HMM trained successfully (score={best_score:.2f})")
 
-        # Save model
-        self.save_model(f"btc_regime_hmm.pkl")
+        # Save symbol-specific model
+        self.save_model(f"{symbol.lower()}_regime_hmm.pkl")
 
     def save_model(self, filename: str):
         """Save HMM model and scaler"""
@@ -310,11 +311,12 @@ class BTCRegimeDetector:
         if len(features_df) == 0:
             raise ValueError("No features available for prediction")
 
-        # Load or train HMM if needed
+        # Load symbol-specific HMM model (BTC and ETH have different distributions)
         if self.hmm_model is None:
-            model_loaded = self.load_model("btc_regime_hmm.pkl")
+            model_file = f"{symbol.lower()}_regime_hmm.pkl"
+            model_loaded = self.load_model(model_file)
             if not model_loaded:
-                logger.info("No trained model found, training HMM...")
+                logger.info(f"No trained model found for {symbol}, training HMM...")
                 await self.train_hmm(symbol, lookback_days)
 
         # Normalize features
@@ -388,9 +390,10 @@ class BTCRegimeDetector:
         Detect regime using CRYPTO-ADAPTED rule-based criteria.
 
         Bitcoin thresholds (vs bourse):
-        - Bear: DD ≤ -30% (vs -15%), sustained 20 days (vs 30)
-        - Expansion: +30%/month (vs +15%)
-        - Bull: DD > -20%, vol <60% (vs DD > -5%, vol <20%)
+        - Bear: DD ≤ -30% + negative trend (vs -15%), sustained 20 days (vs 30)
+        - Expansion: Recovery from -30%+ with +15%/month trend
+        - Bull: DD > -20%, vol <60% (vs DD > -8%, vol <18%)
+        - Bull (recovery): trend > 5%, vol <65%, DD > -50%
 
         Only returns result if confidence ≥ 85%.
 
@@ -406,34 +409,31 @@ class BTCRegimeDetector:
         trend_30d = latest.get('trend_30d', 0)
         volatility = latest['market_volatility']
 
-        # Rule 1: BEAR MARKET (highest priority)
-        # Crypto: DD ≤ -30%, sustained 20 days (vs bourse: -15%, 30 days)
-        # -43% DD = bear market, not correction. Old -50% threshold was too late.
-        if drawdown <= -0.30 and days_since_peak >= 20:
+        # Rule 1: BEAR MARKET - deep drawdown WITH actively declining price
+        # Requires negative trend to avoid misclassifying recovery rallies as Bear
+        # (e.g., BTC at $35k in 2023 = -49% from ATH but clearly recovering)
+        if drawdown <= -0.30 and days_since_peak >= 20 and trend_30d <= -0.10:
             return {
                 'regime_id': 0,
                 'regime_name': 'Bear Market',
-                'confidence': min(0.95, 0.85 + abs(drawdown) * 0.2),  # More DD = more confident
+                'confidence': min(0.95, 0.85 + abs(drawdown) * 0.2),
                 'method': 'rule_based',
-                'reason': f'Drawdown {drawdown:.1%} sustained {int(days_since_peak)} days'
+                'reason': f'Drawdown {drawdown:.1%} sustained {int(days_since_peak)} days, trend {trend_30d:.1%}'
             }
 
-        # Rule 2: EXPANSION (post-crash recovery)
-        # Crypto: +30%/month (vs bourse: +15%/month)
-        if drawdown >= -0.20 and days_since_peak >= 30:  # Recovered
-            # Check if there was recent deep drawdown
-            lookback_dd = features.tail(180)['drawdown_from_peak'].min()  # Last 6 months
-            if lookback_dd <= -0.30 and trend_30d >= 0.30:  # Was -30%+ deep + strong recovery
-                return {
-                    'regime_id': 3,
-                    'regime_name': 'Expansion',
-                    'confidence': 0.90,
-                    'method': 'rule_based',
-                    'reason': f'Recovery from {lookback_dd:.1%} at +{trend_30d:.1%}/30d'
-                }
+        # Rule 2: EXPANSION - recovering from deep drawdown (still far from ATH)
+        # drawdown < -0.15 ensures we're still in recovery; near ATH → Bull Market instead
+        lookback_dd = features.tail(180)['drawdown_from_peak'].min()
+        if lookback_dd <= -0.30 and trend_30d >= 0.15 and drawdown < -0.15:
+            return {
+                'regime_id': 3,
+                'regime_name': 'Expansion',
+                'confidence': 0.90,
+                'method': 'rule_based',
+                'reason': f'Recovery from {lookback_dd:.1%} at +{trend_30d:.1%}/30d'
+            }
 
-        # Rule 3: BULL MARKET (clear uptrend)
-        # Crypto: DD > -20%, vol <60% (vs bourse: DD > -5%, vol <20%)
+        # Rule 3: BULL MARKET - clear uptrend near peaks
         if drawdown >= -0.20 and volatility < 0.60 and trend_30d > 0.10:
             return {
                 'regime_id': 2,
@@ -443,21 +443,27 @@ class BTCRegimeDetector:
                 'reason': f'Stable uptrend: DD={drawdown:.1%}, vol={volatility:.1%}'
             }
 
-        # Rule 4: CORRECTION (fallback before HMM)
-        # Moderate drawdown (-30% < DD < -10%) AND elevated volatility (>65%)
-        # Deeper than -30% is Bear Market (Rule 1), not correction
-        if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
+        # Rule 4: BULL MARKET (recovery) - moderate uptrend even with deeper ATH drawdown
+        if trend_30d > 0.05 and volatility < 0.65 and drawdown > -0.50:
+            return {
+                'regime_id': 2,
+                'regime_name': 'Bull Market',
+                'confidence': 0.85,
+                'method': 'rule_based',
+                'reason': f'Recovery uptrend: DD={drawdown:.1%}, trend={trend_30d:.1%}'
+            }
+
+        # Rule 5: CORRECTION - elevated volatility OR deep DD with flat trend
+        if (drawdown < -0.10 and volatility > 0.65) or (drawdown < -0.20 and abs(trend_30d) < 0.10):
             confidence = 0.85
-            # Higher confidence for deeper corrections
             if drawdown < -0.20:
                 confidence = 0.90
-
             return {
                 'regime_id': 1,
                 'regime_name': 'Correction',
                 'confidence': confidence,
                 'method': 'rule_based',
-                'reason': f'Moderate drawdown {drawdown:.1%} + Elevated volatility {volatility:.1%}'
+                'reason': f'Drawdown {drawdown:.1%} + Elevated volatility {volatility:.1%}'
             }
 
         # No clear rule-based detection → defer to HMM

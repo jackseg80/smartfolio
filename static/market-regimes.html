@@ -135,7 +135,7 @@
                   </div>
                   <div class="status-item">
                     <span class="status-label">Thresholds</span>
-                    <span class="status-value" style="font-size: 0.85rem;">Bear: DD≤-20% (60d)</span>
+                    <span class="status-value" style="font-size: 0.85rem;">Bear: DD&le;-15% (30d)</span>
                   </div>
                 </div>
 
@@ -144,7 +144,7 @@
                   <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                     <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
                     <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
-                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD ≤ -20%, 60 days)</li>
+                    <li><strong>Thresholds:</strong> Traditional stock market parameters (DD &le; -15%, 30 days)</li>
                   </ul>
                 </div>
               </div>
@@ -220,16 +220,16 @@
               <!-- Regime Legend -->
               <div class="btc-regime-legend" style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
                 <div class="legend-item">
-                  <span class="regime-chip bear" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear Market</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD ≤ -30%, 20d+</small>
+                  <span class="regime-chip bear-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear Market</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD &le; -30%, 20d+</small>
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip correction" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD 10-30% + Vol >65%</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD 10-30% + Vol &gt;65%</small>
                 </div>
                 <div class="legend-item">
-                  <span class="regime-chip bull" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull Market</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD > -20%, Vol <60%</small>
+                  <span class="regime-chip bull-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull Market</span>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD &gt; -20%, Vol &lt;60%</small>
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip expansion" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
@@ -313,7 +313,7 @@
                 <strong>ℹ️ About Ethereum Detection:</strong>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                   <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as Bitcoin</li>
-                  <li><strong>Crypto-Adjusted Thresholds:</strong> Bear ≤ -50% (30d+), Bull > -20% (vol <60%), Expansion +30%/mo</li>
+                  <li><strong>Crypto-Adjusted Thresholds:</strong> Bear &le; -30% (20d+), Bull &gt; -20% (vol &lt;60%), Expansion +30%/mo</li>
                   <li><strong>Timeline Chart:</strong> Interactive regime visualization with price history</li>
                 </ul>
               </div>
@@ -347,7 +347,7 @@
                         </td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-confidence">--</td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM Only</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -20%, 60d</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD &le; -15%, 30d</td>
                       </tr>
                       <tr>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">₿ Bitcoin</td>

@@ -16,6 +16,7 @@ import time
 from api.utils import success_response, error_response
 from services.ml.models.btc_regime_detector import BTCRegimeDetector
 from services.price_history import price_history
+from services.regime_constants import REGIME_NAMES, smooth_regime_sequence
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -163,8 +164,9 @@ async def get_crypto_regime_history(
         if len(features_df) == 0:
             return error_response("Insufficient data", code=400)
 
-        # Load HMM model for fallback
-        if not detector.load_model("btc_regime_hmm.pkl"):
+        # Load symbol-specific HMM model for fallback
+        model_file = f"{symbol.lower()}_regime_hmm.pkl"
+        if not detector.load_model(model_file):
             await detector.train_hmm(symbol=symbol, lookback_days=3650)
 
         features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
@@ -205,6 +207,10 @@ async def get_crypto_regime_history(
                 regime_names.append(detector.regime_names[hmm_label])
                 regime_ids.append(hmm_label)
 
+        # Smooth regime sequence to remove short-lived transitions (<7 days)
+        regime_ids = smooth_regime_sequence(regime_ids, min_duration=7)
+        regime_names = [REGIME_NAMES[rid] for rid in regime_ids]
+
         # Format response
         response_data = {
             'dates': features_df.index.strftime('%Y-%m-%d').tolist(),
@@ -215,7 +221,7 @@ async def get_crypto_regime_history(
             'lookback_days': lookback_days,
             'regime_id_mapping': {i: name for i, name in enumerate(detector.regime_names)},
             'events': get_btc_events(features_df.index.min(), features_df.index.max()),
-            'note': 'Hybrid detection (rule-based + HMM fallback) for accurate regime classification.'
+            'note': 'Hybrid detection (rule-based + HMM fallback) with 7-day minimum duration smoothing.'
         }
 
         # Store in cache
@@ -233,11 +239,12 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
     """
     Apply rule-based regime detection for a single row with historical context.
 
-    Crypto-adapted thresholds:
-    - Bear: DD ≤ -30%, sustained 20 days
-    - Correction: -30% < DD < -10% AND vol > 65%
+    Crypto-adapted thresholds (aligned with _detect_regime_rule_based_optimized):
+    - Bear: DD ≤ -30% + negative trend, sustained 20 days
+    - Expansion: Recovery from -30%+ with +15%/month trend
     - Bull: DD > -20%, vol < 60%, trend > +10%
-    - Expansion: Recovery from -30%+ at +30%/month
+    - Bull (recovery): trend > +5%, vol < 65%, DD > -50%
+    - Correction: DD < -10% + vol > 65%
 
     Returns:
         Dict with regime info if clear rule match, else None (defer to HMM)
@@ -247,36 +254,27 @@ def _detect_regime_rule_based_for_row(row: pd.Series, features_context: pd.DataF
     trend_30d = row.get('trend_30d', 0)
     volatility = row.get('market_volatility', 0)
 
-    # Rule 1: BEAR MARKET (highest priority)
-    if drawdown <= -0.30 and days_since_peak >= 20:
-        return {
-            'regime_id': 0,
-            'regime_name': 'Bear Market',
-        }
+    # Rule 1: BEAR MARKET - deep drawdown WITH clearly declining price
+    if drawdown <= -0.30 and days_since_peak >= 20 and trend_30d <= -0.10:
+        return {'regime_id': 0, 'regime_name': 'Bear Market'}
 
-    # Rule 2: EXPANSION (post-crash recovery)
-    if drawdown >= -0.20 and days_since_peak >= 30:
-        # Check if there was recent deep drawdown in last 180 days
-        lookback_dd = features_context.tail(180)['drawdown_from_peak'].min() if len(features_context) > 0 else 0
-        if lookback_dd <= -0.30 and trend_30d >= 0.30:
-            return {
-                'regime_id': 3,
-                'regime_name': 'Expansion',
-            }
+    # Rule 2: EXPANSION - recovering from deep drawdown (still far from ATH)
+    # drawdown < -0.15 ensures we're still in recovery; near ATH → Bull Market instead
+    lookback_dd = features_context.tail(180)['drawdown_from_peak'].min() if len(features_context) > 0 else 0
+    if lookback_dd <= -0.30 and trend_30d >= 0.15 and drawdown < -0.15:
+        return {'regime_id': 3, 'regime_name': 'Expansion'}
 
-    # Rule 3: BULL MARKET (clear uptrend)
+    # Rule 3: BULL MARKET - clear uptrend near peaks
     if drawdown >= -0.20 and volatility < 0.60 and trend_30d > 0.10:
-        return {
-            'regime_id': 2,
-            'regime_name': 'Bull Market',
-        }
+        return {'regime_id': 2, 'regime_name': 'Bull Market'}
 
-    # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
-    if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
-        return {
-            'regime_id': 1,
-            'regime_name': 'Correction',
-        }
+    # Rule 4: BULL MARKET (recovery) - moderate uptrend during recovery
+    if trend_30d > 0.05 and volatility < 0.65 and drawdown > -0.50:
+        return {'regime_id': 2, 'regime_name': 'Bull Market'}
+
+    # Rule 5: CORRECTION - elevated vol OR deep drawdown with flat trend
+    if (drawdown < -0.10 and volatility > 0.65) or (drawdown < -0.20 and abs(trend_30d) < 0.10):
+        return {'regime_id': 1, 'regime_name': 'Correction'}
 
     # No clear rule-based detection → defer to HMM
     return None
@@ -302,21 +300,26 @@ def _detect_regime_rule_based_optimized(
     Returns:
         Dict with regime info if clear rule match, else None
     """
-    # Rule 1: BEAR MARKET (highest priority)
-    if drawdown <= -0.30 and days_since_peak >= 20:
+    # Rule 1: BEAR MARKET - deep drawdown WITH clearly declining price
+    # trend <= -10% required: a -6%/month for crypto is noise, not a bear market
+    if drawdown <= -0.30 and days_since_peak >= 20 and trend_30d <= -0.10:
         return {'regime_id': 0, 'regime_name': 'Bear Market'}
 
-    # Rule 2: EXPANSION (post-crash recovery)
-    if drawdown >= -0.20 and days_since_peak >= 30:
-        if lookback_180d_min_dd <= -0.30 and trend_30d >= 0.30:
-            return {'regime_id': 3, 'regime_name': 'Expansion'}
+    # Rule 2: EXPANSION - recovering from deep drawdown (still far from ATH)
+    # drawdown < -0.15 ensures we're still in recovery; near ATH → Bull Market instead
+    if lookback_180d_min_dd <= -0.30 and trend_30d >= 0.15 and drawdown < -0.15:
+        return {'regime_id': 3, 'regime_name': 'Expansion'}
 
-    # Rule 3: BULL MARKET (clear uptrend)
+    # Rule 3: BULL MARKET - clear uptrend near peaks
     if drawdown >= -0.20 and volatility < 0.60 and trend_30d > 0.10:
         return {'regime_id': 2, 'regime_name': 'Bull Market'}
 
-    # Rule 4: CORRECTION (moderate drawdown + elevated volatility)
-    if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
+    # Rule 4: BULL MARKET (recovery) - moderate uptrend even with deeper ATH drawdown
+    if trend_30d > 0.05 and volatility < 0.65 and drawdown > -0.50:
+        return {'regime_id': 2, 'regime_name': 'Bull Market'}
+
+    # Rule 5: CORRECTION - elevated volatility OR deep drawdown with flat trend
+    if (drawdown < -0.10 and volatility > 0.65) or (drawdown < -0.20 and abs(trend_30d) < 0.10):
         return {'regime_id': 1, 'regime_name': 'Correction'}
 
     # No clear rule-based detection → defer to HMM
@@ -382,7 +385,8 @@ async def get_crypto_regime_forecast(
             return error_response("Insufficient data for forecast", code=400)
 
         # Get recent regime timeline (simplified, just for context visualization)
-        if not detector.load_model("btc_regime_hmm.pkl"):
+        model_file = f"{symbol.lower()}_regime_hmm.pkl"
+        if not detector.load_model(model_file):
             await detector.train_hmm(symbol=symbol, lookback_days=3650)
 
         features_scaled = detector.scaler.transform(features_df[detector.feature_columns])

@@ -140,6 +140,65 @@ def normalize_regime_name(name: str) -> str:
     return name
 
 
+def smooth_regime_sequence(regime_ids: List[int], min_duration: int = 7) -> List[int]:
+    """Remove short-lived regime transitions from a historical sequence.
+
+    Any regime segment shorter than min_duration days gets replaced by the
+    neighboring regime that forms the longest adjacent segment. Multiple passes
+    handle cascading short segments.
+
+    Args:
+        regime_ids: List of regime IDs (0-3) per day
+        min_duration: Minimum number of consecutive days for a regime to persist
+
+    Returns:
+        Smoothed list of regime IDs (same length as input)
+    """
+    if len(regime_ids) <= min_duration:
+        return list(regime_ids)
+
+    smoothed = list(regime_ids)
+
+    for _ in range(3):  # Multiple passes for cascading short segments
+        # Build segments: (start_idx, end_idx, regime_id)
+        segments = []
+        start = 0
+        for i in range(1, len(smoothed)):
+            if smoothed[i] != smoothed[start]:
+                segments.append((start, i - 1, smoothed[start]))
+                start = i
+        segments.append((start, len(smoothed) - 1, smoothed[start]))
+
+        if len(segments) <= 1:
+            break
+
+        # Replace short segments with nearest longer neighbor
+        changed = False
+        for idx, (seg_start, seg_end, _rid) in enumerate(segments):
+            duration = seg_end - seg_start + 1
+            if duration >= min_duration:
+                continue
+
+            # Pick replacement from longer neighbor
+            if idx > 0 and idx < len(segments) - 1:
+                prev_len = segments[idx - 1][1] - segments[idx - 1][0] + 1
+                next_len = segments[idx + 1][1] - segments[idx + 1][0] + 1
+                replacement = segments[idx - 1][2] if prev_len >= next_len else segments[idx + 1][2]
+            elif idx == 0:
+                replacement = segments[1][2]
+            else:
+                replacement = segments[idx - 1][2]
+
+            for i in range(seg_start, seg_end + 1):
+                smoothed[i] = replacement
+            changed = True
+
+        if not changed:
+            break
+
+    return smoothed
+
+
 def regime_to_key(name: str) -> str:
     """Convert regime name to snake_case key for JS/dict usage.
 

@@ -17,6 +17,7 @@ from services.regime_constants import (
     regime_name,
     normalize_regime_name,
     regime_to_key,
+    smooth_regime_sequence,
 )
 
 
@@ -120,3 +121,68 @@ class TestRegimeColors:
     def test_colors_are_hex(self):
         for regime_id, color in REGIME_COLORS.items():
             assert color.startswith('#'), f"Color for regime {regime_id} should be hex: {color}"
+
+
+class TestSmoothRegimeSequence:
+    """Verify regime smoothing removes short-lived transitions."""
+
+    def test_already_smooth_unchanged(self):
+        """Long stable segments should not be altered."""
+        seq = [2] * 30 + [0] * 30 + [2] * 30
+        assert smooth_regime_sequence(seq, min_duration=7) == seq
+
+    def test_short_spike_removed(self):
+        """A 3-day spike in the middle of a long segment should be absorbed."""
+        seq = [2] * 20 + [0, 0, 0] + [2] * 20
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert all(r == 2 for r in result)
+
+    def test_short_sequence_passthrough(self):
+        """Sequences shorter than min_duration are returned as-is."""
+        seq = [0, 1, 2]
+        assert smooth_regime_sequence(seq, min_duration=7) == seq
+
+    def test_boundary_transition_preserved(self):
+        """Real transitions (each side >= min_duration) are preserved."""
+        seq = [0] * 10 + [2] * 10
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert result[:10] == [0] * 10
+        assert result[10:] == [2] * 10
+
+    def test_multiple_short_segments(self):
+        """Multiple consecutive short segments get absorbed."""
+        seq = [2] * 20 + [0, 0, 1, 1, 0, 0] + [2] * 20
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert all(r == 2 for r in result)
+
+    def test_short_at_start_absorbed(self):
+        """Short segment at the very start is absorbed by next neighbor."""
+        seq = [1, 1, 1] + [2] * 20
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert all(r == 2 for r in result)
+
+    def test_short_at_end_absorbed(self):
+        """Short segment at the very end is absorbed by previous neighbor."""
+        seq = [2] * 20 + [1, 1, 1]
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert all(r == 2 for r in result)
+
+    def test_output_length_matches_input(self):
+        """Output must always have the same length as input."""
+        seq = [0] * 5 + [1] * 3 + [2] * 10 + [3] * 2 + [1] * 15
+        result = smooth_regime_sequence(seq, min_duration=7)
+        assert len(result) == len(seq)
+
+    def test_min_duration_respected(self):
+        """After smoothing, no segment should be shorter than min_duration (except edge cases)."""
+        seq = [2] * 50 + [0] * 4 + [2] * 50 + [1] * 3 + [2] * 50
+        result = smooth_regime_sequence(seq, min_duration=7)
+        # All short spikes should be absorbed
+        segments = []
+        start = 0
+        for i in range(1, len(result)):
+            if result[i] != result[start]:
+                segments.append(i - start)
+                start = i
+        segments.append(len(result) - start)
+        assert all(s >= 7 for s in segments)

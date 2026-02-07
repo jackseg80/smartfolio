@@ -19,6 +19,7 @@ import math
 import os
 
 from api.deps import get_required_user
+from services.regime_constants import smooth_regime_sequence, REGIME_NAMES
 
 # Read API base URL from environment or use default
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080")
@@ -521,9 +522,12 @@ async def get_regime_history(
         # Create regime labels using objective criteria (drawdown, MA200, volatility, recovery rate)
         regime_labels = create_rule_based_labels(data)
 
+        # Smooth regime sequence to remove short-lived transitions (<14 days for stocks)
+        regime_labels_smoothed = smooth_regime_sequence(regime_labels.tolist(), min_duration=14)
+
         # Regime names mapping (same as RegimeDetector)
         regime_names_map = ['Bear Market', 'Correction', 'Bull Market', 'Expansion']
-        regime_names_list = [regime_names_map[label] for label in regime_labels]
+        regime_names_list = [regime_names_map[label] for label in regime_labels_smoothed]
 
         # Get dates and prices
         dates = data.index.strftime('%Y-%m-%d').tolist()
@@ -561,16 +565,16 @@ async def get_regime_history(
         import numpy as np
         regime_id_counts = {}
         for i, name in enumerate(regime_names_map):
-            count = int((np.array(regime_labels) == i).sum())
+            count = int(sum(1 for r in regime_labels_smoothed if r == i))
             regime_id_counts[i] = {"name": name, "count": count}
 
-        logger.info(f"Rule-based regime detection: {regime_id_counts}")
+        logger.info(f"Rule-based regime detection (smoothed): {regime_id_counts}")
 
         return {
             "dates": dates,
             "prices": prices,
             "regimes": regime_names_list,
-            "regime_ids": regime_labels.tolist(),
+            "regime_ids": regime_labels_smoothed,
             "benchmark": benchmark,
             "lookback_days": lookback_days,
             "total_samples": total_samples,
