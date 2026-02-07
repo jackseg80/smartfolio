@@ -1,8 +1,8 @@
 # Bitcoin Hybrid Regime Detection System
 
-> **Version:** 1.0 - October 2025
-> **Status:** Production-Ready
-> **Asset:** Bitcoin (BTC)
+> **Version:** 2.0 - February 2026
+> **Status:** Production
+> **Asset:** Bitcoin (BTC), Ethereum (ETH), Solana (SOL)
 
 > 📖 **Document lié** : [HYBRID_REGIME_DETECTOR.md](HYBRID_REGIME_DETECTOR.md) — Version Equity Markets (SPY, QQQ) - architecture de base
 
@@ -14,10 +14,13 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 **Crypto-Specific Adaptations (updated Feb 2026):**
 
-- Bear threshold: -30%, 20 days (vs -15%, 30d equities)
+- Bear threshold: DD ≤ -30% + trend ≤ -10%, 20 days (vs -15%, 30d equities)
 - Bull volatility: <60% (vs <18% equities)
-- Expansion recovery: +30%/month from -30%+ drawdown (vs +15% equities)
-- Correction: -10% to -30% drawdown AND vol >65%
+- Expansion recovery: +15%/month from -30%+ lookback AND DD < -15% (still recovering)
+- Bull (recovery): trend > +5%, vol < 65%, DD > -50%
+- Correction: (DD < -10% AND vol > 65%) OR (DD < -20% AND |trend| < 10%)
+- Smoothing: 7 days minimum regime duration (vs 14d equities)
+- Symbol-specific HMM models: each crypto uses its own trained model
 
 > **Note:** See [REGIME_SYSTEM.md](REGIME_SYSTEM.md) for the unified regime reference.
 
@@ -82,10 +85,11 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
         ┌────────────────────────────────┐
         │  LAYER 2: RULE-BASED DETECTION │
         ├────────────────────────────────┤
-        │ Rule 1: Bear Market (-50%, 30d)│
-        │ Rule 2: Expansion (+30%/month) │
-        │ Rule 3: Bull Market (stable)   │
-        │ Rule 4: Correction (-5 to -50%)│ ← NEW!
+        │ Rule 1: Bear Market (-30%, trend≤-10%)│
+        │ Rule 2: Expansion (+15%/m, DD<-15%) │
+        │ Rule 3: Bull Market (near ATH)      │
+        │ Rule 4: Bull (recovery, trend>5%)   │
+        │ Rule 5: Correction (vol/flat trend) │
         └─────────────┬──────────────────┘
                       │
                       ▼
@@ -123,34 +127,33 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 | Regime | Criteria (Bitcoin) | Criteria (Equities) | Confidence | Example |
 |--------|-------------------|---------------------|------------|---------|
-| **Bear Market** | DD ≤ -30% sustained >20 days | DD ≤ -15% sustained >30 days | 95% | 2022 Luna/FTX (-77%) |
-| **Expansion** | Recovery from DD >-30% at +30%/month | +15%/month | 90% | 2023 recovery (+150%) |
+| **Bear Market** | DD ≤ -30% + trend ≤ -10%, sustained >20d | DD ≤ -15%, sustained >30d | 95% | 2022 Luna/FTX (-77%) |
+| **Expansion** | Lookback DD ≤ -30% + trend ≥ +15%/m + DD < -15% | Recovery from -15%+ at +10%/m | 90% | 2023 recovery (+150%) |
 | **Bull Market** | DD > -20%, vol <60%, trend >10% | DD > -8%, vol <18%, trend >2% | 88% | 2024 bull run |
-| **Correction** | -30% < DD < -10% AND vol >65% | Fallback (no clear rule) | 85% | Oct 2025 (-11.8%) |
+| **Bull (recovery)** | trend > +5%, vol <65%, DD > -50% | N/A | 85% | 2023-2024 rally |
+| **Correction** | (DD < -10% AND vol >65%) OR (DD < -20% AND \|trend\| <10%) | Fallback | 85% | Sideways in drawdown |
 
 **Returns `None`** if no clear rule applies → defers to HMM.
 
-#### Rule 4: Correction (NEW - Critical for Bitcoin)
+#### Rule 4: Bull (recovery) - Moderate uptrend during recovery
 
 ```python
-# Rule 4: CORRECTION (fallback before HMM)
-# Moderate drawdown (-30% < DD < -10%) AND elevated volatility (>65%)
-# Deeper than -30% is Bear Market (Rule 1), not correction
-if (-0.30 < drawdown < -0.10) and (volatility > 0.65):
-    confidence = 0.85
-    # Higher confidence for deeper corrections
-    if drawdown < -0.20:
-        confidence = 0.90
-
-    return {
-        'regime_id': 1,
-        'regime_name': 'Correction',
-        'confidence': confidence,
-        'reason': f'Moderate drawdown {drawdown:.1%} + Elevated volatility {volatility:.1%}'
-    }
+# Moderate positive trend even with deep ATH drawdown
+if trend_30d > 0.05 and volatility < 0.65 and drawdown > -0.50:
+    return {'regime_id': 2, 'regime_name': 'Bull Market', 'confidence': 0.85}
 ```
 
-**Why needed?** Bitcoin's high volatility (45-60% baseline) means many "normal" periods don't match Bull criteria but aren't Bear either.
+**Why needed?** During 2023-2024, BTC rallied from $16k to $70k but was still >30% below ATH for months. Without this rule, these periods fell to HMM.
+
+#### Rule 5: Correction - Elevated vol OR deep DD with flat trend
+
+```python
+# Elevated volatility OR deep drawdown with sideways price action
+if (drawdown < -0.10 and volatility > 0.65) or (drawdown < -0.20 and abs(trend_30d) < 0.10):
+    return {'regime_id': 1, 'regime_name': 'Correction', 'confidence': 0.85}
+```
+
+**Why needed?** Bitcoin's high volatility (45-60% baseline) means many "normal" periods don't match Bull criteria but aren't Bear either. The flat-trend condition catches sideways periods in deep drawdown.
 
 ### Layer 3: HMM Neural Network (Nuanced Cases)
 
@@ -181,11 +184,14 @@ def _fuse_predictions(rule_based, hmm_result):
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Bear drawdown -0.50 | ✅ PASS | Source code verification |
-| Bear duration 30d | ✅ PASS | Source code verification |
-| Expansion +0.30/month | ✅ PASS | Source code verification |
+| Bear drawdown -0.30 + trend ≤ -10% | ✅ PASS | Source code verification |
+| Bear duration 20d | ✅ PASS | Source code verification |
+| Expansion +15%/m + DD < -15% | ✅ PASS | Source code verification |
 | Bull volatility 0.60 | ✅ PASS | Source code verification |
-| Correction rule exists | ✅ PASS | Source code verification |
+| Bull (recovery) rule exists | ✅ PASS | Source code verification |
+| Correction rule (vol OR flat) | ✅ PASS | Source code verification |
+| Smoothing 7d min duration | ✅ PASS | Source code verification |
+| Symbol-specific HMM models | ✅ PASS | ETH/SOL use own models |
 
 ### Current Regime Detection (Oct 2025)
 
@@ -370,8 +376,7 @@ cache_key = f"{symbol}_{lookback_days}"  # e.g., "BTC_365"
 
 1. **No historical validation**: Cannot test 2014/2018/2022 bear markets without time-windowed data
 2. **HMM poorly trained**: Only 8 years of BTC data (vs 30 years for equities)
-3. **No altcoin support**: Thresholds calibrated for Bitcoin only (ETH/SOL would need adjustment)
-4. **No intraday regimes**: Uses daily close prices only
+3. **No intraday regimes**: Uses daily close prices only
 
 ### Future Enhancements
 
@@ -382,10 +387,10 @@ cache_key = f"{symbol}_{lookback_days}"  # e.g., "BTC_365"
    # Would detect Bear Market for Luna/FTX crash
    ```
 
-2. **Altcoin-specific thresholds**:
-   - ETH: -60% bear, 80% vol (more volatile than BTC)
-   - Stablecoins: -2% bear, 5% vol (low volatility)
-   - Memecoins: -80% bear, 200% vol (extreme volatility)
+2. **Altcoin-specific thresholds** (partially done):
+   - ETH/SOL now use symbol-specific HMM models (Feb 2026)
+   - Same rule-based thresholds as BTC (works well for major alts)
+   - Memecoins: would need -80% bear, 200% vol (extreme volatility)
 
 3. **Intraday regime detection**:
    - Use 1h/4h candles instead of daily
@@ -425,6 +430,5 @@ cache_key = f"{symbol}_{lookback_days}"  # e.g., "BTC_365"
 
 ---
 
-**Last Updated:** October 21, 2025
-**Maintainer:** Crypto Rebal Starter Team
+**Last Updated:** February 6, 2026
 **License:** Internal Use Only

@@ -1,7 +1,7 @@
 # Hybrid Regime Detection System
 
-> **Version:** 1.0 - October 2025
-> **Status:** Production-Ready
+> **Version:** 2.0 - February 2026
+> **Status:** Production
 > **Asset:** Equity Markets (SPY, QQQ, etc.)
 
 > 📖 **Document lié** : [BTC_HYBRID_REGIME_DETECTOR.md](BTC_HYBRID_REGIME_DETECTOR.md) — Version Bitcoin/Crypto avec seuils adaptés
@@ -84,11 +84,14 @@ The **Hybrid Regime Detector** combines rule-based detection (for clear cases) w
 
 | Regime | Criteria | Confidence | When Used |
 |--------|----------|------------|-----------|
-| **Bear Market** | DD ≤ -15% sustained >30 days | 95% | Clear crashes |
-| **Expansion** | Recovery from DD >-15% at +15%/month for 3+ months | 90% | Post-crash rebounds |
+| **Bear Market** | DD ≤ -15%, sustained >30 days | 95% | Clear crashes |
+| **Expansion** | Recovery from DD >-15% at +10%/month | 90% | Post-crash rebounds |
 | **Bull Market** | DD > -8%, vol <18%, trend >2% | 88% | Stable uptrends |
+| **Correction** | Fallback (no clear rule match) | 85% | Sideways / mild pullback |
 
 > **Note:** Thresholds updated Feb 2026. See [REGIME_SYSTEM.md](REGIME_SYSTEM.md) for full reference.
+
+**Regime history smoothing:** Short-lived transitions (<14 days) are absorbed by the longer neighboring regime.
 
 **Returns `None`** if no clear rule applies → defers to HMM.
 
@@ -164,11 +167,13 @@ static/saxo-dashboard.html:
 
 | Parameter | Value | Purpose |
 |-----------|-------|---------|
-| `bear_threshold` | -20% | Drawdown for bear market |
-| `bear_duration` | 60 days | Minimum persistence |
-| `expansion_recovery` | +15%/month | Recovery rate threshold |
-| `bull_volatility` | <20% | Low vol for stable bull |
+| `bear_threshold` | -15% | Drawdown for bear market |
+| `bear_duration` | 30 days | Minimum persistence |
+| `expansion_recovery` | +10%/month | Recovery rate threshold |
+| `bull_volatility` | <18% | Low vol for stable bull |
+| `bull_trend` | >2% | Minimum positive trend |
 | `rule_confidence_min` | 85% | Minimum to override HMM |
+| `smoothing_min_duration` | 14 days | Min regime segment length |
 
 ### Contextual Features Added
 
@@ -203,7 +208,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=10950
     "Bear Market": 0.038,
     "Correction": 0.038,
     "Bull Market": 0.887,
-    "Consolidation": 0.038
+    "Expansion": 0.038
   }
 }
 ```
@@ -239,8 +244,8 @@ Mean Return = (N_c × R_c + N_r × R_r) / (N_c + N_r)
 
 **Rule-based checks:**
 ```python
-if drawdown <= -0.20:  # Sees the -55% directly!
-    if days_since_peak >= 60:  # Persistence check
+if drawdown <= -0.15:  # Sees the -55% directly!
+    if days_since_peak >= 30:  # Persistence check
         return "Bear Market", confidence=0.95
 ```
 
@@ -252,10 +257,10 @@ if drawdown <= -0.20:  # Sees the -55% directly!
 
 ### Current Limitations
 
-1. **Lagging Detection:** Rule-based requires 60 days to confirm bear market
-   - **Mitigation:** Can be reduced to 40 days if needed (trade-off: false positives)
+1. **Lagging Detection:** Rule-based requires 30 days to confirm bear market
+   - **Mitigation:** Can be reduced if needed (trade-off: false positives)
 
-2. **Fixed Thresholds:** -20% drawdown is hardcoded
+2. **Fixed Thresholds:** -15% drawdown is hardcoded
    - **Mitigation:** Could make adaptive based on historical volatility
 
 3. **No Forward-Looking:** Cannot predict regime changes
