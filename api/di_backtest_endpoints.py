@@ -56,6 +56,18 @@ class DIWeightsModel(BaseModel):
     sentiment: float = Field(0.10, ge=0, le=1)
 
 
+class ReplicaParamsModel(BaseModel):
+    """Advanced parameters for SmartFolio Replica strategy (Layer toggles + tuning)"""
+    enable_risk_budget: bool = Field(True, description="Enable Layer 1: Risk Budget")
+    enable_market_overrides: bool = Field(True, description="Enable Layer 2: Market Overrides")
+    enable_exposure_cap: bool = Field(True, description="Enable Layer 3: Exposure Cap")
+    enable_governance_penalty: bool = Field(True, description="Enable Layer 4: Governance Penalty")
+    exposure_confidence: float = Field(0.65, ge=0.50, le=1.0, description="Signal quality confidence for exposure cap")
+    max_governance_penalty: float = Field(0.25, ge=0.0, le=0.30, description="Maximum governance penalty")
+    risk_budget_min: float = Field(0.20, ge=0.10, le=0.30, description="Minimum risky allocation")
+    risk_budget_max: float = Field(0.85, ge=0.70, le=0.95, description="Maximum risky allocation")
+
+
 class DIBacktestRequest(BaseModel):
     """Requête pour exécuter un backtest DI"""
     strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal")
@@ -66,6 +78,9 @@ class DIBacktestRequest(BaseModel):
 
     # Custom weights (optionnel)
     di_weights: Optional[DIWeightsModel] = None
+
+    # Advanced params for SmartFolio Replica
+    replica_params: Optional[ReplicaParamsModel] = None
 
     # Options
     use_macro_penalty: bool = Field(True, description="Inclure pénalité VIX/DXY")
@@ -312,6 +327,22 @@ async def run_di_backtest(
         # 2. Créer la stratégie DI
         strategy_config = DIStrategyConfig()
         strategy = get_di_strategy(request.strategy, config=strategy_config)
+
+        # Inject advanced params for SmartFolio Replica
+        if request.strategy == "di_smartfolio_replica" and request.replica_params:
+            from services.di_backtest.trading_strategies import ReplicaParams
+            rp = request.replica_params
+            strategy.replica_params = ReplicaParams(
+                enable_risk_budget=rp.enable_risk_budget,
+                enable_market_overrides=rp.enable_market_overrides,
+                enable_exposure_cap=rp.enable_exposure_cap,
+                enable_governance_penalty=rp.enable_governance_penalty,
+                exposure_confidence=rp.exposure_confidence,
+                max_governance_penalty=rp.max_governance_penalty,
+                risk_budget_min=rp.risk_budget_min,
+                risk_budget_max=rp.risk_budget_max,
+            )
+
         strategy.set_di_series(di_data.df['decision_index'])
 
         # Injecter le cycle_score pour SmartFolio Replica (utilise le vrai cycle, pas une estimation)
@@ -337,6 +368,23 @@ async def run_di_backtest(
 
         # 4. Calculer métriques additionnelles spécifiques au DI
         di_metrics = _calculate_di_specific_metrics_v2(di_data.df, result)
+
+        # Add active layers info for SmartFolio Replica
+        if request.strategy == "di_smartfolio_replica":
+            rp = request.replica_params
+            if rp:
+                layers = []
+                if rp.enable_risk_budget:
+                    layers.append("Risk Budget")
+                if rp.enable_market_overrides:
+                    layers.append("Market Overrides")
+                if rp.enable_exposure_cap:
+                    layers.append("Exposure Cap")
+                if rp.enable_governance_penalty:
+                    layers.append("Governance Penalty")
+            else:
+                layers = ["Risk Budget", "Market Overrides", "Exposure Cap", "Governance Penalty"]
+            di_metrics["active_layers"] = layers
 
         # 5. Formater la réponse
         # Monthly returns depuis l'equity curve

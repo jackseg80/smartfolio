@@ -394,6 +394,138 @@
       color: var(--brand-primary);
     }
 
+    /* ===== Advanced Parameters Panel ===== */
+    .advanced-params-panel {
+      margin-top: var(--space-md);
+      padding: var(--space-md);
+      background: var(--theme-bg);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-md);
+    }
+
+    .advanced-params-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .advanced-params-header h4 {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--theme-text);
+    }
+
+    .advanced-params-header .toggle-icon {
+      transition: transform 0.2s;
+      color: var(--theme-text-muted);
+    }
+
+    .advanced-params-header .toggle-icon.expanded {
+      transform: rotate(180deg);
+    }
+
+    .advanced-params-body {
+      display: none;
+      margin-top: var(--space-md);
+    }
+
+    .advanced-params-body.expanded {
+      display: block;
+    }
+
+    .layer-toggles {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: var(--space-sm);
+      margin-bottom: var(--space-md);
+    }
+
+    .layer-toggle {
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--theme-surface);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .layer-toggle input[type="checkbox"] {
+      accent-color: var(--brand-primary);
+    }
+
+    .param-sliders {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-md);
+    }
+
+    .param-slider {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    .param-slider label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--theme-text-muted);
+    }
+
+    .param-slider label .param-value {
+      font-weight: 600;
+      color: var(--theme-text);
+    }
+
+    .param-slider input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand-primary);
+    }
+
+    .advanced-params-footer {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: var(--space-md);
+    }
+
+    .btn-reset {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      background: var(--theme-surface);
+      color: var(--theme-text-muted);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+      border-color: var(--color-danger);
+      color: var(--color-danger);
+    }
+
+    .active-layers-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-xs);
+      margin-top: var(--space-xs);
+    }
+
+    .layer-badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      font-size: 0.75rem;
+      background: rgba(var(--brand-primary-rgb, 59, 130, 246), 0.1);
+      color: var(--brand-primary);
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
     /* ===== Chart Modal (zoom) ===== */
     .chart-modal {
       display: none;
@@ -599,6 +731,69 @@
         <button class="preset-btn" data-start="2021-11-15" data-end="2022-11-15">Bear 2022</button>
         <button class="preset-btn" data-start="2022-11-15" data-end="2024-04-01">Recovery 23-24</button>
         <button class="preset-btn" data-start="2017-01-01" data-end="">Full History</button>
+      </div>
+
+      <!-- Advanced Parameters (SmartFolio Replica only) -->
+      <div class="advanced-params-panel" id="advancedParamsPanel" style="display: none;">
+        <div class="advanced-params-header" id="advancedParamsToggle">
+          <h4>Advanced Parameters</h4>
+          <span class="toggle-icon" id="advancedParamsIcon">&#9660;</span>
+        </div>
+        <div class="advanced-params-body" id="advancedParamsBody">
+          <div class="layer-toggles">
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableRiskBudget" checked>
+              <span>Layer 1: Risk Budget</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableMarketOverrides" checked>
+              <span>Layer 2: Market Overrides</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableExposureCap" checked>
+              <span>Layer 3: Exposure Cap</span>
+            </label>
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableGovernancePenalty" checked>
+              <span>Layer 4: Governance Penalty</span>
+            </label>
+          </div>
+
+          <div class="param-sliders">
+            <div class="param-slider">
+              <label>
+                <span>Exposure Confidence</span>
+                <span class="param-value" id="exposureConfidenceValue">0.65</span>
+              </label>
+              <input type="range" id="exposureConfidence" min="0.50" max="1.00" step="0.05" value="0.65">
+            </div>
+            <div class="param-slider">
+              <label>
+                <span>Max Governance Penalty</span>
+                <span class="param-value" id="maxGovernancePenaltyValue">25%</span>
+              </label>
+              <input type="range" id="maxGovernancePenalty" min="0" max="0.30" step="0.05" value="0.25">
+            </div>
+            <div class="param-slider">
+              <label>
+                <span>Min Risky Allocation</span>
+                <span class="param-value" id="riskBudgetMinValue">20%</span>
+              </label>
+              <input type="range" id="riskBudgetMin" min="0.10" max="0.30" step="0.05" value="0.20">
+            </div>
+            <div class="param-slider">
+              <label>
+                <span>Max Risky Allocation</span>
+                <span class="param-value" id="riskBudgetMaxValue">85%</span>
+              </label>
+              <input type="range" id="riskBudgetMax" min="0.70" max="0.95" step="0.05" value="0.85">
+            </div>
+          </div>
+
+          <div class="advanced-params-footer">
+            <button class="btn-reset" id="resetAdvancedParams">Reset to Defaults</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -906,6 +1101,9 @@
 
       // Initialize chart modal listeners
       initChartModalListeners();
+
+      // Advanced Parameters panel
+      initAdvancedParams();
     });
 
     async function loadStrategyDescriptions() {
@@ -925,6 +1123,12 @@
     }
 
     function updateStrategyDescription(strategyKey) {
+      // Show/hide advanced params panel based on strategy
+      const advPanel = document.getElementById('advancedParamsPanel');
+      if (advPanel) {
+        advPanel.style.display = strategyKey === 'di_smartfolio_replica' ? 'block' : 'none';
+      }
+
       const details = strategyDetails[strategyKey];
       if (!details) {
         // Fallback descriptions si API pas disponible
@@ -1018,7 +1222,8 @@
             end_date: endDate,
             initial_capital: initialCapital,
             rebalance_frequency: rebalanceFreq,
-            use_macro_penalty: true
+            use_macro_penalty: true,
+            replica_params: getReplicaParams()
           })
         });
 
@@ -1139,6 +1344,18 @@
           <div class="kpi-label">Rebalances</div>
         </div>
       `;
+
+      // Active layers display
+      const activeLayers = data.di_metrics?.active_layers;
+      if (activeLayers && activeLayers.length > 0) {
+        const layersHtml = activeLayers.map(l => `<span class="layer-badge">${l}</span>`).join('');
+        diMetricsGrid.insertAdjacentHTML('beforeend', `
+          <div class="kpi-card" style="grid-column: 1 / -1;">
+            <div class="kpi-label" style="margin-bottom: var(--space-xs);">Active Layers</div>
+            <div class="active-layers-display">${layersHtml}</div>
+          </div>
+        `);
+      }
 
       // Charts
       renderEquityChart(data.equity_curve || []);
@@ -1368,6 +1585,103 @@
           }
         }
       });
+    }
+    // ===== Advanced Parameters =====
+
+    const REPLICA_DEFAULTS = {
+      enableRiskBudget: true,
+      enableMarketOverrides: true,
+      enableExposureCap: true,
+      enableGovernancePenalty: true,
+      exposureConfidence: 0.65,
+      maxGovernancePenalty: 0.25,
+      riskBudgetMin: 0.20,
+      riskBudgetMax: 0.85,
+    };
+
+    function initAdvancedParams() {
+      // Toggle panel expand/collapse
+      const toggle = document.getElementById('advancedParamsToggle');
+      const body = document.getElementById('advancedParamsBody');
+      const icon = document.getElementById('advancedParamsIcon');
+
+      toggle.addEventListener('click', () => {
+        const expanded = body.classList.toggle('expanded');
+        icon.classList.toggle('expanded', expanded);
+      });
+
+      // Slider value displays
+      const sliders = [
+        { id: 'exposureConfidence', displayId: 'exposureConfidenceValue', format: v => v },
+        { id: 'maxGovernancePenalty', displayId: 'maxGovernancePenaltyValue', format: v => Math.round(v * 100) + '%' },
+        { id: 'riskBudgetMin', displayId: 'riskBudgetMinValue', format: v => Math.round(v * 100) + '%' },
+        { id: 'riskBudgetMax', displayId: 'riskBudgetMaxValue', format: v => Math.round(v * 100) + '%' },
+      ];
+
+      sliders.forEach(({ id, displayId, format }) => {
+        const slider = document.getElementById(id);
+        const display = document.getElementById(displayId);
+        slider.addEventListener('input', () => {
+          display.textContent = format(parseFloat(slider.value));
+        });
+      });
+
+      // Min/Max validation
+      document.getElementById('riskBudgetMin').addEventListener('change', () => {
+        const min = parseFloat(document.getElementById('riskBudgetMin').value);
+        const max = parseFloat(document.getElementById('riskBudgetMax').value);
+        if (min >= max) {
+          document.getElementById('riskBudgetMin').value = max - 0.05;
+          document.getElementById('riskBudgetMinValue').textContent = Math.round((max - 0.05) * 100) + '%';
+        }
+      });
+
+      document.getElementById('riskBudgetMax').addEventListener('change', () => {
+        const min = parseFloat(document.getElementById('riskBudgetMin').value);
+        const max = parseFloat(document.getElementById('riskBudgetMax').value);
+        if (max <= min) {
+          document.getElementById('riskBudgetMax').value = min + 0.05;
+          document.getElementById('riskBudgetMaxValue').textContent = Math.round((min + 0.05) * 100) + '%';
+        }
+      });
+
+      // Reset button
+      document.getElementById('resetAdvancedParams').addEventListener('click', resetAdvancedParams);
+    }
+
+    function resetAdvancedParams() {
+      document.getElementById('enableRiskBudget').checked = REPLICA_DEFAULTS.enableRiskBudget;
+      document.getElementById('enableMarketOverrides').checked = REPLICA_DEFAULTS.enableMarketOverrides;
+      document.getElementById('enableExposureCap').checked = REPLICA_DEFAULTS.enableExposureCap;
+      document.getElementById('enableGovernancePenalty').checked = REPLICA_DEFAULTS.enableGovernancePenalty;
+
+      document.getElementById('exposureConfidence').value = REPLICA_DEFAULTS.exposureConfidence;
+      document.getElementById('exposureConfidenceValue').textContent = REPLICA_DEFAULTS.exposureConfidence;
+
+      document.getElementById('maxGovernancePenalty').value = REPLICA_DEFAULTS.maxGovernancePenalty;
+      document.getElementById('maxGovernancePenaltyValue').textContent = Math.round(REPLICA_DEFAULTS.maxGovernancePenalty * 100) + '%';
+
+      document.getElementById('riskBudgetMin').value = REPLICA_DEFAULTS.riskBudgetMin;
+      document.getElementById('riskBudgetMinValue').textContent = Math.round(REPLICA_DEFAULTS.riskBudgetMin * 100) + '%';
+
+      document.getElementById('riskBudgetMax').value = REPLICA_DEFAULTS.riskBudgetMax;
+      document.getElementById('riskBudgetMaxValue').textContent = Math.round(REPLICA_DEFAULTS.riskBudgetMax * 100) + '%';
+    }
+
+    function getReplicaParams() {
+      const strategy = document.getElementById('strategy').value;
+      if (strategy !== 'di_smartfolio_replica') return null;
+
+      return {
+        enable_risk_budget: document.getElementById('enableRiskBudget').checked,
+        enable_market_overrides: document.getElementById('enableMarketOverrides').checked,
+        enable_exposure_cap: document.getElementById('enableExposureCap').checked,
+        enable_governance_penalty: document.getElementById('enableGovernancePenalty').checked,
+        exposure_confidence: parseFloat(document.getElementById('exposureConfidence').value),
+        max_governance_penalty: parseFloat(document.getElementById('maxGovernancePenalty').value),
+        risk_budget_min: parseFloat(document.getElementById('riskBudgetMin').value),
+        risk_budget_max: parseFloat(document.getElementById('riskBudgetMax').value),
+      };
     }
   </script>
 </body>

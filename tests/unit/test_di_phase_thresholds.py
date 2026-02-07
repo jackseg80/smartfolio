@@ -18,7 +18,7 @@ from services.di_backtest.historical_di_calculator import (
     HistoricalDICalculator,
     PhaseFactors,
 )
-from services.di_backtest.trading_strategies import DISmartfolioReplicaStrategy
+from services.di_backtest.trading_strategies import DISmartfolioReplicaStrategy, ReplicaParams
 
 
 class TestHistoricalDIPhaseThresholds:
@@ -403,3 +403,82 @@ class TestGovernancePenalty:
         penalty = DISmartfolioReplicaStrategy._compute_governance_penalty(1.0, 2.0)
         assert penalty <= 0.25
         assert 0.85 - penalty >= 0.20, "Even max penalty keeps risky above floor"
+
+
+class TestReplicaParams:
+    """Tests for configurable ReplicaParams in SmartFolio Replica strategy."""
+
+    def test_default_params_match_current_behavior(self):
+        """Default ReplicaParams gives same result as no params (backward compat)."""
+        cycle, onchain, risk = 85, 70, 75
+        result_no_params = DISmartfolioReplicaStrategy._compute_risk_budget(cycle, onchain, risk)
+        result_default = DISmartfolioReplicaStrategy._compute_risk_budget(
+            cycle, onchain, risk, params=ReplicaParams()
+        )
+        assert result_no_params == result_default, (
+            f"Default params should match no params: {result_no_params} vs {result_default}"
+        )
+
+    def test_custom_bounds_respected(self):
+        """Custom min/max bounds are respected in risk_budget output."""
+        params = ReplicaParams(risk_budget_min=0.30, risk_budget_max=0.70)
+        # High scores that would normally give 85%
+        result = DISmartfolioReplicaStrategy._compute_risk_budget(95, 90, 95, params=params)
+        assert result <= 0.70, f"Max bound 70% violated: {result:.1%}"
+        # Low scores that would normally give 20%
+        result_low = DISmartfolioReplicaStrategy._compute_risk_budget(10, 10, 10, params=params)
+        assert result_low >= 0.30, f"Min bound 30% violated: {result_low:.1%}"
+
+    def test_market_overrides_disabled(self):
+        """Disabling market overrides skips divergence/low-risk checks."""
+        params_on = ReplicaParams(enable_market_overrides=True)
+        params_off = ReplicaParams(enable_market_overrides=False)
+        # Scores where divergence triggers: blended=72.5, onchain=30, |72.5-30|=42.5>=30
+        cycle, onchain, risk = 95, 30, 80
+        result_on = DISmartfolioReplicaStrategy._compute_risk_budget(
+            cycle, onchain, risk, params=params_on
+        )
+        result_off = DISmartfolioReplicaStrategy._compute_risk_budget(
+            cycle, onchain, risk, params=params_off
+        )
+        assert result_off >= result_on, (
+            f"Overrides off should be >= overrides on: {result_off:.1%} vs {result_on:.1%}"
+        )
+
+    def test_high_confidence_raises_exposure_cap(self):
+        """Higher exposure_confidence gives higher/equal cap."""
+        params_low = ReplicaParams(exposure_confidence=0.50)
+        params_high = ReplicaParams(exposure_confidence=1.00)
+        cap_low = DISmartfolioReplicaStrategy._compute_exposure_cap(
+            70, 80, 60.0, 0.15, params=params_low
+        )
+        cap_high = DISmartfolioReplicaStrategy._compute_exposure_cap(
+            70, 80, 60.0, 0.15, params=params_high
+        )
+        assert cap_high >= cap_low, (
+            f"High confidence should give higher cap: {cap_high:.1%} vs {cap_low:.1%}"
+        )
+
+    def test_custom_max_governance_penalty(self):
+        """Custom max_governance_penalty caps the penalty."""
+        params = ReplicaParams(max_governance_penalty=0.10)
+        # High contradiction + high vol → should be capped at 10%
+        penalty = DISmartfolioReplicaStrategy._compute_governance_penalty(
+            0.80, 1.5, params=params
+        )
+        assert penalty <= 0.10, f"Penalty {penalty:.1%} exceeds custom max 10%"
+
+    def test_zero_governance_penalty_cap(self):
+        """Setting max_governance_penalty=0 disables penalty entirely."""
+        params = ReplicaParams(max_governance_penalty=0.0)
+        penalty = DISmartfolioReplicaStrategy._compute_governance_penalty(
+            0.80, 1.5, params=params
+        )
+        assert penalty == 0.0, f"Zero max should give zero penalty, got {penalty:.3f}"
+
+    def test_strategy_accepts_replica_params(self):
+        """DISmartfolioReplicaStrategy.__init__ accepts replica_params."""
+        params = ReplicaParams(risk_budget_min=0.25, exposure_confidence=0.80)
+        strategy = DISmartfolioReplicaStrategy(replica_params=params)
+        assert strategy.replica_params.risk_budget_min == 0.25
+        assert strategy.replica_params.exposure_confidence == 0.80

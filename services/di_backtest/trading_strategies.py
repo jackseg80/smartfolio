@@ -43,6 +43,30 @@ class DIStrategyConfig:
     signal_min_holding_days: int = 14     # Holding minimum
 
 
+@dataclass
+class ReplicaParams:
+    """Configurable parameters for SmartFolio Replica 4-layer pipeline.
+
+    All defaults match the current hardcoded production values,
+    ensuring backward compatibility when no params are provided.
+    """
+    # Layer toggles
+    enable_risk_budget: bool = True
+    enable_market_overrides: bool = True
+    enable_exposure_cap: bool = True
+    enable_governance_penalty: bool = True
+
+    # Layer 1: Risk Budget bounds
+    risk_budget_min: float = 0.20   # Floor for risky allocation (production: 20%)
+    risk_budget_max: float = 0.85   # Ceiling for risky allocation (production: 85%)
+
+    # Layer 3: Exposure Cap
+    exposure_confidence: float = 0.65  # Signal quality confidence (production: 0.65)
+
+    # Layer 4: Governance Penalty
+    max_governance_penalty: float = 0.25  # Maximum penalty (production: 25%)
+
+
 class DIThresholdStrategy(PortfolioStrategy):
     """
     Stratégie S1: Allocation basée sur seuils DI
@@ -454,9 +478,11 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
     Source: static/modules/market-regimes.js → calculateRiskBudget()
     """
 
-    def __init__(self, config: Optional[DIStrategyConfig] = None):
+    def __init__(self, config: Optional[DIStrategyConfig] = None,
+                 replica_params: Optional['ReplicaParams'] = None):
         super().__init__("SmartFolio Replica")
         self.config = config or DIStrategyConfig()
+        self.replica_params = replica_params or ReplicaParams()
         self.di_series: Optional[pd.Series] = None
         self.cycle_series: Optional[pd.Series] = None
         self._log_count = 0
@@ -537,7 +563,8 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
     def _compute_risk_budget(
         cycle_score: float,
         onchain_score: float,
-        risk_score: float
+        risk_score: float,
+        params: Optional['ReplicaParams'] = None
     ) -> float:
         """
         Production risk_budget formula with market overrides.
@@ -557,15 +584,21 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         Source: market-regimes.js → calculateRiskBudget() + applyMarketOverrides()
 
         Returns:
-            risky_allocation in [0.20, 0.85]
+            risky_allocation in [risk_budget_min, risk_budget_max]
         """
+        if params is None:
+            params = ReplicaParams()
+
         # Step 1: Standard blended score (same as production calculateRiskBudget)
         blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
 
         # Step 2: Risk budget formula (v2_conservative)
         risk_factor = 0.5 + 0.5 * (risk_score / 100.0)
         base_risky = max(0.0, min(1.0, (blended - 35) / 45))
-        risky = max(0.20, min(0.85, base_risky * risk_factor))
+        risky = max(params.risk_budget_min, min(params.risk_budget_max, base_risky * risk_factor))
+
+        if not params.enable_market_overrides:
+            return risky
 
         # Step 3: Market overrides (applied to stables target)
         stables = 1.0 - risky
@@ -574,15 +607,15 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         # |blended - onchain| >= 30 → +10% stables
         divergence = abs(blended - onchain_score)
         if divergence >= 30:
-            stables = min(0.80, stables + 0.10)
+            stables = min(1.0 - params.risk_budget_min, stables + 0.10)
 
         # Override 2: Low Risk Score (market-regimes.js L190-201)
         # risk <= 30 → force stables >= 50%
         if risk_score <= 30:
             stables = max(0.50, stables)
 
-        # Clamp final risky in [0.20, 0.85]
-        risky = max(0.20, min(0.85, 1.0 - stables))
+        # Clamp final risky in [min, max]
+        risky = max(params.risk_budget_min, min(params.risk_budget_max, 1.0 - stables))
 
         return risky
 
@@ -651,6 +684,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
     def _compute_governance_penalty(
         contradiction_index: float,
         btc_volatility: float = 0.0,
+        params: Optional['ReplicaParams'] = None,
     ) -> float:
         """
         Layer 4: Governance-inspired penalty on risky allocation.
@@ -665,8 +699,11 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         - High volatility amplifies the penalty
 
         Returns:
-            penalty as fraction to SUBTRACT from risky allocation [0.0, 0.25]
+            penalty as fraction to SUBTRACT from risky allocation [0.0, max_governance_penalty]
         """
+        if params is None:
+            params = ReplicaParams()
+
         if contradiction_index < 0.20:
             # Low contradiction → no governance intervention
             return 0.0
@@ -679,7 +716,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         # vol > 0.50 → +5%, vol > 0.80 → +10%
         vol_amplifier = max(0.0, min(0.10, (btc_volatility - 0.40) * 0.25))
 
-        total_penalty = min(0.25, base_penalty + vol_amplifier)
+        total_penalty = min(params.max_governance_penalty, base_penalty + vol_amplifier)
         return total_penalty
 
     @staticmethod
@@ -688,6 +725,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         risk_score: float,
         di_value: float = 50.0,
         btc_volatility: float = 0.0,
+        params: Optional['ReplicaParams'] = None,
     ) -> float:
         """
         Simplified exposure cap matching production computeExposureCap().
@@ -696,18 +734,21 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
 
         Backtest adaptations:
         - decision_score → di_value / 100 (proxy)
-        - confidence → 0.65 (moderate default)
+        - confidence → params.exposure_confidence (default 0.65)
         - backendStatus → always 'ok' (no degradation in backtest)
 
         Returns:
             exposure cap as fraction [0.20, 0.95]
         """
+        if params is None:
+            params = ReplicaParams()
+
         bs = round(blended_score)
         rs = round(risk_score)
 
         # Proxy for signal quality
         ds = min(1.0, max(0.0, di_value / 100.0))
-        dc = 0.65  # Fixed moderate confidence for backtest
+        dc = params.exposure_confidence
         raw = ds * dc
 
         # 1) Base cap from blended + risk grid
@@ -727,6 +768,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
             base = 55
 
         # 2) Signal quality penalty (max 10pts)
+        # Reference threshold stays at 0.65 (production baseline)
         signal_penalty = max(0, round((0.65 - raw) * 15))
         base -= min(10, signal_penalty)
 
@@ -806,13 +848,9 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         )
 
         if has_real_components:
-            # Layer 1+2: risk_budget + market overrides
-            risky_pct = self._compute_risk_budget(cycle_score, onchain_score, risk_score)
+            params = self.replica_params
 
-            # Layer 3: Exposure cap (regime + signal + volatility)
-            blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
-
-            # Compute BTC rolling volatility from price data
+            # Compute BTC rolling volatility from price data (needed by layers 3+4)
             risky_symbol = [a for a in price_data.columns
                            if a.upper() not in ['USDT', 'USDC', 'DAI', 'BUSD', 'STABLES', 'STABLECOINS']]
             btc_vol = 0.0
@@ -821,16 +859,43 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
                 if len(returns) >= 30:
                     btc_vol = float(returns.tail(30).std() * np.sqrt(365))
 
-            exposure_cap = self._compute_exposure_cap(blended, risk_score, di_value, btc_vol)
-            risky_pct = min(risky_pct, exposure_cap)
+            blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
+            active_layers = []
+            exposure_cap = 1.0    # default: no cap
+            contradiction = 0.0
+            gov_penalty = 0.0
+
+            # Layer 1(+2): risk_budget + market overrides
+            if params.enable_risk_budget:
+                risky_pct = self._compute_risk_budget(
+                    cycle_score, onchain_score, risk_score, params
+                )
+                active_layers.append("Risk Budget")
+                if params.enable_market_overrides:
+                    active_layers.append("Market Overrides")
+            else:
+                risky_pct = 0.60  # neutral fallback when L1 disabled
+
+            # Layer 3: Exposure cap (regime + signal + volatility)
+            if params.enable_exposure_cap:
+                exposure_cap = self._compute_exposure_cap(
+                    blended, risk_score, di_value, btc_vol, params
+                )
+                risky_pct = min(risky_pct, exposure_cap)
+                active_layers.append("Exposure Cap")
 
             # Layer 4: Governance penalty (contradiction-based reduction)
-            contradiction = self._compute_contradiction_index(
-                btc_vol, cycle_score, onchain_score, di_value
-            )
-            gov_penalty = self._compute_governance_penalty(contradiction, btc_vol)
-            risky_pct = max(0.20, risky_pct - gov_penalty)
-            allocation_method = "risk_budget+cap+gov"
+            if params.enable_governance_penalty:
+                contradiction = self._compute_contradiction_index(
+                    btc_vol, cycle_score, onchain_score, di_value
+                )
+                gov_penalty = self._compute_governance_penalty(
+                    contradiction, btc_vol, params
+                )
+                risky_pct = max(params.risk_budget_min, risky_pct - gov_penalty)
+                active_layers.append("Governance Penalty")
+
+            allocation_method = "+".join(active_layers) if active_layers else "none"
         else:
             # Fallback: stables fixes par phase (emergency path)
             if cycle_score >= 90:
