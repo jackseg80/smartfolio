@@ -2,8 +2,9 @@
 DI Backtest Engine
 Moteur de simulation pour valider le Decision Index historiquement
 
-Utilise les stratégies DI avec un moteur simplifié optimisé
-pour le backtesting du Decision Index.
+Simule un système de REBALANCEMENT (pas de trading) :
+le portefeuille ajuste périodiquement ses poids risky/stables
+en fonction des signaux DI.
 """
 
 import logging
@@ -20,15 +21,19 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
-class Trade:
-    """Représente un trade exécuté"""
+class RebalanceEvent:
+    """Représente un événement de rebalancement du portefeuille"""
     date: datetime
-    action: str  # "BUY", "SELL", "REBALANCE"
-    risky_pct: float  # % allocation risky après trade
-    stable_pct: float  # % allocation stable après trade
-    di_value: float  # DI au moment du trade
-    portfolio_value: float  # Valeur portfolio après trade
+    risky_pct: float  # % allocation risky après rebalancement
+    stable_pct: float  # % allocation stable après rebalancement
+    di_value: float  # DI au moment du rebalancement
+    portfolio_value: float  # Valeur portfolio après rebalancement
+    allocation_change: float  # Variation absolue de l'allocation risky
     reason: str = ""
+
+
+# Alias pour compatibilité
+Trade = RebalanceEvent
 
 
 @dataclass
@@ -47,10 +52,13 @@ class DIBacktestResult:
     sortino_ratio: float
     calmar_ratio: float
 
-    # Trading
-    trades: List[Trade]
-    num_trades: int
-    win_rate: float
+    # Rebalancement
+    rebalance_events: List[RebalanceEvent]
+    rebalance_count: int
+    turnover_annual: float  # Turnover annualisé (sum |delta alloc| / years)
+    avg_risky_allocation: float  # Allocation risky moyenne sur la période
+    upside_capture: float  # Capture ratio haussier vs benchmark
+    downside_capture: float  # Capture ratio baissier vs benchmark
 
     # Séries temporelles
     equity_curve: pd.Series
@@ -67,17 +75,33 @@ class DIBacktestResult:
     initial_capital: float
     final_value: float
 
+    # Compatibilité (deprecated)
+    @property
+    def trades(self) -> List[RebalanceEvent]:
+        return self.rebalance_events
+
+    @property
+    def num_trades(self) -> int:
+        return self.rebalance_count
+
+    @property
+    def win_rate(self) -> float:
+        # Retourner capture ratio comme proxy — win_rate n'a pas de sens
+        # pour un système de rebalancement
+        return self.upside_capture
+
 
 class DIBacktestEngine:
     """
-    Moteur de backtest simplifié pour le Decision Index
+    Moteur de backtest pour le Decision Index
 
-    Simule un portefeuille 2 actifs (risky/stable) basé sur les signaux DI.
+    Simule un portefeuille 2 actifs (risky/stable) rebalancé
+    périodiquement selon les signaux DI.
     """
 
     def __init__(
         self,
-        transaction_cost: float = 0.001,  # 0.1% par trade
+        transaction_cost: float = 0.001,  # 0.1% par rebalancement
         rebalance_threshold: float = 0.05,  # Rebalance si écart > 5%
         risk_free_rate: float = 0.02,  # 2% annuel
     ):
@@ -99,7 +123,7 @@ class DIBacktestEngine:
 
         Args:
             di_history: Liste de DIHistoryPoint
-            strategy: Stratégie de trading
+            strategy: Stratégie de rebalancement
             initial_capital: Capital initial
             benchmark_prices: Prix du benchmark (dict date->price)
             risky_symbol: Symbole de l'actif risky
@@ -130,13 +154,12 @@ class DIBacktestEngine:
         risky_allocation = 0.5  # Start 50/50
         stable_allocation = 0.5
 
-        # Calculer allocation initiale basée sur premier DI
-        first_di = di_history[0].decision_index
-
         equity_curve = []
         benchmark_curve = []
-        trades = []
+        rebalance_events = []
         daily_returns = []
+        benchmark_daily_returns = []
+        risky_allocations = []  # Pour calculer la moyenne
 
         # Prix de référence
         base_btc_price = btc_prices.iloc[0]
@@ -154,7 +177,7 @@ class DIBacktestEngine:
             # Calculer returns journaliers
             if i > 0:
                 btc_return = (btc_price - prev_btc_price) / prev_btc_price
-                stable_daily_return = stable_return / 365  # Return journalier stable
+                stable_daily_return = stable_return / 365
 
                 # Portfolio return
                 portfolio_return = (
@@ -166,9 +189,11 @@ class DIBacktestEngine:
                 benchmark_value = benchmark_value * (1 + btc_return)
 
                 daily_returns.append(portfolio_return)
+                benchmark_daily_returns.append(btc_return)
+
+            risky_allocations.append(risky_allocation)
 
             # Obtenir nouvelle allocation de la stratégie
-            # Créer un DataFrame minimal pour la stratégie
             price_df = pd.DataFrame({
                 risky_symbol: btc_prices[:i+1],
                 'STABLES': [1.0] * (i + 1)
@@ -179,11 +204,15 @@ class DIBacktestEngine:
                 'STABLES': stable_allocation
             })
 
+            # Passer les scores composants pour la formule risk_budget
             target_weights = strategy.get_weights(
                 date=pd.Timestamp(date),
                 price_data=price_df,
                 current_weights=current_weights,
-                di_value=di_value
+                di_value=di_value,
+                cycle_score=di_point.cycle_score,
+                onchain_score=di_point.onchain_score,
+                risk_score=di_point.risk_score,
             )
 
             target_risky = target_weights.get(risky_symbol, 0.5)
@@ -197,21 +226,14 @@ class DIBacktestEngine:
                 trade_cost = allocation_diff * portfolio_value * self.transaction_cost
                 portfolio_value -= trade_cost
 
-                # Enregistrer le trade
-                action = "REBALANCE"
-                if target_risky > risky_allocation + 0.1:
-                    action = "BUY"
-                elif target_risky < risky_allocation - 0.1:
-                    action = "SELL"
-
-                trades.append(Trade(
+                rebalance_events.append(RebalanceEvent(
                     date=date,
-                    action=action,
                     risky_pct=target_risky * 100,
                     stable_pct=target_stable * 100,
                     di_value=di_value,
                     portfolio_value=portfolio_value,
-                    reason=f"DI={di_value:.1f}, target={target_risky*100:.0f}%"
+                    allocation_change=allocation_diff * 100,
+                    reason=f"DI={di_value:.1f}, risky {risky_allocation*100:.0f}%→{target_risky*100:.0f}%"
                 ))
 
                 risky_allocation = target_risky
@@ -238,7 +260,9 @@ class DIBacktestEngine:
             equity_series=equity_series,
             benchmark_series=benchmark_series,
             daily_returns=daily_returns,
-            trades=trades,
+            benchmark_daily_returns=benchmark_daily_returns,
+            rebalance_events=rebalance_events,
+            risky_allocations=risky_allocations,
             di_values=di_values,
             btc_prices=btc_prices
         )
@@ -256,9 +280,12 @@ class DIBacktestEngine:
             sharpe_ratio=metrics['sharpe_ratio'],
             sortino_ratio=metrics['sortino_ratio'],
             calmar_ratio=metrics['calmar_ratio'],
-            trades=trades,
-            num_trades=len(trades),
-            win_rate=metrics['win_rate'],
+            rebalance_events=rebalance_events,
+            rebalance_count=len(rebalance_events),
+            turnover_annual=metrics['turnover_annual'],
+            avg_risky_allocation=metrics['avg_risky_allocation'],
+            upside_capture=metrics['upside_capture'],
+            downside_capture=metrics['downside_capture'],
             equity_curve=equity_series,
             benchmark_curve=benchmark_series,
             drawdown_curve=drawdown_series,
@@ -275,7 +302,9 @@ class DIBacktestEngine:
         equity_series: pd.Series,
         benchmark_series: pd.Series,
         daily_returns: List[float],
-        trades: List[Trade],
+        benchmark_daily_returns: List[float],
+        rebalance_events: List[RebalanceEvent],
+        risky_allocations: List[float],
         di_values: pd.Series,
         btc_prices: pd.Series
     ) -> Dict[str, float]:
@@ -311,15 +340,19 @@ class DIBacktestEngine:
         # Calmar Ratio
         calmar_ratio = annualized_return / abs(max_drawdown) if max_drawdown != 0 else 0
 
-        # Win Rate
-        if len(trades) > 1:
-            winning_trades = 0
-            for i in range(1, len(trades)):
-                if trades[i].portfolio_value > trades[i-1].portfolio_value:
-                    winning_trades += 1
-            win_rate = winning_trades / (len(trades) - 1)
-        else:
-            win_rate = 0.5
+        # --- Rebalancing-specific metrics ---
+
+        # Turnover annualisé: somme des |changements d'allocation| / années
+        total_turnover = sum(e.allocation_change for e in rebalance_events) / 100.0
+        turnover_annual = total_turnover / years if years > 0 else 0
+
+        # Allocation risky moyenne
+        avg_risky_allocation = np.mean(risky_allocations) if risky_allocations else 0.5
+
+        # Capture ratios (upside/downside)
+        upside_capture, downside_capture = self._calculate_capture_ratios(
+            daily_returns, benchmark_daily_returns
+        )
 
         # DI Correlation avec returns futurs (30j)
         try:
@@ -340,9 +373,46 @@ class DIBacktestEngine:
             'sharpe_ratio': sharpe_ratio,
             'sortino_ratio': sortino_ratio,
             'calmar_ratio': calmar_ratio,
-            'win_rate': win_rate,
+            'turnover_annual': turnover_annual,
+            'avg_risky_allocation': avg_risky_allocation,
+            'upside_capture': upside_capture,
+            'downside_capture': downside_capture,
             'di_correlation': di_correlation,
         }
+
+    @staticmethod
+    def _calculate_capture_ratios(
+        portfolio_returns: List[float],
+        benchmark_returns: List[float]
+    ) -> Tuple[float, float]:
+        """
+        Calcule les capture ratios upside/downside.
+
+        Upside capture > 1.0  = portfolio capte plus que le benchmark en hausse
+        Downside capture < 1.0 = portfolio perd moins que le benchmark en baisse
+        Idéal: upside élevé + downside faible
+        """
+        if not portfolio_returns or not benchmark_returns:
+            return 1.0, 1.0
+
+        port = np.array(portfolio_returns)
+        bench = np.array(benchmark_returns)
+
+        # Upside: jours où benchmark > 0
+        up_mask = bench > 0
+        if up_mask.sum() > 0:
+            upside = np.mean(port[up_mask]) / np.mean(bench[up_mask])
+        else:
+            upside = 1.0
+
+        # Downside: jours où benchmark < 0
+        down_mask = bench < 0
+        if down_mask.sum() > 0:
+            downside = np.mean(port[down_mask]) / np.mean(bench[down_mask])
+        else:
+            downside = 1.0
+
+        return float(upside), float(downside)
 
     def _calculate_max_drawdown(self, equity_series: pd.Series) -> float:
         """Calcule le max drawdown"""

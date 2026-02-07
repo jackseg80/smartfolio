@@ -88,17 +88,29 @@ Signaux discrets:
 
 ### S6: DISmartfolioReplicaStrategy (Recommandé)
 
-**Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio.**
+**Réplique le pipeline complet de l'Allocation Engine V2 de SmartFolio (4 couches).**
 
-Utilise le cycle score (pas le DI directement) pour déterminer la phase de marché:
-- Phase bullish (cycle ≥90): 15% stables, 85% risky
-- Phase moderate (70≤cycle<90): 20% stables, 80% risky
-- Phase bearish (cycle <70): 30% stables, 70% risky
+**Layer 1 — Risk Budget** (formule production):
 
-Floors appliqués:
-- BTC minimum: 15%
-- ETH minimum: 12%
-- Stables minimum: 10%
+```python
+blended = 0.5×CycleScore + 0.3×OnChainScore + 0.2×RiskScore
+base_risky = (blended - 35) / 45 × phase_factor
+```
+
+Phase factors (basés sur cycle score): bearish (<70) = 0.85, moderate (70-90) = 1.0, bullish (≥90) = 1.05
+
+**Layer 2 — Market Overrides**:
+
+- BTC floor: 15%, ETH floor: 12%, Stables minimum: 10%
+- Macro penalty: VIX > 30 OR DXY ±5% → -15 pts sur le DI
+
+**Layer 3 — Exposure Cap**: risky clampé entre 20% et 80%
+
+**Layer 4 — Governance Penalty** (contradiction-based):
+
+- Contradiction index reconstruit depuis données historiques (vol+cycle, DI vs cycle, score divergence)
+- Penalty proportionnelle: 0-25% de réduction selon le niveau de contradiction
+- Impact historique faible (~0.1-0.3%) car les conditions se déclenchent rarement simultanément
 
 **Idéal pour**: Valider que le DI Backtest est cohérent avec le comportement réel du projet SmartFolio
 
@@ -132,8 +144,11 @@ Exécute un backtest complet.
     "sharpe_ratio": 2.35,
     "sortino_ratio": 6.40,
     "calmar_ratio": 4.06,
-    "num_trades": 24,
-    "win_rate": 0.65,
+    "rebalance_count": 88,
+    "avg_risky_allocation": 0.43,
+    "portfolio_turnover": 0.12,
+    "upside_capture": 0.75,
+    "downside_capture": 0.42,
     "strategy_name": "DI Threshold"
   }
 }
@@ -191,7 +206,11 @@ Analyse détaillée par période prédéfinie.
 | **Sharpe Ratio** | Rendement ajusté au risque (vs risk-free) |
 | **Sortino Ratio** | Sharpe avec downside deviation uniquement |
 | **Calmar Ratio** | Rendement annualisé / Max Drawdown |
-| **Win Rate** | % de trades gagnants |
+| **Rebalance Count** | Nombre de rebalancements effectués |
+| **Avg Risky Allocation** | Allocation moyenne en actifs risqués |
+| **Portfolio Turnover** | Rotation du portefeuille (volume rebalancé) |
+| **Upside Capture** | Capture des hausses vs benchmark |
+| **Downside Capture** | Capture des baisses vs benchmark |
 | **Volatility** | Écart-type annualisé des rendements |
 
 ### Métriques DI Spécifiques

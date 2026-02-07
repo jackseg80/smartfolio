@@ -86,12 +86,17 @@ class HistoricalDICalculator:
         """
         Détermine la phase de marché basée sur le Cycle Score
 
+        Seuils canoniques (CLAUDE.md):
+            cycle < 70       = bearish  (factor 0.85)
+            70 <= cycle < 90 = moderate (factor 1.0)
+            cycle >= 90      = bullish  (factor 1.05)
+
         Returns:
             (phase_name, phase_factor)
         """
-        if cycle_score < 40:
+        if cycle_score < 70:
             return "bearish", self.phase_factors.bearish
-        elif cycle_score < 70:
+        elif cycle_score < 90:
             return "moderate", self.phase_factors.moderate
         else:
             return "bullish", self.phase_factors.bullish

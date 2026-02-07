@@ -442,14 +442,16 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
     """
     Stratégie S6: SmartFolio Replica
 
-    Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio:
-    - Allocation stables basée sur le cycle score (pas le DI directement)
-    - Phase bullish (cycle ≥90): 15% stables, 85% risky
-    - Phase moderate (cycle 70-90): 20% stables, 80% risky
-    - Phase bearish (cycle <70): 30% stables, 70% risky
+    Réplique la logique réelle de l'Allocation Engine V2 de SmartFolio
+    en utilisant la formule risk_budget de production:
 
-    Utilise le cycle_score composant du DI pour déterminer la phase de marché.
-    C'est la stratégie la plus proche du comportement réel du projet.
+        blendedScore = 0.5×cycle + 0.3×onchain + 0.2×risk
+        risk_factor  = 0.5 + 0.5 × (riskScore / 100)
+        baseRisky    = clamp((blendedScore - 35) / 45, 0, 1)
+        risky        = clamp(baseRisky × risk_factor, 0.20, 0.85)
+        stables      = 1 - risky
+
+    Source: static/modules/market-regimes.js → calculateRiskBudget()
     """
 
     def __init__(self, config: Optional[DIStrategyConfig] = None):
@@ -457,10 +459,10 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         self.config = config or DIStrategyConfig()
         self.di_series: Optional[pd.Series] = None
         self.cycle_series: Optional[pd.Series] = None
+        self._log_count = 0
 
     def set_di_series(self, di_series: pd.Series):
         """Injecte la série DI historique"""
-        # Normaliser l'index pour faciliter les lookups
         normalized_series = di_series.copy()
         if isinstance(normalized_series.index, pd.DatetimeIndex):
             normalized_series.index = normalized_series.index.normalize()
@@ -471,23 +473,287 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         import logging
         logger = logging.getLogger(__name__)
 
-        # Normaliser l'index pour faciliter les lookups (minuit, sans timezone)
         normalized_series = cycle_series.copy()
         if isinstance(normalized_series.index, pd.DatetimeIndex):
             normalized_series.index = normalized_series.index.normalize()
 
         self.cycle_series = normalized_series
-        self._log_count = 0  # Reset log counter
-
-        # Afficher quelques exemples de l'index pour debug
-        sample_dates = normalized_series.index[:3].tolist() if len(normalized_series) > 3 else normalized_series.index.tolist()
+        self._log_count = 0
 
         logger.info(
             f"SmartFolioReplica: cycle_series set, len={len(normalized_series)}, "
-            f"index_type={type(normalized_series.index).__name__}, "
             f"min={normalized_series.min():.1f}, max={normalized_series.max():.1f}, "
-            f"mean={normalized_series.mean():.1f}, sample_dates={sample_dates}"
+            f"mean={normalized_series.mean():.1f}"
         )
+
+    @staticmethod
+    def _compute_adaptive_weights(
+        cycle_score: float,
+        onchain_score: float,
+        risk_score: float
+    ) -> tuple:
+        """
+        Contradiction-based adaptive weights.
+        Source: static/governance/contradiction-policy.js → calculateAdaptiveWeights()
+
+        When scores contradict each other (e.g., high cycle but low onchain),
+        reduce cycle weight and increase risk weight.
+
+        Returns:
+            (cycle_w, onchain_w, risk_w) normalized to sum=1.0
+        """
+        # Detect contradiction level (0-1)
+        # Primary signal: divergence between cycle and onchain
+        divergence = abs(cycle_score - onchain_score)
+        # Normalize: 0 at 0 divergence, 1.0 at 40+ divergence
+        contradiction = min(1.0, max(0.0, (divergence - 10) / 30))
+
+        # Base weights (standard blended formula)
+        base_cycle = 0.50
+        base_onchain = 0.30
+        base_risk = 0.20
+
+        # Adjustment coefficients (from contradiction-policy.js)
+        cycle_reduction = 0.35    # up to -35%
+        onchain_reduction = 0.15  # up to -15%
+        risk_increase = 0.50      # up to +50%
+
+        # Apply adjustments
+        adj_cycle = base_cycle * (1 - cycle_reduction * contradiction)
+        adj_onchain = base_onchain * (1 - onchain_reduction * contradiction)
+        adj_risk = base_risk * (1 + risk_increase * contradiction)
+
+        # Floor/ceil
+        floor, ceil = 0.12, 0.65
+        adj_cycle = max(floor, min(ceil, adj_cycle))
+        adj_onchain = max(floor, min(ceil, adj_onchain))
+        adj_risk = max(floor, min(ceil, adj_risk))
+
+        # Normalize to sum=1
+        total = adj_cycle + adj_onchain + adj_risk
+        return adj_cycle / total, adj_onchain / total, adj_risk / total
+
+    @staticmethod
+    def _compute_risk_budget(
+        cycle_score: float,
+        onchain_score: float,
+        risk_score: float
+    ) -> float:
+        """
+        Production risk_budget formula with market overrides.
+
+        Uses standard blended weights (0.5/0.3/0.2) matching production
+        calculateRiskBudget() in market-regimes.js.
+
+        Steps:
+        1. Compute blendedScore with standard weights
+        2. Apply risk_budget formula (v2_conservative)
+        3. Apply overrides: on-chain divergence, low risk score
+
+        Note: Production also applies computeExposureCap() + governance cap_daily
+        which further limit the allocation. The backtest omits these layers
+        to show the pure risk_budget signal.
+
+        Source: market-regimes.js → calculateRiskBudget() + applyMarketOverrides()
+
+        Returns:
+            risky_allocation in [0.20, 0.85]
+        """
+        # Step 1: Standard blended score (same as production calculateRiskBudget)
+        blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
+
+        # Step 2: Risk budget formula (v2_conservative)
+        risk_factor = 0.5 + 0.5 * (risk_score / 100.0)
+        base_risky = max(0.0, min(1.0, (blended - 35) / 45))
+        risky = max(0.20, min(0.85, base_risky * risk_factor))
+
+        # Step 3: Market overrides (applied to stables target)
+        stables = 1.0 - risky
+
+        # Override 1: On-Chain Divergence (market-regimes.js L174-188)
+        # |cycle - onchain| >= 30 → +10% stables
+        divergence = abs(cycle_score - onchain_score)
+        if divergence >= 30:
+            stables = min(0.80, stables + 0.10)
+
+        # Override 2: Low Risk Score (market-regimes.js L190-201)
+        # risk <= 30 → force stables >= 50%
+        if risk_score <= 30:
+            stables = max(0.50, stables)
+
+        # Clamp final risky in [0.20, 0.85]
+        risky = max(0.20, min(0.85, 1.0 - stables))
+
+        return risky
+
+    @staticmethod
+    def _compute_contradiction_index(
+        btc_volatility: float,
+        cycle_score: float,
+        onchain_score: float,
+        di_value: float = 50.0,
+    ) -> float:
+        """
+        Reconstruct contradiction_index from historical data.
+
+        Adapts production SignalExtractor.compute_contradiction_index()
+        (signals.py L140-187) using available backtest data:
+
+        Check 1: High BTC vol + Bullish cycle → contradiction (0.3)
+                 Production: vol > 0.15 annualized + regime_bull > 0.6
+                 Backtest:   vol > 0.50 annualized + cycle >= 70
+
+        Check 2: DI vs Cycle divergence → contradiction (0.25)
+                 Production: extreme_fear+bull OR extreme_greed+not_bull
+                 Backtest:   low DI (<30) + bullish cycle, or high DI (>75) + bearish
+
+        Check 3: Score divergence → contradiction (0.2)
+                 Production: avg_correlation > 0.7
+                 Backtest:   |cycle - onchain| >= 40 (internal signal conflict)
+
+        Returns:
+            contradiction_index in [0.0, 1.0]
+        """
+        contradictions = 0.0
+        total_checks = 0.0
+
+        # Check 1: High volatility + Bullish cycle = suspect
+        # Production uses vol > 0.15 but that's per-asset daily vol;
+        # backtest btc_volatility is annualized, so threshold ~0.50
+        vol_high = btc_volatility > 0.50
+        regime_bull = cycle_score >= 70
+
+        if vol_high and regime_bull:
+            contradictions += 0.3
+        total_checks += 1.0
+
+        # Check 2: DI vs Cycle contradiction (proxy for sentiment vs regime)
+        # Low DI + bullish cycle = fear despite bull signals
+        # High DI + bearish cycle = greed despite bear signals
+        di_extreme_fear = di_value < 30
+        di_extreme_greed = di_value > 75
+
+        if (di_extreme_fear and regime_bull) or (di_extreme_greed and not regime_bull):
+            contradictions += 0.25
+        total_checks += 1.0
+
+        # Check 3: Internal score divergence (proxy for correlation/systemic risk)
+        # Large cycle-onchain gap = different signals disagree
+        score_divergence = abs(cycle_score - onchain_score)
+        if score_divergence >= 40:
+            contradictions += 0.2
+        total_checks += 1.0
+
+        contradiction_index = min(1.0, contradictions / max(1.0, total_checks))
+        return contradiction_index
+
+    @staticmethod
+    def _compute_governance_penalty(
+        contradiction_index: float,
+        btc_volatility: float = 0.0,
+    ) -> float:
+        """
+        Layer 4: Governance-inspired penalty on risky allocation.
+
+        Instead of applying cap_daily (3-12% trading cap) as hard allocation
+        limit (which would be absurdly conservative), applies a proportional
+        penalty inspired by the governance logic in policy_engine.py:
+
+        - contradiction > 0.5  → heavy penalty (-15 to -25% risky)
+        - contradiction 0.3-0.5 → moderate penalty (-5 to -15%)
+        - contradiction < 0.3  → no penalty
+        - High volatility amplifies the penalty
+
+        Returns:
+            penalty as fraction to SUBTRACT from risky allocation [0.0, 0.25]
+        """
+        if contradiction_index < 0.20:
+            # Low contradiction → no governance intervention
+            return 0.0
+
+        # Base penalty: linear scale from contradiction
+        # 0.20 → 0%, 0.50 → 15%, 0.75 → 25%
+        base_penalty = max(0.0, (contradiction_index - 0.20) * 0.45)
+
+        # Volatility amplifier: high vol increases penalty
+        # vol > 0.50 → +5%, vol > 0.80 → +10%
+        vol_amplifier = max(0.0, min(0.10, (btc_volatility - 0.40) * 0.25))
+
+        total_penalty = min(0.25, base_penalty + vol_amplifier)
+        return total_penalty
+
+    @staticmethod
+    def _compute_exposure_cap(
+        blended_score: float,
+        risk_score: float,
+        di_value: float = 50.0,
+        btc_volatility: float = 0.0,
+    ) -> float:
+        """
+        Simplified exposure cap matching production computeExposureCap().
+
+        Source: targets-coordinator.js L349-422
+
+        Backtest adaptations:
+        - decision_score → di_value / 100 (proxy)
+        - confidence → 0.65 (moderate default)
+        - backendStatus → always 'ok' (no degradation in backtest)
+
+        Returns:
+            exposure cap as fraction [0.20, 0.95]
+        """
+        bs = round(blended_score)
+        rs = round(risk_score)
+
+        # Proxy for signal quality
+        ds = min(1.0, max(0.0, di_value / 100.0))
+        dc = 0.65  # Fixed moderate confidence for backtest
+        raw = ds * dc
+
+        # 1) Base cap from blended + risk grid
+        if bs >= 70 and rs >= 80:
+            base = 90
+        elif bs >= 70 and rs >= 60:
+            base = 85
+        elif bs >= 65 and rs >= 70:
+            base = 80
+        elif bs >= 65:
+            base = 75
+        elif bs >= 55 and rs >= 60:
+            base = 70
+        elif bs >= 55:
+            base = 65
+        else:
+            base = 55
+
+        # 2) Signal quality penalty (max 10pts)
+        signal_penalty = max(0, round((0.65 - raw) * 15))
+        base -= min(10, signal_penalty)
+
+        # 3) Volatility penalty (max 10pts)
+        vol_penalty = max(0, round((btc_volatility - 0.20) * 50))
+        base -= min(10, vol_penalty)
+
+        # 4) Backend status - skip in backtest (always 'ok')
+
+        # 5) Regime floor and cap (from MARKET_REGIMES ranges)
+        if bs <= 25:
+            regime_min, regime_max = 20, 40    # Bear Market
+        elif bs <= 50:
+            regime_min, regime_max = 40, 70    # Correction
+        elif bs <= 75:
+            regime_min, regime_max = 60, 85    # Bull Market
+        else:
+            regime_min, regime_max = 75, 95    # Expansion
+
+        # Dynamic boost: Expansion + high Risk Score
+        if bs > 75 and rs >= 80:
+            regime_min = 65
+
+        # 6) Final bounds
+        final_cap = max(regime_min, min(regime_max, round(base)))
+
+        return final_cap / 100.0
 
     def get_weights(
         self,
@@ -497,141 +763,87 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         **kwargs
     ) -> pd.Series:
         """
-        Calcule les poids selon la logique de l'Allocation Engine V2
+        Calcule les poids selon le pipeline production complet:
+        1. risk_budget formula (blended → risk_factor → allocation)
+        2. Market overrides (on-chain divergence, low risk)
+        3. Exposure cap (regime + signal quality + volatility)
+        4. Governance penalty (contradiction-based reduction)
 
-        L'allocation dépend du cycle score pour déterminer la phase:
-        - Phase bullish (cycle ≥90): 85% risky
-        - Phase moderate (70≤cycle<90): 80% risky
-        - Phase bearish (cycle <70): 70% risky
-
-        Les ratios BTC/ETH/Alts dans la partie risky:
-        - Bullish: BTC 21%, ETH 17%, Alts 47% (du total)
-        - Moderate: BTC 24%, ETH 18%, Alts 38%
-        - Bearish: BTC 25%, ETH 18%, Alts 28%
+        Si les composants ne sont pas disponibles, fallback sur les
+        stables fixes par phase (15/20/30%).
         """
         import logging
         logger = logging.getLogger(__name__)
 
-        # Récupérer cycle score si disponible, sinon estimer depuis DI
+        # --- Récupérer les scores composants ---
         cycle_score = kwargs.get('cycle_score')
-        lookup_method = "kwargs"
+        onchain_score = kwargs.get('onchain_score')
+        risk_score = kwargs.get('risk_score')
+        di_value = kwargs.get('di_value', 50.0)
 
-        # Normaliser la date pour le lookup (l'index des séries a été normalisé)
-        date_normalized = pd.Timestamp(date).normalize()
-
+        # Fallback cycle via series si pas dans kwargs
         if cycle_score is None and self.cycle_series is not None:
+            date_normalized = pd.Timestamp(date).normalize()
             try:
-                # Lookup avec date normalisée
                 cycle_score = self.cycle_series.loc[date_normalized]
-                lookup_method = "normalized"
             except KeyError:
-                # Fallback vers nearest
                 idx = self.cycle_series.index.get_indexer([date_normalized], method='nearest')[0]
                 if idx >= 0:
                     cycle_score = self.cycle_series.iloc[idx]
-                    lookup_method = f"nearest[{idx}]"
-                else:
-                    cycle_score = None
-                    lookup_method = "failed"
 
-            # Log pour debug (premiers appels seulement)
-            if not hasattr(self, '_log_count'):
-                self._log_count = 0
-            if self._log_count < 5:
-                cycle_str = f"{cycle_score:.1f}" if cycle_score is not None else "None"
-                logger.info(
-                    f"SmartFolioReplica: date={date}, norm={date_normalized}, cycle_score={cycle_str}, "
-                    f"method={lookup_method}, series_len={len(self.cycle_series)}"
-                )
-                self._log_count += 1
-
-        # Fallback: estimer cycle depuis DI (approximation)
+        # Default si toujours None
         if cycle_score is None:
-            di_value = kwargs.get('di_value')
-            if di_value is None and self.di_series is not None:
-                try:
-                    # Lookup avec date normalisée (l'index a été normalisé dans set_di_series)
-                    di_value = self.di_series.loc[date_normalized]
-                    lookup_method = "di_normalized"
-                except KeyError:
-                    idx = self.di_series.index.get_indexer([date_normalized], method='nearest')[0]
-                    if idx >= 0:
-                        di_value = self.di_series.iloc[idx]
-                        lookup_method = f"di_nearest[{idx}]"
-                    else:
-                        lookup_method = "di_failed"
+            cycle_score = 50.0
+        if onchain_score is None:
+            onchain_score = 50.0
+        if risk_score is None:
+            risk_score = 50.0
 
-            if di_value is not None:
-                # Approximation: DI élevé souvent corrélé à cycle élevé
-                # Mais le DI peut être bas même en bullish (macro penalty)
-                # On utilise une estimation conservatrice
-                cycle_score = di_value * 1.1  # Léger boost car DI inclut penalties
-                cycle_score = min(100, max(0, cycle_score))
+        # --- Calculer allocation via formule production ---
+        has_real_components = (
+            kwargs.get('onchain_score') is not None
+            and kwargs.get('risk_score') is not None
+        )
 
-                # Log fallback
-                if self._log_count < 10:
-                    logger.warning(
-                        f"SmartFolioReplica FALLBACK: date={date}, di_value={di_value:.1f}, "
-                        f"estimated cycle={cycle_score:.1f}, method={lookup_method}"
-                    )
-                    self._log_count += 1
-            else:
-                cycle_score = 50.0  # Neutre par défaut
-                if self._log_count < 10:
-                    logger.error(f"SmartFolioReplica: No cycle or DI data for {date}, using default 50")
-                    self._log_count += 1
+        if has_real_components:
+            # Layer 1+2: risk_budget + market overrides
+            risky_pct = self._compute_risk_budget(cycle_score, onchain_score, risk_score)
 
-        # Déterminer phase et allocation stables selon Allocation Engine V2
-        if cycle_score >= 90:
-            # Phase bullish
-            stables_pct = 0.15
-            # Ratios non-stables: BTC 25%, ETH 20%, Alts 55% (renormalisés)
-            btc_ratio = 0.25
-            eth_ratio = 0.20
-            alts_ratio = 0.55
-        elif cycle_score >= 70:
-            # Phase moderate
-            stables_pct = 0.20
-            btc_ratio = 0.30
-            eth_ratio = 0.22
-            alts_ratio = 0.48
+            # Layer 3: Exposure cap (regime + signal + volatility)
+            blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
+
+            # Compute BTC rolling volatility from price data
+            risky_symbol = [a for a in price_data.columns
+                           if a.upper() not in ['USDT', 'USDC', 'DAI', 'BUSD', 'STABLES', 'STABLECOINS']]
+            btc_vol = 0.0
+            if risky_symbol:
+                returns = price_data[risky_symbol[0]].pct_change().dropna()
+                if len(returns) >= 30:
+                    btc_vol = float(returns.tail(30).std() * np.sqrt(365))
+
+            exposure_cap = self._compute_exposure_cap(blended, risk_score, di_value, btc_vol)
+            risky_pct = min(risky_pct, exposure_cap)
+
+            # Layer 4: Governance penalty (contradiction-based reduction)
+            contradiction = self._compute_contradiction_index(
+                btc_vol, cycle_score, onchain_score, di_value
+            )
+            gov_penalty = self._compute_governance_penalty(contradiction, btc_vol)
+            risky_pct = max(0.20, risky_pct - gov_penalty)
+            allocation_method = "risk_budget+cap+gov"
         else:
-            # Phase bearish
-            stables_pct = 0.30
-            btc_ratio = 0.35
-            eth_ratio = 0.25
-            alts_ratio = 0.40
+            # Fallback: stables fixes par phase (emergency path)
+            if cycle_score >= 90:
+                risky_pct = 0.85
+            elif cycle_score >= 70:
+                risky_pct = 0.80
+            else:
+                risky_pct = 0.70
+            allocation_method = "phase_fallback"
 
-        # L'espace pour risky après stables
-        non_stables_space = 1.0 - stables_pct
+        stables_pct = 1.0 - risky_pct
 
-        # Renormaliser les ratios
-        base_total = btc_ratio + eth_ratio + alts_ratio
-        btc_target = (btc_ratio / base_total) * non_stables_space
-        eth_target = (eth_ratio / base_total) * non_stables_space
-
-        # Appliquer floors (comme dans l'engine réel)
-        btc_floor = 0.15  # 15% minimum BTC
-        eth_floor = 0.12  # 12% minimum ETH
-        stables_floor = 0.10  # 10% minimum stables
-
-        btc_target = max(btc_target, btc_floor)
-        eth_target = max(eth_target, eth_floor)
-        final_stables = max(stables_pct, stables_floor)
-
-        # Calculer alts = reste
-        alts_target = 1.0 - btc_target - eth_target - final_stables
-
-        # Normaliser si dépassement
-        total = btc_target + eth_target + final_stables + alts_target
-        if total > 1.0:
-            scale = 1.0 / total
-            btc_target *= scale
-            eth_target *= scale
-            final_stables *= scale
-            alts_target *= scale
-
-        # Répartir entre assets du backtest (simplifié: BTC = risky, reste = stables)
+        # --- Répartir entre assets du backtest (2-asset: risky + stables) ---
         assets = price_data.columns.tolist()
         weights = pd.Series(0.0, index=assets)
 
@@ -642,28 +854,33 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
             risky_assets = assets
             stable_assets = []
 
-        # Dans le backtest simplifié, on a BTC + STABLES
-        # On considère que risky = BTC représente tout le non-stable
-        risky_pct = btc_target + eth_target + alts_target  # = 1 - stables
-
         if risky_assets:
             weight_per_risky = risky_pct / len(risky_assets)
             for asset in risky_assets:
                 weights[asset] = weight_per_risky
 
         if stable_assets:
-            weight_per_stable = final_stables / len(stable_assets)
+            weight_per_stable = stables_pct / len(stable_assets)
             for asset in stable_assets:
                 weights[asset] = weight_per_stable
 
-        # Log les 3 premiers appels pour voir les weights
-        if self._log_count < 15 and self._log_count >= 5:
+        # Log (premiers appels seulement)
+        if self._log_count < 5:
             phase = "bullish" if cycle_score >= 90 else ("moderate" if cycle_score >= 70 else "bearish")
-            logger.info(
-                f"SmartFolioReplica WEIGHTS: cycle={cycle_score:.1f}, phase={phase}, "
-                f"risky={risky_pct*100:.1f}%, stables={final_stables*100:.1f}%, "
-                f"assets={list(weights.items())}"
-            )
+            if has_real_components:
+                logger.info(
+                    f"SmartFolioReplica: cycle={cycle_score:.1f}, onchain={onchain_score:.1f}, "
+                    f"risk={risk_score:.1f}, di={di_value:.1f}, phase={phase}, "
+                    f"method={allocation_method}, cap={exposure_cap*100:.0f}%, "
+                    f"contradiction={contradiction:.2f}, gov_penalty={gov_penalty*100:.0f}%, "
+                    f"risky={risky_pct*100:.1f}%, stables={stables_pct*100:.1f}%"
+                )
+            else:
+                logger.info(
+                    f"SmartFolioReplica: cycle={cycle_score:.1f}, phase={phase}, "
+                    f"method={allocation_method}, "
+                    f"risky={risky_pct*100:.1f}%, stables={stables_pct*100:.1f}%"
+                )
             self._log_count += 1
 
         return weights

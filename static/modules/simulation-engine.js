@@ -426,14 +426,19 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 }
 
 /**
- * 3. CALCUL DECISION INDEX (aligné sur unified-insights-v2.js - Production)
+ * 3. CALCUL DECISION INDEX (aligné sur strategy_registry.py - Production)
  *
- * ⚠️ ALIGNÉ avec unified-insights-v2.js - 3 composantes:
- * raw_decision_score = (cycle × wCycle) + (onchain × wOnchain) + (risk × wRisk)
- * final_score = raw_decision_score × phase_factor
+ * Formule backend (balanced template):
+ *   raw_score = cycle×0.30 + onchain×0.35 + risk×0.25 + sentiment×0.10
+ *   final_score = raw_score × phase_factor
  *
- * NOTE: Le sentiment n'est PAS une composante du DI (poids 0.33/0.39/0.28).
- * Le sentiment est utilisé comme OVERRIDE contextuel via applySentimentOverride().
+ * Quand sentiment = 50 (neutral/default), utilise les poids 3-composantes
+ * renormalisés (0.33/0.39/0.28) pour compatibilité avec unified-insights-v2.js.
+ *
+ * Phase factors discrets (CLAUDE.md):
+ *   cycle < 70       → bearish  (0.85)
+ *   70 <= cycle < 90 → moderate (1.0)
+ *   cycle >= 90      → bullish  (1.05)
  *
  * ⚠️ IMPORTANT — Sémantique Risk:
  * Risk est un score POSITIF (0..100, plus haut = mieux/robuste).
@@ -458,22 +463,40 @@ export function computeDecisionIndex(context) {
     return result;
   }
 
-  // PRIORITÉ 2: Formule 3-composantes (aligné unified-insights-v2.js)
-  // Poids par défaut alignés sur production: 0.33/0.39/0.28
-  let wCycle = context.weights?.cycle ?? context.weights?.wCycle ?? 0.33;
-  let wOnchain = context.weights?.onchain ?? context.weights?.wOnchain ?? 0.39;
-  let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.28;
+  // PRIORITÉ 2: Formule DI alignée strategy_registry.py
+  // Déterminer si sentiment est actif (non-neutral)
+  const sentimentScore = context.sentimentScore ?? 50;
+  const hasSentiment = sentimentScore !== 50 && sentimentScore != null;
+
+  // Poids de base: 4-composantes backend ou 3-composantes renormalisées
+  let wCycle, wOnchain, wRisk, wSentiment;
+
+  if (hasSentiment) {
+    // 4-composantes: poids backend balanced template
+    wCycle = 0.30;
+    wOnchain = 0.35;
+    wRisk = 0.25;
+    wSentiment = 0.10;
+  } else {
+    // 3-composantes: renormalisé (sentiment exclu, neutral=50 n'apporte rien)
+    wCycle = 0.33;
+    wOnchain = 0.39;
+    wRisk = 0.28;
+    wSentiment = 0;
+  }
 
   // Règle adaptative: Cycle ≥ 90 → boost wCycle (comme unified-insights-v2.js)
   if (scores.cycle >= 90) {
     wCycle = 0.45;
     wOnchain = 0.35;
     wRisk = 0.20;
+    if (hasSentiment) wSentiment = 0.10;
     console.debug('🚀 SIM: Adaptive weights: Cycle ≥ 90 → cycle boost');
   } else if (scores.cycle >= 70) {
     wCycle = 0.40;
     wOnchain = 0.37;
     wRisk = 0.23;
+    if (hasSentiment) wSentiment = 0.10;
   }
 
   // Ajuster poids selon confiances (cycle et onchain uniquement)
@@ -498,29 +521,34 @@ export function computeDecisionIndex(context) {
   wOnchain *= contraFactor;
 
   // Normaliser les poids pour somme = 1
-  const sum = wCycle + wOnchain + wRisk;
+  const sum = wCycle + wOnchain + wRisk + wSentiment;
   wCycle /= sum;
   wOnchain /= sum;
   wRisk /= sum;
+  wSentiment /= sum;
 
-  // Calcul DI brut (3 composantes - aligné production)
+  // Calcul DI brut
   // ✅ Risk est positif (0-100, plus haut = mieux) - pas d'inversion
-  const rawDI =
+  let rawDI =
     (scores.cycle * wCycle) +
     (scores.onchain * wOnchain) +
     (scores.risk * wRisk);
 
-  // Phase factor (basé uniquement sur cycle, pas sentiment)
-  // bullish: cycle ≥ 70 → factor 1.0-1.05
-  // bearish: cycle < 40 → factor 0.90
-  // moderate: sinon → factor 0.95
-  let phaseFactor = 1.0;
-  if (scores.cycle >= 70) {
-    phaseFactor = 1.0 + (scores.cycle - 70) * 0.001; // Slight boost for strong bull
-  } else if (scores.cycle < 40) {
-    phaseFactor = 0.90; // Bearish phase penalty
+  if (hasSentiment) {
+    rawDI += sentimentScore * wSentiment;
+  }
+
+  // Phase factor - valeurs discrètes (CLAUDE.md canonical thresholds)
+  // bearish: cycle < 70       → 0.85
+  // moderate: 70 <= cycle < 90 → 1.0
+  // bullish: cycle >= 90       → 1.05
+  let phaseFactor;
+  if (scores.cycle >= 90) {
+    phaseFactor = 1.05;  // bullish
+  } else if (scores.cycle >= 70) {
+    phaseFactor = 1.0;   // moderate
   } else {
-    phaseFactor = 0.95; // Moderate
+    phaseFactor = 0.85;  // bearish
   }
 
   const di = Math.round(rawDI * phaseFactor);
@@ -532,13 +560,13 @@ export function computeDecisionIndex(context) {
     di: Math.max(0, Math.min(100, di)),
     source: 'decision_index_v2',
     confidence,
-    weights: { wCycle, wOnchain, wRisk },
+    weights: { wCycle, wOnchain, wRisk, wSentiment },
     phaseFactor,
     penalties: {
       contradiction: contradictionCount,
       contradictionFactor: contraFactor
     },
-    reasoning: `DI V2 (aligned): Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)}) × phase(${phaseFactor.toFixed(2)})`
+    reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)})${hasSentiment ? ` + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)})` : ''} × phase(${phaseFactor.toFixed(2)})`
   };
 
   (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
@@ -643,6 +671,14 @@ export function applySentimentOverride(targets, sentimentScore, regime = 'neutra
 
 /**
  * 4. CALCUL RISK BUDGET avec options avancées
+ *
+ * NOTE: Cette formule de simulation (linear/sigmoid DI→stables) diffère de production.
+ * En production (market-regimes.js), le risk budget est calculé à partir de:
+ *   risk_factor = 0.5 + 0.5 × (riskScore / 100)
+ *   baseRisky = clamp((blendedScore - 35) / 45, 0, 1)
+ *   risky = clamp(baseRisky × risk_factor, 0.20, 0.85)
+ * La formule simulation est intentionnellement configurable via UI pour explorer
+ * différents scénarios (courbes, hysteresis, circuit breakers).
  */
 export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
   console.debug('🎭 SIM: computeRiskBudget called:', { di, options, marketOverlays });

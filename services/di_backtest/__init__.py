@@ -27,7 +27,8 @@ from .di_backtest_engine import (
     DIBacktestEngine,
     DIBacktestResult,
     di_backtest_engine,
-    Trade,
+    RebalanceEvent,
+    Trade,  # Alias for backward compatibility
 )
 from .trading_strategies import (
     DIThresholdStrategy,
@@ -53,7 +54,8 @@ __all__ = [
     "DIBacktestEngine",
     "DIBacktestResult",
     "di_backtest_engine",
-    "Trade",
+    "RebalanceEvent",
+    "Trade",  # Alias
     # Strategies
     "DIThresholdStrategy",
     "DIMomentumStrategy",

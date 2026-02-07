@@ -270,7 +270,7 @@ async def run_di_backtest(
     """
     Exécute un backtest complet basé sur le Decision Index
 
-    Simule une stratégie de trading utilisant le DI sur des données historiques
+    Simule une stratégie de rebalancement utilisant le DI sur des données historiques
     et retourne les métriques de performance (Sharpe, Sortino, Max Drawdown, etc.)
     """
     try:
@@ -393,7 +393,11 @@ async def run_di_backtest(
                 "sortino_ratio": round(result.sortino_ratio, 3),
                 "calmar_ratio": round(result.calmar_ratio, 3),
                 "volatility_pct": round(result.volatility * 100, 2),
-                "win_rate_pct": round(result.win_rate * 100, 2),
+                # Rebalancing metrics (replacing meaningless win_rate)
+                "turnover_annual": round(result.turnover_annual, 2),
+                "avg_risky_allocation_pct": round(result.avg_risky_allocation * 100, 1),
+                "upside_capture": round(result.upside_capture, 3),
+                "downside_capture": round(result.downside_capture, 3),
             },
             "benchmark_comparison": {
                 "benchmark": "BTC Buy & Hold",
@@ -407,7 +411,7 @@ async def run_di_backtest(
             "summary": {
                 "strategy_name": result.strategy_name,
                 "total_days": len(di_data.df),
-                "num_trades": result.num_trades,
+                "rebalance_count": result.rebalance_count,
                 "final_value": round(result.final_value, 2),
                 "total_return_pct": round(result.total_return * 100, 2),
                 "benchmark_return_pct": round(result.benchmark_return * 100, 2),
@@ -561,7 +565,7 @@ def _get_strategy_description(key: str) -> str:
         "di_contrarian": "Stratégie contrarian (DI<20→accumulation, DI>80→prise profits)",
         "di_risk_parity": "Risk Parity + scaling DI (allocation inversement proportionnelle à la vol)",
         "di_signal": "Signaux purs (BUY quand DI croise 40↑, SELL quand croise 60↓)",
-        "di_smartfolio_replica": "Réplique la logique réelle SmartFolio (cycle score → phase → allocation)",
+        "di_smartfolio_replica": "Production pipeline (risk_budget + exposure cap + governance penalty)",
     }
     return descriptions.get(key, "Stratégie basée sur le Decision Index")
 
@@ -643,18 +647,21 @@ STRATEGY_DETAILS = {
     },
     "di_smartfolio_replica": {
         "name": "SmartFolio Replica",
-        "short": "Logique réelle du projet",
-        "description": "Réplique exactement la logique de l'Allocation Engine V2 de SmartFolio. Utilise le cycle score (pas le DI) pour déterminer la phase de marché et l'allocation stables.",
+        "short": "Production risk_budget + exposure cap + governance penalty",
+        "description": "Replicates the full production allocation pipeline: risk_budget formula + market overrides + exposure cap + governance-inspired contradiction penalty. Uses historical BTC volatility and score divergence to reconstruct contradiction_index.",
         "rules": [
-            "Phase bullish (cycle ≥90): 15% stables, 85% risky",
-            "Phase moderate (70≤cycle<90): 20% stables, 80% risky",
-            "Phase bearish (cycle <70): 30% stables, 70% risky",
-            "Floors: BTC min 15%, ETH min 12%, Stables min 10%",
-            "Ratios BTC/ETH/Alts varient selon phase"
+            "blendedScore = 0.5×CycleScore + 0.3×OnChain + 0.2×RiskScore",
+            "risk_factor = 0.5 + 0.5 × (RiskScore / 100) → [0.5, 1.0]",
+            "baseRisky = clamp((blended - 35) / 45, 0, 1)",
+            "risky = clamp(baseRisky × risk_factor, 20%, 85%)",
+            "Override: |cycle - onchain| ≥ 30 → +10% stables",
+            "Override: riskScore ≤ 30 → stables ≥ 50%",
+            "Exposure cap: regime floor/ceiling + signal/vol penalties",
+            "Governance penalty: contradiction (vol+cycle, DI vs cycle, score divergence) → 0-25% reduction"
         ],
-        "pros": ["Comportement réel du projet", "Phase-based comme production", "Floors de sécurité"],
-        "cons": ["Dépend du cycle score estimé", "Simplification du vrai engine"],
-        "best_for": "Valider que le DI Backtest est cohérent avec SmartFolio réel"
+        "pros": ["Full production pipeline (4 layers)", "Uses all 3 score components", "Regime-aware + governance-aware"],
+        "cons": ["Simplified 2-asset model (BTC + Stables)", "Contradiction is proxy (no real ML signals)"],
+        "best_for": "Validating real SmartFolio allocation behavior historically"
     }
 }
 

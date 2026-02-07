@@ -668,12 +668,12 @@
       const cycleScore = result.context?.scores?.cycle || 0;
       const onchainScore = result.context?.scores?.onchain || 0;
       const riskScore = result.context?.scores?.risk || 0;
-      const cyclePhase = result.context?.cycle?.phase || (cycleScore >= 70 ? 'bull' : (cycleScore <= 30 ? 'bear' : 'neutral'));
+      const cyclePhase = result.context?.cycle?.phase || (cycleScore >= 90 ? 'bull' : (cycleScore >= 70 ? 'moderate' : 'bear'));
 
       const diPanelData = {
         di: diClamped,
         scores: { cycle: cycleScore, onchain: onchainScore, risk: riskScore },
-        weights: di.weights || { cycle: 0.33, onchain: 0.39, risk: 0.28 },
+        weights: di.weights || { cycle: 0.30, onchain: 0.35, risk: 0.25, sentiment: 0.10 },
         meta: {
           // Champs alignés avec analytics-unified-main-controller.js
           phase: cyclePhase,
@@ -705,7 +705,7 @@
             risky: 100 - riskBudget.target_stables_pct,
             stables: riskBudget.target_stables_pct
           } : null,
-          regime_emoji: cycleScore >= 70 ? '🐂' : (cycleScore <= 30 ? '🐻' : '😐'),
+          regime_emoji: cycleScore >= 90 ? '🐂' : (cycleScore >= 70 ? '😐' : '🐻'),
           sentiment_fg: result.context?.sentimentScore || null,
           sentiment_interpretation: null
         },

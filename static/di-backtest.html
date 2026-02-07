@@ -963,7 +963,7 @@
       const fallbacks = {
         'di_smartfolio_replica': {
           name: 'SmartFolio Replica',
-          description: 'Replicates the real logic of SmartFolio\'s Allocation Engine V2. Uses the cycle score to determine the market phase (bullish/moderate/bearish) and the corresponding stables allocation.'
+          description: 'Full production pipeline: risk_budget formula (blended score → risky %), market overrides (BTC floor 15%, ETH floor 12%), exposure cap (20-80%), and governance penalty (contradiction-based 0-25% reduction). Most realistic backtest strategy.'
         },
         'di_threshold': {
           name: 'DI Threshold',
@@ -1076,8 +1076,8 @@
           <div class="kpi-label">Sortino Ratio</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-value neutral">${metrics.win_rate_pct?.toFixed(1) || '0'}%</div>
-          <div class="kpi-label">Win Rate</div>
+          <div class="kpi-value neutral">${metrics.avg_risky_allocation_pct?.toFixed(0) || '50'}%</div>
+          <div class="kpi-label">Avg Risky Alloc</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value ${benchmark.excess_return_pct >= 0 ? 'positive' : 'negative'}">
@@ -1117,6 +1117,26 @@
         <div class="kpi-card">
           <div class="kpi-value neutral">${diMetrics.avg_di_during_losses?.toFixed(1) || 'N/A'}</div>
           <div class="kpi-label">DI (Pertes >10%)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${metrics.upside_capture >= 0.8 ? 'positive' : 'neutral'}">
+            ${metrics.upside_capture?.toFixed(2) || 'N/A'}
+          </div>
+          <div class="kpi-label">Upside Capture</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value ${metrics.downside_capture <= 0.8 ? 'positive' : 'negative'}">
+            ${metrics.downside_capture?.toFixed(2) || 'N/A'}
+          </div>
+          <div class="kpi-label">Downside Capture</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${metrics.turnover_annual?.toFixed(1) || '0'}</div>
+          <div class="kpi-label">Turnover (annual)</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value neutral">${data.summary?.rebalance_count || '0'}</div>
+          <div class="kpi-label">Rebalances</div>
         </div>
       `;
 

@@ -475,7 +475,7 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
   if (phase === 'bullish' || phase === 'expansion') {
     phaseFactor = 1.05;
   } else if (phase === 'bearish' || phase === 'contraction') {
-    phaseFactor = 0.95;
+    phaseFactor = 0.85;  // Aligned with CLAUDE.md canonical value (was 0.95)
   }
 
   // Score final clampé [0, 100]
