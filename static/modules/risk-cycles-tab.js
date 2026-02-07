@@ -99,11 +99,14 @@ export async function fetchBitcoinHistoricalData() {
     debugLogger.error('❌ Binance fetch échoué:', e.message);
   }
 
-  // 3) CoinGecko 365 jours (si on veut au moins la dernière année)
+  // 3) CoinGecko 365 jours via backend proxy (clé API gérée côté serveur)
   try {
-    debugLogger.debug('🦎 Récupération historique Bitcoin depuis CoinGecko API (365j)...');
-    const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=365&interval=daily');
-    if (!r.ok) throw new Error(`CoinGecko HTTP ${r.status}: ${r.statusText}`);
+    debugLogger.debug('🦎 Récupération historique Bitcoin depuis CoinGecko proxy (365j)...');
+    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const r = await fetch('/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=365&interval=daily', {
+      headers: { 'X-User': activeUser }
+    });
+    if (!r.ok) throw new Error(`CoinGecko proxy HTTP ${r.status}: ${r.statusText}`);
     const j = await r.json();
     if (Array.isArray(j.prices)) {
       const data = j.prices.map(([t, p]) => ({ time: t, price: p }));

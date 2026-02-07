@@ -26,7 +26,7 @@ logger = logging.getLogger("crypto-rebalancer")
 def get_user_coingecko_key(user_id: str) -> Optional[str]:
     """
     Load CoinGecko API key from user's secrets.json.
-    Falls back to .env if user secrets don't exist.
+    Falls back to .env COINGECKO_API_KEY if user secrets don't have one.
 
     Args:
         user_id: User ID
@@ -40,6 +40,12 @@ def get_user_coingecko_key(user_id: str) -> Optional[str]:
     if key:
         logger.debug(f"Using CoinGecko key from user {user_id} secrets")
         return key
+
+    # Fallback to .env (user secrets may not have a CoinGecko key)
+    env_key = os.getenv("COINGECKO_API_KEY", "")
+    if env_key:
+        logger.debug(f"Using CoinGecko key from .env for user {user_id}")
+        return env_key
 
     logger.debug(f"No CoinGecko API key found for user {user_id}")
     return None
@@ -151,16 +157,15 @@ async def _fetch_with_cache_and_fallback(
         return cached
 
     try:
-        # Add API key to params if available (for Pro/Demo API)
+        # Add API key as header if available (for Pro/Demo API)
+        headers = {}
         if api_key:
-            if params is None:
-                params = {}
-            params["x_cg_demo_api_key"] = api_key
+            headers["x-cg-demo-api-key"] = api_key
             logger.debug("Using CoinGecko API key from user config")
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             logger.debug(f"Fetching from CoinGecko: {url}")
-            response = await client.get(url, params=params)
+            response = await client.get(url, params=params, headers=headers)
 
             if response.status_code == 429:
                 logger.warning("CoinGecko rate limit reached (429)")
@@ -329,7 +334,7 @@ async def get_simple_price(
 async def get_market_chart(
     coin_id: str = Query("bitcoin", description="Coin ID (e.g., bitcoin)"),
     vs_currency: str = Query("usd", description="Fiat currency"),
-    days: int = Query(7, description="Number of days", ge=1, le=365),
+    days: int = Query(7, description="Number of days", ge=1, le=730),
     interval: str = Query("daily", description="Data interval"),
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
     user: str = Depends(get_required_user)

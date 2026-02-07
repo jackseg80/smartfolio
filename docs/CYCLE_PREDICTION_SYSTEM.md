@@ -216,7 +216,7 @@ Deux onglets de comparaison inter-cycles (cycles 2, 3, 4):
 - **Normalized**: Performance base 100 au halving (rendements décroissants: x30 → x8 → x2)
 - **Drawdown**: Chute depuis le peak de chaque cycle
 
-**Données dynamiques**: Le cycle 4 est alimenté en temps réel via l'API CoinGecko (cache localStorage 1h). Les cycles 2-3 sont des données historiques fixes.
+**Données dynamiques**: Le cycle 4 est alimenté en temps réel via `fetchBitcoinHistoricalData()` (FRED proxy → Binance → CoinGecko proxy). Les cycles 2-3 sont des données historiques fixes.
 
 ### Cycle Anatomy Table (Feb 2026)
 
