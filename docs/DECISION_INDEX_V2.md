@@ -71,7 +71,10 @@ raw_decision_score = (
     sentiment_score * weights.sentiment     # ~0.1
 )
 
-# Ajustement par phase (bullish/bearish/moderate)
+# Ajustement par phase (basé sur cycle_score seul)
+# bearish (cycle < 70): phase_factor = 0.85
+# moderate (70 ≤ cycle < 90): phase_factor = 1.0
+# bullish (cycle ≥ 90): phase_factor = 1.05
 adjusted_score = raw_decision_score * phase_factor
 
 # Pénalité macro (Feb 2026) - VIX > 30 OU DXY +5% sur 30j → -15 points

@@ -93,18 +93,21 @@ Signaux discrets:
 **Layer 1 — Risk Budget** (formule production):
 
 ```python
-blended = 0.5×CycleScore + 0.3×OnChainScore + 0.2×RiskScore
-base_risky = (blended - 35) / 45 × phase_factor
+blended     = 0.5×CycleScore + 0.3×OnChainScore + 0.2×RiskScore
+risk_factor = 0.5 + 0.5 × (RiskScore / 100)
+base_risky  = clamp((blended - 35) / 45, 0, 1)
+risky       = clamp(base_risky × risk_factor, 0.20, 0.85)
 ```
 
-Phase factors (basés sur cycle score): bearish (<70) = 0.85, moderate (70-90) = 1.0, bullish (≥90) = 1.05
+Source: `static/modules/market-regimes.js` → `calculateRiskBudget()`
 
 **Layer 2 — Market Overrides**:
 
-- BTC floor: 15%, ETH floor: 12%, Stables minimum: 10%
+- On-chain divergence: |cycle - onchain| ≥ 30 → +10% stables
+- Low risk score: risk ≤ 30 → stables ≥ 50%
 - Macro penalty: VIX > 30 OR DXY ±5% → -15 pts sur le DI
 
-**Layer 3 — Exposure Cap**: risky clampé entre 20% et 80%
+**Layer 3 — Exposure Cap**: risky clampé entre 20% et 85%
 
 **Layer 4 — Governance Penalty** (contradiction-based):
 

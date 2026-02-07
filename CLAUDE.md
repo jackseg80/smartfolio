@@ -58,7 +58,7 @@ async def endpoint(user: str = Depends(get_current_user_jwt)): pass
 
 **Règles scoring:**
 
-- Phase basée UNIQUEMENT sur cycle (<70=bearish, 70-90=moderate, ≥90=bullish)
+- Phase basée UNIQUEMENT sur cycle (<70=bearish→0.85, 70-90=moderate→1.0, ≥90=bullish→1.05)
 - Conditions "Correction" + Regime BTC "Bear Market" est NORMAL (concepts différents)
 - Risk Score = Positif (0-100), plus haut = plus robuste. NE JAMAIS inverser avec `100 - scoreRisk`
 - **Decision Index ≠ Allocation Validity**: DI est continu (0-100), Validity est binaire (65/45)
