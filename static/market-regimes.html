@@ -88,6 +88,25 @@
     window.closeStockRegimeHistory = closeStockRegimeHistory;
   </script>
 
+  <!-- Risk Dashboard Store + Orchestrator (for flyout panel scores & overrides) -->
+  <script type="module" src="core/risk-dashboard-store.js"></script>
+  <script type="module" src="core/fetcher.js"></script>
+  <script type="module" src="modules/signals-engine.js"></script>
+  <script type="module" src="modules/cycle-navigator.js"></script>
+  <script type="module" src="modules/onchain-indicators.js"></script>
+  <script type="module" src="modules/market-regimes.js"></script>
+  <script type="module" src="modules/targets-coordinator.js"></script>
+  <script type="module" src="core/risk-data-orchestrator.js"></script>
+
+  <!-- Auto-load calibrated cycle parameters -->
+  <script type="module">
+    import { autoLoadCalibratedParams, listenForCalibrationUpdates } from './modules/cycle-params-loader.js';
+    document.addEventListener('DOMContentLoaded', async () => {
+      await autoLoadCalibratedParams();
+      listenForCalibrationUpdates();
+    });
+  </script>
+
   <!-- AI Chat Styles -->
   <link rel="stylesheet" href="/static/components/ai-chat.css">
 </head>
@@ -719,6 +738,19 @@
       refreshAllRegimes();
     });
   </script>
+
+  <!-- Unified Risk Flyout Panel (Full Sidebar) -->
+  <script type="module" src="components/flyout-panel.js"></script>
+  <script type="module" src="components/risk-sidebar-full.js"></script>
+  <script type="module">
+    import { enableFlyoutLayoutAdapter } from './components/flyout-layout-adapter.js';
+    enableFlyoutLayoutAdapter('.wrap');
+  </script>
+
+  <flyout-panel position="left" width="280" persist-key="market_regimes_flyout">
+    <span slot="title">🎯 Risk Overview</span>
+    <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
+  </flyout-panel>
 
   <!-- AI Chat Components -->
   <script type="module">

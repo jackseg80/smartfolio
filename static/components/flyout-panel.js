@@ -287,12 +287,16 @@ class FlyoutPanel extends HTMLElement {
     // Dynamic width
     this.style.setProperty('--flyout-width', `${this.state.width}px`);
 
-    // Dispatch event for layout shifts
-    this.dispatchEvent(new CustomEvent('flyout-state-change', {
-      bubbles: true,
-      composed: true,
-      detail: { pinned: this.state.pinned, width: this.state.width, position: this.state.position }
-    }));
+    // Dispatch event for layout shifts — only if state actually changed
+    const stateKey = `${this.state.pinned}|${this.state.width}|${this.state.position}`;
+    if (stateKey !== this._lastStateKey) {
+      this._lastStateKey = stateKey;
+      this.dispatchEvent(new CustomEvent('flyout-state-change', {
+        bubbles: true,
+        composed: true,
+        detail: { pinned: this.state.pinned, width: this.state.width, position: this.state.position }
+      }));
+    }
   }
 }
 

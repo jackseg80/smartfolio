@@ -1323,7 +1323,8 @@ async function loadScoresFromStore() {
 
     // ✅ Mettre à jour UI
     updateScoreDisplays(onchainScore, riskScore, blendedScore, ccsScore);
-    updateMarketRegime(blendedScore, onchainScore, riskScore);
+    const cycleScore = state.scores?.cycle ?? null;
+    updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore);
 
     // ✅ Compatibility: Store in localStorage for legacy cross-page access
     const dataSource = globalConfig.get('data_source') || 'unknown';
@@ -1377,10 +1378,10 @@ async function loadScoresFromStore() {
 // L'orchestrator est maintenant la source unique de vérité (SSOT)
 
 // ====== Market Regime Functions ======
-function updateMarketRegime(blendedScore, onchainScore, riskScore) {
+function updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore = null) {
   try {
-    // Calculate regime data
-    const regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore);
+    // Calculate regime data (pass cycleScore to avoid resetting Schmitt trigger flags)
+    const regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScore);
     const regime = regimeData.regime;
 
     console.debug('📊 Market Regime calculated:', regime);

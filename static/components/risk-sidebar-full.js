@@ -328,12 +328,14 @@ class RiskSidebarFull extends HTMLElement {
     }
 
     // === SECTION 5: Market Regime ===
-    const hasRegime = !!(state.regime?.phase);
+    // getMarketRegime() returns .name (e.g. "Correction"), not .phase
+    const regimeName = state.regime?.name || state.regime?.phase;
+    const hasRegime = !!regimeName;
     this._showSection('section-regime', hasRegime);
 
     if (hasRegime) {
-      this.$.regimeDot.className = 'status-dot ' + this._getRegimeClass(state.regime.phase);
-      this.$.regimeText.textContent = state.regime.phase;
+      this.$.regimeDot.className = 'status-dot ' + this._getRegimeClass(regimeName);
+      this.$.regimeText.textContent = regimeName;
 
       // Display active overrides (divergence, low robustness, etc.)
       const overridesEl = this.$.regimeOverrides;

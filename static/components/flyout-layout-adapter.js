@@ -28,24 +28,27 @@ export function enableFlyoutLayoutAdapter(mainSelector = 'body', options = {}) {
     mainEl.style.paddingLeft = '32px'; // Espace pour la poignée du flyout (handle)
 
     // Écouter les changements d'état du flyout
+    let lastMarginState = '';
     document.addEventListener('flyout-state-change', (e) => {
       const { pinned, width, position } = e.detail;
-      debugLogger.debug('[FlyoutLayoutAdapter] State change:', { pinned, width, position });
+      const marginState = pinned ? `${position}:${width}` : 'auto';
+
+      if (marginState === lastMarginState) return;
+      lastMarginState = marginState;
 
       if (pinned) {
         if (position === 'left') {
           mainEl.style.marginLeft = `${width + offset}px`;
           mainEl.style.marginRight = 'auto';
-          debugLogger.debug(`[FlyoutLayoutAdapter] Applied margin-left: ${width + offset}px`);
         } else if (position === 'right') {
           mainEl.style.marginRight = `${width + offset}px`;
           mainEl.style.marginLeft = 'auto';
-          debugLogger.debug(`[FlyoutLayoutAdapter] Applied margin-right: ${width + offset}px`);
         }
+        debugLogger.debug(`[FlyoutLayoutAdapter] margin-${position}: ${width + offset}px`);
       } else {
         mainEl.style.marginLeft = 'auto';
         mainEl.style.marginRight = 'auto';
-        debugLogger.debug('[FlyoutLayoutAdapter] Reset margins to auto');
+        debugLogger.debug('[FlyoutLayoutAdapter] Reset margins');
       }
     });
 
