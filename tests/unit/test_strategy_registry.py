@@ -119,7 +119,7 @@ class TestTemplateLoading:
         assert "test_template" in strategy_registry.templates
         template = strategy_registry.templates["test_template"]
         assert template.name == "Test Template"
-        assert template.weights.cycle == 0.4
+        assert template.weights.cycle == pytest.approx(0.4, abs=1e-9)
         assert template.description == "Template de test"
     
     @pytest.mark.asyncio
@@ -299,19 +299,20 @@ class TestAllocationGeneration:
         """Test allocations spécifiques par phase"""
         strategy_registry.templates = strategy_registry.fallback_templates
         config = strategy_registry.templates["balanced"]
-        
+
+        # The allocation targets use "L1/L0 majors" for LARGE phase (not "LARGE")
         phases_to_test = [
             (Phase.BTC, "BTC"),
-            (Phase.ETH, "ETH"), 
-            (Phase.LARGE, "LARGE"),
+            (Phase.ETH, "ETH"),
+            (Phase.LARGE, "L1/L0 majors"),
             (Phase.ALT, "ALT")
         ]
-        
+
         for phase_enum, expected_symbol in phases_to_test:
             mock_phase = PhaseState(phase_enum, {phase_enum.value: 0.7}, 0.7, [f"Phase {phase_enum.value}"], 2)
-            
+
             targets = strategy_registry._generate_allocation_targets(70.0, mock_phase, config)
-            
+
             # Le symbole de la phase doit avoir poids significatif
             phase_weight = next((t.weight for t in targets if t.symbol == expected_symbol), 0)
             assert phase_weight > 0.2, f"Phase {phase_enum.value}: poids {expected_symbol} trop faible ({phase_weight})"
@@ -491,8 +492,8 @@ class TestIntegration:
             assert result.confidence >= 0.6  # Confiance raisonnable
             assert result.policy_hint in ["Normal", "Aggressive"]  # Pas Slow avec ce setup
             
-            # Allocation LARGE devrait être significative en phase LARGE
-            large_allocation = next((t.weight for t in result.targets if t.symbol == "LARGE"), 0)
+            # Allocation "L1/L0 majors" devrait être significative en phase LARGE
+            large_allocation = next((t.weight for t in result.targets if t.symbol == "L1/L0 majors"), 0)
             assert large_allocation > 0.2  # Au moins 20% en LARGE caps
             
             # Rationale doit mentionner la phase

@@ -23,7 +23,7 @@ def test_healthz():
 
 async def _test_balances_stub_async():
     async with await _client() as client:
-        r = await client.get("/balances/current", params={"source": "stub", "min_usd": 1})
+        r = await client.get("/balances/current", params={"source": "stub", "min_usd": 1}, headers={"X-User": "demo"})
         assert r.status_code == 200
         data = r.json()
         assert isinstance(data.get("items"), list)
@@ -44,6 +44,7 @@ async def _test_rebalance_plan_stub_async():
             "/rebalance/plan",
             params={"source": "stub", "min_usd": 1, "pricing": "local", "dynamic_targets": False},
             json=payload,
+            headers={"X-User": "demo"},
         )
         assert r.status_code == 200
         data = r.json()

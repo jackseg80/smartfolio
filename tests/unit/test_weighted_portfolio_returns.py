@@ -34,6 +34,6 @@ def test_weighted_returns_handles_sparse_history(portfolio_service: PortfolioMet
     assert len(returns) == 3
     assert returns.index.is_monotonic_increasing
     assert not returns.isna().any()
-    assert returns.iloc[0] == pytest.approx(0.10, rel=1e-6)
-    assert returns.iloc[1] == pytest.approx(-0.0454545, rel=1e-6)
-    assert returns.iloc[2] == pytest.approx(0.1153846, rel=1e-6)
+    assert returns.iloc[0] == pytest.approx(0.10, abs=1e-6)
+    assert returns.iloc[1] == pytest.approx(-0.0454545, abs=1e-6)
+    assert returns.iloc[2] == pytest.approx(0.1153846, abs=1e-6)

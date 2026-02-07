@@ -162,24 +162,32 @@ class TestStabilityIntegration:
         assert metadata.get('disabled') is True
 
     def test_rate_limiter_factory(self):
-        with patch('config.settings.get_settings') as mock_settings:
-            # Test enabled rate limiter
-            mock_settings.return_value.security.rate_limit_requests = 100
-            mock_settings.return_value.security.rate_limit_refill_rate = 5.0
-            mock_settings.return_value.security.rate_limit_burst_size = 10
+        import services.rate_limiter as rl_module
+        # Save original global to restore later
+        original_limiter = rl_module._rate_limiter
 
-            limiter = get_rate_limiter()
-            assert isinstance(limiter, AdaptiveRateLimiter)
+        try:
+            with patch('config.settings.get_settings') as mock_settings:
+                # Test enabled rate limiter
+                mock_settings.return_value.security.rate_limit_requests = 100
+                mock_settings.return_value.security.rate_limit_refill_rate = 5.0
+                mock_settings.return_value.security.rate_limit_burst_size = 10
 
-            # Test disabled rate limiter
-            mock_settings.return_value.security.rate_limit_requests = 0
-            from services.rate_limiter import _rate_limiter
-            global _rate_limiter
-            _rate_limiter = None  # Reset global
+                # Reset global to force re-creation
+                rl_module._rate_limiter = None
+                limiter = get_rate_limiter()
+                assert isinstance(limiter, AdaptiveRateLimiter)
 
-            limiter = get_rate_limiter()
-            from services.rate_limiter import DisabledRateLimiter
-            assert isinstance(limiter, DisabledRateLimiter)
+                # Test disabled rate limiter
+                mock_settings.return_value.security.rate_limit_requests = 0
+                rl_module._rate_limiter = None  # Reset global
+
+                limiter = get_rate_limiter()
+                from services.rate_limiter import DisabledRateLimiter
+                assert isinstance(limiter, DisabledRateLimiter)
+        finally:
+            # Restore original global state
+            rl_module._rate_limiter = original_limiter
 
 class TestHysteresisLogic:
     """Test hystérésis and EMA logic"""

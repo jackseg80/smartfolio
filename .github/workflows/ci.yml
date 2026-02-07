@@ -13,6 +13,8 @@ concurrency:
 jobs:
   test:
     runs-on: windows-latest
+    env:
+      DEV_OPEN_API: "1"
 
     steps:
     - name: Checkout code

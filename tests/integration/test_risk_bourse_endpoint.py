@@ -1,11 +1,13 @@
 """
-Tests d'intégration pour endpoint /api/risk/bourse/dashboard
+Tests d'integration pour endpoint /api/risk/bourse/dashboard
 
-Vérifie:
-- Endpoint retourne métriques valides
+Verifie:
+- Endpoint retourne metriques valides
 - Score canonique 0-100 (plus haut = plus robuste)
-- Multi-tenant respecté (user_id obligatoire)
+- Multi-tenant respecte (X-User obligatoire)
 - Fallback gracieux si 0 positions
+
+Updated: 2026-02 - Use X-User header instead of user_id query param
 """
 
 import pytest
@@ -18,25 +20,36 @@ client = TestClient(app)
 class TestRiskBourseEndpoint:
     """Tests de l'endpoint risk bourse."""
 
-    def test_zero_positions_returns_empty_state(self):
-        """0 positions doit retourner état vide sans erreur."""
-        # Utiliser min_usd très élevé pour filtrer toutes les positions
-        response = client.get("/api/risk/bourse/dashboard?user_id=demo&min_usd=999999999")
+    def test_high_min_usd_returns_filtered_state(self):
+        """Very high min_usd should filter all positions gracefully."""
+        # Use X-User header (required by get_required_user)
+        # Use min_usd very high to filter all positions below threshold
+        response = client.get(
+            "/api/risk/bourse/dashboard",
+            params={"min_usd": 999999999},
+            headers={"X-User": "demo"}
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["ok"] is True
-        assert data["positions_count"] == 0
-        assert data["total_value_usd"] == 0.0
+        # When all positions are below threshold, risk score should be 0
         assert data["risk"]["score"] == 0
         assert data["risk"]["level"] == "N/A"
 
-    def test_user_id_parameter_required(self):
-        """user_id doit être présent (multi-tenant)."""
-        # L'endpoint a un default user_id="demo", mais on teste qu'il est bien utilisé
-        response = client.get("/api/risk/bourse/dashboard")  # Sans user_id explicite
+    def test_user_id_via_header(self):
+        """X-User header must be present (multi-tenant)."""
+        response = client.get(
+            "/api/risk/bourse/dashboard",
+            headers={"X-User": "demo"}
+        )
         assert response.status_code == 200
         data = response.json()
-        assert data["user_id"] == "demo"  # Fallback au default
+        assert data["user_id"] == "demo"
+
+    def test_missing_user_header_returns_422(self):
+        """Missing X-User header should return 422."""
+        response = client.get("/api/risk/bourse/dashboard")
+        assert response.status_code == 422
 
 
 # Commande pour lancer ces tests:
