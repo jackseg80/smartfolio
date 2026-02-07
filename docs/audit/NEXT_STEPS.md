@@ -21,7 +21,7 @@
 - `eb88c82` - Tracking mis à jour
 
 ### **Références:**
-- Plan détaillé: `docs/audit/PLAN_ACTION_IMMEDIATE.md`
+- Plan détaillé: `docs/_archive/session_notes/PLAN_ACTION_IMMEDIATE.md`
 - Résumé session: `docs/audit/SESSION_SUMMARY_2025_11_10.md`
 - Tracking: `docs/audit/PROGRESS_TRACKING.md`
 - Guide CLAUDE.md: `CLAUDE.md`
@@ -139,7 +139,7 @@ Session précédente a complété Jours 1-2 de l'audit:
 - Commits: db88466 (tests), d167cba (conformité), 1be7e75 (hotfix), eb88c82 (tracking)
 
 **Références:**
-- Plan: @docs/audit/PLAN_ACTION_IMMEDIATE.md
+- Plan: @docs/_archive/session_notes/PLAN_ACTION_IMMEDIATE.md
 - Prochaines étapes: @docs/audit/NEXT_STEPS.md
 - Résumé session: @docs/audit/SESSION_SUMMARY_2025_11_10.md
 - Guide: @CLAUDE.md

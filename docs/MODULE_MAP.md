@@ -1,6 +1,6 @@
 # Module Map — JavaScript
 
-**Total** : 70 modules JS détectés
+**Total** : ~120 modules JS dans `static/`
 
 ---
 
@@ -51,5 +51,5 @@
 ## Notes
 
 - **debug-logger.js** : Non trouvé dans static/utils/ (peut-être inline ou autre emplacement)
-- **70 modules** : Inventaire complet disponible via `find static/ -name "*.js" -type f`
+- **~120 modules** : Inventaire complet disponible via `find static/ -name "*.js" -type f` (core/, components/, modules/, utils/, selectors/)
 - **Exports vérifiés** : decision-index-panel (ligne 999), GovernancePanel (ligne 13), wealth-saxo-summary (fetchSaxoSummary)

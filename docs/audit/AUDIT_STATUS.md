@@ -1,8 +1,9 @@
 # Statut Global des Audits - SmartFolio
 
-**Date de mise à jour:** 3 Février 2026
-**Dernière revue complète:** Février 2026 (Plan de Sauvetage)
+**Date de mise à jour:** 7 Février 2026
+**Dernière revue complète:** Février 2026 (Plan de Sauvetage + Documentation Audit)
 **Prochaine revue:** Mars 2026
+**Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
 ---
 
@@ -12,7 +13,7 @@
 |-----------|-------|----------|--------|---------------|
 | **Sécurité** | 8.5/10 | ⬆️ +42% | 🟢 BON | Nov 2025 |
 | **Performance** | 7.5/10 | ⬆️ +40% fixes | 🟡 EN COURS | Dec 2025 |
-| **Accessibilité** | 83/100 | ⬆️ +22% | ✅ BON | Dec 2025 |
+| **Accessibilité** | 92+/100 | ⬆️ +33% | ✅ BON | Feb 2026 |
 | **Dette Technique** | 7.5/10 | ⬆️ -67% TODOs | 🟢 BON | Nov 2025 |
 | **Tests** | 8/10 | ➡️ Stable | 🟢 BON | Nov 2025 |
 | **CI/CD** | 8/10 | ⬆️ +Automation | 🟢 BON | Dec 2025 |
@@ -334,7 +335,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 17. [SESSION_SUMMARY_2025_11_10.md](./SESSION_SUMMARY_2025_11_10.md) - Session notes
 
 ### Plans d'Action
-18. [PLAN_ACTION_IMMEDIATE.md](./PLAN_ACTION_IMMEDIATE.md) - Semaine 1 (Nov 2025)
+18. [PLAN_ACTION_IMMEDIATE.md](../_archive/session_notes/PLAN_ACTION_IMMEDIATE.md) - Semaine 1 (Nov 2025, archived)
 19. [README.md](./README.md) - Guide navigation audits
 
 ### Historiques

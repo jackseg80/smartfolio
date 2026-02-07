@@ -2,7 +2,7 @@
 
 **Date de début:** 9 novembre 2025
 **Audit initial:** [AUDIT_COMPLET_2025_11_09.md](./AUDIT_COMPLET_2025_11_09.md)
-**Plan d'action:** [PLAN_ACTION_IMMEDIATE.md](./PLAN_ACTION_IMMEDIATE.md)
+**Plan d'action:** [PLAN_ACTION_IMMEDIATE.md](../_archive/session_notes/PLAN_ACTION_IMMEDIATE.md) (archived)
 
 ---
 

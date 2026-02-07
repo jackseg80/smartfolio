@@ -56,7 +56,7 @@
    - eval() elimination
    - MD5 usedforsecurity=False
 
-3. ⭐ [PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md](./PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md) - **Plan d'amélioration sécurité multi-tenant**
+3. ⭐ [PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md](../_archive/audit_reports/PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md) - **Plan d'amélioration sécurité multi-tenant** (archived)
    - 🔄 EN COURS - Itération 1 (P0)
    - ✅ P0-2: Supprimé user_id="demo" (11 fichiers, 19 occurrences)
    - ✅ P0-3: Sécurisé logs API keys
@@ -175,7 +175,7 @@
 ### Suivi & Planning
 - [PROGRESS_TRACKING.md](./PROGRESS_TRACKING.md) - Suivi hebdomadaire détaillé
 - [NEXT_STEPS.md](./NEXT_STEPS.md) - Prochaines actions planifiées
-- [PLAN_ACTION_IMMEDIATE.md](./PLAN_ACTION_IMMEDIATE.md) - Plan Semaine 1 (Nov 2025)
+- [PLAN_ACTION_IMMEDIATE.md](../_archive/session_notes/PLAN_ACTION_IMMEDIATE.md) - Plan Semaine 1 (Nov 2025, archived)
 - [SESSION_SUMMARY_2025_11_10.md](./SESSION_SUMMARY_2025_11_10.md) - Session notes
 
 **Total:** 21 documents d'audit, 25,000+ lignes

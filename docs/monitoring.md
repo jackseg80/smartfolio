@@ -1,6 +1,8 @@
 # Monitoring SmartFolio
 
 > Guide pour le monitoring système et métier
+>
+> See also: [PERFORMANCE_MONITOR.md](PERFORMANCE_MONITOR.md) for the unified performance tracking page.
 
 ---
 

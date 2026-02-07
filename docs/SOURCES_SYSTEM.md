@@ -1,4 +1,6 @@
-# Sources System v2 - Documentation
+# Sources System v1 - Documentation
+
+> **LEGACY** — This document describes Sources V1. See [SOURCES_V2.md](SOURCES_V2.md) for the current modular system (category-based, Feb 2026).
 
 ## Vue d'ensemble
 

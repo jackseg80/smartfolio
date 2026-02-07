@@ -3,6 +3,8 @@
 > **Version**: 2.0
 > **Date**: Octobre 2025
 > **Statut**: ✅ Production
+>
+> See also: [dynamic-allocation-system.md](dynamic-allocation-system.md) for the frontend dynamic targets workflow.
 
 ## 📊 Vue d'Ensemble
 

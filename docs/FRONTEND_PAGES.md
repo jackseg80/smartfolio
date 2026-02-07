@@ -1,6 +1,6 @@
 # Frontend Pages — Inventaire
 
-**Total** : 101 pages HTML détectées
+**Total** : 25 pages HTML production dans `static/`
 
 ---
 
@@ -14,6 +14,40 @@
 | simulations.html      | Simulation Engine    | local (riskStore, presets)         | simulation-engine.js, SimControls.js         | Prod   |
 | rebalance.html        | Rebalancing          | /rebalance/plan                    | allocation-engine.js                         | Prod   |
 | execution.html        | Execution            | /execution/*                       | execution-manager.js                         | Prod   |
+| execution_history.html| Execution History    | /execution/history/*               | -                                            | Prod   |
+| monitoring.html       | Monitoring           | /api/alerts/*                      | -                                            | Prod   |
+| admin-dashboard.html  | Admin Dashboard      | /admin/*                           | -                                            | Prod   |
+| login.html            | Login                | /auth/*                            | auth-guard.js                                | Prod   |
+
+---
+
+## Pages Risk
+
+| Page | Title | Endpoints | Modules JS | Statut |
+|------|-------|-----------|------------|--------|
+| advanced-risk.html    | Advanced Risk        | /api/risk/advanced/*               | plotly.js                                    | Prod   |
+| market-regimes.html   | Market Regimes       | /api/ml/crypto/*, /api/ml/bourse/* | -                                            | Prod   |
+| cycle-analysis.html   | Cycle Analysis       | /api/ml/crypto/cycle/*             | bitcoin-cycle-chart.js                       | Prod   |
+
+---
+
+## Pages Analytics
+
+| Page | Title | Endpoints | Modules JS | Statut |
+|------|-------|-----------|------------|--------|
+| di-backtest.html      | DI Backtest          | /api/di-backtest/*                 | -                                            | Prod   |
+| optimization.html     | Portfolio Optimization| /api/portfolio/optimize/*          | -                                            | Prod   |
+| portfolio-optimization-advanced.html | Advanced Optimization | /api/portfolio/optimize/* | plotly.js                           | Prod   |
+| performance-monitor-unified.html | Performance Monitor | /api/performance/*           | -                                            | Prod   |
+
+---
+
+## Pages Wealth
+
+| Page | Title | Endpoints | Modules JS | Statut |
+|------|-------|-----------|------------|--------|
+| wealth-dashboard.html | Wealth Dashboard     | /api/wealth/*                      | -                                            | Prod   |
+| ai-dashboard.html     | AI Chat              | /ai/chat/*                         | ai-chat.js                                   | Prod   |
 
 ---
 
@@ -72,5 +106,5 @@
 ## Notes
 
 - **Statut** : Prod (production), Beta (fonctionnel mais incomplet), Migrating (en transition), Legacy (déprécié)
-- **101 pages** : Inventaire complet disponible via `find static/ -name "*.html"`
-- **Test/Debug** : 54 pages identifiées avec préfixes test-, debug-, clear-
+- **25 pages production** dans `static/` (inventaire complet via `ls static/*.html`)
+- **Test/Debug** : pages additionnelles avec préfixes test-, debug-, clear- dans sous-dossiers

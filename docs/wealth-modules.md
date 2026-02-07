@@ -1,5 +1,7 @@
 # Modules Patrimoniaux — État ACTUEL + Roadmap
 
+> See also: [WEALTH_MODULE.md](WEALTH_MODULE.md) for the technical reference of the Wealth CRUD system.
+
 Le cockpit patrimoine vise à intégrer **plusieurs modules** (Crypto, Bourse, Banques) dans une logique unifiée.
 **Phase 2 terminée (Sept 2025)** :
 - **Crypto** : pleinement intégré (analytics/risk/rebalance)

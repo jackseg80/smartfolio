@@ -45,7 +45,7 @@ Spécifications détaillées des modules métiers.
 
 ### 🌍 Bourse & Patrimoine
 - **[Scanner d'Opportunités](MARKET_OPPORTUNITIES_SYSTEM.md)** — Détection de gaps sectoriels mondiaux.
-- **[Module Patrimoine](PATRIMOINE_MODULE.md)** — Suivi unifié des actifs (Banks, Immobilier, Cash).
+- **[Module Wealth](WEALTH_MODULE.md)** — Suivi unifié des actifs (Banks, Immobilier, Cash).
 - **[Intégration Saxo](SAXO_OAUTH2_INTEGRATION.md)** — Connexion OAuth2 et gestion des comptes titres.
 
 ---

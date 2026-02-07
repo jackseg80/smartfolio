@@ -251,11 +251,11 @@ data/
 - **AI Chat Assistant**: [AI_CHAT_GLOBAL.md](docs/AI_CHAT_GLOBAL.md) - Global AI assistant (Groq/Claude), context-aware, dynamic knowledge base
 - **Allocation**: [ALLOCATION_ENGINE_V2.md](docs/ALLOCATION_ENGINE_V2.md) - Topdown hierarchical, floors, incumbency
 - **Decision Index**: [DECISION_INDEX_V2.md](docs/DECISION_INDEX_V2.md) - Dual scoring (DI vs Regime)
-- **Risk Management**: [RISK_SEMANTICS.md](docs/RISK_SEMANTICS.md), [RISK_SCORE_V2_IMPLEMENTATION.md](docs/RISK_SCORE_V2_IMPLEMENTATION.md)
+- **Risk Management**: [RISK_SEMANTICS.md](docs/RISK_SEMANTICS.md), [RISK_SCORING_MODULE.md](docs/RISK_SCORING_MODULE.md)
 - **Governance**: [governance.md](docs/governance.md) - Automated governance system
 - **Phase Engine**: [PHASE_ENGINE.md](docs/PHASE_ENGINE.md) - Market phase detection
 - **Simulator**: [SIMULATION_ENGINE.md](docs/SIMULATION_ENGINE.md) - Complete pipeline
-- **Sources System**: [SOURCES_SYSTEM.md](docs/SOURCES_SYSTEM.md) - Unified multi-source
+- **Sources System**: [SOURCES_V2.md](docs/SOURCES_V2.md) - Modular multi-source (category-based)
 - **Market Opportunities**: [MARKET_OPPORTUNITIES_SYSTEM.md](docs/MARKET_OPPORTUNITIES_SYSTEM.md) - Scoring 3-pillars, gap detection
 - **Intelligent Stop Loss**: [STOP_LOSS_SYSTEM.md](docs/STOP_LOSS_SYSTEM.md) - 6 adaptive methods (Trailing Stop NEW Oct 2025)
 - **P&L Today**: [P&L Today](docs/PNL_TODAY.md) - Real-time tracking

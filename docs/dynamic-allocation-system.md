@@ -1,5 +1,7 @@
 # Système d'Allocation Dynamique v3.0
 
+> See also: [ALLOCATION_ENGINE_V2.md](ALLOCATION_ENGINE_V2.md) for the core hierarchical allocation algorithm.
+
 ## Vue d'ensemble
 
 Le nouveau système d'allocation dynamique remplace les presets hardcodés par des calculs contextuels intelligents, garantissant une cohérence parfaite entre Analytics et Rebalance.
