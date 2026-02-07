@@ -15,6 +15,7 @@ jobs:
     runs-on: windows-latest
     env:
       DEV_OPEN_API: "1"
+      SECURITY_RATE_LIMIT_REQUESTS: "0"
 
     steps:
     - name: Checkout code
