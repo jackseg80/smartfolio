@@ -571,8 +571,8 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         stables = 1.0 - risky
 
         # Override 1: On-Chain Divergence (market-regimes.js L174-188)
-        # |cycle - onchain| >= 30 → +10% stables
-        divergence = abs(cycle_score - onchain_score)
+        # |blended - onchain| >= 30 → +10% stables
+        divergence = abs(blended - onchain_score)
         if divergence >= 30:
             stables = min(0.80, stables + 0.10)
 

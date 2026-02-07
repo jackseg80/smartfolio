@@ -117,6 +117,7 @@ class DIBacktestEngine:
         benchmark_prices: Optional[Dict[datetime, float]] = None,
         risky_symbol: str = "BTC",
         stable_return: float = 0.0,  # Return annuel stablecoins (0%)
+        rebalance_frequency: str = "daily",  # daily, weekly, monthly
     ) -> DIBacktestResult:
         """
         Exécute un backtest avec la stratégie DI donnée
@@ -128,6 +129,7 @@ class DIBacktestEngine:
             benchmark_prices: Prix du benchmark (dict date->price)
             risky_symbol: Symbole de l'actif risky
             stable_return: Return annuel des stablecoins
+            rebalance_frequency: Fréquence de rebalancement (daily/weekly/monthly)
 
         Returns:
             DIBacktestResult avec toutes les métriques
@@ -142,6 +144,9 @@ class DIBacktestEngine:
         dates = [p.date for p in di_history]
         di_values = pd.Series([p.decision_index for p in di_history], index=dates)
         btc_prices = pd.Series([p.btc_price for p in di_history], index=dates)
+
+        # Construire l'ensemble des jours de rebalancement autorisés
+        rebalance_dates = self._build_rebalance_dates(dates, rebalance_frequency)
 
         # Injecter DI dans la stratégie si supporté
         if hasattr(strategy, 'set_di_series'):
@@ -193,51 +198,55 @@ class DIBacktestEngine:
 
             risky_allocations.append(risky_allocation)
 
-            # Obtenir nouvelle allocation de la stratégie
-            price_df = pd.DataFrame({
-                risky_symbol: btc_prices[:i+1],
-                'STABLES': [1.0] * (i + 1)
-            })
+            # Ne vérifier le rebalancement que les jours autorisés
+            is_rebalance_day = date in rebalance_dates or i == 0
 
-            current_weights = pd.Series({
-                risky_symbol: risky_allocation,
-                'STABLES': stable_allocation
-            })
+            if is_rebalance_day:
+                # Obtenir nouvelle allocation de la stratégie
+                price_df = pd.DataFrame({
+                    risky_symbol: btc_prices[:i+1],
+                    'STABLES': [1.0] * (i + 1)
+                })
 
-            # Passer les scores composants pour la formule risk_budget
-            target_weights = strategy.get_weights(
-                date=pd.Timestamp(date),
-                price_data=price_df,
-                current_weights=current_weights,
-                di_value=di_value,
-                cycle_score=di_point.cycle_score,
-                onchain_score=di_point.onchain_score,
-                risk_score=di_point.risk_score,
-            )
+                current_weights = pd.Series({
+                    risky_symbol: risky_allocation,
+                    'STABLES': stable_allocation
+                })
 
-            target_risky = target_weights.get(risky_symbol, 0.5)
-            target_stable = 1.0 - target_risky
-
-            # Vérifier si rebalance nécessaire
-            allocation_diff = abs(target_risky - risky_allocation)
-
-            if allocation_diff > self.rebalance_threshold:
-                # Appliquer coûts de transaction
-                trade_cost = allocation_diff * portfolio_value * self.transaction_cost
-                portfolio_value -= trade_cost
-
-                rebalance_events.append(RebalanceEvent(
-                    date=date,
-                    risky_pct=target_risky * 100,
-                    stable_pct=target_stable * 100,
+                # Passer les scores composants pour la formule risk_budget
+                target_weights = strategy.get_weights(
+                    date=pd.Timestamp(date),
+                    price_data=price_df,
+                    current_weights=current_weights,
                     di_value=di_value,
-                    portfolio_value=portfolio_value,
-                    allocation_change=allocation_diff * 100,
-                    reason=f"DI={di_value:.1f}, risky {risky_allocation*100:.0f}%→{target_risky*100:.0f}%"
-                ))
+                    cycle_score=di_point.cycle_score,
+                    onchain_score=di_point.onchain_score,
+                    risk_score=di_point.risk_score,
+                )
 
-                risky_allocation = target_risky
-                stable_allocation = target_stable
+                target_risky = target_weights.get(risky_symbol, 0.5)
+                target_stable = 1.0 - target_risky
+
+                # Vérifier si rebalance nécessaire
+                allocation_diff = abs(target_risky - risky_allocation)
+
+                if allocation_diff > self.rebalance_threshold:
+                    # Appliquer coûts de transaction
+                    trade_cost = allocation_diff * portfolio_value * self.transaction_cost
+                    portfolio_value -= trade_cost
+
+                    rebalance_events.append(RebalanceEvent(
+                        date=date,
+                        risky_pct=target_risky * 100,
+                        stable_pct=target_stable * 100,
+                        di_value=di_value,
+                        portfolio_value=portfolio_value,
+                        allocation_change=allocation_diff * 100,
+                        reason=f"DI={di_value:.1f}, risky {risky_allocation*100:.0f}%→{target_risky*100:.0f}%"
+                    ))
+
+                    risky_allocation = target_risky
+                    stable_allocation = target_stable
 
             equity_curve.append((date, portfolio_value))
             benchmark_curve.append((date, benchmark_value))
@@ -379,6 +388,47 @@ class DIBacktestEngine:
             'downside_capture': downside_capture,
             'di_correlation': di_correlation,
         }
+
+    @staticmethod
+    def _build_rebalance_dates(dates: list, frequency: str) -> set:
+        """
+        Construit l'ensemble des dates autorisées pour le rebalancement.
+
+        Args:
+            dates: Liste triée de toutes les dates du backtest
+            frequency: 'daily', 'weekly', or 'monthly'
+
+        Returns:
+            Set de dates où le rebalancement est autorisé
+        """
+        if frequency == "daily":
+            return set(dates)
+
+        rebalance_dates = set()
+
+        if frequency == "weekly":
+            # Rebalance chaque lundi (ou premier jour de la semaine disponible)
+            current_week = None
+            for d in dates:
+                week_key = (d.isocalendar()[0], d.isocalendar()[1])
+                if week_key != current_week:
+                    rebalance_dates.add(d)
+                    current_week = week_key
+
+        elif frequency == "monthly":
+            # Rebalance le premier jour de chaque mois
+            current_month = None
+            for d in dates:
+                month_key = (d.year, d.month)
+                if month_key != current_month:
+                    rebalance_dates.add(d)
+                    current_month = month_key
+
+        else:
+            # Fallback: daily
+            return set(dates)
+
+        return rebalance_dates
 
     @staticmethod
     def _calculate_capture_ratios(

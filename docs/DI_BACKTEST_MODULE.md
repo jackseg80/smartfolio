@@ -103,7 +103,7 @@ Source: `static/modules/market-regimes.js` → `calculateRiskBudget()`
 
 **Layer 2 — Market Overrides**:
 
-- On-chain divergence: |cycle - onchain| ≥ 30 → +10% stables
+- On-chain divergence: |blended - onchain| ≥ 30 → +10% stables
 - Low risk score: risk ≤ 30 → stables ≥ 50%
 - Macro penalty: VIX > 30 OR DXY ±5% → -15 pts sur le DI
 

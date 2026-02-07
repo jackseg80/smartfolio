@@ -474,7 +474,7 @@
     }
 
     .chart-container::after {
-      content: "🔍 Cliquer pour agrandir";
+      content: "Click to enlarge";
       position: absolute;
       bottom: 8px;
       right: 8px;
@@ -538,16 +538,16 @@
         </div>
 
         <div class="control-group">
-          <label for="endDate">Date Fin</label>
+          <label for="endDate">End Date</label>
           <input type="date" id="endDate">
         </div>
 
         <div class="control-group">
-          <label for="rebalanceFreq">Rebalancement</label>
+          <label for="rebalanceFreq">Rebalance Frequency</label>
           <select id="rebalanceFreq">
-            <option value="daily">Quotidien</option>
-            <option value="weekly" selected>Hebdomadaire</option>
-            <option value="monthly">Mensuel</option>
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="monthly">Monthly</option>
           </select>
         </div>
 
@@ -1087,7 +1087,7 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-value neutral">${data.period?.days || '0'}</div>
-          <div class="kpi-label">Jours</div>
+          <div class="kpi-label">Days</div>
         </div>
       `;
 
@@ -1116,7 +1116,7 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-value neutral">${diMetrics.avg_di_during_losses?.toFixed(1) || 'N/A'}</div>
-          <div class="kpi-label">DI (Pertes >10%)</div>
+          <div class="kpi-label">DI (Losses >10%)</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value ${metrics.upside_capture >= 0.8 ? 'positive' : 'neutral'}">

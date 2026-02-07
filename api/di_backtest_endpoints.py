@@ -327,11 +327,12 @@ async def run_di_backtest(
             risk_free_rate=0.02
         )
 
-        logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}")
+        logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}, freq={request.rebalance_frequency}")
         result = engine.run_backtest(
             di_history=di_data.di_history,
             strategy=strategy,
-            initial_capital=request.initial_capital
+            initial_capital=request.initial_capital,
+            rebalance_frequency=request.rebalance_frequency
         )
 
         # 4. Calculer métriques additionnelles spécifiques au DI
@@ -654,7 +655,7 @@ STRATEGY_DETAILS = {
             "risk_factor = 0.5 + 0.5 × (RiskScore / 100) → [0.5, 1.0]",
             "baseRisky = clamp((blended - 35) / 45, 0, 1)",
             "risky = clamp(baseRisky × risk_factor, 20%, 85%)",
-            "Override: |cycle - onchain| ≥ 30 → +10% stables",
+            "Override: |blended - onchain| ≥ 30 → +10% stables",
             "Override: riskScore ≤ 30 → stables ≥ 50%",
             "Exposure cap: regime floor/ceiling + signal/vol penalties",
             "Governance penalty: contradiction (vol+cycle, DI vs cycle, score divergence) → 0-25% reduction"

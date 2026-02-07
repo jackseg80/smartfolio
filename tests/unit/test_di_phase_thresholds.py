@@ -174,11 +174,11 @@ class TestSmartfolioReplicaOverrides:
     """Verify production override logic in SmartFolio Replica."""
 
     def test_onchain_divergence_adds_stables(self):
-        """On-chain divergence >= 30pts → +10% stables"""
-        # cycle=94, onchain=64 → divergence=30 → triggers override
-        risky_with_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(94, 64, 78)
-        # Without divergence (same blended roughly): cycle=80, onchain=80, risk=78
-        risky_no_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(80, 80, 78)
+        """On-chain divergence |blended - onchain| >= 30 → +10% stables"""
+        # cycle=95, onchain=30, risk=80 → blended=72.5, divergence=|72.5-30|=42.5 → triggers
+        risky_with_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(95, 30, 80)
+        # Without divergence: cycle=70, onchain=70, risk=80 → blended=72, divergence=|72-70|=2
+        risky_no_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(70, 70, 80)
         # The divergent case should have MORE stables (less risky)
         assert risky_with_divergence < risky_no_divergence, (
             f"Divergent scores should give less risky: {risky_with_divergence:.2f} vs {risky_no_divergence:.2f}"
@@ -187,22 +187,22 @@ class TestSmartfolioReplicaOverrides:
     def test_current_live_scores_risk_budget(self):
         """
         With live scores cycle=94, onchain=64, risk=78:
-        Risk budget formula gives 85% risky, then on-chain divergence
-        override (|94-64|=30 >=30) adds +10% stables → 75% risky, 25% stables.
+        blended = 0.5*94 + 0.3*64 + 0.2*78 = 81.8
+        risk_factor = 0.5 + 0.5*(78/100) = 0.89
+        baseRisky = clamp((81.8-35)/45, 0, 1) = 1.0
+        risky = clamp(1.0 * 0.89, 0.20, 0.85) = 0.85
+
+        On-chain divergence: |blended - onchain| = |81.8 - 64| = 17.8 < 30 → NO override
+        (Production also does NOT trigger this override for these scores)
 
         Note: Production shows ~53% stables because it also applies
         computeExposureCap() + governance cap_daily on top of risk_budget.
-        The backtest intentionally omits these layers to show pure
-        risk_budget signal.
         """
         risky = DISmartfolioReplicaStrategy._compute_risk_budget(94, 64, 78)
-        stables = 1.0 - risky
-        # Risk budget + on-chain divergence override = 75% risky, 25% stables
-        assert risky == pytest.approx(0.75, abs=0.01), (
-            f"With scores 94/64/78, risky should be ~75% (before exposure cap), got {risky*100:.0f}%"
+        # Risk budget at ceiling, no override triggered (divergence < 30)
+        assert risky == pytest.approx(0.85, abs=0.01), (
+            f"With scores 94/64/78, risky should be 85% (risk_budget ceiling), got {risky*100:.0f}%"
         )
-        # Verify divergence override was applied (without it, would be 85%)
-        assert risky < 0.85, "On-chain divergence override should reduce risky from 85%"
 
     def test_low_risk_forces_50pct_stables(self):
         """Risk <= 30 → force stables >= 50%"""
