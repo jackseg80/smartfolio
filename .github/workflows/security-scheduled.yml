@@ -19,9 +19,17 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~\AppData\Local\pip\Cache
+        key: pip-security-${{ runner.os }}
+        restore-keys: pip-security-${{ runner.os }}
+
     - name: Install security tools
       run: |
         python -m pip install --upgrade pip
+        pip install -r requirements.txt
         pip install safety bandit pip-audit
 
     - name: Run Safety (dependency CVE scan)
@@ -41,8 +49,8 @@ jobs:
     - name: Run Bandit (code security scan)
       run: |
         echo "=== Bandit Scan - Code Security Issues ==="
-        bandit -r api/ services/ -ll --format screen
-        bandit -r api/ services/ -ll --format json -o bandit-report.json
+        bandit -r api/ services/ -c .bandit -ll --format screen
+        bandit -r api/ services/ -c .bandit -ll --format json -o bandit-report.json
       continue-on-error: true
 
     - name: Upload security reports
