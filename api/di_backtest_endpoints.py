@@ -703,7 +703,7 @@ STRATEGY_DETAILS = {
             "risk_factor = 0.5 + 0.5 × (RiskScore / 100) → [0.5, 1.0]",
             "baseRisky = clamp((blended - 35) / 45, 0, 1)",
             "risky = clamp(baseRisky × risk_factor, 20%, 85%)",
-            "Override: |blended - onchain| ≥ 30 → +10% stables",
+            "Override: |cycle - onchain| ≥ 30 → +10% stables",
             "Override: riskScore ≤ 30 → stables ≥ 50%",
             "Exposure cap: regime floor/ceiling + signal/vol penalties",
             "Governance penalty: contradiction (vol+cycle, DI vs cycle, score divergence) → 0-25% reduction"

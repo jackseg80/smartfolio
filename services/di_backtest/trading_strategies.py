@@ -564,7 +564,9 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         cycle_score: float,
         onchain_score: float,
         risk_score: float,
-        params: Optional['ReplicaParams'] = None
+        params: Optional['ReplicaParams'] = None,
+        cycle_direction: Optional[float] = None,
+        cycle_confidence: Optional[float] = None,
     ) -> float:
         """
         Production risk_budget formula with market overrides.
@@ -575,6 +577,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         Steps:
         1. Compute blendedScore with standard weights
         2. Apply risk_budget formula (v2_conservative)
+        2b. Apply direction penalty when cycle descending + score > 80
         3. Apply overrides: on-chain divergence, low risk score
 
         Note: Production also applies computeExposureCap() + governance cap_daily
@@ -594,6 +597,14 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
 
         # Step 2: Risk budget formula (v2_conservative)
         risk_factor = 0.5 + 0.5 * (risk_score / 100.0)
+
+        # Step 2b: Direction penalty when cycle is high and descending
+        # At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088 → ~9% reduction
+        if cycle_direction is not None and cycle_score > 80:
+            conf = cycle_confidence if cycle_confidence is not None else 0.5
+            direction_penalty = max(0.0, -cycle_direction) * conf * 0.15
+            risk_factor *= (1.0 - direction_penalty)
+
         base_risky = max(0.0, min(1.0, (blended - 35) / 45))
         risky = max(params.risk_budget_min, min(params.risk_budget_max, base_risky * risk_factor))
 
@@ -604,8 +615,11 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         stables = 1.0 - risky
 
         # Override 1: On-Chain Divergence (market-regimes.js L174-188)
-        # |blended - onchain| >= 30 → +10% stables
-        divergence = abs(blended - onchain_score)
+        # |cycle - onchain| >= 30 → +10% stables
+        # Uses cycle_score directly (not blended) to detect absence of on-chain
+        # confirmation when cycle is advanced. With blended, the 0.3×onchain
+        # weight dilutes the gap (e.g. cycle=94, onchain=53: |blended-onchain|=25 < 30).
+        divergence = abs(cycle_score - onchain_score)
         if divergence >= 30:
             stables = min(1.0 - params.risk_budget_min, stables + 0.10)
 
@@ -822,6 +836,8 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         onchain_score = kwargs.get('onchain_score')
         risk_score = kwargs.get('risk_score')
         di_value = kwargs.get('di_value', 50.0)
+        cycle_direction = kwargs.get('cycle_direction')
+        cycle_confidence = kwargs.get('cycle_confidence')
 
         # Fallback cycle via series si pas dans kwargs
         if cycle_score is None and self.cycle_series is not None:
@@ -868,7 +884,9 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
             # Layer 1(+2): risk_budget + market overrides
             if params.enable_risk_budget:
                 risky_pct = self._compute_risk_budget(
-                    cycle_score, onchain_score, risk_score, params
+                    cycle_score, onchain_score, risk_score, params,
+                    cycle_direction=cycle_direction,
+                    cycle_confidence=cycle_confidence,
                 )
                 active_layers.append("Risk Budget")
                 if params.enable_market_overrides:

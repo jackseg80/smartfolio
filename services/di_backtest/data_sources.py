@@ -102,6 +102,36 @@ class HistoricalDataSources:
         # Clamp
         return max(p["floor"], min(p["ceil"], score))
 
+    def cycle_score_derivative(self, months_after_halving: float) -> float:
+        """
+        Finite-difference derivative of cycle score (pts/month).
+        Positive = ascending (early cycle), negative = descending (late cycle).
+        """
+        delta = 0.5
+        s_plus = self.cycle_score_from_months(months_after_halving + delta)
+        s_minus = self.cycle_score_from_months(months_after_halving - delta)
+        return (s_plus - s_minus) / (2 * delta)
+
+    def cycle_confidence(self, months_after_halving: float) -> float:
+        """
+        Confidence based on distance from phase center (0.4 to 0.9).
+        Port of estimateCyclePosition() confidence logic in cycle-navigator.js.
+        """
+        m = months_after_halving % 48
+        PHASE_WINDOWS = {
+            (0, 7): {"center": 3, "half": 3},       # accumulation
+            (7, 19): {"center": 12, "half": 6},      # bull_build
+            (19, 25): {"center": 21, "half": 3},     # peak
+            (25, 37): {"center": 30, "half": 6},     # bear
+            (37, 49): {"center": 42, "half": 6},     # pre_accumulation
+        }
+        for (lo, hi), win in PHASE_WINDOWS.items():
+            if lo <= m < hi:
+                dist = abs(m - win["center"])
+                norm = min(1.0, dist / win["half"]) if win["half"] > 0 else 1.0
+                return 0.4 + 0.5 * (1 - norm)
+        return 0.5  # fallback
+
     def compute_historical_cycle_scores(
         self,
         start_date: datetime,

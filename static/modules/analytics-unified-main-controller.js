@@ -1247,7 +1247,8 @@ async function loadUnifiedData(force = false) {
         let regimeData = null;
         try {
           const { getRegimeDisplayData } = await import('../modules/market-regimes.js');
-          regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore);
+          const cycleScoreVal = store.get('cycle.score') ?? null;
+          regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScoreVal);
         } catch (e) { debugLogger.warn('Market regime compute failed:', e.message); }
 
         const blendedData = { score: blendedScore, regime: regimeData };

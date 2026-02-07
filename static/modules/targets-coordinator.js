@@ -430,6 +430,7 @@ export function generateSmartTargets() {
   const blendedScore = state.scores?.blended;
   const onchainScore = state.scores?.onchain;
   const riskScore = state.scores?.risk;
+  const cycleScore = state.scores?.cycle;
   const onchainMetadata = state.scores?.onchain_metadata;
   const backendSignals = state.governance?.ml_signals || null;
   const backendStatus = state.ui?.apiStatus?.backend || 'unknown';
@@ -456,7 +457,7 @@ export function generateSmartTargets() {
     // Get market regime - DEEP COPY to avoid mutation across calls
     const regime = getMarketRegime(blendedScore);
     const regimeCopy = JSON.parse(JSON.stringify(regime)); // Deep copy to prevent mutation
-    let adjustedRegime = applyMarketOverrides(regimeCopy, onchainScore, riskScore);
+    let adjustedRegime = applyMarketOverrides(regimeCopy, onchainScore, riskScore, cycleScore);
 
     // Apply enhanced on-chain intelligence if available
     if (onchainMetadata) {

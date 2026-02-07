@@ -156,7 +156,7 @@ function getTransitionStatus(score, regime) {
 /**
  * Applique des overrides basés sur les conditions de marché avec hysteresis
  */
-export function applyMarketOverrides(regime, onchainScore, riskScore) {
+export function applyMarketOverrides(regime, onchainScore, riskScore, cycleScore = null) {
   // DEEP COPY to avoid mutating the original regime object
   let adjustedRegime = {
     ...regime,
@@ -174,7 +174,11 @@ export function applyMarketOverrides(regime, onchainScore, riskScore) {
   // Override 1: Divergence On-Chain avec hysteresis ÉLARGIE (up=30, down=20)
   // Élargi pour éviter flip-flop: gap de 10pts (était 4pts avant)
   if (onchainScore != null) {
-    const divergence = Math.abs(regime.score - onchainScore);
+    // Use cycle score directly when available (not blended/regime.score)
+    // With blended, the 0.3×onchain weight dilutes the gap
+    // e.g. cycle=94, onchain=53: |regime.score-onchain|≈25 < 30, but |cycle-onchain|=41 ≥ 30
+    const divergenceBase = cycleScore != null ? cycleScore : regime.score;
+    const divergence = Math.abs(divergenceBase - onchainScore);
     flags.onchain_div = flip(flags.onchain_div, divergence, 30, 20);  // ÉLARGI
 
     if (flags.onchain_div) {
@@ -222,7 +226,7 @@ let _riskBudgetCache = { key: null, data: null, timestamp: 0 };
 /**
  * Calcule le budget de risque global selon la formule stratégique avec cache snapshot
  */
-export function calculateRiskBudget(blendedScore, riskScore) {
+export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, cycleDirection = null, cycleConfidence = null) {
   // ARRONDIR les scores d'entrée pour stabilité (éviter micro-variations 68.3 vs 68.7)
   const blendedRounded = Math.round(blendedScore);
   const riskRounded = Math.round(riskScore || 0);
@@ -242,7 +246,8 @@ export function calculateRiskBudget(blendedScore, riskScore) {
   }
 
   const now = Date.now();
-  const cacheKey = `${blendedRounded}-${riskRounded}-${riskSemanticsMode}`; // Include mode in key!
+  const dirKey = cycleDirection != null ? Math.round(cycleDirection * 100) : 'n';
+  const cacheKey = `${blendedRounded}-${riskRounded}-${riskSemanticsMode}-${dirKey}`;
 
   // CACHE RÉACTIVÉ (Oct 2025) - TTL 30s pour stabilité
   if (_riskBudgetCache.key === cacheKey && now - _riskBudgetCache.timestamp < 30000) {
@@ -276,6 +281,15 @@ export function calculateRiskBudget(blendedScore, riskScore) {
     // Fallback to conservative if unknown mode
     risk_factor = 0.5 + 0.5 * (riskRounded / 100);
     console.warn('Unknown RISK_SEMANTICS_MODE:', riskSemanticsMode, '- using v2_conservative fallback');
+  }
+
+  // Direction penalty: when cycle is high (>80) and descending, reduce risk_factor
+  // At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088 → ~9% reduction
+  if (cycleDirection != null && cycleScore != null && cycleScore > 80) {
+    const conf = cycleConfidence ?? 0.5;
+    const dirPenalty = Math.max(0, -cycleDirection) * conf * 0.15;
+    risk_factor *= (1 - dirPenalty);
+    console.debug('📉 Direction penalty applied:', { cycleDirection, conf, dirPenalty: dirPenalty.toFixed(4) });
   }
 
   // BaseRisky = clamp((Blended - 35)/45, 0, 1) - utiliser score arrondi
@@ -507,7 +521,7 @@ export function generateRegimeRecommendations(regime, riskBudget) {
  *
  * The full blendedScore (with Risk) is still used for calculateRiskBudget().
  */
-export function getRegimeDisplayData(blendedScore, onchainScore, riskScore) {
+export function getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScore = null, cycleDirection = null, cycleConfidence = null) {
   // Regime score: remove Risk influence to reflect actual market direction
   // blendedScore = CCS×0.50 + OnChain×0.30 + Risk×0.20
   // regimeScore = (CCS×0.50 + OnChain×0.30) / 0.80 = blended without Risk component
@@ -517,8 +531,19 @@ export function getRegimeDisplayData(blendedScore, onchainScore, riskScore) {
     ? Math.floor(Math.max(0, Math.min(100, (blendedScore - riskContribution) / marketWeight)))
     : blendedScore;
 
+  // Use cycleScore directly when available (from estimateCyclePosition().score)
+  // Fallback: infer ccsStar from blended (imprecise — ccsStar ≠ pure cycle score)
+  // blendedScore = ccsStar×0.50 + OnChain×0.30 + Risk×0.20
+  // → ccsStar = (blended - 0.3×onchain - 0.2×risk) / 0.5
+  // Note: ccsStar = CCS×0.7 + cycleScore×0.3, so fallback dilutes the cycle signal
+  const inferredCycleScore = cycleScore ?? (
+    (onchainScore != null && riskScore != null)
+      ? (blendedScore - 0.3 * onchainScore - 0.2 * riskScore) / 0.5
+      : null
+  );
+
   const base = getMarketRegime(regimeScore);
-  const adjusted = applyMarketOverrides(base, onchainScore, riskScore);
+  const adjusted = applyMarketOverrides(base, onchainScore, riskScore, inferredCycleScore);
 
   // Recalculer le regime effectif après ajustements (en cas de changement de score)
   const effectiveScore = adjusted.score;
@@ -528,7 +553,7 @@ export function getRegimeDisplayData(blendedScore, onchainScore, riskScore) {
   effective.overrides = adjusted.overrides;
   effective.allocation_bias = adjusted.allocation_bias;
 
-  const riskBudget = calculateRiskBudget(blendedScore, riskScore);
+  const riskBudget = calculateRiskBudget(blendedScore, riskScore, inferredCycleScore, cycleDirection, cycleConfidence);
   const allocation = allocateRiskyBudget(riskBudget.percentages.risky, effective);
   const recommendations = generateRegimeRecommendations(effective, riskBudget);
 

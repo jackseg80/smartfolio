@@ -222,6 +222,8 @@ class DIBacktestEngine:
                     cycle_score=di_point.cycle_score,
                     onchain_score=di_point.onchain_score,
                     risk_score=di_point.risk_score,
+                    cycle_direction=di_point.cycle_direction,
+                    cycle_confidence=di_point.cycle_confidence,
                 )
 
                 target_risky = target_weights.get(risky_symbol, 0.5)

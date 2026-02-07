@@ -394,7 +394,12 @@ export async function getUnifiedState() {
       const onchainRounded = onchainScore != null ? Math.round(onchainScore) : null;
       const riskRounded = riskScore != null ? Math.round(riskScore) : null;
 
-      regimeData = getRegimeDisplayData(blendedRounded, onchainRounded, riskRounded);
+      regimeData = getRegimeDisplayData(
+        blendedRounded, onchainRounded, riskRounded,
+        cycleData.score ?? null,
+        cycleData.direction ?? null,
+        cycleData.confidence ?? null
+      );
       console.debug('✅ Regime Intelligence loaded:', {
         regimeName: regimeData.regime?.name,
         recommendationsCount: regimeData.recommendations?.length,
@@ -653,6 +658,8 @@ export async function getUnifiedState() {
       const ctx = {
         regime: regimeData.regime?.name?.toLowerCase(),
         cycle_score: cycleData.score,
+        cycle_direction: cycleData.direction ?? null,
+        cycle_confidence: cycleData.confidence ?? null,
         governance_mode: decision.governance_mode || 'Normal',
         sentiment: sentimentData?.interpretation,
         sentiment_value: sentimentData?.value || 50,  // Valeur numérique 0-100 pour logique contextuelle
@@ -958,6 +965,8 @@ export async function getUnifiedState() {
       const ctx = {
         regime: regimeData.regime?.name?.toLowerCase(),
         cycle_score: cycleData.score,
+        cycle_direction: cycleData.direction ?? null,
+        cycle_confidence: cycleData.confidence ?? null,
         governance_mode: decision.governance_mode || 'Normal',
         sentiment: sentimentData?.interpretation,
         flags: {

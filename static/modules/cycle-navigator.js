@@ -480,11 +480,19 @@ export function estimateCyclePosition() {
     confidence = 0.3; // conservative fallback
   }
 
+  // Derivative via finite difference (pts/month), normalized to [-1, 1]
+  const delta = 0.5;
+  const sPlus = cycleScoreFromMonths(cycleData.months + delta);
+  const sMinus = cycleScoreFromMonths(cycleData.months - delta);
+  const derivative = (sPlus - sMinus) / (2 * delta);
+  const direction = Math.max(-1, Math.min(1, derivative / 15)); // 15 pts/month = max slope
+
   const result = {
     ...cycleData,
     phase,
     score,
     confidence,
+    direction,
     multipliers: cycleMultipliers(cycleData.months)
   };
 

@@ -19,6 +19,7 @@ from services.di_backtest.historical_di_calculator import (
     PhaseFactors,
 )
 from services.di_backtest.trading_strategies import DISmartfolioReplicaStrategy, ReplicaParams
+from services.di_backtest.data_sources import HistoricalDataSources
 
 
 class TestHistoricalDIPhaseThresholds:
@@ -174,10 +175,10 @@ class TestSmartfolioReplicaOverrides:
     """Verify production override logic in SmartFolio Replica."""
 
     def test_onchain_divergence_adds_stables(self):
-        """On-chain divergence |blended - onchain| >= 30 → +10% stables"""
-        # cycle=95, onchain=30, risk=80 → blended=72.5, divergence=|72.5-30|=42.5 → triggers
+        """On-chain divergence |cycle - onchain| >= 30 → +10% stables"""
+        # cycle=95, onchain=30, risk=80 → divergence=|95-30|=65 → triggers
         risky_with_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(95, 30, 80)
-        # Without divergence: cycle=70, onchain=70, risk=80 → blended=72, divergence=|72-70|=2
+        # Without divergence: cycle=70, onchain=70, risk=80 → divergence=|70-70|=0
         risky_no_divergence = DISmartfolioReplicaStrategy._compute_risk_budget(70, 70, 80)
         # The divergent case should have MORE stables (less risky)
         assert risky_with_divergence < risky_no_divergence, (
@@ -192,16 +193,16 @@ class TestSmartfolioReplicaOverrides:
         baseRisky = clamp((81.8-35)/45, 0, 1) = 1.0
         risky = clamp(1.0 * 0.89, 0.20, 0.85) = 0.85
 
-        On-chain divergence: |blended - onchain| = |81.8 - 64| = 17.8 < 30 → NO override
-        (Production also does NOT trigger this override for these scores)
+        On-chain divergence: |cycle - onchain| = |94 - 64| = 30 ≥ 30 → TRIGGERS override
+        stables += 10% → risky goes from 85% to 75%
 
         Note: Production shows ~53% stables because it also applies
         computeExposureCap() + governance cap_daily on top of risk_budget.
         """
         risky = DISmartfolioReplicaStrategy._compute_risk_budget(94, 64, 78)
-        # Risk budget at ceiling, no override triggered (divergence < 30)
-        assert risky == pytest.approx(0.85, abs=0.01), (
-            f"With scores 94/64/78, risky should be 85% (risk_budget ceiling), got {risky*100:.0f}%"
+        # Risk budget: base=85%, but divergence override triggers → 75%
+        assert risky == pytest.approx(0.75, abs=0.01), (
+            f"With scores 94/64/78, risky should be 75% (divergence override), got {risky*100:.0f}%"
         )
 
     def test_low_risk_forces_50pct_stables(self):
@@ -215,12 +216,37 @@ class TestSmartfolioReplicaOverrides:
 
     def test_no_divergence_no_penalty(self):
         """When scores agree, no divergence penalty applied"""
-        # cycle=80, onchain=75 → divergence=5 < 30 → no override
+        # cycle=80, onchain=75 → |cycle-onchain|=5 < 30 → no override
         risky = DISmartfolioReplicaStrategy._compute_risk_budget(80, 75, 70)
         # Standard formula should apply: blended≈78.5, risk_factor=0.85
         # baseRisky≈0.97, risky≈0.82
         assert risky >= 0.70, (
             f"With aligned scores (80/75/70), should be aggressive: got {risky*100:.0f}%"
+        )
+
+    def test_divergence_uses_cycle_not_blended(self):
+        """
+        Divergence check uses |cycle - onchain|, not |blended - onchain|.
+        Case: cycle=94, onchain=55, risk=78
+          blended = 0.5*94 + 0.3*55 + 0.2*78 = 79.1
+          |blended - onchain| = |79.1 - 55| = 24.1 < 30 (would NOT trigger with blended)
+          |cycle - onchain|   = |94 - 55|   = 39   ≥ 30 (DOES trigger with cycle)
+        """
+        risky = DISmartfolioReplicaStrategy._compute_risk_budget(94, 55, 78)
+        # Without divergence override: base_risky capped at 85%, risk_factor=0.89 → 85%
+        # With divergence: stables += 10% → risky = 75%
+        assert risky == pytest.approx(0.75, abs=0.01), (
+            f"Divergence |cycle-onchain|=39 should trigger, got risky={risky*100:.0f}%"
+        )
+
+    def test_divergence_boundary_at_30(self):
+        """Divergence exactly 30 → triggers (>=30 not >30)"""
+        # cycle=80, onchain=50 → |80-50|=30 → triggers
+        risky_at = DISmartfolioReplicaStrategy._compute_risk_budget(80, 50, 70)
+        # cycle=79, onchain=50 → |79-50|=29 → no trigger
+        risky_below = DISmartfolioReplicaStrategy._compute_risk_budget(79, 50, 70)
+        assert risky_below > risky_at, (
+            f"Divergence=30 should trigger but 29 should not: {risky_at:.2f} vs {risky_below:.2f}"
         )
 
     def test_adaptive_weights_reduce_cycle_in_contradiction(self):
@@ -433,7 +459,7 @@ class TestReplicaParams:
         """Disabling market overrides skips divergence/low-risk checks."""
         params_on = ReplicaParams(enable_market_overrides=True)
         params_off = ReplicaParams(enable_market_overrides=False)
-        # Scores where divergence triggers: blended=72.5, onchain=30, |72.5-30|=42.5>=30
+        # Scores where divergence triggers: |cycle-onchain|=|95-30|=65>=30
         cycle, onchain, risk = 95, 30, 80
         result_on = DISmartfolioReplicaStrategy._compute_risk_budget(
             cycle, onchain, risk, params=params_on
@@ -482,3 +508,99 @@ class TestReplicaParams:
         strategy = DISmartfolioReplicaStrategy(replica_params=params)
         assert strategy.replica_params.risk_budget_min == 0.25
         assert strategy.replica_params.exposure_confidence == 0.80
+
+
+class TestCycleDirection:
+    """Tests for cycle direction penalty (Piste A — sigmoid derivative)."""
+
+    def setup_method(self):
+        self.ds = HistoricalDataSources()
+
+    def test_derivative_positive_ascending(self):
+        """Month 9 (ascending) → positive derivative"""
+        deriv = self.ds.cycle_score_derivative(9.0)
+        assert deriv > 0, f"M+9 should have positive derivative, got {deriv:.2f}"
+
+    def test_derivative_negative_descending(self):
+        """Month 22 (descending) → negative derivative"""
+        deriv = self.ds.cycle_score_derivative(22.0)
+        assert deriv < 0, f"M+22 should have negative derivative, got {deriv:.2f}"
+
+    def test_derivative_near_zero_at_peak(self):
+        """Month 12-15 (near peak) → derivative close to 0"""
+        deriv = self.ds.cycle_score_derivative(14.0)
+        assert abs(deriv) < 5, f"Near peak derivative should be small, got {deriv:.2f}"
+
+    def test_direction_penalty_reduces_risk_factor(self):
+        """Descending + high cycle → risk_factor reduced → lower risky"""
+        # Without direction: cycle=94, risk=78 → 75% (after divergence)
+        risky_no_dir = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=None
+        )
+        # With negative direction (descending at M+21.5)
+        risky_descending = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=-0.8, cycle_confidence=0.73
+        )
+        assert risky_descending < risky_no_dir, (
+            f"Descending should reduce risky: {risky_descending:.2f} vs {risky_no_dir:.2f}"
+        )
+
+    def test_no_penalty_when_ascending(self):
+        """Ascending → no penalty applied (direction > 0)"""
+        risky_no_dir = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=None
+        )
+        risky_ascending = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=0.8, cycle_confidence=0.73
+        )
+        assert risky_ascending == risky_no_dir, (
+            f"Ascending should give same result: {risky_ascending:.2f} vs {risky_no_dir:.2f}"
+        )
+
+    def test_no_penalty_when_cycle_below_80(self):
+        """Low cycle score → no penalty regardless of direction"""
+        risky_no_dir = DISmartfolioReplicaStrategy._compute_risk_budget(
+            60, 50, 70, cycle_direction=None
+        )
+        risky_with_dir = DISmartfolioReplicaStrategy._compute_risk_budget(
+            60, 50, 70, cycle_direction=-0.9, cycle_confidence=0.8
+        )
+        assert risky_with_dir == risky_no_dir, (
+            f"Low cycle should ignore direction: {risky_with_dir:.2f} vs {risky_no_dir:.2f}"
+        )
+
+    def test_penalty_attenuated_by_confidence(self):
+        """Lower confidence → smaller penalty"""
+        risky_high_conf = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=-0.8, cycle_confidence=0.9
+        )
+        risky_low_conf = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=-0.8, cycle_confidence=0.4
+        )
+        assert risky_low_conf > risky_high_conf, (
+            f"Low confidence should give higher risky: {risky_low_conf:.2f} vs {risky_high_conf:.2f}"
+        )
+
+    def test_backward_compat_no_direction(self):
+        """cycle_direction=None → same as before (no penalty)"""
+        risky_default = DISmartfolioReplicaStrategy._compute_risk_budget(85, 70, 75)
+        risky_explicit_none = DISmartfolioReplicaStrategy._compute_risk_budget(
+            85, 70, 75, cycle_direction=None, cycle_confidence=None
+        )
+        assert risky_default == risky_explicit_none
+
+    def test_confidence_range(self):
+        """Confidence from data_sources is in [0.4, 0.9]"""
+        for m in [3, 9, 14, 21, 30, 42]:
+            conf = self.ds.cycle_confidence(float(m))
+            assert 0.4 <= conf <= 0.9, f"M+{m}: confidence {conf} out of [0.4, 0.9]"
+
+    def test_direction_penalty_magnitude(self):
+        """At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088"""
+        deriv = self.ds.cycle_score_derivative(21.5)
+        direction = max(-1.0, min(1.0, deriv / 15.0))
+        conf = self.ds.cycle_confidence(21.5)
+        penalty = max(0.0, -direction) * conf * 0.15
+        assert 0.05 < penalty < 0.15, (
+            f"Expected penalty ~0.088, got {penalty:.3f} (dir={direction:.2f}, conf={conf:.2f})"
+        )

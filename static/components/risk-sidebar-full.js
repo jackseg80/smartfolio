@@ -125,6 +125,7 @@ class RiskSidebarFull extends HTMLElement {
       // Market Regime
       regimeDot: this.shadowRoot.querySelector('#regime-dot'),
       regimeText: this.shadowRoot.querySelector('#regime-text'),
+      regimeOverrides: this.shadowRoot.querySelector('#regime-overrides'),
       // Cycle
       cycleDot: this.shadowRoot.querySelector('#cycle-dot'),
       cycleText: this.shadowRoot.querySelector('#cycle-text'),
@@ -333,6 +334,19 @@ class RiskSidebarFull extends HTMLElement {
     if (hasRegime) {
       this.$.regimeDot.className = 'status-dot ' + this._getRegimeClass(state.regime.phase);
       this.$.regimeText.textContent = state.regime.phase;
+
+      // Display active overrides (divergence, low robustness, etc.)
+      const overridesEl = this.$.regimeOverrides;
+      if (overridesEl) {
+        const overrides = state.regime.overrides;
+        if (Array.isArray(overrides) && overrides.length > 0) {
+          overridesEl.innerHTML = overrides.map(o =>
+            `<div style="font-size: 0.7rem; color: var(--color-warning-700, #92400e); margin-top: 2px;">⚠ ${o.message}</div>`
+          ).join('');
+        } else {
+          overridesEl.innerHTML = '';
+        }
+      }
     }
 
     // === SECTION 6: Cycle Position ===
@@ -706,6 +720,7 @@ class RiskSidebarFull extends HTMLElement {
           <div class="status-dot" id="regime-dot"></div>
           <div class="status-text" id="regime-text">Loading...</div>
         </div>
+        <div id="regime-overrides" style="margin-top: 4px;"></div>
       </div>
 
       <!-- Cycle Position -->

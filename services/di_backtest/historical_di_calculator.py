@@ -58,6 +58,8 @@ class DIHistoryPoint:
     macro_penalty: int
     raw_score: float
     btc_price: Optional[float] = None
+    cycle_direction: Optional[float] = None   # Normalized derivative [-1, 1]
+    cycle_confidence: Optional[float] = None  # Model confidence [0.4, 0.9]
 
 
 @dataclass
@@ -219,8 +221,15 @@ class HistoricalDICalculator:
         # 5. Convertir en liste de points
         history_points = []
         for idx, row in df.iterrows():
+            dt = idx.to_pydatetime() if hasattr(idx, 'to_pydatetime') else idx
+            months = self.data_sources.get_months_after_halving(dt)
+            raw_derivative = self.data_sources.cycle_score_derivative(months)
+            # Normalize: 15 pts/month is max expected slope → maps to ±1
+            direction = max(-1.0, min(1.0, raw_derivative / 15.0))
+            confidence = self.data_sources.cycle_confidence(months)
+
             point = DIHistoryPoint(
-                date=idx.to_pydatetime() if hasattr(idx, 'to_pydatetime') else idx,
+                date=dt,
                 decision_index=row['decision_index'],
                 cycle_score=row['cycle_score'],
                 onchain_score=row['onchain_score'],
@@ -231,6 +240,8 @@ class HistoricalDICalculator:
                 macro_penalty=int(row['macro_penalty']),
                 raw_score=row['raw_score'],
                 btc_price=row['btc_price'],
+                cycle_direction=direction,
+                cycle_confidence=confidence,
             )
             history_points.append(point)
 

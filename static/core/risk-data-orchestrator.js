@@ -232,7 +232,10 @@ export async function hydrateRiskStore() {
         const regimeData = getRegimeDisplayData(
           blendedScore || 50,
           onchainScore || 50,
-          finalRiskScore
+          finalRiskScore,
+          cycle?.score ?? null,
+          cycle?.direction ?? null,
+          cycle?.confidence ?? null
         );
         // getRegimeDisplayData returns { regime: {...}, risk_budget, allocation, recommendations }
         regime = regimeData?.regime ?? null;
@@ -273,7 +276,8 @@ export async function hydrateRiskStore() {
         onchain: onchainScore,
         blended: blendedScore,
         // Risk score calculé depuis API /api/risk/dashboard (TOUJOURS utiliser API si disponible)
-        risk: riskScore !== null ? riskScore : (currentState.scores?.risk ?? null)
+        risk: riskScore !== null ? riskScore : (currentState.scores?.risk ?? null),
+        cycle: cycle?.score ?? (currentState.scores?.cycle ?? null)
       },
 
       // Governance (pour compatibilité avec risk-sidebar-full.js)

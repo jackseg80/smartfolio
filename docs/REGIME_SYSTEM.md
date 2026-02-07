@@ -192,6 +192,26 @@ regimeScore = Math.floor((blendedScore - riskScore * 0.20) / 0.80)
 The full blendedScore (with Risk) is still used for allocation calculations
 (`calculateRiskBudget()`).
 
+### Market Overrides (applyMarketOverrides)
+
+After computing the base regime, `applyMarketOverrides()` applies protective adjustments:
+
+1. **On-Chain Divergence**: `|cycleScore - onchainScore| >= 30` → +10% stables (with Schmitt trigger hysteresis: up=30, down=20 to prevent flip-flop)
+2. **Low Risk Score**: `riskScore <= 30` → stables >= 50%
+
+The divergence check uses `cycleScore` directly (not the blended score) to detect when the cycle model is bullish but on-chain indicators don't confirm. With blended, the 0.3×onchain weight dilutes the gap.
+
+### Cycle Direction Penalty (V2.1)
+
+`calculateRiskBudget()` applies a direction penalty when the cycle score is high (>80) but descending:
+
+```javascript
+direction_penalty = Math.max(0, -cycleDirection) * confidence * 0.15
+risk_factor *= (1 - direction_penalty)
+```
+
+This distinguishes ascending phases (Month ~9, score=94, no penalty) from descending phases (Month ~21.5, score=94, ~9% risk_factor reduction). `cycleDirection` is the normalized sigmoid derivative ([-1, 1]) from `estimateCyclePosition()`.
+
 See also: [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md)
 
 ---
