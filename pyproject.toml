@@ -73,6 +73,36 @@ dev = [
     "flake8>=7.0.0",
 ]
 
+# Linting with ruff
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "archive",
+    "data",
+    "logs",
+    "htmlcov",
+    "node_modules",
+    "__pycache__",
+    "tests",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # line-too-long (handled by black)
+    "E402",  # module-level-import-not-at-top (common in dynamic imports)
+    "W291",  # trailing-whitespace (handled by pre-commit hooks)
+    "W292",  # missing-newline-at-end-of-file (handled by pre-commit hooks)
+    "W293",  # blank-line-with-whitespace (handled by pre-commit hooks)
+    "F401",  # unused-import (too many false positives with re-exports)
+    "F541",  # f-string-missing-placeholders (intentional in log formats)
+    "F841",  # unused-variable (cleanup backlog)
+]
+
 # Code formatting with black
 [tool.black]
 line-length = 100
