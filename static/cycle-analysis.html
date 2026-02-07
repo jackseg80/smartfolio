@@ -61,58 +61,42 @@
     .controls-card {
       position: sticky;
       top: calc(var(--header-height) + 50px);
-      /* Offset: Header + WealthBar */
       z-index: 90;
       background: var(--theme-surface);
       border: 1px solid var(--theme-border);
-      padding: 0.5rem 1rem;
-      text-align: center;
+      padding: 0.75rem 1rem;
       box-shadow: var(--shadow-lg);
       opacity: 0.98;
       backdrop-filter: blur(8px);
       margin-bottom: 1.5rem;
-      /* Ensure space below when static */
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
     }
 
-    .controls-header h2 {
+    .controls-left h2 {
       margin: 0;
       font-size: 1.1rem;
       line-height: 1.3;
     }
 
-    .controls-header p {
+    .controls-left p {
       color: var(--theme-text-muted);
-      margin: 0;
+      margin: 0.25rem 0 0;
       font-size: 0.8em;
-      display: none;
-      /* Hidden on small mobile */
     }
 
     .controls-actions {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
       gap: 0.5rem;
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
     }
 
-    /* Desktop: Horizontal Layout */
-    @media (min-width: 768px) {
+    @media (min-width: 900px) {
       .controls-card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 0.4rem 1.5rem;
-        text-align: left;
-      }
-
-      .controls-actions {
-        margin-top: 0;
-        justify-content: flex-end;
-      }
-
-      .controls-header p {
-        display: block;
+        grid-template-columns: auto 1fr;
+        padding: 0.75rem 1.25rem;
       }
     }
 
@@ -142,28 +126,34 @@
       font-size: 1.1em;
     }
 
-    .metric {
-      display: flex;
-      justify-content: space-between;
-      margin: 1rem 0;
-      padding: 0.5rem;
-      border-radius: 8px;
+    /* Terminal style output */
+    .term {
+      background: #0a0a0a;
+      border: 1px solid #1a3a1a;
+      border-radius: var(--radius-card);
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 0.75rem 1rem;
+      scrollbar-width: thin;
+      scrollbar-color: #1a3a1a transparent;
     }
-
-    .metric.good {
-      background: var(--success-bg);
-      color: var(--success);
+    .term::-webkit-scrollbar { width: 6px; }
+    .term::-webkit-scrollbar-track { background: transparent; }
+    .term::-webkit-scrollbar-thumb { background: #1a3a1a; border-radius: 3px; }
+    .term:empty::before {
+      content: '$ awaiting command...';
+      color: #1a3a1a;
     }
-
-    .metric.warning {
-      background: var(--warning-bg);
-      color: var(--warning);
-    }
-
-    .metric.error {
-      background: #f8d7da;
-      color: #721c24;
-    }
+    .term .line { white-space: pre-wrap; word-break: break-word; }
+    .term .line .ts { color: #555; }
+    .term .line .ok { color: #22c55e; }
+    .term .line .warn { color: #eab308; }
+    .term .line .err { color: #ef4444; }
+    .term .line .dim { color: #666; }
+    .term .line .val { color: #67e8f9; }
 
     .chart-container {
       height: 400px;
@@ -311,30 +301,27 @@
     <!-- Navigation contextuelle Risk Domain (Feb 2026) -->
     <domain-nav domain="risk"></domain-nav>
 
-    <!-- Contrôles -->
+    <!-- Contrôles + Terminal -->
     <div class="card controls-card">
-      <div class="controls-header">
-        <h2>🔧 Analysis Controls</h2>
-        <p>Manage execution and calibration of the cycle model</p>
+      <div class="controls-left">
+        <h2>Analysis Controls</h2>
+        <p>Cycle model execution &amp; calibration</p>
+        <div class="controls-actions">
+          <button class="btn-primary control-btn" onclick="runFullAnalysis()">
+            <span class="icon">🚀</span><span>Full Analysis</span>
+          </button>
+          <button class="btn-success control-btn" onclick="calibrateModel()">
+            <span class="icon">⚙️</span><span>Calibrate</span>
+          </button>
+          <button class="btn-warning control-btn" onclick="testAlternatives()">
+            <span class="icon">🧪</span><span>Alternatives</span>
+          </button>
+          <button class="btn-primary control-btn" onclick="generateReport()">
+            <span class="icon">📊</span><span>Report</span>
+          </button>
+        </div>
       </div>
-      <div class="controls-actions">
-        <button class="btn-primary control-btn" onclick="runFullAnalysis()">
-          <span class="icon">🚀</span>
-          <span>Full Analysis</span>
-        </button>
-        <button class="btn-success control-btn" onclick="calibrateModel()">
-          <span class="icon">⚙️</span>
-          <span>Calibrate Model</span>
-        </button>
-        <button class="btn-warning control-btn" onclick="testAlternatives()">
-          <span class="icon">🧪</span>
-          <span>Test Alternatives</span>
-        </button>
-        <button class="btn-primary control-btn" onclick="generateReport()">
-          <span class="icon">📊</span>
-          <span>Detailed Report</span>
-        </button>
-      </div>
+      <div id="analysis-results" class="term"></div>
     </div>
 
     <!-- Métriques de Précision -->
@@ -457,11 +444,6 @@
       <div id="indicators-suggestions" class="metrics-grid"></div>
     </div>
 
-    <!-- Résultats -->
-    <div class="card">
-      <h2>📋 Analysis Results</h2>
-      <div id="analysis-results"></div>
-    </div>
   </main>
 
   <script src="debug-logger.js"></script>
@@ -763,11 +745,15 @@
     }
 
     function addResult(title, content, type = 'info') {
-      const results = document.getElementById('analysis-results');
-      const div = document.createElement('div');
-      div.className = `metric ${type}`;
-      div.innerHTML = `<strong>${title}:</strong> ${content}`;
-      results.appendChild(div);
+      const term = document.getElementById('analysis-results');
+      const cls = type === 'good' ? 'ok' : type === 'warning' ? 'warn' : type === 'error' ? 'err' : 'dim';
+      const prefix = type === 'good' ? '  OK ' : type === 'warning' ? 'WARN ' : type === 'error' ? ' ERR ' : 'INFO ';
+      const ts = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const line = document.createElement('div');
+      line.className = 'line';
+      line.innerHTML = `<span class="ts">[${ts}]</span> <span class="${cls}">${prefix}</span>${title}  <span class="val">${content}</span>`;
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
     }
 
     // Calcul des métriques accuracy
@@ -1431,7 +1417,8 @@
 
     // Fonctions principales
     window.runFullAnalysis = async function () {
-      document.getElementById('analysis-results').innerHTML = '<div class="metric good"><strong>🚀 Starting full analysis...</strong></div>';
+      document.getElementById('analysis-results').innerHTML = '';
+      addResult('Starting full analysis...', '', 'info');
 
       // Charger les modules si pas encore fait
       if (!moduleLoaded) {
