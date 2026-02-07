@@ -14,7 +14,7 @@ from services.balance_service import balance_service
 async def endpoint(user: str = Depends(get_required_user), source: str = Query("cointracking")):
     res = await balance_service.resolve_current_balances(source=source, user_id=user)
 
-# ⚠️ DEPRECATED: get_active_user (fallback "demo" non sécurisé) → NE PAS UTILISER
+# ⚠️ SUPPRIMÉ: get_active_user n'existe plus → TOUJOURS utiliser get_required_user
 ```
 
 ```javascript
@@ -110,21 +110,38 @@ di-backtest.html        # Backtest historique Decision Index
 wealth-dashboard.html   # Unified wealth management
 monitoring.html        # KPIs système + Alerts History
 admin-dashboard.html    # Admin Dashboard (RBAC)
+optimization.html      # Portfolio Optimization (Markowitz, Black-Litterman)
+ai-dashboard.html      # Unified AI Dashboard: Bitcoin Regime, Trading signals
 
 # Stocks (Saxo Bank)
 saxo-dashboard.html     # Stock Dashboard: Overview + Positions
 bourse-analytics.html   # Stock Risk Analysis + Advanced Analytics
 bourse-recommendations.html  # Stock Recommendations + Market Opportunities
+
+# Outils & Système
+settings.html          # Configuration: Sources V2, API keys, préférences
+alias-manager.html     # Gestionnaire d'alias actifs crypto
+login.html             # Page d'authentification (point d'entrée)
+execution_history.html # Archive historique exécutions (lien depuis execution.html)
 ```
 
 ### API Namespaces
 ```
+/auth/*                                  # JWT login/logout/verify
 /balances/current, /portfolio/metrics    # Données portfolio
-/api/ml/*, /api/risk/*                   # ML + Risk
+/api/ml/*, /api/risk/*                   # ML + Risk (+ /api/risk/bourse, /api/risk/advanced)
 /api/wealth/items/*, /api/wealth/*       # Wealth management (CRUD + summary)
-/api/sources/*                           # Sources System v2
+/api/sources/*, /api/sources/v2/*        # Sources System v1 + v2
+/api/saxo/*                              # Saxo Bank (positions, orders, OAuth2)
 /execution/governance/*                  # Decision Engine
+/api/execution/history/*                 # Historique exécutions
 /api/di-backtest/*                       # DI Backtest historique
+/api/ai/*                                # AI Chat (Groq, providers, knowledge)
+/api/alerts/*                            # Alertes (active, history, acknowledge)
+/api/fx/*                                # FX rates, devises
+/api/coingecko-proxy/*                   # CoinGecko CORS proxy (caché)
+/api/config/*                            # Configuration data sources
+/api/users/*                             # User settings
 /admin/*                                 # Admin (RBAC protected)
 /proxy/fred/*                            # Macro indicators (DXY, VIX, Bitcoin)
 ```
@@ -132,7 +149,8 @@ bourse-recommendations.html  # Stock Recommendations + Market Opportunities
 ### Fichiers Clés
 ```
 api/main.py, api/admin_router.py, api/deps.py
-api/ml/*.py                              # ML endpoints (8 modules - refactorisé Fév 2026)
+api/utils/formatters.py                  # success_response, error_response, paginated_response
+api/ml/*.py                              # ML endpoints (10 modules - refactorisé Fév 2026)
 services/balance_service.py, services/portfolio.py
 services/execution/governance.py         # Orchestrateur (refactorisé Fév 2026)
 services/ml/orchestrator.py
@@ -140,6 +158,7 @@ services/macro_stress.py                 # DXY/VIX stress → Decision Index pen
 static/global-config.js, static/core/allocation-engine.js
 static/core/fetcher.js                   # Point d'entrée fetch unifié (Fév 2026)
 static/core/storage-service.js           # Abstraction localStorage (Fév 2026)
+static/core/auth-guard.js               # JWT auth (checkAuth, getAuthHeaders)
 config/users.json
 ```
 
@@ -196,14 +215,20 @@ const response = await fetch('/api/risk/dashboard', { headers: { 'X-User': activ
 
 ```
 data/users/{user_id}/
-  config.json           # Config utilisateur (clés API)
-  cointracking/data/    # CSV versionnés automatiquement
-  saxobank/data/        # CSV Saxo
-  wealth/wealth.json     # Unified wealth data (fallback: patrimoine.json)
+  config.json              # Config utilisateur (clés API)
+  config/sources.json      # Configuration des sources de données
+  cointracking/data/       # CSV versionnés automatiquement
+  cointracking/snapshots/  # Snapshots P&L
+  saxobank/data/           # CSV Saxo
+  saxobank/cash/           # Données cash Saxo
+  manual_crypto/           # Balances crypto manuelles
+  manual_bourse/           # Positions bourse manuelles
+  banks/snapshot.json      # Comptes bancaires
+  wealth/patrimoine.json   # Unified wealth data
 ```
 
 - Versioning: `YYYYMMDD_HHMMSS_{filename}.csv`
-- P&L: `data/portfolio_history.json` (clé: user_id + source)
+- P&L snapshots: `data/users/{user_id}/{source}/snapshots/`
 
 ---
 
