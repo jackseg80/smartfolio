@@ -117,6 +117,53 @@ Source: `static/modules/market-regimes.js` → `calculateRiskBudget()`
 
 **Idéal pour**: Valider que le DI Backtest est cohérent avec le comportement réel du projet SmartFolio
 
+### S7: DITrendGateStrategy
+
+SMA200 trend gate + DI allocation:
+- BTC > SMA200 → risk-on allocation (80% risky par défaut)
+- BTC < SMA200 → risk-off allocation (20% risky par défaut)
+- Whipsaw filter: N jours de confirmation avant changement
+- Options: DI modulation en risk-on, drawdown circuit breaker
+
+### S8: DICycleRotationStrategy (Multi-Asset)
+
+**Rotation 3 actifs (BTC/ETH/Stables) basée sur 5 phases du cycle Bitcoin.**
+
+Utilise `cycle_score` + `cycle_direction` pour détecter la phase:
+
+| Phase | Cycle Score | Direction | BTC | ETH | Stables |
+|-------|-------------|-----------|-----|-----|---------|
+| Accumulation | < 70 | ≥ 0 | 50% | 15% | 35% |
+| Bull Building | 70-89 | ≥ 0 | 35% | 35% | 30% |
+| Peak | ≥ 90 | any | 20% | 20% | 60% |
+| Distribution | 70-89 | < 0 | 20% | 10% | 70% |
+| Bear | < 70 | < 0 | 15% | 5% | 80% |
+
+**Features**:
+- EMA smoothing (alpha=0.15) pour éviter les transitions abruptes
+- Floor constraints: BTC≥10%, ETH≥5%, Stables≥10%
+- DI modulation optionnelle (désactivée par défaut)
+
+**Résultats backtest (Full History 2017-2025)**:
+- Rot_conservative: **Sharpe 1.042**, MaxDD -32.6%, Return 612.6%
+- Rot_default: **Sharpe 0.965**, MaxDD -41.3%, Return 692.0%
+- vs Replica V2.1: Sharpe 0.759, MaxDD -57.3%, Return 537.8%
+
+**Idéal pour**: Valider la rotation multi-asset par phase de cycle avant application aux 11 groupes en production
+
+## Multi-Asset Engine
+
+Le moteur de backtest supporte 2 modes:
+
+- **2-asset** (défaut): BTC + Stablecoins — utilisé par toutes les stratégies S1-S7
+- **3-asset** (`multi_asset=True`): BTC + ETH + Stablecoins — utilisé par S8
+
+Le mode 3-asset est activé automatiquement pour `di_cycle_rotation` via l'API.
+
+**Backward compatibility**: Le mode 2-asset utilise le même code (dict de poids) que le mode 3-asset. Les stratégies existantes produisent des résultats identiques.
+
+**Source ETH**: Binance API via `data_sources.get_multi_asset_prices(["ETH"])`, disponible depuis 2017.
+
 ## API Endpoints
 
 ### POST /api/di-backtest/run
@@ -234,7 +281,7 @@ Menu Analytics → DI Backtest (`/di-backtest.html`)
 ### Contrôles
 
 - **Période**: Date début/fin avec presets
-- **Stratégie**: Sélecteur des 5 stratégies
+- **Stratégie**: Sélecteur des 8 stratégies
 - **Capital initial**: Montant de départ
 - **Coûts de transaction**: % par trade (défaut 0.1%)
 
@@ -279,21 +326,26 @@ print(f"Max Drawdown: {result.max_drawdown:.1%}")
 1. **OnChain Score**: Proxy basé sur les prix (pas de données on-chain réelles)
 2. **Sentiment**: Historique Fear & Greed limité à ~365 jours
 3. **Granularité**: Données journalières uniquement
-4. **Benchmark**: Comparaison vs BTC uniquement (pas ETH/SPY)
+4. **ETH avant 2017**: Données ETH limitées (Binance listing 2017), backtests multi-asset démarrent à 2017
 
-## Performance Typique
+## Performance Typique (Full History 2017-2025)
 
-Exemple: Bull Run 2020-2021 avec DI Threshold Strategy
+Comparaison des meilleures stratégies sur Full History (weekly rebalance, $10k initial):
 
-```
-Total Return: 313.6%
-Benchmark (BTC): 499.0%
-Max Drawdown: -45.6%
-Sharpe Ratio: 2.35
-Sortino Ratio: 6.40
-```
+| Stratégie | Sharpe | MaxDD | Return | Avg Risky |
+|-----------|--------|-------|--------|-----------|
+| Rot_conservative (3-asset) | **1.042** | **-32.6%** | 612.6% | 29.7% |
+| Rot_default (3-asset) | 0.965 | -41.3% | 692.0% | 35.5% |
+| TG no whipsaw (2-asset) | 0.955 | -54.4% | 1585.7% | 55.0% |
+| Replica V2.1 (2-asset) | 0.759 | -57.3% | 537.8% | 40.4% |
+| BTC Buy & Hold (benchmark) | — | -83% | ~9500% | 100% |
 
-La stratégie DI est plus conservative que 100% BTC mais offre un meilleur ratio risque/rendement.
+**Key findings:**
+
+- Cycle Rotation conservative offre le meilleur Sharpe (1.042) et la meilleure protection en bear (-32.6% MaxDD)
+- TrendGate no whipsaw offre le meilleur return absolu mais avec plus de risque
+- DI modulation n'apporte pas de valeur ajoutée pour l'allocation (désactivé par défaut)
+- Smoothing rapide (alpha 0.30) ou instant (1.0) performent mieux que le smoothing lent
 
 ## Voir Aussi
 

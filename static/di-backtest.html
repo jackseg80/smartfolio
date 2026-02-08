@@ -13,6 +13,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.Chart && window['chartjs-plugin-annotation'] && !window.__di_annotation_registered__) {
+        Chart.register(window['chartjs-plugin-annotation']);
+        window.__di_annotation_registered__ = true;
+      }
+    });
+  </script>
   <script src="debug-logger.js"></script>
   <script src="components/toast.js" type="module"></script>
   <script src="global-config.js"></script>
@@ -757,6 +766,10 @@
               <input type="checkbox" id="enableGovernancePenalty" checked>
               <span>Layer 4: Governance Penalty</span>
             </label>
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableDirectionPenalty" checked>
+              <span>V2.1: Direction Penalty</span>
+            </label>
           </div>
 
           <div class="param-sliders">
@@ -812,6 +825,18 @@
         <h3>Equity Curve</h3>
         <div class="chart-container">
           <canvas id="equityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Allocation Over Time -->
+      <div class="result-card">
+        <h3>Allocation Over Time</h3>
+        <div class="chart-container">
+          <canvas id="allocationChart"></canvas>
+        </div>
+        <div style="display: flex; gap: var(--space-md); padding: var(--space-xs) var(--space-sm); font-size: 0.75rem; color: var(--theme-text-muted);">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:16px;height:2px;background:#ef4444;display:inline-block;border-top:2px dashed #ef4444;"></span> Divergence Override</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:16px;height:2px;background:#f59e0b;display:inline-block;border-top:2px dashed #f59e0b;"></span> Direction Penalty</span>
         </div>
       </div>
 
@@ -879,7 +904,12 @@
     let diHistoryChart = null;
     let drawdownChart = null;
     let monthlyReturnsChart = null;
+    let allocationChart = null;
     let modalChart = null;
+
+    // Wiring state: equity_curve data for allocation chart
+    let lastEquityCurve = null;
+    let lastDIHistory = null;
 
     // Strategy descriptions cache
     let strategyDetails = {};
@@ -887,6 +917,7 @@
     // Chart modal functions
     const chartConfigs = {
       equityChart: { title: 'Equity Curve', getChart: () => equityChart },
+      allocationChart: { title: 'Allocation Over Time', getChart: () => allocationChart },
       diHistoryChart: { title: 'Decision Index History', getChart: () => diHistoryChart },
       drawdownChart: { title: 'Drawdown', getChart: () => drawdownChart },
       monthlyReturnsChart: { title: 'Monthly Returns', getChart: () => monthlyReturnsChart }
@@ -949,7 +980,9 @@
             tooltip: {
               mode: 'index',
               intersect: false
-            }
+            },
+            // Clone annotation plugin config (V2.1 markers)
+            annotation: sourceOptions.plugins?.annotation ? JSON.parse(JSON.stringify(sourceOptions.plugins.annotation)) : undefined
           },
           scales: cloneScales(sourceOptions.scales)
         }
@@ -970,6 +1003,7 @@
           display: scale.display !== false,
           position: scale.position,
           stacked: scale.stacked,
+          time: scale.time ? { ...scale.time } : undefined,
           title: scale.title ? {
             display: scale.title.display,
             text: scale.title.text
@@ -1358,11 +1392,13 @@
       }
 
       // Charts
-      renderEquityChart(data.equity_curve || []);
+      lastEquityCurve = data.equity_curve || [];
+      renderEquityChart(lastEquityCurve);
+      renderAllocationChart(lastEquityCurve, lastDIHistory);
       renderDrawdownChart(data.drawdowns || []);
       renderMonthlyReturnsChart(data.monthly_returns || []);
 
-      // Fetch DI history for the chart
+      // Fetch DI history for the chart (will re-render allocation chart with annotations)
       fetchDIHistory(data.period?.start, data.period?.end);
     }
 
@@ -1383,7 +1419,12 @@
 
         const result = await response.json();
         if (result.ok && result.data?.history) {
+          lastDIHistory = result.data.history;
           renderDIHistoryChart(result.data.history);
+          // Re-render allocation chart with DI history annotations
+          if (lastEquityCurve) {
+            renderAllocationChart(lastEquityCurve, lastDIHistory);
+          }
         }
       } catch (error) {
         console.error('Error fetching DI history:', error);
@@ -1445,6 +1486,110 @@
       });
     }
 
+    /**
+     * Compute edge-detection annotations from DI history data.
+     * Returns annotation objects for transitions into divergence/direction penalty zones.
+     */
+    function computeV21Annotations(diHistory) {
+      if (!diHistory || diHistory.length < 2) return {};
+      const annotations = {};
+      let prevDivergence = false;
+      let prevDirection = false;
+      let divCount = 0;
+      let dirCount = 0;
+
+      for (let i = 0; i < diHistory.length; i++) {
+        const p = diHistory[i];
+        // Divergence: |cycle - onchain| >= 30
+        const isDivergence = Math.abs(p.cycle_score - p.onchain_score) >= 30;
+        // Direction penalty: cycle > 80 && cycle_direction < 0
+        const isDirection = p.cycle_direction != null && p.cycle_score > 80 && p.cycle_direction < 0;
+
+        // Edge detection: only mark transitions
+        if (isDivergence && !prevDivergence) {
+          annotations[`div_${divCount++}`] = {
+            type: 'line',
+            xMin: p.date, xMax: p.date,
+            borderColor: 'rgba(239, 68, 68, 0.6)',
+            borderWidth: 1.5,
+            borderDash: [4, 4],
+            label: { display: false }
+          };
+        }
+        if (isDirection && !prevDirection) {
+          annotations[`dir_${dirCount++}`] = {
+            type: 'line',
+            xMin: p.date, xMax: p.date,
+            borderColor: 'rgba(245, 158, 11, 0.6)',
+            borderWidth: 1.5,
+            borderDash: [4, 4],
+            label: { display: false }
+          };
+        }
+        prevDivergence = isDivergence;
+        prevDirection = isDirection;
+      }
+      return annotations;
+    }
+
+    function renderAllocationChart(equityCurveData, diHistory) {
+      const ctx = document.getElementById('allocationChart').getContext('2d');
+      if (allocationChart) allocationChart.destroy();
+
+      if (!equityCurveData || equityCurveData.length === 0) return;
+
+      // Sample if too large
+      let sampled = equityCurveData;
+      if (equityCurveData.length > 500) {
+        const step = Math.ceil(equityCurveData.length / 500);
+        sampled = equityCurveData.filter((_, i) => i % step === 0);
+      }
+
+      const labels = sampled.map(d => d.date);
+      const allocValues = sampled.map(d => d.risky_allocation_pct ?? 50);
+
+      // Compute annotations from DI history (if available)
+      const v21Annotations = diHistory ? computeV21Annotations(diHistory) : {};
+
+      allocationChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Risky Allocation %',
+            data: allocValues,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            annotation: { annotations: v21Annotations }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: { unit: 'month' },
+              grid: { display: false }
+            },
+            y: {
+              min: 0,
+              max: 100,
+              title: { display: true, text: 'Risky %' },
+              grid: { color: 'rgba(128, 128, 128, 0.1)' }
+            }
+          }
+        }
+      });
+    }
+
     function renderDIHistoryChart(data) {
       const ctx = document.getElementById('diHistoryChart').getContext('2d');
 
@@ -1460,25 +1605,84 @@
       const labels = sampledData.map(d => d.date);
       const diValues = sampledData.map(d => d.decision_index);
 
+      // Build datasets
+      const datasets = [{
+        label: 'Decision Index',
+        data: diValues,
+        borderColor: '#8b5cf6',
+        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        yAxisID: 'y'
+      }];
+
+      // V2.1: Add cycle direction overlay if data available
+      const hasDirection = sampledData[0]?.cycle_direction != null;
+      if (hasDirection) {
+        const directionValues = sampledData.map(d => d.cycle_direction);
+        // Segment coloring: green when positive, red when negative
+        const segmentColors = sampledData.map(d =>
+          d.cycle_direction >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+        );
+
+        datasets.push({
+          label: 'Cycle Direction',
+          data: directionValues,
+          borderColor: (ctx) => {
+            if (!ctx.p0 || !ctx.p1) return 'rgba(128,128,128,0.5)';
+            const val = ctx.p1.parsed.y;
+            return val >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+          },
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 1.5,
+          yAxisID: 'y1',
+          segment: {
+            borderColor: (ctx) => {
+              const val = ctx.p1.parsed.y;
+              return val >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+            }
+          }
+        });
+      }
+
+      // Build scales
+      const scales = {
+        x: {
+          type: 'time',
+          time: { unit: 'month' },
+          grid: { display: false }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: 'rgba(128, 128, 128, 0.1)' }
+        }
+      };
+
+      if (hasDirection) {
+        scales.y1 = {
+          type: 'linear',
+          display: true,
+          position: 'right',
+          min: -1,
+          max: 1,
+          title: { display: true, text: 'Direction' },
+          grid: { display: false }
+        };
+      }
+
       diHistoryChart = new Chart(ctx, {
         type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Decision Index',
-            data: diValues,
-            borderColor: '#8b5cf6',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            fill: true,
-            tension: 0.3,
-            pointRadius: 0
-          }]
-        },
+        data: { labels, datasets },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { display: false },
+            legend: { display: hasDirection, position: 'top' },
             annotation: {
               annotations: {
                 bullZone: {
@@ -1498,18 +1702,7 @@
               }
             }
           },
-          scales: {
-            x: {
-              type: 'time',
-              time: { unit: 'month' },
-              grid: { display: false }
-            },
-            y: {
-              min: 0,
-              max: 100,
-              grid: { color: 'rgba(128, 128, 128, 0.1)' }
-            }
-          }
+          scales
         }
       });
     }
@@ -1593,6 +1786,7 @@
       enableMarketOverrides: true,
       enableExposureCap: true,
       enableGovernancePenalty: true,
+      enableDirectionPenalty: true,
       exposureConfidence: 0.65,
       maxGovernancePenalty: 0.25,
       riskBudgetMin: 0.20,
@@ -1654,6 +1848,7 @@
       document.getElementById('enableMarketOverrides').checked = REPLICA_DEFAULTS.enableMarketOverrides;
       document.getElementById('enableExposureCap').checked = REPLICA_DEFAULTS.enableExposureCap;
       document.getElementById('enableGovernancePenalty').checked = REPLICA_DEFAULTS.enableGovernancePenalty;
+      document.getElementById('enableDirectionPenalty').checked = REPLICA_DEFAULTS.enableDirectionPenalty;
 
       document.getElementById('exposureConfidence').value = REPLICA_DEFAULTS.exposureConfidence;
       document.getElementById('exposureConfidenceValue').textContent = REPLICA_DEFAULTS.exposureConfidence;
@@ -1677,6 +1872,7 @@
         enable_market_overrides: document.getElementById('enableMarketOverrides').checked,
         enable_exposure_cap: document.getElementById('enableExposureCap').checked,
         enable_governance_penalty: document.getElementById('enableGovernancePenalty').checked,
+        enable_direction_penalty: document.getElementById('enableDirectionPenalty').checked,
         exposure_confidence: parseFloat(document.getElementById('exposureConfidence').value),
         max_governance_penalty: parseFloat(document.getElementById('maxGovernancePenalty').value),
         risk_budget_min: parseFloat(document.getElementById('riskBudgetMin').value),

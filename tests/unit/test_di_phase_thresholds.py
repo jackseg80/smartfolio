@@ -604,3 +604,17 @@ class TestCycleDirection:
         assert 0.05 < penalty < 0.15, (
             f"Expected penalty ~0.088, got {penalty:.3f} (dir={direction:.2f}, conf={conf:.2f})"
         )
+
+    def test_direction_penalty_disabled(self):
+        """enable_direction_penalty=False → same result as cycle_direction=None"""
+        params_disabled = ReplicaParams(enable_direction_penalty=False)
+        risky_disabled = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, params=params_disabled,
+            cycle_direction=-0.8, cycle_confidence=0.73
+        )
+        risky_no_dir = DISmartfolioReplicaStrategy._compute_risk_budget(
+            94, 64, 78, cycle_direction=None
+        )
+        assert risky_disabled == risky_no_dir, (
+            f"Disabled toggle should match no-direction: {risky_disabled:.3f} vs {risky_no_dir:.3f}"
+        )

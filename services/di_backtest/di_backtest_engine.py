@@ -64,6 +64,7 @@ class DIBacktestResult:
     equity_curve: pd.Series
     benchmark_curve: pd.Series
     drawdown_curve: pd.Series
+    allocation_series: pd.Series  # Risky allocation over time (0-1)
 
     # DI-specific
     di_correlation: float  # Corrélation DI vs returns futurs
@@ -118,6 +119,7 @@ class DIBacktestEngine:
         risky_symbol: str = "BTC",
         stable_return: float = 0.0,  # Return annuel stablecoins (0%)
         rebalance_frequency: str = "daily",  # daily, weekly, monthly
+        multi_asset: bool = False,  # Enable ETH in portfolio (3-asset mode)
     ) -> DIBacktestResult:
         """
         Exécute un backtest avec la stratégie DI donnée
@@ -130,6 +132,7 @@ class DIBacktestEngine:
             risky_symbol: Symbole de l'actif risky
             stable_return: Return annuel des stablecoins
             rebalance_frequency: Fréquence de rebalancement (daily/weekly/monthly)
+            multi_asset: Activer le mode multi-asset (BTC+ETH+Stables)
 
         Returns:
             DIBacktestResult avec toutes les métriques
@@ -145,6 +148,14 @@ class DIBacktestEngine:
         di_values = pd.Series([p.decision_index for p in di_history], index=dates)
         btc_prices = pd.Series([p.btc_price for p in di_history], index=dates)
 
+        # ETH prices (multi-asset support — only when explicitly requested)
+        eth_prices = pd.Series([p.eth_price for p in di_history], index=dates)
+        has_eth = (
+            multi_asset
+            and eth_prices.notna().any()
+            and eth_prices.notna().sum() > len(di_history) * 0.5
+        )
+
         # Construire l'ensemble des jours de rebalancement autorisés
         rebalance_dates = self._build_rebalance_dates(dates, rebalance_frequency)
 
@@ -154,10 +165,12 @@ class DIBacktestEngine:
         if hasattr(strategy, 'reset_state'):
             strategy.reset_state()
 
-        # Initialisation
+        # Initialisation — toujours un dict de poids (un seul chemin de code)
         portfolio_value = initial_capital
-        risky_allocation = 0.5  # Start 50/50
-        stable_allocation = 0.5
+        if has_eth:
+            current_weights = {risky_symbol: 0.35, "ETH": 0.15, "STABLES": 0.50}
+        else:
+            current_weights = {risky_symbol: 0.50, "STABLES": 0.50}
 
         equity_curve = []
         benchmark_curve = []
@@ -167,9 +180,10 @@ class DIBacktestEngine:
         risky_allocations = []  # Pour calculer la moyenne
 
         # Prix de référence
-        base_btc_price = btc_prices.iloc[0]
-        prev_btc_price = base_btc_price
+        prev_btc_price = btc_prices.iloc[0]
+        prev_eth_price = eth_prices.iloc[0] if has_eth else None
         prev_portfolio_value = initial_capital
+        peak_portfolio_value = initial_capital  # For portfolio drawdown tracking
 
         # Pour le benchmark
         benchmark_value = initial_capital
@@ -184,10 +198,17 @@ class DIBacktestEngine:
                 btc_return = (btc_price - prev_btc_price) / prev_btc_price
                 stable_daily_return = stable_return / 365
 
-                # Portfolio return
-                portfolio_return = (
-                    risky_allocation * btc_return +
-                    stable_allocation * stable_daily_return
+                # Construire les returns pour tous les assets du dict
+                asset_returns = {risky_symbol: btc_return, "STABLES": stable_daily_return}
+                if "ETH" in current_weights:
+                    eth_price_today = di_point.eth_price or eth_prices.iloc[i]
+                    eth_return = (eth_price_today - prev_eth_price) / prev_eth_price if prev_eth_price else 0.0
+                    asset_returns["ETH"] = eth_return
+
+                # Portfolio return: sum(weight * return) — works for 2 or 3+ assets
+                portfolio_return = sum(
+                    current_weights.get(a, 0.0) * asset_returns.get(a, 0.0)
+                    for a in current_weights
                 )
 
                 portfolio_value = prev_portfolio_value * (1 + portfolio_return)
@@ -196,64 +217,77 @@ class DIBacktestEngine:
                 daily_returns.append(portfolio_return)
                 benchmark_daily_returns.append(btc_return)
 
-            risky_allocations.append(risky_allocation)
+            # Track total risky allocation for allocation_series
+            risky_alloc_total = sum(v for k, v in current_weights.items() if k != "STABLES")
+            risky_allocations.append(risky_alloc_total)
+
+            # Track portfolio peak and drawdown
+            peak_portfolio_value = max(peak_portfolio_value, portfolio_value)
+            portfolio_drawdown = (portfolio_value - peak_portfolio_value) / peak_portfolio_value if peak_portfolio_value > 0 else 0.0
 
             # Ne vérifier le rebalancement que les jours autorisés
             is_rebalance_day = date in rebalance_dates or i == 0
 
             if is_rebalance_day:
                 # Obtenir nouvelle allocation de la stratégie
-                price_df = pd.DataFrame({
-                    risky_symbol: btc_prices[:i+1],
-                    'STABLES': [1.0] * (i + 1)
-                })
+                price_df_data = {risky_symbol: btc_prices[:i+1], 'STABLES': [1.0] * (i + 1)}
+                if has_eth:
+                    price_df_data["ETH"] = eth_prices[:i+1]
+                price_df = pd.DataFrame(price_df_data)
 
-                current_weights = pd.Series({
-                    risky_symbol: risky_allocation,
-                    'STABLES': stable_allocation
-                })
+                current_weights_series = pd.Series(current_weights)
 
                 # Passer les scores composants pour la formule risk_budget
                 target_weights = strategy.get_weights(
                     date=pd.Timestamp(date),
                     price_data=price_df,
-                    current_weights=current_weights,
+                    current_weights=current_weights_series,
                     di_value=di_value,
                     cycle_score=di_point.cycle_score,
                     onchain_score=di_point.onchain_score,
                     risk_score=di_point.risk_score,
                     cycle_direction=di_point.cycle_direction,
                     cycle_confidence=di_point.cycle_confidence,
+                    portfolio_drawdown=portfolio_drawdown,
                 )
 
-                target_risky = target_weights.get(risky_symbol, 0.5)
-                target_stable = 1.0 - target_risky
+                # Convertir target_weights en dict
+                target_dict = {a: float(target_weights.get(a, 0.0)) for a in target_weights.index}
 
-                # Vérifier si rebalance nécessaire
-                allocation_diff = abs(target_risky - risky_allocation)
+                # Calcul du diff total (demi-somme des |deltas|)
+                all_assets = set(list(target_dict.keys()) + list(current_weights.keys()))
+                allocation_diff = sum(
+                    abs(target_dict.get(a, 0.0) - current_weights.get(a, 0.0))
+                    for a in all_assets
+                ) / 2.0
 
                 if allocation_diff > self.rebalance_threshold:
                     # Appliquer coûts de transaction
                     trade_cost = allocation_diff * portfolio_value * self.transaction_cost
                     portfolio_value -= trade_cost
 
+                    risky_total = sum(v for k, v in target_dict.items() if k != "STABLES")
+                    stable_total = target_dict.get("STABLES", 0.0)
+                    prev_risky = sum(v for k, v in current_weights.items() if k != "STABLES")
+
                     rebalance_events.append(RebalanceEvent(
                         date=date,
-                        risky_pct=target_risky * 100,
-                        stable_pct=target_stable * 100,
+                        risky_pct=risky_total * 100,
+                        stable_pct=stable_total * 100,
                         di_value=di_value,
                         portfolio_value=portfolio_value,
                         allocation_change=allocation_diff * 100,
-                        reason=f"DI={di_value:.1f}, risky {risky_allocation*100:.0f}%→{target_risky*100:.0f}%"
+                        reason=f"DI={di_value:.1f}, risky {prev_risky*100:.0f}%→{risky_total*100:.0f}%"
                     ))
 
-                    risky_allocation = target_risky
-                    stable_allocation = target_stable
+                    current_weights = target_dict
 
             equity_curve.append((date, portfolio_value))
             benchmark_curve.append((date, benchmark_value))
 
             prev_btc_price = btc_price
+            if has_eth:
+                prev_eth_price = di_point.eth_price or eth_prices.iloc[i]
             prev_portfolio_value = portfolio_value
 
         # Construire les séries
@@ -281,6 +315,9 @@ class DIBacktestEngine:
         # Drawdown curve
         drawdown_series = self._calculate_drawdown_series(equity_series)
 
+        # Allocation series (aligned with equity_series index)
+        allocation_series = pd.Series(risky_allocations, index=equity_series.index)
+
         return DIBacktestResult(
             total_return=metrics['total_return'],
             annualized_return=metrics['annualized_return'],
@@ -300,6 +337,7 @@ class DIBacktestEngine:
             equity_curve=equity_series,
             benchmark_curve=benchmark_series,
             drawdown_curve=drawdown_series,
+            allocation_series=allocation_series,
             di_correlation=metrics['di_correlation'],
             strategy_name=strategy.name,
             start_date=di_history[0].date,

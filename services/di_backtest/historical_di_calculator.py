@@ -58,6 +58,7 @@ class DIHistoryPoint:
     macro_penalty: int
     raw_score: float
     btc_price: Optional[float] = None
+    eth_price: Optional[float] = None
     cycle_direction: Optional[float] = None   # Normalized derivative [-1, 1]
     cycle_confidence: Optional[float] = None  # Model confidence [0.4, 0.9]
 
@@ -150,6 +151,20 @@ class HistoricalDICalculator:
 
         logger.info(f"Prix BTC: {len(btc_prices)} points demandés, {len(btc_prices_with_buffer)} avec buffer")
 
+        # 1b. Récupérer les prix ETH (pour multi-asset backtest)
+        eth_prices_with_buffer = pd.Series(dtype=float)
+        try:
+            eth_prices_df = await self.data_sources.get_multi_asset_prices(["ETH"], days=3650)
+            if "ETH" in eth_prices_df.columns:
+                eth_full = eth_prices_df["ETH"].dropna()
+                if not eth_full.empty:
+                    eth_prices_with_buffer = eth_full[eth_full.index >= buffer_start]
+                    if end_date:
+                        eth_prices_with_buffer = eth_prices_with_buffer[eth_prices_with_buffer.index <= end_dt]
+                    logger.info(f"Prix ETH: {len(eth_prices_with_buffer)} points avec buffer")
+        except Exception as e:
+            logger.warning(f"ETH prices non disponibles: {e}")
+
         # 2. Calculer les composants SUR LES DONNÉES AVEC BUFFER
         # Les rolling windows ont besoin de données historiques
 
@@ -184,14 +199,22 @@ class HistoricalDICalculator:
                 logger.warning(f"Macro data non disponible: {e}")
 
         # 3. Assembler le DataFrame avec toutes les données (buffer inclus)
-        df_full = pd.DataFrame({
+        df_data = {
             'btc_price': btc_prices_with_buffer,
             'cycle_score': cycle_scores.reindex(btc_prices_with_buffer.index, method='nearest'),
             'onchain_score': onchain_scores.reindex(btc_prices_with_buffer.index),
             'risk_score': risk_scores.reindex(btc_prices_with_buffer.index),
             'sentiment_score': sentiment_scores.reindex(btc_prices_with_buffer.index),
             'macro_penalty': macro_penalties.reindex(btc_prices_with_buffer.index).fillna(0),
-        }).dropna()
+        }
+        if not eth_prices_with_buffer.empty:
+            df_data['eth_price'] = eth_prices_with_buffer.reindex(
+                btc_prices_with_buffer.index, method='ffill', limit=3
+            )
+        # dropna on score columns only (not eth_price) to preserve backward compat
+        score_cols = ['btc_price', 'cycle_score', 'onchain_score', 'risk_score',
+                      'sentiment_score', 'macro_penalty']
+        df_full = pd.DataFrame(df_data).dropna(subset=score_cols)
 
         # 4. Filtrer à la période demandée (sans le buffer)
         # .copy() pour éviter SettingWithCopyWarning
@@ -240,6 +263,7 @@ class HistoricalDICalculator:
                 macro_penalty=int(row['macro_penalty']),
                 raw_score=row['raw_score'],
                 btc_price=row['btc_price'],
+                eth_price=float(row['eth_price']) if 'eth_price' in row.index and pd.notna(row.get('eth_price')) else None,
                 cycle_direction=direction,
                 cycle_confidence=confidence,
             )

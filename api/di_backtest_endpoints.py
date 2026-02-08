@@ -66,11 +66,19 @@ class ReplicaParamsModel(BaseModel):
     max_governance_penalty: float = Field(0.25, ge=0.0, le=0.30, description="Maximum governance penalty")
     risk_budget_min: float = Field(0.20, ge=0.10, le=0.30, description="Minimum risky allocation")
     risk_budget_max: float = Field(0.85, ge=0.70, le=0.95, description="Maximum risky allocation")
+    enable_direction_penalty: bool = Field(True, description="Enable V2.1 cycle direction penalty")
+
+
+class RotationParamsModel(BaseModel):
+    """Parameters for Cycle Rotation strategy (BTC/ETH/Stables)"""
+    smoothing_alpha: float = Field(0.15, ge=0.0, le=1.0, description="EMA smoothing factor (0=no smoothing, 1=instant)")
+    enable_di_modulation: bool = Field(False, description="Enable DI modulation of phase targets")
+    di_mod_range: float = Field(0.10, ge=0.0, le=0.30, description="DI modulation range (±%)")
 
 
 class DIBacktestRequest(BaseModel):
     """Requête pour exécuter un backtest DI"""
-    strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal")
+    strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal, di_cycle_rotation")
     start_date: str = Field(..., description="Date début YYYY-MM-DD (min: 2017-01-01)")
     end_date: str = Field(..., description="Date fin YYYY-MM-DD")
     initial_capital: float = Field(10000.0, gt=0)
@@ -81,6 +89,9 @@ class DIBacktestRequest(BaseModel):
 
     # Advanced params for SmartFolio Replica
     replica_params: Optional[ReplicaParamsModel] = None
+
+    # Advanced params for Cycle Rotation
+    rotation_params: Optional[RotationParamsModel] = None
 
     # Options
     use_macro_penalty: bool = Field(True, description="Inclure pénalité VIX/DXY")
@@ -261,7 +272,9 @@ async def get_historical_di(
                 "phase": str(point.phase),
                 "phase_factor": float(point.phase_factor),
                 "macro_penalty": int(point.macro_penalty),
-                "btc_price": float(point.btc_price) if point.btc_price else None
+                "btc_price": float(point.btc_price) if point.btc_price else None,
+                "cycle_direction": round(float(point.cycle_direction), 3) if point.cycle_direction is not None else None,
+                "cycle_confidence": round(float(point.cycle_confidence), 3) if point.cycle_confidence is not None else None,
             })
 
         return success_response({
@@ -341,6 +354,17 @@ async def run_di_backtest(
                 max_governance_penalty=rp.max_governance_penalty,
                 risk_budget_min=rp.risk_budget_min,
                 risk_budget_max=rp.risk_budget_max,
+                enable_direction_penalty=rp.enable_direction_penalty,
+            )
+
+        # Inject params for Cycle Rotation
+        if request.strategy == "di_cycle_rotation" and request.rotation_params:
+            from services.di_backtest.trading_strategies import RotationParams
+            rp = request.rotation_params
+            strategy.params = RotationParams(
+                smoothing_alpha=rp.smoothing_alpha,
+                enable_di_modulation=rp.enable_di_modulation,
+                di_mod_range=rp.di_mod_range,
             )
 
         strategy.set_di_series(di_data.df['decision_index'])
@@ -358,12 +382,16 @@ async def run_di_backtest(
             risk_free_rate=0.02
         )
 
-        logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}, freq={request.rebalance_frequency}")
+        # Enable multi-asset mode for strategies that use ETH
+        use_multi_asset = request.strategy == "di_cycle_rotation"
+
+        logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}, freq={request.rebalance_frequency}, multi_asset={use_multi_asset}")
         result = engine.run_backtest(
             di_history=di_data.di_history,
             strategy=strategy,
             initial_capital=request.initial_capital,
-            rebalance_frequency=request.rebalance_frequency
+            rebalance_frequency=request.rebalance_frequency,
+            multi_asset=use_multi_asset
         )
 
         # 4. Calculer métriques additionnelles spécifiques au DI
@@ -403,10 +431,12 @@ async def run_di_backtest(
         equity_curve = []
         for i, (date, value) in enumerate(result.equity_curve.items()):
             bench_value = result.benchmark_curve.iloc[i] if i < len(result.benchmark_curve) else request.initial_capital
+            alloc = float(result.allocation_series.iloc[i]) if i < len(result.allocation_series) else 0.5
             equity_curve.append({
                 "date": date.strftime("%Y-%m-%d") if hasattr(date, 'strftime') else str(date)[:10],
                 "portfolio_value": round(float(value), 2),
-                "benchmark_value": round(float(bench_value), 2)
+                "benchmark_value": round(float(bench_value), 2),
+                "risky_allocation_pct": round(alloc * 100, 1),
             })
 
         # Sous-échantillonner l'equity curve pour éviter trop de données
@@ -615,6 +645,8 @@ def _get_strategy_description(key: str) -> str:
         "di_risk_parity": "Risk Parity + scaling DI (allocation inversement proportionnelle à la vol)",
         "di_signal": "Signaux purs (BUY quand DI croise 40↑, SELL quand croise 60↓)",
         "di_smartfolio_replica": "Production pipeline (risk_budget + exposure cap + governance penalty)",
+        "di_trend_gate": "Trend Gate: BTC trend confirmation + DI threshold allocation",
+        "di_cycle_rotation": "3-asset cycle rotation (BTC/ETH/Stables) based on 5 cycle phases",
     }
     return descriptions.get(key, "Stratégie basée sur le Decision Index")
 
@@ -711,6 +743,23 @@ STRATEGY_DETAILS = {
         "pros": ["Full production pipeline (4 layers)", "Uses all 3 score components", "Regime-aware + governance-aware"],
         "cons": ["Simplified 2-asset model (BTC + Stables)", "Contradiction is proxy (no real ML signals)"],
         "best_for": "Validating real SmartFolio allocation behavior historically"
+    },
+    "di_cycle_rotation": {
+        "name": "Cycle Rotation",
+        "short": "3-asset rotation by cycle phase",
+        "description": "Rotates between BTC, ETH, and Stablecoins based on 5 Bitcoin cycle phases. Uses cycle_score + cycle_direction to detect accumulation, bull building, peak, distribution, and bear phases. Each phase has target allocations derived from production ratios.",
+        "rules": [
+            "Accumulation (cycle<70, dir≥0): 50% BTC, 15% ETH, 35% Stables",
+            "Bull Building (70-89, dir≥0): 35% BTC, 35% ETH, 30% Stables",
+            "Peak (cycle≥90): 20% BTC, 20% ETH, 60% Stables",
+            "Distribution (70-89, dir<0): 20% BTC, 10% ETH, 70% Stables",
+            "Bear (cycle<70, dir<0): 15% BTC, 5% ETH, 80% Stables",
+            "EMA smoothing (alpha=0.15) to avoid abrupt transitions",
+            "Floor constraints: BTC≥10%, ETH≥5%, Stables≥10%"
+        ],
+        "pros": ["3-asset diversification", "Phase-aware rotation", "Smooth transitions via EMA", "Derived from production ratios"],
+        "cons": ["Requires ETH price data (2017+)", "Phase detection depends on cycle accuracy", "More parameters to tune"],
+        "best_for": "Validating multi-asset cycle rotation before applying to full 11-group production allocation"
     }
 }
 

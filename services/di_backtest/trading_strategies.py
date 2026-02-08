@@ -55,6 +55,7 @@ class ReplicaParams:
     enable_market_overrides: bool = True
     enable_exposure_cap: bool = True
     enable_governance_penalty: bool = True
+    enable_direction_penalty: bool = True  # V2.1: cycle direction penalty
 
     # Layer 1: Risk Budget bounds
     risk_budget_min: float = 0.20   # Floor for risky allocation (production: 20%)
@@ -600,7 +601,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
 
         # Step 2b: Direction penalty when cycle is high and descending
         # At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088 → ~9% reduction
-        if cycle_direction is not None and cycle_score > 80:
+        if params.enable_direction_penalty and cycle_direction is not None and cycle_score > 80:
             conf = cycle_confidence if cycle_confidence is not None else 0.5
             direction_penalty = max(0.0, -cycle_direction) * conf * 0.15
             risk_factor *= (1.0 - direction_penalty)
@@ -969,6 +970,313 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         return weights
 
 
+@dataclass
+class TrendGateParams:
+    """Parameters for SMA200 Trend Gate strategy variants."""
+    sma_period: int = 200            # SMA lookback period
+    risk_on_alloc: float = 0.80      # Risky allocation when BTC > SMA
+    risk_off_alloc: float = 0.20     # Risky allocation when BTC < SMA
+    whipsaw_days: int = 5            # Anti-whipsaw: consecutive days required
+    enable_drawdown_breaker: bool = False   # Drawdown circuit breaker
+    dd_threshold_1: float = -0.15    # First drawdown threshold
+    dd_threshold_2: float = -0.25    # Second drawdown threshold (floor)
+    dd_multiplier: float = 0.50      # Allocation multiplier at threshold_1
+    dd_ramp_up: bool = True            # Gradual recovery after DD cut
+    enable_di_modulation: bool = False      # Modulate within range using DI
+    di_mod_risk_on_min: float = 0.40   # Min risky in risk-on mode (DI modulation)
+    di_mod_risk_on_max: float = 0.85   # Max risky in risk-on mode (DI modulation)
+
+
+class DITrendGateStrategy(PortfolioStrategy):
+    """
+    Strategy: SMA(200) Trend Gate
+
+    BTC > SMA(200) → risk-on  → high risky allocation
+    BTC < SMA(200) → risk-off → low risky allocation
+
+    Optional features:
+    - Anti-whipsaw: require N consecutive days on same side of SMA
+    - Drawdown circuit breaker: cut allocation when portfolio DD exceeds thresholds
+    - DI modulation: use DI to modulate allocation within risk-on/off ranges
+    """
+
+    def __init__(self, config: Optional[DIStrategyConfig] = None,
+                 trend_params: Optional[TrendGateParams] = None):
+        super().__init__("SMA200 Trend Gate")
+        self.config = config or DIStrategyConfig()
+        self.params = trend_params or TrendGateParams()
+        self.di_series: Optional[pd.Series] = None
+        self._current_regime: Optional[str] = None
+
+    def set_di_series(self, di_series: pd.Series):
+        """Injecte la série DI historique"""
+        normalized = di_series.copy()
+        if isinstance(normalized.index, pd.DatetimeIndex):
+            normalized.index = normalized.index.normalize()
+        self.di_series = normalized
+
+    def set_cycle_series(self, cycle_series: pd.Series):
+        """No-op for compatibility with engine injection."""
+        pass
+
+    def _determine_regime(self, prices: pd.Series) -> str:
+        """Determine risk-on/risk-off from SMA with anti-whipsaw filter."""
+        p = self.params
+        n = len(prices)
+
+        if n < p.sma_period:
+            return self._current_regime or 'risk_on'
+
+        sma = prices.rolling(window=p.sma_period).mean()
+
+        # Anti-whipsaw: check last N days all on same side
+        check_window = min(p.whipsaw_days, n - p.sma_period)
+        if check_window <= 0:
+            # Not enough post-SMA data, use single-day
+            return 'risk_on' if prices.iloc[-1] > sma.iloc[-1] else 'risk_off'
+
+        recent_above = (prices.iloc[-check_window:] > sma.iloc[-check_window:])
+
+        if recent_above.all():
+            regime = 'risk_on'
+        elif (~recent_above).all():
+            regime = 'risk_off'
+        else:
+            # Mixed → keep previous regime (hysteresis)
+            regime = self._current_regime or 'risk_on'
+
+        self._current_regime = regime
+        return regime
+
+    def get_weights(
+        self,
+        date: pd.Timestamp,
+        price_data: pd.DataFrame,
+        current_weights: pd.Series,
+        **kwargs
+    ) -> pd.Series:
+        assets = price_data.columns.tolist()
+        weights = pd.Series(0.0, index=assets)
+
+        stable_assets = [a for a in assets if a.upper() in
+                         ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS']]
+        risky_assets = [a for a in assets if a not in stable_assets]
+        if not risky_assets:
+            risky_assets = assets
+            stable_assets = []
+
+        risky_symbol = risky_assets[0]
+        prices = price_data[risky_symbol]
+        p = self.params
+
+        # Step 1: Trend Gate
+        regime = self._determine_regime(prices)
+
+        # Step 2: Base allocation from regime
+        if p.enable_di_modulation:
+            # Use DI to modulate within the regime range
+            di_value = kwargs.get('di_value', 50.0)
+            if regime == 'risk_on':
+                # Map DI [20, 80] → [min, max] within risk-on range
+                t = max(0.0, min(1.0, (di_value - 20) / 60))
+                risky_pct = p.di_mod_risk_on_min + t * (p.di_mod_risk_on_max - p.di_mod_risk_on_min)
+            else:
+                risky_pct = p.risk_off_alloc
+        else:
+            risky_pct = p.risk_on_alloc if regime == 'risk_on' else p.risk_off_alloc
+
+        # Step 3: Drawdown circuit breaker (uses real portfolio drawdown from engine)
+        if p.enable_drawdown_breaker:
+            current_dd = kwargs.get('portfolio_drawdown', 0.0)
+            if current_dd < p.dd_threshold_2:
+                # Severe drawdown → floor allocation
+                risky_pct = p.risk_off_alloc
+            elif current_dd < p.dd_threshold_1:
+                # Moderate drawdown → hard cut
+                risky_pct *= p.dd_multiplier
+            elif current_dd < 0 and p.dd_ramp_up:
+                # Recovery zone: linear ramp-up from dd_multiplier to 1.0
+                # At threshold_1: multiplier = dd_multiplier
+                # At 0 (no drawdown): multiplier = 1.0
+                recovery_pct = (current_dd - p.dd_threshold_1) / (0 - p.dd_threshold_1)
+                ramp_multiplier = p.dd_multiplier + recovery_pct * (1.0 - p.dd_multiplier)
+                risky_pct *= ramp_multiplier
+
+        # Distribute weights
+        stable_pct = 1.0 - risky_pct
+        if risky_assets:
+            w = risky_pct / len(risky_assets)
+            for a in risky_assets:
+                weights[a] = w
+        if stable_assets:
+            w = stable_pct / len(stable_assets)
+            for a in stable_assets:
+                weights[a] = w
+
+        return weights
+
+
+@dataclass
+class RotationParams:
+    """Parameters for Cycle Rotation strategy (BTC/ETH/Stables).
+
+    5-phase allocation based on cycle_score + cycle_direction.
+    Targets derived from production MACRO_ALLOCATION (allocation-engine.js),
+    normalized to 3 assets (Alts portion redistributed to BTC/ETH).
+    """
+    # Phase thresholds (same as production allocation-engine.js)
+    phase_bearish_max: float = 70.0   # cycle < 70 = bearish
+    phase_bullish_min: float = 90.0   # cycle >= 90 = bullish
+
+    # Target allocations per phase (BTC, ETH, Stables)
+    alloc_accumulation: tuple = (0.50, 0.15, 0.35)   # Early recovery: heavy BTC
+    alloc_bull_building: tuple = (0.35, 0.35, 0.30)   # Mid bull: ETH catches up
+    alloc_peak: tuple = (0.20, 0.20, 0.60)            # Late cycle: reduce exposure
+    alloc_distribution: tuple = (0.20, 0.10, 0.70)    # Cycle turning: defensive
+    alloc_bear: tuple = (0.15, 0.05, 0.80)            # Bear market: max stables
+
+    # Smoothing: EMA on target weights (alpha=0.15 ≈ 7-day half-life)
+    smoothing_alpha: float = 0.15  # 0 = no smoothing, 1 = instant switch
+
+    # DI modulation: scale risky within ±range of phase target
+    # Off by default — backtests show DI is not predictive enough
+    enable_di_modulation: bool = False
+    di_mod_range: float = 0.10  # ±10% around phase target
+
+    # Floors (from production allocation-engine.js)
+    btc_floor: float = 0.10
+    eth_floor: float = 0.05
+    stables_floor: float = 0.10
+
+
+class DICycleRotationStrategy(PortfolioStrategy):
+    """
+    Strategy: Cycle Rotation (BTC/ETH/Stables)
+
+    5-phase rotation based on cycle_score + cycle_direction:
+    - Accumulation: cycle < 70, direction >= 0 → heavy BTC (leads recovery)
+    - Bull Building: cycle 70-89, direction >= 0 → shift to ETH (catches up)
+    - Peak/Euphoria: cycle >= 90 → reduce exposure regardless of direction
+    - Distribution: cycle 70-89, direction < 0 → defensive shift
+    - Bear: cycle < 70, direction < 0 → max stables
+
+    Optional EMA smoothing avoids abrupt phase transitions.
+    """
+
+    def __init__(self, config: Optional[DIStrategyConfig] = None,
+                 rotation_params: Optional[RotationParams] = None):
+        super().__init__("Cycle Rotation")
+        self.config = config or DIStrategyConfig()
+        self.params = rotation_params or RotationParams()
+        self.di_series: Optional[pd.Series] = None
+        self._smoothed_weights: Optional[dict] = None
+
+    def set_di_series(self, di_series: pd.Series):
+        """Injecte la série DI historique."""
+        normalized = di_series.copy()
+        if isinstance(normalized.index, pd.DatetimeIndex):
+            normalized.index = normalized.index.normalize()
+        self.di_series = normalized
+
+    def set_cycle_series(self, cycle_series: pd.Series):
+        """No-op for compatibility with engine injection."""
+        pass
+
+    def reset_state(self):
+        """Reset smoothing state between backtests."""
+        self._smoothed_weights = None
+
+    def _detect_phase(self, cycle_score: float, cycle_direction: Optional[float]) -> str:
+        """Detect 5-phase cycle position from score + direction."""
+        p = self.params
+        direction = cycle_direction if cycle_direction is not None else 0.0
+
+        if cycle_score >= p.phase_bullish_min:
+            return "peak"
+        elif cycle_score >= p.phase_bearish_max:
+            return "bull_building" if direction >= 0 else "distribution"
+        else:
+            return "accumulation" if direction >= 0 else "bear"
+
+    def _phase_targets(self, phase: str) -> tuple:
+        """Return (BTC, ETH, Stables) target allocations for phase."""
+        p = self.params
+        targets = {
+            "accumulation": p.alloc_accumulation,
+            "bull_building": p.alloc_bull_building,
+            "peak": p.alloc_peak,
+            "distribution": p.alloc_distribution,
+            "bear": p.alloc_bear,
+        }
+        return targets.get(phase, p.alloc_bull_building)
+
+    def get_weights(
+        self,
+        date: pd.Timestamp,
+        price_data: pd.DataFrame,
+        current_weights: pd.Series,
+        **kwargs
+    ) -> pd.Series:
+        """Compute BTC/ETH/Stables weights based on cycle phase."""
+        cycle_score = kwargs.get('cycle_score', 50.0)
+        cycle_direction = kwargs.get('cycle_direction')
+        di_value = kwargs.get('di_value', 50.0)
+
+        # 1. Detect phase
+        phase = self._detect_phase(cycle_score, cycle_direction)
+        btc_target, eth_target, stables_target = self._phase_targets(phase)
+
+        # 2. DI modulation (scale risky within ±range)
+        if self.params.enable_di_modulation:
+            di_factor = (di_value - 50) / 50  # [-1, +1]
+            mod = di_factor * self.params.di_mod_range
+            btc_target = max(self.params.btc_floor, btc_target + mod * 0.6)
+            eth_target = max(self.params.eth_floor, eth_target + mod * 0.4)
+            stables_target = max(self.params.stables_floor, 1.0 - btc_target - eth_target)
+
+        # 3. Normalize to sum=1
+        total = btc_target + eth_target + stables_target
+        btc_target /= total
+        eth_target /= total
+        stables_target /= total
+
+        # 4. Apply smoothing (EMA)
+        if self._smoothed_weights is None:
+            self._smoothed_weights = {
+                "BTC": btc_target, "ETH": eth_target, "STABLES": stables_target
+            }
+        else:
+            alpha = self.params.smoothing_alpha
+            self._smoothed_weights["BTC"] += alpha * (btc_target - self._smoothed_weights["BTC"])
+            self._smoothed_weights["ETH"] += alpha * (eth_target - self._smoothed_weights["ETH"])
+            self._smoothed_weights["STABLES"] += alpha * (stables_target - self._smoothed_weights["STABLES"])
+
+        # 5. Enforce floors
+        w = self._smoothed_weights.copy()
+        w["BTC"] = max(self.params.btc_floor, w["BTC"])
+        w["ETH"] = max(self.params.eth_floor, w["ETH"])
+        w["STABLES"] = max(self.params.stables_floor, w["STABLES"])
+
+        # Re-normalize
+        total = sum(w.values())
+
+        # 6. Map to price_data columns
+        assets = price_data.columns.tolist()
+        weights = pd.Series(0.0, index=assets)
+
+        for a in assets:
+            au = a.upper()
+            if au in ('USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS'):
+                weights[a] = w["STABLES"] / total
+            elif au == "ETH":
+                weights[a] = w["ETH"] / total
+            else:
+                # BTC or any other risky asset
+                weights[a] = w["BTC"] / total
+
+        return weights
+
+
 # Dictionnaire des stratégies disponibles
 DI_STRATEGIES = {
     "di_threshold": DIThresholdStrategy,
@@ -977,6 +1285,8 @@ DI_STRATEGIES = {
     "di_risk_parity": DIRiskParityStrategy,
     "di_signal": DISignalStrategy,
     "di_smartfolio_replica": DISmartfolioReplicaStrategy,
+    "di_trend_gate": DITrendGateStrategy,
+    "di_cycle_rotation": DICycleRotationStrategy,
 }
 
 

@@ -1,8 +1,9 @@
 """
 Batch Backtest for SmartFolio Replica Layer Combinations
 
-Teste automatiquement toutes les combinaisons de layers (2^4 = 16)
-et variations de paramètres sur différentes périodes historiques.
+Teste automatiquement toutes les combinaisons de layers (2^5 = 32)
+incluant V2.1 direction penalty, et variations de paramètres
+sur différentes périodes historiques.
 
 Usage:
     cd d:/Python/smartfolio
@@ -63,11 +64,11 @@ PERIODS = [
 # ──────────────────────────────────────────────
 
 def generate_layer_combinations():
-    """Génère les 16 combinaisons de layer toggles."""
+    """Génère les 32 combinaisons de layer toggles (4 layers + V2.1 direction penalty)."""
     bools = [True, False]
-    combos = list(itertools.product(bools, bools, bools, bools))
+    combos = list(itertools.product(bools, bools, bools, bools, bools))
     configs = []
-    for rb, mo, ec, gp in combos:
+    for rb, mo, ec, gp, dp in combos:
         label_parts = []
         if rb:
             label_parts.append("L1")
@@ -77,6 +78,8 @@ def generate_layer_combinations():
             label_parts.append("L3")
         if gp:
             label_parts.append("L4")
+        if dp:
+            label_parts.append("DP")
         label = "+".join(label_parts) if label_parts else "NoLayers"
 
         configs.append({
@@ -86,6 +89,7 @@ def generate_layer_combinations():
                 enable_market_overrides=mo,
                 enable_exposure_cap=ec,
                 enable_governance_penalty=gp,
+                enable_direction_penalty=dp,
             ),
         })
     return configs
@@ -136,6 +140,39 @@ def generate_param_variations():
                 enable_market_overrides=False,
                 enable_exposure_cap=False,
                 enable_governance_penalty=False,
+                risk_budget_min=rmin,
+                risk_budget_max=rmax,
+            ),
+        })
+
+    # V2.1: Direction Penalty impact — all 4 layers ON, toggle DP
+    variations.append({
+        "label": "V2.1_AllLayers+DP",
+        "params": ReplicaParams(enable_direction_penalty=True),
+    })
+    variations.append({
+        "label": "V2.1_AllLayers_noDP",
+        "params": ReplicaParams(enable_direction_penalty=False),
+    })
+
+    # V2.1: DP with different layer combos
+    for mo_label, mo_val in [("withL2", True), ("noL2", False)]:
+        variations.append({
+            "label": f"V2.1_L1+DP_{mo_label}",
+            "params": ReplicaParams(
+                enable_market_overrides=mo_val,
+                enable_exposure_cap=False,
+                enable_governance_penalty=False,
+                enable_direction_penalty=True,
+            ),
+        })
+
+    # V2.1: DP with wider bounds (more room for penalty to act)
+    for rmin, rmax in [(0.10, 0.95), (0.15, 0.90)]:
+        variations.append({
+            "label": f"V2.1_DP_bounds{int(rmin*100)}-{int(rmax*100)}",
+            "params": ReplicaParams(
+                enable_direction_penalty=True,
                 risk_budget_min=rmin,
                 risk_budget_max=rmax,
             ),
@@ -212,6 +249,7 @@ async def main():
         "L2_market_overrides",
         "L3_exposure_cap",
         "L4_governance_penalty",
+        "V21_direction_penalty",
         # Params
         "risk_budget_min",
         "risk_budget_max",
@@ -291,6 +329,7 @@ async def main():
                     "L2_market_overrides": params.enable_market_overrides,
                     "L3_exposure_cap": params.enable_exposure_cap,
                     "L4_governance_penalty": params.enable_governance_penalty,
+                    "V21_direction_penalty": params.enable_direction_penalty,
                     # Params
                     "risk_budget_min": params.risk_budget_min,
                     "risk_budget_max": params.risk_budget_max,
@@ -414,18 +453,30 @@ def print_summary(rows):
             "L2": "Market Overrides",
             "L3": "Exposure Cap",
             "L4": "Governance Penalty",
+            "DP": "Direction Penalty",
         }
+
+        # V2.1 A/B comparison
+        v21_on = [r for r in full_rows if r["config_label"] == "V2.1_AllLayers+DP"]
+        v21_off = [r for r in full_rows if r["config_label"] == "V2.1_AllLayers_noDP"]
+        if v21_on and v21_off:
+            logger.info("  V2.1 Direction Penalty A/B (all layers):")
+            on = v21_on[0]
+            off = v21_off[0]
+            logger.info(f"    WITH DP:    Sharpe={on['sharpe_ratio']:.3f}  Return={on['total_return_pct']:.1f}%  MaxDD={on['max_drawdown_pct']:.1f}%  AvgRisky={on['avg_risky_allocation_pct']:.1f}%  Up/Down={on['upside_capture']:.2f}/{on['downside_capture']:.2f}")
+            logger.info(f"    WITHOUT DP: Sharpe={off['sharpe_ratio']:.3f}  Return={off['total_return_pct']:.1f}%  MaxDD={off['max_drawdown_pct']:.1f}%  AvgRisky={off['avg_risky_allocation_pct']:.1f}%  Up/Down={off['upside_capture']:.2f}/{off['downside_capture']:.2f}")
+            delta_sharpe = on['sharpe_ratio'] - off['sharpe_ratio']
+            delta_return = on['total_return_pct'] - off['total_return_pct']
+            delta_dd = on['max_drawdown_pct'] - off['max_drawdown_pct']
+            logger.info(f"    DELTA:      Sharpe={delta_sharpe:+.3f}  Return={delta_return:+.1f}%  MaxDD={delta_dd:+.1f}%")
+            logger.info("")
+
         for layer_key, layer_name in layer_names.items():
-            # Trouver config avec SEUL ce layer activé
+            # All layers with DP as baseline, find "all except this"
+            all_keys = ["L1", "L2", "L3", "L4", "DP"]
+            without_label = "+".join(k for k in all_keys if k != layer_key)
             only_this = [r for r in full_rows if r["config_label"] == layer_key]
-            # Trouver config sans ce layer (tous les autres activés)
-            without = {
-                "L1": "L2+L3+L4",
-                "L2": "L1+L3+L4",
-                "L3": "L1+L2+L4",
-                "L4": "L1+L2+L3",
-            }
-            without_this = [r for r in full_rows if r["config_label"] == without[layer_key]]
+            without_this = [r for r in full_rows if r["config_label"] == without_label]
 
             if only_this:
                 r = only_this[0]
@@ -435,6 +486,17 @@ def print_summary(rows):
                 logger.info(f"  All except {layer_key}:            Sharpe={r['sharpe_ratio']:.3f}  Return={r['total_return_pct']:.1f}%  AvgRisky={r['avg_risky_allocation_pct']:.1f}%")
             if only_this or without_this:
                 logger.info("")
+
+        # Capture ratio analysis
+        logger.info(f"  {'─' * 50}")
+        logger.info("  CAPTURE RATIO ANALYSIS (Full History)")
+        logger.info(f"  {'─' * 50}")
+        for r in sorted(full_rows, key=lambda x: x['upside_capture'] - x['downside_capture'], reverse=True)[:5]:
+            asymmetry = r['upside_capture'] - r['downside_capture']
+            logger.info(
+                f"  {r['config_label']:<35} Up={r['upside_capture']:.3f}  Down={r['downside_capture']:.3f}  "
+                f"Asymmetry={asymmetry:+.3f}  Sharpe={r['sharpe_ratio']:.3f}"
+            )
 
 
 if __name__ == "__main__":
