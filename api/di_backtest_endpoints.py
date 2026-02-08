@@ -33,7 +33,7 @@ from services.di_backtest.trading_strategies import (
     get_di_strategy,
     DIStrategyConfig,
 )
-from services.di_backtest.historical_di_calculator import DIWeights, PhaseFactors
+from services.di_backtest.historical_di_calculator import DIWeights, PhaseFactors, DICalculatorConfig
 from services.backtesting_engine import (
     backtesting_engine,
     BacktestConfig,
@@ -108,6 +108,7 @@ class DIBacktestRequest(BaseModel):
 
     # Options
     use_macro_penalty: bool = Field(True, description="Inclure pénalité VIX/DXY")
+    calculator_version: str = Field("v1", description="Calculator version: v1 (fixed normalization) or v2 (adaptive)")
 
     # Transaction costs
     transaction_fee_pct: float = Field(0.001, ge=0)
@@ -340,12 +341,23 @@ async def run_di_backtest(
             )
 
         calculator = HistoricalDICalculator(weights=weights)
-        di_data = await calculator.calculate_historical_di(
-            user_id=user,
-            start_date=request.start_date,
-            end_date=request.end_date,
-            include_macro=request.use_macro_penalty
-        )
+        use_v2 = request.calculator_version == "v2"
+
+        if use_v2:
+            di_data = await calculator.calculate_historical_di_v2(
+                user_id=user,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                include_macro=request.use_macro_penalty,
+                config=DICalculatorConfig(),
+            )
+        else:
+            di_data = await calculator.calculate_historical_di(
+                user_id=user,
+                start_date=request.start_date,
+                end_date=request.end_date,
+                include_macro=request.use_macro_penalty
+            )
 
         if di_data.df.empty:
             return error_response("Impossible de calculer le DI historique", code=500)
@@ -528,6 +540,7 @@ async def run_di_backtest(
                 "final_value": round(result.final_value, 2),
                 "total_return_pct": round(result.total_return * 100, 2),
                 "benchmark_return_pct": round(result.benchmark_return * 100, 2),
+                "calculator_version": request.calculator_version,
             }
         })
 

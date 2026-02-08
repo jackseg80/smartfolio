@@ -757,6 +757,14 @@
         </div>
 
         <div class="control-group">
+          <label for="calculatorVersion">DI Calculator</label>
+          <select id="calculatorVersion">
+            <option value="v1">V1 — Fixed Normalization</option>
+            <option value="v2">V2 — Adaptive Proxies</option>
+          </select>
+        </div>
+
+        <div class="control-group">
           <button class="btn-primary" id="runBacktest">
             Run Backtest
           </button>
@@ -1376,6 +1384,7 @@
       const endDate = document.getElementById('endDate').value;
       const rebalanceFreq = document.getElementById('rebalanceFreq').value;
       const initialCapital = parseFloat(document.getElementById('initialCapital').value);
+      const calculatorVersion = document.getElementById('calculatorVersion').value;
 
       if (!startDate || !endDate) {
         alert('Please select a period');
@@ -1400,6 +1409,7 @@
             initial_capital: initialCapital,
             rebalance_frequency: rebalanceFreq,
             use_macro_penalty: true,
+            calculator_version: calculatorVersion,
             replica_params: getReplicaParams(),
             rotation_params: getRotationParams()
           })
@@ -1534,6 +1544,18 @@
           </div>
         `);
       }
+
+      // Calculator version badge
+      const calcVersion = data.summary?.calculator_version || 'v1';
+      const isV2 = calcVersion === 'v2';
+      diMetricsGrid.insertAdjacentHTML('beforeend', `
+        <div class="kpi-card">
+          <div class="kpi-value" style="font-size: 0.95rem; color: ${isV2 ? 'var(--color-success-600)' : 'var(--theme-text-muted)'};">
+            ${isV2 ? 'V2 — Adaptive' : 'V1 — Fixed'}
+          </div>
+          <div class="kpi-label">DI Calculator</div>
+        </div>
+      `);
 
       // Charts
       lastEquityCurve = data.equity_curve || [];
