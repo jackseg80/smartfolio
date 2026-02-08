@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass, field
+from filelock import FileLock
 from typing import Dict, List
 
 # Ordre de référence des groupes (libellés exacts utilisés partout)
@@ -411,9 +412,10 @@ class Taxonomy:
             "groups_order": self.groups_order,
             "aliases": self.aliases,
         }
-        # Écriture UTF-8 (sans BOM)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        # Écriture UTF-8 (sans BOM) — verrouillée pour concurrence
+        with FileLock(str(path) + ".lock", timeout=5):
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
 
     # === API utilitaires ===
 

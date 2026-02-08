@@ -27,17 +27,18 @@
 
 ---
 
-## 🔒 Sécurité: 8.5/10 - BON
+## 🔒 Sécurité: 7.0/10 - EN COURS
 
 ### Statut
-✅ **Production Ready** - Tous les bloqueurs critiques résolus
+🟡 **Réévalué Feb 2026** - 9 CVEs trouvées, auth gaps corrigés (P0), JWT default secret à changer
 
 ### Métriques Clés
 - **Vulnérabilités critiques:** 0 (était 3)
 - **Vulnérabilités HIGH:** 0 (était 6)
 - **Vulnérabilités MEDIUM:** 24 (était 29, -17%)
-- **CVE dépendances:** 0/163 packages
-- **Dernier scan:** 22 Novembre 2025
+- **CVE dépendances:** 2 restantes (était 9, P0 corrigé Feb 8)
+- **Auth gaps corrigés:** governance, execution_history, kraken, csv (Feb 8)
+- **Dernier scan:** 8 Février 2026 (pip-audit + Bandit)
 
 ### Audits Disponibles
 1. [SECURITY_AUDIT_2025-11-22.md](./SECURITY_AUDIT_2025-11-22.md) - Rapport complet (800+ lignes)
@@ -144,7 +145,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ♿ Accessibilité: 68/100 - MOYEN
+## ♿ Accessibilité: ~80/100 - MOYEN
 
 ### Statut
 ✅ **BON** - Phase 1 Quick Wins complétée (23 Dec 2025)
@@ -225,13 +226,13 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ✅ Tests: 8/10 - BON
+## ✅ Tests: 5.0/10 - FAIBLE
 
 ### Statut
-✅ **SOLIDE** - Services critiques couverts, infrastructure en place
+🔴 **Réévalué Feb 2026** - Coverage réel mesuré à 20.5% (était reporté ~50-55%)
 
 ### Métriques Clés
-- **Coverage global:** ~50-55%
+- **Coverage global:** 20.5% (mesuré pytest-cov Feb 8, 2026 — 810 tests, 1268 assertions)
 - **Coverage BalanceService:** 66% (excellente pour service multi-fallback)
 - **Tests unitaires:** 18 créés (17 PASS, 1 skip)
 - **Tests critiques:** Risk (90%), Governance (85%), Stop Loss (95%)

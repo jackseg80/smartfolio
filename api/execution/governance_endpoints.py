@@ -17,7 +17,9 @@ from .models import (
     GovernanceStateResponse, ScoreComponents, CanonicalScores,
     PhaseInfo, ExecutionPressure, MarketSignals, CycleSignals,
     UnifiedSignals, PortfolioMetrics, SuggestionIA,
-    UnifiedApprovalRequest, FreezeRequest, ApplyPolicyRequest
+    UnifiedApprovalRequest, FreezeRequest, ApplyPolicyRequest,
+    SetModeRequest, ProposeDecisionRequest, ReviewPlanRequest,
+    CancelPlanRequest, ValidateAllocationRequest
 )
 
 # Import RBAC from alerts (shared dependency)
@@ -447,10 +449,10 @@ async def get_ml_signals():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/mode")
-async def set_governance_mode(request: dict, user: str = Depends(get_required_user)):
+async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_required_user)):
     """
     Changer le mode de gouvernance
-    
+
     Modes disponibles:
     - manual: Décisions entièrement manuelles
     - ai_assisted: IA propose, humain approuve
@@ -458,12 +460,12 @@ async def set_governance_mode(request: dict, user: str = Depends(get_required_us
     - freeze: Arrêt d'urgence
     """
     try:
-        mode = request.get("mode", "").lower()
-        reason = request.get("reason", "Mode change via UI")
-        
+        mode = request.mode
+        reason = request.reason
+
         if mode not in ["manual", "ai_assisted", "full_ai", "freeze"]:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail=f"Invalid mode '{mode}'. Valid modes: manual, ai_assisted, full_ai, freeze"
             )
         
@@ -488,21 +490,17 @@ async def set_governance_mode(request: dict, user: str = Depends(get_required_us
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/propose")
-async def propose_decision(request: dict, user: str = Depends(get_required_user)):
+async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(get_required_user)):
     """
     Proposer une nouvelle décision avec respect du cooldown
-    
+
     Crée un plan DRAFT en respectant le cooldown entre publications.
     Utilise force_override_cooldown=true pour bypasser en urgence.
     """
     try:
-        targets = request.get("targets", [
-            {"symbol": "BTC", "weight": 0.6},
-            {"symbol": "ETH", "weight": 0.3}, 
-            {"symbol": "SOL", "weight": 0.1}
-        ])
-        reason = request.get("reason", "Test proposal from UI")
-        force_override = request.get("force_override_cooldown", False)
+        targets = request.targets
+        reason = request.reason
+        force_override = request.force_override_cooldown
         
         # Create a proposed plan (nouvelle signature avec tuple return)
         success, message = await governance_engine.create_proposed_plan(targets, reason, force_override)
@@ -530,16 +528,16 @@ async def propose_decision(request: dict, user: str = Depends(get_required_user)
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/review/{plan_id}")
-async def review_plan(plan_id: str, request: dict, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)):
+async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)):
     """
     Review un plan DRAFT → REVIEWED with ETag-based concurrency control
-    
+
     Transition obligatoire avant approbation en mode governance stricte.
     Utilise l'header If-Match pour le contrôle de concurrence optimiste.
     """
     try:
-        reviewed_by = request.get("reviewed_by", "system")
-        notes = request.get("notes", "Reviewed via API")
+        reviewed_by = request.reviewed_by
+        notes = request.notes
         
         success = await governance_engine.review_plan(plan_id, reviewed_by, notes, if_match)
         
@@ -707,15 +705,15 @@ async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_u
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cancel/{plan_id}")
-async def cancel_plan_endpoint(plan_id: str, request: dict, user: str = Depends(get_required_user)):
+async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: str = Depends(get_required_user)):
     """
     Annuler un plan ANY_STATE → CANCELLED
-    
+
     Peut annuler un plan depuis n'importe quel état (sauf EXECUTED/CANCELLED)
     """
     try:
-        cancelled_by = request.get("cancelled_by", "system")
-        reason = request.get("reason", "Cancelled via API")
+        cancelled_by = request.cancelled_by
+        reason = request.reason
         
         success = await governance_engine.cancel_plan(plan_id, cancelled_by, reason)
         
@@ -928,16 +926,16 @@ async def freeze_system_with_ttl(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/validate-allocation")
-async def validate_allocation_change(request: dict, user: str = Depends(get_required_user)):
+async def validate_allocation_change(request: ValidateAllocationRequest, user: str = Depends(get_required_user)):
     """
     Valide un changement d'allocation avant exécution
-    
+
     Vérifie no-trade zone et estime les coûts d'exécution
     """
     try:
-        current_weights = request.get("current_weights", {})
-        target_weights = request.get("target_weights", {})
-        portfolio_usd = request.get("portfolio_usd", 100000)
+        current_weights = request.current_weights
+        target_weights = request.target_weights
+        portfolio_usd = request.portfolio_usd
         
         # Vérifier no-trade zone
         within_zone, changes = governance_engine.is_change_within_no_trade_zone(current_weights, target_weights)

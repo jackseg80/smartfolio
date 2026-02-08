@@ -304,10 +304,10 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | # | Action | Effort | Impact | Status |
 |---| ------ | ------ | ------ | ------ |
 | 6 | Add request ID middleware (correlation IDs) | 2h | Production debugging | DONE (Feb 8) |
-| 7 | Add filelock to critical file writes (users.json, taxonomy, registries) | 3h | Data integrity | |
+| 7 | Add filelock to critical file writes (users.json, taxonomy, registries) | 3h | Data integrity | DONE (Feb 8) |
 | 8 | Add timeouts to FRED proxy endpoints | 30min | Prevents hangs | DONE (Feb 8, P0) |
 | 9 | Add CSV injection protection in csv_helpers.py | 1h | Data security | DONE (Feb 8) |
-| 10 | Validate governance endpoints with Pydantic models | 2h | Input validation | |
+| 10 | Validate governance endpoints with Pydantic models | 2h | Input validation | DONE (Feb 8) |
 | 11 | ~~Add eviction/max-size to in-memory API caches~~ | ~~2h~~ | ~~Memory safety~~ | N/A -- audit found all caches already have TTL/eviction |
 
 ### Medium-term (P2) -- Quality

@@ -25,18 +25,23 @@
 
 ---
 
-## 📊 Scores Actuels (Décembre 2025)
+## 📊 Scores Actuels (Février 2026)
 
 | Dimension | Score | Tendance | Priorité |
 |-----------|-------|----------|----------|
-| **Sécurité** | 8.5/10 | ⬆️ +42% | ✅ BON |
-| **Performance** | 7.5/10 | ⬆️ +40% fixes | 🔄 EN COURS |
-| **Accessibilité** | 68/100 | 🆕 NOUVEAU | 🟠 MOYEN |
-| **Dette Technique** | 7.5/10 | ⬆️ -67% TODOs | ✅ BON |
-| **Tests** | 8/10 | ➡️ Stable | ✅ BON |
-| **CI/CD** | 8/10 | ⬆️ Automation | ✅ BON |
+| **Sécurité** | 7.0/10 | ⬇️ -1.5 (9 CVEs, auth gaps) | 🟡 EN COURS |
+| **Performance** | 7.5/10 | ➡️ Stable | 🔄 EN COURS |
+| **Accessibilité** | ~80/100 | ⬆️ +12 (Quick Wins Phase 1) | 🟡 MOYEN |
+| **Dette Technique** | 7.0/10 | ⬇️ -0.5 | 🟡 MOYEN |
+| **Tests** | 5.0/10 | ⬇️ -3.0 (real: 20.5%) | 🔴 FAIBLE |
+| **CI/CD** | 8/10 | ➡️ Stable | ✅ BON |
+| **API Contract** | 4.0/10 | 🆕 NEW | 🔴 FAIBLE |
+| **Error Handling** | 6.5/10 | 🆕 NEW | 🟡 MOYEN |
+| **Data Integrity** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE |
+| **Logging** | 5.0/10 | 🆕 NEW | 🔴 FAIBLE |
+| **Concurrency** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE |
 
-**Projet:** 🟢 **Production Ready** - Tous les bloqueurs critiques résolus
+**Note Globale:** **6.0/10** (was 7.7) — See [COMPREHENSIVE_AUDIT_2026-02-08.md](./COMPREHENSIVE_AUDIT_2026-02-08.md)
 
 ---
 

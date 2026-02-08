@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+from filelock import FileLock
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
@@ -38,8 +39,9 @@ class UserManagementService:
 
     def _save_users_config(self, config: Dict[str, Any]) -> None:
         """Sauvegarde la configuration users.json"""
-        with open(self.users_config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+        with FileLock(str(self.users_config_path) + ".lock", timeout=5):
+            with open(self.users_config_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
 
         # Clear cache pour forcer reload
         clear_users_cache()

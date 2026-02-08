@@ -7,6 +7,7 @@ import os
 import json
 import logging
 import threading
+from filelock import FileLock
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
@@ -127,8 +128,9 @@ class ModelRegistry:
                 for version, manifest in versions.items():
                     registry_data[model_name][version] = manifest.to_dict()
 
-            with open(self.registry_file, 'w') as f:
-                json.dump(registry_data, f, indent=2, default=str)
+            with FileLock(str(self.registry_file) + ".lock", timeout=5):
+                with open(self.registry_file, 'w') as f:
+                    json.dump(registry_data, f, indent=2, default=str)
         except Exception as e:
             logger.error(f"Failed to save model registry: {e}")
 

@@ -182,6 +182,48 @@ class GovernanceStateResponse(BaseModel):
     suggestion: Optional[SuggestionIA] = Field(None, description="Suggestion IA canonique")
 
 
+class SetModeRequest(BaseModel):
+    """Request to change governance mode"""
+    mode: str = Field(..., description="Governance mode: manual, ai_assisted, full_ai, freeze")
+    reason: str = Field(default="Mode change via UI", max_length=500, description="Reason for mode change")
+
+    @validator('mode')
+    def validate_mode(cls, v):
+        v = v.lower()
+        if v not in ("manual", "ai_assisted", "full_ai", "freeze"):
+            raise ValueError("Mode must be one of: manual, ai_assisted, full_ai, freeze")
+        return v
+
+
+class ProposeDecisionRequest(BaseModel):
+    """Request to propose a new rebalancing decision"""
+    targets: List[Dict[str, Any]] = Field(
+        default=[{"symbol": "BTC", "weight": 0.6}, {"symbol": "ETH", "weight": 0.4}],
+        description="Target allocations"
+    )
+    reason: str = Field(default="Test proposal from UI", max_length=500, description="Proposal reason")
+    force_override_cooldown: bool = Field(default=False, description="Override cooldown period")
+
+
+class ReviewPlanRequest(BaseModel):
+    """Request to review a governance plan"""
+    reviewed_by: str = Field(default="system", max_length=100, description="Reviewer identifier")
+    notes: str = Field(default="Reviewed via API", max_length=500, description="Review notes")
+
+
+class CancelPlanRequest(BaseModel):
+    """Request to cancel a governance plan"""
+    cancelled_by: str = Field(default="system", max_length=100, description="Canceller identifier")
+    reason: str = Field(default="Cancelled via API", max_length=500, description="Cancellation reason")
+
+
+class ValidateAllocationRequest(BaseModel):
+    """Request to validate an allocation change"""
+    current_weights: Dict[str, float] = Field(default_factory=dict, description="Current portfolio weights")
+    target_weights: Dict[str, float] = Field(default_factory=dict, description="Target portfolio weights")
+    portfolio_usd: float = Field(default=100000, ge=0, description="Total portfolio value in USD")
+
+
 class ApprovalRequest(BaseModel):
     """Requête d'approbation d'une décision"""
     decision_id: str

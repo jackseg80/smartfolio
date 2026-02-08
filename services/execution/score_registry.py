@@ -10,6 +10,7 @@ Ce module centralise la configuration et le calcul du score canonique :
 
 import json
 import logging
+from filelock import FileLock
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 from datetime import datetime
@@ -136,9 +137,10 @@ class ScoreRegistry:
             default_config = ScoreConfig()
             config_dict = default_config.dict()
             
-            with open(self.config_path, 'w', encoding='utf-8') as f:
-                json.dump(config_dict, f, indent=2, default=str)
-                
+            with FileLock(str(self.config_path) + ".lock", timeout=5):
+                with open(self.config_path, 'w', encoding='utf-8') as f:
+                    json.dump(config_dict, f, indent=2, default=str)
+
             logger.info(f"Default score config created at {self.config_path}")
             
         except Exception as e:

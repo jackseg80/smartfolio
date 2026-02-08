@@ -11,6 +11,7 @@ Convertit les "blended strategies" frontend en templates backend :
 import json
 import logging
 from datetime import datetime, timedelta
+from filelock import FileLock
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
@@ -212,8 +213,9 @@ class StrategyRegistry:
                 "description": template_config.description
             }
         
-        with open(self.config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
+        with FileLock(str(self.config_path) + ".lock", timeout=5):
+            with open(self.config_path, 'w', encoding='utf-8') as f:
+                json.dump(config, f, indent=2, ensure_ascii=False)
     
     async def calculate_strategy(
         self,
