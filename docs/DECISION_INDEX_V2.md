@@ -77,9 +77,10 @@ raw_decision_score = (
 # bullish (cycle ≥ 90): phase_factor = 1.05
 adjusted_score = raw_decision_score * phase_factor
 
-# Pénalité macro (Feb 2026) - VIX > 30 OU DXY +5% sur 30j → -15 points
+# Pénalité macro graduée (Feb 2026, calibrée DI Backtest V2)
+# VIX: 0 (≤20) → -10 (≥45), DXY: 0 (≤2%) → -8 (≥10%), cap -15
 from services.macro_stress import macro_stress_service
-macro_penalty = macro_stress_service.get_cached_penalty()  # 0 ou -15
+macro_penalty = macro_stress_service.get_cached_penalty()  # 0.0 à -15.0 (graduée)
 adjusted_score += macro_penalty
 
 # Clamp final 0-100
@@ -164,7 +165,7 @@ const decisionScore = Math.round(
 │  2. Apply Adaptive Weights (context-aware)      │
 │  3. Weighted Sum → raw_decision_score           │
 │  4. Phase Multiplier (bull/bear/moderate)       │
-│  4b. Macro Penalty (VIX/DXY stress → -15 pts)   │
+│  4b. Macro Penalty (VIX/DXY graduated, cap -15)  │
 │  5. Clamp to [0, 100] → final_decision_score    │
 │                                                 │
 └─────────────────────────────────────────────────┘
@@ -261,7 +262,7 @@ if (structureScore < 50) {
 }
 ```
 
-### Override #4: Macro Stress (VIX/DXY) — NEW Feb 2026
+### Override #4: Macro Stress (VIX/DXY) — Graduée (Feb 2026)
 
 **Source de données**:
 - **VIX**: CBOE Volatility Index via FRED (série VIXCLS)
@@ -269,28 +270,37 @@ if (structureScore < 50) {
 - **Endpoint**: `/proxy/fred/macro-stress`
 - **Cache**: 4 heures (partagé avec Decision Index)
 
-**Règle de pénalité**:
+**Pénalité graduée linéaire** (calibrée sur DI Backtest V2):
 ```python
 # services/macro_stress.py
-VIX_STRESS_THRESHOLD = 30.0      # VIX > 30 = stress marché
-DXY_CHANGE_THRESHOLD = 5.0       # DXY +5% sur 30j = stress dollar
-DECISION_PENALTY = -15           # Pénalité appliquée au DI
+# VIX: 0 pts (≤20) → -10 pts (≥45), linéaire
+# DXY 30j change: 0 pts (≤2%) → -8 pts (≥10%), linéaire
+# Total = VIX + DXY, cappé à -15 pts
 
-if vix_value > 30 or dxy_change_30d >= 5:
-    adjusted_score += (-15)  # Pénalité directe sur le DI
-    rationale.append("Stress macro détecté (VIX/DXY) - pénalité -15 pts")
+VIX_PENALTY_START = 20.0       # Début de pénalité
+VIX_PENALTY_MAX_LEVEL = 45.0   # Pénalité max atteinte
+VIX_PENALTY_MAX_PTS = 10.0     # -10 pts max VIX seul
+
+DXY_CHANGE_START_PCT = 2.0     # Début de pénalité DXY
+DXY_CHANGE_MAX_PCT = 10.0      # Pénalité max atteinte
+DXY_PENALTY_MAX_PTS = 8.0      # -8 pts max DXY seul
+
+TOTAL_PENALTY_CAP = -15.0      # Cap total
 ```
 
-**Exemple**:
-- VIX = 35 (stress marché élevé)
-- DI avant pénalité = 62
-- **DI après pénalité = 47** (62 - 15)
-- Rationale affiché: "Stress macro détecté (VIX/DXY) - pénalité -15 pts"
+**Exemples**:
+- VIX=25 → pénalité -2.0 pts
+- VIX=35 → pénalité -6.0 pts
+- VIX=35 + DXY change=6% → pénalité -10.0 pts (additif: -6.0 + -4.0)
+- VIX=50 + DXY change=12% → pénalité -15.0 pts (cappé)
+
+**Pourquoi graduée (et non binaire)?** Le DI Backtest V2 (walk-forward, 288 backtests) a montré que la pénalité binaire -15 écrasait le DI pendant des mois entiers (tout 2022). La graduation linéaire est proportionnelle au stress réel et produit une meilleure rétention OOS.
 
 **Fichiers**:
 - Service: `services/macro_stress.py`
 - Intégration: `services/execution/strategy_registry.py:265-272`
 - API: `api/main.py` (endpoints `/proxy/fred/*`)
+- Tests: `tests/unit/test_macro_stress.py`
 
 ---
 
@@ -451,4 +461,53 @@ pytest tests/unit/test_allocation_engine_v2.py
 
 ---
 
-*Dernière mise à jour: 2026-02-03*
+## 8. Calibration Production — Decisions issues du DI Backtest V2
+
+> Ajout: 8 Fev 2026. Resultats complets: [`DI_BACKTEST_MODULE.md`](DI_BACKTEST_MODULE.md)
+
+Le module DI Backtest V2 (walk-forward valide, retention 140-155%, 288 backtests) a revele plusieurs ecarts entre le backtest et la production. Ce tableau documente les decisions prises pour chaque ecart.
+
+### Audit comparatif
+
+| Composant | Production | Backtest V2 | Decision | Raison |
+|-----------|-----------|-------------|----------|--------|
+| **Macro penalty** | ~~Binaire -15~~ → **Graduee lineaire** | Graduee (VIX 0→-10, DXY 0→-8, cap -15) | **Implemente** (P0) | Plus gros gain identifie. Binaire ecrasait le DI pendant des mois |
+| **Phase factor** | Asset-based (BTC/ETH/LARGE/ALT) | Continu 0.85→1.05 via raw_score | **Pas de changement** | Systemes non-comparables: prod = ML rotation, backtest = seuils cycle_score |
+| **Cycle source** | PhaseEngine ML (rotation) | Sigmoide halvings | **Diagnostic prospectif** (P1b) | Correlation inversee en OOS pour sigmoid. Script `diagnose_phase_engine.py` cree |
+| **Risk normalization** | Fixed additive deltas | Expanding percentile | **Pas de changement** | Sources differentes (metriques live vs proxy prix). Percentile inadapte au live |
+| **Asymmetric alpha** | Implicite (Freeze/Slow/Normal/Aggressive + hysteresis) | EMA bull=0.15, bear=0.50 | **Pas de changement** | Mecanisme different, effet similaire. Asymetrie deja presente en production |
+
+### Le DI n'est PAS un signal de trading
+
+Le backtest confirme que l'allocation basee directement sur le DI (DI modulation) **n'apporte pas de valeur ajoutee** (desactivee par defaut dans le backtest, capture asymmetry negative pour toutes les variantes S9).
+
+**Flow reel en production:**
+
+```
+MLSignals (contradiction, confidence) → PolicyEngine → Policy (mode/cap/ramp)
+                                            ↑ le DI n'intervient PAS ici
+
+StrategyRegistry → DI (decision_score) → Dashboard display uniquement
+                 → policy_hint (informatif, pas utilise par PolicyEngine)
+```
+
+Le DI reste utile comme:
+
+1. **Score de communication** — dashboard, conditions display, monitoring
+2. **PAS** comme input pour la PolicyEngine (qui utilise contradiction + confidence)
+3. **PAS** comme signal de trading direct ou modulateur d'allocation
+
+Les decisions d'allocation restent basees sur le cycle + phase + governance rules.
+
+### Scripts de diagnostic
+
+| Script | Description |
+|--------|-------------|
+| `scripts/analysis/diagnose_phase_engine.py --collect` | Collecteur prospectif phase engine (cron) |
+| `scripts/analysis/diagnose_phase_engine.py --analyze` | Analyse biais phase (apres 30+ jours) |
+| `scripts/analysis/diagnose_di_components.py` | Diagnostic IS vs OOS (KS tests, correlations) |
+| `scripts/analysis/walk_forward_rotation_v2.py` | Walk-forward expanding V1 vs V2 |
+
+---
+
+*Derniere mise a jour: 2026-02-08*

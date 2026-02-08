@@ -1,8 +1,10 @@
 """
 Macro Stress Service - Intégration DXY/VIX pour pénalité Decision Index
 
-Phase 3 du Plan de Sauvetage SmartFolio (Feb 2026)
-Règle: VIX > 30 OU DXY +5% sur 30j → pénalité -15 points sur Decision Index
+Pénalité graduée linéaire (calibrée sur DI Backtest V2, Feb 2026):
+- VIX: 0 pts (≤20) → -10 pts (≥45), linéaire
+- DXY: 0 pts (change 30j ≤2%) → -8 pts (change ≥10%), linéaire
+- Total = VIX + DXY, cappé à -15 pts
 """
 from __future__ import annotations
 
@@ -19,10 +21,24 @@ log = logging.getLogger(__name__)
 # Cache TTL: 4 heures (comme les données on-chain)
 MACRO_CACHE_TTL_HOURS = 4
 
-# Seuils de stress
-VIX_STRESS_THRESHOLD = 30.0
-DXY_CHANGE_THRESHOLD_PCT = 5.0
-DECISION_PENALTY = -15
+# Seuils gradués (alignés sur backtest V2 — data_sources.py:compute_macro_penalty_v2)
+VIX_PENALTY_START = 20.0       # VIX en-dessous → pas de pénalité
+VIX_PENALTY_MAX_LEVEL = 45.0   # VIX au-dessus → pénalité max VIX
+VIX_PENALTY_MAX_PTS = 10.0     # -10 pts max pour VIX seul
+
+DXY_CHANGE_START_PCT = 2.0     # Variation 30j en-dessous → pas de pénalité
+DXY_CHANGE_MAX_PCT = 10.0      # Variation 30j au-dessus → pénalité max DXY
+DXY_PENALTY_MAX_PTS = 8.0      # -8 pts max pour DXY seul
+
+TOTAL_PENALTY_CAP = -15.0      # Cap total (VIX + DXY ne dépasse jamais -15)
+
+
+def _graduated_penalty(value: float, start: float, max_level: float, max_pts: float) -> float:
+    """Calcule une pénalité linéaire graduée entre start et max_level."""
+    if value <= start:
+        return 0.0
+    ratio = (value - start) / (max_level - start)
+    return -min(max_pts, ratio * max_pts)
 
 
 @dataclass
@@ -30,11 +46,13 @@ class MacroStressResult:
     """Résultat de l'évaluation du stress macro"""
     vix_value: Optional[float] = None
     vix_stress: bool = False
+    vix_penalty: float = 0.0
     dxy_value: Optional[float] = None
     dxy_change_30d: Optional[float] = None
     dxy_stress: bool = False
+    dxy_penalty: float = 0.0
     macro_stress: bool = False
-    decision_penalty: int = 0
+    decision_penalty: float = 0.0
     fetched_at: Optional[datetime] = None
     error: Optional[str] = None
 
@@ -94,12 +112,17 @@ class MacroStressService:
         """
         Évalue le stress macro actuel (DXY et VIX)
 
+        Pénalité graduée linéaire (calibrée backtest V2):
+        - VIX: 0 (≤20) → -10 (≥45)
+        - DXY 30d change: 0 (≤2%) → -8 (≥10%)
+        - Total cappé à -15
+
         Args:
             user_id: ID utilisateur pour récupérer la clé FRED
             force_refresh: Force le rafraîchissement du cache
 
         Returns:
-            MacroStressResult avec les indicateurs de stress et la pénalité
+            MacroStressResult avec les indicateurs de stress et la pénalité graduée
         """
         # Vérifier le cache
         if not force_refresh and self._is_cache_valid():
@@ -122,8 +145,11 @@ class MacroStressService:
             vix_data = await self._fetch_fred_series("VIXCLS", fred_api_key)
             if vix_data:
                 result.vix_value = vix_data[-1]["value"]
-                result.vix_stress = result.vix_value > VIX_STRESS_THRESHOLD
-                log.info(f"VIX: {result.vix_value:.2f} (stress: {result.vix_stress})")
+                result.vix_stress = result.vix_value > VIX_PENALTY_START
+                result.vix_penalty = _graduated_penalty(
+                    result.vix_value, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS
+                )
+                log.info(f"VIX: {result.vix_value:.2f} (stress: {result.vix_stress}, penalty: {result.vix_penalty:.1f})")
         except Exception as e:
             log.warning(f"Failed to fetch VIX: {e}")
 
@@ -137,21 +163,25 @@ class MacroStressService:
                     past_value = dxy_data[-30]["value"]
                     if past_value > 0:
                         result.dxy_change_30d = ((result.dxy_value - past_value) / past_value) * 100
-                        result.dxy_stress = result.dxy_change_30d >= DXY_CHANGE_THRESHOLD_PCT
+                        result.dxy_stress = result.dxy_change_30d > DXY_CHANGE_START_PCT
+                        result.dxy_penalty = _graduated_penalty(
+                            result.dxy_change_30d, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS
+                        )
                         log.info(
                             f"DXY: {result.dxy_value:.2f} (30d change: {result.dxy_change_30d:.2f}%, "
-                            f"stress: {result.dxy_stress})"
+                            f"stress: {result.dxy_stress}, penalty: {result.dxy_penalty:.1f})"
                         )
         except Exception as e:
             log.warning(f"Failed to fetch DXY: {e}")
 
-        # Calculer le stress global et la pénalité
+        # Pénalité graduée additive, cappée à TOTAL_PENALTY_CAP
+        result.decision_penalty = max(TOTAL_PENALTY_CAP, result.vix_penalty + result.dxy_penalty)
         result.macro_stress = result.vix_stress or result.dxy_stress
+
         if result.macro_stress:
-            result.decision_penalty = DECISION_PENALTY
             log.warning(
-                f"⚠️ MACRO STRESS DETECTED - Decision Index penalty: {DECISION_PENALTY} points "
-                f"(VIX stress: {result.vix_stress}, DXY stress: {result.dxy_stress})"
+                f"MACRO STRESS - penalty: {result.decision_penalty:.1f} pts "
+                f"(VIX: {result.vix_penalty:.1f}, DXY: {result.dxy_penalty:.1f})"
             )
 
         # Mettre en cache
@@ -160,11 +190,11 @@ class MacroStressService:
 
         return result
 
-    def get_cached_penalty(self) -> int:
-        """Retourne la pénalité en cache (0 si pas de cache valide)"""
+    def get_cached_penalty(self) -> float:
+        """Retourne la pénalité en cache (0.0 si pas de cache valide)"""
         if self._is_cache_valid() and self._cache:
             return self._cache.decision_penalty
-        return 0
+        return 0.0
 
     def invalidate_cache(self):
         """Invalide le cache manuellement"""
