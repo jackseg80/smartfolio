@@ -151,11 +151,11 @@
                   <table style="width: 100%; border-collapse: collapse;">
                     <thead>
                       <tr style="background: var(--theme-surface-elevated); text-align: left;">
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current Regime</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Confidence</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Detection Method</th>
-                        <th style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear Threshold</th>
+                        <th scope="col" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Asset</th>
+                        <th scope="col" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Current Regime</th>
+                        <th scope="col" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Confidence</th>
+                        <th scope="col" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Detection Method</th>
+                        <th scope="col" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Bear Threshold</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -252,13 +252,13 @@
 
               <!-- Timeline Chart -->
               <div id="stock-regime-chart-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem; min-height: 550px;">
-                <canvas id="stock-regime-timeline-chart" style="height: 500px; width: 100%;"></canvas>
+                <canvas id="stock-regime-timeline-chart" style="height: 500px; width: 100%;" role="img" aria-label="Stock regime detection timeline chart"></canvas>
               </div>
               <div id="stock-regime-error-message" class="error-state" style="display: none;"></div>
 
               <!-- Regime Probabilities Chart -->
               <div class="pro-only" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem;">
-                <canvas id="stock-regime-probabilities-chart" style="max-height: 300px;"></canvas>
+                <canvas id="stock-regime-probabilities-chart" style="max-height: 300px;" role="img" aria-label="Stock regime probabilities chart"></canvas>
               </div>
 
               <!-- Regime Legend -->
@@ -352,12 +352,12 @@
 
               <!-- Timeline Chart -->
               <div id="btc-regime-chart-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border); margin-bottom: 2rem; min-height: 550px;">
-                <canvas id="btc-regime-timeline-chart" style="height: 500px; width: 100%;"></canvas>
+                <canvas id="btc-regime-timeline-chart" style="height: 500px; width: 100%;" role="img" aria-label="Bitcoin regime detection timeline chart"></canvas>
               </div>
 
               <!-- Regime Probabilities Chart -->
               <div class="btc-regime-probabilities-container" style="background: var(--theme-surface); border-radius: var(--radius-md); padding: 1.5rem; border: 1px solid var(--theme-border);">
-                <canvas id="btc-regime-probabilities-chart" style="max-height: 300px;"></canvas>
+                <canvas id="btc-regime-probabilities-chart" style="max-height: 300px;" role="img" aria-label="Bitcoin regime probabilities chart"></canvas>
               </div>
 
               <!-- Regime Legend -->
@@ -446,7 +446,7 @@
                   </div>
                 </div>
                 <div id="eth-regime-chart-container" style="position: relative; height: 500px; width: 100%;">
-                  <canvas id="eth-regime-timeline-chart" style="position: absolute; top: 0; left: 0; height: 100%; width: 100%;"></canvas>
+                  <canvas id="eth-regime-timeline-chart" style="position: absolute; top: 0; left: 0; height: 100%; width: 100%;" role="img" aria-label="Ethereum regime detection timeline chart"></canvas>
                 </div>
                 <div id="eth-regime-error-message" class="error-state" style="display: none;"></div>
               </div>

@@ -567,7 +567,7 @@
                         <div id="trends-tab" class="tab-content">
                             <h2>Execution Trends</h2>
                             <div id="trendsChart" class="chart-container">
-                                <canvas id="trendsCanvas"></canvas>
+                                <canvas id="trendsCanvas" role="img" aria-label="Execution trends over time chart"></canvas>
                             </div>
                             <div id="trendsData">
                                 <div class="loading">Loading trends...</div>
@@ -1216,13 +1216,13 @@
                     <table class="order-table">
                         <thead>
                             <tr>
-                                <th>Symbol</th>
-                                <th>Action</th>
-                                <th>Quantity</th>
-                                <th>Volume USD</th>
-                                <th>Avg. Price</th>
-                                <th>Fees</th>
-                                <th>Status</th>
+                                <th scope="col">Symbol</th>
+                                <th scope="col">Action</th>
+                                <th scope="col">Quantity</th>
+                                <th scope="col">Volume USD</th>
+                                <th scope="col">Avg. Price</th>
+                                <th scope="col">Fees</th>
+                                <th scope="col">Status</th>
                             </tr>
                         </thead>
                         <tbody>

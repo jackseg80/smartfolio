@@ -1063,7 +1063,7 @@
       <div class="result-card">
         <h3>Equity Curve</h3>
         <div class="chart-container">
-          <canvas id="equityChart"></canvas>
+          <canvas id="equityChart" role="img" aria-label="Backtest equity curve chart"></canvas>
         </div>
       </div>
 
@@ -1071,7 +1071,7 @@
       <div class="result-card">
         <h3>Allocation Over Time</h3>
         <div class="chart-container">
-          <canvas id="allocationChart"></canvas>
+          <canvas id="allocationChart" role="img" aria-label="Portfolio allocation over time chart"></canvas>
         </div>
         <div style="display: flex; gap: var(--space-md); padding: var(--space-xs) var(--space-sm); font-size: 0.75rem; color: var(--theme-text-muted);">
           <span style="display:flex;align-items:center;gap:4px;"><span style="width:16px;height:2px;background:#ef4444;display:inline-block;border-top:2px dashed #ef4444;"></span> Divergence Override</span>
@@ -1083,7 +1083,7 @@
       <div class="result-card">
         <h3>Decision Index History</h3>
         <div class="chart-container">
-          <canvas id="diHistoryChart"></canvas>
+          <canvas id="diHistoryChart" role="img" aria-label="Decision Index history chart"></canvas>
         </div>
       </div>
 
@@ -1091,7 +1091,7 @@
       <div class="result-card">
         <h3>Drawdown</h3>
         <div class="chart-container">
-          <canvas id="drawdownChart"></canvas>
+          <canvas id="drawdownChart" role="img" aria-label="Portfolio drawdown chart"></canvas>
         </div>
       </div>
 
@@ -1099,7 +1099,7 @@
       <div class="result-card">
         <h3>Monthly Returns</h3>
         <div class="chart-container">
-          <canvas id="monthlyReturnsChart"></canvas>
+          <canvas id="monthlyReturnsChart" role="img" aria-label="Monthly returns heatmap chart"></canvas>
         </div>
       </div>
 
@@ -1130,7 +1130,7 @@
         <button class="chart-modal-close" id="chartModalClose">&times;</button>
       </div>
       <div class="chart-modal-body">
-        <canvas id="modalChart"></canvas>
+        <canvas id="modalChart" role="img" aria-label="Zoomed chart detail view"></canvas>
       </div>
     </div>
   </div>

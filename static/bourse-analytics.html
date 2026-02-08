@@ -1221,7 +1221,7 @@
                             <div style="max-height: 300px; overflow-y: auto;">
                                 <table class="positions-table">
                                     <thead>
-                                        <tr><th>Symbol</th><th>Before</th><th>After</th><th>P&L</th></tr>
+                                        <tr><th scope="col">Symbol</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">P&L</th></tr>
                                     </thead>
                                     <tbody>
                                         ${impacts.map(p => `
@@ -1343,7 +1343,7 @@
                         <h4 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--theme-text);">
                             📊 Regime Probabilities
                         </h4>
-                        <canvas id="regimeProbabilitiesChart" style="max-height: 250px;"></canvas>
+                        <canvas id="regimeProbabilitiesChart" style="max-height: 250px;" role="img" aria-label="Stock regime probabilities chart"></canvas>
                     </div>
 
                     <!-- Regime Timeline -->
@@ -1359,7 +1359,7 @@
                                 <button class="timeframe-btn" data-days="3650" onclick="updateRegimeTimeline(3650)">10Y</button>
                             </div>
                         </div>
-                        <canvas id="regimeTimelineChart" style="max-height: 350px;"></canvas>
+                        <canvas id="regimeTimelineChart" style="max-height: 350px;" role="img" aria-label="Stock regime detection timeline chart"></canvas>
                         <div id="regimeTimelineInfo" style="margin-top: 0.75rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm); font-size: 0.8rem; color: var(--theme-text-muted);">
                             ℹ️ Loading historical regime data...
                         </div>
@@ -1702,12 +1702,12 @@
                     <table class="positions-table" id="sectorTable" style="margin-bottom: 1rem;">
                         <thead>
                             <tr>
-                                <th>Sector</th>
-                                <th>Return</th>
-                                <th>Weight</th>
-                                <th>Momentum</th>
-                                <th>Signal</th>
-                                <th>Positions</th>
+                                <th scope="col">Sector</th>
+                                <th scope="col">Return</th>
+                                <th scope="col">Weight</th>
+                                <th scope="col">Momentum</th>
+                                <th scope="col">Signal</th>
+                                <th scope="col">Positions</th>
                             </tr>
                         </thead>
                         <tbody id="sectorTableBody">
@@ -1941,7 +1941,7 @@
                     <!-- Beta Rolling Chart -->
                     ${data.rolling_betas && data.rolling_betas.length > 0 ? `
                         <div style="margin-bottom: 1.5rem;">
-                            <canvas id="${canvasId}" style="max-height: 250px;"></canvas>
+                            <canvas id="${canvasId}" style="max-height: 250px;" role="img" aria-label="Rolling beta forecast chart"></canvas>
                         </div>
                     ` : ''}
 

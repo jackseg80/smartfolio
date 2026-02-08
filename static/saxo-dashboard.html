@@ -134,7 +134,7 @@
                             <h2 class="card-title">Allocation Breakdown</h2>
                         </div>
                         <div style="padding: 1.5rem; display: flex; justify-content: center; align-items: center;">
-                            <canvas id="allocationChart" style="max-width: 350px; max-height: 350px;"></canvas>
+                            <canvas id="allocationChart" style="max-width: 350px; max-height: 350px;" role="img" aria-label="Stock portfolio allocation chart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -897,11 +897,11 @@
                 <table class="positions-table">
                     <thead>
                         <tr>
-                            <th>Instrument</th>
-                            <th>Symbol</th>
-                            <th>Market Value</th>
-                            <th>Asset Class</th>
-                            <th>Weight</th>
+                            <th scope="col">Instrument</th>
+                            <th scope="col">Symbol</th>
+                            <th scope="col">Market Value</th>
+                            <th scope="col">Asset Class</th>
+                            <th scope="col">Weight</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1252,15 +1252,15 @@
                     <table class="positions-table" id="positionsTable">
                         <thead>
                             <tr>
-                                <th onclick="sortPositionsTable('instrument')" style="cursor: pointer; user-select: none;">Instrument <span id="sortIcon-instrument">↕️</span></th>
-                                <th onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol">↕️</span></th>
-                                <th onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity">↕️</span></th>
-                                <th onclick="sortPositionsTable('market_value')" style="cursor: pointer; user-select: none;">Market Value <span id="sortIcon-market_value">▼</span></th>
-                                <th onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value">↕️</span></th>
-                                <th onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct">↕️</span></th>
-                                <th onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency">↕️</span></th>
-                                <th onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class">↕️</span></th>
-                                <th onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('instrument')" style="cursor: pointer; user-select: none;">Instrument <span id="sortIcon-instrument">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('market_value')" style="cursor: pointer; user-select: none;">Market Value <span id="sortIcon-market_value">▼</span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight">↕️</span></th>
                             </tr>
                         </thead>
                         <tbody>

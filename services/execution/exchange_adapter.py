@@ -1319,9 +1319,8 @@ def setup_default_exchanges():
     
     # Log de la configuration sans exposer les secrets
     if binance_api_key:
-        masked_key = binance_api_key[:8] + "..." + binance_api_key[-4:] if len(binance_api_key) > 12 else "***"
         mode = "TESTNET" if binance_sandbox else "MAINNET"
-        logger.info(f"Binance configured with API key {masked_key} in {mode} mode")
+        logger.info(f"Binance configured with API key [CONFIGURED] in {mode} mode")
     else:
         logger.warning("Binance API key not found in environment - will use simulator mode")
     exchange_registry.register_exchange(binance_config)
@@ -1343,8 +1342,7 @@ def setup_default_exchanges():
     
     # Log de la configuration sans exposer les secrets
     if kraken_api_key:
-        masked_key = kraken_api_key[:8] + "..." + kraken_api_key[-4:] if len(kraken_api_key) > 12 else "***"
-        logger.info(f"Kraken configured with API key {masked_key}")
+        logger.info("Kraken configured with API key [CONFIGURED]")
     else:
         logger.warning("Kraken API key not found in environment - will use simulator mode")
     exchange_registry.register_exchange(kraken_config)

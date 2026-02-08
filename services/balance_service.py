@@ -270,7 +270,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG [_try_api_mode]: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}, len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
+            logger.info(f"🔑 DEBUG [_try_api_mode]: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
 
             if not (api_key and api_secret):
                 logger.warning(f"No CoinTracking API credentials configured for user {user_id}")
@@ -461,7 +461,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}, len_key={len(api_key) if api_key else 0}, len_secret={len(api_secret) if api_secret else 0}")
+            logger.info(f"🔑 DEBUG: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
 
             # 1) Load snapshot by exchange via CT-API
             snap = await load_ctapi_exchanges(min_usd=0.0, api_key=api_key, api_secret=api_secret)

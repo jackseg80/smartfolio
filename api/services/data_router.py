@@ -71,7 +71,7 @@ class UserDataRouter:
             "saxo_client_id": self.settings.get("saxo_client_id", ""),  # Saxo still in config for now
             "saxo_client_secret": self.settings.get("saxo_client_secret", "")
         }
-        logger.info(f"API credentials loaded from secrets.json: key_len={len(self.api_credentials.get('api_key', ''))}, secret_len={len(self.api_credentials.get('api_secret', ''))}")
+        logger.info(f"API credentials loaded from secrets.json: has_key={bool(self.api_credentials.get('api_key'))}, has_secret={bool(self.api_credentials.get('api_secret'))}")
 
     def get_csv_files(self, file_type: str = "balance") -> List[str]:
         """

@@ -127,13 +127,13 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Cache Name</th>
-                            <th>Total Entries</th>
-                            <th>Valid Entries</th>
-                            <th>Expired Entries</th>
-                            <th>TTL (seconds)</th>
-                            <th>Type</th>
-                            <th>Actions</th>
+                            <th scope="col">Cache Name</th>
+                            <th scope="col">Total Entries</th>
+                            <th scope="col">Valid Entries</th>
+                            <th scope="col">Expired Entries</th>
+                            <th scope="col">TTL (seconds)</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="cache-table-body">
@@ -184,13 +184,13 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Model Name</th>
-                            <th>Type</th>
-                            <th>Version</th>
-                            <th>Status</th>
-                            <th>Last Updated</th>
-                            <th>Training Status</th>
-                            <th>Actions</th>
+                            <th scope="col">Model Name</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Version</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Last Updated</th>
+                            <th scope="col">Training Status</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="ml-models-table-body">
@@ -207,13 +207,13 @@
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Job ID</th>
-                            <th>Model Name</th>
-                            <th>Status</th>
-                            <th>Triggered By</th>
-                            <th>Created At</th>
-                            <th>Completed At</th>
-                            <th>Actions</th>
+                            <th scope="col">Job ID</th>
+                            <th scope="col">Model Name</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Triggered By</th>
+                            <th scope="col">Created At</th>
+                            <th scope="col">Completed At</th>
+                            <th scope="col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="ml-jobs-table-body">
@@ -551,12 +551,12 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Version</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Type</th>
-                                <th>File Size</th>
-                                <th>Metrics</th>
+                                <th scope="col">Version</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Created</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">File Size</th>
+                                <th scope="col">Metrics</th>
                             </tr>
                         </thead>
                         <tbody id="version-history-table-body">
@@ -869,12 +869,12 @@
                 html += '</div>';
                 html += '<table class="data-table">';
                 html += '<thead><tr>';
-                html += '<th>User ID</th>';
-                html += '<th>Label</th>';
-                html += '<th>Roles</th>';
-                html += '<th>Status</th>';
-                html += '<th>Created</th>';
-                html += '<th>Actions</th>';
+                html += '<th scope="col">User ID</th>';
+                html += '<th scope="col">Label</th>';
+                html += '<th scope="col">Roles</th>';
+                html += '<th scope="col">Status</th>';
+                html += '<th scope="col">Created</th>';
+                html += '<th scope="col">Actions</th>';
                 html += '</tr></thead>';
                 html += '<tbody>';
 
@@ -1023,17 +1023,17 @@
                 const timestampClass = currentLogsSortBy === 'timestamp'
                     ? `sortable sort-${currentLogsSortOrder}`
                     : 'sortable';
-                html += `<th class="${timestampClass}" data-sort="timestamp">Timestamp</th>`;
+                html += `<th scope="col" class="${timestampClass}" data-sort="timestamp">Timestamp</th>`;
 
                 // Level header (sortable)
                 const levelClass = currentLogsSortBy === 'level'
                     ? `sortable sort-${currentLogsSortOrder}`
                     : 'sortable';
-                html += `<th class="${levelClass}" data-sort="level">Level</th>`;
+                html += `<th scope="col" class="${levelClass}" data-sort="level">Level</th>`;
 
                 // Non-sortable headers
-                html += '<th>Module</th>';
-                html += '<th>Message</th>';
+                html += '<th scope="col">Module</th>';
+                html += '<th scope="col">Message</th>';
                 html += '</tr></thead>';
                 html += '<tbody>';
 

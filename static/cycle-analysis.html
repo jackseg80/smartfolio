@@ -347,7 +347,7 @@
         Vertical lines indicate halvings.
       </p>
       <div class="chart-container" style="height: 500px;">
-        <canvas id="bitcoin-cycle-chart"></canvas>
+        <canvas id="bitcoin-cycle-chart" role="img" aria-label="Bitcoin price cycle chart with halving markers"></canvas>
       </div>
       <div id="bitcoin-chart-status"
         style="text-align: center; margin-top: 0.5rem; color: var(--theme-text-muted); font-size: 0.85em;">
@@ -368,13 +368,13 @@
         <p style="color: var(--theme-text-muted); font-size: 0.85em; margin-bottom: 0.5rem;">
           Performance normalized to 100 at halving. Diminishing returns pattern: Cycle 2 x30, Cycle 3 x8, Cycle 4 x2.
         </p>
-        <div class="chart-container"><canvas id="comparison-chart"></canvas></div>
+        <div class="chart-container"><canvas id="comparison-chart" role="img" aria-label="Cycle-over-cycle normalized performance comparison chart"></canvas></div>
       </div>
       <div id="drawdown-panel" style="display: none;">
         <p style="color: var(--theme-text-muted); font-size: 0.85em; margin-bottom: 0.5rem;">
           Drawdown from cycle peak. Previous bears bottomed at M+12 around -78% to -84%.
         </p>
-        <div class="chart-container"><canvas id="drawdown-chart"></canvas></div>
+        <div class="chart-container"><canvas id="drawdown-chart" role="img" aria-label="Drawdown from cycle peak comparison chart"></canvas></div>
       </div>
     </div>
 
@@ -414,7 +414,7 @@
     <div class="card">
       <h2>📊 Visual Validation - Predictions vs Reality</h2>
       <div class="chart-container">
-        <canvas id="validation-chart"></canvas>
+        <canvas id="validation-chart" role="img" aria-label="Cycle predictions vs actual results validation chart"></canvas>
       </div>
     </div>
 
