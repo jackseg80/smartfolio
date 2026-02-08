@@ -32,12 +32,12 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | Tests | 8/10 | **5.0/10** | -3.0 | Real coverage 20.5% (not 50-55%) |
 | CI/CD | 8/10 | 8/10 | 0 | Workflows functional |
 | **NEW: API Contract** | -- | **4.0/10** | -- | 3 response formats, 83% untyped |
-| **NEW: Error Handling** | -- | **6.5/10** | -- | 5 missing timeouts, no circuit breakers |
-| **NEW: Data Integrity** | -- | **5.5/10** | -- | Unauth governance, no CSV sanitization |
-| **NEW: Logging** | -- | **5.0/10** | -- | No request IDs, partial key leaks |
-| **NEW: Concurrency** | -- | **5.5/10** | -- | filelock only in 1/12 writing services |
+| **NEW: Error Handling** | -- | **8.0/10** | +1.5 | Circuit breakers added (CoinGecko/FRED/Saxo), timeouts fixed |
+| **NEW: Data Integrity** | -- | **8.0/10** | +2.5 | Auth on governance, CSV sanitization, Pydantic models |
+| **NEW: Logging** | -- | **8.0/10** | +3.0 | Request IDs, JSON file logs, sensitive data sanitized |
+| **NEW: Concurrency** | -- | **7.5/10** | +2.0 | FileLock on 5 critical writes, scheduler Redis lock |
 
-**New Overall Score: 6.0/10** (was 7.7/10)
+**Updated Overall Score: 7.2/10** (was 6.0 at audit, was 7.7 before audit)
 
 ---
 
@@ -321,20 +321,20 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | 16 | Circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience | DONE (Feb 9) |
 | 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | |
 | 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene | DONE (Feb 8) |
-| 25 | **Batch Binance price requests** in rebalance CSV export (currently sequential, ~23s for 124 actions) | 4h | Performance | |
-| 26 | **Fix symbol mapping** for Binance API (CoinTracking aliases like `WLD3`, `ARB5` append digits that cause 400 errors) | 3h | Reliability | |
+| 25 | Batch Binance price requests (single HTTP call instead of 124 sequential) | 4h | Performance | DONE (Feb 9) |
+| 26 | Fix symbol mapping: strip CoinTracking numeric suffixes (WLD3->WLD) | 3h | Reliability | DONE (Feb 9) |
 
 ### Long-term (P3) -- Technical Excellence
 
-| # | Action | Effort | Impact |
-|---|--------|--------|--------|
-| 19 | Refactor `get_risk_dashboard` (663 lines) | 1-2w | Maintainability |
-| 20 | Refactor `risk_management.py` (Phase 2 God Services) | 2w | Technical debt |
-| 21 | Address 5 frontend God Controllers (2,000+ lines each) | 4w | Frontend debt |
-| 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture |
-| 23 | Activate structured JSON logging | 2h | Observability |
-| 24 | Add distributed lock for scheduler exclusivity | 2h | Multi-worker safety |
-| 27 | **Add CoinGecko rate-limit backoff** (currently gets 429 errors during price enrichment) | 2h | API reliability |
+| # | Action | Effort | Impact | Status |
+|---|--------|--------|--------|--------|
+| 19 | Refactor `get_risk_dashboard` (663 lines) | 1-2w | Maintainability | |
+| 20 | Refactor `risk_management.py` (Phase 2 God Services) | 2w | Technical debt | |
+| 21 | Address 5 frontend God Controllers (2,000+ lines each) | 4w | Frontend debt | |
+| 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture | |
+| 23 | Structured JSON logging (file handler with JsonLogFormatter) | 2h | Observability | DONE (Feb 9) |
+| 24 | Redis distributed lock for scheduler exclusivity | 2h | Multi-worker safety | DONE (Feb 9) |
+| 27 | **Add CoinGecko rate-limit backoff** (currently gets 429 errors during price enrichment) | 2h | API reliability | |
 
 ---
 
