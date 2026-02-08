@@ -77,6 +77,10 @@ class RotationParamsModel(BaseModel):
     # Smoothing
     smoothing_alpha: float = Field(0.30, ge=0.0, le=1.0, description="EMA smoothing factor (0=no smoothing, 1=instant)")
 
+    # Asymmetric alpha: separate speeds for bull vs bear transitions
+    smoothing_alpha_bullish: Optional[float] = Field(None, ge=0.0, le=1.0, description="Slow entry into bull (e.g. 0.15). When set, overrides smoothing_alpha for bullish moves")
+    smoothing_alpha_bearish: Optional[float] = Field(None, ge=0.0, le=1.0, description="Fast exit to bear (e.g. 0.50). When set, overrides smoothing_alpha for bearish moves")
+
     # DI modulation (off by default — backtests show DI is not predictive)
     enable_di_modulation: bool = Field(False, description="Enable DI modulation of phase targets")
     di_mod_range: float = Field(0.10, ge=0.0, le=0.30, description="DI modulation range")
@@ -404,6 +408,8 @@ async def run_di_backtest(
             strategy.params = RotationParams(
                 **alloc_kwargs,
                 smoothing_alpha=rp.smoothing_alpha,
+                smoothing_alpha_bullish=rp.smoothing_alpha_bullish,
+                smoothing_alpha_bearish=rp.smoothing_alpha_bearish,
                 enable_di_modulation=rp.enable_di_modulation,
                 di_mod_range=rp.di_mod_range,
                 enable_drawdown_breaker=rp.enable_drawdown_breaker,

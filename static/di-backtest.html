@@ -831,7 +831,7 @@
 
           <!-- Smoothing Alpha -->
           <div class="param-sliders">
-            <div class="param-slider">
+            <div class="param-slider" id="symmetricAlphaSection">
               <label>
                 <span>Smoothing Alpha</span>
                 <span class="param-value" id="smoothingAlphaValue">0.30</span>
@@ -840,6 +840,36 @@
               <div class="slider-labels">
                 <span>Slow</span>
                 <span>Fast</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Asymmetric Alpha Toggle -->
+          <label class="layer-toggle">
+            <input type="checkbox" id="enableAsymAlpha">
+            <span>Asymmetric Alpha (separate bull/bear speeds)</span>
+          </label>
+          <div class="param-sliders" id="asymAlphaParams" style="display: none;">
+            <div class="param-slider">
+              <label>
+                <span>Bull Alpha (entry speed)</span>
+                <span class="param-value" id="alphaBullValue">0.15</span>
+              </label>
+              <input type="range" id="alphaBull" min="0.05" max="0.50" step="0.05" value="0.15">
+              <div class="slider-labels">
+                <span>Slow entry</span>
+                <span>Fast entry</span>
+              </div>
+            </div>
+            <div class="param-slider">
+              <label>
+                <span>Bear Alpha (exit speed)</span>
+                <span class="param-value" id="alphaBearValue">0.50</span>
+              </label>
+              <input type="range" id="alphaBear" min="0.10" max="1.00" step="0.05" value="0.50">
+              <div class="slider-labels">
+                <span>Slow exit</span>
+                <span>Fast exit</span>
               </div>
             </div>
           </div>
@@ -2129,6 +2159,9 @@
     const ROTATION_DEFAULTS = {
       preset: 'conservative',
       smoothingAlpha: 0.30,
+      enableAsymAlpha: false,
+      alphaBull: 0.15,
+      alphaBear: 0.50,
       enableDDBreaker: false,
       ddThreshold1: -0.10,
       ddThreshold2: -0.20,
@@ -2169,6 +2202,29 @@
         alphaDisplay.textContent = parseFloat(alphaSlider.value).toFixed(2);
       });
 
+      // Asymmetric alpha toggle + sliders
+      const asymToggle = document.getElementById('enableAsymAlpha');
+      const asymParams = document.getElementById('asymAlphaParams');
+      const symSection = document.getElementById('symmetricAlphaSection');
+      asymToggle.addEventListener('change', () => {
+        const enabled = asymToggle.checked;
+        asymParams.style.display = enabled ? 'block' : 'none';
+        symSection.style.opacity = enabled ? '0.4' : '1';
+        symSection.style.pointerEvents = enabled ? 'none' : 'auto';
+      });
+
+      const bullSlider = document.getElementById('alphaBull');
+      const bullDisplay = document.getElementById('alphaBullValue');
+      bullSlider.addEventListener('input', () => {
+        bullDisplay.textContent = parseFloat(bullSlider.value).toFixed(2);
+      });
+
+      const bearSlider = document.getElementById('alphaBear');
+      const bearDisplay = document.getElementById('alphaBearValue');
+      bearSlider.addEventListener('input', () => {
+        bearDisplay.textContent = parseFloat(bearSlider.value).toFixed(2);
+      });
+
       // DD breaker toggle
       const ddToggle = document.getElementById('enableDDBreaker');
       const ddParams = document.getElementById('ddBreakerParams');
@@ -2203,6 +2259,16 @@
       document.getElementById('smoothingAlpha').value = ROTATION_DEFAULTS.smoothingAlpha;
       document.getElementById('smoothingAlphaValue').textContent = ROTATION_DEFAULTS.smoothingAlpha.toFixed(2);
 
+      // Reset asymmetric alpha
+      document.getElementById('enableAsymAlpha').checked = ROTATION_DEFAULTS.enableAsymAlpha;
+      document.getElementById('asymAlphaParams').style.display = 'none';
+      document.getElementById('symmetricAlphaSection').style.opacity = '1';
+      document.getElementById('symmetricAlphaSection').style.pointerEvents = 'auto';
+      document.getElementById('alphaBull').value = ROTATION_DEFAULTS.alphaBull;
+      document.getElementById('alphaBullValue').textContent = ROTATION_DEFAULTS.alphaBull.toFixed(2);
+      document.getElementById('alphaBear').value = ROTATION_DEFAULTS.alphaBear;
+      document.getElementById('alphaBearValue').textContent = ROTATION_DEFAULTS.alphaBear.toFixed(2);
+
       // Reset DD breaker
       document.getElementById('enableDDBreaker').checked = ROTATION_DEFAULTS.enableDDBreaker;
       document.getElementById('ddBreakerParams').style.display = 'none';
@@ -2218,7 +2284,8 @@
       if (strategy !== 'di_cycle_rotation') return null;
 
       const activePreset = document.querySelector('.rotation-preset-btn.active');
-      return {
+      const asymEnabled = document.getElementById('enableAsymAlpha').checked;
+      const params = {
         preset: activePreset ? activePreset.dataset.preset : 'conservative',
         smoothing_alpha: parseFloat(document.getElementById('smoothingAlpha').value),
         enable_di_modulation: false,
@@ -2229,6 +2296,11 @@
         dd_multiplier: 0.50,
         dd_ramp_up: document.getElementById('ddRampUp').checked,
       };
+      if (asymEnabled) {
+        params.smoothing_alpha_bullish = parseFloat(document.getElementById('alphaBull').value);
+        params.smoothing_alpha_bearish = parseFloat(document.getElementById('alphaBear').value);
+      }
+      return params;
     }
 
     function getReplicaParams() {
