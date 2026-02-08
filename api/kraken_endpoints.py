@@ -3,9 +3,11 @@ Endpoints API pour l'intégration Kraken
 Expose les fonctionnalités Kraken via FastAPI
 """
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
 from typing import Dict, Any, List, Optional
 import logging
+
+from api.deps import get_required_user
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +166,7 @@ async def get_kraken_prices(symbols: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/balance")
-async def get_kraken_balance():
+async def get_kraken_balance(user: str = Depends(get_required_user)):
     """Obtenir les soldes du compte Kraken (nécessite credentials)"""
     try:
         from services.execution.exchange_adapter import exchange_registry
@@ -212,7 +214,7 @@ async def get_kraken_balance():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/validate-order")
-async def validate_kraken_order(order_data: Dict[str, Any] = Body(...)):
+async def validate_kraken_order(order_data: Dict[str, Any] = Body(...), user: str = Depends(get_required_user)):
     """Valider un ordre Kraken sans l'exécuter"""
     try:
         from connectors.kraken_api import KrakenAPI, KrakenConfig

@@ -9,6 +9,7 @@ from typing import Optional, List, Dict, Any
 import logging
 from datetime import datetime, timedelta
 
+from api.deps import get_required_user
 from services.execution.governance import Policy, governance_engine
 from services.execution.score_registry import get_score_registry
 from services.execution.phase_engine import get_phase_engine
@@ -446,7 +447,7 @@ async def get_ml_signals():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/mode")
-async def set_governance_mode(request: dict):
+async def set_governance_mode(request: dict, user: str = Depends(get_required_user)):
     """
     Changer le mode de gouvernance
     
@@ -487,7 +488,7 @@ async def set_governance_mode(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/propose")
-async def propose_decision(request: dict):
+async def propose_decision(request: dict, user: str = Depends(get_required_user)):
     """
     Proposer une nouvelle décision avec respect du cooldown
     
@@ -529,7 +530,7 @@ async def propose_decision(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/review/{plan_id}")
-async def review_plan(plan_id: str, request: dict, if_match: Optional[str] = Header(None)):
+async def review_plan(plan_id: str, request: dict, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)):
     """
     Review un plan DRAFT → REVIEWED with ETag-based concurrency control
     
@@ -571,7 +572,7 @@ async def review_plan(plan_id: str, request: dict, if_match: Optional[str] = Hea
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/approve/{resource_id}")
-async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRequest):
+async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRequest, user: str = Depends(get_required_user)):
     """
     Endpoint unifié pour approuver/rejeter des décisions ou des plans
     
@@ -652,7 +653,7 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/activate/{plan_id}")
-async def activate_plan_endpoint(plan_id: str):
+async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)):
     """
     Activer un plan APPROVED → ACTIVE
     
@@ -679,7 +680,7 @@ async def activate_plan_endpoint(plan_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/execute/{plan_id}")
-async def execute_plan_endpoint(plan_id: str):
+async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)):
     """
     Marquer un plan comme exécuté ACTIVE → EXECUTED
     
@@ -706,7 +707,7 @@ async def execute_plan_endpoint(plan_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cancel/{plan_id}")
-async def cancel_plan_endpoint(plan_id: str, request: dict):
+async def cancel_plan_endpoint(plan_id: str, request: dict, user: str = Depends(get_required_user)):
     """
     Annuler un plan ANY_STATE → CANCELLED
     
@@ -927,7 +928,7 @@ async def freeze_system_with_ttl(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/validate-allocation")
-async def validate_allocation_change(request: dict):
+async def validate_allocation_change(request: dict, user: str = Depends(get_required_user)):
     """
     Valide un changement d'allocation avant exécution
     

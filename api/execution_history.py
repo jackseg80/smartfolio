@@ -10,7 +10,7 @@ Ce module fournit les endpoints API pour:
 - Export de données
 """
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Dict, List, Any, Optional
 import logging
@@ -18,6 +18,7 @@ from datetime import datetime, timezone, timedelta
 import json
 import io
 
+from api.deps import get_required_user
 from services.analytics.execution_history import execution_history
 from services.execution.exchange_adapter import exchange_registry
 
@@ -30,7 +31,8 @@ router = APIRouter(prefix="/api/execution/history", tags=["execution-history"])
 async def get_recent_sessions(
     limit: int = Query(50, ge=1, le=500, description="Number of sessions to return"),
     exchange: Optional[str] = Query(None, description="Filter by exchange"),
-    days: int = Query(7, ge=1, le=90, description="Days of history to include")
+    days: int = Query(7, ge=1, le=90, description="Days of history to include"),
+    user: str = Depends(get_required_user)
 ):
     """Obtenir l'historique des sessions d'exécution"""
     try:
@@ -165,7 +167,8 @@ async def get_session_details(session_id: str):
 @router.get("/performance")
 async def get_performance_metrics(
     period_days: int = Query(30, ge=1, le=365, description="Analysis period in days"),
-    exchange: Optional[str] = Query(None, description="Filter by specific exchange")
+    exchange: Optional[str] = Query(None, description="Filter by specific exchange"),
+    user: str = Depends(get_required_user)
 ):
     """Obtenir les métriques de performance sur une période"""
     try:
@@ -223,7 +226,8 @@ async def get_performance_metrics(
 async def get_execution_trends(
     days: int = Query(30, ge=7, le=90, description="Period for trend analysis"),
     interval: str = Query("daily", pattern="^(hourly|daily|weekly)$", description="Aggregation interval"),
-    exchange: Optional[str] = Query(None, description="Filter by exchange")
+    exchange: Optional[str] = Query(None, description="Filter by exchange"),
+    user: str = Depends(get_required_user)
 ):
     """Analyser les tendances d'exécution"""
     try:
@@ -299,7 +303,8 @@ async def get_execution_statistics():
 @router.get("/export/sessions")
 async def export_sessions_csv(
     days: int = Query(30, ge=1, le=365, description="Days of history to export"),
-    exchange: Optional[str] = Query(None, description="Filter by exchange")
+    exchange: Optional[str] = Query(None, description="Filter by exchange"),
+    user: str = Depends(get_required_user)
 ):
     """Exporter l'historique des sessions en CSV"""
     try:
@@ -353,7 +358,8 @@ async def export_sessions_csv(
 @router.post("/record")
 async def record_execution_session(
     session_data: Dict[str, Any],
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    user: str = Depends(get_required_user)
 ):
     """Enregistrer une nouvelle session d'exécution (usage interne)"""
     try:
@@ -472,7 +478,7 @@ async def get_dashboard_data():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cleanup")
-async def cleanup_old_data(background_tasks: BackgroundTasks):
+async def cleanup_old_data(background_tasks: BackgroundTasks, user: str = Depends(get_required_user)):
     """Nettoyer les anciennes données (maintenance)"""
     try:
         background_tasks.add_task(execution_history.cleanup_old_data)

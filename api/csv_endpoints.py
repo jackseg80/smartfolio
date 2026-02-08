@@ -322,7 +322,7 @@ def detect_file_type(filename: str) -> str:
 
 
 @router.get("/csv/cleanup")
-async def cleanup_old_csv_files(keep_days: int = 7):
+async def cleanup_old_csv_files(keep_days: int = 7, user: str = Depends(get_required_user)):
     """Nettoie les anciens fichiers CSV (garde seulement les X derniers jours)"""
     try:
         data_dir = Path("data/raw/")

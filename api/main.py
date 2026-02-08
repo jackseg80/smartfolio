@@ -413,7 +413,7 @@ async def proxy_fred_bitcoin(
         if limit:
             params["limit"] = limit
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, params=params)
 
         if response.status_code == 200:
@@ -481,7 +481,7 @@ async def proxy_fred_dxy(
         if limit:
             params["limit"] = limit
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, params=params)
 
         if response.status_code == 200:
@@ -555,7 +555,7 @@ async def proxy_fred_vix(
         if limit:
             params["limit"] = limit
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, params=params)
 
         if response.status_code == 200:

@@ -159,7 +159,7 @@ class SaxoOAuthClient:
             "client_secret": self.client_secret
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             logger.info(f"🔄 Exchanging code for tokens (env: {self.environment})")
             response = await client.post(
                 self.token_url,
@@ -197,7 +197,7 @@ class SaxoOAuthClient:
             "client_secret": self.client_secret
         }
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=15.0) as client:
             logger.info(f"🔄 Refreshing access token (env: {self.environment})")
             response = await client.post(
                 self.token_url,
