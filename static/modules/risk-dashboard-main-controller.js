@@ -1818,10 +1818,10 @@ function renderRiskDashboard(data) {
         <!-- Top Summary: Collapsible container -->
         <details class="top-collapsible" ${hasSevere ? 'open' : ''}>
           <summary>
-            <div>Vue d’ensemble risques & recommandations</div>
+            <div>Risk Overview & Recommendations</div>
             <div class="summary-right">
-              <span class="badge badge-alerts">⚠️ ${alertCount} alertes${breakdown}</span>
-              <span class="badge badge-recos">💡 ${recos.length} recos</span>
+              <span class="badge badge-alerts">⚠️ ${alertCount} alerts${breakdown}</span>
+              <span class="badge badge-recos">💡 ${recos.length} recs</span>
               <span class="chevron">›</span>
             </div>
           </summary>
@@ -2415,14 +2415,14 @@ function renderBackendUnavailable(message) {
   container.innerHTML = `
         <div style="text-align: center; padding: 3rem; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius-lg); color: var(--theme-text);">
           <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-          <h3 style="color: var(--warning); margin-bottom: 1rem;">Backend de Risque Indisponible</h3>
+          <h3 style="color: var(--warning); margin-bottom: 1rem;">Risk Backend Unavailable</h3>
           <p style="margin-bottom: 1.5rem; color: var(--theme-text-muted);">${message}</p>
           
           <div style="background: var(--theme-bg); padding: 1.5rem; border-radius: var(--radius-md); margin: 1.5rem 0; text-align: left;">
             <h4 style="color: var(--theme-text); margin-bottom: 1rem;">📋 To display real risk data:</h4>
             <ol style="color: var(--theme-text-muted); line-height: 1.6;">
               <li>Start the Python backend server: <code style="background: var(--theme-surface); padding: 0.2rem 0.4rem; border-radius: 3px;">python main.py</code></li>
-              <li>Initialiser le cache d'historique : <code style="background: var(--theme-surface); padding: 0.2rem 0.4rem; border-radius: 3px;">python scripts/init_price_history.py</code></li>
+              <li>Initialize the price history cache: <code style="background: var(--theme-surface); padding: 0.2rem 0.4rem; border-radius: 3px;">python scripts/init_price_history.py</code></li>
               <li>Verify that the API responds at <a href="#" onclick="window.open(window.globalConfig.get('api_base_url') + '/api/risk/dashboard'); return false;" target="_blank" style="color: var(--brand-primary);">the configured API</a></li>
             </ol>
           </div>

@@ -789,7 +789,7 @@ export async function loadOnChainIndicators() {
     // État de chargement (thémé)
     container.innerHTML = `
       <div class="loading" style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-lg);">
-        🔄 Récupération des indicateurs...
+        🔄 Fetching indicators...
       </div>
     `;
 
@@ -894,7 +894,7 @@ export async function loadOnChainIndicators() {
             <span style="font-size: 1.25rem; font-weight: 700; color: ${scoreColor};">${data.score}/100</span>
           </div>
           <div style="font-size:.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">
-            ${data.contributorsCount} indicateur(s) • ${weightDisplay}
+            ${data.contributorsCount} indicator(s) • ${weightDisplay}
           </div>
           <div style="font-size:.75rem; padding: 2px 6px; background: var(--theme-surface-alt); border-radius: 4px; color: var(--theme-text-muted);">
             Consensus: ${consensusText}
@@ -988,11 +988,11 @@ export async function loadOnChainIndicators() {
       <!-- Composite Score Summary -->
       ${card(`
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h4 style="margin:0; color: var(--theme-text);">🔗 Score composite on-chain</h4>
+          <h4 style="margin:0; color: var(--theme-text);">🔗 On-Chain Composite Score</h4>
           <span style="font-size: 2rem; font-weight: 700; color: ${pickScoreColor(composite.score)};">${composite.score}/100</span>
         </div>
         <div style="font-size:.85rem; color: var(--theme-text-muted); margin-top: .5rem;">
-          ${composite.contributors?.length || 0} indicateurs • Confiance: ${Math.round((composite.confidence || 0) * 100)}%
+          ${composite.contributors?.length || 0} indicators • Confidence: ${Math.round((composite.confidence || 0) * 100)}%
         </div>
         ${timestampHtml}
       `, { pad: true })}
@@ -1008,7 +1008,7 @@ export async function loadOnChainIndicators() {
       <!-- Indicators Grid -->
       <details style="margin-top: 1rem;">
         <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem; background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: 6px;">
-          📊 Voir tous les indicateurs (${Object.keys(indicators).filter(k => !k.startsWith('_')).length})
+          📊 View all indicators (${Object.keys(indicators).filter(k => !k.startsWith('_')).length})
         </summary>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
           ${indicatorsGrid}
@@ -1149,7 +1149,7 @@ export async function renderCyclesContentUncached() {
     <!-- Indicateurs On-Chain -->
       <div class="risk-card" style="margin-bottom: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem;">
-        <h3 style="margin: 0;">🔗 Indicateurs On-Chain</h3>
+        <h3 style="margin: 0;">🔗 On-Chain Indicators</h3>
         <div style="display:flex; align-items:center; gap:.75rem;">
           <button onclick="toggleSection('onchain-indicators')" style="background: none; border: 1px solid var(--theme-border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--theme-text); font-size: 0.8rem;" title="Collapse/Expand">
             <span id="onchain-indicators-arrow">▼</span>
@@ -1200,10 +1200,10 @@ export async function renderCyclesContentUncached() {
             ${cycleData.phase?.phase?.replace('_', ' ') || 'UNKNOWN'}
           </div>
           <div style="font-size: 0.95rem; color: var(--theme-text-muted); margin-top: 0.75rem;">
-            Mois ${Math.round(cycleData.months)} post-halving
+            Month ${Math.round(cycleData.months)} post-halving
           </div>
           <div style="font-size: 0.8rem; color: var(--theme-text-muted); margin-top: 0.5rem;">
-            (Dernier halving: 20 avril 2024)
+            (Last halving: April 20, 2024)
           </div>
         </div>
 
