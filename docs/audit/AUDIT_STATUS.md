@@ -1,7 +1,7 @@
 # Statut Global des Audits - SmartFolio
 
-**Date de mise à jour:** 7 Février 2026
-**Dernière revue complète:** Février 2026 (Plan de Sauvetage + Documentation Audit)
+**Date de mise à jour:** 8 Février 2026
+**Dernière revue complète:** 8 Février 2026 (Comprehensive Audit + Security Fixes P0)
 **Prochaine revue:** Mars 2026
 **Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
@@ -11,14 +11,19 @@
 
 | Dimension | Score | Tendance | Statut | Dernier Audit |
 |-----------|-------|----------|--------|---------------|
-| **Sécurité** | 8.5/10 | ⬆️ +42% | 🟢 BON | Nov 2025 |
-| **Performance** | 7.5/10 | ⬆️ +40% fixes | 🟡 EN COURS | Dec 2025 |
-| **Accessibilité** | 92+/100 | ⬆️ +33% | ✅ BON | Feb 2026 |
-| **Dette Technique** | 7.5/10 | ⬆️ -67% TODOs | 🟢 BON | Nov 2025 |
-| **Tests** | 8/10 | ➡️ Stable | 🟢 BON | Nov 2025 |
-| **CI/CD** | 8/10 | ⬆️ +Automation | 🟢 BON | Dec 2025 |
+| **Sécurité** | 7.0/10 | ⬇️ -1.5 | 🟡 EN COURS | **Feb 8, 2026** |
+| **Performance** | 7.5/10 | ➡️ Stable | 🟡 EN COURS | Dec 2025 |
+| **Accessibilité** | ~80/100 | ⬇️ -12 | 🟡 MOYEN | **Feb 8, 2026** |
+| **Dette Technique** | 7.0/10 | ⬇️ -0.5 | 🟡 MOYEN | **Feb 8, 2026** |
+| **Tests** | 5.0/10 | ⬇️ -3.0 | 🔴 FAIBLE | **Feb 8, 2026** |
+| **CI/CD** | 8/10 | ➡️ Stable | 🟢 BON | Dec 2025 |
+| **API Contract** | 4.0/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
+| **Error Handling** | 6.5/10 | 🆕 NEW | 🟡 MOYEN | **Feb 8, 2026** |
+| **Data Integrity** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
+| **Logging** | 5.0/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
+| **Concurrency** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
 
-**Note Globale:** **7.7/10** (vs 7.2 en Nov) = **+7% amélioration**
+**Note Globale:** **6.0/10** (was 7.7) = **-1.7 correction** (metrics were overestimated + 5 new audit domains)
 
 ---
 

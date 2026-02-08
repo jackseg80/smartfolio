@@ -3,7 +3,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
 pydantic-settings>=2.0.0
-python-multipart>=0.0.6  # Required for FastAPI Form data
+python-multipart>=0.0.22  # Required for FastAPI Form data (>=0.0.22 fixes CVE-2026-24486)
 
 # Configuration & Environment
 python-dotenv>=1.0.1
@@ -40,7 +40,7 @@ rq>=1.15.0
 APScheduler==3.10.4  # In-process periodic task scheduling
 
 # File System & Concurrency
-filelock>=3.19.0  # File locking for alert storage
+filelock>=3.20.3  # File locking for alert storage (>=3.20.3 fixes CVE-2026-22701)
 aiofiles>=23.0.0  # Async file I/O for price history cache
 
 # Testing & Browser Automation
