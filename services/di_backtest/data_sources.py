@@ -625,6 +625,9 @@ class HistoricalDataSources:
         """
         Récupère l'historique des prix BTC
 
+        Utilise le cache local (data/price_history/) en priorité.
+        Ne télécharge que si le cache est absent ou insuffisant.
+
         Args:
             days: Nombre de jours d'historique requis (défaut 3000 = ~8 ans)
             force_refresh: Forcer le téléchargement même si cache existant
@@ -632,30 +635,23 @@ class HistoricalDataSources:
         Returns:
             pd.Series avec DatetimeIndex et prix BTC
         """
-        # Vérifier si le cache existant a suffisamment de données
-        existing_history = get_cached_history("BTC", days=None)  # Tout le cache
-
-        need_refresh = force_refresh
-        if existing_history:
-            cached_days = len(existing_history)
-            if cached_days < days * 0.9:  # Moins de 90% des jours demandés
-                logger.info(f"Cache BTC insuffisant: {cached_days} jours < {days} demandés, refresh forcé")
-                need_refresh = True
-            else:
-                logger.info(f"Cache BTC existant: {cached_days} jours (suffisant pour {days} demandés)")
-        else:
-            logger.info("Pas de cache BTC existant, téléchargement initial")
-            need_refresh = True
-
-        # Télécharger si nécessaire
-        success = await download_historical_data("BTC", days=days, force_refresh=need_refresh)
-
-        if not success:
-            logger.error("Échec téléchargement prix BTC")
-            return pd.Series(dtype=float)
-
-        # Récupérer TOUT le cache (sans filtre days qui coupe les anciennes données)
+        # Lire le cache local directement — aucun appel API
         history = get_cached_history("BTC", days=None)
+
+        if history and len(history) >= days * 0.9 and not force_refresh:
+            logger.info(f"Cache BTC local: {len(history)} points (suffisant pour {days})")
+        else:
+            # Cache absent ou insuffisant → télécharger
+            if not history:
+                logger.info("Pas de cache BTC, téléchargement initial...")
+            else:
+                logger.info(f"Cache BTC: {len(history)} pts < {days}, téléchargement...")
+            success = await download_historical_data("BTC", days=days, force_refresh=force_refresh or not history)
+            if not success:
+                logger.error("Échec téléchargement prix BTC")
+                return pd.Series(dtype=float)
+            history = get_cached_history("BTC", days=None)
+
         if not history:
             return pd.Series(dtype=float)
 
@@ -680,6 +676,9 @@ class HistoricalDataSources:
         """
         Récupère les prix de plusieurs actifs
 
+        Utilise le cache local (data/price_history/) en priorité.
+        Ne télécharge que si le cache est absent ou insuffisant.
+
         Args:
             symbols: Liste de symboles (ex: ["BTC", "ETH"])
             days: Nombre de jours d'historique requis
@@ -692,28 +691,29 @@ class HistoricalDataSources:
 
         for symbol in symbols:
             try:
-                # Vérifier si le cache est suffisant
-                existing = get_cached_history(symbol, days=None)
-                need_refresh = force_refresh
+                # Lire le cache local directement — aucun appel API
+                history = get_cached_history(symbol, days=None)
 
-                if existing:
-                    if len(existing) < days * 0.9:
-                        logger.info(f"Cache {symbol} insuffisant: {len(existing)} < {days}, refresh")
-                        need_refresh = True
+                if history and len(history) >= days * 0.9 and not force_refresh:
+                    logger.info(f"Cache {symbol} local: {len(history)} points (suffisant)")
                 else:
-                    need_refresh = True
-
-                success = await download_historical_data(symbol, days=days, force_refresh=need_refresh)
-                if success:
-                    # Récupérer tout le cache
+                    # Cache absent ou insuffisant → télécharger
+                    if not history:
+                        logger.info(f"Pas de cache {symbol}, téléchargement...")
+                    else:
+                        logger.info(f"Cache {symbol}: {len(history)} pts < {days}, téléchargement...")
+                    success = await download_historical_data(symbol, days=days, force_refresh=force_refresh or not history)
+                    if not success:
+                        logger.warning(f"Échec téléchargement {symbol}")
+                        continue
                     history = get_cached_history(symbol, days=None)
-                    if history:
-                        logger.info(f"Historique {symbol}: {len(history)} points")
-                        # Créer un DatetimeIndex pandas
-                        timestamps = [ts for ts, price in history]
-                        prices = [price for ts, price in history]
-                        date_index = pd.to_datetime(timestamps, unit='s')
-                        results[symbol] = pd.Series(prices, index=date_index, name=symbol)
+
+                if history:
+                    logger.info(f"Historique {symbol}: {len(history)} points")
+                    timestamps = [ts for ts, price in history]
+                    prices = [price for ts, price in history]
+                    date_index = pd.to_datetime(timestamps, unit='s')
+                    results[symbol] = pd.Series(prices, index=date_index, name=symbol)
             except Exception as e:
                 logger.warning(f"Erreur récupération {symbol}: {e}")
                 continue

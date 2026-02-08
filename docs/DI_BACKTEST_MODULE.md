@@ -333,7 +333,7 @@ Le DI backtest utilise des **proxies** car les donnees de production ne sont pas
 |-----------|----------------|-------------|
 | OnChain | ML orchestrator, APIs live | Proxy prix : 200 DMA + RSI + momentum 90j |
 | Risk | Metriques live multi-sources | Proxy prix : vol 90j + DD 90j |
-| Sentiment | APIs sentiment temps reel | F&G API (365j max) + proxy vol/momentum |
+| Sentiment | APIs sentiment temps reel | F&G API (365j max) + proxy V2 (vol 30j, mom 14j, RSI 14j, 52w high) |
 | Cycle | `phase_engine` (ML-based) | Sigmoide deterministe (halvings) |
 | Macro | `macro_stress_service` (-15 binaire) | FRED VIX/DXY |
 | Phase Factor | ML per-template | Base sur cycle_score (V1) ou raw_score (V2) |
@@ -388,7 +388,14 @@ Corrige la sigmoide uniquement quand le prix contredit fortement le modele :
 
 Pas de blend permanent (evite double-comptage du momentum deja dans l'onchain proxy).
 
-**5. Phase factor V2 — Continu** (`phase_mode="blended"`)
+**5. Sentiment proxy V2** (`normalization="adaptive"`)
+
+- 4 composants (vs 2 en V1): vol 30j inversee (25%), momentum 14j (25%), RSI 14j (25%), distance 52-week high (25%)
+- Vol, momentum et distance normalises via expanding percentile. RSI inchange (deja 0-100)
+- Automatiquement utilise quand `normalization="adaptive"` (V2 default)
+- **KS results**: degradation sur 5/6 expanding windows (+0.038 a +0.250 KS shift). Le proxy 4-composants est plus regime-dependant que le V1 simple. Impact negligeable sur le DI (sentiment = 10% poids)
+
+**6. Phase factor V2 — Continu** (`phase_mode="blended"`)
 
 ```text
 factor = 0.85 + 0.20 * (raw_score / 100)
@@ -465,7 +472,7 @@ Toutes les strategies sont **ROBUST** (retention > 80%). L'overfitting initial (
 | onchain_score | 3/6 | +0.12 |
 | decision_index | 4/6 | +0.15 |
 | cycle_score | 2/6 | +0.11 (mixte) |
-| sentiment_score | 0/6 | 0 (non modifie) |
+| sentiment_score | 1/6 | -0.10 (V2 plus regime-dependant) |
 
 **Rank stability:** Le champion IS reste top-3 OOS dans 3/5 windows (V1 et V2).
 
@@ -492,7 +499,7 @@ SMA150+AsymA reste disponible pour les profils prudents mais perd de la rank sta
 ## Limitations Connues
 
 1. **OnChain Score**: Proxy base sur les prix (pas de donnees on-chain reelles)
-2. **Sentiment**: Historique Fear & Greed limite a ~365 jours — proxy vol/momentum au-dela
+2. **Sentiment**: Historique Fear & Greed limite a ~365 jours — proxy V2 (4 composants) au-dela. Le proxy V2 a un KS shift plus eleve que V1 (regime-dependant) mais impact negligeable (10% poids)
 3. **Granularite**: Donnees journalieres uniquement
 4. **ETH avant 2017**: Donnees ETH limitees (Binance listing 2017), backtests multi-asset demarrent a 2017
 5. **Bear 2022**: Sharpe -1.3 pour toutes les configs. Tail risks exogenes (Luna/FTX) non-predictibles par proxy — normal, le DI production a ML signals + governance manuelle
