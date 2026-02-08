@@ -118,6 +118,17 @@
       "acquisition_date": null,
       "notes": null,
       "metadata": {}
+    },
+    {
+      "id": "7a7f0e25-5186-4c42-92d2-cb708630e27f",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
     }
   ]
 }
