@@ -71,9 +71,22 @@ class ReplicaParamsModel(BaseModel):
 
 class RotationParamsModel(BaseModel):
     """Parameters for Cycle Rotation strategy (BTC/ETH/Stables)"""
-    smoothing_alpha: float = Field(0.15, ge=0.0, le=1.0, description="EMA smoothing factor (0=no smoothing, 1=instant)")
+    # Preset: maps to predefined allocation profiles
+    preset: str = Field("conservative", description="Allocation preset: conservative, default, aggressive")
+
+    # Smoothing
+    smoothing_alpha: float = Field(0.30, ge=0.0, le=1.0, description="EMA smoothing factor (0=no smoothing, 1=instant)")
+
+    # DI modulation (off by default — backtests show DI is not predictive)
     enable_di_modulation: bool = Field(False, description="Enable DI modulation of phase targets")
-    di_mod_range: float = Field(0.10, ge=0.0, le=0.30, description="DI modulation range (±%)")
+    di_mod_range: float = Field(0.10, ge=0.0, le=0.30, description="DI modulation range")
+
+    # Drawdown circuit breaker
+    enable_drawdown_breaker: bool = Field(False, description="Enable drawdown circuit breaker")
+    dd_threshold_1: float = Field(-0.10, le=0.0, description="First DD threshold (moderate cut)")
+    dd_threshold_2: float = Field(-0.20, le=0.0, description="Second DD threshold (floor to bear)")
+    dd_multiplier: float = Field(0.50, ge=0.0, le=1.0, description="Risky multiplier at threshold_1")
+    dd_ramp_up: bool = Field(True, description="Gradual recovery after DD cut")
 
 
 class DIBacktestRequest(BaseModel):
@@ -361,10 +374,31 @@ async def run_di_backtest(
         if request.strategy == "di_cycle_rotation" and request.rotation_params:
             from services.di_backtest.trading_strategies import RotationParams
             rp = request.rotation_params
+
+            # Map preset to allocation profiles
+            preset_allocs = {
+                "conservative": dict(
+                    alloc_bear=(0.10, 0.03, 0.87),
+                    alloc_peak=(0.15, 0.15, 0.70),
+                    alloc_distribution=(0.15, 0.05, 0.80),
+                ),
+                "aggressive": dict(
+                    alloc_peak=(0.30, 0.20, 0.50),
+                    alloc_distribution=(0.25, 0.15, 0.60),
+                ),
+            }
+            alloc_kwargs = preset_allocs.get(rp.preset, {})
+
             strategy.params = RotationParams(
+                **alloc_kwargs,
                 smoothing_alpha=rp.smoothing_alpha,
                 enable_di_modulation=rp.enable_di_modulation,
                 di_mod_range=rp.di_mod_range,
+                enable_drawdown_breaker=rp.enable_drawdown_breaker,
+                dd_threshold_1=rp.dd_threshold_1,
+                dd_threshold_2=rp.dd_threshold_2,
+                dd_multiplier=rp.dd_multiplier,
+                dd_ramp_up=rp.dd_ramp_up,
             )
 
         strategy.set_di_series(di_data.df['decision_index'])
@@ -725,6 +759,20 @@ STRATEGY_DETAILS = {
         "pros": ["Signaux clairs", "Évite l'overtrading", "Confirmation intégrée"],
         "cons": ["Peut rater des opportunités", "Binaire (all-in ou not)", "Holding forcé"],
         "best_for": "Trading actif avec règles strictes"
+    },
+    "di_trend_gate": {
+        "name": "Trend Gate (SMA200)",
+        "short": "SMA(200) trend gate with optional DD breaker",
+        "description": "Uses BTC SMA(200) as a trend gate: risk-on when price is above the 200-day moving average, risk-off below. Includes optional anti-whipsaw filter and drawdown circuit breaker for crash protection.",
+        "rules": [
+            "BTC > SMA(200) → risk-on: 80% risky allocation",
+            "BTC < SMA(200) → risk-off: 20% risky allocation",
+            "Anti-whipsaw: require N consecutive days on same side",
+            "Optional drawdown breaker: cut allocation at -15%/-25% DD"
+        ],
+        "pros": ["Simple directional signal", "Clear regime detection", "Good Sharpe ratio (0.95+)"],
+        "cons": ["2-asset only (BTC + Stables)", "SMA lag during fast crashes", "Whipsaw in ranging markets"],
+        "best_for": "Directional trend-following with crash protection"
     },
     "di_smartfolio_replica": {
         "name": "SmartFolio Replica",

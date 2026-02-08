@@ -1137,11 +1137,26 @@ class RotationParams:
 
     # Smoothing: EMA on target weights (alpha=0.15 ≈ 7-day half-life)
     smoothing_alpha: float = 0.15  # 0 = no smoothing, 1 = instant switch
+    # Asymmetric alpha: separate speeds for entering bull vs bear
+    # When set, overrides smoothing_alpha directionally
+    smoothing_alpha_bullish: Optional[float] = None  # Slow into bull (e.g. 0.15)
+    smoothing_alpha_bearish: Optional[float] = None  # Fast into bear (e.g. 0.50)
+
+    # SMA safety gate: force bear when BTC < SMA
+    enable_sma_gate: bool = False
+    sma_period: int = 200
 
     # DI modulation: scale risky within ±range of phase target
     # Off by default — backtests show DI is not predictive enough
     enable_di_modulation: bool = False
     di_mod_range: float = 0.10  # ±10% around phase target
+
+    # Drawdown circuit breaker (same logic as TrendGate)
+    enable_drawdown_breaker: bool = False
+    dd_threshold_1: float = -0.15    # First drawdown threshold → cut risky
+    dd_threshold_2: float = -0.25    # Second threshold → floor to bear allocation
+    dd_multiplier: float = 0.50      # Risky multiplier at threshold_1
+    dd_ramp_up: bool = True          # Gradual recovery after DD cut
 
     # Floors (from production allocation-engine.js)
     btc_floor: float = 0.10
@@ -1224,6 +1239,19 @@ class DICycleRotationStrategy(PortfolioStrategy):
 
         # 1. Detect phase
         phase = self._detect_phase(cycle_score, cycle_direction)
+
+        # 1b. SMA safety gate: override to bear if BTC < SMA
+        if self.params.enable_sma_gate:
+            risky_assets = [c for c in price_data.columns if c.upper() not in
+                            ('USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS')]
+            if risky_assets:
+                btc_prices = price_data[risky_assets[0]]
+                n = len(btc_prices)
+                if n >= self.params.sma_period:
+                    sma = btc_prices.rolling(window=self.params.sma_period).mean().iloc[-1]
+                    if btc_prices.iloc[-1] < sma:
+                        phase = "bear"
+
         btc_target, eth_target, stables_target = self._phase_targets(phase)
 
         # 2. DI modulation (scale risky within ±range)
@@ -1240,18 +1268,59 @@ class DICycleRotationStrategy(PortfolioStrategy):
         eth_target /= total
         stables_target /= total
 
-        # 4. Apply smoothing (EMA)
+        # 4. Apply smoothing (EMA) with optional asymmetric alpha
         if self._smoothed_weights is None:
             self._smoothed_weights = {
                 "BTC": btc_target, "ETH": eth_target, "STABLES": stables_target
             }
         else:
-            alpha = self.params.smoothing_alpha
+            # Determine direction: moving toward more stables = bearish transition
+            p = self.params
+            target_risky = btc_target + eth_target
+            current_risky = self._smoothed_weights["BTC"] + self._smoothed_weights["ETH"]
+            moving_to_bear = target_risky < current_risky
+
+            if p.smoothing_alpha_bearish is not None and p.smoothing_alpha_bullish is not None:
+                alpha = p.smoothing_alpha_bearish if moving_to_bear else p.smoothing_alpha_bullish
+            else:
+                alpha = p.smoothing_alpha
+
             self._smoothed_weights["BTC"] += alpha * (btc_target - self._smoothed_weights["BTC"])
             self._smoothed_weights["ETH"] += alpha * (eth_target - self._smoothed_weights["ETH"])
             self._smoothed_weights["STABLES"] += alpha * (stables_target - self._smoothed_weights["STABLES"])
 
-        # 5. Enforce floors
+        # 5. Drawdown circuit breaker
+        if self.params.enable_drawdown_breaker:
+            current_dd = kwargs.get('portfolio_drawdown', 0.0)
+            p = self.params
+            if current_dd < p.dd_threshold_2:
+                # Severe drawdown → snap to bear allocation
+                bear = p.alloc_bear
+                self._smoothed_weights["BTC"] = bear[0]
+                self._smoothed_weights["ETH"] = bear[1]
+                self._smoothed_weights["STABLES"] = bear[2]
+            elif current_dd < p.dd_threshold_1:
+                # Moderate drawdown → scale down risky by multiplier
+                risky_total = self._smoothed_weights["BTC"] + self._smoothed_weights["ETH"]
+                new_risky = risky_total * p.dd_multiplier
+                if risky_total > 0:
+                    scale = new_risky / risky_total
+                    self._smoothed_weights["BTC"] *= scale
+                    self._smoothed_weights["ETH"] *= scale
+                    self._smoothed_weights["STABLES"] = 1.0 - new_risky
+            elif current_dd < 0 and p.dd_ramp_up:
+                # Recovery zone: linear ramp from dd_multiplier to 1.0
+                recovery_pct = (current_dd - p.dd_threshold_1) / (0 - p.dd_threshold_1)
+                ramp = p.dd_multiplier + recovery_pct * (1.0 - p.dd_multiplier)
+                risky_total = self._smoothed_weights["BTC"] + self._smoothed_weights["ETH"]
+                new_risky = risky_total * ramp
+                if risky_total > 0:
+                    scale = new_risky / risky_total
+                    self._smoothed_weights["BTC"] *= scale
+                    self._smoothed_weights["ETH"] *= scale
+                    self._smoothed_weights["STABLES"] = 1.0 - new_risky
+
+        # 6. Enforce floors
         w = self._smoothed_weights.copy()
         w["BTC"] = max(self.params.btc_floor, w["BTC"])
         w["ETH"] = max(self.params.eth_floor, w["ETH"])
@@ -1260,7 +1329,7 @@ class DICycleRotationStrategy(PortfolioStrategy):
         # Re-normalize
         total = sum(w.values())
 
-        # 6. Map to price_data columns
+        # 7. Map to price_data columns
         assets = price_data.columns.tolist()
         weights = pd.Series(0.0, index=assets)
 

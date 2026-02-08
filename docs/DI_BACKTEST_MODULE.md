@@ -321,18 +321,188 @@ print(f"Sharpe Ratio: {result.sharpe_ratio:.2f}")
 print(f"Max Drawdown: {result.max_drawdown:.1%}")
 ```
 
+## DI Calculator V2 — Proxies Adaptatifs
+
+> Ajout: 8 Fev 2026
+
+### Contexte : DI Production vs DI Backtest
+
+Le DI backtest utilise des **proxies** car les donnees de production ne sont pas historiquement disponibles :
+
+| Composant | **Production** | **Backtest** |
+|-----------|----------------|-------------|
+| OnChain | ML orchestrator, APIs live | Proxy prix : 200 DMA + RSI + momentum 90j |
+| Risk | Metriques live multi-sources | Proxy prix : vol 90j + DD 90j |
+| Sentiment | APIs sentiment temps reel | F&G API (365j max) + proxy vol/momentum |
+| Cycle | `phase_engine` (ML-based) | Sigmoide deterministe (halvings) |
+| Macro | `macro_stress_service` (-15 binaire) | FRED VIX/DXY |
+| Phase Factor | ML per-template | Base sur cycle_score (V1) ou raw_score (V2) |
+
+Le V2 calculator rend ces proxies plus realistes sans changer la formule DI.
+
+### DICalculatorConfig
+
+```python
+from services.di_backtest.historical_di_calculator import DICalculatorConfig
+
+config = DICalculatorConfig(
+    normalization="adaptive",   # "fixed" (V1 compat) | "adaptive" (expanding percentile)
+    macro_mode="graduated",     # "binary" (-15 ou 0) | "graduated" (additive, lineaire)
+    phase_mode="blended",       # "cycle" (V1, base sur cycle_score) | "blended" (continu, base sur raw_score)
+    cycle_mode="corrected",     # "deterministic" (V1 sigmoide pure) | "corrected" (correction conditionnelle)
+    cycle_correction_pts=10,    # Points de correction quand prix contredit le modele
+)
+```
+
+### Composants V2 modifies
+
+**1. OnChain proxy — Expanding percentile** (`normalization="adaptive"`)
+
+- DMA distance et momentum 90j normalises via `expanding(min_periods=N).rank(pct=True) * 100`
+- RSI inchange (deja auto-normalise 0-100 par construction)
+- Warm-up fallback a normalisation fixe pour les premiers jours
+- Aucun look-ahead : chaque jour ne voit que l'historique passe
+
+**2. Risk score — Expanding percentile inverse** (`normalization="adaptive"`)
+
+- Volatilite : `(-vol).expanding().rank(pct=True) * 100` (haut rank = basse vol = robuste)
+- Drawdown : `drawdown.expanding().rank(pct=True) * 100` (haut rank = petit DD = robuste)
+- Semantique preservee : high score = robust (pas d'inversion 100-x)
+
+**3. Macro penalty V2 — Graduee additive** (`macro_mode="graduated"`)
+
+```text
+VIX penalty : 0 (VIX <= 20) -> -10 (VIX >= 45), lineaire
+DXY penalty : 0 (change <= 2%) -> -8 (change >= 10%), lineaire
+Total = VIX + DXY, cappe a -15
+```
+
+Exemple : VIX=35 -> ~-6pts (au lieu de -15 en V1). VIX=35 + DXY+5% -> ~-10pts.
+
+**4. Cycle score — Correcteur conditionnel** (`cycle_mode="corrected"`)
+
+Corrige la sigmoide uniquement quand le prix contredit fortement le modele :
+
+- Cycle > 85 ET momentum 6m < -20% -> correction -10pts (sigmoide trop optimiste)
+- Cycle < 40 ET momentum 6m > +30% -> correction +10pts (sigmoide trop pessimiste)
+
+Pas de blend permanent (evite double-comptage du momentum deja dans l'onchain proxy).
+
+**5. Phase factor V2 — Continu** (`phase_mode="blended"`)
+
+```text
+factor = 0.85 + 0.20 * (raw_score / 100)
+```
+
+Remplace les 3 paliers discrets (0.85 / 1.0 / 1.05) par un facteur continu de 0.85 a 1.05, base sur le raw_score blended (plus proche du phase_engine ML en production).
+
+### Utilisation V2
+
+```python
+from services.di_backtest.historical_di_calculator import (
+    HistoricalDICalculator, DICalculatorConfig,
+)
+
+calculator = HistoricalDICalculator()
+
+# V2 (defaults adaptatifs)
+di_data = await calculator.calculate_historical_di_v2(
+    user_id="jack",
+    start_date="2017-01-01",
+    end_date="2025-12-31",
+    config=DICalculatorConfig(),  # Tous les defaults V2
+)
+
+# V1 (backward compat, inchange)
+di_data_v1 = await calculator.calculate_historical_di(
+    user_id="jack",
+    start_date="2017-01-01",
+    end_date="2025-12-31",
+)
+```
+
+## Walk-Forward Validation
+
+### Scripts d'analyse
+
+| Script | Description |
+|--------|-------------|
+| `scripts/analysis/diagnose_di_components.py` | Diagnostic IS vs OOS (KS tests, correlations, distributions) |
+| `scripts/analysis/walk_forward_rotation.py` | Walk-forward V1 : split fixe IS/OOS |
+| `scripts/analysis/walk_forward_rotation_v2.py` | Walk-forward V2 : expanding multi-window, V1 vs V2 |
+| `scripts/analysis/compare_rotation_v3.py` | Comparaison detaillee des configs rotation |
+
+### Expanding Walk-Forward (V2)
+
+Le split fixe (IS 2017-2021, OOS 2021-2025) est biaise : le bear 2022 pese ~50% du OOS, ecrasant la retention. L'expanding walk-forward dilue ce biais :
+
+| Train | Test | Window |
+|-------|------|--------|
+| 2017-2019 | 2020 | OOS-1 |
+| 2017-2020 | 2021 | OOS-2 |
+| 2017-2021 | 2022 | OOS-3 |
+| 2017-2022 | 2023 | OOS-4 |
+| 2017-2023 | 2024-2025 | OOS-5 |
+
+### Resultats Walk-Forward (8 Fevrier 2026)
+
+**Sharpe Retention moyenne (expanding, 5 windows):**
+
+| Config | V1 Calculator | V2 Calculator |
+|--------|--------------|--------------|
+| **Cons+AsymA** | 155% | 153% |
+| **Cons+Fast** | 154% | 153% |
+| **Cons+SMA150+AsymA** | 141% | 140% |
+| **Replica V2.1** | 154% | 111% |
+
+Toutes les strategies sont **ROBUST** (retention > 80%). L'overfitting initial (-3% a 18% sur split fixe) etait un artefact du regime 2022, pas de la calibration.
+
+**KS Distribution Shift (V2 vs V1, amelioration):**
+
+| Composant | Fenetres ameliorees | Gain moyen |
+|-----------|--------------------|-----------:|
+| risk_score | 4/6 | +0.15 |
+| onchain_score | 3/6 | +0.12 |
+| decision_index | 4/6 | +0.15 |
+| cycle_score | 2/6 | +0.11 (mixte) |
+| sentiment_score | 0/6 | 0 (non modifie) |
+
+**Rank stability:** Le champion IS reste top-3 OOS dans 3/5 windows (V1 et V2).
+
+### Diagnostic DI — Findings cles
+
+Resultats de `diagnose_di_components.py` sur IS (2017-2021) vs OOS (2021-2025) :
+
+- **risk_score** : Plus gros distribution shift (KS=0.420), mais correlation amelioree OOS
+- **cycle_score** : Correlation INVERSEE (IS: +0.144, OOS: -0.178) — le smoking gun. La sigmoide deterministe donne des signaux contre-productifs en OOS
+- **decision_index** : Correlation passe de +0.148 a -0.096 (entraine par le cycle)
+- **Macro penalty** : MOINS frequente OOS (6.0%) que IS (8.3%), contrairement a l'intuition
+- **Phase** : Bearish 61.4% OOS (pas 80% comme suppose initialement)
+
+### Strategie recommandee
+
+**Cons+AsymA** (asymetrique alpha bull=0.15, bear=0.50) est la config par defaut recommandee :
+
+- Meilleure retention (153%)
+- Bonne rank stability
+- L'asymetrie d'alpha (entree lente, sortie rapide) est structurellement robuste
+
+SMA150+AsymA reste disponible pour les profils prudents mais perd de la rank stability sur les windows recentes (2023-2025).
+
 ## Limitations Connues
 
-1. **OnChain Score**: Proxy basé sur les prix (pas de données on-chain réelles)
-2. **Sentiment**: Historique Fear & Greed limité à ~365 jours
-3. **Granularité**: Données journalières uniquement
-4. **ETH avant 2017**: Données ETH limitées (Binance listing 2017), backtests multi-asset démarrent à 2017
+1. **OnChain Score**: Proxy base sur les prix (pas de donnees on-chain reelles)
+2. **Sentiment**: Historique Fear & Greed limite a ~365 jours — proxy vol/momentum au-dela
+3. **Granularite**: Donnees journalieres uniquement
+4. **ETH avant 2017**: Donnees ETH limitees (Binance listing 2017), backtests multi-asset demarrent a 2017
+5. **Bear 2022**: Sharpe -1.3 pour toutes les configs. Tail risks exogenes (Luna/FTX) non-predictibles par proxy — normal, le DI production a ML signals + governance manuelle
+6. **Cycle correction V2**: Legere degradation sur 2024-25 (-0.07 KS) due au changement structurel du cycle BTC (ETF spot, adoption institutionnelle)
 
 ## Performance Typique (Full History 2017-2025)
 
-Comparaison des meilleures stratégies sur Full History (weekly rebalance, $10k initial):
+Comparaison des meilleures strategies sur Full History (weekly rebalance, $10k initial):
 
-| Stratégie | Sharpe | MaxDD | Return | Avg Risky |
+| Strategie | Sharpe | MaxDD | Return | Avg Risky |
 |-----------|--------|-------|--------|-----------|
 | Rot_conservative (3-asset) | **1.042** | **-32.6%** | 612.6% | 29.7% |
 | Rot_default (3-asset) | 0.965 | -41.3% | 692.0% | 35.5% |
@@ -344,11 +514,12 @@ Comparaison des meilleures stratégies sur Full History (weekly rebalance, $10k 
 
 - Cycle Rotation conservative offre le meilleur Sharpe (1.042) et la meilleure protection en bear (-32.6% MaxDD)
 - TrendGate no whipsaw offre le meilleur return absolu mais avec plus de risque
-- DI modulation n'apporte pas de valeur ajoutée pour l'allocation (désactivé par défaut)
+- DI modulation n'apporte pas de valeur ajoutee pour l'allocation (desactivee par defaut)
 - Smoothing rapide (alpha 0.30) ou instant (1.0) performent mieux que le smoothing lent
+- **Cons+AsymA** est le meilleur compromis retention/performance pour le walk-forward
 
 ## Voir Aussi
 
-- [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) - Formule complète du DI
-- [RISK_SEMANTICS.md](RISK_SEMANTICS.md) - Sémantique du Risk Score
+- [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) - Formule complete du DI
+- [RISK_SEMANTICS.md](RISK_SEMANTICS.md) - Semantique du Risk Score
 - [architecture.md](architecture.md) - Architecture globale SmartFolio

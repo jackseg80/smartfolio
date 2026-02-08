@@ -636,6 +636,63 @@
     .result-card .chart-container {
       position: relative;
     }
+
+    /* ===== Rotation Params ===== */
+    .rotation-presets {
+      margin-bottom: var(--space-md);
+    }
+
+    .preset-buttons {
+      display: flex;
+      gap: var(--space-xs);
+      margin-top: var(--space-xs);
+    }
+
+    .rotation-preset-btn {
+      padding: 0.4rem 1rem;
+      font-size: 0.85rem;
+      background: var(--theme-surface);
+      color: var(--theme-text);
+      border: 1px solid var(--theme-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .rotation-preset-btn:hover {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .rotation-preset-btn.active {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    .preset-detail {
+      margin-top: var(--space-xs);
+      font-size: 0.78rem;
+      color: var(--theme-text-muted);
+      font-style: italic;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--theme-text-muted);
+      margin-top: -2px;
+    }
+
+    .dd-breaker-section {
+      margin-top: var(--space-md);
+    }
+
+    .dd-breaker-params {
+      margin-top: var(--space-sm);
+      padding-left: var(--space-md);
+    }
   </style>
 </head>
 
@@ -664,8 +721,10 @@
         <div class="control-group">
           <label for="strategy">Strategy</label>
           <select id="strategy">
-            <option value="di_smartfolio_replica">SmartFolio Replica (Recommended)</option>
-            <option value="di_threshold">DI Threshold (Seuils)</option>
+            <option value="di_cycle_rotation">Cycle Rotation (Recommended)</option>
+            <option value="di_smartfolio_replica">SmartFolio Replica</option>
+            <option value="di_trend_gate">Trend Gate (SMA200)</option>
+            <option value="di_threshold">DI Threshold</option>
             <option value="di_momentum">DI Momentum</option>
             <option value="di_contrarian">DI Contrarian</option>
             <option value="di_risk_parity">DI Risk Parity</option>
@@ -707,11 +766,11 @@
       <!-- Strategy Description -->
       <div class="strategy-info" id="strategyInfo">
         <div class="strategy-info-header">
-          <span class="strategy-info-title" id="strategyTitle">SmartFolio Replica</span>
+          <span class="strategy-info-title" id="strategyTitle">Cycle Rotation</span>
           <button class="strategy-info-toggle" id="strategyToggle">Show details</button>
         </div>
         <p class="strategy-description" id="strategyDescription">
-          Replicates the actual logic of SmartFolio's Allocation Engine V2.
+          3-asset rotation (BTC/ETH/Stables) across 5 Bitcoin cycle phases. Best risk-adjusted returns.
         </p>
         <div class="strategy-rules" id="strategyDetails">
           <h4>Rules</h4>
@@ -740,6 +799,77 @@
         <button class="preset-btn" data-start="2021-11-15" data-end="2022-11-15">Bear 2022</button>
         <button class="preset-btn" data-start="2022-11-15" data-end="2024-04-01">Recovery 23-24</button>
         <button class="preset-btn" data-start="2017-01-01" data-end="">Full History</button>
+      </div>
+
+      <!-- Advanced Parameters (Cycle Rotation) -->
+      <div class="advanced-params-panel" id="rotationParamsPanel" style="display: none;">
+        <div class="advanced-params-header" id="rotationParamsToggle">
+          <h4>Rotation Parameters</h4>
+          <span class="toggle-icon" id="rotationParamsIcon">&#9660;</span>
+        </div>
+        <div class="advanced-params-body" id="rotationParamsBody">
+          <!-- Presets -->
+          <div class="rotation-presets">
+            <label style="font-size: 0.85rem; font-weight: 500; color: var(--theme-text-muted);">Allocation Profile</label>
+            <div class="preset-buttons">
+              <button class="rotation-preset-btn active" data-preset="conservative">Conservative</button>
+              <button class="rotation-preset-btn" data-preset="default">Default</button>
+              <button class="rotation-preset-btn" data-preset="aggressive">Aggressive</button>
+            </div>
+            <div class="preset-detail" id="presetDetail">
+              Bear: 10/3/87 &middot; Peak: 15/15/70 &middot; Distribution: 15/5/80
+            </div>
+          </div>
+
+          <!-- Smoothing Alpha -->
+          <div class="param-sliders">
+            <div class="param-slider">
+              <label>
+                <span>Smoothing Alpha</span>
+                <span class="param-value" id="smoothingAlphaValue">0.30</span>
+              </label>
+              <input type="range" id="smoothingAlpha" min="0.00" max="1.00" step="0.05" value="0.30">
+              <div class="slider-labels">
+                <span>Slow</span>
+                <span>Fast</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drawdown Circuit Breaker -->
+          <div class="dd-breaker-section">
+            <label class="layer-toggle">
+              <input type="checkbox" id="enableDDBreaker">
+              <span>Drawdown Circuit Breaker</span>
+            </label>
+            <div class="dd-breaker-params" id="ddBreakerParams" style="display: none;">
+              <div class="param-sliders">
+                <div class="param-slider">
+                  <label>
+                    <span>Threshold 1 (moderate cut)</span>
+                    <span class="param-value" id="ddThreshold1Value">-10%</span>
+                  </label>
+                  <input type="range" id="ddThreshold1" min="-0.30" max="-0.05" step="0.05" value="-0.10">
+                </div>
+                <div class="param-slider">
+                  <label>
+                    <span>Threshold 2 (floor to bear)</span>
+                    <span class="param-value" id="ddThreshold2Value">-20%</span>
+                  </label>
+                  <input type="range" id="ddThreshold2" min="-0.40" max="-0.10" step="0.05" value="-0.20">
+                </div>
+              </div>
+              <label class="layer-toggle">
+                <input type="checkbox" id="ddRampUp" checked>
+                <span>Gradual recovery (ramp-up)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="advanced-params-footer">
+            <button class="btn-reset" id="resetRotationParams">Reset to Defaults</button>
+          </div>
+        </div>
       </div>
 
       <!-- Advanced Parameters (SmartFolio Replica only) -->
@@ -1136,8 +1266,9 @@
       // Initialize chart modal listeners
       initChartModalListeners();
 
-      // Advanced Parameters panel
+      // Advanced Parameters panels
       initAdvancedParams();
+      initRotationParams();
     });
 
     async function loadStrategyDescriptions() {
@@ -1157,10 +1288,14 @@
     }
 
     function updateStrategyDescription(strategyKey) {
-      // Show/hide advanced params panel based on strategy
+      // Show/hide advanced params panels based on strategy
       const advPanel = document.getElementById('advancedParamsPanel');
+      const rotPanel = document.getElementById('rotationParamsPanel');
       if (advPanel) {
         advPanel.style.display = strategyKey === 'di_smartfolio_replica' ? 'block' : 'none';
+      }
+      if (rotPanel) {
+        rotPanel.style.display = strategyKey === 'di_cycle_rotation' ? 'block' : 'none';
       }
 
       const details = strategyDetails[strategyKey];
@@ -1224,6 +1359,14 @@
           description: 'Pure trading signals. BUY when DI crosses 40 upward, SELL when it crosses 60 downward.'
         }
       };
+      fallbacks['di_cycle_rotation'] = {
+        name: 'Cycle Rotation',
+        description: '3-asset rotation (BTC/ETH/Stables) across 5 Bitcoin cycle phases. Uses cycle_score + direction to detect accumulation, bull building, peak, distribution, and bear phases. Best risk-adjusted returns (Sharpe >1.0).'
+      };
+      fallbacks['di_trend_gate'] = {
+        name: 'Trend Gate (SMA200)',
+        description: 'SMA(200) trend gate: risk-on when BTC > SMA200, risk-off below. Optional anti-whipsaw filter and drawdown circuit breaker.'
+      };
       return fallbacks[key] || { name: key, description: 'Strategy based on the Decision Index' };
     }
 
@@ -1257,7 +1400,8 @@
             initial_capital: initialCapital,
             rebalance_frequency: rebalanceFreq,
             use_macro_penalty: true,
-            replica_params: getReplicaParams()
+            replica_params: getReplicaParams(),
+            rotation_params: getRotationParams()
           })
         });
 
@@ -1532,6 +1676,99 @@
       return annotations;
     }
 
+    /**
+     * Detect cycle phase from score + direction (mirrors DICycleRotationStrategy._detect_phase)
+     */
+    function detectCyclePhase(cycleScore, cycleDirection) {
+      const dir = cycleDirection ?? 0;
+      if (cycleScore >= 90) return 'peak';
+      if (cycleScore >= 70) return dir >= 0 ? 'bull_building' : 'distribution';
+      return dir >= 0 ? 'accumulation' : 'bear';
+    }
+
+    const PHASE_COLORS = {
+      accumulation: 'rgba(59, 130, 246, 0.12)',   // blue
+      bull_building: 'rgba(16, 185, 129, 0.12)',   // green
+      peak: 'rgba(245, 158, 11, 0.12)',            // amber
+      distribution: 'rgba(249, 115, 22, 0.12)',    // orange
+      bear: 'rgba(239, 68, 68, 0.12)',             // red
+    };
+
+    const PHASE_LABELS = {
+      accumulation: 'Accum',
+      bull_building: 'Bull',
+      peak: 'Peak',
+      distribution: 'Distrib',
+      bear: 'Bear',
+    };
+
+    /**
+     * Compute phase background annotations from DI history for the allocation chart.
+     * Only shown when Cycle Rotation strategy is selected.
+     */
+    function computePhaseAnnotations(diHistory) {
+      if (!diHistory || diHistory.length < 2) return {};
+      const strategy = document.getElementById('strategy').value;
+      if (strategy !== 'di_cycle_rotation') return {};
+
+      const annotations = {};
+      let currentPhase = null;
+      let phaseStart = null;
+      let count = 0;
+
+      for (let i = 0; i < diHistory.length; i++) {
+        const p = diHistory[i];
+        const phase = detectCyclePhase(p.cycle_score, p.cycle_direction);
+
+        if (phase !== currentPhase) {
+          // Close previous phase
+          if (currentPhase && phaseStart) {
+            annotations[`phase_${count}`] = {
+              type: 'box',
+              xMin: phaseStart,
+              xMax: p.date,
+              backgroundColor: PHASE_COLORS[currentPhase],
+              borderWidth: 0,
+              label: {
+                display: count === 0 || currentPhase !== detectCyclePhase(
+                  diHistory[Math.max(0, i - 20)]?.cycle_score ?? 50,
+                  diHistory[Math.max(0, i - 20)]?.cycle_direction
+                ),
+                content: PHASE_LABELS[currentPhase],
+                position: { x: 'center', y: 'start' },
+                font: { size: 9, weight: 'normal' },
+                color: 'rgba(128, 128, 128, 0.6)',
+              }
+            };
+            count++;
+          }
+          currentPhase = phase;
+          phaseStart = p.date;
+        }
+      }
+
+      // Close last phase
+      if (currentPhase && phaseStart) {
+        const lastDate = diHistory[diHistory.length - 1].date;
+        annotations[`phase_${count}`] = {
+          type: 'box',
+          xMin: phaseStart,
+          xMax: lastDate,
+          backgroundColor: PHASE_COLORS[currentPhase],
+          borderWidth: 0,
+          label: {
+            display: true,
+            content: PHASE_LABELS[currentPhase],
+            position: { x: 'center', y: 'start' },
+            font: { size: 9, weight: 'normal' },
+            color: 'rgba(128, 128, 128, 0.6)',
+          }
+        };
+      }
+
+      return annotations;
+    }
+
     function renderAllocationChart(equityCurveData, diHistory) {
       const ctx = document.getElementById('allocationChart').getContext('2d');
       if (allocationChart) allocationChart.destroy();
@@ -1548,8 +1785,10 @@
       const labels = sampled.map(d => d.date);
       const allocValues = sampled.map(d => d.risky_allocation_pct ?? 50);
 
-      // Compute annotations from DI history (if available)
+      // Compute annotations: phase backgrounds (rotation) or V2.1 markers (replica)
+      const phaseAnnotations = diHistory ? computePhaseAnnotations(diHistory) : {};
       const v21Annotations = diHistory ? computeV21Annotations(diHistory) : {};
+      const allAnnotations = { ...phaseAnnotations, ...v21Annotations };
 
       allocationChart = new Chart(ctx, {
         type: 'line',
@@ -1571,7 +1810,7 @@
           maintainAspectRatio: false,
           plugins: {
             legend: { display: false },
-            annotation: { annotations: v21Annotations }
+            annotation: { annotations: allAnnotations }
           },
           scales: {
             x: {
@@ -1861,6 +2100,113 @@
 
       document.getElementById('riskBudgetMax').value = REPLICA_DEFAULTS.riskBudgetMax;
       document.getElementById('riskBudgetMaxValue').textContent = Math.round(REPLICA_DEFAULTS.riskBudgetMax * 100) + '%';
+    }
+
+    // ===== Rotation Parameters =====
+
+    const ROTATION_DEFAULTS = {
+      preset: 'conservative',
+      smoothingAlpha: 0.30,
+      enableDDBreaker: false,
+      ddThreshold1: -0.10,
+      ddThreshold2: -0.20,
+      ddRampUp: true,
+    };
+
+    const PRESET_DESCRIPTIONS = {
+      conservative: 'Bear: 10/3/87 \u00b7 Peak: 15/15/70 \u00b7 Distribution: 15/5/80',
+      default: 'Bear: 15/5/80 \u00b7 Peak: 20/20/60 \u00b7 Distribution: 20/10/70',
+      aggressive: 'Bear: 15/5/80 \u00b7 Peak: 30/20/50 \u00b7 Distribution: 25/15/60',
+    };
+
+    function initRotationParams() {
+      // Toggle panel expand/collapse
+      const toggle = document.getElementById('rotationParamsToggle');
+      const body = document.getElementById('rotationParamsBody');
+      const icon = document.getElementById('rotationParamsIcon');
+
+      toggle.addEventListener('click', () => {
+        const expanded = body.classList.toggle('expanded');
+        icon.classList.toggle('expanded', expanded);
+      });
+
+      // Preset buttons
+      document.querySelectorAll('.rotation-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.rotation-preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const preset = btn.dataset.preset;
+          document.getElementById('presetDetail').textContent = PRESET_DESCRIPTIONS[preset] || '';
+        });
+      });
+
+      // Smoothing alpha slider
+      const alphaSlider = document.getElementById('smoothingAlpha');
+      const alphaDisplay = document.getElementById('smoothingAlphaValue');
+      alphaSlider.addEventListener('input', () => {
+        alphaDisplay.textContent = parseFloat(alphaSlider.value).toFixed(2);
+      });
+
+      // DD breaker toggle
+      const ddToggle = document.getElementById('enableDDBreaker');
+      const ddParams = document.getElementById('ddBreakerParams');
+      ddToggle.addEventListener('change', () => {
+        ddParams.style.display = ddToggle.checked ? 'block' : 'none';
+      });
+
+      // DD threshold sliders
+      const ddSliders = [
+        { id: 'ddThreshold1', displayId: 'ddThreshold1Value', format: v => Math.round(v * 100) + '%' },
+        { id: 'ddThreshold2', displayId: 'ddThreshold2Value', format: v => Math.round(v * 100) + '%' },
+      ];
+      ddSliders.forEach(({ id, displayId, format }) => {
+        const slider = document.getElementById(id);
+        const display = document.getElementById(displayId);
+        slider.addEventListener('input', () => {
+          display.textContent = format(parseFloat(slider.value));
+        });
+      });
+
+      // Reset button
+      document.getElementById('resetRotationParams').addEventListener('click', resetRotationParams);
+    }
+
+    function resetRotationParams() {
+      // Reset preset
+      document.querySelectorAll('.rotation-preset-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector('.rotation-preset-btn[data-preset="conservative"]').classList.add('active');
+      document.getElementById('presetDetail').textContent = PRESET_DESCRIPTIONS.conservative;
+
+      // Reset alpha
+      document.getElementById('smoothingAlpha').value = ROTATION_DEFAULTS.smoothingAlpha;
+      document.getElementById('smoothingAlphaValue').textContent = ROTATION_DEFAULTS.smoothingAlpha.toFixed(2);
+
+      // Reset DD breaker
+      document.getElementById('enableDDBreaker').checked = ROTATION_DEFAULTS.enableDDBreaker;
+      document.getElementById('ddBreakerParams').style.display = 'none';
+      document.getElementById('ddThreshold1').value = ROTATION_DEFAULTS.ddThreshold1;
+      document.getElementById('ddThreshold1Value').textContent = Math.round(ROTATION_DEFAULTS.ddThreshold1 * 100) + '%';
+      document.getElementById('ddThreshold2').value = ROTATION_DEFAULTS.ddThreshold2;
+      document.getElementById('ddThreshold2Value').textContent = Math.round(ROTATION_DEFAULTS.ddThreshold2 * 100) + '%';
+      document.getElementById('ddRampUp').checked = ROTATION_DEFAULTS.ddRampUp;
+    }
+
+    function getRotationParams() {
+      const strategy = document.getElementById('strategy').value;
+      if (strategy !== 'di_cycle_rotation') return null;
+
+      const activePreset = document.querySelector('.rotation-preset-btn.active');
+      return {
+        preset: activePreset ? activePreset.dataset.preset : 'conservative',
+        smoothing_alpha: parseFloat(document.getElementById('smoothingAlpha').value),
+        enable_di_modulation: false,
+        di_mod_range: 0.10,
+        enable_drawdown_breaker: document.getElementById('enableDDBreaker').checked,
+        dd_threshold_1: parseFloat(document.getElementById('ddThreshold1').value),
+        dd_threshold_2: parseFloat(document.getElementById('ddThreshold2').value),
+        dd_multiplier: 0.50,
+        dd_ramp_up: document.getElementById('ddRampUp').checked,
+      };
     }
 
     function getReplicaParams() {

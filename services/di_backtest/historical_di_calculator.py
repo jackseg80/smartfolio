@@ -6,6 +6,9 @@ Formule DI (source: services/execution/strategy_registry.py):
     raw_score = (cycle × 0.30 + onchain × 0.35 + risk × 0.25 + sentiment × 0.10)
     adjusted_score = raw_score × phase_factor + macro_penalty
     final_score = clamp(adjusted_score, 0, 100)
+
+V2 adds adaptive normalization, graduated macro, blended phase factor,
+and conditional cycle correction — see DICalculatorConfig.
 """
 
 import asyncio
@@ -42,6 +45,16 @@ class PhaseFactors:
     bearish: float = 0.85
     moderate: float = 1.0
     bullish: float = 1.05
+
+
+@dataclass
+class DICalculatorConfig:
+    """Configuration V2 for adaptive DI calculation"""
+    normalization: str = "adaptive"     # "fixed" | "adaptive"
+    macro_mode: str = "graduated"       # "binary" | "graduated"
+    phase_mode: str = "blended"         # "cycle" | "blended"
+    cycle_mode: str = "corrected"       # "deterministic" | "corrected"
+    cycle_correction_pts: int = 10
 
 
 @dataclass
@@ -87,7 +100,7 @@ class HistoricalDICalculator:
 
     def _determine_phase(self, cycle_score: float) -> tuple[str, float]:
         """
-        Détermine la phase de marché basée sur le Cycle Score
+        Détermine la phase de marché basée sur le Cycle Score — V1 (production compat)
 
         Seuils canoniques (CLAUDE.md):
             cycle < 70       = bearish  (factor 0.85)
@@ -103,6 +116,25 @@ class HistoricalDICalculator:
             return "moderate", self.phase_factors.moderate
         else:
             return "bullish", self.phase_factors.bullish
+
+    def _determine_phase_v2(self, raw_score: float) -> tuple[str, float]:
+        """
+        Phase factor V2 — continu, basé sur raw_score blended.
+
+        Plus proche du comportement production (phase_engine ML multi-signaux)
+        que le V1 qui utilise cycle_score seul.
+
+        Factor continu: 0.85 (raw=0) → 1.05 (raw=100)
+        Phase labels: bearish (<40), moderate (40-65), bullish (≥65)
+        """
+        factor = 0.85 + 0.20 * (raw_score / 100.0)
+        if raw_score < 40:
+            phase = "bearish"
+        elif raw_score < 65:
+            phase = "moderate"
+        else:
+            phase = "bullish"
+        return phase, factor
 
     async def calculate_historical_di(
         self,
@@ -299,6 +331,208 @@ class HistoricalDICalculator:
             di_history=history_points,
             df=df,
             metadata=metadata
+        )
+
+    async def calculate_historical_di_v2(
+        self,
+        user_id: str,
+        start_date: str = "2017-01-01",
+        end_date: Optional[str] = None,
+        include_macro: bool = True,
+        config: Optional['DICalculatorConfig'] = None,
+    ) -> DIBacktestData:
+        """
+        Decision Index V2 — adaptive proxies for realistic backtesting.
+
+        Uses expanding percentile normalization, graduated macro penalty,
+        blended phase factor, and conditional cycle correction.
+
+        V1 calculate_historical_di() remains 100% unchanged.
+        """
+        cfg = config or DICalculatorConfig()
+        start_dt = pd.Timestamp(start_date)
+        end_dt = pd.Timestamp(end_date) if end_date else pd.Timestamp.now()
+
+        buffer_days = 250
+        buffer_start = start_dt - pd.Timedelta(days=buffer_days)
+
+        logger.info(f"Calcul DI V2: {start_date} → {end_date or 'now'} "
+                     f"[norm={cfg.normalization}, macro={cfg.macro_mode}, "
+                     f"phase={cfg.phase_mode}, cycle={cfg.cycle_mode}]")
+
+        # 1. Prix BTC
+        btc_prices_full = await self.data_sources.get_btc_prices(days=3650)
+        if btc_prices_full.empty:
+            raise ValueError("Impossible de récupérer les prix BTC")
+        if not isinstance(btc_prices_full.index, pd.DatetimeIndex):
+            btc_prices_full.index = pd.to_datetime(btc_prices_full.index)
+
+        btc_prices_with_buffer = btc_prices_full[btc_prices_full.index >= buffer_start]
+        if end_date:
+            btc_prices_with_buffer = btc_prices_with_buffer[btc_prices_with_buffer.index <= end_dt]
+
+        # 1b. Prix ETH
+        eth_prices_with_buffer = pd.Series(dtype=float)
+        try:
+            eth_prices_df = await self.data_sources.get_multi_asset_prices(["ETH"], days=3650)
+            if "ETH" in eth_prices_df.columns:
+                eth_full = eth_prices_df["ETH"].dropna()
+                if not eth_full.empty:
+                    eth_prices_with_buffer = eth_full[eth_full.index >= buffer_start]
+                    if end_date:
+                        eth_prices_with_buffer = eth_prices_with_buffer[eth_prices_with_buffer.index <= end_dt]
+        except Exception as e:
+            logger.warning(f"ETH prices non disponibles: {e}")
+
+        # 2. Composants V2
+
+        # Cycle Score
+        if cfg.cycle_mode == "corrected":
+            cycle_scores = self.data_sources.compute_corrected_cycle_scores(
+                btc_prices_with_buffer.index.min(),
+                btc_prices_with_buffer.index.max(),
+                btc_prices_with_buffer,
+                correction_pts=cfg.cycle_correction_pts,
+            )
+        else:
+            cycle_scores = self.data_sources.compute_historical_cycle_scores(
+                btc_prices_with_buffer.index.min(),
+                btc_prices_with_buffer.index.max(),
+            )
+
+        # OnChain Proxy (avec normalization adaptive ou fixed)
+        onchain_scores = self.data_sources.compute_onchain_proxy(
+            btc_prices_with_buffer, normalization=cfg.normalization,
+        )
+
+        # Risk Score (avec normalization adaptive ou fixed)
+        risk_scores = self.data_sources.compute_risk_score(
+            btc_prices_with_buffer, normalization=cfg.normalization,
+        )
+
+        # Sentiment
+        sentiment_scores = await self._get_sentiment_scores(btc_prices_with_buffer)
+
+        # Macro penalty
+        macro_penalties = pd.Series(0, index=btc_prices_with_buffer.index, name='macro_penalty')
+        if include_macro:
+            try:
+                vix_df, dxy_df = await self.data_sources.fetch_historical_macro(user_id, start_date)
+                if not vix_df.empty and not dxy_df.empty:
+                    if cfg.macro_mode == "graduated":
+                        macro_penalties = self.data_sources.compute_macro_penalty_v2(
+                            vix_df['value'], dxy_df['value'],
+                        )
+                    else:
+                        macro_penalties = self.data_sources.compute_macro_penalty(
+                            vix_df['value'], dxy_df['value'],
+                        )
+                    macro_penalties = macro_penalties.reindex(
+                        btc_prices_with_buffer.index, method='ffill',
+                    ).fillna(0)
+            except Exception as e:
+                logger.warning(f"Macro data non disponible: {e}")
+
+        # 3. Assemblage DataFrame
+        df_data = {
+            'btc_price': btc_prices_with_buffer,
+            'cycle_score': cycle_scores.reindex(btc_prices_with_buffer.index, method='nearest'),
+            'onchain_score': onchain_scores.reindex(btc_prices_with_buffer.index),
+            'risk_score': risk_scores.reindex(btc_prices_with_buffer.index),
+            'sentiment_score': sentiment_scores.reindex(btc_prices_with_buffer.index),
+            'macro_penalty': macro_penalties.reindex(btc_prices_with_buffer.index).fillna(0),
+        }
+        if not eth_prices_with_buffer.empty:
+            df_data['eth_price'] = eth_prices_with_buffer.reindex(
+                btc_prices_with_buffer.index, method='ffill', limit=3,
+            )
+
+        score_cols = ['btc_price', 'cycle_score', 'onchain_score', 'risk_score',
+                      'sentiment_score', 'macro_penalty']
+        df_full = pd.DataFrame(df_data).dropna(subset=score_cols)
+
+        # 4. Filtrer période demandée
+        df = df_full[(df_full.index >= start_dt) & (df_full.index <= end_dt)].copy()
+
+        logger.info(f"V2 DataFrame: {len(df)} points (buffer: {len(df_full) - len(df)})")
+
+        # 5. DI calculation
+        w = self.weights
+        df['raw_score'] = (
+            df['cycle_score'] * w.cycle +
+            df['onchain_score'] * w.onchain +
+            df['risk_score'] * w.risk +
+            df['sentiment_score'] * w.sentiment
+        )
+
+        # Phase factor: V2 (blended/continu) ou V1 (cycle-based)
+        if cfg.phase_mode == "blended":
+            phases = df['raw_score'].apply(lambda x: self._determine_phase_v2(x))
+        else:
+            phases = df['cycle_score'].apply(lambda x: self._determine_phase(x))
+        df['phase'] = phases.apply(lambda x: x[0])
+        df['phase_factor'] = phases.apply(lambda x: x[1])
+
+        df['decision_index'] = (
+            df['raw_score'] * df['phase_factor'] + df['macro_penalty']
+        ).clip(0, 100)
+
+        # 6. History points
+        history_points = []
+        for idx, row in df.iterrows():
+            dt = idx.to_pydatetime() if hasattr(idx, 'to_pydatetime') else idx
+            months = self.data_sources.get_months_after_halving(dt)
+            raw_derivative = self.data_sources.cycle_score_derivative(months)
+            direction = max(-1.0, min(1.0, raw_derivative / 15.0))
+            confidence = self.data_sources.cycle_confidence(months)
+
+            point = DIHistoryPoint(
+                date=dt,
+                decision_index=row['decision_index'],
+                cycle_score=row['cycle_score'],
+                onchain_score=row['onchain_score'],
+                risk_score=row['risk_score'],
+                sentiment_score=row['sentiment_score'],
+                phase=row['phase'],
+                phase_factor=row['phase_factor'],
+                macro_penalty=int(row['macro_penalty']),
+                raw_score=row['raw_score'],
+                btc_price=row['btc_price'],
+                eth_price=float(row['eth_price']) if 'eth_price' in row.index and pd.notna(row.get('eth_price')) else None,
+                cycle_direction=direction,
+                cycle_confidence=confidence,
+            )
+            history_points.append(point)
+
+        metadata = {
+            "total_points": int(len(df)),
+            "calculator_version": "v2",
+            "config": {
+                "normalization": cfg.normalization,
+                "macro_mode": cfg.macro_mode,
+                "phase_mode": cfg.phase_mode,
+                "cycle_mode": cfg.cycle_mode,
+            },
+            "weights": {
+                "cycle": float(w.cycle), "onchain": float(w.onchain),
+                "risk": float(w.risk), "sentiment": float(w.sentiment),
+            },
+            "di_stats": {
+                "mean": float(df['decision_index'].mean()),
+                "std": float(df['decision_index'].std()),
+                "min": float(df['decision_index'].min()),
+                "max": float(df['decision_index'].max()),
+                "median": float(df['decision_index'].median()),
+            },
+            "macro_penalties_count": int((df['macro_penalty'] < 0).sum()),
+        }
+
+        return DIBacktestData(
+            start_date=df.index.min().to_pydatetime(),
+            end_date=df.index.max().to_pydatetime(),
+            di_history=history_points,
+            df=df,
+            metadata=metadata,
         )
 
     async def _get_sentiment_scores(self, btc_prices: pd.Series) -> pd.Series:

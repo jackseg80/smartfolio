@@ -148,6 +148,49 @@ class HistoricalDataSources:
 
         return pd.Series(scores, index=dates, name='cycle_score')
 
+    def compute_corrected_cycle_scores(
+        self,
+        start_date: datetime,
+        end_date: datetime,
+        prices: pd.Series,
+        correction_pts: int = 10,
+        momentum_window: int = 180,
+        high_threshold: float = 85.0,
+        low_threshold: float = 40.0,
+        bearish_momentum: float = -0.20,
+        bullish_momentum: float = 0.30,
+    ) -> pd.Series:
+        """
+        Cycle Score with conditional correction when price contradicts the model.
+
+        Only corrects at strong divergence points — no permanent blend.
+        Avoids double-counting momentum (already in onchain proxy).
+
+        Args:
+            correction_pts: Points to add/subtract when divergence detected
+            momentum_window: Days for price momentum (default 180 = 6 months)
+            high_threshold: Cycle score above which bearish price triggers correction
+            low_threshold: Cycle score below which bullish price triggers correction
+            bearish_momentum: 6-month return threshold for bearish divergence
+            bullish_momentum: 6-month return threshold for bullish divergence
+        """
+        sigmoid = self.compute_historical_cycle_scores(start_date, end_date)
+
+        # Aligner prix avec les dates du cycle
+        momentum_6m = prices.pct_change(momentum_window).reindex(sigmoid.index, method='ffill')
+
+        corrected = sigmoid.copy()
+
+        # Cycle dit "haut" mais prix en chute forte → correction baissière
+        mask_bearish = (sigmoid > high_threshold) & (momentum_6m < bearish_momentum)
+        corrected.loc[mask_bearish] -= correction_pts
+
+        # Cycle dit "bas" mais prix en forte hausse → correction haussière
+        mask_bullish = (sigmoid < low_threshold) & (momentum_6m > bullish_momentum)
+        corrected.loc[mask_bullish] += correction_pts
+
+        return corrected.clip(0, 100).rename('cycle_score')
+
     # ========== ONCHAIN PROXY (basé sur prix) ==========
 
     def compute_onchain_proxy(
@@ -155,15 +198,19 @@ class HistoricalDataSources:
         prices: pd.Series,
         dma_window: int = 200,
         rsi_window: int = 14,
-        momentum_window: int = 90
+        momentum_window: int = 90,
+        normalization: str = "fixed",
     ) -> pd.Series:
         """
         Calcule un proxy OnChain basé sur les prix (0-100)
 
         Composants:
         - Distance au 200 DMA (40%)
-        - RSI adapté (30%)
+        - RSI adapté (30%)  — toujours 0-100 natif, pas de percentile
         - Momentum 90j (30%)
+
+        Args:
+            normalization: "fixed" (backward compat) ou "adaptive" (expanding percentile)
 
         Returns:
             pd.Series avec score 0-100 (plus haut = plus bullish)
@@ -172,23 +219,37 @@ class HistoricalDataSources:
             logger.warning(f"Pas assez de données pour le proxy OnChain ({len(prices)} < {dma_window})")
             return pd.Series(50.0, index=prices.index, name='onchain_proxy')
 
-        # 1. Distance au 200 DMA (0-100)
+        # 1. Distance au 200 DMA
         dma = prices.rolling(dma_window, min_periods=1).mean()
         distance_pct = ((prices - dma) / dma) * 100
-        # Normaliser [-50%, +50%] → [0, 100]
-        dma_score = (distance_pct + 50).clip(0, 100)
 
-        # 2. RSI (déjà 0-100)
+        if normalization == "adaptive":
+            # Expanding percentile: rang relatif à tout l'historique passé
+            dma_score = distance_pct.expanding(min_periods=dma_window).rank(pct=True) * 100
+            # Fallback à normalisation fixe pour les premiers jours (warm-up)
+            fixed_dma = (distance_pct + 50).clip(0, 100)
+            dma_score = dma_score.fillna(fixed_dma)
+        else:
+            # Normaliser [-50%, +50%] → [0, 100]
+            dma_score = (distance_pct + 50).clip(0, 100)
+
+        # 2. RSI (déjà 0-100 par construction — PAS de percentile)
         delta = prices.diff()
         gain = delta.where(delta > 0, 0).rolling(rsi_window, min_periods=1).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(rsi_window, min_periods=1).mean()
         rs = gain / loss.replace(0, 1e-10)
         rsi = 100 - (100 / (1 + rs))
 
-        # 3. Momentum 90j (returns normalisés)
+        # 3. Momentum 90j
         returns_90d = prices.pct_change(momentum_window)
-        # Normaliser [-50%, +100%] → [0, 100]
-        momentum_score = ((returns_90d * 100) + 50).clip(0, 100)
+
+        if normalization == "adaptive":
+            momentum_score = returns_90d.expanding(min_periods=momentum_window).rank(pct=True) * 100
+            fixed_mom = ((returns_90d * 100) + 50).clip(0, 100)
+            momentum_score = momentum_score.fillna(fixed_mom)
+        else:
+            # Normaliser [-50%, +100%] → [0, 100]
+            momentum_score = ((returns_90d * 100) + 50).clip(0, 100)
 
         # Combinaison pondérée
         onchain_proxy = (
@@ -205,13 +266,17 @@ class HistoricalDataSources:
         self,
         prices: pd.Series,
         vol_window: int = 90,
-        dd_window: int = 90
+        dd_window: int = 90,
+        normalization: str = "fixed",
     ) -> pd.Series:
         """
         Calcule le Risk Score historique (0-100)
 
         ATTENTION: Score POSITIF - plus haut = plus robuste/sûr
         NE JAMAIS inverser avec 100 - score
+
+        Args:
+            normalization: "fixed" (backward compat) ou "adaptive" (expanding percentile)
 
         Composants:
         - Volatilité inversée (50%): basse vol = score haut
@@ -222,19 +287,32 @@ class HistoricalDataSources:
 
         returns = prices.pct_change()
 
-        # 1. Volatilité annualisée inversée
+        # 1. Volatilité annualisée
         vol = returns.rolling(vol_window, min_periods=1).std() * np.sqrt(365)
-        # Normaliser: vol 0-100% → score 100-0
-        # Vol typique crypto: 30-150%
-        vol_normalized = (vol * 100).clip(0, 150)
-        vol_score = 100 - (vol_normalized / 1.5)  # 0% vol → 100, 150% vol → 0
 
-        # 2. Drawdown inversé
+        if normalization == "adaptive":
+            # Expanding percentile inversé: rank le plus haut = vol la plus basse
+            vol_score = (-vol).expanding(min_periods=vol_window).rank(pct=True) * 100
+            # Fallback warm-up
+            fixed_vol = 100 - ((vol * 100).clip(0, 150) / 1.5)
+            vol_score = vol_score.fillna(fixed_vol)
+        else:
+            vol_normalized = (vol * 100).clip(0, 150)
+            vol_score = 100 - (vol_normalized / 1.5)  # 0% vol → 100, 150% vol → 0
+
+        # 2. Drawdown
         rolling_max = prices.rolling(dd_window, min_periods=1).max()
         drawdown = (prices - rolling_max) / rolling_max  # Négatif
-        # DD typique: 0% à -80%
-        dd_score = 100 + (drawdown * 100)  # 0% DD → 100, -80% DD → 20
-        dd_score = dd_score.clip(0, 100)
+
+        if normalization == "adaptive":
+            # Expanding percentile: rank le plus haut = DD le moins négatif
+            dd_score = drawdown.expanding(min_periods=dd_window).rank(pct=True) * 100
+            # Fallback warm-up
+            fixed_dd = (100 + (drawdown * 100)).clip(0, 100)
+            dd_score = dd_score.fillna(fixed_dd)
+        else:
+            dd_score = 100 + (drawdown * 100)  # 0% DD → 100, -80% DD → 20
+            dd_score = dd_score.clip(0, 100)
 
         # Combinaison
         risk_score = (vol_score * 0.5 + dd_score * 0.5).fillna(50.0).clip(0, 100)
@@ -408,7 +486,7 @@ class HistoricalDataSources:
         dxy_change_threshold: float = 5.0
     ) -> pd.Series:
         """
-        Calcule la pénalité macro historique (-15 ou 0)
+        Calcule la pénalité macro historique (-15 ou 0) — V1 binaire
 
         Règle: VIX > 30 OU DXY +5% sur 30j → -15 points
         """
@@ -429,6 +507,48 @@ class HistoricalDataSources:
         penalties.loc[stress_mask] = -15
 
         return penalties
+
+    def compute_macro_penalty_v2(
+        self,
+        vix_series: pd.Series,
+        dxy_series: pd.Series,
+        vix_start: float = 20.0,
+        vix_max: float = 45.0,
+        vix_penalty_max: float = 10.0,
+        dxy_change_start: float = 2.0,
+        dxy_change_max: float = 10.0,
+        dxy_penalty_max: float = 8.0,
+        total_cap: float = -15.0,
+    ) -> pd.Series:
+        """
+        Calcule la pénalité macro historique — V2 graduée additive
+
+        VIX : linéaire de 0 (≤start) à -vix_penalty_max (≥vix_max)
+        DXY : linéaire de 0 (change ≤start) à -dxy_penalty_max (change ≥max)
+        Total = VIX + DXY, cappé à total_cap
+
+        Plus réaliste : VIX=31 → ~-4pts (pas -15), VIX=31 + DXY+5% → ~-8pts
+        """
+        common_dates = vix_series.index.intersection(dxy_series.index)
+
+        # VIX penalty: linéaire start→max
+        vix = vix_series.reindex(common_dates)
+        vix_penalty = -np.clip(
+            (vix - vix_start) / (vix_max - vix_start) * vix_penalty_max,
+            0, vix_penalty_max,
+        )
+
+        # DXY penalty: linéaire sur changement 30j
+        dxy_pct_change = dxy_series.pct_change(30).reindex(common_dates) * 100
+        dxy_penalty = -np.clip(
+            (dxy_pct_change - dxy_change_start) / (dxy_change_max - dxy_change_start) * dxy_penalty_max,
+            0, dxy_penalty_max,
+        )
+
+        # Somme additive cappée
+        penalties = (vix_penalty.fillna(0) + dxy_penalty.fillna(0)).clip(lower=total_cap, upper=0)
+
+        return penalties.rename('macro_penalty')
 
     # ========== PRIX CRYPTO ==========
 
