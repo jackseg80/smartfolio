@@ -93,9 +93,24 @@ class RotationParamsModel(BaseModel):
     dd_ramp_up: bool = Field(True, description="Gradual recovery after DD cut")
 
 
+class ContinuousParamsModel(BaseModel):
+    """Parameters for Adaptive Continuous strategy (S9)"""
+    alloc_floor: float = Field(0.10, ge=0.05, le=0.30, description="Minimum risky allocation (bear floor)")
+    alloc_ceiling: float = Field(0.85, ge=0.50, le=0.95, description="Maximum risky allocation (bull ceiling)")
+    enable_trend_overlay: bool = Field(True, description="Enable golden/death cross trend confirmation")
+    sma_fast: int = Field(50, ge=10, le=100, description="Fast SMA period for trend overlay")
+    sma_slow: int = Field(200, ge=100, le=300, description="Slow SMA period for trend overlay")
+    trend_boost_pct: float = Field(0.10, ge=0.0, le=0.20, description="Max trend boost (+/- allocation)")
+    enable_risk_adjustment: bool = Field(True, description="Enable risk score adjustment")
+    smoothing_alpha_bull: float = Field(0.12, ge=0.01, le=1.0, description="Slow entry smoothing (bull)")
+    smoothing_alpha_bear: float = Field(0.50, ge=0.01, le=1.0, description="Fast exit smoothing (bear)")
+    eth_share_bull: float = Field(0.40, ge=0.10, le=0.60, description="ETH share of risky in bull")
+    eth_share_bear: float = Field(0.20, ge=0.05, le=0.40, description="ETH share of risky in bear")
+
+
 class DIBacktestRequest(BaseModel):
     """Requête pour exécuter un backtest DI"""
-    strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal, di_cycle_rotation")
+    strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal, di_cycle_rotation, di_adaptive_continuous")
     start_date: str = Field(..., description="Date début YYYY-MM-DD (min: 2017-01-01)")
     end_date: str = Field(..., description="Date fin YYYY-MM-DD")
     initial_capital: float = Field(10000.0, gt=0)
@@ -109,6 +124,9 @@ class DIBacktestRequest(BaseModel):
 
     # Advanced params for Cycle Rotation
     rotation_params: Optional[RotationParamsModel] = None
+
+    # Advanced params for Adaptive Continuous (S9)
+    continuous_params: Optional[ContinuousParamsModel] = None
 
     # Options
     use_macro_penalty: bool = Field(True, description="Inclure pénalité VIX/DXY")
@@ -419,6 +437,24 @@ async def run_di_backtest(
                 dd_ramp_up=rp.dd_ramp_up,
             )
 
+        # Inject params for Adaptive Continuous (S9)
+        if request.strategy == "di_adaptive_continuous" and request.continuous_params:
+            from services.di_backtest.trading_strategies import ContinuousParams
+            cp = request.continuous_params
+            strategy.params = ContinuousParams(
+                alloc_floor=cp.alloc_floor,
+                alloc_ceiling=cp.alloc_ceiling,
+                enable_trend_overlay=cp.enable_trend_overlay,
+                sma_fast=cp.sma_fast,
+                sma_slow=cp.sma_slow,
+                trend_boost_pct=cp.trend_boost_pct,
+                enable_risk_adjustment=cp.enable_risk_adjustment,
+                smoothing_alpha_bull=cp.smoothing_alpha_bull,
+                smoothing_alpha_bear=cp.smoothing_alpha_bear,
+                eth_share_bull=cp.eth_share_bull,
+                eth_share_bear=cp.eth_share_bear,
+            )
+
         strategy.set_di_series(di_data.df['decision_index'])
 
         # Injecter le cycle_score pour SmartFolio Replica (utilise le vrai cycle, pas une estimation)
@@ -435,7 +471,7 @@ async def run_di_backtest(
         )
 
         # Enable multi-asset mode for strategies that use ETH
-        use_multi_asset = request.strategy == "di_cycle_rotation"
+        use_multi_asset = request.strategy in ("di_cycle_rotation", "di_adaptive_continuous")
 
         logger.info(f"Running DI backtest: {len(di_data.di_history)} points, strategy={request.strategy}, freq={request.rebalance_frequency}, multi_asset={use_multi_asset}")
         result = engine.run_backtest(
@@ -529,6 +565,7 @@ async def run_di_backtest(
                 "avg_risky_allocation_pct": round(result.avg_risky_allocation * 100, 1),
                 "upside_capture": round(result.upside_capture, 3),
                 "downside_capture": round(result.downside_capture, 3),
+                "capture_ratio": round(result.upside_capture / result.downside_capture, 3) if result.downside_capture > 0 else None,
             },
             "benchmark_comparison": {
                 "benchmark": "BTC Buy & Hold",
@@ -700,6 +737,7 @@ def _get_strategy_description(key: str) -> str:
         "di_smartfolio_replica": "Production pipeline (risk_budget + exposure cap + governance penalty)",
         "di_trend_gate": "Trend Gate: BTC trend confirmation + DI threshold allocation",
         "di_cycle_rotation": "3-asset cycle rotation (BTC/ETH/Stables) based on 5 cycle phases",
+        "di_adaptive_continuous": "Continuous DI→allocation mapping + golden/death cross trend confirmation (S9)",
     }
     return descriptions.get(key, "Stratégie basée sur le Decision Index")
 
@@ -827,6 +865,24 @@ STRATEGY_DETAILS = {
         "pros": ["3-asset diversification", "Phase-aware rotation", "Smooth transitions via EMA", "Derived from production ratios"],
         "cons": ["Requires ETH price data (2017+)", "Phase detection depends on cycle accuracy", "More parameters to tune"],
         "best_for": "Validating multi-asset cycle rotation before applying to full 11-group production allocation"
+    },
+    "di_adaptive_continuous": {
+        "name": "Adaptive Continuous (S9)",
+        "short": "Continuous DI mapping + trend confirmation",
+        "description": "Maps DI directly to a continuous allocation function (no discrete phases). Enriched with golden/death cross trend confirmation and direction-continuous asymmetric smoothing. Designed to improve bull capture by allowing higher allocation ceilings (85%) while maintaining bear protection via fast exit smoothing.",
+        "rules": [
+            "DI 0-25 → 10% risky (bear floor)",
+            "DI 25-50 → 10-40% risky (gradual ramp)",
+            "DI 50-75 → 40-70% risky (mid ramp)",
+            "DI 75-100 → 70-85% risky (aggressive bull ramp)",
+            "Golden cross (SMA50 > SMA200 + price > SMA200) → +10% boost",
+            "Death cross (SMA50 < SMA200 + price < SMA200) → -10% reduction",
+            "Direction-continuous smoothing: slow entry (α=0.12), fast exit (α=0.50)",
+            "Continuous BTC/ETH split: ETH 20-40% of risky based on DI"
+        ],
+        "pros": ["No phase discontinuities", "Higher ceiling (85%) for bull capture", "Trend confirmation prevents false signals", "Uses DI directly (no parallel score)"],
+        "cons": ["More parameters than Cycle Rotation", "Trend overlay adds ~200 days warmup", "Backtest-only (not production)"],
+        "best_for": "Improving upside capture while maintaining bear protection"
     }
 }
 

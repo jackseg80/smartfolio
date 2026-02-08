@@ -151,6 +151,70 @@ Utilise `cycle_score` + `cycle_direction` pour détecter la phase:
 
 **Idéal pour**: Valider la rotation multi-asset par phase de cycle avant application aux 11 groupes en production
 
+### S9: DIAdaptiveContinuousStrategy (Multi-Asset)
+
+**Allocation continue basée sur le DI + trend confirmation (golden/death cross).**
+
+Contrairement à S8 (5 phases discrètes), S9 utilise un mapping continu piecewise linéaire du DI vers l'allocation risky, sans seuils binaires.
+
+**Pipeline d'allocation:**
+
+1. **DI → Allocation continue** (piecewise linéaire):
+
+| DI Range | Allocation Risky | Description |
+|----------|-----------------|-------------|
+| 0-25 | floor (10%) | Bear protection |
+| 25-50 | 10% → 40% | Rampe graduelle |
+| 50-75 | 40% → 70% | Rampe intermédiaire |
+| 75-100 | 70% → ceiling (85%) | Rampe bull agressive |
+
+2. **Trend overlay** (golden/death cross — structurellement différent de l'onchain proxy):
+   - Golden cross (SMA50 > SMA200 ET price > SMA200) → +10% boost
+   - Death cross (SMA50 < SMA200 ET price < SMA200) → -10% réduction
+   - Zone mixte → 0% (neutre)
+   - Le onchain proxy mesure la *magnitude* (distance à SMA200), le trend overlay mesure la *direction* (SMA50 vs SMA200)
+
+3. **Risk score adjustment**: `(risk_score - 50) / 500` → ±10% max
+
+4. **Smoothing asymétrique continu** (via `cycle_direction`, pas de seuil binaire):
+   ```
+   direction_factor = (cycle_direction + 1) / 2    # [0, 1]
+   alpha = alpha_bear + direction_factor × (alpha_bull - alpha_bear)
+   # direction=-1 → alpha_bear (fast exit)
+   # direction=+1 → alpha_bull (slow entry)
+   ```
+
+5. **BTC/ETH split continu**: ETH share de 20% (bear) à 40% (bull) du risky, interpolé sur DI 30-80
+
+6. **Floor enforcement**: BTC≥10%, ETH≥3%, Stables≥10%
+
+**Paramètres (`ContinuousParams`):**
+
+| Paramètre | Défaut | Description |
+|-----------|--------|-------------|
+| `alloc_floor` | 0.10 | Min risky (bear floor) |
+| `alloc_ceiling` | 0.85 | Max risky (bull ceiling) |
+| `enable_trend_overlay` | True | Golden/death cross |
+| `sma_fast` / `sma_slow` | 50 / 200 | Périodes SMA pour trend |
+| `trend_boost_pct` | 0.10 | Boost ±allocation |
+| `enable_risk_adjustment` | True | Ajustement risk score |
+| `smoothing_alpha_bull` | 0.12 | Slow entry |
+| `smoothing_alpha_bear` | 0.50 | Fast exit |
+| `eth_share_bull` / `eth_share_bear` | 0.40 / 0.20 | ETH share du risky |
+
+**Différences clés vs S8 (Cycle Rotation):**
+
+| Aspect | S8 (Cycle Rotation) | S9 (Adaptive Continuous) |
+|--------|---------------------|--------------------------|
+| Allocation | 5 phases discrètes | Mapping continu piecewise |
+| Signal de base | `cycle_score` | `di_value` (composite complet) |
+| Ceiling | 70% (bull) | 85% (configurable) |
+| Trend | Aucun | Golden/death cross overlay |
+| Smoothing | EMA uniforme ou asym binaire | Direction-continu (pas de seuil) |
+| Avg risky OOS | ~28% | ~41-51% |
+
+**Idéal pour**: Exploration paramétrique de l'allocation continue. Outil de recherche, pas de production.
+
 ## Multi-Asset Engine
 
 Le moteur de backtest supporte 2 modes:
@@ -158,7 +222,7 @@ Le moteur de backtest supporte 2 modes:
 - **2-asset** (défaut): BTC + Stablecoins — utilisé par toutes les stratégies S1-S7
 - **3-asset** (`multi_asset=True`): BTC + ETH + Stablecoins — utilisé par S8
 
-Le mode 3-asset est activé automatiquement pour `di_cycle_rotation` via l'API.
+Le mode 3-asset est activé automatiquement pour `di_cycle_rotation` et `di_adaptive_continuous` via l'API.
 
 **Backward compatibility**: Le mode 2-asset utilise le même code (dict de poids) que le mode 3-asset. Les stratégies existantes produisent des résultats identiques.
 
@@ -281,7 +345,7 @@ Menu Analytics → DI Backtest (`/di-backtest.html`)
 ### Contrôles
 
 - **Période**: Date début/fin avec presets
-- **Stratégie**: Sélecteur des 8 stratégies
+- **Stratégie**: Sélecteur des 9 stratégies
 - **Capital initial**: Montant de départ
 - **Coûts de transaction**: % par trade (défaut 0.1%)
 
@@ -453,16 +517,24 @@ Le split fixe (IS 2017-2021, OOS 2021-2025) est biaise : le bear 2022 pese ~50% 
 
 ### Resultats Walk-Forward (8 Fevrier 2026)
 
-**Sharpe Retention moyenne (expanding, 5 windows):**
+**Sharpe Retention moyenne (expanding, 5 windows) — 12 configs, 288 backtests:**
 
-| Config | V1 Calculator | V2 Calculator |
-|--------|--------------|--------------|
-| **Cons+AsymA** | 155% | 153% |
-| **Cons+Fast** | 154% | 153% |
-| **Cons+SMA150+AsymA** | 141% | 140% |
-| **Replica V2.1** | 154% | 111% |
+| Config | Type | V1 Calculator | V2 Calculator |
+|--------|------|--------------|--------------|
+| **Cons+AsymA** | rotation | 155% | 153% |
+| **Cons+Fast** | rotation | 154% | 153% |
+| **Replica V2.1** | replica | 154% | 111% |
+| **Cons+SMA150+AsymA** | rotation | 141% | 140% |
+| AC-C75 | continuous | 122% | 93% |
+| AC-C70-FB80-T15 | continuous | 121% | 88% |
+| AC-C70 | continuous | 120% | 94% |
+| AC-Default | continuous | 117% | 92% |
+| AC-C70-FB70 | continuous | 117% | 89% |
+| AC-C75-FB65-T15 | continuous | 114% | 87% |
+| AC-C80-FB60 | continuous | 111% | 85% |
+| AC-FB70 | continuous | 109% | 88% |
 
-Toutes les strategies sont **ROBUST** (retention > 80%). L'overfitting initial (-3% a 18% sur split fixe) etait un artefact du regime 2022, pas de la calibration.
+Toutes les strategies sont **ROBUST** (retention > 80%). Les rotations retiennent ~150% du Sharpe IS→OOS, les strategies continues ~85-95%.
 
 **KS Distribution Shift (V2 vs V1, amelioration):**
 
@@ -486,15 +558,77 @@ Resultats de `diagnose_di_components.py` sur IS (2017-2021) vs OOS (2021-2025) :
 - **Macro penalty** : MOINS frequente OOS (6.0%) que IS (8.3%), contrairement a l'intuition
 - **Phase** : Bearish 61.4% OOS (pas 80% comme suppose initialement)
 
+### Exploration Parametrique S9 — Adaptive Continuous (8 Fev 2026)
+
+8 variantes de `ContinuousParams` testees pour ameliorer l'asymetrie de capture :
+
+| Config | Ceiling | Alpha Bear | Trend Boost | Hypothese |
+|--------|---------|------------|-------------|-----------|
+| AC-Default | 0.85 | 0.50 | 0.10 | Baseline S9 |
+| AC-C70 | 0.70 | 0.50 | 0.10 | Cap exposition max |
+| AC-C75 | 0.75 | 0.50 | 0.10 | Cap modere |
+| AC-FB70 | 0.85 | 0.70 | 0.10 | Sortie bear rapide |
+| AC-C70-FB70 | 0.70 | 0.70 | 0.10 | Cap + sortie rapide |
+| AC-C75-FB65-T15 | 0.75 | 0.65 | 0.15 | 3 leviers equilibres |
+| AC-C70-FB80-T15 | 0.70 | 0.80 | 0.15 | Protection agressive |
+| AC-C80-FB60 | 0.80 | 0.60 | 0.10 | Ajustement leger |
+
+**Capture Asymmetry OOS moyenne (V2, 5 fenetres expanding):**
+
+| Config | 2020 | 2021 | 2022 | 2023 | 2024-25 | Moyenne |
+|--------|------|------|------|------|---------|---------|
+| **Cons+AsymA** | +0.049 | +0.060 | +0.006 | -0.004 | -0.003 | **+0.022** |
+| Cons+Fast | +0.043 | +0.064 | +0.007 | -0.004 | -0.007 | +0.021 |
+| Cons+SMA150+AsymA | +0.049 | +0.061 | +0.006 | -0.004 | -0.015 | +0.019 |
+| AC-Default | +0.029 | +0.038 | -0.014 | -0.029 | -0.032 | -0.002 |
+| AC-FB70 | +0.029 | +0.034 | -0.021 | -0.028 | -0.026 | -0.002 |
+| AC-C70-FB80-T15 | +0.026 | +0.033 | -0.015 | -0.030 | -0.031 | -0.003 |
+| AC-C75-FB65-T15 | +0.025 | +0.034 | -0.012 | -0.033 | -0.032 | -0.004 |
+| AC-C70 | +0.019 | +0.035 | -0.014 | -0.030 | -0.032 | -0.004 |
+| AC-C70-FB70 | +0.021 | +0.031 | -0.021 | -0.028 | -0.028 | -0.005 |
+
+**Sharpe OOS moyen et MaxDD worst-case (V2):**
+
+| Config | Avg OOS Sharpe | Worst MaxDD OOS |
+|--------|----------------|-----------------|
+| **Cons+AsymA** | **1.222** | **-21.7%** |
+| Cons+Fast | 1.203 | -21.6% |
+| Cons+SMA150+AsymA | 1.158 | -17.6% |
+| AC-C70-FB80-T15 | 0.889 | -28.8% |
+| AC-Default | 0.888 | -29.9% |
+| AC-FB70 | 0.878 | -30.3% |
+| AC-C70-FB70 | 0.850 | -30.2% |
+
+**Rendement absolu IS (V2, train 2017-2021):**
+
+| Config | Return IS | Sharpe IS | Avg Risky IS |
+|--------|-----------|-----------|--------------|
+| AC-FB70 | 968% | 1.507 | 42.7% |
+| AC-Default | 906% | 1.468 | 42.8% |
+| AC-C70-FB80-T15 | 829% | 1.487 | 40.9% |
+| Cons+AsymA | 436% | 1.631 | 28.0% |
+
+**Conclusion de l'exploration:**
+
+Le probleme est **structurel, pas parametrique**. Les 8 variantes AC-* sont clustered entre -0.002 et -0.005 d'asymetrie moyenne OOS malgre des parametres tres differents (ceiling 0.70-0.85, alpha_bear 0.50-0.80, trend 0.10-0.15).
+
+La cause : le mapping continu DI→allocation produit une allocation risky moyenne de ~41-51% (vs ~28% pour Cons+AsymA). Le DI passe la majorite du temps entre 40 et 70, zone ou l'allocation est deja 30-60% risky. Baisser le ceiling ne change presque rien car le DI depasse rarement 75.
+
+Les **5 phases discretes** de S8 agissent comme un filtre naturel de double confirmation (cycle_score ET direction doivent s'aligner), ce que le mapping continu n'a pas.
+
 ### Strategie recommandee
 
 **Cons+AsymA** (asymetrique alpha bull=0.15, bear=0.50) est la config par defaut recommandee :
 
-- Meilleure retention (153%)
-- Bonne rank stability
+- Meilleure capture asymmetry OOS (+0.022 vs -0.002 pour le meilleur AC-*)
+- Meilleur Sharpe OOS moyen (1.222 vs 0.889)
+- Meilleure retention (153% vs 92%)
+- MaxDD controle (-21.7% vs -28.8%)
 - L'asymetrie d'alpha (entree lente, sortie rapide) est structurellement robuste
 
-SMA150+AsymA reste disponible pour les profils prudents mais perd de la rank stability sur les windows recentes (2023-2025).
+SMA150+AsymA reste disponible pour les profils prudents (meilleur MaxDD: -17.6%) mais perd de la rank stability sur les windows recentes (2023-2025).
+
+S9 (Adaptive Continuous) reste disponible comme outil d'exploration parametrique via l'UI, et genere les rendements absolus IS les plus eleves (906-968%). Il n'est pas recommande comme strategie de reference pour le walk-forward.
 
 ## Limitations Connues
 
@@ -509,21 +643,24 @@ SMA150+AsymA reste disponible pour les profils prudents mais perd de la rank sta
 
 Comparaison des meilleures strategies sur Full History (weekly rebalance, $10k initial):
 
-| Strategie | Sharpe | MaxDD | Return | Avg Risky |
-|-----------|--------|-------|--------|-----------|
-| Rot_conservative (3-asset) | **1.042** | **-32.6%** | 612.6% | 29.7% |
-| Rot_default (3-asset) | 0.965 | -41.3% | 692.0% | 35.5% |
-| TG no whipsaw (2-asset) | 0.955 | -54.4% | 1585.7% | 55.0% |
-| Replica V2.1 (2-asset) | 0.759 | -57.3% | 537.8% | 40.4% |
-| BTC Buy & Hold (benchmark) | — | -83% | ~9500% | 100% |
+| Strategie | Type | Sharpe | MaxDD | Return | Avg Risky |
+|-----------|------|--------|-------|--------|-----------|
+| Cons+AsymA (3-asset) | rotation | **1.042** | **-29.8%** | 542% | 28% |
+| Rot_default (3-asset) | rotation | 0.965 | -41.3% | 692% | 35.5% |
+| AC-Default (3-asset) | continuous | 0.906 | -50.8% | **906%** | 43% |
+| TG no whipsaw (2-asset) | trend gate | 0.955 | -54.4% | 1586% | 55% |
+| Replica V2.1 (2-asset) | replica | 0.759 | -57.3% | 538% | 40% |
+| BTC Buy & Hold (benchmark) | — | — | -83% | ~9500% | 100% |
 
 **Key findings:**
 
-- Cycle Rotation conservative offre le meilleur Sharpe (1.042) et la meilleure protection en bear (-32.6% MaxDD)
+- **Cons+AsymA** est la strategie recommandee : meilleur Sharpe (1.042), meilleure protection bear (-29.8% MaxDD), meilleure capture asymmetry OOS (+0.022)
+- Adaptive Continuous (S9) genere les rendements absolus les plus eleves (906% IS) mais avec un profil de risque plus agressif (MaxDD -51%, asymetrie negative OOS)
+- L'exploration parametrique de S9 (8 variantes, 288 backtests) confirme que la limitation est structurelle (allocation moyenne trop haute), pas parametrique
 - TrendGate no whipsaw offre le meilleur return absolu mais avec plus de risque
 - DI modulation n'apporte pas de valeur ajoutee pour l'allocation (desactivee par defaut)
 - Smoothing rapide (alpha 0.30) ou instant (1.0) performent mieux que le smoothing lent
-- **Cons+AsymA** est le meilleur compromis retention/performance pour le walk-forward
+- Les phases discretes de S8 agissent comme un filtre naturel de double confirmation que le mapping continu de S9 ne reproduit pas
 
 ## Voir Aussi
 

@@ -1346,6 +1346,234 @@ class DICycleRotationStrategy(PortfolioStrategy):
         return weights
 
 
+@dataclass
+class ContinuousParams:
+    """Parameters for Adaptive Continuous strategy (S9).
+
+    Maps DI directly to a continuous allocation function (no discrete phases),
+    with optional trend confirmation overlay (golden/death cross) and
+    direction-continuous asymmetric smoothing.
+    """
+    # Allocation function
+    alloc_floor: float = 0.10       # Min risky allocation (bear protection)
+    alloc_ceiling: float = 0.85     # Max risky allocation (bull capture)
+
+    # Trend confirmation overlay (golden/death cross — structurally different from onchain)
+    enable_trend_overlay: bool = True
+    sma_fast: int = 50              # Fast SMA period
+    sma_slow: int = 200             # Slow SMA period
+    trend_boost_pct: float = 0.10   # +/- boost from trend confirmation
+
+    # Risk score adjustment
+    enable_risk_adjustment: bool = True
+
+    # Smoothing (continuous via cycle_direction, not binary threshold)
+    smoothing_alpha_bull: float = 0.12   # Slow entry into bull
+    smoothing_alpha_bear: float = 0.50   # Fast exit to bear
+
+    # ETH split (continuous interpolation)
+    eth_share_bull: float = 0.40    # ETH = 40% of risky in bull
+    eth_share_bear: float = 0.20    # ETH = 20% of risky in bear
+
+    # Floors (deliberately lower than production for wider allocation range)
+    btc_floor: float = 0.10
+    eth_floor: float = 0.03
+    stables_floor: float = 0.10
+
+
+class DIAdaptiveContinuousStrategy(PortfolioStrategy):
+    """
+    Strategy S9: Adaptive Continuous Allocation
+
+    Maps DI directly to a continuous allocation function — no discrete phases.
+    Enriched with:
+    - Golden/death cross trend confirmation (SMA50 vs SMA200)
+    - Risk score adjustment (continuous ±10%)
+    - Direction-continuous asymmetric smoothing
+    - Continuous BTC/ETH split
+
+    Key differences from S8 (Cycle Rotation):
+    - No 5-phase discretization → smooth piecewise linear mapping
+    - DI-based (not cycle_score-based) → uses the full composite signal
+    - Trend overlay is additive (structural direction, not magnitude)
+    - Ceiling at 85% vs 70% → higher bull capture potential
+    """
+
+    def __init__(self, config: Optional[DIStrategyConfig] = None,
+                 continuous_params: Optional[ContinuousParams] = None):
+        super().__init__("Adaptive Continuous")
+        self.config = config or DIStrategyConfig()
+        self.params = continuous_params or ContinuousParams()
+        self.di_series: Optional[pd.Series] = None
+        self._smoothed_alloc: Optional[float] = None
+
+    def set_di_series(self, di_series: pd.Series):
+        """Inject historical DI series."""
+        normalized = di_series.copy()
+        if isinstance(normalized.index, pd.DatetimeIndex):
+            normalized.index = normalized.index.normalize()
+        self.di_series = normalized
+
+    def set_cycle_series(self, cycle_series: pd.Series):
+        """No-op for compatibility with engine injection."""
+        pass
+
+    def reset_state(self):
+        """Reset smoothing state between backtests."""
+        self._smoothed_alloc = None
+
+    @staticmethod
+    def _di_to_allocation(di_value: float, floor: float = 0.10,
+                          ceiling: float = 0.85) -> float:
+        """
+        Continuous piecewise linear mapping from DI (0-100) to risky allocation.
+
+        DI  0-25  → floor (bear protection)
+        DI 25-50  → floor → 0.40 (gradual ramp)
+        DI 50-75  → 0.40 → 0.70 (mid ramp)
+        DI 75-100 → 0.70 → ceiling (aggressive bull ramp)
+        """
+        if di_value <= 25:
+            return floor
+        elif di_value <= 50:
+            t = (di_value - 25) / 25
+            return floor + t * 0.30
+        elif di_value <= 75:
+            t = (di_value - 50) / 25
+            return 0.40 + t * 0.30
+        else:
+            t = (di_value - 75) / 25
+            return 0.70 + t * (ceiling - 0.70)
+
+    @staticmethod
+    def _compute_trend_boost(prices: pd.Series, sma_fast: int = 50,
+                             sma_slow: int = 200,
+                             boost: float = 0.10) -> float:
+        """
+        Trend confirmation overlay via golden/death cross detection.
+
+        Structurally different from onchain_score (which measures distance
+        to SMA200 — magnitude). This measures SMA50 vs SMA200 relationship
+        (trend direction).
+
+        Returns:
+            +boost if golden cross zone (price > SMA200 AND SMA50 > SMA200)
+            -boost if death cross zone (price < SMA200 AND SMA50 < SMA200)
+            0.0 if mixed/insufficient data
+        """
+        n = len(prices)
+        if n < sma_slow:
+            return 0.0
+
+        sma_f = prices.rolling(window=sma_fast).mean()
+        sma_s = prices.rolling(window=sma_slow).mean()
+        current_price = prices.iloc[-1]
+        current_sma_f = sma_f.iloc[-1]
+        current_sma_s = sma_s.iloc[-1]
+
+        if pd.isna(current_sma_f) or pd.isna(current_sma_s):
+            return 0.0
+
+        if current_price > current_sma_s and current_sma_f > current_sma_s:
+            return boost    # Golden cross zone
+        elif current_price < current_sma_s and current_sma_f < current_sma_s:
+            return -boost   # Death cross zone
+        return 0.0          # Mixed zone
+
+    def get_weights(
+        self,
+        date: pd.Timestamp,
+        price_data: pd.DataFrame,
+        current_weights: pd.Series,
+        **kwargs
+    ) -> pd.Series:
+        """
+        Compute BTC/ETH/Stables weights via continuous allocation pipeline.
+
+        Pipeline:
+        1. DI → continuous allocation (piecewise linear)
+        2. + trend overlay (golden/death cross boost)
+        3. + risk score adjustment (continuous ±0.10)
+        4. Asymmetric EMA smoothing (continuous via cycle_direction)
+        5. Continuous BTC/ETH split
+        6. Floor enforcement + normalization
+        """
+        di_value = kwargs.get('di_value', 50.0)
+        risk_score = kwargs.get('risk_score', 50.0)
+        cycle_direction = kwargs.get('cycle_direction', 0.0)
+        p = self.params
+
+        # Step 1: Continuous DI → allocation
+        target_alloc = self._di_to_allocation(di_value, p.alloc_floor, p.alloc_ceiling)
+
+        # Step 2: Trend confirmation overlay
+        if p.enable_trend_overlay:
+            risky_assets = [c for c in price_data.columns if c.upper() not in
+                            ('USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS')]
+            if risky_assets:
+                btc_prices = price_data[risky_assets[0]]
+                trend_boost = self._compute_trend_boost(
+                    btc_prices, p.sma_fast, p.sma_slow, p.trend_boost_pct
+                )
+                target_alloc += trend_boost
+
+        # Step 3: Risk score adjustment
+        if p.enable_risk_adjustment:
+            risk_adj = (risk_score - 50) / 500  # ±0.10 max
+            target_alloc += risk_adj
+
+        # Clamp after adjustments
+        target_alloc = max(p.alloc_floor, min(p.alloc_ceiling, target_alloc))
+
+        # Step 4: Direction-continuous asymmetric smoothing
+        if cycle_direction is None:
+            cycle_direction = 0.0
+        direction_factor = (cycle_direction + 1) / 2  # [0, 1]
+        # direction=-1 → factor=0 → alpha=alpha_bear (fast)
+        # direction=+1 → factor=1 → alpha=alpha_bull (slow)
+        alpha = p.smoothing_alpha_bear + direction_factor * (
+            p.smoothing_alpha_bull - p.smoothing_alpha_bear
+        )
+
+        if self._smoothed_alloc is None:
+            self._smoothed_alloc = target_alloc
+        else:
+            self._smoothed_alloc += alpha * (target_alloc - self._smoothed_alloc)
+
+        risky = max(p.alloc_floor, min(p.alloc_ceiling, self._smoothed_alloc))
+
+        # Step 5: Continuous BTC/ETH split
+        t = max(0.0, min(1.0, (di_value - 30) / 50))
+        eth_share = p.eth_share_bear + t * (p.eth_share_bull - p.eth_share_bear)
+
+        btc_target = risky * (1 - eth_share)
+        eth_target = risky * eth_share
+        stables_target = 1.0 - risky
+
+        # Step 6: Enforce floors
+        btc_target = max(p.btc_floor, btc_target)
+        eth_target = max(p.eth_floor, eth_target)
+        stables_target = max(p.stables_floor, stables_target)
+
+        # Re-normalize
+        total = btc_target + eth_target + stables_target
+
+        # Map to price_data columns
+        assets = price_data.columns.tolist()
+        weights = pd.Series(0.0, index=assets)
+
+        for a in assets:
+            au = a.upper()
+            if au in ('USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS'):
+                weights[a] = stables_target / total
+            elif au == "ETH":
+                weights[a] = eth_target / total
+            else:
+                weights[a] = btc_target / total
+
+        return weights
+
+
 # Dictionnaire des stratégies disponibles
 DI_STRATEGIES = {
     "di_threshold": DIThresholdStrategy,
@@ -1356,6 +1584,7 @@ DI_STRATEGIES = {
     "di_smartfolio_replica": DISmartfolioReplicaStrategy,
     "di_trend_gate": DITrendGateStrategy,
     "di_cycle_rotation": DICycleRotationStrategy,
+    "di_adaptive_continuous": DIAdaptiveContinuousStrategy,
 }
 
 

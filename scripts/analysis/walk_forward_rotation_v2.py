@@ -50,8 +50,10 @@ from services.di_backtest.di_backtest_engine import DIBacktestEngine
 from services.di_backtest.trading_strategies import (
     DISmartfolioReplicaStrategy,
     DICycleRotationStrategy,
+    DIAdaptiveContinuousStrategy,
     ReplicaParams,
     RotationParams,
+    ContinuousParams,
     DIStrategyConfig,
 )
 
@@ -120,6 +122,73 @@ def build_strategy_configs():
         ),
     })
 
+    # S9: Adaptive Continuous — parameter grid exploration
+    # Baseline (default params)
+    configs.append({
+        "label": "AC-Default",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(),
+    })
+
+    # Lever 1: Reduce ceiling (cap max exposure)
+    configs.append({
+        "label": "AC-C70",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(alloc_ceiling=0.70),
+    })
+    configs.append({
+        "label": "AC-C75",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(alloc_ceiling=0.75),
+    })
+
+    # Lever 2: Faster bear exit
+    configs.append({
+        "label": "AC-FB70",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(smoothing_alpha_bear=0.70),
+    })
+
+    # Combined: ceiling + fast bear
+    configs.append({
+        "label": "AC-C70-FB70",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(alloc_ceiling=0.70, smoothing_alpha_bear=0.70),
+    })
+
+    # Balanced 3 levers: mid ceiling + fast bear + stronger trend
+    configs.append({
+        "label": "AC-C75-FB65-T15",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(
+            alloc_ceiling=0.75, smoothing_alpha_bear=0.65, trend_boost_pct=0.15,
+        ),
+    })
+
+    # Aggressive protection: low ceiling + very fast bear + strong trend
+    configs.append({
+        "label": "AC-C70-FB80-T15",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(
+            alloc_ceiling=0.70, smoothing_alpha_bear=0.80, trend_boost_pct=0.15,
+        ),
+    })
+
+    # Mild adjustment: slightly lower ceiling + slightly faster bear
+    configs.append({
+        "label": "AC-C80-FB60",
+        "type": "continuous",
+        "multi_asset": True,
+        "params": ContinuousParams(alloc_ceiling=0.80, smoothing_alpha_bear=0.60),
+    })
+
     return configs
 
 
@@ -150,6 +219,8 @@ async def run_backtest(di_data, config, initial_capital=10000.0):
         strategy = DISmartfolioReplicaStrategy(config=cfg, replica_params=config["params"])
     elif config["type"] == "rotation":
         strategy = DICycleRotationStrategy(config=cfg, rotation_params=config["params"])
+    elif config["type"] == "continuous":
+        strategy = DIAdaptiveContinuousStrategy(config=cfg, continuous_params=config["params"])
     else:
         raise ValueError(f"Unknown strategy type: {config['type']}")
 

@@ -729,6 +729,7 @@
             <option value="di_contrarian">DI Contrarian</option>
             <option value="di_risk_parity">DI Risk Parity</option>
             <option value="di_signal">DI Signal Only</option>
+            <option value="di_adaptive_continuous">Adaptive Continuous (S9)</option>
           </select>
         </div>
 
@@ -907,6 +908,76 @@
           <div class="advanced-params-footer">
             <button class="btn-reset" id="resetRotationParams">Reset to Defaults</button>
           </div>
+        </div>
+      </div>
+
+      <!-- Continuous Parameters (Adaptive Continuous S9 only) -->
+      <div class="advanced-params-panel" id="continuousParamsPanel" style="display: none;">
+        <div class="advanced-params-header" id="continuousParamsToggle">
+          <h4>Adaptive Continuous Parameters</h4>
+          <span class="toggle-icon" id="continuousParamsIcon">&#9660;</span>
+        </div>
+        <div class="advanced-params-body" id="continuousParamsBody">
+
+          <div class="param-section">
+            <h5>Allocation Range</h5>
+            <div class="param-row">
+              <label>Floor (Bear) <span id="allocFloorValue">10%</span></label>
+              <input type="range" id="allocFloor" min="0.05" max="0.30" step="0.01" value="0.10">
+            </div>
+            <div class="param-row">
+              <label>Ceiling (Bull) <span id="allocCeilingValue">85%</span></label>
+              <input type="range" id="allocCeiling" min="0.50" max="0.95" step="0.01" value="0.85">
+            </div>
+          </div>
+
+          <div class="param-section">
+            <h5>Trend Overlay (Golden/Death Cross)</h5>
+            <div class="param-row">
+              <label>
+                <input type="checkbox" id="enableTrendOverlay" checked>
+                Enable trend confirmation (SMA50 vs SMA200)
+              </label>
+            </div>
+            <div class="param-row">
+              <label>Trend Boost <span id="trendBoostValue">±10%</span></label>
+              <input type="range" id="trendBoostPct" min="0.00" max="0.20" step="0.01" value="0.10">
+            </div>
+          </div>
+
+          <div class="param-section">
+            <h5>Asymmetric Smoothing</h5>
+            <div class="param-row">
+              <label>Bull Entry (slow) <span id="contAlphaBullValue">0.12</span></label>
+              <input type="range" id="contAlphaBull" min="0.01" max="0.50" step="0.01" value="0.12">
+            </div>
+            <div class="param-row">
+              <label>Bear Exit (fast) <span id="contAlphaBearValue">0.50</span></label>
+              <input type="range" id="contAlphaBear" min="0.10" max="1.00" step="0.01" value="0.50">
+            </div>
+          </div>
+
+          <div class="param-section">
+            <h5>ETH Split</h5>
+            <div class="param-row">
+              <label>ETH share (bull) <span id="ethShareBullValue">40%</span></label>
+              <input type="range" id="ethShareBull" min="0.10" max="0.60" step="0.01" value="0.40">
+            </div>
+            <div class="param-row">
+              <label>ETH share (bear) <span id="ethShareBearValue">20%</span></label>
+              <input type="range" id="ethShareBear" min="0.05" max="0.40" step="0.01" value="0.20">
+            </div>
+          </div>
+
+          <div class="param-section">
+            <div class="param-row">
+              <label>
+                <input type="checkbox" id="enableRiskAdj" checked>
+                Enable risk score adjustment (±10%)
+              </label>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1335,6 +1406,10 @@
       if (rotPanel) {
         rotPanel.style.display = strategyKey === 'di_cycle_rotation' ? 'block' : 'none';
       }
+      const contPanel = document.getElementById('continuousParamsPanel');
+      if (contPanel) {
+        contPanel.style.display = strategyKey === 'di_adaptive_continuous' ? 'block' : 'none';
+      }
 
       const details = strategyDetails[strategyKey];
       if (!details) {
@@ -1405,6 +1480,10 @@
         name: 'Trend Gate (SMA200)',
         description: 'SMA(200) trend gate: risk-on when BTC > SMA200, risk-off below. Optional anti-whipsaw filter and drawdown circuit breaker.'
       };
+      fallbacks['di_adaptive_continuous'] = {
+        name: 'Adaptive Continuous (S9)',
+        description: 'Continuous DI→allocation mapping (no discrete phases) with golden/death cross trend confirmation. Higher ceiling (85%) for bull capture, fast exit smoothing for bear protection. 3-asset rotation (BTC/ETH/Stables).'
+      };
       return fallbacks[key] || { name: key, description: 'Strategy based on the Decision Index' };
     }
 
@@ -1441,7 +1520,8 @@
             use_macro_penalty: true,
             calculator_version: calculatorVersion,
             replica_params: getReplicaParams(),
-            rotation_params: getRotationParams()
+            rotation_params: getRotationParams(),
+            continuous_params: getContinuousParams()
           })
         });
 
@@ -2302,6 +2382,56 @@
       }
       return params;
     }
+
+    function getContinuousParams() {
+      const strategy = document.getElementById('strategy').value;
+      if (strategy !== 'di_adaptive_continuous') return null;
+
+      return {
+        alloc_floor: parseFloat(document.getElementById('allocFloor').value),
+        alloc_ceiling: parseFloat(document.getElementById('allocCeiling').value),
+        enable_trend_overlay: document.getElementById('enableTrendOverlay').checked,
+        sma_fast: 50,
+        sma_slow: 200,
+        trend_boost_pct: parseFloat(document.getElementById('trendBoostPct').value),
+        enable_risk_adjustment: document.getElementById('enableRiskAdj').checked,
+        smoothing_alpha_bull: parseFloat(document.getElementById('contAlphaBull').value),
+        smoothing_alpha_bear: parseFloat(document.getElementById('contAlphaBear').value),
+        eth_share_bull: parseFloat(document.getElementById('ethShareBull').value),
+        eth_share_bear: parseFloat(document.getElementById('ethShareBear').value),
+      };
+    }
+
+    // Wire continuous params sliders
+    (function initContinuousSliders() {
+      const sliders = [
+        { id: 'allocFloor', display: 'allocFloorValue', fmt: v => Math.round(v * 100) + '%' },
+        { id: 'allocCeiling', display: 'allocCeilingValue', fmt: v => Math.round(v * 100) + '%' },
+        { id: 'trendBoostPct', display: 'trendBoostValue', fmt: v => '±' + Math.round(v * 100) + '%' },
+        { id: 'contAlphaBull', display: 'contAlphaBullValue', fmt: v => v.toFixed(2) },
+        { id: 'contAlphaBear', display: 'contAlphaBearValue', fmt: v => v.toFixed(2) },
+        { id: 'ethShareBull', display: 'ethShareBullValue', fmt: v => Math.round(v * 100) + '%' },
+        { id: 'ethShareBear', display: 'ethShareBearValue', fmt: v => Math.round(v * 100) + '%' },
+      ];
+      sliders.forEach(s => {
+        const el = document.getElementById(s.id);
+        const disp = document.getElementById(s.display);
+        if (el && disp) {
+          el.addEventListener('input', () => { disp.textContent = s.fmt(parseFloat(el.value)); });
+        }
+      });
+      // Toggle collapse
+      const toggle = document.getElementById('continuousParamsToggle');
+      const body = document.getElementById('continuousParamsBody');
+      const icon = document.getElementById('continuousParamsIcon');
+      if (toggle && body) {
+        toggle.addEventListener('click', () => {
+          const isHidden = body.style.display === 'none';
+          body.style.display = isHidden ? 'block' : 'none';
+          if (icon) icon.textContent = isHidden ? '\u25B2' : '\u25BC';
+        });
+      }
+    })();
 
     function getReplicaParams() {
       const strategy = document.getElementById('strategy').value;
