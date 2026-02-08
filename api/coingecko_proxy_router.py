@@ -20,6 +20,7 @@ from pathlib import Path
 
 from services.user_secrets import get_coingecko_api_key
 from api.deps import get_required_user
+from shared.circuit_breaker import coingecko_circuit
 
 logger = logging.getLogger("crypto-rebalancer")
 
@@ -156,6 +157,13 @@ async def _fetch_with_cache_and_fallback(
         # Return data directly (frontend expects raw CoinGecko response)
         return cached
 
+    # Circuit breaker: fail-fast with stale cache fallback
+    if not coingecko_circuit.is_available():
+        logger.warning(f"CoinGecko circuit OPEN — using stale cache for {cache_key}")
+        if cache_key in _cache:
+            return _cache[cache_key]["data"]
+        raise HTTPException(status_code=503, detail="CoinGecko API unavailable (circuit open) and no cache")
+
     try:
         # Add API key as header if available (for Pro/Demo API)
         headers = {}
@@ -183,6 +191,7 @@ async def _fetch_with_cache_and_fallback(
 
             # Cache the response
             set_cached_data(cache_key, data, cache_ttl)
+            coingecko_circuit.record_success()
 
             logger.info(f"Successfully fetched data from CoinGecko: {url}")
             # Return data directly (frontend expects raw CoinGecko response)
@@ -190,6 +199,7 @@ async def _fetch_with_cache_and_fallback(
 
     except httpx.TimeoutException:
         logger.error("CoinGecko API timeout")
+        coingecko_circuit.record_failure()
         # Try to use stale cache
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]
@@ -201,6 +211,7 @@ async def _fetch_with_cache_and_fallback(
 
     except httpx.HTTPStatusError as e:
         logger.error(f"CoinGecko API error: {e.response.status_code}")
+        coingecko_circuit.record_failure()
         # Try to use stale cache instead of raising error
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]
@@ -213,6 +224,7 @@ async def _fetch_with_cache_and_fallback(
 
     except Exception as e:
         logger.error(f"Unexpected error fetching CoinGecko data: {e}")
+        coingecko_circuit.record_failure()
         # ALWAYS try to use stale cache before raising error
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]

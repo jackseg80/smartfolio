@@ -16,6 +16,8 @@ from typing import Optional
 
 import httpx
 
+from shared.circuit_breaker import fred_circuit, CircuitOpenError
+
 log = logging.getLogger(__name__)
 
 # Cache TTL: 4 heures (comme les données on-chain)
@@ -78,7 +80,9 @@ class MacroStressService:
     async def _fetch_fred_series(
         self, series_id: str, fred_api_key: str, start_date: str = "2020-01-01"
     ) -> list[dict]:
-        """Récupère une série FRED"""
+        """Récupère une série FRED (avec circuit breaker)"""
+        fred_circuit.raise_if_open()
+
         url = "https://api.stlouisfed.org/fred/series/observations"
         params = {
             "series_id": series_id,
@@ -87,11 +91,18 @@ class MacroStressService:
             "observation_start": start_date,
         }
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url, params=params)
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(url, params=params)
+        except (httpx.TimeoutException, httpx.ConnectError, OSError) as e:
+            fred_circuit.record_failure()
+            raise Exception(f"FRED API network error: {e}") from e
 
         if response.status_code != 200:
+            fred_circuit.record_failure()
             raise Exception(f"FRED API error: HTTP {response.status_code}")
+
+        fred_circuit.record_success()
 
         data = response.json()
         observations = data.get("observations", [])
@@ -150,6 +161,8 @@ class MacroStressService:
                     result.vix_value, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS
                 )
                 log.info(f"VIX: {result.vix_value:.2f} (stress: {result.vix_stress}, penalty: {result.vix_penalty:.1f})")
+        except CircuitOpenError:
+            log.warning("FRED circuit OPEN — skipping VIX fetch")
         except Exception as e:
             log.warning(f"Failed to fetch VIX: {e}")
 
@@ -171,6 +184,8 @@ class MacroStressService:
                             f"DXY: {result.dxy_value:.2f} (30d change: {result.dxy_change_30d:.2f}%, "
                             f"stress: {result.dxy_stress}, penalty: {result.dxy_penalty:.1f})"
                         )
+        except CircuitOpenError:
+            log.warning("FRED circuit OPEN — skipping DXY fetch")
         except Exception as e:
             log.warning(f"Failed to fetch DXY: {e}")
 

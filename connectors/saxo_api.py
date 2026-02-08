@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from dotenv import load_dotenv
 from services.user_secrets import get_saxo_credentials
+from shared.circuit_breaker import saxo_circuit
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -253,15 +254,22 @@ class SaxoOAuthClient:
         params = {param_name: account_key}
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"📊 Fetching positions for account {account_key[:8]} using {param_name}...")
-            response = await client.get(url, params=params, headers=headers)
-            response.raise_for_status()
+        saxo_circuit.raise_if_open()
 
-            data = response.json()
-            positions = data.get("Data", [])
-            logger.info(f"✅ Retrieved {len(positions)} positions")
-            return positions
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                logger.info(f"Fetching positions for account {account_key[:8]} using {param_name}...")
+                response = await client.get(url, params=params, headers=headers)
+                response.raise_for_status()
+
+                data = response.json()
+                positions = data.get("Data", [])
+                logger.info(f"Retrieved {len(positions)} positions")
+                saxo_circuit.record_success()
+                return positions
+        except (httpx.TimeoutException, httpx.ConnectError, OSError) as e:
+            saxo_circuit.record_failure()
+            raise
 
     async def get_balances(
         self,
@@ -292,14 +300,21 @@ class SaxoOAuthClient:
         params = {param_name: account_key}
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"💰 Fetching balances for account {account_key[:8]} using {param_name}...")
-            response = await client.get(url, params=params, headers=headers)
-            response.raise_for_status()
+        saxo_circuit.raise_if_open()
 
-            balances = response.json()
-            logger.info(f"✅ Retrieved balances (Total: {balances.get('TotalValue', 0)})")
-            return balances
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                logger.info(f"Fetching balances for account {account_key[:8]} using {param_name}...")
+                response = await client.get(url, params=params, headers=headers)
+                response.raise_for_status()
+
+                balances = response.json()
+                logger.info(f"Retrieved balances (Total: {balances.get('TotalValue', 0)})")
+                saxo_circuit.record_success()
+                return balances
+        except (httpx.TimeoutException, httpx.ConnectError, OSError) as e:
+            saxo_circuit.record_failure()
+            raise
 
     async def get_transactions(
         self,
@@ -349,15 +364,22 @@ class SaxoOAuthClient:
         }
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"📜 Fetching transactions {from_date} to {to_date}...")
-            response = await client.get(url, params=params, headers=headers)
-            response.raise_for_status()
+        saxo_circuit.raise_if_open()
 
-            data = response.json()
-            transactions = data.get("Data", [])
-            logger.info(f"✅ Retrieved {len(transactions)} transactions")
-            return transactions
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                logger.info(f"Fetching transactions {from_date} to {to_date}...")
+                response = await client.get(url, params=params, headers=headers)
+                response.raise_for_status()
+
+                data = response.json()
+                transactions = data.get("Data", [])
+                logger.info(f"Retrieved {len(transactions)} transactions")
+                saxo_circuit.record_success()
+                return transactions
+        except (httpx.TimeoutException, httpx.ConnectError, OSError) as e:
+            saxo_circuit.record_failure()
+            raise
 
     async def get_instrument_details(
         self,
@@ -393,25 +415,32 @@ class SaxoOAuthClient:
         url = f"{self.api_base}/ref/v1/instruments/details/{uic}/{asset_type}"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            try:
-                logger.debug(f"🔍 Resolving UIC {uic} ({asset_type})...")
+        if not saxo_circuit.is_available():
+            logger.warning(f"Saxo circuit OPEN — skipping UIC {uic} resolution")
+            return None
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                logger.debug(f"Resolving UIC {uic} ({asset_type})...")
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
 
                 data = response.json()
-                logger.debug(f"✅ Resolved UIC {uic} → {data.get('Symbol', 'N/A')}")
+                logger.debug(f"Resolved UIC {uic} -> {data.get('Symbol', 'N/A')}")
+                saxo_circuit.record_success()
                 return data
 
-            except httpx.HTTPStatusError as e:
-                if e.response.status_code == 404:
-                    logger.warning(f"⚠️ Instrument not found: UIC {uic} ({asset_type})")
-                else:
-                    logger.warning(f"⚠️ Failed to resolve UIC {uic}: {e}")
-                return None
-            except Exception as e:
-                logger.warning(f"⚠️ Error resolving UIC {uic}: {e}")
-                return None
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"Instrument not found: UIC {uic} ({asset_type})")
+            else:
+                logger.warning(f"Failed to resolve UIC {uic}: {e}")
+                saxo_circuit.record_failure()
+            return None
+        except (httpx.TimeoutException, httpx.ConnectError, OSError) as e:
+            logger.warning(f"Network error resolving UIC {uic}: {e}")
+            saxo_circuit.record_failure()
+            return None
 
 
 # Helper functions for PKCE state management

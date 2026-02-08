@@ -12,6 +12,8 @@ from urllib.parse import urlencode
 
 import httpx
 
+from shared.circuit_breaker import coingecko_circuit, CircuitOpenError
+
 log = logging.getLogger(__name__)
 
 @dataclass
@@ -115,7 +117,11 @@ class CoinGeckoConnector:
         return symbol_lower
 
     def _make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
-        """Effectue une requête vers l'API CoinGecko avec gestion d'erreur."""
+        """Effectue une requête vers l'API CoinGecko avec gestion d'erreur et circuit breaker."""
+        if not coingecko_circuit.is_available():
+            log.warning(f"CoinGecko circuit OPEN — skipping {endpoint}")
+            return None
+
         self._rate_limit()
 
         url = f"{self.BASE_URL}{endpoint}"
@@ -132,21 +138,24 @@ class CoinGeckoConnector:
             response = self.session.get(url, params=params, headers=headers)
             response.raise_for_status()
 
+            coingecko_circuit.record_success()
             return response.json()
 
         except httpx.TimeoutException:
             log.error(f"CoinGecko API timeout for {endpoint}")
+            coingecko_circuit.record_failure()
             return None
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:
                 log.warning(f"CoinGecko rate limit hit, status: {e.response.status_code}")
-                # Augmenter le délai pour les prochaines requêtes
                 self._rate_limit_delay = min(self._rate_limit_delay * 1.5, 10.0)
             else:
                 log.error(f"CoinGecko API error {e.response.status_code} for {endpoint}: {e}")
+            coingecko_circuit.record_failure()
             return None
         except httpx.ConnectError as e:
             log.error(f"Connection failed to CoinGecko API for {endpoint}: {e}")
+            coingecko_circuit.record_failure()
             return None
         except json.JSONDecodeError as e:
             log.error(f"Invalid JSON response from CoinGecko for {endpoint}: {e}")

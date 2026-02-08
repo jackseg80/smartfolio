@@ -238,6 +238,22 @@ async def health_all():
             "error": str(e)
         }
 
+    # 6. Circuit Breakers (external API resilience)
+    try:
+        from shared.circuit_breaker import coingecko_circuit, fred_circuit, saxo_circuit
+        circuits = [coingecko_circuit, fred_circuit, saxo_circuit]
+        circuit_statuses = {c.name: c.get_status() for c in circuits}
+        any_open = any(s["state"] == "open" for s in circuit_statuses.values())
+        results["components"]["circuit_breakers"] = {
+            "status": "degraded" if any_open else "healthy",
+            "circuits": circuit_statuses,
+        }
+    except Exception as e:
+        results["components"]["circuit_breakers"] = {
+            "status": "unknown",
+            "error": str(e),
+        }
+
     # Compute overall status
     statuses = [c.get("status") for c in results["components"].values()]
     if all(s == "healthy" for s in statuses):
