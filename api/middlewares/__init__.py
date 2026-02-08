@@ -12,7 +12,7 @@ ErrorHandlingMiddleware which remain separate to avoid migration complexity.
 """
 
 from .security import add_security_headers_middleware
-from .timing import request_timing_middleware
+from .timing import request_timing_middleware, request_id_var
 from .logging import request_logger_middleware
 from .cache import no_cache_dev_middleware
 
@@ -21,4 +21,5 @@ __all__ = [
     "request_timing_middleware",
     "request_logger_middleware",
     "no_cache_dev_middleware",
+    "request_id_var",
 ]

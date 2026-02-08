@@ -29,12 +29,6 @@ class CacheManager:
         """Register all known application caches"""
         # Import caches from various modules
         try:
-            from api.advanced_analytics_endpoints import _advanced_cache
-            self.register_cache("advanced_analytics", _advanced_cache, ttl=1800)
-        except ImportError:
-            logger.warning("Could not import advanced_analytics cache")
-
-        try:
             from api.analytics_endpoints import _analytics_cache
             self.register_cache("analytics", _analytics_cache, ttl=900)
         except ImportError:

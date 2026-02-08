@@ -12,6 +12,16 @@ from typing import List, Dict, Any
 
 logger = logging.getLogger(__name__)
 
+# Characters that trigger formula execution in spreadsheet applications
+_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _sanitize_csv_value(value: str) -> str:
+    """Sanitize a string value to prevent CSV injection in spreadsheet apps."""
+    if value and isinstance(value, str) and value.startswith(_FORMULA_PREFIXES):
+        return f"'{value}"
+    return value
+
 
 async def load_csv_balances(csv_file_path: str) -> List[Dict[str, Any]]:
     """
@@ -106,13 +116,17 @@ async def load_csv_balances(csv_file_path: str) -> List[Dict[str, Any]]:
 
                 # Only add valid rows (with symbol, positive amount and value)
                 if symbol and amount > 0 and value_usd > 0:
-                    items.append({
-                        "symbol": symbol,
-                        "alias": symbol,
-                        "amount": amount,
-                        "value_usd": value_usd,
-                        "location": location
-                    })
+                    # Strip formula prefixes from text fields (defense-in-depth)
+                    safe_symbol = symbol.lstrip("=+@\t\r")
+                    safe_location = location.lstrip("=+@\t\r") if location else location
+                    if safe_symbol:
+                        items.append({
+                            "symbol": safe_symbol,
+                            "alias": safe_symbol,
+                            "amount": amount,
+                            "value_usd": value_usd,
+                            "location": safe_location or "Unknown"
+                        })
 
     except Exception as e:
         logger.error(f"Error parsing CSV file {csv_file_path}: {e}")
@@ -150,13 +164,13 @@ def to_csv(actions: List[Dict[str, Any]]) -> str:
     lines = ["group,alias,symbol,action,usd,est_quantity,price_used,exec_hint"]
     for a in actions or []:
         lines.append("{},{},{},{},{:.2f},{},{},{}".format(
-            a.get("group", ""),
-            a.get("alias", ""),
-            a.get("symbol", ""),
-            a.get("action", ""),
+            _sanitize_csv_value(a.get("group", "")),
+            _sanitize_csv_value(a.get("alias", "")),
+            _sanitize_csv_value(a.get("symbol", "")),
+            _sanitize_csv_value(a.get("action", "")),
             float(a.get("usd") or 0.0),
             ("" if a.get("est_quantity") is None else f"{a.get('est_quantity')}"),
             ("" if a.get("price_used") is None else f"{a.get('price_used')}"),
-            a.get("exec_hint", "")
+            _sanitize_csv_value(a.get("exec_hint", ""))
         ))
     return "\n".join(lines)

@@ -368,6 +368,7 @@ async def rebalance_plan_csv(
     pricing: str = Query("local"),
     dynamic_targets: bool = Query(False, description="Use dynamic targets from CCS/cycle module"),
     payload: Dict[str, Any] = Body(...),
+    user: str = Depends(get_required_user),
 ):
     # réutilise le JSON pour construire le CSV
     plan = await rebalance_plan(
@@ -376,6 +377,7 @@ async def rebalance_plan_csv(
         pricing=pricing,
         dynamic_targets=dynamic_targets,
         payload=payload,
+        user=user,
     )
     actions = plan.get("actions") or []
     csv_text = to_csv(actions)

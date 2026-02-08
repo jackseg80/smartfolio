@@ -8,6 +8,8 @@ Provides request timing and structured JSON logging.
 import json
 import logging
 import time
+import uuid
+from contextvars import ContextVar
 from time import monotonic
 from fastapi import Request
 from fastapi.responses import Response
@@ -15,6 +17,11 @@ from config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
+
+# Context variable for request ID — accessible from any module via:
+#   from api.middlewares.timing import request_id_var
+#   rid = request_id_var.get("")
+request_id_var: ContextVar[str] = ContextVar("request_id", default="")
 
 
 async def request_timing_middleware(request: Request, call_next) -> Response:
@@ -35,6 +42,10 @@ async def request_timing_middleware(request: Request, call_next) -> Response:
     Returns:
         Response with X-Process-Time header added
     """
+    # Generate or reuse request ID (honor incoming header for distributed tracing)
+    rid = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
+    request_id_var.set(rid)
+
     start_time = monotonic()
 
     response = await call_next(request)
@@ -45,6 +56,7 @@ async def request_timing_middleware(request: Request, call_next) -> Response:
     # Structured JSON log record
     log_record = {
         "ts": time.time(),
+        "request_id": rid,
         "method": request.method,
         "path": request.url.path,
         "status": response.status_code,
@@ -62,6 +74,7 @@ async def request_timing_middleware(request: Request, call_next) -> Response:
         if response.status_code >= 400 or process_time > 1.0:
             logger.info(json.dumps(log_record, ensure_ascii=False))
 
-    # Add timing header
+    # Add timing and request ID headers
     response.headers["X-Process-Time"] = f"{process_time:.3f}"
+    response.headers["X-Request-ID"] = rid
     return response

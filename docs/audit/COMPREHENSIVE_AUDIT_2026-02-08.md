@@ -291,24 +291,24 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 
 ### Immediate (P0) -- Security Critical
 
-| # | Action | Effort | Impact |
-|---|--------|--------|--------|
-| 1 | **Upgrade starlette** to >=0.47.2 (CVE-2024-47874 + CVE-2025-54121) | 1h | Closes DoS vulnerability |
-| 2 | **Add auth to governance endpoints** | 2h | Closes privilege escalation |
-| 3 | **Add auth to execution_history, kraken, ML training** | 3h | Closes data exposure |
-| 4 | **Add timeouts** to Saxo token exchange/refresh | 15min | Prevents infinite hang |
-| 5 | **Upgrade** urllib3, python-multipart, protobuf, filelock, pyasn1 | 30min | Closes 7 CVEs |
+| # | Action | Effort | Impact | Status |
+|---| ------ | ------ | ------ | ------ |
+| 1 | **Upgrade starlette** to >=0.47.2 (CVE-2024-47874 + CVE-2025-54121) | 1h | Closes DoS vulnerability | DONE (Feb 8) |
+| 2 | **Add auth to governance endpoints** | 2h | Closes privilege escalation | DONE (Feb 8) |
+| 3 | **Add auth to execution_history, kraken, csv cleanup** | 3h | Closes data exposure | DONE (Feb 8) |
+| 4 | **Add timeouts** to Saxo token exchange/refresh | 15min | Prevents infinite hang | DONE (Feb 8) |
+| 5 | **Upgrade** urllib3, python-multipart, protobuf, filelock, pyasn1 | 30min | Closes 7 CVEs | DONE (Feb 8) |
 
 ### Short-term (P1) -- High Value
 
-| # | Action | Effort | Impact |
-|---|--------|--------|--------|
-| 6 | Add request ID middleware (correlation IDs) | 2h | Production debugging |
-| 7 | Add filelock to critical file writes (users.json, taxonomy, registries) | 3h | Data integrity |
-| 8 | Add timeouts to FRED proxy endpoints | 30min | Prevents hangs |
-| 9 | Add CSV injection protection in csv_helpers.py | 1h | Data security |
-| 10 | Validate governance endpoints with Pydantic models | 2h | Input validation |
-| 11 | Add eviction/max-size to in-memory API caches | 2h | Memory safety |
+| # | Action | Effort | Impact | Status |
+|---| ------ | ------ | ------ | ------ |
+| 6 | Add request ID middleware (correlation IDs) | 2h | Production debugging | DONE (Feb 8) |
+| 7 | Add filelock to critical file writes (users.json, taxonomy, registries) | 3h | Data integrity | |
+| 8 | Add timeouts to FRED proxy endpoints | 30min | Prevents hangs | DONE (Feb 8, P0) |
+| 9 | Add CSV injection protection in csv_helpers.py | 1h | Data security | DONE (Feb 8) |
+| 10 | Validate governance endpoints with Pydantic models | 2h | Input validation | |
+| 11 | ~~Add eviction/max-size to in-memory API caches~~ | ~~2h~~ | ~~Memory safety~~ | N/A -- audit found all caches already have TTL/eviction |
 
 ### Medium-term (P2) -- Quality
 
@@ -321,6 +321,8 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | 16 | Implement basic circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience |
 | 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability |
 | 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene |
+| 25 | **Batch Binance price requests** in rebalance CSV export (currently sequential, ~23s for 124 actions) | 4h | Performance |
+| 26 | **Fix symbol mapping** for Binance API (CoinTracking aliases like `WLD3`, `ARB5` append digits that cause 400 errors) | 3h | Reliability |
 
 ### Long-term (P3) -- Technical Excellence
 
@@ -332,6 +334,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture |
 | 23 | Activate structured JSON logging | 2h | Observability |
 | 24 | Add distributed lock for scheduler exclusivity | 2h | Multi-worker safety |
+| 27 | **Add CoinGecko rate-limit backoff** (currently gets 429 errors during price enrichment) | 2h | API reliability |
 
 ---
 

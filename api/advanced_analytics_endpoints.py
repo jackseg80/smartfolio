@@ -20,10 +20,6 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analytics/advanced", tags=["advanced-analytics"])
 
-# Cache pour les analytics avancés (vidé pour forcer l'utilisation du service centralisé)
-# NOTE: Si cache réintroduit, TOUJOURS inclure user_id dans les clés: f"{metric}:{user}:{params}"
-_advanced_cache = {}
-
 class DrawdownPeriod(BaseModel):
     """Période de drawdown détaillée"""
     start_date: datetime
