@@ -45,32 +45,32 @@ COMPUTE_ON_STUB_SOURCES = os.getenv("COMPUTE_ON_STUB_SOURCES", "false").strip().
 LOG_DIR = Path(__file__).parent.parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 
-# Configuration du logging avec handlers multiples (console + fichier rotatif)
+# Configuration du logging avec handlers multiples (console text + fichier JSON)
 log_level = getattr(logging, LOG_LEVEL, logging.INFO)
-log_format = "%(asctime)s %(levelname)s %(name)s: %(message)s"
 
-# Configuration avec RotatingFileHandler pour limiter la taille des logs
-# Utiliser force=True pour éviter les handlers dupliqués si le module est importé plusieurs fois
+# Console handler — human-readable text for terminal
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+
+# File handler — structured JSON (one JSON object per line, machine-parseable)
+from shared.json_log_formatter import JsonLogFormatter
+
+file_handler = RotatingFileHandler(
+    LOG_DIR / "app.log",
+    maxBytes=5 * 1024 * 1024,  # 5 MB par fichier
+    backupCount=3,  # 3 backups (15 MB total max)
+    encoding="utf-8",
+)
+file_handler.setFormatter(JsonLogFormatter())
+
 logging.basicConfig(
     level=log_level,
-    format=log_format,
-    force=True,  # Python 3.8+: reset handlers pour éviter les doublons
-    handlers=[
-        # Console (stdout) - pour le terminal
-        logging.StreamHandler(),
-        # Fichier rotatif - 5 MB par fichier, 3 backups (15 MB total)
-        # Adapté pour Claude Code: fichiers de taille raisonnable
-        RotatingFileHandler(
-            LOG_DIR / "app.log",
-            maxBytes=5 * 1024 * 1024,  # 5 MB par fichier (facile à lire pour une IA)
-            backupCount=3,  # Garder 3 fichiers de backup (15 MB total max)
-            encoding="utf-8",
-        ),
-    ],
+    force=True,
+    handlers=[console_handler, file_handler],
 )
 logger = logging.getLogger("crypto-rebalancer")
 logger.info(
-    f"📝 Logging initialized: console + file (rotating 5MB x3 backups) -> {LOG_DIR / 'app.log'}"
+    f"Logging initialized: console (text) + file (JSON) -> {LOG_DIR / 'app.log'}"
 )
 
 # Import différé des connecteurs pour éviter les blocages réseau au démarrage
