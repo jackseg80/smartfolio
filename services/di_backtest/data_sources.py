@@ -400,6 +400,71 @@ class HistoricalDataSources:
 
         return sentiment_proxy.rename('sentiment_proxy')
 
+    def compute_sentiment_proxy_v2(
+        self,
+        prices: pd.Series,
+        normalization: str = "adaptive",
+    ) -> pd.Series:
+        """
+        Sentiment proxy V2 — enrichi et adaptatif.
+
+        4 composants (vs 2 en V1):
+        - Vol 30j inversée (25%): haute vol = fear, fenêtre plus longue que V1
+        - Momentum 14j (25%): hausse = greed
+        - RSI 14j rescalé (25%): RSI<30 = extreme fear, RSI>70 = extreme greed
+        - Distance au 52-week high (25%): proche du ATH = euphoria, loin = pain
+
+        Args:
+            normalization: "fixed" (V1 compat) ou "adaptive" (expanding percentile)
+        """
+        returns = prices.pct_change()
+
+        # 1. Vol 30j inversée (fenêtre plus stable que 14j)
+        vol_30d = returns.rolling(30, min_periods=1).std() * np.sqrt(365)
+        if normalization == "adaptive":
+            # Expanding percentile inversé: basse vol = haut score = greed
+            vol_score = (-vol_30d).expanding(min_periods=30).rank(pct=True) * 100
+            fixed_vol = 100 - (vol_30d * 100).clip(0, 100)
+            vol_score = vol_score.fillna(fixed_vol)
+        else:
+            vol_score = 100 - (vol_30d * 100).clip(0, 100)
+
+        # 2. Momentum 14j
+        momentum_14d = prices.pct_change(14)
+        if normalization == "adaptive":
+            momentum_score = momentum_14d.expanding(min_periods=14).rank(pct=True) * 100
+            fixed_mom = ((momentum_14d * 100) / 0.4 + 50).clip(0, 100)
+            momentum_score = momentum_score.fillna(fixed_mom)
+        else:
+            momentum_score = ((momentum_14d * 100) / 0.4 + 50).clip(0, 100)
+
+        # 3. RSI 14j (déjà 0-100 natif, pas de percentile)
+        delta = prices.diff()
+        gain = delta.where(delta > 0, 0).rolling(14, min_periods=1).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(14, min_periods=1).mean()
+        rs = gain / loss.replace(0, 1e-10)
+        rsi = 100 - (100 / (1 + rs))
+
+        # 4. Distance au 52-week high (proxy euphoria/pain)
+        high_52w = prices.rolling(365, min_periods=30).max()
+        distance_from_high = (prices - high_52w) / high_52w  # [-1, 0]
+        if normalization == "adaptive":
+            dist_score = distance_from_high.expanding(min_periods=90).rank(pct=True) * 100
+            fixed_dist = ((distance_from_high + 1) * 100).clip(0, 100)
+            dist_score = dist_score.fillna(fixed_dist)
+        else:
+            dist_score = ((distance_from_high + 1) * 100).clip(0, 100)
+
+        # Combinaison pondérée (4 composants = plus diversifié)
+        sentiment = (
+            vol_score * 0.25 +
+            momentum_score * 0.25 +
+            rsi * 0.25 +
+            dist_score * 0.25
+        ).fillna(50.0).clip(0, 100)
+
+        return sentiment.rename('sentiment_proxy')
+
     # ========== MACRO (VIX/DXY via FRED) ==========
 
     async def fetch_fred_series(

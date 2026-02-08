@@ -410,8 +410,10 @@ class HistoricalDICalculator:
             btc_prices_with_buffer, normalization=cfg.normalization,
         )
 
-        # Sentiment
-        sentiment_scores = await self._get_sentiment_scores(btc_prices_with_buffer)
+        # Sentiment (V2 utilise proxy enrichi avec normalisation adaptive)
+        sentiment_scores = await self._get_sentiment_scores(
+            btc_prices_with_buffer, normalization=cfg.normalization,
+        )
 
         # Macro penalty
         macro_penalties = pd.Series(0, index=btc_prices_with_buffer.index, name='macro_penalty')
@@ -535,16 +537,25 @@ class HistoricalDICalculator:
             metadata=metadata,
         )
 
-    async def _get_sentiment_scores(self, btc_prices: pd.Series) -> pd.Series:
+    async def _get_sentiment_scores(
+        self, btc_prices: pd.Series, normalization: str = "fixed"
+    ) -> pd.Series:
         """
-        Récupère les scores sentiment (Fear & Greed si disponible, sinon proxy)
+        Récupère les scores sentiment (Fear & Greed si disponible, sinon proxy).
+
+        Args:
+            normalization: "fixed" (V1 proxy) ou "adaptive" (V2 proxy enrichi)
         """
+        use_v2 = normalization == "adaptive"
+
         # Essayer Fear & Greed API
         fg_scores = await self.data_sources.fetch_fear_greed_history(days=365)
 
         if fg_scores.empty:
             # Fallback: proxy basé sur prix
-            logger.info("Fear & Greed non disponible, utilisation du proxy")
+            logger.info("Fear & Greed non disponible, utilisation du proxy %s", "V2" if use_v2 else "V1")
+            if use_v2:
+                return self.data_sources.compute_sentiment_proxy_v2(btc_prices, normalization=normalization)
             return self.data_sources.compute_sentiment_proxy(btc_prices)
 
         # Combiner F&G récent + proxy pour données anciennes
@@ -553,8 +564,11 @@ class HistoricalDICalculator:
         # Reindex F&G avec forward fill pour les gaps
         fg_reindexed = fg_scores.reindex(all_dates, method='nearest').astype(float)
 
-        # Pour les dates avant F&G, utiliser le proxy
-        proxy = self.data_sources.compute_sentiment_proxy(btc_prices)
+        # Pour les dates avant F&G, utiliser le proxy (V2 si adaptive)
+        if use_v2:
+            proxy = self.data_sources.compute_sentiment_proxy_v2(btc_prices, normalization=normalization)
+        else:
+            proxy = self.data_sources.compute_sentiment_proxy(btc_prices)
         fg_min_date = fg_scores.index.min() if not fg_scores.empty else all_dates.max()
 
         # Créer le résultat en float pour éviter les warnings de types
