@@ -589,6 +589,50 @@ async def job_daily_ml_training():
 # SCHEDULER LIFECYCLE
 # ============================================================================
 
+async def _acquire_scheduler_lock() -> bool:
+    """Try to acquire a Redis distributed lock for scheduler exclusivity.
+
+    Prevents duplicate schedulers when running multiple uvicorn workers.
+    Uses Redis SET NX with a 120s TTL (auto-expires if process dies).
+    Returns True if lock acquired (or Redis unavailable — single-worker fallback).
+    """
+    try:
+        import redis.asyncio as aioredis
+
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        if not redis_url or not redis_url.strip():
+            return True  # No Redis configured, allow scheduler
+
+        client = aioredis.from_url(redis_url, socket_connect_timeout=2)
+        # SET NX: only set if key doesn't exist. TTL 120s = auto-release on crash.
+        acquired = await client.set("smartfolio:scheduler_lock", os.getpid(), nx=True, ex=120)
+        await client.aclose()
+
+        if not acquired:
+            logger.info("Scheduler lock held by another worker — skipping scheduler init")
+        return bool(acquired)
+
+    except Exception as e:
+        logger.debug(f"Redis lock unavailable ({e}) — allowing scheduler (single-worker mode)")
+        return True  # Redis down = assume single worker
+
+
+async def _renew_scheduler_lock():
+    """Periodically renew the scheduler lock TTL (called as a scheduler job)."""
+    try:
+        import redis.asyncio as aioredis
+
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        if not redis_url or not redis_url.strip():
+            return
+
+        client = aioredis.from_url(redis_url, socket_connect_timeout=2)
+        await client.expire("smartfolio:scheduler_lock", 120)
+        await client.aclose()
+    except Exception:
+        pass  # Best-effort renewal
+
+
 async def initialize_scheduler() -> bool:
     """
     Initialize and start the APScheduler.
@@ -600,15 +644,19 @@ async def initialize_scheduler() -> bool:
 
     # Check if scheduler is enabled
     if os.getenv("RUN_SCHEDULER", "0") != "1":
-        logger.info("⏸️ Scheduler disabled (RUN_SCHEDULER != 1)")
+        logger.info("Scheduler disabled (RUN_SCHEDULER != 1)")
         return False
 
     if _scheduler is not None:
-        logger.warning("⚠️ Scheduler already initialized")
+        logger.warning("Scheduler already initialized")
         return True
 
+    # Distributed lock: prevent duplicate schedulers in multi-worker setups
+    if not await _acquire_scheduler_lock():
+        return False
+
     try:
-        logger.info("🚀 Initializing APScheduler...")
+        logger.info("Initializing APScheduler...")
 
         # Create scheduler with timezone
         _scheduler = AsyncIOScheduler(timezone="Europe/Zurich")
@@ -694,6 +742,16 @@ async def initialize_scheduler() -> bool:
             **job_defaults
         )
 
+        # Lock renewal: extend Redis lock TTL every 60s
+        _scheduler.add_job(
+            _renew_scheduler_lock,
+            IntervalTrigger(seconds=60),
+            id="scheduler_lock_renewal",
+            name="Scheduler Lock Renewal",
+            coalesce=True,
+            max_instances=1,
+        )
+
         # Start scheduler
         _scheduler.start()
 
@@ -713,21 +771,31 @@ async def initialize_scheduler() -> bool:
 
 
 async def shutdown_scheduler():
-    """Shutdown the scheduler gracefully"""
+    """Shutdown the scheduler gracefully and release distributed lock"""
     global _scheduler
 
     if _scheduler is None:
-        logger.info("⏸️ Scheduler not running, nothing to shutdown")
+        logger.info("Scheduler not running, nothing to shutdown")
         return
 
     try:
-        logger.info("🛑 Shutting down APScheduler...")
+        logger.info("Shutting down APScheduler...")
 
-        # Shutdown with grace period
         _scheduler.shutdown(wait=True)
         _scheduler = None
 
-        logger.info("✅ APScheduler shutdown complete")
+        # Release distributed lock
+        try:
+            import redis.asyncio as aioredis
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            if redis_url and redis_url.strip():
+                client = aioredis.from_url(redis_url, socket_connect_timeout=2)
+                await client.delete("smartfolio:scheduler_lock")
+                await client.aclose()
+        except Exception:
+            pass  # Best-effort release
+
+        logger.info("APScheduler shutdown complete")
 
     except Exception as e:
-        logger.exception(f"❌ Failed to shutdown scheduler: {e}")
+        logger.exception(f"Failed to shutdown scheduler: {e}")
