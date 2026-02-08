@@ -1,6 +1,7 @@
 # services/pricing.py
 import json
 import os
+import re
 import time
 import asyncio
 import logging
@@ -105,11 +106,28 @@ SYMBOL_ALIAS = {
     "JUPSOL": "SOL",
 }
 
+def _normalize_symbol(symbol: str) -> str:
+    """Normalize CoinTracking symbols for exchange lookup.
+
+    1. Strip trailing numeric suffixes (WLD3→WLD, LUNA2→LUNA, APT3→APT)
+       CoinTracking appends digits to disambiguate tokens sharing a ticker.
+    2. Apply known aliases (WBTC→BTC, STETH→ETH)
+    """
+    if not symbol:
+        return symbol
+    s = symbol.upper()
+    # Strip trailing digits; keep original if base too short (<2 chars)
+    base = re.sub(r'\d+$', '', s)
+    if len(base) >= 2:
+        s = base
+    return SYMBOL_ALIAS.get(s, s)
+
+
 def get_price_usd(symbol: str):
     if not symbol:
         return None
     symbol = symbol.upper()
-    base = SYMBOL_ALIAS.get(symbol, symbol)
+    base = _normalize_symbol(symbol)
 
     # 1) fiat/stables fixes
     if base in FIAT_STABLE_FIXED:
@@ -287,7 +305,7 @@ async def aget_price_usd(symbol: str):
     if not symbol:
         return None
     symbol = symbol.upper()
-    base = SYMBOL_ALIAS.get(symbol, symbol)
+    base = _normalize_symbol(symbol)
 
     if base in FIAT_STABLE_FIXED:
         return FIAT_STABLE_FIXED[base]
@@ -311,21 +329,127 @@ async def aget_price_usd(symbol: str):
     return None
 
 
+async def _from_binance_batch_async(symbols: list) -> dict:
+    """Fetch prices for multiple symbols from Binance in ONE HTTP call.
+
+    Uses the /api/v3/ticker/price?symbols=[...] endpoint.
+    Falls back to fetching all tickers if the targeted batch returns 400
+    (e.g. when an unknown symbol is in the list).
+    """
+    if not symbols:
+        return {}
+
+    pairs = sorted(set(f"{s}USDT" for s in symbols))
+
+    try:
+        # Binance requires compact JSON (no spaces) for the symbols parameter
+        symbols_param = json.dumps(pairs, separators=(",", ":"))
+        url = f"https://api.binance.com/api/v3/ticker/price?symbols={symbols_param}"
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            r = await client.get(url)
+            if r.status_code == 400:
+                # Unknown symbol in batch — fall back to all tickers
+                logger.debug("Binance batch 400 — falling back to all tickers")
+                r = await client.get("https://api.binance.com/api/v3/ticker/price")
+            if r.status_code != 200:
+                logger.debug("Binance batch HTTP %s", r.status_code)
+                return {}
+            data = r.json()
+    except (httpx.HTTPError, httpx.TimeoutException) as e:
+        logger.debug("Binance batch error: %s", e)
+        return {}
+
+    result = {}
+    items = data if isinstance(data, list) else [data]
+    for item in items:
+        pair = item.get("symbol", "")
+        if pair.endswith("USDT"):
+            base = pair[:-4]
+            try:
+                price = float(item["price"])
+                if price > 0:
+                    result[base] = price
+            except (ValueError, KeyError):
+                continue
+    return result
+
+
 async def aget_prices_usd(symbols, max_concurrency: int = 6):
-    sem = asyncio.Semaphore(max_concurrency)
+    """Fetch USD prices for a list of symbols.
+
+    Optimized flow (Feb 2026):
+    1. Check cache + stables for all symbols
+    2. Batch-fetch remaining from Binance in ONE HTTP call
+    3. Individual fallback (file/coingecko) for stragglers
+    """
     results = {}
+    # (original_symbol, normalized_base) pairs still needing a price
+    remaining = []
 
-    async def worker(sym: str):
-        async with sem:
-            results[sym] = await aget_price_usd(sym)
-
-    tasks = []
-    for s in set([(s or "").upper() for s in symbols]):
+    # Step 1: cache + stables
+    for s in set((s or "").upper() for s in symbols):
         if not s:
             continue
-        tasks.append(asyncio.create_task(worker(s)))
-    if tasks:
-        await asyncio.gather(*tasks, return_exceptions=True)
+        base = _normalize_symbol(s)
+
+        if base in FIAT_STABLE_FIXED:
+            results[s] = FIAT_STABLE_FIXED[base]
+            continue
+
+        cached = _get_from_cache(base)
+        if cached:
+            results[s] = cached
+            continue
+
+        remaining.append((s, base))
+
+    if not remaining:
+        return results
+
+    # Step 2: batch Binance (single HTTP call)
+    if "binance" in PRICE_PROVIDER_ORDER:
+        bases_needed = list(set(base for _, base in remaining))
+        binance_prices = await _from_binance_batch_async(bases_needed)
+
+        still_remaining = []
+        for orig, base in remaining:
+            if base in binance_prices:
+                price = binance_prices[base]
+                _set_cache(base, price)
+                results[orig] = price
+            else:
+                still_remaining.append((orig, base))
+        remaining = still_remaining
+
+    if not remaining:
+        # Persist cache after batch fill
+        await _save_cache_to_disk_async()
+        return results
+
+    # Step 3: individual fallback for stragglers (file, coingecko)
+    sem = asyncio.Semaphore(max_concurrency)
+
+    async def worker(orig: str, base: str):
+        async with sem:
+            for name in PRICE_PROVIDER_ORDER:
+                if name == "binance":
+                    continue  # already tried in batch
+                if name == "file":
+                    p = await _from_file_async(base)
+                elif name == "coingecko":
+                    p = await _from_coingecko_async(base)
+                else:
+                    p = None
+                if p and p > 0:
+                    _set_cache(base, p)
+                    results[orig] = p
+                    return
+
+    tasks = [asyncio.create_task(worker(orig, base)) for orig, base in remaining]
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+    # Persist cache
+    await _save_cache_to_disk_async()
     return results
 
 # ========== Fonctions de gestion du cache ==========

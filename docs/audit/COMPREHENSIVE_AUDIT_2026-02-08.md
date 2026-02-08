@@ -312,17 +312,17 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 
 ### Medium-term (P2) -- Quality
 
-| # | Action | Effort | Impact |
-|---|--------|--------|--------|
-| 12 | Standardize response format (success_response everywhere) | 8h | API consistency |
-| 13 | Add return type annotations to endpoints | 6h | OpenAPI docs |
-| 14 | Add `aria-label` + `role="img"` to 27 remaining canvas elements | 2h | Accessibility |
-| 15 | Add `scope=` to 216 remaining `<th>` elements | 3h | Accessibility |
-| 16 | Implement basic circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience |
-| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability |
-| 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene |
-| 25 | **Batch Binance price requests** in rebalance CSV export (currently sequential, ~23s for 124 actions) | 4h | Performance |
-| 26 | **Fix symbol mapping** for Binance API (CoinTracking aliases like `WLD3`, `ARB5` append digits that cause 400 errors) | 3h | Reliability |
+| # | Action | Effort | Impact | Status |
+|---|--------|--------|--------|--------|
+| 12 | Standardize response format (success_response everywhere) | 8h | API consistency | |
+| 13 | Add return type annotations to endpoints | 6h | OpenAPI docs | |
+| 14 | Add `aria-label` + `role="img"` to 20 canvas elements (9 pages) | 2h | Accessibility | DONE (Feb 8) |
+| 15 | Add `scope="col"` to 151 `<th>` elements (10 pages) | 3h | Accessibility | DONE (Feb 8) |
+| 16 | Circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience | DONE (Feb 9) |
+| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | |
+| 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene | DONE (Feb 8) |
+| 25 | **Batch Binance price requests** in rebalance CSV export (currently sequential, ~23s for 124 actions) | 4h | Performance | |
+| 26 | **Fix symbol mapping** for Binance API (CoinTracking aliases like `WLD3`, `ARB5` append digits that cause 400 errors) | 3h | Reliability | |
 
 ### Long-term (P3) -- Technical Excellence
 
