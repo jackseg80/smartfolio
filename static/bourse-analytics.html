@@ -27,7 +27,7 @@
 
     import { initDeepLinks } from './components/deep-links.js';
     import { wealthContextBar } from './components/WealthContextBar.js';
-    import { safeFetch } from './core/fetcher.js';
+    import { safeFetch, cachedApiCall, hasCacheHit } from './core/fetcher.js';
 
     // Anchors for bourse-analytics.html
     initDeepLinks({
@@ -37,6 +37,8 @@
 
     window.wealthContextBar = wealthContextBar;
     window.safeFetch = safeFetch;
+    window.cachedApiCall = cachedApiCall;
+    window.hasCacheHit = hasCacheHit;
     </script>
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>
@@ -249,6 +251,7 @@
         let currentPortfolioData = null;
         let currentFileKey = null;
         let analyticsTabLoaded = false;
+        let forceRefreshFlag = false;
 
         // Chart instances (prevent memory leaks)
         let regimeTimelineChartInstance = null;
@@ -259,6 +262,20 @@
         // Plotly lazy loading state
         let plotlyLoaded = false;
         let pdfLibsLoaded = false;
+
+        function bourseCacheKey(section) {
+            const user = localStorage.getItem('activeUser') || 'demo';
+            return `bourse:${user}:${section}`;
+        }
+
+        function showCacheIndicator() {
+            const el = document.getElementById('cacheIndicator');
+            if (el) { el.style.display = 'inline-block'; }
+        }
+
+        function cacheOpts(fetchOpts = {}) {
+            return { ...fetchOpts, forceRefresh: forceRefreshFlag };
+        }
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', async () => {
@@ -332,6 +349,11 @@
         // ==================== DATA LOADING ====================
         async function loadBourseData(forceRefresh = false) {
             debugLogger.debug('📊 Loading Bourse data for Analytics...');
+            forceRefreshFlag = forceRefresh;
+            if (forceRefresh) {
+                analyticsTabLoaded = false;
+                document.getElementById('cacheIndicator').style.display = 'none';
+            }
 
             try {
                 document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Loading stock market data...</div>';
@@ -437,12 +459,19 @@
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('dashboardContent').style.display = 'block';
 
-                // Load Risk tab by default
-                await loadRiskAnalytics();
+                // Load active tab
+                const activeTab = document.querySelector('.tab-btn.active')?.textContent?.trim();
+                if (activeTab === 'Analytics') {
+                    await loadAnalyticsTab();
+                } else {
+                    await loadRiskAnalytics();
+                }
 
+                forceRefreshFlag = false;
                 debugLogger.debug('✅ Bourse Analytics data loaded');
 
             } catch (error) {
+                forceRefreshFlag = false;
                 debugLogger.error('Error loading Bourse data:', error);
                 document.getElementById('mainContent').innerHTML = `
                     <div class="error-message">❌ Error: ${error.message}</div>
@@ -454,9 +483,13 @@
         async function loadRiskAnalytics() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
-                document.getElementById('riskSummary').innerHTML = '<div class="loading">Computing risk metrics…</div>';
-                document.getElementById('riskMetrics').innerHTML = '<div class="loading">…</div>';
-                document.getElementById('riskStructure').innerHTML = '<div class="loading">…</div>';
+                const key = bourseCacheKey('risk-dashboard');
+                if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
+                else {
+                    document.getElementById('riskSummary').innerHTML = '<div class="loading">Computing risk metrics…</div>';
+                    document.getElementById('riskMetrics').innerHTML = '<div class="loading">…</div>';
+                    document.getElementById('riskStructure').innerHTML = '<div class="loading">…</div>';
+                }
 
                 let riskUrl = `/api/risk/bourse/dashboard?user_id=${activeUser}`;
                 if (window.saxoSourceType === 'manual') {
@@ -468,12 +501,9 @@
                 }
 
                 const fullRiskUrl = `${window.getApiBase()}${riskUrl}`;
-                const response = await window.safeFetch(fullRiskUrl, {
-                    headers: { 'X-User': activeUser }
-                });
-                if (!response?.ok) throw new Error('risk endpoint failed');
+                const riskData = await window.cachedApiCall(key, fullRiskUrl, cacheOpts({ headers: { 'X-User': activeUser } }), 'bourse');
 
-                const { risk, coverage, positions_count, total_value_usd } = response.data || response;
+                const { risk, coverage, positions_count, total_value_usd } = riskData;
                 const score = risk?.score ?? 0;
                 const level = risk?.level ?? 'N/A';
 
@@ -564,12 +594,7 @@
                 }
 
                 const fullAlertsUrl = `${window.getApiBase()}${alertsUrl}`;
-                const response = await window.safeFetch(fullAlertsUrl, {
-                    headers: { 'X-User': activeUser }
-                });
-                if (!response?.ok) throw new Error('Alerts endpoint failed');
-
-                const data = response.data || response;
+                const data = await window.cachedApiCall(bourseCacheKey('alerts'), fullAlertsUrl, cacheOpts({ headers: { 'X-User': activeUser } }), 'bourse');
                 const { critical, warnings, info, summary } = data;
 
                 const totalAlerts = summary?.total || 0;
@@ -645,27 +670,27 @@
             const activeUser = localStorage.getItem('activeUser') || 'demo';
 
             try {
-                document.getElementById('mlBadge').textContent = 'Analyzing...';
-
-                // Get top 3 stocks from portfolio for predictions
+                // Get top stocks from portfolio for predictions
                 const topStocks = currentPortfolioData?.summary?.top_holdings?.slice(0, 3) || [];
                 const benchmark = 'SPY';
                 const firstStockRaw = topStocks[0]?.symbol || currentPortfolioData?.positions?.[0]?.symbol || 'AAPL';
                 const firstStock = firstStockRaw.split(':')[0];
 
-                // Fetch ML predictions in parallel (20 years for 4-5 full market cycles)
+                const regimeKey = bourseCacheKey('ml-regime');
+                const forecastKey = bourseCacheKey('ml-forecast');
+                if (!forceRefreshFlag && window.hasCacheHit(regimeKey, 'bourse')) showCacheIndicator();
+                else document.getElementById('mlBadge').textContent = 'Analyzing...';
+
                 const baseUrl = window.location.origin;
-                const [regimeRes, volatilityRes] = await Promise.all([
-                    window.safeFetch(`${baseUrl}/api/ml/bourse/regime?benchmark=${benchmark}&lookback_days=7300`),
-                    window.safeFetch(`${baseUrl}/api/ml/bourse/forecast?symbol=${firstStock}&lookback_days=365`)
+                const opts = cacheOpts();
+                const [regime, volatility] = await Promise.all([
+                    window.cachedApiCall(regimeKey, `${baseUrl}/api/ml/bourse/regime?benchmark=${benchmark}&lookback_days=7300`, opts, 'bourse').catch(() => ({})),
+                    window.cachedApiCall(forecastKey, `${baseUrl}/api/ml/bourse/forecast?symbol=${firstStock}&lookback_days=365`, opts, 'bourse').catch(() => ({}))
                 ]);
 
-                if (!regimeRes?.ok && !volatilityRes?.ok) {
+                if (!regime.current_regime && !volatility.predictions) {
                     throw new Error('ML services unavailable. Please check backend logs.');
                 }
-
-                const regime = regimeRes?.data || regimeRes || {};
-                const volatility = volatilityRes?.data || volatilityRes || {};
 
                 const regimeColor = getRegimeColor(regime.current_regime);
                 const regimeConfidence = ((regime.confidence || 0) * 100).toFixed(0);
@@ -800,10 +825,15 @@
         async function loadCorrelationAnalysis() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
-                document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Loading visualization library…</div>';
+                const key = bourseCacheKey('correlation');
+                if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
+                else document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Loading visualization library…</div>';
+
                 await loadPlotlyLib();
 
-                document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Calculating correlations…</div>';
+                if (!window.hasCacheHit(key, 'bourse') || forceRefreshFlag) {
+                    document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Calculating correlations…</div>';
+                }
 
                 let url = `/api/risk/bourse/advanced/correlation?user_id=${activeUser}&method=pearson&lookback_days=252`;
                 if (window.saxoSourceType === 'manual') {
@@ -814,10 +844,7 @@
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
-                const response = await window.safeFetch(globalConfig.getApiUrl(url));
-                if (!response?.ok) throw new Error('Correlation analysis failed');
-
-                const data = response.data || response;
+                const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
                 const corrMatrix = data.correlation_matrix || {};
                 const labels = data.clustering?.labels || Object.keys(corrMatrix);
                 const corrArray = labels.map(row => labels.map(col => corrMatrix[row]?.[col] || 0));
@@ -1297,12 +1324,11 @@
             const activeUser = localStorage.getItem('activeUser') || 'demo';
 
             try {
-                // Fetch current regime (20 years for 4-5 full market cycles)
-                const regimeUrl = `/api/ml/bourse/regime?user_id=${activeUser}&benchmark=SPY&lookback_days=7300`;
-                const regimeResponse = await window.safeFetch(globalConfig.getApiUrl(regimeUrl));
-                if (!regimeResponse?.ok) throw new Error('Regime detection failed');
+                const key = bourseCacheKey('regime-history');
+                if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
 
-                const regimeData = regimeResponse.data || regimeResponse;
+                const regimeUrl = `/api/ml/bourse/regime?user_id=${activeUser}&benchmark=SPY&lookback_days=7300`;
+                const regimeData = await window.cachedApiCall(key, globalConfig.getApiUrl(regimeUrl), cacheOpts(), 'bourse');
 
                 // Detect absurd probabilities
                 const probabilities = regimeData.regime_probabilities || {};
@@ -1613,19 +1639,22 @@
         async function loadSectorRotation() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
-                document.getElementById('sectorRotation').innerHTML = '<div class="loading">Loading visualization library…</div>';
+                const key = bourseCacheKey('sector-rotation');
+                if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
+                else document.getElementById('sectorRotation').innerHTML = '<div class="loading">Loading visualization library…</div>';
+
                 await loadPlotlyLib();
-                document.getElementById('sectorRotation').innerHTML = '<div class="loading">Analyzing sectors…</div>';
+
+                if (!window.hasCacheHit(key, 'bourse') || forceRefreshFlag) {
+                    document.getElementById('sectorRotation').innerHTML = '<div class="loading">Analyzing sectors…</div>';
+                }
 
                 let url = `/api/risk/bourse/specialized/sector-rotation?user_id=${activeUser}&lookback_days=60`;
                 if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
-                const response = await window.safeFetch(globalConfig.getApiUrl(url));
-                if (!response?.ok) throw new Error('Sector rotation failed');
-
-                const data = response.data || response;
+                const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
                 const sectors = data.sectors || {};
                 const sortedSectors = Object.entries(sectors).sort((a, b) => (b[1].momentum || 0) - (a[1].momentum || 0));
 
@@ -1804,17 +1833,16 @@
         async function loadMarginMonitoring() {
             const activeUser = localStorage.getItem('activeUser') || 'demo';
             try {
-                document.getElementById('marginMonitoring').innerHTML = '<div class="loading">Calculating margin metrics…</div>';
+                const key = bourseCacheKey('margin');
+                if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
+                else document.getElementById('marginMonitoring').innerHTML = '<div class="loading">Calculating margin metrics…</div>';
 
                 let url = `/api/risk/bourse/specialized/margin?user_id=${activeUser}`;
                 if (currentFileKey) {
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
-                const response = await window.safeFetch(globalConfig.getApiUrl(url));
-                if (!response?.ok) throw new Error('Margin monitoring failed');
-
-                const data = response.data || response;
+                const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
 
                 const warningLevel = data.warnings && data.warnings.length > 0 ?
                     (data.warnings.some(w => w.includes('CRITICAL')) ? 'danger' : 'warning') : 'success';

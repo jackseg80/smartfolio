@@ -22,7 +22,8 @@ const CACHE_CONFIG = {
   signals: { ram: 30 * 60 * 1000, disk: 2 * 60 * 60 * 1000 },  // 30min RAM, 2h disk (CoinGecko rate limit fix)
   risk: { ram: 5 * 60 * 1000, disk: 30 * 60 * 1000 },          // 5min RAM, 30min disk
   portfolio: { ram: 1 * 60 * 1000, disk: 5 * 60 * 1000 },      // 1min RAM, 5min disk
-  cycles: { ram: 10 * 60 * 1000, disk: 6 * 60 * 60 * 1000 }    // 10min RAM, 6h disk
+  cycles: { ram: 10 * 60 * 1000, disk: 6 * 60 * 60 * 1000 },   // 10min RAM, 6h disk
+  bourse: { ram: 10 * 60 * 1000, disk: 60 * 60 * 1000, timeout: 60000 }  // 10min RAM, 1h disk, 60s timeout
 };
 
 /**
@@ -60,7 +61,7 @@ export async function fetchCached(key, fetchFn, cacheType = 'signals') {
   console.debug(`Cache miss: ${key}, fetching...`);
   
   try {
-    const data = await retryFetch(fetchFn);
+    const data = await retryFetch(fetchFn, 2, 500, config.timeout);
     
     // Store in both caches
     const entry = { data, timestamp: now };
@@ -93,12 +94,12 @@ export async function fetchCached(key, fetchFn, cacheType = 'signals') {
 /**
  * Simple retry logic
  */
-async function retryFetch(fetchFn, maxRetries = 2, baseDelay = 500) {
+async function retryFetch(fetchFn, maxRetries = 2, baseDelay = 500, timeoutMs = 8000) {
   let lastError;
-  
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await withTimeout(fetchFn(), 8000);
+      return await withTimeout(fetchFn(), timeoutMs);
     } catch (error) {
       lastError = error;
       
@@ -188,18 +189,40 @@ export function getCacheStats() {
  *
  * @param {string} cacheKey - Unique cache key
  * @param {string} url - API endpoint URL
- * @param {Object} options - Options for safeFetch
+ * @param {Object} options - Options for safeFetch (supports forceRefresh to bypass cache)
  * @param {string} cacheType - Cache type for TTL config
  * @returns {Promise<any>} - Response data
  */
 export async function cachedApiCall(cacheKey, url, options = {}, cacheType = 'signals') {
+  const { forceRefresh, ...fetchOptions } = options;
+  if (forceRefresh) {
+    RAM_CACHE.delete(cacheKey);
+    localStorage.removeItem(`cache:${cacheKey}`);
+  }
   return fetchCached(cacheKey, async () => {
-    const result = await safeFetch(url, options);
+    const result = await safeFetch(url, fetchOptions);
     if (!result.ok) {
       throw new Error(result.error || `HTTP ${result.status}`);
     }
     return result.data;
   }, cacheType);
+}
+
+/**
+ * Check if a cache key is likely a hit (quick sync check)
+ * @param {string} cacheKey - Cache key to check
+ * @param {string} cacheType - Cache type for TTL config
+ * @returns {boolean}
+ */
+export function hasCacheHit(cacheKey, cacheType = 'signals') {
+  if (RAM_CACHE.has(cacheKey)) return true;
+  try {
+    const raw = localStorage.getItem(`cache:${cacheKey}`);
+    if (!raw) return false;
+    const entry = JSON.parse(raw);
+    const config = CACHE_CONFIG[cacheType] || CACHE_CONFIG.signals;
+    return entry?.timestamp && (Date.now() - entry.timestamp) < config.disk;
+  } catch { return false; }
 }
 
 /**
