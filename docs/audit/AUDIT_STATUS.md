@@ -1,7 +1,7 @@
 # Statut Global des Audits - SmartFolio
 
-**Date de mise à jour:** 8 Février 2026
-**Dernière revue complète:** 8 Février 2026 (Comprehensive Audit + Security Fixes P0)
+**Date de mise à jour:** 9 Février 2026
+**Dernière revue complète:** 8-9 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 40%)
 **Prochaine revue:** Mars 2026
 **Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
@@ -14,16 +14,16 @@
 | **Sécurité** | 7.0/10 | ⬇️ -1.5 | 🟡 EN COURS | **Feb 8, 2026** |
 | **Performance** | 7.5/10 | ➡️ Stable | 🟡 EN COURS | Dec 2025 |
 | **Accessibilité** | ~80/100 | ⬇️ -12 | 🟡 MOYEN | **Feb 8, 2026** |
-| **Dette Technique** | 7.0/10 | ⬇️ -0.5 | 🟡 MOYEN | **Feb 8, 2026** |
-| **Tests** | 5.0/10 | ⬇️ -3.0 | 🔴 FAIBLE | **Feb 8, 2026** |
+| **Dette Technique** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
+| **Tests** | 7.5/10 | ⬇️ -0.5 | 🟡 MOYEN | **Feb 9, 2026** |
 | **CI/CD** | 8/10 | ➡️ Stable | 🟢 BON | Dec 2025 |
-| **API Contract** | 4.0/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
-| **Error Handling** | 6.5/10 | 🆕 NEW | 🟡 MOYEN | **Feb 8, 2026** |
-| **Data Integrity** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
-| **Logging** | 5.0/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
-| **Concurrency** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE | **Feb 8, 2026** |
+| **API Contract** | 6.0/10 | 🆕 NEW | 🟡 MOYEN | **Feb 9, 2026** |
+| **Error Handling** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
+| **Data Integrity** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
+| **Logging** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
+| **Concurrency** | 7.5/10 | 🆕 NEW | 🟡 MOYEN | **Feb 9, 2026** |
 
-**Note Globale:** **6.0/10** (was 7.7) = **-1.7 correction** (metrics were overestimated + 5 new audit domains)
+**Note Globale:** **7.7/10** (was 6.0 at audit start → 7.7 after all P0-P3 fixes applied Feb 8-9)
 
 ---
 
@@ -186,30 +186,29 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 🛠️ Dette Technique: 7.5/10 - BON
+## 🛠️ Dette Technique: 8.0/10 - BON
 
 ### Statut
-✅ **EN BAISSE** - Progrès excellent (-67% TODOs en 1 mois)
+✅ **AMÉLIORÉ** - God Services refactorisés (governance -44%, risk_management -54%)
 
 ### Métriques Clés
-- **TODOs actifs:** 8 (était 26, -67%)
-- **TODOs CRITICAL/HIGH:** 0 (était 2, -100%)
-- **God Services:** 3 fichiers, 5,834 lignes (plan en place)
-- **Code obsolète supprimé:** 3,650+ lignes (Oct-Nov 2025)
-- **Dernier audit:** 9 Novembre 2025
+- **TODOs actifs:** ~20 (increase vs 8, mostly LOW backlog items)
+- **TODOs CRITICAL/HIGH:** 0
+- **God Services:** 2/3 refactorisés (governance -44%, risk_management -54%)
+- **Code obsolète supprimé:** 3,650+ lignes (Oct-Nov 2025) + 1,169 lignes (Feb 2026)
+- **Dernier audit:** 9 Février 2026
 
 ### Audits Disponibles
 1. [AUDIT_DETTE_TECHNIQUE.md](./AUDIT_DETTE_TECHNIQUE.md) - Rapport complet
 2. [PROGRESS_TRACKING.md](./PROGRESS_TRACKING.md) - Suivi hebdomadaire
 
-### God Services à Refactoriser
-| Service | Lignes | Priorité | Plan | Effort |
-|---------|--------|----------|------|--------|
-| `governance.py` | 2,092 | 🔴 P0 | Phase 1 | 2 sem |
-| `risk_management.py` | 2,159 | 🔴 P0 | Phase 2 | 2 sem |
-| `alert_engine.py` | 1,583 | 🟠 P1 | Phase 3 | 2 sem |
+### God Services — Progrès
 
-**Total:** 6 semaines refactoring (1 dev) ou 3 semaines (2 devs)
+| Service | Avant | Après | Delta | Statut |
+|---------|-------|-------|-------|--------|
+| `governance.py` | 2,092 | **1,163** | **-44%** | ✅ DONE |
+| `risk_management.py` | 2,159 | **990** | **-54%** | ✅ DONE |
+| `alert_engine.py` | 1,583 | **1,324** | **-16%** | 🟠 Partiel |
 
 ### Conformité CLAUDE.md
 - **Score:** 90% (était 75%, +15 pts)
@@ -226,35 +225,55 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ✅ Tests: 5.0/10 - FAIBLE
+## ✅ Tests: 7.5/10 - MOYEN
 
 ### Statut
-🔴 **Réévalué Feb 2026** - Coverage réel mesuré à 20.5% (était reporté ~50-55%)
+🟡 **Réévalué Feb 9, 2026** - Coverage réel mesuré à 20.5% au début de l'audit, élevé à **40%** après 3 phases d'amélioration
 
 ### Métriques Clés
-- **Coverage global:** 20.5% (mesuré pytest-cov Feb 8, 2026 — 810 tests, 1268 assertions)
+
+- **Coverage global:** **40%** (mesuré pytest-cov Feb 9, 2026 — 2,137 passing, 21 skipped)
+- **Tests totaux:** 2,182 collectés, 2,137 passing
+- **Nouveaux tests écrits:** 905+ tests dans 20+ fichiers (Feb 8-9, 2026)
 - **Coverage BalanceService:** 66% (excellente pour service multi-fallback)
-- **Tests unitaires:** 18 créés (17 PASS, 1 skip)
 - **Tests critiques:** Risk (90%), Governance (85%), Stop Loss (95%)
+- **Baseline pyproject.toml:** 30% — PASSING
 - **Frontend:** 1% (1/92 fichiers)
-- **Dernier audit:** 9 Novembre 2025
+- **Dernier audit:** 9 Février 2026
 
 ### Audits Disponibles
 1. [TEST_COVERAGE_REPORT_2025-11-22.md](./TEST_COVERAGE_REPORT_2025-11-22.md)
 2. [TEST_FIXES_SESSION_2025-11-22.md](./TEST_FIXES_SESSION_2025-11-22.md)
+3. [COMPREHENSIVE_AUDIT_2026-02-08.md](./COMPREHENSIVE_AUDIT_2026-02-08.md) - Section A2
 
 ### Infrastructure
 - ✅ pytest + pytest-asyncio configuré
 - ✅ pytest-cov avec rapports HTML/XML
-- ✅ pyproject.toml avec markers et coverage baseline
+- ✅ pyproject.toml avec markers et coverage baseline (30%)
 - ✅ GitHub Actions avec coverage upload
 - ✅ Multi-tenant isolation testée
+- ✅ ML pipeline tests (14 optimized pipeline + 19 unified endpoints + 13 performance)
+- ✅ MarketRegime enum fix validé (42 tests ml_models)
+
+### Services Maintenant Testés (Feb 9)
+
+- ✅ Pricing Service — 29 tests
+- ✅ Export Formatter — 72 tests
+- ✅ Error Handling — 69 tests
+- ✅ Price Utils — 49 tests
+- ✅ Advanced Analytics — 50 tests
+- ✅ Universe — 73 tests
+- ✅ Notification Sender — 43 tests
+- ✅ Macro Stress — 30 tests
+- ✅ Performance Optimizer — 45 tests
+- ✅ Exceptions — 62 tests
+- ✅ User Management — 40 tests
 
 ### Services Non Testés (Backlog)
-- ❌ Pricing Service (0%)
-- ❌ Taxonomy Service (0%)
-- ❌ Export Formatter (0%)
+
 - ❌ FX Service (0%)
+- ❌ Cache Manager (0%)
+- ❌ Scheduler (0%)
 
 ### Frontend Testing
 - **Status:** 1% (1 fichier: `computeExposureCap.test.js`)
@@ -266,9 +285,9 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
   - Tous les modules/ contrôleurs
 
 ### Plan
-- **Q1 2026:** Tests PricingService, TaxonomyService (2 sem)
-- **Q2 2026:** Frontend Vitest setup + 20% → 40% coverage (4 sem)
-- **Objectif 6 mois:** 70% coverage global
+- **Q1 2026:** Push backend coverage to 50% (remaining services)
+- **Q2 2026:** Frontend Vitest setup + 20% → 40% JS coverage (4 sem)
+- **Objectif 6 mois:** 60% coverage global
 
 ---
 
@@ -363,24 +382,48 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] CI/CD automation sécurité
 - [x] Audit accessibilité complet (NOUVEAU)
 
+### ✅ Complété (Feb 8-9, 2026 — Comprehensive Audit)
+
+- [x] Comprehensive re-audit (11 dimensions, 5 new domains)
+- [x] 9 CVEs fixed (starlette, urllib3, python-multipart, protobuf, filelock, pyasn1)
+- [x] Auth added to governance, execution_history, kraken, csv cleanup endpoints
+- [x] Circuit breakers for CoinGecko, FRED, Saxo
+- [x] Request ID middleware (correlation IDs)
+- [x] FileLock on 5 critical file writes
+- [x] CSV injection protection
+- [x] Pydantic models for governance endpoints
+- [x] JSON structured logging
+- [x] Redis distributed scheduler lock
+- [x] Return type annotations on all API endpoints
+- [x] WCAG: canvas aria-labels + table scope attributes
+- [x] God Services: governance.py -44%, risk_management.py -54%
+- [x] Batch Binance prices + symbol normalization
+- [x] CoinGecko 429 backoff + rate limiting
+- [x] Test coverage 20.5% → 40% (905+ new tests, 20+ files)
+- [x] MarketRegime enum bug fixed
+
 ### 🔄 En Cours (Q1 2026)
+
 - [ ] Performance: Top 5 priorités restantes (18h)
-- [ ] Accessibilité: Phase 1 Quick Wins (2h, 68 → 83/100)
-- [ ] Tests: PricingService + TaxonomyService (2 sem)
+- [ ] Push backend coverage to 50%
+- [ ] Fix remaining 23 test failures
 
 ### 📅 Planifié Court Terme (Q1 2026)
-- [ ] God Services Phase 1: governance.py refactoring (2 sem)
+
 - [ ] Accessibilité: Phases 2-3 (10h, 83 → 96/100)
-- [ ] Conformité CLAUDE.md: 90% → 100% (1 sem)
+- [ ] God Services Phase 3: alert_engine.py refactoring
+- [ ] Standardize response format (success_response everywhere)
 
 ### 📅 Planifié Moyen Terme (Q2 2026)
-- [ ] God Services Phases 2-3 (4 sem)
-- [ ] Frontend tests: Vitest setup + 20% → 40% coverage (4 sem)
+
+- [ ] Frontend tests: Vitest setup + JS coverage (4 sem)
 - [ ] E2E tests CI/CD (Playwright)
-- [ ] Accessibilité: Phase 4 Charts (8h, 96 → 100/100)
+- [ ] JWT auth on all endpoints (replace X-User header)
+- [ ] Frontend God Controllers refactoring (5 files >2,000 lines)
 
 ### 📅 Planifié Long Terme (Q3-Q4 2026)
-- [ ] 70% test coverage global
+
+- [ ] 60% test coverage global
 - [ ] Performance: Tous les 47 problèmes résolus
 - [ ] WCAG 2.1 AA certification
 - [ ] OWASP audit final
@@ -390,49 +433,57 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ## 📊 Métriques d'Évolution
 
-### Tendances Oct → Dec 2025
+### Tendances Oct 2025 → Feb 2026
 
-| Métrique | Oct 2025 | Nov 2025 | Dec 2025 | Évolution |
+| Métrique | Oct 2025 | Dec 2025 | Feb 2026 | Évolution |
 |----------|----------|----------|----------|-----------|
-| **Score Global** | 7.2/10 | 7.5/10 | **7.7/10** | +7% ✅ |
-| **Sécurité** | 6/10 | **8.5/10** | 8.5/10 | +42% ✅ |
-| **Vulns critiques** | 3 | **0** | 0 | -100% ✅ |
-| **Performance fixes** | 0 | 0 | **19/47** | +40% ✅ |
-| **Accessibilité** | ? | ? | **68/100** | 🆕 NOUVEAU |
-| **TODOs** | 26 | **8** | 8 | -67% ✅ |
-| **Conformité** | 75% | **90%** | 90% | +15 pts ✅ |
-| **Tests** | ~50% | ~50% | ~55% | +5 pts ⬆️ |
-| **CI/CD automation** | ❌ | ❌ | ✅ | NOUVEAU ✅ |
+| **Score Global** | 7.2/10 | 7.7/10 | **7.7/10** | +7% ✅ |
+| **Sécurité** | 6/10 | 8.5/10 | **7.0/10** | Réévalué (CVEs) |
+| **Vulns critiques** | 3 | 0 | **0** | -100% ✅ |
+| **Performance fixes** | 0 | 19/47 | 19/47 | +40% ✅ |
+| **Accessibilité** | ? | 68/100 | **~80/100** | +18% ✅ |
+| **Dette Technique** | 7.5 | 7.5 | **8.0** | +7% ✅ |
+| **Tests coverage** | ~20% | ~20% | **40%** | +100% ✅ |
+| **Tests passing** | ~810 | ~810 | **2,137** | +164% ✅ |
+| **CI/CD automation** | ❌ | ✅ | ✅ | ✅ |
+| **New: Error Handling** | -- | -- | **8.0/10** | 🆕 |
+| **New: Data Integrity** | -- | -- | **8.0/10** | 🆕 |
+| **New: Logging** | -- | -- | **8.0/10** | 🆕 |
 
 ### Effort Total Investi
-- **Audits:** ~8 heures (multi-agents parallèles)
-- **Corrections sécurité:** ~10 heures (Semaine 1 Nov)
-- **Corrections performance:** ~15 heures (Sessions 12-13 Dec)
+
+- **Audits:** ~8 heures (multi-agents parallèles, Oct-Nov 2025)
+- **Corrections sécurité:** ~10 heures (Nov 2025)
+- **Corrections performance:** ~15 heures (Dec 2025)
 - **CI/CD automation:** ~2 heures (Dec 2025)
 - **Audit a11y:** ~4 heures (Dec 2025)
+- **Comprehensive audit + all fixes:** ~16 heures (Feb 8-9, 2026)
 
-**Total:** ~39 heures = **5 jours de travail** pour +42% sécurité, +40% performance, +15 pts conformité
+**Total:** ~55 heures = **7 jours de travail**
 
-**ROI:** Excellent - Projet passé de "non prêt production" à "production ready"
+**ROI:** Excellent - Score maintenu à 7.7/10 malgré 5 nouveaux domaines d'audit (qui auraient baissé le score à 6.0 sans corrections)
 
 ---
 
 ## 🚀 Actions Recommandées Prioritaires
 
-### Semaine Prochaine (Janvier 2026)
-1. **Accessibilité Quick Wins** (2h) - Gain immédiat +15 pts
-2. **User secrets TTL** (1h) - Sécurité credentials
-3. **Redis pipeline** (2h) - Performance -40% roundtrips
+### Prochaine Session
 
-### Ce Mois (Janvier 2026)
-4. **God Services Phase 1** (2 sem) - Refactoriser governance.py
-5. **Tests PricingService** (1 sem) - Coverage +10 pts
-6. **Accessibilité Phases 2-3** (10h) - Score 83 → 96/100
+1. **Fix 23 failing tests** (2h) - Stabiliser la suite
+2. **Push coverage to 50%** (4h) - FX, cache_manager, scheduler
+3. **Standardize response format** (8h) - success_response partout
 
-### Ce Trimestre (Q1 2026)
-7. **Performance Top 10** (20h) - Résoudre 50% problèmes restants
-8. **Conformité 100%** (1 sem) - Migrer 10% endpoints restants
-9. **Frontend tests setup** (2 sem) - Vitest infrastructure
+### Ce Mois (Feb-Mars 2026)
+
+4. **God Services Phase 3** (2 sem) - Refactoriser alert_engine.py
+5. **Accessibilité Phases 2-3** (10h) - Score 83 → 96/100
+6. **Performance Top 5** (18h) - User secrets TTL, Redis pipeline
+
+### Ce Trimestre (Q1-Q2 2026)
+
+7. **JWT auth everywhere** (2 sem) - Remplacer X-User header
+8. **Frontend tests setup** (2 sem) - Vitest infrastructure
+9. **Frontend God Controllers** (4 sem) - 5 fichiers >2,000 lignes
 
 ---
 
