@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 from pathlib import Path
 import logging
 
+from filelock import FileLock
+
 # PERFORMANCE FIX (Dec 2025): Use partitioned storage for O(1) access
 from services.portfolio_history_storage import PartitionedPortfolioStorage
 
@@ -39,9 +41,10 @@ def _atomic_json_dump(data: dict | list, path: Path | str) -> None:
     )
 
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, path)  # Atomique sous Windows ≥ 10
+        with FileLock(str(path) + ".lock", timeout=5):
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            os.replace(tmp_path, path)  # Atomique sous Windows ≥ 10
     except (OSError, PermissionError, ValueError) as e:
         # Nettoyer le fichier temporaire en cas d'erreur
         if os.path.exists(tmp_path):

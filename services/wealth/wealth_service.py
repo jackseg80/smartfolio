@@ -7,6 +7,8 @@ import uuid
 from pathlib import Path
 from typing import List, Optional
 
+from filelock import FileLock
+
 from models.wealth import WealthItemInput, WealthItemOutput
 from services.fx_service import convert as fx_convert
 from services.wealth.wealth_migration import migrate_user_data
@@ -59,16 +61,17 @@ def _load_snapshot(user_id: str) -> dict:
 
 
 def _save_snapshot(data: dict, user_id: str) -> None:
-    """Save wealth snapshot for specific user (atomic write)."""
+    """Save wealth snapshot for specific user (atomic write with filelock)."""
     _ensure_storage(user_id)
     path = _get_storage_path(user_id)
 
-    # Atomic write: write to temp file, then rename
+    # Atomic write: write to temp file, then rename (protected by filelock)
     temp_path = path.with_suffix(".tmp")
     try:
-        with temp_path.open("w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, ensure_ascii=False)
-        temp_path.replace(path)
+        with FileLock(str(path) + ".lock", timeout=5):
+            with temp_path.open("w", encoding="utf-8") as handle:
+                json.dump(data, handle, indent=2, ensure_ascii=False)
+            temp_path.replace(path)
         logger.info(
             f"[wealth] snapshot saved for user={user_id} with {len(data.get('items', []))} items"
         )

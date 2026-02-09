@@ -39,6 +39,8 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    "manual: marks tests requiring a running server (auto-skipped)",
+    "performance: marks performance/stress tests",
 ]
 
 # Warnings

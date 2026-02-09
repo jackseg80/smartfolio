@@ -22,6 +22,8 @@ import statistics
 from collections import defaultdict
 import uuid
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -221,10 +223,11 @@ class ExecutionHistoryService:
             if len(daily_sessions) > 1000:
                 daily_sessions = daily_sessions[-1000:]
             
-            # Sauvegarder
-            with open(session_file, 'w') as f:
-                json.dump(daily_sessions, f, indent=2)
-                
+            # Sauvegarder (avec filelock pour protéger les écritures concurrentes)
+            with FileLock(str(session_file) + ".lock", timeout=5):
+                with open(session_file, 'w') as f:
+                    json.dump(daily_sessions, f, indent=2)
+
         except Exception as e:
             logger.error(f"Error persisting session: {e}")
     

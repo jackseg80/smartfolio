@@ -6,6 +6,8 @@ import logging
 from pathlib import Path
 from typing import Optional
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 
@@ -107,7 +109,8 @@ def migrate_user_data(user_id: str, force: bool = False) -> dict:
     if not banks_path.exists():
         logger.info(f"[migration] no banks data found for user={user_id}, creating empty wealth")
         wealth_path.parent.mkdir(parents=True, exist_ok=True)
-        wealth_path.write_text(json.dumps({"items": []}, indent=2), encoding="utf-8")
+        with FileLock(str(wealth_path) + ".lock", timeout=5):
+            wealth_path.write_text(json.dumps({"items": []}, indent=2), encoding="utf-8")
         return {
             "status": "success",
             "reason": "no_legacy_data",
@@ -135,8 +138,9 @@ def migrate_user_data(user_id: str, force: bool = False) -> dict:
     # Write new format
     try:
         wealth_path.parent.mkdir(parents=True, exist_ok=True)
-        with wealth_path.open("w", encoding="utf-8") as f:
-            json.dump({"items": migrated_items}, f, indent=2, ensure_ascii=False)
+        with FileLock(str(wealth_path) + ".lock", timeout=5):
+            with wealth_path.open("w", encoding="utf-8") as f:
+                json.dump({"items": migrated_items}, f, indent=2, ensure_ascii=False)
         logger.info(
             f"[migration] migrated {len(migrated_items)} accounts to wealth for user={user_id}"
         )

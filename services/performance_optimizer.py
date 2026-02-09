@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 import json
 from pathlib import Path
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 class PortfolioPerformanceOptimizer:
@@ -67,15 +69,16 @@ class PortfolioPerformanceOptimizer:
             oldest_key = next(iter(self.memory_cache))
             del self.memory_cache[oldest_key]
         
-        # Cache to disk
+        # Cache to disk (with filelock for concurrent access)
         try:
             cache_data = {
                 'data': result.tolist() if hasattr(result, 'tolist') else result,
                 'timestamp': datetime.now().isoformat(),
                 'shape': result.shape if hasattr(result, 'shape') else None
             }
-            with open(cache_file, 'w') as f:
-                json.dump(cache_data, f)
+            with FileLock(str(cache_file) + ".lock", timeout=5):
+                with open(cache_file, 'w') as f:
+                    json.dump(cache_data, f)
         except Exception as e:
             logger.warning(f"Failed to cache {key}: {e}")
         

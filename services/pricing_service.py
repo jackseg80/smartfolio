@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+from filelock import FileLock
 from models.wealth import PricePoint
 from services.taxonomy import Taxonomy
 
@@ -72,9 +73,10 @@ def _store_cache(point: PricePoint, granularity: str) -> None:
     path = _cache_path(point.instrument_id, granularity)
     tmp_path = path.with_suffix(".tmp")
     try:
-        with tmp_path.open("w", encoding="utf-8") as handle:
-            json.dump(payload, handle, ensure_ascii=False, indent=2)
-        tmp_path.replace(path)
+        with FileLock(str(path) + ".lock", timeout=5):
+            with tmp_path.open("w", encoding="utf-8") as handle:
+                json.dump(payload, handle, ensure_ascii=False, indent=2)
+            tmp_path.replace(path)
     except Exception as exc:  # pragma: no cover - defensive
         logger.debug("[wealth][pricing] cache write failed for %s: %s", point.instrument_id, exc)
 

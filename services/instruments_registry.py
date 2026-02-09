@@ -24,6 +24,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 # Paths
@@ -57,7 +59,8 @@ def _ensure_loaded_global() -> None:
             _global_catalog_cache = {}
     else:
         GLOBAL_CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-        GLOBAL_CATALOG_PATH.write_text("{}", encoding="utf-8")
+        with FileLock(str(GLOBAL_CATALOG_PATH) + ".lock", timeout=5):
+            GLOBAL_CATALOG_PATH.write_text("{}", encoding="utf-8")
         _global_catalog_cache = {}
         logger.info("[registry] Created empty global catalog")
 
@@ -74,7 +77,8 @@ def _ensure_loaded_global() -> None:
             _ticker_to_isin_cache = {}
     else:
         GLOBAL_ISIN_MAP_PATH.parent.mkdir(parents=True, exist_ok=True)
-        GLOBAL_ISIN_MAP_PATH.write_text("{}", encoding="utf-8")
+        with FileLock(str(GLOBAL_ISIN_MAP_PATH) + ".lock", timeout=5):
+            GLOBAL_ISIN_MAP_PATH.write_text("{}", encoding="utf-8")
         _isin_to_ticker_cache = {}
         _ticker_to_isin_cache = {}
         logger.info("[registry] Created empty ISIN mapping")

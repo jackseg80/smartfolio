@@ -16,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
+from filelock import FileLock
+
 from services.fx_service import convert as fx_convert
 from services.sources.base import BalanceItem, SourceBase, SourceInfo
 from services.sources.category import SourceCategory, SourceMode, SourceStatus
@@ -70,13 +72,14 @@ class ManualCryptoSource(SourceBase):
         return {"assets": [], "version": 1}
 
     def _save_data(self, data: dict) -> None:
-        """Save assets to storage (atomic write)."""
+        """Save assets to storage (atomic write with filelock)."""
         self._ensure_storage()
         temp_path = self._storage_path.with_suffix(".tmp")
         try:
-            with temp_path.open("w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            temp_path.replace(self._storage_path)
+            with FileLock(str(self._storage_path) + ".lock", timeout=5):
+                with temp_path.open("w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                temp_path.replace(self._storage_path)
             logger.info(f"[manual_crypto] saved {len(data.get('assets', []))} assets for user={self.user_id}")
         except Exception as e:
             logger.error(f"[manual_crypto] failed to save for user={self.user_id}: {e}")

@@ -22,6 +22,8 @@ from enum import Enum
 import statistics
 from pathlib import Path
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 class ConnectionStatus(Enum):
@@ -261,10 +263,11 @@ class ConnectionMonitor:
             if len(existing_data) > 2880:
                 existing_data = existing_data[-2880:]
                 
-            # Sauvegarder
-            with open(file_path, 'w') as f:
-                json.dump(existing_data, f, indent=2)
-                
+            # Sauvegarder (avec filelock)
+            with FileLock(str(file_path) + ".lock", timeout=5):
+                with open(file_path, 'w') as f:
+                    json.dump(existing_data, f, indent=2)
+
         except Exception as e:
             logger.error(f"Error persisting metrics: {e}")
             
@@ -433,10 +436,11 @@ class ConnectionMonitor:
             if len(existing_alerts) > 1000:
                 existing_alerts = existing_alerts[-1000:]
                 
-            # Sauvegarder
-            with open(alerts_file, 'w') as f:
-                json.dump(existing_alerts, f, indent=2)
-                
+            # Sauvegarder (avec filelock)
+            with FileLock(str(alerts_file) + ".lock", timeout=5):
+                with open(alerts_file, 'w') as f:
+                    json.dump(existing_alerts, f, indent=2)
+
         except Exception as e:
             logger.error(f"Error persisting alert: {e}")
             

@@ -43,6 +43,8 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 from zoneinfo import ZoneInfo
 
+from filelock import FileLock
+
 logger = logging.getLogger(__name__)
 
 TZ = ZoneInfo("Europe/Zurich")
@@ -160,12 +162,12 @@ class PartitionedPortfolioStorage:
                 # Sort by date
                 month_snapshots.sort(key=lambda x: x.get("date", ""))
 
-                # Save atomically
+                # Save atomically with filelock (protects multi-process)
                 temp_path = partition_path.with_suffix('.tmp')
-                with open(temp_path, 'w', encoding='utf-8') as f:
-                    json.dump(month_snapshots, f, indent=2)
-
-                temp_path.replace(partition_path)
+                with FileLock(str(partition_path) + ".lock", timeout=5):
+                    with open(temp_path, 'w', encoding='utf-8') as f:
+                        json.dump(month_snapshots, f, indent=2)
+                    temp_path.replace(partition_path)
 
             logger.info(
                 f"Snapshot saved: user={user_id}, source={source}, "
