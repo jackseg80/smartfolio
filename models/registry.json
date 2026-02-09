@@ -76,7 +76,7 @@
       "model_type": "regime",
       "status": "trained",
       "created_at": "2024-10-21T16:47:00+00:00",
-      "updated_at": "2026-02-08T03:00:44.927798",
+      "updated_at": "2026-02-09T03:00:21.366689",
       "file_path": "models/regime/btc_regime_hmm.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -98,26 +98,26 @@
         "covariance_type": "full"
       },
       "validation_metrics": {
-        "accuracy": 0.9037162162162162,
-        "best_val_accuracy": 0.8900169204737732,
+        "accuracy": 0.8875,
+        "best_val_accuracy": 0.896875,
         "data_source": "synthetic",
-        "train_samples": 1773,
-        "test_samples": 592,
-        "val_samples": 591,
+        "train_samples": 1918,
+        "test_samples": 640,
+        "val_samples": 640,
         "feature_count": 10,
-        "trained_at": "2026-02-08T03:00:23.086004",
-        "training_time_seconds": 44.900636196136475
+        "trained_at": "2026-02-09T03:00:09.190981",
+        "training_time_seconds": 21.35612440109253
       },
       "test_metrics": {
-        "accuracy": 0.9037162162162162,
-        "best_val_accuracy": 0.8900169204737732,
+        "accuracy": 0.8875,
+        "best_val_accuracy": 0.896875,
         "data_source": "synthetic",
-        "train_samples": 1773,
-        "test_samples": 592,
-        "val_samples": 591,
+        "train_samples": 1918,
+        "test_samples": 640,
+        "val_samples": 640,
         "feature_count": 10,
-        "trained_at": "2026-02-08T03:00:23.086004",
-        "training_time_seconds": 44.900636196136475
+        "trained_at": "2026-02-09T03:00:09.190981",
+        "training_time_seconds": 21.35612440109253
       },
       "target_assets": [
         "BTC"
@@ -218,7 +218,7 @@
       "model_type": "volatility",
       "status": "trained",
       "created_at": "2024-09-15T08:53:00+00:00",
-      "updated_at": "2026-02-08T00:00:14.434560",
+      "updated_at": "2026-02-09T00:00:12.461067",
       "file_path": "models/volatility/volatility_model_v2.1.pkl",
       "file_size": 0,
       "file_hash": null,
@@ -241,9 +241,9 @@
         "distribution": "normal"
       },
       "validation_metrics": {
-        "test_mse": 0.024420975397030514,
-        "best_val_mse": 0.026410979839662712,
-        "r2": 0.5065220594406128,
+        "test_mse": 0.023350161810715992,
+        "best_val_mse": 0.025743648720284302,
+        "r2": 0.5281223058700562,
         "data_source": "real_crypto_365d",
         "assets": "BTC,ETH,SOL",
         "models_trained": 3,
@@ -266,19 +266,19 @@
           },
           {
             "symbol": "SOL",
-            "test_mse": 0.02634589746594429,
-            "best_val_mse": 0.049043770879507065,
-            "r2": 0.5241963863372803,
+            "test_mse": 0.023133456707000732,
+            "best_val_mse": 0.04704177752137184,
+            "r2": 0.5889971256256104,
             "train_samples": 195,
             "test_samples": 65
           }
         ],
-        "training_time_seconds": 14.414606809616089
+        "training_time_seconds": 12.455456495285034
       },
       "test_metrics": {
-        "test_mse": 0.024420975397030514,
-        "best_val_mse": 0.026410979839662712,
-        "r2": 0.5065220594406128,
+        "test_mse": 0.023350161810715992,
+        "best_val_mse": 0.025743648720284302,
+        "r2": 0.5281223058700562,
         "data_source": "real_crypto_365d",
         "assets": "BTC,ETH,SOL",
         "models_trained": 3,
@@ -301,14 +301,14 @@
           },
           {
             "symbol": "SOL",
-            "test_mse": 0.02634589746594429,
-            "best_val_mse": 0.049043770879507065,
-            "r2": 0.5241963863372803,
+            "test_mse": 0.023133456707000732,
+            "best_val_mse": 0.04704177752137184,
+            "r2": 0.5889971256256104,
             "train_samples": 195,
             "test_samples": 65
           }
         ],
-        "training_time_seconds": 14.414606809616089
+        "training_time_seconds": 12.455456495285034
       },
       "target_assets": [
         "BTC",
