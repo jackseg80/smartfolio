@@ -29,7 +29,8 @@ def test_api_endpoints():
     results = []
     for endpoint, name in tests:
         try:
-            response = requests.get(f"{BASE_URL}{endpoint}", timeout=5)
+            headers = {"X-User": "jack"} if "/api/" in endpoint else {}
+            response = requests.get(f"{BASE_URL}{endpoint}", headers=headers, timeout=5)
             status = "PASS" if response.status_code == 200 else "FAIL"
             results.append(f"{status} {name}: HTTP {response.status_code}")
         except Exception as e:
@@ -185,8 +186,9 @@ def test_integration_flow():
     
     try:
         # Test risk dashboard API
-        risk_response = requests.get(f"{BASE_URL}/api/risk/dashboard", 
-                                   params={"source": "cointracking", "min_usd": "100"})
+        risk_response = requests.get(f"{BASE_URL}/api/risk/dashboard",
+                                   params={"source": "cointracking", "min_usd": "100"},
+                                   headers={"X-User": "jack"})
         
         if risk_response.status_code == 200:
             risk_data = risk_response.json()

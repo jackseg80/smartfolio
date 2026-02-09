@@ -58,8 +58,9 @@ def test_all():
     
     # Test 4: Risk API works
     try:
-        resp = requests.get(f"{BASE_URL}/api/risk/dashboard", 
-                          params={"source": "cointracking", "min_usd": "100"}, timeout=10)
+        resp = requests.get(f"{BASE_URL}/api/risk/dashboard",
+                          params={"source": "cointracking", "min_usd": "100"},
+                          headers={"X-User": "jack"}, timeout=10)
         if resp.status_code == 200:
             data = resp.json()
             if data.get('success'):
