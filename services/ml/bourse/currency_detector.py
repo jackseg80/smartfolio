@@ -117,6 +117,28 @@ class CurrencyExchangeDetector:
         'ITEK': ('.PA', 'EUR', 'Euronext Paris'),  # HAN-GINS Tech Megatrend
         'BTEC': ('.SW', 'USD', 'SIX Swiss'),  # iShares NASDAQ Biotechnology
 
+        # SPDR Sector ETFs (US)
+        'XLK': ('', 'USD', 'NYSE'),   # Technology
+        'XLV': ('', 'USD', 'NYSE'),   # Healthcare
+        'XLF': ('', 'USD', 'NYSE'),   # Financials
+        'XLY': ('', 'USD', 'NYSE'),   # Consumer Discretionary
+        'XLC': ('', 'USD', 'NYSE'),   # Communication Services
+        'XLI': ('', 'USD', 'NYSE'),   # Industrials
+        'XLP': ('', 'USD', 'NYSE'),   # Consumer Staples
+        'XLE': ('', 'USD', 'NYSE'),   # Energy
+        'XLU': ('', 'USD', 'NYSE'),   # Utilities
+        'XLRE': ('', 'USD', 'NYSE'),  # Real Estate
+        'XLB': ('', 'USD', 'NYSE'),   # Materials
+        'SMH': ('.L', 'GBP', 'LSE London'),  # iShares MSCI Global Semiconductors (LSE)
+
+        # Geographic ETFs (US-listed)
+        'VGK': ('', 'USD', 'NYSE'),   # Vanguard FTSE Europe
+        'VPL': ('', 'USD', 'NYSE'),   # Vanguard FTSE Pacific
+        'VWO': ('', 'USD', 'NYSE'),   # Vanguard FTSE Emerging Markets
+        'EWJ': ('', 'USD', 'NYSE'),   # iShares MSCI Japan
+        'SPY': ('', 'USD', 'NYSE'),   # S&P 500 benchmark
+        'FLXI': ('.DE', 'EUR', 'XETRA'),  # Franklin FTSE India
+
         # Fixed income
         'AGGS': ('.SW', 'CHF', 'SIX Swiss'),  # iShares Core Global Aggregate Bond
 
@@ -159,6 +181,20 @@ class CurrencyExchangeDetector:
             yf_symbol = f"{symbol}{suffix}"
             logger.debug(f"✓ {symbol} → {yf_symbol} ({currency} on {exchange})")
             return (yf_symbol, currency, exchange)
+
+        # 1b. Handle symbols already containing suffix (e.g., ROG.SW, HSBA.L, BNP.PA)
+        if '.' in symbol:
+            base, suffix = symbol.rsplit('.', 1)
+            suffix_to_currency = {
+                'SW': ('CHF', 'SIX Swiss'), 'DE': ('EUR', 'XETRA'),
+                'PA': ('EUR', 'Euronext Paris'), 'L': ('GBP', 'LSE London'),
+                'MI': ('EUR', 'Borsa Italiana'), 'AS': ('EUR', 'Euronext Amsterdam'),
+                'WA': ('PLN', 'WSE Warsaw'),
+            }
+            if suffix in suffix_to_currency:
+                currency, exchange = suffix_to_currency[suffix]
+                logger.debug(f"✓ {symbol} detected via suffix .{suffix}: ({currency} on {exchange})")
+                return (symbol, currency, exchange)
 
         # 2. Use ISIN to detect currency if available
         if isin and len(isin) >= 2:
