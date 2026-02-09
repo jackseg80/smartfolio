@@ -28,7 +28,7 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | Security | 8.5/10 | **7.0/10** | -1.5 | 9 CVEs, auth gaps, JWT default secret |
 | Performance | 7.5/10 | 7.5/10 | 0 | Not re-profiled, assumed stable |
 | Accessibility | 92+/100 | **~80/100** | -12 | Only 6/20 pages actually tested |
-| Technical Debt | 7.5/10 | **7.5/10** | 0 | get_risk_dashboard refactored (-51%), governance endpoints cleaned |
+| Technical Debt | 7.5/10 | **8.0/10** | +0.5 | risk_management.py -54% (2159→990), get_risk_dashboard -51%, governance -44% |
 | Tests | 8/10 | **6.0/10** | -2.0 | Coverage raised 20.5% -> 30.2% (989 passing, baseline met) |
 | CI/CD | 8/10 | 8/10 | 0 | Workflows functional |
 | **NEW: API Contract** | -- | **6.0/10** | -- | Return types added, 5 HTTP codes fixed (400→404); 3 response formats remain |
@@ -37,7 +37,7 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | **NEW: Logging** | -- | **8.0/10** | +3.0 | Request IDs, JSON file logs, sensitive data sanitized |
 | **NEW: Concurrency** | -- | **7.5/10** | +2.0 | FileLock on 5 critical writes, scheduler Redis lock |
 
-**Updated Overall Score: 7.5/10** (was 6.0 at audit, was 7.7 before audit)
+**Updated Overall Score: 7.5/10** (was 6.0 at audit, was 7.7 before audit; Tech Debt now 8.0/10)
 
 ---
 
@@ -111,10 +111,10 @@ The previous 50-55% figure likely measured a subset of files. The full `pytest -
 | Service | Nov 2025 | Feb 2026 | Delta |
 |---------|----------|----------|-------|
 | `governance.py` | 2,092 | **1,163** | **-44%** |
-| `risk_management.py` | 2,159 | **2,159** | **0%** |
+| `risk_management.py` | 2,159 | **990** | **-54%** |
 | `alert_engine.py` | 1,583 | **1,324** | **-16%** |
 
-Only Phase 1 (governance) was completed. Phase 2 (risk_management) untouched.
+Phase 1 (governance -44%) and Phase 2 (risk_management -54%) completed. Models, AlertSystem, and VaR calculations deduplicated into `services/risk/` modules.
 
 #### NEW: Frontend God Controllers (never audited before)
 
@@ -330,7 +330,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
 | 19 | Refactor `get_risk_dashboard` (663 lines → 326 lines, -51%) | 4h | Maintainability | DONE (Feb 9) |
-| 20 | Refactor `risk_management.py` (Phase 2 God Services) | 2w | Technical debt | |
+| 20 | Refactor `risk_management.py` (2,159→990 lines, -54%) | 2w | Technical debt | DONE (Feb 9) |
 | 21 | Address 5 frontend God Controllers (2,000+ lines each) | 4w | Frontend debt | |
 | 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture | |
 | 23 | Structured JSON logging (file handler with JsonLogFormatter) | 2h | Observability | DONE (Feb 9) |

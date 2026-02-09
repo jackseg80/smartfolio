@@ -59,11 +59,12 @@ def test_risk_dashboard_rejects_long_user_id():
 
 
 def test_risk_dashboard_empty_portfolio():
-    """Test that new users with no data get a clear response"""
+    """Test that a valid user with an unused source gets a clear response"""
+    # Use a valid user but a source directory that has no data
     response = client.get(
         "/api/risk/dashboard",
-        headers={"X-User": "test_empty_user"},
-        params={"source": "cointracking", "min_usd": 1.0}
+        headers={"X-User": "demo"},
+        params={"source": "manual_bourse", "min_usd": 1.0}
     )
 
     assert response.status_code == 200
@@ -75,16 +76,16 @@ def test_risk_dashboard_empty_portfolio():
 
 
 def test_risk_dashboard_different_users_get_different_responses():
-    """Test that different users get independent responses"""
+    """Test that different valid users get independent responses"""
     response_user1 = client.get(
         "/api/risk/dashboard",
-        headers={"X-User": "test_user_a"},
+        headers={"X-User": "demo"},
         params={"source": "cointracking", "min_usd": 1.0}
     )
 
     response_user2 = client.get(
         "/api/risk/dashboard",
-        headers={"X-User": "test_user_b"},
+        headers={"X-User": "jack"},
         params={"source": "cointracking", "min_usd": 1.0}
     )
 
