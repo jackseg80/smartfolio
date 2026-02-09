@@ -14,6 +14,7 @@ import numpy as np
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from api.deps import get_required_user
+from api.utils.formatters import success_response, error_response
 from pydantic import BaseModel
 
 from services.risk_management import risk_manager, RiskMetrics, CorrelationMatrix, StressTestResult, StressScenario, PerformanceAttribution, BacktestResult, RiskAlert, AlertSeverity, AlertCategory
@@ -897,7 +898,7 @@ async def get_risk_dashboard(
 
         price_df = _fetch_price_dataframe(balances, price_history_days)
         if price_df is None:
-            return {"success": False, "message": "Insufficient price data for metrics calculation"}
+            return error_response("Insufficient price data for metrics calculation", code=400)
 
         # Calculate portfolio exposure and GRI (shared between V2 and response)
         exposure_by_group, group_risk_index = _calculate_exposure_and_gri(balances)

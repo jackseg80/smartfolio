@@ -18,7 +18,9 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 
+from fastapi.responses import JSONResponse
 from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
+from api.utils.formatters import success_response, error_response
 from shared.error_handlers import handle_api_errors
 from .gating import get_gating_system
 from api.schemas.ml_contract import MLSystemHealth, ModelHealth
@@ -179,12 +181,12 @@ async def get_model_metrics(model_name: str, version: Optional[str] = None) -> d
         model_data = all_metrics.get(model_name, {})
         if version:
             version_data = model_data.get("versions", {}).get(version, {})
-            return {"model": model_name, "version": version, "metrics": version_data}
+            return success_response({"model": model_name, "version": version, "metrics": version_data})
         else:
             versions = model_data.get("versions", {})
             if versions:
                 latest_version = max(versions.keys())
-                return {"model": model_name, "version": latest_version, "metrics": versions[latest_version]}
+                return success_response({"model": model_name, "version": latest_version, "metrics": versions[latest_version]})
 
     gating_system = get_gating_system()
     matching_keys = [key for key in gating_system.prediction_history.keys() if model_name in key]
@@ -193,7 +195,7 @@ async def get_model_metrics(model_name: str, version: Optional[str] = None) -> d
         key = matching_keys[0]
         health_report = gating_system.get_model_health_report(key)
 
-        return {
+        return success_response({
             "model": model_name,
             "version": "1.0.0",
             "metrics": {
@@ -203,9 +205,9 @@ async def get_model_metrics(model_name: str, version: Optional[str] = None) -> d
                 "acceptance_rate": health_report.get("acceptance_rate", 0.8),
                 "last_updated": health_report.get("last_prediction", datetime.now()).isoformat()
             }
-        }
+        })
 
-    return {"error": f"No metrics found for model {model_name}"}
+    return error_response(f"No metrics found for model {model_name}", code=400)
 
 
 @router.get("/versions/{model_name}")
@@ -223,17 +225,17 @@ async def get_model_versions(model_name: str) -> dict:
         model_data = all_metrics.get(model_name, {})
         versions = list(model_data.get("versions", {}).keys())
 
-        return {
+        return success_response({
             "model": model_name,
             "available_versions": versions,
             "total_versions": len(versions)
-        }
+        })
 
-    return {
+    return success_response({
         "model": model_name,
         "available_versions": ["1.0.0"],
         "total_versions": 1
-    }
+    })
 
 
 @router.post("/metrics/{model_name}/update")
@@ -266,9 +268,8 @@ async def update_model_metrics(
     with open(metrics_file, 'w') as f:
         json.dump(all_metrics, f, indent=2)
 
-    return {
-        "success": True,
+    return success_response({
         "model": model_name,
         "version": version,
         "message": "Metrics updated successfully"
-    }
+    })

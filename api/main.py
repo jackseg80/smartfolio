@@ -90,6 +90,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 from api.deps import get_required_user
 from api.exception_handlers import setup_exception_handlers
+from api.utils.formatters import error_response
 
 # Import modular configuration (Phase 2.1 - Refactoring)
 from api.middleware_setup import setup_middlewares
@@ -450,13 +451,13 @@ async def proxy_fred_bitcoin(
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error in FRED proxy: {e}")
-        return {"success": False, "error": f"HTTP error: {str(e)}", "data": []}
+        return error_response(f"HTTP error: {str(e)}", code=502, details={"data": []})
     except httpx.TimeoutException as e:
         logger.error(f"Timeout in FRED proxy: {e}")
-        return {"success": False, "error": f"Timeout: {str(e)}", "data": []}
+        return error_response(f"Timeout: {str(e)}", code=504, details={"data": []})
     except (ValueError, KeyError) as e:
         logger.warning(f"Data parsing error in FRED proxy: {e}")
-        return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+        return error_response(f"Parsing error: {str(e)}", code=400, details={"data": []})
 
 
 @app.get("/proxy/fred/dxy")
@@ -524,13 +525,13 @@ async def proxy_fred_dxy(
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error in FRED DXY proxy: {e}")
-        return {"success": False, "error": f"HTTP error: {str(e)}", "data": []}
+        return error_response(f"HTTP error: {str(e)}", code=502, details={"data": []})
     except httpx.TimeoutException as e:
         logger.error(f"Timeout in FRED DXY proxy: {e}")
-        return {"success": False, "error": f"Timeout: {str(e)}", "data": []}
+        return error_response(f"Timeout: {str(e)}", code=504, details={"data": []})
     except (ValueError, KeyError) as e:
         logger.warning(f"Data parsing error in FRED DXY proxy: {e}")
-        return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+        return error_response(f"Parsing error: {str(e)}", code=400, details={"data": []})
 
 
 @app.get("/proxy/fred/vix")
@@ -595,13 +596,13 @@ async def proxy_fred_vix(
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error in FRED VIX proxy: {e}")
-        return {"success": False, "error": f"HTTP error: {str(e)}", "data": []}
+        return error_response(f"HTTP error: {str(e)}", code=502, details={"data": []})
     except httpx.TimeoutException as e:
         logger.error(f"Timeout in FRED VIX proxy: {e}")
-        return {"success": False, "error": f"Timeout: {str(e)}", "data": []}
+        return error_response(f"Timeout: {str(e)}", code=504, details={"data": []})
     except (ValueError, KeyError) as e:
         logger.warning(f"Data parsing error in FRED VIX proxy: {e}")
-        return {"success": False, "error": f"Parsing error: {str(e)}", "data": []}
+        return error_response(f"Parsing error: {str(e)}", code=400, details={"data": []})
 
 
 @app.get("/proxy/fred/macro-stress")

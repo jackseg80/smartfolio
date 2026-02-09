@@ -93,11 +93,10 @@ async def create_rebalance_session(
         # Ajouter les notes de stratégie
         session.strategy_notes = request.strategy_notes
         
-        return {
-            "success": True,
+        return success_response({
             "session_id": session.id,
             "message": "Rebalance session created successfully"
-        }
+        })
         
     except Exception as e:
         logger.error(f"Error creating session: {e}")
@@ -187,10 +186,9 @@ async def add_portfolio_snapshot(
         if not success:
             return error_response("Session not found", code=404)
         
-        return {
-            "success": True,
+        return success_response({
             "message": f"Portfolio snapshot added ({'before' if is_before else 'after'} rebalancement)"
-        }
+        })
         
     except Exception as e:
         logger.error(f"Error adding portfolio snapshot: {e}")
@@ -214,10 +212,9 @@ async def add_rebalance_actions(
         if not success:
             return error_response("Session not found", code=404)
         
-        return {
-            "success": True,
+        return success_response({
             "message": f"Added {len(actions)} rebalance actions to session"
-        }
+        })
         
     except Exception as e:
         logger.error(f"Error adding actions: {e}")
@@ -242,10 +239,9 @@ async def update_execution_results(
         if not success:
             return error_response("Session not found", code=404)
         
-        return {
-            "success": True,
+        return success_response({
             "message": f"Updated execution results for {len(request.order_results)} orders"
-        }
+        })
         
     except Exception as e:
         logger.error(f"Error updating execution results: {e}")
@@ -398,7 +394,7 @@ async def get_detailed_performance_analysis(
         sessions = history_mgr.get_recent_sessions(days_back=days_back)
 
         if not sessions:
-            return {"error": "No sessions found for the specified period"}
+            return error_response("No sessions found for the specified period", code=404)
 
         # Analyser l'impact des rebalancement
         analysis = performance_tracker.analyze_rebalancing_impact(sessions)

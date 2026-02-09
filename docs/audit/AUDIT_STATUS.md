@@ -1,7 +1,7 @@
 # Statut Global des Audits - SmartFolio
 
 **Date de mise à jour:** 9 Février 2026
-**Dernière revue complète:** 8-9 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 40%)
+**Dernière revue complète:** 8-9 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 40% + Response Format + FileLock)
 **Prochaine revue:** Mars 2026
 **Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
@@ -15,15 +15,16 @@
 | **Performance** | 7.5/10 | ➡️ Stable | 🟡 EN COURS | Dec 2025 |
 | **Accessibilité** | ~80/100 | ⬇️ -12 | 🟡 MOYEN | **Feb 8, 2026** |
 | **Dette Technique** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
-| **Tests** | 7.5/10 | ⬇️ -0.5 | 🟡 MOYEN | **Feb 9, 2026** |
+| **Tests** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
 | **CI/CD** | 8/10 | ➡️ Stable | 🟢 BON | Dec 2025 |
-| **API Contract** | 6.0/10 | 🆕 NEW | 🟡 MOYEN | **Feb 9, 2026** |
+| **Tests** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
+| **API Contract** | 7.0/10 | ⬆️ +1.0 | 🟡 MOYEN | **Feb 9, 2026** |
 | **Error Handling** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
 | **Data Integrity** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
 | **Logging** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
-| **Concurrency** | 7.5/10 | 🆕 NEW | 🟡 MOYEN | **Feb 9, 2026** |
+| **Concurrency** | 8.5/10 | ⬆️ +1.0 | 🟢 BON | **Feb 9, 2026** |
 
-**Note Globale:** **7.7/10** (was 6.0 at audit start → 7.7 after all P0-P3 fixes applied Feb 8-9)
+**Note Globale:** **7.9/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format)
 
 ---
 
@@ -213,7 +214,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ### Conformité CLAUDE.md
 - **Score:** 90% (était 75%, +15 pts)
 - **Endpoints multi-tenant:** 14 migrés (Query("demo") → Depends(get_active_user))
-- **Response formatters:** 90% utilisent success_response/error_response
+- **Response formatters:** 95%+ utilisent success_response/error_response (27 bare returns migrés Feb 9)
 - **Risk Score inversions:** 0 (corrigé + commenté)
 
 ### Prochaines Actions
@@ -225,16 +226,17 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ✅ Tests: 7.5/10 - MOYEN
+## ✅ Tests: 8.0/10 - BON
 
 ### Statut
-🟡 **Réévalué Feb 9, 2026** - Coverage réel mesuré à 20.5% au début de l'audit, élevé à **40%** après 3 phases d'amélioration
+🟢 **Stabilisé Feb 9, 2026** - Coverage 40%, **2,147 passing, 0 failures**, 34 skipped. Tous les tests corrigés (27 failures + 8 errors → 0).
 
 ### Métriques Clés
 
-- **Coverage global:** **40%** (mesuré pytest-cov Feb 9, 2026 — 2,137 passing, 21 skipped)
-- **Tests totaux:** 2,182 collectés, 2,137 passing
+- **Coverage global:** **40%** (mesuré pytest-cov Feb 9, 2026 — **2,147 passing, 0 failures**, 34 skipped)
+- **Tests totaux:** 2,181 collectés, 2,147 passing, 0 failures
 - **Nouveaux tests écrits:** 905+ tests dans 20+ fichiers (Feb 8-9, 2026)
+- **Tests corrigés:** 27 failures + 8 errors → 0 (formats, async, server-skip, thresholds)
 - **Coverage BalanceService:** 66% (excellente pour service multi-fallback)
 - **Tests critiques:** Risk (90%), Governance (85%), Stop Loss (95%)
 - **Baseline pyproject.toml:** 30% — PASSING
@@ -389,7 +391,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] Auth added to governance, execution_history, kraken, csv cleanup endpoints
 - [x] Circuit breakers for CoinGecko, FRED, Saxo
 - [x] Request ID middleware (correlation IDs)
-- [x] FileLock on 5 critical file writes
+- [x] FileLock on 11 file-writing services (expanded from 5)
 - [x] CSV injection protection
 - [x] Pydantic models for governance endpoints
 - [x] JSON structured logging
@@ -406,13 +408,14 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 - [ ] Performance: Top 5 priorités restantes (18h)
 - [ ] Push backend coverage to 50%
-- [ ] Fix remaining 23 test failures
+- [x] ~~Fix remaining 23 test failures~~ → **DONE** (27+8 → 0 failures, Feb 9)
+- [x] ~~Standardize response format~~ → **DONE** (27 bare returns migrated, Feb 9)
+- [x] ~~FileLock expanded~~ → **DONE** (5 → 11 services, Feb 9)
 
 ### 📅 Planifié Court Terme (Q1 2026)
 
 - [ ] Accessibilité: Phases 2-3 (10h, 83 → 96/100)
 - [ ] God Services Phase 3: alert_engine.py refactoring
-- [ ] Standardize response format (success_response everywhere)
 
 ### 📅 Planifié Moyen Terme (Q2 2026)
 
@@ -437,7 +440,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 | Métrique | Oct 2025 | Dec 2025 | Feb 2026 | Évolution |
 |----------|----------|----------|----------|-----------|
-| **Score Global** | 7.2/10 | 7.7/10 | **7.7/10** | +7% ✅ |
+| **Score Global** | 7.2/10 | 7.7/10 | **7.9/10** | +10% ✅ |
 | **Sécurité** | 6/10 | 8.5/10 | **7.0/10** | Réévalué (CVEs) |
 | **Vulns critiques** | 3 | 0 | **0** | -100% ✅ |
 | **Performance fixes** | 0 | 19/47 | 19/47 | +40% ✅ |
@@ -469,9 +472,9 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ### Prochaine Session
 
-1. **Fix 23 failing tests** (2h) - Stabiliser la suite
+1. ~~**Fix 23 failing tests**~~ → ✅ **DONE** (2,147 passing, 0 failures)
 2. **Push coverage to 50%** (4h) - FX, cache_manager, scheduler
-3. **Standardize response format** (8h) - success_response partout
+3. ~~**Standardize response format**~~ → ✅ **DONE** (27 bare returns migrated)
 
 ### Ce Mois (Feb-Mars 2026)
 

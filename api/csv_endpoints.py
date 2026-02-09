@@ -12,6 +12,7 @@ import aiohttp
 import asyncio
 from pathlib import Path
 from api.deps import get_required_user
+from api.utils.formatters import success_response, error_response
 from api.services.user_fs import UserScopedFS
 
 router = APIRouter()
@@ -328,7 +329,7 @@ async def cleanup_old_csv_files(keep_days: int = 7, user: str = Depends(get_requ
         data_dir = Path("data/raw/")
         
         if not data_dir.exists():
-            return {"success": True, "message": "Dossier data/raw/ n'existe pas", "deleted": 0}
+            return success_response({"message": "Dossier data/raw/ n'existe pas", "deleted": 0})
         
         cutoff_time = datetime.now().timestamp() - (keep_days * 24 * 60 * 60)
         deleted_count = 0
@@ -352,14 +353,10 @@ async def cleanup_old_csv_files(keep_days: int = 7, user: str = Depends(get_requ
                         file_path.unlink()  # Supprimer le fichier
                         deleted_count += 1
         
-        return {
-            "success": True, 
+        return success_response({
             "message": f"Nettoyage terminé - {deleted_count} fichiers supprimés",
             "deleted": deleted_count
-        }
+        })
         
     except Exception as e:
-        return {
-            "success": False,
-            "error": f"Erreur nettoyage: {str(e)}"
-        }
+        return error_response(f"Erreur nettoyage: {str(e)}", code=400)

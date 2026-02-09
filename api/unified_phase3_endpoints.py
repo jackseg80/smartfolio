@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Any, Union
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from api.utils.formatters import success_response, error_response
 
 # Phase 3 component imports
 from services.risk.advanced_risk_engine import AdvancedRiskEngine, VaRMethod, RiskHorizon
@@ -507,15 +508,15 @@ async def get_learning_insights() -> dict:
         feedback_learning = components["feedback_learning"]
         
         if not feedback_learning:
-            return {"insights": [], "status": "inactive"}
-        
+            return success_response({"insights": [], "status": "inactive"})
+
         insights = feedback_learning.get_learning_insights()
-        
-        return {
+
+        return success_response({
             "insights": insights,
             "generated_at": datetime.now().isoformat(),
             "status": "active"
-        }
+        })
         
     except Exception as e:
         logger.error(f"Error getting learning insights: {e}")

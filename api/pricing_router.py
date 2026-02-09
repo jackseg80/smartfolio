@@ -6,6 +6,7 @@ import os
 import logging
 from typing import Dict
 from fastapi import APIRouter, Query
+from api.utils.formatters import success_response, error_response
 
 logger = logging.getLogger("crypto-rebalancer")
 
@@ -104,19 +105,17 @@ async def pricing_diagnostic(
                 "price_source": src
             })
 
-        return {
-            "ok": True,
+        return success_response({
             "mode": mode,
             "pricing_internal_mode": ("hybrid" if mode == "auto" else mode),
-            "meta": {
-                "source_used": source_used,
-                "items_considered": len(rows),
-                "symbols_analyzed": len(symbols),
-                "data_age_min": data_age_min,
-                "max_age_min": max_age_min,
-            },
             "items": results
-        }
+        }, meta={
+            "source_used": source_used,
+            "items_considered": len(rows),
+            "symbols_analyzed": len(symbols),
+            "data_age_min": data_age_min,
+            "max_age_min": max_age_min,
+        })
 
     except Exception as e:
         # Import PricingException uniquement si disponible
@@ -124,12 +123,12 @@ async def pricing_diagnostic(
             from api.exceptions import PricingException
             if isinstance(e, PricingException):
                 logger.error(f"Pricing error in diagnostics: {e}")
-                return {"ok": False, "error": f"Pricing error: {e.message}", "error_code": e.error_code.value if e.error_code else None}
+                return error_response(f"Pricing error: {e.message}", code=400, details={"error_code": e.error_code.value if e.error_code else None})
         except ImportError:
             pass
 
         logger.error(f"Unexpected error in pricing diagnostics: {e}")
-        return {"ok": False, "error": f"Diagnostic failed: {str(e)}"}
+        return error_response(f"Diagnostic failed: {str(e)}", code=500)
 
 
 @router.get(

@@ -17,6 +17,7 @@ from api.schemas.ml_contract import (
     UnifiedPrediction, QualityMetrics, UncertaintyMeasures,
     ModelType, ConfidenceLevel
 )
+from api.utils.formatters import error_response
 
 logger = logging.getLogger(__name__)
 

@@ -380,7 +380,7 @@ async def submit_feedback(
             provided_by=feedback.provided_by
         )
         
-        return {"success": True, "feedback_id": feedback_id}
+        return success_response({"feedback_id": feedback_id})
         
     except Exception as e:
         log.error(f"Failed to submit feedback: {e}")
@@ -393,7 +393,7 @@ async def get_learning_insights(
     """Récupérer les insights d'apprentissage"""
     try:
         insights = learning_engine.get_learning_insights()
-        return {"insights": insights}
+        return success_response({"insights": insights})
         
     except Exception as e:
         log.error(f"Failed to get learning insights: {e}")
@@ -514,7 +514,7 @@ async def start_intelligence_system(
         if not learning_engine.running:
             await learning_engine.start()
         
-        return {"success": True, "message": "Intelligence system started"}
+        return success_response({"message": "Intelligence system started"})
         
     except Exception as e:
         log.error(f"Failed to start intelligence system: {e}")
@@ -534,7 +534,7 @@ async def stop_intelligence_system(
         if learning_engine.running:
             await learning_engine.stop()
         
-        return {"success": True, "message": "Intelligence system stopped"}
+        return success_response({"message": "Intelligence system stopped"})
         
     except Exception as e:
         log.error(f"Failed to stop intelligence system: {e}")

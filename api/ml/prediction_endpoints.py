@@ -21,6 +21,7 @@ from pydantic import BaseModel
 from services.ml.orchestrator import get_orchestrator, get_ml_predictions
 from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
 from api.deps import get_required_user
+from api.utils.formatters import success_response, error_response
 from shared.error_handlers import handle_api_errors, handle_service_errors
 from .cache_utils import get_ml_cache, cache_get, cache_set
 
@@ -130,13 +131,12 @@ async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le
     orchestrator = get_orchestrator()
     prediction = await orchestrator.predict_volatility(symbol, horizon_days)
 
-    result = {
-        "success": True,
+    result = success_response({
         "symbol": symbol,
         "horizon_days": horizon_days,
         "volatility_forecast": prediction,
         "timestamp": datetime.now().isoformat()
-    }
+    })
 
     cache_set(ml_cache, cache_key, result)
     return result
@@ -151,13 +151,12 @@ async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)) -> d
     for s in req_symbols:
         results[s] = pipeline_manager.load_volatility_model(s)
     loaded = sum(1 for v in results.values() if v)
-    return {
-        "success": True,
+    return success_response({
         "trainable_assets": len(req_symbols),
         "estimated_duration_minutes": 1,
         "results": results,
         "loaded": loaded
-    }
+    })
 
 
 @router.post("/volatility/batch-predict")
@@ -190,11 +189,10 @@ async def alias_regime_current() -> dict:
     else:
         regime_obj = {"regime_name": "Unknown", "confidence": 0.5, "duration_days": 0}
 
-    return {
-        "success": True,
+    return success_response({
         "regime_prediction": regime_obj,
         "timestamp": live.get("timestamp")
-    }
+    })
 
 
 # ===== LIVE PREDICTIONS =====
@@ -217,7 +215,6 @@ async def get_live_predictions() -> dict:
         market_regime = "Bull Market"
 
     return {
-        "success": True,
         "btc_volatility": btc_volatility,
         "eth_volatility": eth_volatility,
         "market_regime": market_regime,
@@ -237,8 +234,7 @@ async def get_portfolio_metrics() -> dict:
     """
     Obtenir les métriques de portefeuille ML (stub endpoint)
     """
-    return {
-        "success": True,
+    return success_response({
         "metrics": {
             "sharpe_ratio": 1.42,
             "max_drawdown": 0.15,
@@ -246,7 +242,7 @@ async def get_portfolio_metrics() -> dict:
             "alpha": 0.08
         },
         "timestamp": datetime.now().isoformat()
-    }
+    })
 
 
 # ===== SENTIMENT ENDPOINTS =====
@@ -258,7 +254,6 @@ async def get_sentiment(symbol: str, days: int = Query(default=1, ge=1, le=30)) 
     Obtenir le sentiment pour un asset (stub endpoint)
     """
     return {
-        "success": True,
         "symbol": symbol.upper(),
         "aggregated_sentiment": {
             "score": 0.15,
@@ -280,15 +275,14 @@ async def get_fear_greed_sentiment(days: int = Query(default=1, ge=1, le=30)) ->
     """
     Obtenir Fear & Greed index (stub endpoint)
     """
-    return {
-        "success": True,
+    return success_response({
         "fear_greed_data": {
             "value": 65,
             "fear_greed_index": 65,
             "classification": "Greed",
             "timestamp": datetime.now().isoformat()
         }
-    }
+    })
 
 
 @router.get("/sentiment/analyze")
@@ -300,7 +294,7 @@ async def alias_sentiment_analyze(symbols: str = Query("BTC,ETH"), days: int = Q
     for s in syms:
         single = await get_sentiment(s, days)
         results[s] = single.get("aggregated_sentiment") if isinstance(single, dict) else None
-    return {"success": True, "results": results, "days": days}
+    return success_response({"results": results, "days": days})
 
 
 @router.get("/sentiment/symbol/{symbol}", response_model=SentimentResponse)
@@ -468,8 +462,7 @@ async def alias_correlation_matrix(
         logger.warning(f"Failed to calculate average correlation: {e}")
         avg_corr = None
 
-    return {
-        "success": True,
+    return success_response({
         "assets": list({row.get('symbol') for row in balances if row.get('symbol')}),
         "correlations": corr_matrix.correlations,
         "market_metrics": {
@@ -479,7 +472,7 @@ async def alias_correlation_matrix(
             "average_correlation": avg_corr
         },
         "calculation_time": None
-    }
+    })
 
 
 # ===== HELPER FUNCTIONS =====

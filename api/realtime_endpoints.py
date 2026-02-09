@@ -17,6 +17,7 @@ from services.streaming.realtime_engine import (
     StreamEventType, StreamEvent
 )
 from api.dependencies.dev_guards import require_simulation, require_dev_mode, validate_websocket_token
+from api.utils.formatters import success_response, error_response
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
 DEBUG_SIM = os.getenv("DEBUG_SIMULATION", "false").lower() == "true"
@@ -483,9 +484,9 @@ async def start_realtime_engine(
     try:
         if not engine.running:
             await engine.start()
-            return {"success": True, "message": "Realtime engine started"}
+            return success_response({"message": "Realtime engine started"})
         else:
-            return {"success": True, "message": "Realtime engine already running"}
+            return success_response({"message": "Realtime engine already running"})
     except Exception as e:
         log.error(f"Failed to start realtime engine: {e}")
         raise HTTPException(500, "failed_to_start_engine")
@@ -498,9 +499,9 @@ async def stop_realtime_engine(
     try:
         if engine.running:
             await engine.stop()
-            return {"success": True, "message": "Realtime engine stopped"}
+            return success_response({"message": "Realtime engine stopped"})
         else:
-            return {"success": True, "message": "Realtime engine already stopped"}
+            return success_response({"message": "Realtime engine already stopped"})
     except Exception as e:
         log.error(f"Failed to stop realtime engine: {e}")
         raise HTTPException(500, "failed_to_stop_engine")
