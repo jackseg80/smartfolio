@@ -7,6 +7,10 @@ import requests
 import re
 from typing import Dict, Any
 
+import pytest
+from tests.e2e.conftest import requires_server
+
+@requires_server
 def test_web_compatibility():
     """Test de compatibilité web simplifié"""
     base_url = "http://localhost:8080"

@@ -5,7 +5,10 @@ Focus sur la récupération et la gestion gracieuse des erreurs
 import json
 import time
 import requests
+import pytest
+from tests.e2e.conftest import requires_server
 
+@requires_server
 def test_phase3_resilience():
     """Tests de résilience Phase 3"""
     base_url = "http://localhost:8080"

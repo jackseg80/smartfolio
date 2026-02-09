@@ -179,9 +179,11 @@ class TestMLEndpoints:
         assert response.status_code == 200
         data = response.json()
 
-        assert "symbol" in data
-        assert data["symbol"] == symbol
-        assert "volatility_forecast" in data or "error" in data
+        # Response wrapped in success_response
+        inner = data.get("data", data)
+        assert "symbol" in inner
+        assert inner["symbol"] == symbol
+        assert "volatility_forecast" in inner or "error" in inner
 
     def test_regime_prediction_endpoint(self):
         """Test de l'endpoint de prediction de regime"""
@@ -190,9 +192,10 @@ class TestMLEndpoints:
         assert response.status_code == 200
         data = response.json()
 
-        # The /regime/current endpoint returns regime_prediction
-        assert data["success"] is True
-        assert "regime_prediction" in data
+        # The /regime/current endpoint returns success_response with regime_prediction
+        inner = data.get("data", data)
+        assert data.get("ok", data.get("success")) is True
+        assert "regime_prediction" in inner
 
     def test_sentiment_endpoint(self):
         """Test de l'endpoint de sentiment"""
@@ -202,8 +205,8 @@ class TestMLEndpoints:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["success"] is True
-        assert data["symbol"] == symbol
+        # get_sentiment returns plain dict (used internally by other endpoints)
+        assert data.get("symbol") == symbol
         assert "aggregated_sentiment" in data
         assert "sources_used" in data
 
@@ -216,8 +219,8 @@ class TestMLEndpoints:
         assert response.status_code == 200
         data = response.json()
 
-        assert data["success"] is True
-        assert data["symbol"] == "FEAR-GREED"
+        # /sentiment/fear-greed is captured by /sentiment/{symbol} route (plain dict)
+        assert data.get("symbol") == "FEAR-GREED"
         assert "aggregated_sentiment" in data
 
     @patch('api.ml.model_endpoints.pipeline_manager')

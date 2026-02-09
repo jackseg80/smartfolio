@@ -5,7 +5,10 @@ Test de l'API /api/risk/dashboard en mode Shadow (v2_shadow)
 import asyncio
 import httpx
 import json
+import pytest
+from tests.manual.conftest import requires_server
 
+@requires_server
 async def test_shadow_mode():
     """
     Appeler l'API en mode v2_shadow et vérifier qu'on a bien Legacy + V2

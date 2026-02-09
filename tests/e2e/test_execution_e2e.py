@@ -11,9 +11,12 @@ Ce script teste le workflow complet:
 
 import requests
 import time
+import pytest
+from tests.e2e.conftest import requires_server
 
 API_BASE = "http://localhost:8001"
 
+@requires_server
 def test_execution_workflow():
     """Test du workflow complet d'exécution"""
     

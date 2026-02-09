@@ -7,8 +7,10 @@ Tests that the API endpoints return valid responses without mocking.
 import pytest
 import requests
 import time
+from tests.manual.conftest import requires_server
 
 
+@requires_server
 class TestCrossAssetEndpoints:
     """Test cross-asset correlation API endpoints"""
     

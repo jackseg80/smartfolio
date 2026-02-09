@@ -31,13 +31,14 @@ def test_scheduler_health_endpoint_disabled():
     client = TestClient(app)
     response = client.get("/api/scheduler/health")
 
-    assert response.status_code == 200
+    # error_response returns 503 when scheduler is not running
+    assert response.status_code == 503
     data = response.json()
 
     assert data["ok"] is False
-    assert data["enabled"] is False
-    assert "not running" in data["message"].lower()
-    assert data["jobs"] == {}
+    assert "not running" in data["error"].lower()
+    assert data["details"]["enabled"] is False
+    assert data["details"]["jobs"] == {}
 
 
 def test_pnl_snapshot_script_exists():
@@ -86,7 +87,7 @@ async def test_scheduler_initialization_with_flag():
 
         # Check jobs are registered
         jobs = scheduler.get_jobs()
-        assert len(jobs) == 6, f"Expected 6 jobs, got {len(jobs)}"
+        assert len(jobs) == 9, f"Expected 9 jobs, got {len(jobs)}"
 
         job_ids = [job.id for job in jobs]
         expected_jobs = [
@@ -95,7 +96,10 @@ async def test_scheduler_initialization_with_flag():
             "ohlcv_daily",
             "ohlcv_hourly",
             "staleness_monitor",
-            "api_warmers"
+            "api_warmers",
+            "crypto_toolbox_refresh",
+            "daily_ml_training",
+            "scheduler_lock_renewal"
         ]
 
         for expected_job in expected_jobs:
@@ -131,7 +135,10 @@ def test_scheduler_job_names():
             "ohlcv_daily": "OHLCV Update Daily",
             "ohlcv_hourly": "OHLCV Update Hourly",
             "staleness_monitor": "Staleness Monitor",
-            "api_warmers": "API Warmers"
+            "api_warmers": "API Warmers",
+            "crypto_toolbox_refresh": "Crypto-Toolbox Indicators Refresh (2x daily)",
+            "daily_ml_training": "Daily ML Training (20y data)",
+            "scheduler_lock_renewal": "Scheduler Lock Renewal"
         }
 
         for job_id, expected_name in expected_names.items():

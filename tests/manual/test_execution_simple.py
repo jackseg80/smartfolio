@@ -47,7 +47,7 @@ TEST_ACTIONS = [
     }
 ]
 
-def test_api_endpoint(method, endpoint, data=None):
+def _call_api_endpoint(method, endpoint, data=None):
     """Test un endpoint API"""
     url = f"{API_BASE}{endpoint}"
     
@@ -72,7 +72,7 @@ def main():
     
     # 1. Verifier les exchanges disponibles
     print("\n1. Exchanges disponibles:")
-    exchanges = test_api_endpoint("GET", "/execution/exchanges")
+    exchanges = _call_api_endpoint("GET", "/execution/exchanges")
     if exchanges:
         for ex in exchanges["exchanges"]:
             status = "CONNECTED" if ex["connected"] else "DISCONNECTED"
@@ -88,7 +88,7 @@ def main():
         }
     }
     
-    validation = test_api_endpoint("POST", "/execution/validate-plan", validation_data)
+    validation = _call_api_endpoint("POST", "/execution/validate-plan", validation_data)
     if validation:
         if validation["valid"]:
             print(f"  OK Plan valide: {validation['total_orders']} ordres, ${validation['total_volume']:.2f}")
@@ -102,7 +102,7 @@ def main():
     
     # 3. Lancer l'execution en mode simulation
     print(f"\n3. Execution du plan {plan_id} (simulation):")
-    execution = test_api_endpoint("POST", f"/execution/execute-plan?plan_id={plan_id}&dry_run=true&max_parallel=2")
+    execution = _call_api_endpoint("POST", f"/execution/execute-plan?plan_id={plan_id}&dry_run=true&max_parallel=2")
     if execution and execution["success"]:
         print(f"  STARTED Execution lancee: {execution['message']}")
         execution_id = execution["execution_id"]
@@ -115,7 +115,7 @@ def main():
     for i in range(10):  # Max 20 secondes
         time.sleep(2)
         
-        status = test_api_endpoint("GET", f"/execution/status/{plan_id}")
+        status = _call_api_endpoint("GET", f"/execution/status/{plan_id}")
         if status:
             progress = status.get("completion_percentage", 0)
             success_rate = status.get("success_rate", 0)
@@ -132,7 +132,7 @@ def main():
     
     # 5. Details des ordres executes
     print(f"\n5. Details des ordres:")
-    orders = test_api_endpoint("GET", f"/execution/orders/{plan_id}")
+    orders = _call_api_endpoint("GET", f"/execution/orders/{plan_id}")
     if orders:
         for order in orders["orders"]:
             status_text = order["status"].upper()
@@ -144,7 +144,7 @@ def main():
     
     # 6. Statistiques globales
     print(f"\n6. Statistiques globales:")
-    stats = test_api_endpoint("GET", "/execution/pipeline-status")
+    stats = _call_api_endpoint("GET", "/execution/pipeline-status")
     if stats:
         print(f"  ACTIVE Plans actifs: {stats['active_executions']}")
         print(f"  SUCCESS Taux de succes global: {stats['statistics']['success_rate']:.1f}%")

@@ -61,9 +61,10 @@ def test_phase3_learning_insights():
     assert response.status_code == 200
 
     data = response.json()
-    # API returns 'insights' instead of 'learning_insights'
-    assert "insights" in data or "learning_insights" in data
-    assert "status" in data or "active_patterns" in data
+    # Response wrapped in success_response: data is in data["data"]
+    inner = data.get("data", data)
+    assert "insights" in inner or "learning_insights" in inner
+    assert "status" in inner or "active_patterns" in inner
 
 def test_phase3_health_alerts():
     """Test que l'endpoint health alerts fonctionne"""

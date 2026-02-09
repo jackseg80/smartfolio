@@ -12,7 +12,9 @@ Usage:
 
 import asyncio
 import httpx
+import pytest
 from datetime import datetime
+from tests.manual.conftest import requires_server
 
 BASE_URL = "http://localhost:8080"
 
@@ -58,6 +60,7 @@ async def get_pnl_summary(user_id: str = "demo", source: str = "cointracking", a
             print(f"   Error: {response.text}")
             return None
 
+@requires_server
 async def test_etag_caching():
     """Test du mécanisme ETag pour cache validation"""
     async with httpx.AsyncClient() as client:
@@ -80,6 +83,7 @@ async def test_etag_caching():
         else:
             print("   ⚠️  Cache ETag n'a pas retourné 304")
 
+@requires_server
 async def test_anchor_points():
     """Test des différents anchor points"""
     anchors = ["prev_close", "midnight", "session"]

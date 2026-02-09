@@ -67,12 +67,13 @@ def test_risk_dashboard_empty_portfolio():
         params={"source": "manual_bourse", "min_usd": 1.0}
     )
 
-    assert response.status_code == 200
+    # error_response returns 400 for insufficient price data
+    assert response.status_code == 400
     data = response.json()
 
-    # Empty portfolio returns success=False with a message
-    assert data.get("success") is False
-    assert "message" in data
+    # Error response has ok=False and error message
+    assert data.get("ok") is False
+    assert "error" in data
 
 
 def test_risk_dashboard_different_users_get_different_responses():

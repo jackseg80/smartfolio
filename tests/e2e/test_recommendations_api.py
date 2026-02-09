@@ -417,7 +417,7 @@ class TestErrorHandling:
         )
 
         # Should return error (not crash)
-        assert response.status_code in [200, 400, 404, 500]
+        assert response.status_code in [200, 400, 404, 422, 500]
 
     def test_invalid_timeframe(self, test_client, test_user_id, saxo_csv_file_key):
         """Invalid timeframe should be handled gracefully"""
