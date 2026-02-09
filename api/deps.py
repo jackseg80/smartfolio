@@ -47,28 +47,84 @@ def decode_access_token(token: str) -> Optional[dict]:
         logger.error(f"Unexpected JWT decode error: {e}")
         return None
 
+def _extract_jwt_user(authorization: Optional[str]) -> Optional[str]:
+    """
+    Extract and validate user_id from a JWT Authorization header.
+
+    Returns user_id if JWT is valid, None if no JWT present.
+    Raises HTTPException(401) if JWT is present but invalid/expired.
+    """
+    if not authorization or not isinstance(authorization, str):
+        return None
+
+    parts = authorization.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None  # Not a Bearer token — skip silently
+
+    token = parts[1]
+    payload = decode_access_token(token)
+
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check user still exists and is active
+    if not is_allowed_user(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_info = get_user_info(user_id)
+    if user_info and user_info.get("status") != "active":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
+    return user_id
+
+
 # Redis client singleton
 _redis_client = None
 
-def get_required_user(x_user: str = Header(..., alias="X-User")) -> str:
+def get_required_user(
+    x_user: str = Header(..., alias="X-User"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+) -> str:
     """
-    Dépendance FastAPI qui FORCE le header X-User (pas de fallback).
+    Dépendance FastAPI qui FORCE le header X-User et valide le JWT si présent.
 
-    Usage: Pour endpoints critiques nécessitant isolation multi-tenant stricte.
+    En mode soft (REQUIRE_JWT=0, défaut) : valide le JWT si présent, fallback X-User.
+    En mode strict (REQUIRE_JWT=1) : rejette les requêtes sans JWT valide.
 
     Args:
         x_user: Header X-User REQUIS
+        authorization: Header Authorization optionnel (Bearer token)
 
     Returns:
         str: ID utilisateur validé
 
     Raises:
-        HTTPException: 422 si header manquant, 403 si utilisateur inconnu
+        HTTPException: 422 si header X-User manquant, 401 si JWT invalide,
+                       403 si utilisateur inconnu ou mismatch JWT/X-User
 
     Example:
         @router.get("/endpoint")
         async def endpoint(user: str = Depends(get_required_user)):
-            # user est garanti non-None, pas de fallback
+            # user est garanti non-None, JWT validé si présent
     """
     try:
         # Validation et normalisation
@@ -80,53 +136,82 @@ def get_required_user(x_user: str = Header(..., alias="X-User")) -> str:
             logger.info(f"DEV MODE: Bypassing authorization for user: {normalized_user}")
             return normalized_user
 
-        # Vérification autorisation normale
-        if not is_allowed_user(normalized_user):
-            logger.warning(f"Unknown user attempted access (required): {x_user}")
+        # JWT validation (if present)
+        jwt_user = _extract_jwt_user(authorization)
+
+        # Strict mode: reject requests without valid JWT
+        require_jwt = os.getenv("REQUIRE_JWT", "0") == "1"
+        if require_jwt and not jwt_user:
+            logger.warning(f"JWT required but not provided for user: {normalized_user}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication token required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Anti-spoofing: ensure JWT user matches X-User header
+        if jwt_user and jwt_user != normalized_user:
+            logger.warning(f"JWT/X-User mismatch: JWT={jwt_user}, X-User={normalized_user}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Unknown user: {x_user}"
+                detail="User identity mismatch between token and header",
+            )
+
+        effective_user = jwt_user or normalized_user
+
+        # Vérification autorisation normale
+        if not is_allowed_user(effective_user):
+            logger.warning(f"Unknown user attempted access (required): {effective_user}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Unknown user: {effective_user}",
             )
 
         # Log pour audit
-        logger.info(f"Active user (required): {normalized_user}")
-        return normalized_user
+        auth_mode = "[JWT]" if jwt_user else "[X-User]"
+        logger.info(f"Active user (required): {effective_user} {auth_mode}")
+        return effective_user
 
     except ValueError as e:
         logger.warning(f"Invalid user ID format: {x_user} - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid user ID format: {e}"
+            detail=f"Invalid user ID format: {e}",
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Unexpected error in get_required_user: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            detail="Internal server error",
         )
 
 
-def require_admin_role(x_user: str = Header(..., alias="X-User")) -> str:
+def require_admin_role(
+    x_user: str = Header(..., alias="X-User"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+) -> str:
     """
-    Dépendance FastAPI qui FORCE le rôle admin pour l'utilisateur.
+    Dépendance FastAPI qui FORCE le rôle admin et valide le JWT si présent.
 
     Usage: Pour endpoints admin uniquement (user management, logs, cache, ML, API keys).
 
     Args:
         x_user: Header X-User REQUIS
+        authorization: Header Authorization optionnel (Bearer token)
 
     Returns:
         str: ID utilisateur validé avec rôle admin
 
     Raises:
-        HTTPException: 403 si utilisateur n'a pas le rôle admin
+        HTTPException: 401 si JWT invalide, 403 si pas admin ou mismatch
 
     Example:
         @router.get("/admin/users")
         async def list_users(user: str = Depends(require_admin_role)):
-            # user est garanti avoir le rôle "admin"
+            # user est garanti avoir le rôle "admin", JWT validé si présent
     """
-    # Valider l'utilisateur d'abord
     try:
         normalized_user = validate_user_id(x_user)
 
@@ -136,50 +221,73 @@ def require_admin_role(x_user: str = Header(..., alias="X-User")) -> str:
             logger.info(f"DEV MODE: Bypassing admin role check for user: {normalized_user}")
             return normalized_user
 
-        # Vérification autorisation normale
-        if not is_allowed_user(normalized_user):
-            logger.warning(f"Unknown user attempted admin access: {x_user}")
+        # JWT validation (if present)
+        jwt_user = _extract_jwt_user(authorization)
+
+        # Strict mode: reject requests without valid JWT
+        require_jwt = os.getenv("REQUIRE_JWT", "0") == "1"
+        if require_jwt and not jwt_user:
+            logger.warning(f"JWT required but not provided for admin user: {normalized_user}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication token required",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        # Anti-spoofing: ensure JWT user matches X-User header
+        if jwt_user and jwt_user != normalized_user:
+            logger.warning(f"JWT/X-User mismatch in admin endpoint: JWT={jwt_user}, X-User={normalized_user}")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Unknown user: {x_user}"
+                detail="User identity mismatch between token and header",
+            )
+
+        effective_user = jwt_user or normalized_user
+
+        # Vérification autorisation normale
+        if not is_allowed_user(effective_user):
+            logger.warning(f"Unknown user attempted admin access: {effective_user}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Unknown user: {effective_user}",
             )
 
         # Récupérer les infos utilisateur pour vérifier le rôle
-        user_info = get_user_info(normalized_user)
+        user_info = get_user_info(effective_user)
         if not user_info:
-            logger.warning(f"User info not found for admin access: {normalized_user}")
+            logger.warning(f"User info not found for admin access: {effective_user}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User info not found: {normalized_user}"
+                detail=f"User info not found: {effective_user}",
             )
 
         # Vérifier le rôle admin
         user_roles = user_info.get("roles", [])
         if "admin" not in user_roles:
-            logger.warning(f"User {normalized_user} attempted admin access without admin role (roles: {user_roles})")
+            logger.warning(f"User {effective_user} attempted admin access without admin role (roles: {user_roles})")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin role required for this operation"
+                detail="Admin role required for this operation",
             )
 
         # Log pour audit
-        logger.info(f"Admin access granted for user: {normalized_user}")
-        return normalized_user
+        auth_mode = "[JWT]" if jwt_user else "[X-User]"
+        logger.info(f"Admin access granted for user: {effective_user} {auth_mode}")
+        return effective_user
 
     except ValueError as e:
         logger.warning(f"Invalid user ID format in admin endpoint: {x_user} - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid user ID format: {e}"
+            detail=f"Invalid user ID format: {e}",
         )
     except HTTPException:
-        # Re-raise HTTPException as-is
         raise
     except Exception as e:
         logger.error(f"Unexpected error in require_admin_role: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            detail="Internal server error",
         )
 
 

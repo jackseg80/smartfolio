@@ -88,15 +88,7 @@ class TestGetRequiredUser:
         patches[f"{MODULE}.is_allowed_user"].assert_called_once_with("jack")
 
     def test_unknown_user_raises_http_error(self):
-        """An unknown (not allowed) user should trigger an HTTP error.
-
-        NOTE: The current implementation of get_required_user has a broad
-        ``except Exception`` handler (line 101) that catches the HTTPException(403)
-        raised at line 86, and re-wraps it as a 500. This differs from
-        require_admin_role which has an explicit ``except HTTPException: raise``
-        clause. The test validates the *actual* behavior (500) rather than the
-        *intended* behavior (403).
-        """
+        """An unknown (not allowed) user should trigger HTTP 403."""
         from api.deps import get_required_user
 
         patches = _mock_users(validate_return="unknown_user", is_allowed=False)
@@ -105,8 +97,7 @@ class TestGetRequiredUser:
             with pytest.raises(HTTPException) as exc_info:
                 get_required_user(x_user="unknown_user")
 
-        # The broad except Exception catches the 403 and re-raises as 500
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 403
 
     def test_invalid_format_raises_400(self):
         """An invalid user ID format (special chars, too long) should trigger HTTP 400."""
@@ -151,10 +142,7 @@ class TestGetRequiredUser:
         patches[f"{MODULE}.is_allowed_user"].assert_not_called()
 
     def test_dev_open_api_disabled_by_default(self):
-        """Without DEV_OPEN_API env var, unknown users are rejected.
-
-        See note on test_unknown_user_raises_http_error regarding the 500 status.
-        """
+        """Without DEV_OPEN_API env var, unknown users are rejected with 403."""
         from api.deps import get_required_user
 
         patches = _mock_users(validate_return="outsider", is_allowed=False)
@@ -163,8 +151,7 @@ class TestGetRequiredUser:
             with pytest.raises(HTTPException) as exc_info:
                 get_required_user(x_user="outsider")
 
-        # Same broad except pattern catches the 403 -> 500
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 403
 
     def test_empty_user_raises_400(self):
         """An empty user ID should trigger HTTP 400 via validate_user_id."""
@@ -818,3 +805,320 @@ class TestEdgeCases:
 
         assert exc_info.value.status_code == 401
         assert call_order == ["is_allowed"]  # get_info should NOT be called
+
+
+# ============================================================================
+# _extract_jwt_user (private helper)
+# ============================================================================
+
+class TestExtractJwtUser:
+    """Tests for _extract_jwt_user(authorization) helper."""
+
+    def test_none_returns_none(self):
+        from api.deps import _extract_jwt_user
+        assert _extract_jwt_user(None) is None
+
+    def test_empty_string_returns_none(self):
+        from api.deps import _extract_jwt_user
+        assert _extract_jwt_user("") is None
+
+    def test_not_bearer_returns_none(self):
+        """Non-Bearer Authorization headers should be silently ignored."""
+        from api.deps import _extract_jwt_user
+        assert _extract_jwt_user("Basic dXNlcjpwYXNz") is None
+
+    def test_bearer_only_no_token_returns_none(self):
+        from api.deps import _extract_jwt_user
+        assert _extract_jwt_user("Bearer") is None
+
+    def test_valid_bearer_returns_user_id(self):
+        from api.deps import _extract_jwt_user
+
+        user_info = {"id": "jack", "roles": ["admin"], "status": "active"}
+        with patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}), \
+             patch(f"{MODULE}.is_allowed_user", return_value=True), \
+             patch(f"{MODULE}.get_user_info", return_value=user_info):
+            result = _extract_jwt_user("Bearer valid.jwt.token")
+
+        assert result == "jack"
+
+    def test_invalid_token_raises_401(self):
+        from api.deps import _extract_jwt_user
+
+        with patch(f"{MODULE}.decode_access_token", return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                _extract_jwt_user("Bearer bad.jwt.token")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid or expired token" in exc_info.value.detail
+
+    def test_token_without_sub_raises_401(self):
+        from api.deps import _extract_jwt_user
+
+        with patch(f"{MODULE}.decode_access_token", return_value={"exp": 9999999999}):
+            with pytest.raises(HTTPException) as exc_info:
+                _extract_jwt_user("Bearer no-sub.jwt.token")
+
+        assert exc_info.value.status_code == 401
+        assert "Invalid token payload" in exc_info.value.detail
+
+    def test_unknown_user_raises_401(self):
+        from api.deps import _extract_jwt_user
+
+        with patch(f"{MODULE}.decode_access_token", return_value={"sub": "deleted"}), \
+             patch(f"{MODULE}.is_allowed_user", return_value=False):
+            with pytest.raises(HTTPException) as exc_info:
+                _extract_jwt_user("Bearer deleted-user.jwt.token")
+
+        assert exc_info.value.status_code == 401
+
+    def test_inactive_user_raises_403(self):
+        from api.deps import _extract_jwt_user
+
+        inactive_info = {"id": "suspended", "status": "inactive"}
+        with patch(f"{MODULE}.decode_access_token", return_value={"sub": "suspended"}), \
+             patch(f"{MODULE}.is_allowed_user", return_value=True), \
+             patch(f"{MODULE}.get_user_info", return_value=inactive_info):
+            with pytest.raises(HTTPException) as exc_info:
+                _extract_jwt_user("Bearer inactive.jwt.token")
+
+        assert exc_info.value.status_code == 403
+        assert "inactive" in exc_info.value.detail.lower()
+
+    def test_bearer_case_insensitive(self):
+        from api.deps import _extract_jwt_user
+
+        user_info = {"id": "jack", "status": "active"}
+        with patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}), \
+             patch(f"{MODULE}.is_allowed_user", return_value=True), \
+             patch(f"{MODULE}.get_user_info", return_value=user_info):
+            result = _extract_jwt_user("BEARER valid.jwt.token")
+
+        assert result == "jack"
+
+
+# ============================================================================
+# get_required_user — JWT integration
+# ============================================================================
+
+class TestGetRequiredUserJwt:
+    """Tests for JWT validation in get_required_user."""
+
+    def test_valid_jwt_matching_x_user_succeeds(self):
+        """JWT + X-User with matching user_id should succeed."""
+        from api.deps import get_required_user
+
+        user_info = {"id": "jack", "status": "active"}
+        patches = _mock_users(validate_return="jack", is_allowed=True, user_info=user_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}):
+            result = get_required_user(x_user="jack", authorization="Bearer valid.jwt.token")
+
+        assert result == "jack"
+
+    def test_jwt_mismatch_x_user_raises_403(self):
+        """JWT for 'jack' but X-User 'demo' should raise 403 (anti-spoofing)."""
+        from api.deps import get_required_user
+
+        user_info = {"id": "jack", "status": "active"}
+        patches = _mock_users(validate_return="demo", is_allowed=True, user_info=user_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="demo", authorization="Bearer jacks.jwt.token")
+
+        assert exc_info.value.status_code == 403
+        assert "mismatch" in exc_info.value.detail.lower()
+
+    def test_expired_jwt_raises_401(self):
+        """An expired JWT should raise 401 even with valid X-User."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.decode_access_token", return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="jack", authorization="Bearer expired.jwt")
+
+        assert exc_info.value.status_code == 401
+
+    def test_malformed_jwt_raises_401(self):
+        """A malformed Bearer token should raise 401."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.decode_access_token", return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="jack", authorization="Bearer garbage-token")
+
+        assert exc_info.value.status_code == 401
+
+    def test_no_jwt_soft_mode_uses_x_user(self):
+        """Without JWT in soft mode (default), X-User fallback should work."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]):
+            result = get_required_user(x_user="jack", authorization=None)
+
+        assert result == "jack"
+
+    def test_no_jwt_strict_mode_raises_401(self):
+        """Without JWT in strict mode (REQUIRE_JWT=1), should raise 401."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch.dict("os.environ", {"REQUIRE_JWT": "1"}):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="jack", authorization=None)
+
+        assert exc_info.value.status_code == 401
+        assert "token required" in exc_info.value.detail.lower()
+
+    def test_basic_auth_header_ignored(self):
+        """Authorization: Basic ... should be ignored, X-User used as fallback."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]):
+            result = get_required_user(x_user="jack", authorization="Basic dXNlcjpwYXNz")
+
+        assert result == "jack"
+
+    def test_dev_mode_bypasses_jwt_validation(self):
+        """DEV_OPEN_API=1 should bypass JWT validation entirely."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=False)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.os.getenv", return_value="1"):
+            result = get_required_user(x_user="jack", authorization="Bearer whatever")
+
+        assert result == "jack"
+
+    def test_jwt_without_sub_raises_401(self):
+        """JWT token without 'sub' claim should raise 401."""
+        from api.deps import get_required_user
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"exp": 9999999999}):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="jack", authorization="Bearer no-sub.jwt")
+
+        assert exc_info.value.status_code == 401
+
+    def test_jwt_for_inactive_user_raises_403(self):
+        """JWT for inactive user should raise 403."""
+        from api.deps import get_required_user
+
+        inactive_info = {"id": "jack", "status": "inactive"}
+        patches = _mock_users(validate_return="jack", is_allowed=True, user_info=inactive_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}):
+            with pytest.raises(HTTPException) as exc_info:
+                get_required_user(x_user="jack", authorization="Bearer valid.jwt")
+
+        assert exc_info.value.status_code == 403
+
+
+# ============================================================================
+# require_admin_role — JWT integration
+# ============================================================================
+
+class TestRequireAdminRoleJwtIntegration:
+    """Tests for JWT validation in require_admin_role."""
+
+    def test_admin_valid_jwt_succeeds(self):
+        """Admin user with valid matching JWT should succeed."""
+        from api.deps import require_admin_role
+
+        admin_info = {"id": "jack", "roles": ["admin"], "status": "active"}
+        patches = _mock_users(validate_return="jack", is_allowed=True, user_info=admin_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}):
+            result = require_admin_role(x_user="jack", authorization="Bearer valid.jwt")
+
+        assert result == "jack"
+
+    def test_admin_jwt_mismatch_raises_403(self):
+        """JWT for 'jack' but X-User 'demo' on admin endpoint should raise 403."""
+        from api.deps import require_admin_role
+
+        admin_info = {"id": "jack", "roles": ["admin"], "status": "active"}
+        patches = _mock_users(validate_return="demo", is_allowed=True, user_info=admin_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "jack"}):
+            with pytest.raises(HTTPException) as exc_info:
+                require_admin_role(x_user="demo", authorization="Bearer jacks.jwt")
+
+        assert exc_info.value.status_code == 403
+        assert "mismatch" in exc_info.value.detail.lower()
+
+    def test_non_admin_with_jwt_raises_403(self):
+        """Non-admin user with valid JWT should raise 403 on admin endpoint."""
+        from api.deps import require_admin_role
+
+        viewer_info = {"id": "demo", "roles": ["viewer"], "status": "active"}
+        patches = _mock_users(validate_return="demo", is_allowed=True, user_info=viewer_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]), \
+             patch(f"{MODULE}.decode_access_token", return_value={"sub": "demo"}):
+            with pytest.raises(HTTPException) as exc_info:
+                require_admin_role(x_user="demo", authorization="Bearer demo.jwt")
+
+        assert exc_info.value.status_code == 403
+        assert "Admin role required" in exc_info.value.detail
+
+    def test_admin_strict_no_jwt_raises_401(self):
+        """In strict mode, admin endpoint without JWT should raise 401."""
+        from api.deps import require_admin_role
+
+        admin_info = {"id": "jack", "roles": ["admin"], "status": "active"}
+        patches = _mock_users(validate_return="jack", is_allowed=True, user_info=admin_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch.dict("os.environ", {"REQUIRE_JWT": "1"}):
+            with pytest.raises(HTTPException) as exc_info:
+                require_admin_role(x_user="jack", authorization=None)
+
+        assert exc_info.value.status_code == 401
+
+    def test_admin_no_jwt_soft_mode_succeeds(self):
+        """In soft mode (default), admin without JWT should still work via X-User."""
+        from api.deps import require_admin_role
+
+        admin_info = {"id": "jack", "roles": ["admin"], "status": "active"}
+        patches = _mock_users(validate_return="jack", is_allowed=True, user_info=admin_info)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.is_allowed_user", patches[f"{MODULE}.is_allowed_user"]), \
+             patch(f"{MODULE}.get_user_info", patches[f"{MODULE}.get_user_info"]):
+            result = require_admin_role(x_user="jack", authorization=None)
+
+        assert result == "jack"
+
+    def test_admin_expired_jwt_raises_401(self):
+        """Expired JWT on admin endpoint should raise 401."""
+        from api.deps import require_admin_role
+
+        patches = _mock_users(validate_return="jack", is_allowed=True)
+        with patch(f"{MODULE}.validate_user_id", patches[f"{MODULE}.validate_user_id"]), \
+             patch(f"{MODULE}.decode_access_token", return_value=None):
+            with pytest.raises(HTTPException) as exc_info:
+                require_admin_role(x_user="jack", authorization="Bearer expired.jwt")
+
+        assert exc_info.value.status_code == 401

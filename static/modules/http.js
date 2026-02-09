@@ -8,6 +8,11 @@
 
 const __etagCache = new Map();
 
+function _getAuthToken() {
+    try { return localStorage.getItem('authToken') || null; }
+    catch { return null; }
+}
+
 export async function safeFetch(url, options = {}) {
     const maxRetries = options.maxRetries ?? 3;
     const baseDelay = options.baseDelay ?? 1000; // 1s
@@ -34,7 +39,8 @@ export async function safeFetch(url, options = {}) {
                 headers: {
                     ...(options.headers || {}),
                     ...(__etagCache.has(url) ? { 'If-None-Match': __etagCache.get(url) } : {}),
-                    ...(currentUser ? { 'X-User': currentUser } : {})
+                    ...(currentUser ? { 'X-User': currentUser } : {}),
+                    ...(_getAuthToken() ? { 'Authorization': `Bearer ${_getAuthToken()}` } : {})
                 }
             });
 

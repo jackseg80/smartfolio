@@ -1,7 +1,7 @@
 # Statut Global des Audits - SmartFolio
 
-**Date de mise à jour:** 9 Février 2026
-**Dernière revue complète:** 8-9 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 40% + Response Format + FileLock)
+**Date de mise à jour:** 10 Février 2026
+**Dernière revue complète:** 8-10 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 40% + Response Format + FileLock + JWT Auth)
 **Prochaine revue:** Mars 2026
 **Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
@@ -11,7 +11,7 @@
 
 | Dimension | Score | Tendance | Statut | Dernier Audit |
 |-----------|-------|----------|--------|---------------|
-| **Sécurité** | 7.0/10 | ⬇️ -1.5 | 🟡 EN COURS | **Feb 8, 2026** |
+| **Sécurité** | 7.5/10 | ⬆️ +0.5 | 🟡 EN COURS | **Feb 10, 2026** |
 | **Performance** | 7.5/10 | ➡️ Stable | 🟡 EN COURS | Dec 2025 |
 | **Accessibilité** | ~80/100 | ⬇️ -12 | 🟡 MOYEN | **Feb 8, 2026** |
 | **Dette Technique** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
@@ -23,14 +23,14 @@
 | **Logging** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
 | **Concurrency** | 8.5/10 | ⬆️ +1.0 | 🟢 BON | **Feb 9, 2026** |
 
-**Note Globale:** **7.9/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format)
+**Note Globale:** **8.0/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format → 8.0 after JWT auth)
 
 ---
 
-## 🔒 Sécurité: 7.0/10 - EN COURS
+## 🔒 Sécurité: 7.5/10 - EN COURS
 
 ### Statut
-🟡 **Réévalué Feb 2026** - 9 CVEs trouvées, auth gaps corrigés (P0), JWT default secret à changer
+🟡 **Réévalué Feb 2026** - 9 CVEs fixed, auth gaps fixed (P0), JWT validation on all 188 endpoints (Feb 10)
 
 ### Métriques Clés
 - **Vulnérabilités critiques:** 0 (était 3)
@@ -404,11 +404,15 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] CoinGecko 429 backoff + rate limiting
 - [x] Test coverage 20.5% → 40% (905+ new tests, 20+ files)
 - [x] MarketRegime enum bug fixed
+- [x] JWT auth on all 188 endpoints (soft mode, anti-spoofing cross-check)
+- [x] Cache + Scheduler tests (140 new tests → 2323 passing)
+- [x] Bug fix: get_required_user 403→500 (missing except HTTPException)
 
 ### 🔄 En Cours (Q1 2026)
 
 - [ ] Performance: Top 5 priorités restantes (18h)
 - [ ] Push backend coverage to 50%
+- [ ] Enable REQUIRE_JWT=1 strict mode (after monitoring)
 - [x] ~~Fix remaining 23 test failures~~ → **DONE** (27+8 → 0 failures, Feb 9)
 - [x] ~~Standardize response format~~ → **DONE** (27 bare returns migrated, Feb 9)
 - [x] ~~FileLock expanded~~ → **DONE** (5 → 11 services, Feb 9)
@@ -422,7 +426,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 - [ ] Frontend tests: Vitest setup + JS coverage (4 sem)
 - [ ] E2E tests CI/CD (Playwright)
-- [ ] JWT auth on all endpoints (replace X-User header)
+- [x] ~~JWT auth on all endpoints~~ → **DONE** (soft mode: validates JWT on all 188 endpoints, Feb 10)
 - [ ] Frontend God Controllers refactoring (5 files >2,000 lines)
 
 ### 📅 Planifié Long Terme (Q3-Q4 2026)
@@ -485,7 +489,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ### Ce Trimestre (Q1-Q2 2026)
 
-7. **JWT auth everywhere** (2 sem) - Remplacer X-User header
+7. ~~**JWT auth everywhere**~~ → ✅ **DONE** (soft mode Feb 10, strict mode via REQUIRE_JWT=1)
 8. **Frontend tests setup** (2 sem) - Vitest infrastructure
 9. **Frontend God Controllers** (4 sem) - 5 fichiers >2,000 lignes
 
