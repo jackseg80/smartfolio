@@ -3,6 +3,7 @@ Log Reader Service - Lecture et parsing des logs système
 Filtrage, pagination, statistiques.
 """
 from __future__ import annotations
+import json
 import re
 from pathlib import Path
 from datetime import datetime
@@ -18,7 +19,7 @@ LogEntry = Dict[str, Any]
 class LogReader:
     """Service de lecture et parsing des logs"""
 
-    # Format log: "2025-01-19 10:30:45,123 INFO module.name: message"
+    # Legacy format: "2025-01-19 10:30:45,123 INFO module.name: message"
     LOG_PATTERN = re.compile(
         r'(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})\s+'
         r'(?P<level>\w+)\s+'
@@ -60,7 +61,7 @@ class LogReader:
 
     def parse_log_line(self, line: str) -> Optional[LogEntry]:
         """
-        Parse une ligne de log.
+        Parse une ligne de log (JSON ou legacy text format).
 
         Args:
             line: Ligne de log brute
@@ -68,6 +69,25 @@ class LogReader:
         Returns:
             dict ou None si parsing échoue
         """
+        # Try JSON format first: {"ts": 1770632222.887, "level": "INFO", "logger": "...", "msg": "..."}
+        if line.startswith('{'):
+            try:
+                data = json.loads(line)
+                ts = data.get("ts")
+                if ts is not None:
+                    timestamp = datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M:%S,%f")[:23]
+                else:
+                    timestamp = data.get("timestamp", "")
+                return {
+                    "timestamp": timestamp,
+                    "level": data.get("level", "INFO"),
+                    "module": data.get("logger", "unknown"),
+                    "message": data.get("msg", "")
+                }
+            except (json.JSONDecodeError, ValueError, OSError):
+                pass
+
+        # Fallback: legacy text format
         match = self.LOG_PATTERN.match(line)
         if not match:
             return None
@@ -166,7 +186,6 @@ class LogReader:
                 # Tri par timestamp (parsing datetime pour comparaison correcte)
                 def timestamp_key(log):
                     try:
-                        # Format: "2025-12-20 14:32:09,413" -> parse as datetime
                         ts_str = log["timestamp"].replace(',', '.')
                         return datetime.strptime(ts_str, "%Y-%m-%d %H:%M:%S.%f")
                     except Exception:
