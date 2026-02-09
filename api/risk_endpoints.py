@@ -28,6 +28,13 @@ COMPUTE_ON_STUB_SOURCES = (os.getenv("COMPUTE_ON_STUB_SOURCES", "false").strip()
 # Cache for risk endpoints (TTL: 30 min per CACHE_TTL_OPTIMIZATION.md)
 _risk_cache = {}
 
+# Canonical group risk levels (0-10), shared across V2 calculations and GRI
+_GROUP_RISK_LEVELS = {
+    'Stablecoins': 0, 'BTC': 2, 'ETH': 3, 'L2/Scaling': 5,
+    'DeFi': 5, 'AI/Data': 5, 'SOL': 6, 'L1/L0 majors': 6,
+    'Gaming/NFT': 6, 'Others': 7, 'Memecoins': 9,
+}
+
 # ===== Helper: Convert python/numpy/pandas types to JSON-safe natives =====
 def _clean_for_json(obj: Any) -> Any:
     """Recursively convert complex types (numpy, dataclass, datetime) to JSON-safe values"""
@@ -582,6 +589,257 @@ async def run_custom_stress_test(
             message=f"Erreur lors du stress test: {str(e)}"
         )
 
+# ===== Dashboard helpers (extracted from get_risk_dashboard for maintainability) =====
+
+def _fetch_price_dataframe(balances: List[Dict[str, Any]], price_history_days: int):
+    """Fetch price history for portfolio assets and return a pandas DataFrame.
+
+    Returns DataFrame with forward-filled prices, or None if fewer than 2 assets have data.
+    """
+    from services.price_history import get_cached_history
+    import pandas as pd
+
+    price_data = {}
+    for balance in balances:
+        symbol = balance.get('symbol', '').upper()
+        if symbol:
+            try:
+                prices = get_cached_history(symbol, days=price_history_days)
+                if prices and len(prices) > 10:
+                    timestamps = [pd.Timestamp.fromtimestamp(p[0]) for p in prices]
+                    values = [p[1] for p in prices]
+                    price_data[symbol] = pd.Series(values, index=timestamps)
+            except Exception as e:
+                logger.warning(f"Failed to get price data for {symbol}: {e}")
+
+    if len(price_data) < 2:
+        return None
+
+    return pd.DataFrame(price_data).ffill()
+
+
+def _calculate_exposure_and_gri(balances: List[Dict[str, Any]]) -> Tuple[Dict[str, float], float]:
+    """Calculate portfolio exposure by group and Group Risk Index (GRI).
+
+    Uses Taxonomy to map symbols to groups and _GROUP_RISK_LEVELS for risk weights.
+    Returns (exposure_by_group, group_risk_index).
+    """
+    from services.taxonomy import Taxonomy
+    taxonomy = Taxonomy.load()
+
+    total_value = sum(float(h.get("value_usd", 0.0)) for h in balances) or 0.0
+    exposure_by_group = {group: 0.0 for group in _GROUP_RISK_LEVELS.keys()}
+
+    if total_value > 0:
+        for h in balances:
+            symbol = str(h.get('symbol', '')).upper()
+            group = taxonomy.group_for_alias(symbol)
+            w = float(h.get('value_usd', 0.0)) / total_value
+            exposure_by_group[group] = exposure_by_group.get(group, 0.0) + w
+
+    if exposure_by_group:
+        gri_raw = sum(w * _GROUP_RISK_LEVELS.get(g, 6) for g, w in exposure_by_group.items())
+        group_risk_index = max(0.0, min(10.0, gri_raw))
+    else:
+        group_risk_index = 0.0
+
+    return exposure_by_group, group_risk_index
+
+
+def _calculate_structural_adjustments(exposure_by_group: Dict[str, float]) -> Dict[str, Any]:
+    """Calculate structural risk adjustments based on portfolio group exposure.
+
+    Returns dict with adj_stables, adj_majors, adj_altcoins, adj_structural_total.
+    """
+    # 1. Stablecoins protection (±15 pts)
+    stables_pct = exposure_by_group.get("Stablecoins", 0.0)
+    if stables_pct >= 0.15:
+        adj_stables = +15
+    elif stables_pct >= 0.10:
+        adj_stables = +10
+    elif stables_pct >= 0.05:
+        adj_stables = +5
+    elif stables_pct > 0:
+        adj_stables = 0
+    else:
+        adj_stables = -10
+
+    # 2. Majors exposure (±10 pts) - BTC+ETH = stability
+    majors_pct = exposure_by_group.get("BTC", 0.0) + exposure_by_group.get("ETH", 0.0)
+    if majors_pct >= 0.60:
+        adj_majors = +10
+    elif majors_pct >= 0.50:
+        adj_majors = +5
+    elif majors_pct >= 0.40:
+        adj_majors = 0
+    else:
+        adj_majors = -10
+
+    # 3. Altcoin over-exposure (-15 pts max)
+    sol_pct = exposure_by_group.get("SOL", 0.0)
+    altcoins_pct = max(0.0, 1.0 - majors_pct - stables_pct - sol_pct)
+    if altcoins_pct > 0.50:
+        adj_altcoins = -15
+    elif altcoins_pct > 0.40:
+        adj_altcoins = -10
+    elif altcoins_pct > 0.30:
+        adj_altcoins = -5
+    else:
+        adj_altcoins = 0
+
+    adj_structural_total = adj_stables + adj_majors + adj_altcoins
+    logger.info(f"Structural adjustments: stables={adj_stables:+d}, majors={adj_majors:+d}, altcoins={adj_altcoins:+d} -> TOTAL={adj_structural_total:+d}")
+
+    return {
+        "adj_stables": adj_stables, "adj_majors": adj_majors,
+        "adj_altcoins": adj_altcoins, "adj_structural_total": adj_structural_total,
+    }
+
+
+def _calculate_v2_risk_metrics(
+    price_df,
+    balances: List[Dict[str, Any]],
+    exposure_by_group: Dict[str, float],
+    min_history_days: int,
+    min_coverage_pct: float,
+    min_asset_count: int
+) -> Tuple[Any, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    """Calculate V2 risk metrics with dual-window blend, penalties, and structural adjustments.
+
+    Returns (risk_metrics_v2, blend_metadata, dual_window_result).
+    """
+    from services.portfolio_metrics import portfolio_metrics_service
+
+    dual_window_result = portfolio_metrics_service.calculate_dual_window_metrics(
+        price_data=price_df, balances=balances,
+        min_history_days=min_history_days, min_coverage_pct=min_coverage_pct,
+        min_asset_count=min_asset_count, confidence_level=0.95
+    )
+
+    long_term = dual_window_result.get('long_term')
+    full_inter = dual_window_result['full_intersection']
+    exclusions = dual_window_result.get('exclusions_metadata', {})
+
+    # Exclusion penalties
+    excluded_pct = exclusions.get('excluded_pct', 0.0)
+    penalty_excluded = -75 * max(0.0, (excluded_pct - 0.20) / 0.80) if excluded_pct > 0.20 else 0.0
+
+    # Young meme penalty
+    excluded_assets = exclusions.get('excluded_assets', [])
+    meme_keywords = ['PEPE', 'BONK', 'DOGE', 'SHIB', 'WIF', 'FLOKI']
+    young_memes = [a for a in excluded_assets if any(kw in str(a.get('symbol', '')).upper() for kw in meme_keywords)]
+
+    total_value = sum(float(b.get('value_usd', 0)) for b in balances)
+    if young_memes and len(young_memes) >= 2:
+        young_memes_value = sum(float(a.get('value_usd', 0)) for a in young_memes)
+        young_memes_pct = young_memes_value / total_value if total_value > 0 else 0
+        penalty_memes_age = -min(25, 80 * young_memes_pct) if young_memes_pct > 0.30 else 0.0
+    else:
+        penalty_memes_age = 0.0
+        young_memes_pct = 0.0
+
+    # Structural adjustments
+    adj = _calculate_structural_adjustments(exposure_by_group)
+    adj_structural_total = adj["adj_structural_total"]
+
+    # Blend weights
+    days_full = full_inter['window_days']
+    coverage_long_term = long_term.get('coverage_pct', 0.0) if long_term else 0.0
+    w_long = coverage_long_term * 0.4
+    w_full = 1 - w_long
+    total_penalty = penalty_excluded + penalty_memes_age + adj_structural_total
+
+    # Select blend mode and compute final score
+    if long_term and days_full >= 120 and coverage_long_term >= 0.80:
+        mode = "blend"
+        risk_score_full = full_inter['metrics'].risk_score
+        risk_score_long = long_term['metrics'].risk_score
+        blended_risk_score = w_full * risk_score_full + w_long * risk_score_long
+        final_risk_score = max(0, min(100, blended_risk_score + total_penalty))
+        sharpe_blended = w_full * full_inter['metrics'].sharpe_ratio + w_long * long_term['metrics'].sharpe_ratio
+        risk_metrics_v2 = replace(full_inter['metrics'], risk_score=final_risk_score)
+        risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
+        risk_metrics_v2 = replace(risk_metrics_v2, sharpe_ratio=sharpe_blended)
+        logger.info(f"V2 BLEND: full={risk_score_full:.1f}, long={risk_score_long:.1f}, blended={blended_risk_score:.1f}, final={final_risk_score:.1f}")
+
+    elif long_term:
+        mode, w_full, w_long = "long_term_only", 0.0, 1.0
+        risk_score_long = long_term['metrics'].risk_score
+        risk_score_full = full_inter['metrics'].risk_score
+        blended_risk_score = risk_score_long
+        final_risk_score = max(0, min(100, risk_score_long + total_penalty))
+        sharpe_blended = long_term['metrics'].sharpe_ratio
+        risk_metrics_v2 = replace(long_term['metrics'], risk_score=final_risk_score)
+        risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
+        logger.info(f"V2 Long-Term only: base={risk_score_long:.1f}, final={final_risk_score:.1f}")
+
+    else:
+        mode, w_full, w_long = "full_intersection_only", 1.0, 0.0
+        risk_score_full = full_inter['metrics'].risk_score
+        risk_score_long = None
+        blended_risk_score = risk_score_full
+        final_risk_score = max(0, min(100, risk_score_full + total_penalty))
+        sharpe_blended = full_inter['metrics'].sharpe_ratio
+        risk_metrics_v2 = replace(full_inter['metrics'], risk_score=final_risk_score)
+        risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
+        logger.info(f"V2 Full only: base={risk_score_full:.1f}, final={final_risk_score:.1f}")
+
+    # Build blend metadata
+    blend_metadata = {
+        "mode": mode, "w_full": w_full, "w_long": w_long,
+        "risk_score_full": risk_score_full,
+        "risk_score_long": risk_score_long,
+        "blended_risk_score": blended_risk_score,
+        "penalty_excluded": penalty_excluded, "penalty_memes": penalty_memes_age,
+        "adj_stables": adj["adj_stables"], "adj_majors": adj["adj_majors"],
+        "adj_altcoins": adj["adj_altcoins"], "adj_structural_total": adj_structural_total,
+        "final_risk_score_v2": final_risk_score,
+        "young_memes_count": len(young_memes), "young_memes_pct": young_memes_pct,
+        "excluded_pct": excluded_pct,
+        "sharpe_used": {
+            "full": full_inter['metrics'].sharpe_ratio,
+            "long": long_term['metrics'].sharpe_ratio if long_term else None,
+            "blended": sharpe_blended,
+        },
+    }
+
+    return risk_metrics_v2, blend_metadata, dual_window_result
+
+
+def _build_dual_window_section(dual_window_result: Optional[Dict], use_dual_window: bool) -> Optional[Dict]:
+    """Build the dual_window section for the API response."""
+    if not use_dual_window or not dual_window_result:
+        return None
+
+    lt = dual_window_result.get('long_term')
+    fi = dual_window_result['full_intersection']
+
+    return {
+        "enabled": True,
+        "long_term": {
+            "available": lt is not None,
+            "window_days": lt['window_days'] if lt else None,
+            "asset_count": lt['asset_count'] if lt else None,
+            "coverage_pct": lt['coverage_pct'] if lt else None,
+            "metrics": {
+                "sharpe_ratio": lt['metrics'].sharpe_ratio,
+                "volatility": lt['metrics'].volatility_annualized,
+                "risk_score": lt['metrics'].risk_score,
+            } if lt else None,
+        },
+        "full_intersection": {
+            "window_days": fi['window_days'],
+            "asset_count": fi['asset_count'],
+            "metrics": {
+                "sharpe_ratio": fi['metrics'].sharpe_ratio,
+                "volatility": fi['metrics'].volatility_annualized,
+                "risk_score": fi['metrics'].risk_score,
+            },
+        },
+        "exclusions": dual_window_result.get('exclusions_metadata'),
+    }
+
+
 @router.get("/dashboard")
 async def get_risk_dashboard(
     source: str = Query("cointracking", description="Data source: cointracking or cointracking_api"),
@@ -633,43 +891,20 @@ async def get_risk_dashboard(
                 "message": "Aucun holding trouvé dans le portfolio après filtrage"
             }
         
-        # NOUVEAU: Utiliser le service centralisé de métriques pour garantir la cohérence
+        # Fetch price data for portfolio assets
         from services.portfolio_metrics import portfolio_metrics_service
-        from services.price_history import get_cached_history
-        import pandas as pd
-        
-        logger.info(f"🎯 Using centralized metrics service for {len(balances)} assets over {price_history_days} days")
-        
-        # Récupérer les données de prix historiques
-        price_data = {}
-        for balance in balances:
-            symbol = balance.get('symbol', '').upper()
-            if symbol:
-                try:
-                    prices = get_cached_history(symbol, days=price_history_days)
-                    if prices and len(prices) > 10:
-                        timestamps = [pd.Timestamp.fromtimestamp(p[0]) for p in prices]
-                        values = [p[1] for p in prices]
-                        price_data[symbol] = pd.Series(values, index=timestamps)
-                except Exception as e:
-                    logger.warning(f"Failed to get price data for {symbol}: {e}")
-        
-        if len(price_data) < 2:
-            return {
-                "success": False,
-                "message": "Insufficient price data for metrics calculation"
-            }
-        
-        # Créer DataFrame des prix
-        # ⚠️ NE PAS faire dropna() ici ! Le service dual-window a besoin des données complètes
-        # pour calculer séparément la cohorte long-term (365j) et l'intersection full (61j)
-        price_df = pd.DataFrame(price_data).ffill()
+        logger.info(f"Computing risk dashboard for {len(balances)} assets over {price_history_days} days")
 
-        # 🆕 Phase 5: Shadow Mode - Calcul des 2 versions si nécessaire
-        logger.info(f"🧪 SHADOW MODE DEBUG: risk_version received = '{risk_version}', use_dual_window = {use_dual_window}")
+        price_df = _fetch_price_dataframe(balances, price_history_days)
+        if price_df is None:
+            return {"success": False, "message": "Insufficient price data for metrics calculation"}
+
+        # Calculate portfolio exposure and GRI (shared between V2 and response)
+        exposure_by_group, group_risk_index = _calculate_exposure_and_gri(balances)
+
+        # Shadow Mode setup
         compute_legacy = risk_version in ["legacy", "v2_shadow"]
         compute_v2 = risk_version in ["v2_shadow", "v2_active"]
-        logger.info(f"🧪 SHADOW MODE DEBUG: compute_legacy = {compute_legacy}, compute_v2 = {compute_v2}")
 
         risk_metrics_legacy = None
         risk_metrics_v2 = None
@@ -690,268 +925,16 @@ async def get_risk_dashboard(
                 logger.error(f"❌ Legacy calculation failed: {e}")
                 risk_metrics_legacy = None
 
-        # Calcul V2 (avec Dual-Window Blend + Pénalités)
+        # V2 dual-window calculation
         if compute_v2 and use_dual_window:
             try:
-                dual_window_result = portfolio_metrics_service.calculate_dual_window_metrics(
-                    price_data=price_df,
-                    balances=balances,
+                risk_metrics_v2, blend_metadata, dual_window_result = _calculate_v2_risk_metrics(
+                    price_df=price_df, balances=balances,
+                    exposure_by_group=exposure_by_group,
                     min_history_days=min_history_days,
                     min_coverage_pct=min_coverage_pct,
                     min_asset_count=min_asset_count,
-                    confidence_level=0.95
                 )
-
-                # 🆕 BLEND DYNAMIQUE: Full Intersection prioritaire avec pénalités
-                long_term = dual_window_result.get('long_term')
-                full_inter = dual_window_result['full_intersection']
-                exclusions = dual_window_result.get('exclusions_metadata', {})
-
-                # Critères pour blend weight
-                days_full = full_inter['window_days']
-                # Coverage = % du portfolio couvert par Long-Term cohort (NOT Full Intersection!)
-                coverage_long_term = long_term.get('coverage_pct', 0.0) if long_term else 0.0
-
-                # Blend weight dynamique:
-                # Si Long-Term coverage faible (beaucoup d'exclusions) → priorité Full Intersection
-                # Si Long-Term coverage élevé (peu d'exclusions) → blend équilibré Long-Term + Full
-                #
-                # Version simplifiée: w_long directement proportionnel à coverage_LT
-                w_long = coverage_long_term * 0.4  # Max 40% si coverage=100%
-                w_full = 1 - w_long  # Donc w_full entre 0.6 et 1.0
-
-                # Pénalités communes à tous les cas
-                excluded_pct = exclusions.get('excluded_pct', 0.0)
-                penalty_excluded = -75 * max(0.0, (excluded_pct - 0.20) / 0.80) if excluded_pct > 0.20 else 0.0
-
-                # Pénalité memecoins jeunes (assets exclus de long-term qui sont des memes)
-                excluded_assets = exclusions.get('excluded_assets', [])
-                meme_keywords = ['PEPE', 'BONK', 'DOGE', 'SHIB', 'WIF', 'FLOKI']
-                young_memes = [a for a in excluded_assets if any(kw in str(a.get('symbol', '')).upper() for kw in meme_keywords)]
-
-                if young_memes and len(young_memes) >= 2:
-                    # Calculer % valeur des memes jeunes
-                    total_value = sum(float(b.get('value_usd', 0)) for b in balances)
-                    young_memes_value = sum(float(a.get('value_usd', 0)) for a in young_memes)
-                    young_memes_pct = young_memes_value / total_value if total_value > 0 else 0
-                    penalty_memes_age = -min(25, 80 * young_memes_pct) if young_memes_pct > 0.30 else 0.0
-                else:
-                    penalty_memes_age = 0.0
-                    young_memes_pct = 0.0
-
-                # 🆕 NOV 2025: Calculer exposure_by_group pour ajustements structurels
-                from services.taxonomy import Taxonomy
-                taxonomy = Taxonomy.load()
-
-                # Barème de risque par groupe (0-10)
-                GROUP_RISK_LEVELS = {
-                    'Stablecoins': 0, 'BTC': 2, 'ETH': 3, 'L2/Scaling': 5,
-                    'DeFi': 5, 'AI/Data': 5, 'SOL': 6, 'L1/L0 majors': 6,
-                    'Gaming/NFT': 6, 'Others': 7, 'Memecoins': 9
-                }
-
-                total_value = sum(float(b.get('value_usd', 0)) for b in balances)
-                exposure_by_group = {group: 0.0 for group in GROUP_RISK_LEVELS.keys()}
-
-                if total_value > 0:
-                    for h in balances:
-                        symbol = str(h.get('symbol', '')).upper()
-                        group = taxonomy.group_for_alias(symbol)
-                        w = float(h.get('value_usd', 0.0)) / total_value
-                        exposure_by_group[group] = exposure_by_group.get(group, 0.0) + w
-
-                # 🆕 NOV 2025: Ajustements structurels basés sur exposition réelle
-                # (Protection Stables, Exposition Majors, Sur-exposition Altcoins)
-                logger.debug(f"📊 Calculating structural adjustments from exposure: {exposure_by_group}")
-
-                # 1. Protection Stablecoins (±15 pts) - Impact crash réel: -8% pertes évitées
-                stables_pct = exposure_by_group.get("Stablecoins", 0.0)
-                if stables_pct >= 0.15:
-                    adj_stables = +15
-                    logger.info(f"🛡️  Stablecoins bonus: +15 pts (excellent cushion: {stables_pct*100:.1f}%)")
-                elif stables_pct >= 0.10:
-                    adj_stables = +10
-                    logger.info(f"🛡️  Stablecoins bonus: +10 pts (good protection: {stables_pct*100:.1f}%)")
-                elif stables_pct >= 0.05:
-                    adj_stables = +5
-                    logger.info(f"🛡️  Stablecoins bonus: +5 pts (minimal protection: {stables_pct*100:.1f}%)")
-                elif stables_pct > 0:
-                    adj_stables = 0
-                    logger.debug(f"🛡️  Stablecoins: no adjustment (insufficient: {stables_pct*100:.1f}%)")
-                else:
-                    adj_stables = -10
-                    logger.warning(f"⚠️  Stablecoins penalty: -10 pts (no protection: {stables_pct*100:.1f}%)")
-
-                # 2. Exposition Majors (±10 pts) - BTC+ETH = stabilité
-                majors_pct = exposure_by_group.get("BTC", 0.0) + exposure_by_group.get("ETH", 0.0)
-                if majors_pct >= 0.60:
-                    adj_majors = +10
-                    logger.info(f"🏛️  Majors bonus: +10 pts (healthy portfolio: {majors_pct*100:.1f}%)")
-                elif majors_pct >= 0.50:
-                    adj_majors = +5
-                    logger.info(f"🏛️  Majors bonus: +5 pts (acceptable: {majors_pct*100:.1f}%)")
-                elif majors_pct >= 0.40:
-                    adj_majors = 0
-                    logger.debug(f"🏛️  Majors: no adjustment (under-exposed: {majors_pct*100:.1f}%)")
-                else:
-                    adj_majors = -10
-                    logger.warning(f"⚠️  Majors penalty: -10 pts (risky: {majors_pct*100:.1f}%)")
-
-                # 3. Sur-exposition Altcoins (-15 pts) - Volatilité x2-3 vs majors
-                # Altcoins = tout sauf BTC, ETH, Stables, SOL (top 5)
-                sol_pct = exposure_by_group.get("SOL", 0.0)
-                altcoins_pct = max(0.0, 1.0 - majors_pct - stables_pct - sol_pct)
-                if altcoins_pct > 0.50:
-                    adj_altcoins = -15
-                    logger.warning(f"⚠️  Altcoins penalty: -15 pts (very risky: {altcoins_pct*100:.1f}%)")
-                elif altcoins_pct > 0.40:
-                    adj_altcoins = -10
-                    logger.warning(f"⚠️  Altcoins penalty: -10 pts (risky: {altcoins_pct*100:.1f}%)")
-                elif altcoins_pct > 0.30:
-                    adj_altcoins = -5
-                    logger.info(f"⚠️  Altcoins penalty: -5 pts (acceptable: {altcoins_pct*100:.1f}%)")
-                else:
-                    adj_altcoins = 0
-                    logger.debug(f"✅ Altcoins: no penalty (reasonable: {altcoins_pct*100:.1f}%)")
-
-                # Total ajustements structurels
-                adj_structural_total = adj_stables + adj_majors + adj_altcoins
-                logger.info(f"📊 Structural adjustments: stables={adj_stables:+d}, majors={adj_majors:+d}, altcoins={adj_altcoins:+d} → TOTAL={adj_structural_total:+d}")
-
-                # CAS 1: Blend Long-Term + Full Intersection
-                if long_term and days_full >= 120 and coverage_long_term >= 0.80:
-                    logger.info(f"✅ BLEND MODE: Full={w_full:.2f}, Long={w_long:.2f} ({days_full}d, LT coverage={coverage_long_term*100:.0f}%)")
-
-                    # Blend Risk Score
-                    risk_score_full = full_inter['metrics'].risk_score
-                    risk_score_long = long_term['metrics'].risk_score
-                    blended_risk_score = w_full * risk_score_full + w_long * risk_score_long
-
-                    # Appliquer pénalités + ajustements structurels
-                    final_risk_score = max(0, min(100, blended_risk_score + penalty_excluded + penalty_memes_age + adj_structural_total))
-
-                    logger.info(f"📊 Risk Score V2 blend: full={risk_score_full:.1f}, long={risk_score_long:.1f}, blended={blended_risk_score:.1f}")
-                    logger.info(f"⚠️  Penalties: excluded={penalty_excluded:.1f}, young_memes={penalty_memes_age:.1f} ({len(young_memes)} memes)")
-                    logger.info(f"🆕 Structural adjustments: {adj_structural_total:+.1f} (stables={adj_stables:+d}, majors={adj_majors:+d}, altcoins={adj_altcoins:+d})")
-                    logger.info(f"✅ Final Risk Score V2: {final_risk_score:.1f} (was {blended_risk_score:.1f} before all adjustments)")
-
-                    # ✅ Stocker métriques v2 AVEC Risk Score V2 = Blend + Pénalités
-                    risk_metrics_v2 = replace(full_inter['metrics'], risk_score=final_risk_score)
-
-                    # 🆕 RECALCULER overall_risk_level à partir du nouveau score
-                    risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
-
-                    # Sharpe blendé (pour cohérence)
-                    sharpe_blended = w_full * full_inter['metrics'].sharpe_ratio + w_long * long_term['metrics'].sharpe_ratio
-                    risk_metrics_v2 = replace(risk_metrics_v2, sharpe_ratio=sharpe_blended)
-
-                    # 🆕 Phase 5: Métadonnées blend pour API response
-                    blend_metadata = {
-                        "mode": "blend",
-                        "w_full": w_full,
-                        "w_long": w_long,
-                        "risk_score_full": risk_score_full,
-                        "risk_score_long": risk_score_long,
-                        "blended_risk_score": blended_risk_score,
-                        "penalty_excluded": penalty_excluded,
-                        "penalty_memes": penalty_memes_age,
-                        "adj_stables": adj_stables,
-                        "adj_majors": adj_majors,
-                        "adj_altcoins": adj_altcoins,
-                        "adj_structural_total": adj_structural_total,
-                        "final_risk_score_v2": final_risk_score,
-                        "young_memes_count": len(young_memes),
-                        "young_memes_pct": young_memes_pct,
-                        "excluded_pct": excluded_pct,
-                        "sharpe_used": {
-                            "full": full_inter['metrics'].sharpe_ratio,
-                            "long": long_term['metrics'].sharpe_ratio,
-                            "blended": sharpe_blended
-                        }
-                    }
-
-                # CAS 2: Long-Term uniquement (Full insuffisante) AVEC pénalités
-                elif long_term:
-                    logger.info(f"✅ Using LONG-TERM window: {long_term['window_days']}d, {long_term['asset_count']} assets (Full insufficient)")
-
-                    base_risk_score = long_term['metrics'].risk_score
-                    final_risk_score = max(0, min(100, base_risk_score + penalty_excluded + penalty_memes_age + adj_structural_total))
-
-                    logger.info(f"📊 Risk Score V2 (Long-Term only): base={base_risk_score:.1f}, penalties={penalty_excluded + penalty_memes_age:.1f}, structural={adj_structural_total:+.1f}, final={final_risk_score:.1f}")
-                    logger.info(f"⚠️  Penalties: excluded={penalty_excluded:.1f}, young_memes={penalty_memes_age:.1f} ({len(young_memes)} memes)")
-                    logger.info(f"🆕 Structural adjustments: {adj_structural_total:+.1f} (stables={adj_stables:+d}, majors={adj_majors:+d}, altcoins={adj_altcoins:+d})")
-
-                    # ✅ Stocker métriques v2 avec pénalités
-                    risk_metrics_v2 = replace(long_term['metrics'], risk_score=final_risk_score)
-
-                    # 🆕 RECALCULER overall_risk_level à partir du nouveau score
-                    risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
-
-                    blend_metadata = {
-                        "mode": "long_term_only",
-                        "w_full": 0.0,
-                        "w_long": 1.0,
-                        "risk_score_full": full_inter['metrics'].risk_score,
-                        "risk_score_long": base_risk_score,
-                        "blended_risk_score": base_risk_score,
-                        "penalty_excluded": penalty_excluded,
-                        "penalty_memes": penalty_memes_age,
-                        "adj_stables": adj_stables,
-                        "adj_majors": adj_majors,
-                        "adj_altcoins": adj_altcoins,
-                        "adj_structural_total": adj_structural_total,
-                        "final_risk_score_v2": final_risk_score,
-                        "young_memes_count": len(young_memes),
-                        "young_memes_pct": young_memes_pct,
-                        "excluded_pct": excluded_pct,
-                        "sharpe_used": {
-                            "full": full_inter['metrics'].sharpe_ratio,
-                            "long": long_term['metrics'].sharpe_ratio,
-                            "blended": long_term['metrics'].sharpe_ratio
-                        }
-                    }
-
-                # CAS 3: Full Intersection uniquement (pas de cohorte long-term) AVEC pénalités
-                else:
-                    logger.warning(f"⚠️  Using FULL INTERSECTION only: {days_full}d (no long-term cohort)")
-
-                    base_risk_score = full_inter['metrics'].risk_score
-                    final_risk_score = max(0, min(100, base_risk_score + penalty_excluded + penalty_memes_age + adj_structural_total))
-
-                    logger.info(f"📊 Risk Score V2 (Full only): base={base_risk_score:.1f}, penalties={penalty_excluded + penalty_memes_age:.1f}, structural={adj_structural_total:+.1f}, final={final_risk_score:.1f}")
-                    logger.info(f"⚠️  Penalties: excluded={penalty_excluded:.1f}, young_memes={penalty_memes_age:.1f} ({len(young_memes)} memes)")
-                    logger.info(f"🆕 Structural adjustments: {adj_structural_total:+.1f} (stables={adj_stables:+d}, majors={adj_majors:+d}, altcoins={adj_altcoins:+d})")
-
-                    # ✅ Stocker métriques v2 avec pénalités
-                    risk_metrics_v2 = replace(full_inter['metrics'], risk_score=final_risk_score)
-
-                    # 🆕 RECALCULER overall_risk_level à partir du nouveau score
-                    risk_metrics_v2 = replace(risk_metrics_v2, overall_risk_level=_score_to_risk_level(final_risk_score))
-
-                    # Métadonnées pour API
-                    blend_metadata = {
-                        "mode": "full_intersection_only",
-                        "w_full": 1.0,
-                        "w_long": 0.0,
-                        "risk_score_full": base_risk_score,
-                        "risk_score_long": None,
-                        "blended_risk_score": base_risk_score,
-                        "penalty_excluded": penalty_excluded,
-                        "penalty_memes": penalty_memes_age,
-                        "adj_stables": adj_stables,
-                        "adj_majors": adj_majors,
-                        "adj_altcoins": adj_altcoins,
-                        "adj_structural_total": adj_structural_total,
-                        "final_risk_score_v2": final_risk_score,
-                        "young_memes_count": len(young_memes),
-                        "young_memes_pct": young_memes_pct,
-                        "excluded_pct": excluded_pct,
-                        "sharpe_used": {
-                            "full": full_inter['metrics'].sharpe_ratio,
-                            "long": None,
-                            "blended": full_inter['metrics'].sharpe_ratio
-                        }
-                    }
 
             except Exception as e:
                 # ✅ FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
@@ -993,45 +976,7 @@ async def get_risk_dashboard(
             min_correlation_threshold=0.7
         )
 
-        # Exposition par groupes (via Taxonomy) + Group Risk Index (GRI)
-        total_value = sum(float(h.get("value_usd", 0.0)) for h in balances) or 0.0
-        from services.taxonomy import Taxonomy
-        taxonomy = Taxonomy.load()
-
-        # Barème de risque par groupe (0-10), simple et explicable
-        GROUP_RISK_LEVELS = {
-            'Stablecoins': 0,
-            'BTC': 2,
-            'ETH': 3,
-            'L2/Scaling': 5,
-            'DeFi': 5,
-            'AI/Data': 5,
-            'SOL': 6,
-            'L1/L0 majors': 6,
-            'Gaming/NFT': 6,
-            'Others': 7,
-            'Memecoins': 9,
-        }
-
-        # Initialize exposure_by_group with ALL 11 canonical groups at 0.0
-        # This ensures all groups appear in API response, even if portfolio has 0% in some
-        exposure_by_group = {group: 0.0 for group in GROUP_RISK_LEVELS.keys()}
-
-        # Add actual exposures
-        if total_value > 0:
-            for h in balances:
-                symbol = str(h.get('symbol', '')).upper()
-                group = taxonomy.group_for_alias(symbol)
-                w = float(h.get('value_usd', 0.0)) / total_value
-                exposure_by_group[group] = exposure_by_group.get(group, 0.0) + w
-        if exposure_by_group:
-            gri_raw = 0.0
-            for g, w in exposure_by_group.items():
-                level = GROUP_RISK_LEVELS.get(g, 6)  # défaut modéré si inconnu
-                gri_raw += w * level
-            group_risk_index = max(0.0, min(10.0, gri_raw))
-        else:
-            group_risk_index = 0.0
+        # exposure_by_group and group_risk_index already computed above via _calculate_exposure_and_gri
 
         # Construction de la réponse dashboard avec métriques centralisées
         
@@ -1148,31 +1093,7 @@ async def get_risk_dashboard(
                     "dual_window_enabled": use_dual_window and dual_window_result is not None,
                     "risk_score_source": dual_window_result['risk_score_source'] if dual_window_result else 'single_window'
                 },
-                # 🆕 Dual Window Details (si activé)
-                "dual_window": {
-                    "enabled": use_dual_window and dual_window_result is not None,
-                    "long_term": {
-                        "available": dual_window_result['long_term'] is not None if dual_window_result else False,
-                        "window_days": dual_window_result['long_term']['window_days'] if dual_window_result and dual_window_result['long_term'] else None,
-                        "asset_count": dual_window_result['long_term']['asset_count'] if dual_window_result and dual_window_result['long_term'] else None,
-                        "coverage_pct": dual_window_result['long_term']['coverage_pct'] if dual_window_result and dual_window_result['long_term'] else None,
-                        "metrics": {
-                            "sharpe_ratio": dual_window_result['long_term']['metrics'].sharpe_ratio if dual_window_result and dual_window_result['long_term'] else None,
-                            "volatility": dual_window_result['long_term']['metrics'].volatility_annualized if dual_window_result and dual_window_result['long_term'] else None,
-                            "risk_score": dual_window_result['long_term']['metrics'].risk_score if dual_window_result and dual_window_result['long_term'] else None
-                        } if dual_window_result and dual_window_result['long_term'] else None
-                    } if dual_window_result else None,
-                    "full_intersection": {
-                        "window_days": dual_window_result['full_intersection']['window_days'] if dual_window_result else None,
-                        "asset_count": dual_window_result['full_intersection']['asset_count'] if dual_window_result else None,
-                        "metrics": {
-                            "sharpe_ratio": dual_window_result['full_intersection']['metrics'].sharpe_ratio if dual_window_result else None,
-                            "volatility": dual_window_result['full_intersection']['metrics'].volatility_annualized if dual_window_result else None,
-                            "risk_score": dual_window_result['full_intersection']['metrics'].risk_score if dual_window_result else None
-                        } if dual_window_result else None
-                    } if dual_window_result else None,
-                    "exclusions": dual_window_result['exclusions_metadata'] if dual_window_result else None
-                } if use_dual_window else None
+                "dual_window": _build_dual_window_section(dual_window_result, use_dual_window)
             },
             "correlation_metrics": {
                 "diversification_ratio": correlation_metrics.diversification_ratio,

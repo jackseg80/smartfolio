@@ -561,7 +561,7 @@ async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Option
             if if_match:
                 raise HTTPException(status_code=412, detail="Precondition Failed: ETag mismatch or plan state changed")
             else:
-                raise HTTPException(status_code=400, detail="Plan not found or not in reviewable state")
+                raise HTTPException(status_code=404, detail="Plan not found or not in reviewable state")
             
     except HTTPException:
         raise
@@ -639,7 +639,7 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
                     "timestamp": datetime.now().isoformat()
                 }
             else:
-                raise HTTPException(status_code=400, detail="Plan not found or not in approvable state")
+                raise HTTPException(status_code=404, detail="Plan not found or not in approvable state")
         
         else:
             raise HTTPException(status_code=400, detail="Invalid resource_type. Must be 'decision' or 'plan'")
@@ -669,7 +669,7 @@ async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_
                 "timestamp": datetime.now().isoformat()
             }
         else:
-            raise HTTPException(status_code=400, detail="Plan not found or not in activatable state")
+            raise HTTPException(status_code=404, detail="Plan not found or not in activatable state")
             
     except HTTPException:
         raise
@@ -696,7 +696,7 @@ async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_u
                 "timestamp": datetime.now().isoformat()
             }
         else:
-            raise HTTPException(status_code=400, detail="Plan not found or not in executable state")
+            raise HTTPException(status_code=404, detail="Plan not found or not in executable state")
             
     except HTTPException:
         raise
@@ -728,7 +728,7 @@ async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: s
                 "timestamp": datetime.now().isoformat()
             }
         else:
-            raise HTTPException(status_code=400, detail="Plan not found or not in cancellable state")
+            raise HTTPException(status_code=404, detail="Plan not found or not in cancellable state")
             
     except HTTPException:
         raise

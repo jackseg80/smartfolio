@@ -28,16 +28,16 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | Security | 8.5/10 | **7.0/10** | -1.5 | 9 CVEs, auth gaps, JWT default secret |
 | Performance | 7.5/10 | 7.5/10 | 0 | Not re-profiled, assumed stable |
 | Accessibility | 92+/100 | **~80/100** | -12 | Only 6/20 pages actually tested |
-| Technical Debt | 7.5/10 | **7.0/10** | -0.5 | TODOs up 8->20, frontend God Controllers found |
+| Technical Debt | 7.5/10 | **7.5/10** | 0 | get_risk_dashboard refactored (-51%), governance endpoints cleaned |
 | Tests | 8/10 | **5.0/10** | -3.0 | Real coverage 20.5% (not 50-55%) |
 | CI/CD | 8/10 | 8/10 | 0 | Workflows functional |
-| **NEW: API Contract** | -- | **5.5/10** | -- | 3 response formats; return type annotations added (~100 endpoints) |
+| **NEW: API Contract** | -- | **6.0/10** | -- | Return types added, 5 HTTP codes fixed (400→404); 3 response formats remain |
 | **NEW: Error Handling** | -- | **8.0/10** | +1.5 | Circuit breakers added (CoinGecko/FRED/Saxo), timeouts fixed |
 | **NEW: Data Integrity** | -- | **8.0/10** | +2.5 | Auth on governance, CSV sanitization, Pydantic models |
 | **NEW: Logging** | -- | **8.0/10** | +3.0 | Request IDs, JSON file logs, sensitive data sanitized |
 | **NEW: Concurrency** | -- | **7.5/10** | +2.0 | FileLock on 5 critical writes, scheduler Redis lock |
 
-**Updated Overall Score: 7.3/10** (was 6.0 at audit, was 7.7 before audit)
+**Updated Overall Score: 7.4/10** (was 6.0 at audit, was 7.7 before audit)
 
 ---
 
@@ -132,7 +132,7 @@ Only Phase 1 (governance) was completed. Phase 2 (risk_management) untouched.
 
 | Function | File | Lines |
 |----------|------|-------|
-| `get_risk_dashboard` | `api/risk_endpoints.py` | **663** |
+| `get_risk_dashboard` | `api/risk_endpoints.py` | **326** (was 663, -51%) |
 | `_evaluate_alert_type` | `services/alerts/alert_engine.py` | **298** |
 | `_create_ensemble_predictions` | `services/ml/orchestrator.py` | **247** |
 
@@ -185,7 +185,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 2. **`paginated_response()`** defined but **never used** (dead code)
 3. **33/60 API files have ZERO authentication** -- including governance mutations, ML training, Kraken balances
 4. **393/472 endpoints** lack return type annotations (OpenAPI docs incomplete)
-5. **5 "not found" errors** return 400 instead of 404 in governance endpoints
+5. ~~**5 "not found" errors** return 400 instead of 404 in governance endpoints~~ **FIXED (Feb 9)**
 6. **244 uses of HTTP 500** (many should be 502/504 for upstream failures)
 
 ---
@@ -314,21 +314,22 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 
 | # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
-| 12 | Standardize response format (success_response everywhere) | 8h | API consistency | |
+| 12 | Standardize response format (success_response everywhere) | 8h | API consistency | DEFERRED (needs coordinated frontend migration) |
 | 13 | Add return type annotations to endpoints (~100 endpoints across 35+ files) | 6h | OpenAPI docs | DONE (Feb 9) |
 | 14 | Add `aria-label` + `role="img"` to 20 canvas elements (9 pages) | 2h | Accessibility | DONE (Feb 8) |
 | 15 | Add `scope="col"` to 151 `<th>` elements (10 pages) | 3h | Accessibility | DONE (Feb 8) |
 | 16 | Circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience | DONE (Feb 9) |
-| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | |
+| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | NOT MET (19.9%, needs 10% increase) |
 | 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene | DONE (Feb 8) |
 | 25 | Batch Binance price requests (single HTTP call instead of 124 sequential) | 4h | Performance | DONE (Feb 9) |
 | 26 | Fix symbol mapping: strip CoinTracking numeric suffixes (WLD3->WLD) | 3h | Reliability | DONE (Feb 9) |
+| 28 | Fix 5 governance HTTP status codes (400→404 for "plan not found") | 15min | API correctness | DONE (Feb 9) |
 
 ### Long-term (P3) -- Technical Excellence
 
 | # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
-| 19 | Refactor `get_risk_dashboard` (663 lines) | 1-2w | Maintainability | |
+| 19 | Refactor `get_risk_dashboard` (663 lines → 326 lines, -51%) | 4h | Maintainability | DONE (Feb 9) |
 | 20 | Refactor `risk_management.py` (Phase 2 God Services) | 2w | Technical debt | |
 | 21 | Address 5 frontend God Controllers (2,000+ lines each) | 4w | Frontend debt | |
 | 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture | |
