@@ -1,27 +1,21 @@
 /**
- * Decision Index Panel v7.1 - Actionnable Design with Smart Recommendations
+ * Decision Index Panel v8.0 - Mini Cycle Chart + Fused Pillars
  *
  * Layout 2 colonnes équilibré avec recommandations contextuelles
- * - Colonne gauche: Score DI + Barre + Contributions annotées + Metadata
- * - Colonne droite: Recommandation intelligente + 3 piliers (Cycle, On-Chain, Risk) + Footer stats
+ * - Colonne gauche: Score DI + Barre + Contributions annotées + Metadata + Recommendation
+ * - Colonne droite: Context Bar + Mini Cycle Chart + Allocation texte + Pillars fusionnés + Key Metrics
  * - Design gaming compact et moderne
- * - Focus sur l'actionnable (suppression trend/régime redondants)
  *
- * Changements v7.1:
- * - ✅ Recommandations contextuelles intelligentes basées sur DI + piliers
- * - ✅ Actions spécifiques avec pourcentages d'allocation
- * - ✅ Alertes adaptatives (On-Chain critique, Risk faible, etc.)
- * - ✅ Format structuré : Titre + Action + Détails
+ * Changements v8.0:
+ * - ✅ Mini Cycle Chart (Chart.js sigmoïde avec phases colorées + marqueur position)
+ * - ✅ Allocation en texte compact (une ligne, plus de graphique)
+ * - ✅ 3 piliers fusionnés en une seule rangée horizontale
+ * - ✅ Context Bar remonté en haut de la colonne droite
+ * - ❌ Supprimé: Allocation bar graphique (trop d'espace)
+ * - ❌ Supprimé: 3 pillar bars séparés (fusionnés)
  *
- * Changements v7.0:
- * - ✅ Contributions annotées (scores alignés avec barres)
- * - ✅ Recommandation actionnable basée sur le DI (déplacée à droite pour équilibrage)
- * - ✅ Metadata utiles (confiance, mode, freshness)
- * - ❌ Supprimé: Trend 7j + sparkline (jamais visible)
- * - ❌ Supprimé: Régime ribbon (redondant avec piliers droite)
- *
- * @version 7.1.0
- * @date 2025-01-20
+ * @version 8.0.0
+ * @date 2026-02-09
  */
 
 // Debounce timeout
@@ -225,39 +219,30 @@ function renderMiniSparkline(series, width = 60, height = 16) {
  */
 function renderScoresAndContributions(scores, contributions) {
   const items = [
-    { key: 'cycle', icon: '🔄', pct: contributions.cycle },
-    { key: 'onchain', icon: '🔗', pct: contributions.onchain },
-    { key: 'risk', icon: '🛡️', pct: contributions.risk }
+    { key: 'cycle', label: 'Cycle', pct: contributions.cycle },
+    { key: 'onchain', label: 'OnCh', pct: contributions.onchain },
+    { key: 'risk', label: 'Risk', pct: contributions.risk }
   ];
 
   return `
     <div class="scores-contrib-annotated">
-      <div class="contrib-title">CONTRIBUTIONS <span class="contrib-subtitle" title="Contribution relative = (poids × score) / total">(poids × score)</span></div>
+      <div class="contrib-title">WEIGHTS</div>
 
-      <!-- Ligne 1: Icons + Scores -->
+      <!-- Labels au-dessus de la barre -->
       <div class="contrib-labels-row">
         ${items.map(item => `
           <div class="contrib-label" style="width: ${item.pct}%;">
-            <span class="label-icon">${item.icon}</span>
-            <span class="label-score">${Math.round(scores[item.key] || 0)}</span>
+            <span class="label-name">${item.label}</span>
+            <span class="label-pct">${item.pct.toFixed(0)}%</span>
           </div>
         `).join('')}
       </div>
 
-      <!-- Ligne 2: Barre empilée -->
+      <!-- Barre empilée -->
       <div class="contrib-bar-stacked">
         <div class="contrib-seg cycle" style="width: ${contributions.cycle}%;"></div>
         <div class="contrib-seg onchain" style="width: ${contributions.onchain}%;"></div>
         <div class="contrib-seg risk" style="width: ${contributions.risk}%;"></div>
-      </div>
-
-      <!-- Ligne 3: Pourcentages -->
-      <div class="contrib-pcts-row">
-        ${items.map(item => `
-          <div class="contrib-pct" style="width: ${item.pct}%;">
-            ${item.pct.toFixed(0)}%
-          </div>
-        `).join('')}
       </div>
     </div>
   `;
@@ -447,60 +432,46 @@ function renderMetadata(meta) {
 /**
  * Génère la colonne gauche avec score principal
  */
-function renderLeftColumn(data) {
+function getLeftParts(data) {
   const score = Math.round(data.di);
   const gradient = getGradientForScore(score);
   const levelText = getLevelText(score);
   const m = data.meta || {};
   const s = data.scores || {};
 
-  // Calculer contributions
   const contributions = calculateRelativeContributions(data.weights || {}, s);
-  const scoresAndContributions = renderScoresAndContributions(s, contributions);
-  const metadata = renderMetadata(m);
 
-  // Recommandation en bas de la colonne gauche
-  const recommendation = renderRecommendation(score, m, s);
-
-  return `
-    <div class="di-left-col">
-      <div class="di-header-compact">
+  return {
+    scoreBlock: `
+      <div class="di-score-block">
         <div class="di-title-row">
           <span class="di-title">DECISION INDEX</span>
           <button class="di-help-btn" aria-label="Aide" type="button">?</button>
         </div>
-      </div>
-
-      <div class="di-score-section">
-        <div class="di-score-big">${score}</div>
-        <div class="di-score-label">${levelText}</div>
-      </div>
-
-      <div class="di-main-bar-compact">
-        <div class="di-bar-track">
-          <div class="di-bar-fill" style="width: ${score}%; background: ${gradient};">
-            <div class="di-bar-glow"></div>
+        <div class="di-score-section">
+          <div class="di-score-big">${score}</div>
+          <div class="di-score-label">${levelText}</div>
+        </div>
+        <div class="di-main-bar-compact">
+          <div class="di-bar-track">
+            <div class="di-bar-fill" style="width: ${score}%; background: ${gradient};">
+              <div class="di-bar-glow"></div>
+            </div>
+            <div class="di-bar-segments">
+              ${Array(10).fill(0).map((_, i) =>
+                `<div class="seg ${(i+1)*10 <= score ? 'on' : ''}"></div>`
+              ).join('')}
+            </div>
           </div>
-          <div class="di-bar-segments">
-            ${Array(10).fill(0).map((_, i) =>
-              `<div class="seg ${(i+1)*10 <= score ? 'on' : ''}"></div>`
-            ).join('')}
+          <div class="di-bar-labels">
+            <span>0</span><span>25</span><span>50</span><span>75</span><span>100</span>
           </div>
         </div>
-        <div class="di-bar-labels">
-          <span>0</span>
-          <span>25</span>
-          <span>50</span>
-          <span>75</span>
-          <span>100</span>
-        </div>
-      </div>
-
-      ${scoresAndContributions}
-      ${metadata}
-      ${recommendation}
-    </div>
-  `;
+      </div>`,
+    weights: renderScoresAndContributions(s, contributions),
+    metadata: renderMetadata(m),
+    recommendation: renderRecommendation(score, m, s)
+  };
 }
 
 /**
@@ -683,18 +654,357 @@ function renderAllocationBar(allocation) {
   `;
 }
 
+// ═══════════════════════════════════════════════════════════
+// MINI CYCLE CHART (v8.0)
+// ═══════════════════════════════════════════════════════════
+
+// Chart.js instance reference for cleanup
+let _diMiniCycleChart = null;
+
+/**
+ * Compute cycle score inline (same sigmoid as cycle-navigator.js)
+ * Reads calibrated params from localStorage, falls back to defaults
+ */
+function _computeCycleScore(monthsAfterHalving, params) {
+  if (typeof monthsAfterHalving !== 'number' || monthsAfterHalving < 0) return 50;
+  const m48 = monthsAfterHalving % 48;
+  const { m_rise_center, m_fall_center, k_rise, k_fall, p_shape } = params;
+  const rise = 1 / (1 + Math.exp(-k_rise * (m48 - m_rise_center)));
+  const fall = 1 / (1 + Math.exp(-k_fall * (m_fall_center - m48)));
+  return Math.max(0, Math.min(100, Math.pow(rise * fall, p_shape) * 100));
+}
+
+/**
+ * Load calibrated cycle params from localStorage or use defaults
+ */
+function _getLocalCycleParams() {
+  const defaults = { m_rise_center: 5.0, m_fall_center: 24.0, k_rise: 0.8, k_fall: 1.2, p_shape: 1.15 };
+  try {
+    const saved = localStorage.getItem('bitcoin_cycle_params');
+    if (saved) {
+      const data = JSON.parse(saved);
+      if (data?.params && data.version && data.version.startsWith('2.')) {
+        return { ...defaults, ...data.params };
+      }
+    }
+  } catch (_) { /* ignore */ }
+  return defaults;
+}
+
+/**
+ * Render canvas container for the mini cycle chart
+ */
+function renderMiniCycleChartContainer() {
+  return `
+    <div class="di-mini-cycle-container">
+      <div class="di-mini-cycle-title">CYCLE POSITION</div>
+      <div class="di-mini-cycle-wrapper">
+        <canvas id="di-mini-cycle-canvas"></canvas>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Mount the mini cycle chart using Chart.js (call AFTER DOM insertion)
+ */
+function mountMiniCycleChart(cycleMonths) {
+  const canvas = document.getElementById('di-mini-cycle-canvas');
+  if (!canvas) return;
+
+  // Guard: Chart.js not loaded
+  if (typeof Chart === 'undefined') {
+    canvas.parentElement.innerHTML = '<div style="text-align:center;color:rgba(148,163,184,0.5);font-size:0.7rem;padding:1rem;">Chart.js not available</div>';
+    return;
+  }
+
+  // Destroy previous instance
+  if (_diMiniCycleChart) {
+    _diMiniCycleChart.destroy();
+    _diMiniCycleChart = null;
+  }
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  const params = _getLocalCycleParams();
+  const currentMonths = typeof cycleMonths === 'number' && cycleMonths > 0 ? cycleMonths : 22;
+  const currentScore = _computeCycleScore(currentMonths, params);
+
+  // Generate curve data (0-48 months, step 0.5)
+  const curveData = [];
+  for (let m = 0; m <= 48; m += 0.5) {
+    curveData.push({ x: m, y: _computeCycleScore(m, params) });
+  }
+
+  // Phase definitions
+  const phases = [
+    { name: 'Acc',  start: 0,  end: 6,  color: 'rgba(245,158,11,0.12)', border: '#f59e0b' },
+    { name: 'Bull', start: 6,  end: 18, color: 'rgba(16,185,129,0.12)',  border: '#10b981' },
+    { name: 'Peak', start: 18, end: 24, color: 'rgba(139,92,246,0.12)',  border: '#8b5cf6' },
+    { name: 'Bear', start: 24, end: 36, color: 'rgba(220,38,38,0.10)',   border: '#dc2626' },
+    { name: 'Pre',  start: 36, end: 48, color: 'rgba(107,114,128,0.08)', border: '#6b7280' }
+  ];
+
+  // Check if annotation plugin is available
+  const hasAnnotationPlugin = !!(window.ChartAnnotation || Chart.registry?.plugins?.get('annotation'));
+
+  // Build annotation config (only if plugin available)
+  const annotationConfig = {};
+  if (hasAnnotationPlugin) {
+    const annotations = {};
+    phases.forEach((p, i) => {
+      annotations[`phase${i}`] = {
+        type: 'box',
+        xMin: p.start,
+        xMax: p.end,
+        yMin: 0,
+        yMax: 100,
+        backgroundColor: p.color,
+        borderWidth: 0
+      };
+      annotations[`phaseLabel${i}`] = {
+        type: 'label',
+        xValue: (p.start + p.end) / 2,
+        yValue: 96,
+        content: p.name,
+        color: p.border,
+        font: { size: 9, weight: '600' },
+        backgroundColor: 'transparent'
+      };
+    });
+
+    // Current position vertical line
+    annotations.currentLine = {
+      type: 'line',
+      xMin: currentMonths,
+      xMax: currentMonths,
+      borderColor: '#ef4444',
+      borderWidth: 2,
+      borderDash: [4, 3],
+      label: {
+        display: true,
+        content: 'NOW',
+        position: 'start',
+        backgroundColor: 'rgba(239,68,68,0.9)',
+        color: '#fff',
+        font: { size: 8, weight: '700' },
+        padding: { x: 4, y: 2 },
+        borderRadius: 3
+      }
+    };
+
+    // Current position point
+    annotations.currentPoint = {
+      type: 'point',
+      xValue: currentMonths,
+      yValue: currentScore,
+      backgroundColor: '#ef4444',
+      borderColor: '#fff',
+      borderWidth: 2,
+      radius: 5
+    };
+
+    annotationConfig.annotation = { annotations };
+  }
+
+  // Add a visible current-position point on the curve (works without annotation plugin)
+  const currentPointData = [{ x: currentMonths, y: currentScore }];
+
+  _diMiniCycleChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          data: curveData,
+          borderColor: '#10b981',
+          borderWidth: 2.5,
+          fill: {
+            target: 'origin',
+            above: 'rgba(16,185,129,0.08)'
+          },
+          pointRadius: 0,
+          pointHoverRadius: 0,
+          tension: 0.4
+        },
+        // Current position dot (always visible even without annotation plugin)
+        {
+          data: currentPointData,
+          borderColor: '#ef4444',
+          backgroundColor: '#ef4444',
+          pointRadius: 6,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointHoverRadius: 8,
+          showLine: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 600, easing: 'easeOutQuart' },
+      layout: { padding: { top: 4, right: 8, bottom: 0, left: 4 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          filter: (item) => item.datasetIndex === 1, // Only on current position dot
+          callbacks: {
+            title: () => 'Current Position',
+            label: (ctx) => `Score: ${Math.round(ctx.parsed.y)} (${Math.round(ctx.parsed.x)}m)`
+          }
+        },
+        datalabels: { display: false },
+        ...annotationConfig
+      },
+      scales: {
+        x: {
+          type: 'linear',
+          min: 0,
+          max: 48,
+          grid: { color: 'rgba(148,163,184,0.06)', drawTicks: false },
+          border: { display: false },
+          ticks: {
+            stepSize: 6,
+            color: 'rgba(148,163,184,0.4)',
+            font: { size: 8 },
+            callback: v => v === 0 ? 'H' : `${v}m`,
+            padding: 2
+          }
+        },
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: 'rgba(148,163,184,0.06)', drawTicks: false },
+          border: { display: false },
+          ticks: {
+            stepSize: 50,
+            color: 'rgba(148,163,184,0.4)',
+            font: { size: 8 },
+            padding: 2
+          }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// ALLOCATION TEXT COMPACT (v8.0)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Render allocation as a compact text line (replaces the allocation bar)
+ */
+function renderAllocationText(allocation) {
+  if (!allocation || typeof allocation !== 'object') {
+    return '';
+  }
+
+  const btc = allocation.btc || 0;
+  const eth = allocation.eth || 0;
+  const stables = allocation.stables || 0;
+  const alts = allocation.alts || 0;
+  const total = btc + eth + stables + alts;
+  if (total === 0) return '';
+
+  const norm = (v) => Math.round((v / total) * 100);
+  const items = [
+    { name: 'BTC', pct: norm(btc), color: '#f7931a' },
+    { name: 'ETH', pct: norm(eth), color: '#627eea' },
+    { name: 'Stables', pct: norm(stables), color: '#26a17b' },
+    { name: 'Alts', pct: norm(alts), color: '#8b5cf6' }
+  ].filter(s => s.pct > 0);
+
+  const text = items.map(s =>
+    `<span class="alloc-text-item"><span class="alloc-text-dot" style="background:${s.color};"></span>${s.name} ${s.pct}%</span>`
+  ).join('<span class="alloc-text-sep">·</span>');
+
+  return `
+    <div class="di-alloc-text">
+      <span class="alloc-text-label">ALLOCATION</span>
+      <div class="alloc-text-values">${text}</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// FUSED PILLARS (v8.0)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Render the 3 pillars (Cycle, On-Chain, Risk) as a single compact row
+ */
+function renderFusedPillars(scores, meta) {
+  const cycleVal = Math.round(scores.cycle || 0);
+  const onchainVal = Math.round(scores.onchain || 0);
+  const riskVal = Math.round(scores.risk || 0);
+
+  const items = [
+    { label: 'CYCLE', value: cycleVal, color: '#3b82f6' },
+    { label: 'ONCHAIN', value: onchainVal, color: '#8b5cf6' },
+    { label: 'RISK', value: riskVal, color: '#ef4444' }
+  ];
+
+  return `
+    <div class="di-pillars-fused">
+      ${items.map(item => `
+        <div class="pillar-fused-col">
+          <span class="pillar-fused-label">${item.label}</span>
+          <div class="pillar-fused-score" style="color: ${getScoreColor(item.value)};">${item.value}</div>
+          <div class="pillar-fused-track">
+            <div class="pillar-fused-fill" style="width:${Math.min(100, item.value)}%;background:${item.color};"></div>
+          </div>
+        </div>
+      `).join('<div class="pillar-fused-divider"></div>')}
+    </div>
+  `;
+}
+
 /**
  * Génère les Key Metrics (VaR + Sharpe + Risk Budget)
  */
-function renderKeyMetrics(meta) {
+/**
+ * Render unified metrics bar (Active Factors + Key Metrics merged)
+ * Full-width bar below the 2-column grid
+ */
+function renderMetricsBar(meta, scores = {}) {
+  const items = [];
+
+  // --- Active Factors ---
+  // Contradiction
+  const contradiction = meta.contradiction ?? null;
+  if (contradiction != null) {
+    const cPct = Math.round(contradiction * 100);
+    const cColor = cPct > 50 ? '#ef4444' : cPct > 25 ? '#f59e0b' : '#10b981';
+    items.push({ label: 'Contradiction', value: `${cPct}%`, color: cColor });
+  }
+
+  // Macro Stress
+  const macroStress = meta.macro_stress ?? false;
+  const macroVal = meta.macro_penalty ?? null;
+  if (macroStress || macroVal) {
+    const details = [];
+    if (meta.vix_value) details.push(`VIX ${meta.vix_value.toFixed(0)}`);
+    if (meta.dxy_change_30d) details.push(`DXY ${meta.dxy_change_30d > 0 ? '+' : ''}${meta.dxy_change_30d.toFixed(1)}%`);
+    const mColor = macroStress ? '#ef4444' : '#10b981';
+    items.push({
+      label: 'Macro',
+      value: macroStress ? (details.length ? details.join(' ') : 'Stress') : 'Normal',
+      color: mColor
+    });
+  } else {
+    items.push({ label: 'Macro', value: 'Normal', color: '#10b981' });
+  }
+
+  // --- Key Metrics ---
   // VaR 95%
   const var95 = meta.risk_var95 ?? meta.var95 ?? null;
-  const var95Display = var95 != null
-    ? `${(Math.abs(var95) * 100).toFixed(2)}%`
-    : '--';
+  const var95Display = var95 != null ? `${(Math.abs(var95) * 100).toFixed(2)}%` : '--';
   const varColor = var95 != null
     ? (Math.abs(var95) > 0.05 ? '#ef4444' : Math.abs(var95) > 0.03 ? '#f59e0b' : '#10b981')
     : '#6b7280';
+  items.push({ label: 'VaR 95%', value: var95Display, color: varColor });
 
   // Sharpe Ratio
   const sharpe = meta.sharpe ?? meta.sharpe_ratio ?? meta.risk_sharpe ?? null;
@@ -702,6 +1012,7 @@ function renderKeyMetrics(meta) {
   const sharpeColor = sharpe != null
     ? (sharpe >= 1.5 ? '#10b981' : sharpe >= 0.5 ? '#f59e0b' : '#ef4444')
     : '#6b7280';
+  items.push({ label: 'Sharpe', value: sharpeDisplay, color: sharpeColor });
 
   // Risk Budget (% risky assets)
   const riskBudget = meta.risk_budget ?? null;
@@ -710,21 +1021,16 @@ function renderKeyMetrics(meta) {
   const riskBudgetColor = riskyPct != null
     ? (riskyPct >= 60 ? '#ef4444' : riskyPct >= 40 ? '#f59e0b' : '#10b981')
     : '#6b7280';
+  items.push({ label: 'Risk %', value: riskBudgetDisplay, color: riskBudgetColor });
 
   return `
-    <div class="di-key-metrics">
-      <div class="metric-mini">
-        <span class="metric-mini-label">VaR 95%</span>
-        <span class="metric-mini-value" style="color: ${varColor};" title="Value at Risk at 95%">${var95Display}</span>
-      </div>
-      <div class="metric-mini">
-        <span class="metric-mini-label">Sharpe</span>
-        <span class="metric-mini-value" style="color: ${sharpeColor};" title="Sharpe Ratio">${sharpeDisplay}</span>
-      </div>
-      <div class="metric-mini">
-        <span class="metric-mini-label">Risk %</span>
-        <span class="metric-mini-value" style="color: ${riskBudgetColor};" title="Risky assets allocation">${riskBudgetDisplay}</span>
-      </div>
+    <div class="di-metrics-bar">
+      ${items.map(item => `
+        <div class="metrics-bar-item">
+          <span class="metrics-bar-label">${item.label}</span>
+          <span class="metrics-bar-value" style="color:${item.color};">${item.value}</span>
+        </div>
+      `).join('')}
     </div>
   `;
 }
@@ -790,69 +1096,19 @@ function renderQuickContextBar(meta) {
 }
 
 /**
- * Génère la colonne droite avec allocation + piliers
+ * Génère la colonne droite v8.0:
+ * Context Bar → Mini Cycle Chart → Allocation texte + Pillars fusionnés → Active Factors + Key Metrics
  */
-function renderRightColumn(data) {
+function getRightParts(data) {
   const s = data.scores || {};
   const m = data.meta || {};
 
-  // Allocation Bar compacte (si données disponibles)
-  const allocationRing = data.allocation ? renderAllocationBar(data.allocation) : '';
-
-  // Préparer les données pour chaque pilier
-  const cycleConf = m.cycle_confidence ? Math.round(m.cycle_confidence * 100) : null;
-  const cyclePhase = m.cycle_phase || m.phase || 'Unknown';
-  const cycleMonths = m.cycle_months;
-
-  const onchainConf = m.onchain_confidence ? Math.round(m.onchain_confidence * 100) : null;
-  const onchainCritiques = m.onchain_critiques || 0;
-
-  const riskVar = m.risk_var95;
-  const riskBudget = m.risk_budget;
-
-  const cycleBar = renderCompactPillarBar(
-    'Cycle', '🔄', s.cycle || 0,
-    cycleMonths ? `${cyclePhase} • ${Math.round(cycleMonths)}m` : cyclePhase,
-    cycleConf,
-    '#3b82f6',
-    m  // Pass meta for visual phases
-  );
-
-  const onchainBar = renderCompactPillarBar(
-    'On-Chain', '🔗', s.onchain || 0,
-    `${onchainCritiques} critical signals`,
-    onchainConf,
-    '#8b5cf6'
-  );
-
-  const riskBar = renderCompactPillarBar(
-    'Risk', '🛡️', s.risk || 0,
-    riskVar ? `VaR: ${Math.round(Math.abs(riskVar) * 1000) / 10}%` :
-    (riskBudget ? `R: ${riskBudget.risky}% • S: ${riskBudget.stables}%` : null),
-    null,
-    '#ef4444'
-  );
-
-  // Quick Context Bar
-  const contextBar = renderQuickContextBar(m);
-
-  // Key Metrics (VaR + Sharpe)
-  const keyMetrics = renderKeyMetrics(m);
-
-  return `
-    <div class="di-right-col">
-      ${allocationRing}
-
-      <div class="pillars-container">
-        ${cycleBar}
-        ${onchainBar}
-        ${riskBar}
-      </div>
-
-      ${keyMetrics}
-      ${contextBar}
-    </div>
-  `;
+  return {
+    contextBar: renderQuickContextBar(m),
+    cycleChart: renderMiniCycleChartContainer(),
+    allocation: data.allocation ? renderAllocationText(data.allocation) : '',
+    fusedPillars: renderFusedPillars(s, m)
+  };
 }
 
 /**
@@ -1015,24 +1271,31 @@ function injectStyles() {
       overflow: hidden;
     }
 
-    /* Layout 2 colonnes */
-    .di-layout-2col {
+    /* Layout 3 rangées alignées */
+    .di-row {
       display: grid;
       grid-template-columns: 1fr 1.2fr;
-      gap: 2rem;
+      gap: 0.75rem;
+      align-items: stretch;
       position: relative;
       z-index: 1;
     }
 
-    /* Colonne gauche */
-    .di-left-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .di-row + .di-row {
+      margin-top: 0.5rem;
     }
 
-    .di-header-compact {
-      margin-bottom: 0.25rem;
+    .di-top-left, .di-top-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .di-score-block {
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
     }
 
     .di-title-row {
@@ -1073,12 +1336,12 @@ function injectStyles() {
     .di-score-section {
       display: flex;
       align-items: baseline;
-      gap: 1rem;
-      margin: 0.5rem 0;
+      gap: 0.75rem;
+      margin: 0.25rem 0;
     }
 
     .di-score-big {
-      font-size: 3.5rem;
+      font-size: 2.75rem;
       font-weight: 800;
       line-height: 1;
       background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
@@ -1088,7 +1351,7 @@ function injectStyles() {
     }
 
     .di-score-label {
-      font-size: 1rem;
+      font-size: 0.875rem;
       font-weight: 600;
       color: rgba(148, 163, 184, 0.8);
       text-transform: uppercase;
@@ -1097,7 +1360,7 @@ function injectStyles() {
 
     /* Barre principale compacte */
     .di-main-bar-compact {
-      margin: 0.75rem 0;
+      margin: 0.25rem 0;
     }
 
     .di-bar-track {
@@ -1194,10 +1457,9 @@ function injectStyles() {
     /* Scores + Contributions Annotées (Option 2) */
     .scores-contrib-annotated {
       background: rgba(30, 41, 59, 0.3);
-      border-radius: 6px;
-      padding: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.05);
-      margin: 0.75rem 0;
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
     }
 
     .contrib-title {
@@ -1231,14 +1493,16 @@ function injectStyles() {
       font-size: 0.75rem;
     }
 
-    .label-icon {
-      font-size: 0.875rem;
+    .label-name {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      color: rgba(148, 163, 184, 0.9);
     }
 
-    .label-score {
+    .label-pct {
       font-weight: 700;
       color: rgba(226, 232, 240, 1);
-      font-size: 0.875rem;
+      font-size: 0.75rem;
     }
 
     /* Ligne 2: Barre empilée */
@@ -1280,59 +1544,35 @@ function injectStyles() {
       background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, transparent 100%);
     }
 
-    /* Ligne 3: Pourcentages */
-    .contrib-pcts-row {
-      display: flex;
-    }
-
-    .contrib-pct {
-      display: flex;
-      justify-content: center;
-      font-size: 0.625rem;
-      font-weight: 600;
-      color: rgba(148, 163, 184, 0.8);
-    }
-
-    /* Recommandation actionnable */
+    /* Recommandation actionnable - compact v8 */
     .di-recommendation {
       background: rgba(30, 41, 59, 0.3);
-      border-radius: 6px;
-      padding: 0.875rem;
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      margin-bottom: 1rem;
-    }
-
-    /* Recommandation dans colonne gauche (si elle y reste) */
-    .di-left-col .di-recommendation {
-      margin: 0.75rem 0;
-    }
-
-    /* Recommandation dans colonne droite (en haut) */
-    .di-right-col .di-recommendation {
-      margin: 0 0 1rem 0;
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
     }
 
     .reco-content {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.25rem;
     }
 
     .reco-header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      gap: 0.375rem;
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
     }
 
     .reco-icon {
-      font-size: 1.25rem;
+      font-size: 1rem;
       flex-shrink: 0;
     }
 
     .reco-title {
-      font-size: 0.8rem;
+      font-size: 0.6875rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -1340,17 +1580,16 @@ function injectStyles() {
     }
 
     .reco-action {
-      font-size: 0.875rem;
-      line-height: 1.4;
+      font-size: 0.75rem;
+      line-height: 1.3;
       color: rgba(226, 232, 240, 0.95);
       font-weight: 600;
     }
 
     .reco-details {
-      font-size: 0.75rem;
-      line-height: 1.5;
-      color: rgba(148, 163, 184, 0.8);
-      padding-top: 0.25rem;
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      color: rgba(148, 163, 184, 0.7);
       font-style: italic;
     }
 
@@ -1380,35 +1619,35 @@ function injectStyles() {
       background: rgba(153, 27, 27, 0.1);
     }
 
-    /* Metadata */
+    /* Metadata - compact inline v8 */
     .di-metadata {
       background: rgba(30, 41, 59, 0.3);
-      border-radius: 6px;
-      padding: 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.05);
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.25rem 0.75rem;
     }
 
     .meta-row {
       display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      text-align: center;
+      align-items: center;
+      gap: 0.375rem;
     }
 
     .meta-label {
-      font-size: 0.625rem;
+      font-size: 0.5625rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: rgba(148, 163, 184, 0.6);
+      color: rgba(148, 163, 184, 0.5);
     }
 
     .meta-value {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       font-weight: 600;
-      color: rgba(226, 232, 240, 0.9);
+      color: rgba(226, 232, 240, 0.85);
     }
 
     /* Badge Override */
@@ -1426,12 +1665,9 @@ function injectStyles() {
       font-size: 0.7rem;
     }
 
-    /* Colonne droite */
-    .di-right-col {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+    /* ═══════════════════════════════════════════════════════════
+       LEGACY COLUMN STYLES (kept for simulations.html compat)
+       ═══════════════════════════════════════════════════════════ */
 
     .pillars-container {
       display: flex;
@@ -1442,9 +1678,9 @@ function injectStyles() {
     /* Barres de piliers compactes */
     .pillar-bar-compact {
       background: rgba(30, 41, 59, 0.3);
-      border-radius: 6px;
-      padding: 0.625rem 0.75rem;
-      border: 1px solid rgba(148, 163, 184, 0.05);
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
       transition: all 0.3s;
     }
 
@@ -1597,9 +1833,9 @@ function injectStyles() {
       justify-content: center;
       align-items: center;
       gap: 2rem;
-      padding: 0.875rem 1rem;
-      margin-top: 1rem;
-      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
       background: rgba(30, 41, 59, 0.2);
       border-radius: 0 0 12px 12px;
     }
@@ -1651,41 +1887,186 @@ function injectStyles() {
        KEY METRICS (VaR + Sharpe)
        ═══════════════════════════════════════════════════════════ */
 
-    .di-key-metrics {
+    /* Full-width metrics bar (between grid and footer) */
+    .di-metrics-bar {
       display: flex;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0.625rem 0.875rem;
-      background: rgba(30, 41, 59, 0.4);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
-      margin-top: 0.5rem;
-    }
-
-    .metric-mini {
-      display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      gap: 0.125rem;
+      gap: 1.5rem;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      background: rgba(30, 41, 59, 0.2);
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
     }
 
-    .metric-mini-label {
-      font-size: 0.5rem;
+    .metrics-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+    }
+
+    .metrics-bar-label {
+      font-size: 0.5625rem;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: rgba(148, 163, 184, 0.6);
+      color: rgba(148, 163, 184, 0.5);
     }
 
-    .metric-mini-value {
-      font-size: 0.875rem;
+    .metrics-bar-value {
+      font-size: 0.75rem;
       font-weight: 700;
-      color: rgba(226, 232, 240, 0.95);
     }
 
     /* ═══════════════════════════════════════════════════════════
-       ALLOCATION BAR (Horizontal Stacked Bar - Compact)
+       MINI CYCLE CHART (v8.0)
        ═══════════════════════════════════════════════════════════ */
 
+    .di-mini-cycle-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: rgba(30, 41, 59, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      min-height: 0;
+    }
+
+    .di-mini-cycle-title {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(148, 163, 184, 0.5);
+      margin-bottom: 0.25rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .di-mini-cycle-wrapper {
+      position: relative;
+      flex: 1;
+      min-height: 80px;
+    }
+
+    .di-mini-cycle-wrapper canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ALLOCATION TEXT COMPACT (v8.0)
+       ═══════════════════════════════════════════════════════════ */
+
+    .di-alloc-text {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.625rem;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 8px;
+    }
+
+    .alloc-text-label {
+      font-size: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(148, 163, 184, 0.5);
+      flex-shrink: 0;
+    }
+
+    .alloc-text-values {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.125rem;
+      font-size: 0.6875rem;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    .alloc-text-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-weight: 600;
+    }
+
+    .alloc-text-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .alloc-text-sep {
+      color: rgba(148, 163, 184, 0.3);
+      margin: 0 0.125rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FUSED PILLARS (v8.0)
+       ═══════════════════════════════════════════════════════════ */
+
+    .di-pillars-fused {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.08);
+      border-radius: 8px;
+      padding: 0.5rem 0.625rem;
+    }
+
+    .pillar-fused-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.375rem;
+    }
+
+    .pillar-fused-divider {
+      width: 1px;
+      background: rgba(148, 163, 184, 0.12);
+      align-self: stretch;
+      flex-shrink: 0;
+    }
+
+    .pillar-fused-label {
+      font-size: 0.5625rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: rgba(148, 163, 184, 0.6);
+    }
+
+    .pillar-fused-score {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .pillar-fused-track {
+      width: 100%;
+      height: 3px;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 0.125rem;
+    }
+
+    .pillar-fused-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Legacy allocation bar (kept for backward compat with simulations.html) */
     .alloc-bar-container {
       background: rgba(30, 41, 59, 0.3);
       border-radius: 8px;
@@ -1779,12 +2160,10 @@ function injectStyles() {
       align-items: center;
       justify-content: space-between;
       gap: 0.5rem;
-      background: rgba(30, 41, 59, 0.4);
-      backdrop-filter: blur(4px);
-      border: 1px solid rgba(148, 163, 184, 0.1);
+      background: rgba(30, 41, 59, 0.3);
+      border: 1px solid rgba(148, 163, 184, 0.08);
       border-radius: 8px;
-      padding: 0.625rem 0.875rem;
-      margin-top: 0.75rem;
+      padding: 0.5rem 0.625rem;
     }
 
     .ctx-item {
@@ -1907,9 +2286,8 @@ function injectStyles() {
 
     /* Responsive */
     @media (max-width: 768px) {
-      .di-layout-2col {
+      .di-row {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
       }
 
       .di-score-big {
@@ -1923,17 +2301,9 @@ function injectStyles() {
       }
 
       .di-metadata {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
+        gap: 0.125rem 0.5rem;
       }
 
-      .meta-row {
-        flex-direction: row;
-        justify-content: space-between;
-        text-align: left;
-      }
-
-      /* Context Bar responsive */
       .di-context-bar {
         padding: 0.5rem;
         gap: 0.25rem;
@@ -1951,24 +2321,21 @@ function injectStyles() {
         max-width: 80px;
       }
 
-      /* Key Metrics responsive */
-      .di-key-metrics {
+      .di-metrics-bar {
         gap: 0.75rem;
-        padding: 0.5rem;
         flex-wrap: wrap;
       }
 
-      .metric-mini {
-        flex: 1 1 45%;
-        min-width: 80px;
+      .di-mini-cycle-wrapper {
+        min-height: 120px;
       }
 
-      .metric-mini-label {
-        font-size: 0.45rem;
+      .di-pillars-fused {
+        padding: 0.375rem 0.5rem;
       }
 
-      .metric-mini-value {
-        font-size: 0.75rem;
+      .pillar-fused-score {
+        font-size: 1.125rem;
       }
     }
 
@@ -1981,13 +2348,12 @@ function injectStyles() {
         font-size: 2.5rem;
       }
 
-      .contrib-labels-row,
-      .contrib-pcts-row {
+      .contrib-labels-row {
         font-size: 0.65rem;
       }
 
       .di-metadata {
-        grid-template-columns: 1fr;
+        justify-content: center;
       }
 
       .ctx-item[data-ctx="phase"] .ctx-value {
@@ -2005,6 +2371,18 @@ function injectStyles() {
 
       .ctx-divider {
         display: none;
+      }
+
+      .di-mini-cycle-wrapper {
+        min-height: 100px;
+      }
+
+      .pillar-fused-score {
+        font-size: 1rem;
+      }
+
+      .pillar-fused-label {
+        font-size: 0.5rem;
       }
     }
 
@@ -2026,7 +2404,12 @@ function injectStyles() {
       .pillar-bar-compact,
       .scores-contrib-annotated,
       .di-recommendation,
-      .di-metadata {
+      .di-metadata,
+      .di-score-block,
+      .di-mini-cycle-container,
+      .di-alloc-text,
+      .di-pillars-fused,
+      .di-context-bar {
         background: rgba(248, 250, 252, 0.5);
       }
 
@@ -2040,7 +2423,7 @@ function injectStyles() {
       .pillar-name,
       .pillar-score,
       .meta-value,
-      .label-score,
+      .label-pct,
       .reco-title,
       .reco-action {
         color: #1e293b;
@@ -2049,6 +2432,7 @@ function injectStyles() {
       .di-title,
       .contrib-title,
       .meta-label,
+      .metrics-bar-label,
       .reco-details {
         color: #64748b;
       }
@@ -2067,23 +2451,43 @@ function _renderDIPanelInternal(container, data, opts = {}) {
     return;
   }
 
+  // Cleanup previous mini cycle chart before re-render
+  if (_diMiniCycleChart) {
+    _diMiniCycleChart.destroy();
+    _diMiniCycleChart = null;
+  }
+
   // Injecter les styles si nécessaire
   injectStyles();
 
-  // Générer les colonnes
-  const leftCol = renderLeftColumn(data);
-  const rightCol = renderRightColumn(data);
-
-  // Générer le footer global
+  // Générer les parties
+  const left = getLeftParts(data);
+  const right = getRightParts(data);
+  const metricsBar = renderMetricsBar(data.meta || {}, data.scores || {});
   const globalFooter = renderGlobalFooterStats(data.meta || {});
 
-  // Construire le panneau complet
+  // Layout 3 rangées alignées: chaque rangée est une grille 2 colonnes
   container.innerHTML = `
     <div class="di-panel-gaming">
-      <div class="di-layout-2col">
-        ${leftCol}
-        ${rightCol}
+      <div class="di-row di-row-top">
+        <div class="di-top-left">
+          ${left.scoreBlock}
+          ${left.weights}
+        </div>
+        <div class="di-top-right">
+          ${right.contextBar}
+          ${right.cycleChart}
+        </div>
       </div>
+      <div class="di-row di-row-mid">
+        ${left.metadata}
+        ${right.allocation || '<div></div>'}
+      </div>
+      <div class="di-row di-row-bot">
+        ${left.recommendation}
+        ${right.fusedPillars}
+      </div>
+      ${metricsBar}
       ${globalFooter}
       ${renderHelpContent()}
     </div>
@@ -2091,6 +2495,12 @@ function _renderDIPanelInternal(container, data, opts = {}) {
 
   // Monter le système d'aide
   mountHelpSystem(container);
+
+  // Mount mini cycle chart after DOM is ready
+  const cycleMonths = data.meta?.cycle_months;
+  requestAnimationFrame(() => {
+    mountMiniCycleChart(cycleMonths);
+  });
 }
 
 /**
@@ -2107,6 +2517,12 @@ export function renderDecisionIndexPanel(container, data, opts = {}) {
  * Cleanup (détruit les event listeners pour prévenir memory leaks)
  */
 export function destroyDIPanelCharts() {
+  // Cleanup mini cycle chart
+  if (_diMiniCycleChart) {
+    _diMiniCycleChart.destroy();
+    _diMiniCycleChart = null;
+  }
+
   // Cleanup event listeners
   if (helpSystemController) {
     helpSystemController.abort();
@@ -2122,9 +2538,8 @@ export function destroyDIPanelCharts() {
  * Helper pour s'assurer que les dépendances sont chargées
  */
 export async function ensureChartJSLoaded() {
-  // Plus besoin de Chart.js dans cette version
-  // Gardé pour compatibilité
-  return true;
+  // Chart.js requis pour le mini cycle chart (v8.0)
+  return typeof Chart !== 'undefined';
 }
 
 // Logger minimal
