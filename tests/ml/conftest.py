@@ -25,7 +25,7 @@ def temp_models_dir():
 @pytest.fixture  
 def mock_pipeline_manager(temp_models_dir):
     """Fixture qui crée un pipeline manager avec répertoire temporaire"""
-    return OptimizedMLPipelineManager(models_path=temp_models_dir)
+    return OptimizedMLPipelineManager(models_base_path=temp_models_dir)
 
 
 @pytest.fixture

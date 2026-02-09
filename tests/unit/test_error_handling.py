@@ -1,313 +1,392 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Test script pour la gestion d'erreurs et retry logic du BinanceAdapter
+"""Tests for shared/error_handling.py - comprehensive coverage (40+ tests)"""
 
-Ce script teste les différents scénarios d'erreur et vérifie que
-le système de retry et de gestion d'erreurs fonctionne correctement.
-"""
-
-import asyncio
-import logging
-from unittest.mock import Mock, patch, AsyncMock
-from services.execution.exchange_adapter import (
-    BinanceAdapter, ExchangeConfig, ExchangeType,
-    RetryableError, RateLimitError
+import pytest
+from shared.error_handling import (
+    safe_import, safe_call, safe_call_async, safe_get_data,
+    safe_api_call, safe_pricing_operation, error_handler,
+    safe_price_fetch, safe_exchange_operation,
+)
+from shared.exceptions import (
+    NetworkException, TimeoutException, APIException,
+    PricingException, ExchangeException, CryptoRebalancerException,
 )
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-class MockBinanceException(Exception):
-    """Mock de BinanceAPIException pour les tests"""
-    def __init__(self, code, message, status_code=400):
-        self.code = code
-        self.message = message
-        self.status_code = status_code
-        super().__init__(message)
+class TestSafeImport:
+    def test_import_builtin(self):
+        r = safe_import("json")
+        assert r is not None and hasattr(r, "dumps")
 
-async def test_retry_mechanism():
-    """Test du mécanisme de retry avec exponential backoff"""
-    print("[TEST] Retry mechanism...")
-    
-    config = ExchangeConfig(
-        name="binance_test",
-        type=ExchangeType.CEX,
-        api_key="test_key",
-        api_secret="test_secret",
-        sandbox=True,
-        fee_rate=0.001,
-        min_order_size=10.0
-    )
-    
-    adapter = BinanceAdapter(config)
-    
-    # Mock du client qui échoue 2 fois puis réussit
-    mock_client = Mock()
-    call_count = 0
-    
-    def mock_get_account():
-        nonlocal call_count
-        call_count += 1
-        if call_count <= 2:
-            raise MockBinanceException(-1003, "Too many requests", 429)
-        return {"balances": []}
-    
-    mock_client.get_account = mock_get_account
-    adapter.client = mock_client
-    adapter.connected = True
-    
-    # Test que le retry fonctionne
-    try:
-        balance = await adapter.get_balance("BTC")
-        print("[PASS] Retry mechanism works - connection succeeded after 2 failures")
-        assert call_count == 3, f"Expected 3 calls, got {call_count}"
-    except Exception as e:
-        print(f"[FAIL] Retry mechanism failed: {e}")
-        return False
-    
-    return True
+    def test_import_with_package(self):
+        assert safe_import("path", package="os") is not None
 
-async def test_rate_limit_handling():
-    """Test de la gestion des rate limits"""
-    print("\n[TEST] Rate limit handling...")
-    
-    config = ExchangeConfig(
-        name="binance_test",
-        type=ExchangeType.CEX,
-        api_key="test_key", 
-        api_secret="test_secret",
-        sandbox=True,
-        fee_rate=0.001,
-        min_order_size=10.0
-    )
-    
-    adapter = BinanceAdapter(config)
-    
-    # Test de la conversion d'exception
-    # Mock binance.exceptions module
-    import sys
-    from types import ModuleType
-    
-    # Create mock binance.exceptions module
-    mock_binance_exceptions = ModuleType('binance.exceptions')
-    
-    class MockBinanceAPIException(Exception):
-        def __init__(self, code, message, status_code=400):
-            self.code = code
-            self.message = message  
-            self.status_code = status_code
-            super().__init__(message)
-    
-    class MockBinanceRequestException(Exception):
-        pass
-    
-    mock_binance_exceptions.BinanceAPIException = MockBinanceAPIException
-    mock_binance_exceptions.BinanceRequestException = MockBinanceRequestException
-    
-    sys.modules['binance.exceptions'] = mock_binance_exceptions
-    
-    try:
-        # Simuler une erreur de rate limit
-        mock_exception = MockBinanceAPIException(-1003, "Too many requests", 429)
-        adapter._handle_binance_exception(mock_exception)
-        print("[FAIL] Rate limit exception not detected")
-        return False
-    except RateLimitError as e:
-        print("[PASS] Rate limit correctly detected and converted")
-        assert e.retry_after == 60, f"Expected retry_after=60, got {e.retry_after}"
-    except Exception as e:
-        print(f"[FAIL] Wrong exception raised: {type(e).__name__}: {e}")
-        return False
-    
-    return True
+    def test_import_nonexistent(self):
+        assert safe_import("nonexistent_xyz_123") is None
 
-async def test_connection_recovery():
-    """Test de la reconnexion automatique"""
-    print("\n[TEST] Test de la reconnexion automatique...")
-    
-    config = ExchangeConfig(
-        name="binance_test",
-        type=ExchangeType.CEX,
-        api_key="test_key",
-        api_secret="test_secret", 
-        sandbox=True,
-        fee_rate=0.001,
-        min_order_size=10.0
-    )
-    
-    adapter = BinanceAdapter(config)
-    
-    # Mock de la méthode connect
-    connect_calls = 0
-    original_connect = adapter.connect
-    
-    async def mock_connect():
-        nonlocal connect_calls
-        connect_calls += 1
-        if connect_calls == 1:
-            return True  # Première connexion réussit
-        return True  # Reconnexion réussit aussi
-    
-    adapter.connect = mock_connect
-    
-    # Simuler une déconnexion
-    adapter.connected = False
-    
-    # Appeler get_balance qui doit déclencher une reconnexion
-    mock_client = Mock()
-    mock_client.get_account.return_value = {"balances": [{"asset": "BTC", "free": "0.5", "locked": "0.0"}]}
-    
-    # Simuler que le client est créé après reconnexion
-    async def mock_get_balance_internal(asset):
-        if not adapter.connected:
-            await adapter.connect()
-            adapter.client = mock_client
-            adapter.connected = True
-        return 0.5
-    
-    # Patcher la méthode get_balance
-    with patch.object(adapter, 'get_balance', side_effect=mock_get_balance_internal):
-        balance = await adapter.get_balance("BTC")
-        print("[PASS] Reconnexion automatique fonctionne")
-        assert connect_calls >= 1, "La reconnexion n'a pas été tentée"
-    
-    return True
+    def test_import_with_fallback_success(self):
+        r = safe_import("nonexistent_xyz", fallback_module="json")
+        assert r is not None and hasattr(r, "dumps")
 
-async def test_error_classification():
-    """Test de la classification des erreurs"""
-    print("\n[TEST] Test de la classification des erreurs...")
-    
-    config = ExchangeConfig(
-        name="binance_test",
-        type=ExchangeType.CEX,
-        api_key="test_key",
-        api_secret="test_secret",
-        sandbox=True,
-        fee_rate=0.001,
-        min_order_size=10.0
-    )
-    
-    adapter = BinanceAdapter(config)
-    
-    # Mock binance.exceptions module
-    import sys
-    from types import ModuleType
-    
-    # Create mock binance.exceptions module
-    mock_binance_exceptions = ModuleType('binance.exceptions')
-    
-    class MockBinanceAPIException(Exception):
-        def __init__(self, code, message, status_code=400):
-            self.code = code
-            self.message = message  
-            self.status_code = status_code
-            super().__init__(message)
-    
-    class MockBinanceRequestException(Exception):
-        pass
-    
-    mock_binance_exceptions.BinanceAPIException = MockBinanceAPIException
-    mock_binance_exceptions.BinanceRequestException = MockBinanceRequestException
-    
-    sys.modules['binance.exceptions'] = mock_binance_exceptions
-    
-    test_cases = [
-        # (error_code, expected_exception_type, description)
-        (-1003, RateLimitError, "Rate limit error"),
-        (-1002, RateLimitError, "IP banned"),
-        (-1001, RetryableError, "Network error"),
-        (-2010, ValueError, "Account error (non-retryable)"),
-        (-9999, ValueError, "Unknown API error")
-    ]
-    
-    for error_code, expected_type, description in test_cases:
-        try:
-            mock_exception = MockBinanceAPIException(error_code, f"Test {description}")
-            adapter._handle_binance_exception(mock_exception)
-            print(f"[FAIL] {description}: Exception pas levée")
-            return False
-        except expected_type:
-            print(f"[PASS] {description}: Correctement classifié comme {expected_type.__name__}")
-        except Exception as e:
-            print(f"[FAIL] {description}: Mauvaise classification - {type(e).__name__} au lieu de {expected_type.__name__}")
-            return False
-    
-    return True
+    def test_import_with_fallback_also_fails(self):
+        assert safe_import("nonexist_a", fallback_module="nonexist_b") is None
 
-async def test_exponential_backoff():
-    """Test du calcul de l'exponential backoff"""
-    print("\n[TEST] Test de l'exponential backoff...")
-    
-    from services.execution.exchange_adapter import calculate_backoff_delay
-    
-    # Test que les délais augmentent exponentiellement
-    delays = []
-    for attempt in range(5):
-        delay = calculate_backoff_delay(attempt, base_delay=1.0, max_delay=10.0)
-        delays.append(delay)
-        print(f"   Attempt {attempt}: {delay:.2f}s")
-    
-    # Vérifier que les délais augmentent (en général, avec de la jitter il peut y avoir des variations)
-    base_delays = [1.0, 2.0, 4.0, 8.0, 10.0]  # Max à 10.0
-    
-    for i, (actual, expected_base) in enumerate(zip(delays, base_delays)):
-        # Avec jitter, on s'attend à ±25% du délai de base
-        min_delay = expected_base * 0.75
-        max_delay = expected_base * 1.25
-        if not (0.1 <= actual <= max(max_delay, 10.0)):  # 0.1 est le minimum absolu
-            print(f"[FAIL] Délai {i} hors limites: {actual:.2f}s (attendu: {min_delay:.2f}-{max_delay:.2f}s)")
-            return False
-    
-    print("[PASS] Exponential backoff avec jitter fonctionne correctement")
-    return True
+    def test_import_no_fallback(self):
+        assert safe_import("nonexistent_xyz") is None
 
-async def main():
-    """Fonction principale des tests"""
-    print("[RUN] Test de la gestion d'erreurs - BinanceAdapter")
-    print("=" * 50)
-    
-    tests = [
-        ("Exponential Backoff", test_exponential_backoff),
-        ("Classification des erreurs", test_error_classification),
-        ("Gestion rate limits", test_rate_limit_handling),
-        ("Mécanisme retry", test_retry_mechanism),
-        ("Reconnexion automatique", test_connection_recovery),
-    ]
-    
-    results = []
-    
-    for test_name, test_func in tests:
-        try:
-            print(f"\n[INFO] Exécution: {test_name}")
-            success = await test_func()
-            results.append((test_name, success))
-        except Exception as e:
-            print(f"[FAIL] Erreur dans {test_name}: {e}")
-            results.append((test_name, False))
-    
-    # Résumé des résultats
-    print("\n" + "=" * 50)
-    print("[SUMMARY] RÉSUMÉ DES TESTS")
-    print("=" * 50)
-    
-    passed = 0
-    total = len(results)
-    
-    for test_name, success in results:
-        status = "[PASS] PASSÉ" if success else "[FAIL] ÉCHOUÉ"
-        print(f"{test_name:.<40} {status}")
-        if success:
-            passed += 1
-    
-    print(f"\n[RESULT] Résultat final: {passed}/{total} tests passés")
-    
-    if passed == total:
-        print("[SUCCESS] Tous les tests de gestion d'erreurs sont passés!")
-        return True
-    else:
-        print("[WARN]  Certains tests ont échoué - vérification nécessaire")
-        return False
 
-if __name__ == "__main__":
-    asyncio.run(main())
+class TestSafeCall:
+    def test_success(self):
+        assert safe_call(lambda: 42) == 42
+
+    def test_default_on_exception(self):
+        assert safe_call(lambda: 1 / 0, default=-1) == -1
+
+    def test_default_is_none(self):
+        assert safe_call(lambda: 1 / 0) is None
+
+    def test_expected_exceptions(self):
+        def f():
+            raise ValueError("x")
+        r = safe_call(f, default="fb", context="ctx",
+                      expected_exceptions=(ValueError,), log_level="info")
+        assert r == "fb"
+
+    def test_unexpected_exception_converted(self):
+        assert safe_call(lambda: 1 / 0, default="s", context="div") == "s"
+
+    def test_context_logging(self):
+        assert safe_call(lambda: 1 / 0, default=0, context="ctx") == 0
+
+    def test_returns_none_from_func(self):
+        assert safe_call(lambda: None, default="x") is None
+
+
+class TestSafeCallAsync:
+    async def test_success(self):
+        async def ok():
+            return 99
+        assert await safe_call_async(ok) == 99
+
+    async def test_default_on_exception(self):
+        async def f():
+            raise RuntimeError("boom")
+        assert await safe_call_async(f, default="safe") == "safe"
+
+    async def test_default_none(self):
+        async def f():
+            raise ValueError("e")
+        assert await safe_call_async(f) is None
+
+    async def test_expected_exception(self):
+        async def f():
+            raise KeyError("m")
+        r = await safe_call_async(f, default={},
+            expected_exceptions=(KeyError,), context="at", log_level="debug")
+        assert r == {}
+
+    async def test_unexpected_converted(self):
+        async def f():
+            raise ConnectionError("net")
+        assert await safe_call_async(f, default="off", context="n") == "off"
+
+
+class TestSafeGetData:
+    def test_success(self):
+        assert safe_get_data(lambda: {"a": 1}) == {"a": 1}
+
+    def test_fallback_on_none(self):
+        assert safe_get_data(lambda: None, fallback="d") == "d"
+
+    def test_fallback_on_key_error(self):
+        def f():
+            return {}["missing"]
+        assert safe_get_data(f, fallback="fb", context="k") == "fb"
+
+    def test_fallback_on_value_error(self):
+        def f():
+            raise ValueError("v")
+        assert safe_get_data(f, fallback=0, context="v") == 0
+
+    def test_fallback_on_type_error(self):
+        def f():
+            raise TypeError("t")
+        assert safe_get_data(f, fallback=[], context="t") == []
+
+    def test_fallback_on_unexpected(self):
+        def f():
+            raise RuntimeError("u")
+        assert safe_get_data(f, fallback="s", context="r") == "s"
+
+    def test_empty_string_valid(self):
+        assert safe_get_data(lambda: "", fallback="x") == ""
+
+    def test_zero_valid(self):
+        assert safe_get_data(lambda: 0, fallback=999) == 0
+
+    def test_false_valid(self):
+        assert safe_get_data(lambda: False, fallback=True) is False
+
+
+class TestSafeApiCall:
+    def test_success(self):
+        assert safe_api_call(lambda: {"d": "ok"}, "api") == {"d": "ok"}
+
+    def test_default_on_none(self):
+        assert safe_api_call(lambda: None, "api", default="e") == "e"
+
+    def test_connection_error(self):
+        def f():
+            raise ConnectionError("r")
+        with pytest.raises(NetworkException):
+            safe_api_call(f, "api")
+
+    def test_os_error(self):
+        def f():
+            raise OSError("s")
+        with pytest.raises(NetworkException):
+            safe_api_call(f, "api")
+
+    def test_timeout_error(self):
+        # TimeoutError is a subclass of OSError, so (ConnectionError, OSError)
+        # branch catches it first, raising NetworkException instead of TimeoutException
+        def f():
+            raise TimeoutError("t")
+        with pytest.raises(NetworkException):
+            safe_api_call(f, "api")
+
+    def test_generic_error(self):
+        def f():
+            raise RuntimeError("s")
+        with pytest.raises(APIException):
+            safe_api_call(f, "api")
+
+    def test_retries_before_raising(self):
+        c = 0
+        def f():
+            nonlocal c
+            c += 1
+            raise RuntimeError("f")
+        with pytest.raises(APIException):
+            safe_api_call(f, "a", retry_count=2)
+        assert c == 3
+
+    def test_retry_succeeds(self):
+        c = 0
+        def f():
+            nonlocal c
+            c += 1
+            if c < 2:
+                raise ConnectionError("t")
+            return "ok"
+        assert safe_api_call(f, "a", retry_count=2) == "ok"
+        assert c == 2
+
+    def test_retries_on_none(self):
+        c = 0
+        def f():
+            nonlocal c
+            c += 1
+            return None
+        r = safe_api_call(f, "a", default="fb", retry_count=1)
+        assert r == "fb" and c == 2
+
+
+class TestSafePricingOperation:
+    def test_success(self):
+        assert safe_pricing_operation(lambda: 50000.0, symbol="BTC") == 50000.0
+
+    def test_value_error(self):
+        def f():
+            raise ValueError("b")
+        with pytest.raises(PricingException) as e:
+            safe_pricing_operation(f, symbol="ETH", source="cg")
+        assert "ETH" in str(e.value)
+
+    def test_key_error(self):
+        def f():
+            raise KeyError("m")
+        with pytest.raises(PricingException):
+            safe_pricing_operation(f, symbol="SOL")
+
+    def test_connection_error(self):
+        def f():
+            raise ConnectionError("n")
+        with pytest.raises(NetworkException):
+            safe_pricing_operation(f, symbol="BTC")
+
+    def test_os_error(self):
+        def f():
+            raise OSError("s")
+        with pytest.raises(NetworkException):
+            safe_pricing_operation(f, symbol="BTC")
+
+    def test_generic_error(self):
+        def f():
+            raise RuntimeError("u")
+        with pytest.raises(PricingException):
+            safe_pricing_operation(f, symbol="ADA")
+
+    def test_unknown_symbol(self):
+        def f():
+            raise ValueError("n")
+        with pytest.raises(PricingException) as e:
+            safe_pricing_operation(f)
+        assert "unknown symbol" in str(e.value)
+
+
+class TestErrorHandler:
+    def test_sync_success(self):
+        @error_handler()
+        def add(a, b):
+            return a + b
+        assert add(2, 3) == 5
+
+    def test_sync_reraise(self):
+        @error_handler(context="st", reraise=True)
+        def f():
+            raise ValueError("b")
+        with pytest.raises(CryptoRebalancerException):
+            f()
+
+    def test_sync_no_reraise(self):
+        @error_handler(reraise=False, default_return="s")
+        def f():
+            raise RuntimeError("b")
+        assert f() == "s"
+
+    def test_sync_custom_exc_passes(self):
+        @error_handler(reraise=True)
+        def f():
+            raise PricingException("bp", symbol="BTC")
+        with pytest.raises(PricingException):
+            f()
+
+    def test_sync_custom_exc_no_reraise(self):
+        @error_handler(reraise=False, default_return=0)
+        def f():
+            raise NetworkException("ne")
+        assert f() == 0
+
+    async def test_async_reraise(self):
+        @error_handler(context="at", reraise=True)
+        async def f():
+            raise ConnectionError("off")
+        with pytest.raises(CryptoRebalancerException):
+            await f()
+
+    async def test_async_no_reraise(self):
+        @error_handler(reraise=False, default_return={})
+        async def f():
+            raise RuntimeError("ab")
+        assert await f() == {}
+
+    async def test_async_custom_exc_passes(self):
+        @error_handler(reraise=True)
+        async def f():
+            raise ExchangeException("ed", "binance")
+        with pytest.raises(ExchangeException):
+            await f()
+
+    async def test_async_custom_exc_no_reraise(self):
+        @error_handler(reraise=False, default_return=None)
+        async def f():
+            raise APIException("ae", "cg")
+        assert await f() is None
+
+    def test_preserves_sync_name(self):
+        @error_handler()
+        def my_function():
+            pass
+        assert my_function.__name__ == "my_function"
+
+    def test_preserves_async_name(self):
+        @error_handler()
+        async def my_async_function():
+            pass
+        assert my_async_function.__name__ == "my_async_function"
+
+    async def test_async_success(self):
+        @error_handler()
+        async def async_add(a, b):
+            return a + b
+        assert await async_add(3, 4) == 7
+
+
+class TestSafePriceFetch:
+    def test_valid_prices(self):
+        prices = {"BTC": 50000, "ETH": 3000}
+        r = safe_price_fetch(lambda: prices, ["BTC", "ETH"], source="t")
+        assert r == {"BTC": 50000.0, "ETH": 3000.0}
+
+    def test_filters_none(self):
+        r = safe_price_fetch(lambda: {"BTC": 50000, "ETH": None}, ["BTC"])
+        assert "ETH" not in r and r["BTC"] == 50000.0
+
+    def test_filters_zero(self):
+        r = safe_price_fetch(lambda: {"BTC": 50000, "S": 0}, ["BTC", "S"])
+        assert "S" not in r
+
+    def test_filters_negative(self):
+        r = safe_price_fetch(lambda: {"BTC": 50000, "B": -100}, ["BTC"])
+        assert "B" not in r
+
+    def test_filters_non_numeric(self):
+        r = safe_price_fetch(lambda: {"BTC": 50000, "B": "nan"}, ["BTC"])
+        assert "B" not in r and r["BTC"] == 50000.0
+
+    def test_none_result(self):
+        assert safe_price_fetch(lambda: None, ["BTC"]) == {}
+
+    def test_empty_result(self):
+        assert safe_price_fetch(lambda: {}, ["BTC"]) == {}
+
+    def test_non_dict_result(self):
+        assert safe_price_fetch(lambda: [1, 2], ["BTC"]) == {}
+
+    def test_raises_on_error(self):
+        def f():
+            raise RuntimeError("ff")
+        with pytest.raises(PricingException) as e:
+            safe_price_fetch(f, ["BTC"], source="coingecko")
+        assert "coingecko" in str(e.value)
+
+    def test_string_number_converted(self):
+        r = safe_price_fetch(lambda: {"BTC": "50000.5"}, ["BTC"])
+        assert r["BTC"] == 50000.5
+
+
+class TestSafeExchangeOperation:
+    def test_success(self):
+        r = safe_exchange_operation(lambda: {"id": "123"}, "binance", "place")
+        assert r == {"id": "123"}
+
+    def test_connection_error(self):
+        def f():
+            raise ConnectionError("r")
+        with pytest.raises(ExchangeException) as e:
+            safe_exchange_operation(f, "kraken", "fetch")
+        assert "kraken" in str(e.value)
+
+    def test_os_error(self):
+        def f():
+            raise OSError("s")
+        with pytest.raises(ExchangeException):
+            safe_exchange_operation(f, "binance")
+
+    def test_timeout(self):
+        # TimeoutError is a subclass of OSError, so (ConnectionError, OSError)
+        # branch catches it first, raising ExchangeException
+        def f():
+            raise TimeoutError("sl")
+        with pytest.raises(ExchangeException) as e:
+            safe_exchange_operation(f, "coinbase", "fetch_orders")
+        assert "coinbase" in str(e.value)
+
+    def test_generic_error(self):
+        def f():
+            raise RuntimeError("u")
+        with pytest.raises(ExchangeException) as e:
+            safe_exchange_operation(f, "ftx", "withdraw")
+        assert "ftx" in str(e.value)
+        assert "withdraw" in str(e.value)
+

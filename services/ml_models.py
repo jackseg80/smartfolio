@@ -172,17 +172,17 @@ class CryptoMLPredictor:
             
             if ret_90 < -0.2:  # Strong downtrend
                 if vol > vol_pct:
-                    labels.iloc[i] = MarketRegime.DISTRIBUTION.value
+                    labels.iloc[i] = MarketRegime.BEAR_MARKET.value
                 else:
-                    labels.iloc[i] = MarketRegime.ACCUMULATION.value
+                    labels.iloc[i] = MarketRegime.CORRECTION.value
             elif ret_90 > 0.5:  # Strong uptrend
                 if vol > vol_pct:
-                    labels.iloc[i] = MarketRegime.EUPHORIA.value
+                    labels.iloc[i] = MarketRegime.BULL_MARKET.value
                 else:
                     labels.iloc[i] = MarketRegime.EXPANSION.value
             else:  # Neutral trend
                 if vol > vol_pct:
-                    labels.iloc[i] = MarketRegime.DISTRIBUTION.value
+                    labels.iloc[i] = MarketRegime.BEAR_MARKET.value
                 else:
                     labels.iloc[i] = MarketRegime.EXPANSION.value
                     

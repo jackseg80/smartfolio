@@ -303,19 +303,20 @@ class TestPrepareRegimeLabels:
         # All labels should be "Expansion" (the one valid enum value in the code)
         assert set(labels.unique()).issubset({"Expansion"})
 
-    def test_downtrend_triggers_distribution_bug(self, predictor):
-        """BUG: Strong downtrend + high vol triggers MarketRegime.DISTRIBUTION
-        which does not exist, raising AttributeError."""
+    def test_downtrend_produces_bear_market_label(self, predictor):
+        """Strong downtrend + high vol produces BEAR_MARKET labels."""
         df = self._make_downtrend_data()
-        with pytest.raises(AttributeError, match="DISTRIBUTION"):
-            predictor.prepare_regime_labels(df)
+        labels = predictor.prepare_regime_labels(df)
+        assert len(labels) > 0
+        assert MarketRegime.BEAR_MARKET.value in labels.values
 
-    def test_uptrend_high_vol_triggers_euphoria_bug(self, predictor):
-        """BUG: Strong uptrend + high vol triggers MarketRegime.EUPHORIA
-        which does not exist, raising AttributeError."""
+    def test_uptrend_high_vol_produces_bull_market_label(self, predictor):
+        """Strong uptrend + high vol produces BULL_MARKET or EXPANSION labels."""
         df = self._make_uptrend_high_vol_data()
-        with pytest.raises(AttributeError, match="EUPHORIA"):
-            predictor.prepare_regime_labels(df)
+        labels = predictor.prepare_regime_labels(df)
+        assert len(labels) > 0
+        valid_regimes = {MarketRegime.BULL_MARKET.value, MarketRegime.EXPANSION.value}
+        assert any(v in valid_regimes for v in labels.values)
 
     def test_primary_asset_fallback(self, predictor):
         """If primary_asset is not in columns, the first column is used.
@@ -481,12 +482,12 @@ class TestCryptoMLPipelineGetPredictions:
 # ---------------------------------------------------------------------------
 
 class TestCryptoMLPipelineTrainPipeline:
-    """train_pipeline calls prepare_regime_labels which hits the enum bug
-    when price data triggers non-expansion branches."""
+    """train_pipeline calls prepare_regime_labels which uses MarketRegime enum
+    for all price regimes including downtrends."""
 
-    def test_train_pipeline_fails_due_to_enum_bug_with_downtrend(self, tmp_path):
-        """BUG: train_pipeline fails when prepare_regime_labels encounters
-        strong downtrend data referencing MarketRegime.DISTRIBUTION."""
+    def test_train_pipeline_with_downtrend_data(self, tmp_path):
+        """train_pipeline succeeds with downtrend data (MarketRegime enum is correct).
+        The pipeline may catch internal training errors but should not raise AttributeError."""
         np.random.seed(42)
         idx = pd.date_range("2024-01-01", periods=200)
         prices = np.zeros(200)
@@ -497,8 +498,10 @@ class TestCryptoMLPipelineTrainPipeline:
 
         pipeline = CryptoMLPipeline()
         pipeline.predictor = CryptoMLPredictor(models_path=str(tmp_path / "m"))
-        with pytest.raises(AttributeError):
-            pipeline.train_pipeline(df, save_models=False)
+        # Should NOT raise AttributeError - enum values are correct
+        results = pipeline.train_pipeline(df, save_models=False)
+        assert isinstance(results, dict)
+        assert pipeline.is_trained is True
 
     def test_train_pipeline_with_neutral_data_hits_training_error(
         self, price_data_btc_eth, tmp_path

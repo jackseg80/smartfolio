@@ -1,19 +1,17 @@
 """
-Tests unitaires pour le service Macro Stress (pénalité graduée)
+Unit tests for services/macro_stress.py
 
-Vérifie la calibration alignée sur DI Backtest V2:
-- VIX: 0 (≤20) → -10 (≥45), linéaire
-- DXY: 0 (change ≤2%) → -8 (change ≥10%), linéaire
-- Total cappé à -15
+Tests graduated penalty, MacroStressResult, MacroStressService cache, evaluate_stress.
 """
 import pytest
+from unittest.mock import patch, AsyncMock
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock
+from dataclasses import asdict
 
 from services.macro_stress import (
-    MacroStressService,
-    MacroStressResult,
     _graduated_penalty,
+    MacroStressResult,
+    MacroStressService,
     VIX_PENALTY_START,
     VIX_PENALTY_MAX_LEVEL,
     VIX_PENALTY_MAX_PTS,
@@ -25,245 +23,382 @@ from services.macro_stress import (
 )
 
 
+@pytest.fixture
+def fresh_service():
+    svc = object.__new__(MacroStressService)
+    svc._cache = None
+    svc._cache_time = None
+    return svc
+
+
 class TestGraduatedPenalty:
-    """Tests de la fonction de pénalité graduée linéaire"""
 
-    def test_below_start_no_penalty(self):
-        assert _graduated_penalty(15.0, 20.0, 45.0, 10.0) == 0.0
+    def test_value_below_start_returns_zero(self):
+        assert _graduated_penalty(10.0, 20.0, 45.0, 10.0) == 0.0
 
-    def test_at_start_no_penalty(self):
+    def test_value_exactly_at_start_returns_zero(self):
         assert _graduated_penalty(20.0, 20.0, 45.0, 10.0) == 0.0
 
-    def test_midpoint_linear(self):
-        # (32.5 - 20) / (45 - 20) * 10 = 12.5/25 * 10 = 5.0
-        result = _graduated_penalty(32.5, 20.0, 45.0, 10.0)
-        assert result == pytest.approx(-5.0, abs=0.01)
+    def test_value_at_max_level_returns_negative_max(self):
+        assert _graduated_penalty(45.0, 20.0, 45.0, 10.0) == pytest.approx(-10.0)
 
-    def test_at_max_level(self):
-        result = _graduated_penalty(45.0, 20.0, 45.0, 10.0)
-        assert result == pytest.approx(-10.0, abs=0.01)
+    def test_value_above_max_level_capped(self):
+        assert _graduated_penalty(100.0, 20.0, 45.0, 10.0) == pytest.approx(-10.0)
 
-    def test_above_max_level_capped(self):
-        # Au-delà de max_level, plafonné à -max_pts
-        result = _graduated_penalty(60.0, 20.0, 45.0, 10.0)
-        assert result == pytest.approx(-10.0, abs=0.01)
+    def test_midpoint_value(self):
+        assert _graduated_penalty(32.5, 20.0, 45.0, 10.0) == pytest.approx(-5.0)
 
+    def test_quarter_point(self):
+        assert _graduated_penalty(26.25, 20.0, 45.0, 10.0) == pytest.approx(-2.5)
 
-class TestVIXPenalty:
-    """Tests de la pénalité VIX graduée"""
+    def test_three_quarter_point(self):
+        assert _graduated_penalty(38.75, 20.0, 45.0, 10.0) == pytest.approx(-7.5)
 
-    def test_vix_15_no_penalty(self):
-        """VIX=15 → en-dessous du seuil, pas de pénalité"""
-        result = _graduated_penalty(15.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == 0.0
+    def test_negative_value_returns_zero(self):
+        assert _graduated_penalty(-5.0, 20.0, 45.0, 10.0) == 0.0
 
-    def test_vix_25_partial_penalty(self):
-        """VIX=25 → (25-20)/(45-20)*10 = 2.0 pts"""
-        result = _graduated_penalty(25.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-2.0, abs=0.01)
+    def test_zero_value_returns_zero(self):
+        assert _graduated_penalty(0.0, 20.0, 45.0, 10.0) == 0.0
 
-    def test_vix_31_graduated_not_15(self):
-        """VIX=31 → (31-20)/(45-20)*10 = 4.4 pts (pas -15 comme avant!)"""
-        result = _graduated_penalty(31.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-4.4, abs=0.01)
+    def test_dxy_params_below_start(self):
+        assert _graduated_penalty(1.0, 2.0, 10.0, 8.0) == 0.0
 
-    def test_vix_35_six_pts(self):
-        """VIX=35 → (35-20)/(45-20)*10 = 6.0 pts (doc backtest: '~-6pts')"""
-        result = _graduated_penalty(35.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-6.0, abs=0.01)
+    def test_dxy_params_at_max(self):
+        assert _graduated_penalty(10.0, 2.0, 10.0, 8.0) == pytest.approx(-8.0)
 
-    def test_vix_45_max_penalty(self):
-        """VIX=45 → pénalité max VIX = -10 pts"""
-        result = _graduated_penalty(45.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-10.0, abs=0.01)
+    def test_dxy_params_midpoint(self):
+        assert _graduated_penalty(6.0, 2.0, 10.0, 8.0) == pytest.approx(-4.0)
 
-    def test_vix_60_capped_at_max(self):
-        """VIX=60 → toujours -10 pts (cappé)"""
-        result = _graduated_penalty(60.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-10.0, abs=0.01)
+    def test_small_range(self):
+        assert _graduated_penalty(0.5, 0.0, 1.0, 5.0) == pytest.approx(-2.5)
 
+    def test_very_large_value_capped(self):
+        assert _graduated_penalty(1000.0, 20.0, 45.0, 10.0) == pytest.approx(-10.0)
 
-class TestDXYPenalty:
-    """Tests de la pénalité DXY graduée"""
-
-    def test_dxy_change_1pct_no_penalty(self):
-        """DXY change=1% → en-dessous du seuil"""
-        result = _graduated_penalty(1.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        assert result == 0.0
-
-    def test_dxy_change_6pct_partial(self):
-        """DXY change=6% → (6-2)/(10-2)*8 = 4.0 pts"""
-        result = _graduated_penalty(6.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-4.0, abs=0.01)
-
-    def test_dxy_change_10pct_max(self):
-        """DXY change=10% → pénalité max DXY = -8 pts"""
-        result = _graduated_penalty(10.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-8.0, abs=0.01)
-
-    def test_dxy_change_15pct_capped(self):
-        """DXY change=15% → toujours -8 pts (cappé)"""
-        result = _graduated_penalty(15.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        assert result == pytest.approx(-8.0, abs=0.01)
-
-
-class TestCombinedPenalty:
-    """Tests de la pénalité combinée VIX + DXY"""
-
-    def test_vix35_dxy6_additive(self):
-        """VIX=35 + DXY change=6% → -6.0 + -4.0 = -10.0"""
-        vix_pen = _graduated_penalty(35.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        dxy_pen = _graduated_penalty(6.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        total = max(TOTAL_PENALTY_CAP, vix_pen + dxy_pen)
-        assert total == pytest.approx(-10.0, abs=0.01)
-
-    def test_vix50_dxy12_capped_at_minus15(self):
-        """VIX=50 + DXY change=12% → -10.0 + -8.0 = -18.0, cappé à -15.0"""
-        vix_pen = _graduated_penalty(50.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        dxy_pen = _graduated_penalty(12.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        total = max(TOTAL_PENALTY_CAP, vix_pen + dxy_pen)
-        assert total == pytest.approx(-15.0, abs=0.01)
-
-    def test_no_stress_zero_penalty(self):
-        """VIX=15 + DXY change=1% → 0 + 0 = 0"""
-        vix_pen = _graduated_penalty(15.0, VIX_PENALTY_START, VIX_PENALTY_MAX_LEVEL, VIX_PENALTY_MAX_PTS)
-        dxy_pen = _graduated_penalty(1.0, DXY_CHANGE_START_PCT, DXY_CHANGE_MAX_PCT, DXY_PENALTY_MAX_PTS)
-        total = max(TOTAL_PENALTY_CAP, vix_pen + dxy_pen)
-        assert total == 0.0
+    def test_just_above_start(self):
+        r = _graduated_penalty(20.01, 20.0, 45.0, 10.0)
+        assert r < 0.0
+        assert r > -0.01
 
 
 class TestMacroStressResult:
-    """Tests du dataclass MacroStressResult"""
 
     def test_default_values(self):
         result = MacroStressResult()
-        assert result.decision_penalty == 0.0
+        assert result.vix_value is None
+        assert result.vix_stress is False
         assert result.vix_penalty == 0.0
+        assert result.dxy_value is None
+        assert result.dxy_change_30d is None
+        assert result.dxy_stress is False
         assert result.dxy_penalty == 0.0
         assert result.macro_stress is False
-        assert result.vix_stress is False
-        assert result.dxy_stress is False
+        assert result.decision_penalty == 0.0
+        assert result.fetched_at is None
+        assert result.error is None
 
-    def test_penalty_is_float(self):
-        """Le type decision_penalty est float (pas int) pour les valeurs graduées"""
-        result = MacroStressResult(decision_penalty=-4.4)
-        assert isinstance(result.decision_penalty, float)
+    def test_custom_values(self):
+        now = datetime.now()
+        result = MacroStressResult(
+            vix_value=30.0, vix_stress=True, vix_penalty=-4.0,
+            dxy_value=105.0, dxy_change_30d=5.0, dxy_stress=True, dxy_penalty=-3.0,
+            macro_stress=True, decision_penalty=-7.0, fetched_at=now,
+        )
+        assert result.vix_value == 30.0
+        assert result.vix_stress is True
+        assert result.decision_penalty == -7.0
+
+    def test_error_result(self):
+        result = MacroStressResult(error="FRED API key not configured")
+        assert result.error == "FRED API key not configured"
+        assert result.decision_penalty == 0.0
+
+    def test_asdict(self):
+        result = MacroStressResult(vix_value=25.0, vix_penalty=-2.0)
+        d = asdict(result)
+        assert isinstance(d, dict)
+        assert d["vix_value"] == 25.0
+        assert d["vix_penalty"] == -2.0
+        assert "decision_penalty" in d
 
 
-class TestMacroStressServiceEvaluate:
-    """Tests d'intégration du service evaluate_stress"""
+class TestConstants:
 
-    @pytest.fixture(autouse=True)
-    def fresh_service(self):
-        """Reset le singleton entre chaque test"""
-        MacroStressService._instance = None
-        MacroStressService._cache = None
-        MacroStressService._cache_time = None
-        self.service = MacroStressService()
+    def test_vix_penalty_start(self):
+        assert VIX_PENALTY_START == 20.0
+
+    def test_vix_penalty_max_level(self):
+        assert VIX_PENALTY_MAX_LEVEL == 45.0
+
+    def test_vix_penalty_max_pts(self):
+        assert VIX_PENALTY_MAX_PTS == 10.0
+
+    def test_dxy_change_start_pct(self):
+        assert DXY_CHANGE_START_PCT == 2.0
+
+    def test_dxy_change_max_pct(self):
+        assert DXY_CHANGE_MAX_PCT == 10.0
+
+    def test_dxy_penalty_max_pts(self):
+        assert DXY_PENALTY_MAX_PTS == 8.0
+
+    def test_total_penalty_cap(self):
+        assert TOTAL_PENALTY_CAP == -15.0
+
+    def test_cache_ttl_hours(self):
+        assert MACRO_CACHE_TTL_HOURS == 4
+
+
+class TestServiceCacheLogic:
+
+    def test_cache_invalid_when_empty(self, fresh_service):
+        assert fresh_service._is_cache_valid() is False
+
+    def test_cache_invalid_when_no_time(self, fresh_service):
+        fresh_service._cache = MacroStressResult()
+        fresh_service._cache_time = None
+        assert fresh_service._is_cache_valid() is False
+
+    def test_cache_invalid_when_no_result(self, fresh_service):
+        fresh_service._cache = None
+        fresh_service._cache_time = datetime.now()
+        assert fresh_service._is_cache_valid() is False
+
+    def test_cache_valid_when_recent(self, fresh_service):
+        fresh_service._cache = MacroStressResult()
+        fresh_service._cache_time = datetime.now()
+        assert fresh_service._is_cache_valid() is True
+
+    def test_cache_invalid_when_expired(self, fresh_service):
+        fresh_service._cache = MacroStressResult()
+        fresh_service._cache_time = datetime.now() - timedelta(hours=5)
+        assert fresh_service._is_cache_valid() is False
+
+    def test_cache_valid_at_boundary(self, fresh_service):
+        fresh_service._cache = MacroStressResult()
+        fresh_service._cache_time = datetime.now() - timedelta(hours=3, minutes=59)
+        assert fresh_service._is_cache_valid() is True
+
+    def test_get_cached_penalty_no_cache(self, fresh_service):
+        assert fresh_service.get_cached_penalty() == 0.0
+
+    def test_get_cached_penalty_valid(self, fresh_service):
+        fresh_service._cache = MacroStressResult(decision_penalty=-7.5)
+        fresh_service._cache_time = datetime.now()
+        assert fresh_service.get_cached_penalty() == -7.5
+
+    def test_get_cached_penalty_expired(self, fresh_service):
+        fresh_service._cache = MacroStressResult(decision_penalty=-7.5)
+        fresh_service._cache_time = datetime.now() - timedelta(hours=5)
+        assert fresh_service.get_cached_penalty() == 0.0
+
+    def test_invalidate_cache(self, fresh_service):
+        fresh_service._cache = MacroStressResult()
+        fresh_service._cache_time = datetime.now()
+        fresh_service.invalidate_cache()
+        assert fresh_service._cache is None
+        assert fresh_service._cache_time is None
+
+
+def _make_vix_data(latest_value):
+    return [{"date": "2026-01-15", "value": latest_value}]
+
+
+def _make_dxy_data(past_value, current_value, n_points=30):
+    data = []
+    for i in range(n_points):
+        val = past_value + (current_value - past_value) * (i / (n_points - 1))
+        data.append({"date": f"2026-01-{i+1:02d}", "value": val})
+    return data
+
+
+class TestEvaluateStress:
 
     @pytest.mark.asyncio
-    async def test_vix_31_graduated_penalty(self):
-        """VIX=31 produit une pénalité graduée de -4.4 (pas -15)"""
-        vix_data = [{"date": "2026-01-01", "value": 31.0}]
+    async def test_no_fred_key_returns_error(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={}):
+            with patch.dict("os.environ", {}, clear=True):
+                result = await fresh_service.evaluate_stress("test_user")
+                assert result.error == "FRED API key not configured"
 
-        with patch.object(self.service, '_fetch_fred_series', new_callable=AsyncMock) as mock_fetch, \
-             patch('services.user_secrets.get_user_secrets', return_value={"fred": {"api_key": "test"}}):
-            mock_fetch.side_effect = [vix_data, []]  # VIX ok, DXY empty
+    @pytest.mark.asyncio
+    async def test_returns_cached_result(self, fresh_service):
+        cached = MacroStressResult(decision_penalty=-5.0, vix_value=30.0)
+        fresh_service._cache = cached
+        fresh_service._cache_time = datetime.now()
+        result = await fresh_service.evaluate_stress("test_user")
+        assert result is cached
+        assert result.decision_penalty == -5.0
 
-            result = await self.service.evaluate_stress("test_user")
+    @pytest.mark.asyncio
+    async def test_force_refresh_ignores_cache(self, fresh_service):
+        cached = MacroStressResult(decision_penalty=-5.0)
+        fresh_service._cache = cached
+        fresh_service._cache_time = datetime.now()
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user", force_refresh=True)
+            assert result is not cached
+            assert result.decision_penalty == 0.0
 
+    @pytest.mark.asyncio
+    async def test_low_vix_no_penalty(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value == 15.0
+            assert result.vix_stress is False
+            assert result.vix_penalty == 0.0
+
+    @pytest.mark.asyncio
+    async def test_high_vix_penalty(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(45.0), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value == 45.0
             assert result.vix_stress is True
-            assert result.vix_penalty == pytest.approx(-4.4, abs=0.01)
-            assert result.decision_penalty == pytest.approx(-4.4, abs=0.01)
+            assert result.vix_penalty == pytest.approx(-10.0)
+
+    @pytest.mark.asyncio
+    async def test_moderate_vix_graduated(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(32.5), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_penalty == pytest.approx(-5.0)
+
+    @pytest.mark.asyncio
+    async def test_high_dxy_change(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), _make_dxy_data(100.0, 112.0),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.dxy_penalty == pytest.approx(-8.0)
+            assert result.dxy_stress is True
+
+    @pytest.mark.asyncio
+    async def test_combined_penalty_capped(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(45.0), _make_dxy_data(100.0, 112.0),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.decision_penalty == pytest.approx(-15.0)
             assert result.macro_stress is True
 
     @pytest.mark.asyncio
-    async def test_no_stress_zero_penalty(self):
-        """VIX=15 → pas de stress, pénalité = 0"""
-        vix_data = [{"date": "2026-01-01", "value": 15.0}]
+    async def test_vix_fetch_failure(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                Exception("VIX fail"), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value is None
+            assert result.vix_penalty == 0.0
 
-        with patch.object(self.service, '_fetch_fred_series', new_callable=AsyncMock) as mock_fetch, \
-             patch('services.user_secrets.get_user_secrets', return_value={"fred": {"api_key": "test"}}):
-            mock_fetch.side_effect = [vix_data, []]
+    @pytest.mark.asyncio
+    async def test_dxy_fetch_failure(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(30.0), Exception("DXY fail"),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value == 30.0
+            assert result.dxy_value is None
 
-            result = await self.service.evaluate_stress("test_user")
-
-            assert result.vix_stress is False
+    @pytest.mark.asyncio
+    async def test_both_fetch_failures(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                Exception("VIX"), Exception("DXY"),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
             assert result.decision_penalty == 0.0
             assert result.macro_stress is False
 
     @pytest.mark.asyncio
-    async def test_combined_vix_dxy(self):
-        """VIX=35 + DXY change=6% → pénalité combinée"""
-        vix_data = [{"date": "2026-01-01", "value": 35.0}]
-        # DXY: 30 observations, le dernier = 106, le -30ème = 100 → change = 6%
-        dxy_data = [{"date": f"2025-12-{i:02d}", "value": 100.0} for i in range(1, 31)]
-        dxy_data.append({"date": "2026-01-31", "value": 106.0})
-
-        with patch.object(self.service, '_fetch_fred_series', new_callable=AsyncMock) as mock_fetch, \
-             patch('services.user_secrets.get_user_secrets', return_value={"fred": {"api_key": "test"}}):
-            mock_fetch.side_effect = [vix_data, dxy_data]
-
-            result = await self.service.evaluate_stress("test_user")
-
-            # VIX=35 → -6.0, DXY change=6% → -4.0, total = -10.0
-            assert result.vix_penalty == pytest.approx(-6.0, abs=0.01)
-            assert result.dxy_penalty == pytest.approx(-4.0, abs=0.01)
-            assert result.decision_penalty == pytest.approx(-10.0, abs=0.01)
+    async def test_empty_vix_data(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                [], _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value is None
 
     @pytest.mark.asyncio
-    async def test_cache_returns_cached_penalty(self):
-        """Le cache retourne la pénalité graduée correcte"""
-        vix_data = [{"date": "2026-01-01", "value": 25.0}]
-
-        with patch.object(self.service, '_fetch_fred_series', new_callable=AsyncMock) as mock_fetch, \
-             patch('services.user_secrets.get_user_secrets', return_value={"fred": {"api_key": "test"}}):
-            mock_fetch.side_effect = [vix_data, []]
-
-            await self.service.evaluate_stress("test_user")
-
-            # get_cached_penalty retourne la même valeur
-            cached = self.service.get_cached_penalty()
-            assert cached == pytest.approx(-2.0, abs=0.01)
-            assert isinstance(cached, float)
+    async def test_insufficient_dxy_data(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), [{"date": "2026-01-15", "value": 105.0}],
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.dxy_value == 105.0
+            assert result.dxy_change_30d is None
 
     @pytest.mark.asyncio
-    async def test_no_fred_key_returns_empty(self):
-        """Sans clé FRED, retourne un résultat vide avec erreur"""
-        with patch('services.user_secrets.get_user_secrets', return_value={}):
-            result = await self.service.evaluate_stress("test_user")
-            assert result.error == "FRED API key not configured"
-            assert result.decision_penalty == 0.0
+    async def test_result_cached_after_eval(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), _make_dxy_data(100.0, 101.0),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert fresh_service._cache is result
+            assert fresh_service._cache_time is not None
 
-    def test_cache_ttl_respected(self):
-        """Le cache expire après MACRO_CACHE_TTL_HOURS"""
-        self.service._cache = MacroStressResult(decision_penalty=-4.0)
-        self.service._cache_time = datetime.now() - timedelta(hours=MACRO_CACHE_TTL_HOURS + 1)
+    @pytest.mark.asyncio
+    async def test_fred_key_from_env(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={}):
+            with patch.dict("os.environ", {"FRED_API_KEY": "env_key"}):
+                fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                    _make_vix_data(15.0), _make_dxy_data(100.0, 101.0),
+                ])
+                result = await fresh_service.evaluate_stress("test_user")
+                assert result.error is None
 
-        assert not self.service._is_cache_valid()
-        assert self.service.get_cached_penalty() == 0.0
+    @pytest.mark.asyncio
+    async def test_circuit_open_skips_vix(self, fresh_service):
+        from shared.circuit_breaker import CircuitOpenError
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                CircuitOpenError("fred"), _make_dxy_data(100.0, 101.0),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value is None
+            assert result.dxy_value is not None
 
-    def test_cache_valid_within_ttl(self):
-        """Le cache est valide dans le TTL"""
-        self.service._cache = MacroStressResult(decision_penalty=-4.0)
-        self.service._cache_time = datetime.now() - timedelta(hours=1)
+    @pytest.mark.asyncio
+    async def test_circuit_open_skips_dxy(self, fresh_service):
+        from shared.circuit_breaker import CircuitOpenError
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(25.0), CircuitOpenError("fred"),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.vix_value == 25.0
+            assert result.dxy_value is None
 
-        assert self.service._is_cache_valid()
-        assert self.service.get_cached_penalty() == pytest.approx(-4.0)
+    @pytest.mark.asyncio
+    async def test_macro_stress_flag_vix_only(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(30.0), _make_dxy_data(100.0, 100.5),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.macro_stress is True
 
-
-class TestConstants:
-    """Vérifie que les constantes sont alignées avec le backtest V2"""
-
-    def test_vix_constants(self):
-        assert VIX_PENALTY_START == 20.0
-        assert VIX_PENALTY_MAX_LEVEL == 45.0
-        assert VIX_PENALTY_MAX_PTS == 10.0
-
-    def test_dxy_constants(self):
-        assert DXY_CHANGE_START_PCT == 2.0
-        assert DXY_CHANGE_MAX_PCT == 10.0
-        assert DXY_PENALTY_MAX_PTS == 8.0
-
-    def test_total_cap(self):
-        assert TOTAL_PENALTY_CAP == -15.0
+    @pytest.mark.asyncio
+    async def test_macro_stress_flag_dxy_only(self, fresh_service):
+        with patch("services.user_secrets.get_user_secrets", return_value={"fred": {"api_key": "k"}}):
+            fresh_service._fetch_fred_series = AsyncMock(side_effect=[
+                _make_vix_data(15.0), _make_dxy_data(100.0, 105.0),
+            ])
+            result = await fresh_service.evaluate_stress("test_user")
+            assert result.macro_stress is True
