@@ -477,42 +477,7 @@ function getLeftParts(data) {
 /**
  * Génère le footer stats global (à placer en bas du panneau complet)
  */
-function renderGlobalFooterStats(meta) {
-  const sentimentFG = meta.sentiment_fg || '—';
-  const sentimentColor = typeof sentimentFG === 'number' ?
-    (sentimentFG >= 70 ? '#ef4444' : sentimentFG >= 30 ? '#f59e0b' : '#10b981') : '#6b7280';
-
-  // ML Sentiment zone detection
-  const sentimentZone = typeof sentimentFG === 'number'
-    ? (sentimentFG < 25 ? 'panic' : sentimentFG > 75 ? 'euphoria' : 'normal')
-    : 'unknown';
-  const sentimentZoneLabel = {
-    panic: '(Override Panic)',
-    euphoria: '(Override Euphoria)',
-    normal: '',
-    unknown: ''
-  }[sentimentZone];
-
-  return `
-    <div class="di-global-footer">
-      <div class="footer-stat">
-        <span class="footer-label">ML Sentiment</span>
-        <span class="footer-value" style="color: ${sentimentColor}" title="Override actif si <25 ou >75">
-          ${sentimentFG}
-          ${sentimentZoneLabel ? `<span class="sentiment-zone ${sentimentZone}">${sentimentZoneLabel}</span>` : ''}
-        </span>
-      </div>
-      <div class="footer-stat">
-        <span class="footer-label">Status</span>
-        <span class="footer-value ${meta.live ? 'live' : 'offline'}">${meta.live ? '● Live' : '○ Off'}</span>
-      </div>
-      <div class="footer-stat">
-        <span class="footer-label">Source</span>
-        <span class="footer-value">${meta.source || 'N/A'}</span>
-      </div>
-    </div>
-  `;
-}
+// renderGlobalFooterStats removed in v8.0 — merged into renderMetricsBar
 
 /**
  * Génère une barre de pilier compacte avec phases visuelles pour le Cycle
@@ -969,15 +934,20 @@ function renderFusedPillars(scores, meta) {
  * Full-width bar below the 2-column grid
  */
 function renderMetricsBar(meta, scores = {}) {
-  const items = [];
+  const leftItems = [];
 
-  // --- Active Factors ---
+  // ML Sentiment
+  const sentimentFG = meta.sentiment_fg || '—';
+  const sentimentColor = typeof sentimentFG === 'number'
+    ? (sentimentFG >= 70 ? '#ef4444' : sentimentFG >= 30 ? '#f59e0b' : '#10b981') : '#6b7280';
+  leftItems.push({ label: 'Sentiment', value: `${sentimentFG}`, color: sentimentColor });
+
   // Contradiction
   const contradiction = meta.contradiction ?? null;
   if (contradiction != null) {
     const cPct = Math.round(contradiction * 100);
     const cColor = cPct > 50 ? '#ef4444' : cPct > 25 ? '#f59e0b' : '#10b981';
-    items.push({ label: 'Contradiction', value: `${cPct}%`, color: cColor });
+    leftItems.push({ label: 'Contradiction', value: `${cPct}%`, color: cColor });
   }
 
   // Macro Stress
@@ -988,23 +958,22 @@ function renderMetricsBar(meta, scores = {}) {
     if (meta.vix_value) details.push(`VIX ${meta.vix_value.toFixed(0)}`);
     if (meta.dxy_change_30d) details.push(`DXY ${meta.dxy_change_30d > 0 ? '+' : ''}${meta.dxy_change_30d.toFixed(1)}%`);
     const mColor = macroStress ? '#ef4444' : '#10b981';
-    items.push({
+    leftItems.push({
       label: 'Macro',
       value: macroStress ? (details.length ? details.join(' ') : 'Stress') : 'Normal',
       color: mColor
     });
   } else {
-    items.push({ label: 'Macro', value: 'Normal', color: '#10b981' });
+    leftItems.push({ label: 'Macro', value: 'Normal', color: '#10b981' });
   }
 
-  // --- Key Metrics ---
   // VaR 95%
   const var95 = meta.risk_var95 ?? meta.var95 ?? null;
   const var95Display = var95 != null ? `${(Math.abs(var95) * 100).toFixed(2)}%` : '--';
   const varColor = var95 != null
     ? (Math.abs(var95) > 0.05 ? '#ef4444' : Math.abs(var95) > 0.03 ? '#f59e0b' : '#10b981')
     : '#6b7280';
-  items.push({ label: 'VaR 95%', value: var95Display, color: varColor });
+  leftItems.push({ label: 'VaR 95%', value: var95Display, color: varColor });
 
   // Sharpe Ratio
   const sharpe = meta.sharpe ?? meta.sharpe_ratio ?? meta.risk_sharpe ?? null;
@@ -1012,25 +981,42 @@ function renderMetricsBar(meta, scores = {}) {
   const sharpeColor = sharpe != null
     ? (sharpe >= 1.5 ? '#10b981' : sharpe >= 0.5 ? '#f59e0b' : '#ef4444')
     : '#6b7280';
-  items.push({ label: 'Sharpe', value: sharpeDisplay, color: sharpeColor });
+  leftItems.push({ label: 'Sharpe', value: sharpeDisplay, color: sharpeColor });
 
-  // Risk Budget (% risky assets)
+  // Risk Budget
   const riskBudget = meta.risk_budget ?? null;
   const riskyPct = riskBudget?.risky ?? null;
   const riskBudgetDisplay = riskyPct != null ? `${Math.round(riskyPct)}%` : '--';
   const riskBudgetColor = riskyPct != null
     ? (riskyPct >= 60 ? '#ef4444' : riskyPct >= 40 ? '#f59e0b' : '#10b981')
     : '#6b7280';
-  items.push({ label: 'Risk %', value: riskBudgetDisplay, color: riskBudgetColor });
+  leftItems.push({ label: 'Risk %', value: riskBudgetDisplay, color: riskBudgetColor });
+
+  // Right side: Status + Source
+  const statusClass = meta.live ? 'live' : 'offline';
+  const statusText = meta.live ? 'Live' : 'Off';
+  const source = meta.source || 'N/A';
 
   return `
     <div class="di-metrics-bar">
-      ${items.map(item => `
+      <div class="metrics-bar-left">
+        ${leftItems.map(item => `
+          <div class="metrics-bar-item">
+            <span class="metrics-bar-label">${item.label}</span>
+            <span class="metrics-bar-value" style="color:${item.color};">${item.value}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="metrics-bar-right">
         <div class="metrics-bar-item">
-          <span class="metrics-bar-label">${item.label}</span>
-          <span class="metrics-bar-value" style="color:${item.color};">${item.value}</span>
+          <span class="metrics-bar-label">Status</span>
+          <span class="metrics-bar-value ${statusClass}">${statusText}</span>
         </div>
-      `).join('')}
+        <div class="metrics-bar-item">
+          <span class="metrics-bar-label">Source</span>
+          <span class="metrics-bar-value">${source}</span>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -1827,76 +1813,27 @@ function injectStyles() {
       }
     }
 
-    /* Global Footer (centré en bas du panneau) */
-    .di-global-footer {
+    /* ═══════════════════════════════════════════════════════════
+       LEGACY (removed sections)
+       ═══════════════════════════════════════════════════════════ */
+
+    /* Full-width metrics bar (replaces footer) */
+    .di-metrics-bar {
       display: flex;
-      justify-content: center;
+      justify-content: space-between;
       align-items: center;
-      gap: 2rem;
       padding: 0.5rem 1rem;
       margin-top: 0.5rem;
-      border-top: 1px solid rgba(148, 163, 184, 0.08);
       background: rgba(30, 41, 59, 0.2);
+      border-top: 1px solid rgba(148, 163, 184, 0.08);
       border-radius: 0 0 12px 12px;
     }
 
-    .footer-stat {
-      text-align: center;
-    }
-
-    .footer-label {
-      display: block;
-      font-size: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: rgba(148, 163, 184, 0.5);
-      margin-bottom: 0.125rem;
-    }
-
-    .footer-value {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: rgba(226, 232, 240, 0.8);
-    }
-
-    .footer-value.live {
-      color: #10b981;
-    }
-
-    .footer-value.offline {
-      color: #ef4444;
-    }
-
-    /* Sentiment zone indicator */
-    .sentiment-zone {
-      display: block;
-      font-size: 0.5rem;
-      font-weight: 500;
-      margin-top: 0.125rem;
-    }
-
-    .sentiment-zone.panic {
-      color: #ef4444;
-    }
-
-    .sentiment-zone.euphoria {
-      color: #f59e0b;
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       KEY METRICS (VaR + Sharpe)
-       ═══════════════════════════════════════════════════════════ */
-
-    /* Full-width metrics bar (between grid and footer) */
-    .di-metrics-bar {
+    .metrics-bar-left,
+    .metrics-bar-right {
       display: flex;
-      justify-content: center;
       align-items: center;
-      gap: 1.5rem;
-      padding: 0.5rem 1rem;
-      margin-top: 0.5rem;
-      background: rgba(30, 41, 59, 0.2);
-      border-top: 1px solid rgba(148, 163, 184, 0.08);
+      gap: 1rem;
     }
 
     .metrics-bar-item {
@@ -1915,6 +1852,15 @@ function injectStyles() {
     .metrics-bar-value {
       font-size: 0.75rem;
       font-weight: 700;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    .metrics-bar-value.live {
+      color: #10b981;
+    }
+
+    .metrics-bar-value.offline {
+      color: #ef4444;
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -2053,11 +1999,11 @@ function injectStyles() {
 
     .pillar-fused-track {
       width: 100%;
-      height: 3px;
+      height: 6px;
       background: rgba(15, 23, 42, 0.5);
       border-radius: 999px;
       overflow: hidden;
-      margin-top: 0.125rem;
+      margin-top: 0.25rem;
     }
 
     .pillar-fused-fill {
@@ -2294,9 +2240,14 @@ function injectStyles() {
         font-size: 3rem;
       }
 
-      .di-global-footer {
-        gap: 1rem;
-        padding: 0.75rem 0.5rem;
+      .di-metrics-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .metrics-bar-left,
+      .metrics-bar-right {
+        gap: 0.5rem;
         flex-wrap: wrap;
       }
 
@@ -2319,11 +2270,6 @@ function injectStyles() {
 
       .ctx-item[data-ctx="phase"] .ctx-value {
         max-width: 80px;
-      }
-
-      .di-metrics-bar {
-        gap: 0.75rem;
-        flex-wrap: wrap;
       }
 
       .di-mini-cycle-wrapper {
@@ -2464,7 +2410,6 @@ function _renderDIPanelInternal(container, data, opts = {}) {
   const left = getLeftParts(data);
   const right = getRightParts(data);
   const metricsBar = renderMetricsBar(data.meta || {}, data.scores || {});
-  const globalFooter = renderGlobalFooterStats(data.meta || {});
 
   // Layout 3 rangées alignées: chaque rangée est une grille 2 colonnes
   container.innerHTML = `
@@ -2488,7 +2433,6 @@ function _renderDIPanelInternal(container, data, opts = {}) {
         ${right.fusedPillars}
       </div>
       ${metricsBar}
-      ${globalFooter}
       ${renderHelpContent()}
     </div>
   `;
