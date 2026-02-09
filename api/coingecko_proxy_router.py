@@ -11,6 +11,7 @@ Features:
 """
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Dict, Any, Optional
+import asyncio
 import httpx
 import logging
 from datetime import datetime, timedelta
@@ -164,75 +165,73 @@ async def _fetch_with_cache_and_fallback(
             return _cache[cache_key]["data"]
         raise HTTPException(status_code=503, detail="CoinGecko API unavailable (circuit open) and no cache")
 
+    max_retries = 3
+    headers = {}
+    if api_key:
+        headers["x-cg-demo-api-key"] = api_key
+
     try:
-        # Add API key as header if available (for Pro/Demo API)
-        headers = {}
-        if api_key:
-            headers["x-cg-demo-api-key"] = api_key
-            logger.debug("Using CoinGecko API key from user config")
-
         async with httpx.AsyncClient(timeout=10.0) as client:
-            logger.debug(f"Fetching from CoinGecko: {url}")
-            response = await client.get(url, params=params, headers=headers)
+            for attempt in range(max_retries + 1):
+                logger.debug(f"Fetching from CoinGecko: {url} (attempt {attempt + 1})")
+                response = await client.get(url, params=params, headers=headers)
 
-            if response.status_code == 429:
-                logger.warning("CoinGecko rate limit reached (429)")
-                # Try to use stale cache if available
-                if cache_key in _cache:
-                    stale_data = _cache[cache_key]["data"]
-                    age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
-                    logger.info(f"Using stale cache (age: {age:.1f}s) due to rate limit")
-                    # Return data directly (frontend expects raw CoinGecko response)
-                    return stale_data
-                raise HTTPException(status_code=429, detail="CoinGecko API rate limit exceeded and no cache available")
+                if response.status_code == 429:
+                    if attempt < max_retries:
+                        backoff = 2 ** attempt  # 1s, 2s, 4s
+                        logger.warning(f"CoinGecko 429 — retry {attempt + 1}/{max_retries} in {backoff}s")
+                        await asyncio.sleep(backoff)
+                        continue
+                    logger.warning(f"CoinGecko 429 — exhausted {max_retries} retries")
+                    # Fall through to stale cache below
+                    if cache_key in _cache:
+                        stale_data = _cache[cache_key]["data"]
+                        age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
+                        logger.info(f"Using stale cache (age: {age:.1f}s) after rate limit retries exhausted")
+                        return stale_data
+                    raise HTTPException(status_code=429, detail="CoinGecko API rate limit exceeded and no cache available")
 
-            response.raise_for_status()
-            data = response.json()
+                response.raise_for_status()
+                data = response.json()
 
-            # Cache the response
-            set_cached_data(cache_key, data, cache_ttl)
-            coingecko_circuit.record_success()
+                # Cache the response
+                set_cached_data(cache_key, data, cache_ttl)
+                coingecko_circuit.record_success()
 
-            logger.info(f"Successfully fetched data from CoinGecko: {url}")
-            # Return data directly (frontend expects raw CoinGecko response)
-            return data
+                logger.info(f"Successfully fetched data from CoinGecko: {url}")
+                return data
 
     except httpx.TimeoutException:
         logger.error("CoinGecko API timeout")
         coingecko_circuit.record_failure()
-        # Try to use stale cache
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]
             age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
             logger.info(f"Using stale cache (age: {age:.1f}s) due to timeout")
-            # Return data directly (frontend expects raw CoinGecko response)
             return stale_data
         raise HTTPException(status_code=504, detail="CoinGecko API timeout and no cache available")
 
     except httpx.HTTPStatusError as e:
         logger.error(f"CoinGecko API error: {e.response.status_code}")
         coingecko_circuit.record_failure()
-        # Try to use stale cache instead of raising error
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]
             age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
             logger.info(f"Using stale cache (age: {age:.1f}s) due to API error {e.response.status_code}")
-            # Return data directly (frontend expects raw CoinGecko response)
             return stale_data
-        # Only raise if no cache available
         raise HTTPException(status_code=e.response.status_code, detail=f"CoinGecko API error and no cache available")
+
+    except HTTPException:
+        raise
 
     except Exception as e:
         logger.error(f"Unexpected error fetching CoinGecko data: {e}")
         coingecko_circuit.record_failure()
-        # ALWAYS try to use stale cache before raising error
         if cache_key in _cache:
             stale_data = _cache[cache_key]["data"]
             age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
             logger.info(f"Using stale cache (age: {age:.1f}s) due to unexpected error")
-            # Return data directly (frontend expects raw CoinGecko response)
             return stale_data
-        # Last resort: return empty object (frontend expects raw CoinGecko response)
         logger.warning(f"No cache available for {cache_key}, returning empty fallback")
         return {}
 
@@ -246,7 +245,7 @@ async def get_bitcoin_data(
     sparkline: bool = Query(False, description="Include sparkline data"),
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Proxy endpoint for CoinGecko Bitcoin data (multi-tenant).
 
@@ -288,7 +287,7 @@ async def get_bitcoin_data(
 async def get_global_data(
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Proxy endpoint for CoinGecko global cryptocurrency market data (multi-tenant).
     Used for BTC dominance and market cap data.
@@ -316,7 +315,7 @@ async def get_simple_price(
     vs_currencies: str = Query("usd", description="Comma-separated fiat currencies"),
     cache_ttl: int = Query(180, description="Cache TTL in seconds (default 3min for prices)", ge=60, le=7200),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Proxy endpoint for CoinGecko simple price endpoint (multi-tenant).
     Used for getting current prices of multiple coins.
@@ -350,7 +349,7 @@ async def get_market_chart(
     interval: str = Query("daily", description="Data interval"),
     cache_ttl: int = Query(900, description="Cache TTL in seconds (default 15min)", ge=60, le=7200),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Proxy endpoint for CoinGecko market chart endpoint (multi-tenant).
     Used for historical price data and volatility calculations.
@@ -378,7 +377,7 @@ async def get_market_chart(
     return await _fetch_with_cache_and_fallback(url, cache_key, cache_ttl, params, api_key)
 
 @router.get("/cache/stats")
-async def get_cache_stats():
+async def get_cache_stats() -> dict:
     """
     Get cache statistics (useful for debugging).
 
@@ -410,7 +409,7 @@ async def get_cache_stats():
     }
 
 @router.post("/cache/cleanup")
-async def trigger_cache_cleanup():
+async def trigger_cache_cleanup() -> dict:
     """
     Manually trigger cleanup of expired cache entries.
 
@@ -424,7 +423,7 @@ async def trigger_cache_cleanup():
     }
 
 @router.delete("/cache/clear")
-async def clear_cache():
+async def clear_cache() -> dict:
     """
     Clear the entire cache (useful for debugging/testing).
 

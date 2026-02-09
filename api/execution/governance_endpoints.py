@@ -307,7 +307,7 @@ async def get_governance_state():
 # Former functionality available with resource_type="decision"
 
 @router.post("/init-ml")
-async def init_ml_models():
+async def init_ml_models() -> dict:
     """
     Force l'initialisation des modèles ML pour la gouvernance
     
@@ -349,7 +349,7 @@ async def init_ml_models():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/unfreeze")
-async def unfreeze_system():
+async def unfreeze_system() -> dict:
     """
     Dégeler le système de gouvernance
     
@@ -372,7 +372,7 @@ async def unfreeze_system():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/signals")
-async def get_ml_signals():
+async def get_ml_signals() -> dict:
     """
     Obtenir les signaux ML actuels
     
@@ -449,7 +449,7 @@ async def get_ml_signals():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/mode")
-async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_required_user)):
+async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_required_user)) -> dict:
     """
     Changer le mode de gouvernance
 
@@ -490,7 +490,7 @@ async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_r
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/propose")
-async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(get_required_user)):
+async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(get_required_user)) -> dict:
     """
     Proposer une nouvelle décision avec respect du cooldown
 
@@ -528,7 +528,7 @@ async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/review/{plan_id}")
-async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)):
+async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)) -> dict:
     """
     Review un plan DRAFT → REVIEWED with ETag-based concurrency control
 
@@ -570,7 +570,7 @@ async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Option
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/approve/{resource_id}")
-async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRequest, user: str = Depends(get_required_user)):
+async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRequest, user: str = Depends(get_required_user)) -> dict:
     """
     Endpoint unifié pour approuver/rejeter des décisions ou des plans
     
@@ -651,7 +651,7 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/activate/{plan_id}")
-async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)):
+async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)) -> dict:
     """
     Activer un plan APPROVED → ACTIVE
     
@@ -678,7 +678,7 @@ async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/execute/{plan_id}")
-async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)):
+async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)) -> dict:
     """
     Marquer un plan comme exécuté ACTIVE → EXECUTED
     
@@ -705,7 +705,7 @@ async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_u
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cancel/{plan_id}")
-async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: str = Depends(get_required_user)):
+async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: str = Depends(get_required_user)) -> dict:
     """
     Annuler un plan ANY_STATE → CANCELLED
 
@@ -737,7 +737,7 @@ async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: s
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/cooldown-status")
-async def get_cooldown_status():
+async def get_cooldown_status() -> dict:
     """
     Vérifier le statut du cooldown de publication des plans
     
@@ -770,7 +770,7 @@ async def apply_policy_from_alert(
     request: ApplyPolicyRequest,
     idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
     current_user: User = Depends(require_role("approver"))
-):
+) -> dict:
     """
     Applique une policy sans creer de plan (respecte cooldown) - NOUVEAU
 
@@ -869,7 +869,7 @@ async def freeze_system_with_ttl(
     request: FreezeRequest,
     idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
     current_user: User = Depends(require_role("approver"))
-):
+) -> dict:
     """
     Freeze le système avec TTL et auto-restore - ÉTENDU
     
@@ -926,7 +926,7 @@ async def freeze_system_with_ttl(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/validate-allocation")
-async def validate_allocation_change(request: ValidateAllocationRequest, user: str = Depends(get_required_user)):
+async def validate_allocation_change(request: ValidateAllocationRequest, user: str = Depends(get_required_user)) -> dict:
     """
     Valide un changement d'allocation avant exécution
 

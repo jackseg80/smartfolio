@@ -58,7 +58,7 @@ async def validate_execution_plan(request: ExecutionRequest):
 
 
 @router.post("/governance/validate-allocation")
-async def validate_allocation_change(request: dict):
+async def validate_allocation_change(request: dict) -> dict:
     """
     Valide un changement d'allocation avant exécution
 

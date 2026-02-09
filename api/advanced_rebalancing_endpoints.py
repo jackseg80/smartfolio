@@ -29,7 +29,7 @@ router = APIRouter(prefix="/advanced-rebalancing", tags=["advanced_rebalancing"]
 @router.post("/plan")
 async def create_advanced_rebalancing_plan(
     request_data: Dict[str, Any] = Body(...)
-):
+) -> dict:
     """
     Génère un plan de rebalancement avancé avec stratégie sélectionnée
     
@@ -176,7 +176,7 @@ async def create_advanced_rebalancing_plan(
 @router.post("/simulate")
 async def simulate_rebalancing_strategies(
     request_data: Dict[str, Any] = Body(...)
-):
+) -> dict:
     """
     Simule plusieurs stratégies de rebalancement pour comparaison
     
@@ -316,7 +316,7 @@ async def simulate_rebalancing_strategies(
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @router.get("/strategies")
-async def get_available_strategies():
+async def get_available_strategies() -> dict:
     """
     Liste les stratégies de rebalancement disponibles avec descriptions
     
@@ -423,7 +423,7 @@ async def get_available_strategies():
 @router.post("/constraints/validate")
 async def validate_constraints(
     constraints: Dict[str, Any] = Body(...)
-):
+) -> dict:
     """
     Valide des contraintes de rebalancement personnalisées
     

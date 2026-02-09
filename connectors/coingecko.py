@@ -116,13 +116,11 @@ class CoinGeckoConnector:
         log.debug(f"No mapping found for {symbol_or_alias}, trying lowercase: {symbol_lower}")
         return symbol_lower
 
-    def _make_request(self, endpoint: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
-        """Effectue une requête vers l'API CoinGecko avec gestion d'erreur et circuit breaker."""
+    def _make_request(self, endpoint: str, params: Dict[str, Any] = None, max_retries: int = 3) -> Optional[Dict[str, Any]]:
+        """Effectue une requête vers l'API CoinGecko avec retry backoff sur 429 et circuit breaker."""
         if not coingecko_circuit.is_available():
             log.warning(f"CoinGecko circuit OPEN — skipping {endpoint}")
             return None
-
-        self._rate_limit()
 
         url = f"{self.BASE_URL}{endpoint}"
         headers = {}
@@ -133,33 +131,43 @@ class CoinGeckoConnector:
         if params is None:
             params = {}
 
-        try:
-            log.debug(f"CoinGecko request: {endpoint} with params: {params}")
-            response = self.session.get(url, params=params, headers=headers)
-            response.raise_for_status()
+        for attempt in range(max_retries + 1):
+            self._rate_limit()
 
-            coingecko_circuit.record_success()
-            return response.json()
+            try:
+                log.debug(f"CoinGecko request: {endpoint} (attempt {attempt + 1})")
+                response = self.session.get(url, params=params, headers=headers)
+                response.raise_for_status()
 
-        except httpx.TimeoutException:
-            log.error(f"CoinGecko API timeout for {endpoint}")
-            coingecko_circuit.record_failure()
-            return None
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 429:
-                log.warning(f"CoinGecko rate limit hit, status: {e.response.status_code}")
-                self._rate_limit_delay = min(self._rate_limit_delay * 1.5, 10.0)
-            else:
-                log.error(f"CoinGecko API error {e.response.status_code} for {endpoint}: {e}")
-            coingecko_circuit.record_failure()
-            return None
-        except httpx.ConnectError as e:
-            log.error(f"Connection failed to CoinGecko API for {endpoint}: {e}")
-            coingecko_circuit.record_failure()
-            return None
-        except json.JSONDecodeError as e:
-            log.error(f"Invalid JSON response from CoinGecko for {endpoint}: {e}")
-            return None
+                coingecko_circuit.record_success()
+                return response.json()
+
+            except httpx.TimeoutException:
+                log.error(f"CoinGecko API timeout for {endpoint}")
+                coingecko_circuit.record_failure()
+                return None
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429:
+                    self._rate_limit_delay = min(self._rate_limit_delay * 1.5, 10.0)
+                    if attempt < max_retries:
+                        backoff = 2 ** attempt  # 1s, 2s, 4s
+                        log.warning(f"CoinGecko 429 rate limit — retry {attempt + 1}/{max_retries} in {backoff}s")
+                        time.sleep(backoff)
+                        continue
+                    log.warning(f"CoinGecko 429 rate limit — exhausted {max_retries} retries for {endpoint}")
+                else:
+                    log.error(f"CoinGecko API error {e.response.status_code} for {endpoint}: {e}")
+                coingecko_circuit.record_failure()
+                return None
+            except httpx.ConnectError as e:
+                log.error(f"Connection failed to CoinGecko API for {endpoint}: {e}")
+                coingecko_circuit.record_failure()
+                return None
+            except json.JSONDecodeError as e:
+                log.error(f"Invalid JSON response from CoinGecko for {endpoint}: {e}")
+                return None
+
+        return None
 
     def get_market_snapshot(self, symbols_or_aliases: List[str]) -> Dict[str, CoinMeta]:
         """

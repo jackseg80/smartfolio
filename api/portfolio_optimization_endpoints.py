@@ -732,7 +732,7 @@ async def analyze_portfolio(
         raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")
 
 @router.get("/objectives")
-async def get_optimization_objectives():
+async def get_optimization_objectives() -> dict:
     """Get available optimization objectives"""
     return {
         "objectives": [
@@ -765,7 +765,7 @@ async def get_optimization_objectives():
     }
 
 @router.get("/constraints/defaults")
-async def get_default_constraints(conservative: bool = Query(False)):
+async def get_default_constraints(conservative: bool = Query(False)) -> dict:
     """Get default optimization constraints"""
     
     constraints = create_crypto_constraints(conservative=conservative)
@@ -1138,7 +1138,7 @@ async def backtest_optimization(
     test_periods: int = Query(12, description="Number of monthly rebalancing periods to test"),
     source: str = Query("cointracking"),
     min_usd: float = Query(100)
-):
+) -> dict:
     """
     Backtest optimization strategy over historical periods
     """

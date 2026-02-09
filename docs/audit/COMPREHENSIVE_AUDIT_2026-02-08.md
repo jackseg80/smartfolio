@@ -31,13 +31,13 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | Technical Debt | 7.5/10 | **7.0/10** | -0.5 | TODOs up 8->20, frontend God Controllers found |
 | Tests | 8/10 | **5.0/10** | -3.0 | Real coverage 20.5% (not 50-55%) |
 | CI/CD | 8/10 | 8/10 | 0 | Workflows functional |
-| **NEW: API Contract** | -- | **4.0/10** | -- | 3 response formats, 83% untyped |
+| **NEW: API Contract** | -- | **5.5/10** | -- | 3 response formats; return type annotations added (~100 endpoints) |
 | **NEW: Error Handling** | -- | **8.0/10** | +1.5 | Circuit breakers added (CoinGecko/FRED/Saxo), timeouts fixed |
 | **NEW: Data Integrity** | -- | **8.0/10** | +2.5 | Auth on governance, CSV sanitization, Pydantic models |
 | **NEW: Logging** | -- | **8.0/10** | +3.0 | Request IDs, JSON file logs, sensitive data sanitized |
 | **NEW: Concurrency** | -- | **7.5/10** | +2.0 | FileLock on 5 critical writes, scheduler Redis lock |
 
-**Updated Overall Score: 7.2/10** (was 6.0 at audit, was 7.7 before audit)
+**Updated Overall Score: 7.3/10** (was 6.0 at audit, was 7.7 before audit)
 
 ---
 
@@ -315,7 +315,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | # | Action | Effort | Impact | Status |
 |---|--------|--------|--------|--------|
 | 12 | Standardize response format (success_response everywhere) | 8h | API consistency | |
-| 13 | Add return type annotations to endpoints | 6h | OpenAPI docs | |
+| 13 | Add return type annotations to endpoints (~100 endpoints across 35+ files) | 6h | OpenAPI docs | DONE (Feb 9) |
 | 14 | Add `aria-label` + `role="img"` to 20 canvas elements (9 pages) | 2h | Accessibility | DONE (Feb 8) |
 | 15 | Add `scope="col"` to 151 `<th>` elements (10 pages) | 3h | Accessibility | DONE (Feb 8) |
 | 16 | Circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience | DONE (Feb 9) |
@@ -334,7 +334,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | 22 | Implement JWT auth on all endpoints (replace X-User header) | 2w | Auth architecture | |
 | 23 | Structured JSON logging (file handler with JsonLogFormatter) | 2h | Observability | DONE (Feb 9) |
 | 24 | Redis distributed lock for scheduler exclusivity | 2h | Multi-worker safety | DONE (Feb 9) |
-| 27 | **Add CoinGecko rate-limit backoff** (currently gets 429 errors during price enrichment) | 2h | API reliability | |
+| 27 | **Add CoinGecko rate-limit backoff** (retry with exponential backoff on 429 in connector + proxy) | 2h | API reliability | DONE (Feb 9) |
 
 ---
 

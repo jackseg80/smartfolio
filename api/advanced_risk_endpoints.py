@@ -306,7 +306,7 @@ async def get_risk_summary(
         raise HTTPException(500, "risk_summary_failed")
 
 @router.get("/scenarios/list")
-async def list_stress_scenarios():
+async def list_stress_scenarios() -> dict:
     """Liste des scénarios de stress disponibles"""
     return {
         "scenarios": [
@@ -339,7 +339,7 @@ async def list_stress_scenarios():
     }
 
 @router.get("/methods/info")
-async def get_methods_info():
+async def get_methods_info() -> dict:
     """Information sur les méthodes disponibles"""
     return {
         "var_methods": {

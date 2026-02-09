@@ -58,7 +58,7 @@ async def list_wealth_items(
     type: Optional[str] = Query(None, description="Item type filter"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip")
-):
+) -> dict:
     """
     List wealth items for user with optional filters and pagination.
 
@@ -106,7 +106,7 @@ async def list_wealth_items(
 async def get_wealth_item(
     item_id: str,
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """Get a specific wealth item by ID."""
     from services.wealth.wealth_service import get_item
 
@@ -122,7 +122,7 @@ async def get_wealth_item(
 async def create_wealth_item(
     item: "WealthItemInput",
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Create a new wealth item for the user.
 
@@ -147,7 +147,7 @@ async def update_wealth_item(
     item_id: str,
     item: "WealthItemInput",
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Update an existing wealth item.
 
@@ -204,7 +204,7 @@ async def delete_wealth_item(
 @router.get("/summary")
 async def get_wealth_summary(
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Get wealth summary for user.
 
@@ -812,7 +812,7 @@ async def global_summary(
 async def export_bank_lists(
     user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$")
-):
+) -> dict:
     """
     Export bank accounts list in multiple formats.
 
@@ -878,7 +878,7 @@ async def export_bank_lists(
 async def export_wealth_lists(
     user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$")
-):
+) -> dict:
     """
     Export wealth items list in multiple formats.
     Includes all categories: liquidity, tangible, liability, insurance.

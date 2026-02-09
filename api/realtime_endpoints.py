@@ -198,7 +198,7 @@ async def get_realtime_status(
 @router.get("/connections")
 async def get_connection_stats(
     engine: RealtimeEngine = Depends(get_realtime_engine)
-):
+) -> dict:
     """Statistiques détaillées des connexions WebSocket"""
     try:
         return engine.websocket_manager.get_connection_stats()
@@ -478,7 +478,7 @@ async def get_demo_page():
 @router.post("/start", dependencies=[Depends(require_dev_mode)])
 async def start_realtime_engine(
     engine: RealtimeEngine = Depends(get_realtime_engine)
-):
+) -> dict:
     """Démarrer le moteur de streaming (DEV ONLY - pour tests/management)"""
     try:
         if not engine.running:
@@ -493,7 +493,7 @@ async def start_realtime_engine(
 @router.post("/stop", dependencies=[Depends(require_dev_mode)])
 async def stop_realtime_engine(
     engine: RealtimeEngine = Depends(get_realtime_engine)
-):
+) -> dict:
     """Arrêter le moteur de streaming (DEV ONLY - pour tests/management)"""
     try:
         if engine.running:

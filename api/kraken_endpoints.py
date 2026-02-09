@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/kraken", tags=["kraken"])
 
 @router.get("/status")
-async def kraken_status():
+async def kraken_status() -> dict:
     """Obtenir le statut de l'intégration Kraken"""
     try:
         from services.execution.exchange_adapter import exchange_registry
@@ -51,7 +51,7 @@ async def kraken_status():
         }
 
 @router.get("/pairs")
-async def get_kraken_trading_pairs():
+async def get_kraken_trading_pairs() -> dict:
     """Obtenir les paires de trading Kraken disponibles"""
     try:
         from services.execution.exchange_adapter import exchange_registry
@@ -116,7 +116,7 @@ async def get_kraken_trading_pairs():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/prices")
-async def get_kraken_prices(symbols: Optional[str] = None):
+async def get_kraken_prices(symbols: Optional[str] = None) -> dict:
     """Obtenir les prix Kraken pour des symboles spécifiques"""
     try:
         from connectors.kraken_api import KrakenAPI, KrakenConfig
@@ -166,7 +166,7 @@ async def get_kraken_prices(symbols: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/balance")
-async def get_kraken_balance(user: str = Depends(get_required_user)):
+async def get_kraken_balance(user: str = Depends(get_required_user)) -> dict:
     """Obtenir les soldes du compte Kraken (nécessite credentials)"""
     try:
         from services.execution.exchange_adapter import exchange_registry
@@ -214,7 +214,7 @@ async def get_kraken_balance(user: str = Depends(get_required_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/validate-order")
-async def validate_kraken_order(order_data: Dict[str, Any] = Body(...), user: str = Depends(get_required_user)):
+async def validate_kraken_order(order_data: Dict[str, Any] = Body(...), user: str = Depends(get_required_user)) -> dict:
     """Valider un ordre Kraken sans l'exécuter"""
     try:
         from connectors.kraken_api import KrakenAPI, KrakenConfig
@@ -265,7 +265,7 @@ async def validate_kraken_order(order_data: Dict[str, Any] = Body(...), user: st
         }
 
 @router.get("/system-info")
-async def get_kraken_system_info():
+async def get_kraken_system_info() -> dict:
     """Obtenir les informations système Kraken"""
     try:
         from connectors.kraken_api import KrakenAPI, KrakenConfig
@@ -299,7 +299,7 @@ async def get_kraken_system_info():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/test-connection")
-async def test_kraken_connection():
+async def test_kraken_connection() -> dict:
     """Test de connexion Kraken complet"""
     try:
         from services.execution.exchange_adapter import exchange_registry

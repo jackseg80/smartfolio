@@ -72,7 +72,7 @@ async def execute_plan(
 
 
 @router.post("/cancel/{plan_id}")
-async def cancel_execution(plan_id: str):
+async def cancel_execution(plan_id: str) -> dict:
     """
     Annuler l'exécution d'un plan
 
@@ -98,7 +98,7 @@ async def cancel_execution(plan_id: str):
 
 
 @router.get("/exchanges")
-async def list_exchanges():
+async def list_exchanges() -> dict:
     """
     Lister les exchanges disponibles
 
@@ -130,7 +130,7 @@ async def list_exchanges():
 
 
 @router.post("/exchanges/connect")
-async def connect_exchanges():
+async def connect_exchanges() -> dict:
     """
     Connecter tous les exchanges configurés
 

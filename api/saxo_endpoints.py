@@ -406,7 +406,7 @@ async def export_saxo_lists(
     user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$"),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
-):
+) -> dict:
     """
     Export Saxo positions and sectors lists in multiple formats.
 

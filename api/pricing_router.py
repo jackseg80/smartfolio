@@ -21,7 +21,7 @@ async def pricing_diagnostic(
     min_usd: float = Query(1.0, description="Minimum USD threshold to filter rows"),
     mode: str = Query("auto", description="Pricing mode to diagnose: local|auto"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of symbols to analyze")
-):
+) -> dict:
     """Diagnostique la source de prix retenue par symbole selon la logique actuelle.
 
     Retourne, pour chaque symbole présent dans les holdings filtrés:
@@ -141,6 +141,6 @@ async def pricing_diagnostic_alias(
     min_usd: float = Query(1.0),
     mode: str = Query("auto"),
     limit: int = Query(50, ge=1, le=500)
-):
+) -> dict:
     """Alias endpoint for pricing diagnostic (compatibility)"""
     return await pricing_diagnostic(source=source, min_usd=min_usd, mode=mode, limit=limit)

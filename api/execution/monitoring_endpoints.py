@@ -46,7 +46,7 @@ async def get_execution_status(plan_id: str):
 async def list_execution_plans(
     limit: int = Query(default=50, le=100),
     offset: int = Query(default=0, ge=0)
-):
+) -> dict:
     """
     Lister les plans d'exécution
 
@@ -78,7 +78,7 @@ async def list_execution_plans(
 
 
 @router.get("/orders/{plan_id}")
-async def get_plan_orders(plan_id: str):
+async def get_plan_orders(plan_id: str) -> dict:
     """
     Obtenir la liste détaillée des ordres d'un plan
 
@@ -133,7 +133,7 @@ async def get_plan_orders(plan_id: str):
 
 
 @router.get("/pipeline-status")
-async def get_pipeline_status():
+async def get_pipeline_status() -> dict:
     """
     Obtenir le statut global du pipeline d'exécution
 

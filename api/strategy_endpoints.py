@@ -194,7 +194,7 @@ async def get_current_strategy(template_id: str = Query("balanced", description=
 
 
 @router.get("/health")
-async def strategy_health():
+async def strategy_health() -> dict:
     """Health check du Strategy Registry"""
     try:
         registry = get_strategy_registry()
@@ -209,7 +209,7 @@ async def strategy_health():
 @router.post("/compare")
 async def compare_templates(
     template_ids: List[str] = Body(..., description="Template IDs to compare", max_items=5)
-):
+) -> dict:
     """Compare plusieurs templates côte à côte"""
     try:
         if len(template_ids) < 2:
@@ -250,7 +250,7 @@ async def compare_templates(
 
 # Endpoint d'administration (future extension)
 @router.get("/admin/templates/{template_id}/weights")
-async def get_template_weights(template_id: str):
+async def get_template_weights(template_id: str) -> dict:
     """Retourne les poids détaillés d'un template (admin)"""
     try:
         registry = get_strategy_registry()

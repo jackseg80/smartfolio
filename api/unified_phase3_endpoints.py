@@ -40,7 +40,7 @@ router = APIRouter(prefix="/api/phase3", tags=["Phase 3 Unified"])
 @router.post("/intelligence/explain-decision")
 async def mock_explain_decision(
     request: Dict[str, Any]
-):
+) -> dict:
     """Mock endpoint pour tester les explications d'IA"""
     model_name = request.get("model_name", "risk_assessor")
     prediction = request.get("prediction", 0.7)
@@ -220,7 +220,7 @@ async def get_unified_system_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/decision/process")
-async def process_unified_decision(request: UnifiedDecisionRequest, background_tasks: BackgroundTasks):
+async def process_unified_decision(request: UnifiedDecisionRequest, background_tasks: BackgroundTasks) -> dict:
     """Process a decision using all Phase 3 components in orchestrated fashion"""
     try:
         components = await get_phase3_components()
@@ -269,7 +269,7 @@ async def process_unified_decision(request: UnifiedDecisionRequest, background_t
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/risk/comprehensive-analysis")
-async def comprehensive_risk_analysis(request: RiskAnalysisRequest):
+async def comprehensive_risk_analysis(request: RiskAnalysisRequest) -> dict:
     """Perform comprehensive risk analysis using Phase 3A Advanced Risk Engine"""
     try:
         components = await get_phase3_components()
@@ -407,7 +407,7 @@ async def comprehensive_risk_analysis(request: RiskAnalysisRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/streaming/active-connections")
-async def get_active_streaming_connections():
+async def get_active_streaming_connections() -> dict:
     """Get information about active real-time streaming connections"""
     try:
         components = await get_phase3_components()
@@ -430,7 +430,7 @@ async def get_active_streaming_connections():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/intelligence/human-decisions")
-async def get_pending_human_decisions():
+async def get_pending_human_decisions() -> dict:
     """Get pending human-in-the-loop decisions"""
     try:
         components = await get_phase3_components()
@@ -457,7 +457,7 @@ async def submit_human_feedback(
     approved: bool = Query(..., description="Human approval decision"),
     feedback: Optional[str] = Query(None, description="Optional feedback text"),
     confidence: float = Query(0.8, ge=0.0, le=1.0, description="Human confidence level")
-):
+) -> dict:
     """Submit human feedback for a pending decision"""
     try:
         components = await get_phase3_components()
@@ -500,7 +500,7 @@ async def submit_human_feedback(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/learning/insights")
-async def get_learning_insights():
+async def get_learning_insights() -> dict:
     """Get insights from feedback learning system"""
     try:
         components = await get_phase3_components()
@@ -526,7 +526,7 @@ async def orchestrate_full_workflow(
     portfolio_weights: Dict[str, float],
     decision_context: Dict[str, Any] = {},
     background_tasks: BackgroundTasks = None
-):
+) -> dict:
     """Execute complete Phase 3A/3B/3C workflow with all components"""
     try:
         components = await get_phase3_components()
@@ -671,7 +671,7 @@ async def _record_workflow_feedback(feedback_learning, workflow_id: str, result:
         logger.error(f"Error recording workflow feedback: {e}")
 
 @router.get("/health/comprehensive")
-async def get_comprehensive_health_status():
+async def get_comprehensive_health_status() -> dict:
     """Get comprehensive health status of all Phase 3 components"""
     try:
         health_monitor = get_health_monitor()
@@ -711,7 +711,7 @@ async def get_comprehensive_health_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health/component/{component_name}")
-async def get_component_health(component_name: str):
+async def get_component_health(component_name: str) -> dict:
     """Get detailed health status of a specific Phase 3 component"""
     try:
         health_monitor = get_health_monitor()
@@ -747,7 +747,7 @@ async def get_component_health(component_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/health/alerts")
-async def get_active_health_alerts():
+async def get_active_health_alerts() -> dict:
     """Get active health alerts for all Phase 3 components"""
     try:
         health_monitor = get_health_monitor()
@@ -783,7 +783,7 @@ async def get_active_health_alerts():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/health/initialize-monitoring")
-async def initialize_phase3_monitoring():
+async def initialize_phase3_monitoring() -> dict:
     """Initialize comprehensive Phase 3 health monitoring"""
     try:
         health_monitor = await initialize_health_monitoring()

@@ -22,7 +22,7 @@ router = APIRouter(tags=["ML Registry"])
 
 @router.get("/registry/models")
 @handle_api_errors(fallback={"models": [], "total": 0})
-async def list_registered_models(model_type: Optional[str] = None):
+async def list_registered_models(model_type: Optional[str] = None) -> dict:
     """
     Lister les modèles enregistrés dans le registry
     """
@@ -38,7 +38,7 @@ async def list_registered_models(model_type: Optional[str] = None):
 
 @router.get("/registry/models/{model_name}")
 @handle_api_errors(fallback={"manifest": {}}, reraise_http_errors=True)
-async def get_model_info(model_name: str, version: Optional[str] = None):
+async def get_model_info(model_name: str, version: Optional[str] = None) -> dict:
     """
     Obtenir les informations détaillées d'un modèle
     """
@@ -53,7 +53,7 @@ async def get_model_info(model_name: str, version: Optional[str] = None):
 
 @router.get("/registry/models/{model_name}/versions")
 @handle_api_errors(fallback={"versions": [], "total_versions": 0}, reraise_http_errors=True)
-async def get_model_versions_registry(model_name: str):
+async def get_model_versions_registry(model_name: str) -> dict:
     """
     Obtenir toutes les versions d'un modèle depuis le registry
     """
@@ -92,7 +92,7 @@ async def update_model_status(
     version: str,
     status: ModelStatus,
     reason: Optional[str] = Body(None)
-):
+) -> dict:
     """
     Mettre à jour le statut d'un modèle
     """
@@ -119,7 +119,7 @@ async def update_model_performance_metrics(
     version: str,
     validation_metrics: Optional[Dict[str, float]] = Body(None),
     test_metrics: Optional[Dict[str, float]] = Body(None)
-):
+) -> dict:
     """
     Mettre à jour les métriques de performance d'un modèle
     """

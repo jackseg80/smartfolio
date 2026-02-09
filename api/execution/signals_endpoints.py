@@ -41,7 +41,7 @@ _RECOMPUTE_LOCK = asyncio.Lock()  # Mutex pour éviter recompute concurrent
 
 
 @router.post("/signals/update")
-async def update_ml_signals(request: UpdateSignalsRequest):
+async def update_ml_signals(request: UpdateSignalsRequest) -> dict:
     """
     Mettre à jour des champs de signaux ML maintenus côté gouvernance.
     Actuellement: accepte `blended_score` (0-100) pour activer les garde-fous backend.
@@ -79,7 +79,7 @@ async def recompute_ml_signals(
     current_user: User = Depends(require_role("governance_admin")),
     idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
     x_csrf_token: Optional[str] = Header(default=None, alias="X-CSRF-Token"),
-):
+) -> dict:
     """
     Recompute blended score server-side from components and attach to governance signals.
     Phase 2B: With concurrency safety mutex

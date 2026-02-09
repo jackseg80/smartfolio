@@ -28,7 +28,7 @@ router = APIRouter(prefix="/debug", tags=["debug"])
 
 
 @router.get("/paths")
-async def debug_paths():
+async def debug_paths() -> dict:
     """Endpoint de diagnostic pour vérifier les chemins"""
     if not DEBUG:
         raise HTTPException(status_code=404, detail="Debug endpoint not available")
@@ -47,7 +47,7 @@ async def debug_paths():
 
 
 @router.get("/exchanges-snapshot")
-async def debug_exchanges_snapshot(source: str = Query("cointracking_api")):
+async def debug_exchanges_snapshot(source: str = Query("cointracking_api")) -> dict:
     """DEBUG: introspection rapide de la répartition par exchange (cointracking_api)"""
     if not DEBUG:
         raise HTTPException(status_code=404, detail="Debug endpoint not available")
@@ -64,7 +64,7 @@ async def debug_exchanges_snapshot(source: str = Query("cointracking_api")):
 
 
 @router.get("/ctapi")
-async def debug_ctapi():
+async def debug_ctapi() -> dict:
     """Endpoint de debug pour CoinTracking API"""
     if not DEBUG:
         raise HTTPException(status_code=404, detail="Debug endpoint not available")
@@ -104,7 +104,7 @@ async def debug_ctapi():
 
 
 @router.get("/api-keys")
-async def debug_api_keys(debug_token: Optional[str] = Query(None), user: str = Depends(get_required_user)):
+async def debug_api_keys(debug_token: Optional[str] = Query(None), user: str = Depends(get_required_user)) -> dict:
     """
     Expose les clés API pour auto-configuration (DEBUG ONLY).
 
@@ -134,7 +134,7 @@ async def debug_api_keys(debug_token: Optional[str] = Query(None), user: str = D
 
 
 @router.post("/api-keys")
-async def update_api_keys(payload: APIKeysRequest, debug_token: Optional[str] = Query(None)):
+async def update_api_keys(payload: APIKeysRequest, debug_token: Optional[str] = Query(None)) -> dict:
     """Met à jour les clés API dans le fichier .env (sécurisé)"""
     if not DEBUG:
         raise HTTPException(status_code=404, detail="Debug endpoint not available")
@@ -187,7 +187,7 @@ async def update_api_keys(payload: APIKeysRequest, debug_token: Optional[str] = 
 
 
 @router.get("/secrets-status")
-async def debug_secrets_status(user: str = Depends(get_required_user)):
+async def debug_secrets_status(user: str = Depends(get_required_user)) -> dict:
     """
     Debug endpoint: Vérifie quelles clés API sont chargées depuis secrets.json
 

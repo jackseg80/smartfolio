@@ -23,7 +23,7 @@ router = APIRouter(tags=["ML Cache"])
 
 @router.post("/cache/clear")
 @handle_api_errors(fallback={"cleared_entries": 0})
-async def clear_ml_cache():
+async def clear_ml_cache() -> dict:
     """
     Vider le cache des endpoints ML
     """
@@ -38,7 +38,7 @@ async def clear_ml_cache():
 
 @router.get("/cache/stats")
 @handle_api_errors(fallback={"cache_stats": {}})
-async def get_cache_statistics():
+async def get_cache_statistics() -> dict:
     """
     Obtenir les statistiques détaillées du cache optimisé
     """
@@ -53,7 +53,7 @@ async def get_cache_statistics():
 
 @router.post("/memory/optimize")
 @handle_api_errors(fallback={"optimization_result": {}, "message": "Memory optimization failed"})
-async def optimize_memory_usage():
+async def optimize_memory_usage() -> dict:
     """
     Optimiser l'utilisation mémoire des modèles ML
     """

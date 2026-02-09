@@ -100,7 +100,7 @@ def _get_ml_models_stats() -> Dict:
 
 
 @router.get("/cache/stats")
-async def get_cache_stats():
+async def get_cache_stats() -> dict:
     """Get comprehensive cache statistics (Redis, ML models, optimization cache)"""
 
     # 1. Optimization cache (portfolio optimization matrices)
@@ -154,7 +154,7 @@ async def get_cache_stats():
 async def clear_cache(
     older_than_days: int = Query(7, description="Clear cache files older than N days"),
     clear_memory: bool = Query(True, description="Also clear memory cache")
-):
+) -> dict:
     """Clear optimization cache (DEV ONLY - disabled in production)"""
     
     try:
@@ -178,7 +178,7 @@ async def benchmark_optimization_methods(
     n_assets: int = Query(100, description="Number of assets to benchmark"),
     n_periods: int = Query(252, description="Number of time periods"),
     seed: int = Query(42, description="Random seed for reproducibility")
-):
+) -> dict:
     """Benchmark different optimization methods (DEV ONLY - heavy computation)"""
     
     if n_assets > 1000:
@@ -286,7 +286,7 @@ async def benchmark_optimization_methods(
     }
 
 @router.get("/system/memory")
-async def get_memory_usage():
+async def get_memory_usage() -> dict:
     """Get current system memory usage"""
     
     try:
@@ -320,7 +320,7 @@ async def get_memory_usage():
 async def precompute_matrices(
     n_assets: int = Query(100, description="Number of top assets to precompute"),
     source: str = Query("cointracking", description="Data source")
-):
+) -> dict:
     """Precompute optimization matrices (DEV ONLY - disabled in production)"""
     
     try:
@@ -385,7 +385,7 @@ async def get_performance_summary(
     anchor: str = Query(default="prev_close", description="Temporal reference point (prev_close, midnight, session)"),
     user: str = Depends(get_required_user),
     source: str = Query(default="cointracking", description="Data source")
-):
+) -> dict:
     """
     P&L Summary endpoint pour performance tracking intraday
 

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/multi-asset", tags=["Multi-Asset Portfolio"])
 
 @router.get("/asset-classes")
-async def get_asset_classes():
+async def get_asset_classes() -> dict:
     """Get all supported asset classes"""
     
     return {
@@ -45,7 +45,7 @@ async def get_assets(
     sector: Optional[str] = Query(None, description="Filter by sector"),
     limit: int = Query(50, ge=1, le=500, description="Maximum number of assets to return"),
     offset: int = Query(0, ge=0, description="Number of assets to skip")
-):
+) -> dict:
     """
     Get available assets, optionally filtered by class, region, or sector.
 
@@ -104,7 +104,7 @@ async def get_assets(
     }
 
 @router.post("/assets")
-async def add_asset(asset_data: dict = Body(...)):
+async def add_asset(asset_data: dict = Body(...)) -> dict:
     """Add a new asset to the universe"""
     
     try:
@@ -154,7 +154,7 @@ async def get_multi_asset_prices(
     symbols: str = Query(..., description="Comma-separated list of symbols"),
     period: str = Query("1y", description="Price period (1d, 1mo, 3mo, 6mo, 1y, 2y, 5y)"),
     include_volume: bool = Query(False, description="Include volume data")
-):
+) -> dict:
     """Get price data for multiple assets across different classes"""
     
     try:
@@ -225,7 +225,7 @@ async def get_multi_asset_correlation(
     symbols: str = Query(..., description="Comma-separated list of symbols"),
     period: str = Query("1y", description="Analysis period"),
     include_class_correlation: bool = Query(True, description="Include asset class correlation analysis")
-):
+) -> dict:
     """Calculate correlation matrix across multiple asset classes"""
     
     try:
@@ -301,7 +301,7 @@ async def get_performance_analysis(
     symbols: str = Query(..., description="Comma-separated list of symbols"),
     period: str = Query("1y", description="Analysis period"),
     benchmark: Optional[str] = Query("SPY", description="Benchmark symbol for comparison")
-):
+) -> dict:
     """Analyze performance metrics by asset class"""
     
     try:
@@ -416,7 +416,7 @@ async def suggest_allocation(
     investment_horizon: str = Query("medium", description="Investment horizon: short, medium, long"),
     total_portfolio_value: float = Query(100000, description="Total portfolio value in USD"),
     exclude_asset_classes: Optional[str] = Query(None, description="Comma-separated asset classes to exclude")
-):
+) -> dict:
     """Get suggested asset allocation based on risk profile and investment horizon"""
     
     try:
@@ -493,7 +493,7 @@ async def suggest_allocation(
 async def calculate_diversification_score(
     symbols: str = Query(..., description="Comma-separated list of current portfolio symbols"),
     weights: Optional[str] = Query(None, description="Comma-separated weights (if not provided, assumes equal weight)")
-):
+) -> dict:
     """Calculate portfolio diversification score across asset classes"""
     
     try:

@@ -277,7 +277,7 @@ async def analyze_drawdowns(
     user: str = Depends(get_required_user),
     days: int = Query(365, description="Number of days of history"),
     min_duration: int = Query(5, description="Minimum duration in days")
-):
+) -> dict:
     """
     Analyser les périodes de drawdown en détail
     """
@@ -315,7 +315,7 @@ async def compare_strategies(
     user: str = Depends(get_required_user),
     strategies: List[str] = Query(["rebalancing", "buy_hold", "momentum"], description="Strategies to compare"),
     days: int = Query(365, description="Analysis period")
-):
+) -> dict:
     """
     Comparer les performances de différentes stratégies
     """
@@ -367,7 +367,7 @@ async def get_risk_metrics(
     user: str = Depends(get_required_user),
     days: int = Query(365, description="Analysis period"),
     confidence_level: float = Query(0.95, description="Confidence level for VaR")
-):
+) -> dict:
     """
     Calculer les métriques de risque avancées
     """

@@ -117,7 +117,7 @@ async def unified_predictions(request: PredictionRequest):
 
 @router.get("/volatility/predict/{symbol}")
 @handle_api_errors(fallback={"volatility_forecast": None})
-async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le=365)):
+async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le=365)) -> dict:
     """
     Prédiction de volatilité pour un asset spécifique
     """
@@ -144,7 +144,7 @@ async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le
 
 @router.post("/volatility/train-portfolio")
 @handle_api_errors(fallback={"trainable_assets": 0, "loaded": 0, "results": {}})
-async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)):
+async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)) -> dict:
     """Alias that preloads requested volatility models instead of training."""
     req_symbols = symbols or ["BTC", "ETH"]
     results = {}
@@ -162,7 +162,7 @@ async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)):
 
 @router.post("/volatility/batch-predict")
 @handle_api_errors(fallback={"predictions": {}})
-async def alias_batch_predict(payload: Dict[str, Any] = Body(default={})):
+async def alias_batch_predict(payload: Dict[str, Any] = Body(default={})) -> dict:
     """Alias that forwards to unified /predict."""
     assets = payload.get("symbols") or payload.get("assets") or ["BTC", "ETH"]
     horizons = [1, 7, 30]
@@ -174,7 +174,7 @@ async def alias_batch_predict(payload: Dict[str, Any] = Body(default={})):
 
 @router.get("/regime/current")
 @handle_api_errors(fallback={"regime_prediction": {"regime_name": "Unknown", "confidence": 0.5, "duration_days": 0}})
-async def alias_regime_current():
+async def alias_regime_current() -> dict:
     """Alias that returns current/live regime signal."""
     live = await get_live_predictions()
     regime_val = live.get("regime_prediction") or live.get("market_regime")
@@ -201,7 +201,7 @@ async def alias_regime_current():
 
 @router.get("/predictions/live")
 @handle_api_errors(fallback={"btc_volatility": 0.0, "eth_volatility": 0.0, "market_regime": "Unknown", "models_used": {}})
-async def get_live_predictions():
+async def get_live_predictions() -> dict:
     """
     Obtenir les prédictions en temps réel basées sur les modèles entraînés
     """
@@ -233,7 +233,7 @@ async def get_live_predictions():
 
 @router.get("/portfolio-metrics")
 @handle_api_errors(fallback={"metrics": {}})
-async def get_portfolio_metrics():
+async def get_portfolio_metrics() -> dict:
     """
     Obtenir les métriques de portefeuille ML (stub endpoint)
     """
@@ -253,7 +253,7 @@ async def get_portfolio_metrics():
 
 @router.get("/sentiment/{symbol}")
 @handle_api_errors(fallback={"aggregated_sentiment": {"score": 0.0, "confidence": 0.5}})
-async def get_sentiment(symbol: str, days: int = Query(default=1, ge=1, le=30)):
+async def get_sentiment(symbol: str, days: int = Query(default=1, ge=1, le=30)) -> dict:
     """
     Obtenir le sentiment pour un asset (stub endpoint)
     """
@@ -276,7 +276,7 @@ async def get_sentiment(symbol: str, days: int = Query(default=1, ge=1, le=30)):
 
 @router.get("/sentiment/fear-greed")
 @handle_api_errors(fallback={"fear_greed_data": {"value": 50, "classification": "Neutral"}})
-async def get_fear_greed_sentiment(days: int = Query(default=1, ge=1, le=30)):
+async def get_fear_greed_sentiment(days: int = Query(default=1, ge=1, le=30)) -> dict:
     """
     Obtenir Fear & Greed index (stub endpoint)
     """
@@ -293,7 +293,7 @@ async def get_fear_greed_sentiment(days: int = Query(default=1, ge=1, le=30)):
 
 @router.get("/sentiment/analyze")
 @handle_api_errors(fallback={"results": {}})
-async def alias_sentiment_analyze(symbols: str = Query("BTC,ETH"), days: int = Query(7)):
+async def alias_sentiment_analyze(symbols: str = Query("BTC,ETH"), days: int = Query(7)) -> dict:
     """Alias that aggregates sentiment for multiple symbols."""
     syms = [s.strip().upper() for s in symbols.split(',') if s.strip()]
     results = {}
@@ -438,7 +438,7 @@ async def get_symbol_sentiment(
 async def alias_correlation_matrix(
     user: str = Depends(get_required_user),
     window_days: int = Query(30)
-):
+) -> dict:
     """Alias routed to risk correlation endpoint logic."""
     from api.unified_data import get_unified_filtered_balances
     from services.risk_management import risk_manager

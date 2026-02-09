@@ -254,7 +254,7 @@ async def get_ml_dashboard(
     symbol: str = Query("AAPL", description="Stock ticker symbol"),
     benchmark: str = Query("SPY", description="Market benchmark"),
     lookback_days: int = Query(365, ge=90, le=1825, description="Days of history")
-):
+) -> dict:
     """
     Get comprehensive ML analytics dashboard for a stock.
 
@@ -315,7 +315,7 @@ async def get_ml_dashboard(
 async def train_models(
     symbols: str = Query("AAPL,MSFT,GOOGL", description="Comma-separated stock tickers"),
     lookback_days: int = Query(730, ge=365, le=3650, description="Training data period")
-):
+) -> dict:
     """
     Train ML models on historical stock data.
 
@@ -410,7 +410,7 @@ async def train_models(
 
 
 @router.get("/api/ml/bourse/model-info")
-async def get_model_info(model_type: str = Query("regime", description="Model type (regime, volatility, correlation)")):
+async def get_model_info(model_type: str = Query("regime", description="Model type (regime, volatility, correlation)")) -> dict:
     """
     Retourne infos sur l'état d'un modèle ML.
 
@@ -466,7 +466,7 @@ async def get_model_info(model_type: str = Query("regime", description="Model ty
 async def get_regime_history(
     benchmark: str = Query("SPY", description="Market benchmark ticker"),
     lookback_days: int = Query(365, ge=365, le=10950, description="Days of history to return (1 year to 30 years)")
-):
+) -> dict:
     """
     Retourne l'historique des régimes ML avec les prix réels du benchmark.
 
@@ -601,7 +601,7 @@ async def get_portfolio_recommendations(
     benchmark: str = Query("SPY", description="Benchmark symbol for relative strength"),
     file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
     cash_amount: Optional[float] = Query(None, ge=0.0, description="Cash/liquidities in USD")
-):
+) -> dict:
     """
     Generate BUY/HOLD/SELL recommendations for all portfolio positions.
 
@@ -816,7 +816,7 @@ async def get_market_opportunities(
     source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
     file_key: Optional[str] = Query(None, description="Saxo CSV file key"),
     min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum gap percentage to consider")
-):
+) -> dict:
     """
     Get market opportunities outside current portfolio.
 

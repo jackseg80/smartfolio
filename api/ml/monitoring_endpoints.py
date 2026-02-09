@@ -166,7 +166,7 @@ async def get_ml_system_health():
 
 @router.get("/metrics/{model_name}")
 @handle_api_errors(fallback={"error": "Metrics unavailable"}, reraise_http_errors=True)
-async def get_model_metrics(model_name: str, version: Optional[str] = None):
+async def get_model_metrics(model_name: str, version: Optional[str] = None) -> dict:
     """
     Obtenir les métriques pour un modèle spécifique
     """
@@ -210,7 +210,7 @@ async def get_model_metrics(model_name: str, version: Optional[str] = None):
 
 @router.get("/versions/{model_name}")
 @handle_api_errors(fallback={"available_versions": [], "total_versions": 0})
-async def get_model_versions(model_name: str):
+async def get_model_versions(model_name: str) -> dict:
     """
     Lister les versions disponibles d'un modèle
     """
@@ -242,7 +242,7 @@ async def update_model_metrics(
     model_name: str,
     version: str,
     metrics: Dict[str, Any] = Body(...)
-):
+) -> dict:
     """
     Mettre à jour les métriques d'un modèle (version spécifique)
     """

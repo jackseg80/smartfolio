@@ -488,7 +488,7 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
 # ============================================================================
 
 @router.get("")
-async def get_crypto_toolbox_data(force: bool = Query(False, description="Force refresh bypassing cache")):
+async def get_crypto_toolbox_data(force: bool = Query(False, description="Force refresh bypassing cache")) -> dict:
     """
     Get crypto-toolbox indicators.
 
@@ -512,7 +512,7 @@ async def get_crypto_toolbox_data(force: bool = Query(False, description="Force 
 
 
 @router.post("/refresh")
-async def force_refresh():
+async def force_refresh() -> dict:
     """
     Force refresh crypto-toolbox data (bypass cache).
 
@@ -523,7 +523,7 @@ async def force_refresh():
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> dict:
     """
     Health check endpoint.
 
@@ -543,7 +543,7 @@ async def health_check():
 
 
 @router.post("/cache/clear")
-async def clear_cache():
+async def clear_cache() -> dict:
     """
     Clear cache (admin/debug endpoint).
 

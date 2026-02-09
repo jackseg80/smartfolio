@@ -254,7 +254,7 @@ class BacktestRequest(BaseModel):
     transaction_cost_pct: Optional[float] = 0.001  # 0.1%
 
 @router.get("/status")
-async def get_risk_system_status():
+async def get_risk_system_status() -> dict:
     """
     Statut du système de gestion des risques
     """
@@ -597,7 +597,7 @@ async def get_risk_dashboard(
     min_asset_count: int = Query(5, ge=3, le=20, description="Minimum number of assets in cohort"),
     # 🔧 FIX: CSV hint for cache invalidation (Oct 2025)
     _csv_hint: Optional[str] = Query(None, description="Hint for cache invalidation when CSV changes (filename or timestamp)")
-):
+) -> dict:
     """
     Endpoint pour dashboard de risque temps réel
     Combine toutes les métriques de risque en une seule réponse
@@ -1319,7 +1319,7 @@ def _get_top_correlations(correlations: Dict[str, Dict[str, float]], top_n: int 
 @router.get("/attribution")
 async def get_performance_attribution(
     analysis_days: int = Query(30, ge=7, le=365, description="Analysis period in days")
-):
+) -> dict:
     """
     Calcule l'attribution de performance détaillée du portfolio
     
@@ -1402,7 +1402,7 @@ async def get_performance_attribution(
 @router.post("/backtest")
 async def run_strategy_backtest(
     request: BacktestRequest
-):
+) -> dict:
     """
     Exécute un backtest d'une stratégie d'allocation personnalisée
     
@@ -1506,7 +1506,7 @@ async def run_strategy_backtest(
 @router.get("/alerts")
 async def get_risk_alerts(
     severity_filter: Optional[str] = Query(None, description="Filter by severity (info/low/medium/high/critical)")
-):
+) -> dict:
     """
     Récupère les alertes de risque actives
     
@@ -1594,7 +1594,7 @@ async def get_risk_alerts(
 @router.get("/alerts/history")
 async def get_alerts_history(
     limit: int = Query(50, ge=1, le=500, description="Number of alerts to return")
-):
+) -> dict:
     """
     Récupère l'historique des alertes
     
@@ -1705,7 +1705,7 @@ def _generate_risk_alerts(risk_metrics: RiskMetrics, correlation_matrix: Correla
 # ===== NEW ENDPOINTS: Stress Testing & Monte Carlo (Dec 2025) =====
 
 @router.get("/stress-scenarios")
-async def get_stress_scenarios():
+async def get_stress_scenarios() -> dict:
     """
     Liste tous les scénarios de stress test disponibles
 
@@ -1732,7 +1732,7 @@ async def get_stress_scenarios():
 async def run_stress_test_portfolio(
     scenario_id: str = Query(..., description="Scenario ID (crisis_2008, covid_2020, etc.)"),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Exécute un stress test réel sur le portfolio avec un scénario donné
 
@@ -1815,7 +1815,7 @@ async def run_monte_carlo(
     pricing: str = Query("auto", description="Pricing source (ignored)"),
     min_usd: float = Query(1.0, description="Min USD threshold (ignored)"),
     user: str = Depends(get_required_user)
-):
+) -> dict:
     """
     Exécute une simulation Monte Carlo sur le portfolio
 

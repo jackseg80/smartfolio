@@ -61,7 +61,7 @@ class BacktestResponse(BaseModel):
     benchmark_comparison: Dict
     
 @router.get("/strategies")
-async def get_available_strategies():
+async def get_available_strategies() -> dict:
     """Get list of available backtesting strategies"""
     
     strategies = []
@@ -229,7 +229,7 @@ async def run_backtest(
 async def compare_strategies(
     request: StrategyComparisonRequest,
     source: str = Query("cointracking")
-):
+) -> dict:
     """
     Compare multiple strategies side-by-side
     """
@@ -340,7 +340,7 @@ async def compare_strategies(
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 
 @router.get("/metrics/definitions")
-async def get_metrics_definitions():
+async def get_metrics_definitions() -> dict:
     """
     Get definitions of all backtesting metrics
     """
@@ -439,7 +439,7 @@ async def get_performance_charts(
     start_date: str = Query(...),
     end_date: str = Query(...),
     source: str = Query("cointracking")
-):
+) -> dict:
     """
     Get chart data for a specific strategy backtest
     """

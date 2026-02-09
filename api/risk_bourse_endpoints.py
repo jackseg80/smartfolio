@@ -288,7 +288,7 @@ async def get_position_var(
     file_key: Optional[str] = Query(None, description="Specific Saxo file to use"),
     confidence_level: float = Query(0.95, ge=0.8, le=0.99),
     lookback_days: int = Query(252, ge=30, le=730)
-):
+) -> dict:
     """
     Calculate position-level VaR (marginal & component VaR)
 
@@ -383,7 +383,7 @@ async def get_correlation_matrix(
     file_key: Optional[str] = Query(None),
     method: str = Query("pearson", description="Correlation method"),
     lookback_days: int = Query(252, ge=30, le=730)
-):
+) -> dict:
     """
     Calculate correlation matrix between positions
 
@@ -458,7 +458,7 @@ async def run_stress_test(
     scenario: str = Query("market_crash", description="Stress scenario name"),
     market_shock: Optional[float] = Query(None, description="Market shock percentage for custom scenario"),
     custom_shocks: Optional[Dict[str, float]] = None
-):
+) -> dict:
     """
     Run stress test on portfolio
 
@@ -529,7 +529,7 @@ async def get_fx_exposure(
     user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     base_currency: str = Query("USD", description="Base currency for reporting")
-):
+) -> dict:
     """
     Analyze currency exposure in portfolio
 
@@ -581,7 +581,7 @@ async def get_earnings_prediction(
     file_key: Optional[str] = Query(None),
     ticker: str = Query(..., description="Ticker to analyze"),
     lookback_days: int = Query(365, ge=30, le=1825)
-):
+) -> dict:
     """
     Predict earnings impact on volatility
 
@@ -639,7 +639,7 @@ async def get_sector_rotation(
     user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     lookback_days: int = Query(60, ge=30, le=180)
-):
+) -> dict:
     """
     Detect sector rotation patterns
 
@@ -737,7 +737,7 @@ async def get_beta_forecast(
     benchmark: str = Query("SPY", description="Benchmark ticker"),
     forecast_method: str = Query("ewma", description="Forecast method"),
     lookback_days: int = Query(252, ge=60, le=730)
-):
+) -> dict:
     """
     Forecast dynamic beta vs benchmark
 
@@ -797,7 +797,7 @@ async def get_dividend_analysis(
     user_id: str = Depends(get_required_user),
     file_key: Optional[str] = Query(None),
     ticker: str = Query(..., description="Ticker to analyze")
-):
+) -> dict:
     """
     Analyze dividend impact and yield
 
@@ -876,7 +876,7 @@ async def get_margin_monitoring(
     account_equity: Optional[float] = Query(None, description="Override account equity"),
     maintenance_margin_pct: float = Query(0.25, ge=0.10, le=0.50),
     initial_margin_pct: float = Query(0.50, ge=0.25, le=1.0)
-):
+) -> dict:
     """
     Monitor margin requirements for leveraged positions
 
@@ -936,7 +936,7 @@ async def get_risk_alerts(
     file_key: Optional[str] = Query(None, description="Saxo file key for multi-file support"),
     use_cache: bool = Query(True, description="Use cached alerts if available"),
     redis: Optional[Any] = Depends(get_redis_client)
-):
+) -> dict:
     """
     Get risk alerts for bourse portfolio based on moderate risk profile.
 
@@ -1084,7 +1084,7 @@ async def acknowledge_alert(
     alert_id: str,
     user: str = Depends(get_required_user),
     redis: Optional[Any] = Depends(get_redis_client)
-):
+) -> dict:
     """
     Mark an alert as acknowledged (seen/handled by user).
 
@@ -1138,7 +1138,7 @@ async def get_alerts_history(
     limit: int = Query(50, ge=1, le=100, description="Maximum number of alerts to return"),
     days_back: int = Query(7, ge=1, le=30, description="Number of days to look back"),
     redis: Optional[Any] = Depends(get_redis_client)
-):
+) -> dict:
     """
     Get historical alerts for user (last N days).
 

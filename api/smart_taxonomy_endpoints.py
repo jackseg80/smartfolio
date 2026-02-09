@@ -26,7 +26,7 @@ async def classify_symbols(
     symbols: List[str] = Body(..., description="List of symbols to classify"),
     confidence_threshold: float = Query(50.0, ge=0, le=100, description="Minimum confidence threshold"),
     use_cache: bool = Query(True, description="Use results cache")
-):
+) -> dict:
     """
     Classification intelligente de symboles avec scoring de confiance
     
@@ -99,7 +99,7 @@ async def classify_symbols(
 @router.get("/duplicates")
 async def detect_portfolio_duplicates(
     symbols: List[str] = Query(..., description="Portfolio symbols to analyze")
-):
+) -> dict:
     """
     Détection de doublons et dérivés dans un portfolio
     
@@ -170,7 +170,7 @@ async def detect_portfolio_duplicates(
 @router.post("/learn") 
 async def human_feedback_learning(
     feedback_data: Dict[str, Any] = Body(...)
-):
+) -> dict:
     """
     API d'apprentissage - Feedback humain pour améliorer la classification
     
@@ -279,7 +279,7 @@ async def human_feedback_learning(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/stats")
-async def get_classification_stats():
+async def get_classification_stats() -> dict:
     """
     Statistiques du système de classification intelligente
     
@@ -326,7 +326,7 @@ async def get_classification_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cache/clear")
-async def clear_classification_cache():
+async def clear_classification_cache() -> dict:
     """Vide le cache de classification (maintenance)"""
     try:
         smart_classification_service.clear_cache()
@@ -342,7 +342,7 @@ async def clear_classification_cache():
 @router.get("/suggest-improvements")
 async def suggest_taxonomy_improvements(
     min_confidence: float = Query(30.0, description="Minimum confidence threshold for suggestions")
-):
+) -> dict:
     """
     Suggestions d'améliorations pour la taxonomie basées sur l'analyse des classifications
     

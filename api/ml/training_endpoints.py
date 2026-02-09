@@ -36,7 +36,7 @@ class TrainingRequest(BaseModel):
 async def train_models(
     request: TrainingRequest,
     background_tasks: BackgroundTasks
-):
+) -> dict:
     """
     Entraîner les modèles ML de manière unifiée
     """
@@ -88,6 +88,6 @@ async def _train_models_background(
 
 
 @router.post("/regime/train")
-async def alias_regime_train():
+async def alias_regime_train() -> dict:
     """Alias that loads the regime model."""
     return await load_regime_model()

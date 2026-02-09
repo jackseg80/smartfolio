@@ -41,7 +41,7 @@ router = APIRouter(tags=["ML Models"])
     },
     include_traceback=True
 )
-async def get_unified_pipeline_status():
+async def get_unified_pipeline_status() -> dict:
     """
     Obtenir le statut complet du pipeline ML unifié
     """
@@ -54,13 +54,13 @@ async def get_unified_pipeline_status():
 
 
 @router.get("/models/status")
-async def alias_models_status():
+async def alias_models_status() -> dict:
     """Alias of /api/ml/status for legacy front-ends."""
     return await get_unified_pipeline_status()
 
 
 @router.get("/volatility/models/status")
-async def alias_volatility_models_status():
+async def alias_volatility_models_status() -> dict:
     """Expose a volatility-focused status for legacy widgets."""
     base = await get_unified_pipeline_status()
     ps = base.get("pipeline_status", {}) if isinstance(base, dict) else {}
@@ -82,7 +82,7 @@ async def alias_volatility_models_status():
 async def load_volatility_models(
     symbols: Optional[List[str]] = Query(None, description="Specific symbols to load (None = all)"),
     background_tasks: BackgroundTasks = None
-):
+) -> dict:
     """
     Charger les modèles de volatilité
     """
@@ -126,7 +126,7 @@ async def _load_all_volatility_background():
 
 @router.post("/models/load-regime")
 @handle_api_errors(fallback={"message": "Failed to load regime model"})
-async def load_regime_model():
+async def load_regime_model() -> dict:
     """
     Charger le modèle de détection de régime
     """
@@ -152,7 +152,7 @@ async def load_regime_model():
 @handle_api_errors(fallback={"preload_results": {}, "loaded_models": 0, "total_requested": 0})
 async def preload_priority_models(
     symbols: List[str] = Query(default=["BTC", "ETH"], description="Priority symbols to preload")
-):
+) -> dict:
     """
     Précharger des modèles prioritaires (BTC, ETH par défaut)
     """
@@ -182,7 +182,7 @@ async def preload_priority_models(
 
 @router.get("/models/loaded")
 @handle_api_errors(fallback={"loaded_models": {}})
-async def get_loaded_models():
+async def get_loaded_models() -> dict:
     """
     Obtenir la liste des modèles actuellement chargés
     """
@@ -208,7 +208,7 @@ async def get_loaded_models():
 
 @router.get("/models/{model_key}/info")
 @handle_api_errors(fallback={"model_info": {}}, reraise_http_errors=True)
-async def get_model_info(model_key: str):
+async def get_model_info(model_key: str) -> dict:
     """
     Obtenir les informations détaillées d'un modèle chargé
     """
@@ -237,7 +237,7 @@ async def get_model_info(model_key: str):
 
 @router.get("/models/loading-status")
 @handle_api_errors(fallback={"loading_status": {}, "models_in_cache": 0, "cache_memory_usage": 0})
-async def get_models_loading_status():
+async def get_models_loading_status() -> dict:
     """
     Obtenir le statut de chargement en temps réel des modèles
     """
@@ -257,7 +257,7 @@ async def get_models_loading_status():
 
 @router.delete("/models/{model_key}")
 @handle_api_errors(fallback={"message": "Failed to unload model"})
-async def unload_model(model_key: str):
+async def unload_model(model_key: str) -> dict:
     """
     Décharger un modèle spécifique de la mémoire
     """
@@ -283,7 +283,7 @@ async def unload_model(model_key: str):
 
 @router.delete("/models/clear-all")
 @handle_api_errors(fallback={"cleared_count": 0})
-async def clear_all_models():
+async def clear_all_models() -> dict:
     """
     Décharger tous les modèles de la mémoire
     """
@@ -302,7 +302,7 @@ async def clear_all_models():
 
 @router.get("/performance/summary")
 @handle_api_errors(fallback={"summary": {}})
-async def get_performance_summary():
+async def get_performance_summary() -> dict:
     """
     Obtenir un résumé des performances des modèles
     """
@@ -341,7 +341,7 @@ async def get_performance_summary():
 # ===== DEBUG ENDPOINTS =====
 
 @router.get("/debug/pipeline-info")
-async def debug_pipeline_info(x_admin_key: str = Header(None)):
+async def debug_pipeline_info(x_admin_key: str = Header(None)) -> dict:
     """
     Endpoint de debug pour analyser les instances du pipeline manager
 
