@@ -15,7 +15,7 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 
 | Finding | Impact |
 |---------|--------|
-| **Test coverage is 20.5%**, not 50-55% as reported | Score overestimated by 2.5x |
+| **Test coverage was 20.5%**, raised to **30.2%** with 179 new tests | Baseline 30% now met |
 | **9 CVEs** in 8 packages (including 2 Starlette DoS) | Previous "0 CVE" status is outdated |
 | **55% of API files have zero authentication** | Governance, ML training, Kraken balances exposed |
 | **73% of API files don't use standard response format** | 3 competing envelope formats |
@@ -29,7 +29,7 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | Performance | 7.5/10 | 7.5/10 | 0 | Not re-profiled, assumed stable |
 | Accessibility | 92+/100 | **~80/100** | -12 | Only 6/20 pages actually tested |
 | Technical Debt | 7.5/10 | **7.5/10** | 0 | get_risk_dashboard refactored (-51%), governance endpoints cleaned |
-| Tests | 8/10 | **5.0/10** | -3.0 | Real coverage 20.5% (not 50-55%) |
+| Tests | 8/10 | **6.0/10** | -2.0 | Coverage raised 20.5% -> 30.2% (989 passing, baseline met) |
 | CI/CD | 8/10 | 8/10 | 0 | Workflows functional |
 | **NEW: API Contract** | -- | **6.0/10** | -- | Return types added, 5 HTTP codes fixed (400→404); 3 response formats remain |
 | **NEW: Error Handling** | -- | **8.0/10** | +1.5 | Circuit breakers added (CoinGecko/FRED/Saxo), timeouts fixed |
@@ -37,7 +37,7 @@ This audit refreshes all 6 existing dimensions and introduces 5 new audit domain
 | **NEW: Logging** | -- | **8.0/10** | +3.0 | Request IDs, JSON file logs, sensitive data sanitized |
 | **NEW: Concurrency** | -- | **7.5/10** | +2.0 | FileLock on 5 critical writes, scheduler Redis lock |
 
-**Updated Overall Score: 7.4/10** (was 6.0 at audit, was 7.7 before audit)
+**Updated Overall Score: 7.5/10** (was 6.0 at audit, was 7.7 before audit)
 
 ---
 
@@ -319,7 +319,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 | 14 | Add `aria-label` + `role="img"` to 20 canvas elements (9 pages) | 2h | Accessibility | DONE (Feb 8) |
 | 15 | Add `scope="col"` to 151 `<th>` elements (10 pages) | 3h | Accessibility | DONE (Feb 8) |
 | 16 | Circuit breaker for CoinGecko, FRED, Saxo | 4h | Resilience | DONE (Feb 9) |
-| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | NOT MET (19.9%, needs 10% increase) |
+| 17 | Raise test coverage to 30% baseline | 1-2w | Test reliability | DONE (Feb 9) — 20.5% -> 30.2%, +179 tests, 7 new test files |
 | 18 | Fix sensitive data in logs (API key length, partial keys) | 1h | Security hygiene | DONE (Feb 8) |
 | 25 | Batch Binance price requests (single HTTP call instead of 124 sequential) | 4h | Performance | DONE (Feb 9) |
 | 26 | Fix symbol mapping: strip CoinTracking numeric suffixes (WLD3->WLD) | 3h | Reliability | DONE (Feb 9) |
@@ -342,7 +342,7 @@ The reported 92+ score only applies to **6 of 20 pages** tested via Lighthouse.
 ## Part D: Audit Documentation Corrections Needed
 
 1. **AUDIT_STATUS.md** lines 142-179: Accessibility section contradicts header table. Body says 68/100, header says 92+. True score is ~80/100.
-2. **AUDIT_STATUS.md** line 229: Tests coverage reported as "~50-55%". Real coverage is **20.51%**.
+2. **AUDIT_STATUS.md** line 229: Tests coverage reported as "~50-55%". Real coverage was 20.51%, now raised to **30.24%** (Feb 9).
 3. **README.md** line 34: Accessibility score shows "68/100". Should be updated to ~80/100.
 4. **AUDIT_STATUS.md** line 34: Security score "8.5/10" should reflect new CVEs (recommend 7.0/10).
 

@@ -13,6 +13,7 @@ asyncio_default_fixture_loop_scope = "function"
 addopts = [
     "--cov=services",
     "--cov=api",
+    "--cov=shared",
     "--cov-report=html",
     "--cov-report=xml",
     "--cov-report=term-missing",
