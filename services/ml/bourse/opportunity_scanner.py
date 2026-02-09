@@ -213,6 +213,9 @@ ETF_SECTOR_MAPPING = {
     "INDA": "Emerging Markets", # iShares MSCI India ETF
     "EWZ": "Emerging Markets",  # iShares MSCI Brazil ETF
 
+    # India / Emerging Markets ETFs
+    "FLXI": "Emerging Markets",  # Franklin FTSE India UCITS ETF
+
     # Alternative Assets
     "AGGS": "Fixed Income",     # iShares Core Global Aggregate Bond UCITS ETF
     "XGDU": "Commodities",      # Xtrackers IE Physical Gold ETC

@@ -999,7 +999,15 @@ async def get_market_opportunities(
         from services.ml.bourse.portfolio_gap_detector import PortfolioGapDetector
         gap_detector = PortfolioGapDetector()
 
-        total_capital_needed = sum(o.get("capital_needed", 0) for o in opportunities)
+        # Calculate capital needed per SECTOR (not per stock suggestion)
+        # Each stock in a gap carries the full gap capital, so deduplicate by sector
+        seen_sectors = set()
+        total_capital_needed = 0
+        for opp in opportunities:
+            sector = opp.get("sector")
+            if sector not in seen_sectors:
+                seen_sectors.add(sector)
+                total_capital_needed += opp.get("capital_needed", 0)
 
         sales_result = await gap_detector.detect_sales(
             positions=positions,

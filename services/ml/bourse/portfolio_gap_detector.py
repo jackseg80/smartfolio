@@ -330,13 +330,23 @@ class PortfolioGapDetector:
             # Calculate total values
             total_value = sum(p.get("market_value", 0) or p.get("market_value_usd", 0) for p in current_positions)
             total_freed = sum(s.get("sale_value", 0) for s in suggested_sales)
-            total_invested = sum(o.get("capital_needed", 0) for o in opportunities)
+            # Calculate capital invested per sector (deduplicate stocks in same sector)
+            seen_sectors = set()
+            total_invested = 0
+            for o in opportunities:
+                s = o.get("sector")
+                if s not in seen_sectors:
+                    seen_sectors.add(s)
+                    total_invested += o.get("capital_needed", 0)
 
-            # Extract sector allocations
+            # Extract sector allocations (map raw Yahoo sectors to GICS standard names)
+            from services.ml.bourse.opportunity_scanner import SECTOR_MAPPING
+
             def get_sector_allocation(positions):
                 sector_values = {}
                 for p in positions:
-                    sector = p.get("sector", "Other")
+                    raw_sector = p.get("sector", "Other")
+                    sector = SECTOR_MAPPING.get(raw_sector, raw_sector)
                     value = p.get("market_value", 0) or p.get("market_value_usd", 0)
                     sector_values[sector] = sector_values.get(sector, 0) + value
 
@@ -362,12 +372,19 @@ class PortfolioGapDetector:
                         pos["market_value"] = current_val - sale_value
                         break
 
-            # Add opportunities
+            # Add opportunities (divide capital among stocks in same sector)
+            sector_stock_counts = {}
             for opp in opportunities:
+                s = opp.get("sector", "Other")
+                sector_stock_counts[s] = sector_stock_counts.get(s, 0) + 1
+
+            for opp in opportunities:
+                s = opp.get("sector", "Other")
+                n_stocks = sector_stock_counts.get(s, 1)
                 after_positions.append({
                     "symbol": opp.get("symbol", "NEW"),
-                    "sector": opp.get("sector", "Other"),
-                    "market_value": opp.get("capital_needed", 0)
+                    "sector": s,
+                    "market_value": opp.get("capital_needed", 0) / n_stocks
                 })
 
             after_allocation = get_sector_allocation(after_positions)
