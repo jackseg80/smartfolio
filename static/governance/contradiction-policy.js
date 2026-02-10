@@ -12,7 +12,7 @@ import { getStableContradiction } from './stability-engine.js';
  * @returns {Object} - Classification complète
  */
 export function classifyContradiction(state) {
-  const pct = selectContradictionPct(state);
+  const pct = selectContradictionPct(state) ?? 0;
 
   if (pct >= 70) {
     return {

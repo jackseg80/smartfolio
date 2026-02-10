@@ -252,7 +252,11 @@ export async function getUnifiedMLStatus() {
                             regime: { loaded: sourcesCount > 1 ? 1 : 0, available: true },
                             correlation: { loaded: sourcesCount > 2 ? 1 : 0 },
                             sentiment: { loaded: 1, available: true }
-                        }
+                        },
+                        // Real governance data for badge (no fabrication)
+                        contradictionIndex: govData.signals?.contradiction_index ?? null,
+                        signalsTimestamp: govData.signals?.timestamp || null,
+                        derivedPolicy: govData.derived_policy || null
                     };
                     (window.debugLogger?.debug || console.log)(`✅ Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence * 100).toFixed(1)}% confidence`);
                     mlUnifiedCache = { data: result, timestamp: Date.now() };

@@ -8,7 +8,7 @@ import { formatZurich, isStale } from '../utils/time.js';
 import { selectContradictionPct, selectEffectiveCap, selectOverridesCount, selectGovernanceTimestamp, selectDecisionSource, selectCapPercent, selectPolicyCapPercent, selectEngineCapPercent } from '../selectors/governance.js';
 
 // Constants
-const TTL_STALE_MINUTES = 30;
+const TTL_STALE_MINUTES = 60;
 
 function normalizeCapDisplay(raw) {
   if (typeof raw !== 'number' || !Number.isFinite(raw)) {
@@ -100,7 +100,7 @@ function getBackendStatus(state) {
       return 'stale';
     }
 
-    return apiStatus === 'healthy' ? 'healthy' : 'healthy';
+    return apiStatus === 'healthy' ? 'healthy' : 'unknown';
   } catch (error) {
     return 'error';
   }
@@ -258,28 +258,22 @@ function buildBadgeHtml(data) {
   const statusFlag = data.status === 'stale' ? ' STALE' : data.status === 'error' ? ' ERROR' : '';
   parts.push(`<span>Updated <span class="badge-value">${formattedTime}</span>${statusFlag}</span>`);
 
-  // Contradiction
-  if (data.contradiction !== null && data.contradiction !== undefined) {
-    parts.push('<span class="badge-separator">•</span>');
-    parts.push(`<span>Contrad <span class="badge-value">${data.contradiction}%</span></span>`);
-  }
+  // Contradiction (always show — use "--" when no real data)
+  parts.push('<span class="badge-separator">•</span>');
+  const contradVal = (data.contradiction != null && Number.isFinite(data.contradiction)) ? `${data.contradiction}%` : '—';
+  parts.push(`<span>Contrad <span class="badge-value">${contradVal}</span></span>`);
 
-  // Cap (effective)
+  // Cap (always show — use "—" when no real data)
+  parts.push('<span class="badge-separator">•</span>');
   if (data.capPolicy != null && Number.isFinite(data.capPolicy)) {
-    parts.push('<span class="badge-separator">•</span>');
     const capChunks = [`Cap <span class=\"badge-value\">${data.capPolicy}%</span>`];
     if (data.capEngine != null && Number.isFinite(data.capEngine) && data.capEngine !== data.capPolicy) {
       capChunks.push(`SMART <span class=\"badge-value\">${data.capEngine}%</span>`);
     }
     parts.push(`<span>${capChunks.join(' • ')}</span>`);
   } else if (data.cap != null && Number.isFinite(data.cap)) {
-    parts.push('<span class="badge-separator">•</span>');
     parts.push(`<span>Cap <span class="badge-value">${data.cap}%</span></span>`);
-  } else if (data.cap != null) {
-    parts.push('<span class="badge-separator">•</span>');
-    parts.push('<span>Cap <span class="badge-value">—</span></span>');
   } else {
-    parts.push('<span class="badge-separator">•</span>');
     parts.push('<span>Cap <span class="badge-value">—</span></span>');
   }
 

@@ -103,6 +103,7 @@ export function applyHysteresis(newValue, state) {
  */
 export function getStableContradiction(state) {
   const rawContradiction = selectContradiction01(state);
+  if (rawContradiction == null) return 0;
   return applyHysteresis(rawContradiction, state);
 }
 

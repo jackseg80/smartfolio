@@ -6,10 +6,11 @@
 /**
  * Sélecteur principal pour contradiction (valeur 0-1 normalisée)
  * @param {Object} state - État unifié
- * @returns {number} - Valeur 0-1 (0 = pas de contradiction, 1 = contradiction maximale)
+ * @returns {number|null} - Valeur 0-1 (0 = pas de contradiction, 1 = max), null si pas de données
  */
 export function selectContradiction01(state) {
-  const raw = state?.governance?.contradiction_index ?? 0;
+  const raw = state?.governance?.contradiction_index;
+  if (raw == null) return null;
   const c = raw > 1 ? raw / 100 : raw; // Normalise 0-100 vers 0-1
   return Math.max(0, Math.min(1, Number.isFinite(c) ? c : 0));
 }
@@ -17,10 +18,11 @@ export function selectContradiction01(state) {
 /**
  * Sélecteur pour contradiction en pourcentage (affichage UI)
  * @param {Object} state - État unifié
- * @returns {number} - Valeur 0-100 (entier arrondi)
+ * @returns {number|null} - Valeur 0-100 (entier arrondi), null si pas de données
  */
 export function selectContradictionPct(state) {
-  return Math.round(selectContradiction01(state) * 100);
+  const val = selectContradiction01(state);
+  return val != null ? Math.round(val * 100) : null;
 }
 
 /**
@@ -158,7 +160,7 @@ export function selectEffectiveCap(state) {
       if (!updated) return true;
       const ts = new Date(updated);
       if (Number.isNaN(ts.getTime())) return true;
-      return Date.now() - ts.getTime() > 30 * 60 * 1000;
+      return Date.now() - ts.getTime() > 60 * 60 * 1000;
     })();
     if (backendStatus === 'stale' || stale) {
       if (window.__DEBUG_GOVERNANCE_VERBOSE__) {

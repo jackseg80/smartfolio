@@ -1463,51 +1463,40 @@ class WealthContextBar {
       }
 
       // Determine data source priority: ML > Risk > Fallback
-      let dataSource = 'backend';
-      let timestamp = new Date().toISOString();
-      let contradiction = 0.3; // Default fallback
-      let engineCap = 20; // Default fallback
-      let apiStatus = 'stale';
+      // RULE: Use REAL governance data only. Show null (→ "--") when unavailable.
+      let dataSource = 'unknown';
+      let timestamp = null;
+      let contradictionIndex = null;
+      let engineCap = null;
+      let policyCapDaily = null;
+      let apiStatus = 'unknown';
 
-      // Use unified ML status from centralized source
       let modelsLoaded = 0;
       if (mlStatus) {
         dataSource = mlStatus.source;
         timestamp = mlStatus.timestamp;
         modelsLoaded = mlStatus.totalLoaded;
-
-        // Use ML confidence for contradiction calculation
-        const confidence = mlStatus.confidence || 0;
-        contradiction = Math.max(0.1, Math.min(0.9, 1 - confidence));
-        engineCap = Math.round(confidence < 0.5 ? 25 : 15 + ((1-confidence) * 10));
         apiStatus = mlStatus.source !== 'error' ? 'healthy' : 'stale';
 
-        (window.debugLogger?.debug || console.log)(`🎯 Unified ML: ${modelsLoaded}/${mlStatus.totalModels} models, source: ${dataSource}, confidence: ${(confidence*100).toFixed(1)}%`);
-      } else {
-        // Fallback if unified ML fails - try Risk data first
-        if (risk?.risk_metrics) {
-          dataSource = 'risk_backend';
-          timestamp = risk.timestamp || new Date().toISOString();
-          modelsLoaded = 0; // No ML models from risk data
-          contradiction = Math.min(0.5, risk.risk_metrics.volatility_annualized || 0.3);
-          engineCap = Math.abs(risk.risk_metrics.var_95_1d || 0.03) * 100;
-          apiStatus = 'healthy';
-          (window.debugLogger?.debug || console.log)(`📊 Risk Backend: VaR ${risk.risk_metrics.var_95_1d?.toFixed(3)}, Vol ${(contradiction*100).toFixed(1)}%`);
-        } else {
-          // Final fallback
-          dataSource = 'fallback';
-          modelsLoaded = 4;
-          const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-          contradiction = 0.15 + ((dayOfYear % 7) * 0.01);
-          engineCap = 18 + (dayOfYear % 5);
-          apiStatus = 'stale';
-          (window.debugLogger?.debug || console.log)(`⚠️ Badge using final fallback data`);
+        // Use REAL governance data from API response (not fabricated)
+        contradictionIndex = mlStatus.contradictionIndex ?? null;
+        if (mlStatus.derivedPolicy?.cap_daily != null) {
+          policyCapDaily = mlStatus.derivedPolicy.cap_daily;
         }
-      }
 
-      // Risk Data section is now handled above
-      if (false) { // Disabled - moved to else clause above
-      } // End of disabled risk section
+        (window.debugLogger?.debug || console.log)(`🎯 Unified ML: ${modelsLoaded}/${mlStatus.totalModels} models, source: ${dataSource}, contrad: ${contradictionIndex}`);
+      } else if (risk?.risk_metrics) {
+        // Risk backend available but no governance data
+        dataSource = 'risk_backend';
+        timestamp = risk.timestamp || new Date().toISOString();
+        apiStatus = 'healthy';
+        (window.debugLogger?.debug || console.log)(`📊 Risk Backend: no governance data available`);
+      } else {
+        // No data at all
+        dataSource = 'fallback';
+        apiStatus = 'stale';
+        (window.debugLogger?.debug || console.log)(`⚠️ No real data available for badge`);
+      }
 
       // Detect overrides from portfolio state
       let overrides = [];
@@ -1516,30 +1505,26 @@ class WealthContextBar {
         const topAsset = balances.items[0];
         const concentration = topAsset?.value_usd / totalValue || 0;
 
-        // Add concentration override if BTC > 50%
         if (concentration > 0.5 && topAsset?.symbol === 'BTC') {
           overrides.push('btc_concentration_override');
         }
       }
 
-      // Create unified store with best available data
+      // Create unified store with REAL data only (null = unknown → badge shows "--")
       window.realDataStore = {
         risk,
         balances,
-        mlStatus, // Unified ML status
+        mlStatus,
         governance: {
+          contradiction_index: contradictionIndex,
           ml_signals: {
             decision_source: dataSource,
-            updated: timestamp,
-            models_loaded: modelsLoaded
-          },
-          status: {
-            contradiction: contradiction
+            updated: timestamp
           },
           caps: {
-            engine_cap: engineCap,
-            active_policy: { cap_daily: 0.20 }
+            engine_cap: engineCap
           },
+          active_policy: policyCapDaily != null ? { cap_daily: policyCapDaily } : null,
           overrides: overrides
         },
         ui: {
@@ -1549,7 +1534,7 @@ class WealthContextBar {
         }
       };
 
-      (window.debugLogger?.debug || console.log)(`🔗 Unified data: source=${dataSource}, models=${modelsLoaded}, contradiction=${(contradiction*100).toFixed(1)}%, cap=${engineCap}%, overrides=${overrides.length}`);
+      (window.debugLogger?.debug || console.log)(`🔗 Unified data: source=${dataSource}, models=${modelsLoaded}, contrad=${contradictionIndex}, overrides=${overrides.length}`);
 
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Failed to fetch real API data:', error);
