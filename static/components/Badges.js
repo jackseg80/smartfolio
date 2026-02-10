@@ -94,13 +94,19 @@ function getBackendStatus(state) {
       return 'stale';
     }
 
-    // Check if data is stale based on timestamp
+    // Trust the store when it explicitly says 'healthy'
+    // (the store already checks staleness in _updateBackendStatusFromGovernance)
+    if (apiStatus === 'healthy') {
+      return 'healthy';
+    }
+
+    // Fallback: when store has no explicit status, check timestamp directly
     const updated = selectGovernanceTimestamp(state);
     if (isStale(updated, TTL_STALE_MINUTES)) {
       return 'stale';
     }
 
-    return apiStatus === 'healthy' ? 'healthy' : 'unknown';
+    return 'unknown';
   } catch (error) {
     return 'error';
   }

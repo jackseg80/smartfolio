@@ -155,18 +155,28 @@ export function selectEffectiveCap(state) {
       return 5;
     }
 
-    const updated = selectGovernanceTimestamp(state);
-    const stale = (() => {
-      if (!updated) return true;
-      const ts = new Date(updated);
-      if (Number.isNaN(ts.getTime())) return true;
-      return Date.now() - ts.getTime() > 60 * 60 * 1000;
-    })();
-    if (backendStatus === 'stale' || stale) {
+    if (backendStatus === 'stale') {
       if (window.__DEBUG_GOVERNANCE_VERBOSE__) {
         console.debug('[CAP-SELECTOR] selectEffectiveCap -> STALE FALLBACK:', 8);
       }
       return 8;
+    }
+
+    // Only check timestamp when store has no explicit status
+    if (backendStatus !== 'healthy') {
+      const updated = selectGovernanceTimestamp(state);
+      const stale = (() => {
+        if (!updated) return true;
+        const ts = new Date(updated);
+        if (Number.isNaN(ts.getTime())) return true;
+        return Date.now() - ts.getTime() > 60 * 60 * 1000;
+      })();
+      if (stale) {
+        if (window.__DEBUG_GOVERNANCE_VERBOSE__) {
+          console.debug('[CAP-SELECTOR] selectEffectiveCap -> TIMESTAMP STALE FALLBACK:', 8);
+        }
+        return 8;
+      }
     }
 
     const alertCap = normalizeCapToPercent(state?.governance?.caps?.alert_cap ?? state?.alerts?.active_cap);
