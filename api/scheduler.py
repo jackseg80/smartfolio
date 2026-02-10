@@ -379,11 +379,12 @@ async def job_staleness_monitor():
             import json
             import time
 
-            users_config = Path("config/users.json")
-            if users_config.exists():
-                users = json.loads(users_config.read_text())
+            users_config_path = Path("config/users.json")
+            if users_config_path.exists():
+                users_data = json.loads(users_config_path.read_text())
+                users_list = users_data.get("users", []) if isinstance(users_data, dict) else users_data
 
-                for user in users:
+                for user in users_list:
                     user_id = user.get("id")
                     if not user_id:
                         continue
