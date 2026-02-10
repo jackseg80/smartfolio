@@ -482,7 +482,7 @@ class RecommendationsOrchestrator:
             # Add symbol_to_sector mapping for easier lookup
             symbol_to_sector = {}
             for symbol in positions_returns.keys():
-                symbol_to_sector[symbol] = analytics.sector_map.get(symbol, 'Unknown')
+                symbol_to_sector[symbol] = analytics._get_sector_for_ticker(symbol)
 
             result['symbol_to_sector'] = symbol_to_sector
 

@@ -59,11 +59,16 @@ class SpecializedBourseAnalytics:
             'MCD': 'Consumer', 'NKE': 'Consumer', 'COST': 'Consumer', 'SBUX': 'Consumer',
             'UHRN': 'Consumer',  # Swatch Group (luxury goods)
 
-            # Energy
+            # Energy / Materials
             'XOM': 'Energy', 'CVX': 'Energy', 'COP': 'Energy', 'SLB': 'Energy',
+            'GLEN': 'Materials',  # Glencore (mining/commodities)
 
             # Industrial
             'BA': 'Industrial', 'CAT': 'Industrial', 'GE': 'Industrial', 'MMM': 'Industrial',
+            'WFRD': 'Industrial',  # Weatherford International (oilfield services)
+
+            # China / Asia
+            'BABA': 'Technology',  # Alibaba
 
             # ETFs
             'SPY': 'ETF-Broad', 'QQQ': 'ETF-Tech', 'IWM': 'ETF-SmallCap', 'DIA': 'ETF-Industrial',
@@ -75,6 +80,13 @@ class SpecializedBourseAnalytics:
             'AGGS': 'ETF-Bonds',  # iShares Global Aggregate Bond
             'BTEC': 'ETF-Healthcare',  # iShares NASDAQ Biotech
             'XGDU': 'ETF-Commodities',  # Xtrackers Physical Gold ETC
+            'VWO': 'ETF-Emerging',  # Vanguard FTSE Emerging Markets
+            'XLI': 'ETF-Industrial',  # Industrial Select Sector SPDR
+            'VGK': 'ETF-International',  # Vanguard FTSE Europe
+            'SMH': 'ETF-Tech',  # VanEck Semiconductor
+            'FLXI': 'ETF-Emerging',  # Franklin FTSE India
+            'XLU': 'ETF-Utilities',  # Utilities Select Sector SPDR
+            'XLP': 'ETF-Consumer',  # Consumer Staples Select Sector SPDR
         }
 
         # Cache for dynamic sector lookups

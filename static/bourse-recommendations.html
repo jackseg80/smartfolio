@@ -283,6 +283,8 @@
         let currentTimeframe = 'medium';
         let currentHorizon = 'medium';
         let lastOpportunitiesData = null;
+        let recSortColumn = null;
+        let recSortDirection = 'asc';
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', async () => {
@@ -525,6 +527,52 @@
             `;
         }
 
+        function sortRecommendations(column) {
+            if (recSortColumn === column) {
+                recSortDirection = recSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                recSortColumn = column;
+                recSortDirection = 'asc';
+            }
+
+            const searchTerm = document.getElementById('recSearch')?.value || '';
+            const actionFilter = document.getElementById('recFilter')?.value || 'all';
+            const filtered = currentRecommendations.filter(rec => {
+                const matchesSearch = !searchTerm ||
+                    rec.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (rec.name && rec.name.toLowerCase().includes(searchTerm.toLowerCase()));
+                const matchesAction = actionFilter === 'all' || rec.action === actionFilter;
+                return matchesSearch && matchesAction;
+            });
+
+            const actionOrder = { 'STRONG BUY': 5, 'BUY': 4, 'HOLD': 3, 'SELL': 2, 'STRONG SELL': 1 };
+            const multiplier = recSortDirection === 'asc' ? 1 : -1;
+
+            filtered.sort((a, b) => {
+                let valA, valB;
+                switch (column) {
+                    case 'symbol': valA = a.symbol; valB = b.symbol; break;
+                    case 'name': valA = a.name || a.symbol; valB = b.name || b.symbol; break;
+                    case 'action': valA = actionOrder[a.action] || 0; valB = actionOrder[b.action] || 0; return (valA - valB) * multiplier;
+                    case 'rr': valA = a.price_targets?.risk_reward_tp1 || 0; valB = b.price_targets?.risk_reward_tp1 || 0; return (valA - valB) * multiplier;
+                    case 'confidence': return (a.confidence - b.confidence) * multiplier;
+                    case 'sector': valA = a.sector || ''; valB = b.sector || ''; break;
+                    case 'weight': return (a.weight_pct - b.weight_pct) * multiplier;
+                    default: return 0;
+                }
+                return String(valA).localeCompare(String(valB)) * multiplier;
+            });
+
+            renderRecommendationsTable(filtered);
+        }
+
+        function getSortIcon(column) {
+            if (recSortColumn !== column) return '<span style="opacity: 0.3; margin-left: 4px;">▲</span>';
+            return recSortDirection === 'asc'
+                ? '<span style="margin-left: 4px;">▲</span>'
+                : '<span style="margin-left: 4px;">▼</span>';
+        }
+
         function renderRecommendationsTable(recommendations) {
             const tableContainer = document.getElementById('recommendationsTable');
             const countBadge = document.getElementById('recCount');
@@ -538,18 +586,20 @@
                 return;
             }
 
+            const thStyle = 'padding: 0.75rem; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted); cursor: pointer; user-select: none; white-space: nowrap;';
+
             let tableHTML = `
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Name</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Action</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">R/R</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Confidence</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Weight</th>
+                                <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('symbol')">Symbol ${getSortIcon('symbol')}</th>
+                                <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('name')">Name ${getSortIcon('name')}</th>
+                                <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('action')">Action ${getSortIcon('action')}</th>
+                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('rr')">R/R ${getSortIcon('rr')}</th>
+                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('confidence')">Confidence ${getSortIcon('confidence')}</th>
+                                <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('sector')">Sector ${getSortIcon('sector')}</th>
+                                <th scope="col" style="${thStyle} text-align: right;" onclick="sortRecommendations('weight')">Weight ${getSortIcon('weight')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -908,6 +958,7 @@
                         <thead>
                             <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
+                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Name</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Score</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Type</th>
@@ -920,6 +971,7 @@
                                 return `
                                     <tr style="border-bottom: 1px solid var(--theme-border);">
                                         <td style="padding: 0.75rem; font-weight: 600;">${opp.symbol}</td>
+                                        <td style="padding: 0.75rem; color: var(--theme-text-muted);">${opp.name || opp.symbol}</td>
                                         <td style="padding: 0.75rem;">${opp.sector}</td>
                                         <td style="padding: 0.75rem; text-align: center; color: ${scoreColor}; font-weight: 600;">${opp.score.toFixed(0)}</td>
                                         <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--info-bg); color: var(--info); border-radius: var(--radius-sm); font-size: 0.75rem;">${opp.type}</span></td>
