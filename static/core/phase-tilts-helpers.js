@@ -117,7 +117,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   const finalRiskySum = riskyKeys.reduce((sum, k) => sum + (T[k] || 0), 0);
   const finalTotalSum = Object.values(T).reduce((sum, val) => sum + val, 0);
 
-  debugLogger.error('✅ TiltHelpers: Zero-sum tilts applied - DETAILED DEBUG:', {
+  debugLogger.debug('✅ TiltHelpers: Zero-sum tilts applied - DETAILED DEBUG:', {
     originalStables: stables.toFixed(4) + '%',
     finalStables: finalStables.toFixed(4) + '%',
     stablesPreserved: Math.abs(finalStables - stables) < 0.01,

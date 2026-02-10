@@ -74,7 +74,7 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <label for="sim-source-select" style="font-size: 0.9rem; color: var(--theme-text-muted);">Source:</label>
           <select id="sim-source-select" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text); font-size: 0.9rem;">
-            <option value="">Charger...</option>
+            <option value="">Loading...</option>
           </select>
           <button id="test-source-btn" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem;">🧪 Test</button>
         </div>
@@ -86,7 +86,7 @@
     <domain-nav domain="analytics"></domain-nav>
 
     <!-- Controls flottants -->
-    <div id="controls" class="controls-flyout" role="complementary" aria-label="Controls de simulation" tabindex="-1">
+    <div id="controls" class="controls-flyout" role="complementary" aria-label="Simulation controls" tabindex="-1">
       <div class="flyout-handle">🎛️ Controls</div>
       <div class="flyout-header">
         <h2>🎛️ Controls</h2>
@@ -145,6 +145,11 @@
               <div id="sim-selected-preset" class="di-preset" style="margin-top: var(--space-sm);">Preset: Custom</div>
             </div>
 
+            <!-- Cycle Position Timeline -->
+            <div class="result-card" id="sim-cycle-timeline-card">
+              <div id="sim-cycle-timeline"></div>
+            </div>
+
             <!-- Risk Budget -->
             <div class="result-card">
               <h4>💰 Risk Budget</h4>
@@ -170,7 +175,7 @@
 
             <!-- Allocation Targets -->
             <div class="result-card">
-              <h4>🎯 Allocation par Groupes</h4>
+              <h4>🎯 Allocation by Groups</h4>
               <div id="sim-allocation-chart" class="allocation-chart">
                 Loading allocation...
               </div>
@@ -181,15 +186,15 @@
               <h4>⚡ Execution Plan</h4>
               <div style="margin-bottom: var(--space-md);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-                  <span>Delta Total:</span>
+                  <span>Total Delta:</span>
                   <span id="sim-total-delta" style="font-family: monospace; font-weight: 600;">--%</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
-                  <span>Seuil:</span>
+                  <span>Threshold:</span>
                   <span id="sim-exec-threshold" style="font-family: monospace;">--%</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <span>Statut:</span>
+                  <span>Status:</span>
                   <span id="sim-exec-status" class="status-badge">--</span>
                 </div>
               </div>
@@ -202,7 +207,7 @@
             <div class="result-card">
               <h4>📝 Summary</h4>
               <div id="sim-summary-nl" style="line-height: 1.6; color: var(--theme-text);">
-                Summary en langage naturel...
+                Natural language summary...
               </div>
             </div>
           </div>
@@ -212,7 +217,7 @@
       <!-- Inspecteur -->
       <div id="inspector" class="sim-panel sim-panel-inspector">
         <div class="sim-header">
-          <h3>🔍 Inspecteur</h3>
+          <h3>🔍 Inspector</h3>
         </div>
         <div id="sim-inspector" class="results-content">
           <!-- Inspecteur généré par SimInspector.js -->
@@ -228,9 +233,8 @@
     import { SimInspector } from './components/SimInspector.js';
     import * as SimEngine from './modules/simulation-engine.js';
 
-    // Sélecteurs & policy
-    import { selectContradictionPct, selectContradiction01, selectCapPercent } from './selectors/governance.js';
-    import { classifyContradiction } from './governance/contradiction-policy.js';
+    // Sélecteurs
+    import { selectCapPercent } from './selectors/governance.js';
 
     // Badges UI
     import { renderBadges } from './components/Badges.js';
@@ -299,32 +303,6 @@
       cols.push(current.trim());
       return cols;
     }
-
-    // Fallback functions for missing modules
-    function smoothContradiction(value, prevValue, config, state) {
-      return { value01: value, level: 'medium', persistCount: 0 };
-    }
-
-    function getEffectiveContradiction01(opts) {
-      return {
-        value01: opts.state?.governance?.contradiction_index ?? 0.5,
-        stale: false,
-        useBaseWeights: false
-      };
-    }
-
-    function calculateAdaptiveWeights(base, state) {
-      return base;
-    }
-
-    function applyContradictionCaps(policy, state) {
-      return policy;
-    }
-
-    // État local de smoothing (persistance) + config par défaut
-    let smoothState = { prevLevel: undefined, prevValue: undefined, persistCount: 0 };
-    const SMOOTHING_CFG = { ema_alpha: 0.25, deadband: 2, persistence: 3 }; // deadband en %
-    const STALE_TTL_MIN = 30;
 
     // État global de l'application
     let appState = {
@@ -554,7 +532,7 @@
       const statusEl = document.getElementById('simulation-status');
       if (statusEl) {
         const badge = statusEl.querySelector('.status-badge');
-        badge.textContent = 'Mode Simulation';
+        badge.textContent = 'Simulation Mode';
         badge.className = 'status-badge info';
       }
 
@@ -616,6 +594,115 @@
       }
     }
 
+
+    /**
+     * Convert cycleScore (0-100) to approximate months in the 48-month chronological cycle.
+     * Used by the DI panel's mini cycle chart (Acc 0-6, Bull 6-18, Peak 18-24, Bear 24-36, Pre-Acc 36-48).
+     *
+     * High scores → Bull/Peak months, Low scores → Bear months
+     */
+    function cycleScoreToMonths(score, onchainScore = 50) {
+      // DI panel chronological phases: Acc(0-6) → Bull(6-18) → Peak(18-24) → Bear(24-36) → Pre-Acc(36-48)
+      // Fallback heuristic for manual slider values (presets use explicit cycleMonths)
+      if (score >= 80) return 18 + (score - 80) / 20 * 6;     // 80-100 → Peak (18-24m)
+      if (score >= 55) return 6 + (score - 55) / 25 * 12;     // 55-80  → Bull (6-18m)
+      // Ambiguous zone (35-55): onchain discriminates bear bounce vs accumulation
+      if (score >= 35) {
+        if (onchainScore < 45) {
+          // Weak onchain = bear context: higher score = later (bounce)
+          return 24 + (score - 35) / 20 * 6;                  // 35→24m, 42→26.1m, 55→30m
+        }
+        return (score - 35) / 20 * 6;                         // 35-55, healthy onchain → Acc (0-6m)
+      }
+      // Low scores: deeper into bear (lower score = later in bear)
+      if (score >= 15) return 24 + (35 - score) / 20 * 8;     // 35→24m, 25→28m, 15→32m
+      return 32 + (15 - score) / 15 * 4;                       // 15→32m, 0→36m
+    }
+
+    /**
+     * Render visual cycle position timeline based on cycle score
+     *
+     * Phases ordered by bullishness (left=bearish, right=bullish):
+     *   Bear (0-20) | Pre-Acc (20-35) | Accumulation (35-55) | Bull Build (55-80) | Peak (80-100)
+     *
+     * Position = cycleScore directly (0-100 maps to 0-100% on bar)
+     */
+    function renderSimCycleTimeline(cycleScore, blendedScore, pipelineMode) {
+      const container = document.getElementById('sim-cycle-timeline');
+      if (!container) return;
+
+      // Phases ordered by bullishness — score ranges map directly to bar position
+      const phases = [
+        { name: 'Bear',         start: 0,  end: 20,  color: '#dc2626', emoji: '\u{1F534}' },
+        { name: 'Pre-Acc',      start: 20, end: 35,  color: '#6b7280', emoji: '\u26AB' },
+        { name: 'Accumulation', start: 35, end: 55,  color: '#f59e0b', emoji: '\u{1F7E1}' },
+        { name: 'Bull Build',   start: 55, end: 80,  color: '#10b981', emoji: '\u{1F7E2}' },
+        { name: 'Peak',         start: 80, end: 100, color: '#8b5cf6', emoji: '\u{1F7E3}' }
+      ];
+
+      const positionPercent = Math.max(1, Math.min(99, cycleScore));
+      const currentPhase = phases.find(p => cycleScore >= p.start && cycleScore < p.end)
+        || (cycleScore >= 100 ? phases[phases.length - 1] : phases[0]);
+
+      // Build phase segments
+      const segmentsHTML = phases.map(p => {
+        const widthPct = p.end - p.start;
+        const isCurrent = cycleScore >= p.start && cycleScore < p.end
+          || (cycleScore >= 100 && p === phases[phases.length - 1]);
+        return `<div style="width:${widthPct}%;height:100%;background:${p.color};opacity:${isCurrent?1:0.35};display:flex;align-items:center;justify-content:center;">
+          <span style="font-size:0.55rem;font-weight:600;color:rgba(255,255,255,0.9);text-shadow:0 1px 2px rgba(0,0,0,0.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;">${p.emoji} ${p.name}</span>
+        </div>`;
+      }).join('');
+
+      // Legend with current phase highlighted
+      const legendHTML = phases.map(p => {
+        const isCurrent = (cycleScore >= p.start && cycleScore < p.end)
+          || (cycleScore >= 100 && p === phases[phases.length - 1]);
+        return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:0.7rem;color:${isCurrent ? 'var(--theme-text)' : 'var(--theme-text-muted)'};${isCurrent ? 'font-weight:700;' : ''}">
+          <span style="width:8px;height:8px;border-radius:50%;background:${p.color};display:inline-block;${isCurrent ? 'box-shadow:0 0 4px '+p.color+';' : ''}"></span>${p.name}
+        </span>`;
+      }).join(' ');
+
+      // Score scale labels under the bar
+      const scalePoints = [0, 20, 35, 55, 80, 100];
+      const labelsHTML = scalePoints.map(s =>
+        `<span style="font-size:0.6rem;color:var(--theme-text-muted);position:absolute;left:${s}%;transform:translateX(-50%);">${s}</span>`
+      ).join('');
+
+      // Blended score display
+      const blendedInfo = pipelineMode === 'production' && blendedScore != null
+        ? `<span style="margin-left:auto;font-size:0.75rem;font-weight:600;color:var(--brand-primary);">Blended: ${blendedScore}/100</span>`
+        : '';
+
+      container.innerHTML = `
+        <div style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--theme-text-muted);margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+          <span>Cycle Position</span>
+          <span style="font-size:0.85rem;padding:2px 10px;border-radius:4px;background:${currentPhase.color};color:white;font-weight:700;">${currentPhase.emoji} ${currentPhase.name} (${cycleScore})</span>
+          ${blendedInfo}
+        </div>
+        <div style="position:relative;padding:0 0 1.75rem;">
+          <!-- Phase bar -->
+          <div style="position:relative;height:32px;background:var(--theme-surface-elevated,#1a1a2e);border-radius:999px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,0.2);">
+            <div style="display:flex;height:100%;position:absolute;inset:0;">
+              ${segmentsHTML}
+            </div>
+          </div>
+          <!-- Position marker (outside overflow:hidden) -->
+          <div style="position:absolute;top:-8px;left:${positionPercent}%;transform:translateX(-50%);z-index:10;display:flex;flex-direction:column;align-items:center;pointer-events:none;transition:left 0.3s ease;">
+            <div style="width:4px;height:48px;background:var(--brand-primary);border-radius:2px;box-shadow:0 0 12px var(--brand-primary),0 2px 4px rgba(0,0,0,0.4);"></div>
+            <div style="width:16px;height:16px;background:var(--brand-primary);border:3px solid white;border-radius:50%;margin-top:-8px;box-shadow:0 0 10px var(--brand-primary);"></div>
+            <span style="font-size:0.7rem;font-weight:700;color:var(--brand-primary);margin-top:3px;text-shadow:0 1px 2px rgba(0,0,0,0.5);">${cycleScore}</span>
+          </div>
+          <!-- Score scale -->
+          <div style="position:relative;height:16px;margin-top:4px;">
+            ${labelsHTML}
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;">
+          ${legendHTML}
+        </div>
+      `;
+    }
 
     function displayResults(result) {
       const { di, riskBudget, cappedTargets, orders, explanation } = result;
@@ -692,10 +779,11 @@
           alpha: null,
 
           // Données pour tuiles
-          blended_score: diClamped,
-          regime_score: diClamped,
+          blended_score: result.blendedScore ?? diClamped,
+          regime_score: result.blendedScore ?? diClamped,
+          pipeline_mode: result.pipelineMode ?? 'production',
           cycle_phase: cyclePhase,
-          cycle_months: result.context?.cycle?.months || null,
+          cycle_months: result.context?.cycle?.months ?? cycleScoreToMonths(cycleScore, onchainScore),
           onchain_critiques: 0,
           onchain_confidence: null,
           risk_var95: null,
@@ -706,7 +794,7 @@
             stables: riskBudget.target_stables_pct
           } : null,
           regime_emoji: cycleScore >= 90 ? '🐂' : (cycleScore >= 70 ? '😐' : '🐻'),
-          sentiment_fg: result.context?.sentimentScore || null,
+          sentiment_fg: result.context?.sentimentScore ?? null,
           sentiment_interpretation: null
         },
         history: [...window.diHistoryBuffers[historyKey]],
@@ -723,6 +811,13 @@
 
       // Render panneau DI
       renderDecisionIndexPanel(document.getElementById('di-panel-sim'), diPanelData);
+
+      // Render cycle position timeline
+      renderSimCycleTimeline(
+        cycleScore,
+        result.blendedScore ?? null,
+        result.pipelineMode ?? 'production'
+      );
 
       // Preset info (conservé pour affichage sous le panneau)
       const presetName = result?.presetInfo?.name || result?.context?.presetInfo?.name || 'Custom';
@@ -743,9 +838,12 @@
 
       document.getElementById('sim-stables-pct').textContent = `${stablesPct}%`;
       document.getElementById('sim-risky-pct').textContent = `${riskyPct}%`;
-      document.getElementById('sim-risk-curve').textContent = riskBudget.curve;
+      document.getElementById('sim-risk-curve').textContent =
+        riskBudget.pipeline_mode === 'production' ? 'production' : (riskBudget.curve || 'linear');
       document.getElementById('sim-risk-clamps').textContent =
-        `${riskBudget.clamps.min_stables}-${riskBudget.clamps.max_stables}%`;
+        riskBudget.clamps
+          ? `${riskBudget.clamps.min_stables}-${riskBudget.clamps.max_stables}%`
+          : `${riskBudget.percentages?.stables ?? stablesPct}% (fixed)`;
 
       // Ajuster la largeur des barres
       document.getElementById('sim-stables-bar').style.width = `${stablesPct}%`;
@@ -763,7 +861,7 @@
         statusEl.textContent = 'Execute';
         statusEl.className = 'status-badge success';
       } else {
-        statusEl.textContent = 'Attendre';
+        statusEl.textContent = 'Hold';
         statusEl.className = 'status-badge warning';
       }
 
@@ -783,7 +881,7 @@
         .sort(([,a], [,b]) => b - a)
         .filter(([, value]) => value >= 0.1); // Filtrer les très petites valeurs
 
-      const chartTitle = '🎯 Allocations Cibles (Simulation)';
+      const chartTitle = '🎯 Target Allocations (Simulation)';
 
       let html = `<div style="margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: var(--theme-text);">${chartTitle}</div>`;
       html += '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';

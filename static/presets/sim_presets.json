@@ -18,7 +18,8 @@
         "onchainConf": 0.7,
         "sentimentScore": 60,
         "contradictionPenalty": 0.12,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 10
       },
       "regime_phase": {
         "enabled": true,
@@ -60,7 +61,8 @@
         "onchainConf": 0.7,
         "sentimentScore": 75,
         "contradictionPenalty": 0.15,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 15
       },
       "market_overlays": {
         "vol_z": 2.5,
@@ -107,7 +109,8 @@
         "onchainConf": 0.85,
         "sentimentScore": 70,
         "contradictionPenalty": 0.08,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 12
       },
       "regime_phase": {
         "enabled": true,
@@ -149,7 +152,8 @@
         "onchainConf": 0.8,
         "sentimentScore": 75,
         "contradictionPenalty": 0.06,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 16
       },
       "regime_phase": {
         "enabled": true,
@@ -191,7 +195,8 @@
         "onchainConf": 0.85,
         "sentimentScore": 85,
         "contradictionPenalty": 0.04,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 19
       },
       "regime_phase": {
         "enabled": true,
@@ -233,7 +238,8 @@
         "onchainConf": 0.65,
         "sentimentScore": 50,
         "contradictionPenalty": 0.35,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 22
       },
       "market_overlays": {
         "vol_z": 3.2,
@@ -280,7 +286,8 @@
         "onchainConf": 0.8,
         "sentimentScore": 30,
         "contradictionPenalty": 0.2,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 25
       },
       "regime_phase": {
         "enabled": true,
@@ -322,7 +329,8 @@
         "onchainConf": 0.85,
         "sentimentScore": 15,
         "contradictionPenalty": 0.05,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 32
       },
       "market_overlays": {
         "vol_z": 3.8,
@@ -369,7 +377,8 @@
         "onchainConf": 0.5,
         "sentimentScore": 35,
         "contradictionPenalty": 0.25,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 24
       },
       "regime_phase": {
         "enabled": false,
@@ -411,7 +420,8 @@
         "onchainConf": 0.7,
         "sentimentScore": 55,
         "contradictionPenalty": 0.12,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 42
       },
       "regime_phase": {
         "enabled": true,
@@ -453,7 +463,8 @@
         "onchainConf": 0.65,
         "sentimentScore": 65,
         "contradictionPenalty": 0.1,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 8
       },
       "regime_phase": {
         "enabled": false,
@@ -495,7 +506,8 @@
         "onchainConf": 0.6,
         "sentimentScore": 50,
         "contradictionPenalty": 0.18,
-        "backendDecision": null
+        "backendDecision": null,
+        "cycleMonths": 39
       },
       "regime_phase": {
         "enabled": false,

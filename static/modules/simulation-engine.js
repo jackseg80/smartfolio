@@ -4,12 +4,25 @@ import { calculateAdaptiveWeights } from '../governance/contradiction-policy.js'
 /**
  * Simulation Engine - Pipeline exact d'Analytics Unified en mode simulation
  * Version simplifiée avec fallbacks pour éviter les blocages d'imports
+ *
+ * MODE PRODUCTION (defaut): utilise les formules exactes de analytics-unified.html
+ *   - Risk Budget via calculateRiskBudget() de market-regimes.js
+ *   - Blended Score canonique: 0.50*CCS + 0.30*OnChain + 0.20*Risk
+ *   - DI via Strategy API (avec fallback local)
+ *   - Poids adaptatifs avec onchainPenaltyFloor
+ *
+ * MODE CUSTOM: garde les sliders configurables (linear/sigmoid, min/max stables)
  */
 
 console.debug('🎭 SIM: Simulation Engine loaded');
 
 // Imports pour système de contradiction unifié
 let contradictionModules = null;
+
+// Import dynamique des modules production
+let productionRiskBudgetFn = null;
+let strategyApiModule = null;
+let macroStressData = null;
 
 async function loadContradictionModules() {
   if (!contradictionModules) {
@@ -112,6 +125,48 @@ async function loadRealComputeFunction() {
       console.debug('✅ SIM: Real Phase Engine loaded');
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load phase-engine.js, using fallback tilts:', error.message);
+    }
+  }
+
+  // Charger calculateRiskBudget de production (market-regimes.js)
+  if (!productionRiskBudgetFn) {
+    try {
+      const mrModule = await import('../modules/market-regimes.js');
+      productionRiskBudgetFn = mrModule.calculateRiskBudget;
+      console.debug('✅ SIM: Production calculateRiskBudget loaded from market-regimes.js');
+    } catch (error) {
+      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load market-regimes.js calculateRiskBudget:', error.message);
+    }
+  }
+
+  // Charger Strategy API adapter pour DI production
+  if (!strategyApiModule) {
+    try {
+      strategyApiModule = await import('../core/strategy-api-adapter.js');
+      console.debug('✅ SIM: Strategy API adapter loaded');
+    } catch (error) {
+      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load strategy-api-adapter.js:', error.message);
+    }
+  }
+
+  // Fetch macro stress data (VIX/DXY) pour DI penalty
+  if (!macroStressData) {
+    try {
+      const baseUrl = window.globalConfig?.get?.('api_base_url') || window.location.origin;
+      const resp = await fetch(`${baseUrl}/proxy/fred/macro-stress`, { signal: AbortSignal.timeout(3000) });
+      if (resp.ok) {
+        const data = await resp.json();
+        // Handle both {data: {vix, dxy}} and flat {vix, dxy} formats
+        macroStressData = data?.data ?? data;
+        console.debug('✅ SIM: Macro stress data loaded:', macroStressData);
+      } else {
+        // Non-OK response (422, 404, etc.) — mark as unavailable, don't retry
+        macroStressData = { vix: null, dxy: null, penalty: 0 };
+        console.debug('⚠️ SIM: Macro stress endpoint returned', resp.status, '- penalty=0');
+      }
+    } catch (error) {
+      macroStressData = { vix: null, dxy: null, penalty: 0 };
+      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Macro stress unavailable, penalty=0:', error.message);
     }
   }
 }
@@ -410,9 +465,17 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
     // Phase Engine
     phaseEngine: {
       enabled: uiOverrides.phaseEngine?.enabled ?? false,
-      mode: uiOverrides.phaseEngine?.mode ?? 'shadow',
+      mode: uiOverrides.phaseEngine?.mode ?? 'apply',
       forcedPhase: uiOverrides.phaseEngine?.forcedPhase ?? null,
       offset: uiOverrides.phaseEngine?.offset ?? 0
+    },
+
+    // Pipeline mode (production=aligned with analytics-unified, custom=configurable sliders)
+    pipelineMode: uiOverrides.pipelineMode ?? 'production',
+
+    // Cycle position hint (chronological months 0-48, from preset or null for heuristic)
+    cycle: {
+      months: uiOverrides.cycleMonths ?? null
     },
 
     // Métadonnées
@@ -426,11 +489,128 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 }
 
 /**
+ * 2b. BLENDED SCORE — Formule canonique production
+ *
+ * Source de vérité: analytics-unified-main-controller.js (ligne 1209-1236)
+ * Formule: 0.50 × CycleScore + 0.30 × OnChainScore + 0.20 × RiskScore
+ *
+ * Ce score est utilisé comme input pour:
+ *   - calculateRiskBudget() (production mode)
+ *   - Détermination du régime de marché
+ *
+ * NOTE: Le DI (Decision Index) est un score SÉPARÉ calculé différemment
+ * (via Strategy API avec poids adaptatifs + phase_factor + macro_penalty).
+ */
+export function computeBlendedScore(cycleScore, onchainScore, riskScore) {
+  const blended = 0.50 * (cycleScore ?? 50) + 0.30 * (onchainScore ?? 50) + 0.20 * (riskScore ?? 50);
+  const result = Math.round(Math.max(0, Math.min(100, blended)));
+  console.debug('🎭 SIM: Blended Score (production formula):', {
+    cycle: cycleScore, onchain: onchainScore, risk: riskScore,
+    formula: `0.50×${cycleScore} + 0.30×${onchainScore} + 0.20×${riskScore}`,
+    result
+  });
+  return result;
+}
+
+/**
+ * 2c. PRODUCTION RISK BUDGET — Wrapper autour de market-regimes.js
+ *
+ * Utilise la formule exacte de production:
+ *   risk_factor = 0.5 + 0.5 × (riskScore / 100)
+ *   baseRisky = clamp((blendedScore - 35) / 45, 0, 1)
+ *   risky = clamp(baseRisky × risk_factor, 0.20, 0.85)
+ *   stables = 100 - risky
+ *
+ * + Direction penalty quand cycle > 80 et descendant
+ */
+function computeProductionRiskBudget(blendedScore, riskScore, cycleScore = null, cycleDirection = null, cycleConfidence = null) {
+  if (!productionRiskBudgetFn) {
+    console.warn('⚠️ SIM: Production risk budget function not loaded, falling back to inline calculation');
+    // Inline fallback matching production formula
+    const riskRounded = Math.round(riskScore || 0);
+    const blendedRounded = Math.round(blendedScore);
+    let risk_factor = 0.5 + 0.5 * (riskRounded / 100);
+
+    if (cycleDirection != null && cycleScore != null && cycleScore > 80) {
+      const conf = cycleConfidence ?? 0.5;
+      const dirPenalty = Math.max(0, -cycleDirection) * conf * 0.15;
+      risk_factor *= (1 - dirPenalty);
+    }
+
+    const baseRisky = Math.max(0, Math.min(1, (blendedRounded - 35) / 45));
+    const riskyAllocation = Math.max(0.20, Math.min(0.85, baseRisky * risk_factor));
+    const riskyPct = Math.round(riskyAllocation * 100);
+    const stablesPct = 100 - riskyPct;
+
+    return {
+      target_stables_pct: stablesPct,
+      source: 'production-inline-fallback',
+      risk_factor,
+      base_risky: baseRisky,
+      percentages: { risky: riskyPct, stables: stablesPct },
+      metadata: { blended_score: blendedRounded, risk_score: riskRounded }
+    };
+  }
+
+  const result = productionRiskBudgetFn(blendedScore, riskScore, cycleScore, cycleDirection, cycleConfidence);
+  console.debug('✅ SIM: Production risk budget calculated:', result);
+  return result;
+}
+
+/**
+ * 2d. MACRO PENALTY — Graduated VIX/DXY penalty (cap -15)
+ *
+ * Production: fetched from /proxy/fred/macro-stress
+ * Uses graduated formula from DECISION_INDEX_V2.md:
+ *   VIX penalty: 0 to -10 (graduated)
+ *   DXY penalty: 0 to -8 (graduated)
+ *   Total cap: -15
+ */
+function computeMacroPenalty() {
+  if (!macroStressData || (!macroStressData.vix && !macroStressData.dxy)) {
+    return { penalty: 0, vix: null, dxy: null, source: 'unavailable' };
+  }
+
+  let vixPenalty = 0;
+  let dxyPenalty = 0;
+
+  // VIX penalty: graduated 0 to -10
+  if (macroStressData.vix != null) {
+    if (macroStressData.vix > 30) vixPenalty = -10;
+    else if (macroStressData.vix > 25) vixPenalty = -7;
+    else if (macroStressData.vix > 20) vixPenalty = -4;
+    else if (macroStressData.vix > 18) vixPenalty = -2;
+  }
+
+  // DXY penalty: graduated 0 to -8
+  if (macroStressData.dxy != null) {
+    if (macroStressData.dxy > 108) dxyPenalty = -8;
+    else if (macroStressData.dxy > 105) dxyPenalty = -5;
+    else if (macroStressData.dxy > 103) dxyPenalty = -3;
+    else if (macroStressData.dxy > 101) dxyPenalty = -1;
+  }
+
+  // Use backend penalty if available, else compute
+  const totalPenalty = macroStressData.penalty != null
+    ? macroStressData.penalty
+    : Math.max(-15, vixPenalty + dxyPenalty);
+
+  return {
+    penalty: totalPenalty,
+    vix: macroStressData.vix,
+    dxy: macroStressData.dxy,
+    vixPenalty,
+    dxyPenalty,
+    source: 'macro-stress-api'
+  };
+}
+
+/**
  * 3. CALCUL DECISION INDEX (aligné sur strategy_registry.py - Production)
  *
  * Formule backend (balanced template):
  *   raw_score = cycle×0.30 + onchain×0.35 + risk×0.25 + sentiment×0.10
- *   final_score = raw_score × phase_factor
+ *   final_score = raw_score × phase_factor + macro_penalty
  *
  * Quand sentiment = 50 (neutral/default), utilise les poids 3-composantes
  * renormalisés (0.33/0.39/0.28) pour compatibilité avec unified-insights-v2.js.
@@ -551,7 +731,11 @@ export function computeDecisionIndex(context) {
     phaseFactor = 0.85;  // bearish
   }
 
-  const di = Math.round(rawDI * phaseFactor);
+  // Macro penalty (production: VIX/DXY graduated, cap -15)
+  const macroPenaltyResult = computeMacroPenalty();
+  const macroPenalty = macroPenaltyResult.penalty || 0;
+
+  const di = Math.round(rawDI * phaseFactor + macroPenalty);
 
   // Confidence basée sur cycle + onchain (les 2 seules métriques avec confidence réelle)
   const confidence = Math.min(1, ((confidences?.cycle ?? 0.46) + (confidences?.onchain ?? 0.6)) / 2);
@@ -562,11 +746,13 @@ export function computeDecisionIndex(context) {
     confidence,
     weights: { wCycle, wOnchain, wRisk, wSentiment },
     phaseFactor,
+    macroPenalty: macroPenaltyResult,
     penalties: {
       contradiction: contradictionCount,
-      contradictionFactor: contraFactor
+      contradictionFactor: contraFactor,
+      macro: macroPenalty
     },
-    reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)})${hasSentiment ? ` + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)})` : ''} × phase(${phaseFactor.toFixed(2)})`
+    reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)})${hasSentiment ? ` + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)})` : ''} × phase(${phaseFactor.toFixed(2)}) + macro(${macroPenalty})`
   };
 
   (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
@@ -783,18 +969,40 @@ export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
 
 /**
  * 5. CALCUL TARGETS (réutilise computeMacroTargetsDynamic)
+ *
+ * ALIGNÉ avec production (unified-insights-v2.js):
+ * - sentiment_value passé dans le contexte
+ * - phase_engine default = 'apply' (comme production)
+ * - regime derivé du blendedScore (pas juste onchain)
  */
 export function computeTargets(riskBudget, context) {
   console.debug('🎭 SIM: computeTargets called');
 
-  // Construire le contexte pour computeMacroTargetsDynamic (même format)
+  // Déterminer le regime à partir du blendedScore (comme production)
+  const blended = context.blendedScore ?? context.scores?.cycle ?? 50;
+  const regime = blended >= 65 ? 'bull' : blended <= 35 ? 'bear' : 'neutral';
+
+  // Déterminer le sentiment pour le contexte
+  const sentimentScore = context.sentimentScore ?? 50;
+  let sentimentLabel = 'neutral';
+  if (sentimentScore < 25) sentimentLabel = 'extreme_fear';
+  else if (sentimentScore < 45) sentimentLabel = 'fear';
+  else if (sentimentScore > 75) sentimentLabel = 'extreme_greed';
+  else if (sentimentScore > 55) sentimentLabel = 'greed';
+
+  // Construire le contexte pour computeMacroTargetsDynamic (aligné production)
   const ctx = {
     cycle_score: context.scores.cycle,
-    regime: context.scores.onchain > 70 ? 'bull' : context.scores.onchain < 30 ? 'bear' : 'neutral',
-    sentiment: context.scores.onchain < 25 ? 'extreme_fear' : 'neutral',
+    regime,
+    sentiment: sentimentLabel,
+    sentiment_value: sentimentScore,
     governance_mode: 'Standard',
     flags: {
-      phase_engine: context.phaseEngine?.enabled && context.phaseEngine?.mode === 'apply' ? 'apply' : 'off'
+      // En mode production: toujours 'apply' (comme analytics-unified)
+      // En mode custom: respecter le toggle enabled/mode de l'UI
+      phase_engine: context.pipelineMode === 'production' ? 'apply' :
+                    (context.phaseEngine?.enabled === false ? 'off' :
+                    (context.phaseEngine?.mode ?? 'apply'))
     }
   };
 
@@ -997,12 +1205,12 @@ export function planOrdersSimulated(current, targets, execPolicy = {}) {
 export function explainPipeline(context, steps) {
   console.debug('🎭 SIM: explainPipeline called');
 
-  const { di, riskBudget, targets, finalTargets, cappedResult, orders } = steps;
+  const { di, riskBudget, targets, finalTargets, cappedResult, orders, blendedScore, pipelineMode } = steps;
 
   // Arbre hiérarchique pour SimInspector
   const explainTree = {
     root: {
-      label: 'Pipeline de Simulation',
+      label: `Pipeline ${pipelineMode === 'production' ? '(Production)' : '(Custom)'}`,
       status: 'completed',
       children: {
         inputs: {
@@ -1010,9 +1218,23 @@ export function explainPipeline(context, steps) {
           status: 'completed',
           data: {
             scores: context.scores,
+            blendedScore: blendedScore ?? 'N/A',
             sentimentScore: context.sentimentScore ?? 50,
             confidences: context.confidences,
-            overrides: context.backendDecision ? 'Backend forced' : 'DI V2 (4 comp.)'
+            overrides: context.backendDecision ? 'Backend forced' : 'DI V2 (4 comp.)',
+            pipelineMode: pipelineMode ?? 'production'
+          }
+        },
+
+        blended: {
+          label: `Blended Score: ${blendedScore ?? 'N/A'}/100`,
+          status: 'completed',
+          data: {
+            formula: '0.50×Cycle + 0.30×OnChain + 0.20×Risk',
+            cycle: context.scores?.cycle,
+            onchain: context.scores?.onchain,
+            risk: context.scores?.risk,
+            result: blendedScore
           }
         },
 
@@ -1022,14 +1244,19 @@ export function explainPipeline(context, steps) {
           data: {
             source: di.source,
             confidence: `${Math.round(di.confidence * 100)}%`,
+            macroPenalty: di.macroPenalty ?? { penalty: 0 },
             reasoning: di.reasoning
           }
         },
 
         riskBudget: {
-          label: `Risk Budget: ${riskBudget.target_stables_pct}% Stables`,
-          status: riskBudget.flags.hysteresis || riskBudget.flags.cb_vol || riskBudget.flags.cb_dd ? 'warning' : 'completed',
+          label: `Risk Budget: ${riskBudget.target_stables_pct}% Stables (${riskBudget.pipeline_mode ?? riskBudget.source ?? 'unknown'})`,
+          status: riskBudget.flags?.hysteresis || riskBudget.flags?.cb_vol || riskBudget.flags?.cb_dd ? 'warning' : 'completed',
           data: {
+            source: riskBudget.source,
+            pipeline_mode: riskBudget.pipeline_mode,
+            risk_factor: riskBudget.risk_factor,
+            base_risky: riskBudget.base_risky,
             curve: riskBudget.curve,
             flags: riskBudget.flags,
             clamps: riskBudget.clamps
@@ -1087,11 +1314,15 @@ function generateNaturalLanguageSummary(context, steps) {
 
   summary += `Budget risk recommande ${riskBudget.target_stables_pct}% en stables `;
 
-  if (riskBudget.flags.hysteresis) {
+  if (riskBudget.pipeline_mode === 'production') {
+    summary += `(production formula, risk_factor=${riskBudget.risk_factor?.toFixed?.(3) ?? 'N/A'}) `;
+  }
+
+  if (riskBudget.flags?.hysteresis) {
     summary += `(hysteresis applied) `;
   }
 
-  if (riskBudget.flags.cb_vol || riskBudget.flags.cb_dd) {
+  if (riskBudget.flags?.cb_vol || riskBudget.flags?.cb_dd) {
     summary += `(circuit-breakers triggered) `;
   }
 
@@ -1124,8 +1355,11 @@ export function loadPreset(presetObj) {
     contradictionPenalty: presetObj.inputs?.contradictionPenalty ?? 0.1,
     backendDecision: presetObj.inputs?.backendDecision || null,
 
-    // Phase Engine
-    phaseEngine: presetObj.regime_phase || { enabled: false, mode: 'shadow' },
+    // Cycle position hint for DI panel (chronological months 0-48)
+    cycleMonths: presetObj.inputs?.cycleMonths ?? null,
+
+    // Phase Engine (default 'apply' aligned with production)
+    phaseEngine: presetObj.regime_phase || { enabled: false, mode: 'apply' },
 
     // Risk Budget
     riskBudget: presetObj.risk_budget || { curve: 'linear', min_stables: 10, max_stables: 60 },
@@ -1310,26 +1544,63 @@ export async function simulateFullPipeline(uiOverrides = {}) {
       ? BASE_WEIGHTS
       : contradictionModules.calculateAdaptiveWeights(BASE_WEIGHTS, stateForEngine);
 
-    // 3. Decision Index avec poids adaptatifs
+    // 3. Blended Score (production formula: 0.50*CCS + 0.30*OnChain + 0.20*Risk)
+    const blendedScore = computeBlendedScore(
+      baseContext.scores.cycle,
+      baseContext.scores.onchain,
+      baseContext.scores.risk
+    );
+
+    // 3b. Decision Index avec poids adaptatifs
     const di = computeDecisionIndex({ ...baseContext, weights });
 
-    // 4. Risk Budget
-    // ⚠️ PRIORITÉ: regimeData.risk_budget si disponible (source unique comme Analytics)
+    // 4. Risk Budget — Production vs Custom mode
+    const pipelineMode = uiOverrides.pipelineMode ?? 'production';
     let riskBudget;
-    if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
-      riskBudget = {
-        target_stables_pct: stateForEngine.regimeData.risk_budget.target_stables_pct,
-        source: 'market-regimes (v2)',
-        regime_based: true
-      };
-      console.debug('✅ SIM: Using regimeData.risk_budget as source of truth:', riskBudget);
+
+    if (pipelineMode === 'production') {
+      // MODE PRODUCTION: formule exacte de market-regimes.js
+      // Uses blendedScore + riskScore (NOT DI score)
+      riskBudget = computeProductionRiskBudget(
+        blendedScore,
+        baseContext.scores.risk,
+        baseContext.scores.cycle,
+        null, // cycleDirection - not available in simulation context
+        null  // cycleConfidence
+      );
+      riskBudget.source = riskBudget.source || 'market-regimes (production)';
+      riskBudget.pipeline_mode = 'production';
+      console.debug('✅ SIM: Production risk budget used:', {
+        blended: blendedScore,
+        risk: baseContext.scores.risk,
+        stables: riskBudget.target_stables_pct
+      });
     } else {
-      riskBudget = computeRiskBudget(di.di, uiOverrides.riskBudget, uiOverrides.marketOverlays);
-      console.debug('⚠️ SIM: Fallback to computed risk budget (no regimeData):', riskBudget);
+      // MODE CUSTOM: formule configurable via sliders (linear/sigmoid)
+      // ⚠️ PRIORITÉ: regimeData.risk_budget si disponible (source unique comme Analytics)
+      if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
+        riskBudget = {
+          target_stables_pct: stateForEngine.regimeData.risk_budget.target_stables_pct,
+          source: 'market-regimes (v2)',
+          regime_based: true
+        };
+        console.debug('✅ SIM: Using regimeData.risk_budget as source of truth:', riskBudget);
+      } else {
+        riskBudget = computeRiskBudget(di.di, uiOverrides.riskBudget, uiOverrides.marketOverlays);
+        console.debug('⚠️ SIM: Custom risk budget (linear/sigmoid):', riskBudget);
+      }
+      riskBudget.pipeline_mode = 'custom';
     }
 
-    // 5. Targets de base
-    const targets = computeTargets(riskBudget, { ...baseContext, weights });
+    // 5. Targets de base — enrichir contexte pour production fidelity
+    const enrichedContext = {
+      ...baseContext,
+      weights,
+      blendedScore,
+      // Enrichissement contexte pour computeMacroTargetsDynamic (Etape 3 du plan)
+      sentimentScore: uiOverrides.sentimentScore ?? baseContext.sentimentScore ?? 50
+    };
+    const targets = computeTargets(riskBudget, enrichedContext);
 
     // 6. Phase tilts
     const finalTargets = await applyPhaseEngineTilts(targets, uiOverrides.phaseEngine);
@@ -1377,7 +1648,7 @@ export async function simulateFullPipeline(uiOverrides = {}) {
 
     // 10. Explication
     const explanation = explainPipeline(baseContext, {
-      di, riskBudget, targets, finalTargets, cappedResult, orders
+      di, riskBudget, targets, finalTargets, cappedResult, orders, blendedScore, pipelineMode
     });
 
     const capPercentFromState = selectCapPercent(stateForEngine);
@@ -1390,6 +1661,8 @@ export async function simulateFullPipeline(uiOverrides = {}) {
 
     const fullResult = {
       context: baseContext,
+      blendedScore,
+      pipelineMode,
       di,
       riskBudget,
       targets,

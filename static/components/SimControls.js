@@ -23,6 +23,9 @@ export class SimControls {
 
   getDefaultState() {
     return {
+      // Pipeline Mode: 'production' (aligned with analytics-unified) or 'custom' (configurable)
+      pipelineMode: 'production',
+
       // Decision Inputs
       cycleScore: 50,
       onChainScore: 50,
@@ -33,10 +36,13 @@ export class SimControls {
       contradictionPenalty: 0.1,
       backendDecision: null,
 
-      // Phase Engine
+      // Cycle position hint for DI panel (set by presets, cleared on manual slider change)
+      cycleMonths: null,
+
+      // Phase Engine — default 'apply' aligned with production
       phaseEngine: {
         enabled: false,
-        mode: 'shadow',
+        mode: 'apply',
         forcedPhase: null,
         offset: 0
       },
@@ -111,6 +117,28 @@ export class SimControls {
         </div>
 
         <div class="controls-content">
+          <!-- Pipeline Mode Section -->
+          <div class="control-section pipeline-mode-section">
+            <h4>⚙️ Pipeline Mode</h4>
+            <div class="pipeline-mode-toggle">
+              <label class="pipeline-option ${this.state.pipelineMode === 'production' ? 'active' : ''}">
+                <input type="radio" name="pipeline-mode" value="production" ${this.state.pipelineMode === 'production' ? 'checked' : ''} />
+                <span class="pipeline-label">Production</span>
+                <span class="pipeline-desc">Exact same formulas as analytics-unified</span>
+              </label>
+              <label class="pipeline-option ${this.state.pipelineMode === 'custom' ? 'active' : ''}">
+                <input type="radio" name="pipeline-mode" value="custom" ${this.state.pipelineMode === 'custom' ? 'checked' : ''} />
+                <span class="pipeline-label">Custom</span>
+                <span class="pipeline-desc">Configurable risk budget (linear/sigmoid)</span>
+              </label>
+            </div>
+            <div class="pipeline-info" id="pipeline-info">
+              ${this.state.pipelineMode === 'production'
+                ? '<span class="pipeline-badge production">Blended: 0.50×Cycle + 0.30×OnChain + 0.20×Risk → Risk Budget (market-regimes.js)</span>'
+                : '<span class="pipeline-badge custom">DI → Risk Budget (linear/sigmoid configurable)</span>'}
+            </div>
+          </div>
+
           <!-- Decision Inputs Section -->
           <div class="control-section">
             <h4>📊 Decision Inputs</h4>
@@ -167,9 +195,9 @@ export class SimControls {
             </div>
           </div>
 
-          <!-- Risk Budget Section -->
-          <div class="control-section">
-            <h4>💰 Risk Budget</h4>
+          <!-- Risk Budget Section (hidden in production mode) -->
+          <div class="control-section risk-budget-section" id="risk-budget-section" style="${this.state.pipelineMode === 'production' ? 'display:none' : ''}">
+            <h4>💰 Risk Budget (Custom Mode)</h4>
             <div class="controls-grid">
               <div class="control-group">
                 <label>Courbe DI→Stables</label>
@@ -361,6 +389,15 @@ export class SimControls {
   }
 
   attachEventListeners() {
+    // Pipeline mode toggle
+    this.container.querySelectorAll('input[name="pipeline-mode"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        this.state.pipelineMode = e.target.value;
+        this.updatePipelineModeUI();
+        this.debouncedUpdate();
+      });
+    });
+
     // Sliders avec debounce
     this.container.querySelectorAll('.sim-slider').forEach(slider => {
       slider.addEventListener('input', (e) => {
@@ -510,6 +547,38 @@ export class SimControls {
     }
   }
 
+  /**
+   * Update UI elements based on pipeline mode (production vs custom)
+   * In production mode: hide risk budget sliders, show production formula info
+   * In custom mode: show all sliders
+   */
+  updatePipelineModeUI() {
+    const isProduction = this.state.pipelineMode === 'production';
+
+    // Toggle risk budget section visibility
+    const rbSection = document.getElementById('risk-budget-section');
+    if (rbSection) {
+      rbSection.style.display = isProduction ? 'none' : '';
+    }
+
+    // Update radio button active states
+    this.container.querySelectorAll('.pipeline-option').forEach(opt => {
+      const radio = opt.querySelector('input[type="radio"]');
+      opt.classList.toggle('active', radio?.checked);
+    });
+
+    // Update pipeline info badge
+    const infoEl = document.getElementById('pipeline-info');
+    if (infoEl) {
+      infoEl.innerHTML = isProduction
+        ? '<span class="pipeline-badge production">Blended: 0.50\u00d7Cycle + 0.30\u00d7OnChain + 0.20\u00d7Risk \u2192 Risk Budget (market-regimes.js)</span>'
+        : '<span class="pipeline-badge custom">DI \u2192 Risk Budget (linear/sigmoid configurable)</span>';
+    }
+
+    // Update badge
+    this.updateBadges();
+  }
+
   updateState(element) {
     const id = element.id.replace('sim-', '');
     const value = element.type === 'checkbox' ? element.checked :
@@ -518,6 +587,11 @@ export class SimControls {
 
     // Mapping spécifique selon l'ID
     this.mapValueToState(id, value, element);
+
+    // Clear preset cycleMonths hint on manual slider change (fall back to heuristic)
+    if (!this.isLoadingPreset) {
+      this.state.cycleMonths = null;
+    }
 
     if (!this.isLoadingPreset) {
       this.markCustomPreset();
@@ -665,6 +739,13 @@ export class SimControls {
 
   updateBadges() {
     const badges = [];
+
+    // Pipeline mode
+    if (this.state.pipelineMode === 'production') {
+      badges.push({ text: 'PRODUCTION', type: 'success' });
+    } else {
+      badges.push({ text: 'CUSTOM', type: 'info' });
+    }
 
     // Hystérésis
     if (this.state.riskBudget.hysteresis.on) {
@@ -1123,6 +1204,81 @@ const controlsCSS = `
 
   select, input[type="checkbox"] {
     accent-color: var(--brand-primary);
+  }
+
+  /* Pipeline Mode Toggle */
+  .pipeline-mode-section {
+    background: var(--theme-surface) !important;
+    border: 2px solid var(--brand-primary) !important;
+  }
+
+  .pipeline-mode-toggle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+  }
+
+  .pipeline-option {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--theme-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .pipeline-option:hover {
+    border-color: var(--brand-primary);
+    background: color-mix(in oklab, var(--brand-primary) 5%, transparent);
+  }
+
+  .pipeline-option.active {
+    border-color: var(--brand-primary);
+    background: color-mix(in oklab, var(--brand-primary) 10%, transparent);
+  }
+
+  .pipeline-option input[type="radio"] {
+    display: none;
+  }
+
+  .pipeline-label {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--theme-text);
+  }
+
+  .pipeline-desc {
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+    margin-top: 2px;
+  }
+
+  .pipeline-info {
+    margin-top: var(--space-xs);
+  }
+
+  .pipeline-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  .pipeline-badge.production {
+    background: color-mix(in oklab, var(--success) 15%, transparent);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .pipeline-badge.custom {
+    background: color-mix(in oklab, var(--brand-primary) 15%, transparent);
+    color: var(--brand-primary);
+    border: 1px solid var(--brand-primary);
   }
 
   @media (max-width: 768px) {
