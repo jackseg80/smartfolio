@@ -12,8 +12,14 @@ from api.utils.formatters import (
     error_response,
     paginated_response,
     legacy_response,
-    StandardResponse
+    StandardResponse,
+    to_csv,
+    format_currency,
+    format_percentage,
+    format_action_summary,
+    sanitize_for_json,
 )
+import math
 
 
 class TestSuccessResponse:
@@ -279,3 +285,162 @@ class TestStandardResponseModel:
         assert response.details == {"user_id": "invalid"}
         assert response.data is None
         assert response.meta is None
+
+
+# ---------------------------------------------------------------------------
+# to_csv — Lines 25-47 (uncovered)
+# ---------------------------------------------------------------------------
+class TestToCsv:
+    def test_basic_csv(self):
+        actions = [{"symbol": "BTC", "action": "buy", "amount": 0.5, "value_usd": 25000}]
+        result = to_csv(actions)
+        assert "symbol" in result  # header
+        assert "BTC" in result
+        assert "buy" in result
+
+    def test_empty_list(self):
+        assert to_csv([]) == ""
+
+    def test_multiple_rows(self):
+        actions = [
+            {"symbol": "BTC", "action": "buy", "amount": 0.5},
+            {"symbol": "ETH", "action": "sell", "amount": 2.0},
+        ]
+        result = to_csv(actions)
+        lines = result.strip().split("\n")
+        assert len(lines) == 3  # header + 2 rows
+
+    def test_missing_fields_default_empty(self):
+        actions = [{"symbol": "SOL"}]
+        result = to_csv(actions)
+        assert "SOL" in result
+
+    def test_all_fieldnames_in_header(self):
+        actions = [{"symbol": "BTC"}]
+        result = to_csv(actions)
+        header = result.split("\n")[0]
+        for field in ["symbol", "action", "amount", "value_usd", "location",
+                      "current_allocation", "target_allocation", "drift", "priority", "notes"]:
+            assert field in header
+
+
+# ---------------------------------------------------------------------------
+# format_currency — Lines 49-54 (uncovered)
+# ---------------------------------------------------------------------------
+class TestFormatCurrency:
+    def test_usd_default(self):
+        assert format_currency(1000.0) == "$1,000.00"
+
+    def test_usd_explicit(self):
+        assert format_currency(1234.56, "USD") == "$1,234.56"
+
+    def test_other_currency(self):
+        assert format_currency(500.0, "EUR") == "500.00 EUR"
+
+    def test_zero(self):
+        assert format_currency(0.0) == "$0.00"
+
+    def test_large_number(self):
+        result = format_currency(1000000.50)
+        assert "$1,000,000.50" == result
+
+    def test_negative(self):
+        result = format_currency(-100.0)
+        assert result == "$-100.00"
+
+
+# ---------------------------------------------------------------------------
+# format_percentage — Line 58 (uncovered)
+# ---------------------------------------------------------------------------
+class TestFormatPercentage:
+    def test_default_decimals(self):
+        assert format_percentage(42.567) == "42.57%"
+
+    def test_zero_decimals(self):
+        assert format_percentage(42.567, decimals=0) == "43%"
+
+    def test_one_decimal(self):
+        assert format_percentage(3.14, decimals=1) == "3.1%"
+
+    def test_zero_value(self):
+        assert format_percentage(0.0) == "0.00%"
+
+    def test_negative(self):
+        assert format_percentage(-5.5) == "-5.50%"
+
+
+# ---------------------------------------------------------------------------
+# format_action_summary — Lines 60-83 (uncovered)
+# ---------------------------------------------------------------------------
+class TestFormatActionSummary:
+    def test_empty_actions(self):
+        result = format_action_summary([])
+        assert result["total_actions"] == 0
+        assert result["total_value"] == 0
+        assert result["summary"] == "No actions required"
+
+    def test_buy_and_sell_actions(self):
+        actions = [
+            {"action": "buy", "value_usd": 1000},
+            {"action": "sell", "value_usd": 500},
+            {"action": "buy", "value_usd": 200},
+        ]
+        result = format_action_summary(actions)
+        assert result["total_actions"] == 3
+        assert result["buy_actions"] == 2
+        assert result["sell_actions"] == 1
+        assert result["total_value"] == 1700.0
+        assert "$1,700.00" in result["total_value_formatted"]
+        assert "3 actions" in result["summary"]
+
+    def test_only_buys(self):
+        actions = [{"action": "buy", "value_usd": 100}]
+        result = format_action_summary(actions)
+        assert result["buy_actions"] == 1
+        assert result["sell_actions"] == 0
+
+
+# ---------------------------------------------------------------------------
+# sanitize_for_json — Lines 90-130 (uncovered)
+# ---------------------------------------------------------------------------
+class TestSanitizeForJson:
+    def test_normal_dict(self):
+        data = {"a": 1, "b": "hello"}
+        assert sanitize_for_json(data) == data
+
+    def test_nan_replaced_with_none(self):
+        assert sanitize_for_json(float("nan")) is None
+
+    def test_inf_replaced_with_none(self):
+        assert sanitize_for_json(float("inf")) is None
+
+    def test_neg_inf_replaced_with_none(self):
+        assert sanitize_for_json(float("-inf")) is None
+
+    def test_inf_with_replacement_value(self):
+        assert sanitize_for_json(float("inf"), replace_inf_with=0) == 0
+        assert sanitize_for_json(float("-inf"), replace_inf_with=0) == 0
+
+    def test_nested_dict(self):
+        data = {"score": float("inf"), "nested": {"value": float("nan")}}
+        result = sanitize_for_json(data)
+        assert result["score"] is None
+        assert result["nested"]["value"] is None
+
+    def test_list_with_special_values(self):
+        data = [1.5, float("nan"), float("-inf"), 42]
+        result = sanitize_for_json(data, replace_inf_with=0)
+        assert result == [1.5, None, 0, 42]
+
+    def test_normal_float_unchanged(self):
+        assert sanitize_for_json(3.14) == 3.14
+
+    def test_non_float_passthrough(self):
+        assert sanitize_for_json("hello") == "hello"
+        assert sanitize_for_json(42) == 42
+        assert sanitize_for_json(True) is True
+        assert sanitize_for_json(None) is None
+
+    def test_empty_structures(self):
+        assert sanitize_for_json({}) == {}
+        assert sanitize_for_json([]) == []
