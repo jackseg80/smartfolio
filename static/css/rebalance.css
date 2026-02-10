@@ -118,7 +118,7 @@ button {
 
 #donutCurrent,
 #donutTarget {
-  min-height: 260px; /* prevent CLS when charts render */
+  min-height: 200px; /* prevent CLS when charts render */
 }
 
 #legend {

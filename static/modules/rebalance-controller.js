@@ -1789,8 +1789,39 @@
 
     /* ---------- Donuts (SVG) ---------- */
     const COLORS = ["#60a5fa", "#34d399", "#f472b6", "#f59e0b", "#a78bfa", "#f87171", "#22d3ee", "#eab308"];
+
+    // Tooltip custom instantané (remplace le <title> natif lent)
+    const _donutTip = (() => {
+      const el = document.createElement('div');
+      Object.assign(el.style, {
+        position: 'fixed', pointerEvents: 'none', zIndex: '9999',
+        padding: '4px 10px', borderRadius: '6px', fontSize: '13px', fontWeight: '600',
+        background: 'var(--theme-surface-elevated)', color: 'var(--theme-text)',
+        border: '1px solid var(--theme-border)', boxShadow: '0 2px 8px rgba(0,0,0,.35)',
+        opacity: '0', transition: 'opacity .08s'
+      });
+      document.body.appendChild(el);
+      return el;
+    })();
+    document.addEventListener('mouseover', e => {
+      const g = e.target.closest('g[data-label]');
+      if (!g) return;
+      _donutTip.textContent = g.dataset.label;
+      _donutTip.style.opacity = '1';
+    });
+    document.addEventListener('mousemove', e => {
+      if (_donutTip.style.opacity === '1') {
+        _donutTip.style.left = (e.clientX + 12) + 'px';
+        _donutTip.style.top = (e.clientY - 28) + 'px';
+      }
+    });
+    document.addEventListener('mouseout', e => {
+      const g = e.target.closest('g[data-label]');
+      if (g) _donutTip.style.opacity = '0';
+    });
+
     function donutSVG(weights, title) {
-      const size = 160, r = 68, cx = 80, cy = 80, stroke = 22;
+      const size = 200, r = 85, cx = 100, cy = 100, stroke = 24;
       const names = Object.keys(weights || {});
       let start = -Math.PI / 2;
       const segs = [];
@@ -1803,16 +1834,17 @@
           const x1 = cx + r * Math.cos(start), y1 = cy + r * Math.sin(start);
           const x2 = cx + r * Math.cos(end), y2 = cy + r * Math.sin(end);
           const path = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
-          segs.push(`<path d="${path}" stroke="${COLORS[i % COLORS.length]}" stroke-width="${stroke}" fill="none" />`);
+          const label = `${name} (${(pct * 100).toFixed(1)}%)`;
+          segs.push(`<g data-label="${label}" style="cursor:pointer"><path d="${path}" stroke="transparent" stroke-width="${stroke + 10}" fill="none" /><path d="${path}" stroke="${COLORS[i % COLORS.length]}" stroke-width="${stroke}" fill="none" /></g>`);
         }
         start = end;
       });
       const total = (Object.values(weights || {}).reduce((a, b) => a + Number(b || 0), 0)).toFixed(0);
-      return `<svg width="${size}" height="${size}" viewBox="0 0 160 160">
+      return `<svg width="${size}" height="${size}" viewBox="0 0 200 200">
     <circle cx="${cx}" cy="${cy}" r="${r}" stroke="#152232" stroke-width="${stroke}" fill="none"/>
     ${segs.join("")}
-    <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="14" fill="#cbd5e1">${title || ""}</text>
-    <text x="${cx}" y="${cy + 14}" text-anchor="middle" font-size="12" fill="#93a3b5">${total}%</text>
+    <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="15" fill="#cbd5e1">${title || ""}</text>
+    <text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="13" fill="#93a3b5">${total}%</text>
   </svg>`;
     }
     function renderDonuts(plan) {
