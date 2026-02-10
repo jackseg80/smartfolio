@@ -233,6 +233,26 @@ f824fdb refactor(frontend): unifier fetch + StorageService + cleanup legacy
 
 ---
 
+## Phase 4.4: monitoring.html Refonte (Février 2026)
+
+**Avant**: Page legacy avec `fetch()` brut, mesure manuelle de latence via `performance.now()`, endpoints inexistants (`/api/monitoring/health`), pas d'auth guard, pas de Simple/Pro.
+
+**Après**: Page modernisée alignée avec le reste du projet.
+
+| Aspect | Avant | Après |
+|--------|-------|-------|
+| Fetch | `fetch()` brut + `globalConfig.apiRequest()` | `apiCall()` depuis `core/fetcher.js` |
+| Endpoints | Manuels/inexistants | Vrais endpoints (`/health/all`, `/api/alerts/*`, `/api/scheduler/health`) |
+| Auth | Aucune | Auth guard JWT + X-User |
+| View modes | Non | Simple (2 KPIs) / Pro (4 KPIs) |
+| KPIs | 4 manuels (latence, error rate) | 4 backend-driven (health, alerts, circuits, scheduler) |
+| Styles | Inline `style=""` | CSS tokens (`tokens.css`, `view-modes.css`) |
+| Responsive | Non | 768px, 1400px breakpoints |
+
+**Sections finales**: Health Banner + System Status KPI + Active Alerts KPI + Circuit Breakers KPI (pro) + Scheduler KPI (pro) + Alerts History table (filterable, paginated)
+
+---
+
 ## Corrections Sécurité Multi-Tenant (Février 2026)
 
 Suite à un audit des logs de démarrage, plusieurs violations du principe multi-tenant ont été corrigées :

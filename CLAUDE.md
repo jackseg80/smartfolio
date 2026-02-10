@@ -108,7 +108,7 @@ execution.html         # Exécution temps réel
 simulations.html       # Simulateur complet
 di-backtest.html        # Backtest historique Decision Index
 wealth-dashboard.html   # Unified wealth management
-monitoring.html        # KPIs système + Alerts History
+monitoring.html        # System Health + Alerts History (apiCall, Simple/Pro)
 admin-dashboard.html    # Admin Dashboard (RBAC)
 optimization.html      # Portfolio Optimization (Markowitz, Black-Litterman)
 ai-dashboard.html      # Unified AI Dashboard: Bitcoin Regime, Trading signals
