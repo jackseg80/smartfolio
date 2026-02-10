@@ -375,7 +375,7 @@
                                 Please select a Stock data source in the Dashboard.
                             </p>
                             <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
-                                Aller au Dashboard Saxo →
+                                Go to Saxo Dashboard →
                             </a>
                         </div>
                     `;
@@ -386,13 +386,12 @@
                 let portfolioData = { positions: [], summary: {} };
 
                 if (window.saxoSourceType === 'manual') {
-                    const response = await fetch('/api/sources/v2/bourse/balances', {
+                    const response = await window.safeFetch('/api/sources/v2/bourse/balances', {
                         headers: { 'X-User': activeUser }
                     });
                     if (response.ok) {
-                        const apiResponse = await response.json();
-                        const data = apiResponse.data || apiResponse;
-                        const items = data.data?.items || data.items || [];
+                        const data = response.data?.data || response.data;
+                        const items = data?.data?.items || data?.items || [];
                         portfolioData.positions = items.map(item => ({
                             symbol: item.symbol || item.asset_name,
                             ticker: item.symbol || item.asset_name,
@@ -400,11 +399,10 @@
                         }));
                     }
                 } else if (window.saxoSourceType === 'api') {
-                    const response = await fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
+                    const response = await window.safeFetch(`${window.getApiBase()}/api/saxo/api-positions`, {
                         headers: { 'X-User': activeUser }
                     });
                     if (response.status === 401) {
-                        // Saxo not connected - show connection message
                         document.getElementById('mainContent').innerHTML = `
                             <div class="dashboard-card" style="padding: 3rem; text-align: center;">
                                 <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
@@ -413,45 +411,42 @@
                                     Please connect to your Saxo Bank account to access analytics.
                                 </p>
                                 <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
-                                    Aller au Dashboard Saxo →
+                                    Go to Saxo Dashboard →
                                 </a>
                             </div>
                         `;
                         return;
                     }
                     if (response.ok) {
-                        const result = await response.json();
-                        const data = result.data || result;
-                        const innerData = data.data || data;
-                        portfolioData.positions = (innerData.positions || []).map(pos => ({
+                        const data = response.data?.data || response.data;
+                        const innerData = data?.data || data;
+                        portfolioData.positions = (innerData?.positions || []).map(pos => ({
                             symbol: pos.symbol,
                             ticker: pos.symbol,
                             market_value_usd: pos.market_value || 0
                         }));
                     }
                 } else if (window.saxoSourceType === 'csv') {
-                    // CSV mode
                     let portfoliosUrl = '/api/saxo/portfolios';
                     if (currentFileKey) {
                         portfoliosUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
                     }
-                    const response = await fetch(`${window.getApiBase()}${portfoliosUrl}`, {
+                    const response = await window.safeFetch(`${window.getApiBase()}${portfoliosUrl}`, {
                         headers: { 'X-User': activeUser }
                     });
                     if (response.ok) {
-                        const result = await response.json();
-                        const portfolios = result.portfolios || [];
+                        const portfolios = response.data?.portfolios || [];
                         if (portfolios.length > 0) {
                             const portfolio = portfolios[0];
                             let detailUrl = `/api/saxo/portfolios/${portfolio.portfolio_id}`;
                             if (currentFileKey) {
                                 detailUrl += `?file_key=${encodeURIComponent(currentFileKey)}`;
                             }
-                            const detailResponse = await fetch(`${window.getApiBase()}${detailUrl}`, {
+                            const detailResponse = await window.safeFetch(`${window.getApiBase()}${detailUrl}`, {
                                 headers: { 'X-User': activeUser }
                             });
                             if (detailResponse.ok) {
-                                portfolioData = await detailResponse.json();
+                                portfolioData = detailResponse.data;
                             }
                         }
                     }
@@ -611,7 +606,7 @@
                     document.getElementById('criticalAlerts').innerHTML = `
                         <div class="alert-empty">
                             <div style="font-size: 3rem; margin-bottom: 1rem;">✅</div>
-                            <div style="font-weight: 600; font-size: 1.125rem;">Portfolio Sain</div>
+                            <div style="font-weight: 600; font-size: 1.125rem;">Healthy Portfolio</div>
                             <div style="font-size: 0.875rem;">No alerts detected.</div>
                         </div>
                     `;
@@ -636,7 +631,7 @@
             } catch (e) {
                 debugLogger.error('Critical alerts load failed', e);
                 document.getElementById('criticalAlerts').innerHTML = `
-                    <div class="alert-empty" style="color: var(--danger);">⚠️ Loading error des alertes</div>
+                    <div class="alert-empty" style="color: var(--danger);">⚠️ Failed to load alerts</div>
                 `;
             }
         }
