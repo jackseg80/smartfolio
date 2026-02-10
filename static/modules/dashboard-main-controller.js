@@ -593,6 +593,22 @@ function setupExportButtons() {
         });
         console.debug('✅ Wealth export button initialized');
     }
+
+    // PDF export button
+    const pdfExportBtn = document.getElementById('pdf-export-btn');
+    if (pdfExportBtn) {
+        pdfExportBtn.addEventListener('click', () => {
+            import('./pdf-export.js').then(({ exportPageToPDF }) => {
+                exportPageToPDF({
+                    element: document.querySelector('main.wrap'),
+                    title: 'Dashboard Report',
+                    filename: 'smartfolio-dashboard',
+                    button: pdfExportBtn,
+                });
+            });
+        });
+        console.debug('✅ PDF export button initialized');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

@@ -1,7 +1,7 @@
 # Statut Global des Audits - SmartFolio
 
 **Date de mise à jour:** 10 Février 2026
-**Dernière revue complète:** 8-10 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 46% + Response Format + FileLock + JWT Auth + Coverage Push)
+**Dernière revue complète:** 8-10 Février 2026 (Comprehensive Audit + Fixes P0-P3 + Coverage 47% + Response Format + FileLock + JWT Auth + Coverage Push + Plan v5 Complete)
 **Prochaine revue:** Mars 2026
 **Refactoring Feb 2026:** See [REFACTORING_2026_REPORT.md](../REFACTORING_2026_REPORT.md)
 
@@ -23,7 +23,7 @@
 | **Logging** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
 | **Concurrency** | 8.5/10 | ⬆️ +1.0 | 🟢 BON | **Feb 9, 2026** |
 
-**Note Globale:** **8.1/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format → 8.0 after JWT auth → 8.1 after coverage push 46%)
+**Note Globale:** **8.2/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format → 8.0 after JWT auth → 8.1 after coverage push 46% → 8.2 after Plan v5 complete: notifications, backups, freshness, morning brief, PDF export, mobile UX, Sentry, scheduler Redis)
 
 ---
 
@@ -228,13 +228,13 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ## ✅ Tests: 8.5/10 - BON
 
 ### Statut
-🟢 **Coverage push Feb 10, 2026** - Coverage **46.3%**, **2,808 passing, 0 failures** (unit), 10 skipped. 9 nouveaux fichiers de tests ajoutés (backtesting, trading strategies, taxonomy, etc.).
+🟢 **Coverage push Feb 10, 2026** - Coverage **~47%**, **3,198 passing, 0 failures** (unit), 10 skipped. 25+ nouveaux fichiers de tests (backtesting, trading strategies, taxonomy, bourse metrics, risk_scoring 100%, etc.). Plan v5 complete (11/11 items).
 
 ### Métriques Clés
 
-- **Coverage global:** **46.3%** (mesuré pytest-cov Feb 10, 2026 — **2,808 passing, 0 unit failures**, 10 skipped)
-- **Tests totaux:** 2,808 collectés, 2,808 passing, 0 failures (unit+integration)
-- **Nouveaux tests écrits:** 1,530+ tests dans 36+ fichiers (Feb 8-10, 2026)
+- **Coverage global:** **~47%** (mesuré pytest-cov Feb 10, 2026 — **3,198 passing, 0 unit failures**, 10 skipped)
+- **Tests totaux:** 3,198 collectés, 3,198 passing, 0 failures (unit+integration)
+- **Nouveaux tests écrits:** 1,920+ tests dans 40+ fichiers (Feb 8-10, 2026)
 - **Tests corrigés:** 27 failures + 8 errors → 0 (formats, async, server-skip, thresholds)
 - **Coverage BalanceService:** 66% (excellente pour service multi-fallback)
 - **Tests critiques:** Risk (90%), Governance (85%), Stop Loss (95%), CircuitBreaker (100%), ErrorHandling (95%)
@@ -285,6 +285,14 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - ✅ **Circuit Breaker — 50+ tests** (100% coverage)
 - ✅ **Trailing Stop Calculator — 40+ tests**
 - ✅ **Utils Formatters — extended +30 tests**
+- ✅ **Bourse Metrics — 48 tests** (~96% coverage) (NEW Feb 10)
+- ✅ **Alert Types — 50 tests** (~70% coverage) (NEW Feb 10)
+- ✅ **Signals — 50 tests** (~60% coverage) (NEW Feb 10)
+- ✅ **Advanced Rebalancing — 50 tests** (~30% coverage) (NEW Feb 10)
+- ✅ **Risk Scoring — 80 tests** (100% coverage) (NEW Feb 10)
+- ✅ **Instruments Registry — 45 tests** (90% coverage) (NEW Feb 10)
+- ✅ **Portfolio Metrics Service — 42 tests** (~40% coverage) (NEW Feb 10)
+- ✅ **Structural Score V2 — 28 tests** (~80% coverage) (NEW Feb 10)
 
 ### Services Non Testés (Backlog)
 
@@ -423,10 +431,27 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] Bug fix: get_required_user 403→500 (missing except HTTPException)
 - [x] Alert Storage + Portfolio Optimization + Risk Management tests (154 new tests → 2476 passing, coverage 45%)
 
+### ✅ Complété (Feb 10, 2026 — Plan v5 Complete)
+
+- [x] Plan d'Amelioration v5: 11/11 items complete, 3,198 tests, 0 failures
+- [x] 1.1 Atomic writes (user_management + alert_storage)
+- [x] 1.2 Circuit breakers (binance + cointracking)
+- [x] 1.3 Backup system (create/restore/verify/retention + 6 endpoints)
+- [x] 1.4 Notifications connected (Telegram + Webhook async + AlertEngine hook)
+- [x] 2.1 Data freshness Web Component on 22 pages
+- [x] 2.2 Offline detection on 19 missing pages
+- [x] 3.1 Morning brief (service + endpoint + scheduler + Web Component)
+- [x] 4.1 Export PDF (jsPDF + html2canvas + Plotly.toImage)
+- [x] 4.2 Mobile UX (responsive.css, touch targets 44px)
+- [x] 5.1 Sentry frontend on 21 pages
+- [x] 5.2 Scheduler resilient (Redis HASH, heartbeat, webhook, recovery)
+- [x] Hotfix: encoding (BOM + CP1252 mojibake on 22 HTML files)
+- [x] Coverage push 42.9% → ~47% (390+ new tests in 4 phases)
+
 ### 🔄 En Cours (Q1 2026)
 
 - [ ] Performance: Top 5 priorités restantes (18h)
-- [ ] Push backend coverage to 50% (at 46.3% — 2,808 tests, +332 new tests Feb 10)
+- [ ] Push backend coverage to 50% (at ~47% — 3,198 tests)
 - [ ] Enable REQUIRE_JWT=1 strict mode (after monitoring)
 - [x] ~~Fix remaining 23 test failures~~ → **DONE** (27+8 → 0 failures, Feb 9)
 - [x] ~~Standardize response format~~ → **DONE** (27 bare returns migrated, Feb 9)
@@ -466,8 +491,8 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 | **Performance fixes** | 0 | 19/47 | 19/47 | +40% ✅ |
 | **Accessibilité** | ? | 68/100 | **~80/100** | +18% ✅ |
 | **Dette Technique** | 7.5 | 7.5 | **8.0** | +7% ✅ |
-| **Tests coverage** | ~20% | ~20% | **46.3%** | +131% ✅ |
-| **Tests passing** | ~810 | ~810 | **2,808** | +247% ✅ |
+| **Tests coverage** | ~20% | ~20% | **~47%** | +135% ✅ |
+| **Tests passing** | ~810 | ~810 | **3,198** | +295% ✅ |
 | **CI/CD automation** | ❌ | ✅ | ✅ | ✅ |
 | **New: Error Handling** | -- | -- | **8.0/10** | 🆕 |
 | **New: Data Integrity** | -- | -- | **8.0/10** | 🆕 |
@@ -482,8 +507,9 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - **Audit a11y:** ~4 heures (Dec 2025)
 - **Comprehensive audit + all fixes:** ~16 heures (Feb 8-9, 2026)
 - **Coverage push + JWT auth:** ~6 heures (Feb 10, 2026)
+- **Plan v5 (11 items):** ~18 heures (Feb 7-10, 2026)
 
-**Total:** ~61 heures = **8 jours de travail**
+**Total:** ~79 heures = **10 jours de travail**
 
 **ROI:** Excellent - Score maintenu à 7.7/10 malgré 5 nouveaux domaines d'audit (qui auraient baissé le score à 6.0 sans corrections)
 
@@ -494,7 +520,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ### Prochaine Session
 
 1. ~~**Fix 23 failing tests**~~ → ✅ **DONE** (2,476 passing, 0 failures)
-2. **Push coverage to 50%** (1h remaining) - at 46.3%, need ~3.7% more (fx_service, wealth, saxo_auth)
+2. **Push coverage to 50%** (1h remaining) - at ~47%, need ~3% more (fx_service, wealth, saxo_auth)
 3. ~~**Standardize response format**~~ → ✅ **DONE** (27 bare returns migrated)
 
 ### Ce Mois (Feb-Mars 2026)

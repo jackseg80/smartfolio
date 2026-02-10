@@ -193,6 +193,9 @@
   --radius-badge: var(--radius-sm);     /* Badge/tag radius: 4px */
   --radius-modal: var(--radius-xl);     /* Modal dialog radius: 12px */
 
+  /* Touch targets — WCAG 2.5.5 minimum 44x44px */
+  --touch-target-min: 44px;
+
   /* ══════════════════════════════════════════════════════════
      OMBRES
      ══════════════════════════════════════════════════════════ */

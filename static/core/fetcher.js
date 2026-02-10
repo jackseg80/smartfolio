@@ -155,6 +155,33 @@ function tryParseLocalStorage(key) {
 }
 
 /**
+ * Get the last update timestamp for a cache key (ms since epoch).
+ * Returns null if not cached.
+ */
+export function getLastUpdateTime(cacheKey) {
+  const ramEntry = RAM_CACHE.get(cacheKey);
+  if (ramEntry?.timestamp) return ramEntry.timestamp;
+  try {
+    const raw = localStorage.getItem(`cache:${cacheKey}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return parsed?.timestamp || null;
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+/**
+ * Get seconds since last update for a cache key.
+ * Returns null if not cached.
+ */
+export function getLastUpdateAgo(cacheKey) {
+  const ts = getLastUpdateTime(cacheKey);
+  if (!ts) return null;
+  return Math.round((Date.now() - ts) / 1000);
+}
+
+/**
  * Clear all caches
  */
 export function clearCache() {

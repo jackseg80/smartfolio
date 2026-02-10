@@ -11,12 +11,16 @@
   <link rel="stylesheet" href="shared-theme.css">
   <link rel="stylesheet" href="theme-compat.css">
   <link rel="stylesheet" href="css/view-modes.css">
+    <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
 
   <!-- Scripts partagés existants -->
   <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>
   <script src="global-config.js"></script>
+  <script type="module" src="components/data-freshness.js"></script>
   <script type="module" src="network-state-manager.js"></script> <!-- Network resilience layer -->
+    <script type="module" src="core/sentry-init.js"></script>
   <script src="appearance.js"></script> <!-- Critical: must load before first paint to avoid theme flash -->
   <script src="lazy-loader.js"></script>
 
@@ -148,6 +152,7 @@
         <h1>Risk Dashboard</h1>
       </div>
       <div class="header-controls">
+        <button id="pdf-export-btn" class="btn btn-secondary pdf-hide" style="font-size:0.8rem;padding:6px 12px;" title="Export page as PDF" onclick="import('./modules/pdf-export.js').then(m=>m.exportPageToPDF({element:document.querySelector('.wrap'),title:'Risk Dashboard',filename:'risk-dashboard',button:this}))">Export PDF</button>
         <view-toggle></view-toggle>
         <div class="timestamp" id="last-update">Loading...</div>
         <button class="icon-btn" id="refresh-btn" title="Refresh data" aria-label="Refresh data">

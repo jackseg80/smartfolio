@@ -9,9 +9,15 @@
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
     <link rel="stylesheet" href="css/view-modes.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/print.css" media="print">
     <script type="module" src="components/nav.js"></script>
     <script type="module" src="components/tooltips.js"></script>
     <script type="module" src="components/view-toggle.js"></script>
+    <script type="module" src="components/data-freshness.js"></script>
+    <script type="module" src="components/morning-brief-card.js"></script>
+    <script type="module" src="network-state-manager.js"></script>
+    <script type="module" src="core/sentry-init.js"></script>
     <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
@@ -529,7 +535,15 @@
         <!-- Page Header with View Toggle -->
         <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--theme-border);">
             <h1 style="font-size:1.5rem;font-weight:700;color:var(--theme-text);margin:0;">Dashboard</h1>
-            <view-toggle></view-toggle>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button id="pdf-export-btn" class="btn btn-secondary pdf-hide" style="font-size:0.8rem;padding:6px 12px;" title="Export page as PDF">Export PDF</button>
+                <view-toggle></view-toggle>
+            </div>
+        </div>
+
+        <!-- MORNING BRIEF -->
+        <div style="margin-bottom: 20px;">
+            <morning-brief-card auto-refresh="900" collapsed></morning-brief-card>
         </div>
 
         <!-- LEVEL 1: WEALTH -->
@@ -894,7 +908,7 @@
                 </div>
                 <div class="metric">
                     <span class="metric-label">Data Freshness</span>
-                    <span class="metric-value" id="data-freshness">--</span>
+                    <span class="metric-value"><data-freshness cache-key="scores" stale-warn="5" stale-error="30" compact></data-freshness></span>
                 </div>
             </div>
 

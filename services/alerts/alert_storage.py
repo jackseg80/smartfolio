@@ -12,6 +12,8 @@ Implémente un système hybride Redis ZSET/HASH + fichier JSON + in-memory avec:
 
 import json
 import logging
+import os
+import tempfile
 import threading
 import time
 from datetime import datetime, timedelta
@@ -734,10 +736,24 @@ class AlertStorage:
             return {"alerts": [], "metadata": {}}
     
     def _save_json_data(self, data: Dict[str, Any]):
-        """Sauvegarde les données JSON avec serialization custom pour Enum/datetime"""
-        # Serializer les objets non-JSON-serializable (Enum, datetime, etc.)
+        """Sauvegarde les données JSON avec écriture atomique (temp + os.replace)"""
         serialized_data = _serialize_for_json(data)
-        self.json_file.write_text(json.dumps(serialized_data, indent=2))
+        fd, tmp_path = tempfile.mkstemp(
+            prefix=f".{self.json_file.name}.",
+            suffix=".tmp",
+            dir=str(self.json_file.parent)
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(serialized_data, f, indent=2)
+            os.replace(tmp_path, self.json_file)
+        except (OSError, PermissionError, ValueError):
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            raise
     
     def _is_duplicate(self, alert: Alert) -> bool:
         """

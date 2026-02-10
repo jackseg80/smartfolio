@@ -240,8 +240,8 @@ async def health_all():
 
     # 6. Circuit Breakers (external API resilience)
     try:
-        from shared.circuit_breaker import coingecko_circuit, fred_circuit, saxo_circuit
-        circuits = [coingecko_circuit, fred_circuit, saxo_circuit]
+        from shared.circuit_breaker import coingecko_circuit, fred_circuit, saxo_circuit, binance_circuit, cointracking_circuit
+        circuits = [coingecko_circuit, fred_circuit, saxo_circuit, binance_circuit, cointracking_circuit]
         circuit_statuses = {c.name: c.get_status() for c in circuits}
         any_open = any(s["state"] == "open" for s in circuit_statuses.values())
         results["components"]["circuit_breakers"] = {

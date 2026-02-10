@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import tempfile
 from filelock import FileLock
 from pathlib import Path
 from datetime import datetime, timezone
@@ -38,10 +39,25 @@ class UserManagementService:
             return json.load(f)
 
     def _save_users_config(self, config: Dict[str, Any]) -> None:
-        """Sauvegarde la configuration users.json"""
-        with FileLock(str(self.users_config_path) + ".lock", timeout=5):
-            with open(self.users_config_path, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=2, ensure_ascii=False)
+        """Sauvegarde la configuration users.json (écriture atomique)"""
+        path = self.users_config_path
+        fd, tmp_path = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=str(path.parent)
+        )
+        try:
+            with FileLock(str(path) + ".lock", timeout=5):
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(config, f, indent=2, ensure_ascii=False)
+                os.replace(tmp_path, path)
+        except (OSError, PermissionError, ValueError):
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
+            raise
 
         # Clear cache pour forcer reload
         clear_users_cache()

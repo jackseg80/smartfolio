@@ -52,6 +52,7 @@
   <link rel="preload" href="shared-theme.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" href="theme-compat.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" href="css/view-modes.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="stylesheet" href="css/responsive.css">
   <link rel="preload" href="components/governance-panel.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <link rel="preload" href="components/decision-index-panel.css?v=20251015fixed" as="style" onload="this.onload=null;this.rel='stylesheet'">
   <!-- IMPORTANT: analytics-unified-theme.css EN DERNIER pour surcharger le DI Panel -->
@@ -61,6 +62,7 @@
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
     <link rel="stylesheet" href="css/view-modes.css">
+    <link rel="stylesheet" href="css/print.css" media="print">
     <link rel="stylesheet" href="components/governance-panel.css">
     <link rel="stylesheet" href="components/decision-index-panel.css?v=20251015fixed">
     <link rel="stylesheet" href="analytics-unified-theme.css?v=20260129v1">
@@ -91,6 +93,9 @@
   <script defer src="debug-logger.js"></script>
   <script defer src="global-config.js"></script>
   <script defer src="appearance.js"></script>
+  <script type="module" src="components/data-freshness.js"></script>
+  <script type="module" src="network-state-manager.js"></script>
+    <script type="module" src="core/sentry-init.js"></script>
   <script type="module" src="components/nav.js"></script>
   <script type="module" src="components/view-toggle.js"></script>
   <script type="module" src="components/domain-nav.js"></script>
@@ -168,7 +173,10 @@
     <!-- Page Header (Feb 2026) -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <h1 style="margin: 0; font-size: 1.5rem; color: var(--theme-text);">🧠 ML Intelligence</h1>
-      <view-toggle></view-toggle>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button id="pdf-export-btn" class="btn btn-secondary pdf-hide" style="font-size:0.8rem;padding:6px 12px;" title="Export page as PDF" onclick="import('./modules/pdf-export.js').then(m=>m.exportPageToPDF({element:document.querySelector('.wrap'),title:'ML Intelligence',filename:'ml-intelligence',button:this}))">Export PDF</button>
+        <view-toggle></view-toggle>
+      </div>
     </div>
 
     <!-- Navigation contextuelle Analytics Domain (Feb 2026) -->

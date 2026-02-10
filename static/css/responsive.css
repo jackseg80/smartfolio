@@ -1,0 +1,152 @@
+/**
+ * SmartFolio Responsive Overrides
+ *
+ * Mobile-first adjustments for touch devices and small screens.
+ * Load AFTER tokens.css and shared-theme.css.
+ *
+ * Breakpoints:
+ *   <768px   — Mobile (single column)
+ *   768-1024 — Tablet (2 columns)
+ *   >1024    — Desktop (auto-fit grid)
+ */
+
+/* ══════════════════════════════════════════════════════════
+   TOUCH TARGETS — WCAG 2.5.5 minimum 44x44px
+   ══════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  /* Buttons and interactive elements */
+  button,
+  .btn,
+  .icon-btn,
+  a.btn,
+  select,
+  [role="button"] {
+    min-height: var(--touch-target-min, 44px);
+    min-width: var(--touch-target-min, 44px);
+  }
+
+  /* Navigation links */
+  nav a,
+  domain-nav a,
+  .nav-link {
+    min-height: var(--touch-target-min, 44px);
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+  }
+
+  /* Form inputs */
+  input,
+  textarea,
+  select {
+    min-height: var(--touch-target-min, 44px);
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE (<768px) — Single column layout
+   ══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* Main container */
+  .wrap {
+    padding: 12px 8px !important;
+  }
+
+  /* Grid override — single column */
+  .dashboard-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Cards span full width */
+  .dashboard-grid > .card,
+  .dashboard-grid > [style*="grid-column: span"] {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Page header stack */
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .page-header h1 {
+    font-size: 1.2rem !important;
+  }
+
+  /* Card headers wrap */
+  .card-header {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  /* Hide non-essential on mobile */
+  .pro-only:not(.mobile-visible) {
+    display: none !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Charts reduce height */
+  .chart-container,
+  [class*="chart-wrapper"] {
+    max-height: 250px !important;
+  }
+
+  /* Smaller font sizes */
+  .metric-value {
+    font-size: 1.5rem !important;
+  }
+
+  .metric-label {
+    font-size: 0.75rem !important;
+  }
+
+  /* Morning brief card full width */
+  morning-brief-card {
+    margin: 0 -4px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   TABLET (768px - 1024px) — Two column layout
+   ══════════════════════════════════════════════════════════ */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  /* Full-width cards keep spanning */
+  .dashboard-grid > [style*="grid-column: span 2"],
+  .dashboard-grid > [style*="grid-column: span 3"] {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SAFE AREA — Notch / rounded corners
+   ══════════════════════════════════════════════════════════ */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  nav,
+  .page-header {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}

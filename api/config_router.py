@@ -57,6 +57,16 @@ async def get_configured_data_source():
         logger.error(f"Error getting data source config: {e}")
         return success_response({"data_source": "stub"})  # Safe fallback
 
+@router.get("/sentry-dsn")
+async def get_sentry_dsn():
+    """
+    Get the public Sentry DSN for frontend error tracking.
+    Returns empty string if not configured (Sentry will be disabled).
+    """
+    dsn = os.getenv("SENTRY_DSN_PUBLIC", "")
+    return success_response({"dsn": dsn})
+
+
 @router.get("/api-base-url")
 async def get_api_base_url():
     """

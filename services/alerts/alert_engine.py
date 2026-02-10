@@ -882,6 +882,9 @@ class AlertEngine:
         # Phase 3B: Broadcast alert en temps réel
         asyncio.create_task(self._broadcast_alert_realtime(alert))
 
+        # Phase 1.4: Notifications multi-canal (Telegram, Discord, Webhook)
+        asyncio.create_task(self._send_alert_notifications(alert))
+
         return alert
 
     def _apply_systemic_alert_cap_reduction(self, alert: Alert, alert_data: Dict[str, Any]) -> None:
@@ -1236,6 +1239,22 @@ class AlertEngine:
             logger.error(f"Error broadcasting alert {alert.id} via Phase 3B: {e}")
             self.metrics.increment("streaming_broadcasts_failed")
     
+    async def _send_alert_notifications(self, alert: Alert):
+        """Phase 1.4: Envoie l'alerte via canaux de notification (Telegram, Discord, Webhook)."""
+        try:
+            from services.notifications.notification_sender import notification_sender
+            results = await notification_sender.send_engine_alert(alert)
+
+            for channel, success in results.items():
+                status = "sent" if success else "failed"
+                logger.debug(f"Alert {alert.id} notification {status} via {channel}")
+                self.metrics.increment(
+                    f"notification_{status}_total",
+                    {"channel": channel}
+                )
+        except Exception as e:
+            logger.error(f"Error sending notifications for alert {alert.id}: {e}")
+
     async def broadcast_risk_event(self, event_type: str, data: Dict[str, Any], severity: str = "S2"):
         """
         API publique pour broadcaster des événements de risque personnalisés

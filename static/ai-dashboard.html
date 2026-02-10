@@ -8,6 +8,7 @@
 
     <!-- Styles -->
     <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
 
@@ -67,6 +68,9 @@
     <script src="performance-optimizer.js"></script>
     <script src="global-config.js"></script>
     <script src="appearance.js"></script>
+    <script type="module" src="components/data-freshness.js"></script>
+    <script type="module" src="network-state-manager.js"></script>
+    <script type="module" src="core/sentry-init.js"></script>
 
     <style>
         body {
@@ -1292,7 +1296,7 @@
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API volatilité non disponible');
+                    debugLogger.warn('âš ï¸ API volatilité non disponible');
                 }
 
                 // 2. Statut régime via API réelle optimisée
@@ -1330,7 +1334,7 @@
                         debugLogger.debug('✅ Régime actuel chargé:', regimeMetric);
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API régime non disponible');
+                    debugLogger.warn('âš ï¸ API régime non disponible');
                 }
 
                 // 3. Statut corrélations via API réelle
@@ -1351,11 +1355,11 @@
                             correlationStatus = 'No data';
                             correlationMetric = 'Empty portfolio';
                             correlationSource = correlationData.message || 'No holdings';
-                            debugLogger.debug('⚠️ Corrélations non disponibles:', correlationData.message);
+                            debugLogger.debug('âš ï¸ Corrélations non disponibles:', correlationData.message);
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API corrélations non disponible');
+                    debugLogger.warn('âš ï¸ API corrélations non disponible');
                 }
 
                 // 4. ML Sentiment via API réelle
@@ -1551,7 +1555,7 @@
                         models: activeModelCount
                     });
                 } catch (error) {
-                    debugLogger.warn('⚠️ Source ML centralisée échouée, utilisation de données stables:', error);
+                    debugLogger.warn('âš ï¸ Source ML centralisée échouée, utilisation de données stables:', error);
                     // Fallback stable comme avant
                     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
                     activeModelCount = 4;
@@ -1787,7 +1791,7 @@
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API régime non disponible');
+                    debugLogger.warn('âš ï¸ API régime non disponible');
                 }
 
                 // Charger statut corrélations
@@ -1806,7 +1810,7 @@
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API corrélations non disponible');
+                    debugLogger.warn('âš ï¸ API corrélations non disponible');
                 }
 
                 // Charger ML Sentiment
@@ -1849,7 +1853,7 @@
                             createDetailedCard('🔗', 'Correlation Analysis - Details', correlationStatus, correlationMetric, correlationSource, 'Pearson'),
                             createDetailedCard('😊', 'ML Sentiment - Details', sentimentStatus, sentimentMetric, sentimentSource, 'F&G Index')
                         ];
-                        debugLogger.debug('🃏 Cartes créées:', detailedCards.length);
+                        debugLogger.debug('ðŸƒ Cartes créées:', detailedCards.length);
 
                         detailedCards.forEach((card, index) => {
                             debugLogger.debug(`➕ Ajout carte ${index + 1}:`, card);
@@ -2684,7 +2688,7 @@
                         addAdminLog(`📊 Modèles chargés: ${loaded.join(', ')}`);
                     }
                 } else {
-                    addAdminLog('⚠️ Chargement partiel ou échec');
+                    addAdminLog('âš ï¸ Chargement partiel ou échec');
                 }
 
                 await refreshPipelineStatus();
@@ -2719,7 +2723,7 @@
                     if (result.preload_results.regime) {
                         addAdminLog('✅ Modèle de régime chargé avec succès');
                     } else {
-                        addAdminLog('⚠️ Modèle de régime non disponible (fichiers manquants)');
+                        addAdminLog('âš ï¸ Modèle de régime non disponible (fichiers manquants)');
                     }
                 } else {
                     addAdminLog('✅ Preload exécuté (régime inclus par défaut)');
@@ -2744,7 +2748,7 @@
                 return;
             }
 
-            addAdminLog('🗑️ Vidage de tous les modèles de la mémoire...');
+            addAdminLog('ðŸ—‘ï¸ Vidage de tous les modèles de la mémoire...');
 
             try {
                 const result = await pipelineApiCall('/memory/optimize', {
@@ -2757,7 +2761,7 @@
                     addAdminLog(`✅ ${result.models_cleared || 0} modèles supprimés de la mémoire`);
                     addAdminLog(`💾 ${(result.memory_freed_mb || 0).toFixed(1)}MB de mémoire libérée`);
                 } else {
-                    addAdminLog('⚠️ Vidage des modèles effectué');
+                    addAdminLog('âš ï¸ Vidage des modèles effectué');
                 }
                 await refreshPipelineStatus();
                 showSuccess('Models removed from memory');
@@ -2777,7 +2781,7 @@
             addAdminLog(`🎯 Chargement des modèles pour: ${symbolList.join(', ')}`);
 
             // TODO: Implémenter le chargement de symboles spécifiques
-            addAdminLog('⚠️ Fonction en cours d\'implémentation');
+            addAdminLog('âš ï¸ Fonction en cours d\'implémentation');
             showSuccess('Feature being implemented');
         }
 
@@ -2834,7 +2838,7 @@
                     addAdminLog(`✅ Cache optimisé: ${result.cache_cleared ? 'vidé' : 'optimisé'}`);
                     addAdminLog(`💾 Mémoire libérée: ${(result.memory_freed_mb || 0).toFixed(1)}MB`);
                 } else {
-                    addAdminLog('⚠️ Optimisation du cache effectuée');
+                    addAdminLog('âš ï¸ Optimisation du cache effectuée');
                 }
                 // NOTE: Cache display removed (moved to Admin Dashboard)
                 showSuccess('ML cache optimized');
@@ -2882,7 +2886,7 @@
                     }
                 } catch (e) {
                     document.getElementById('active-alerts-count').textContent = 'Error';
-                    debugLogger.warn('⚠️ Impossible de récupérer les alertes actives');
+                    debugLogger.warn('âš ï¸ Impossible de récupérer les alertes actives');
                 }
 
                 // 2. Vérifier le statut AlertEngine
@@ -2897,7 +2901,7 @@
                     }
                 } catch (e) {
                     document.getElementById('alert-engine-status').textContent = 'Error';
-                    debugLogger.warn('⚠️ Impossible de vérifier AlertEngine');
+                    debugLogger.warn('âš ï¸ Impossible de vérifier AlertEngine');
                 }
 
                 // 3. Vérifier Advanced Risk Engine (toujours configuré mais pas intégré)

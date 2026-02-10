@@ -25,6 +25,7 @@ import aiofiles
 
 # Réutiliser la configuration existante
 from services.pricing import SYMBOL_ALIAS, FIAT_STABLE_FIXED
+from shared.circuit_breaker import binance_circuit
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +168,10 @@ class PriceHistory:
             logger.debug(f"Symbole {symbol} non supporté par Binance")
             return []
 
+        if not binance_circuit.is_available():
+            logger.warning(f"Binance circuit OPEN — skipping {symbol}")
+            return []
+
         url = "https://api.binance.com/api/v3/klines"
 
         async def fetch(params: Dict[str, int | str]) -> List[List[Union[int, str, float]]]:
@@ -192,6 +197,7 @@ class PriceHistory:
                     history.append((ts, close_price))
                 # Trier et dédupliquer au cas où
                 history = sorted(list({ts: (ts, px) for ts, px in history}.values()))
+                binance_circuit.record_success()
                 logger.info(f"✅ Téléchargé {len(history)} points pour {symbol} (<=1000)")
                 await asyncio.sleep(BINANCE_REQUEST_DELAY)
                 return history
@@ -235,10 +241,12 @@ class PriceHistory:
 
             # Déduplication et tri UNE SEULE FOIS après la boucle (optimisation)
             history = sorted(list({ts: (ts, px) for ts, px in history}.values()))[-days:]
+            binance_circuit.record_success()
             logger.info(f"✅ Téléchargé {len(history)} points pour {symbol} (>1000)")
             return history
 
         except Exception as e:
+            binance_circuit.record_failure()
             logger.warning(f"Erreur téléchargement Binance {symbol}: {e}")
             return []
                 

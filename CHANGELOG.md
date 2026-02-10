@@ -5,7 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-02-06
+## [Unreleased] - 2026-02-10
+
+### 🏗️ Plan d'Amelioration v5 — 11 Items Complete (Feb 2026)
+
+**Period:** February 7-10, 2026
+**Objective:** Address critical infrastructure gaps (notifications, backups, freshness, mobile, observability)
+**Result:** 11/11 items complete, 2910 tests passing, 0 failures
+
+#### Phase 1: Foundations & Reliability (P0)
+
+- **1.1 Atomic Writes** — `services/user_management.py` + `services/alerts/alert_storage.py` migrated to temp+`os.replace()` pattern + 20 tests
+- **1.2 Circuit Breakers** — Added `binance_circuit` + `cointracking_circuit` in `shared/circuit_breaker.py`, integrated in `price_history.py` and `cointracking_api.py`, health_router extended (5 circuits)
+- **1.3 Backup System** — `services/backup_manager.py` (create/restore/verify/retention), 3 PowerShell scripts, 6 `/admin/backups/*` endpoints + 52 tests
+- **1.4 Notifications Connected** — `TelegramNotifier` (httpx async), `WebhookNotifier` converted to async, bridge `convert_engine_alert()`, hook in `alert_engine.py:_create_alert()`, `api/notification_endpoints.py` (4 endpoints), `config/alerts_rules.json` extended + 68 tests
+
+#### Phase 2: Data Freshness & Offline
+
+- **2.1 Data Freshness** — Web Component `<data-freshness>` deployed on 22 pages, `fetcher.js` exposes `getLastUpdateTime()` + 15 tests
+- **2.2 Offline Detection** — `network-state-manager.js` imported in 19 missing pages + persistent banner
+
+#### Phase 3: Morning Brief
+
+- **3.1 Morning Brief** — `services/morning_brief_service.py`, endpoint `GET /api/morning-brief`, scheduler job 07:30, Web Component `morning-brief-card.js` + 40 tests
+
+#### Phase 4: Export & Mobile
+
+- **4.1 Export PDF** — `static/modules/pdf-export.js` (jsPDF + html2canvas), `static/css/print.css`, button on 3 pages + Plotly.toImage support
+- **4.2 Mobile UX** — `static/css/responsive.css`, touch targets 44px, single column <768px
+
+#### Phase 5: Observability & Scheduler
+
+- **5.1 Sentry Frontend** — `static/core/sentry-init.js`, endpoint `/api/config/sentry-dsn`, deployed on 21 pages
+- **5.2 Scheduler Resilient** — `_job_status` dict → Redis HASH (`smartfolio:scheduler:jobs`), heartbeat TTL 180s, webhook failure alerts, recovery at restart, `/admin/scheduler/status` endpoint + 17 tests
+
+#### Hotfix: Encoding
+
+- **Double-encoded UTF-8** — Fixed BOM + CP1252 mojibake on 22 HTML files. Script `scripts/fix_encoding.py` handles 5 undefined CP1252 bytes + mixed-content lines. 19/22 fully fixed, 3 with residual in JS comments only.
+
+### 📈 Coverage Push 42.9% → ~47% (Feb 2026)
+
+**Period:** February 10, 2026
+**Result:** 3198 tests passing, 0 failures
+
+#### Added — Tests
+
+- **Backtesting Engine** — 43 tests (~60% coverage)
+- **Trading Strategies** — 70 tests (~65% coverage, 5 strategies)
+- **Taxonomy** — 30 tests (67% coverage)
+- **Regime Constants** — 43 tests (~90% coverage)
+- **Data Processing** — 48 tests (~70% coverage)
+- **Idempotency Manager** — 25 tests (~80% coverage)
+- **Monte Carlo** — 9 tests (~40% coverage)
+- **Stress Testing** — 20 tests (~50% coverage)
+- **Utils Formatters** — +30 tests (~85% coverage)
+- **Bourse Metrics** — 48 tests (~96% coverage)
+- **Alert Types** — 50 tests (~70% coverage)
+- **Signals** — 50 tests (~60% coverage)
+- **Advanced Rebalancing** — 50 tests (~30% coverage)
+- **Risk Scoring** — 80 tests (100% coverage)
+- **Instruments Registry** — 45 tests (90% coverage)
+- **Portfolio Metrics Service** — 42 tests (~40% coverage)
+- **Structural Score V2** — 28 tests (~80% coverage)
+
+### 🔑 JWT Auth Migration (Feb 2026)
+
+- Modified `get_required_user` + `require_admin_role` in `api/deps.py`
+- Added `_extract_jwt_user()` helper: validates JWT if present
+- Soft mode (default): JWT validated if present, fallback to X-User header
+- Strict mode (`REQUIRE_JWT=1`): rejects without valid JWT
+- Anti-spoofing cross-check: JWT user != X-User → 403
+- Frontend `http.js` sends JWT via `Authorization: Bearer <token>`
+- 80 tests in `test_api_deps.py` (was 55)
+
+---
 
 ### 🌐 Full FR → EN Translation (Feb 2026)
 

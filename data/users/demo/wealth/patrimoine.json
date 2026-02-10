@@ -283,6 +283,83 @@
       "acquisition_date": null,
       "notes": "Demo account",
       "metadata": {}
+    },
+    {
+      "id": "cf169bcc-01b4-4576-9387-0f1c519b04f6",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "82848c0c-7cf1-4038-8160-e7015e8bd68a",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "0464f55c-c006-4223-8f8e-cd81d810c01d",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "c0b24cfb-60f4-4135-b1e9-972b539a4b26",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "3907475f-9384-4af4-9dcb-32ebe5593457",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "03b53927-78a3-4a5b-9ef0-23f194154043",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
+    },
+    {
+      "id": "d677d117-4b3f-48bb-8271-25a10533a301",
+      "name": "Demo Bank (current)",
+      "category": "liquidity",
+      "type": "bank_account",
+      "value": 1000.0,
+      "currency": "USD",
+      "acquisition_date": null,
+      "notes": "Demo account",
+      "metadata": {}
     }
   ]
 }

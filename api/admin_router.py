@@ -1205,3 +1205,248 @@ async def list_api_keys(user: str = Depends(require_admin_role)):
             "cointracking": {"status": "valid", "masked_key": "ct_5678...efgh"}
         }
     })
+
+
+# ============================================================================
+# Backups
+# ============================================================================
+
+class BackupCreateRequest(BaseModel):
+    """Request model for creating a backup"""
+    user_ids: Optional[List[str]] = Field(None, description="User IDs to backup (null = all users)")
+    include_secrets: bool = Field(False, description="Include secrets.json in backup")
+
+
+class BackupRestoreRequest(BaseModel):
+    """Request model for restoring a backup"""
+    zip_path: str = Field(..., description="Path to backup ZIP file")
+    user_id: str = Field(..., description="Target user ID")
+    dry_run: bool = Field(True, description="Simulate restore without writing files")
+
+
+class BackupVerifyRequest(BaseModel):
+    """Request model for verifying a backup"""
+    zip_path: str = Field(..., description="Path to backup ZIP file")
+
+
+@router.get("/backups/status")
+async def get_backups_status(user: str = Depends(require_admin_role)):
+    """
+    Get current backup status for all users.
+
+    Returns:
+        dict: Backup counts, sizes, latest dates, retention policy
+    """
+    from services.backup_manager import backup_manager
+    try:
+        status_data = backup_manager.get_status()
+        return success_response(status_data)
+    except Exception as e:
+        logger.error(f"Error getting backup status: {e}")
+        return error_response(
+            f"Failed to get backup status: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/backups/create-now")
+async def trigger_backup(
+    request: BackupCreateRequest,
+    user: str = Depends(require_admin_role),
+):
+    """
+    Trigger an immediate backup for specified users.
+
+    Args:
+        request: Backup configuration (user_ids, include_secrets)
+
+    Returns:
+        dict: Results per user (file path, size, checksum)
+    """
+    from services.backup_manager import backup_manager
+    try:
+        result = backup_manager.create_backup(
+            user_ids=request.user_ids,
+            include_secrets=request.include_secrets,
+        )
+        logger.info(
+            f"Backup triggered by admin '{user}': "
+            f"{result['total_ok']} OK, {result['total_failed']} failed"
+        )
+        return success_response(result)
+    except Exception as e:
+        logger.error(f"Backup creation failed: {e}")
+        return error_response(
+            f"Backup failed: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.get("/backups/list")
+async def list_backups(
+    user_id: Optional[str] = Query(None, description="Filter by user ID"),
+    user: str = Depends(require_admin_role),
+):
+    """
+    List all existing backups.
+
+    Args:
+        user_id: Optional filter by user
+
+    Returns:
+        list: Backup files with metadata
+    """
+    from services.backup_manager import backup_manager
+    try:
+        backups = backup_manager.list_backups(user_id=user_id)
+        return success_response(backups, meta={"count": len(backups)})
+    except Exception as e:
+        logger.error(f"Error listing backups: {e}")
+        return error_response(
+            f"Failed to list backups: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/backups/apply-retention")
+async def apply_retention(
+    user_id: Optional[str] = Query(None, description="Apply only for this user"),
+    user: str = Depends(require_admin_role),
+):
+    """
+    Apply retention policy (7 daily / 4 weekly / 12 monthly).
+    Deletes old backups exceeding the policy.
+
+    Returns:
+        dict: Number of deleted files per user
+    """
+    from services.backup_manager import backup_manager
+    try:
+        deleted = backup_manager.apply_retention(user_id=user_id)
+        total_deleted = sum(deleted.values())
+        logger.info(f"Retention applied by admin '{user}': {total_deleted} backups deleted")
+        return success_response(deleted, meta={"total_deleted": total_deleted})
+    except Exception as e:
+        logger.error(f"Error applying retention: {e}")
+        return error_response(
+            f"Failed to apply retention: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/backups/verify")
+async def verify_backup(
+    request: BackupVerifyRequest,
+    user: str = Depends(require_admin_role),
+):
+    """
+    Verify integrity of a backup file (ZIP structure + SHA-256).
+
+    Returns:
+        dict: Verification result with checksum
+    """
+    from services.backup_manager import backup_manager
+    try:
+        result = backup_manager.verify_backup(request.zip_path)
+        return success_response(result)
+    except Exception as e:
+        logger.error(f"Error verifying backup: {e}")
+        return error_response(
+            f"Verification failed: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@router.post("/backups/restore")
+async def restore_backup(
+    request: BackupRestoreRequest,
+    user: str = Depends(require_admin_role),
+):
+    """
+    Restore a backup. Use dry_run=true first to preview files.
+
+    Args:
+        request: zip_path, user_id, dry_run
+
+    Returns:
+        dict: Restore result (files list, count)
+    """
+    from services.backup_manager import backup_manager
+    try:
+        result = backup_manager.restore_backup(
+            zip_path=request.zip_path,
+            user_id=request.user_id,
+            dry_run=request.dry_run,
+        )
+        if not request.dry_run and result.get("ok"):
+            logger.info(
+                f"Backup restored by admin '{user}' for user '{request.user_id}': "
+                f"{result.get('file_count', 0)} files"
+            )
+        return success_response(result)
+    except Exception as e:
+        logger.error(f"Restore failed: {e}")
+        return error_response(
+            f"Restore failed: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+# ============================================================================
+# Scheduler Status (Persistent via Redis)
+# ============================================================================
+
+@router.get("/scheduler/status")
+async def get_scheduler_status(user: str = Depends(require_admin_role)):
+    """
+    Get scheduler status from Redis (persistent across restarts).
+    Returns job execution history, heartbeat, and scheduler health.
+    """
+    try:
+        from api.scheduler import (
+            get_scheduler,
+            get_job_status_persistent,
+            get_scheduler_heartbeat,
+        )
+
+        scheduler = get_scheduler()
+
+        # Get persistent status from Redis (or in-memory fallback)
+        job_status = await get_job_status_persistent()
+
+        # Get heartbeat
+        heartbeat = await get_scheduler_heartbeat()
+
+        # Get next run times if scheduler is running
+        next_runs = {}
+        if scheduler:
+            for job in scheduler.get_jobs():
+                next_runs[job.id] = {
+                    "name": job.name,
+                    "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+                }
+
+        # Count failures in last status
+        failed_count = sum(
+            1 for s in job_status.values()
+            if s.get("status") in ("error", "failed")
+        )
+
+        return success_response({
+            "scheduler_running": scheduler is not None,
+            "heartbeat": heartbeat,
+            "jobs": job_status,
+            "next_runs": next_runs,
+            "summary": {
+                "total_jobs": len(job_status),
+                "failed_jobs": failed_count,
+                "healthy": failed_count == 0 and scheduler is not None,
+            },
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting scheduler status: {e}")
+        return error_response(
+            f"Failed to get scheduler status: {str(e)}",
+            code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

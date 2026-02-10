@@ -129,3 +129,5 @@ class CircuitBreaker:
 coingecko_circuit = CircuitBreaker("coingecko", failure_threshold=5, recovery_timeout=60)
 fred_circuit = CircuitBreaker("fred", failure_threshold=3, recovery_timeout=120)
 saxo_circuit = CircuitBreaker("saxo", failure_threshold=5, recovery_timeout=60)
+binance_circuit = CircuitBreaker("binance", failure_threshold=5, recovery_timeout=60)
+cointracking_circuit = CircuitBreaker("cointracking", failure_threshold=3, recovery_timeout=90)

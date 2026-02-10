@@ -395,6 +395,87 @@ uvicorn api.main:app --port 8080  # No --reload flag
 - P&L snapshots respect CoinTracking API rate limits (60 req/min)
 - OHLCV updates implement exponential backoff on 429 errors
 
+## Redis Persistent Job Status (Feb 2026)
+
+### Overview
+
+Job status is now persisted to Redis HASH instead of an in-memory dict. This enables:
+- **Status survives restarts** — job history preserved across application restarts
+- **Heartbeat monitoring** — PID + timestamp written to `smartfolio:scheduler:heartbeat` with 180s TTL
+- **Failure alerts** — webhook notification on job failures (configurable)
+- **Recovery** — on startup, job status is recovered from Redis
+
+### Redis Keys
+
+| Key | Type | TTL | Purpose |
+|-----|------|-----|---------|
+| `smartfolio:scheduler:jobs` | HASH | None | Persistent job status (JSON per job) |
+| `smartfolio:scheduler:heartbeat` | String | 180s | Scheduler liveness indicator (PID + timestamp) |
+
+### New Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SCHEDULER_FAILURE_WEBHOOK` | `` | Webhook URL for job failure alerts (JSON payload) |
+
+### Failure Webhook Payload
+
+When a job fails and `SCHEDULER_FAILURE_WEBHOOK` is set, a POST request is sent:
+
+```json
+{
+  "text": "SmartFolio scheduler job failed: pnl_intraday - Connection timeout",
+  "job_id": "pnl_intraday",
+  "status": "error",
+  "error": "Connection timeout",
+  "timestamp": "2026-02-10T14:30:00"
+}
+```
+
+### New Jobs (Feb 2026)
+
+| Job ID | Schedule | Description |
+|--------|----------|-------------|
+| `morning_brief` | 07:30 Europe/Zurich | Generate daily morning brief |
+| `crypto_toolbox_refresh` | Every 6h | Refresh crypto toolbox data |
+| `daily_ml_training` | 02:00 Europe/Zurich | Retrain ML models |
+
+### Admin Endpoint
+
+**GET** `/admin/scheduler/status`
+
+Returns persistent scheduler status from Redis, including heartbeat info:
+
+```json
+{
+  "success": true,
+  "data": {
+    "enabled": true,
+    "heartbeat": {
+      "pid": 12345,
+      "timestamp": "2026-02-10T14:30:00",
+      "alive": true
+    },
+    "jobs": {
+      "pnl_intraday": {
+        "last_run": "2026-02-10T14:30:00",
+        "status": "success",
+        "duration_ms": 245.3
+      }
+    }
+  }
+}
+```
+
+### Graceful Degradation
+
+All Redis operations are best-effort:
+- If Redis is unavailable, falls back to in-memory `_job_status` dict
+- No job execution is blocked by Redis failures
+- First startup with Redis = empty state (equivalent to current behavior)
+
+---
+
 ## Extending the Scheduler
 
 ### Add New Job
@@ -478,7 +559,7 @@ Set up alerts for:
 
 ---
 
-**Last Updated:** Oct 2025
+**Last Updated:** Feb 2026
 **Maintainer:** FastAPI Team
-**Status:** ✅ Production Ready
+**Status:** ✅ Production Ready (Redis persistent job status added Feb 2026)
 

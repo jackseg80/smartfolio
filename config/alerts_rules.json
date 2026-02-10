@@ -280,6 +280,10 @@
         "enabled": true,
         "level": "INFO"
       },
+      "telegram": {
+        "enabled": false,
+        "timeout_seconds": 10
+      },
       "webhook": {
         "enabled": false,
         "url": null,

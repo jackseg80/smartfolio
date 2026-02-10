@@ -169,13 +169,17 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(multi_asset_router)
     logger.info("✅ Strategy & Backtesting routers registered (incl. DI Backtest)")
 
-    # ========== Alerts & Real-time ==========
+    # ========== Alerts, Notifications & Real-time ==========
     from api.alerts_endpoints import router as alerts_router
+    from api.morning_brief_endpoints import router as morning_brief_router
+    from api.notification_endpoints import router as notification_router
     from api.realtime_endpoints import router as realtime_router
 
     app.include_router(alerts_router)
+    app.include_router(morning_brief_router)
+    app.include_router(notification_router)
     app.include_router(realtime_router)
-    logger.info("✅ Alerts & Real-time routers registered")
+    logger.info("✅ Alerts, Notifications, Morning Brief & Real-time routers registered")
 
     # ========== Market Data & Pricing ==========
     from api.coingecko_proxy_router import router as coingecko_proxy_router

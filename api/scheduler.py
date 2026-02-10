@@ -15,6 +15,7 @@ Configuration:
 """
 
 import asyncio
+import json
 import logging
 import os
 from datetime import datetime
@@ -56,6 +57,24 @@ def _user_has_cointracking_credentials(user_id: str) -> bool:
 _scheduler: Optional[AsyncIOScheduler] = None
 _job_status: Dict[str, Dict[str, Any]] = {}
 
+# Redis keys for persistent job status
+REDIS_JOB_STATUS_KEY = "smartfolio:scheduler:jobs"
+REDIS_HEARTBEAT_KEY = "smartfolio:scheduler:heartbeat"
+
+
+async def _get_redis_client():
+    """Get Redis async client, or None if unavailable."""
+    try:
+        import redis.asyncio as aioredis
+        redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+        if not redis_url or not redis_url.strip():
+            return None
+        client = aioredis.from_url(redis_url, socket_connect_timeout=2)
+        await client.ping()
+        return client
+    except Exception:
+        return None
+
 
 def get_scheduler() -> Optional[AsyncIOScheduler]:
     """Get the singleton scheduler instance"""
@@ -68,13 +87,104 @@ def get_job_status() -> Dict[str, Dict[str, Any]]:
 
 
 async def _update_job_status(job_id: str, status: str, duration_ms: Optional[float] = None, error: Optional[str] = None):
-    """Update job execution status"""
-    _job_status[job_id] = {
+    """Update job execution status in memory and persist to Redis."""
+    entry = {
         "last_run": datetime.now().isoformat(),
         "status": status,
         "duration_ms": duration_ms,
         "error": error
     }
+    _job_status[job_id] = entry
+
+    # Persist to Redis HASH (best-effort)
+    try:
+        client = await _get_redis_client()
+        if client:
+            try:
+                await client.hset(REDIS_JOB_STATUS_KEY, job_id, json.dumps(entry))
+            finally:
+                await client.aclose()
+    except Exception:
+        pass
+
+    # Webhook alert on failure
+    if status in ("error", "failed"):
+        await _notify_job_failure(job_id, entry)
+
+
+async def get_job_status_persistent() -> Dict[str, Dict[str, Any]]:
+    """Get job status from Redis (persistent across restarts), fallback to in-memory."""
+    try:
+        client = await _get_redis_client()
+        if client:
+            try:
+                raw = await client.hgetall(REDIS_JOB_STATUS_KEY)
+                if raw:
+                    return {
+                        (k.decode() if isinstance(k, bytes) else k):
+                        json.loads(v.decode() if isinstance(v, bytes) else v)
+                        for k, v in raw.items()
+                    }
+            finally:
+                await client.aclose()
+    except Exception:
+        pass
+    return _job_status.copy()
+
+
+async def get_scheduler_heartbeat() -> Optional[Dict[str, Any]]:
+    """Get scheduler heartbeat from Redis."""
+    try:
+        client = await _get_redis_client()
+        if client:
+            try:
+                raw = await client.get(REDIS_HEARTBEAT_KEY)
+                if raw:
+                    return json.loads(raw.decode() if isinstance(raw, bytes) else raw)
+            finally:
+                await client.aclose()
+    except Exception:
+        pass
+    return None
+
+
+async def _notify_job_failure(job_id: str, entry: dict):
+    """Send webhook notification when a scheduler job fails."""
+    try:
+        webhook_url = os.getenv("SCHEDULER_FAILURE_WEBHOOK")
+        if not webhook_url:
+            return
+
+        import httpx
+        payload = {
+            "text": f"Scheduler job '{job_id}' {entry['status']}: {entry.get('error', 'Unknown error')}",
+            "job_id": job_id,
+            "status": entry["status"],
+            "error": entry.get("error"),
+            "timestamp": entry["last_run"],
+        }
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            await client.post(webhook_url, json=payload)
+    except Exception as e:
+        logger.debug(f"Failed to send failure webhook for {job_id}: {e}")
+
+
+async def _recover_job_status_from_redis():
+    """Load last known job status from Redis at startup (recovery)."""
+    try:
+        client = await _get_redis_client()
+        if client:
+            try:
+                raw = await client.hgetall(REDIS_JOB_STATUS_KEY)
+                if raw:
+                    for k, v in raw.items():
+                        key = k.decode() if isinstance(k, bytes) else k
+                        _job_status[key] = json.loads(v.decode() if isinstance(v, bytes) else v)
+                    logger.info(f"Recovered {len(raw)} job statuses from Redis")
+            finally:
+                await client.aclose()
+    except Exception as e:
+        logger.debug(f"Redis recovery unavailable: {e}")
 
 
 # ============================================================================
@@ -586,6 +696,90 @@ async def job_daily_ml_training():
         # Ne pas lever exception - retry demain
 
 
+async def job_morning_brief():
+    """Morning Brief generation (daily at 07:30 Europe/Zurich)"""
+    job_id = "morning_brief"
+    start = datetime.now()
+
+    try:
+        logger.info(f"🔄 [{job_id}] Starting Morning Brief generation...")
+
+        import json
+        from services.morning_brief_service import morning_brief_service
+
+        # Load active users
+        try:
+            with open("config/users.json", "r", encoding="utf-8") as f:
+                users_config = json.load(f)
+                active_users = [
+                    user["id"]
+                    for user in users_config.get("users", [])
+                    if user.get("status") == "active"
+                ]
+        except Exception as e:
+            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            active_users = ["jack"]
+
+        if not active_users:
+            await _update_job_status(job_id, "skipped", 0, "No active users")
+            return
+
+        success_count = 0
+        for user_id in active_users:
+            try:
+                brief = await morning_brief_service.generate(user_id=user_id)
+
+                # Try to send via configured channels
+                try:
+                    user_config_path = f"data/users/{user_id}/config.json"
+                    import os
+                    if os.path.exists(user_config_path):
+                        with open(user_config_path, "r", encoding="utf-8") as f:
+                            user_cfg = json.load(f)
+                        if user_cfg.get("morning_brief", {}).get("send_telegram", False):
+                            from services.notifications.notification_sender import notification_sender
+                            from services.notifications.alert_manager import Alert, AlertLevel, AlertType
+
+                            channels = user_cfg.get("notifications", {}).get("channels", {})
+                            tg_config = channels.get("telegram", {})
+                            if tg_config.get("enabled") and tg_config.get("chat_id"):
+                                message = morning_brief_service.format_telegram(brief)
+                                tg_notifier = notification_sender.channels.get("telegram")
+                                if tg_notifier:
+                                    send_config = {k: v for k, v in tg_config.items() if k != "enabled"}
+                                    notif_alert = Alert(
+                                        type=AlertType.SYSTEM_ERROR,
+                                        level=AlertLevel.INFO,
+                                        source="morning_brief",
+                                        title="Morning Brief",
+                                        message=message,
+                                        data={"morning_brief": True},
+                                        actions=[],
+                                    )
+                                    await tg_notifier.send(notif_alert, send_config)
+                                    logger.info(f"   📱 Morning brief sent via Telegram for [{user_id}]")
+                except Exception as send_err:
+                    logger.warning(f"   ⚠️ Morning brief notification failed for [{user_id}]: {send_err}")
+
+                success_count += 1
+                logger.debug(f"   ✅ Morning brief generated for [{user_id}]")
+            except Exception as e:
+                logger.warning(f"   ❌ Morning brief failed for [{user_id}]: {e}")
+
+        duration_ms = (datetime.now() - start).total_seconds() * 1000
+        if success_count == len(active_users):
+            logger.info(f"✅ [{job_id}] Morning Brief completed in {duration_ms:.0f}ms ({success_count} users)")
+            await _update_job_status(job_id, "success", duration_ms)
+        else:
+            logger.warning(f"⚠️ [{job_id}] Morning Brief partial: {success_count}/{len(active_users)}")
+            await _update_job_status(job_id, "partial", duration_ms)
+
+    except Exception as e:
+        duration_ms = (datetime.now() - start).total_seconds() * 1000
+        logger.exception(f"❌ [{job_id}] Morning Brief exception")
+        await _update_job_status(job_id, "error", duration_ms, str(e))
+
+
 # ============================================================================
 # SCHEDULER LIFECYCLE
 # ============================================================================
@@ -619,7 +813,7 @@ async def _acquire_scheduler_lock() -> bool:
 
 
 async def _renew_scheduler_lock():
-    """Periodically renew the scheduler lock TTL (called as a scheduler job)."""
+    """Periodically renew the scheduler lock TTL and update heartbeat."""
     try:
         import redis.asyncio as aioredis
 
@@ -629,6 +823,16 @@ async def _renew_scheduler_lock():
 
         client = aioredis.from_url(redis_url, socket_connect_timeout=2)
         await client.expire("smartfolio:scheduler_lock", 120)
+        # Heartbeat: write PID + timestamp so admin can see scheduler is alive
+        await client.set(
+            REDIS_HEARTBEAT_KEY,
+            json.dumps({
+                "pid": os.getpid(),
+                "timestamp": datetime.now().isoformat(),
+                "jobs_count": len(_job_status),
+            }),
+            ex=180,  # 3 min TTL — expires if scheduler dies
+        )
         await client.aclose()
     except Exception:
         pass  # Best-effort renewal
@@ -658,6 +862,9 @@ async def initialize_scheduler() -> bool:
 
     try:
         logger.info("Initializing APScheduler...")
+
+        # Recover last known job status from Redis (if available)
+        await _recover_job_status_from_redis()
 
         # Create scheduler with timezone
         _scheduler = AsyncIOScheduler(timezone="Europe/Zurich")
@@ -740,6 +947,15 @@ async def initialize_scheduler() -> bool:
             CronTrigger(hour=3, minute=0, timezone="Europe/Zurich", jitter=300),
             id="daily_ml_training",
             name="Daily ML Training (20y data)",
+            **job_defaults
+        )
+
+        # Morning Brief: daily at 07:30 Europe/Zurich
+        _scheduler.add_job(
+            job_morning_brief,
+            CronTrigger(hour=7, minute=30, timezone="Europe/Zurich", jitter=60),
+            id="morning_brief",
+            name="Morning Brief Generation",
             **job_defaults
         )
 

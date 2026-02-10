@@ -1,0 +1,63 @@
+/**
+ * Print styles for SmartFolio pages.
+ * Applied via @media print and during PDF export.
+ */
+
+@media print {
+  /* Hide interactive elements */
+  nav,
+  domain-nav,
+  .page-header button,
+  .icon-btn,
+  .refresh-btn,
+  .pdf-hide,
+  .toast-container,
+  .ai-chat-widget,
+  view-toggle,
+  .network-toast,
+  morning-brief-card .refresh-btn {
+    display: none !important;
+  }
+
+  /* Reset backgrounds for print */
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure charts are visible */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Links: show URL */
+  a[href]::after {
+    content: none;
+  }
+
+  /* Full width layout */
+  .wrap,
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-grid {
+    display: block !important;
+  }
+
+  .dashboard-grid > * {
+    margin-bottom: 16px;
+    break-inside: avoid;
+  }
+}

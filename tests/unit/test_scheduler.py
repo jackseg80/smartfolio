@@ -25,6 +25,14 @@ from api.scheduler import (
     _renew_scheduler_lock,
     initialize_scheduler,
     shutdown_scheduler,
+    # Redis persistence (5.2)
+    _get_redis_client,
+    get_job_status_persistent,
+    get_scheduler_heartbeat,
+    _notify_job_failure,
+    _recover_job_status_from_redis,
+    REDIS_JOB_STATUS_KEY,
+    REDIS_HEARTBEAT_KEY,
 )
 import api.scheduler as scheduler_module
 
@@ -35,10 +43,16 @@ import api.scheduler as scheduler_module
 
 @pytest.fixture(autouse=True)
 def reset_scheduler_state():
-    """Reset scheduler globals before each test."""
+    """Reset scheduler globals before each test.
+
+    Also disables Redis and webhook calls by default to avoid network
+    timeouts in tests. Individual tests can override with patch().
+    """
     scheduler_module._scheduler = None
     scheduler_module._job_status.clear()
-    yield
+    with patch.object(scheduler_module, '_get_redis_client', new_callable=AsyncMock, return_value=None), \
+         patch.object(scheduler_module, '_notify_job_failure', new_callable=AsyncMock):
+        yield
     scheduler_module._scheduler = None
     scheduler_module._job_status.clear()
 
@@ -737,8 +751,8 @@ class TestInitializeScheduler:
 
         assert result is True
         mock_sched.start.assert_called_once()
-        # 8 user jobs + 1 lock renewal = 9 add_job calls
-        assert mock_sched.add_job.call_count == 9
+        # 9 user jobs + 1 lock renewal = 10 add_job calls
+        assert mock_sched.add_job.call_count == 10
 
     @pytest.mark.asyncio
     async def test_already_initialized(self):
@@ -778,7 +792,7 @@ class TestInitializeScheduler:
         expected_ids = [
             "pnl_intraday", "pnl_eod", "ohlcv_daily", "ohlcv_hourly",
             "staleness_monitor", "api_warmers", "crypto_toolbox_refresh",
-            "daily_ml_training", "scheduler_lock_renewal",
+            "daily_ml_training", "morning_brief", "scheduler_lock_renewal",
         ]
         for eid in expected_ids:
             assert eid in job_ids, f"Missing job: {eid}"
@@ -812,3 +826,249 @@ class TestShutdownScheduler:
         scheduler_module._scheduler = mock_sched
 
         await shutdown_scheduler()  # Should not raise
+
+
+# ============================================================================
+# REDIS PERSISTENCE (5.2)
+# ============================================================================
+
+class TestGetRedisClient:
+    """Tests for _get_redis_client."""
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_empty_url(self):
+        with patch.dict(os.environ, {"REDIS_URL": ""}):
+            assert await _get_redis_client() is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_whitespace_url(self):
+        with patch.dict(os.environ, {"REDIS_URL": "   "}):
+            assert await _get_redis_client() is None
+
+
+class TestUpdateJobStatusRedis:
+    """Tests for Redis persistence in _update_job_status."""
+
+    @pytest.mark.asyncio
+    async def test_persists_to_redis_hash(self):
+        mock_client = AsyncMock()
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            with patch("api.scheduler._notify_job_failure", new_callable=AsyncMock):
+                await _update_job_status("test_job", "success", duration_ms=100)
+
+        mock_client.hset.assert_called_once()
+        args = mock_client.hset.call_args
+        assert args[0][0] == REDIS_JOB_STATUS_KEY
+        assert args[0][1] == "test_job"
+        data = json.loads(args[0][2])
+        assert data["status"] == "success"
+        assert data["duration_ms"] == 100
+        mock_client.aclose.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_works_when_redis_unavailable(self):
+        """In-memory dict still updated when Redis is down."""
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            with patch("api.scheduler._notify_job_failure", new_callable=AsyncMock):
+                await _update_job_status("test_job", "success", duration_ms=50)
+
+        status = get_job_status()
+        assert status["test_job"]["status"] == "success"
+
+    @pytest.mark.asyncio
+    async def test_redis_error_does_not_crash(self):
+        mock_client = AsyncMock()
+        mock_client.hset.side_effect = Exception("Redis write error")
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            with patch("api.scheduler._notify_job_failure", new_callable=AsyncMock):
+                await _update_job_status("test_job", "success")
+
+        # In-memory still updated
+        assert get_job_status()["test_job"]["status"] == "success"
+
+    @pytest.mark.asyncio
+    async def test_triggers_webhook_on_error(self):
+        mock_notify = AsyncMock()
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            with patch("api.scheduler._notify_job_failure", mock_notify):
+                await _update_job_status("job1", "error", error="timeout")
+
+        mock_notify.assert_called_once()
+        assert mock_notify.call_args[0][0] == "job1"
+        assert mock_notify.call_args[0][1]["status"] == "error"
+
+    @pytest.mark.asyncio
+    async def test_triggers_webhook_on_failed(self):
+        mock_notify = AsyncMock()
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            with patch("api.scheduler._notify_job_failure", mock_notify):
+                await _update_job_status("job1", "failed", error="all failed")
+
+        mock_notify.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_no_webhook_on_success(self):
+        mock_notify = AsyncMock()
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            with patch("api.scheduler._notify_job_failure", mock_notify):
+                await _update_job_status("job1", "success")
+
+        mock_notify.assert_not_called()
+
+
+class TestGetJobStatusPersistent:
+    """Tests for get_job_status_persistent (Redis-backed)."""
+
+    @pytest.mark.asyncio
+    async def test_reads_from_redis(self):
+        redis_data = {
+            b"job1": json.dumps({"status": "success", "last_run": "2026-01-01T00:00:00"}).encode(),
+            b"job2": json.dumps({"status": "error", "last_run": "2026-01-01T01:00:00"}).encode(),
+        }
+        mock_client = AsyncMock()
+        mock_client.hgetall = AsyncMock(return_value=redis_data)
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            result = await get_job_status_persistent()
+
+        assert "job1" in result
+        assert result["job1"]["status"] == "success"
+        assert "job2" in result
+        assert result["job2"]["status"] == "error"
+        mock_client.aclose.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_memory(self):
+        scheduler_module._job_status["mem_job"] = {"status": "ok", "last_run": "now"}
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            result = await get_job_status_persistent()
+
+        assert "mem_job" in result
+        assert result["mem_job"]["status"] == "ok"
+
+    @pytest.mark.asyncio
+    async def test_falls_back_on_redis_error(self):
+        scheduler_module._job_status["mem_job"] = {"status": "ok"}
+        mock_client = AsyncMock()
+        mock_client.hgetall = AsyncMock(side_effect=Exception("Redis error"))
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            result = await get_job_status_persistent()
+
+        assert "mem_job" in result
+
+
+class TestNotifyJobFailure:
+    """Tests for _notify_job_failure webhook."""
+
+    @pytest.mark.asyncio
+    async def test_sends_webhook(self):
+        mock_response = MagicMock()
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch.dict(os.environ, {"SCHEDULER_FAILURE_WEBHOOK": "http://hooks.example.com/alert"}):
+            with patch("httpx.AsyncClient", return_value=mock_client):
+                await _notify_job_failure("test_job", {
+                    "status": "error", "error": "boom", "last_run": "now"
+                })
+
+        mock_client.post.assert_called_once()
+        call_args = mock_client.post.call_args
+        assert call_args[0][0] == "http://hooks.example.com/alert"
+        payload = call_args[1]["json"]
+        assert payload["job_id"] == "test_job"
+        assert "boom" in payload["text"]
+
+    @pytest.mark.asyncio
+    async def test_noop_without_webhook_url(self):
+        env = os.environ.copy()
+        env.pop("SCHEDULER_FAILURE_WEBHOOK", None)
+        with patch.dict(os.environ, env, clear=True):
+            await _notify_job_failure("test_job", {
+                "status": "error", "error": "boom", "last_run": "now"
+            })
+        # Should not raise
+
+    @pytest.mark.asyncio
+    async def test_webhook_failure_does_not_raise(self):
+        with patch.dict(os.environ, {"SCHEDULER_FAILURE_WEBHOOK": "http://hooks.example.com/alert"}):
+            with patch("httpx.AsyncClient", side_effect=Exception("Network error")):
+                await _notify_job_failure("test_job", {
+                    "status": "error", "error": "boom", "last_run": "now"
+                })
+        # Should not raise
+
+
+class TestRecoverJobStatusFromRedis:
+    """Tests for _recover_job_status_from_redis (startup recovery)."""
+
+    @pytest.mark.asyncio
+    async def test_loads_status_into_memory(self):
+        redis_data = {
+            b"recovered_job": json.dumps({
+                "status": "success", "last_run": "2026-01-01T00:00:00",
+                "duration_ms": 200, "error": None
+            }).encode(),
+        }
+        mock_client = AsyncMock()
+        mock_client.hgetall = AsyncMock(return_value=redis_data)
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            await _recover_job_status_from_redis()
+
+        assert "recovered_job" in scheduler_module._job_status
+        assert scheduler_module._job_status["recovered_job"]["status"] == "success"
+        mock_client.aclose.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_noop_when_redis_unavailable(self):
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            await _recover_job_status_from_redis()
+        assert scheduler_module._job_status == {}
+
+    @pytest.mark.asyncio
+    async def test_noop_on_redis_error(self):
+        mock_client = AsyncMock()
+        mock_client.hgetall = AsyncMock(side_effect=Exception("Connection lost"))
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            await _recover_job_status_from_redis()
+        # Should not raise, _job_status stays empty
+
+
+class TestGetSchedulerHeartbeat:
+    """Tests for get_scheduler_heartbeat."""
+
+    @pytest.mark.asyncio
+    async def test_reads_heartbeat(self):
+        heartbeat_data = json.dumps({
+            "pid": 1234, "timestamp": "2026-01-01T00:00:00", "jobs_count": 5
+        })
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(return_value=heartbeat_data.encode())
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            result = await get_scheduler_heartbeat()
+
+        assert result["pid"] == 1234
+        assert result["jobs_count"] == 5
+        mock_client.aclose.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_unavailable(self):
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=None):
+            result = await get_scheduler_heartbeat()
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_on_redis_error(self):
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=Exception("timeout"))
+
+        with patch("api.scheduler._get_redis_client", new_callable=AsyncMock, return_value=mock_client):
+            result = await get_scheduler_heartbeat()
+        assert result is None

@@ -11,6 +11,8 @@ from collections import defaultdict
 from functools import partial
 
 import logging
+from shared.circuit_breaker import cointracking_circuit
+
 logger = logging.getLogger(__name__)
 logger.debug("CT-API parser version: %s", "2025-08-22-1")
 
@@ -244,6 +246,9 @@ def _post_api(method: str, params: Optional[Dict[str, Any]] = None,
       - body form-urlencoded: method, nonce, ...extra params
       - headers: Key, Sign (HMAC-SHA512 du body avec SECRET)
     """
+    if not cointracking_circuit.is_available():
+        raise RuntimeError(f"CoinTracking circuit OPEN — call rejected for {method}")
+
     # Utiliser les clés fournies en paramètre ou fallback sur les variables d'environnement
     if api_key and api_secret:
         key = api_key
@@ -282,13 +287,18 @@ def _post_api(method: str, params: Optional[Dict[str, Any]] = None,
             try:
                 payload = json.loads(raw)
             except json.JSONDecodeError:
+                cointracking_circuit.record_failure()
                 raise RuntimeError(f"Réponse non JSON: {raw[:200]}...")
+            cointracking_circuit.record_success()
             return payload
     except HTTPError as e:
+        cointracking_circuit.record_failure()
         raise RuntimeError(f"HTTP {e.code}: {e.read().decode('utf-8','replace')}")
     except URLError as e:
+        cointracking_circuit.record_failure()
         raise RuntimeError(f"URLError: {e}")
     except (OSError, TimeoutError) as e:
+        cointracking_circuit.record_failure()
         raise RuntimeError(f"Network error: {e}")
 
 # --- Parsing helpers ---------------------------------------------------------

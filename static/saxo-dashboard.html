@@ -9,7 +9,11 @@
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
     <link rel="stylesheet" href="css/view-modes.css">
+    <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="css/saxo-dashboard.css">
+    <script type="module" src="components/data-freshness.js"></script>
+    <script type="module" src="network-state-manager.js"></script>
+    <script type="module" src="core/sentry-init.js"></script>
     <script type="module" src="components/nav.js"></script>
     <script type="module" src="components/view-toggle.js"></script>
     <script type="module" src="components/domain-nav.js"></script>
@@ -670,7 +674,7 @@
                     });
 
                     if (!portfolios || portfolios.length === 0) {
-                        debugLogger.warn('⚠️ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
+                        debugLogger.warn('âš ï¸ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
                         showNoDataState('📂 No Saxo CSV found. Please import a Saxo Bank CSV file.');
                         return;
                     }
@@ -1021,7 +1025,7 @@
                     </div>
 
                     <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--theme-text-muted);">
-                        ℹ️ <strong>Info:</strong> Cette valeur représente les liquidités disponibles sur votre compte Saxo. Elle sera prise en compte dans les analyses de risque et les recommandations (converties en USD).
+                        â„¹ï¸ <strong>Info:</strong> Cette valeur représente les liquidités disponibles sur votre compte Saxo. Elle sera prise en compte dans les analyses de risque et les recommandations (converties en USD).
                     </div>
 
                     <div style="display: flex; gap: 1rem; justify-content: flex-end;">

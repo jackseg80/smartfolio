@@ -8,6 +8,7 @@ import pytest
 from services.notifications.alert_manager import Alert, AlertLevel, AlertType
 from services.notifications.notification_sender import (
     ConsoleNotifier, EmailNotifier, NotificationConfig, NotificationSender, WebhookNotifier,
+    TelegramNotifier, convert_engine_alert, SEVERITY_TO_LEVEL,
 )
 
 
@@ -140,25 +141,67 @@ class TestWebhookPayloads:
         assert result is False
 
     @pytest.mark.asyncio
-    @patch("services.notifications.notification_sender.requests.post")
-    async def test_webhook_send_success(self, mock_post):
-        mock_post.return_value = MagicMock(status_code=200)
-        result = await self.notifier.send(self.alert, {"webhook_url": "https://h.com/x", "webhook_type": "generic"})
+    async def test_webhook_send_success_async(self):
+        """Webhook now uses httpx.AsyncClient."""
+        mock_response = MagicMock(status_code=200, text="OK")
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await self.notifier.send(
+                self.alert, {"webhook_url": "https://h.com/x", "webhook_type": "generic"}
+            )
         assert result is True
-        mock_post.assert_called_once()
+        mock_client.post.assert_called_once()
 
     @pytest.mark.asyncio
-    @patch("services.notifications.notification_sender.requests.post")
-    async def test_webhook_send_failure(self, mock_post):
-        mock_post.return_value = MagicMock(status_code=500, text="Error")
-        result = await self.notifier.send(self.alert, {"webhook_url": "https://h.com/x", "webhook_type": "discord"})
+    async def test_webhook_send_failure_async(self):
+        mock_response = MagicMock(status_code=500, text="Error")
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await self.notifier.send(
+                self.alert, {"webhook_url": "https://h.com/x", "webhook_type": "discord"}
+            )
         assert result is False
 
     @pytest.mark.asyncio
-    @patch("services.notifications.notification_sender.requests.post", side_effect=Exception("timeout"))
-    async def test_webhook_send_exception(self, mock_post):
-        result = await self.notifier.send(self.alert, {"webhook_url": "https://h.com/x"})
+    async def test_webhook_send_exception_async(self):
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=Exception("timeout"))
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await self.notifier.send(
+                self.alert, {"webhook_url": "https://h.com/x"}
+            )
         assert result is False
+
+    @pytest.mark.asyncio
+    async def test_webhook_discord_204_is_success(self):
+        """Discord returns 204 No Content on success."""
+        mock_response = MagicMock(status_code=204, text="")
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await self.notifier.send(
+                self.alert, {"webhook_url": "https://discord.com/api/webhooks/123", "webhook_type": "discord"}
+            )
+        assert result is True
+
 
 class TestEmailNotifier:
 
@@ -216,12 +259,18 @@ class TestNotificationConfig:
         assert config.min_level == AlertLevel.ERROR
         assert config.alert_types == ["portfolio_drift"]
 
+
 class TestNotificationSender:
 
     def test_default_console_config(self):
         sender = NotificationSender()
         assert len(sender.configurations) == 1
         assert sender.configurations[0].channel_type == "console"
+
+    def test_has_telegram_channel(self):
+        sender = NotificationSender()
+        assert "telegram" in sender.channels
+        assert isinstance(sender.channels["telegram"], TelegramNotifier)
 
     def test_add_config(self):
         sender = NotificationSender()
@@ -338,3 +387,219 @@ class TestWebhookColorMaps:
             payload = notifier._format_slack_payload(_make_alert(level=level))
             c = payload["attachments"][0]["color"]
             assert isinstance(c, str) and c.startswith("#")
+
+
+# ─── TelegramNotifier ────────────────────────────────────────────────
+
+
+class TestTelegramNotifier:
+
+    @pytest.mark.asyncio
+    async def test_missing_config_returns_false(self):
+        notifier = TelegramNotifier()
+        result = await notifier.send(_make_alert(), {})
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_missing_chat_id(self):
+        notifier = TelegramNotifier()
+        result = await notifier.send(_make_alert(), {"bot_token": "123"})
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_missing_bot_token(self):
+        notifier = TelegramNotifier()
+        result = await notifier.send(_make_alert(), {"chat_id": "456"})
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_successful_send(self):
+        notifier = TelegramNotifier()
+        config = {"chat_id": "123456", "bot_token": "FAKE_TOKEN"}
+
+        mock_response = MagicMock(status_code=200)
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await notifier.send(_make_alert(), config)
+        assert result is True
+        mock_client.post.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_api_error_returns_false(self):
+        notifier = TelegramNotifier()
+        config = {"chat_id": "123456", "bot_token": "FAKE_TOKEN"}
+
+        mock_response = MagicMock(status_code=401, text="Unauthorized")
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_response)
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await notifier.send(_make_alert(), config)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_timeout_returns_false(self):
+        import httpx
+        notifier = TelegramNotifier()
+        config = {"chat_id": "123456", "bot_token": "FAKE_TOKEN"}
+
+        with patch("httpx.AsyncClient") as MockClient:
+            mock_client = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
+            mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+            mock_client.__aexit__ = AsyncMock(return_value=False)
+            MockClient.return_value = mock_client
+
+            result = await notifier.send(_make_alert(), config)
+        assert result is False
+
+    def test_format_text_contains_title(self):
+        notifier = TelegramNotifier()
+        text = notifier._format_telegram_text(_make_alert(title="My Title"))
+        assert "My Title" in text
+
+    def test_format_text_contains_message(self):
+        notifier = TelegramNotifier()
+        text = notifier._format_telegram_text(_make_alert(message="Action required"))
+        assert "Action required" in text
+
+    def test_format_text_with_bridge_data(self):
+        notifier = TelegramNotifier()
+        alert = Alert(
+            level=AlertLevel.WARNING,
+            title="[S2] VOL_Q90_CROSS",
+            message="Reduction exposition",
+            data={
+                "details": "Volatilite 5.2% tres elevee",
+                "reasons": "Volatilite critique; Risque drawdown",
+                "severity": "S2",
+                "metric": "vol_90d",
+            },
+        )
+        text = notifier._format_telegram_text(alert)
+        assert "Reasons" in text
+        assert "Details" in text
+        assert "metric" in text
+
+
+# ─── Bridge: convert_engine_alert ─────────────────────────────────────
+
+
+class TestConvertEngineAlert:
+
+    def _make_engine_alert(self, severity="S2", alert_type="VOL_Q90_CROSS"):
+        alert = MagicMock()
+        alert.id = "ALR-20260210-abc12345"
+
+        sev_mock = MagicMock()
+        sev_mock.value = severity
+        alert.severity = sev_mock
+
+        type_mock = MagicMock()
+        type_mock.value = alert_type
+        alert.alert_type = type_mock
+
+        alert.data = {"current_vol": 0.052, "threshold": 0.04}
+        alert.suggested_action = {"type": "slow", "ttl_minutes": 360}
+        alert.format_unified_message.return_value = {
+            "action": "Reduction exposition (mode Slow)",
+            "impact": "2.0% estimated",
+            "reasons": ["Volatilite critique", "Risque drawdown"],
+            "details": "Volatilite 5.2% tres elevee. Mode Slow recommande.",
+        }
+        return alert
+
+    def test_converts_s1_to_info(self):
+        converted = convert_engine_alert(self._make_engine_alert(severity="S1"))
+        assert converted.level == AlertLevel.INFO
+
+    def test_converts_s2_to_warning(self):
+        converted = convert_engine_alert(self._make_engine_alert(severity="S2"))
+        assert converted.level == AlertLevel.WARNING
+
+    def test_converts_s3_to_critical(self):
+        converted = convert_engine_alert(self._make_engine_alert(severity="S3"))
+        assert converted.level == AlertLevel.CRITICAL
+
+    def test_preserves_alert_id(self):
+        converted = convert_engine_alert(self._make_engine_alert())
+        assert converted.id == "ALR-20260210-abc12345"
+
+    def test_title_includes_severity_and_type(self):
+        converted = convert_engine_alert(self._make_engine_alert(severity="S2", alert_type="REGIME_FLIP"))
+        assert "S2" in converted.title
+        assert "REGIME_FLIP" in converted.title
+
+    def test_message_contains_action(self):
+        converted = convert_engine_alert(self._make_engine_alert())
+        assert "Reduction" in converted.message
+
+    def test_data_includes_details_and_reasons(self):
+        converted = convert_engine_alert(self._make_engine_alert())
+        assert "details" in converted.data
+        assert "reasons" in converted.data
+
+    def test_data_preserves_original(self):
+        converted = convert_engine_alert(self._make_engine_alert())
+        assert converted.data["current_vol"] == 0.052
+
+    def test_handles_format_error(self):
+        alert = self._make_engine_alert()
+        alert.format_unified_message.side_effect = Exception("format error")
+        converted = convert_engine_alert(alert)
+        assert converted.id == "ALR-20260210-abc12345"
+        assert converted.message == "VOL_Q90_CROSS"
+
+
+# ─── send_engine_alert integration ────────────────────────────────────
+
+
+class TestSendEngineAlert:
+
+    @pytest.mark.asyncio
+    async def test_send_engine_alert_calls_bridge(self):
+        sender = NotificationSender()
+        engine_alert = MagicMock()
+        engine_alert.id = "ALR-test"
+        sev = MagicMock()
+        sev.value = "S2"
+        engine_alert.severity = sev
+        atype = MagicMock()
+        atype.value = "VOL_Q90_CROSS"
+        engine_alert.alert_type = atype
+        engine_alert.data = {}
+        engine_alert.suggested_action = {}
+        engine_alert.format_unified_message.return_value = {
+            "action": "Test action",
+            "impact": "1%",
+            "reasons": ["Test"],
+            "details": "Test details",
+        }
+        results = await sender.send_engine_alert(engine_alert)
+        assert "console" in results
+
+
+# ─── SEVERITY_TO_LEVEL mapping ───────────────────────────────────────
+
+
+class TestSeverityMapping:
+
+    def test_s1_maps_to_info(self):
+        assert SEVERITY_TO_LEVEL["S1"] == AlertLevel.INFO
+
+    def test_s2_maps_to_warning(self):
+        assert SEVERITY_TO_LEVEL["S2"] == AlertLevel.WARNING
+
+    def test_s3_maps_to_critical(self):
+        assert SEVERITY_TO_LEVEL["S3"] == AlertLevel.CRITICAL
+
+    def test_all_severities_mapped(self):
+        assert len(SEVERITY_TO_LEVEL) == 3
