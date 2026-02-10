@@ -228,13 +228,13 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ## ✅ Tests: 8.0/10 - BON
 
 ### Statut
-🟢 **Stabilisé Feb 9, 2026** - Coverage 40%, **2,090 passing, 0 failures**, 10 skipped. Cache Manager, ML Cache Utils, Cache Utils, Scheduler testés (Feb 9).
+🟢 **Stabilisé Feb 10, 2026** - Coverage **45%**, **2,476 passing, 0 failures**, 21 skipped. Alert Storage, Portfolio Optimization, Risk Management testés (Feb 10).
 
 ### Métriques Clés
 
-- **Coverage global:** **40%** (mesuré pytest-cov Feb 9, 2026 — **2,090 passing, 0 failures**, 10 skipped)
-- **Tests totaux:** 2,090 collectés, 2,080 passing, 0 failures (1 flaky pre-existant)
-- **Nouveaux tests écrits:** 1,045+ tests dans 24+ fichiers (Feb 8-9, 2026)
+- **Coverage global:** **45%** (mesuré pytest-cov Feb 10, 2026 — **2,476 passing, 0 failures**, 21 skipped)
+- **Tests totaux:** 2,476 collectés, 2,476 passing, 0 failures
+- **Nouveaux tests écrits:** 1,200+ tests dans 27+ fichiers (Feb 8-10, 2026)
 - **Tests corrigés:** 27 failures + 8 errors → 0 (formats, async, server-skip, thresholds)
 - **Coverage BalanceService:** 66% (excellente pour service multi-fallback)
 - **Tests critiques:** Risk (90%), Governance (85%), Stop Loss (95%)
@@ -288,7 +288,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
   - Tous les modules/ contrôleurs
 
 ### Plan
-- **Q1 2026:** Push backend coverage to 50% (remaining services)
+- **Q1 2026:** Push backend coverage to 50% (at 45% — alert_storage, portfolio_optimization, risk_management done)
 - **Q2 2026:** Frontend Vitest setup + 20% → 40% JS coverage (4 sem)
 - **Objectif 6 mois:** 60% coverage global
 
@@ -407,11 +407,12 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] JWT auth on all 188 endpoints (soft mode, anti-spoofing cross-check)
 - [x] Cache + Scheduler tests (140 new tests → 2323 passing)
 - [x] Bug fix: get_required_user 403→500 (missing except HTTPException)
+- [x] Alert Storage + Portfolio Optimization + Risk Management tests (154 new tests → 2476 passing, coverage 45%)
 
 ### 🔄 En Cours (Q1 2026)
 
 - [ ] Performance: Top 5 priorités restantes (18h)
-- [ ] Push backend coverage to 50%
+- [ ] Push backend coverage to 50% (at 45%)
 - [ ] Enable REQUIRE_JWT=1 strict mode (after monitoring)
 - [x] ~~Fix remaining 23 test failures~~ → **DONE** (27+8 → 0 failures, Feb 9)
 - [x] ~~Standardize response format~~ → **DONE** (27 bare returns migrated, Feb 9)
@@ -451,8 +452,8 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 | **Performance fixes** | 0 | 19/47 | 19/47 | +40% ✅ |
 | **Accessibilité** | ? | 68/100 | **~80/100** | +18% ✅ |
 | **Dette Technique** | 7.5 | 7.5 | **8.0** | +7% ✅ |
-| **Tests coverage** | ~20% | ~20% | **40%** | +100% ✅ |
-| **Tests passing** | ~810 | ~810 | **2,137** | +164% ✅ |
+| **Tests coverage** | ~20% | ~20% | **45%** | +125% ✅ |
+| **Tests passing** | ~810 | ~810 | **2,476** | +206% ✅ |
 | **CI/CD automation** | ❌ | ✅ | ✅ | ✅ |
 | **New: Error Handling** | -- | -- | **8.0/10** | 🆕 |
 | **New: Data Integrity** | -- | -- | **8.0/10** | 🆕 |
@@ -477,8 +478,8 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ### Prochaine Session
 
-1. ~~**Fix 23 failing tests**~~ → ✅ **DONE** (2,147 passing, 0 failures)
-2. **Push coverage to 50%** (4h) - FX, cache_manager, scheduler
+1. ~~**Fix 23 failing tests**~~ → ✅ **DONE** (2,476 passing, 0 failures)
+2. **Push coverage to 50%** (2h remaining) - at 45%, need ~5% more (sector_analyzer, advanced_rebalancing)
 3. ~~**Standardize response format**~~ → ✅ **DONE** (27 bare returns migrated)
 
 ### Ce Mois (Feb-Mars 2026)
