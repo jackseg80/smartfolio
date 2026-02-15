@@ -19,30 +19,31 @@
     <script type="module" src="components/view-toggle.js"></script>
     <script type="module" src="components/domain-nav.js"></script>
     <script type="module">
-    // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    import { initDeepLinks } from './components/deep-links.js';
+    import { wealthContextBar } from './components/WealthContextBar.js';
+    import { safeFetch, cachedApiCall, hasCacheHit } from './core/fetcher.js';
+
+    // Expose globals BEFORE any await (prevents race condition with classic scripts)
+    window.wealthContextBar = wealthContextBar;
+    window.safeFetch = safeFetch;
+    window.cachedApiCall = cachedApiCall;
+    window.hasCacheHit = hasCacheHit;
+
+    // ===== AUTH GUARD (Dec 2025) =====
     await checkAuth();
     // =================================
 
     // ===== VIEW MODE MANAGER (Feb 2026) =====
-    import { ViewModeManager } from './core/view-mode-manager.js';
     ViewModeManager.init();
     // ========================================
-
-    import { initDeepLinks } from './components/deep-links.js';
-    import { wealthContextBar } from './components/WealthContextBar.js';
-    import { safeFetch, cachedApiCall, hasCacheHit } from './core/fetcher.js';
 
     // Anchors for bourse-analytics.html
     initDeepLinks({
         'risk': 'Risk Analysis',
         'analytics': 'Analytics'
     });
-
-    window.wealthContextBar = wealthContextBar;
-    window.safeFetch = safeFetch;
-    window.cachedApiCall = cachedApiCall;
-    window.hasCacheHit = hasCacheHit;
     </script>
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>

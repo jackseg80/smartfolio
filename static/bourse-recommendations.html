@@ -19,28 +19,29 @@
     <script type="module" src="components/view-toggle.js"></script>
     <script type="module" src="components/domain-nav.js"></script>
     <script type="module">
-    // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
+    import { ViewModeManager } from './core/view-mode-manager.js';
+    import { initDeepLinks } from './components/deep-links.js';
+    import { wealthContextBar } from './components/WealthContextBar.js';
+    import { safeFetch } from './core/fetcher.js';
+
+    // Expose globals BEFORE any await (prevents race condition with classic scripts)
+    window.wealthContextBar = wealthContextBar;
+    window.safeFetch = safeFetch;
+
+    // ===== AUTH GUARD (Dec 2025) =====
     await checkAuth();
     // =================================
 
     // ===== VIEW MODE MANAGER (Feb 2026) =====
-    import { ViewModeManager } from './core/view-mode-manager.js';
     ViewModeManager.init();
     // ========================================
-
-    import { initDeepLinks } from './components/deep-links.js';
-    import { wealthContextBar } from './components/WealthContextBar.js';
-    import { safeFetch } from './core/fetcher.js';
 
     // Anchors for bourse-recommendations.html
     initDeepLinks({
         'recommendations': 'Recommendations',
         'opportunities': 'Opportunities'
     });
-
-    window.wealthContextBar = wealthContextBar;
-    window.safeFetch = safeFetch;
     </script>
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>

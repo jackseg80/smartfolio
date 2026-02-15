@@ -14,25 +14,26 @@
     <script type="module" src="core/sentry-init.js"></script>
     <script type="module" src="components/nav.js"></script>
     <script type="module">
-    // ===== AUTH GUARD (Dec 2025) =====
     import { checkAuth } from './core/auth-guard.js';
-    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    import { initDeepLinks } from './components/deep-links.js';
+    import { wealthContextBar } from './components/WealthContextBar.js';
+    import { safeFetch } from './core/fetcher.js';
+
+    // Expose globals BEFORE any await (prevents race condition with classic scripts)
+    window.wealthContextBar = wealthContextBar;
+    window.safeFetch = safeFetch;
+
+    // ===== AUTH GUARD (Dec 2025) =====
+    await checkAuth();
     // =================================
 
-        import { initDeepLinks } from './components/deep-links.js';
-        import { wealthContextBar } from './components/WealthContextBar.js';
-        import { safeFetch } from './core/fetcher.js';
-
-        initDeepLinks({
-            'overview': 'Overview',
-            'liquidity': 'Liquidity',
-            'tangible': 'Real Estate',
-            'liability': 'Liabilities',
-            'insurance': 'Insurance'
-        });
-
-        window.wealthContextBar = wealthContextBar;
-        window.safeFetch = safeFetch;
+    initDeepLinks({
+        'overview': 'Overview',
+        'liquidity': 'Liquidity',
+        'tangible': 'Real Estate',
+        'liability': 'Liabilities',
+        'insurance': 'Insurance'
+    });
     </script>
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>
