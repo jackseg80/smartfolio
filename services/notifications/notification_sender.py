@@ -23,9 +23,22 @@ except ImportError:
     MimeText = None
     MimeMultipart = None
 
+from datetime import datetime
+from enum import Enum
+
 from .alert_manager import Alert, AlertLevel
 
 logger = logging.getLogger(__name__)
+
+
+class _SafeEncoder(json.JSONEncoder):
+    """JSON encoder that handles Enum and datetime objects"""
+    def default(self, o):
+        if isinstance(o, Enum):
+            return o.value
+        if isinstance(o, datetime):
+            return o.isoformat()
+        return super().default(o)
 
 # Mapping severity (new system) -> AlertLevel (old system)
 SEVERITY_TO_LEVEL = {
@@ -128,7 +141,7 @@ class ConsoleNotifier:
             message += f"\n   {alert.message}"
 
         if alert.data:
-            message += f"\n   Data: {json.dumps(alert.data, indent=2)}"
+            message += f"\n   Data: {json.dumps(alert.data, indent=2, cls=_SafeEncoder)}"
 
         if alert.actions:
             message += f"\n   Actions: {', '.join(alert.actions)}"

@@ -200,6 +200,19 @@ class AlertEngine:
         if self.phase_aware_enabled and self.phase_context:
             return self.phase_context.get_lagged_phase()
         return None
+
+    @staticmethod
+    def _serialize_phase_snapshot(snapshot: Optional[PhaseSnapshot]) -> Optional[Dict[str, Any]]:
+        """Serialize PhaseSnapshot to JSON-safe dict"""
+        if snapshot is None:
+            return None
+        return {
+            "phase": snapshot.phase.value if hasattr(snapshot.phase, 'value') else str(snapshot.phase),
+            "confidence": snapshot.confidence,
+            "persistence_count": snapshot.persistence_count,
+            "captured_at": snapshot.captured_at.isoformat() if hasattr(snapshot.captured_at, 'isoformat') else str(snapshot.captured_at),
+            "contradiction_index": snapshot.contradiction_index,
+        }
     
     def get_multi_timeframe_status(self) -> Dict[str, Any]:
         """Retourne le status du système multi-timeframe (Phase 2B1)"""
@@ -830,7 +843,7 @@ class AlertEngine:
             # Générer l'alerte avec traçabilité gating et multi-timeframe
             alert_data.update({
                 "gating_reason": gating_reason,
-                "phase_snapshot": self.get_lagged_phase().__dict__ if self.get_lagged_phase() else None,
+                "phase_snapshot": self._serialize_phase_snapshot(self.get_lagged_phase()),
                 "contradiction_index": signals.get('contradiction_index', 0.0),
                 "multi_timeframe": multi_timeframe_metadata
             })
