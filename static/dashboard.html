@@ -5,6 +5,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>📊 Dashboard - SmartFolio</title>
+    <link rel="modulepreload" href="components/nav.js">
+    <link rel="modulepreload" href="components/tooltips.js">
+    <link rel="modulepreload" href="components/view-toggle.js">
+    <link rel="modulepreload" href="components/data-freshness.js">
+    <link rel="modulepreload" href="components/morning-brief-card.js">
+    <link rel="modulepreload" href="modules/dashboard-main-controller.js">
+    <link rel="modulepreload" href="core/auth-guard.js">
+    <link rel="modulepreload" href="core/view-mode-manager.js">
+    <link rel="modulepreload" href="shared-asset-groups.js">
+    <link rel="modulepreload" href="core/unified-insights-v2.js">
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
@@ -77,6 +87,7 @@
             gap: 20px;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             margin-top: 20px;
+            min-height: 400px; /* Reserve space for grid */
         }
 
         .card {
@@ -86,6 +97,24 @@
             padding: var(--space-xl);
             transition: all var(--transition-normal);
             box-shadow: var(--shadow-sm);
+            min-height: 280px; /* Stabilize layout by reserving height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Specific heights for known cards */
+        #global { min-height: 400px; }
+        #overview { min-height: 240px; }
+        #market-regime { min-height: 240px; }
+        #risk-alerts { min-height: 240px; }
+
+        .morning-brief-container {
+            margin-bottom: 20px;
+            min-height: 54px; /* Height of collapsed header */
+        }
+
+        .morning-brief-container:has(morning-brief-card:not([collapsed])) {
+            min-height: 300px; /* Approximate height when expanded */
         }
 
         .card:hover {
@@ -542,7 +571,7 @@
         </div>
 
         <!-- MORNING BRIEF -->
-        <div style="margin-bottom: 20px;">
+        <div class="morning-brief-container">
             <morning-brief-card auto-refresh="900" collapsed></morning-brief-card>
         </div>
 

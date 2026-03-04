@@ -207,6 +207,22 @@ briefTemplate.innerHTML = `
     color: var(--theme-text-muted, #64748b);
   }
 
+  /* Skeleton Loader */
+  .skeleton-loader {
+    display: grid;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .skeleton-item {
+    background: var(--theme-surface-elevated, #f1f5f9);
+    border-radius: 4px;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
   .error-msg { color: var(--color-danger-600, #b91c1c); }
 </style>
 
@@ -223,7 +239,11 @@ briefTemplate.innerHTML = `
     </div>
   </div>
   <div class="brief-body">
-    <div class="loading">Loading morning brief...</div>
+    <div class="skeleton-loader">
+      <div class="skeleton-item" style="height: 18px; width: 40%;"></div>
+      <div class="skeleton-item" style="height: 80px;"></div>
+      <div class="skeleton-item" style="height: 40px; width: 70%;"></div>
+    </div>
   </div>
 </div>
 `;
