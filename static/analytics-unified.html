@@ -7,6 +7,15 @@
   <meta name="description" content="Unified Analytics Dashboard - Real-time ML analysis, risk metrics, performance, market cycles and decision intelligence for your SmartFolio portfolio">
   <title>Unified Analytics - SmartFolio</title>
 
+  <link rel="modulepreload" href="components/nav.js">
+  <link rel="modulepreload" href="components/domain-nav.js">
+  <link rel="modulepreload" href="analytics-unified.js">
+  <link rel="modulepreload" href="modules/analytics-unified-main-controller.js">
+  <link rel="modulepreload" href="core/auth-guard.js">
+  <link rel="modulepreload" href="core/view-mode-manager.js">
+  <link rel="modulepreload" href="core/risk-dashboard-store.js">
+  <link rel="modulepreload" href="core/unified-insights-v2.js">
+
   <!-- Preconnect to CDNs for better performance -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
@@ -37,8 +46,23 @@
       0% { background-position: 200% 0; }
       100% { background-position: -200% 0; }
     }
-    /* Theme loading inline pour éviter flash */
-    [data-theme="light"] body { background: #f8fafc; color: #1e293b; }
+    /* Responsive fluide */
+    @media (max-width: 768px) { .wrap { padding: 1rem; } }
+
+    #governance-container {
+      min-height: 80px; /* Réserve l'espace pour le bandeau de gouvernance */
+      margin-bottom: 1.5rem;
+      display: flow-root;
+    }
+
+    .metrics-grid-250, .metrics-grid-220, .metrics-grid-200 {
+      min-height: 140px; /* Réserve l'espace pour la première ligne de cards */
+    }
+
+    .metric-card {
+      min-height: 130px;
+      contain: layout style;
+    }
   </style>
   <script>
     // ⚡ Critical theme loading - DOIT être synchrone pour éviter FOUC
