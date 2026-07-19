@@ -1,6 +1,6 @@
 # Wealth Module - Documentation
 
-> **Version:** 2.0 (Feb 2026)
+> **Version:** 2.1 (Jul 2026)
 > **Status:** Production Ready
 > **Previous name:** Patrimoine Module (renamed in Feb 2026 FR→EN migration)
 
@@ -57,12 +57,17 @@ PatrimoineItemOutput = WealthItemOutput
 **API Endpoints** ([api/wealth_endpoints.py](../api/wealth_endpoints.py))
 ```
 GET    /api/wealth/items          # List items (category/type filters)
-GET    /api/wealth/items/{id}     # Get item
-POST   /api/wealth/items          # Create
-PUT    /api/wealth/items/{id}     # Update
+GET    /api/wealth/items/{id}     # Get item (WealthItemOutput)
+POST   /api/wealth/items          # Create (201, WealthItemOutput)
+PUT    /api/wealth/items/{id}     # Update (WealthItemOutput)
 DELETE /api/wealth/items/{id}     # Delete
 GET    /api/wealth/summary        # Net Worth summary
 ```
+
+The single-item `GET`, `POST`, and `PUT` endpoints declare
+`WealthItemOutput` as their response type. The response contract must stay
+aligned with the returned Pydantic model so FastAPI can serialize a successful
+operation without raising a response-validation error after persistence.
 
 **Legacy routes** (still supported for backward compatibility):
 ```
@@ -347,6 +352,11 @@ AFTER (wealth/wealth.json):
 ## Tests
 
 **Unit tests** ([tests/](../tests/))
+
+The API regression test
+[`tests/unit/test_wealth_endpoints.py`](../tests/unit/test_wealth_endpoints.py)
+verifies that creating an item returns HTTP `201` with the serialized
+`WealthItemOutput`.
 
 ```bash
 # Run all tests

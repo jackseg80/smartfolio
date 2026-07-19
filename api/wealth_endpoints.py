@@ -106,7 +106,7 @@ async def list_wealth_items(
 async def get_wealth_item(
     item_id: str,
     user: str = Depends(get_required_user)
-) -> dict:
+) -> WealthItemOutput:
     """Get a specific wealth item by ID."""
     from services.wealth.wealth_service import get_item
 
@@ -122,7 +122,7 @@ async def get_wealth_item(
 async def create_wealth_item(
     item: "WealthItemInput",
     user: str = Depends(get_required_user)
-) -> dict:
+) -> WealthItemOutput:
     """
     Create a new wealth item for the user.
 
@@ -147,7 +147,7 @@ async def update_wealth_item(
     item_id: str,
     item: "WealthItemInput",
     user: str = Depends(get_required_user)
-) -> dict:
+) -> WealthItemOutput:
     """
     Update an existing wealth item.
 
