@@ -347,8 +347,8 @@ class BacktestingEngine:
         attribution = self._calculate_attribution(weights_df, backtest_data, returns)
         
         # Monthly and annual returns
-        monthly_returns = returns.resample('M').apply(lambda x: (1 + x).prod() - 1)
-        annual_returns = returns.resample('Y').apply(lambda x: (1 + x).prod() - 1)
+        monthly_returns = returns.resample('ME').apply(lambda x: (1 + x).prod() - 1)
+        annual_returns = returns.resample('YE').apply(lambda x: (1 + x).prod() - 1)
         
         # Drawdowns
         rolling_max = portfolio_df['value'].expanding().max()
@@ -396,9 +396,9 @@ class BacktestingEngine:
         elif frequency == RebalanceFrequency.BIWEEKLY:
             return list(pd.date_range(start_date, end_date, freq='2W'))
         elif frequency == RebalanceFrequency.MONTHLY:
-            return list(pd.date_range(start_date, end_date, freq='M'))
+            return list(pd.date_range(start_date, end_date, freq='ME'))
         elif frequency == RebalanceFrequency.QUARTERLY:
-            return list(pd.date_range(start_date, end_date, freq='Q'))
+            return list(pd.date_range(start_date, end_date, freq='QE'))
         
         # Filter to actual trading days for non-daily frequencies
         rebal_dates = []
@@ -409,9 +409,9 @@ class BacktestingEngine:
             elif frequency == RebalanceFrequency.BIWEEKLY:
                 base_dates = pd.date_range(start_date, end_date, freq='2W')
             elif frequency == RebalanceFrequency.MONTHLY:
-                base_dates = pd.date_range(start_date, end_date, freq='M')
+                base_dates = pd.date_range(start_date, end_date, freq='ME')
             elif frequency == RebalanceFrequency.QUARTERLY:
-                base_dates = pd.date_range(start_date, end_date, freq='Q')
+                base_dates = pd.date_range(start_date, end_date, freq='QE')
             else:
                 return list(date_index)
             

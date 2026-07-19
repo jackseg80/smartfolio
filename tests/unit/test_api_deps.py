@@ -30,6 +30,12 @@ def _reset_env():
 MODULE = "api.deps"
 
 
+@pytest.fixture(autouse=True)
+def _disable_dev_open_api(monkeypatch):
+    """Keep authentication unit tests independent from the CI dev bypass."""
+    monkeypatch.delenv("DEV_OPEN_API", raising=False)
+
+
 def _mock_users(
     validate_return="jack",
     validate_side_effect=None,

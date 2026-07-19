@@ -8,33 +8,43 @@ User IDs must be <= 50 characters.
 Test users with no data get {"success": False} because no balances are found.
 """
 
+from unittest.mock import AsyncMock, call, patch
+
 import pytest
 from fastapi.testclient import TestClient
+
+import api.risk_endpoints as risk_endpoints
 from api.main import app
-from datetime import datetime
 
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _clear_risk_dashboard_cache():
+    """Prevent cached responses from leaking between endpoint tests."""
+    risk_endpoints._risk_cache.clear()
+
+
+def _empty_portfolio(source: str) -> dict:
+    return {"items": [], "source_used": source}
+
+
 def test_risk_dashboard_returns_200_with_valid_user():
-    """Test that /api/risk/dashboard returns 200 with a valid user and stub source"""
-    response = client.get(
-        "/api/risk/dashboard",
-        headers={"X-User": "demo"},
-        params={
-            "source": "stub",
-            "min_usd": 1.0,
-            "price_history_days": 30,
-            "lookback_days": 30
-        }
-    )
+    """An empty portfolio is a valid, deterministic dashboard response."""
+    with patch(
+        "api.unified_data.get_unified_filtered_balances",
+        new=AsyncMock(return_value=_empty_portfolio("stub")),
+    ):
+        response = client.get(
+            "/api/risk/dashboard",
+            headers={"X-User": "demo"},
+            params={"source": "stub", "min_usd": 1.0},
+        )
 
-    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == 200
     data = response.json()
-
-    # Response can be success=True with metrics or success=False if insufficient price data
-    # Both are valid 200 responses
-    assert isinstance(data, dict)
+    assert data["success"] is False
+    assert "message" in data
 
 
 def test_risk_dashboard_requires_x_user_header():
@@ -59,46 +69,47 @@ def test_risk_dashboard_rejects_long_user_id():
 
 
 def test_risk_dashboard_empty_portfolio():
-    """Test that a valid user with an unused source gets a clear response"""
-    # Use a valid user but a source directory that has no data
-    response = client.get(
-        "/api/risk/dashboard",
-        headers={"X-User": "demo"},
-        params={"source": "manual_bourse", "min_usd": 1.0}
-    )
+    """A source without holdings should return a clear empty response."""
+    with patch(
+        "api.unified_data.get_unified_filtered_balances",
+        new=AsyncMock(return_value=_empty_portfolio("manual_bourse")),
+    ):
+        response = client.get(
+            "/api/risk/dashboard",
+            headers={"X-User": "demo"},
+            params={"source": "manual_bourse", "min_usd": 1.0},
+        )
 
-    # error_response returns 400 for insufficient price data
-    assert response.status_code == 400
+    assert response.status_code == 200
     data = response.json()
-
-    # Error response has ok=False and error message
-    assert data.get("ok") is False
-    assert "error" in data
+    assert data["success"] is False
+    assert "message" in data
 
 
-def test_risk_dashboard_different_users_get_different_responses():
-    """Test that different valid users get independent responses"""
-    response_user1 = client.get(
-        "/api/risk/dashboard",
-        headers={"X-User": "demo"},
-        params={"source": "cointracking", "min_usd": 1.0}
-    )
-
-    response_user2 = client.get(
-        "/api/risk/dashboard",
-        headers={"X-User": "jack"},
-        params={"source": "cointracking", "min_usd": 1.0}
-    )
+def test_risk_dashboard_passes_each_user_to_the_balance_resolver():
+    """Balance resolution remains isolated for each authenticated user."""
+    mocked_balances = AsyncMock(return_value=_empty_portfolio("cointracking"))
+    with patch(
+        "api.unified_data.get_unified_filtered_balances",
+        new=mocked_balances,
+    ):
+        response_user1 = client.get(
+            "/api/risk/dashboard",
+            headers={"X-User": "demo"},
+            params={"source": "cointracking", "min_usd": 1.0},
+        )
+        response_user2 = client.get(
+            "/api/risk/dashboard",
+            headers={"X-User": "jack"},
+            params={"source": "cointracking", "min_usd": 1.0},
+        )
 
     assert response_user1.status_code == 200
     assert response_user2.status_code == 200
-
-    # Both should return valid JSON
-    data_user1 = response_user1.json()
-    data_user2 = response_user2.json()
-
-    assert isinstance(data_user1, dict)
-    assert isinstance(data_user2, dict)
+    assert mocked_balances.await_args_list == [
+        call(source="cointracking", min_usd=1.0, user_id="demo"),
+        call(source="cointracking", min_usd=1.0, user_id="jack"),
+    ]
 
 
 if __name__ == "__main__":
