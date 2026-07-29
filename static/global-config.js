@@ -200,10 +200,10 @@ class GlobalConfig {
       if (saved) {
         const parsed = JSON.parse(saved);
         this.settings = { ...DEFAULT_SETTINGS, ...parsed };
-        // Ensure api_base_url is always set to a usable default if missing/empty
-        if (!this.settings.api_base_url) {
-          this.settings.api_base_url = detectDefaultApiBase();
-        }
+        // The browser API is always served by the same SmartFolio origin as the
+        // page.  Do not reuse a persisted server-side address here: a LAN URL
+        // would be blocked by CSP (and mixed-content rules) on the HTTPS site.
+        this.settings.api_base_url = detectDefaultApiBase();
         console.debug(`✅ Settings loaded from localStorage for user: ${storageKey}`);
       }
     } catch (error) {
@@ -337,7 +337,9 @@ class GlobalConfig {
    * Construit l'URL API avec les paramètres par défaut
    */
   getApiUrl(endpoint, additionalParams = {}) {
-    const base = this.settings.api_base_url;
+    // Keep requests same-origin even if an old browser setting was retained.
+    // API_BASE_URL is reserved for backend-to-backend requests inside Docker.
+    const base = detectDefaultApiBase();
 
     // Normalize endpoint to avoid /api/api duplication
     let normalizedEndpoint = endpoint;
@@ -667,7 +669,7 @@ window.apiRequest = (endpoint, options) => globalConfig.apiRequest(endpoint, opt
  * @returns {string} The API base URL (without trailing slash)
  */
 window.getApiBase = () => {
-  const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin || 'http://localhost:8080';
+  const apiBase = detectDefaultApiBase();
   return apiBase.replace(/\/$/, ''); // Remove trailing slash
 };
 
@@ -1002,37 +1004,15 @@ if (window.matchMedia) {
 // Appliquer le thème au chargement
 globalConfig.applyTheme();
 
-// ====== Load API_BASE_URL from backend (Docker-friendly) ======
-(async function initApiBaseUrl() {
-  try {
-    // Try to fetch API_BASE_URL from backend config endpoint
-    // Use relative URL to avoid chicken-and-egg problem
-    const response = await fetch('/api/config/api-base-url', {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      if (result?.ok && result?.data?.api_base_url) {
-        const backendApiUrl = result.data.api_base_url;
-
-        // If backend URL differs from stored config, update it
-        const currentApiUrl = globalConfig.get('api_base_url');
-        if (currentApiUrl !== backendApiUrl) {
-          console.debug(`🔧 Updating API_BASE_URL from backend: ${currentApiUrl} → ${backendApiUrl}`);
-          globalConfig.set('api_base_url', backendApiUrl);
-        }
-
-        console.debug('✅ API_BASE_URL loaded from backend:', backendApiUrl);
-      }
-    } else {
-      console.debug('⚠️ Could not fetch API_BASE_URL from backend, using detected value');
-    }
-  } catch (error) {
-    console.debug('⚠️ Error loading API_BASE_URL from backend (non-critical):', error.message);
-    // Fallback to detected value already set in config
+// ====== Browser API base ======
+// The backend's API_BASE_URL is an internal Docker address and must never be
+// copied into browser storage.  The page and API are served from one origin.
+(function initApiBaseUrl() {
+  const browserApiUrl = detectDefaultApiBase();
+  if (globalConfig.get('api_base_url') !== browserApiUrl) {
+    globalConfig.set('api_base_url', browserApiUrl);
   }
+  console.debug('✅ Browser API base uses the current origin:', browserApiUrl);
 })();
 
 console.debug('🚀 Configuration globale chargée:', globalConfig.getAll());
