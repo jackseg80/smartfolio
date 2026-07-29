@@ -44,7 +44,9 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "${PORT:-8080}:${PORT:-8080}"  # LAN accessible
+      # Bind explicitly to the LAN IPv4. This prevents direct exposure through
+      # a host's globally routed IPv6 address while preserving LAN access.
+      - "${SMARTFOLIO_BIND_ADDRESS:-127.0.0.1}:${PORT:-8080}:${PORT:-8080}"
     environment:
       # Core settings
       DEBUG: ${DEBUG:-false}

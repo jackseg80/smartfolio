@@ -2,8 +2,8 @@
 
 > Hôte public: `segalla.ddns.net`  
 > Serveur: `robot2` (`192.168.1.200`)  
-> État au 29 juillet 2026: préflight local réussi, proxy arrêté, aucune règle
-> routeur 80/443 appliquée.
+> État au 29 juillet 2026: proxy déployé, règles routeur 80/443 actives et
+> certificat Let's Encrypt valide.
 
 ## Rôle de Caddy
 
@@ -55,7 +55,8 @@ Le préflight Caddy avec certificat interne a confirmé:
 - `/healthz` et le login servis en HTTPS sur 8443;
 - accès LAN direct sur 8080 toujours fonctionnel.
 
-Caddy a ensuite été arrêté. Aucune exposition publique 80/443 n'a été créée.
+Caddy est maintenant démarré sur `robot2`. Le certificat public Let’s Encrypt
+pour `segalla.ddns.net` a été émis avec succès.
 
 ## Ordre de déploiement
 
@@ -88,6 +89,7 @@ AUTH_USER_STORE=persistent
 AUTH_USERS_PATH=/app/data/auth/users.json
 JWT_SECRET_KEY=<secret aléatoire d'au moins 32 caractères>
 REDIS_URL=redis://redis:6379/0
+SMARTFOLIO_BIND_ADDRESS=192.168.1.200
 PUBLIC_BASE_URL=https://segalla.ddns.net
 CORS_ORIGINS=https://segalla.ddns.net
 ALLOWED_HOSTS=segalla.ddns.net,192.168.1.200,localhost,smartfolio-api
@@ -100,7 +102,9 @@ pas inclus dans le format de log.
 
 ## Restriction des services internes
 
-Le firewall et les chaînes Docker doivent autoriser les ports 8080, 8000, 3000,
+SmartFolio et Caddy sont liés explicitement à `192.168.1.200`, ce qui empêche
+leur exposition directe via IPv6. Le firewall et les chaînes Docker doivent
+encore autoriser les ports 8080, 8000, 3000,
 4000, 9000 et 1883 uniquement depuis les réseaux LAN approuvés, en IPv4 et
 IPv6. Avant toute règle:
 

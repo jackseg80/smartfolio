@@ -4,8 +4,10 @@ services:
     container_name: smartfolio-proxy
     restart: unless-stopped
     ports:
-      - "8081:80"
-      - "8443:443"
+      # Router forwarding targets the server LAN address; do not publish the
+      # proxy on all IPv4/IPv6 interfaces.
+      - "${PROXY_BIND_ADDRESS:-127.0.0.1}:8081:80"
+      - "${PROXY_BIND_ADDRESS:-127.0.0.1}:8443:443"
     environment:
       PUBLIC_HOST: ${PUBLIC_HOST:-segalla.ddns.net}
     volumes:
