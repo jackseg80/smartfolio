@@ -25,9 +25,7 @@ const KEYS = {
   DEBUG_MODE: 'debugMode'
 };
 
-// Default values
 const DEFAULTS = {
-  USER: 'demo',
   SOURCE: 'cointracking'
 };
 
@@ -41,10 +39,10 @@ export const StorageService = {
 
   /**
    * Get the active user ID
-   * @returns {string} User ID or 'demo' as fallback
+   * @returns {string|null} Authenticated user ID, or null before login
    */
   getActiveUser() {
-    return localStorage.getItem(KEYS.ACTIVE_USER) || DEFAULTS.USER;
+    return localStorage.getItem(KEYS.ACTIVE_USER);
   },
 
   /**

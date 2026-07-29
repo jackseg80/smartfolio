@@ -69,7 +69,7 @@ function handleMLPollingVisibility() {
 async function loadMLPredictions() {
   try {
     // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     // 1) Statut ML global depuis source unifiée
     const { getUnifiedMLStatus } = await import('../shared-ml-functions.js');
@@ -204,7 +204,7 @@ async function loadMLPredictions() {
 async function loadMLPredictionsFallback() {
   try {
     // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     // Ancien système comme fallback
     const statusResponse = await fetch('/api/ml/status', {

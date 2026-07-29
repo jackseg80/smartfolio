@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/market", tags=["market"])
 
 class MarketPricesResponse(BaseModel):
-    """Réponse des prix de marché avec force relative"""
+    """Market price response with relative strength."""
     prices: Dict[str, List[Dict[str, Any]]] = Field(description="Historical prices per asset")
     relative_strength: Dict[str, float] = Field(description="Calculated relative strength")
     meta: Dict[str, Any] = Field(description="Metadata")

@@ -22,7 +22,7 @@ class ManualSourceEditor {
      * Get current user from localStorage
      */
     getCurrentUser() {
-        return localStorage.getItem('activeUser') || 'demo';
+        return localStorage.getItem('activeUser');
     }
 
     /**

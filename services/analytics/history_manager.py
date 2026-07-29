@@ -274,9 +274,9 @@ class HistoryManager:
         data = asdict(session)
         
         # Convertir les dates en ISO strings
-        for field in ['created_at', 'started_at', 'completed_at']:
-            if data[field]:
-                data[field] = data[field].isoformat()
+        for date_field in ['created_at', 'started_at', 'completed_at']:
+            if data[date_field]:
+                data[date_field] = data[date_field].isoformat()
         
         # Sérialiser les snapshots
         if data['portfolio_before']:
@@ -297,9 +297,9 @@ class HistoryManager:
     def _deserialize_session(self, data: Dict[str, Any]) -> RebalanceSession:
         """Désérialiser une session depuis JSON"""
         # Convertir les dates
-        for field in ['created_at', 'started_at', 'completed_at']:
-            if data[field]:
-                data[field] = datetime.fromisoformat(data[field])
+        for date_field in ['created_at', 'started_at', 'completed_at']:
+            if data[date_field]:
+                data[date_field] = datetime.fromisoformat(data[date_field])
         
         # Désérialiser les snapshots
         if data['portfolio_before']:

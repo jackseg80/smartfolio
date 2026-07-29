@@ -269,7 +269,7 @@ async def auto_classify_symbol_enhanced(symbol: str, use_coingecko: bool = True)
     # 2. Si échec et CoinGecko activé, essayer l'enrichissement
     if use_coingecko:
         try:
-            from .coingecko import coingecko_service
+            from .coingecko_safe import coingecko_service
             coingecko_result = await coingecko_service.classify_symbol(symbol)
             if coingecko_result:
                 return coingecko_result

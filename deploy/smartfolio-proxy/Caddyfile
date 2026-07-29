@@ -1,0 +1,42 @@
+{
+	admin off
+}
+
+{$PUBLIC_HOST:segalla.ddns.net} {
+	encode zstd gzip
+
+	@saxo_callback path /api/saxo/callback
+	log_skip @saxo_callback
+
+	log {
+		output file /var/log/caddy/access.log {
+			mode 0600
+			roll_size 10MiB
+			roll_keep 7
+			roll_keep_for 168h
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers>Authorization delete
+				request>headers>Cookie delete
+				request>headers>Set-Cookie delete
+			}
+		}
+	}
+
+	header {
+		-Server
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+	}
+
+	reverse_proxy smartfolio-api:8080 {
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 60s
+			keepalive 30s
+		}
+	}
+}

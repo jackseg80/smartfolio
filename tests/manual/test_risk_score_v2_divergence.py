@@ -13,6 +13,7 @@ from services.portfolio_metrics import portfolio_metrics_service
 from services.price_history import get_cached_history
 import pandas as pd
 import logging
+import pytest
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 logger = logging.getLogger(__name__)
@@ -52,8 +53,13 @@ async def test_risk_divergence(user_id="demo"):
         logger.error("❌ Insufficient price data")
         return
 
-    price_df = pd.DataFrame(price_data).fillna(method='ffill').dropna()
+    price_df = pd.DataFrame(price_data).ffill().dropna()
     logger.info(f"📊 Price DataFrame: {len(price_df)} rows, {len(price_df.columns)} assets")
+    if len(price_df) < 29:
+        pytest.skip(
+            f"Manual divergence check requires at least 29 aligned price rows; "
+            f"only {len(price_df)} are available"
+        )
 
     # Calcul LEGACY (single window)
     logger.info("\n🔷 CALCUL LEGACY (Single Window)...")

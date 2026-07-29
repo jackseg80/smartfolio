@@ -124,7 +124,6 @@ tests/fixtures/diagnostic_*.html
 
 # Playwright E2E tests
 node_modules/
-package-lock.json
 test-results/
 test-results-latest.json/
 tests/e2e-report/
@@ -167,6 +166,7 @@ analyze_*.py  # Temporary analysis scripts
 
 
 # Coverage reports (generated files)
+coverage/
 coverage.xml
 coverage.json
 htmlcov/

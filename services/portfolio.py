@@ -398,7 +398,12 @@ class PortfolioAnalytics:
             logger.error(f"Unexpected error saving snapshot: {e}", exc_info=True)
             return False
     
-    def get_portfolio_trend(self, days: int = 30, user_id: str = "demo", source: str = "cointracking") -> Dict[str, Any]:
+    def get_portfolio_trend(
+        self,
+        days: int = 30,
+        user_id: str | None = None,
+        source: str = "cointracking",
+    ) -> Dict[str, Any]:
         """
         Retourne les données de tendance du portfolio
         
@@ -410,6 +415,8 @@ class PortfolioAnalytics:
         Returns:
             Données de tendance pour graphiques
         """
+        if not user_id:
+            raise ValueError("An authenticated user_id is required")
         historical_data = self._load_historical_data(user_id=user_id, source=source)
         
         if not historical_data:

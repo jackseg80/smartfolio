@@ -1,0 +1,9 @@
+{
+	admin off
+}
+
+https://segalla.ddns.net {
+	tls internal
+	encode zstd gzip
+	reverse_proxy smartfolio-api:8080
+}

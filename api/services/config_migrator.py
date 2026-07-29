@@ -228,7 +228,9 @@ def resolve_secret_ref(ref: str, user_fs: UserScopedFS) -> Optional[str]:
     try:
         from services.user_secrets import get_user_secrets
         # Extract user_id from user_fs
-        user_id = user_fs.user_id if hasattr(user_fs, 'user_id') else "demo"
+        if not hasattr(user_fs, "user_id") or not user_fs.user_id:
+            raise ValueError("UserScopedFS must provide an authenticated user_id")
+        user_id = user_fs.user_id
         secrets = get_user_secrets(user_id)
 
         # Map old config keys to new secrets structure

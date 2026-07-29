@@ -10,7 +10,7 @@ export async function buildDashboardContext() {
     const context = {
         page: 'Dashboard - Global Portfolio View'
     };
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
     try {
@@ -149,7 +149,7 @@ export async function buildRiskDashboardContext() {
     };
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
         // PRIORITY: Use riskStore (same data source as frontend UI)
@@ -294,7 +294,7 @@ export async function buildAnalyticsContext() {
     };
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const activeSource = localStorage.getItem('activeSource') || 'cointracking';
 
         // 1. Load Decision Index & Phase from Governance
@@ -514,7 +514,7 @@ export async function buildWealthContext() {
     };
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
 
         // Fetch wealth summary
         const response = await fetch('/api/wealth/summary', {
@@ -560,7 +560,7 @@ export async function buildSettingsContext() {
     };
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
 
         // Get user configuration from localStorage
         context.user_id = activeUser;

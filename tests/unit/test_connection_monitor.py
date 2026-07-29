@@ -303,15 +303,18 @@ class TestGetPerformanceSummary:
 class TestStoreMetrics:
     def test_stores_in_memory(self, monitor):
         m = _make_metrics(exchange="test_exchange")
-        with patch("asyncio.create_task"):
+        with patch("asyncio.create_task") as create_task:
             monitor._store_metrics(m)
+            create_task.call_args.args[0].close()
         assert "test_exchange" in monitor.metrics_history
         assert len(monitor.metrics_history["test_exchange"]) == 1
 
     def test_appends_to_existing(self, monitor):
         m1 = _make_metrics(exchange="test_exchange")
         m2 = _make_metrics(exchange="test_exchange", response_time_ms=200.0)
-        with patch("asyncio.create_task"):
+        with patch("asyncio.create_task") as create_task:
             monitor._store_metrics(m1)
+            create_task.call_args.args[0].close()
             monitor._store_metrics(m2)
+            create_task.call_args.args[0].close()
         assert len(monitor.metrics_history["test_exchange"]) == 2

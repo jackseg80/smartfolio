@@ -11,6 +11,7 @@ from unittest.mock import Mock, AsyncMock
 
 # Import du test app
 from api.main import app
+from api.deps import get_current_user_jwt
 from api.alerts_endpoints import initialize_alert_engine
 from services.alerts.alert_engine import AlertEngine
 from services.alerts.alert_types import Alert, AlertType, AlertSeverity
@@ -79,7 +80,11 @@ class TestAlertsAPI:
     def client(self, mock_alert_engine):
         """Client de test avec mock engine"""
         initialize_alert_engine(mock_alert_engine)
-        return TestClient(app)
+        app.dependency_overrides[get_current_user_jwt] = lambda: "jack"
+        try:
+            yield TestClient(app)
+        finally:
+            app.dependency_overrides.pop(get_current_user_jwt, None)
     
     def test_get_active_alerts(self, client):
         """Test GET /api/alerts/active"""
@@ -199,6 +204,16 @@ class TestAlertsAPI:
         assert data["config_version"] == "test-1.0"
         
         mock_alert_engine._check_config_reload.assert_called_once()
+
+    def test_viewer_cannot_reload_config(self, client):
+        """A viewer cannot mutate the alert engine configuration."""
+        app.dependency_overrides[get_current_user_jwt] = lambda: "demo"
+        try:
+            response = client.post("/api/alerts/config/reload")
+        finally:
+            app.dependency_overrides[get_current_user_jwt] = lambda: "jack"
+
+        assert response.status_code == 403
     
     def test_get_current_config(self, client):
         """Test GET /api/alerts/config/current"""

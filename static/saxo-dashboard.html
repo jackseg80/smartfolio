@@ -377,7 +377,7 @@
                 document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Loading stock data...</div>';
                 document.getElementById('dashboardContent').style.display = 'none';
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // ✅ FIX: Read bourseSource dynamically (don't trust window.saxoSourceType which may be stale)
                 let bourseSource = window.wealthContextBar?.getContext()?.bourse;
@@ -937,7 +937,7 @@
 
         // Load saved cash amount for current portfolio (Sources V2)
         async function loadPortfolioCash(fileKey = null) {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
                 // Build URL with file_key (use parameter if provided, fallback to global)
@@ -1119,7 +1119,7 @@
                 return;
             }
 
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
                 // Show saving indicator
@@ -1173,7 +1173,7 @@
 
                 // ✅ FIX: Update cache with new cash amount to persist across refreshes
                 try {
-                    const activeUser = localStorage.getItem('activeUser') || 'demo';
+                    const activeUser = localStorage.getItem('activeUser') || '';
                     const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
                     const isManualSource = bourseSource === 'manual_bourse';
                     const isApiSource = bourseSource && bourseSource.startsWith('api:');
@@ -1534,7 +1534,7 @@
             else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
                 window.saxoSourceType = 'csv';
                 const key = bourseSource.substring(5); // Remove 'saxo:' prefix
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 try {
                     // Load available sources to resolve file_key
@@ -1585,7 +1585,7 @@
                 debugLogger.debug('🔄 Bourse source changed:', event.detail);
 
                 // Invalidate all Saxo caches (critical for source switching)
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith(`saxo_portfolio_${activeUser}_`)) {
                         localStorage.removeItem(key);

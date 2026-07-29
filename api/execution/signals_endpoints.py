@@ -6,28 +6,15 @@ utilisés par le système de gouvernance.
 """
 
 from fastapi import APIRouter, HTTPException, Header, Depends
-from typing import Optional, List
+from typing import Optional
 import logging
 import asyncio
 from datetime import datetime
 
 from services.execution.governance import governance_engine
 from .models import UpdateSignalsRequest, RecomputeSignalsRequest
-
-# Import RBAC from alerts (shared dependency)
-try:
-    from api.alerts_endpoints import User, require_role
-except ImportError:
-    # Fallback si alerts_endpoints pas encore disponible
-    class User:
-        def __init__(self, username: str = "system", roles: List[str] = None):
-            self.username = username
-            self.roles = roles or ["approver", "governance_admin"]
-
-    def require_role(required_role: str):
-        def dependency(current_user: User = Depends(lambda: User())):
-            return current_user
-        return dependency
+from api.auth_security import AuthenticatedUser as User
+from api.deps import require_any_role
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +28,10 @@ _RECOMPUTE_LOCK = asyncio.Lock()  # Mutex pour éviter recompute concurrent
 
 
 @router.post("/signals/update")
-async def update_ml_signals(request: UpdateSignalsRequest) -> dict:
+async def update_ml_signals(
+    request: UpdateSignalsRequest,
+    current_user: User = Depends(require_any_role("ml_admin")),
+) -> dict:
     """
     Mettre à jour des champs de signaux ML maintenus côté gouvernance.
     Actuellement: accepte `blended_score` (0-100) pour activer les garde-fous backend.
@@ -76,7 +66,7 @@ async def update_ml_signals(request: UpdateSignalsRequest) -> dict:
 @router.post("/signals/recompute")
 async def recompute_ml_signals(
     request: RecomputeSignalsRequest,
-    current_user: User = Depends(require_role("governance_admin")),
+    current_user: User = Depends(require_any_role("ml_admin")),
     idempotency_key: Optional[str] = Header(default=None, alias="Idempotency-Key"),
     x_csrf_token: Optional[str] = Header(default=None, alias="X-CSRF-Token"),
 ) -> dict:

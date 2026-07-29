@@ -20,7 +20,7 @@ from ..feature_engineering import CryptoFeatureEngineer
 from ..data_pipeline import MLDataPipeline
 
 # Security: Use safe loader for PyTorch models
-from services.ml.safe_loader import safe_torch_load
+from services.ml.safe_loader import safe_pickle_load, safe_torch_load
 
 logger = logging.getLogger(__name__)
 
@@ -551,8 +551,8 @@ class VolatilityPredictor:
                 return False
             
             # Load metadata and scaler
-            metadata = joblib.load(metadata_path)
-            scaler = joblib.load(scaler_path)
+            metadata = safe_pickle_load(metadata_path)
+            scaler = safe_pickle_load(scaler_path)
             
             # Initialize and load model
             model = VolatilityLSTM(

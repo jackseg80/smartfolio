@@ -149,7 +149,7 @@ const storeActions = {
   // Persist key data to localStorage (user-specific)
   persist(baseKey = 'risk-dashboard-state') {
     const state = getState();
-    const userId = localStorage.getItem('activeUser') || 'demo';
+    const userId = localStorage.getItem('activeUser');
     const key = `${baseKey}:${userId}`;
 
     const toSave = {
@@ -177,7 +177,7 @@ const storeActions = {
   // Restore from localStorage (user-specific)
   hydrate(baseKey = 'risk-dashboard-state') {
     try {
-      const userId = localStorage.getItem('activeUser') || 'demo';
+      const userId = localStorage.getItem('activeUser');
       const key = `${baseKey}:${userId}`;
       const saved = localStorage.getItem(key);
 
@@ -223,7 +223,7 @@ const storeActions = {
 
   // Clear store and reload for new user
   clearAndRehydrate() {
-    const userId = localStorage.getItem('activeUser') || 'demo';
+    const userId = localStorage.getItem('activeUser');
     console.debug('🔄 Clearing store and rehydrating for user:', userId);
 
     // Reset to initial state

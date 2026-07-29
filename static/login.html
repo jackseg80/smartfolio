@@ -485,10 +485,18 @@
 
         // Check if already logged in
         (async function checkExistingAuth() {
-            const token = localStorage.getItem('authToken');
-            if (token) {
+            // Capture the token being checked. A user can submit the login form while
+            // this request is still pending; in that case it must never clear the new
+            // token written by the successful login response.
+            const existingToken = localStorage.getItem('authToken');
+            if (existingToken) {
                 try {
-                    const response = await fetch(`${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`);
+                    const response = await fetch(`${API_BASE}/auth/verify`, {
+                        credentials: 'same-origin',
+                        headers: {
+                            'Authorization': `Bearer ${existingToken}`,
+                        },
+                    });
                     if (response.ok) {
                         const data = await response.json();
                         if (data.ok && data.data?.valid) {
@@ -496,12 +504,16 @@
                             return;
                         }
                     }
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('activeUser');
+                    if (localStorage.getItem('authToken') === existingToken) {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('activeUser');
+                    }
                 } catch (err) {
                     console.debug('Token verification failed:', err);
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('activeUser');
+                    if (localStorage.getItem('authToken') === existingToken) {
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('activeUser');
+                    }
                 }
             }
         })();
@@ -549,6 +561,7 @@
 
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
@@ -564,8 +577,12 @@
                     return;
                 }
 
-                if (data.ok && data.data?.token) {
-                    localStorage.setItem('authToken', data.data.token);
+                if (data.ok && data.data?.user) {
+                    if (data.data.token) {
+                        localStorage.setItem('authToken', data.data.token);
+                    } else {
+                        localStorage.removeItem('authToken');
+                    }
                     localStorage.setItem('activeUser', data.data.user.id);
                     localStorage.setItem('userInfo', JSON.stringify(data.data.user));
                     window.location.href = '/static/dashboard.html';

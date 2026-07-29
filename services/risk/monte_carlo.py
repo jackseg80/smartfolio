@@ -68,7 +68,6 @@ async def run_monte_carlo_simulation(
     horizon_days: int = 30,
     confidence_level: float = 0.95,
     price_history_days: int = 365,
-    user_id: str = "demo"
 ) -> MonteCarloResult:
     """
     Exécute une simulation Monte Carlo sur le portfolio
@@ -79,8 +78,6 @@ async def run_monte_carlo_simulation(
         horizon_days: Horizon de simulation en jours (défaut: 30)
         confidence_level: Niveau de confiance pour VaR (défaut: 0.95)
         price_history_days: Jours d'historique pour estimer distributions (défaut: 365)
-        user_id: ID utilisateur
-
     Returns:
         MonteCarloResult avec statistiques complètes
     """

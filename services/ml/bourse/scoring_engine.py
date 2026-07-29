@@ -10,6 +10,7 @@ Combines multiple signals with adaptive weights based on timeframe:
 """
 
 from typing import Dict, Any, Optional
+import math
 import logging
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,17 @@ class ScoringEngine:
         self.timeframe = timeframe
         self.weights = self.WEIGHTS[timeframe]
 
+    @staticmethod
+    def _finite_score(value: Any, default: float = 0.5) -> float:
+        """Return a bounded score and keep incomplete market data neutral."""
+        try:
+            score = float(value)
+        except (TypeError, ValueError):
+            return default
+        if not math.isfinite(score):
+            return default
+        return min(1.0, max(0.0, score))
+
     def calculate_score(
         self,
         technical_score: float,
@@ -78,6 +90,12 @@ class ScoringEngine:
         Returns:
             Dict with final score, breakdown, and confidence
         """
+        technical_score = self._finite_score(technical_score)
+        regime_score = self._finite_score(regime_score)
+        relative_strength_score = self._finite_score(relative_strength_score)
+        risk_score = self._finite_score(risk_score)
+        sector_score = self._finite_score(sector_score)
+
         # Weighted average
         final_score = (
             technical_score * self.weights["technical"] +

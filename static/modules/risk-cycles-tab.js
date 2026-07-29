@@ -30,7 +30,7 @@ export async function fetchBitcoinHistoricalData() {
   try {
     debugLogger.debug('🏛️ Récupération historique Bitcoin depuis FRED via proxy...');
     const proxyUrl = '/proxy/fred/bitcoin?start_date=2014-01-01';
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const r = await fetch(proxyUrl, {
       headers: { 'X-User': activeUser }
     });
@@ -102,7 +102,7 @@ export async function fetchBitcoinHistoricalData() {
   // 3) CoinGecko 365 jours via backend proxy (clé API gérée côté serveur)
   try {
     debugLogger.debug('🦎 Récupération historique Bitcoin depuis CoinGecko proxy (365j)...');
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const r = await fetch('/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=365&interval=daily', {
       headers: { 'X-User': activeUser }
     });

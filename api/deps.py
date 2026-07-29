@@ -5,8 +5,8 @@ Redis client pour caching et persistence.
 Common dependency factories for endpoints.
 """
 from __future__ import annotations
-from typing import Optional, Tuple
-from fastapi import Header, HTTPException, status, Query
+from typing import Any, Callable, Optional, Tuple
+from fastapi import Cookie, Depends, Header, HTTPException, status, Query
 import logging
 import os
 
@@ -15,6 +15,13 @@ from api.config.users import (
     is_allowed_user,
     validate_user_id,
     get_user_info
+)
+from api.auth_security import (
+    ACCESS_COOKIE,
+    AuthenticatedUser,
+    get_auth_mode,
+    get_jwt_secret,
+    is_access_token_revoked,
 )
 
 logger = logging.getLogger(__name__)
@@ -35,10 +42,11 @@ def decode_access_token(token: str) -> Optional[dict]:
     """
     try:
         from jose import jwt, JWTError
-        SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production-please")
         ALGORITHM = "HS256"
 
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_jwt_secret(), algorithms=[ALGORITHM])
+        if is_access_token_revoked(payload):
+            return None
         return payload
     except JWTError as e:
         logger.debug(f"JWT decode error: {e}")
@@ -97,12 +105,83 @@ def _extract_jwt_user(authorization: Optional[str]) -> Optional[str]:
     return user_id
 
 
+def _extract_cookie_user(access_cookie: Optional[str]) -> Optional[str]:
+    if not isinstance(access_cookie, str) or not access_cookie:
+        return None
+    payload = decode_access_token(access_cookie)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired session",
+        )
+    user_id = payload["sub"]
+    if not is_allowed_user(user_id):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+    user_info = get_user_info(user_id)
+    if not user_info or user_info.get("status") != "active":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+    return user_id
+
+
+def resolve_authenticated_user(
+    *,
+    authorization: Optional[str] = None,
+    access_cookie: Optional[str] = None,
+    x_user: Optional[str] = None,
+) -> str:
+    """Resolve identity from a session; X-User is only a consistency assertion."""
+    mode = get_auth_mode()
+    if mode == "cookie" and authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer authentication is disabled in cookie mode",
+        )
+    bearer_user = _extract_jwt_user(authorization)
+    cookie_user = _extract_cookie_user(access_cookie)
+    if bearer_user and cookie_user and bearer_user != cookie_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Session identity mismatch")
+    session_user = cookie_user or bearer_user
+
+    normalized_header = validate_user_id(x_user) if isinstance(x_user, str) and x_user else None
+    if mode == "legacy":
+        if not normalized_header:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="X-User header is required in legacy mode",
+            )
+        if not is_allowed_user(normalized_header):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Unknown user: {normalized_header}",
+            )
+        if session_user and session_user != normalized_header:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User identity mismatch between token and header",
+            )
+        return session_user or normalized_header
+
+    if not session_user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication session required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if normalized_header and normalized_header != session_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User identity mismatch between session and header",
+        )
+    return session_user
+
+
 # Redis client singleton
 _redis_client = None
 
 def get_required_user(
-    x_user: str = Header(..., alias="X-User"),
+    x_user: Optional[str] = Header(None, alias="X-User"),
     authorization: Optional[str] = Header(None, alias="Authorization"),
+    access_cookie: Optional[str] = Cookie(None, alias=ACCESS_COOKIE),
 ) -> str:
     """
     Dépendance FastAPI qui FORCE le header X-User et valide le JWT si présent.
@@ -127,70 +206,58 @@ def get_required_user(
             # user est garanti non-None, JWT validé si présent
     """
     try:
-        # Validation et normalisation
-        normalized_user = validate_user_id(x_user)
-
-        # Mode développement : bypass de l'autorisation si DEV_OPEN_API=1
-        dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
-        if dev_mode:
-            logger.info(f"DEV MODE: Bypassing authorization for user: {normalized_user}")
-            return normalized_user
-
-        # JWT validation (if present)
-        jwt_user = _extract_jwt_user(authorization)
-
-        # Strict mode: reject requests without valid JWT
-        require_jwt = os.getenv("REQUIRE_JWT", "0") == "1"
-        if require_jwt and not jwt_user:
-            logger.warning(f"JWT required but not provided for user: {normalized_user}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication token required",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        # Anti-spoofing: ensure JWT user matches X-User header
-        if jwt_user and jwt_user != normalized_user:
-            logger.warning(f"JWT/X-User mismatch: JWT={jwt_user}, X-User={normalized_user}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User identity mismatch between token and header",
-            )
-
-        effective_user = jwt_user or normalized_user
-
-        # Vérification autorisation normale
-        if not is_allowed_user(effective_user):
-            logger.warning(f"Unknown user attempted access (required): {effective_user}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Unknown user: {effective_user}",
-            )
-
-        # Log pour audit
-        auth_mode = "[JWT]" if jwt_user else "[X-User]"
-        logger.info(f"Active user (required): {effective_user} {auth_mode}")
-        return effective_user
-
-    except ValueError as e:
-        logger.warning(f"Invalid user ID format: {x_user} - {e}")
+        mode = get_auth_mode()
+        if mode == "legacy":
+            if x_user is None:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="X-User header is required in legacy mode",
+                )
+            normalized_user = validate_user_id(x_user)
+            if os.getenv("DEV_OPEN_API", "0") == "1":
+                return normalized_user
+            jwt_user = _extract_jwt_user(authorization)
+            if os.getenv("REQUIRE_JWT", "0") == "1" and not jwt_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Authentication token required",
+                )
+            if jwt_user and jwt_user != normalized_user:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User identity mismatch between token and header",
+                )
+            effective_user = jwt_user or normalized_user
+            if not is_allowed_user(effective_user):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Unknown user: {effective_user}",
+                )
+            return effective_user
+        return resolve_authenticated_user(
+            authorization=authorization,
+            access_cookie=access_cookie,
+            x_user=x_user,
+        )
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid user ID format: {e}",
-        )
+            detail=f"Invalid user ID format: {exc}",
+        ) from exc
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Unexpected error in get_required_user: {e}")
+    except Exception as exc:
+        logger.error("Unexpected error in get_required_user: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from exc
 
 
 def require_admin_role(
-    x_user: str = Header(..., alias="X-User"),
+    x_user: Optional[str] = Header(None, alias="X-User"),
     authorization: Optional[str] = Header(None, alias="Authorization"),
+    access_cookie: Optional[str] = Cookie(None, alias=ACCESS_COOKIE),
 ) -> str:
     """
     Dépendance FastAPI qui FORCE le rôle admin et valide le JWT si présent.
@@ -213,85 +280,35 @@ def require_admin_role(
             # user est garanti avoir le rôle "admin", JWT validé si présent
     """
     try:
-        normalized_user = validate_user_id(x_user)
-
-        # Mode développement : bypass de l'autorisation si DEV_OPEN_API=1
-        dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
-        if dev_mode:
-            logger.info(f"DEV MODE: Bypassing admin role check for user: {normalized_user}")
-            return normalized_user
-
-        # JWT validation (if present)
-        jwt_user = _extract_jwt_user(authorization)
-
-        # Strict mode: reject requests without valid JWT
-        require_jwt = os.getenv("REQUIRE_JWT", "0") == "1"
-        if require_jwt and not jwt_user:
-            logger.warning(f"JWT required but not provided for admin user: {normalized_user}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Authentication token required",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        # Anti-spoofing: ensure JWT user matches X-User header
-        if jwt_user and jwt_user != normalized_user:
-            logger.warning(f"JWT/X-User mismatch in admin endpoint: JWT={jwt_user}, X-User={normalized_user}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User identity mismatch between token and header",
-            )
-
-        effective_user = jwt_user or normalized_user
-
-        # Vérification autorisation normale
-        if not is_allowed_user(effective_user):
-            logger.warning(f"Unknown user attempted admin access: {effective_user}")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Unknown user: {effective_user}",
-            )
-
-        # Récupérer les infos utilisateur pour vérifier le rôle
-        user_info = get_user_info(effective_user)
+        user_id = get_required_user(x_user, authorization, access_cookie)
+        if get_auth_mode() == "legacy" and os.getenv("DEV_OPEN_API", "0") == "1":
+            return user_id
+        user_info = get_user_info(user_id)
         if not user_info:
-            logger.warning(f"User info not found for admin access: {effective_user}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User info not found: {effective_user}",
+                detail=f"User info not found: {user_id}",
             )
-
-        # Vérifier le rôle admin
-        user_roles = user_info.get("roles", [])
-        if "admin" not in user_roles:
-            logger.warning(f"User {effective_user} attempted admin access without admin role (roles: {user_roles})")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin role required for this operation",
-            )
-
-        # Log pour audit
-        auth_mode = "[JWT]" if jwt_user else "[X-User]"
-        logger.info(f"Admin access granted for user: {effective_user} {auth_mode}")
-        return effective_user
-
-    except ValueError as e:
-        logger.warning(f"Invalid user ID format in admin endpoint: {x_user} - {e}")
+        if "admin" in user_info.get("roles", []):
+            return user_id
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid user ID format: {e}",
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required for this operation",
         )
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Unexpected error in require_admin_role: {e}")
+    except Exception as exc:
+        logger.error("Unexpected error in require_admin_role: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
-        )
+        ) from exc
 
 
-def get_current_user_jwt(authorization: Optional[str] = Header(None, alias="Authorization")) -> str:
+def get_current_user_jwt(
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    access_cookie: Optional[str] = Cookie(None, alias=ACCESS_COOKIE),
+) -> str:
     """
     Dépendance FastAPI qui extrait et valide le JWT token.
 
@@ -311,15 +328,46 @@ def get_current_user_jwt(authorization: Optional[str] = Header(None, alias="Auth
         async def endpoint(user: str = Depends(get_current_user_jwt)):
             # user est garanti authentifié via JWT
     """
-    # Mode développement : bypass si DEV_SKIP_AUTH=1
-    dev_skip_auth = os.getenv("DEV_SKIP_AUTH", "0") == "1"
+    if not isinstance(authorization, str):
+        authorization = None
+    if not isinstance(access_cookie, str):
+        access_cookie = None
+
+    if get_auth_mode() == "cookie" and authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer authentication is disabled in cookie mode",
+        )
+
+    # Mode développement : bypass uniquement en mode legacy
+    dev_skip_auth = (
+        get_auth_mode() == "legacy"
+        and os.getenv("ENVIRONMENT", "development").lower() != "production"
+        and os.getenv("DEV_SKIP_AUTH", "0") == "1"
+    )
     if dev_skip_auth:
         default_user = get_default_user()
         logger.info(f"DEV MODE: Bypassing JWT auth, using default user: {default_user}")
         return default_user
 
-    # Vérifier présence du header
-    if not authorization:
+    if authorization and not access_cookie:
+        parts = authorization.split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication token format",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    bearer_user = _extract_jwt_user(authorization)
+    cookie_user = _extract_cookie_user(access_cookie)
+    if bearer_user and cookie_user and bearer_user != cookie_user:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Session identity mismatch",
+        )
+    user_id = cookie_user or bearer_user
+    if not user_id:
         logger.warning("Missing Authorization header")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -327,62 +375,31 @@ def get_current_user_jwt(authorization: Optional[str] = Header(None, alias="Auth
             headers={"WWW-Authenticate": "Bearer"}
         )
 
-    # Extraire le token du header "Bearer <token>"
-    parts = authorization.split()
-    if len(parts) != 2 or parts[0].lower() != "bearer":
-        logger.warning(f"Invalid Authorization header format: {authorization[:20]}...")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication token format",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
-    token = parts[1]
-
-    # Décoder et valider le token
-    payload = decode_access_token(token)
-    if not payload:
-        logger.warning("Invalid or expired JWT token")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
-    # Extraire l'user_id du payload
-    user_id = payload.get("sub")
-    if not user_id:
-        logger.error("JWT payload missing 'sub' claim")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
-    # Vérifier que l'utilisateur existe toujours
-    if not is_allowed_user(user_id):
-        logger.warning(f"JWT token for unknown/deleted user: {user_id}")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"}
-        )
-
-    # Vérifier le status
-    user_info = get_user_info(user_id)
-    if user_info and user_info.get("status") != "active":
-        logger.warning(f"JWT token for inactive user: {user_id}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
-        )
-
-    # Log pour audit
     logger.debug(f"JWT authenticated user: {user_id}")
     return user_id
 
 
-def require_admin_role_jwt(authorization: str = Header(..., alias="Authorization")) -> str:
+def require_any_role(*allowed_roles: str) -> Callable:
+    """FastAPI dependency requiring at least one current role (admin always qualifies)."""
+    allowed = set(allowed_roles)
+
+    def dependency(user_id: str = Depends(get_current_user_jwt)) -> AuthenticatedUser:
+        user_info = get_user_info(user_id)
+        roles = set(user_info.get("roles", [])) if user_info else set()
+        if "admin" not in roles and roles.isdisjoint(allowed):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"One of these roles is required: {', '.join(sorted(allowed))}",
+            )
+        return AuthenticatedUser(username=user_id, roles=sorted(roles))
+
+    return dependency
+
+
+def require_admin_role_jwt(
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    access_cookie: Optional[str] = Cookie(None, alias=ACCESS_COOKIE),
+) -> str:
     """
     Dépendance FastAPI qui FORCE le rôle admin via JWT token.
 
@@ -403,7 +420,10 @@ def require_admin_role_jwt(authorization: str = Header(..., alias="Authorization
             # user est garanti avoir le rôle "admin" via JWT
     """
     # Valider le JWT d'abord
-    user_id = get_current_user_jwt(authorization)
+    if isinstance(access_cookie, str):
+        user_id = get_current_user_jwt(authorization, access_cookie)
+    else:
+        user_id = get_current_user_jwt(authorization)
 
     # Récupérer les infos utilisateur pour vérifier le rôle
     user_info = get_user_info(user_id)
@@ -428,7 +448,7 @@ def require_admin_role_jwt(authorization: str = Header(..., alias="Authorization
     return user_id
 
 
-def get_redis_client() -> Optional[any]:
+def get_redis_client() -> Optional[Any]:
     """
     Dépendance FastAPI pour obtenir le client Redis.
 
@@ -491,6 +511,8 @@ def get_redis_client() -> Optional[any]:
 
 def get_user_and_source(
     user: str = Header(None, alias="X-User"),
+    authorization: Optional[str] = Header(None, alias="Authorization"),
+    access_cookie: Optional[str] = Cookie(None, alias=ACCESS_COOKIE),
     source: str = Query("auto", description="Data source (auto, cointracking, saxobank)")
 ) -> Tuple[str, str]:
     """
@@ -500,7 +522,7 @@ def get_user_and_source(
     and source from query parameters.
 
     Args:
-        user: User ID from X-User header (optional, defaults to 'demo')
+        user: Optional consistency header; it never authenticates in secure modes
         source: Data source from query parameter (default: 'auto')
 
     Returns:
@@ -531,39 +553,24 @@ def get_user_and_source(
             user_id = params["user_id"]
             source = params["source"]
     """
-    # Use get_active_user logic for user extraction
-    if not user:
-        user_id = get_default_user()
-        logger.debug(f"No X-User header, using default: {user_id}")
-    else:
-        try:
-            user_id = validate_user_id(user)
-
-            # Dev mode bypass
-            dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
-            if dev_mode:
-                logger.info(f"DEV MODE: Bypassing authorization for user: {user_id}")
-            elif not is_allowed_user(user_id):
-                logger.warning(f"Unknown user attempted access: {user}")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Unknown user: {user}"
-                )
-
-            logger.info(f"Active user: {user_id}")
-
-        except ValueError as e:
-            logger.warning(f"Invalid user ID format: {user} - {e}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid user ID format: {e}"
-            )
-
-    return user_id, source
+    try:
+        if get_auth_mode() == "legacy" and not user:
+            return get_default_user(), source
+        user_id = resolve_authenticated_user(
+            authorization=authorization,
+            access_cookie=access_cookie,
+            x_user=user,
+        )
+        return user_id, source
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid user ID format: {exc}",
+        ) from exc
 
 
 def get_user_and_source_dict(
-    user_source: Tuple[str, str] = None
+    user_source: Optional[Tuple[str, str]] = None
 ) -> dict:
     """
     Alternative dependency that returns user and source as a dict.
@@ -581,8 +588,10 @@ def get_user_and_source_dict(
             source = params["source"]
     """
     if user_source is None:
-        # This should not happen if used as a dependency
-        user_id, source = get_default_user(), "auto"
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication session required",
+        )
     else:
         user_id, source = user_source
 

@@ -30,12 +30,13 @@ export function getTodayCH() {
 /**
  * Générer clé localStorage scopée par user/source/contexte
  * @param {Object} opts - Options { user, source, suffix }
- * @param {string} opts.user - ID utilisateur (défaut: 'demo')
+ * @param {string} opts.user - Authenticated user ID
  * @param {string} opts.source - Source de données (défaut: 'cointracking')
  * @param {string} opts.suffix - Suffixe contexte (défaut: '_prod', ou '_sim' pour simulation)
  * @returns {string} Clé localStorage (ex: "di_history_demo_cointracking_prod")
  */
-export function makeKey({ user = 'demo', source = 'cointracking', suffix = '_prod' } = {}) {
+export function makeKey({ user, source = 'cointracking', suffix = '_prod' } = {}) {
+  if (!user) throw new Error('Authenticated user is required for DI history');
   return `di_history_${user}_${source}${suffix}`;
 }
 

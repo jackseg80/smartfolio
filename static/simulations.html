@@ -330,7 +330,7 @@
     async function loadAvailableSources() {
       try {
         const apiBase = window.globalConfig?.get('api_base_url') || window.location.origin;
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser') || '';
         const response = await fetch(`${apiBase}/api/users/sources`, {
           headers: { 'X-User': activeUser }
         });
@@ -368,7 +368,7 @@
     async function testSelectedSource() {
       const select = document.getElementById('sim-source-select');
       const source = select?.value || getActiveSource();
-      const userId = localStorage.getItem('activeUser') || 'demo';
+      const userId = localStorage.getItem('activeUser') || '';
 
       debugLogger.debug(`🧪 Testing source: ${source} for user: ${userId}`);
 
@@ -731,7 +731,7 @@
       }
 
       // Decision Index - Nouveau panneau visuel
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser') || '';
       const dataSource = window.globalConfig?.get('data_source') || 'unknown';
       const historyKey = `di_history_${activeUser}_${dataSource}_simulation`;
 

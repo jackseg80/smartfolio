@@ -1,9 +1,15 @@
 # connectors/cointracking_api.py
 from __future__ import annotations
 
-import os, time, hmac, hashlib, json, re, asyncio
+import asyncio
+import hashlib
+import hmac
+import json
+import os
+import re
+import time
 from typing import Any, Dict, List, Optional, Tuple
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 from dotenv import load_dotenv
@@ -139,7 +145,8 @@ def _now_ms() -> int:
     return int(time.time() * 1000)
 
 def _clean_exchange_name(name: str) -> str:
-    if not name: return "Unknown"
+    if not name:
+        return "Unknown"
     n = str(name).strip()
     # CoinTracking renvoie souvent "Kraken Balance" etc.
     if n.endswith(" Balance"):
@@ -262,6 +269,12 @@ def _post_api(method: str, params: Optional[Dict[str, Any]] = None,
         raise RuntimeError("CT_API_KEY / CT_API_SECRET manquants (ou vides) - fournir en paramètre ou dans l'environnement")
 
     url = API_BASE.rstrip("/") + "/"
+    parsed_url = urlparse(url)
+    if (
+        parsed_url.scheme != "https"
+        or parsed_url.hostname not in {"cointracking.info", "www.cointracking.info"}
+    ):
+        raise RuntimeError("CoinTracking API base must use HTTPS on cointracking.info")
     form: Dict[str, Any] = {"method": method, "nonce": _now_ms()}
     if params:
         form.update(params)
@@ -282,7 +295,8 @@ def _post_api(method: str, params: Optional[Dict[str, Any]] = None,
     )
 
     try:
-        with urlopen(req, timeout=25) as resp:
+        # The scheme and hostname are allowlisted immediately above.
+        with urlopen(req, timeout=25) as resp:  # nosec B310
             raw = resp.read().decode("utf-8", errors="replace")
             try:
                 payload = json.loads(raw)
@@ -832,14 +846,26 @@ def _normalize_exchange_name(raw: str) -> str:
     s = s.replace("  ", " ")
     return s or "Unknown"
 
-async def ct_grouped_balance_rows(session=None, exclude_dep_with: str = "1") -> list[dict]:
+async def ct_grouped_balance_rows(
+    session=None,
+    exclude_dep_with: str = "1",
+    *,
+    api_key: str,
+    api_secret: str,
+) -> list[dict]:
     """
     Appelle getGroupedBalance(group=exchange) et renvoie la liste brute (rows) telle que l'API la donne.
     """
     params = {"group": "exchange"}
     if exclude_dep_with is not None:
         params["exclude_dep_with"] = str(exclude_dep_with)
-    data = await ct_call("getGroupedBalance", params=params, session=session)
+    del session  # Retained for backward-compatible callers.
+    data = await _post_api_cached_async(
+        "getGroupedBalance",
+        params=params,
+        api_key=api_key,
+        api_secret=api_secret,
+    )
     # data['details'] est normalement un mapping exchange->coins OU une liste de lignes selon ton parser.
     # Ton implémentation ct_call() actuelle remonte déjà des 'rows' à plat dans ct debug/previews.
     # Si besoin, adapte ici pour aplatir en lignes {symbol, amount, value_usd, location}

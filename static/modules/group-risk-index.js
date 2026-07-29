@@ -66,6 +66,7 @@ export class GroupRiskIndex {
     _groupAssetsByTaxonomy(holdings) {
         const groups = {};
         const totalPortfolioValue = Object.values(holdings).reduce((sum, h) => sum + (h.value_usd || 0), 0);
+        if (totalPortfolioValue <= 0) return groups;
 
         for (const [symbol, holding] of Object.entries(holdings)) {
             const classification = this.taxonomy.getAssetClassification(symbol);
@@ -123,7 +124,9 @@ export class GroupRiskIndex {
             }
 
             // Calculate concentration within group (Herfindahl index)
-            const assetWeightsInGroup = groupData.assets.map(a => a.value / groupData.total_value);
+            const assetWeightsInGroup = groupData.total_value > 0
+                ? groupData.assets.map(a => a.value / groupData.total_value)
+                : [];
             const herfindahlIndex = assetWeightsInGroup.reduce((sum, w) => sum + w * w, 0);
 
             // Calculate group risk level
@@ -137,9 +140,13 @@ export class GroupRiskIndex {
                 concentration_score: herfindahlIndex * 100, // 0-100 scale
                 diversification_score: (1 - herfindahlIndex) * 100, // Inverse of concentration
                 risk_level: riskLevel,
-                risk_score: this._calculateGroupRiskScore(weightedVolatility, groupData.weight, herfindahlIndex),
+                risk_penalty_score: this._calculateGroupRiskPenalty(
+                    weightedVolatility,
+                    groupData.weight,
+                    herfindahlIndex
+                ),
                 asset_count: groupData.assets.length,
-                effective_assets: 1 / herfindahlIndex // Effective number of assets
+                effective_assets: herfindahlIndex > 0 ? 1 / herfindahlIndex : 0
             };
         }
 
@@ -157,7 +164,7 @@ export class GroupRiskIndex {
         const portfolioHerfindahl = groupWeights.reduce((sum, w) => sum + w * w, 0);
 
         // Calculate effective number of groups
-        const effectiveGroups = 1 / portfolioHerfindahl;
+        const effectiveGroups = portfolioHerfindahl > 0 ? 1 / portfolioHerfindahl : 0;
 
         // Calculate inter-group correlation (simplified)
         let avgInterGroupCorrelation = 0.6; // Default moderate correlation
@@ -189,14 +196,18 @@ export class GroupRiskIndex {
             return sum + w * groupRisks[groups[i]].weighted_volatility;
         }, 0);
 
-        const diversificationRatio = weightedAverageVolatility / portfolioVolatility;
+        const diversificationRatio = portfolioVolatility > 0
+            ? weightedAverageVolatility / portfolioVolatility
+            : 0;
 
         return {
             portfolio_herfindahl: portfolioHerfindahl,
             effective_groups: effectiveGroups,
             diversification_ratio: diversificationRatio,
             avg_inter_group_correlation: avgInterGroupCorrelation,
-            diversification_score: Math.min(100, (effectiveGroups / groups.length) * 100),
+            diversification_score: groups.length > 0
+                ? Math.min(100, (effectiveGroups / groups.length) * 100)
+                : 0,
             correlation_risk: avgInterGroupCorrelation > 0.8 ? 'HIGH' : avgInterGroupCorrelation > 0.6 ? 'MEDIUM' : 'LOW'
         };
     }
@@ -213,7 +224,7 @@ export class GroupRiskIndex {
 
         // Risk-weighted concentration (weight * risk)
         const riskWeightedConcentration = groups.reduce((sum, group) => {
-            return sum + group.weight * group.risk_score / 100;
+            return sum + group.weight * group.risk_penalty_score / 100;
         }, 0);
 
         // Concentration risk level
@@ -298,10 +309,10 @@ export class GroupRiskIndex {
         const concentrationPenalty = concentrationRisk.concentration_score; // 0-100, higher = worse
         const diversificationBonus = Math.max(0, 100 - concentrationPenalty); // Invert for bonus
 
-        // Group risk_score is actually a penalty in this context (higher = riskier)
+        // The group penalty is explicitly named as a penalty (higher = riskier).
         // Invert to align with GRI convention (higher = better)
         const riskAdjustedComponent = Object.values(groupRisks).reduce((acc, group) => {
-            return acc + group.weight * (100 - group.risk_score); // Invert penalty to robustness
+            return acc + group.weight * (100 - group.risk_penalty_score);
         }, 0);
 
         // Weight the components
@@ -319,7 +330,7 @@ export class GroupRiskIndex {
         return 'LOW';
     }
 
-    _calculateGroupRiskScore(volatility, weight, concentration) {
+    _calculateGroupRiskPenalty(volatility, weight, concentration) {
         // Combine volatility, portfolio weight, and internal concentration
         const baseRisk = Math.min(100, volatility * 200); // Normalize volatility to 0-100
         const weightPenalty = weight * 50; // Higher weight = higher contribution to portfolio risk

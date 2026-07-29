@@ -12,7 +12,8 @@ import logging
 
 from api.deps import require_admin_role
 from api.utils import success_response, error_response
-from api.config.users import get_all_users, clear_users_cache
+from api.auth_security import revoke_all_user_sessions
+from api.config.users import clear_users_cache, get_all_users, update_user_password
 from services.user_management import get_user_management_service
 from services.log_reader import get_log_reader
 from services.cache_manager import cache_manager
@@ -35,15 +36,15 @@ router = APIRouter(
 # ============================================================================
 
 class CreateUserRequest(BaseModel):
-    """Request model pour création utilisateur"""
+    """Request model for user creation."""
     user_id: str = Field(..., min_length=1, max_length=50, description="User ID (alphanumeric + underscore)")
     label: str = Field(..., min_length=1, max_length=100, description="Display label")
-    password: Optional[str] = Field(None, min_length=8, description="Initial password (optional, min 8 characters)")
+    password: Optional[str] = Field(None, min_length=12, description="Initial password (optional, minimum 12 characters)")
     roles: List[str] = Field(default=["viewer"], description="User roles")
 
 
 class UpdateUserRequest(BaseModel):
-    """Request model pour mise à jour utilisateur"""
+    """Request model for user updates."""
     label: Optional[str] = Field(None, min_length=1, max_length=100)
     roles: Optional[List[str]] = None
     status: Optional[str] = Field(None, pattern="^(active|inactive)$")
@@ -51,7 +52,7 @@ class UpdateUserRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     """Request model pour reset password (admin uniquement)"""
-    new_password: str = Field(..., min_length=8, description="New password (min 8 characters)")
+    new_password: str = Field(..., min_length=12, description="New password (minimum 12 characters)")
 
 
 class AssignRolesRequest(BaseModel):
@@ -199,27 +200,7 @@ async def create_user(
             from api.auth_router import get_password_hash
 
             password_hash = get_password_hash(request.password)
-
-            # Mettre à jour users.json avec le password_hash
-            import json
-            from pathlib import Path
-
-            users_path = Path(__file__).parent.parent / "config" / "users.json"
-            with open(users_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-
-            # Trouver et mettre à jour l'utilisateur nouvellement créé
-            for u in config.get("users", []):
-                if u.get("id") == request.user_id:
-                    u["password_hash"] = password_hash
-                    break
-
-            # Sauvegarder
-            with open(users_path, 'w', encoding='utf-8') as f:
-                json.dump(config, f, indent=2, ensure_ascii=False)
-
-            # Vider le cache pour forcer reload
-            clear_users_cache()
+            update_user_password(request.user_id, password_hash)
 
             logger.info(f"Password set for new user '{request.user_id}'")
 
@@ -281,6 +262,8 @@ async def update_user(
             data=update_data,
             admin_user=user
         )
+        if request.status == "inactive":
+            revoke_all_user_sessions(user_id)
 
         return success_response(
             updated_user,
@@ -333,6 +316,7 @@ async def delete_user(
             admin_user=user,
             hard_delete=hard_delete
         )
+        revoke_all_user_sessions(user_id)
 
         delete_type = "HARD (permanent)" if hard_delete else "soft (désactivation)"
         return success_response(
@@ -415,8 +399,6 @@ async def reset_user_password(
         dict: Confirmation du reset
     """
     try:
-        import json
-        from pathlib import Path
         from api.auth_router import get_password_hash
         from api.config.users import get_user_info
 
@@ -428,28 +410,8 @@ async def reset_user_password(
         # Hasher le nouveau password
         new_hash = get_password_hash(request.new_password)
 
-        # Mettre à jour users.json
-        users_path = Path(__file__).parent.parent / "config" / "users.json"
-        with open(users_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-
-        # Trouver et mettre à jour l'utilisateur
-        updated = False
-        for u in config.get("users", []):
-            if u.get("id") == user_id:
-                u["password_hash"] = new_hash
-                updated = True
-                break
-
-        if not updated:
-            raise ValueError(f"User '{user_id}' not found in config")
-
-        # Sauvegarder
-        with open(users_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f, indent=2, ensure_ascii=False)
-
-        # CRITICAL: Vider le cache pour forcer reload de la config
-        clear_users_cache()
+        update_user_password(user_id, new_hash)
+        revoke_all_user_sessions(user_id)
 
         logger.info(f"Password reset by admin '{user}' for user '{user_id}'")
 

@@ -26,6 +26,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from services.ml.model_registry import ModelRegistry, ModelStatus
+from services.ml.safe_loader import safe_pickle_load
 
 logger = logging.getLogger(__name__)
 
@@ -252,7 +253,6 @@ class TrainingExecutor:
         """
         try:
             from pathlib import Path
-            import pickle
 
             models_dir = Path(__file__).parent.parent.parent / "models"
 
@@ -264,10 +264,9 @@ class TrainingExecutor:
                     logger.warning(f"⚠️ Metadata file not found: {metadata_path}")
                     return None
 
-                with open(metadata_path, 'rb') as f:
-                    metadata = pickle.load(f)
-                    logger.info(f"✅ Loaded regime metadata from {metadata_path}")
-                    return metadata
+                metadata = safe_pickle_load(metadata_path)
+                logger.info(f"✅ Loaded regime metadata from {metadata_path}")
+                return metadata
 
             elif model_type == "volatility" or "volatility" in str(model_type).lower():
                 # Load volatility metadata (needs symbol)
@@ -281,10 +280,9 @@ class TrainingExecutor:
                     logger.warning(f"⚠️ Metadata file not found: {metadata_path}")
                     return None
 
-                with open(metadata_path, 'rb') as f:
-                    metadata = pickle.load(f)
-                    logger.info(f"✅ Loaded {symbol} volatility metadata from {metadata_path}")
-                    return metadata
+                metadata = safe_pickle_load(metadata_path)
+                logger.info(f"✅ Loaded {symbol} volatility metadata from {metadata_path}")
+                return metadata
 
             else:
                 logger.warning(f"⚠️ Unknown model type: {model_type}")

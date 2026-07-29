@@ -796,7 +796,7 @@
         // ===== Data Loading =====
         async function loadData() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Load summary
                 const summaryRes = await fetch('/api/wealth/summary', {
@@ -1278,7 +1278,7 @@
             };
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const itemId = document.getElementById('itemId').value;
 
                 let response;
@@ -1323,7 +1323,7 @@
             }
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/api/wealth/items/${itemId}`, {
                     method: 'DELETE',
                     headers: {

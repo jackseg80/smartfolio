@@ -176,7 +176,7 @@ async function runOptimization() {
     const url = `${API_BASE}/api/portfolio/optimization/optimize-advanced?${params.toString()}`;
 
     // Multi-tenant: utiliser le user actif
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     const response = await fetch(url, {
       method: 'POST',
@@ -617,7 +617,7 @@ async function compareAlgorithms() {
         const params = new URLSearchParams(baseParams);
         const url = `${API_BASE}/api/portfolio/optimization/optimize-advanced?${params.toString()}`;
 
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
 
         const response = await fetch(url, {
           method: 'POST',

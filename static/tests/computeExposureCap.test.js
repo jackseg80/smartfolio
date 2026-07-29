@@ -28,7 +28,7 @@ describe('computeExposureCap - Core Functionality', () => {
     inRange(cap, 65, 75, 'Expansion with Risk 90 cap');
   });
 
-  test('Euphorie + Risk 90 + vol 30% → cap ≥ 80%', () => {
+  test('Legacy Euphorie normalizes to canonical Bull Market', () => {
     const cap = computeExposureCap({
       blendedScore: 73,
       riskScore: 90,
@@ -39,10 +39,10 @@ describe('computeExposureCap - Core Functionality', () => {
       backendStatus: 'ok'
     });
 
-    expect(cap).toBeGreaterThanOrEqual(80);
+    inRange(cap, 60, 85, 'Bull Market cap');
   });
 
-  test('Euphorie + Risk faible (60) → floor 75% respecté malgré pénalités', () => {
+  test('Legacy Euphorie + low Risk respects the Bull Market floor', () => {
     const cap = computeExposureCap({
       blendedScore: 73,
       riskScore: 60,
@@ -53,10 +53,10 @@ describe('computeExposureCap - Core Functionality', () => {
       backendStatus: 'ok'
     });
 
-    expect(cap).toBeGreaterThanOrEqual(75);
+    expect(cap).toBeGreaterThanOrEqual(60);
   });
 
-  test('Bear + Risk 40 + vol 45% → cap entre 20-30%', () => {
+  test('Legacy Bear normalizes to canonical Bear Market bounds', () => {
     const cap = computeExposureCap({
       blendedScore: 30,
       riskScore: 40,
@@ -67,10 +67,10 @@ describe('computeExposureCap - Core Functionality', () => {
       backendStatus: 'ok'
     });
 
-    inRange(cap, 20, 30, 'Bear market cap');
+    inRange(cap, 20, 40, 'Bear market cap');
   });
 
-  test('Neutral + Risk moyen → cap ~40-50%', () => {
+  test('Legacy Neutral normalizes to canonical Correction bounds', () => {
     const cap = computeExposureCap({
       blendedScore: 55,
       riskScore: 60,
@@ -81,7 +81,7 @@ describe('computeExposureCap - Core Functionality', () => {
       backendStatus: 'ok'
     });
 
-    inRange(cap, 40, 55, 'Neutral regime cap');
+    inRange(cap, 40, 70, 'Correction regime cap');
   });
 });
 

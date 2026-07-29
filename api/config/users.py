@@ -13,6 +13,8 @@ from config.users import (
     get_user_info,
     get_user_mode,
     clear_users_cache,
+    get_users_config_path,
+    update_user_password,
     validate_user_id,
 )
 
@@ -25,5 +27,7 @@ __all__ = [
     "get_user_info",
     "get_user_mode",
     "clear_users_cache",
+    "get_users_config_path",
+    "update_user_password",
     "validate_user_id",
 ]

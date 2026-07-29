@@ -222,7 +222,6 @@ class StressTestResult:
 async def calculate_stress_test(
     holdings: List[Dict[str, Any]],
     scenario_id: str,
-    user_id: str = "demo"
 ) -> StressTestResult:
     """
     Calcule l'impact d'un scénario de stress sur le portfolio
@@ -230,8 +229,6 @@ async def calculate_stress_test(
     Args:
         holdings: Liste des holdings avec value_usd et symbol
         scenario_id: ID du scénario (ex: "crisis_2008")
-        user_id: ID utilisateur (pour isolation)
-
     Returns:
         StressTestResult avec impact détaillé
     """

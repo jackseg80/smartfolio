@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 import httpx
 from dotenv import load_dotenv
 from fastapi import Body, Depends, FastAPI, HTTPException, Query, Response
+from fastapi.responses import RedirectResponse
 
 from api.services.cointracking_helpers import load_ctapi_exchanges
 from api.services.csv_helpers import to_csv
@@ -145,6 +146,12 @@ setup_middlewares(
 # ========== Static Files Setup (Modular) ==========
 # All static file mounts configured in api/static_files_setup.py for maintainability
 setup_static_files(app, debug=DEBUG)
+
+
+@app.get("/", include_in_schema=False)
+async def application_entrypoint() -> RedirectResponse:
+    """Send unauthenticated visitors to the public login page."""
+    return RedirectResponse(url="/static/login.html", status_code=307)
 
 # >>> BEGIN: CT-API helpers (centralized constants) >>>
 try:
@@ -711,3 +718,25 @@ async def portfolio_breakdown_locations(
 
 # /portfolio/alerts migrated to api/portfolio_endpoints.py
 # /api/config/* endpoints migrated to api/config_router.py
+
+
+def _build_public_openapi():
+    """Build an English-only public schema without internal French docstrings."""
+    from fastapi.openapi.utils import get_openapi
+
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(
+        title="SmartFolio API",
+        version="1.0.0",
+        routes=app.routes,
+    )
+    for methods in schema.get("paths", {}).values():
+        for operation in methods.values():
+            if isinstance(operation, dict):
+                operation.pop("description", None)
+    app.openapi_schema = schema
+    return schema
+
+
+app.openapi = _build_public_openapi

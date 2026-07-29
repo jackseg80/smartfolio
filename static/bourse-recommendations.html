@@ -387,7 +387,7 @@
         async function loadRecommendations(timeframe = 'medium') {
             const tableContainer = document.getElementById('recommendationsTable');
             const scanBtn = document.getElementById('btnScanRecommendations');
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             const originalText = scanBtn ? scanBtn.textContent : '';
 
             // Check if source is configured
@@ -527,6 +527,17 @@
             `;
         }
 
+        function finiteNumber(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        }
+
+        function formatNumber(value, digits = 1, fallback = 'N/A') {
+            const number = finiteNumber(value);
+            return number === null ? fallback : number.toFixed(digits);
+        }
+
         function sortRecommendations(column) {
             if (recSortColumn === column) {
                 recSortDirection = recSortDirection === 'asc' ? 'desc' : 'asc';
@@ -641,7 +652,9 @@
         }
 
         function getConfidenceBar(confidence) {
-            const percentage = Math.round(confidence * 100);
+            const confidenceValue = finiteNumber(confidence);
+            if (confidenceValue === null) return '<span style="color: var(--theme-text-muted);">N/A</span>';
+            const percentage = Math.round(confidenceValue * 100);
             const color = percentage > 70 ? '#22c55e' : percentage > 50 ? '#fbbf24' : '#ef4444';
             return `
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -796,7 +809,7 @@
         }
 
         async function loadMarketOpportunities() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             const scanBtn = document.getElementById('btnScanOpportunities');
             const originalText = scanBtn.textContent;
 
@@ -922,19 +935,20 @@
             container.innerHTML = `
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding: 1rem;">
                     ${gaps.map(gap => {
-                        const scoreColor = gap.score >= 70 ? 'var(--success)' : gap.score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
+                        const score = finiteNumber(gap.score);
+                        const scoreColor = score !== null && score >= 70 ? 'var(--success)' : score !== null && score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
                         return `
                             <div style="padding: 1.5rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                                     <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">${gap.sector}</h4>
-                                    <div style="font-size: 1.25rem; font-weight: 700; color: ${scoreColor};">${gap.score.toFixed(0)}</div>
+                                    <div style="font-size: 1.25rem; font-weight: 700; color: ${scoreColor};">${formatNumber(gap.score, 0)}</div>
                                 </div>
                                 <div style="margin-bottom: 0.75rem;">
                                     <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current / Target</div>
-                                    <div style="font-size: 1.125rem; font-weight: 600;">${gap.current_pct.toFixed(1)}% → ${gap.target_pct.toFixed(1)}%</div>
+                                    <div style="font-size: 1.125rem; font-weight: 600;">${formatNumber(gap.current_pct)}% → ${formatNumber(gap.target_pct)}%</div>
                                 </div>
                                 <div style="padding: 0.5rem; background: var(--theme-surface); border-radius: var(--radius-sm); font-size: 0.75rem;">
-                                    <div style="color: var(--theme-text-muted);">Gap: <strong style="color: var(--warning);">${gap.gap_pct.toFixed(1)}%</strong></div>
+                                    <div style="color: var(--theme-text-muted);">Gap: <strong style="color: var(--warning);">${formatNumber(gap.gap_pct)}%</strong></div>
                                     <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">ETF: <strong>${gap.etf}</strong></div>
                                 </div>
                             </div>
@@ -967,13 +981,14 @@
                         </thead>
                         <tbody>
                             ${opportunities.map(opp => {
-                                const scoreColor = opp.score >= 70 ? 'var(--success)' : opp.score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
+                                const score = finiteNumber(opp.score);
+                                const scoreColor = score !== null && score >= 70 ? 'var(--success)' : score !== null && score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
                                 return `
                                     <tr style="border-bottom: 1px solid var(--theme-border);">
                                         <td style="padding: 0.75rem; font-weight: 600;">${opp.symbol}</td>
                                         <td style="padding: 0.75rem; color: var(--theme-text-muted);">${opp.name || opp.symbol}</td>
                                         <td style="padding: 0.75rem;">${opp.sector}</td>
-                                        <td style="padding: 0.75rem; text-align: center; color: ${scoreColor}; font-weight: 600;">${opp.score.toFixed(0)}</td>
+                                        <td style="padding: 0.75rem; text-align: center; color: ${scoreColor}; font-weight: 600;">${formatNumber(opp.score, 0)}</td>
                                         <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--info-bg); color: var(--info); border-radius: var(--radius-sm); font-size: 0.75rem;">${opp.type}</span></td>
                                         <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${opp.rationale}</td>
                                     </tr>
@@ -1099,12 +1114,12 @@
 
                 markdownText += `## Portfolio Gaps\n`;
                 (lastOpportunitiesData.gaps || []).forEach(gap => {
-                    markdownText += `- **${gap.sector}**: ${gap.current_pct.toFixed(1)}% → ${gap.target_pct.toFixed(1)}% (ETF: ${gap.etf})\n`;
+                    markdownText += `- **${gap.sector}**: ${formatNumber(gap.current_pct)}% → ${formatNumber(gap.target_pct)}% (ETF: ${gap.etf})\n`;
                 });
 
                 markdownText += `\n## Top Opportunities\n`;
                 (lastOpportunitiesData.opportunities || []).forEach(opp => {
-                    markdownText += `- **${opp.symbol}** (${opp.sector}): Score ${opp.score.toFixed(0)} - ${opp.rationale}\n`;
+                    markdownText += `- **${opp.symbol}** (${opp.sector}): Score ${formatNumber(opp.score, 0)} - ${opp.rationale}\n`;
                 });
 
                 markdownText += `\n## Suggested Sales\n`;

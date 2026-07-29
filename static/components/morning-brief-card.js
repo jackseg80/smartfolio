@@ -304,7 +304,7 @@ class MorningBriefCard extends HTMLElement {
     this._refreshBtn.classList.add('spinning');
 
     try {
-      const user = localStorage.getItem('activeUser') || 'demo';
+      const user = localStorage.getItem('activeUser');
       const forceParam = force ? '&force=true' : '';
 
       // Use auth headers if available

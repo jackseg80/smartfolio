@@ -31,25 +31,25 @@ _analytics_cache = {}
 
 # Models pour les requêtes/réponses
 class PortfolioSnapshotRequest(BaseModel):
-    """Requête pour créer un snapshot de portfolio"""
+    """Request to create a portfolio snapshot."""
     total_usd: float = Field(..., description="Valeur totale en USD")
-    allocations: Dict[str, float] = Field(..., description="Répartition par groupe en %")
+    allocations: Dict[str, float] = Field(..., description="Allocation by group in percent")
     values_usd: Dict[str, float] = Field(..., description="Valeurs en USD par groupe")
     performance_24h_pct: Optional[float] = Field(default=None, description="Performance 24h")
     performance_7d_pct: Optional[float] = Field(default=None, description="Performance 7j")
     performance_30d_pct: Optional[float] = Field(default=None, description="Performance 30j")
-    volatility_score: Optional[float] = Field(default=None, description="Score de volatilité")
+    volatility_score: Optional[float] = Field(default=None, description="Volatility score")
     diversification_score: Optional[float] = Field(default=None, description="Score de diversification")
 
 class SessionCreateRequest(BaseModel):
-    """Requête pour créer une session de rebalancement"""
-    target_allocations: Dict[str, float] = Field(..., description="Allocations cibles")
-    source: str = Field(default="api", description="Source des données")
-    pricing_mode: str = Field(default="auto", description="Mode de pricing")
+    """Request to create a rebalancing session."""
+    target_allocations: Dict[str, float] = Field(..., description="Target allocations")
+    source: str = Field(default="api", description="Data source")
+    pricing_mode: str = Field(default="auto", description="Pricing mode")
     dynamic_targets_used: bool = Field(default=False, description="Utilise des targets dynamiques")
     ccs_score: Optional[float] = Field(default=None, description="Score CCS")
-    min_trade_usd: float = Field(default=25.0, description="Montant minimum de trade")
-    strategy_notes: str = Field(default="", description="Notes sur la stratégie")
+    min_trade_usd: float = Field(default=25.0, description="Minimum trade amount")
+    strategy_notes: str = Field(default="", description="Strategy notes")
 
 class SessionResponse(BaseModel):
     """Réponse pour une session de rebalancement"""
@@ -65,8 +65,8 @@ class SessionResponse(BaseModel):
     total_fees: float
 
 class ExecutionResultRequest(BaseModel):
-    """Requête pour mettre à jour les résultats d'exécution"""
-    order_results: List[Dict[str, Any]] = Field(..., description="Résultats des ordres")
+    """Request to update execution results."""
+    order_results: List[Dict[str, Any]] = Field(..., description="Order results")
 
 @router.post("/sessions")
 async def create_rebalance_session(
@@ -481,7 +481,7 @@ async def generate_comprehensive_report(
             try:
                 from api.unified_data import get_unified_filtered_balances
                 # Récupérer l'historique portfolio des derniers jours
-                portfolio_history = await _get_portfolio_history_data(days_back)
+                portfolio_history = await _get_portfolio_history_data(days_back, user)
             except Exception as e:
                 logger.warning(f"Could not retrieve portfolio history: {e}")
                 portfolio_history = None
@@ -542,7 +542,7 @@ async def get_optimization_recommendations(
         return error_response(str(e), code=500)
 
 
-async def _get_portfolio_history_data(days_back: int) -> List[Dict[str, Any]]:
+async def _get_portfolio_history_data(days_back: int, user_id: str) -> List[Dict[str, Any]]:
     """Récupérer l'historique du portfolio pour analyse"""
     try:
         from datetime import datetime, timedelta, timezone
@@ -558,7 +558,8 @@ async def _get_portfolio_history_data(days_back: int) -> List[Dict[str, Any]]:
             try:
                 # Pour une vraie implémentation, il faudrait une vraie base de données temporelle
                 # Ici on simule avec les données actuelles comme approximation
-                balances = await get_unified_filtered_balances()
+                balance_result = await get_unified_filtered_balances(user_id=user_id)
+                balances = balance_result.get("items", [])
                 
                 portfolio_snapshot = {
                     'timestamp': current_date.isoformat(),
@@ -581,9 +582,9 @@ async def _get_portfolio_history_data(days_back: int) -> List[Dict[str, Any]]:
 
 
 class MarketBreadthResponse(BaseModel):
-    """Réponse pour l'analyse de largeur de marché"""
-    advance_decline_ratio: float = Field(description="Ratio avance/déclin [0-1]")
-    new_highs_count: int = Field(description="Nombre de nouveaux ATH récents")
+    """Response for market breadth analysis."""
+    advance_decline_ratio: float = Field(description="Advance-decline ratio [0-1]")
+    new_highs_count: int = Field(description="Number of recent new all-time highs")
     volume_concentration: float = Field(description="Concentration du volume [0-1]")
     momentum_dispersion: float = Field(description="Dispersion du momentum [0-1]")
     meta: Dict[str, Any] = Field(description="Metadata")

@@ -377,7 +377,7 @@ async def coingecko_stats():
     Statistiques sur le service CoinGecko
     """
     try:
-        from services.coingecko import coingecko_service
+        from services.coingecko_safe import coingecko_service
         stats = await coingecko_service.get_enrichment_stats()
         return success_response({"stats": stats})
     except Exception as e:
@@ -390,22 +390,22 @@ async def enrich_from_coingecko(payload: Dict[str, Any] = Body({})):
     """
     sample_symbols = payload.get("sample_symbols", "")
     if not sample_symbols:
-        return error_response("Le paramètre sample_symbols est requis", code=400)
+        return error_response("The sample_symbols parameter is required", code=400)
 
     symbols_list = [s.strip().upper() for s in sample_symbols.split(",") if s.strip()]
 
     if not symbols_list:
-        return error_response("Aucun symbole fourni", code=400)
+        return error_response("No symbols were provided", code=400)
 
     try:
-        from services.coingecko import coingecko_service
+        from services.coingecko_safe import coingecko_service
         results = await coingecko_service.classify_symbols_batch(symbols_list)
 
         # Filtrer les résultats non-null
         classifications = {k: v for k, v in results.items() if v is not None}
 
         return success_response({
-            "message": f"{len(classifications)} symboles classifiés via CoinGecko sur {len(symbols_list)} demandés",
+            "message": f"{len(classifications)} of {len(symbols_list)} symbols classified through CoinGecko",
             "total_requested": len(symbols_list),
             "coingecko_classified": len(classifications),
             "coverage": len(classifications) / len(symbols_list) if symbols_list else 0.0,
@@ -414,7 +414,7 @@ async def enrich_from_coingecko(payload: Dict[str, Any] = Body({})):
         })
 
     except Exception as e:
-        return error_response(f"Erreur lors de l'enrichissement CoinGecko: {str(e)}", code=500)
+        return error_response(f"CoinGecko enrichment failed: {str(e)}", code=500)
 
 @router.get("/test-coingecko-api")
 async def test_coingecko_api(api_key: str = None):

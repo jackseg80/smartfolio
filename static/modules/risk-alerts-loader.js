@@ -8,7 +8,7 @@ export async function loadRiskAlerts() {
   if (!container) return;
 
   try {
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     // Fetch active alerts from the unified alert system
     const response = await fetch('/api/alerts/list?severity=medium,high,critical&limit=5', {

@@ -2,8 +2,6 @@
 # Target: Ubuntu 24.04.2 LTS on NUC with Docker
 # Features: Redis cache/streaming, auto-start, healthchecks, optimized volumes
 
-version: '3.8'
-
 services:
   # Redis service - Cache & streaming backend
   redis:
@@ -49,13 +47,17 @@ services:
       - "${PORT:-8080}:${PORT:-8080}"  # LAN accessible
     environment:
       # Core settings
-      DEBUG: ${DEBUG:-true}
-      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-false}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
       PORT: ${PORT:-8080}
       HOST: 0.0.0.0  # Must be 0.0.0.0 for container networking
 
       # Redis connection (use service name as hostname)
       REDIS_URL: redis://redis:6379/0
+      AUTH_MODE: ${AUTH_MODE:-legacy}
+      AUTH_USER_STORE: ${AUTH_USER_STORE:-persistent}
+      AUTH_USERS_PATH: /app/data/auth/users.json
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be configured}
 
       # API Base URL for internal HTTP calls (backend calling itself)
       # In Docker, use localhost:PORT since it's the same container
@@ -76,7 +78,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
       # Uvicorn Network Settings (allow LAN access)
-      FORWARDED_ALLOW_IPS: "*"  # Allow access from any IP (dev mode)
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-172.18.0.0/16}
 
       # Security (optional, for dev/debug)
       DEBUG_TOKEN: ${DEBUG_TOKEN:-}
@@ -90,6 +92,8 @@ services:
 
       # CORS (dev only)
       CORS_ORIGINS: ${CORS_ORIGINS:-}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-segalla.ddns.net,192.168.1.200,localhost,smartfolio-api}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-https://segalla.ddns.net}
 
       # SaxoBank OAuth2 credentials (read from .env)
       SAXO_SIM_CLIENT_ID: ${SAXO_SIM_CLIENT_ID}
@@ -111,7 +115,7 @@ services:
       - smartfolio-net
 
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8080}/healthz"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -143,5 +147,5 @@ volumes:
 # Internal network for service communication
 networks:
   smartfolio-net:
-    driver: bridge
+    external: true
     name: smartfolio-network

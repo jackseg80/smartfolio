@@ -377,7 +377,11 @@ class MLGatingSystem:
             "acceptance_rate": accepted / total_predictions,
             "avg_confidence": float(avg_confidence),
             "last_prediction": max(h['timestamp'] for h in recent_history),
-            "health_score": quality.model_health if model_key in self.model_metrics else 0.5
+            "health_score": (
+                self.model_metrics[model_key].model_health
+                if model_key in self.model_metrics
+                else 0.5
+            )
         }
 
 

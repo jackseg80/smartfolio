@@ -234,7 +234,9 @@ data/
 - ✅ **HTTP headers**: CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
 - ✅ **Automated tests**: header & security validation
 
-📖 Complete details: [SECURITY.md](docs/SECURITY.md)
+📖 Complete details: [SECURITY.md](docs/SECURITY.md),
+[AUTHENTICATION.md](docs/AUTHENTICATION.md), and
+[EXTERNAL_ACCESS_CADDY.md](docs/EXTERNAL_ACCESS_CADDY.md)
 
 ## Documentation
 

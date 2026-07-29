@@ -8,6 +8,7 @@ Ce module gère:
 Extrait de alert_engine.py pour modularité.
 """
 
+from bisect import bisect_right
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import List, Optional
@@ -77,17 +78,29 @@ class PhaseAwareContext:
 
         self.phase_history.append(snapshot)
 
-        # Nettoyer l'historique > 2 * lag_minutes
+        # L'historique est chronologique. Une recherche binaire évite de
+        # reconstruire toute la liste à chaque tick (coût quadratique lorsque
+        # la fréquence de mise à jour augmente).
         cutoff = now - timedelta(minutes=self.lag_minutes * 2)
-        self.phase_history = [s for s in self.phase_history if s.captured_at > cutoff]
+        expired_count = bisect_right(
+            self.phase_history,
+            cutoff,
+            key=lambda item: item.captured_at,
+        )
+        if expired_count:
+            del self.phase_history[:expired_count]
 
         # Calculer la phase laggée
         lag_cutoff = now - timedelta(minutes=self.lag_minutes)
-        lagged_snapshots = [s for s in self.phase_history if s.captured_at <= lag_cutoff]
+        candidate_index = bisect_right(
+            self.phase_history,
+            lag_cutoff,
+            key=lambda item: item.captured_at,
+        ) - 1
 
-        if lagged_snapshots:
-            # Prendre le plus récent dans la fenêtre laggée
-            candidate = max(lagged_snapshots, key=lambda x: x.captured_at)
+        if candidate_index >= 0:
+            # Prendre le plus récent dans la fenêtre laggée.
+            candidate = self.phase_history[candidate_index]
 
             # Vérifier la persistance: phases similaires consécutives
             if candidate.persistence_count >= self.persistence_ticks:

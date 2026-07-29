@@ -538,10 +538,10 @@ class AdvancedRiskManager:
         selection_effect = 0.0
         interaction_effect = 0.0
 
-        for group, stats in group_contributions.items():
-            pw = stats["total_weight"]
+        for group, group_stats in group_contributions.items():
+            pw = group_stats["total_weight"]
             bweight = benchmark_weights.get(group, pw)
-            pr = stats["group_return"]
+            pr = group_stats["group_return"]
             br = benchmark_returns.get(group, 0.0)
 
             allocation_effect += (pw - bweight) * br

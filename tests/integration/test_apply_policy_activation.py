@@ -4,12 +4,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.main import app
+from api.deps import get_current_user_jwt
 from services.execution.governance import governance_engine
 
 
 @pytest.fixture
 def client() -> TestClient:
-    return TestClient(app)
+    app.dependency_overrides[get_current_user_jwt] = lambda: "jack"
+    try:
+        yield TestClient(app)
+    finally:
+        app.dependency_overrides.pop(get_current_user_jwt, None)
 
 
 @pytest.fixture(autouse=True)
@@ -80,3 +85,22 @@ def test_apply_policy_activates_manual_policy(client: TestClient):
     assert pytest.approx(0.20) == active_policy.get("cap_daily")
     assert active_policy.get("mode") == "Normal"
     assert governance_engine.current_state.last_applied_policy.cap_daily == pytest.approx(0.20)
+
+
+def test_viewer_cannot_apply_policy():
+    app.dependency_overrides[get_current_user_jwt] = lambda: "demo"
+    try:
+        response = TestClient(app).post(
+            "/execution/governance/apply_policy",
+            json={
+                "mode": "Normal",
+                "cap_daily": 0.1,
+                "ramp_hours": 6,
+                "reason": "viewer must be rejected",
+                "source_alert_id": "alert-viewer",
+            },
+            headers={"Idempotency-Key": str(uuid.uuid4())},
+        )
+    finally:
+        app.dependency_overrides.pop(get_current_user_jwt, None)
+    assert response.status_code == 403

@@ -20,7 +20,7 @@ class SourcesManagerV2 {
      * Get current user
      */
     getCurrentUser() {
-        return localStorage.getItem('activeUser') || 'demo';
+        return localStorage.getItem('activeUser');
     }
 
     /**
@@ -786,7 +786,7 @@ class SourcesManagerV2 {
             const response = await fetch('/api/sources/upload', {
                 method: 'POST',
                 headers: {
-                    'X-User': localStorage.getItem('activeUser') || 'demo'
+                    'X-User': localStorage.getItem('activeUser')
                 },
                 body: formData
             });
@@ -1059,7 +1059,7 @@ class SourcesManagerV2 {
             const response = await fetch(`/upload?module=${module}`, {
                 method: 'POST',
                 headers: {
-                    'X-User': localStorage.getItem('activeUser') || 'demo'
+                    'X-User': localStorage.getItem('activeUser')
                 },
                 body: formData
             });

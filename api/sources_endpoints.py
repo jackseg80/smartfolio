@@ -22,7 +22,7 @@ router = APIRouter(prefix="/api/sources", tags=["Sources"])
 
 # Modèles Pydantic
 class DetectedFile(BaseModel):
-    """Fichier détecté"""
+    """Detected file."""
     name: str
     relative_path: str
     size_bytes: int
@@ -52,7 +52,7 @@ class SourcesScanResult(BaseModel):
     is_legacy: bool = False
 
 class SourcesListResponse(BaseModel):
-    """Réponse de la liste des sources"""
+    """Source list response."""
     modules: List[SourceModuleInfo]
     config_version: int
     last_updated: str
@@ -65,8 +65,8 @@ class SourcesScanResponse(BaseModel):
 class ImportRequest(BaseModel):
     """Requête d'import d'un module"""
     module: str = Field(..., description="Nom du module (cointracking, saxobank)")
-    force: bool = Field(False, description="Forcer l'import même si récent")
-    files: Optional[List[str]] = Field(None, description="Fichiers spécifiques à importer (chemins relatifs)")
+    force: bool = Field(False, description="Force import even when recent")
+    files: Optional[List[str]] = Field(None, description="Specific files to import (relative paths)")
 
 class ImportResponse(BaseModel):
     """Réponse d'import"""
@@ -78,7 +78,7 @@ class ImportResponse(BaseModel):
     error: Optional[str] = None
 
 class RefreshApiRequest(BaseModel):
-    """Requête de refresh API"""
+    """API refresh request."""
     module: str = Field(..., description="Nom du module")
 
 class RefreshApiResponse(BaseModel):
@@ -443,19 +443,19 @@ async def _refresh_cointracking_api(api_key: str, api_secret: str, user_fs: User
 
 
 class UploadResponse(BaseModel):
-    """Réponse d'upload de fichier"""
+    """File upload response."""
     success: bool
     message: str
     uploaded_files: List[str] = []
     error: Optional[str] = None
 
 class DeleteFileRequest(BaseModel):
-    """Requête de suppression de fichier"""
+    """File deletion request."""
     module: str = Field(..., description="Nom du module (cointracking, saxobank)")
-    filename: str = Field(..., description="Nom du fichier à supprimer")
+    filename: str = Field(..., description="Name of the file to delete")
 
 class DeleteFileResponse(BaseModel):
-    """Réponse de suppression de fichier"""
+    """File deletion response."""
     success: bool
     message: str
     error: Optional[str] = None

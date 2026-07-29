@@ -74,11 +74,87 @@ export function getAuthHeaders(includeXUser = true) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    if (includeXUser) {
-        headers['X-User'] = getCurrentUser();
+    const currentUser = getCurrentUser();
+    if (includeXUser && currentUser) {
+        headers['X-User'] = currentUser;
+    }
+    const csrfCookie = document.cookie
+        .split('; ')
+        .find(value => value.startsWith('smartfolio_csrf='));
+    if (csrfCookie) {
+        headers['X-CSRF-Token'] = decodeURIComponent(csrfCookie.split('=').slice(1).join('='));
     }
 
     return headers;
+}
+
+/**
+ * Wrap fetch so legacy same-origin calls inherit the current authentication
+ * and CSRF headers during the dual-to-cookie migration. Cross-origin requests
+ * are passed through unchanged to prevent credential leakage.
+ */
+export function createAuthenticatedFetch(fetchImplementation) {
+    return function authenticatedFetch(input, init = {}) {
+        const request = (
+            typeof Request !== 'undefined' && input instanceof Request
+        ) ? input : null;
+        const target = new URL(request?.url || String(input), window.location.href);
+
+        if (target.origin !== window.location.origin) {
+            return fetchImplementation(input, init);
+        }
+
+        const headers = new Headers(request?.headers);
+        new Headers(init.headers).forEach((value, name) => headers.set(name, value));
+        const authHeaders = getAuthHeaders();
+        Object.entries(authHeaders).forEach(([name, value]) => {
+            if (!headers.has(name)) headers.set(name, value);
+        });
+
+        return fetchImplementation(input, {
+            ...init,
+            credentials: init.credentials || request?.credentials || 'same-origin',
+            headers
+        });
+    };
+}
+
+export function installAuthenticatedFetch() {
+    if (
+        typeof window === 'undefined'
+        || typeof window.fetch !== 'function'
+        || window.__smartfolioAuthenticatedFetchInstalled
+    ) {
+        return;
+    }
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = createAuthenticatedFetch(nativeFetch);
+    window.__smartfolioAuthenticatedFetchInstalled = true;
+}
+
+installAuthenticatedFetch();
+
+async function refreshCookieSession() {
+    const csrfCookie = document.cookie
+        .split('; ')
+        .find(value => value.startsWith('smartfolio_csrf='));
+    if (!csrfCookie) return false;
+
+    const csrfToken = decodeURIComponent(csrfCookie.split('=').slice(1).join('='));
+    const response = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': csrfToken }
+    });
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    const user = data.data?.user;
+    if (user) {
+        StorageService.setActiveUser(user.id);
+        localStorage.setItem('userInfo', JSON.stringify(user));
+    }
+    return true;
 }
 
 /**
@@ -89,12 +165,28 @@ export function getAuthHeaders(includeXUser = true) {
 export async function verifyToken() {
     const token = getAuthToken();
 
-    if (!token) {
-        return false;
-    }
-
     try {
-        const response = await fetch(`${API_BASE}/auth/verify?token=${encodeURIComponent(token)}`);
+        const sessionResponse = await fetch(`${API_BASE}/auth/session`, {
+            credentials: 'same-origin',
+            headers: getAuthHeaders()
+        });
+        if (sessionResponse.ok) {
+            const sessionData = await sessionResponse.json();
+            const user = sessionData.data?.user;
+            if (user) {
+                StorageService.setActiveUser(user.id);
+                localStorage.setItem('userInfo', JSON.stringify(user));
+            }
+            return true;
+        }
+        if (sessionResponse.status === 401 && await refreshCookieSession()) {
+            return true;
+        }
+        if (!token) return false;
+
+        const response = await fetch(`${API_BASE}/auth/verify`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
         if (!response.ok) {
             return false;
@@ -114,18 +206,14 @@ export async function verifyToken() {
  * @param {boolean} showMessage - Afficher un message de déconnexion (default: false)
  */
 export async function logout(showMessage = false) {
-    const token = getAuthToken();
-
-    // Appeler l'endpoint logout (optionnel, pour logs serveur)
-    if (token) {
-        try {
-            await fetch(`${API_BASE}/auth/logout`, {
-                method: 'POST',
-                headers: getAuthHeaders(false)
-            });
-        } catch (err) {
-            console.debug('Logout endpoint error:', err);
-        }
+    try {
+        await fetch(`${API_BASE}/auth/logout`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: getAuthHeaders(false)
+        });
+    } catch (err) {
+        console.debug('Logout endpoint error:', err);
     }
 
     // 🔒 FIX: Capture currentUser avant de vider localStorage
@@ -185,15 +273,7 @@ export async function checkAuth(options = {}) {
     // NOTE: DEV_SKIP_AUTH est géré uniquement backend (api/deps.py)
     // Le frontend ne doit PAS vérifier ce mode pour des raisons de sécurité
 
-    // Vérifier présence du token
-    const token = getAuthToken();
-    if (!token) {
-        console.warn('No auth token found, redirecting to login');
-        window.location.href = '/static/login.html';
-        return null;
-    }
-
-    // Vérifier validité du token
+    // Cookie sessions are attempted first; legacy JWT remains a transition fallback.
     const isValid = await verifyToken();
     if (!isValid) {
         console.warn('Invalid or expired token, redirecting to login');

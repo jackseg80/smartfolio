@@ -12,6 +12,9 @@ from typing import Dict, Any
 
 BASE_URL = "http://localhost:8080"
 
+# This is a manually executable smoke-test script, not an isolated pytest module.
+__test__ = False
+
 def test_api_endpoints():
     """Test critical API endpoints"""
     print("Testing API endpoints...")

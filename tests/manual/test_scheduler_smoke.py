@@ -87,7 +87,7 @@ async def test_scheduler_initialization_with_flag():
 
         # Check jobs are registered
         jobs = scheduler.get_jobs()
-        assert len(jobs) == 9, f"Expected 9 jobs, got {len(jobs)}"
+        assert len(jobs) == 10, f"Expected 10 jobs, got {len(jobs)}"
 
         job_ids = [job.id for job in jobs]
         expected_jobs = [
@@ -99,6 +99,7 @@ async def test_scheduler_initialization_with_flag():
             "api_warmers",
             "crypto_toolbox_refresh",
             "daily_ml_training",
+            "morning_brief",
             "scheduler_lock_renewal"
         ]
 

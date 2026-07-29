@@ -7,8 +7,8 @@ function getActiveUser() {
   // Fallback for pages where auth-guard not loaded yet
   try {
     const u = localStorage.getItem('activeUser');
-    return u && typeof u === 'string' ? u : 'demo';
-  } catch (_) { return 'demo'; }
+    return u && typeof u === 'string' ? u : null;
+  } catch (_) { return null; }
 }
 // Back-compat: expose currentUser
 window.currentUser = getActiveUser();
@@ -1666,7 +1666,7 @@ async function checkAdminRole() {
 
   try {
     // Vérifier si l'utilisateur a le rôle admin via l'endpoint admin
-    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/users`, {
+    const response = await fetch('/admin/users', {
       headers: { 'X-User': getActiveUser() }
     });
 

@@ -112,7 +112,9 @@ def safe_pickle_load(file_path: str | Path) -> Any:
     # Fallback to standard pickle
     try:
         with open(abs_path, 'rb') as f:
-            model = pickle.load(f)
+            # The resolved path is restricted to application-owned
+            # model directories above; callers cannot supply arbitrary paths.
+            model = pickle.load(f)  # nosec B301
         logger.debug(f"Successfully loaded pickle model: {abs_path}")
         return model
     except Exception as e:
@@ -184,13 +186,24 @@ def safe_torch_load(
                 f"Model {abs_path.name} requires weights_only=False (custom layers): {e}"
             )
             logger.info(f"Loading PyTorch model (weights_only=False): {abs_path}")
-            model = torch.load(abs_path, map_location=map_location, weights_only=False)
+            # Legacy custom-layer models require full loading, but
+            # only after the application-owned path validation above.
+            model = torch.load(  # nosec B614
+                abs_path,
+                map_location=map_location,
+                weights_only=False,
+            )
             logger.debug(f"Successfully loaded with weights_only=False: {abs_path}")
             return model
     else:
         # Explicit weights_only parameter provided
         logger.info(f"Loading PyTorch model (weights_only={weights_only}): {abs_path}")
-        model = torch.load(abs_path, map_location=map_location, weights_only=weights_only)
+        # Explicit legacy opt-in, constrained by the validated model path.
+        model = torch.load(  # nosec B614
+            abs_path,
+            map_location=map_location,
+            weights_only=weights_only,
+        )
         logger.debug(f"Successfully loaded PyTorch model: {abs_path}")
         return model
 

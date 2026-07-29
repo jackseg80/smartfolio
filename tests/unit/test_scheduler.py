@@ -352,16 +352,21 @@ class TestJobOhlcvDaily:
         mock_process.communicate = AsyncMock(return_value=(b"OK", b""))
 
         with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-            with patch('asyncio.wait_for', return_value=(b"OK", b"")):
-                await job_ohlcv_daily()
+            await job_ohlcv_daily()
 
         status = get_job_status()
         assert status["ohlcv_daily"]["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_timeout(self):
-        with patch('asyncio.create_subprocess_exec', return_value=AsyncMock()):
-            with patch('asyncio.wait_for', side_effect=asyncio.TimeoutError()):
+        async def timeout_after_closing(awaitable, *args, **kwargs):
+            awaitable.close()
+            raise asyncio.TimeoutError()
+
+        mock_process = MagicMock()
+        mock_process.communicate = AsyncMock()
+        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+            with patch('asyncio.wait_for', side_effect=timeout_after_closing):
                 await job_ohlcv_daily()
 
         status = get_job_status()
@@ -386,16 +391,21 @@ class TestJobOhlcvHourly:
         mock_process.communicate = AsyncMock(return_value=(b"OK", b""))
 
         with patch('asyncio.create_subprocess_exec', return_value=mock_process):
-            with patch('asyncio.wait_for', return_value=(b"OK", b"")):
-                await job_ohlcv_hourly()
+            await job_ohlcv_hourly()
 
         status = get_job_status()
         assert status["ohlcv_hourly"]["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_timeout(self):
-        with patch('asyncio.create_subprocess_exec', return_value=AsyncMock()):
-            with patch('asyncio.wait_for', side_effect=asyncio.TimeoutError()):
+        async def timeout_after_closing(awaitable, *args, **kwargs):
+            awaitable.close()
+            raise asyncio.TimeoutError()
+
+        mock_process = MagicMock()
+        mock_process.communicate = AsyncMock()
+        with patch('asyncio.create_subprocess_exec', return_value=mock_process):
+            with patch('asyncio.wait_for', side_effect=timeout_after_closing):
                 await job_ohlcv_hourly()
 
         status = get_job_status()

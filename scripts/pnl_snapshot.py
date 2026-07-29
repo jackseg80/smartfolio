@@ -21,7 +21,7 @@ import asyncio
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any
 
@@ -71,8 +71,22 @@ async def create_snapshot(
             "source": source,
             "min_usd": min_usd
         }
+        # The scheduler is a trusted in-process actor but the API still requires
+        # a signed identity in dual/cookie modes. Mint a short-lived token for the
+        # configured user rather than relying on the deprecated X-User header.
+        from api.auth_router import create_access_token
+        from api.config.users import get_user_info
+
+        user_info = get_user_info(user_id)
+        if not user_info:
+            return {"ok": False, "error": "Configured snapshot user was not found"}
+        token = create_access_token(
+            {"sub": user_id, "roles": list(user_info.get("roles", []))},
+            expires_delta=timedelta(minutes=5),
+        )
         headers = {
-            "X-User": user_id
+            "Authorization": f"Bearer {token}",
+            "X-User": user_id,
         }
 
         # Call API with timeout
@@ -214,4 +228,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

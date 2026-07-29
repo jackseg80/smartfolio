@@ -8,7 +8,7 @@ Provides ML-powered predictions:
 - Technical signals aggregation
 """
 
-from fastapi import APIRouter, Query, HTTPException, Depends
+from fastapi import APIRouter, Query, HTTPException, Depends, Request
 from fastapi.responses import Response
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ import math
 import os
 
 from api.deps import get_required_user
+from api.auth_security import ACCESS_COOKIE
 from services.regime_constants import smooth_regime_sequence, REGIME_NAMES
 
 # Read API base URL from environment or use default
@@ -28,6 +29,17 @@ from services.ml.bourse.recommendations_orchestrator import RecommendationsOrche
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _forward_authenticated_headers(request: Request, user_id: str) -> dict[str, str]:
+    """Forward the already-validated caller identity to local Saxo API calls."""
+    headers = {"X-User": user_id}
+    authorization = request.headers.get("Authorization")
+    if authorization:
+        headers["Authorization"] = authorization
+    elif access_cookie := request.cookies.get(ACCESS_COOKIE):
+        headers["Cookie"] = f"{ACCESS_COOKIE}={access_cookie}"
+    return headers
 
 
 def sanitize_inf_nan(obj):
@@ -54,6 +66,15 @@ def sanitize_inf_nan(obj):
     else:
         # For other types, try to convert to string or return as-is
         return obj
+
+
+def _finite_number(value: Any, default: float) -> float:
+    """Convert an optional market metric to a JSON-safe finite number."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
 
 # Global adapter instance (shared across requests for performance)
 stocks_ml_adapter = StocksMLAdapter(models_dir="models/stocks")
@@ -594,6 +615,7 @@ async def get_regime_history(
 
 @router.get("/api/ml/bourse/portfolio-recommendations")
 async def get_portfolio_recommendations(
+    request: Request,
     user: str = Depends(get_required_user),
     source: str = Query("saxobank", description="Data source (saxobank, cointracking, etc.)"),
     timeframe: str = Query("medium", description="Timeframe: short (1-2w), medium (1m), long (3-6m)"),
@@ -726,7 +748,7 @@ async def get_portfolio_recommendations(
 
                 pos_response = await client.get(
                     positions_url,
-                    headers={"X-User": user}
+                    headers=_forward_authenticated_headers(request, user)
                 )
 
                 # Handle 401 Unauthorized specifically (Saxo not connected)
@@ -759,7 +781,10 @@ async def get_portfolio_recommendations(
         # Get current market regime
         async with httpx.AsyncClient(timeout=30.0) as client:  # Increased timeout to 30 seconds
             regime_url = f"{API_BASE_URL}/api/ml/bourse/regime?benchmark={benchmark}&lookback_days={max(lookback_days, 365)}"
-            regime_response = await client.get(regime_url)
+            regime_response = await client.get(
+                regime_url,
+                headers=_forward_authenticated_headers(request, user),
+            )
             regime_response.raise_for_status()
             regime_data = regime_response.json()
             market_regime = regime_data.get("current_regime", "Bull Market")
@@ -811,6 +836,7 @@ async def get_portfolio_recommendations(
 
 @router.get("/api/bourse/opportunities")
 async def get_market_opportunities(
+    request: Request,
     user: str = Depends(get_required_user),
     horizon: str = Query("medium", description="Time horizon: short (1-3M), medium (6-12M), long (2-3Y)"),
     source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
@@ -888,7 +914,7 @@ async def get_market_opportunities(
                     positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
                     pos_response = await client.get(
                         positions_url,
-                        headers={"X-User": user}
+                        headers=_forward_authenticated_headers(request, user)
                     )
                     # Handle 401 Unauthorized specifically (Saxo not connected)
                     if pos_response.status_code == 401:
@@ -906,7 +932,7 @@ async def get_market_opportunities(
                         positions_url += f"?file_key={file_key}"
                     pos_response = await client.get(
                         positions_url,
-                        headers={"X-User": user}
+                        headers=_forward_authenticated_headers(request, user)
                     )
                     pos_response.raise_for_status()
                     positions_data = pos_response.json()
@@ -966,11 +992,17 @@ async def get_market_opportunities(
             if top_stocks:
                 for stock in top_stocks:
                     # Use individual stock scores if available, otherwise fall back to sector scores
-                    stock_score = stock.get("composite_score") or gap.get("score", 50)
-                    stock_momentum = stock.get("momentum_score") or gap.get("momentum_score", 50)
-                    stock_value = stock.get("value_score") or gap.get("value_score", 50)
-                    stock_diversification = stock.get("diversification_score") or gap.get("diversification_score", 50)
-                    stock_confidence = stock.get("confidence") or gap.get("confidence", 0.7)
+                    stock_score = _finite_number(stock.get("composite_score"), _finite_number(gap.get("score"), 50.0))
+                    stock_momentum = _finite_number(stock.get("momentum_score"), _finite_number(gap.get("momentum_score"), 50.0))
+                    stock_value = _finite_number(stock.get("value_score"), _finite_number(gap.get("value_score"), 50.0))
+                    stock_diversification = _finite_number(
+                        stock.get("diversification_score"),
+                        _finite_number(gap.get("diversification_score"), 50.0),
+                    )
+                    stock_confidence = min(
+                        1.0,
+                        max(0.0, _finite_number(stock.get("confidence"), _finite_number(gap.get("confidence"), 0.7))),
+                    )
 
                     opportunities.append({
                         "symbol": stock.get("symbol"),
@@ -1046,4 +1078,3 @@ async def get_market_opportunities(
     except Exception as e:
         logger.error(f"Error getting market opportunities: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
-

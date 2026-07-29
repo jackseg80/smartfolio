@@ -22,25 +22,25 @@ log = logging.getLogger(__name__)
 class VaRResponse(BaseModel):
     var_value: float = Field(..., description="Value-at-Risk en devise de base")
     expected_shortfall: float = Field(..., description="Expected Shortfall (CVaR)")
-    confidence_level: float = Field(..., description="Niveau de confiance (0.95, 0.99)")
-    method: str = Field(..., description="Méthode utilisée")
+    confidence_level: float = Field(..., description="Confidence level (0.95, 0.99)")
+    method: str = Field(..., description="Method used")
     horizon: str = Field(..., description="Horizon temporel")
-    portfolio_value: float = Field(..., description="Valeur du portefeuille")
+    portfolio_value: float = Field(..., description="Portfolio value")
     timestamp: datetime = Field(..., description="Timestamp du calcul")
 
 class StressTestResponse(BaseModel):
-    scenario: str = Field(..., description="Nom du scénario de stress")
-    portfolio_loss: float = Field(..., description="Perte absolue du portefeuille")
+    scenario: str = Field(..., description="Stress scenario name")
+    portfolio_loss: float = Field(..., description="Absolute portfolio loss")
     portfolio_loss_pct: float = Field(..., description="Perte en pourcentage")
     asset_impacts: Dict[str, float] = Field(..., description="Impact par actif")
-    shock_applied: Dict[str, float] = Field(..., description="Chocs appliqués par actif")
-    recovery_estimate_days: Optional[int] = Field(None, description="Estimation de récupération en jours")
+    shock_applied: Dict[str, float] = Field(..., description="Shocks applied per asset")
+    recovery_estimate_days: Optional[int] = Field(None, description="Estimated recovery time in days")
     timestamp: datetime = Field(..., description="Timestamp du calcul")
 
 class MonteCarloResponse(BaseModel):
-    simulations: int = Field(..., description="Nombre de simulations")
-    var_estimates: Dict[str, float] = Field(..., description="Estimations VaR par niveau de confiance")
-    expected_return: float = Field(..., description="Retour espéré")
+    simulations: int = Field(..., description="Number of simulations")
+    var_estimates: Dict[str, float] = Field(..., description="VaR estimates by confidence level")
+    expected_return: float = Field(..., description="Expected return")
     volatility: float = Field(..., description="Estimated volatility")
     skewness: float = Field(..., description="Skewness")
     kurtosis: float = Field(..., description="Kurtosis")
@@ -69,8 +69,8 @@ class AdvancedRiskSummaryResponse(BaseModel):
 
 # Request Models
 class PortfolioRequest(BaseModel):
-    weights: Dict[str, float] = Field(..., description="Poids du portefeuille par asset")
-    value: float = Field(..., gt=0, description="Valeur totale du portefeuille")
+    weights: Dict[str, float] = Field(..., description="Portfolio weights by asset")
+    value: float = Field(..., gt=0, description="Total portfolio value")
     
     @validator('weights')
     def weights_must_sum_to_one(cls, v):

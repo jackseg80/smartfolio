@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import os
 import glob
+import logging
 from datetime import datetime
 import aiohttp
 import asyncio
@@ -16,6 +17,7 @@ from api.utils.formatters import success_response, error_response
 from api.services.user_fs import UserScopedFS
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Legacy wrapper helpers
 def _log_legacy_usage(endpoint: str, user: str):
@@ -124,7 +126,7 @@ def get_cointracking_credentials_for_user(user: str) -> tuple[str, str]:
     if not api_key or not api_secret:
         raise HTTPException(
             status_code=400,
-            detail=f"Clés API CoinTracking non configurées pour l'utilisateur {user} (vérifier data/users/{user}/secrets.json)"
+            detail=f"CoinTracking API keys are not configured for user {user} (check data/users/{user}/secrets.json)"
         )
 
     return api_key, api_secret

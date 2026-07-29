@@ -212,7 +212,7 @@ class DataFreshness extends HTMLElement {
 
     this._refreshBtn.classList.add('spinning');
     try {
-      const user = localStorage.getItem('activeUser') || 'demo';
+      const user = localStorage.getItem('activeUser');
       const response = await fetch(url, {
         headers: { 'X-User': user },
       });

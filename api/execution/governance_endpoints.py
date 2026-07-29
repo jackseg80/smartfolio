@@ -9,7 +9,8 @@ from typing import Optional, List, Dict, Any
 import logging
 from datetime import datetime, timedelta
 
-from api.deps import get_required_user
+from api.auth_security import AuthenticatedUser as User
+from api.deps import get_required_user, require_any_role
 from services.execution.governance import Policy, governance_engine
 from services.execution.score_registry import get_score_registry
 from services.execution.phase_engine import get_phase_engine
@@ -21,23 +22,6 @@ from .models import (
     SetModeRequest, ProposeDecisionRequest, ReviewPlanRequest,
     CancelPlanRequest, ValidateAllocationRequest
 )
-
-# Import RBAC from alerts (shared dependency)
-try:
-    from api.alerts_endpoints import User, get_current_user, require_role
-except ImportError:
-    class User:
-        def __init__(self, username: str = "system", roles: List[str] = None):
-            self.username = username
-            self.roles = roles or ["approver"]
-    
-    def get_current_user() -> User:
-        return User("system_user", ["approver", "viewer"])
-    
-    def require_role(required_role: str):
-        def dependency(current_user: User = Depends(get_current_user)):
-            return current_user
-        return dependency
 
 logger = logging.getLogger(__name__)
 
@@ -224,7 +208,7 @@ async def get_governance_state():
                 avg_correlation=0.65,
                 beta_btc=0.85,
                 exposures={"BTC": 45.0, "ETH": 25.0, "Large": 20.0, "Alt": 10.0}
-            ).dict()
+            ).model_dump()
         }
         
         # 7. Suggestion IA canonique (lecture seule)
@@ -284,7 +268,7 @@ async def get_governance_state():
             last_decision_id=state.current_plan.plan_id if state.current_plan else None,
             contradiction_index=state.signals.contradiction_index if state.signals else 0.0,
             ml_signals_timestamp=state.signals.timestamp.isoformat() if state.signals and hasattr(state.signals, 'timestamp') and state.signals.timestamp else (state.last_update.isoformat() if state.last_update else datetime.now().isoformat()),
-            active_policy=state.execution_policy.dict() if state.execution_policy else None,
+            active_policy=state.execution_policy.model_dump() if state.execution_policy else None,
             pending_approvals=pending_approvals,
             next_update_time=state.last_update.isoformat() if state.last_update else None,
             etag=current_etag,
@@ -307,7 +291,9 @@ async def get_governance_state():
 # Former functionality available with resource_type="decision"
 
 @router.post("/init-ml")
-async def init_ml_models() -> dict:
+async def init_ml_models(
+    current_user: User = Depends(require_any_role("ml_admin")),
+) -> dict:
     """
     Force l'initialisation des modèles ML pour la gouvernance
     
@@ -349,7 +335,9 @@ async def init_ml_models() -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/unfreeze")
-async def unfreeze_system() -> dict:
+async def unfreeze_system(
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Dégeler le système de gouvernance
     
@@ -449,7 +437,10 @@ async def get_ml_signals() -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/mode")
-async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_required_user)) -> dict:
+async def set_governance_mode(
+    request: SetModeRequest,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Changer le mode de gouvernance
 
@@ -490,7 +481,10 @@ async def set_governance_mode(request: SetModeRequest, user: str = Depends(get_r
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/propose")
-async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(get_required_user)) -> dict:
+async def propose_decision(
+    request: ProposeDecisionRequest,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Proposer une nouvelle décision avec respect du cooldown
 
@@ -528,7 +522,12 @@ async def propose_decision(request: ProposeDecisionRequest, user: str = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/review/{plan_id}")
-async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Optional[str] = Header(None), user: str = Depends(get_required_user)) -> dict:
+async def review_plan(
+    plan_id: str,
+    request: ReviewPlanRequest,
+    if_match: Optional[str] = Header(None),
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Review un plan DRAFT → REVIEWED with ETag-based concurrency control
 
@@ -536,7 +535,7 @@ async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Option
     Utilise l'header If-Match pour le contrôle de concurrence optimiste.
     """
     try:
-        reviewed_by = request.reviewed_by
+        reviewed_by = current_user.username
         notes = request.notes
         
         success = await governance_engine.review_plan(plan_id, reviewed_by, notes, if_match)
@@ -570,7 +569,11 @@ async def review_plan(plan_id: str, request: ReviewPlanRequest, if_match: Option
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/approve/{resource_id}")
-async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRequest, user: str = Depends(get_required_user)) -> dict:
+async def unified_approval_endpoint(
+    resource_id: str,
+    request: UnifiedApprovalRequest,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Endpoint unifié pour approuver/rejeter des décisions ou des plans
     
@@ -594,7 +597,7 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
                 "resource_id": resource_id,
                 "action": "approved" if request.approved else "rejected",
                 "message": f"Decision {resource_id} {'approved' if request.approved else 'rejected'}",
-                "approved_by": request.approved_by,
+                "approved_by": current_user.username,
                 "timestamp": datetime.now().isoformat()
             }
         
@@ -604,7 +607,7 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
                 # Rejet de plan
                 success = await governance_engine.reject_plan(
                     resource_id,
-                    request.approved_by,  # renamed to rejected_by internally
+                    current_user.username,
                     request.notes or request.reason or "Rejected via API"
                 )
 
@@ -617,13 +620,13 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
                     "resource_id": resource_id,
                     "action": "rejected",
                     "message": f"Plan {resource_id} rejected",
-                    "rejected_by": request.approved_by,
+                    "rejected_by": current_user.username,
                     "timestamp": datetime.now().isoformat()
                 }
             
             success = await governance_engine.approve_plan(
                 resource_id, 
-                request.approved_by, 
+                current_user.username,
                 request.notes or request.reason or "Approved via API"
             )
             
@@ -633,9 +636,9 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
                     "resource_type": "plan",
                     "resource_id": resource_id,
                     "action": "approved",
-                    "message": f"Plan {resource_id} approved by {request.approved_by}",
+                    "message": f"Plan {resource_id} approved by {current_user.username}",
                     "new_state": "APPROVED",
-                    "approved_by": request.approved_by,
+                    "approved_by": current_user.username,
                     "timestamp": datetime.now().isoformat()
                 }
             else:
@@ -651,7 +654,10 @@ async def unified_approval_endpoint(resource_id: str, request: UnifiedApprovalRe
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/activate/{plan_id}")
-async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)) -> dict:
+async def activate_plan_endpoint(
+    plan_id: str,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Activer un plan APPROVED → ACTIVE
     
@@ -678,7 +684,10 @@ async def activate_plan_endpoint(plan_id: str, user: str = Depends(get_required_
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/execute/{plan_id}")
-async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_user)) -> dict:
+async def execute_plan_endpoint(
+    plan_id: str,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Marquer un plan comme exécuté ACTIVE → EXECUTED
     
@@ -705,14 +714,18 @@ async def execute_plan_endpoint(plan_id: str, user: str = Depends(get_required_u
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/cancel/{plan_id}")
-async def cancel_plan_endpoint(plan_id: str, request: CancelPlanRequest, user: str = Depends(get_required_user)) -> dict:
+async def cancel_plan_endpoint(
+    plan_id: str,
+    request: CancelPlanRequest,
+    current_user: User = Depends(require_any_role("governance_admin")),
+) -> dict:
     """
     Annuler un plan ANY_STATE → CANCELLED
 
     Peut annuler un plan depuis n'importe quel état (sauf EXECUTED/CANCELLED)
     """
     try:
-        cancelled_by = request.cancelled_by
+        cancelled_by = current_user.username
         reason = request.reason
         
         success = await governance_engine.cancel_plan(plan_id, cancelled_by, reason)
@@ -769,7 +782,7 @@ async def get_cooldown_status() -> dict:
 async def apply_policy_from_alert(
     request: ApplyPolicyRequest,
     idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
-    current_user: User = Depends(require_role("approver"))
+    current_user: User = Depends(require_any_role("governance_admin"))
 ) -> dict:
     """
     Applique une policy sans creer de plan (respecte cooldown) - NOUVEAU
@@ -816,7 +829,7 @@ async def apply_policy_from_alert(
             "notes": policy_notes,
         }
         policy = Policy(**policy_payload)
-        policy_dict = policy.dict()
+        policy_dict = policy.model_dump()
 
         response_data = {
             "success": True,
@@ -868,7 +881,7 @@ async def apply_policy_from_alert(
 async def freeze_system_with_ttl(
     request: FreezeRequest,
     idempotency_key: str = Header(..., alias="Idempotency-Key", description="Idempotency key UUID"),
-    current_user: User = Depends(require_role("approver"))
+    current_user: User = Depends(require_any_role("governance_admin"))
 ) -> dict:
     """
     Freeze le système avec TTL et auto-restore - ÉTENDU

@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   getUserInfo,
   getAuthHeaders,
+  createAuthenticatedFetch,
   verifyToken,
   logout,
   checkAuth,
@@ -73,12 +74,12 @@ describe('Auth Guard - Headers', () => {
 
   test('should generate auth headers with token', () => {
     localStorage.setItem('authToken', 'token-abc');
-    localStorage.setItem('currentUser', 'demo');
+    localStorage.setItem('activeUser', 'jack');
 
     const headers = getAuthHeaders();
 
     expect(headers).toHaveProperty('Authorization', 'Bearer token-abc');
-    expect(headers).toHaveProperty('X-User', 'demo');
+    expect(headers).toHaveProperty('X-User', 'jack');
   });
 
   test('should generate auth headers without X-User when disabled', () => {
@@ -91,17 +92,48 @@ describe('Auth Guard - Headers', () => {
     expect(headers).not.toHaveProperty('X-User');
   });
 
-  test('should return only X-User when no token but includeXUser=true', () => {
+  test('should not invent an X-User when no identity exists', () => {
     const headers = getAuthHeaders();
 
     expect(headers).not.toHaveProperty('Authorization');
-    expect(headers).toHaveProperty('X-User', 'demo'); // getCurrentUser() returns 'demo' by default
+    expect(headers).not.toHaveProperty('X-User');
   });
 
   test('should return empty headers when no token and includeXUser=false', () => {
     const headers = getAuthHeaders(false);
 
     expect(headers).toEqual({});
+  });
+
+  test('should enrich legacy same-origin fetch calls', async () => {
+    localStorage.setItem('authToken', 'token-dual');
+    localStorage.setItem('activeUser', 'jack');
+    const transport = jest.fn().mockResolvedValue({ ok: true });
+    const authenticatedFetch = createAuthenticatedFetch(transport);
+
+    await authenticatedFetch('/api/private', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const options = transport.mock.calls[0][1];
+    expect(options.credentials).toBe('same-origin');
+    expect(options.headers.get('Authorization')).toBe('Bearer token-dual');
+    expect(options.headers.get('X-User')).toBe('jack');
+    expect(options.headers.get('Content-Type')).toBe('application/json');
+  });
+
+  test('should never leak authentication headers cross-origin', async () => {
+    localStorage.setItem('authToken', 'secret-token');
+    localStorage.setItem('activeUser', 'jack');
+    const transport = jest.fn().mockResolvedValue({ ok: true });
+    const authenticatedFetch = createAuthenticatedFetch(transport);
+    const options = { headers: { Accept: 'application/json' } };
+
+    await authenticatedFetch('https://example.org/public', options);
+
+    expect(transport).toHaveBeenCalledWith('https://example.org/public', options);
+    expect(options.headers).toEqual({ Accept: 'application/json' });
   });
 });
 
@@ -140,10 +172,45 @@ describe('Auth Guard - Token Verification', () => {
   });
 
   test('should return false when no token stored', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 401
+    });
+
     const result = await verifyToken();
 
     expect(result).toBe(false);
-    expect(fetch).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost/auth/session',
+      expect.objectContaining({ credentials: 'same-origin' })
+    );
+  });
+
+  test('should refresh an expired cookie session with CSRF', async () => {
+    document.cookie = 'smartfolio_csrf=csrf-test-token';
+    global.fetch
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          data: { user: { id: 'jack', label: 'Jack', roles: ['admin'] } }
+        })
+      });
+
+    const result = await verifyToken();
+
+    expect(result).toBe(true);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenLastCalledWith(
+      'http://localhost/auth/refresh',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': 'csrf-test-token' }
+      })
+    );
   });
 
   test('should handle network errors gracefully', async () => {
@@ -313,13 +380,13 @@ describe('Auth Guard - Edge Cases', () => {
     // Ensure localStorage is empty
     localStorage.clear();
 
-    // These functions should return default/null values when localStorage is empty
+    // These functions must fail closed when localStorage is empty.
     const token = getAuthToken();
     const user = getCurrentUser();
     const info = getUserInfo();
 
     expect(token).toBeNull();
-    expect(user).toBe('demo'); // getCurrentUser returns 'demo' as default
+    expect(user).toBeNull();
     expect(info).toBeNull();
   });
 

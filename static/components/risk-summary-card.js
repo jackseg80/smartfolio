@@ -351,7 +351,7 @@ class RiskSummaryCard extends HTMLElement {
         this._abortController = new AbortController();
 
         try {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser');
             const response = await fetch('/api/risk/dashboard', {
                 headers: { 'X-User': activeUser },
                 signal: this._abortController.signal

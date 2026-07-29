@@ -17,15 +17,15 @@ const initUserDisplay = async () => {
     const userInfoStr = localStorage.getItem('userInfo');
     const activeUser = localStorage.getItem('activeUser');
 
-    let displayName = 'Utilisateur';
+    let displayName = 'User';
 
     if (userInfoStr) {
       try {
         const userInfo = JSON.parse(userInfoStr);
-        displayName = userInfo.label || userInfo.id || 'Utilisateur';
+        displayName = userInfo.label || userInfo.id || 'User';
       } catch (err) {
         console.debug('Could not parse userInfo:', err);
-        displayName = activeUser || 'Utilisateur';
+        displayName = activeUser || 'User';
       }
     } else if (activeUser) {
       displayName = activeUser;
@@ -50,7 +50,7 @@ window.getCurrentUser = () => {
   if (window.authGuard?.getCurrentUser) {
     return window.authGuard.getCurrentUser();
   }
-  return localStorage.getItem('activeUser') || 'demo';
+  return localStorage.getItem('activeUser');
 };
 // Alias for backward compatibility
 window.getActiveUser = window.getCurrentUser;
@@ -350,7 +350,7 @@ const initUnifiedNav = () => {
 
         try {
           // Import auth guard dynamically
-          const authGuard = await import('./core/auth-guard.js');
+          const authGuard = await import('../core/auth-guard.js');
           await authGuard.logout(true);
         } catch (err) {
           console.error('Logout error:', err);

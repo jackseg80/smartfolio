@@ -17,6 +17,9 @@ from services.streaming.realtime_engine import (
     StreamEventType, StreamEvent
 )
 from api.dependencies.dev_guards import require_simulation, require_dev_mode, validate_websocket_token
+from api.auth_security import ACCESS_COOKIE, get_auth_mode
+from api.deps import decode_access_token
+from api.config.users import get_user_info, is_allowed_user
 from api.utils.formatters import success_response, error_response
 
 router = APIRouter(prefix="/api/realtime", tags=["realtime"])
@@ -27,27 +30,27 @@ log = logging.getLogger(__name__)
 
 # Response Models
 class RealtimeStatusResponse(BaseModel):
-    status: str = Field(..., description="Status du système temps réel")
-    connections: int = Field(..., description="Nombre de connexions WebSocket actives")
-    uptime_seconds: float = Field(..., description="Temps de fonctionnement en secondes")
-    events_processed: int = Field(..., description="Nombre d'événements traités")
-    events_per_second: float = Field(..., description="Taux de traitement d'événements")
-    redis_status: str = Field(..., description="Status de Redis Streams")
-    timestamp: datetime = Field(..., description="Timestamp de la réponse")
+    status: str = Field(..., description="Real-time system status")
+    connections: int = Field(..., description="Number of active WebSocket connections")
+    uptime_seconds: float = Field(..., description="Uptime in seconds")
+    events_processed: int = Field(..., description="Number of processed events")
+    events_per_second: float = Field(..., description="Event processing rate")
+    redis_status: str = Field(..., description="Redis Streams status")
+    timestamp: datetime = Field(..., description="Response timestamp")
 
 class WsStatusResponse(BaseModel):
     status: str = Field(..., description="Status message")
 
 class StreamStatsResponse(BaseModel):
     stream_name: str
-    length: int = Field(..., description="Nombre de messages dans le stream")
-    consumers: int = Field(..., description="Nombre de consumers actifs")
+    length: int = Field(..., description="Number of messages in the stream")
+    consumers: int = Field(..., description="Number of active consumers")
     last_activity: Optional[datetime] = Field(None, description="Last activity")
 
 class PublishEventRequest(BaseModel):
-    event_type: str = Field(..., description="Type d'événement")
+    event_type: str = Field(..., description="Event type")
     data: Dict[str, Any] = Field(..., description="Event data")
-    source: str = Field(default="api", description="Source de l'événement")
+    source: str = Field(default="api", description="Event source")
 
 # WebSocket endpoint principal
 @router.websocket("/ws")
@@ -75,10 +78,41 @@ async def websocket_endpoint(
     - Mises à jour de portfolio
     - Status système
     """
-    # Validation auth (optionnelle en dev, requise en prod)
-    if not validate_websocket_token(token):
+    mode = get_auth_mode()
+    origin = websocket.headers.get("origin")
+    allowed_origins = {
+        value.strip()
+        for value in os.getenv("CORS_ORIGINS", "").split(",")
+        if value.strip()
+    }
+    public_base_url = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+    if public_base_url:
+        allowed_origins.add(public_base_url)
+
+    access_cookie = websocket.cookies.get(ACCESS_COOKIE)
+    candidate = access_cookie or (token if mode != "cookie" else None)
+    payload = decode_access_token(candidate) if candidate else None
+    user_id = payload.get("sub") if payload else None
+    valid_session = bool(
+        user_id
+        and is_allowed_user(user_id)
+        and (get_user_info(user_id) or {}).get("status") == "active"
+    )
+    valid_origin = mode == "legacy" or bool(origin and origin in allowed_origins)
+
+    # Legacy development keeps its original token guard; secure modes require
+    # a cookie/Bearer identity and an explicitly allowed Origin.
+    if (
+        (mode == "legacy" and not validate_websocket_token(token))
+        or (mode != "legacy" and (not valid_session or not valid_origin))
+    ):
         await websocket.close(code=1008)  # Policy Violation
-        log.warning(f"WebSocket connection rejected for client_id={client_id} - invalid or missing token")
+        log.warning(
+            "WebSocket rejected client_id=%s valid_session=%s valid_origin=%s",
+            client_id,
+            valid_session,
+            valid_origin,
+        )
         return
 
     engine = await get_realtime_engine()
@@ -505,4 +539,3 @@ async def stop_realtime_engine(
     except Exception as e:
         log.error(f"Failed to stop realtime engine: {e}")
         raise HTTPException(500, "failed_to_stop_engine")
-

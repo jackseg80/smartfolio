@@ -24,7 +24,7 @@ from ..feature_engineering import CryptoFeatureEngineer
 from ..data_pipeline import MLDataPipeline
 
 # Security: Use safe loader for PyTorch models
-from services.ml.safe_loader import safe_torch_load
+from services.ml.safe_loader import safe_pickle_load, safe_torch_load
 
 logger = logging.getLogger(__name__)
 
@@ -1271,9 +1271,9 @@ class RegimeDetector:
                 return False
             
             # Load components
-            self.training_metadata = joblib.load(model_files['metadata'])
-            self.scaler = joblib.load(model_files['scaler'])
-            self.feature_columns = joblib.load(model_files['features'])
+            self.training_metadata = safe_pickle_load(model_files['metadata'])
+            self.scaler = safe_pickle_load(model_files['scaler'])
+            self.feature_columns = safe_pickle_load(model_files['features'])
 
             # Load optimal temperature (calibrated on validation set)
             # Fall back to default if not available (old models)

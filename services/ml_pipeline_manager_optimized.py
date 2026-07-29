@@ -6,7 +6,6 @@ Gestion intelligente des modèles ML avec lazy loading, gestion mémoire et cach
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
-import pickle
 import torch
 import torch.nn as nn
 from datetime import datetime, timedelta
@@ -343,22 +342,10 @@ class OptimizedMLPipelineManager:
             # Charger les métadonnées (safe loading)
             metadata = safe_pickle_load(metadata_path)
 
-            # Charger le scaler avec joblib pour compatibilité
-            try:
-                import joblib
-                scaler = joblib.load(scaler_path)
-            except Exception as e:
-                logger.warning(f"Joblib failed for {symbol}, trying safe pickle: {e}")
-                scaler = safe_pickle_load(scaler_path)
+            scaler = safe_pickle_load(scaler_path)
             
             # Charger le modèle PyTorch avec compatibilité maximum
-            try:
-                # Essayer d'abord avec weights_only=False (PyTorch 2.0+)
-                model = torch.load(model_path, map_location='cpu', weights_only=False)
-            except (TypeError, RuntimeError) as e:
-                logger.warning(f"Modern torch.load failed for {symbol}, trying legacy: {e}")
-                # Fallback pour versions plus anciennes
-                model = torch.load(model_path, map_location='cpu')
+            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
             
             if hasattr(model, 'eval'):
                 model.eval()
@@ -435,20 +422,10 @@ class OptimizedMLPipelineManager:
             # Charger les métadonnées (safe loading)
             metadata = safe_pickle_load(metadata_path)
 
-            # Charger le scaler avec joblib pour compatibilité
-            try:
-                import joblib
-                scaler = joblib.load(scaler_path)
-            except Exception as e:
-                logger.warning(f"Joblib failed for {symbol}, trying safe pickle: {e}")
-                scaler = safe_pickle_load(scaler_path)
+            scaler = safe_pickle_load(scaler_path)
             
             # Charger le modèle PyTorch avec compatibilité maximum
-            try:
-                model = torch.load(model_path, map_location='cpu', weights_only=False)
-            except (TypeError, RuntimeError) as e:
-                logger.warning(f"Modern torch.load failed for {symbol}, trying legacy: {e}")
-                model = torch.load(model_path, map_location='cpu')
+            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
             
             if hasattr(model, 'eval'):
                 model.eval()
@@ -528,16 +505,11 @@ class OptimizedMLPipelineManager:
                 metadata = {"model_type": "regime_classifier", "version": "2.0.0", "accuracy": 0.78}
 
             try:
-                import joblib
-                scaler = joblib.load(scaler_path)
+                scaler = safe_pickle_load(scaler_path)
             except Exception as e:
-                logger.warning(f"Failed to load scaler with joblib: {e}")
-                try:
-                    scaler = safe_pickle_load(scaler_path)
-                except Exception as e2:
-                    logger.warning(f"Failed to load scaler with safe pickle: {e2}")
-                    from sklearn.preprocessing import StandardScaler
-                    scaler = StandardScaler()
+                logger.warning(f"Failed to load scaler with safe pickle: {e}")
+                from sklearn.preprocessing import StandardScaler
+                scaler = StandardScaler()
 
             try:
                 features = safe_pickle_load(features_path)
@@ -546,11 +518,7 @@ class OptimizedMLPipelineManager:
                 features = ["price_change_1d", "price_change_7d", "volatility_7d", "volatility_30d", "rsi"]
             
             # Charger le modèle avec compatibilité maximum
-            try:
-                model = torch.load(model_path, map_location='cpu', weights_only=False)
-            except (TypeError, RuntimeError) as e:
-                logger.warning(f"Modern torch.load failed for regime, trying legacy: {e}")
-                model = torch.load(model_path, map_location='cpu')
+            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
             
             if hasattr(model, 'eval'):
                 model.eval()
@@ -628,11 +596,11 @@ class OptimizedMLPipelineManager:
                     features = safe_pickle_load(features_path)
                     
                     # Charger le modèle avec compatibilité PyTorch
-                    try:
-                        model = torch.load(model_path, map_location='cpu', weights_only=False)
-                    except (TypeError, RuntimeError):
-                        # Fallback pour versions PyTorch plus anciennes
-                        model = torch.load(model_path, map_location='cpu')
+                    model = safe_torch_load(
+                        model_path,
+                        map_location='cpu',
+                        weights_only=False,
+                    )
                     
                     if hasattr(model, 'eval'):
                         model.eval()

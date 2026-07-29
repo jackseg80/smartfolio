@@ -13,6 +13,7 @@ Multi-tenant aware: Uses X-User header or get_active_user dependency
 from __future__ import annotations
 
 import logging
+import os
 import secrets
 from datetime import datetime
 from typing import Dict, Any, Optional, List
@@ -169,11 +170,10 @@ async def saxo_callback(
         Success: /settings.html?status=connected
         Error: /settings.html?status=error&message=...
     """
-    # Build absolute URL for redirect (fixes localhost issue in production)
-    # Use the Host header that the client used (e.g., 192.168.1.200:8080)
-    host = request.headers.get("host", "localhost:8080")
-    scheme = request.url.scheme  # http or https
-    base_url = f"{scheme}://{host}"
+    # Never trust a public Host header for OAuth redirects.
+    base_url = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+    if not base_url:
+        base_url = str(request.base_url).rstrip("/")
 
     try:
         # Retrieve PKCE verifier

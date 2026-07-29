@@ -68,12 +68,12 @@ async def health_redis():
     """Test Redis connectivity"""
     import os
     try:
-        import aioredis
+        import redis.asyncio as aioredis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis = await aioredis.from_url(redis_url, socket_timeout=2.0)
         await redis.ping()
         keys_count = await redis.dbsize()
-        await redis.close()
+        await redis.aclose()
         return success_response({
             "status": "connected",
             "url": redis_url.split("@")[-1] if "@" in redis_url else redis_url,  # Hide credentials
@@ -170,12 +170,12 @@ async def health_all():
 
     # 2. Redis
     try:
-        import aioredis
+        import redis.asyncio as aioredis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         redis = await aioredis.from_url(redis_url, socket_timeout=2.0)
         await redis.ping()
         keys_count = await redis.dbsize()
-        await redis.close()
+        await redis.aclose()
         results["components"]["redis"] = {
             "status": "healthy",
             "keys": keys_count

@@ -13,6 +13,7 @@ import joblib
 
 from services.price_history import get_cached_history, get_symbols_with_cache
 from connectors.cointracking_api import get_current_balances
+from services.ml.safe_loader import safe_pickle_load
 
 logger = logging.getLogger(__name__)
 
@@ -328,7 +329,7 @@ class MLDataPipeline:
                     cache_time = datetime.fromtimestamp(cache_file.stat().st_mtime)
                     if datetime.now() - cache_time < timedelta(hours=self.cache_ttl_hours):
                         logger.info(f"Loading cached training data for {symbol}")
-                        training_data[symbol] = joblib.load(cache_file)
+                        training_data[symbol] = safe_pickle_load(cache_file)
                         successful_symbols.append(symbol)
                         continue
                 

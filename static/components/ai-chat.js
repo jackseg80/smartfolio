@@ -240,7 +240,7 @@ export class AIChatComponent {
     }
 
     getActiveUser() {
-        return localStorage.getItem('activeUser') || 'demo';
+        return localStorage.getItem('activeUser');
     }
 
     destroy() {

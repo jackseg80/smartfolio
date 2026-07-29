@@ -439,7 +439,7 @@ async function fetchRiskData() {
     console.debug(`🔍 DEBUG - csvFile from window.userSettings: '${csvFile}'`);
     console.debug(`🔍 DEBUG - saxoFile from window.userSettings: '${saxoFile}'`);
 
-    const cacheKey = `risk-dashboard-balance:${(localStorage.getItem('activeUser') || 'demo')}:${dataSource}:${csvFile}:${minUsd}`;
+    const cacheKey = `risk-dashboard-balance:${localStorage.getItem('activeUser')}:${dataSource}:${csvFile}:${minUsd}`;
 
     console.debug(`🔍 fetchRiskData - csvFile: '${csvFile}', dataSource: '${dataSource}', cacheKey: '${cacheKey}'`);
 
@@ -1328,7 +1328,7 @@ async function loadScoresFromStore() {
 
     // ✅ Compatibility: Store in localStorage for legacy cross-page access
     const dataSource = globalConfig.get('data_source') || 'unknown';
-    const __user = (localStorage.getItem('activeUser') || 'demo');
+    const __user = localStorage.getItem('activeUser');
     const __prefix = (k) => `${k}:${__user}`;
     try {
       // ✅ FIX: Ne pas stocker de strings vides - seulement stocker si la valeur existe

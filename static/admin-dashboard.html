@@ -800,7 +800,7 @@
         // Load system stats
         async function loadSystemStats() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/status', {
                     headers: { 'X-User': activeUser }
                 });
@@ -844,7 +844,7 @@
             container.innerHTML = '<div class="loading">Loading users</div>';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/users', {
                     headers: { 'X-User': activeUser }
                 });
@@ -946,7 +946,7 @@
             container.innerHTML = '<h2>Logs Viewer</h2><div class="loading">Loading logs</div>';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Build filters UI
                 let html = '<h2>Logs Viewer</h2>';
@@ -982,7 +982,7 @@
             contentDiv.innerHTML = '<div class="loading">Loading logs</div>';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const offset = currentLogsPage * logsPageSize;
 
                 // Build query params
@@ -1189,7 +1189,7 @@
                     return;
                 }
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/users', {
                     method: 'POST',
                     headers: {
@@ -1260,7 +1260,7 @@
                     return;
                 }
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/users/${userId}`, {
                     method: 'PUT',
                     headers: {
@@ -1314,7 +1314,7 @@
                 const deleteType = document.querySelector('input[name="deleteType"]:checked').value;
                 const hardDelete = deleteType === 'hard';
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Build URL with hard_delete parameter if needed
                 const url = `/admin/users/${userId}${hardDelete ? '?hard_delete=true' : ''}`;
@@ -1383,7 +1383,7 @@
                     return;
                 }
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Create FormData
                 const formData = new URLSearchParams();
@@ -1455,7 +1455,7 @@
                     return;
                 }
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 const response = await fetch(`/admin/users/${userId}/reset-password`, {
                     method: 'POST',
@@ -1531,7 +1531,7 @@
         // Refresh cache stats
         async function refreshCacheStats() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/stats', {
                     headers: { 'X-User': activeUser }
                 });
@@ -1596,7 +1596,7 @@
             }
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/cache/clear?cache_name=${encodeURIComponent(cacheName)}`, {
                     method: 'DELETE',
                     headers: { 'X-User': activeUser }
@@ -1624,7 +1624,7 @@
             }
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/clear?cache_name=all', {
                     method: 'DELETE',
                     headers: { 'X-User': activeUser }
@@ -1648,7 +1648,7 @@
         // Clear expired entries
         async function clearExpiredEntries() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/clear-expired', {
                     method: 'POST',
                     headers: { 'X-User': activeUser }
@@ -1697,7 +1697,7 @@
         // Refresh ML models
         async function refreshMLModels() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/models', {
                     headers: { 'X-User': activeUser }
                 });
@@ -1784,7 +1784,7 @@
             }
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/ml/train/${encodeURIComponent(modelName)}?model_type=${encodeURIComponent(modelType)}`, {
                     method: 'POST',
                     headers: { 'X-User': activeUser }
@@ -1809,7 +1809,7 @@
         // Load training jobs
         async function loadTrainingJobs() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/jobs', {
                     headers: { 'X-User': activeUser }
                 });
@@ -1885,7 +1885,7 @@
             }
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/ml/jobs/${encodeURIComponent(jobId)}`, {
                     method: 'DELETE',
                     headers: { 'X-User': activeUser }
@@ -1910,7 +1910,7 @@
         // Update ML job stats
         async function updateMLJobStats() {
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/jobs', {
                     headers: { 'X-User': activeUser }
                 });
@@ -1964,7 +1964,7 @@
             document.getElementById('model-info-content').style.display = 'none';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Fetch model manifest from EXISTING endpoint
                 const response = await fetch(`/api/ml/registry/models/${modelName}`, {
@@ -2123,7 +2123,7 @@
             document.getElementById('version-history-content').style.display = 'none';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Fetch version history from EXISTING endpoint
                 const response = await fetch(`/api/ml/registry/models/${targetModel}/versions`, {
@@ -2256,7 +2256,7 @@
             document.getElementById('start-training-btn').style.display = 'none';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Fetch default parameters from NEW endpoint
                 const response = await fetch(`/admin/ml/models/${modelName}/default-params`, {
@@ -2405,7 +2405,7 @@
             btn.textContent = '⏳ Starting...';
 
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // POST to train endpoint with config body
                 const response = await fetch(`/admin/ml/train/${modelName}?model_type=${modelType}`, {

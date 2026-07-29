@@ -269,7 +269,7 @@
         let pdfLibsLoaded = false;
 
         function bourseCacheKey(section) {
-            const user = localStorage.getItem('activeUser') || 'demo';
+            const user = localStorage.getItem('activeUser') || '';
             return `bourse:${user}:${section}`;
         }
 
@@ -364,7 +364,7 @@
                 document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Loading stock market data...</div>';
                 document.getElementById('dashboardContent').style.display = 'none';
 
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser') || '';
 
                 // Check if source is configured
                 if (!window.saxoSourceType) {
@@ -481,7 +481,7 @@
 
         // ==================== RISK ANALYTICS ====================
         async function loadRiskAnalytics() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('risk-dashboard');
                 if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
@@ -581,7 +581,7 @@
 
         // ==================== CRITICAL ALERTS ====================
         async function loadCriticalAlerts() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
                 let alertsUrl = `/api/risk/bourse/alerts?user_id=${activeUser}`;
@@ -667,7 +667,7 @@
 
         // ==================== ML INSIGHTS ====================
         async function loadMLInsights() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
                 // Get top stocks from portfolio for predictions
@@ -823,7 +823,7 @@
         }
 
         async function loadCorrelationAnalysis() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('correlation');
                 if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
@@ -1126,7 +1126,7 @@
         }
 
         async function runStressTestWithImpact(impact) {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 document.getElementById('stressTestResults').style.display = 'block';
                 document.getElementById('stressTestMetrics').innerHTML = '<div class="loading">Running stress test…</div>';
@@ -1272,7 +1272,7 @@
         }
 
         async function runStressTest(scenario) {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 document.getElementById('stressTestResults').style.display = 'block';
                 document.getElementById('stressTestMetrics').innerHTML = '<div class="loading">Running stress test…</div>';
@@ -1321,7 +1321,7 @@
         }
 
         async function loadRegimeHistory() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
                 const key = bourseCacheKey('regime-history');
@@ -1637,7 +1637,7 @@
         }
 
         async function loadSectorRotation() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('sector-rotation');
                 if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
@@ -1831,7 +1831,7 @@
         }
 
         async function loadMarginMonitoring() {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('margin');
                 if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
@@ -1938,7 +1938,7 @@
         }
 
         async function loadTickerAnalytics(ticker) {
-            const activeUser = localStorage.getItem('activeUser') || 'demo';
+            const activeUser = localStorage.getItem('activeUser') || '';
 
             // Load all ticker analytics in parallel
             await Promise.all([

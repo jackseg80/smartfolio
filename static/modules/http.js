@@ -13,6 +13,23 @@ function _getAuthToken() {
     catch { return null; }
 }
 
+function _getCookie(name) {
+    const prefix = `${encodeURIComponent(name)}=`;
+    const item = document.cookie.split('; ').find(value => value.startsWith(prefix));
+    return item ? decodeURIComponent(item.slice(prefix.length)) : null;
+}
+
+async function _refreshCookieSession() {
+    const csrfToken = _getCookie('smartfolio_csrf');
+    if (!csrfToken) return false;
+    const response = await fetch('/auth/refresh', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': csrfToken }
+    });
+    return response.ok;
+}
+
 export async function safeFetch(url, options = {}) {
     const maxRetries = options.maxRetries ?? 3;
     const baseDelay = options.baseDelay ?? 1000; // 1s
@@ -20,6 +37,7 @@ export async function safeFetch(url, options = {}) {
     const retryStatusCodes = options.retryStatusCodes ?? [408, 429, 500, 502, 503, 504];
 
     let lastError;
+    let authRefreshAttempted = false;
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         const controller = new AbortController();
@@ -34,13 +52,17 @@ export async function safeFetch(url, options = {}) {
 
             const res = await fetch(url, {
                 cache: 'no-store',
+                credentials: 'same-origin',
                 signal: controller.signal,
                 ...options,
                 headers: {
                     ...(options.headers || {}),
                     ...(__etagCache.has(url) ? { 'If-None-Match': __etagCache.get(url) } : {}),
                     ...(currentUser ? { 'X-User': currentUser } : {}),
-                    ...(_getAuthToken() ? { 'Authorization': `Bearer ${_getAuthToken()}` } : {})
+                    ...(_getAuthToken() ? { 'Authorization': `Bearer ${_getAuthToken()}` } : {}),
+                    ...(!['GET', 'HEAD', 'OPTIONS'].includes((options.method || 'GET').toUpperCase()) && _getCookie('smartfolio_csrf')
+                        ? { 'X-CSRF-Token': _getCookie('smartfolio_csrf') }
+                        : {})
                 }
             });
 
@@ -68,6 +90,18 @@ export async function safeFetch(url, options = {}) {
             }
 
             const ok = res.ok === true;
+
+            if (
+                res.status === 401
+                && !authRefreshAttempted
+                && !String(url).includes('/auth/refresh')
+            ) {
+                authRefreshAttempted = true;
+                if (await _refreshCookieSession()) {
+                    attempt -= 1;
+                    continue;
+                }
+            }
 
             // Retry sur certains status codes
             if (!ok && retryStatusCodes.includes(res.status) && attempt < maxRetries) {

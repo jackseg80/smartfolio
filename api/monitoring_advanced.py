@@ -34,18 +34,18 @@ USE_MOCK_MONITORING = os.getenv("USE_MOCK_MONITORING", "true").lower() == "true"
 
 # Modèles Pydantic pour notifications (migrés depuis monitoring_endpoints.py)
 class NotificationConfigRequest(BaseModel):
-    """Requête pour configurer les notifications"""
-    channel_type: str = Field(..., description="Type de canal (console, email, webhook)")
-    enabled: bool = Field(default=True, description="Canal activé")
+    """Request to configure notifications."""
+    channel_type: str = Field(..., description="Channel type (console, email, webhook)")
+    enabled: bool = Field(default=True, description="Channel enabled")
     min_level: str = Field(default="info", description="Niveau minimum")
-    alert_types: Optional[List[str]] = Field(default=None, description="Types d'alertes à filtrer")
-    config: Dict[str, Any] = Field(default={}, description="Configuration spécifique au canal")
+    alert_types: Optional[List[str]] = Field(default=None, description="Alert types to filter")
+    config: Dict[str, Any] = Field(default={}, description="Channel-specific configuration")
 
 class TestAlertRequest(BaseModel):
-    """Requête pour déclencher une alerte de test"""
-    level: str = Field(default="info", description="Niveau d'alerte")
-    title: Optional[str] = Field(default=None, description="Titre personnalisé")
-    message: Optional[str] = Field(default=None, description="Message personnalisé")
+    """Request to trigger a test alert."""
+    level: str = Field(default="info", description="Alert level")
+    title: Optional[str] = Field(default=None, description="Custom title")
+    message: Optional[str] = Field(default=None, description="Custom message")
 
 # Note: FastAPI lifecycle events will be handled by the main app
 # The monitoring will start automatically when first accessed
@@ -617,7 +617,7 @@ async def remove_notification_config(channel_type: str):
         else:
             raise HTTPException(
                 status_code=404, 
-                detail=f"Configuration {channel_type} non trouvée"
+                detail=f"{channel_type} configuration not found"
             )
             
     except HTTPException:

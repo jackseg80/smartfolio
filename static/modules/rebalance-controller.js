@@ -986,7 +986,7 @@
 
         // DEBUG A - Vérification parité Rebalance ↔ Analytics
         debugLogger.debug('[whoami]', {
-          currentUser: localStorage.getItem('activeUser') || 'demo',
+          currentUser: localStorage.getItem('activeUser'),
           currentSource: window.globalConfig?.get('data_source') || 'unknown'
         });
         debugLogger.debug('[balances]', {
@@ -1712,7 +1712,7 @@
     }
 
     async function postJson(url, body) {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const r = await fetch(url, {
         method: "POST",
         headers: {
@@ -1726,7 +1726,7 @@
     }
 
     async function postCsv(url, body) {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const r = await fetch(url, {
         method: "POST",
         headers: {

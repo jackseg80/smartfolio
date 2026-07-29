@@ -349,7 +349,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     // Récupérer le stress macro (VIX/DXY) pour Override #4 (Feb 2026)
     let macroStress = null;
     try {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const macroResp = await fetch('/proxy/fred/macro-stress', {
         headers: { 'X-User': activeUser }
       });
@@ -411,7 +411,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const alpha = s?.signals?.alpha;
 
     // 📊 Historique Decision Index (persistance localStorage via di-history.js)
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const dataSource = window.globalConfig?.get('data_source') || 'cointracking';
 
     // Détecter contexte simulation
@@ -606,7 +606,7 @@ const CACHE_CONFIG = {
 // Generate cache key that includes data source to invalidate on source change
 function getCacheKey(baseKey) {
   const dataSource = globalConfig.get('data_source') || 'unknown';
-  const user = (localStorage.getItem('activeUser') || 'demo');
+  const user = localStorage.getItem('activeUser');
   return `${baseKey}_${user}_${dataSource}`;
 }
 
@@ -1079,7 +1079,7 @@ async function loadUnifiedData(force = false) {
     try {
       // DEBUG A - Vérification parité Rebalance ↔ Analytics
       debugLogger.debug('[whoami]', {
-        currentUser: localStorage.getItem('activeUser') || 'demo',
+        currentUser: localStorage.getItem('activeUser'),
         currentSource: window.globalConfig?.get('data_source') || 'unknown'
       });
 
@@ -1141,7 +1141,7 @@ async function loadUnifiedData(force = false) {
 
         // DEBUG A - Vérification parité Rebalance ↔ Analytics
         debugLogger.debug('[whoami]', {
-          currentUser: localStorage.getItem('activeUser') || 'demo',
+          currentUser: localStorage.getItem('activeUser'),
           currentSource: window.globalConfig?.get('data_source') || 'unknown'
         });
         debugLogger.debug('[balances]', {

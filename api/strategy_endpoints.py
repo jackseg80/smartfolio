@@ -25,17 +25,17 @@ class AllocationTargetResponse(BaseModel):
     symbol: str
     weight: float = Field(..., ge=0, le=1, description="Poids (0-1)")
     rationale: Optional[str] = Field(None, description="Justification allocation")
-    confidence: Optional[float] = Field(None, ge=0, le=1, description="Confiance allocation")
+    confidence: Optional[float] = Field(None, ge=0, le=1, description="Allocation confidence")
 
 
 class StrategyResultResponse(BaseModel):
-    decision_score: float = Field(..., ge=0, le=100, description="Score décisionnel 0-100")
-    confidence: float = Field(..., ge=0, le=1, description="Confiance globale")
+    decision_score: float = Field(..., ge=0, le=100, description="Decision score 0-100")
+    confidence: float = Field(..., ge=0, le=1, description="Overall confidence")
     targets: List[AllocationTargetResponse] = Field(..., description="Targets d'allocation")
-    rationale: List[str] = Field(..., description="Explications décision")
-    policy_hint: str = Field(..., description="Policy pour exécution: Slow/Normal/Aggressive")
-    generated_at: datetime = Field(..., description="Timestamp génération")
-    strategy_used: str = Field(..., description="Nom stratégie appliquée")
+    rationale: List[str] = Field(..., description="Decision explanations")
+    policy_hint: str = Field(..., description="Execution policy: Slow/Normal/Aggressive")
+    generated_at: datetime = Field(..., description="Generation timestamp")
+    strategy_used: str = Field(..., description="Applied strategy name")
 
 
 class TemplateInfoResponse(BaseModel):
@@ -53,9 +53,9 @@ class TemplateWeightsRequest(BaseModel):
 
 
 class PreviewRequest(BaseModel):
-    template_id: str = Field(..., description="ID du template à utiliser")
-    custom_weights: Optional[TemplateWeightsRequest] = Field(None, description="Poids custom optionnels")
-    force_refresh: bool = Field(False, description="Forcer recalcul")
+    template_id: str = Field(..., description="Template ID to use")
+    custom_weights: Optional[TemplateWeightsRequest] = Field(None, description="Optional custom weights")
+    force_refresh: bool = Field(False, description="Force recalculation")
 
 
 @router.get("/templates", response_model=Dict[str, TemplateInfoResponse])
@@ -208,7 +208,7 @@ async def strategy_health() -> dict:
 # Endpoint bonus: comparaison templates
 @router.post("/compare")
 async def compare_templates(
-    template_ids: List[str] = Body(..., description="Template IDs to compare", max_items=5)
+    template_ids: List[str] = Body(..., description="Template IDs to compare", max_length=5)
 ) -> dict:
     """Compare plusieurs templates côte à côte"""
     try:

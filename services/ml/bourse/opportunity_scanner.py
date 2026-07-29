@@ -10,6 +10,7 @@ Date: October 2025
 
 import pandas as pd
 import numpy as np
+import math
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import logging
@@ -238,6 +239,15 @@ class OpportunityScanner:
     def __init__(self):
         """Initialize scanner with sector analyzer"""
         self.sector_analyzer = SectorAnalyzer()
+
+    @staticmethod
+    def _finite_number(value: Any, fallback: float) -> float:
+        """Keep partial market-data responses from leaking NaN into the API."""
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return fallback
+        return number if math.isfinite(number) else fallback
 
     async def scan_opportunities(
         self,
@@ -512,9 +522,11 @@ class OpportunityScanner:
                 }
 
             # Extract scores
-            momentum_score = analysis.get("momentum_score", 50)
-            value_score = analysis.get("value_score", 50)
-            diversification_score = analysis.get("diversification_score", 50)
+            momentum_score = self._finite_number(analysis.get("momentum_score"), 50.0)
+            value_score = self._finite_number(analysis.get("value_score"), 50.0)
+            diversification_score = self._finite_number(
+                analysis.get("diversification_score"), 50.0
+            )
 
             # Weighted average (Momentum 40%, Value 30%, Diversification 30%)
             score = (
@@ -524,7 +536,7 @@ class OpportunityScanner:
             )
 
             # Confidence based on data quality
-            confidence = analysis.get("confidence", 0.7)
+            confidence = min(1.0, max(0.0, self._finite_number(analysis.get("confidence"), 0.7)))
 
             return {
                 "momentum_score": round(momentum_score, 1),

@@ -392,7 +392,8 @@ def get_combined_balances_with_locations() -> Dict[str, Any]:
     for it in current_items:
         s = str(it.get("symbol", "")).upper()
         loc = sym2loc.get(s, "Portfolio")
-        e = dict(it); e["location"] = loc
+        e = dict(it)
+        e["location"] = loc
         enriched.append(e)
     return {"source_used": "cointracking_combined", "items": enriched, "exchange_mapping_count": len(sym2loc)}
 
@@ -456,7 +457,8 @@ async def get_unified_balances_by_exchange(source: str = "cointracking") -> Dict
                     for it in cur_items:
                         s = str(it.get("symbol", "")).upper()
                         ex = sym2ex.get(s, "Portfolio")
-                        it2 = dict(it); it2["location"] = ex
+                        it2 = dict(it)
+                        it2["location"] = ex
                         buckets.setdefault(ex, []).append(it2)
                     ex_list = []
                     for ex, arr in buckets.items():

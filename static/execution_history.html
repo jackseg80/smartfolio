@@ -19,6 +19,10 @@
     <script type="module" src="components/data-freshness.js"></script>
     <script type="module" src="network-state-manager.js"></script>
     <script type="module" src="core/sentry-init.js"></script>
+    <script type="module">
+        import { checkAuth } from './core/auth-guard.js';
+        await checkAuth();
+    </script>
 
     <!-- Navigation unifiée (conditionnelle) -->
     <script type="module">

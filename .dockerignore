@@ -26,8 +26,8 @@ ENV/
 *.log
 logs/
 
-# Data files that shouldn't be in container
-data/price_history/*.json
+# User and runtime data must never be baked into an image
+data/
 cache/*.json
 *.db
 *.sqlite

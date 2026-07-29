@@ -20,7 +20,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Security: Use safe loader for PyTorch models
-from services.ml.safe_loader import safe_torch_load
+from services.ml.safe_loader import safe_pickle_load, safe_torch_load
 
 logger = logging.getLogger(__name__)
 
@@ -545,7 +545,7 @@ class CorrelationForecaster:
             # Load scalers
             scalers_file = self.model_dir / "scalers.pkl"
             if scalers_file.exists():
-                self.scalers = joblib.load(scalers_file)
+                self.scalers = safe_pickle_load(scalers_file)
             
             # Load models for each horizon
             models_loaded = 0
@@ -745,9 +745,9 @@ class CorrelationForecaster:
                     pair_key = f"{symbol1}_{symbol2}"
                     corr_idx = 0
                     for k in range(len(symbols)):
-                        for l in range(k + 1, len(symbols)):
-                            if (symbols[k] == symbol1 and symbols[l] == symbol2) or \
-                               (symbols[k] == symbol2 and symbols[l] == symbol1):
+                        for other_index in range(k + 1, len(symbols)):
+                            if (symbols[k] == symbol1 and symbols[other_index] == symbol2) or \
+                               (symbols[k] == symbol2 and symbols[other_index] == symbol1):
                                 break
                             corr_idx += 1
                     

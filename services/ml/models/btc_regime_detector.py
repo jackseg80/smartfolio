@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 import joblib
 
 from services.price_history import price_history
+from services.ml.safe_loader import safe_pickle_load
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +277,7 @@ class BTCRegimeDetector:
             logger.warning(f"Model file not found: {model_path}")
             return False
 
-        data = joblib.load(model_path)
+        data = safe_pickle_load(model_path)
         self.hmm_model = data['hmm_model']
         self.scaler = data['scaler']
         self.feature_columns = data['feature_columns']

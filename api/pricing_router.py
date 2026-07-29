@@ -5,7 +5,8 @@ Extracted from api/main.py for better organization
 import os
 import logging
 from typing import Dict
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+from api.deps import get_required_user
 from api.utils.formatters import success_response, error_response
 
 logger = logging.getLogger("crypto-rebalancer")
@@ -21,7 +22,8 @@ async def pricing_diagnostic(
     source: str = Query("cointracking", description="Balance source (cointracking|stub|cointracking_api)"),
     min_usd: float = Query(1.0, description="Minimum USD threshold to filter rows"),
     mode: str = Query("auto", description="Pricing mode to diagnose: local|auto"),
-    limit: int = Query(50, ge=1, le=500, description="Maximum number of symbols to analyze")
+    limit: int = Query(50, ge=1, le=500, description="Maximum number of symbols to analyze"),
+    user: str = Depends(get_required_user),
 ) -> dict:
     """Diagnostique la source de prix retenue par symbole selon la logique actuelle.
 
@@ -37,7 +39,11 @@ async def pricing_diagnostic(
     try:
         # Récupérer holdings unifiés avec filtrage homogène
         from api.unified_data import get_unified_filtered_balances
-        unified = await get_unified_filtered_balances(source=source, min_usd=min_usd)
+        unified = await get_unified_filtered_balances(
+            user_id=user,
+            source=source,
+            min_usd=min_usd,
+        )
         rows = unified.get("items", [])
         source_used = unified.get("source_used", source)
 
@@ -139,7 +145,14 @@ async def pricing_diagnostic_alias(
     source: str = Query("cointracking"),
     min_usd: float = Query(1.0),
     mode: str = Query("auto"),
-    limit: int = Query(50, ge=1, le=500)
+    limit: int = Query(50, ge=1, le=500),
+    user: str = Depends(get_required_user),
 ) -> dict:
     """Alias endpoint for pricing diagnostic (compatibility)"""
-    return await pricing_diagnostic(source=source, min_usd=min_usd, mode=mode, limit=limit)
+    return await pricing_diagnostic(
+        source=source,
+        min_usd=min_usd,
+        mode=mode,
+        limit=limit,
+        user=user,
+    )

@@ -29,7 +29,7 @@ def main():
 
     path = sys.argv[1]
     with io.open(path, "r", encoding="utf-8", errors="ignore") as f:
-        lines = [l.rstrip("\n") for l in f]
+        lines = [line.rstrip("\n") for line in f]
 
     first = lines[0] if lines else ""
 

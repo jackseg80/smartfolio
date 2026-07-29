@@ -227,7 +227,7 @@ def _calculate_risk_score_v2(
     return score, breakdown
 
 class RiskMetricsResponse(BaseModel):
-    """Réponse pour les métriques de risque"""
+    """Risk metrics response."""
     success: bool
     risk_metrics: Optional[Dict[str, Any]] = None
     message: Optional[str] = None
@@ -248,13 +248,13 @@ class StressTestResponse(BaseModel):
     calculation_time: Optional[str] = None
 
 class CustomStressRequest(BaseModel):
-    """Requête pour stress test personnalisé"""
+    """Custom stress test request."""
     asset_shocks: Dict[str, float]  # symbol/group -> shock percentage
     scenario_name: Optional[str] = "Custom Scenario"
     scenario_description: Optional[str] = "User-defined stress scenario"
 
 class BacktestRequest(BaseModel):
-    """Requête pour backtest de stratégie"""
+    """Strategy backtest request."""
     strategy_name: str
     target_allocations: Dict[str, float]  # groupe -> allocation (ex: {"BTC": 0.4, "ETH": 0.3, "DeFi": 0.3})
     backtest_days: Optional[int] = 180
@@ -852,7 +852,7 @@ async def get_risk_dashboard(
     risk_version: str = Query("v2_active", description="Risk Score version: legacy | v2_shadow | v2_active"),
     use_dual_window: bool = Query(True, description="Enable dual-window system (long-term + full intersection)"),
     min_history_days: int = Query(180, ge=90, le=365, description="Minimum days for long-term cohort"),
-    min_coverage_pct: float = Query(0.80, ge=0.5, le=1.0, description="% minimum de valeur couverte pour cohorte"),
+    min_coverage_pct: float = Query(0.80, ge=0.5, le=1.0, description="Minimum value coverage percentage for the cohort"),
     min_asset_count: int = Query(5, ge=3, le=20, description="Minimum number of assets in cohort"),
     # 🔧 FIX: CSV hint for cache invalidation (Oct 2025)
     _csv_hint: Optional[str] = Query(None, description="Hint for cache invalidation when CSV changes (filename or timestamp)")
@@ -1692,7 +1692,6 @@ async def run_stress_test_portfolio(
         result = await calculate_stress_test(
             holdings=balances,
             scenario_id=scenario_id,
-            user_id=user
         )
 
         # Convertir en dict pour JSON
@@ -1777,7 +1776,6 @@ async def run_monte_carlo(
             horizon_days=horizon_days,
             confidence_level=confidence_level,
             price_history_days=price_history_days,
-            user_id=user
         )
 
         # Convertir en dict pour JSON
@@ -1829,4 +1827,3 @@ async def run_monte_carlo(
     except Exception as e:
         logger.error(f"Monte Carlo simulation failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
-

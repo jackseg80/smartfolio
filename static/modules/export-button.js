@@ -165,7 +165,7 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
         statusText.style.color = 'var(--theme-text-muted)';
 
         // Build URL with format only
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         let url = `${window.globalConfig?.API_BASE_URL || ''}${endpoint}?format=${format}`;
 
         // Add source for Crypto (passed as parameter or from context)

@@ -1,4 +1,4 @@
-"""
+r"""
 Backfill local price history for the currently held symbols.
 
 Usage (PowerShell):
@@ -92,4 +92,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Any
 import logging
 
 # Import from config/ (not api/) to respect layered architecture
-from config.users import clear_users_cache, get_user_info, validate_user_id
+from config.users import clear_users_cache, get_user_info, get_users_config_path, validate_user_id
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class UserManagementService:
     """Service centralisé pour gestion utilisateurs"""
 
     def __init__(self):
-        self.users_config_path = Path("config/users.json")
+        self.users_config_path = get_users_config_path()
         self.data_users_path = Path("data/users")
 
     def _load_users_config(self) -> Dict[str, Any]:
@@ -311,7 +311,7 @@ class UserManagementService:
         config = self._load_users_config()
 
         # Empêcher suppression user par défaut
-        if normalized_user_id == config.get("default", "demo"):
+        if normalized_user_id == config.get("default"):
             raise ValueError(f"Cannot delete default user: {normalized_user_id}")
 
         # Trouver user

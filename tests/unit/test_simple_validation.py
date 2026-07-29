@@ -8,6 +8,9 @@ import json
 
 BASE_URL = "http://localhost:8080"
 
+# This is a manually executable smoke-test script, not an isolated pytest module.
+__test__ = False
+
 def test_all():
     """Test all components"""
     print("CCS -> Rebalance Communication Validation")

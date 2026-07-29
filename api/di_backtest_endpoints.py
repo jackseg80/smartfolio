@@ -109,9 +109,9 @@ class ContinuousParamsModel(BaseModel):
 
 
 class DIBacktestRequest(BaseModel):
-    """Requête pour exécuter un backtest DI"""
+    """Request to run a Decision Index backtest."""
     strategy: str = Field(..., description="Strategy: di_threshold, di_momentum, di_contrarian, di_risk_parity, di_signal, di_cycle_rotation, di_adaptive_continuous")
-    start_date: str = Field(..., description="Date début YYYY-MM-DD (min: 2017-01-01)")
+    start_date: str = Field(..., description="Start date YYYY-MM-DD (minimum: 2017-01-01)")
     end_date: str = Field(..., description="Date fin YYYY-MM-DD")
     initial_capital: float = Field(10000.0, gt=0)
     rebalance_frequency: str = Field("weekly", description="daily, weekly, monthly")
@@ -129,7 +129,7 @@ class DIBacktestRequest(BaseModel):
     continuous_params: Optional[ContinuousParamsModel] = None
 
     # Options
-    use_macro_penalty: bool = Field(True, description="Inclure pénalité VIX/DXY")
+    use_macro_penalty: bool = Field(True, description="Include the VIX/DXY penalty")
     calculator_version: str = Field("v1", description="Calculator version: v1 (fixed normalization) or v2 (adaptive)")
 
     # Transaction costs
@@ -138,16 +138,16 @@ class DIBacktestRequest(BaseModel):
 
 
 class DIHistoryRequest(BaseModel):
-    """Requête pour le DI historique"""
-    start_date: str = Field("2017-01-01", description="Date début YYYY-MM-DD")
+    """Request for historical Decision Index data."""
+    start_date: str = Field("2017-01-01", description="Start date YYYY-MM-DD")
     end_date: Optional[str] = Field(None, description="Date fin (None = aujourd'hui)")
     di_weights: Optional[DIWeightsModel] = None
     include_macro: bool = True
 
 
 class DICompareRequest(BaseModel):
-    """Requête pour comparer plusieurs stratégies"""
-    strategies: List[str] = Field(..., description="Liste des stratégies à comparer")
+    """Request to compare multiple strategies."""
+    strategies: List[str] = Field(..., description="Strategies to compare")
     start_date: str
     end_date: str
     initial_capital: float = 10000.0

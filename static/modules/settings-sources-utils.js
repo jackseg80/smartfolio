@@ -15,7 +15,7 @@ async function saveSourcesConfiguration() {
 
   // Sauvegarde via API pour persistance multi-device
   try {
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const response = await fetch('/api/users/settings', {
       method: 'PUT',
       headers: {

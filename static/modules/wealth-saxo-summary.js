@@ -125,7 +125,7 @@ function convertV2BalancesToSaxoSummary(items, userId) {
 
 export async function fetchSaxoSummary() {
     const now = Date.now();
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     // Get current source FIRST (before checking cache)
     // ✅ CRITICAL: Do NOT use localStorage fallback - wait for wealthContextBar to be ready
@@ -535,7 +535,7 @@ export function invalidateSaxoCache(clearAll = false) {
                     keysToRemove.push(key);
                 } else {
                     // Clear only current user's cache
-                    const activeUser = localStorage.getItem('activeUser') || 'demo';
+                    const activeUser = localStorage.getItem('activeUser');
                     if (key.includes(activeUser)) {
                         keysToRemove.push(key);
                     }

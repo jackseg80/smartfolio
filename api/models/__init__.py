@@ -39,7 +39,7 @@ class ErrorResponse(BaseModel):
 
 
 class APIKeysRequest(BaseModel):
-    """Modèle pour la mise à jour des clés API"""
+    """Model for updating API keys."""
     coingecko_api_key: Optional[str] = Field(None, min_length=10, max_length=100)
     cointracking_api_key: Optional[str] = Field(None, min_length=10, max_length=100)
     cointracking_api_secret: Optional[str] = Field(None, min_length=10, max_length=100)

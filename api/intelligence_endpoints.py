@@ -24,34 +24,34 @@ log = logging.getLogger(__name__)
 
 # Request/Response Models
 class ExplanationRequest(BaseModel):
-    model_name: str = Field(..., description="Nom du modèle à expliquer")
+    model_name: str = Field(..., description="Model to explain")
     prediction: Union[float, int, str] = Field(..., description="Model prediction")
-    features: Dict[str, float] = Field(..., description="Features utilisées")
+    features: Dict[str, float] = Field(..., description="Features used")
     model_data: Optional[Dict[str, Any]] = Field(None, description="Additional model data")
-    explanation_types: Optional[List[str]] = Field(None, description="Types d'explications demandées")
+    explanation_types: Optional[List[str]] = Field(None, description="Requested explanation types")
 
 class DecisionRequest(BaseModel):
-    decision_type: str = Field(..., description="Type de décision")
-    original_decision: Any = Field(..., description="Décision originale ML")
+    decision_type: str = Field(..., description="Decision type")
+    original_decision: Any = Field(..., description="Original ML decision")
     prediction: Union[float, int, str] = Field(..., description="Associated prediction")
-    features: Dict[str, float] = Field(..., description="Features de décision")
-    context: Optional[Dict[str, Any]] = Field(None, description="Contexte de la décision")
+    features: Dict[str, float] = Field(..., description="Decision features")
+    context: Optional[Dict[str, Any]] = Field(None, description="Decision context")
     timeout_action: str = Field("approve", description="Action en cas de timeout")
 
 class HumanDecisionResponse(BaseModel):
-    human_decision: Any = Field(..., description="Décision humaine")
+    human_decision: Any = Field(..., description="Human decision")
     feedback: Optional[str] = Field(None, description="Feedback textuel")
-    decided_by: str = Field(..., description="Identifiant du décideur")
+    decided_by: str = Field(..., description="Decision maker identifier")
 
 class FeedbackRequest(BaseModel):
-    request_id: str = Field(..., description="ID de la demande de décision")
+    request_id: str = Field(..., description="Decision request ID")
     decision_quality: int = Field(..., ge=1, le=5, description="Decision quality (1-5)")
     explanation_clarity: int = Field(..., ge=1, le=5, description="Explanation clarity (1-5)")
-    confidence_in_ai: int = Field(..., ge=1, le=5, description="Confiance dans l'IA (1-5)")
+    confidence_in_ai: int = Field(..., ge=1, le=5, description="Confidence in AI (1-5)")
     feedback_text: str = Field(..., description="Feedback textuel")
-    suggestions: Optional[List[str]] = Field(None, description="Suggestions d'amélioration")
-    would_decide_differently: bool = Field(False, description="Aurait décidé différemment")
-    provided_by: str = Field("anonymous", description="Identifiant du feedback provider")
+    suggestions: Optional[List[str]] = Field(None, description="Improvement suggestions")
+    would_decide_differently: bool = Field(False, description="Would decide differently")
+    provided_by: str = Field("anonymous", description="Feedback provider identifier")
 
 # Explainable AI Endpoints
 @router.post("/explain/decision")

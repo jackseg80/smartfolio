@@ -891,11 +891,22 @@ class AdvancedRebalancingEngine:
             return {}
         
         total_value = sum(h["value_usd"] for h in holdings)
+        if total_value <= 0:
+            return {
+                "diversification_score": 0.0,
+                "concentration_risk": 0.0,
+                "estimated_volatility": 0.0,
+                "sharpe_estimate": 0.0,
+            }
         
         # Diversification (Shannon entropy)
         weights = [h["value_usd"] / total_value for h in holdings]
         entropy = -sum(w * np.log(w) for w in weights if w > 0)
-        diversification = entropy / np.log(len(holdings))  # Normalisé 0-1
+        diversification = (
+            entropy / np.log(len(holdings))
+            if len(holdings) > 1
+            else 0.0
+        )
         
         # Concentration risque (HHI)
         hhi = sum(w**2 for w in weights)

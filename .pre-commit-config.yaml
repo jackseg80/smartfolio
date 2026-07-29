@@ -34,7 +34,7 @@ repos:
       - id: strip-bom
         name: Strip UTF-8 BOM
         entry: powershell
-        args: ["-File", "tools/strip_bom.ps1"]
+        args: ["-File", "scripts/dev_tools/strip_bom.ps1"]
         language: system
         files: \.(py|js|ts|json|html|css|md)$
 
@@ -83,13 +83,13 @@ repos:
     hooks:
       - id: check-risk-inversion
         name: Check for Risk Score inversion
-        entry: python tools/check_risk_inversion.py
+        entry: python scripts/debug/check_risk_inversion.py
         language: python
         types_or: [python, javascript, ts, tsx]
         files: '\.(py|js|ts|tsx)$'
 
       - id: validate-commit-msg
         name: Validate commit message format
-        entry: python tools/validate_commit_msg.py
+        entry: python scripts/dev_tools/validate_commit_msg.py
         language: python
         stages: [commit-msg]

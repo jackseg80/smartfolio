@@ -26,6 +26,12 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: npm
+
     - name: Cache pip dependencies
       uses: actions/cache@v4
       with:
@@ -38,6 +44,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest-cov pytest-asyncio
+
+    - name: Install frontend dependencies
+      run: npm ci
+
+    - name: Run Jest
+      run: npm test -- --runInBand
 
     - name: Run tests with coverage
       run: |
@@ -82,9 +94,42 @@ jobs:
     - name: Lint with ruff
       run: |
         ruff check .
-      continue-on-error: true
 
-    - name: Type check with mypy
+    - name: Type check public security boundary with mypy
       run: |
-        mypy api/ services/ --ignore-missing-imports
-      continue-on-error: true
+        mypy api/auth_security.py api/auth_router.py api/deps.py api/middleware_setup.py api/static_files_setup.py config/users.py --ignore-missing-imports --explicit-package-bases --follow-imports=skip
+
+    - name: Validate OpenAPI
+      run: |
+        python -c "from api.main import app; import json; json.dumps(app.openapi())"
+        python scripts/security/check_openapi_english.py
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install security scanners
+      run: python -m pip install bandit pip-audit
+
+    - name: Scan Python code
+      run: bandit -r api services connectors -ll -x tests
+
+    - name: Audit Python dependencies
+      run: pip-audit -r requirements.txt
+
+    - name: Reject unsafe direct model loads
+      shell: bash
+      run: |
+        if grep -R -nE '(pickle|joblib|torch)\.load\(' api services connectors \
+          --include='*.py' --exclude='safe_loader.py'; then
+          echo "Direct model deserialization is forbidden; use services.ml.safe_loader."
+          exit 1
+        fi

@@ -5,6 +5,62 @@
  * Utilise localStorage pour la persistance.
  */
 
+// Install authentication before any page-level initialization issues fetch calls.
+// Module scripts are deferred, while this file is loaded synchronously by the
+// application pages; waiting for auth-guard.js caused the first API requests to
+// be sent without the JWT during the dual-to-cookie migration.
+(function installEarlyAuthenticatedFetch() {
+  if (
+    typeof window === 'undefined'
+    || typeof window.fetch !== 'function'
+    || window.__smartfolioAuthenticatedFetchInstalled
+  ) {
+    return;
+  }
+
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = function authenticatedFetch(input, init = {}) {
+    const request = (
+      typeof Request !== 'undefined' && input instanceof Request
+    ) ? input : null;
+    const target = new URL(request?.url || String(input), window.location.href);
+
+    if (target.origin !== window.location.origin) {
+      return nativeFetch(input, init);
+    }
+
+    const headers = new Headers(request?.headers);
+    new Headers(init.headers).forEach((value, name) => headers.set(name, value));
+
+    const token = localStorage.getItem('authToken');
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const activeUser = localStorage.getItem('activeUser');
+    if (activeUser && !headers.has('X-User')) {
+      headers.set('X-User', activeUser);
+    }
+
+    const csrfCookie = document.cookie
+      .split('; ')
+      .find(value => value.startsWith('smartfolio_csrf='));
+    if (csrfCookie && !headers.has('X-CSRF-Token')) {
+      headers.set(
+        'X-CSRF-Token',
+        decodeURIComponent(csrfCookie.split('=').slice(1).join('='))
+      );
+    }
+
+    return nativeFetch(input, {
+      ...init,
+      credentials: init.credentials || request?.credentials || 'same-origin',
+      headers
+    });
+  };
+  window.__smartfolioAuthenticatedFetchInstalled = true;
+})();
+
 // Configuration par défaut
 // Helper: detect sensible default API base depending on where the page runs
 function detectDefaultApiBase() {
@@ -50,8 +106,7 @@ window.getCurrentUser = function () {
     return userSelector.value;
   }
 
-  // Fallback final: demo
-  return 'demo';
+  return null;
 };
 
 // Alias for backward compatibility - prefer getCurrentUser()
@@ -131,7 +186,7 @@ class GlobalConfig {
    * Récupère la clé localStorage isolée par utilisateur
    */
   getStorageKey() {
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     return `smartfolio_settings_${activeUser}`;
   }
 
@@ -316,7 +371,7 @@ class GlobalConfig {
     const url = this.getApiUrl(endpoint, options.params || {});
 
     // Ajouter automatiquement le header X-User
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     const requestOptions = {
       ...options, // ← d'abord
@@ -693,7 +748,7 @@ const balanceCache = {
 window.loadBalanceData = async function (forceRefresh = false) {
   const dataSource = globalConfig.get('data_source');
   const apiBaseUrl = globalConfig.get('api_base_url');
-  const currentUser = localStorage.getItem('activeUser') || 'demo';
+  const currentUser = localStorage.getItem('activeUser');
 
   // 🔧 FIX: Include csv_selected_file in cache key for proper isolation
   const csvFile = window.userSettings?.csv_selected_file || 'latest';

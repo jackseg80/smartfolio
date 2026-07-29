@@ -31,7 +31,7 @@ class WealthContextBar {
     try {
       // Priorité : querystring > localStorage (namespacé par user) > defaults
       const params = new URLSearchParams(location.search);
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const userKey = `wealth_ctx:${activeUser}`;
       const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
 
@@ -69,7 +69,7 @@ class WealthContextBar {
   saveContext() {
     try {
       // Sauvegarder dans localStorage namespacé par user
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const userKey = `wealth_ctx:${activeUser}`;
       localStorage.setItem(userKey, JSON.stringify(this.context));
 
@@ -124,7 +124,7 @@ class WealthContextBar {
   }
 
   async loadAccountSources() {
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const now = Date.now();
 
     // Utiliser cache si valide (< 60s) et même user
@@ -221,7 +221,7 @@ class WealthContextBar {
   }
 
   async loadBourseSources() {
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const now = Date.now();
 
     // Utiliser cache si valide
@@ -334,7 +334,7 @@ class WealthContextBar {
     }
 
     this.settingsPutController = new AbortController();
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     try {
       const response = await fetch('/api/users/settings', {
@@ -438,7 +438,7 @@ class WealthContextBar {
     // Charger les sources disponibles si pas déjà chargé
     if (!window.availableSources) {
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const response = await fetch('/api/users/sources', {
           headers: { 'X-User': activeUser }
         });
@@ -463,7 +463,7 @@ class WealthContextBar {
     if (!window.userSettings) {
       // Charger d'abord les settings depuis le backend pour ne pas perdre les clés API
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const response = await fetch('/api/users/settings', {
           headers: { 'X-User': activeUser }
         });
@@ -490,7 +490,7 @@ class WealthContextBar {
     } else {
       // Si window.userSettings existe déjà, recharger quand même les clés API pour les préserver
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const response = await fetch('/api/users/settings', {
           headers: { 'X-User': activeUser }
         });
@@ -588,7 +588,7 @@ class WealthContextBar {
 
       if (sourcesV2Id) {
         try {
-          const activeUser = localStorage.getItem('activeUser') || 'demo';
+          const activeUser = localStorage.getItem('activeUser');
           console.debug(`[WealthContextBar] Syncing Sources V2: activating ${sourcesV2Id}`);
           await fetch('/api/sources/v2/crypto/active', {
             method: 'PUT',
@@ -770,7 +770,7 @@ class WealthContextBar {
     // Charger les sources disponibles si pas déjà chargé
     if (!window.availableSources) {
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const response = await fetch('/api/users/sources', {
           headers: { 'X-User': activeUser }
         });
@@ -814,7 +814,7 @@ class WealthContextBar {
     }
 
     try {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       console.debug(`[WealthContextBar] Syncing Sources V2 Bourse: activating ${sourcesV2Id}`);
       await fetch('/api/sources/v2/bourse/active', {
         method: 'PUT',
@@ -1159,7 +1159,7 @@ class WealthContextBar {
    */
   async activateManualSource(category) {
     try {
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
       const sourceId = `manual_${category}`;
 
       console.debug(`[WealthContextBar] Activating manual source for ${category}: ${sourceId}`);
@@ -1209,7 +1209,7 @@ class WealthContextBar {
     accountSelect.removeAttribute('aria-busy');
 
     // Restaurer sélection depuis localStorage namespacé
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const userKey = `wealth_ctx:${activeUser}`;
     const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
     const restoredValue = stored.account || 'all';
@@ -1250,7 +1250,7 @@ class WealthContextBar {
     bourseSelect.removeAttribute('aria-busy');
 
     // Restaurer sélection depuis localStorage namespacé
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const userKey = `wealth_ctx:${activeUser}`;
     const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
     const restoredValue = stored.bourse || 'all';
@@ -1432,7 +1432,7 @@ class WealthContextBar {
   async fetchAndUpdateRealData() {
     try {
       // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       // Parallel fetch of all available APIs
       // ✅ Utilise window.loadBalanceData() au lieu de fetch direct (règle CLAUDE.md)

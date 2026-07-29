@@ -1001,7 +1001,7 @@ export async function getUnifiedState() {
  */
 function snapshotId(u) {
   return JSON.stringify({
-    user: u.user?.id || localStorage.getItem('activeUser') || 'demo',
+    user: u.user?.id || localStorage.getItem('activeUser'),
     source: u.meta?.data_source,
     // Scores arrondis pour stabilité (pas de timestamps qui changent)
     blended: Math.round(u.decision?.score || 50),

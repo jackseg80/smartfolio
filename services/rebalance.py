@@ -1,5 +1,6 @@
 from __future__ import annotations
 import logging
+from math import exp
 from typing import Any, Dict, List, Optional, Tuple
 from constants import get_exchange_priority, normalize_exchange_name, format_exec_hint
 from services.taxonomy import Taxonomy
@@ -43,7 +44,7 @@ def _get_exec_hint(action: Dict[str, Any], items_by_group: Dict[str, List[Dict[s
     ordered = sorted(loc_vals.items(), key=lambda kv: (prio(kv[0]), -kv[1]))
 
     if action_type == "sell":
-        cex = [l for l, _ in ordered if prio(l) < 15]
+        cex = [location for location, _ in ordered if prio(location) < 15]
         main = (cex[0] if cex else ordered[0][0])
         return _format_hint_for_location(main, "sell")
 
@@ -200,7 +201,8 @@ def plan_rebalance(
             run = 0.0
             for i, (a, _) in enumerate(buckets):
                 if i < n - 1:
-                    alloc[a] = q; run += q
+                    alloc[a] = q
+                    run += q
                 else:
                     alloc[a] = round(total - run, 2)
             return alloc
@@ -208,7 +210,8 @@ def plan_rebalance(
         for i, (a, w) in enumerate(buckets):
             if i < len(buckets) - 1:
                 x = round(total * (max(w, 0.0) / base), 2)
-                alloc[a] = x; run += x
+                alloc[a] = x
+                run += x
             else:
                 alloc[a] = round(total - run, 2)
         return alloc

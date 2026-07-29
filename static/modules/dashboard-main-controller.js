@@ -224,7 +224,7 @@ async function loadUnifiedDataForDashboard() {
         // 2. Try to get cached scores from localStorage (from analytics-unified cache)
         const getCachedScore = (key) => {
             try {
-                const user = localStorage.getItem('activeUser') || 'demo';
+                const user = localStorage.getItem('activeUser');
                 const ds = (window.globalConfig && window.globalConfig.get('data_source')) || 'unknown';
                 const fullKey = `${key}_${user}_${ds}`;
                 const cached = localStorage.getItem(fullKey) || localStorage.getItem(key);
@@ -761,7 +761,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Also clear localStorage scores for the old source (legacy keys)
-        const oldUser = localStorage.getItem('activeUser') || 'demo';
+        const oldUser = localStorage.getItem('activeUser');
         ['risk_score_onchain', 'risk_score_risk', 'risk_score_blended', 'risk_score_ccs'].forEach(key => {
             localStorage.removeItem(`${key}:${oldUser}`);
         });
@@ -986,7 +986,7 @@ async function loadRealCSVPortfolioData() {
         if (displaySource === 'cointracking') {
             try {
                 const userSettings = await fetch('/api/users/settings', {
-                    headers: { 'X-User': localStorage.getItem('activeUser') || 'demo' }
+                    headers: { 'X-User': localStorage.getItem('activeUser') }
                 }).then(r => r.ok ? r.json() : null);
 
                 const csvFileName = userSettings?.csv_selected_file;
@@ -1064,7 +1064,7 @@ async function loadRealCSVPortfolioData() {
     };
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const pnlUrl = `${window.location.origin}/api/portfolio/metrics?source=${currentSource}&user_id=${activeUser}`;
         const pnlResponse = await fetch(pnlUrl, {
             headers: { 'X-User': activeUser }
@@ -1229,7 +1229,7 @@ async function loadScoresData() {
         // Fallback: Si le store est vide, essayer localStorage COMME BEFORE
         // (pour compatibilité si risk-dashboard n'a pas encore chargé le store)
         console.debug('⚠️ Store empty, trying localStorage fallback...');
-        const __user = localStorage.getItem('activeUser') || 'demo';
+        const __user = localStorage.getItem('activeUser');
         const get = (k) => {
             const withPrefix = localStorage.getItem(`${k}:${__user}`);
             if (withPrefix !== null && withPrefix !== '') {
@@ -2630,7 +2630,7 @@ async function refreshSaxoTile() {
 
             // Fetch detailed positions for chart
             try {
-                const activeUser = localStorage.getItem('activeUser') || 'demo';
+                const activeUser = localStorage.getItem('activeUser');
                 const bourseSource = window.wealthContextBar?.getContext()?.bourse;
                 let apiUrl;
                 let isManualSource = false;
@@ -2735,7 +2735,7 @@ async function refreshPatrimoineTile() {
     const emptyStateEl = document.getElementById('wealth-empty-state');
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const response = await fetch(`${window.location.origin}/api/wealth/summary`, {
             headers: {
                 'X-User': activeUser
@@ -2822,7 +2822,7 @@ async function refreshGlobalTile() {
     if (statusEl) statusEl.className = 'status-badge status-loading';
 
     try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
         const currentSource = (window.globalConfig && window.globalConfig.get('data_source')) || 'auto';
         const minThreshold = (window.globalConfig && window.globalConfig.get('min_usd_threshold')) || 1.0;
 
@@ -3148,7 +3148,7 @@ async function loadRiskAlerts() {
     try {
         debugLogger.debug('🚨 Loading risk alerts...');
 
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser');
 
         const [riskRes, alertsRes] = await Promise.all([
             fetch('/api/risk/dashboard', {
@@ -3334,4 +3334,3 @@ window.loadRiskAlerts = loadRiskAlerts;
 window.updateSystemStatus = updateSystemStatus;
 
 // ✅ REMOVED: Auto-refresh Global tile moved to main DOMContentLoaded listener to avoid duplicates
-

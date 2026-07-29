@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class ModelStatus(str, Enum):
-    """États possibles d'un modèle"""
+    """Possible model states."""
     TRAINING = "training"
     TRAINED = "trained"
     VALIDATED = "validated"

@@ -71,8 +71,9 @@ def main():
     
     # Calculer score global
     scores = []
-    if integration: scores.append(100)  # Integration binaire
-    if resilience and "summary" in resilience: 
+    if integration:
+        scores.append(100)  # Integration binaire
+    if resilience and "summary" in resilience:
         scores.append(resilience["summary"]["overall_resilience_score"])
     if performance and "summary" in performance:
         scores.append(performance["summary"]["performance_score"]) 

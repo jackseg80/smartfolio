@@ -16,9 +16,11 @@ import uuid
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from api.utils.formatters import success_response, error_response
+from api.auth_security import AuthenticatedUser
+from api.deps import require_any_role
 from services.alerts.alert_engine import AlertEngine
 from services.alerts.alert_types import Alert, AlertType, AlertSeverity
-from services.alerts.prometheus_metrics import get_alert_metrics
+from services.alerts.prometheus_metrics import get_alert_metrics as get_prometheus_alert_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +30,11 @@ router = APIRouter(prefix="/api/alerts", tags=["alerts"])
 
 class ApplyPolicyRequest(BaseModel):
     """Requête d'application de policy depuis alerte"""
-    mode: str = Field(..., description="Mode de policy")
-    cap_daily: float = Field(..., ge=0.0, le=0.2, description="Cap quotidien [0-20%]")
+    mode: str = Field(..., description="Policy mode")
+    cap_daily: float = Field(..., ge=0.0, le=0.2, description="Daily cap [0-20%]")
     ramp_hours: int = Field(..., ge=1, le=72, description="Ramping [1-72h]")
-    reason: str = Field(..., max_length=140, description="Raison du changement")
-    source_alert_id: str = Field(..., description="ID de l'alerte source")
+    reason: str = Field(..., max_length=140, description="Reason for the change")
+    source_alert_id: str = Field(..., description="Source alert ID")
     
     @validator('mode')
     def validate_mode(cls, v):
@@ -49,9 +51,9 @@ class ApplyPolicyRequest(BaseModel):
 
 class FreezeRequest(BaseModel):
     """Requête de freeze avec TTL"""
-    reason: str = Field(..., max_length=140, description="Raison du freeze")
-    ttl_minutes: int = Field(default=360, ge=15, le=1440, description="TTL auto-unfreeze [15min-24h]")
-    source_alert_id: Optional[str] = Field(None, description="ID alerte source si applicable")
+    reason: str = Field(..., max_length=140, description="Reason for the freeze")
+    ttl_minutes: int = Field(default=360, ge=15, le=1440, description="Automatic unfreeze TTL [15min-24h]")
+    source_alert_id: Optional[str] = Field(None, description="Source alert ID, when applicable")
     
     @validator('reason')
     def validate_reason(cls, v):
@@ -60,19 +62,19 @@ class FreezeRequest(BaseModel):
         return v.strip()
 
 class SnoozeRequest(BaseModel):
-    """Requête de snooze d'alerte"""
+    """Request to snooze an alert."""
     minutes: int = Field(..., ge=5, le=1440, description="Snooze duration [5min-24h]")
     
 class AckRequest(BaseModel):
-    """Requête d'acquittement (optionnel body)"""
-    notes: Optional[str] = Field(None, max_length=200, description="Notes optionnelles")
+    """Alert acknowledgement request with an optional body."""
+    notes: Optional[str] = Field(None, max_length=200, description="Optional notes")
 
 class ResolveRequest(BaseModel):
-    """Requête de résolution d'alerte"""
-    resolution_note: Optional[str] = Field(None, max_length=500, description="Note de résolution")
+    """Request to resolve an alert."""
+    resolution_note: Optional[str] = Field(None, max_length=500, description="Resolution note")
 
 class AlertResponse(BaseModel):
-    """Réponse alerte formatée"""
+    """Formatted alert response."""
     id: str
     alert_type: str
     severity: str
@@ -85,32 +87,19 @@ class AlertResponse(BaseModel):
     escalation_count: int = 0
 
 class MetricsResponse(BaseModel):
-    """Réponse métriques d'observabilité"""
+    """Observability metrics response."""
     alert_engine: Dict[str, Any]
     storage: Dict[str, Any] 
     host_info: Dict[str, Any]
     timestamp: str
 
-# Dépendances pour RBAC (simulation - dans vraie implémentation, lire JWT/session)
-class User(BaseModel):
-    username: str
-    roles: List[str]
-
-def get_current_user() -> User:
-    """Récupère l'utilisateur actuel (simulation)"""
-    # Dans vraie implémentation: décoder JWT, lire session, etc.
-    return User(username="system_user", roles=["approver", "viewer"])
+# Real JWT/cookie-backed RBAC dependencies.
+User = AuthenticatedUser
+get_current_user = require_any_role("viewer", "governance_admin", "ml_admin")
 
 def require_role(required_role: str):
-    """Decorator pour vérifier les rôles utilisateur"""
-    def dependency(current_user: User = Depends(get_current_user)):
-        if required_role not in current_user.roles:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Insufficient permissions. Required role: {required_role}"
-            )
-        return current_user
-    return dependency
+    mapped_role = "governance_admin" if required_role == "approver" else required_role
+    return require_any_role(mapped_role)
 
 # Instance globale AlertEngine (sera initialisée dans main.py)
 alert_engine: Optional[AlertEngine] = None
@@ -769,7 +758,7 @@ async def get_prometheus_metrics(
         storage_metrics = engine.storage.get_metrics()
         
         # Update Prometheus metrics
-        alert_metrics = get_alert_metrics()
+        alert_metrics = get_prometheus_alert_metrics()
         alert_metrics.update_storage_metrics(storage_metrics)
         
         # Update alert counts 

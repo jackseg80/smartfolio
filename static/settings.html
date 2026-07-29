@@ -2256,7 +2256,7 @@
 
     async function updateSaxoOAuthStatus() {
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser') || '';
         const response = await fetch('/api/saxo/auth/status', {
           headers: { 'X-User': activeUser }
         });
@@ -2330,7 +2330,7 @@
 
     async function initSaxoLogin() {
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser') || '';
         const response = await fetch('/api/saxo/auth/login', {
           headers: { 'X-User': activeUser }
         });
@@ -2375,7 +2375,7 @@
       }
 
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser') || '';
         const response = await fetch('/api/saxo/auth/disconnect', {
           method: 'POST',
           headers: { 'X-User': activeUser }
@@ -2401,7 +2401,7 @@
 
     async function refreshSaxoToken() {
       try {
-        const activeUser = localStorage.getItem('activeUser') || 'demo';
+        const activeUser = localStorage.getItem('activeUser') || '';
         const response = await fetch('/api/saxo/auth/refresh', {
           method: 'POST',
           headers: { 'X-User': activeUser }

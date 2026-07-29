@@ -110,7 +110,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
       version: 'store_fallback_with_retry'
     });
     const now = Date.now();
-    const user = (localStorage.getItem('activeUser') || 'demo');
+    const user = localStorage.getItem('activeUser');
     const source = (window.globalConfig && window.globalConfig.get?.('data_source')) || 'unknown';
 
     // Get taxonomy for hash calculation

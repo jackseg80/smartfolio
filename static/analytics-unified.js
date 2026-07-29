@@ -248,7 +248,7 @@ async function loadRiskData() {
     startRiskAlertsPolling();
 
     // 🆕 FIX Nov 2025: Multi-tenant support avec X-User header
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     const riskData = await fetchWithCache('risk-dashboard', async () => {
         const minUsd = globalConfig?.get('min_usd_threshold') || 10;
@@ -320,7 +320,7 @@ async function loadRiskData() {
     console.debug('💾 Loading Performance Monitor data...');
 
     // 🆕 FIX Nov 2025: Multi-tenant support
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     // Performance Monitor is about SYSTEM performance, not financial performance
     let cacheStats = null, memoryStats = null;
@@ -404,7 +404,7 @@ async function loadMonitoringData() {
     console.debug('📈 Loading Advanced Analytics data...');
 
     // 🆕 FIX Nov 2025: Multi-tenant support
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
 
     try {
         const url = `${API_BASE}/analytics/advanced/metrics?days=365`;

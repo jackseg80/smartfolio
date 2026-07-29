@@ -148,7 +148,7 @@ export async function renderTargetsContent() {
   let cooldownStatus = null;
   try {
     const apiUrl = window.globalConfig ? window.globalConfig.getApiUrl('/execution/governance/cooldown-status') : '/execution/governance/cooldown-status';
-    const activeUser = localStorage.getItem('activeUser') || 'demo';
+    const activeUser = localStorage.getItem('activeUser');
     const response = await fetch(`${apiUrl}?user_id=${activeUser}`);
     if (response.ok) {
       cooldownStatus = await response.json();
@@ -624,7 +624,7 @@ window.applyStrategy = async function (mode) {
     // Create governance decision via API instead of direct apply
     try {
       const apiUrl = window.globalConfig ? window.globalConfig.getApiUrl('/execution/governance/propose') : '/execution/governance/propose';
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       // Auto-bypass cooldown in dev environment (localhost + LAN IPs)
       const isDev = isDevEnvironment();

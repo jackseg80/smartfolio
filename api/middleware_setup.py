@@ -11,13 +11,16 @@ import logging
 import os
 from typing import List, Optional
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.httpsredirect import HTTPSRedirectMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from api.middleware import RateLimitMiddleware
+from api.auth_security import ACCESS_COOKIE, get_auth_mode, validate_csrf
+from api.deps import resolve_authenticated_user
 from api.middlewares import (
     add_security_headers_middleware,
     no_cache_dev_middleware,
@@ -26,6 +29,19 @@ from api.middlewares import (
 )
 
 logger = logging.getLogger(__name__)
+
+PUBLIC_EXACT_PATHS = {
+    "/",
+    "/auth/login",
+    "/auth/refresh",
+    "/healthz",
+    "/favicon.ico",
+    "/api/saxo/callback",
+}
+
+
+def _is_public_path(path: str) -> bool:
+    return path in PUBLIC_EXACT_PATHS or path.startswith("/static/")
 
 
 def setup_middlewares(
@@ -62,7 +78,14 @@ def setup_middlewares(
         allow_origins=(cors_origins or default_origins),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["*"],
+        allow_headers=[
+            "Accept",
+            "Authorization",
+            "Content-Type",
+            "Idempotency-Key",
+            "X-CSRF-Token",
+            "X-User",
+        ],
     )
     logger.info(f"✅ CORS configured with {len(cors_origins or default_origins)} allowed origins")
 
@@ -90,11 +113,7 @@ def setup_middlewares(
         allowed_hosts = ["*"]
         logger.info("🔒 TrustedHostMiddleware: dev mode (allow all hosts)")
     else:
-        # En production sans ALLOWED_HOSTS: fallback permissif pour Docker/LAN
-        allowed_hosts = ["*"]
-        logger.warning(
-            "⚠️  TrustedHostMiddleware: production sans ALLOWED_HOSTS défini, utilise '*' (permissif)"
-        )
+        raise RuntimeError("ALLOWED_HOSTS must be configured in production")
 
     app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
@@ -133,5 +152,35 @@ def setup_middlewares(
     # No-cache for static files (development only)
     app.middleware("http")(no_cache_dev_middleware)
     logger.info("✅ No-cache dev middleware registered")
+
+    @app.middleware("http")
+    async def default_authentication_middleware(request: Request, call_next):
+        """Require a coherent authenticated identity on every non-public route."""
+        mode = get_auth_mode()
+        if (
+            mode == "legacy"
+            or request.method == "OPTIONS"
+            or _is_public_path(request.url.path)
+        ):
+            return await call_next(request)
+        try:
+            resolve_authenticated_user(
+                authorization=request.headers.get("Authorization"),
+                access_cookie=request.cookies.get(ACCESS_COOKIE),
+                x_user=request.headers.get("X-User"),
+            )
+            uses_cookie = bool(request.cookies.get(ACCESS_COOKIE))
+            bearer_compat = mode == "dual" and bool(request.headers.get("Authorization"))
+            if request.method not in {"GET", "HEAD", "OPTIONS"} and uses_cookie and not bearer_compat:
+                validate_csrf(request)
+        except HTTPException as exc:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"detail": exc.detail},
+                headers=exc.headers,
+            )
+        return await call_next(request)
+
+    logger.info("🔒 Default authentication middleware registered (dual/cookie modes)")
 
     logger.info("🎯 All middlewares configured successfully")

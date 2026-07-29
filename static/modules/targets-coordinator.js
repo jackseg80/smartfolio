@@ -6,6 +6,7 @@
 import { store } from '../core/risk-dashboard-store.js';
 import { interpretCCS } from './signals-engine.js';
 import { getMarketRegime, applyMarketOverrides, calculateRiskBudget, allocateRiskyBudget, generateRegimeRecommendations } from './market-regimes.js';
+import { normalizeRegimeName } from '../core/regime-constants.js';
 
 // All asset groups (ensures consistent 11-group taxonomy)
 const ALL_ASSET_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
@@ -398,7 +399,7 @@ export function computeExposureCap({ blendedScore, riskScore, decision_score, co
     'expansion': 95,
   };
 
-  const regimeKey = String(regime?.name || regime || '').toLowerCase();
+  const regimeKey = normalizeRegimeName(regime?.name || regime || '').toLowerCase();
   let regimeMin = minByRegime[regimeKey] ?? 40;
   let regimeMax = maxByRegime[regimeKey] ?? 95;
 

@@ -59,7 +59,7 @@ export async function fetchSignals() {
     try {
       const apiBase = window.getApiBase();
       const proxyUrl = `${apiBase}/api/coingecko-proxy/global`;
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       const dominanceResponse = await fetch(proxyUrl, {
         method: 'GET',
@@ -129,7 +129,7 @@ export async function fetchSignals() {
     try {
       const apiBase = window.getApiBase();
       const proxyUrl = `${apiBase}/api/coingecko-proxy/simple/price?ids=bitcoin,ethereum&vs_currencies=usd`;
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       const pricesResponse = await fetch(proxyUrl, {
         method: 'GET',
@@ -178,7 +178,7 @@ export async function fetchSignals() {
     try {
       const apiBase = window.getApiBase();
       const proxyUrl = `${apiBase}/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=7&interval=daily`;
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       const volatilityResponse = await fetch(proxyUrl, {
         method: 'GET',
@@ -227,7 +227,7 @@ export async function fetchSignals() {
       // Use backend proxy to avoid CORS and rate limiting
       const apiBase = window.getApiBase();
       const proxyUrl = `${apiBase}/api/coingecko-proxy/bitcoin?market_data=true`;
-      const activeUser = localStorage.getItem('activeUser') || 'demo';
+      const activeUser = localStorage.getItem('activeUser');
 
       const trendResponse = await fetch(proxyUrl, {
         method: 'GET',

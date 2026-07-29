@@ -152,26 +152,37 @@ class BourseRiskCalculator:
         Returns:
             Array of portfolio returns
         """
-        # Get common dates across all positions
-        all_dates = None
+        # Compute returns before intersecting dates.  Reindexing prices first can
+        # introduce missing values for a ticker and make its return series shorter
+        # than the other positions (as seen with partially quoted securities).
+        returns_by_ticker = {}
+        common_dates = None
         for ticker, data in position_data.items():
-            if all_dates is None:
-                all_dates = data['prices'].index
-            else:
-                all_dates = all_dates.intersection(data['prices'].index)
+            close_prices = data['prices']['close']
+            close_prices = close_prices.loc[
+                ~close_prices.index.duplicated(keep='last')
+            ].sort_index()
+            returns = close_prices.pct_change(fill_method=None).replace(
+                [np.inf, -np.inf], np.nan
+            ).dropna()
 
-        if len(all_dates) == 0:
-            raise ValueError("No common dates found across positions")
+            if returns.empty:
+                raise ValueError(f"No usable return data for {ticker}")
 
-        # Calculate weighted returns
-        portfolio_returns = np.zeros(len(all_dates) - 1)  # -1 for pct_change
+            returns_by_ticker[ticker] = returns
+            common_dates = (
+                returns.index
+                if common_dates is None
+                else common_dates.intersection(returns.index)
+            )
 
+        if common_dates is None or common_dates.empty:
+            raise ValueError("No common return dates are available across positions")
+
+        portfolio_returns = np.zeros(len(common_dates))
         for ticker, data in position_data.items():
-            prices = data['prices'].loc[all_dates, 'close']
-            returns = prices.pct_change().dropna().values
-            weight = data['weight']
-
-            portfolio_returns += returns * weight
+            returns = returns_by_ticker[ticker].reindex(common_dates).to_numpy(dtype=float)
+            portfolio_returns += returns * data['weight']
 
         return portfolio_returns
 

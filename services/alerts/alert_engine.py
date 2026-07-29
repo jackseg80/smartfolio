@@ -13,6 +13,7 @@ Refactoré en modules (Fév 2026):
 
 import asyncio
 import logging
+import numpy as np
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple

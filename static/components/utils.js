@@ -58,7 +58,7 @@ export async function fetchWithTimeout(url, { timeoutMs = 5000, signal, headers,
  */
 export async function fetchRisk() {
   // 🆕 FIX Nov 2025: Récupérer l'user actif depuis localStorage pour multi-tenant
-  const activeUser = localStorage.getItem('activeUser') || 'demo';
+  const activeUser = localStorage.getItem('activeUser');
 
   // 🔧 FIX Jan 2026: Récupérer la source active depuis globalConfig pour multi-tenant isolation
   const currentSource = window.globalConfig?.get('data_source') || 'cointracking';

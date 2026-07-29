@@ -374,8 +374,12 @@ class PartitionedPortfolioStorage:
             # Group snapshots by (user_id, source)
             from collections import defaultdict
             grouped = defaultdict(list)
-            for snapshot in legacy_snapshots:
-                user_id = snapshot.get("user_id", "demo")
+            for index, snapshot in enumerate(legacy_snapshots):
+                user_id = snapshot.get("user_id")
+                if not user_id:
+                    raise ValueError(
+                        f"Legacy snapshot at index {index} has no user_id; migration aborted"
+                    )
                 source = snapshot.get("source", "cointracking")
                 grouped[(user_id, source)].append(snapshot)
 

@@ -32,7 +32,7 @@ class DrawdownPeriod(BaseModel):
     is_recovered: bool = False
 
 class AdvancedMetrics(BaseModel):
-    """Métriques de performance avancées"""
+    """Advanced performance metrics."""
     # Métriques de base
     total_return_pct: float
     annualized_return_pct: float
@@ -64,7 +64,7 @@ class AdvancedMetrics(BaseModel):
     win_loss_ratio: float
 
 class TimeSeriesData(BaseModel):
-    """Données de série temporelle pour graphiques"""
+    """Time-series data for charts."""
     dates: List[str]
     portfolio_values: List[float]
     returns: List[float]
@@ -514,7 +514,6 @@ async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, 
 def _generate_mock_performance_data(days: int, strategy_bias: str = "rebalancing") -> Dict[str, Any]:
     """Générer des données de performance simulées"""
     import random
-    from datetime import datetime, timedelta
     
     # Paramètres selon la stratégie
     params = {
