@@ -1009,8 +1009,9 @@
           // Source API (stub ou cointracking_api)
           balances = balanceResult.data.items.map(item => ({
             symbol: item.symbol,
-            balance: item.balance,
-            value_usd: item.value_usd
+            balance: item.balance ?? item.amount,
+            value_usd: item.value_usd,
+            location: item.location
           }));
         } else {
           throw new Error('Invalid data format received');
@@ -1361,8 +1362,9 @@
           // Source API (stub ou cointracking_api)
           individualBalances = balanceResult.data.items.map(item => ({
             symbol: item.symbol,
-            balance: item.balance,
-            value_usd: item.value_usd
+            balance: item.balance ?? item.amount,
+            value_usd: item.value_usd,
+            location: item.location
           }));
         } else {
           throw new Error('Invalid data format received');
@@ -1370,8 +1372,9 @@
 
         debugLogger.debug('🔍 Rebalancing', individualBalances.length, 'individual assets using source:', balanceResult.source);
 
-        // Load exchange data for smart location selection
-        const exchangeData = await loadExchangeData();
+        // Derive exchange locations from the authenticated balance response.
+        // Raw CoinTracking exports are private and are never served as static files.
+        const exchangeData = loadExchangeData(individualBalances);
         debugLogger.debug('🔍 Exchange data loaded for smart location selection');
 
         // Calculate individual asset targets based on group targets
@@ -1481,50 +1484,33 @@
       return 'Others';
     }
 
-    // Load and parse exchange distribution data
-    async function loadExchangeData() {
-      try {
-        // Try to find the most recent Coins by Exchange file
-        let exchangeResponse;
-        const possibleFilenames = [
-          '/data/raw/CoinTracking - Coins by Exchange - 26.08.2025.csv',
-          '/data/raw/CoinTracking - Coins by Exchange.csv',
-          './data/raw/CoinTracking - Coins by Exchange - 26.08.2025.csv',
-          './data/raw/CoinTracking - Coins by Exchange.csv'
-        ];
+    // Build exchange distribution data from authenticated, tenant-scoped balances.
+    function loadExchangeData(balances = []) {
+      const exchangeData = {};
 
-        for (const filename of possibleFilenames) {
-          try {
-            exchangeResponse = await fetch(filename);
-            if (exchangeResponse.ok) {
-              debugLogger.debug('🔍 Found exchange data at:', filename);
-              break;
-            }
-          } catch (error) {
-            continue;
-          }
+      balances.forEach(item => {
+        const symbol = String(item.symbol || '').trim().toUpperCase();
+        const exchange = String(item.location || '').trim();
+        const valueUsd = Number(item.value_usd);
+        const amount = Number(item.balance ?? item.amount);
+
+        if (!symbol || !exchange || !Number.isFinite(valueUsd) || valueUsd < 0) {
+          return;
         }
 
-        if (!exchangeResponse || !exchangeResponse.ok) {
-          throw new Error('No exchange data file found');
+        if (!exchangeData[symbol]) {
+          exchangeData[symbol] = {};
+        }
+        if (!exchangeData[symbol][exchange]) {
+          exchangeData[symbol][exchange] = { amount: 0, value_usd: 0 };
         }
 
-        const csvText = await exchangeResponse.text();
-        const exchangeData = parseExchangeCSV(csvText);
+        exchangeData[symbol][exchange].amount += Number.isFinite(amount) ? amount : 0;
+        exchangeData[symbol][exchange].value_usd += valueUsd;
+      });
 
-        debugLogger.debug('🔍 Loaded exchange data for', Object.keys(exchangeData).length, 'coins across exchanges');
-
-        // Show sample of loaded data
-        const sampleCoins = Object.keys(exchangeData).slice(0, 3);
-        sampleCoins.forEach(coin => {
-          debugLogger.debug(`📊 ${coin} exchanges:`, Object.keys(exchangeData[coin]));
-        });
-        return exchangeData;
-
-      } catch (error) {
-        debugLogger.warn('Could not load exchange data:', error);
-        return {};
-      }
+      debugLogger.debug('🔍 Loaded exchange locations for', Object.keys(exchangeData).length, 'assets from balances');
+      return exchangeData;
     }
 
     // Parse exchange CSV data  
@@ -2388,8 +2374,6 @@
       // Recharger les données filtrées
       if (currentWealthContext.module === 'crypto' || currentWealthContext.module === 'all') {
         loadStrategies();
-        // Optionnel: recharger exchange data si nécessaire
-        loadExchangeData().catch(console.warn);
       }
 
       // TODO: Charger données pour autres modules (bourse, banque, divers)
@@ -2521,27 +2505,6 @@
           loadStrategies();
         }
       }, 1000); // Attendre 1s au cas où l'event n'a pas encore été émis
-
-      // Test exchange data loading
-      setTimeout(async () => {
-        debugLogger.debug('🧪 Testing exchange data loading...');
-        try {
-          const exchangeData = await loadExchangeData();
-          debugLogger.debug('✅ Exchange data loaded successfully');
-
-          // Test specific coins
-          const testCoins = ['BTC', 'ETH', 'ADA', 'AAVE'];
-          testCoins.forEach(coin => {
-            if (exchangeData[coin]) {
-              debugLogger.debug(`✅ ${coin}: Found on`, Object.keys(exchangeData[coin]).join(', '));
-            } else {
-              debugLogger.debug(`❌ ${coin}: Not found in exchange data`);
-            }
-          });
-        } catch (error) {
-          debugLogger.error('❌ Exchange data test failed:', error);
-        }
-      }, 2000);
 
       // Restaurer l'état de la section stratégies
       const isCollapsed = localStorage.getItem('strategies_section_collapsed') === 'true';
