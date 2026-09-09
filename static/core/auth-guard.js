@@ -22,6 +22,29 @@ const API_BASE = window.location.origin;
 
 // Pages publiques (ne nécessitent pas d'authentification)
 const PUBLIC_PAGES = ['/static/login.html', '/login.html'];
+const AUTH_RETRY_EXCLUDED_PATHS = new Set([
+    '/auth/login',
+    '/auth/logout',
+    '/auth/refresh',
+    '/auth/session',
+    '/auth/verify'
+]);
+let sessionRefreshInFlight = null;
+let lastSessionRefreshAt = 0;
+
+async function ensureFreshCookieSession() {
+    if (Date.now() - lastSessionRefreshAt < 5000) return true;
+    if (!sessionRefreshInFlight) {
+        sessionRefreshInFlight = refreshCookieSession()
+            .then(refreshed => {
+                if (refreshed) lastSessionRefreshAt = Date.now();
+                return refreshed;
+            })
+            .catch(() => false)
+            .finally(() => { sessionRefreshInFlight = null; });
+    }
+    return sessionRefreshInFlight;
+}
 
 /**
  * Vérifie si la page actuelle est publique
@@ -94,7 +117,7 @@ export function getAuthHeaders(includeXUser = true) {
  * are passed through unchanged to prevent credential leakage.
  */
 export function createAuthenticatedFetch(fetchImplementation) {
-    return function authenticatedFetch(input, init = {}) {
+    return async function authenticatedFetch(input, init = {}) {
         const request = (
             typeof Request !== 'undefined' && input instanceof Request
         ) ? input : null;
@@ -111,11 +134,24 @@ export function createAuthenticatedFetch(fetchImplementation) {
             if (!headers.has(name)) headers.set(name, value);
         });
 
-        return fetchImplementation(input, {
+        const requestOptions = {
             ...init,
             credentials: init.credentials || request?.credentials || 'same-origin',
             headers
-        });
+        };
+        const retryInput = request ? request.clone() : input;
+        const response = await fetchImplementation(input, requestOptions);
+
+        if (response.status !== 401 || AUTH_RETRY_EXCLUDED_PATHS.has(target.pathname)) {
+            return response;
+        }
+
+        const refreshed = await ensureFreshCookieSession();
+        if (!refreshed) return response;
+
+        // The first request was rejected before executing its operation. Retry
+        // it once with the renewed same-origin cookie session.
+        return fetchImplementation(retryInput, requestOptions);
     };
 }
 

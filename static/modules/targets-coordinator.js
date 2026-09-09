@@ -11,6 +11,19 @@ import { normalizeRegimeName } from '../core/regime-constants.js';
 // All asset groups (ensures consistent 11-group taxonomy)
 const ALL_ASSET_GROUPS = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
 
+function getDecisionInputSnapshot(state = store.snapshot()) {
+  return {
+    ccs_mixed: state.cycle?.ccsStar,
+    onchain_score: state.scores?.onchain,
+    risk_score: state.scores?.risk,
+    blended_score: state.scores?.blended
+  };
+}
+
+function hasCompleteDecisionInputs(state = store.snapshot()) {
+  return Object.values(getDecisionInputSnapshot(state)).every(Number.isFinite);
+}
+
 // Default macro targets (baseline allocation) - TOUS les 11 groupes
 export const DEFAULT_MACRO_TARGETS = {
   'BTC': 35.0,
@@ -594,10 +607,10 @@ export function proposeTargets(mode = 'blend', options = {}) {
         // The blended mode requires the complete score produced by the decision chain.
         const effectiveScore = finalBlendedScore;
 
-        // Missing components make this decision mode unavailable.
-        // even when CCS is not available (external APIs can fail but we still have OnChain + Risk)
-        if (!Number.isFinite(effectiveScore)) {
-          throw new Error('Blended score is unavailable');
+        // A persisted blended value is not sufficient by itself: every current
+        // input must be present before producing a portfolio recommendation.
+        if (!hasCompleteDecisionInputs(state) || !Number.isFinite(effectiveScore)) {
+          throw new Error('Complete decision inputs are unavailable');
         } else if (effectiveScore >= 70) {
           // High confidence: use effective score (blended or CCS*cycle)
           proposedTargets = generateCCSTargets(effectiveScore);
@@ -714,7 +727,7 @@ export function computePlan(currentAllocations, targetAllocations) {
  * Apply targets to store and trigger events
  */
 export async function applyTargets(proposalResult) {
-  if (!proposalResult || !proposalResult.targets) {
+  if (!proposalResult || proposalResult.available !== true || !proposalResult.targets) {
     throw new Error('Invalid proposal result');
   }
 
@@ -746,29 +759,49 @@ export async function applyTargets(proposalResult) {
     // Save to decision log (localStorage)
     appendToDecisionLog(decisionEntry);
 
-    // Save to last_targets for rebalance.html communication
-    const dataToSave = {
+    // Save cross-page targets only when they can be tied to a complete current
+    // decision and to one explicit portfolio identity.
+    const state = store.snapshot();
+    const portfolioUserId = localStorage.getItem('activeUser');
+    const portfolioSourceId = state.wallet?.source_used
+      || window.globalConfig?.get?.('data_source')
+      || null;
+    const decisionInputs = getDecisionInputSnapshot(state);
+    const canPersistCrossPage = hasCompleteDecisionInputs(state)
+      && Boolean(portfolioUserId)
+      && Boolean(portfolioSourceId);
+
+    const dataToSave = canPersistCrossPage ? {
+      schema_version: 2,
+      portfolio_user_id: portfolioUserId,
+      portfolio_source_id: portfolioSourceId,
+      decision_inputs: decisionInputs,
       targets: proposalResult.targets,
       timestamp: decisionEntry.timestamp,
       strategy: proposalResult.strategy,
+      mode: proposalResult.mode,
       source: 'risk-dashboard-ccs'
-    };
+    } : null;
 
     // DEBUG: Log save operations (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
       console.debug('🔍 DEBUG applyTargets - Full proposal result:', proposalResult);
       console.debug('🔍 DEBUG applyTargets - Targets being saved:', proposalResult.targets);
-      console.debug('🔍 DEBUG applyTargets - BTC before save:', dataToSave.targets.BTC);
-      console.debug('🔍 DEBUG applyTargets - ETH before save:', dataToSave.targets.ETH);
+      console.debug('🔍 DEBUG applyTargets - BTC before save:', dataToSave?.targets?.BTC);
+      console.debug('🔍 DEBUG applyTargets - ETH before save:', dataToSave?.targets?.ETH);
     }
 
-    localStorage.setItem('last_targets', JSON.stringify(dataToSave));
+    if (dataToSave) {
+      localStorage.setItem('last_targets', JSON.stringify(dataToSave));
+    } else {
+      localStorage.removeItem('last_targets');
+    }
 
     // DEBUG: Verify what was actually saved (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
-      const savedData = JSON.parse(localStorage.getItem('last_targets'));
-      console.debug('🔍 DEBUG applyTargets - BTC after save:', savedData.targets.BTC);
-      console.debug('🔍 DEBUG applyTargets - ETH after save:', savedData.targets.ETH);
+      const savedData = JSON.parse(localStorage.getItem('last_targets') || 'null');
+      console.debug('🔍 DEBUG applyTargets - BTC after save:', savedData?.targets?.BTC);
+      console.debug('🔍 DEBUG applyTargets - ETH after save:', savedData?.targets?.ETH);
     }
 
     // Dispatch event for external listeners (rebalance.html)

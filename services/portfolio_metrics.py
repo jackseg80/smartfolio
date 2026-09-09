@@ -14,7 +14,6 @@ import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime, timedelta
 import logging
-import math
 import statistics
 from dataclasses import dataclass
 from functools import cached_property, lru_cache  # PERFORMANCE FIX (Dec 2025): CPU cache
@@ -186,6 +185,21 @@ class PortfolioMetricsService:
 
     def __init__(self):
         self.risk_free_rate = 0.02  # 2% annuel
+
+    @staticmethod
+    def _calendar_span_days(price_data: pd.DataFrame) -> int:
+        """Return the calendar span, independent of the sampling frequency."""
+        if not isinstance(price_data.index, pd.DatetimeIndex):
+            return len(price_data)
+        try:
+            timestamps = pd.DatetimeIndex(pd.to_datetime(price_data.index, errors='coerce')).dropna()
+            if len(timestamps) == 0:
+                return 0
+            first_day = timestamps.min().normalize()
+            last_day = timestamps.max().normalize()
+            return max(1, (last_day - first_day).days + 1)
+        except (TypeError, ValueError, OverflowError):
+            return len(price_data)
 
     @cached_property
     def taxonomy(self):
@@ -535,7 +549,8 @@ class PortfolioMetricsService:
 
             full_intersection_result = {
                 'metrics': full_intersection_metrics,
-                'window_days': len(full_intersection_price_data),  # ✅ Utiliser le DataFrame nettoyé
+                'window_days': self._calendar_span_days(full_intersection_price_data),
+                'observation_count': len(full_intersection_price_data),
                 'asset_count': len(balances),
                 'coverage_pct': 1.0
             }

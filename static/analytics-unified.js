@@ -538,10 +538,12 @@ function formatPercent(value) {
 }
 
 function getRiskLevel(score) {
-    if (!score) return 'Unknown';
-    if (score < 30) return 'Low risk';
-    if (score < 70) return 'Moderate risk';
-    return 'High risk';
+    if (!Number.isFinite(score)) return 'Unknown';
+    if (score >= 80) return 'Very robust';
+    if (score >= 65) return 'Robust';
+    if (score >= 50) return 'Moderate';
+    if (score >= 35) return 'Fragile';
+    return 'Very fragile';
 }
 
 // Note: updateRiskAlerts() removed - now handled by risk-alerts-loader.js (unified alert system)

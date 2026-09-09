@@ -265,7 +265,7 @@ function renderRecommendation(score, meta, scores = {}) {
 
   // Détection d'alertes spécifiques
   const criticalOnchain = onchain < 30;
-  const lowRisk = risk < 40;
+  const lowRobustness = risk < 40;
   const strongCycle = cycle >= 70;
 
   // Logique de recommandation basée sur le DI global
@@ -306,9 +306,9 @@ function renderRecommendation(score, meta, scores = {}) {
     title = 'Mixed position';
     colorClass = 'warning';
 
-    if (lowRisk) {
+    if (lowRobustness) {
       action = 'Reduce exposure, secure gains';
-      details = `Low risk (${Math.round(risk)}) → Increase stables to 25-30%`;
+      details = `Low robustness (${Math.round(risk)}) → Increase stables to 25-30%`;
     } else if (criticalOnchain) {
       action = 'Prioritize absolute caution';
       details = 'Critical on-chain signals → Avoid new risky positions';
@@ -322,7 +322,7 @@ function renderRecommendation(score, meta, scores = {}) {
     title = 'Unfavorable position';
     colorClass = 'defensive';
 
-    if (lowRisk && criticalOnchain) {
+    if (lowRobustness && criticalOnchain) {
       action = 'Reduce exposure immediately';
       details = 'Risk + On-Chain weak → Secure 40-50% in stables';
     } else {

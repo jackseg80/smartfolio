@@ -899,6 +899,7 @@ def _build_dual_window_section(dual_window_result: Optional[Dict], use_dual_wind
         },
         "full_intersection": {
             "window_days": fi['window_days'],
+            "observation_count": fi.get('observation_count'),
             "asset_count": fi['asset_count'],
             "metrics": {
                 "sharpe_ratio": fi['metrics'].sharpe_ratio,

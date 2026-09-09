@@ -280,7 +280,7 @@ class RiskSidebarFull extends HTMLElement {
       this.$.ccsMixLabel.textContent = this._getScoreLabel(ccsScore);
       this._applyScoreClass(this.$.ccsMix, ccsScore, this.$.ccsMix.parentElement);
     } else {
-      debugLogger.warn('[risk-sidebar] CCS Mixte: no valid score', ccsScore);
+      debugLogger.debug('[risk-sidebar] CCS Mixte unavailable', ccsScore);
     }
 
     // === SECTION 2: On-Chain ===
@@ -301,7 +301,7 @@ class RiskSidebarFull extends HTMLElement {
 
     if (hasRisk) {
       this.$.risk.textContent = Math.round(riskScore);
-      this.$.riskLabel.textContent = this._getScoreLabel(riskScore);
+      this.$.riskLabel.textContent = this._getRiskLabel(riskScore);
       this._applyScoreClass(this.$.risk, riskScore, this.$.risk.parentElement);
     }
 
@@ -451,6 +451,14 @@ class RiskSidebarFull extends HTMLElement {
     if (score >= 40) return 'Neutral';
     if (score >= 20) return 'Low';
     return 'Critical';
+  }
+
+  _getRiskLabel(score) {
+    if (score >= 80) return 'Very robust';
+    if (score >= 65) return 'Robust';
+    if (score >= 50) return 'Moderate';
+    if (score >= 35) return 'Fragile';
+    return 'Very fragile';
   }
 
   _applyScoreClass(el, score, parentContainer) {

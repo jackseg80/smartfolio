@@ -1379,6 +1379,15 @@ async function loadScoresFromStore() {
 
 // ====== Market Regime Functions ======
 function updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore = null) {
+  if (![blendedScore, onchainScore, riskScore].every(Number.isFinite)) {
+    debugLogger.debug('Market regime unavailable: verified blended, on-chain and Risk Scores are required');
+    const regimeDot = document.getElementById('regime-dot');
+    const regimeText = document.getElementById('regime-text');
+    if (regimeDot) regimeDot.className = 'status-dot';
+    if (regimeText) regimeText.textContent = 'Unavailable';
+    return null;
+  }
+
   try {
     // Calculate regime data (pass cycleScore to avoid resetting Schmitt trigger flags)
     const regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScore);
@@ -1836,9 +1845,11 @@ function renderRiskDashboard(data) {
                   ${(() => {
       const riskScore = m.risk_score || 0;
       // IMPORTANT: Risk Score positif - plus haut = meilleur (plus robuste)
-      if (riskScore > 70) return 'Excellent - Very robust portfolio';
-      if (riskScore > 50) return 'Good - Robustness/return balance';
-      return 'Low - Watch out for high volatility';
+      if (riskScore >= 80) return 'Very robust - Strong overall protection';
+      if (riskScore >= 65) return 'Robust - Good overall protection; review active alerts';
+      if (riskScore >= 50) return 'Moderate - Some risk factors need attention';
+      if (riskScore >= 35) return 'Fragile - Reduce major risk concentrations';
+      return 'Very fragile - Capital protection should take priority';
     })()}
                 </div>
               </div>

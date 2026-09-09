@@ -13,21 +13,31 @@ import * as governanceSelectors from '../../selectors/governance.js';
  */
 export async function renderAllocationBlock(u, options = {}) {
   try {
+    const clearSuggestedAllocation = (reason) => {
+      localStorage.removeItem('unified_suggested_allocation');
+      window.dispatchEvent(new CustomEvent('unifiedSuggestedAllocationUpdated', {
+        detail: { available: false, reason }
+      }));
+    };
+
     // SOURCE CANONIQUE UNIQUE: Utiliser targets_by_group (même source que plan d'exécution)
     (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: Using u.targets_by_group as canonical source');
     let allocation = u.targets_by_group;
     (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: targets_by_group result:', allocation);
 
     if (!allocation || Object.keys(allocation).length === 0) {
-      return '<div class="error-message">❌ Error: verified allocation targets are unavailable</div>';
+      clearSuggestedAllocation('verified_targets_unavailable');
+      return '<div class="info-message">Allocation targets are unavailable until all required risk inputs are verified.</div>';
     }
     if (Object.values(allocation).some(value => !Number.isFinite(value) || value < 0)) {
+      clearSuggestedAllocation('verified_targets_invalid');
       return '<div class="error-message">❌ Error: allocation targets contain invalid values</div>';
     }
 
     // GARDE-FOUS - Checksum et validation
     const total = Object.values(allocation || {}).reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
     if (Math.abs(total - 100) > 0.5) {
+      clearSuggestedAllocation('verified_targets_sum_mismatch');
       (window.debugLogger?.error || console.error)(`Target sum mismatch: ${total.toFixed(1)}%`);
       return `<div class="error-message">❌ Error: allocation targets sum to ${total.toFixed(1)}%</div>`;
     }
@@ -351,6 +361,10 @@ export async function renderAllocationBlock(u, options = {}) {
 
     return '';
   } catch (e) {
+    localStorage.removeItem('unified_suggested_allocation');
+    window.dispatchEvent(new CustomEvent('unifiedSuggestedAllocationUpdated', {
+      detail: { available: false, reason: 'verified_targets_render_failed' }
+    }));
     (window.debugLogger?.warn || console.warn)('Unified allocation render skipped:', e.message || e);
     return '';
   }

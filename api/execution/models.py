@@ -170,7 +170,7 @@ class GovernanceStateResponse(BaseModel):
     current_state: str
     mode: str
     last_decision_id: Optional[str] = None
-    contradiction_index: float
+    contradiction_index: Optional[float] = None
     ml_signals_timestamp: Optional[str] = None
     active_policy: Optional[Dict[str, Any]] = None
     pending_approvals: int

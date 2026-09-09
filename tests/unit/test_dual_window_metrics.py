@@ -506,5 +506,20 @@ class TestDualWindowStability:
         assert excl['reason'] == 'success'
 
 
+def test_calendar_span_days_uses_dates_not_intraday_observation_count(portfolio_service):
+    index = pd.date_range("2026-01-01", periods=24 * 30, freq="h")
+    price_data = pd.DataFrame({"BTC": np.arange(len(index))}, index=index)
+
+    assert len(price_data) == 720
+    assert portfolio_service._calendar_span_days(price_data) == 30
+
+
+def test_calendar_span_days_preserves_daily_windows(portfolio_service):
+    index = pd.date_range("2026-01-01", periods=60, freq="D")
+    price_data = pd.DataFrame({"BTC": np.arange(len(index))}, index=index)
+
+    assert portfolio_service._calendar_span_days(price_data) == 60
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

@@ -1,8 +1,11 @@
 import { describe, expect, test } from '@jest/globals';
 
 import { calculateZeroSumCappedMoves } from '../components/unified-insights/allocation-calculator.js';
+import { renderAllocationBlock } from '../components/unified-insights/execution-plan-renderer.js';
 import { computeMacroTargetsDynamic } from '../core/unified-insights-v2.js';
 import { computeCCS, DEFAULT_CCS_WEIGHTS } from '../modules/signals-engine.js';
+import { proposeTargets } from '../modules/targets-coordinator.js';
+import { store } from '../core/risk-dashboard-store.js';
 
 describe('crypto decision-chain invariants', () => {
   test('preserves a defensive stablecoin budget above the former hidden 60% cap', () => {
@@ -50,6 +53,48 @@ describe('crypto decision-chain invariants', () => {
     );
 
     expect(result[0].suggested).toBe(0);
+  });
+
+  test('clears a previous rebalance suggestion when verified targets are unavailable', async () => {
+    localStorage.setItem('unified_suggested_allocation', JSON.stringify({
+      targets: { Stablecoins: 80, BTC: 20 },
+      timestamp: new Date().toISOString()
+    }));
+
+    const html = await renderAllocationBlock({ targets_by_group: {} });
+
+    expect(localStorage.getItem('unified_suggested_allocation')).toBeNull();
+    expect(html).toContain('Allocation targets are unavailable');
+  });
+
+  test('does not reuse a blended score when one current decision input is missing', () => {
+    store.setState({
+      ...store.snapshot(),
+      cycle: { ...store.snapshot().cycle, ccsStar: null },
+      scores: { ...store.snapshot().scores, onchain: 55, risk: 71, blended: 31 }
+    }, 'test-incomplete-decision');
+
+    const result = proposeTargets('blend');
+
+    expect(result.available).toBe(false);
+    expect(result.targets).toBeNull();
+    expect(result.error).toContain('Complete decision inputs are unavailable');
+  });
+
+  test('proposes blended targets when all current decision inputs are numeric', () => {
+    store.setState({
+      ...store.snapshot(),
+      cycle: { ...store.snapshot().cycle, ccsStar: 24 },
+      scores: { ...store.snapshot().scores, onchain: 55, risk: 71, blended: 43 }
+    }, 'test-complete-decision');
+
+    const result = proposeTargets('blend');
+
+    expect(result.available).toBe(true);
+    expect(result.targets).not.toBeNull();
+    expect(Object.values(result.targets)
+      .filter(Number.isFinite)
+      .reduce((sum, value) => sum + value, 0)).toBeCloseTo(100, 8);
   });
 
   test('does not manufacture a CCS score when one required signal is unavailable', () => {

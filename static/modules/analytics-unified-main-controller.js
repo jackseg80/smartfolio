@@ -2,7 +2,15 @@
  * Sauvegarde les données unified pour rebalance.html
  * Compatible avec le nouveau système u.targets_by_group
  */
-async function saveUnifiedDataForRebalance() {
+  async function saveUnifiedDataForRebalance() {
+    const clearSuggestedAllocation = (reason = 'verified_targets_unavailable') => {
+      localStorage.removeItem('unified_suggested_allocation');
+      localStorage.removeItem('last_targets');
+      window.dispatchEvent(new CustomEvent('unifiedSuggestedAllocationUpdated', {
+      detail: { available: false, reason }
+    }));
+  };
+
   try {
     console.debug('💾 Saving unified data for rebalance.html...');
 
@@ -10,8 +18,11 @@ async function saveUnifiedDataForRebalance() {
     const { getUnifiedState } = await import('../core/unified-insights-v2.js');
     const unifiedState = await getUnifiedState();
 
-    if (!unifiedState || !unifiedState.targets_by_group) {
-      debugLogger.warn('⚠️ No unified targets available to save');
+    if (!unifiedState
+        || !unifiedState.targets_by_group
+        || Object.keys(unifiedState.targets_by_group).length === 0) {
+      clearSuggestedAllocation();
+      debugLogger.debug('No verified unified targets available; previous suggestion cleared');
       return;
     }
 
@@ -45,7 +56,7 @@ async function saveUnifiedDataForRebalance() {
     } catch (e) { /* ignore parse errors */ }
 
     if (!preserved.allocation_snapshot) {
-      localStorage.removeItem('unified_suggested_allocation');
+      clearSuggestedAllocation();
       debugLogger.warn('Suggested allocation was not saved because it is not bound to a portfolio snapshot');
       return;
     }
@@ -86,6 +97,7 @@ async function saveUnifiedDataForRebalance() {
     });
 
   } catch (error) {
+    clearSuggestedAllocation('verified_targets_refresh_failed');
     debugLogger.error('❌ Failed to save unified data:', error);
   }
 }
@@ -686,6 +698,23 @@ function readRiskDashboardCache() {
     }
 
     const parsed = JSON.parse(cached);
+    const activeUser = localStorage.getItem('activeUser');
+    const cacheData = parsed?.data;
+    const isVerifiedV2Cache = parsed?.schema_version === 2
+      && parsed?.user_id === activeUser
+      && parsed?.source_id === dataSource
+      && cacheData?.complete === true
+      && [cacheData.ccsScore, cacheData.onchainScore, cacheData.riskScore, cacheData.blendedScore]
+        .every(Number.isFinite);
+
+    // Legacy entries were not user-scoped and may contain a blended score whose
+    // current CCS input is unavailable. They cannot feed a live decision.
+    if (!isVerifiedV2Cache) {
+      localStorage.removeItem(cacheKey);
+      debugLogger.debug('Discarded unverified legacy risk-dashboard cache');
+      return null;
+    }
+
     const age = Date.now() - parsed.timestamp;
     const ttl = 6 * 60 * 60 * 1000; // 6 heures (même TTL que risk-dashboard)
 
@@ -698,10 +727,10 @@ function readRiskDashboardCache() {
     debugLogger.debug(`✅ CROSS-PAGE CACHE HIT: Using risk-dashboard cache (age: ${ageMin} min, TTL: 6h)`);
 
     return {
-      onchainScore: parsed.data?.onchainScore,
-      riskScore: parsed.data?.riskScore,
-      blendedScore: parsed.data?.blendedScore,
-      ccsScore: parsed.data?.ccsScore,
+      onchainScore: cacheData.onchainScore,
+      riskScore: cacheData.riskScore,
+      blendedScore: cacheData.blendedScore,
+      ccsScore: cacheData.ccsScore,
       timestamp: parsed.timestamp,
       source: 'risk_dashboard_6h_cache'
     };
@@ -804,6 +833,15 @@ function updateRiskMetrics() {
     } else if (scoreElement) {
       scoreElement.textContent = '--/100';
     }
+    const riskLabelElement = document.querySelector('[data-metric="risk-score"] small');
+    if (riskLabelElement) {
+      riskLabelElement.textContent = !Number.isFinite(riskScore) ? 'Unknown'
+        : riskScore >= 80 ? 'Very robust'
+          : riskScore >= 65 ? 'Robust'
+            : riskScore >= 50 ? 'Moderate'
+              : riskScore >= 35 ? 'Fragile'
+                : 'Very fragile';
+    }
 
     // Update On-Chain Score (IMPORTANT: Score positif - plus haut = meilleur signal)
     const onchainScore = store.get('scores.onchain');
@@ -814,6 +852,21 @@ function updateRiskMetrics() {
         onchainScore > 40 ? 'var(--warning)' : 'var(--danger)';
     } else if (onchainElement) {
       onchainElement.textContent = '--/100';
+    }
+
+    // Regime Score requires a current CCS Mixed value. Clear any value painted
+    // before the verified-input guard runs.
+    const blendedScore = store.get('scores.blended');
+    const blendedCard = document.querySelector('[data-metric="risk-kpi-blended"]');
+    const blendedElement = blendedCard?.querySelector('.metric-value');
+    const blendedLabelElement = blendedCard?.querySelector('small');
+    if (blendedElement) {
+      blendedElement.textContent = Number.isFinite(blendedScore) ? Math.round(blendedScore) : '--';
+    }
+    if (blendedLabelElement) {
+      blendedLabelElement.textContent = Number.isFinite(blendedScore)
+        ? 'CCS × Cycle (synthesis)'
+        : 'Synthesis unavailable';
     }
 
     debugLogger.debug('📊 Risk metrics updated with dynamic data');
@@ -1143,14 +1196,36 @@ async function loadUnifiedData(force = false) {
       debugLogger.warn('Patch injection error:', e.message);
     }
 
-    // 4) Compute blended (decision index) - With cache
-    if (isCacheValid(CACHE_CONFIG.blended.key, CACHE_CONFIG.blended.ttl)) {
+    // 4) Compute the market Regime Score only from verified current inputs.
+    const blendState = store.snapshot();
+    const blendInputs = {
+      ccsMixte: blendState.cycle?.ccsStar ?? null,
+      onchain: blendState.scores?.onchain ?? null,
+      risk: blendState.scores?.risk ?? null
+    };
+    const blendInputsAvailable = Object.values(blendInputs).every(Number.isFinite);
+    const cachedBlendedData = isCacheValid(CACHE_CONFIG.blended.key, CACHE_CONFIG.blended.ttl)
+      ? getCache(CACHE_CONFIG.blended.key)
+      : null;
+    const cachedInputsMatch = blendInputsAvailable
+      && cachedBlendedData?.inputs
+      && Object.keys(blendInputs).every(key => (
+        Number.isFinite(cachedBlendedData.inputs[key])
+        && Math.abs(cachedBlendedData.inputs[key] - blendInputs[key]) < 0.05
+      ));
+
+    if (!blendInputsAvailable) {
+      localStorage.removeItem(getCacheKey(CACHE_CONFIG.blended.key));
+      store.set('scores.blended', null);
+      store.set('market.regime', null);
+      debugLogger.debug('Regime Score unavailable: current CCS Mixed, on-chain and Risk Scores are required', blendInputs);
+    } else if (cachedInputsMatch) {
       debugLogger.debug('✅ Blended score loaded from cache');
-      const blendedData = getCache(CACHE_CONFIG.blended.key);
-      store.set('scores.blended', blendedData.score);
-      store.set('market.regime', blendedData.regime);
+      store.set('scores.blended', cachedBlendedData.score);
+      store.set('market.regime', cachedBlendedData.regime);
       loadedFromCache++;
     } else {
+      localStorage.removeItem(getCacheKey(CACHE_CONFIG.blended.key));
       try {
         const s = store.snapshot();
 
@@ -1222,7 +1297,7 @@ async function loadUnifiedData(force = false) {
         // Formule : 50% CCS Mixte + 30% On-Chain + 20% Risk (sans inversion)
         // Respecte docs/RISK_SEMANTICS.md
 
-        const ccsMixteScore = s.cycle?.ccsStar ?? s.cycle?.score ?? null;
+        const ccsMixteScore = s.cycle?.ccsStar ?? null;
         const onchainScore = s.scores?.onchain ?? null;
         const riskScore = s.scores?.risk ?? null;
 
@@ -1257,7 +1332,7 @@ async function loadUnifiedData(force = false) {
           regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScoreVal);
         } catch (e) { debugLogger.warn('Market regime compute failed:', e.message); }
 
-        const blendedData = { score: blendedScore, regime: regimeData };
+        const blendedData = { score: blendedScore, regime: regimeData, inputs: blendInputs };
         setCache(CACHE_CONFIG.blended.key, blendedData);
 
         store.set('scores.blended', blendedScore);

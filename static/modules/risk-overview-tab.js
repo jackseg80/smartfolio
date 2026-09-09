@@ -416,9 +416,11 @@ function renderRiskDashboard(container, data) {
               ${(() => {
                 const riskScore = m.risk_score || 0;
                 // IMPORTANT: Risk Score positif - plus haut = meilleur (plus robuste)
-                if (riskScore > 70) return 'Excellent - Very robust portfolio';
-                if (riskScore > 50) return 'Good - Robustness/return balance';
-                return 'Low - Watch out for high volatility';
+                if (riskScore >= 80) return 'Very robust - Strong overall protection';
+                if (riskScore >= 65) return 'Robust - Good overall protection; review active alerts';
+                if (riskScore >= 50) return 'Moderate - Some risk factors need attention';
+                if (riskScore >= 35) return 'Fragile - Reduce major risk concentrations';
+                return 'Very fragile - Capital protection should take priority';
               })()}
             </div>
           </div>

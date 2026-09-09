@@ -88,7 +88,34 @@
         debugLogger.debug('🔍 syncCCSTargets - BTC value:', targetsData.targets?.BTC);
         debugLogger.debug('🔍 syncCCSTargets - ETH value:', targetsData.targets?.ETH);
 
-        if (targetsData.source === 'risk-dashboard-ccs' && targetsData.targets && targetsData.timestamp) {
+        const state = window.store?.snapshot?.() || {};
+        const activeUser = localStorage.getItem('activeUser');
+        const activeSource = state.wallet?.source_used
+          || window.globalConfig?.get?.('data_source')
+          || null;
+        const currentInputs = {
+          ccs_mixed: state.cycle?.ccsStar,
+          onchain_score: state.scores?.onchain,
+          risk_score: state.scores?.risk,
+          blended_score: state.scores?.blended
+        };
+        const storedInputs = targetsData.decision_inputs || {};
+        const inputKeys = Object.keys(currentInputs);
+        const inputsAreCurrent = inputKeys.every(key =>
+          Number.isFinite(currentInputs[key])
+          && Number.isFinite(storedInputs[key])
+          && Math.abs(currentInputs[key] - storedInputs[key]) < 0.05
+        );
+        const isVerifiedTarget = targetsData.schema_version === 2
+          && targetsData.source === 'risk-dashboard-ccs'
+          && targetsData.portfolio_user_id === activeUser
+          && targetsData.portfolio_source_id === activeSource
+          && state._hydrated === true
+          && inputsAreCurrent
+          && targetsData.targets
+          && targetsData.timestamp;
+
+        if (isVerifiedTarget) {
           // Vérifier que les données ne sont pas trop anciennes (2 heures)
           const dataAge = Date.now() - new Date(targetsData.timestamp).getTime();
           const maxAge = 2 * 60 * 60 * 1000; // 2 heures
@@ -114,12 +141,15 @@
               timestamp: targetsData.timestamp
             };
           } else {
+            localStorage.removeItem('last_targets');
             debugLogger.debug('🔍 syncCCSTargets - Data too old, ignoring');
           }
         } else {
-          debugLogger.debug('🔍 syncCCSTargets - Invalid data structure or wrong source');
+          localStorage.removeItem('last_targets');
+          debugLogger.debug('🔍 syncCCSTargets - Discarded unverified or stale-context targets');
         }
       } catch (error) {
+        localStorage.removeItem('last_targets');
         debugLogger.error('🔍 syncCCSTargets - Error parsing stored targets:', error);
       }
 
@@ -413,7 +443,7 @@
           // Ajouter la stratégie dynamique CCS en deuxième
           // FIX: TOUJOURS recalculer si le store est hydraté (ignorer localStorage qui peut être obsolète)
           const storeState = window.store?.snapshot?.();
-          const storeIsHydrated = storeState?._hydrated && (storeState?.scores?.blended || storeState?.cycle?.ccsStar);
+          const storeIsHydrated = storeState?._hydrated === true;
 
           let ccsTargets = null;
 
@@ -437,7 +467,7 @@
           }
 
           // Fallback: essayer localStorage SEULEMENT si le store n'est pas encore hydraté
-          if (!ccsTargets) {
+          if (!ccsTargets && !storeIsHydrated) {
             ccsTargets = syncCCSTargets();
             if (ccsTargets) {
               debugLogger.debug('📦 Loaded CCS targets from localStorage (store not yet hydrated)');
@@ -445,7 +475,8 @@
           }
 
           // Si toujours pas de données, générer automatiquement
-          if (!ccsTargets && window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
+          if (!ccsTargets && !storeIsHydrated
+              && window.targetsCoordinator && typeof window.targetsCoordinator.proposeTargets === 'function') {
             try {
               debugLogger.debug('No localStorage targets, auto-generating with blend strategy...');
               const proposal = window.targetsCoordinator.proposeTargets('blend');

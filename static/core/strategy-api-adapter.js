@@ -499,7 +499,12 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
     color: getColorForScore(decisionScore),
     available: true,
     confidence: null,
-    reasoning: `V2 hierarchical allocation • ${v2Allocation.metadata.phase} phase • Floors applied`,
+    weights: {
+      cycle: wCycle,
+      onchain: wOnchain,
+      risk: wRisk
+    },
+    reasoning: `V2 hierarchical allocation • ${v2Allocation.metadata.phase} phase`,
 
     // Données V2 spécifiques
     policy_hint: v2Allocation.execution.convergence_strategy === 'gradual' ? 'Slow' : 'Normal',

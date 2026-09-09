@@ -975,7 +975,11 @@ export async function getUnifiedState() {
   // 🆕 Exposer Structure Modulation V2 (Oct 2025)
   // ctx.structure_modulation est défini dans computeMacroTargetsDynamic()
   // On le récupère depuis le contexte utilisé pour les targets
-  const structureMod = await (async () => {
+  const canComputeStructureModulation = decision.available === true
+    && unifiedState.targets_by_group
+    && Object.keys(unifiedState.targets_by_group).length > 0
+    && regimeData?.risk_budget;
+  const structureMod = canComputeStructureModulation ? await (async () => {
     try {
       // Reconstruire le contexte (même que pour targets_by_group)
       const ctx = {
@@ -999,10 +1003,10 @@ export async function getUnifiedState() {
 
       return ctx.structure_modulation || null;
     } catch (error) {
-      debugLogger.warn('⚠️ Structure modulation unavailable:', error);
+      debugLogger.debug('Structure modulation unavailable:', error);
       return null;
     }
-  })();
+  })() : null;
 
   unifiedState.structure_modulation = structureMod;
 

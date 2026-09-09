@@ -135,6 +135,33 @@ describe('Auth Guard - Headers', () => {
     expect(transport).toHaveBeenCalledWith('https://example.org/public', options);
     expect(options.headers).toEqual({ Accept: 'application/json' });
   });
+
+  test('should refresh and retry one same-origin request rejected during startup', async () => {
+    document.cookie = 'smartfolio_csrf=csrf-retry-token';
+    localStorage.setItem('activeUser', 'jack');
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ data: { user: { id: 'jack' } } })
+    });
+    const transport = jest.fn()
+      .mockResolvedValueOnce({ ok: false, status: 401 })
+      .mockResolvedValueOnce({ ok: true, status: 200 });
+    const authenticatedFetch = createAuthenticatedFetch(transport);
+
+    const response = await authenticatedFetch('/api/risk/dashboard');
+
+    expect(response.ok).toBe(true);
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(global.fetch).toHaveBeenCalledWith(
+      'http://localhost/auth/refresh',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-Token': 'csrf-retry-token' }
+      })
+    );
+    document.cookie = 'smartfolio_csrf=; Max-Age=0; path=/';
+  });
 });
 
 describe('Auth Guard - Token Verification', () => {

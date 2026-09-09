@@ -26,6 +26,16 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/execution/governance", tags=["governance"])
 
+
+def _iso_with_timezone(value: Optional[datetime]) -> Optional[str]:
+    """Serialize datetimes with an explicit offset for browser-safe freshness checks."""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.astimezone()
+    return value.isoformat()
+
+
 @router.get("/state", response_model=GovernanceStateResponse)
 async def get_governance_state(user: str = Depends(get_required_user)):
     """
@@ -127,7 +137,7 @@ async def get_governance_state(user: str = Depends(get_required_user)):
                 unified_signals = UnifiedSignals(
                     market=market_signals,
                     cycle=cycle_signals,
-                    as_of=state.signals.as_of.isoformat() if hasattr(state.signals, 'as_of') and state.signals.as_of else datetime.now().isoformat()
+                    as_of=_iso_with_timezone(state.signals.as_of) if hasattr(state.signals, 'as_of') and state.signals.as_of else datetime.now().astimezone().isoformat()
                 )
                 
         except Exception as e:
@@ -151,11 +161,19 @@ async def get_governance_state(user: str = Depends(get_required_user)):
             current_state=current_state,
             mode=state.governance_mode.value if hasattr(state.governance_mode, 'value') else state.governance_mode,
             last_decision_id=state.current_plan.plan_id if state.current_plan else None,
-            contradiction_index=state.signals.contradiction_index if state.signals else 0.0,
-            ml_signals_timestamp=state.signals.timestamp.isoformat() if state.signals and hasattr(state.signals, 'timestamp') and state.signals.timestamp else (state.last_update.isoformat() if state.last_update else datetime.now().isoformat()),
+            contradiction_index=(
+                state.signals.contradiction_index
+                if state.signals and state.signals.available is True
+                else None
+            ),
+            ml_signals_timestamp=(
+                _iso_with_timezone(state.signals.as_of)
+                if state.signals and state.signals.available is True and state.signals.as_of
+                else None
+            ),
             active_policy=state.execution_policy.model_dump() if state.execution_policy else None,
             pending_approvals=pending_approvals,
-            next_update_time=state.last_update.isoformat() if state.last_update else None,
+            next_update_time=_iso_with_timezone(state.last_update),
             etag=current_etag,
             auto_unfreeze_at=state.auto_unfreeze_at.isoformat() if state.auto_unfreeze_at else None,
             
