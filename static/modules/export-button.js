@@ -66,7 +66,11 @@ export function renderExportButton(container, module, options) {
     button.addEventListener('click', async () => {
         // Get context data dynamically
         const cryptoSource = module === 'crypto' ?
-            (window.globalConfig?.get('data_source') || localStorage.getItem('data_source') || 'cointracking') : null;
+            (window.globalConfig?.get('data_source') || localStorage.getItem('data_source')) : null;
+        if (module === 'crypto' && !cryptoSource) {
+            window.showToast?.('Select a portfolio source before exporting.', 'warning');
+            return;
+        }
         const saxoFileKey = module === 'saxo' ? (window.currentFileKey || null) : null;
 
         await openExportModal(module, endpoint, filename, cryptoSource, saxoFileKey);
@@ -170,7 +174,8 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
 
         // Add source for Crypto (passed as parameter or from context)
         if (module === 'crypto') {
-            const cryptoSource = source || window.globalConfig?.get('data_source') || localStorage.getItem('data_source') || 'cointracking';
+            const cryptoSource = source || window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
+            if (!cryptoSource) throw new Error('No portfolio source is selected');
             url += `&source=${encodeURIComponent(cryptoSource)}`;
             console.debug(`📄 Export with crypto source: ${cryptoSource}`);
         }

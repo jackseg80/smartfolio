@@ -4,6 +4,7 @@
  */
 
 // Configuration API - uses centralized window.getApiBase() from global-config.js
+import { getAuthHeaders } from './core/auth-guard.js';
 
 // Utilitaires UI communes
 export function showLoading(elementId, message = 'Loading...') {
@@ -61,7 +62,9 @@ export function showSuccess(message, container = null) {
 export async function fetchMLStatus(endpoint) {
     try {
         const apiBase = window.getApiBase();
-        const response = await fetch(`${apiBase}/api/ml/${endpoint}`);
+        const response = await fetch(`${apiBase}/api/ml/${endpoint}`, {
+            headers: getAuthHeaders()
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
     } catch (error) {
@@ -75,13 +78,13 @@ export async function postMLAction(endpoint, data = {}) {
         const apiBase = window.getApiBase();
         const response = await fetch(`${apiBase}/api/ml/${endpoint}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
             body: JSON.stringify(data)
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
     } catch (error) {
-        debugLogger.error(`ML API ${endpoint} failed:`, error);
+        (window.debugLogger?.error || console.error)(`ML API ${endpoint} failed:`, error);
         throw error;
     }
 }
@@ -121,7 +124,13 @@ export async function trainRegimeModel() {
 }
 
 export async function analyzeCorrelations(symbols = ['BTC', 'ETH'], windowDays = 30) {
-    return await fetchMLStatus(`correlation/matrix/current?window_days=${windowDays}`);
+    const source = window.globalConfig?.get('data_source');
+    if (!source) {
+        throw new Error('No portfolio source selected');
+    }
+    return await fetchMLStatus(
+        `correlation/matrix/current?window_days=${windowDays}&source=${encodeURIComponent(source)}`
+    );
 }
 
 export async function analyzeSentiment(symbols = ['BTC', 'ETH'], days = 7) {

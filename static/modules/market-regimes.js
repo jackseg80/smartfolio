@@ -227,9 +227,16 @@ let _riskBudgetCache = { key: null, data: null, timestamp: 0 };
  * Calcule le budget de risque global selon la formule stratégique avec cache snapshot
  */
 export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, cycleDirection = null, cycleConfidence = null) {
+  if (![blendedScore, riskScore].every(Number.isFinite)) {
+    throw new Error('Blended Score and Risk Score are required to calculate the risk budget');
+  }
+  if (blendedScore < 0 || blendedScore > 100 || riskScore < 0 || riskScore > 100) {
+    throw new Error('Blended Score and Risk Score must be within [0, 100]');
+  }
+
   // ARRONDIR les scores d'entrée pour stabilité (éviter micro-variations 68.3 vs 68.7)
   const blendedRounded = Math.round(blendedScore);
-  const riskRounded = Math.round(riskScore || 0);
+  const riskRounded = Math.round(riskScore);
 
   // Risk semantics version (v2_conservative, v2_aggressive)
   // MIGRATION: Force v2 mode if legacy is detected (legacy removed in Jan 2026)
@@ -285,11 +292,10 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
 
   // Direction penalty: when cycle is high (>80) and descending, reduce risk_factor
   // At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088 → ~9% reduction
-  if (cycleDirection != null && cycleScore != null && cycleScore > 80) {
-    const conf = cycleConfidence ?? 0.5;
-    const dirPenalty = Math.max(0, -cycleDirection) * conf * 0.15;
+  if ([cycleDirection, cycleScore, cycleConfidence].every(Number.isFinite) && cycleScore > 80) {
+    const dirPenalty = Math.max(0, -cycleDirection) * cycleConfidence * 0.15;
     risk_factor *= (1 - dirPenalty);
-    console.debug('📉 Direction penalty applied:', { cycleDirection, conf, dirPenalty: dirPenalty.toFixed(4) });
+    console.debug('📉 Direction penalty applied:', { cycleDirection, confidence: cycleConfidence, dirPenalty: dirPenalty.toFixed(4) });
   }
 
   // BaseRisky = clamp((Blended - 35)/45, 0, 1) - utiliser score arrondi

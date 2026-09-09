@@ -1,5 +1,5 @@
 // Allocation Engine V2 - Descente hiérarchique avec Feature Flag
-// Macro → Secteurs → Coins avec floors contextuels et incumbency protection
+// Macro → Secteurs → Coins avec contraintes explicites uniquement
 
 import { getAssetGroup, UNIFIED_ASSET_GROUPS, GROUP_ORDER, loadTaxonomyDataSync } from '../shared-asset-groups.js';
 // ✅ MODIFIÉ (Phase 1.2): Utiliser selectEffectiveCap pour cohérence staleness/alert/policy
@@ -63,6 +63,8 @@ const FLOORS_CONFIG = {
  */
 export async function calculateHierarchicalAllocation(context, currentPositions = [], options = {}) {
   const enableV2 = options.enableV2 ?? ALLOCATION_ENGINE_V2;
+  const enableFloors = options.enableFloors === true;
+  const respectIncumbency = options.respectIncumbency === true;
 
   console.debug('🏗️ Allocation Engine called:', { enableV2, contextualScores: !!context.adaptiveWeights });
 
@@ -82,9 +84,9 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     }
     // 1. EXTRACTION DU CONTEXTE
     const {
-      cycleScore = 50,
-      onchainScore = 50,
-      riskScore = 50,
+      cycleScore,
+      onchainScore,
+      riskScore,
       adaptiveWeights = {},
       risk_budget = {},
       contradiction = 0,
@@ -93,6 +95,10 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
       // 🆕 NOUVEAU (Oct 2025): Structure Modulation V2 pour deltaCap
       structure_modulation = {}
     } = context;
+
+    if (![cycleScore, onchainScore, riskScore].every(Number.isFinite)) {
+      throw new Error('Cycle, on-chain and Risk Score are required for allocation');
+    }
 
     // Extraire meme_cap depuis le régime de marché
     const meme_cap = regime?.allocation_bias?.meme_cap ?? null;
@@ -103,7 +109,9 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     // 2. DÉTECTION PHASE MARCHÉ
     const isBullishPhase = cycleScore >= 90;
     const isModeratePhase = cycleScore >= 70 && cycleScore < 90;
-    const selectedFloors = isBullishPhase ? { ...FLOORS_CONFIG.base, ...FLOORS_CONFIG.bullish } : FLOORS_CONFIG.base;
+    const selectedFloors = enableFloors
+      ? (isBullishPhase ? { ...FLOORS_CONFIG.base, ...FLOORS_CONFIG.bullish } : FLOORS_CONFIG.base)
+      : {};
 
     console.debug('📊 Market phase detection:', { cycleScore, isBullishPhase, isModeratePhase });
 
@@ -115,8 +123,9 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     const sectorAllocation = calculateSectorAllocation(macroAllocation, selectedFloors, isBullishPhase);
     console.debug('🏭 Sector allocation:', sectorAllocation);
 
-    // 5. ALLOCATION NIVEAU 3 - COINS (Incumbency Protection + Meme Cap)
-    const coinAllocation = calculateCoinAllocation(sectorAllocation, currentPositions, selectedFloors, meme_cap);
+    // 5. ALLOCATION NIVEAU 3 - COINS. Incumbency is opt-in only.
+    const positionsForAllocation = respectIncumbency ? currentPositions : [];
+    const coinAllocation = calculateCoinAllocation(sectorAllocation, positionsForAllocation, selectedFloors, meme_cap);
     console.debug('🪙 Coin allocation:', coinAllocation);
 
     // 6. CALCUL ITERATIONS ESTIMÉES
@@ -154,13 +163,7 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     });
 
     if (!totalCheck.isValid) {
-      debugLogger.error('❌ Invalid allocation total:', totalCheck.total);
-      // Normaliser l'allocation si nécessaire
-      const scale = 1 / totalCheck.total;
-      Object.keys(coinAllocation).forEach(key => {
-        coinAllocation[key] *= scale;
-      });
-      (window.debugLogger?.warn || console.warn)('⚠️ Allocation normalized to sum to 1.0');
+      throw new Error(`Invalid allocation total: ${totalCheck.total}`);
     }
 
     // 8. LOGS POUR DEBUG
@@ -224,7 +227,7 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     return result;
 
   } catch (error) {
-    debugLogger.error('❌ Allocation Engine V2 failed:', error);
+    (window.debugLogger?.error || console.error)('❌ Allocation Engine V2 failed:', error);
     return null; // Fallback vers V1
   }
 }
@@ -233,13 +236,15 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
  * Niveau 1: Allocation Macro (BTC, ETH, Stables, Alts total)
  */
 function calculateMacroAllocation(context, floors) {
-  const { cycleScore = 50, adaptiveWeights = {}, risk_budget = {} } = context;
+  const { cycleScore, adaptiveWeights = {}, risk_budget = {} } = context;
 
-  // SOURCE UNIQUE: risk_budget.target_stables_pct avec fallback regime_based
-  const stablesTarget = risk_budget.target_stables_pct ?
-    risk_budget.target_stables_pct / 100 :
-    risk_budget.stable_allocation ||  // Fallback to stable_allocation if provided
-    (cycleScore >= 90 ? 0.15 : cycleScore >= 70 ? 0.20 : 0.30);
+  // SOURCE UNIQUE: le budget stablecoins doit être fourni et vérifiable.
+  const stablesTarget = Number.isFinite(risk_budget.target_stables_pct)
+    ? risk_budget.target_stables_pct / 100
+    : (Number.isFinite(risk_budget.stable_allocation) ? risk_budget.stable_allocation : null);
+  if (!Number.isFinite(stablesTarget) || stablesTarget < 0 || stablesTarget > 1) {
+    throw new Error('Verified stablecoin risk budget is unavailable');
+  }
 
   // RENORMALISATION PROPORTIONNELLE des non-stables
   const nonStablesSpace = 1 - stablesTarget;
@@ -348,7 +353,7 @@ function calculateSectorAllocation(macroAllocation, floors, isBullishPhase) {
 
   // NORMALISATION: si la somme des floors > budget alts, réduire proportionnellement
   const totalSectorWeights = Object.values(sectorWeights).reduce((sum, w) => sum + w, 0);
-  const othersFloor = floors.Others || 0.01;
+  const othersFloor = floors.Others ?? 0;
   const availableForSectors = Math.max(0, altsTotal - othersFloor);
 
   if (totalSectorWeights > availableForSectors) {

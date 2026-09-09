@@ -15,19 +15,40 @@ async function saveUnifiedDataForRebalance() {
       return;
     }
 
-    // Preserve iter1_targets from execution-plan-renderer's earlier write
-    // (Path 2 overwrites Path 1 — we must keep the capped targets computed by Path 1)
+    const portfolioUserId = localStorage.getItem('activeUser');
+    const portfolioSourceId = window.globalConfig?.get('data_source') || null;
+    const targetsMatch = (left, right) => {
+      if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+      const keys = [...new Set([...Object.keys(left), ...Object.keys(right)])]
+        .filter(key => key !== 'model_version');
+      return keys.every(key => Math.abs(Number(left[key] || 0) - Number(right[key] || 0)) < 0.05);
+    };
+
+    // Preserve a capped plan only when it belongs to the same portfolio and
+    // was calculated from the same theoretical targets.
     let preserved = {};
     try {
       const existing = JSON.parse(localStorage.getItem('unified_suggested_allocation') || 'null');
-      if (existing?.iter1_targets && typeof existing.iter1_targets === 'object') {
+      const samePortfolio = existing?.portfolio_user_id === portfolioUserId
+        && existing?.portfolio_source_id === portfolioSourceId;
+      if (samePortfolio
+          && targetsMatch(existing?.targets, unifiedState.targets_by_group)
+          && existing?.iter1_targets
+          && typeof existing.iter1_targets === 'object') {
         preserved = {
           iter1_targets: existing.iter1_targets,
           cap_percent: existing.cap_percent,
-          mode_name: existing.mode_name
+          mode_name: existing.mode_name,
+          allocation_snapshot: existing.allocation_snapshot
         };
       }
     } catch (e) { /* ignore parse errors */ }
+
+    if (!preserved.allocation_snapshot) {
+      localStorage.removeItem('unified_suggested_allocation');
+      debugLogger.warn('Suggested allocation was not saved because it is not bound to a portfolio snapshot');
+      return;
+    }
 
     // Préparer les données au format attendu par rebalance.html
     const unifiedData = {
@@ -42,6 +63,9 @@ async function saveUnifiedDataForRebalance() {
 
       // Métadonnées utiles
       source: 'analytics_unified_v2',
+      portfolio_user_id: portfolioUserId,
+      portfolio_source_id: portfolioSourceId,
+      allocation_snapshot: preserved.allocation_snapshot,
       stables_source: unifiedState.risk?.budget?.target_stables_pct,
       cycle_score: unifiedState.cycle?.score,
       regime_name: unifiedState.regime?.name,
@@ -244,6 +268,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
                 // Mettre à jour le store
                 store.set('wallet.balances', realBalances);
                 store.set('wallet.total', totalValue);
+                store.set('wallet.source_used', balanceResult.data?.source_used || balanceResult.source || null);
 
                 debugLogger.debug('✅ Balance data reloaded successfully');
               }
@@ -363,24 +388,31 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     console.debug('🔍 Risk score from unified state:', u.scores?.risk);
     console.debug('🔍 Risk score from store:', store.get('scores.risk'));
 
-    const cycleScore = u.cycle?.score ?? 50;
-    const onchainScore = u.onchain?.score ?? 50;
-    const riskScore = u.scores?.risk ?? 50;
-    const blendedScore = u.decision?.score ?? 50;
+    const cycleScore = u.cycle?.score ?? null;
+    const onchainScore = u.onchain?.score ?? null;
+    const riskScore = u.scores?.risk ?? null;
+    const blendedScore = u.decision?.available === true && Number.isFinite(u.decision?.score)
+      ? u.decision.score
+      : null;
 
     console.debug('🔍 Final scores used in DI panel:', { cycleScore, onchainScore, riskScore, blendedScore });
 
     // Weights (depuis unified state)
-    const wCycle = u.decision?.weights?.cycle ?? 0.5;
-    const wOnchain = u.decision?.weights?.onchain ?? 0.3;
-    const wRisk = u.decision?.weights?.risk ?? 0.2;
+    const wCycle = u.decision?.weights?.cycle ?? null;
+    const wOnchain = u.decision?.weights?.onchain ?? null;
+    const wRisk = u.decision?.weights?.risk ?? null;
 
     // Calcul blended confidence
     const s = store.snapshot();
-    const ocConf = Math.max(0, Math.min(1, s.scores?.onchain_metadata?.confidence ?? 0.5));
-    const cycleConf = Math.max(0, Math.min(1, s.cycle?.confidence ?? 0.5));
-    const wSum = (wCycle + wOnchain + wRisk) || 1;
-    const blendedConfidence = (wCycle * cycleConf + wOnchain * ocConf + wRisk * 1.0) / wSum; // risk=1.0
+    const ocConf = Number.isFinite(s.scores?.onchain_metadata?.confidence)
+      ? Math.max(0, Math.min(1, s.scores.onchain_metadata.confidence))
+      : null;
+    const cycleConf = Number.isFinite(s.cycle?.confidence)
+      ? Math.max(0, Math.min(1, s.cycle.confidence))
+      : null;
+    const blendedConfidence = Number.isFinite(u.decision?.confidence)
+      ? u.decision.confidence
+      : null;
 
     // Sélecteurs gouvernance normalisés
     const capPercent = window.selectEffectiveCap(s);           // entier en %
@@ -391,14 +423,14 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const beCap = s?.governance?.execution_policy?.cap_daily;
     console.debug('[CAP] ui=%s%% be=%s%%', capPercent, beCap ? (beCap*100).toFixed(2) : 'NA');
     const modeLabel = (() => {
-      const m = s?.governance?.mode || s?.governance?.current_state || 'normal';
+      const m = s?.governance?.mode || s?.governance?.current_state || 'unknown';
       return String(m).replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, x => x.toUpperCase());
     })();
 
     // Régime et phase
     const regimeData = u.regime || {};
-    const phaseEngineMode = localStorage.getItem('PHASE_ENGINE_ENABLED') || 'shadow';
-    let actualPhase = regimeData.name || 'neutral';
+    const phaseEngineMode = localStorage.getItem('PHASE_ENGINE_ENABLED') || 'off';
+    let actualPhase = regimeData.name || 'unknown';
     if (typeof window !== 'undefined') {
       if (window._phaseEngineAppliedResult?.phase) {
         actualPhase = window._phaseEngineAppliedResult.phase;
@@ -412,7 +444,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
 
     // 📊 Historique Decision Index (persistance localStorage via di-history.js)
     const activeUser = localStorage.getItem('activeUser');
-    const dataSource = window.globalConfig?.get('data_source') || 'cointracking';
+    const dataSource = window.globalConfig?.get('data_source') || null;
 
     // Détecter contexte simulation
     const isSimulation = !!window.__SIMULATION__;
@@ -427,10 +459,13 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const today = diHistoryModule.getTodayCH();
 
     // Charger historique existant (avec sanitization)
-    let diHistory = diHistoryModule.loadHistory(historyKey, 30);
+    let diHistory = activeUser && dataSource
+      ? diHistoryModule.loadHistory(historyKey, 30)
+      : [];
 
     // Migration douce depuis legacy s?.di_history si première utilisation
-    if (diHistory.length === 0 && s?.di_history && Array.isArray(s.di_history) && s.di_history.length > 0) {
+    if (activeUser && dataSource && diHistory.length === 0
+        && s?.di_history && Array.isArray(s.di_history) && s.di_history.length > 0) {
       console.debug('📦 Migration legacy DI history...');
       diHistory = diHistoryModule.migrateLegacy(s.di_history, 30);
       diHistoryModule.saveHistory(historyKey, diHistory);
@@ -438,16 +473,19 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     }
 
     // Ajouter score actuel si nécessaire (date différente OU delta > 0.1)
-    const { history: updatedHistory, added } = diHistoryModule.pushIfNeeded({
-      key: historyKey,
-      history: diHistory,
-      today,
-      di: blendedScore,
-      max: 30,
-      minDelta: 0.1
-    });
-
-    diHistory = updatedHistory;
+    let added = false;
+    if (Number.isFinite(blendedScore) && activeUser && dataSource) {
+      const update = diHistoryModule.pushIfNeeded({
+        key: historyKey,
+        history: diHistory,
+        today,
+        di: blendedScore,
+        max: 30,
+        minDelta: 0.1
+      });
+      diHistory = update.history;
+      added = update.added;
+    }
 
     if (added) {
       console.debug('📊 DI history updated:', {
@@ -504,8 +542,8 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
       scores: { cycle: cycleScore, onchain: onchainScore, risk: riskScore },
       weights: { cycle: wCycle, onchain: wOnchain, risk: wRisk },
       meta: {
-        phase: (regimeData?.name || s?.regime?.name || actualPhase || 'neutral'),   // ✅ current calc > store cache
-        source: u.decision?.source || window.globalConfig?.get('data_source') || 'allocation_engine_v2',
+        phase: (regimeData?.name || s?.regime?.name || actualPhase || 'unknown'),
+        source: u.decision?.source || window.globalConfig?.get('data_source') || null,
         live: s.ui?.apiStatus?.backend === 'healthy',
         backend: s.ui?.apiStatus?.backend === 'healthy',
         signals: s.ui?.apiStatus?.signals === 'healthy',
@@ -801,7 +839,7 @@ async function ensureRiskBudgetReady(getRiskBudget, options = {}) {
       }
     }
 
-    if (!rb?.stables_allocation && typeof store?.snapshot === 'function') {
+    if (rb?.stables_allocation == null && typeof store?.snapshot === 'function') {
       const snapshot = store.snapshot();
       const snapBudget = snapshot?.risk?.budget?.percentages;
       if (snapBudget?.stables != null && snapBudget?.risky != null) {
@@ -812,20 +850,8 @@ async function ensureRiskBudgetReady(getRiskBudget, options = {}) {
       }
     }
 
-    if (!rb?.stables_allocation && typeof window.computeRiskBudget === 'function') {
-      try {
-        const computed = window.computeRiskBudget(store.get('scores.blended') || 50);
-        if (computed?.target_stables_pct != null) {
-          rb = {
-            stables_allocation: computed.target_stables_pct / 100,
-            risky_allocation: (100 - computed.target_stables_pct) / 100
-          };
-        }
-      } catch (e) { /* ignore */ }
-    }
-
-    // Additional fallback: check for cached market regimes calculation
-    if (!rb?.stables_allocation && window.store?.get) {
+    // Check for a previously verified market-regime calculation.
+    if (rb?.stables_allocation == null && window.store?.get) {
       const marketRegime = window.store.get('market.regime');
       if (marketRegime?.risk_budget) {
         rb = {
@@ -855,22 +881,10 @@ async function ensureRiskBudgetReady(getRiskBudget, options = {}) {
       if (typeof unsubscribe === 'function') unsubscribe();
     };
 
-    const finalize = (value, fallback = false) => {
+    const finalize = (value) => {
       if (settled) return;
       settled = true;
       cleanup();
-
-      if (fallback) {
-        console.debug('⏰ RiskBudget resolution timeout, computing synthetic allocation');
-        const blendedScore = store.get('scores.blended') || 50;
-        const stablesPercent = Math.max(10, Math.min(80, 100 - blendedScore));
-        console.debug(`💡 Synthetic allocation: ${stablesPercent}% stables based on blended score ${blendedScore}`);
-        resolve({
-          stables_allocation: stablesPercent / 100,
-          risky_allocation: (100 - stablesPercent) / 100
-        });
-        return;
-      }
 
       resolve(value);
     };
@@ -883,7 +897,7 @@ async function ensureRiskBudgetReady(getRiskBudget, options = {}) {
     };
 
     pollId = setInterval(attemptResolve, waitMs);
-    timeoutId = setTimeout(() => finalize(null, true), timeoutMs);
+    timeoutId = setTimeout(() => finalize(null), timeoutMs);
 
     if (store && typeof store.subscribe === 'function') {
       unsubscribe = store.subscribe(attemptResolve);
@@ -1094,6 +1108,7 @@ async function loadUnifiedData(force = false) {
             const totalValue = realBalances.reduce((sum, item) => sum + (parseFloat(item.value_usd) || 0), 0);
             store.set('wallet.balances', realBalances);
             store.set('wallet.total', totalValue);
+            store.set('wallet.source_used', balanceResult.data?.source_used || balanceResult.source || null);
 
             debugLogger.debug('🔧 PATCH: Analytics FORCE injection même avec cache:', {
               items: realBalances.length,
@@ -1162,6 +1177,7 @@ async function loadUnifiedData(force = false) {
               const totalValue = realBalances.reduce((sum, item) => sum + (parseFloat(item.value_usd) || 0), 0);
               store.set('wallet.balances', realBalances);
               store.set('wallet.total', totalValue);
+              store.set('wallet.source_used', balanceResult.data?.source_used || balanceResult.source || null);
 
               // DEBUG B - Test grouping avec vraies données comme Rebalance
               try {
@@ -1206,33 +1222,23 @@ async function loadUnifiedData(force = false) {
         // Formule : 50% CCS Mixte + 30% On-Chain + 20% Risk (sans inversion)
         // Respecte docs/RISK_SEMANTICS.md
 
-        const ccsMixteScore = s.cycle?.ccsStar ?? s.cycle?.score ?? 50; // CCS Mixte (CCS + Cycle blended)
-        const onchainScore = s.scores?.onchain ?? 50;
-        const riskScore = s.scores?.risk ?? 50;
+        const ccsMixteScore = s.cycle?.ccsStar ?? s.cycle?.score ?? null;
+        const onchainScore = s.scores?.onchain ?? null;
+        const riskScore = s.scores?.risk ?? null;
 
         // Poids fixes identiques à risk-dashboard.html
         const wCCSMixte = 0.50;
         const wOnchain = 0.30;
         const wRisk = 0.20;
 
-        // Calcul blended avec formule canonique (pas d'inversion Risk!)
-        let totalScore = 0;
-        let totalWeight = 0;
-
-        if (ccsMixteScore != null) {
-          totalScore += ccsMixteScore * wCCSMixte;
-          totalWeight += wCCSMixte;
-        }
-        if (onchainScore != null) {
-          totalScore += onchainScore * wOnchain;
-          totalWeight += wOnchain;
-        }
-        if (riskScore != null) {
-          totalScore += riskScore * wRisk; // ✅ Direct, pas d'inversion
-          totalWeight += wRisk;
+        if (![ccsMixteScore, onchainScore, riskScore].every(Number.isFinite)) {
+          throw new Error('Blended score unavailable: cycle, on-chain and Risk Score are required');
         }
 
-        const blended = totalWeight > 0 ? totalScore / totalWeight : 50;
+        // Calcul blended avec formule canonique (Risk Score direct, sans inversion)
+        const blended = (ccsMixteScore * wCCSMixte)
+          + (onchainScore * wOnchain)
+          + (riskScore * wRisk);
         const blendedScore = Math.round(Math.max(0, Math.min(100, blended)));
 
         console.debug('🎯 Blended Score (formule canonique):', {

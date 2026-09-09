@@ -115,16 +115,24 @@ class PolicyEngine:
             Policy dérivée
         """
         try:
-            contradiction = signals.contradiction_index
-            confidence = signals.confidence
-
-            # Override manuel si applicable
+            # Une politique explicitement saisie par l'utilisateur reste prioritaire.
             if governance_mode == "manual" and manual_policy is not None:
                 enforced_policy = self.enforce_policy_bounds(manual_policy)
                 self._last_cap = enforced_policy.cap_daily
                 logger.info("[governance] manual policy override in effect (mode=%s, cap=%.2f%%)",
                           enforced_policy.mode, enforced_policy.cap_daily * 100)
                 return enforced_policy
+
+            if not signals.available:
+                return self.enforce_policy_bounds(Policy(
+                    mode="Freeze",
+                    cap_daily=0.01,
+                    ramp_hours=48,
+                    notes=f"Verified signals unavailable: {signals.unavailable_reason}"
+                ))
+
+            contradiction = signals.contradiction_index
+            confidence = signals.confidence
 
             # Phase 1A: Hystérésis pour éviter flip-flop mode prudent/normal
             # Prudent si contradiction ≥ 0.45, Normal si contradiction ≤ 0.40

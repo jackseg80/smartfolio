@@ -97,7 +97,7 @@ async function initQuickSettings() {
   // Valeurs initiales
   if (document.getElementById('quick_data_source')) {
     const quickEl = document.getElementById('quick_data_source');
-    quickEl.value = s.data_source || 'stub_balanced';
+    quickEl.value = s.data_source || '';
     // Si un CSV spécifique a été choisi, refléter la clé correspondante
     try {
       const list = window.availableSources || [];
@@ -203,7 +203,7 @@ async function initQuickSettings() {
 // Fonction helper pour obtenir les settings par défaut
 function getDefaultSettings() {
   return {
-    data_source: "cointracking", // V2: Use module name instead of generic "csv"
+    data_source: null,
     api_base_url: window.location.origin, // Will be overridden by backend value
     display_currency: "USD",
     min_usd_threshold: 1.0,
@@ -1464,7 +1464,8 @@ async function runFullSystemTest() {
 
   // Risk API
   try {
-    const response = await fetch(`${globalSettings.api_base_url}/api/risk/dashboard`, { headers: { 'X-User': getActiveUser() } });
+    if (!globalSettings.data_source) throw new Error('No portfolio source is selected');
+    const response = await fetch(`${globalSettings.api_base_url}/api/risk/dashboard?source=${encodeURIComponent(globalSettings.data_source)}`, { headers: { 'X-User': getActiveUser() } });
     if (response.ok) {
       const data = await response.json();
       const riskScore = data.data?.risk_score || data.risk_score || 0;
@@ -2421,7 +2422,9 @@ async function testRiskAPI() {
   resultsDiv.innerHTML = '🛡️ Test Risk API...';
 
   try {
-    const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/risk/dashboard`, {
+    const settings = window.userSettings || getDefaultSettings();
+    if (!settings.data_source) throw new Error('No portfolio source is selected');
+    const response = await fetch(`${settings.api_base_url}/api/risk/dashboard?source=${encodeURIComponent(settings.data_source)}`, {
       headers: { 'X-User': getActiveUser() }
     });
 

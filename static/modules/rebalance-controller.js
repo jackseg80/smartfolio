@@ -134,7 +134,18 @@
         if (!raw) return null;
 
         const data = JSON.parse(raw);
-        if (!data || typeof data !== 'object' || !data.targets || !data.timestamp) return null;
+        if (!data || typeof data !== 'object' || !data.targets || !data.timestamp || !data.allocation_snapshot) return null;
+
+        const activeUser = localStorage.getItem('activeUser');
+        const activeSource = window.store?.get?.('wallet.source_used')
+          || window.globalConfig?.get('data_source')
+          || null;
+        if (!data.portfolio_user_id || !data.portfolio_source_id
+            || data.portfolio_user_id !== activeUser
+            || data.portfolio_source_id !== activeSource) {
+          debugLogger.warn('Ignoring suggested allocation for another or unidentified portfolio');
+          return null;
+        }
 
         // Accepter les nouvelles sources v2 et les anciennes pour compatibilité
         const validSources = ['analytics-unified', 'analytics_unified_v2', null, undefined];
@@ -200,6 +211,9 @@
           is_execution_plan: usingIter1,
           is_iter1: usingIter1,
           cap_percent: capPercent,
+          portfolio_user_id: data.portfolio_user_id,
+          portfolio_source_id: data.portfolio_source_id,
+          allocation_snapshot: data.allocation_snapshot || null,
           _debug: {
             source: data.source,
             methodology: data.methodology,
@@ -450,32 +464,30 @@
             }
           }
 
-          // Si toujours pas de targets, utiliser les defaults
+          // Missing decision inputs must remain unavailable.
           if (!ccsTargets) {
-            const defaultTargets = window.targetsCoordinator?.DEFAULT_MACRO_TARGETS || {
-              'BTC': 35.0, 'ETH': 25.0, 'Stablecoins': 20.0, 'SOL': 5.0,
-              'L1/L0 majors': 7.0, 'L2/Scaling': 4.0, 'DeFi': 2.0,
-              'AI/Data': 1.5, 'Gaming/NFT': 0.5, 'Memecoins': 0.0, 'Others': 0.0
+            availableStrategies['ccs-dynamic-error'] = {
+              name: 'Strategic (Dynamic)',
+              icon: '⚠️',
+              description: 'Decision inputs are unavailable',
+              risk_level: 'Unavailable',
+              allocations: {},
+              _isError: true
             };
-            ccsTargets = {
-              targets: { ...defaultTargets },
-              strategy: 'Macro Baseline (default)',
-              timestamp: new Date().toISOString()
-            };
-            delete ccsTargets.targets.model_version;
           }
 
-          // Toujours ajouter la stratégie dynamique (jamais placeholder)
-          availableStrategies['ccs-dynamic'] = {
-            name: 'Strategic (Dynamic)',
-            icon: '🎯',
-            description: `Targets CCS - ${ccsTargets.strategy}`,
-            risk_level: 'Variable',
-            allocations: ccsTargets.targets,
-            _isDynamic: true,
-            _ccsData: ccsTargets
-          };
-          debugLogger.debug('Added dynamic CCS strategy:', ccsTargets);
+          if (ccsTargets) {
+            availableStrategies['ccs-dynamic'] = {
+              name: 'Strategic (Dynamic)',
+              icon: '🎯',
+              description: `Targets CCS - ${ccsTargets.strategy}`,
+              risk_level: 'Variable',
+              allocations: ccsTargets.targets,
+              _isDynamic: true,
+              _ccsData: ccsTargets
+            };
+            debugLogger.debug('Added dynamic CCS strategy:', ccsTargets);
+          }
 
         } catch (syncError) {
           debugLogger.warn('Erreur synchronisation stratégies dynamiques (non bloquante):', syncError);
@@ -565,21 +577,16 @@
       } catch (error) {
         debugLogger.error('Erreur chargement stratégies:', error);
 
-        // En cas d'erreur critique, utiliser au minimum la stratégie par défaut
+        // Keep the failure explicit; do not manufacture an executable allocation.
         if (Object.keys(availableStrategies).length === 0) {
           availableStrategies = {
-            'balanced': {
-              name: 'Balanced (Fallback)',
-              icon: '⚖️',
-              description: 'Fallback strategy - Balanced distribution',
-              risk_level: 'moyen',
-              allocations: {
-                'BTC': 35.0,
-                'ETH': 25.0,
-                'Stablecoins': 20.0,
-                'L1/L0 majors': 10.0,
-                'Others': 10.0
-              }
+            'strategy-error': {
+              name: 'Strategies unavailable',
+              icon: '⚠️',
+              description: 'Portfolio strategies could not be loaded',
+              risk_level: 'Unavailable',
+              allocations: {},
+              _isError: true
             }
           };
         }
@@ -787,6 +794,7 @@
       // Utiliser le système dynamicTargets pour appliquer la stratégie
       dynamicTargets = strategy.allocations;
       useDynamicTargets = true;
+      dynamicTargetsContext = strategy._unifiedData || null;
 
       // Mettre à jour l'indicateur UI avec gouvernance
       const indicator = el("dynamicTargetsIndicator");
@@ -823,6 +831,7 @@
       // Désactiver les targets dynamiques
       dynamicTargets = null;
       useDynamicTargets = false;
+      dynamicTargetsContext = null;
 
       // Masquer l'indicateur
       const indicator = el("dynamicTargetsIndicator");
@@ -831,11 +840,6 @@
       }
 
       showNotification('Manual mode enabled', 'info');
-
-      // Régénérer le plan avec les targets par défaut
-      setTimeout(() => {
-        runPlan();
-      }, 500);
     }
 
     function showStrategiesError(message) {
@@ -927,12 +931,14 @@
     /* ---------- Dynamic Targets Support ---------- */
     let dynamicTargets = null;
     let useDynamicTargets = false;
+    let dynamicTargetsContext = null;
 
     // Interface for CCS/cycle module integration
     window.rebalanceAPI = {
       setDynamicTargets: function (targets, metadata = {}) {
         dynamicTargets = targets;
         useDynamicTargets = true;
+        dynamicTargetsContext = metadata.portfolio_user_id ? metadata : null;
         debugLogger.debug('Dynamic targets set:', targets, metadata);
 
         // Update UI to show dynamic mode
@@ -954,6 +960,7 @@
       clearDynamicTargets: function () {
         dynamicTargets = null;
         useDynamicTargets = false;
+        dynamicTargetsContext = null;
 
         // Hide UI indicator
         const indicator = el("dynamicTargetsIndicator");
@@ -1198,465 +1205,6 @@
       return [...Array.from(groups.values()), ...ungrouped];
     }
 
-    // Generate rebalancing plan using real configured data only
-    async function generateRealPlan() {
-      let currentByGroup = {};
-      let currentWeights = {};
-      let totalUsd = 0;
-
-      try {
-        const realPortfolioData = await loadRealPortfolioData();
-        if (realPortfolioData && realPortfolioData.totalValue > 0) {
-          currentByGroup = realPortfolioData.currentByGroup;
-          currentWeights = realPortfolioData.currentWeights;
-          totalUsd = realPortfolioData.totalValue;
-          debugLogger.debug('✅ Using real data for rebalancing plan:', { totalUsd, groups: Object.keys(currentByGroup).length });
-        } else {
-          throw new Error('No portfolio data available from configured source');
-        }
-      } catch (error) {
-        debugLogger.error('❌ Failed to load portfolio data:', error);
-        throw new Error(`Portfolio data unavailable: ${error.message}. Please configure data source in settings.`);
-      }
-
-      // Target weights from selected strategy or default (GROUP LEVEL)
-      let groupTargetWeights;
-      if (useDynamicTargets && dynamicTargets) {
-        groupTargetWeights = { ...dynamicTargets };
-        debugLogger.debug('Using dynamic group targets:', groupTargetWeights);
-      } else {
-        groupTargetWeights = {
-          BTC: 35,
-          ETH: 25,
-          Stablecoins: 20,
-          'L1/L0 majors': 10,
-          'Exchange Tokens': 3,
-          DeFi: 3,
-          Memecoins: 2,
-          Privacy: 1,
-          Others: 1
-        };
-      }
-
-      // Generate actions for INDIVIDUAL ASSETS (not groups)
-      const actions = await generateIndividualAssetActions(groupTargetWeights, totalUsd);
-      debugLogger.debug('🔍 Generated', actions.length, 'individual asset actions');
-
-      // Still calculate group deltas for the summary display
-      const deltasByGroup = {};
-      Object.keys(groupTargetWeights).forEach(group => {
-        const currentUsd = currentByGroup[group] || 0;
-        const targetUsd = totalUsd * (groupTargetWeights[group] / 100);
-        deltasByGroup[group] = targetUsd - currentUsd;
-      });
-
-      return {
-        current_weights_pct: currentWeights,
-        target_weights_pct: groupTargetWeights,
-        current_by_group: currentByGroup,
-        deltas_by_group_usd: deltasByGroup,
-        actions: actions,
-        total_usd: totalUsd,
-        unknown_aliases: [],
-        meta: {
-          source_used: 'mock_data',
-          items_count: Object.keys(currentByGroup).length,
-          pricing_mode: 'mock',
-          generated_at: new Date().toISOString()
-        }
-      };
-    }
-
-    function getMainSymbolForGroup(group, currentByGroup = {}) {
-      // Use real assets from the portfolio based on ASSET_GROUPS
-      const groupToRealSymbols = {
-        'BTC': ['BTC', 'TBTC'],
-        'ETH': ['ETH', 'WSTETH', 'STETH', 'RETH', 'WETH', 'CBETH'],
-        'Stablecoins': ['USDT', 'USD', 'USDC', 'DAI'],
-        'L1/L0 majors': ['SOL2', 'ATOM2', 'DOT2', 'ADA', 'AVAX', 'NEAR', 'LINK', 'XRP', 'BCH', 'XLM', 'LTC', 'SUI3', 'TRX'],
-        'Exchange Tokens': ['BNB', 'BGB', 'CHSB'],
-        'DeFi': ['AAVE', 'JUPSOL', 'JITOSOL', 'FET'],
-        'Memecoins': ['DOGE'],
-        'Privacy': ['XMR'],
-        'Others': ['IMO', 'VVV3', 'TAO6']
-      };
-
-      // Get the primary symbols for this group from your real portfolio
-      const possibleSymbols = groupToRealSymbols[group] || [];
-
-      // Find which symbol actually exists in the current portfolio with highest value
-      let bestSymbol = null;
-      let bestValue = 0;
-
-      // Check which symbols from ASSET_GROUPS are actually in the current portfolio
-      for (const [assetGroup, symbols] of Object.entries(ASSET_GROUPS)) {
-        if (assetGroup === group) {
-          for (const symbol of symbols) {
-            // Look for assets in the current portfolio matching this symbol
-            const groupData = Object.entries(currentByGroup || {}).find(([groupName, value]) => {
-              return groupName === group && value > bestValue;
-            });
-            if (groupData) {
-              bestValue = groupData[1];
-              bestSymbol = symbols[0]; // Use the first (primary) symbol for the group
-            }
-          }
-          break;
-        }
-      }
-
-      // Fallback to the first symbol in the group or a default
-      if (!bestSymbol && possibleSymbols.length > 0) {
-        bestSymbol = possibleSymbols[0];
-      }
-
-      return bestSymbol || {
-        'BTC': 'BTC',
-        'ETH': 'ETH',
-        'Stablecoins': 'USDT',
-        'L1/L0 majors': 'XRP',
-        'Exchange Tokens': 'BNB',
-        'DeFi': 'AAVE',
-        'Memecoins': 'DOGE',
-        'Privacy': 'XMR',
-        'Others': 'IMO'
-      }[group] || 'UNKNOWN';
-    }
-
-    function getRealPriceForSymbol(symbol, currentByGroup, totalUsd) {
-      // Get real prices from CSV data - using market prices from the CSV
-      const realPrices = {
-        'BTC': 109822, 'TBTC': 110343,
-        'ETH': 4421, 'WSTETH': 5369, 'STETH': 4432, 'RETH': 5044,
-        'USDT': 1.0, 'USD': 1.0, 'USDC': 1.0, 'DAI': 1.0,
-        'SOL2': 187, 'ATOM2': 4.46, 'DOT2': 3.77, 'ADA': 0.84,
-        'AVAX': 23.31, 'NEAR': 2.42, 'LINK': 23.39, 'XRP': 2.90,
-        'BCH': 535, 'XLM': 0.39, 'LTC': 110, 'SUI3': 3.38, 'TRX': 0.35,
-        'BNB': 842, 'BGB': 4.57, 'CHSB': 0.24,
-        'AAVE': 330, 'JUPSOL': 212, 'JITOSOL': 231, 'FET': 0.63,
-        'DOGE': 0.21, 'XMR': 263, 'IMO': 1.46, 'VVV3': 2.87, 'TAO6': 324
-      };
-
-      return realPrices[symbol] || 1.0;
-    }
-
-    // Generate actions for INDIVIDUAL ASSETS based on group targets
-    async function generateIndividualAssetActions(groupTargetWeights, totalUsd) {
-      const actions = [];
-
-      try {
-        // Load balance data using configured source
-        debugLogger.debug('🔍 Loading balance data for rebalancing using configured source...');
-        const balanceResult = await window.loadBalanceData();
-
-        if (!balanceResult.success) {
-          throw new Error(balanceResult.error);
-        }
-
-        let individualBalances;
-
-        if (balanceResult.csvText) {
-          // Source CSV locale
-          individualBalances = window.parseCSVBalances(balanceResult.csvText);
-        } else if (balanceResult.data && balanceResult.data.items) {
-          // Source API (stub ou cointracking_api)
-          individualBalances = balanceResult.data.items.map(item => ({
-            symbol: item.symbol,
-            balance: item.balance ?? item.amount,
-            value_usd: item.value_usd,
-            location: item.location
-          }));
-        } else {
-          throw new Error('Invalid data format received');
-        }
-
-        debugLogger.debug('🔍 Rebalancing', individualBalances.length, 'individual assets using source:', balanceResult.source);
-
-        // Derive exchange locations from the authenticated balance response.
-        // Raw CoinTracking exports are private and are never served as static files.
-        const exchangeData = loadExchangeData(individualBalances);
-        debugLogger.debug('🔍 Exchange data loaded for smart location selection');
-
-        // Calculate individual asset targets based on group targets
-        const individualTargets = calculateIndividualAssetTargets(individualBalances, groupTargetWeights, totalUsd);
-
-        // Generate actions for each asset
-        individualBalances.forEach(asset => {
-          const targetValue = individualTargets[asset.symbol] || 0;
-          const currentValue = asset.value_usd;
-          const delta = targetValue - currentValue;
-
-          // Only generate actions for significant changes (>$25)
-          if (Math.abs(delta) >= 25) {
-            const price = getRealPriceForSymbol(asset.symbol);
-            const group = getAssetGroupLocal(asset.symbol);
-            const action = delta > 0 ? 'BUY' : 'SELL';
-
-            // Use smart exchange selection for location
-            const optimalLocation = selectOptimalExchange(asset.symbol, action, Math.abs(delta), exchangeData);
-            const exchangeSummary = getExchangeSummary(asset.symbol, exchangeData);
-
-            actions.push({
-              group: group,
-              alias: asset.symbol,
-              symbol: asset.symbol,
-              action: action,
-              usd: Math.abs(delta),
-              est_quantity: Math.abs(delta) / price,
-              price_used: price,
-              price_source: 'csv_market_price',
-              location: optimalLocation,
-              current_value: currentValue,
-              target_value: targetValue,
-              current_balance: asset.balance,
-              exchange_summary: exchangeSummary
-            });
-          }
-        });
-
-        // Sort actions by USD amount (largest first)
-        actions.sort((a, b) => b.usd - a.usd);
-
-      } catch (error) {
-        debugLogger.error('Error generating individual asset actions:', error);
-        return []; // Return empty array on error
-      }
-
-      return actions;
-    }
-
-    // Calculate target value for each individual asset based on group targets
-    function calculateIndividualAssetTargets(individualBalances, groupTargetWeights, totalUsd) {
-      const targets = {};
-
-      // Group assets by their ASSET_GROUPS classification
-      const assetsByGroup = {};
-
-      individualBalances.forEach(asset => {
-        const group = getAssetGroupLocal(asset.symbol);
-        if (!assetsByGroup[group]) {
-          assetsByGroup[group] = [];
-        }
-        assetsByGroup[group].push(asset);
-      });
-
-      // For each group, distribute the target amount among assets
-      Object.entries(groupTargetWeights).forEach(([group, groupTargetPct]) => {
-        const groupTargetUsd = totalUsd * (groupTargetPct / 100);
-        const assetsInGroup = assetsByGroup[group] || [];
-
-        if (assetsInGroup.length === 0) return;
-
-        // Distribute group target proportionally based on current values
-        const groupCurrentTotal = assetsInGroup.reduce((sum, asset) => sum + asset.value_usd, 0);
-
-        if (groupCurrentTotal > 0) {
-          // Proportional distribution based on current holdings
-          assetsInGroup.forEach(asset => {
-            const proportion = asset.value_usd / groupCurrentTotal;
-            targets[asset.symbol] = groupTargetUsd * proportion;
-          });
-        } else {
-          // If no current holdings, distribute equally
-          const targetPerAsset = groupTargetUsd / assetsInGroup.length;
-          assetsInGroup.forEach(asset => {
-            targets[asset.symbol] = targetPerAsset;
-          });
-        }
-      });
-
-      return targets;
-    }
-
-    // Get the group classification for an asset
-    function getAssetGroupLocal(symbol) {
-      // Utiliser la fonction unifiée si disponible
-      if (getAssetGroup && typeof getAssetGroup === 'function') {
-        return getAssetGroup(symbol);
-      }
-
-      // Fallback si le module n'est pas encore chargé
-      for (const [group, symbols] of Object.entries(ASSET_GROUPS)) {
-        if (symbols.includes(symbol.toUpperCase())) {
-          return group;
-        }
-      }
-      return 'Others';
-    }
-
-    // Build exchange distribution data from authenticated, tenant-scoped balances.
-    function loadExchangeData(balances = []) {
-      const exchangeData = {};
-
-      balances.forEach(item => {
-        const symbol = String(item.symbol || '').trim().toUpperCase();
-        const exchange = String(item.location || '').trim();
-        const valueUsd = Number(item.value_usd);
-        const amount = Number(item.balance ?? item.amount);
-
-        if (!symbol || !exchange || !Number.isFinite(valueUsd) || valueUsd < 0) {
-          return;
-        }
-
-        if (!exchangeData[symbol]) {
-          exchangeData[symbol] = {};
-        }
-        if (!exchangeData[symbol][exchange]) {
-          exchangeData[symbol][exchange] = { amount: 0, value_usd: 0 };
-        }
-
-        exchangeData[symbol][exchange].amount += Number.isFinite(amount) ? amount : 0;
-        exchangeData[symbol][exchange].value_usd += valueUsd;
-      });
-
-      debugLogger.debug('🔍 Loaded exchange locations for', Object.keys(exchangeData).length, 'assets from balances');
-      return exchangeData;
-    }
-
-    // Parse exchange CSV data  
-    function parseExchangeCSV(csvText) {
-      const cleanedText = csvText.replace(/^\ufeff/, '');
-      const lines = cleanedText.split('\n');
-      const exchangeData = {};
-
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-
-        try {
-          const columns = parseCSVLine(line);
-          if (columns.length >= 5) {
-            const amount = parseFloat(columns[0]);
-            const exchange = columns[1];
-            const valueUSD = parseFloat(columns[2]);
-            const coinInfo = columns[4]; // "BTC (Bitcoin) by Exchange"
-
-            // Extract coin symbol from "BTC (Bitcoin) by Exchange" format
-            const coinMatch = coinInfo.match(/^([A-Z0-9]+)/);
-            if (!coinMatch) continue;
-
-            const coinSymbol = coinMatch[1];
-
-            if (!isNaN(amount) && !isNaN(valueUSD) && valueUSD >= 0.01) {
-              if (!exchangeData[coinSymbol]) {
-                exchangeData[coinSymbol] = {};
-              }
-
-              if (!exchangeData[coinSymbol][exchange]) {
-                exchangeData[coinSymbol][exchange] = {
-                  amount: 0,
-                  value_usd: 0
-                };
-              }
-
-              exchangeData[coinSymbol][exchange].amount += amount;
-              exchangeData[coinSymbol][exchange].value_usd += valueUSD;
-            }
-          }
-        } catch (error) {
-          debugLogger.warn('Error parsing exchange CSV line:', error);
-        }
-      }
-
-      return exchangeData;
-    }
-
-    // Smart exchange selection logic
-    function selectOptimalExchange(coinSymbol, action, amount, exchangeData) {
-      const coinExchanges = exchangeData[coinSymbol] || {};
-
-      if (Object.keys(coinExchanges).length === 0) {
-        debugLogger.debug(`💡 No exchange data for ${coinSymbol}, using default`);
-        return action === 'BUY' ? 'Binance (Recommended)' : 'Current Holdings';
-      }
-
-      debugLogger.debug(`💡 Found exchanges for ${coinSymbol}:`, Object.keys(coinExchanges));
-
-      // Sort exchanges by value (descending)
-      const sortedExchanges = Object.entries(coinExchanges)
-        .map(([exchange, data]) => ({
-          exchange,
-          value: data.value_usd,
-          amount: data.amount
-        }))
-        .sort((a, b) => b.value - a.value);
-
-      if (action === 'SELL') {
-        // For sells, prefer exchanges with high liquidity, avoid Ledger due to transfer costs
-        const liquidExchanges = sortedExchanges.filter(ex =>
-          !ex.exchange.toLowerCase().includes('ledger') &&
-          !ex.exchange.toLowerCase().includes('wallet')
-        );
-
-        if (liquidExchanges.length > 0) {
-          const best = liquidExchanges[0];
-          const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
-          const rate = (window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
-          const val = best.value * rate;
-          let formatted;
-          try {
-            const dec = (cur === 'BTC') ? 8 : 2;
-            formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
-          } catch (_) {
-            formatted = `${val.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`;
-          }
-          return `${best.exchange} (${formatted})`;
-        }
-
-        // Fallback to largest holding
-        const largest = sortedExchanges[0];
-        {
-          const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
-          const rate = (window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
-          const val = largest.value * rate;
-          let formatted;
-          try {
-            const dec = (cur === 'BTC') ? 8 : 2;
-            formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val);
-          } catch (_) {
-            formatted = `${val.toFixed(cur === 'BTC' ? 8 : 2)} ${cur}`;
-          }
-          return `${largest.exchange} (${formatted})`;
-        }
-      } else {
-        // For buys, prefer main trading exchanges
-        const tradingExchanges = ['Binance', 'Kraken', 'Kraken Earn'];
-
-        for (const tradingExchange of tradingExchanges) {
-          const found = sortedExchanges.find(ex =>
-            ex.exchange.toLowerCase().includes(tradingExchange.toLowerCase())
-          );
-          if (found) {
-            return `${found.exchange} (Liquid)`;
-          }
-        }
-
-        // Fallback to recommended exchange
-        return 'Binance (Recommended)';
-      }
-    }
-
-    // Get exchange summary for a coin
-    function getExchangeSummary(coinSymbol, exchangeData) {
-      const coinExchanges = exchangeData[coinSymbol] || {};
-      const exchanges = Object.entries(coinExchanges).map(([exchange, data]) => {
-        return `${exchange}: ${formatMoney(data.value_usd)}`;
-      }).join(', ');
-
-      return exchanges || 'No exchange data';
-    }
-
-
-    async function generateRealCsv() {
-      const plan = await generateRealPlan();
-      const headers = 'group,alias,symbol,action,usd,est_quantity,price_used,location\n';
-      const rows = plan.actions.map(action =>
-        `${action.group},${action.alias},${action.symbol},${action.action},${action.usd},${action.est_quantity},${action.price_used},${action.location}`
-      ).join('\n');
-      const csvContent = headers + rows;
-      return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    }
-
     function setStatus(text) { el("status").textContent = text; }
     function showNotification(text, type = 'info', duration = 3000) {
       const notif = document.createElement('div');
@@ -1745,12 +1293,27 @@
 
       debugLogger.debug('🔍 buildPayload - Final payload sub_allocation:', payload.sub_allocation);
 
-      // Use dynamic targets if available, otherwise default manual targets
-      if (useDynamicTargets && dynamicTargets) {
+      const isVerifiedSuggestion = useDynamicTargets
+        && dynamicTargets
+        && dynamicTargetsContext?.portfolio_user_id
+        && dynamicTargetsContext?.portfolio_source_id
+        && dynamicTargetsContext?.allocation_snapshot
+        && dynamicTargetsContext?.timestamp;
+
+      if (isVerifiedSuggestion) {
         debugLogger.debug('🔍 Sending dynamic targets to server:', dynamicTargets);
-        payload.dynamic_targets_pct = dynamicTargets;
+        const { model_version: _verifiedModelVersion, ...verifiedTargets } = dynamicTargets;
+        payload.dynamic_targets_pct = verifiedTargets;
+        payload.target_origin = 'unified_suggested_allocation';
+        payload.portfolio_user_id = dynamicTargetsContext.portfolio_user_id;
+        payload.portfolio_source_id = dynamicTargetsContext.portfolio_source_id;
+        payload.allocation_snapshot = dynamicTargetsContext.allocation_snapshot;
+        payload.proposal_timestamp = dynamicTargetsContext.timestamp;
+      } else if (useDynamicTargets && dynamicTargets) {
+        const { model_version: _manualModelVersion, ...manualTargets } = dynamicTargets;
+        payload.group_targets_pct = manualTargets;
       } else {
-        payload.group_targets_pct = { BTC: 35, ETH: 25, Stablecoins: 10, SOL: 10, "L1/L0 majors": 10, Others: 10 };
+        throw new Error('Select an allocation before generating a rebalancing plan');
       }
 
       return payload;
@@ -1765,7 +1328,7 @@
 
       // Add dynamic_targets parameter if we're using dynamic targets
       const params = { source, min_usd, pricing };
-      if (useDynamicTargets && dynamicTargets) {
+      if (useDynamicTargets && dynamicTargets && dynamicTargetsContext?.portfolio_user_id) {
         params.dynamic_targets = true;
       }
 
@@ -2001,7 +1564,7 @@
             }
           } catch (apiError) {
             debugLogger.warn('Taxonomy API unavailable for individual alias:', apiError);
-            // Simulate successful addition
+            throw new Error('Alias assignment unavailable: taxonomy service did not confirm the change');
           }
 
           await runPlan(); // Rafraîchit les données
@@ -2027,9 +1590,9 @@
         return res;
       } catch (error) {
         debugLogger.warn('Taxonomy API unavailable:', error);
-        setStatus(`Simulation - ${Object.keys(map || {}).length} aliases added (offline mode)`);
-        showNotification(`📝 Aliases saved locally (offline mode)`, 'info');
-        return { written: Object.keys(map || {}).length, mode: 'mock' };
+        setStatus('Unavailable');
+        showNotification(`❌ Alias update not confirmed: ${error.message}`, 'error');
+        throw error;
       }
     }
 
@@ -2120,25 +1683,12 @@
 
         let plan;
 
-        // Vérifier si le mode priority est activé
-        const isPriorityMode = document.getElementById('sub-allocation-toggle')?.checked || false;
-
-        if (isPriorityMode) {
-          debugLogger.debug('🔄 Priority mode activated - using API call with buildPayload');
-          try {
-            plan = await postJson(url, buildPayload());
-            debugLogger.debug('🔍 Server returned plan with priority_meta:', plan.priority_meta);
-            debugLogger.debug('🔍 Server plan total_usd:', plan.total_usd);
-            debugLogger.debug('🔍 Server plan source:', plan.meta?.source_used);
-          } catch (apiError) {
-            debugLogger.warn('❌ API call failed for priority mode, falling back to local data:', apiError);
-            plan = await generateRealPlan(); // Fallback to local data
-          }
-        } else {
-          // Mode proportionnel - utiliser les données locales comme avant
-          debugLogger.debug('🔄 Using real data for rebalancing plan from configured source (proportional mode)');
-          plan = await generateRealPlan(); // Use real configured data only
-        }
+        plan = await postJson(url, buildPayload());
+        debugLogger.debug('Server returned rebalancing plan:', {
+          source: plan.meta?.source_used,
+          totalUsd: plan.total_usd,
+          priorityMeta: plan.priority_meta
+        });
         renderDonuts(plan);
         renderSummary(plan);
         renderPriorityMeta(plan);
@@ -2205,13 +1755,7 @@
         setStatus("Generating CSV…");
         const { api, qs } = currentQuery();
 
-        let blob;
-        try {
-          blob = await postCsv(`${api}/rebalance/plan.csv?${qs}`, buildPayload());
-        } catch (apiError) {
-          debugLogger.warn('CSV API unavailable, generating mock CSV:', apiError);
-          blob = await generateRealCsv(); // Use real data only
-        }
+        const blob = await postCsv(`${api}/rebalance/plan.csv?${qs}`, buildPayload());
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         const ts = new Date().toISOString().replace(/[:.]/g, "-");
@@ -2661,23 +2205,12 @@
             }
           }
 
-          // Si toujours pas de targets (module pas chargé), utiliser les defaults
+          // Missing decision inputs must remain unavailable.
           if (!ccsTargets) {
-            debugLogger.debug('Using default macro targets as fallback');
-            const defaultTargets = window.targetsCoordinator?.DEFAULT_MACRO_TARGETS || {
-              'BTC': 35.0, 'ETH': 25.0, 'Stablecoins': 20.0, 'SOL': 5.0,
-              'L1/L0 majors': 7.0, 'L2/Scaling': 4.0, 'DeFi': 2.0,
-              'AI/Data': 1.5, 'Gaming/NFT': 0.5, 'Memecoins': 0.0, 'Others': 0.0
-            };
-
-            ccsTargets = {
-              targets: { ...defaultTargets },
-              strategy: 'Macro Baseline (default)',
-              timestamp: new Date().toISOString()
-            };
-            delete ccsTargets.targets.model_version;
-
-            showNotification('📊 Using default macro targets', 'info', 3000);
+            delete availableStrategies['ccs-dynamic'];
+            showNotification('⚠️ Dynamic targets are unavailable until decision inputs load', 'warning', 4000);
+            renderStrategiesUI();
+            return;
           }
 
           if (ccsTargets) {

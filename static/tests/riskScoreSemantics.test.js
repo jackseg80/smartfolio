@@ -162,27 +162,16 @@ describe('Risk Score Semantics - Legacy Mode Migration', () => {
 
 describe('Risk Score Semantics - Edge Cases', () => {
 
-  test('Null/undefined Risk Score → fallback to 0', () => {
-    const budgetNull = calculateRiskBudget(60, null);
-    const budgetUndefined = calculateRiskBudget(60, undefined);
-
-    // Both should produce valid results (using 0 as fallback)
-    expect(budgetNull.risky_allocation).toBeGreaterThanOrEqual(0);
-    expect(budgetUndefined.risky_allocation).toBeGreaterThanOrEqual(0);
+  test('Null/undefined Risk Score → unavailable', () => {
+    expect(() => calculateRiskBudget(60, null)).toThrow(/required/);
+    expect(() => calculateRiskBudget(60, undefined)).toThrow(/required/);
   });
 
-  test('Negative Risk Score → clamped to 0', () => {
-    const budget = calculateRiskBudget(60, -10);
-
-    // Should handle gracefully
-    expect(budget.risky_allocation).toBeGreaterThanOrEqual(0);
+  test('Negative Risk Score → rejected', () => {
+    expect(() => calculateRiskBudget(60, -10)).toThrow(/within/);
   });
 
-  test('Risk Score > 100 → not clamped (allows overboost)', () => {
-    const budget = calculateRiskBudget(60, 120);
-
-    // Should allow values > 100 (documented feature for exceptional robustness)
-    expect(budget).toBeDefined();
-    expect(budget.risky_allocation).toBeGreaterThanOrEqual(0);
+  test('Risk Score > 100 → rejected', () => {
+    expect(() => calculateRiskBudget(60, 120)).toThrow(/within/);
   });
 });

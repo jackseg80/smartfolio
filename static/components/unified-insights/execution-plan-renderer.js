@@ -18,115 +18,18 @@ export async function renderAllocationBlock(u, options = {}) {
     let allocation = u.targets_by_group;
     (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: targets_by_group result:', allocation);
 
-    // PATCH C - Moteur unique : utiliser groupAssetsByClassification comme Rebalance (DÉSACTIVÉ pour test)
-    let allocation_backup = null;
-    try {
-      // FORCE: Utiliser toutes les sources possibles pour récupérer les balances
-      let balanceData = store.snapshot()?.wallet?.balances || [];
-
-      // Fallback vers les clés store directes si snapshot échoue
-      if (balanceData.length === 0) {
-        balanceData = store.get('wallet.balances') || [];
-        console.debug('🔧 PATCH C: Using direct store access for balances');
-      }
-
-      // Dernier recours : attendre que l'injection soit finie et réessayer
-      if (balanceData.length === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms
-        balanceData = store.snapshot()?.wallet?.balances || store.get('wallet.balances') || [];
-        console.debug('🔧 PATCH C: Retry after 100ms delay');
-      }
-
-      console.debug('🔧 PATCH C starting with balances:', balanceData.length, 'items', {
-        from_snapshot: store.snapshot()?.wallet?.balances?.length || 0,
-        from_direct: store.get('wallet.balances')?.length || 0,
-        final_used: balanceData.length
-      });
-
-      if (balanceData.length > 0) {
-        const groupedData = groupAssetsByClassification(balanceData);
-        const totalValue = groupedData.reduce((sum, g) => sum + g.value, 0);
-
-        if (totalValue > 0) {
-          // Convertir au format attendu par l'UI (% par groupe)
-          allocation = {};
-          GROUP_ORDER.forEach(group => {
-            const found = groupedData.find(g => g.label === group);
-            allocation[group] = found ? (found.value / totalValue) * 100 : 0;
-          });
-
-          console.debug('🔧 PATCH C SUCCESS: Analytics utilise maintenant groupAssetsByClassification comme Rebalance:', {
-            groups: Object.entries(allocation).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
-            othersCheck: allocation['Others']?.toFixed(1) + '%',
-            source: 'groupAssetsByClassification',
-            totalValue
-          });
-        } else {
-          (window.debugLogger?.warn || console.warn)('🔧 PATCH C: totalValue is 0, skipping allocation');
-        }
-      } else {
-        (window.debugLogger?.warn || console.warn)('🔧 PATCH C: No balance data available');
-      }
-    } catch (e) {
-      (window.debugLogger?.error || console.error)('🔧 PATCH C failed with error:', e.message, e.stack);
-    }
-
-    // Fallback vers u.targets_by_group si patch échoue (plus de presets hardcodés)
     if (!allocation || Object.keys(allocation).length === 0) {
-      (window.debugLogger?.warn || console.warn)('🚨 PATCH C FAILED - Using dynamic targets_by_group as fallback');
-
-      // Fallback ultime : utiliser les positions actuelles normalisées
-      allocation = {};
-      GROUP_ORDER.forEach(group => allocation[group] = 0);
-
-      // Utiliser la même logique que PATCH C pour fallback
-      try {
-        const balanceData = store.snapshot()?.wallet?.balances || [];
-        if (balanceData.length > 0) {
-          const groupedData = groupAssetsByClassification(balanceData);
-          const totalValue = groupedData.reduce((sum, g) => sum + g.value, 0);
-
-          if (totalValue > 0) {
-            GROUP_ORDER.forEach(group => {
-              const found = groupedData.find(g => g.label === group);
-              allocation[group] = found ? (found.value / totalValue) * 100 : 0;
-            });
-            console.debug('✅ FALLBACK: Using groupAssetsByClassification as allocation targets');
-          }
-        }
-      } catch (e) {
-        (window.debugLogger?.error || console.error)('Fallback also failed:', e.message);
-      }
-
-      // Dernier recours: utiliser targets_by_group (dynamique)
-      if (!allocation || Object.values(allocation).every(v => v === 0)) {
-        allocation = u.targets_by_group || {};
-        (window.debugLogger?.warn || console.warn)('⚠️ ULTIMATE FALLBACK: u.targets_by_group utilisé (calcul dynamique)');
-      }
+      return '<div class="error-message">❌ Error: verified allocation targets are unavailable</div>';
     }
-
-    // Allocation fournie par u.targets_by_group (calcul dynamique) - vérification
-    if (!allocation || Object.keys(allocation).length === 0) {
-      (window.debugLogger?.error || console.error)('🚨 ERREUR CRITIQUE: targets_by_group vide', { u, allocation });
-      return '<div class="error-message">❌ Error: dynamic calculations unavailable</div>';
+    if (Object.values(allocation).some(value => !Number.isFinite(value) || value < 0)) {
+      return '<div class="error-message">❌ Error: allocation targets contain invalid values</div>';
     }
 
     // GARDE-FOUS - Checksum et validation
     const total = Object.values(allocation || {}).reduce((a, b) => a + (isFinite(b) ? b : 0), 0);
     if (Math.abs(total - 100) > 0.5) {
-      (window.debugLogger?.warn || console.warn)(`⚠️ target_sum_mismatch: somme = ${total.toFixed(1)}% (≠ 100%)`);
-      // Petite normalisation douce (hors stables)
-      if (allocation && allocation['Stablecoins'] != null) {
-        const st = allocation['Stablecoins'];
-        const space = Math.max(0, 100 - st);
-        const nonKeys = Object.keys(allocation).filter(k => k !== 'Stablecoins');
-        const nonSum = nonKeys.reduce((s, k) => s + allocation[k], 0) || 1;
-        nonKeys.forEach(k => allocation[k] = allocation[k] * (space / nonSum));
-        const newTotal = Object.values(allocation).reduce((a, b) => a + b, 0);
-        if (Math.abs(newTotal - 100) > 0.5) {
-          (window.debugLogger?.warn || console.warn)(`⚠️ soft renorm failed: ${newTotal.toFixed(2)}%`);
-        }
-      }
+      (window.debugLogger?.error || console.error)(`Target sum mismatch: ${total.toFixed(1)}%`);
+      return `<div class="error-message">❌ Error: allocation targets sum to ${total.toFixed(1)}%</div>`;
     }
 
     if (allocation && Object.keys(allocation).length > 0) {
@@ -167,7 +70,8 @@ export async function renderAllocationBlock(u, options = {}) {
         }
       }
 
-      const current = await getCurrentAllocationByGroup(5.0);
+      const configuredMinUsd = Number(window.globalConfig?.get('min_usd_threshold')) || 1.0;
+      const current = await getCurrentAllocationByGroup(configuredMinUsd);
 
       // DEBUG: Verify allocation before assigning to targetAdj
       console.debug('🎯 ALLOCATION DEBUG before targetAdj:', {
@@ -246,7 +150,7 @@ export async function renderAllocationBlock(u, options = {}) {
       // Compute iteration-1 governance-capped targets: { group: percentage }
       const iter1Targets = {};
       entries.forEach(entry => {
-        iter1Targets[entry.k] = Math.round((entry.cur + entry.suggested) * 10) / 10;
+        iter1Targets[entry.k] = entry.cur + entry.suggested;
       });
 
       console.debug('🎯 ITER1 TARGETS computed (governance-capped):', {
@@ -289,7 +193,13 @@ export async function renderAllocationBlock(u, options = {}) {
             mode_name: mode.name, // Frozen/Observe/Deploy/Rotate/Hedge
             strategy: 'Regime-Based Allocation',
             timestamp: new Date().toISOString(),
-            source: 'analytics-unified'
+            source: 'analytics-unified',
+            portfolio_user_id: localStorage.getItem('activeUser'),
+            portfolio_source_id: current?.source_used || window.globalConfig?.get('data_source') || null,
+            allocation_snapshot: {
+              total_usd: current?.grand ?? null,
+              weights_pct: current?.pct ?? null
+            }
           };
           localStorage.setItem('unified_suggested_allocation', JSON.stringify(payload));
           window.dispatchEvent(new CustomEvent('unifiedSuggestedAllocationUpdated', { detail: payload }));
@@ -310,7 +220,7 @@ export async function renderAllocationBlock(u, options = {}) {
       // NOUVEAU - Séparation Budget vs Exécution
       const riskBudget = u.risk_budget || {};
       const execution = u.execution || {};
-      const stablesTheorique = riskBudget.target_stables_pct || null;
+      const stablesTheorique = riskBudget.target_stables_pct ?? null;
       let estimatedIters = execution.estimated_iters_to_target ?? 'N/A';
       if (visible.length > 0) {
         const capPctForIterations = capPercent != null ? capPercent : (typeof mode.cap === 'number' ? mode.cap : null);

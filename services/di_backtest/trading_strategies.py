@@ -581,9 +581,9 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         2b. Apply direction penalty when cycle descending + score > 80
         3. Apply overrides: on-chain divergence, low risk score
 
-        Note: Production also applies computeExposureCap() + governance cap_daily
-        which further limit the allocation. The backtest omits these layers
-        to show the pure risk_budget signal.
+        The legacy replica can also apply its separately configured exposure
+        and governance layers. A daily movement cap is never treated as a
+        portfolio exposure target.
 
         Source: market-regimes.js → calculateRiskBudget() + applyMarketOverrides()
 
@@ -601,9 +601,9 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
 
         # Step 2b: Direction penalty when cycle is high and descending
         # At M+21.5: direction≈-0.8, confidence≈0.73 → penalty≈0.088 → ~9% reduction
-        if params.enable_direction_penalty and cycle_direction is not None and cycle_score > 80:
-            conf = cycle_confidence if cycle_confidence is not None else 0.5
-            direction_penalty = max(0.0, -cycle_direction) * conf * 0.15
+        if (params.enable_direction_penalty and cycle_direction is not None
+                and cycle_confidence is not None and cycle_score > 80):
+            direction_penalty = max(0.0, -cycle_direction) * cycle_confidence * 0.15
             risk_factor *= (1.0 - direction_penalty)
 
         base_risky = max(0.0, min(1.0, (blended - 35) / 45))
@@ -743,7 +743,7 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         params: Optional['ReplicaParams'] = None,
     ) -> float:
         """
-        Simplified exposure cap matching production computeExposureCap().
+        Legacy exposure cap retained for historical replica comparisons.
 
         Source: targets-coordinator.js L349-422
 
@@ -826,8 +826,8 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         3. Exposure cap (regime + signal quality + volatility)
         4. Governance penalty (contradiction-based reduction)
 
-        Si les composants ne sont pas disponibles, fallback sur les
-        stables fixes par phase (15/20/30%).
+        Si les composants nécessaires ne sont pas disponibles à la date du
+        backtest, la stratégie conserve l'allocation courante.
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -836,99 +836,102 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         cycle_score = kwargs.get('cycle_score')
         onchain_score = kwargs.get('onchain_score')
         risk_score = kwargs.get('risk_score')
-        di_value = kwargs.get('di_value', 50.0)
+        di_value = kwargs.get('di_value')
         cycle_direction = kwargs.get('cycle_direction')
         cycle_confidence = kwargs.get('cycle_confidence')
 
-        # Fallback cycle via series si pas dans kwargs
+        # Use only observations available on or before the simulated date.
         if cycle_score is None and self.cycle_series is not None:
             date_normalized = pd.Timestamp(date).normalize()
-            try:
-                cycle_score = self.cycle_series.loc[date_normalized]
-            except KeyError:
-                idx = self.cycle_series.index.get_indexer([date_normalized], method='nearest')[0]
-                if idx >= 0:
-                    cycle_score = self.cycle_series.iloc[idx]
+            available_cycle = self.cycle_series.loc[self.cycle_series.index <= date_normalized]
+            if not available_cycle.empty:
+                cycle_score = available_cycle.iloc[-1]
 
-        # Default si toujours None
-        if cycle_score is None:
-            cycle_score = 50.0
-        if onchain_score is None:
-            onchain_score = 50.0
-        if risk_score is None:
-            risk_score = 50.0
+        if di_value is None and self.di_series is not None:
+            date_normalized = pd.Timestamp(date).normalize()
+            available_di = self.di_series.loc[self.di_series.index <= date_normalized]
+            if not available_di.empty:
+                di_value = available_di.iloc[-1]
+
+        assets = price_data.columns.tolist()
+        current = current_weights.reindex(assets).fillna(0.0).clip(lower=0.0)
+        current_total = float(current.sum())
+        if current_total <= 0:
+            raise ValueError("Current weights are required to abstain from rebalancing")
+        current = current / current_total
+
+        required_scores = {
+            'cycle_score': cycle_score,
+            'onchain_score': onchain_score,
+            'risk_score': risk_score,
+        }
+        if any(value is None or not np.isfinite(value) for value in required_scores.values()):
+            logger.warning("SmartFolioReplica abstained: required historical scores unavailable")
+            return current
+
+        params = self.replica_params
+        if (params.enable_exposure_cap or params.enable_governance_penalty) and (
+                di_value is None or not np.isfinite(di_value)):
+            logger.warning("SmartFolioReplica abstained: historical Decision Index unavailable")
+            return current
 
         # --- Calculer allocation via formule production ---
-        has_real_components = (
-            kwargs.get('onchain_score') is not None
-            and kwargs.get('risk_score') is not None
-        )
+        # Compute BTC rolling volatility from observations available at this date.
+        risky_symbol = [a for a in price_data.columns
+                       if a.upper() not in ['USDT', 'USDC', 'DAI', 'BUSD', 'STABLES', 'STABLECOINS']]
+        btc_vol = 0.0
+        if risky_symbol:
+            returns = price_data.loc[price_data.index <= date, risky_symbol[0]].pct_change().dropna()
+            if len(returns) >= 30:
+                btc_vol = float(returns.tail(30).std() * np.sqrt(365))
+            elif params.enable_exposure_cap or params.enable_governance_penalty:
+                logger.warning("SmartFolioReplica abstained: insufficient causal volatility history")
+                return current
 
-        if has_real_components:
-            params = self.replica_params
+        blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
+        active_layers = []
+        exposure_cap = 1.0
+        contradiction = 0.0
+        gov_penalty = 0.0
 
-            # Compute BTC rolling volatility from price data (needed by layers 3+4)
-            risky_symbol = [a for a in price_data.columns
-                           if a.upper() not in ['USDT', 'USDC', 'DAI', 'BUSD', 'STABLES', 'STABLECOINS']]
-            btc_vol = 0.0
-            if risky_symbol:
-                returns = price_data[risky_symbol[0]].pct_change().dropna()
-                if len(returns) >= 30:
-                    btc_vol = float(returns.tail(30).std() * np.sqrt(365))
-
-            blended = 0.5 * cycle_score + 0.3 * onchain_score + 0.2 * risk_score
-            active_layers = []
-            exposure_cap = 1.0    # default: no cap
-            contradiction = 0.0
-            gov_penalty = 0.0
-
-            # Layer 1(+2): risk_budget + market overrides
-            if params.enable_risk_budget:
-                risky_pct = self._compute_risk_budget(
-                    cycle_score, onchain_score, risk_score, params,
-                    cycle_direction=cycle_direction,
-                    cycle_confidence=cycle_confidence,
-                )
-                active_layers.append("Risk Budget")
-                if params.enable_market_overrides:
-                    active_layers.append("Market Overrides")
-            else:
-                risky_pct = 0.60  # neutral fallback when L1 disabled
-
-            # Layer 3: Exposure cap (regime + signal + volatility)
-            if params.enable_exposure_cap:
-                exposure_cap = self._compute_exposure_cap(
-                    blended, risk_score, di_value, btc_vol, params
-                )
-                risky_pct = min(risky_pct, exposure_cap)
-                active_layers.append("Exposure Cap")
-
-            # Layer 4: Governance penalty (contradiction-based reduction)
-            if params.enable_governance_penalty:
-                contradiction = self._compute_contradiction_index(
-                    btc_vol, cycle_score, onchain_score, di_value
-                )
-                gov_penalty = self._compute_governance_penalty(
-                    contradiction, btc_vol, params
-                )
-                risky_pct = max(params.risk_budget_min, risky_pct - gov_penalty)
-                active_layers.append("Governance Penalty")
-
-            allocation_method = "+".join(active_layers) if active_layers else "none"
+        # Layer 1(+2): risk_budget + market overrides
+        if params.enable_risk_budget:
+            risky_pct = self._compute_risk_budget(
+                cycle_score, onchain_score, risk_score, params,
+                cycle_direction=cycle_direction,
+                cycle_confidence=cycle_confidence,
+            )
+            active_layers.append("Risk Budget")
+            if params.enable_market_overrides:
+                active_layers.append("Market Overrides")
         else:
-            # Fallback: stables fixes par phase (emergency path)
-            if cycle_score >= 90:
-                risky_pct = 0.85
-            elif cycle_score >= 70:
-                risky_pct = 0.80
-            else:
-                risky_pct = 0.70
-            allocation_method = "phase_fallback"
+            stable_names = {'USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS'}
+            risky_pct = float(sum(weight for asset, weight in current.items() if asset.upper() not in stable_names))
+
+        # Layer 3: Exposure cap (legacy diagnostic)
+        if params.enable_exposure_cap:
+            exposure_cap = self._compute_exposure_cap(
+                blended, risk_score, di_value, btc_vol, params
+            )
+            risky_pct = min(risky_pct, exposure_cap)
+            active_layers.append("Exposure Cap")
+
+        # Layer 4: Governance penalty (legacy diagnostic)
+        if params.enable_governance_penalty:
+            contradiction = self._compute_contradiction_index(
+                btc_vol, cycle_score, onchain_score, di_value
+            )
+            gov_penalty = self._compute_governance_penalty(
+                contradiction, btc_vol, params
+            )
+            risky_pct = max(params.risk_budget_min, risky_pct - gov_penalty)
+            active_layers.append("Governance Penalty")
+
+        allocation_method = "+".join(active_layers) if active_layers else "hold_current"
 
         stables_pct = 1.0 - risky_pct
 
         # --- Répartir entre assets du backtest (2-asset: risky + stables) ---
-        assets = price_data.columns.tolist()
         weights = pd.Series(0.0, index=assets)
 
         stable_assets = [a for a in assets if a.upper() in ['USDT', 'USDC', 'DAI', 'BUSD', 'TUSD', 'STABLES', 'STABLECOINS']]
@@ -951,20 +954,14 @@ class DISmartfolioReplicaStrategy(PortfolioStrategy):
         # Log (premiers appels seulement)
         if self._log_count < 5:
             phase = "bullish" if cycle_score >= 90 else ("moderate" if cycle_score >= 70 else "bearish")
-            if has_real_components:
-                logger.info(
-                    f"SmartFolioReplica: cycle={cycle_score:.1f}, onchain={onchain_score:.1f}, "
-                    f"risk={risk_score:.1f}, di={di_value:.1f}, phase={phase}, "
-                    f"method={allocation_method}, cap={exposure_cap*100:.0f}%, "
-                    f"contradiction={contradiction:.2f}, gov_penalty={gov_penalty*100:.0f}%, "
-                    f"risky={risky_pct*100:.1f}%, stables={stables_pct*100:.1f}%"
-                )
-            else:
-                logger.info(
-                    f"SmartFolioReplica: cycle={cycle_score:.1f}, phase={phase}, "
-                    f"method={allocation_method}, "
-                    f"risky={risky_pct*100:.1f}%, stables={stables_pct*100:.1f}%"
-                )
+            di_label = f"{di_value:.1f}" if di_value is not None else "unavailable"
+            logger.info(
+                f"SmartFolioReplica: cycle={cycle_score:.1f}, onchain={onchain_score:.1f}, "
+                f"risk={risk_score:.1f}, di={di_label}, phase={phase}, "
+                f"method={allocation_method}, cap={exposure_cap*100:.0f}%, "
+                f"contradiction={contradiction:.2f}, gov_penalty={gov_penalty*100:.0f}%, "
+                f"risky={risky_pct*100:.1f}%, stables={stables_pct*100:.1f}%"
+            )
             self._log_count += 1
 
         return weights

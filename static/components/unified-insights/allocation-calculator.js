@@ -10,91 +10,68 @@ import { getAllocCache } from './utils.js';
  * Algorithme : prioriser les mouvements les plus urgents sans dépasser le cap global
  */
 export function calculateZeroSumCappedMoves(entries, cap) {
-  // Clone entries to avoid mutation
-  const result = entries.map(entry => ({...entry, suggested: 0}));
+  const safeCap = Number.isFinite(Number(cap)) ? Math.max(0, Number(cap)) : 0;
+  const result = entries.map(entry => {
+    const current = Number(entry.cur);
+    const target = Number(entry.tgt);
+    const suppliedDelta = Number(entry.delta);
+    const delta = Number.isFinite(current) && Number.isFinite(target)
+      ? target - current
+      : suppliedDelta;
 
-  console.debug('🔄 CORRECT LOGIC: Applying individual cap ±' + cap + '% to each asset independently');
-
-  // Phase 1: Appliquer le cap individuellement à chaque asset
-  for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
-    const requestedMove = entry.delta;
-
-    // Appliquer le cap INDIVIDUELLEMENT (pas de budget global)
-    if (requestedMove > cap) {
-      result[i].suggested = cap; // Limité à +cap%
-    } else if (requestedMove < -cap) {
-      result[i].suggested = -cap; // Limité à -cap%
-    } else {
-      result[i].suggested = requestedMove; // Mouvement complet si dans la limite
-    }
-
-    result[i].suggested = Math.round(result[i].suggested * 10) / 10;
-  }
-
-  console.debug('🔄 Individual moves after cap:', result.map(r =>
-    `${r.k}: requested=${r.delta.toFixed(1)}%, capped=${r.suggested.toFixed(1)}%`
-  ));
-
-  // Phase 2: Vérifier contrainte zéro-somme et ajuster proportionnellement
-  const totalSuggested = result.reduce((sum, entry) => sum + entry.suggested, 0);
-
-  console.debug('🔄 Zero-sum check:', {
-    total_suggested: totalSuggested.toFixed(1) + '%',
-    needs_adjustment: Math.abs(totalSuggested) > 0.05
+    return {
+      ...entry,
+      delta: Number.isFinite(delta) ? delta : 0,
+      suggested: 0
+    };
   });
 
-  if (Math.abs(totalSuggested) > 0.05) {
-    // Ajustement zéro-somme INTELLIGENT qui respecte les caps individuels
-    let remaining = totalSuggested;
-    const maxIterations = 10;
-    let iteration = 0;
+  const maxRequestedMove = result.reduce(
+    (maximum, entry) => Math.max(maximum, Math.abs(entry.delta)),
+    0
+  );
+  const commonFactor = maxRequestedMove > 0
+    ? Math.min(1, safeCap / maxRequestedMove)
+    : 0;
 
-    console.debug('🔄 Zero-sum adjustment needed:', {
-      excess: totalSuggested.toFixed(1) + '%',
-      starting_adjustment: 'intelligent cap-respecting'
+  // A common factor keeps every asset on the segment current -> target.
+  // It therefore preserves positivity and direction when the endpoints are valid.
+  result.forEach(entry => {
+    entry.suggested = entry.delta * commonFactor;
+  });
+
+  // If legacy inputs do not have exactly zero-sum deltas, reduce the larger side.
+  // Never create a move in the opposite direction merely to balance the plan.
+  const buys = result.reduce((sum, entry) => sum + Math.max(0, entry.suggested), 0);
+  const sells = result.reduce((sum, entry) => sum + Math.max(0, -entry.suggested), 0);
+  const balancedAmount = Math.min(buys, sells);
+
+  if (buys > 0 && sells > 0) {
+    const buyScale = balancedAmount / buys;
+    const sellScale = balancedAmount / sells;
+    result.forEach(entry => {
+      entry.suggested *= entry.suggested >= 0 ? buyScale : sellScale;
     });
-
-    while (Math.abs(remaining) > 0.05 && iteration < maxIterations) {
-      iteration++;
-      const adjustableEntries = result.filter(r => {
-        const currentSuggested = r.suggested;
-        const delta = r.delta;
-
-        // Peut-on ajuster cette entrée sans violer le cap ?
-        if (remaining > 0) {
-          // Besoin de réduire les mouvements positifs ou augmenter les négatifs
-          return (currentSuggested > -cap) && (currentSuggested > delta - cap);
-        } else {
-          // Besoin d'augmenter les mouvements positifs ou réduire les négatifs
-          return (currentSuggested < cap) && (currentSuggested < delta + cap);
-        }
-      });
-
-      if (adjustableEntries.length === 0) {
-        (window.debugLogger?.warn || console.warn)('🔄 Cannot achieve zero-sum without violating caps');
-        break;
-      }
-
-      const adjustment = -remaining / adjustableEntries.length;
-
-      adjustableEntries.forEach(entry => {
-        const newValue = entry.suggested + adjustment;
-        // Appliquer l'ajustement en respectant les caps
-        entry.suggested = Math.max(-cap, Math.min(cap, newValue));
-        entry.suggested = Math.round(entry.suggested * 10) / 10;
-      });
-
-      remaining = result.reduce((sum, entry) => sum + entry.suggested, 0);
-    }
-
-    console.debug('🔄 Zero-sum adjustment completed:', {
-      iterations: iteration,
-      final_total: remaining.toFixed(1) + '%',
-      converged: Math.abs(remaining) <= 0.05,
-      final_moves: result.map(r => `${r.k}: ${r.suggested.toFixed(1)}%`)
-    });
+  } else {
+    result.forEach(entry => { entry.suggested = 0; });
   }
+
+  result.forEach(entry => {
+    const magnitude = Math.min(
+      Math.abs(entry.suggested),
+      safeCap,
+      Math.abs(entry.delta)
+    );
+    entry.suggested = Math.sign(entry.suggested) * magnitude;
+    if (Math.abs(entry.suggested) < 1e-12) entry.suggested = 0;
+  });
+
+  console.debug('🔄 Feasible capped moves:', {
+    cap: safeCap,
+    common_factor: commonFactor,
+    total: result.reduce((sum, entry) => sum + entry.suggested, 0),
+    moves: result.map(entry => ({ group: entry.k, requested: entry.delta, suggested: entry.suggested }))
+  });
 
   return result;
 }
@@ -112,6 +89,9 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     const now = Date.now();
     const user = localStorage.getItem('activeUser');
     const source = (window.globalConfig && window.globalConfig.get?.('data_source')) || 'unknown';
+    let sourceUsed = (window.store && typeof window.store.get === 'function')
+      ? (window.store.get('wallet.source_used') || source)
+      : source;
 
     // Get taxonomy for hash calculation
     let taxonomyHash = 'unknown';
@@ -237,6 +217,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
           })
         ]);
         items = (balances && balances.items) || [];
+        sourceUsed = balances?.source_used || currentSource;
         (window.debugLogger?.info || console.log)('✅ API SUCCESS: Using fresh API data', {
           items: items.length,
           source: 'api_direct'
@@ -250,6 +231,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
             const balanceResult = await window.loadBalanceData();
             if (balanceResult.success && balanceResult.data?.items) {
               items = balanceResult.data.items;
+              sourceUsed = balanceResult.data?.source_used || balanceResult.source || currentSource;
               grand = items.reduce((sum, item) => sum + (parseFloat(item.value_usd) || 0), 0);
               useStoreData = true;
               (window.debugLogger?.info || console.log)('✅ LOADBALANCEDATA FALLBACK: Using cached balance data', {
@@ -300,7 +282,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     if (grand > 0) {
       Object.entries(totals).forEach(([g, v]) => { pct[g] = (v / grand) * 100; });
     }
-    const result = { totals, pct, grand, groups };
+    const result = { totals, pct, grand, groups, source_used: sourceUsed };
     _allocCache.data = result;
     _allocCache.ts = now;
     _allocCache.key = cacheKey;

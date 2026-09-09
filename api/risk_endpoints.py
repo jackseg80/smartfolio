@@ -6,7 +6,7 @@ Fournit les métriques VaR/CVaR, corrélation, stress tests et monitoring temps 
 from __future__ import annotations
 import logging
 from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from dataclasses import asdict, is_dataclass, replace
 from decimal import Decimal
 import math
@@ -28,6 +28,73 @@ COMPUTE_ON_STUB_SOURCES = (os.getenv("COMPUTE_ON_STUB_SOURCES", "false").strip()
 
 # Cache for risk endpoints (TTL: 30 min per CACHE_TTL_OPTIMIZATION.md)
 _risk_cache = {}
+
+
+@router.get("/portfolio-reference")
+async def get_portfolio_reference(
+    source: str = Query(..., description="Explicit portfolio data source"),
+    history_days: int = Query(365, ge=90, le=730, description="Daily price-history window"),
+    user: str = Depends(get_required_user),
+):
+    """Return an identity-bound portfolio snapshot and its measured risk coverage."""
+    import pandas as pd
+
+    from services.balance_service import balance_service
+    from services.decision.portfolio_reference import build_portfolio_snapshot, calculate_risk_reference
+    from services.price_history import get_cached_history
+
+    balance_result = await balance_service.resolve_current_balances(user_id=user, source=source)
+    rows = balance_result.get("items") or []
+    resolved_source = balance_result.get("source_used") or source
+    if not rows:
+        raise HTTPException(status_code=422, detail="No portfolio positions are available for this user and source")
+
+    observed_at = datetime.now(timezone.utc)
+    snapshot = build_portfolio_snapshot(
+        rows,
+        user_id=user,
+        source_id=resolved_source,
+        observed_at=observed_at,
+    )
+
+    series_by_symbol = {}
+    for symbol in sorted({position["symbol"] for position in snapshot["positions"]}):
+        try:
+            history = get_cached_history(symbol, days=history_days)
+        except Exception as exc:
+            logger.warning("Price history unavailable for %s: %s", symbol, exc)
+            history = []
+        if not history:
+            continue
+
+        timestamps = []
+        prices = []
+        for raw_timestamp, raw_price in history:
+            try:
+                timestamp = float(raw_timestamp)
+                if timestamp > 10_000_000_000:
+                    timestamp /= 1000.0
+                price = float(raw_price)
+                if math.isfinite(price) and price > 0:
+                    timestamps.append(pd.Timestamp.fromtimestamp(timestamp, tz="UTC"))
+                    prices.append(price)
+            except (TypeError, ValueError, OverflowError, OSError):
+                continue
+        if prices:
+            series_by_symbol[symbol] = pd.Series(prices, index=timestamps).sort_index()
+
+    price_frame = pd.DataFrame(series_by_symbol)
+    risk_reference = calculate_risk_reference(
+        snapshot,
+        price_frame,
+        window_days=history_days,
+        min_common_observations=90,
+    )
+    return success_response({
+        "portfolio": snapshot,
+        "risk_reference": risk_reference,
+        "source_warnings": balance_result.get("warnings") or [],
+    })
 
 # Canonical group risk levels (0-10), shared across V2 calculations and GRI
 _GROUP_RISK_LEVELS = {
@@ -280,6 +347,7 @@ async def get_risk_system_status() -> dict:
 @router.get("/metrics", response_model=RiskMetricsResponse)
 async def get_portfolio_risk_metrics(
     price_history_days: int = Query(30, ge=10, le=365, description="Number of days of history"),
+    source: str = Query(..., description="Explicit portfolio data source"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -296,7 +364,7 @@ async def get_portfolio_risk_metrics(
     """
     try:
         # PERFORMANCE FIX: Check cache first (30 min TTL)
-        cache_key = f"risk_metrics:{user}:{price_history_days}"
+        cache_key = f"risk_metrics:{user}:{source}:{price_history_days}"
         CACHE_TTL = 1800  # 30 minutes per CACHE_TTL_OPTIMIZATION.md
 
         cached = cache_get(_risk_cache, cache_key, CACHE_TTL)
@@ -310,7 +378,7 @@ async def get_portfolio_risk_metrics(
         from api.unified_data import get_unified_filtered_balances
         
         # Récupération des holdings actuels via le système unifié
-        balances_response = await get_unified_filtered_balances(source="cointracking", min_usd=1.0, user_id=user)
+        balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
         src_used = (balances_response or {}).get('source_used', '')
         if (src_used.startswith('stub') or src_used == 'none') and not COMPUTE_ON_STUB_SOURCES:
             return RiskMetricsResponse(success=False, message="No real data: stub source in use")
@@ -375,7 +443,7 @@ async def get_portfolio_risk_metrics(
 @router.get("/correlation", response_model=CorrelationResponse)
 async def get_correlation_matrix(
     lookback_days: int = Query(30, ge=10, le=365, description="Number of days for correlation calculation"),
-    source: str = Query("cointracking", description="Data source: stub_balanced, cointracking, or cointracking_api"),
+    source: str = Query(..., description="Explicit portfolio data source"),
     user: str = Depends(get_required_user)
 ):
     """
@@ -444,6 +512,8 @@ async def get_correlation_matrix(
 @router.get("/stress-test/{scenario}", response_model=StressTestResponse)
 async def run_predefined_stress_test(
     scenario: str,
+    source: str = Query(..., description="Explicit portfolio data source"),
+    user: str = Depends(get_required_user),
 ):
     """
     Exécute un stress test basé sur des scénarios crypto historiques
@@ -472,12 +542,10 @@ async def run_predefined_stress_test(
                 message=f"Scénario invalide. Scénarios disponibles: {available_scenarios}"
             )
         
-        # Import des balances CoinTracking
-        from connectors.cointracking_api import get_current_balances
-        
-        # Récupération des holdings actuels
-        balances_response = await get_current_balances()
-        balances = balances_response.get('items', []) if isinstance(balances_response, dict) else balances_response
+        from api.unified_data import get_unified_filtered_balances
+
+        balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
+        balances = balances_response.get('items', [])
         if not balances or len(balances) == 0:
             return StressTestResponse(
                 success=False,
@@ -522,7 +590,9 @@ async def run_predefined_stress_test(
 
 @router.post("/stress-test/custom", response_model=StressTestResponse)
 async def run_custom_stress_test(
-    request: CustomStressRequest
+    request: CustomStressRequest,
+    source: str = Query(..., description="Explicit portfolio data source"),
+    user: str = Depends(get_required_user),
 ):
     """
     Exécute un stress test personnalisé avec shocks définis par l'utilisateur
@@ -539,11 +609,10 @@ async def run_custom_stress_test(
                 message="Au moins un shock d'asset doit être défini"
             )
         
-        # Import des balances CoinTracking
-        from connectors.cointracking_api import get_current_balances
-        
-        # Récupération des holdings actuels
-        balances = await get_current_balances()
+        from api.unified_data import get_unified_filtered_balances
+
+        balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
+        balances = balances_response.get('items', [])
         if not balances or len(balances) == 0:
             return StressTestResponse(
                 success=False,
@@ -843,7 +912,7 @@ def _build_dual_window_section(dual_window_result: Optional[Dict], use_dual_wind
 
 @router.get("/dashboard")
 async def get_risk_dashboard(
-    source: str = Query("cointracking", description="Data source: cointracking or cointracking_api"),
+    source: str = Query(..., description="Explicit portfolio data source"),
     pricing: str = Query("local", description="Price source: local or coingecko"),
     min_usd: float = Query(1.0, description="Minimum USD threshold"),
     price_history_days: int = Query(30, ge=10, le=365, description="History window for metrics (days)"),
@@ -1240,7 +1309,9 @@ def _get_top_correlations(correlations: Dict[str, Dict[str, float]], top_n: int 
 
 @router.get("/attribution")
 async def get_performance_attribution(
-    analysis_days: int = Query(30, ge=7, le=365, description="Analysis period in days")
+    analysis_days: int = Query(30, ge=7, le=365, description="Analysis period in days"),
+    source: str = Query(..., description="Explicit portfolio data source"),
+    user: str = Depends(get_required_user),
 ) -> dict:
     """
     Calcule l'attribution de performance détaillée du portfolio
@@ -1254,15 +1325,13 @@ async def get_performance_attribution(
     try:
         start_time = datetime.now()
         
-        # Import des balances CoinTracking
-        from connectors.cointracking_api import get_current_balances
-        
-        # Récupération des holdings actuels
-        balances_response = await get_current_balances()
+        from api.unified_data import get_unified_filtered_balances
+
+        balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
         if not balances_response or not isinstance(balances_response, dict):
             return {
                 "success": False,
-                "message": "Erreur lors de la récupération des données CoinTracking"
+                "message": "Portfolio data is unavailable"
             }
         
         balances = balances_response.get('items', [])
@@ -1427,7 +1496,9 @@ async def run_strategy_backtest(
 
 @router.get("/alerts")
 async def get_risk_alerts(
-    severity_filter: Optional[str] = Query(None, description="Filter by severity (info/low/medium/high/critical)")
+    severity_filter: Optional[str] = Query(None, description="Filter by severity (info/low/medium/high/critical)"),
+    source: str = Query(..., description="Explicit portfolio data source"),
+    user: str = Depends(get_required_user),
 ) -> dict:
     """
     Récupère les alertes de risque actives
@@ -1437,15 +1508,13 @@ async def get_risk_alerts(
     concentration excessive, etc.
     """
     try:
-        # Import des balances CoinTracking
-        from connectors.cointracking_api import get_current_balances
-        
-        # Récupération des holdings actuels
-        balances_response = await get_current_balances()
+        from api.unified_data import get_unified_filtered_balances
+
+        balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
         if not balances_response or not isinstance(balances_response, dict):
             return {
                 "success": False,
-                "message": "Erreur lors de la récupération des données CoinTracking"
+                "message": "Portfolio data is unavailable"
             }
         
         balances = balances_response.get('items', [])
@@ -1653,6 +1722,7 @@ async def get_stress_scenarios() -> dict:
 @router.post("/stress-test-portfolio")
 async def run_stress_test_portfolio(
     scenario_id: str = Query(..., description="Scenario ID (crisis_2008, covid_2020, etc.)"),
+    source: str = Query(..., description="Explicit portfolio data source"),
     user: str = Depends(get_required_user)
 ) -> dict:
     """
@@ -1675,7 +1745,7 @@ async def run_stress_test_portfolio(
 
         # Récupérer portfolio actuel
         balances_response = await get_unified_filtered_balances(
-            source="cointracking",
+            source=source,
             min_usd=1.0,
             user_id=user
         )
@@ -1731,8 +1801,7 @@ async def run_monte_carlo(
     horizon_days: int = Query(30, ge=1, le=365, description="Forecast horizon in days"),
     confidence_level: float = Query(0.95, ge=0.90, le=0.99, description="Confidence level for VaR"),
     price_history_days: int = Query(365, ge=90, le=730, description="Days of price history for distributions"),
-    # ✅ FIX: Accept extra params from frontend (global-config.js adds these automatically)
-    source: str = Query("cointracking", description="Data source (ignored, uses unified data)"),
+    source: str = Query(..., description="Explicit portfolio data source"),
     pricing: str = Query("auto", description="Pricing source (ignored)"),
     min_usd: float = Query(1.0, description="Min USD threshold (ignored)"),
     user: str = Depends(get_required_user)
@@ -1754,10 +1823,10 @@ async def run_monte_carlo(
         from services.risk.monte_carlo import run_monte_carlo_simulation
         from api.unified_data import get_unified_filtered_balances
 
-        # Récupérer portfolio actuel (use unified data, ignore source param)
+        # Récupérer le portfolio explicitement sélectionné
         balances_response = await get_unified_filtered_balances(
-            source="cointracking",  # Force cointracking for stability
-            min_usd=1.0,
+            source=source,
+            min_usd=min_usd,
             user_id=user
         )
 

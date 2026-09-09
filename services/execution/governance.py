@@ -265,14 +265,65 @@ class GovernanceEngine:
                 logger.info(f"[DEBUG] Got ML predictions, keys: {list(ml_predictions.keys())}")
 
                 if 'error' not in ml_predictions:
-                    # Extract signals from real ML models using RealSignalExtractor
+                    required_models = ('volatility', 'regime', 'correlation', 'sentiment')
+                    model_outputs = ml_predictions.get('models', {})
+                    unavailable_models = [
+                        name for name in required_models
+                        if not isinstance(model_outputs.get(name), dict)
+                        or not model_outputs.get(name)
+                        or model_outputs[name].get('available') is False
+                    ]
+                    if unavailable_models:
+                        self.current_state.signals = create_default_signals(
+                            "Missing verified model outputs: " + ", ".join(unavailable_models)
+                        )
+                        self.current_state.raw_signals = ml_predictions
+                        self._last_signals_fetch = datetime.now()
+                        logger.warning("ML governance signals unavailable: %s", unavailable_models)
+                        return
+
+                    ensemble_output = ml_predictions.get('ensemble', {})
+                    if not isinstance(ensemble_output, dict) or ensemble_output.get('available') is not True:
+                        self.current_state.signals = create_default_signals(
+                            "No calibrated ensemble forecast is available"
+                        )
+                        self.current_state.raw_signals = ml_predictions
+                        self._last_signals_fetch = datetime.now()
+                        return
+
+                    volatility_signals = RealSignalExtractor.extract_volatility_signals(ml_predictions)
+                    regime_signals = RealSignalExtractor.extract_regime_signals(ml_predictions)
+                    correlation_signals = RealSignalExtractor.extract_correlation_signals(ml_predictions)
+                    sentiment_signals = RealSignalExtractor.extract_sentiment_signals(ml_predictions)
+                    extracted_outputs = {
+                        "volatility": volatility_signals,
+                        "regime": regime_signals,
+                        "correlation": correlation_signals,
+                        "sentiment": sentiment_signals,
+                    }
+                    empty_outputs = [name for name, value in extracted_outputs.items() if not value]
+                    if empty_outputs:
+                        self.current_state.signals = create_default_signals(
+                            "Verified model outputs could not be extracted: " + ", ".join(empty_outputs)
+                        )
+                        self.current_state.raw_signals = ml_predictions
+                        self._last_signals_fetch = datetime.now()
+                        return
+
+                    ensemble = ml_predictions.get('ensemble', {})
+                    decision_score = ensemble.get('decision_score', ensemble.get('confidence_level'))
+                    if not isinstance(decision_score, (int, float)):
+                        decision_score = 0.0
+
                     self.current_state.signals = MLSignals(
                         as_of=datetime.now(),
-                        volatility=RealSignalExtractor.extract_volatility_signals(ml_predictions),
-                        regime=RealSignalExtractor.extract_regime_signals(ml_predictions),
-                        correlation=RealSignalExtractor.extract_correlation_signals(ml_predictions),
-                        sentiment=RealSignalExtractor.extract_sentiment_signals(ml_predictions),
-                        decision_score=ml_predictions.get('ensemble', {}).get('confidence_level', 0.6),
+                        available=True,
+                        unavailable_reason=None,
+                        volatility=volatility_signals,
+                        regime=regime_signals,
+                        correlation=correlation_signals,
+                        sentiment=sentiment_signals,
+                        decision_score=decision_score,
                         confidence=RealSignalExtractor.calculate_confidence(ml_predictions),
                         contradiction_index=RealSignalExtractor.compute_contradiction_index(ml_predictions),
                         sources_used=list(ml_predictions.get('models', {}).keys())
@@ -287,43 +338,24 @@ class GovernanceEngine:
                 else:
                     logger.warning(f"ML orchestrator error: {ml_predictions.get('error')}")
 
-            # Fallback to API endpoint
-            async with httpx.AsyncClient() as client:
-                signals_response = await client.get(f"{self.api_base_url}/api/ml/status", timeout=5.0)
-                if signals_response.status_code == 200:
-                    ml_status = signals_response.json()
-
-                    # Fallback to simulated signals using SignalExtractor
-                    self.current_state.signals = MLSignals(
-                        as_of=datetime.now(),
-                        volatility=SignalExtractor.extract_volatility_signals(ml_status),
-                        regime=SignalExtractor.extract_regime_signals(ml_status),
-                        correlation=SignalExtractor.extract_correlation_signals(ml_status),
-                        sentiment=SignalExtractor.extract_sentiment_signals(ml_status),
-                        decision_score=0.6,
-                        confidence=0.75,
-                        contradiction_index=SignalExtractor.compute_contradiction_index(ml_status),
-                        sources_used=["volatility_fallback", "regime_fallback", "correlation_fallback", "sentiment_fallback"]
-                    )
-
-                    # Store raw signals for XAI (Phase 3C) - fallback format
-                    self.current_state.raw_signals = ml_status
-
-                    self._last_signals_fetch = datetime.now()
-                    logger.debug("ML signals refreshed via fallback API")
+            self.current_state.signals = create_default_signals(
+                "ML orchestrator did not return a complete verified result"
+            )
+            self.current_state.raw_signals = {}
+            self._last_signals_fetch = datetime.now()
 
         except httpx.HTTPError as e:
             logger.warning(f"HTTP error refreshing ML signals: {e}")
             if not self.current_state.signals:
-                self.current_state.signals = create_default_signals()
+                self.current_state.signals = create_default_signals(str(e))
         except (ValueError, KeyError) as e:
             logger.warning(f"Data parsing error in ML signals: {e}")
             if not self.current_state.signals:
-                self.current_state.signals = create_default_signals()
+                self.current_state.signals = create_default_signals(str(e))
         except Exception as e:
             logger.exception(f"Unexpected error refreshing ML signals: {e}")
             if not self.current_state.signals:
-                self.current_state.signals = create_default_signals()
+                self.current_state.signals = create_default_signals(str(e))
 
     async def get_current_ml_signals(self) -> Optional[MLSignals]:
         """Retourne les signaux ML actuels (wrapper pour endpoints)"""

@@ -12,7 +12,7 @@ from services.execution.governance import governance_engine
 def client() -> TestClient:
     app.dependency_overrides[get_current_user_jwt] = lambda: "jack"
     try:
-        yield TestClient(app)
+        yield TestClient(app, headers={"X-User": "jack"})
     finally:
         app.dependency_overrides.pop(get_current_user_jwt, None)
 

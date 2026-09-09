@@ -157,7 +157,8 @@
           const minUsd = globalConfig.get('min_usd_threshold') || 1.0;
           const priceDays = 365;
           const corrDays = 90;
-          const currentSource = globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+          const currentSource = globalConfig.get('data_source');
+          if (!currentSource) throw new Error('No portfolio source is selected');
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {
@@ -477,7 +478,8 @@
           const minUsd = globalConfig.get('min_usd_threshold') || 1.0;
           const priceDays = 365;
           const corrDays = 90;
-          const currentSource = globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+          const currentSource = globalConfig.get('data_source');
+          if (!currentSource) throw new Error('No portfolio source is selected');
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {

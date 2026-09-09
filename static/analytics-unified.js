@@ -249,10 +249,15 @@ async function loadRiskData() {
 
     // 🆕 FIX Nov 2025: Multi-tenant support avec X-User header
     const activeUser = localStorage.getItem('activeUser');
+    const source = globalConfig?.get('data_source') || localStorage.getItem('data_source');
+    if (!source) {
+        showRiskError();
+        return;
+    }
 
     const riskData = await fetchWithCache('risk-dashboard', async () => {
         const minUsd = globalConfig?.get('min_usd_threshold') || 10;
-        const url = `${API_BASE}/api/risk/dashboard?min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
+        const url = `${API_BASE}/api/risk/dashboard?source=${encodeURIComponent(source)}&min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
         const response = await fetch(url, {
             headers: { 'X-User': activeUser }
         });

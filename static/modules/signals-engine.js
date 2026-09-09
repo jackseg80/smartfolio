@@ -16,6 +16,16 @@ export const DEFAULT_CCS_WEIGHTS = {
   model_version: 'ccs-1'
 };
 
+function unavailableSignal(error) {
+  return {
+    value: null,
+    normalized: null,
+    timestamp: Date.now(),
+    source: 'unavailable',
+    error: error instanceof Error ? error.message : String(error)
+  };
+}
+
 /**
  * Fetch market signals from multiple sources
  */
@@ -47,12 +57,7 @@ export async function fetchSignals() {
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('⚠️ Fear & Greed fallback:', error);
-      signals.fear_greed = {
-        value: 48, // Static fallback to current real value
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      signals.fear_greed = unavailableSignal(error);
     }
 
     // 2. BTC Dominance (CoinGecko via proxy)
@@ -86,13 +91,8 @@ export async function fetchSignals() {
         throw new Error(`CoinGecko proxy failed: ${dominanceResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ BTC Dominance fallback (using static value):', error);
-      signals.btc_dominance = {
-        value: 57.5, // Current approximate value
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      (window.debugLogger?.warn || console.warn)('⚠️ BTC Dominance unavailable:', error);
+      signals.btc_dominance = unavailableSignal(error);
     }
 
     // 3. Funding Rate (Binance API)
@@ -117,12 +117,7 @@ export async function fetchSignals() {
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('⚠️ Funding Rate fallback:', error);
-      signals.funding_rate = {
-        value: 0.0001, // Neutral funding rate (0.01%)
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      signals.funding_rate = unavailableSignal(error);
     }
 
     // 4. ETH/BTC Ratio (CoinGecko via proxy)
@@ -165,13 +160,8 @@ export async function fetchSignals() {
         throw new Error(`CoinGecko proxy failed: ${pricesResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ ETH/BTC Ratio fallback (using static value):', error);
-      signals.eth_btc_ratio = {
-        value: 0.037, // Approximate current ratio
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      (window.debugLogger?.warn || console.warn)('⚠️ ETH/BTC Ratio unavailable:', error);
+      signals.eth_btc_ratio = unavailableSignal(error);
     }
 
     // 5. Volatility (calculated from recent BTC price changes via proxy)
@@ -213,13 +203,8 @@ export async function fetchSignals() {
         throw new Error(`CoinGecko proxy failed: ${volatilityResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Volatility fallback (using static value):', error);
-      signals.volatility = {
-        value: 0.65, // 65% typical crypto volatility
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      (window.debugLogger?.warn || console.warn)('⚠️ Volatility unavailable:', error);
+      signals.volatility = unavailableSignal(error);
     }
 
     // 6. Trend (7-day price momentum)
@@ -254,26 +239,17 @@ export async function fetchSignals() {
         throw new Error(`CoinGecko proxy failed: ${trendResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Trend fallback (using static value):', error);
-      signals.trend = {
-        value: 0.025, // 2.5% slight positive trend
-        normalized: null,
-        timestamp: Date.now(),
-        source: 'fallback_static'
-      };
+      (window.debugLogger?.warn || console.warn)('⚠️ Trend unavailable:', error);
+      signals.trend = unavailableSignal(error);
     }
 
   } catch (globalError) {
     debugLogger.error('❌ Global error fetching signals:', globalError);
-    // Return all fallback data if everything fails
-    return {
-      fear_greed: { value: 48, normalized: null, timestamp: Date.now(), source: 'fallback' },
-      btc_dominance: { value: 57.5, normalized: null, timestamp: Date.now(), source: 'fallback' },
-      funding_rate: { value: 0.0001, normalized: null, timestamp: Date.now(), source: 'fallback' },
-      eth_btc_ratio: { value: 0.037, normalized: null, timestamp: Date.now(), source: 'fallback' },
-      volatility: { value: 0.65, normalized: null, timestamp: Date.now(), source: 'fallback' },
-      trend: { value: 0.025, normalized: null, timestamp: Date.now(), source: 'fallback' }
-    };
+    return Object.fromEntries(
+      Object.keys(DEFAULT_CCS_WEIGHTS)
+        .filter(key => key !== 'model_version')
+        .map(key => [key, unavailableSignal(globalError)])
+    );
   }
 
   console.debug('🔍 Fetched REAL signals:', signals);
@@ -303,8 +279,7 @@ function normalizeSignal(key, rawValue) {
       // Higher ETH/BTC = alt season = higher CCS
       // Handle edge case where rawValue might be 0 or very small
       if (rawValue <= 0) {
-        (window.debugLogger?.warn || console.warn)('ETH/BTC ratio is 0 or negative, using neutral score');
-        return 50; // Neutral score
+        return null;
       }
       const ethNorm = Math.max(0, Math.min(100, (rawValue - 0.025) / (0.06 - 0.025) * 100)); // Adjusted range: 0.025-0.06
       return ethNorm;
@@ -320,7 +295,7 @@ function normalizeSignal(key, rawValue) {
       return trendNorm;
 
     default:
-      return 50; // Neutral
+      return null;
   }
 }
 
@@ -337,21 +312,24 @@ export function computeCCS(signals, weights = DEFAULT_CCS_WEIGHTS) {
   }
 
   let weightedSum = 0;
-  let totalWeight = 0;
   const normalizedSignals = {};
+  const missingSignals = [];
+  const requiredKeys = Object.keys(weights).filter(key => key !== 'model_version');
 
-  // Process each signal
-  for (const [key, signal] of Object.entries(signals)) {
-    if (key === 'model_version') continue;
-
+  for (const key of requiredKeys) {
+    const signal = signals[key];
     const weight = weights[key];
-    if (!weight || !signal || typeof signal.value !== 'number') {
-      (window.debugLogger?.warn || console.warn)(`Skipping invalid signal: ${key}`);
+    if (!Number.isFinite(weight) || weight <= 0 || !signal || !Number.isFinite(signal.value) || signal.source === 'unavailable') {
+      missingSignals.push(key);
       continue;
     }
 
     // Normalize signal
     const normalized = normalizeSignal(key, signal.value);
+    if (!Number.isFinite(normalized)) {
+      missingSignals.push(key);
+      continue;
+    }
     normalizedSignals[key] = {
       ...signal,
       normalized,
@@ -360,11 +338,23 @@ export function computeCCS(signals, weights = DEFAULT_CCS_WEIGHTS) {
 
     // Add to weighted sum
     weightedSum += normalized * weight;
-    totalWeight += weight;
   }
 
-  // Calculate final CCS score (0-100)
-  const ccsScore = totalWeight > 0 ? weightedSum / totalWeight : 50;
+  if (missingSignals.length > 0) {
+    return {
+      available: false,
+      score: null,
+      signals: normalizedSignals,
+      weights,
+      missing_signals: missingSignals,
+      reason: 'Required CCS signals are unavailable',
+      calculation_time: new Date().toISOString(),
+      model_version: weights.model_version || 'ccs-1'
+    };
+  }
+
+  const totalWeight = requiredKeys.reduce((sum, key) => sum + weights[key], 0);
+  const ccsScore = weightedSum / totalWeight;
 
   // Validation
   if (isNaN(ccsScore) || ccsScore < 0 || ccsScore > 100) {
@@ -372,6 +362,7 @@ export function computeCCS(signals, weights = DEFAULT_CCS_WEIGHTS) {
   }
 
   return {
+    available: true,
     score: Math.round(ccsScore * 100) / 100, // Round to 2 decimals
     signals: normalizedSignals,
     weights,
@@ -413,7 +404,11 @@ export function validateCCS(ccs) {
     return false;
   }
 
-  const { score, signals, model_version } = ccs;
+  const { available, score, signals, model_version } = ccs;
+
+  if (available !== true) {
+    return false;
+  }
 
   if (typeof score !== 'number' || score < 0 || score > 100) {
     return false;

@@ -221,7 +221,8 @@
         const minUsd = window.globalConfig.get('min_usd_threshold') || 1.0;
         const priceDays = 365;
         const corrDays = 90;
-        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+        const currentSource = window.globalConfig.get('data_source');
+        if (!currentSource) throw new Error('No portfolio source is selected');
 
         const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
           params: {
@@ -395,8 +396,11 @@
     window.runStressTest = async function(scenarioId) {
       try {
         window.showToast?.(`Calculating scenario ${scenarioId} impact...`, 'info');
+        const source = window.globalConfig.get('data_source');
+        if (!source) throw new Error('No portfolio source is selected');
 
-        const response = await window.globalConfig.apiRequest(`/api/risk/stress-test-portfolio?scenario_id=${scenarioId}`, {
+        const response = await window.globalConfig.apiRequest('/api/risk/stress-test-portfolio', {
+          params: { scenario_id: scenarioId, source },
           method: 'POST'
         });
 
@@ -546,8 +550,11 @@
           </div>
         `;
 
+        const source = window.globalConfig.get('data_source');
+        if (!source) throw new Error('No portfolio source is selected');
         const response = await window.globalConfig.apiRequest('/api/risk/monte-carlo', {
           params: {
+            source,
             num_simulations: 10000,
             horizon_days: 30,
             confidence_level: 0.95,
@@ -871,7 +878,8 @@
         const minUsd = window.globalConfig.get('min_usd_threshold') || 1.0;
         const priceDays = 365;
         const corrDays = 90;
-        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+        const currentSource = window.globalConfig.get('data_source');
+        if (!currentSource) throw new Error('No portfolio source is selected');
 
         const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
           params: {

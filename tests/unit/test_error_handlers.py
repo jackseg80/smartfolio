@@ -171,6 +171,22 @@ class TestHandleServiceErrors:
         result = parse_data()
         assert result == []
 
+    @pytest.mark.asyncio
+    async def test_async_service_is_awaited(self):
+        @handle_service_errors(silent=True, default_return=None)
+        async def async_value():
+            return 42
+
+        assert await async_value() == 42
+
+    @pytest.mark.asyncio
+    async def test_async_service_error_uses_default(self):
+        @handle_service_errors(silent=True, default_return="unavailable")
+        async def async_failure():
+            raise ValueError("Invalid")
+
+        assert await async_failure() == "unavailable"
+
 
 # ===========================
 # 3. Storage Error Handler Tests

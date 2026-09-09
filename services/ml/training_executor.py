@@ -408,17 +408,7 @@ class TrainingExecutor:
                         "trained_at": metadata.get("trained_at", "unknown")
                     }
                 else:
-                    # Fallback to reasonable defaults if metadata not found
-                    logger.warning("⚠️ Metadata not found, using fallback values")
-                    return {
-                        "accuracy": 0.85,
-                        "precision": 0.83,
-                        "recall": 0.87,
-                        "f1_score": 0.85,
-                        "data_source": "real_btc_730d",
-                        "epochs": 100,
-                        "status": "metadata_missing"
-                    }
+                    raise RuntimeError("Regime training finished without verifiable model metadata")
 
             elif model_type == "volatility" or "volatility" in model_name.lower():
                 # Train volatility forecaster
@@ -478,37 +468,14 @@ class TrainingExecutor:
                         "per_asset": all_metrics
                     }
                 else:
-                    # Fallback if no metadata found
-                    logger.warning("⚠️ No volatility metadata found, using fallback values")
-                    return {
-                        "mse": 0.0020,
-                        "mae": 0.032,
-                        "r2": 0.70,
-                        "data_source": "real_crypto_365d",
-                        "epochs": 100,
-                        "assets": ",".join(symbols),
-                        "status": "metadata_missing"
-                    }
+                    raise RuntimeError("Volatility training finished without verifiable model metadata")
 
             else:
-                # Unknown model type - fallback to mock
-                logger.warning(f"⚠️ Unknown model type '{model_type}', using mock training")
-                time.sleep(5)
-                return {
-                    "accuracy": 0.85,
-                    "status": "mock",
-                    "reason": f"No training implementation for type '{model_type}'"
-                }
+                raise ValueError(f"No training implementation for model type '{model_type}'")
 
         except Exception as e:
             logger.error(f"❌ Real training failed: {e}")
-            # Fallback to mock on error
-            time.sleep(5)
-            return {
-                "error": str(e),
-                "status": "mock_fallback",
-                "accuracy": 0.80
-            }
+            raise
 
     def _run_training_job(self, job_id: str):
         """

@@ -155,24 +155,27 @@ async function refreshGI() {
         updateGlobalInsightMeta();
 
     } catch (error) {
-        debugLogger.warn('⚠️ Global Insight fallback to simple calculation:', error);
+        debugLogger.warn('⚠️ Global Insight unavailable:', error);
         console.debug('Error details:', error.stack || error);
 
-        // Fallback to simple calculation if intelligent system fails
+        // Keep missing decision inputs explicit in the summary card.
         const st = store.snapshot();
         const blended = st.scores?.blended ?? null;
-        const cycle = Math.round(st.cycle?.ccsStar ?? st.cycle?.score ?? 0);
+        const cycleRaw = st.cycle?.ccsStar ?? st.cycle?.score ?? null;
+        const cycle = Number.isFinite(cycleRaw) ? Math.round(cycleRaw) : null;
         const onch = st.scores?.onchain ?? null;
         const risk = st.scores?.risk ?? null;
-        // ✅ Risk Score utilisé directement (pas d'inversion) - conforme CLAUDE.md
-        const score = blended != null ? Math.round(blended) : Math.round(((cycle || 50) * 0.5) + ((onch ?? 50) * 0.3) + ((risk ?? 50) * 0.2));
+        const score = Number.isFinite(blended) ? Math.round(blended) : null;
 
         const el = document.getElementById('gi-score');
-        if (el) { el.textContent = score; el.style.color = colorForScore(score); }
+        if (el) {
+            el.textContent = score ?? '--';
+            if (score != null) el.style.color = colorForScore(score);
+        }
 
         const ec = document.getElementById('gi-cycle');
         if (ec) {
-            ec.textContent = cycle || '--';
+            ec.textContent = cycle ?? '--';
             if (typeof cycle === 'number') ec.style.color = colorForScore(cycle);
         }
         const eo = document.getElementById('gi-onchain');
@@ -190,8 +193,8 @@ async function refreshGI() {
 
         const reco = document.getElementById('gi-reco');
         if (reco) {
-            reco.textContent = score >= 70 ? '⚠️ Reduce 10-20%' : score <= 35 ? '🟢 Cautious DCA' : '⏸️ Neutral / Wait';
-            reco.title = 'Basic recommendation (intelligent system unavailable)';
+            reco.textContent = '⚠️ Decision unavailable';
+            reco.title = 'Complete verified inputs are required';
         }
 
         // Update meta badge even in fallback
@@ -261,27 +264,21 @@ async function loadUnifiedDataForDashboard() {
             store.set('scores.blended', cachedBlended.score);
             debugLogger.debug('✅ Blended score loaded from cache for dashboard');
         } else {
-            // Calculate blended if we have component scores
-            // ✅ Respecte docs/RISK_SEMANTICS.md - Risk Score utilisé directement (pas d'inversion)
+            // Calculate the blend only when every observed component is present.
             const state = store.snapshot();
-            const cycleScore = state.cycle?.score ?? 50;
-            const onchainScore = state.scores?.onchain ?? 50;
-            const riskScore = state.scores?.risk ?? 50;
-            const blended = (cycleScore * 0.50) + (onchainScore * 0.30) + (riskScore * 0.20);
-            const blendedScore = Math.round(Math.max(0, Math.min(100, blended)));
-            store.set('scores.blended', blendedScore);
-            debugLogger.debug('✅ Blended score calculated for dashboard');
-        }
-
-        // Ensure basic CCS signals data is available for sophisticated modules
-        const state = store.snapshot();
-        if (!state.ccs?.signals) {
-            store.set('ccs.signals', {
-                fear_greed: { value: 50 },
-                btc_dominance: { value: 57.5 },
-                funding_rate: { value: 0.0001 }
-            });
-            debugLogger.debug('✅ Basic CCS signals data initialized for dashboard');
+            const cycleScore = state.cycle?.score;
+            const onchainScore = state.scores?.onchain;
+            const riskScore = state.scores?.risk;
+            if ([cycleScore, onchainScore, riskScore].every(Number.isFinite)) {
+                // Risk Score is positive robustness; never invert it.
+                const blended = (cycleScore * 0.50) + (onchainScore * 0.30) + (riskScore * 0.20);
+                const blendedScore = Math.round(Math.max(0, Math.min(100, blended)));
+                store.set('scores.blended', blendedScore);
+                debugLogger.debug('✅ Blended score calculated for dashboard');
+            } else {
+                store.set('scores.blended', null);
+                debugLogger.warn('Blended score unavailable: one or more components are missing');
+            }
         }
 
         debugLogger.debug('🎯 Dashboard data loading completed');
@@ -306,7 +303,7 @@ async function waitForStoreReady() {
                 const { calculateRiskBudget } = await import('../modules/market-regimes.js');
                 const riskBudget = calculateRiskBudget(state.scores.blended, state.scores.risk ?? null);
                 store.set('risk.risk_budget', riskBudget);
-                console.debug('✅ Synthesized risk budget fallback:', { target_stables_pct: riskBudget.target_stables_pct });
+                console.debug('✅ Risk budget calculated from complete scores:', { target_stables_pct: riskBudget.target_stables_pct });
             } catch (fallbackError) {
                 debugLogger.warn('⚠️ Unable to synthesize risk budget fallback:', fallbackError);
             }
@@ -563,8 +560,11 @@ function setupExportButtons() {
         cryptoExportBtn.addEventListener('click', () => {
             import('./export-button.js').then(({ openExportModal }) => {
                 const cryptoSource = window.globalConfig?.get('data_source') ||
-                    localStorage.getItem('data_source') ||
-                    'cointracking';
+                    localStorage.getItem('data_source');
+                if (!cryptoSource) {
+                    window.showToast?.('Select a portfolio source before exporting.', 'warning');
+                    return;
+                }
                 openExportModal('crypto', '/api/portfolio/export-lists', 'crypto-portfolio', cryptoSource);
             });
         });
@@ -3149,9 +3149,14 @@ async function loadRiskAlerts() {
         debugLogger.debug('🚨 Loading risk alerts...');
 
         const activeUser = localStorage.getItem('activeUser');
+        const source = window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
+        if (!source) {
+            debugLogger.warn('Risk alerts unavailable: no portfolio source is selected');
+            return;
+        }
 
         const [riskRes, alertsRes] = await Promise.all([
-            fetch('/api/risk/dashboard', {
+            fetch(`/api/risk/dashboard?source=${encodeURIComponent(source)}`, {
                 headers: { 'X-User': activeUser }
             })
                 .then(r => r.ok ? r.json() : null)

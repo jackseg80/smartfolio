@@ -42,7 +42,7 @@ describe('computeExposureCap - Core Functionality', () => {
     inRange(cap, 60, 85, 'Bull Market cap');
   });
 
-  test('Legacy Euphorie + low Risk respects the Bull Market floor', () => {
+  test('Legacy Euphorie + low Risk respects the Bull Market maximum', () => {
     const cap = computeExposureCap({
       blendedScore: 73,
       riskScore: 60,
@@ -53,7 +53,7 @@ describe('computeExposureCap - Core Functionality', () => {
       backendStatus: 'ok'
     });
 
-    expect(cap).toBeGreaterThanOrEqual(60);
+    expect(cap).toBeLessThanOrEqual(85);
   });
 
   test('Legacy Bear normalizes to canonical Bear Market bounds', () => {
@@ -87,21 +87,22 @@ describe('computeExposureCap - Core Functionality', () => {
 
 describe('computeExposureCap - Backend Status Handling', () => {
 
-  test('Backend error → forte réduction mais floor Expansion (60%) respecté', () => {
-    const cap = computeExposureCap({
+  test('Backend error reduces the cap without forcing an Expansion floor', () => {
+    const params = {
       blendedScore: 70,
       riskScore: 85,
       decision_score: 0.5,
       confidence: 0.5,
       volatility: 0.32,
       regime: 'expansion',
-      backendStatus: 'error'
-    });
+    };
+    const cap = computeExposureCap({ ...params, backendStatus: 'error' });
+    const healthyCap = computeExposureCap({ ...params, backendStatus: 'ok' });
 
-    expect(cap).toBeGreaterThanOrEqual(60);
+    expect(cap).toBeLessThan(healthyCap);
   });
 
-  test('Backend stale → dégradation -15pts mais floor respecté', () => {
+  test('Backend stale applies the full 15 point degradation', () => {
     const cap = computeExposureCap({
       blendedScore: 68,
       riskScore: 90,
@@ -112,7 +113,7 @@ describe('computeExposureCap - Backend Status Handling', () => {
       backendStatus: 'stale'
     });
 
-    expect(cap).toBeGreaterThanOrEqual(60);
+    expect(cap).toBe(56);
   });
 
   test('Backend status unknown → pas de pénalité appliquée', () => {
@@ -177,7 +178,7 @@ describe('computeExposureCap - Volatility Normalization', () => {
 
 describe('computeExposureCap - Edge Cases', () => {
 
-  test('Régime inconnu → fallback floor 40%', () => {
+  test('Unknown regime uses only the generic maximum', () => {
     const cap = computeExposureCap({
       blendedScore: 50,
       riskScore: 70,
@@ -191,8 +192,8 @@ describe('computeExposureCap - Edge Cases', () => {
     expect(cap).toBeGreaterThanOrEqual(40);
   });
 
-  test('Scores null/undefined → fallback sécurisé', () => {
-    const cap = computeExposureCap({
+  test('Missing scores are rejected instead of replaced with zeroes', () => {
+    expect(() => computeExposureCap({
       blendedScore: null,
       riskScore: undefined,
       decision_score: null,
@@ -200,10 +201,7 @@ describe('computeExposureCap - Edge Cases', () => {
       volatility: null,
       regime: 'expansion',
       backendStatus: 'ok'
-    });
-
-    expect(cap).toBeGreaterThanOrEqual(40);
-    expect(cap).toBeLessThanOrEqual(95);
+    })).toThrow('Exposure cap inputs unavailable');
   });
 
   test('Regime name avec casse mixte → normalisé correctement', () => {
@@ -253,22 +251,21 @@ describe('computeExposureCap - Edge Cases', () => {
 
     // Bad signal devrait avoir un cap plus bas
     expect(capBadSignal).toBeLessThan(capGoodSignal);
-    // Mais floor Expansion respecté
-    expect(capBadSignal).toBeGreaterThanOrEqual(60);
+    expect(capBadSignal).toBeGreaterThanOrEqual(0);
   });
 });
 
-describe('computeExposureCap - Regime Floors', () => {
+describe('computeExposureCap - No implicit regime floors', () => {
 
-  test('Tous les régimes respectent leurs floors minimums', () => {
+  test('A weak signal can remain below the former regime minimums', () => {
     const regimes = [
-      { name: 'expansion', floor: 75 },
-      { name: 'bull market', floor: 60 },
-      { name: 'correction', floor: 40 },
-      { name: 'bear market', floor: 20 },
+      { name: 'expansion', maximum: 95 },
+      { name: 'bull market', maximum: 85 },
+      { name: 'correction', maximum: 70 },
+      { name: 'bear market', maximum: 40 },
     ];
 
-    regimes.forEach(({ name, floor }) => {
+    regimes.forEach(({ name, maximum }) => {
       const cap = computeExposureCap({
         blendedScore: 50,
         riskScore: 50,
@@ -279,7 +276,8 @@ describe('computeExposureCap - Regime Floors', () => {
         backendStatus: 'stale'  // Pénalité backend pour tester floor
       });
 
-      expect(cap).toBeGreaterThanOrEqual(floor);
+      expect(cap).toBe(22);
+      expect(cap).toBeLessThanOrEqual(maximum);
     });
   });
 });

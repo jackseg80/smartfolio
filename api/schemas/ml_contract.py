@@ -198,21 +198,11 @@ def create_fallback_response(
     assets: List[str],
     error_msg: str = "Model unavailable"
 ) -> UnifiedMLResponse:
-    """Créer une réponse de fallback avec confiance faible"""
-    predictions = [
-        UnifiedPrediction(
-            asset=asset,
-            value=0.0,
-            quality=QualityMetrics(confidence=0.1),
-            uncertainty=UncertaintyMeasures(std=999.0)
-        )
-        for asset in assets
-    ]
-
+    """Create an explicit unavailable response without synthetic predictions."""
     return UnifiedMLResponse(
         success=False,
         model_type=model_type,
-        predictions=predictions,
+        predictions=[],
         warnings=[error_msg],
         failed_assets=assets
     )

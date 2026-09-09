@@ -25,10 +25,6 @@ const KEYS = {
   DEBUG_MODE: 'debugMode'
 };
 
-const DEFAULTS = {
-  SOURCE: 'cointracking'
-};
-
 /**
  * Centralized localStorage service
  */
@@ -99,10 +95,10 @@ export const StorageService = {
 
   /**
    * Get the current data source
-   * @returns {string} Data source or 'cointracking' as fallback
+   * @returns {string|null} Explicitly selected data source, or null
    */
   getDataSource() {
-    return localStorage.getItem(KEYS.DATA_SOURCE) || DEFAULTS.SOURCE;
+    return localStorage.getItem(KEYS.DATA_SOURCE);
   },
 
   /**

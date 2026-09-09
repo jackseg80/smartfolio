@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+import math
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -258,9 +259,65 @@ async def rebalance_plan(
 
     unified_data = await get_unified_filtered_balances(source=source, min_usd=min_usd, user_id=user)
     rows = unified_data.get("items", [])
+    resolved_source = unified_data.get("source_used", source)
 
     # targets - support for dynamic CCS-based targets
     if dynamic_targets and payload.get("dynamic_targets_pct"):
+        if payload.get("target_origin") != "unified_suggested_allocation":
+            raise HTTPException(status_code=409, detail="Dynamic allocation has no verified origin")
+        if payload.get("portfolio_user_id") != user:
+            raise HTTPException(status_code=409, detail="Suggested allocation belongs to another user")
+        if payload.get("portfolio_source_id") != resolved_source:
+            raise HTTPException(status_code=409, detail="Suggested allocation belongs to another portfolio source")
+        if not payload.get("allocation_snapshot"):
+            raise HTTPException(status_code=409, detail="Suggested allocation has no portfolio snapshot")
+        proposal_timestamp = payload.get("proposal_timestamp")
+        try:
+            parsed_timestamp = datetime.fromisoformat(str(proposal_timestamp).replace("Z", "+00:00"))
+            if parsed_timestamp.tzinfo is None:
+                parsed_timestamp = parsed_timestamp.replace(tzinfo=timezone.utc)
+            age_seconds = (datetime.now(timezone.utc) - parsed_timestamp.astimezone(timezone.utc)).total_seconds()
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=409, detail="Suggested allocation has an invalid timestamp")
+        if age_seconds < -60 or age_seconds > 2 * 60 * 60:
+            raise HTTPException(status_code=409, detail="Suggested allocation is stale")
+
+        snapshot_total = payload["allocation_snapshot"].get("total_usd")
+        current_total = sum(float(row.get("value_usd") or row.get("usd_value") or 0.0) for row in rows)
+        if not isinstance(snapshot_total, (int, float)) or not math.isfinite(float(snapshot_total)):
+            raise HTTPException(status_code=409, detail="Suggested allocation snapshot has no valid total")
+        allowed_delta = max(1.0, abs(current_total) * 0.005)
+        if abs(float(snapshot_total) - current_total) > allowed_delta:
+            raise HTTPException(status_code=409, detail="Portfolio changed since the suggested allocation was calculated")
+
+        snapshot_weights = payload["allocation_snapshot"].get("weights_pct")
+        if not isinstance(snapshot_weights, dict) or not snapshot_weights:
+            raise HTTPException(status_code=409, detail="Suggested allocation snapshot has no valid weights")
+        try:
+            parsed_snapshot_weights = {str(group): float(weight) for group, weight in snapshot_weights.items()}
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=409, detail="Suggested allocation snapshot has invalid weights")
+        if (any(not math.isfinite(weight) or weight < 0 for weight in parsed_snapshot_weights.values())
+                or abs(sum(parsed_snapshot_weights.values()) - 100.0) > 0.1):
+            raise HTTPException(status_code=409, detail="Suggested allocation snapshot has invalid weights")
+
+        from services.taxonomy import Taxonomy
+        taxonomy = Taxonomy.load()
+        current_group_values: Dict[str, float] = {}
+        for row in rows:
+            value = float(row.get("value_usd") or row.get("usd_value") or 0.0)
+            alias = str(row.get("alias") or row.get("symbol") or "")
+            group = taxonomy.group_for_alias(alias)
+            current_group_values[group] = current_group_values.get(group, 0.0) + value
+        current_weights = {
+            group: (value / current_total * 100.0 if current_total > 0 else 0.0)
+            for group, value in current_group_values.items()
+        }
+        compared_groups = set(parsed_snapshot_weights) | set(current_weights)
+        if any(abs(parsed_snapshot_weights.get(group, 0.0) - current_weights.get(group, 0.0)) > 0.5
+               for group in compared_groups):
+            raise HTTPException(status_code=409, detail="Portfolio composition changed since the suggested allocation was calculated")
+
         # CCS/cycle module provides pre-calculated targets
         targets_raw = payload.get("dynamic_targets_pct", {})
         group_targets_pct = {str(k): float(v) for k, v in targets_raw.items()}
@@ -281,6 +338,13 @@ async def rebalance_plan(
                 p = float(it.get("weight_pct", 0.0))
                 if g:
                     group_targets_pct[g] = p
+
+    if not group_targets_pct:
+        raise HTTPException(status_code=422, detail="At least one allocation target is required")
+    if any(not math.isfinite(weight) or weight < 0 for weight in group_targets_pct.values()):
+        raise HTTPException(status_code=422, detail="Allocation targets must be finite and non-negative")
+    if abs(sum(group_targets_pct.values()) - 100.0) > 0.1:
+        raise HTTPException(status_code=422, detail="Allocation targets must sum to 100%")
 
     primary_symbols = norm_primary_symbols(payload.get("primary_symbols"))
 
@@ -311,7 +375,7 @@ async def rebalance_plan(
     )
 
     # enrichissement prix (selon "pricing")
-    source_used = unified_data.get("source_used", source)
+    source_used = resolved_source
     plan = await enrich_actions_with_prices(
         plan, rows, pricing_mode=pricing, source_used=source_used, diagnostic=pricing_diag
     )

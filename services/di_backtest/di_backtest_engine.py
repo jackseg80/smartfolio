@@ -8,6 +8,7 @@ en fonction des signaux DI.
 """
 
 import logging
+import math
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
@@ -96,8 +97,8 @@ class DIBacktestEngine:
     """
     Moteur de backtest pour le Decision Index
 
-    Simule un portefeuille 2 actifs (risky/stable) rebalancé
-    périodiquement selon les signaux DI.
+    Simule un portefeuille spot multi-actifs rebalancé périodiquement selon
+    les signaux DI. Chaque actif risqué utilise sa propre série de prix.
     """
 
     def __init__(
@@ -120,6 +121,8 @@ class DIBacktestEngine:
         stable_return: float = 0.0,  # Return annuel stablecoins (0%)
         rebalance_frequency: str = "daily",  # daily, weekly, monthly
         multi_asset: bool = False,  # Enable ETH in portfolio (3-asset mode)
+        asset_prices: Optional[pd.DataFrame] = None,
+        initial_weights: Optional[Dict[str, float]] = None,
     ) -> DIBacktestResult:
         """
         Exécute un backtest avec la stratégie DI donnée
@@ -133,6 +136,8 @@ class DIBacktestEngine:
             stable_return: Return annuel des stablecoins
             rebalance_frequency: Fréquence de rebalancement (daily/weekly/monthly)
             multi_asset: Activer le mode multi-asset (BTC+ETH+Stables)
+            asset_prices: Prix propres aux actifs simulés, indexés par date
+            initial_weights: Poids spot initiaux, positifs et de somme 1
 
         Returns:
             DIBacktestResult avec toutes les métriques
@@ -146,15 +151,30 @@ class DIBacktestEngine:
         # Créer Series des données
         dates = [p.date for p in di_history]
         di_values = pd.Series([p.decision_index for p in di_history], index=dates)
-        btc_prices = pd.Series([p.btc_price for p in di_history], index=dates)
+        risky_symbol = risky_symbol.upper()
+        btc_prices = pd.Series([p.btc_price for p in di_history], index=dates, dtype=float)
 
         # ETH prices (multi-asset support — only when explicitly requested)
-        eth_prices = pd.Series([p.eth_price for p in di_history], index=dates)
+        eth_prices = pd.Series([p.eth_price for p in di_history], index=dates, dtype=float)
         has_eth = (
             multi_asset
             and eth_prices.notna().any()
             and eth_prices.notna().sum() > len(di_history) * 0.5
         )
+
+        if asset_prices is not None:
+            price_frame = asset_prices.copy()
+            price_frame.index = pd.to_datetime(price_frame.index)
+            price_frame.columns = [str(column).upper() for column in price_frame.columns]
+            price_frame = price_frame.reindex(pd.to_datetime(dates))
+            if risky_symbol not in price_frame.columns:
+                raise ValueError(f"Missing benchmark prices for {risky_symbol}")
+            btc_prices = pd.Series(price_frame[risky_symbol].to_numpy(), index=dates, dtype=float)
+        else:
+            price_frame = pd.DataFrame({risky_symbol: btc_prices.to_numpy()}, index=pd.to_datetime(dates))
+            if has_eth:
+                price_frame["ETH"] = eth_prices.to_numpy()
+        price_frame["STABLES"] = 1.0
 
         # Construire l'ensemble des jours de rebalancement autorisés
         rebalance_dates = self._build_rebalance_dates(dates, rebalance_frequency)
@@ -167,7 +187,16 @@ class DIBacktestEngine:
 
         # Initialisation — toujours un dict de poids (un seul chemin de code)
         portfolio_value = initial_capital
-        if has_eth:
+        if initial_weights is not None:
+            current_weights = {str(asset).upper(): float(weight) for asset, weight in initial_weights.items()}
+            if (not current_weights
+                    or any(not math.isfinite(weight) or weight < 0 for weight in current_weights.values())
+                    or abs(sum(current_weights.values()) - 1.0) > 1e-6):
+                raise ValueError("Initial weights must be finite, non-negative and sum to 1")
+            missing_assets = set(current_weights) - set(price_frame.columns)
+            if missing_assets:
+                raise ValueError(f"Missing price histories for initial assets: {sorted(missing_assets)}")
+        elif has_eth:
             current_weights = {risky_symbol: 0.35, "ETH": 0.15, "STABLES": 0.50}
         else:
             current_weights = {risky_symbol: 0.50, "STABLES": 0.50}
@@ -179,9 +208,6 @@ class DIBacktestEngine:
         benchmark_daily_returns = []
         risky_allocations = []  # Pour calculer la moyenne
 
-        # Prix de référence
-        prev_btc_price = btc_prices.iloc[0]
-        prev_eth_price = eth_prices.iloc[0] if has_eth else None
         prev_portfolio_value = initial_capital
         peak_portfolio_value = initial_capital  # For portfolio drawdown tracking
 
@@ -191,35 +217,46 @@ class DIBacktestEngine:
         for i, di_point in enumerate(di_history):
             date = di_point.date
             di_value = di_point.decision_index
-            btc_price = di_point.btc_price or btc_prices.iloc[i]
+            period_start_value = prev_portfolio_value
 
             # Calculer returns journaliers
             if i > 0:
-                btc_return = (btc_price - prev_btc_price) / prev_btc_price
                 stable_daily_return = stable_return / 365
 
-                # Construire les returns pour tous les assets du dict
-                asset_returns = {risky_symbol: btc_return, "STABLES": stable_daily_return}
-                if "ETH" in current_weights:
-                    eth_price_today = di_point.eth_price or eth_prices.iloc[i]
-                    eth_return = (eth_price_today - prev_eth_price) / prev_eth_price if prev_eth_price else 0.0
-                    asset_returns["ETH"] = eth_return
+                previous_benchmark_price = price_frame.iloc[i - 1].get(risky_symbol)
+                current_benchmark_price = price_frame.iloc[i].get(risky_symbol)
+                if (not np.isfinite(previous_benchmark_price) or not np.isfinite(current_benchmark_price)
+                        or previous_benchmark_price <= 0):
+                    raise ValueError(f"Missing valid benchmark price for {risky_symbol} on {date}")
+                btc_return = (current_benchmark_price - previous_benchmark_price) / previous_benchmark_price
 
-                # Portfolio return: sum(weight * return) — works for 2 or 3+ assets
-                portfolio_return = sum(
-                    current_weights.get(a, 0.0) * asset_returns.get(a, 0.0)
-                    for a in current_weights
-                )
+                asset_returns = {"STABLES": stable_daily_return}
+                for asset in current_weights:
+                    if asset == "STABLES":
+                        continue
+                    previous_price = price_frame.iloc[i - 1].get(asset)
+                    current_price = price_frame.iloc[i].get(asset)
+                    if (not np.isfinite(previous_price) or not np.isfinite(current_price)
+                            or previous_price <= 0):
+                        raise ValueError(f"Missing valid price for {asset} on {date}")
+                    asset_returns[asset] = (current_price - previous_price) / previous_price
 
-                portfolio_value = prev_portfolio_value * (1 + portfolio_return)
+                # Grow each holding independently. The weights must drift with market
+                # returns until an explicit rebalance occurs.
+                grown_weights = {
+                    asset: weight * (1 + asset_returns.get(asset, 0.0))
+                    for asset, weight in current_weights.items()
+                }
+                portfolio_growth = sum(grown_weights.values())
+                if portfolio_growth <= 0:
+                    raise ValueError(f"Portfolio value became non-positive on {date}")
+
+                portfolio_value = prev_portfolio_value * portfolio_growth
+                current_weights = {
+                    asset: grown_value / portfolio_growth
+                    for asset, grown_value in grown_weights.items()
+                }
                 benchmark_value = benchmark_value * (1 + btc_return)
-
-                daily_returns.append(portfolio_return)
-                benchmark_daily_returns.append(btc_return)
-
-            # Track total risky allocation for allocation_series
-            risky_alloc_total = sum(v for k, v in current_weights.items() if k != "STABLES")
-            risky_allocations.append(risky_alloc_total)
 
             # Track portfolio peak and drawdown
             peak_portfolio_value = max(peak_portfolio_value, portfolio_value)
@@ -230,10 +267,7 @@ class DIBacktestEngine:
 
             if is_rebalance_day:
                 # Obtenir nouvelle allocation de la stratégie
-                price_df_data = {risky_symbol: btc_prices[:i+1], 'STABLES': [1.0] * (i + 1)}
-                if has_eth:
-                    price_df_data["ETH"] = eth_prices[:i+1]
-                price_df = pd.DataFrame(price_df_data)
+                price_df = price_frame.iloc[:i + 1].copy()
 
                 current_weights_series = pd.Series(current_weights)
 
@@ -252,7 +286,14 @@ class DIBacktestEngine:
                 )
 
                 # Convertir target_weights en dict
-                target_dict = {a: float(target_weights.get(a, 0.0)) for a in target_weights.index}
+                target_dict = {str(a).upper(): float(target_weights.get(a, 0.0)) for a in target_weights.index}
+                if (not target_dict
+                        or any(not math.isfinite(weight) or weight < 0 for weight in target_dict.values())
+                        or abs(sum(target_dict.values()) - 1.0) > 1e-6):
+                    raise ValueError(f"Invalid target weights on {date}")
+                missing_target_prices = set(target_dict) - set(price_frame.columns)
+                if missing_target_prices:
+                    raise ValueError(f"Missing price histories for target assets: {sorted(missing_target_prices)}")
 
                 # Calcul du diff total (demi-somme des |deltas|)
                 all_assets = set(list(target_dict.keys()) + list(current_weights.keys()))
@@ -282,12 +323,19 @@ class DIBacktestEngine:
 
                     current_weights = target_dict
 
+            # Performance metrics use the same net equity curve, after costs.
+            if i > 0:
+                net_portfolio_return = (portfolio_value / period_start_value) - 1
+                daily_returns.append(net_portfolio_return)
+                benchmark_daily_returns.append(btc_return)
+
+            # Track the allocation actually held after any explicit rebalance.
+            risky_alloc_total = sum(v for k, v in current_weights.items() if k != "STABLES")
+            risky_allocations.append(risky_alloc_total)
+
             equity_curve.append((date, portfolio_value))
             benchmark_curve.append((date, benchmark_value))
 
-            prev_btc_price = btc_price
-            if has_eth:
-                prev_eth_price = di_point.eth_price or eth_prices.iloc[i]
             prev_portfolio_value = portfolio_value
 
         # Construire les séries
@@ -309,7 +357,8 @@ class DIBacktestEngine:
             rebalance_events=rebalance_events,
             risky_allocations=risky_allocations,
             di_values=di_values,
-            btc_prices=btc_prices
+            btc_prices=btc_prices,
+            initial_capital=initial_capital
         )
 
         # Drawdown curve
@@ -355,12 +404,13 @@ class DIBacktestEngine:
         rebalance_events: List[RebalanceEvent],
         risky_allocations: List[float],
         di_values: pd.Series,
-        btc_prices: pd.Series
+        btc_prices: pd.Series,
+        initial_capital: float
     ) -> Dict[str, float]:
         """Calcule toutes les métriques de performance"""
 
         # Returns
-        total_return = (equity_series.iloc[-1] / equity_series.iloc[0]) - 1
+        total_return = (equity_series.iloc[-1] / initial_capital) - 1
         benchmark_return = (benchmark_series.iloc[-1] / benchmark_series.iloc[0]) - 1
         excess_return = total_return - benchmark_return
 

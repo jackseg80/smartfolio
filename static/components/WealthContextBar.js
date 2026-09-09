@@ -1433,11 +1433,13 @@ class WealthContextBar {
     try {
       // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
       const activeUser = localStorage.getItem('activeUser');
+      const source = window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
+      if (!source) throw new Error('No portfolio source is selected');
 
       // Parallel fetch of all available APIs
       // ✅ Utilise window.loadBalanceData() au lieu de fetch direct (règle CLAUDE.md)
       const [riskData, balancesData] = await Promise.allSettled([
-        fetch('/api/risk/dashboard', {
+        fetch(`/api/risk/dashboard?source=${encodeURIComponent(source)}`, {
           headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
         }).then(r => r.json()),
         window.loadBalanceData

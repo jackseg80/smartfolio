@@ -11,7 +11,6 @@ import { safeFetch } from './fetcher.js';
 const MIGRATION_CONFIG = {
   enabled: true,  // Feature flag principal
   strategy_template: 'balanced',  // Template par défaut
-  fallback_on_error: true,  // Fallback vers logique frontend si API échoue
   cache_ttl_ms: 60000,  // Cache 1 minute
   api_timeout_ms: 3000,  // Timeout API 3s
   debug_mode: true,  // Logs de debug ACTIVÉS pour voir V2 en action
@@ -19,8 +18,8 @@ const MIGRATION_CONFIG = {
   // NOUVEAU - Configuration Allocation Engine V2
   allocation: {
     topdown_v2: true,  // Feature flag pour allocation hiérarchique
-    respect_incumbency: true,  // Protection positions détenues
-    enable_floors: true  // Floors contextuels activés
+    respect_incumbency: false,
+    enable_floors: false
   }
 };
 
@@ -73,6 +72,19 @@ function debugLog(...args) {
   if (MIGRATION_CONFIG.debug_mode) {
     console.debug('[StrategyAdapter]', ...args);
   }
+}
+
+function unavailableDecision(reason) {
+  return {
+    available: false,
+    score: null,
+    confidence: null,
+    action: 'DATA_UNAVAILABLE',
+    targets: [],
+    source: 'unavailable',
+    error: reason,
+    generated_at: new Date().toISOString()
+  };
 }
 
 /**
@@ -182,10 +194,24 @@ function determineAppropriateTemplate(context = {}) {
  * @returns {Promise<object>} Résultat au format legacy
  */
 export async function calculateIntelligentDecisionIndexAPI(context) {
-  // Si migration désactivée, utiliser fallback immédiatement
+  const riskBudget = extractRiskBudgetFromContext(context);
+  const requiredInputs = {
+    cycle: context?.cycleData?.score,
+    onchain: context?.onchainScore,
+    risk: context?.riskScore,
+    stablecoin_budget: riskBudget.target_stables_pct,
+    movement_cap_pct: context?.execution?.cap_pct_per_iter
+  };
+  const missingInputs = Object.entries(requiredInputs)
+    .filter(([, value]) => !Number.isFinite(value))
+    .map(([key]) => key);
+  if (missingInputs.length > 0) {
+    return unavailableDecision(`Required decision inputs unavailable: ${missingInputs.join(', ')}`);
+  }
+
+  // Si la migration est désactivée, la décision est indisponible.
   if (!MIGRATION_CONFIG.enabled) {
-    debugLog('Migration disabled, using fallback');
-    return await fallbackToLegacyCalculation(context);
+    return unavailableDecision('Strategy calculation is disabled');
   }
   
   try {
@@ -217,16 +243,20 @@ export async function calculateIntelligentDecisionIndexAPI(context) {
       // Calculer allocation hiérarchique
       const v2Allocation = await calculateHierarchicalAllocation(
         {
-          cycleScore: context.cycleData?.score ?? 50,
-          onchainScore: context.onchainScore ?? 50,
-          riskScore: context.riskScore ?? 50,
+          cycleScore: context.cycleData.score,
+          onchainScore: context.onchainScore,
+          riskScore: context.riskScore,
           adaptiveWeights: context.adaptiveWeights,
-          risk_budget: extractRiskBudgetFromContext(context),
+          risk_budget: riskBudget,
           contradiction: context.contradiction ?? 0,
-          execution: { cap_pct_per_iter: (context?.execution?.cap_pct_per_iter ?? context?.governance_cap ?? 7) }
+          execution: { cap_pct_per_iter: context.execution.cap_pct_per_iter }
         },
         currentPositions,
-        { enableV2: true }
+        {
+          enableV2: true,
+          enableFloors: MIGRATION_CONFIG.allocation.enable_floors,
+          respectIncumbency: MIGRATION_CONFIG.allocation.respect_incumbency
+        }
       );
 
       if (v2Allocation) {
@@ -236,18 +266,7 @@ export async function calculateIntelligentDecisionIndexAPI(context) {
         debugLog('🔍 V2 allocation details:', v2Allocation);
         debugLog('🔍 Final result targets count:', finalResult.targets?.length || 0);
       } else {
-        // Fallback API Strategy classique
-        debugLog('⚠️ V2 allocation failed, fallback to API Strategy');
-        (window.debugLogger?.warn || console.warn)('❌ V2 Allocation Engine returned null - checking reasons...');
-
-        try {
-          const strategyResult = await getStrategyFromAPI(templateId);
-          finalResult = convertStrategyResultToLegacyFormat(strategyResult, context);
-        } catch (apiError) {
-          (window.debugLogger?.warn || console.warn)('⚠️ API Strategy also failed, using hardcoded fallback');
-          // Fallback ultime: allocation hardcodée basée sur le cycle
-          finalResult = createFallbackAllocation(context);
-        }
+        finalResult = unavailableDecision('Allocation engine could not produce a verified allocation');
       }
     } else {
       // V1 classique - API Strategy
@@ -267,24 +286,10 @@ export async function calculateIntelligentDecisionIndexAPI(context) {
     return finalResult;
     
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('Strategy API failed, using fallback:', error.message);
+    (window.debugLogger?.warn || console.warn)('Strategy API unavailable:', error.message);
     
-    // Fallback vers logique legacy si configuré
-    if (MIGRATION_CONFIG.fallback_on_error) {
-      return await fallbackToLegacyCalculation(context);
-    } else {
-      throw error;
-    }
+    return unavailableDecision(`Strategy service unavailable: ${error.message}`);
   }
-}
-
-/**
- * Fallback vers la logique legacy calculateIntelligentDecisionIndex
- */
-async function fallbackToLegacyCalculation(context) {
-  // Import dynamique pour éviter les cycles
-  const { calculateIntelligentDecisionIndex } = await import('./unified-insights.js');
-  return calculateIntelligentDecisionIndex(context);
 }
 
 /**
@@ -381,22 +386,17 @@ async function getCurrentPositions() {
   try {
     // Essayer d'obtenir depuis le globalConfig ou API
     if (window.globalConfig) {
-      const currentSource = window.globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+      const currentSource = window.globalConfig.get('data_source');
+      if (!currentSource) {
+        throw new Error('No portfolio source selected');
+      }
       const apiResponse = await window.globalConfig.apiRequest('/balances/current', {
         params: { source: currentSource }  // 🔧 FIX: Pass source parameter for multi-tenant isolation
       });
       return apiResponse?.items || [];
     }
 
-    // Fallback: positions mockées pour développement
-    console.debug('⚠️ Using mock positions for V2 allocation engine');
-    return [
-      { symbol: 'BTC', value_usd: 1000 },
-      { symbol: 'ETH', value_usd: 800 },
-      { symbol: 'SOL', value_usd: 300 },
-      { symbol: 'USDC', value_usd: 1500 },
-      { symbol: 'LINK', value_usd: 200 }
-    ];
+    return [];
   } catch (error) {
     (window.debugLogger?.warn || console.warn)('Failed to get current positions:', error.message);
     return [];
@@ -444,9 +444,13 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
 
   // ✅ FIX: Calculer le VRAI Decision Index (0-100) avec formule pondérée
   // Comme documenté dans DECISION_INDEX_V2.md et services/execution/strategy_registry.py
-  const cycleScore = context.cycleData?.score ?? 50;
-  const onchainScore = context.onchainScore ?? 50;
-  const riskScore = context.riskScore ?? 50;
+  const cycleScore = context.cycleData?.score;
+  const onchainScore = context.onchainScore;
+  const riskScore = context.riskScore;
+
+  if (![cycleScore, onchainScore, riskScore].every(Number.isFinite)) {
+    return unavailableDecision('Allocation result cannot be scored without cycle, on-chain and risk inputs');
+  }
 
   // ============================================================================
   // CRITICAL FIX (Feb 2026): Harmonisation poids frontend/backend
@@ -493,7 +497,8 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
   return {
     score: decisionScore,
     color: getColorForScore(decisionScore),
-    confidence: 0.8, // Bonne confiance avec V2
+    available: true,
+    confidence: null,
     reasoning: `V2 hierarchical allocation • ${v2Allocation.metadata.phase} phase • Floors applied`,
 
     // Données V2 spécifiques
@@ -519,68 +524,6 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
 }
 
 /**
- * Fallback ultime: créer une allocation basique quand tout échoue
- */
-function createFallbackAllocation(context) {
-  const cycleScore = context.cycleData?.score ?? 50;
-
-  // Allocation basique selon le cycle
-  let allocation;
-  if (cycleScore >= 80) {
-    // Bull market
-    allocation = {
-      'BTC': 30,
-      'ETH': 25,
-      'Stablecoins': 15,
-      'SOL': 10,
-      'L1/L0 majors': 10,
-      'DeFi': 6,
-      'L2/Scaling': 4
-    };
-  } else if (cycleScore >= 60) {
-    // Modéré
-    allocation = {
-      'BTC': 35,
-      'ETH': 25,
-      'Stablecoins': 20,
-      'SOL': 8,
-      'L1/L0 majors': 7,
-      'DeFi': 3,
-      'L2/Scaling': 2
-    };
-  } else {
-    // Bear/prudent
-    allocation = {
-      'BTC': 40,
-      'ETH': 20,
-      'Stablecoins': 30,
-      'SOL': 4,
-      'L1/L0 majors': 4,
-      'DeFi': 1,
-      'L2/Scaling': 1
-    };
-  }
-
-  // Convertir en format targets
-  const targets = Object.entries(allocation).map(([symbol, weight]) => ({
-    symbol,
-    weight: weight / 100,
-    weight_pct: weight,
-    rationale: `Fallback allocation (Cycle=${cycleScore})`
-  }));
-
-  return {
-    score: Math.max(40, Math.min(80, cycleScore * 0.8)), // Score raisonnable
-    confidence: 0.6, // Confiance modérée pour fallback
-    reasoning: `Fallback allocation based on cycle score ${cycleScore}`,
-    targets,
-    source: 'fallback_hardcoded',
-    template_used: 'fallback',
-    generated_at: new Date().toISOString()
-  };
-}
-
-/**
  * SOURCE UNIQUE - Construit les objectifs théoriques avec stables préservées
  * @param {object} u - État unifié (unifiedState)
  * @returns {object} Map { groupTopLevel -> % } de 11 entrées, somme ≈ 100
@@ -595,45 +538,8 @@ export function buildTheoreticalTargets(u) {
     return u.targets_by_group;
   }
 
-  // FALLBACK: Logique artificielle si pas de source canonique (cas edge)
-  const blendedScore = u?.scores?.blended || u?.decision?.score || 50;
-  (window.debugLogger?.warn || console.warn)('⚠️ FALLBACK vers logique artificielle - targets_by_group manquant', { blendedScore });
-
-  let stablesTarget, btcTarget, ethTarget, altsTarget;
-
-  if (blendedScore >= 76) {
-    // Expansion: less stables, more alts
-    stablesTarget = 15; btcTarget = 35; ethTarget = 25; altsTarget = 25;
-  } else if (blendedScore >= 51) {
-    // Bull Market: balanced
-    stablesTarget = 25; btcTarget = 40; ethTarget = 20; altsTarget = 15;
-  } else if (blendedScore >= 26) {
-    // Correction: more stables, selective
-    stablesTarget = 35; btcTarget = 35; ethTarget = 20; altsTarget = 10;
-  } else {
-    // Bear Market: capital preservation
-    stablesTarget = 50; btcTarget = 30; ethTarget = 15; altsTarget = 5;
-  }
-
-  // Créer allocation théorique cohérente
-  const artificialTargets = {
-    'Stablecoins': stablesTarget,
-    'BTC': btcTarget,
-    'ETH': ethTarget,
-    'SOL': altsTarget * 0.3,
-    'L1/L0 majors': altsTarget * 0.4,
-    'L2/Scaling': altsTarget * 0.2,
-    'DeFi': altsTarget * 0.1,
-    'AI/Data': 0,
-    'Gaming/NFT': 0,
-    'Memecoins': 0,
-    'Others': 0
-  };
-
-  (window.debugLogger?.debug || console.log)('🎯 FALLBACK TARGETS (buildTheoreticalTargets):', artificialTargets);
-  console.debug('📊 buildTheoreticalTargets source: FALLBACK_REGIME_LOGIC', { blendedScore, regime: blendedScore >= 76 ? 'Expansion' : blendedScore >= 51 ? 'Bull Market' : blendedScore >= 26 ? 'Correction' : 'Bear Market' });
-
-  return artificialTargets;
+  (window.debugLogger?.warn || console.warn)('⚠️ Canonical targets unavailable');
+  return {};
 }
 
 // Export pour compatibilité ascendante

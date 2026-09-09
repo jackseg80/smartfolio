@@ -67,7 +67,11 @@ export async function hydrateRiskStore() {
         }
 
         // 🔧 FIX: Get current source from globalConfig (MULTI-TENANT CRITICAL - Nov 2025)
-        const currentSource = window.globalConfig.get('data_source') || 'cointracking';
+        const currentSource = window.globalConfig.get('data_source');
+        if (!currentSource) {
+          debugLogger.warn('Risk data unavailable: no portfolio source is selected');
+          return null;
+        }
 
         // 🔧 FIX: Add _csv_hint to invalidate backend cache when CSV changes (Nov 2025)
         const csvFile = window.userSettings?.csv_selected_file || 'latest';
@@ -96,12 +100,11 @@ export async function hydrateRiskStore() {
     // Fetch governance state (pour contradiction_index autoritaire)
     const fetchGovernanceState = async () => {
       try {
-        const response = await fetch(`${window.location.origin}/execution/governance/state`);
-        if (!response.ok) {
-          debugLogger.warn('⚠️ Governance state fetch failed:', response.status);
+        if (!window.globalConfig?.apiRequest) {
+          debugLogger.warn('⚠️ globalConfig.apiRequest not available for governance state');
           return null;
         }
-        return await response.json();
+        return await window.globalConfig.apiRequest('/execution/governance/state');
       } catch (err) {
         debugLogger.warn('⚠️ Governance state fetch failed:', err);
         return null;
@@ -165,7 +168,7 @@ export async function hydrateRiskStore() {
     const contradiction = governanceState?.contradiction_index ?? null;
 
     // Ajouter interpretation au CCS si manquant
-    if (ccs && !ccs.interpretation) {
+    if (Number.isFinite(ccs?.score) && !ccs.interpretation) {
       ccs = { ...ccs, interpretation: interpretCCS(ccs.score) };
     }
 
@@ -187,7 +190,7 @@ export async function hydrateRiskStore() {
     // Calculer blended score (CCS + Cycle)
     // Blend CCS with Cycle to get ccsStar
     let ccsStar = null;
-    if (ccs && cycle) {
+    if (Number.isFinite(ccs?.score) && cycle) {
       try {
         const blendResult = blendCCS(ccs.score, cycle.months || 18);
         // blendCCS returns { originalCCS, cycleScore, blendedCCS, cycleWeight, phase }
@@ -199,40 +202,21 @@ export async function hydrateRiskStore() {
 
     // Calculate final blended score (CCS*0.5 + OnChain*0.3 + Risk*0.2)
     let blendedScore = null;
-    if (ccsStar !== null || onchainScore !== null || riskScore !== null) {
+    if ([ccsStar, onchainScore, riskScore].every(Number.isFinite)) {
       const wCCS = 0.50;
       const wOnchain = 0.30;
       const wRisk = 0.20;
-
-      let totalScore = 0;
-      let totalWeight = 0;
-
-      if (ccsStar !== null) {
-        totalScore += ccsStar * wCCS;
-        totalWeight += wCCS;
-      }
-      if (onchainScore !== null) {
-        totalScore += onchainScore * wOnchain;
-        totalWeight += wOnchain;
-      }
-      if (riskScore !== null) {
-        totalScore += riskScore * wRisk;
-        totalWeight += wRisk;
-      }
-
-      blendedScore = totalWeight > 0 ? Math.round(totalScore / totalWeight) : null;
+      blendedScore = Math.round(ccsStar * wCCS + onchainScore * wOnchain + riskScore * wRisk);
     }
 
     // Calculer market regime (nécessite blended + onchain + risk scores)
     let regime = null;
-    if (blendedScore !== null || onchainScore !== null) {
+    if ([blendedScore, onchainScore, riskScore].every(Number.isFinite)) {
       try {
-        // Utiliser le risk score calculé, sinon fallback sur store existant
-        const finalRiskScore = riskScore ?? currentState.scores?.risk ?? 50;
         const regimeData = getRegimeDisplayData(
-          blendedScore || 50,
-          onchainScore || 50,
-          finalRiskScore,
+          blendedScore,
+          onchainScore,
+          riskScore,
           cycle?.score ?? null,
           cycle?.direction ?? null,
           cycle?.confidence ?? null
@@ -248,7 +232,7 @@ export async function hydrateRiskStore() {
     const newState = {
       ...currentState,
       // CCS Mixte
-      ccs: ccs || currentState.ccs || { score: null },
+      ccs: ccs || { available: false, score: null, reason: 'CCS unavailable' },
 
       // Cycle position
       cycle: cycle ? {
@@ -261,14 +245,14 @@ export async function hydrateRiskStore() {
       }),
 
       // Market regime
-      regime: regime || currentState.regime || {
+      regime: regime || {
         phase: null,
         confidence: null,
         divergence: null
       },
 
       // Risk metrics complets (pour analytics-unified.html: var_95_1d, max_drawdown, etc.)
-      risk: riskData || currentState.risk || null,
+      risk: riskData || null,
 
       // Scores unifiés
       scores: {
@@ -276,7 +260,7 @@ export async function hydrateRiskStore() {
         onchain: onchainScore,
         blended: blendedScore,
         // Risk score calculé depuis API /api/risk/dashboard (TOUJOURS utiliser API si disponible)
-        risk: riskScore !== null ? riskScore : (currentState.scores?.risk ?? null),
+        risk: riskScore,
         cycle: cycle?.score ?? (currentState.scores?.cycle ?? null)
       },
 

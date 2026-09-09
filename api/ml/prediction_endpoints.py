@@ -172,22 +172,27 @@ async def alias_batch_predict(payload: Dict[str, Any] = Body(default={})) -> dic
 # ===== REGIME PREDICTIONS =====
 
 @router.get("/regime/current")
-@handle_api_errors(fallback={"regime_prediction": {"regime_name": "Unknown", "confidence": 0.5, "duration_days": 0}})
+@handle_api_errors(fallback={"regime_prediction": {"available": False, "reason": "Regime inference failed"}})
 async def alias_regime_current() -> dict:
     """Alias that returns current/live regime signal."""
     live = await get_live_predictions()
     regime_val = live.get("regime_prediction") or live.get("market_regime")
 
-    if isinstance(regime_val, str):
-        regime_obj = {"regime_name": regime_val, "confidence": 0.68, "duration_days": 0}
-    elif isinstance(regime_val, dict):
+    if isinstance(regime_val, dict) and regime_val.get("available") is True:
         regime_obj = {
+            "available": True,
             "regime_name": regime_val.get("regime_name") or regime_val.get("name") or "Unknown",
-            "confidence": regime_val.get("confidence", 0.68),
+            "confidence": regime_val.get("confidence"),
             "duration_days": regime_val.get("duration_days", 0)
         }
     else:
-        regime_obj = {"regime_name": "Unknown", "confidence": 0.5, "duration_days": 0}
+        regime_obj = {
+            "available": False,
+            "regime_name": None,
+            "confidence": None,
+            "duration_days": None,
+            "reason": live.get("reason", "No verified live regime inference is connected")
+        }
 
     return success_response({
         "regime_prediction": regime_obj,
@@ -198,7 +203,7 @@ async def alias_regime_current() -> dict:
 # ===== LIVE PREDICTIONS =====
 
 @router.get("/predictions/live")
-@handle_api_errors(fallback={"btc_volatility": 0.0, "eth_volatility": 0.0, "market_regime": "Unknown", "models_used": {}})
+@handle_api_errors(fallback={"available": False, "reason": "Live prediction lookup failed", "models_used": {}})
 async def get_live_predictions() -> dict:
     """
     Obtenir les prédictions en temps réel basées sur les modèles entraînés
@@ -206,41 +211,33 @@ async def get_live_predictions() -> dict:
     orchestrator = get_orchestrator()
     pipeline_status = await orchestrator.get_model_status()
 
-    btc_volatility = 0.0734
-    eth_volatility = 0.0892
-    market_regime = "Correction"
-    fear_greed_index = 58
-
-    if pipeline_status.get('pipeline_status', {}).get('regime_models', {}).get('model_loaded'):
-        market_regime = "Bull Market"
+    regime_loaded = pipeline_status.get('pipeline_status', {}).get('regime_models', {}).get('model_loaded', False)
 
     return {
-        "btc_volatility": btc_volatility,
-        "eth_volatility": eth_volatility,
-        "market_regime": market_regime,
-        "fear_greed_index": fear_greed_index,
+        "available": False,
+        "btc_volatility": None,
+        "eth_volatility": None,
+        "market_regime": None,
+        "fear_greed_index": None,
+        "reason": "No verified live inference is connected to this compatibility endpoint",
         "models_used": {
-            "volatility_models_available": 12,
-            "regime_model_loaded": pipeline_status.get('pipeline_status', {}).get('regime_models', {}).get('model_loaded', False),
-            "based_on_training": True
+            "regime_model_loaded": regime_loaded,
+            "based_on_training": False
         },
         "timestamp": datetime.now().isoformat()
     }
 
 
 @router.get("/portfolio-metrics")
-@handle_api_errors(fallback={"metrics": {}})
+@handle_api_errors(fallback={"available": False, "metrics": None})
 async def get_portfolio_metrics() -> dict:
     """
     Obtenir les métriques de portefeuille ML (stub endpoint)
     """
     return success_response({
-        "metrics": {
-            "sharpe_ratio": 1.42,
-            "max_drawdown": 0.15,
-            "volatility": 0.22,
-            "alpha": 0.08
-        },
+        "available": False,
+        "metrics": None,
+        "reason": "No identity-bound portfolio metric calculation is connected to this compatibility endpoint",
         "timestamp": datetime.now().isoformat()
     })
 
@@ -248,40 +245,32 @@ async def get_portfolio_metrics() -> dict:
 # ===== SENTIMENT ENDPOINTS =====
 
 @router.get("/sentiment/{symbol}")
-@handle_api_errors(fallback={"aggregated_sentiment": {"score": 0.0, "confidence": 0.5}})
+@handle_api_errors(fallback={"available": False, "aggregated_sentiment": None})
 async def get_sentiment(symbol: str, days: int = Query(default=1, ge=1, le=30)) -> dict:
     """
     Obtenir le sentiment pour un asset (stub endpoint)
     """
     return {
+        "available": False,
         "symbol": symbol.upper(),
-        "aggregated_sentiment": {
-            "score": 0.15,
-            "confidence": 0.72,
-            "source_breakdown": {
-                "fear_greed": {
-                    "average_sentiment": 0.15
-                }
-            }
-        },
-        "sources_used": ["fear_greed", "social_sentiment"],
+        "aggregated_sentiment": None,
+        "sources_used": [],
+        "reason": "No verified sentiment inference is connected to this compatibility endpoint",
         "timestamp": datetime.now().isoformat()
     }
 
 
 @router.get("/sentiment/fear-greed")
-@handle_api_errors(fallback={"fear_greed_data": {"value": 50, "classification": "Neutral"}})
+@handle_api_errors(fallback={"available": False, "fear_greed_data": None})
 async def get_fear_greed_sentiment(days: int = Query(default=1, ge=1, le=30)) -> dict:
     """
     Obtenir Fear & Greed index (stub endpoint)
     """
     return success_response({
-        "fear_greed_data": {
-            "value": 65,
-            "fear_greed_index": 65,
-            "classification": "Greed",
-            "timestamp": datetime.now().isoformat()
-        }
+        "available": False,
+        "fear_greed_data": None,
+        "reason": "No verified Fear & Greed observation is connected to this endpoint",
+        "timestamp": datetime.now().isoformat()
     })
 
 
@@ -300,18 +289,10 @@ async def alias_sentiment_analyze(symbols: str = Query("BTC,ETH"), days: int = Q
 @router.get("/sentiment/symbol/{symbol}", response_model=SentimentResponse)
 @handle_api_errors(
     fallback={
-        "success": True,
+        "success": False,
         "symbol": "BTC",
-        "aggregated_sentiment": {
-            "fear_greed_index": 50,
-            "overall_sentiment": 0.0,
-            "interpretation": "neutral",
-            "confidence": 0.5,
-            "trend": "neutral",
-            "source_breakdown": {},
-            "analysis_period_days": 1
-        },
-        "sources_used": ["fallback"],
+        "aggregated_sentiment": {"available": False},
+        "sources_used": [],
         "metadata": {"error": "Sentiment analysis failed"}
     },
     reraise_http_errors=False
@@ -333,90 +314,47 @@ async def get_symbol_sentiment(
         logger.debug(f"Returning cached sentiment for {symbol}")
         return cached_result
 
-    orchestrator = get_orchestrator()
-
     try:
         from services.execution.governance import governance_engine
         current_state = await governance_engine.get_current_state()
-
-        if current_state and current_state.signals:
-            sentiment_dict = current_state.signals.sentiment
-            sentiment_value = sentiment_dict.get('sentiment_score', 0.0) if isinstance(sentiment_dict, dict) else 0.0
-            confidence = current_state.signals.confidence
-            logger.debug(f"Using governance sentiment: {sentiment_value}, confidence: {confidence}")
-        else:
-            sentiment_value = 0.1
-            confidence = 0.6
-            logger.debug("Using fallback sentiment from orchestrator")
-
+        signals = current_state.signals if current_state else None
     except Exception as e:
-        logger.warning(f"Could not get governance sentiment, using fallback: {e}")
-        import hashlib
-        seed = int(hashlib.md5(f"{symbol}_{days}".encode(), usedforsecurity=False).hexdigest(), 16) % 1000
-        sentiment_value = (seed / 1000) * 1.4 - 0.7
-        confidence = 0.65
+        logger.warning(f"Could not get verified governance sentiment: {e}")
+        signals = None
 
-    fear_greed_value = max(0, min(100, round(50 + (sentiment_value * 50))))
-
-    if fear_greed_value < 25:
-        interpretation = "extreme_fear"
-    elif fear_greed_value < 45:
-        interpretation = "fear"
-    elif fear_greed_value < 55:
-        interpretation = "neutral"
-    elif fear_greed_value < 75:
-        interpretation = "greed"
-    else:
-        interpretation = "extreme_greed"
-
-    source_breakdown = {}
-    if include_breakdown:
-        source_breakdown = {
-            "fear_greed": {
-                "average_sentiment": sentiment_value,
-                "value": fear_greed_value,
-                "confidence": confidence,
-                "trend": "neutral",
-                "volatility": abs(sentiment_value * 0.3)
+    is_available = bool(
+        signals
+        and getattr(signals, "available", False)
+        and isinstance(signals.sentiment, dict)
+        and signals.sentiment
+    )
+    if not is_available:
+        result = SentimentResponse(
+            success=False,
+            symbol=symbol.upper(),
+            aggregated_sentiment={
+                "available": False,
+                "reason": "No verified sentiment observation is available",
+                "analysis_period_days": days
             },
-            "social_media": {
-                "average_sentiment": sentiment_value * 0.85,
-                "platforms": ["twitter", "reddit", "telegram"],
-                "volume": "medium",
-                "confidence": confidence * 0.9
-            },
-            "news_sentiment": {
-                "average_sentiment": sentiment_value * 0.7,
-                "sources": ["coindesk", "cointelegraph", "decrypt"],
-                "articles_analyzed": min(50, days * 8),
-                "confidence": confidence * 1.1 if confidence < 0.9 else 0.95
-            }
-        }
-
-    if confidence > 0.8:
-        data_quality = "high"
-    elif confidence > 0.5:
-        data_quality = "medium"
-    else:
-        data_quality = "low"
+            sources_used=[],
+            metadata={"timestamp": datetime.now().isoformat(), "data_quality": "unavailable"}
+        )
+        cache_set(ml_cache, cache_key, result)
+        return result
 
     result = SentimentResponse(
         success=True,
         symbol=symbol.upper(),
         aggregated_sentiment={
-            "fear_greed_index": fear_greed_value,
-            "overall_sentiment": sentiment_value,
-            "interpretation": interpretation,
-            "confidence": confidence,
-            "trend": "neutral",
-            "source_breakdown": source_breakdown,
+            "available": True,
+            **signals.sentiment,
             "analysis_period_days": days
         },
-        sources_used=["ml_orchestrator", "governance_engine", "market_signals"],
+        sources_used=list(signals.sources_used),
         metadata={
             "timestamp": datetime.now().isoformat(),
-            "model_version": "unified_ml_v1.0",
-            "data_quality": data_quality,
+            "data_quality": "reported_by_governance",
             "last_updated": datetime.now().isoformat()
         }
     )
@@ -431,13 +369,14 @@ async def get_symbol_sentiment(
 @handle_api_errors(fallback={"assets": [], "correlations": {}, "market_metrics": {}})
 async def alias_correlation_matrix(
     user: str = Depends(get_required_user),
+    source: str = Query(..., description="Explicit portfolio data source"),
     window_days: int = Query(30)
 ) -> dict:
     """Alias routed to risk correlation endpoint logic."""
     from api.unified_data import get_unified_filtered_balances
     from services.risk_management import risk_manager
 
-    balances_response = await get_unified_filtered_balances(source="cointracking", min_usd=1.0, user_id=user)
+    balances_response = await get_unified_filtered_balances(source=source, min_usd=1.0, user_id=user)
     balances = balances_response.get('items', [])
     corr_matrix = await risk_manager.calculate_correlation_matrix(holdings=balances, lookback_days=window_days)
 
@@ -488,34 +427,15 @@ async def _get_multi_horizon_predictions(assets: List[str], horizons: List[int],
         symbol_predictions = {}
 
         for horizon in horizons:
-            base_volatility = 0.05 if symbol == "BTC" else 0.08 if symbol == "ETH" else 0.12
-            horizon_factor = 1.0 + (horizon - 1) * 0.02
-            volatility_prediction = base_volatility * horizon_factor
-
-            if horizon <= 1:
-                price_change = 0.001
-            elif horizon <= 7:
-                price_change = 0.025
-            else:
-                price_change = 0.08
-
-            horizon_data = {
-                "volatility": round(volatility_prediction, 4),
-                "expected_return": round(price_change, 4),
-                "horizon_days": horizon
+            symbol_predictions[f"horizon_{horizon}d"] = {
+                "available": False,
+                "volatility": None,
+                "expected_return": None,
+                "confidence": None if include_confidence else None,
+                "prediction_interval": None if include_confidence else None,
+                "horizon_days": horizon,
+                "reason": "No verified multi-horizon model inference is connected"
             }
-
-            if include_confidence:
-                confidence = max(0.6, 0.95 - (horizon * 0.01))
-                horizon_data.update({
-                    "confidence": round(confidence, 3),
-                    "prediction_interval": {
-                        "lower": round(volatility_prediction * 0.8, 4),
-                        "upper": round(volatility_prediction * 1.2, 4)
-                    }
-                })
-
-            symbol_predictions[f"horizon_{horizon}d"] = horizon_data
 
         multi_horizon_results[symbol] = symbol_predictions
 
@@ -531,14 +451,14 @@ async def _add_confidence_metrics(predictions: Dict[str, Any], assets: List[str]
 
     for symbol in assets:
         if symbol in enhanced_predictions:
-            base_confidence = 0.78 if symbol in ["BTC", "ETH"] else 0.65
-
             confidence_metrics = {
-                "model_confidence": base_confidence,
-                "data_quality_score": 0.85,
-                "prediction_stability": 0.72,
-                "market_condition_factor": 0.8,
-                "overall_confidence": round((base_confidence + 0.85 + 0.72 + 0.8) / 4, 3)
+                "available": False,
+                "model_confidence": None,
+                "data_quality_score": None,
+                "prediction_stability": None,
+                "market_condition_factor": None,
+                "overall_confidence": None,
+                "reason": "Prediction confidence has not been calibrated out of sample"
             }
 
             if isinstance(enhanced_predictions[symbol], dict):

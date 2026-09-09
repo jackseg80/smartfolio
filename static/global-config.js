@@ -141,7 +141,7 @@ window.isValidDataSource = function (key) {
 };
 
 const DEFAULT_SETTINGS = {
-  data_source: 'stub_balanced',
+  data_source: null,
   pricing: 'auto', // 🔧 FIX: Changed default from 'local' to 'auto' (real-time prices recommended)
   display_currency: 'USD',
   min_usd_threshold: 1.00,
@@ -752,6 +752,14 @@ window.loadBalanceData = async function (forceRefresh = false) {
   const apiBaseUrl = globalConfig.get('api_base_url');
   const currentUser = localStorage.getItem('activeUser');
 
+  if (!dataSource) {
+    return {
+      success: false,
+      error: 'Select a portfolio data source in Settings before loading balances',
+      source: null
+    };
+  }
+
   // 🔧 FIX: Include csv_selected_file in cache key for proper isolation
   const csvFile = window.userSettings?.csv_selected_file || 'latest';
   const cacheKey = `${currentUser}:${dataSource}:${csvFile}`;
@@ -759,7 +767,13 @@ window.loadBalanceData = async function (forceRefresh = false) {
   // Vérifier cache (sauf si refresh forcé)
   if (!forceRefresh && balanceCache.isValid(cacheKey)) {
     console.debug(`🚀 Balance data loaded from cache (user: ${currentUser}, file: ${csvFile})`);
-    return { success: true, data: balanceCache.get(cacheKey), source: 'cache', cached: true };
+    const cachedData = balanceCache.get(cacheKey);
+    return {
+      success: true,
+      data: cachedData,
+      source: cachedData?.source_used || dataSource,
+      cached: true
+    };
   }
 
   // Cache miss ou refresh forcé - charger depuis API
@@ -822,8 +836,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
         return result;
       }
 
-      case 'cointracking':
-      default: {
+      case 'cointracking': {
         // Local CoinTracking CSV via API backend
         console.debug('📄 Using local CoinTracking CSV files via API');
         const params = { source: 'cointracking' };
@@ -833,78 +846,16 @@ window.loadBalanceData = async function (forceRefresh = false) {
         balanceCache.set(csvData, cacheKey);
         return result;
       }
+      default:
+        throw new Error(`Unknown portfolio data source '${dataSource}'`);
     }
   } catch (error) {
     debugLogger.error(`❌ Error loading balance data via API (source: ${dataSource}):`, error);
-    (window.debugLogger?.debug || console.log)('🔄 Trying fallback: direct CSV file loading...');
-
-    // Fallback: try to load CSV files directly
-    try {
-      const csvFiles = [
-        'data/raw/CoinTracking - Current Balance.csv',
-        'data/raw/CoinTracking - Balance by Exchange - 26.08.2025.csv'
-      ];
-
-      for (const csvFile of csvFiles) {
-        try {
-          (window.debugLogger?.debug || console.log)(`📄 Attempting to load: ${csvFile}`);
-          const response = await fetch(csvFile);
-          if (response.ok) {
-            const csvText = await response.text();
-            (window.debugLogger?.debug || console.log)(`✅ Successfully loaded ${csvFile} (${csvText.length} characters)`);
-            return {
-              success: true,
-              csvText: csvText,
-              source: 'csv_direct',
-              file: csvFile
-            };
-          }
-        } catch (fileError) {
-          (window.debugLogger?.debug || console.log)(`⚠️ Could not load ${csvFile}:`, fileError.message);
-        }
-      }
-
-      // Si aucun fichier CSV accessible et API échoué
-      debugLogger.error('📊 No CSV files accessible and API failed.');
-
-      // Pour les sources réelles (csv_*, cointracking_api), ne pas fallback vers stub
-      if (dataSource.startsWith('csv_') || dataSource === 'cointracking_api') {
-        debugLogger.error(`❌ Real data source '${dataSource}' failed, not falling back to stub`);
-        return {
-          success: false,
-          error: `Failed to load data from source: ${dataSource}`,
-          source: dataSource
-        };
-      }
-
-      // Pour les sources stub ou legacy, fallback vers stub
-      try {
-        const stubFlavor = dataSource.startsWith('stub') ? dataSource : 'stub_balanced';
-        (window.debugLogger?.debug || console.log)(`🔄 Falling back to stub: ${stubFlavor}`);
-        const stubData = await globalConfig.apiRequest('/balances/current', {
-          params: { source: stubFlavor, _t: timestamp }
-        });
-        (window.debugLogger?.info || console.log)('✅ Successfully loaded stub data from API');
-        return { success: true, data: stubData, source: stubData?.source_used || stubFlavor };
-      } catch (stubError) {
-        debugLogger.error('❌ Stub data via API also failed:', stubError);
-      }
-
-      // Dernière option: retourner erreur - pas de données mockées
-      return {
-        success: false,
-        error: `All data sources failed. Configure valid data source in settings: API=${error.message}`,
-        source: 'none'
-      };
-
-    } catch (fallbackError) {
-      debugLogger.error('❌ Fallback also failed:', fallbackError);
-      return {
-        success: false,
-        error: `API failed: ${error.message}, Fallback failed: ${fallbackError.message}`,
-        source: dataSource
-      };
-    }
+    return {
+      success: false,
+      error: `Failed to load the selected portfolio source '${dataSource}': ${error.message}`,
+      source: dataSource
+    };
   }
 };
 

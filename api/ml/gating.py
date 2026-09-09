@@ -253,7 +253,7 @@ class MLGatingSystem:
         model_key: str,
         model_type: ModelType,
         context: Optional[Dict[str, Any]] = None
-    ) -> Tuple[UnifiedPrediction, bool]:
+    ) -> Tuple[Optional[UnifiedPrediction], bool]:
         """
         Appliquer le gating sur une prédiction
 
@@ -262,6 +262,13 @@ class MLGatingSystem:
         """
         try:
             context = context or {}
+
+            if not self.calibrator.is_fitted.get(model_key, False):
+                raise ValueError(f"No fitted calibrator for {model_key}")
+            if model_key not in self.model_metrics:
+                raise ValueError(f"No out-of-sample quality metrics for {model_key}")
+            if context.get('data_age_hours') is None or context.get('feature_availability') is None:
+                raise ValueError(f"Missing observed data quality metadata for {model_key}")
 
             # 1. Calibration de la prédiction
             calibrated_pred, confidence = self.calibrator.calibrate_prediction(
@@ -305,23 +312,12 @@ class MLGatingSystem:
         except Exception as e:
             logger.error(f"Gating failed for {asset} with model {model_key}: {e}")
 
-            # Prédiction de fallback
-            fallback_prediction = UnifiedPrediction(
-                asset=asset,
-                value=0.0,
-                uncertainty=UncertaintyMeasures(
-                    std=999.0,
-                    calibration_score=0.0
-                ),
-                quality=QualityMetrics(confidence=self.config.fallback_confidence)
-            )
-
             self._update_prediction_history(model_key, {
                 'error': True,
                 'timestamp': datetime.now()
             })
 
-            return fallback_prediction, False
+            return None, False
 
     def _should_accept_prediction(
         self,

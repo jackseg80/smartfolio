@@ -593,6 +593,9 @@ window.applyStrategy = async function (mode) {
     debugLogger.debug('🔍 DEBUG store state before:', window.store.snapshot());
 
     const proposal = proposeTargets(mode);
+    if (proposal.available !== true || !proposal.targets) {
+      throw new Error(proposal.error || 'Selected targets are unavailable');
+    }
     debugLogger.debug('🔍 DEBUG proposal result:', proposal);
     debugLogger.debug('🔍 DEBUG proposal BTC allocation:', proposal.targets.BTC);
 

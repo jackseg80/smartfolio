@@ -9,25 +9,8 @@
  *    Fréquence: Quotidienne
  *    Fiabilité: ✅ Production ready
  * 
- * 2. MVRV Ratio - SIMULATION (API réelle disponible via services payants)
- *    Sources possibles: Glassnode, CoinMetrics, LookIntoBitcoin
- *    API publique gratuite: ❌ Non disponible
- *    Status: Simulé avec patterns historiques réalistes
- * 
- * 3. NVT Ratio - SIMULATION (calcul complexe requis)
- *    Calcul: (Market Cap) / (Transaction Volume * 365)
- *    Sources données: CoinGecko (price), Blockchain.info (volume)
- *    Status: Simulé - intégration API possible
- * 
- * 4. Puell Multiple - SIMULATION (données minières requises)
- *    Calcul: (Daily Revenue) / (365-day MA Daily Revenue)
- *    Sources: Blockchain.info, Glassnode
- *    Status: Simulé - intégration complexe
- * 
- * 5. RHODL Ratio - NON IMPLÉMENTÉ
- *    Calcul très complexe nécessitant données UTXO
- *    Sources: Glassnode uniquement (payant)
- *    Status: Non prioritaire
+ * Les autres indicateurs proviennent du service Crypto-Toolbox. Aucune valeur
+ * synthétique n'est produite quand ce service ou sa source est indisponible.
  */
 
 // ===== SWR CACHE SYSTEM =====
@@ -787,7 +770,12 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
         revalidateInBackground().catch(() => { });
       }
 
-      return cached;
+      return {
+        ...cached,
+        served_from: 'cache',
+        stale: false,
+        cache_age_ms: age
+      };
     }
 
     // Between TTL_SHOW and TTL_HARD: show cache + revalidate in background
@@ -798,7 +786,12 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
       });
 
       revalidateInBackground().catch(() => { });
-      return cached;
+      return {
+        ...cached,
+        served_from: 'cache_revalidating',
+        stale: true,
+        cache_age_ms: age
+      };
     }
 
     // > TTL_HARD: fall through to network
@@ -818,9 +811,15 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
         });
       }
 
-      // Return stale cache even if old
-      if (cached) {
-        return cached;
+      // A hard-expired observation must not be exposed as current data.
+      const cacheAge = cached ? now - (cached.saved_at || 0) : Infinity;
+      if (cached && cacheAge < TTL_HARD_MS) {
+        return {
+          ...cached,
+          served_from: 'circuit_breaker_cache',
+          stale: true,
+          cache_age_ms: cacheAge
+        };
       }
     } else {
       // Reset circuit breaker
@@ -960,14 +959,15 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
               `❌ CRITICAL: ${zeroPercentage.toFixed(1)}% of indicators are zero - data likely invalid!`
             );
           }
-          // Show user-visible warning
+          // Show user-visible warning and reject the invalid observation.
           if (window.showToast) {
             window.showToast(
-              `⚠️ On-chain data quality issue detected (${zeroPercentage.toFixed(0)}% zeros) - using fallback`,
+              `⚠️ On-chain data quality issue detected (${zeroPercentage.toFixed(0)}% zeros)`,
               'warning',
               { duration: 10000 }
             );
           }
+          throw new Error(`On-chain observation rejected: ${zeroPercentage.toFixed(1)}% zero values`);
         } else if (zeroPercentage > 50) {
           // Warning: 50-80% zeros - suspicious
           if (_logLimiter.limit('invalid_indicators_warning', 120000)) {
@@ -988,6 +988,9 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
           count: Object.keys(indicators).length,
           fetched_at: new Date().toISOString(),
           source: 'network',
+          served_from: 'network',
+          stale: false,
+          cache_age_ms: 0,
           data_quality: {
             zero_percentage: zeroPercentage,
             valid_count: nonZeroCount,
@@ -1022,9 +1025,9 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
       const isAbortError = error.name === 'AbortError' || error.message.includes('aborted');
 
       if (isAbortError) {
-        debugLogger.debug('🔄 Crypto-Toolbox API request aborted (normal):', error.message);
+        (window.debugLogger?.debug || console.debug)('🔄 Crypto-Toolbox API request aborted (normal):', error.message);
       } else {
-        debugLogger.error('❌ Crypto-Toolbox API fetch failed:', error.message);
+        (window.debugLogger?.error || console.error)('❌ Crypto-Toolbox API fetch failed:', error.message);
       }
 
       // Enhanced graceful degradation for all types of API failures (except abort)
@@ -1044,18 +1047,26 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
         }
       }
 
-      // SWR Graceful Degradation: Always try to return cache instead of failing completely
+      // SWR graceful degradation is bounded by the hard freshness limit.
       const staleCache = readOnchainCache();
       if (staleCache && !force) {
         const age = Date.now() - (staleCache.saved_at || 0);
-        debugLogger.info(`🔄 Using stale cache due to API failure (age: ${Math.round(age / 1000 / 60)}min)`, {
-          served_from: 'stale_cache_fallback',
-          cache_age_minutes: Math.round(age / 1000 / 60),
-          reason: 'api_failure',
-          error_type: error.name || 'unknown',
-          circuit_breaker_failures: _circuitBreakerState.failures
-        });
-        return staleCache;
+        if (age < TTL_HARD_MS) {
+          (window.debugLogger?.info || console.info)(`🔄 Using labeled stale cache due to API failure (age: ${Math.round(age / 1000 / 60)}min)`, {
+            served_from: 'stale_cache_fallback',
+            cache_age_minutes: Math.round(age / 1000 / 60),
+            reason: 'api_failure',
+            error_type: error.name || 'unknown',
+            circuit_breaker_failures: _circuitBreakerState.failures
+          });
+          return {
+            ...staleCache,
+            served_from: 'stale_cache_fallback',
+            stale: true,
+            cache_age_ms: age,
+            fallback_reason: 'api_failure'
+          };
+        }
       }
 
       // Last resort: return minimal empty state instead of throwing
@@ -1065,10 +1076,13 @@ export async function fetchCryptoToolboxIndicators({ force = false, silent = fal
       return {
         indicators: {},
         count: 0,
-        fetched_at: new Date().toISOString(),
-        source: 'fallback_empty',
+        fetched_at: null,
+        source: null,
+        served_from: 'unavailable',
+        stale: false,
+        cache_age_ms: null,
         error: error.message,
-        graceful_degradation: true
+        available: false
       };
     } finally {
       _ongoingFetch = null; // Clear deduplication lock
@@ -1178,7 +1192,7 @@ function parseCryptoToolboxHTML(html) {
     }
 
   } catch (error) {
-    debugLogger.error('❌ Crypto-Toolbox HTML parsing failed:', error.message);
+    (window.debugLogger?.error || console.error)('❌ Crypto-Toolbox HTML parsing failed:', error.message);
   }
 
   return indicators;
@@ -1289,123 +1303,6 @@ function convertCryptoToolboxPercentToScore(percent, isContrarian = false) {
 }
 
 /**
- * Génère des indicateurs simulés selon la source de données stub sélectionnée
- */
-function getSimulatedIndicators(dataSource) {
-  const baseIndicators = {
-    fear_greed: {
-      name: 'Fear & Greed Index',
-      value: 0,
-      value_numeric: 0,
-      raw_value: 0,
-      threshold_numeric: 80,
-      in_critical_zone: false,
-      threshold: '80% (Extreme Greed)',
-      raw_threshold: 80,
-      threshold_operator: '>',
-      source: 'Simulated',
-      timestamp: new Date()
-    },
-    mvrv: {
-      name: 'MVRV Ratio',
-      value: 0,
-      value_numeric: 0,
-      raw_value: 0,
-      threshold_numeric: 3.0,
-      in_critical_zone: false,
-      threshold: '3.0 (Overvalued)',
-      raw_threshold: 3.0,
-      threshold_operator: '>',
-      source: 'Simulated',
-      timestamp: new Date()
-    },
-    nvt: {
-      name: 'NVT Ratio',
-      value: 0,
-      value_numeric: 0,
-      raw_value: 0,
-      threshold_numeric: 100,
-      in_critical_zone: false,
-      threshold: '100 (Overvalued)',
-      raw_threshold: 100,
-      threshold_operator: '>',
-      source: 'Simulated',
-      timestamp: new Date()
-    }
-  };
-
-  // Configure indicators based on data source
-  switch (dataSource) {
-    case 'stub_conservative':
-      // Conservative: Low risk signals
-      baseIndicators.fear_greed.value_numeric = 30; // Fear
-      baseIndicators.fear_greed.value = 30;
-      baseIndicators.fear_greed.raw_value = 30;
-
-      baseIndicators.mvrv.value_numeric = 1.5; // Undervalued
-      baseIndicators.mvrv.value = 1.5;
-      baseIndicators.mvrv.raw_value = 1.5;
-
-      baseIndicators.nvt.value_numeric = 50; // Normal
-      baseIndicators.nvt.value = 50;
-      baseIndicators.nvt.raw_value = 50;
-      break;
-
-    case 'stub_balanced':
-      // Balanced: Moderate signals
-      baseIndicators.fear_greed.value_numeric = 55; // Neutral-Greed
-      baseIndicators.fear_greed.value = 55;
-      baseIndicators.fear_greed.raw_value = 55;
-
-      baseIndicators.mvrv.value_numeric = 2.2; // Fairly valued
-      baseIndicators.mvrv.value = 2.2;
-      baseIndicators.mvrv.raw_value = 2.2;
-
-      baseIndicators.nvt.value_numeric = 75; // Slightly elevated
-      baseIndicators.nvt.value = 75;
-      baseIndicators.nvt.raw_value = 75;
-      break;
-
-    case 'stub_shitcoins':
-      // Risky: High risk signals
-      baseIndicators.fear_greed.value_numeric = 85; // Extreme Greed - CRITICAL ZONE
-      baseIndicators.fear_greed.value = 85;
-      baseIndicators.fear_greed.raw_value = 85;
-      baseIndicators.fear_greed.in_critical_zone = true;
-
-      baseIndicators.mvrv.value_numeric = 3.5; // Overvalued - CRITICAL ZONE
-      baseIndicators.mvrv.value = 3.5;
-      baseIndicators.mvrv.raw_value = 3.5;
-      baseIndicators.mvrv.in_critical_zone = true;
-
-      baseIndicators.nvt.value_numeric = 120; // Overvalued - CRITICAL ZONE
-      baseIndicators.nvt.value = 120;
-      baseIndicators.nvt.raw_value = 120;
-      baseIndicators.nvt.in_critical_zone = true;
-      break;
-
-    default:
-      // Default to balanced
-      return getSimulatedIndicators('stub_balanced');
-  }
-
-  // Add metadata
-  const result = {
-    ...baseIndicators,
-    _metadata: {
-      available_count: Object.keys(baseIndicators).length,
-      critical_count: Object.values(baseIndicators).filter(i => i.in_critical_zone).length,
-      source: dataSource,
-      timestamp: new Date().toISOString(),
-      simulated: true
-    }
-  };
-
-  console.debug(`🧪 Generated ${result._metadata.available_count} simulated indicators for ${dataSource} (${result._metadata.critical_count} critical)`);
-  return Promise.resolve(result);
-}
-
-/**
  * Récupère tous les indicateurs disponibles avec cache stable
  */
 export async function fetchAllIndicators({ force = false } = {}) {
@@ -1415,16 +1312,17 @@ export async function fetchAllIndicators({ force = false } = {}) {
   const errors = [];
 
   // Check current data source configuration
-  const dataSource = window.globalConfig?.get('data_source') || 'stub_balanced';
+  const dataSource = window.globalConfig?.get('data_source') || null;
   console.debug(`🎯 Current data source: ${dataSource}`);
 
-  // ALWAYS try to fetch real indicators from Crypto-Toolbox API first (even for stub sources)
-  // Only fallback to simulated if API fails
+  // Always request observed indicators. An API failure remains unavailable.
   try {
     // 1. Fetch all indicators from Crypto-Toolbox backend with SWR
     console.debug('🌐 Calling fetchCryptoToolboxIndicators with SWR...', { force });
     const cryptoToolboxResult = await fetchCryptoToolboxIndicators({ force });
     const cryptoToolboxData = cryptoToolboxResult?.indicators || cryptoToolboxResult;
+    const observedAt = cryptoToolboxResult?.fetched_at || null;
+    const stale = cryptoToolboxResult?.stale === true;
     console.debug('🔍 CryptoToolbox result:', cryptoToolboxData);
 
     const toolboxAvailable = !!(cryptoToolboxData && Object.keys(cryptoToolboxData).filter(k => !k.startsWith('_')).length > 0);
@@ -1448,7 +1346,7 @@ export async function fetchAllIndicators({ force = false } = {}) {
           threshold_operator: data.threshold_operator,
           source: data.source || 'crypto-toolbox',
           scraped_at: data.scraped_at,
-          timestamp: new Date()
+          timestamp: data.scraped_at || observedAt || null
         };
 
         console.debug(`✅ ${data.name} loaded: ${data.value_numeric}% ${data.in_critical_zone ? '🚨' : ''}`);
@@ -1507,26 +1405,28 @@ export async function fetchAllIndicators({ force = false } = {}) {
     return {
       ...indicators,
       _metadata: {
+        available: successCount > 0,
         available_count: successCount,
+        stale,
+        served_from: cryptoToolboxResult?.served_from || null,
+        cache_age_ms: cryptoToolboxResult?.cache_age_ms ?? null,
+        observed_at: observedAt,
         missing_apis: errors,
         source_stats: sourceStats,
         message: `${successCount} real indicators loaded from Crypto-Toolbox backend.`,
-        last_updated: new Date().toISOString()
+        last_updated: observedAt
       }
     };
 
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('❌ Error fetching real indicators, fallback to simulated:', error.message);
-
-    // Fallback to simulated indicators if API fails
-    const simulatedData = await getSimulatedIndicators(dataSource);
+    (window.debugLogger?.warn || console.warn)('❌ Real on-chain indicators unavailable:', error.message);
     return {
-      ...simulatedData,
       _metadata: {
-        ...simulatedData._metadata,
-        fallback_reason: 'api_error',
+        available_count: 0,
+        unavailable: true,
         api_error: error.message,
-        message: `Using simulated indicators (API unavailable: ${error.message})`
+        message: `Real on-chain indicators unavailable: ${error.message}`,
+        last_updated: null
       }
     };
   }
@@ -1577,12 +1477,13 @@ export function enhanceCycleScore(sigmoidScore, onchainWeight = 0.3) {
       });
 
     } catch (error) {
-      debugLogger.error('Error enhancing cycle score:', error);
+      (window.debugLogger?.error || console.error)('Error enhancing cycle score:', error);
       resolve({
+        available: false,
         original_sigmoid: sigmoidScore,
-        enhanced_score: sigmoidScore,
+        enhanced_score: null,
         error: error.message,
-        confidence: 0.5
+        confidence: null
       });
     }
   });

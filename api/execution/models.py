@@ -131,8 +131,10 @@ class UpdateSignalsRequest(BaseModel):
 
 
 class RecomputeSignalsRequest(BaseModel):
-    """Optionally provide components for blended recomputation.
-    If omitted, backend falls back to neutral values.
+    """Components used for a blended recomputation.
+
+    Missing observations are rejected by the endpoint; they are never replaced
+    with neutral scores.
     """
     ccs_mixte: Optional[float] = Field(default=None, ge=0.0, le=100.0)
     onchain_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
@@ -201,10 +203,11 @@ class SetModeRequest(BaseModel):
 class ProposeDecisionRequest(BaseModel):
     """Request to propose a new rebalancing decision"""
     targets: List[Dict[str, Any]] = Field(
-        default=[{"symbol": "BTC", "weight": 0.6}, {"symbol": "ETH", "weight": 0.4}],
+        ...,
+        min_items=1,
         description="Target allocations"
     )
-    reason: str = Field(default="Test proposal from UI", max_length=500, description="Proposal reason")
+    reason: str = Field(default="Proposal from UI", max_length=500, description="Proposal reason")
     force_override_cooldown: bool = Field(default=False, description="Override cooldown period")
 
 

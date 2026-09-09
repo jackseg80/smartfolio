@@ -7,8 +7,6 @@ import asyncio
 import logging
 from typing import Dict, List, Optional, Any, Union
 from datetime import datetime, timedelta
-from pathlib import Path
-import json
 
 from config.settings import Settings
 from .data_pipeline import MLDataPipeline
@@ -76,52 +74,22 @@ class MLOrchestrator:
         
         logger.info("ML Orchestrator initialized with configuration support")
     
-    async def get_data_source_config(self) -> str:
+    async def get_data_source_config(self) -> Optional[str]:
         """
-        Get the configured data source from settings
-        Priority: frontend config > environment config > fallback detection
+        Return an explicitly injected ML data source.
+
+        The backend cannot read a browser's selected portfolio identity. It must
+        therefore abstain instead of inferring a source from local files or API
+        keys. Portfolio-bound ML needs a dedicated authenticated contract.
         
         Returns:
-            Data source: 'stub', 'cointracking', or 'cointracking_api'
+            Explicit data source, or None when no source is bound.
         """
-        try:
-            # Try to read from browser localStorage via API (simulating frontend config)
-            # This would be the preferred method to sync with settings.html
-            try:
-                import httpx
-                async with httpx.AsyncClient() as client:
-                    # Try to get config from a potential config endpoint
-                    response = await client.get("http://127.0.0.1:8080/api/config/data-source", timeout=2.0)
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data.get('data_source') in ['stub', 'cointracking', 'cointracking_api']:
-                            logger.info(f"Using data source from config API: {data['data_source']}")
-                            return data['data_source']
-            except Exception as e:
-                logger.debug(f"Config API not available, using fallback: {e}")
-                # Config API not available, continue with fallback logic
-                pass
-            
-            # Fallback: Check environment/settings based detection
-            if hasattr(self.settings, 'data_source'):
-                return self.settings.data_source
-            
-            # Smart detection based on available resources
-            api_key = getattr(self.settings.api_keys, 'cointracking_api_key', None)
-            api_secret = getattr(self.settings.api_keys, 'cointracking_api_secret', None)
-            if api_key and api_secret:
-                logger.info("API keys found, using cointracking_api")
-                return 'cointracking_api'
-            elif Path('data/raw').exists() and any(Path('data/raw').glob('*.csv')):
-                logger.info("CSV files found, using cointracking")
-                return 'cointracking'  # CSV files available
-            else:
-                logger.info("No API keys or CSV files found, using stub data")
-                return 'stub'  # Fallback to test data
-                
-        except Exception as e:
-            logger.warning(f"Error getting data source config: {e}, using stub data")
-            return 'stub'
+        configured = getattr(self.settings, 'data_source', None)
+        if isinstance(configured, str) and configured.strip():
+            return configured.strip()
+        logger.warning("No identity-bound ML data source is configured")
+        return None
     
     async def get_portfolio_assets(self, min_usd: float = 100) -> List[str]:
         """
@@ -135,6 +103,13 @@ class MLOrchestrator:
         """
         try:
             data_source = await self.get_data_source_config()
+
+            if not data_source:
+                logger.warning("Portfolio universe unavailable without an explicit data source")
+                return []
+            if data_source == 'stub' or data_source.startswith('stub_'):
+                logger.warning("Synthetic data source cannot provide a real portfolio universe")
+                return []
             logger.info(f"Fetching portfolio assets from configured source: {data_source}")
             
             assets = self.data_pipeline.fetch_portfolio_assets(
@@ -147,7 +122,7 @@ class MLOrchestrator:
             
         except Exception as e:
             logger.error(f"Error fetching portfolio assets: {e}")
-            return ['BTC', 'ETH', 'SOL', 'ADA']  # Safe fallback
+            return []
     
     async def initialize_models(self, force_retrain: bool = False) -> Dict[str, Any]:
         """
@@ -381,6 +356,19 @@ class MLOrchestrator:
                 symbols = await self.get_portfolio_assets(min_usd=50)
             
             data_source = await self.get_data_source_config()
+            if not data_source or data_source == 'stub' or data_source.startswith('stub_'):
+                return {
+                    'available': False,
+                    'timestamp': datetime.now().isoformat(),
+                    'data_source': data_source,
+                    'symbols': symbols,
+                    'horizons': horizons,
+                    'models': {},
+                    'ensemble': {},
+                    'confidence_scores': {},
+                    'alerts': ['An explicit real data source is required for verified predictions'],
+                    'reason': 'No identity-bound real ML data source is configured'
+                }
             
             predictions = {
                 'timestamp': datetime.now().isoformat(),
@@ -487,27 +475,44 @@ class MLOrchestrator:
 
                     # Map horizons to appropriate volatility estimates
                     vol_map = {
-                        1: float(vol_7d) if not pd.isna(vol_7d) else 0.5,
-                        7: float(vol_7d) if not pd.isna(vol_7d) else 0.5,
-                        30: float(vol_30d) if not pd.isna(vol_30d) else 0.5,
-                        90: float(vol_90d) if not pd.isna(vol_90d) else 0.5
+                        1: float(vol_7d) if not pd.isna(vol_7d) else None,
+                        7: float(vol_7d) if not pd.isna(vol_7d) else None,
+                        30: float(vol_30d) if not pd.isna(vol_30d) else None,
+                        90: float(vol_90d) if not pd.isna(vol_90d) else None
                     }
 
                     logger.debug(f"Calculated volatility for {symbol}: 7d={vol_7d:.2%}, 30d={vol_30d:.2%}, 90d={vol_90d:.2%}")
 
                 except Exception as calc_error:
-                    logger.warning(f"Volatility calculation failed for {symbol}: {calc_error}, using fallback")
-                    vol_map = {h: 0.5 for h in horizons}
+                    logger.warning(f"Volatility calculation failed for {symbol}: {calc_error}")
+                    volatility_predictions[symbol] = {
+                        f'{horizon}d': {
+                            'available': False,
+                            'volatility_forecast': None,
+                            'reason': str(calc_error)
+                        }
+                        for horizon in horizons
+                    }
+                    continue
 
                 # Generate predictions for each horizon
                 symbol_predictions = {}
                 for horizon in horizons:
-                    # Use calculated volatility or fallback to mock
-                    vol_forecast = vol_map.get(horizon, 0.3 + (horizon * 0.02))
+                    vol_forecast = vol_map.get(horizon)
+                    if vol_forecast is None:
+                        symbol_predictions[f'{horizon}d'] = {
+                            'available': False,
+                            'volatility_forecast': None,
+                            'reason': 'The requested historical window is unavailable'
+                        }
+                        continue
 
                     pred = {
+                        'available': True,
                         'volatility_forecast': float(vol_forecast),
-                        'confidence': 0.75,  # Fixed confidence for historical vol
+                        'confidence': None,
+                        'is_forecast': False,
+                        'metric_type': 'historical_realized_volatility',
                         'risk_level': 'high' if vol_forecast > 0.6 else 'medium' if vol_forecast > 0.4 else 'low'
                     }
                     symbol_predictions[f'{horizon}d'] = pred
@@ -533,18 +538,21 @@ class MLOrchestrator:
 
             for symbol in symbols[:5]:
                 asset_data = individual_assets.get(symbol, {})
+                sentiment_score = asset_data.get('overall_sentiment')
+                if not isinstance(sentiment_score, (int, float)):
+                    sentiment_data[symbol] = {
+                        'available': False,
+                        'reason': 'No verified sentiment observation is available'
+                    }
+                    continue
 
                 # Extract sentiment score (range -1 to 1)
-                sentiment_score = asset_data.get('overall_sentiment', 0.0)
-                confidence = asset_data.get('confidence', 0.5)
-
-                # Calculate Fear & Greed Index from sentiment (0-100 scale)
-                fear_greed_index = int(max(0, min(100, 50 + (sentiment_score * 50))))
+                confidence = asset_data.get('confidence')
 
                 sentiment_data[symbol] = {
+                    'available': True,
                     'sentiment_score': sentiment_score,
-                    'fear_greed_index': fear_greed_index,
-                    'confidence': confidence,
+                    'confidence': confidence if isinstance(confidence, (int, float)) else None,
                     'data_points': asset_data.get('data_points', 0),
                     'source_breakdown': asset_data.get('source_breakdown', {}),
                     'social_mentions': asset_data.get('source_breakdown', {}).get('social_media', {}).get('volume', 0),
@@ -555,21 +563,11 @@ class MLOrchestrator:
             return sentiment_data
 
         except Exception as e:
-            logger.warning(f"Real sentiment analysis failed: {e}, using fallback")
-
-            # Fallback to basic mock if real analysis fails
-            sentiment_data = {}
-            for symbol in symbols[:5]:
-                sentiment_data[symbol] = {
-                    'sentiment_score': 0.0,  # Neutral fallback
-                    'fear_greed_index': 50,  # Neutral fallback
-                    'confidence': 0.3,
-                    'data_points': 0,
-                    'social_mentions': 0,
-                    'news_sentiment': 'neutral',
-                    'error': str(e)
-                }
-            return sentiment_data
+            logger.warning(f"Real sentiment analysis failed: {e}")
+            return {
+                symbol: {'available': False, 'reason': str(e)}
+                for symbol in symbols[:5]
+            }
 
     def _classify_sentiment_label(self, sentiment_score: float) -> str:
         """Convert sentiment score to label"""
@@ -603,16 +601,15 @@ class MLOrchestrator:
                 })
                 return result
             else:
-                # Fallback prediction if model not available
                 return {
                     'symbol': symbol,
                     'horizon_days': horizon_days,
-                    'volatility_forecast': 0.25,
-                    'confidence': 0.5,
-                    'risk_level': 'medium',
+                    'available': False,
+                    'volatility_forecast': None,
+                    'confidence': None,
                     'timestamp': datetime.now().isoformat(),
-                    'model_version': 'fallback',
-                    'note': 'Using fallback prediction - trained models not loaded'
+                    'model_version': None,
+                    'reason': 'No verified volatility result is available'
                 }
                 
         except Exception as e:
@@ -637,10 +634,12 @@ class MLOrchestrator:
             if self.model_status.get('advanced_risk') != 'ready':
                 logger.warning("Advanced Risk Engine not ready for VaR calculation")
                 return {
+                    'available': False,
                     'error': 'Advanced Risk Engine not initialized',
-                    'fallback_var': portfolio_value * 0.03,  # 3% fallback
+                    'var_absolute': None,
+                    'cvar_absolute': None,
                     'confidence_level': confidence_level,
-                    'method': 'fallback',
+                    'method': method,
                     'timestamp': datetime.now().isoformat()
                 }
             
@@ -665,6 +664,7 @@ class MLOrchestrator:
             )
             
             return {
+                'available': True,
                 'var_absolute': var_result.var_absolute,
                 'cvar_absolute': var_result.cvar_absolute,
                 'confidence_level': var_result.confidence_level,
@@ -680,8 +680,10 @@ class MLOrchestrator:
         except Exception as e:
             logger.error(f"Error calculating portfolio VaR: {e}")
             return {
+                'available': False,
                 'error': str(e),
-                'fallback_var': portfolio_value * 0.03,
+                'var_absolute': None,
+                'cvar_absolute': None,
                 'confidence_level': confidence_level,
                 'method': method,
                 'timestamp': datetime.now().isoformat()
@@ -690,179 +692,32 @@ class MLOrchestrator:
     async def _get_regime_predictions(self, symbols: List[str]) -> Dict[str, Any]:
         """Get market regime predictions"""
         return {
-            'current_regime': 'Bull Market',
-            'regime_probability': 0.75,
-            'regime_stability': 0.82,
-            'expected_duration_days': 45
+            'available': False,
+            'current_regime': None,
+            'regime_probability': None,
+            'regime_stability': None,
+            'expected_duration_days': None,
+            'reason': 'No verified regime inference is connected to the orchestrator'
         }
     
     async def _get_correlation_forecasts(self, symbols: List[str]) -> Dict[str, Any]:
         """Get correlation forecasts between assets"""
-        correlations = {}
-        correlation_values = []
-
-        for i, symbol1 in enumerate(symbols[:3]):
-            for symbol2 in symbols[i+1:4]:
-                pair = f"{symbol1}-{symbol2}"
-                current_corr = 0.65  # Simulated value - in production, calculate from real price data
-                correlations[pair] = {
-                    'current_correlation': current_corr,
-                    'forecast_correlation': 0.58,
-                    'correlation_trend': 'decreasing'
-                }
-                correlation_values.append(current_corr)
-
-        # Calculate aggregate metrics expected by governance.py
-        avg_correlation = sum(correlation_values) / len(correlation_values) if correlation_values else 0.5
-        systemic_risk_level = "high" if avg_correlation > 0.7 else "medium" if avg_correlation > 0.5 else "low"
-
-        # Add aggregate fields that governance expects
-        correlations['avg_correlation'] = avg_correlation
-        correlations['systemic_risk'] = systemic_risk_level
-
-        return correlations
+        return {
+            'available': False,
+            'avg_correlation': None,
+            'systemic_risk': None,
+            'reason': 'No verified correlation forecast is connected to the orchestrator'
+        }
     
     async def _get_advanced_risk_analysis(self, symbols: List[str], horizons: List[int]) -> Dict[str, Any]:
-        """Get comprehensive risk analysis using Advanced Risk Engine"""
-        try:
-            if self.model_status.get('advanced_risk') != 'ready':
-                logger.warning("Advanced Risk Engine not ready, using fallback analysis")
-                return {
-                    'status': 'fallback',
-                    'var_absolutes': {symbol: {'1d': 0.05, '7d': 0.15, '30d': 0.35} for symbol in symbols[:5]},
-                    'portfolio_risk': {'daily_var_95': 0.03, 'cvar_absolute': 0.045},
-                    'stress_test_summary': 'Engine not initialized'
-                }
-            
-            risk_analysis = {
-                'timestamp': datetime.now().isoformat(),
-                'symbols_analyzed': symbols[:10],  # Limit for performance
-                'var_analysis': {},
-                'stress_tests': {},
-                'monte_carlo': {},
-                'portfolio_metrics': {},
-                'risk_alerts': []
-            }
-            
-            # Get portfolio weights (simplified - equal weight for now)
-            num_assets = min(len(symbols), 10)
-            equal_weight = 1.0 / num_assets
-            portfolio_weights = {symbol: equal_weight for symbol in symbols[:num_assets]}
-            portfolio_value = 100000  # $100k portfolio for analysis
-            
-            # Calculate VaR for different horizons and methods
-            for horizon_days in horizons:
-                horizon = RiskHorizon.DAILY if horizon_days == 1 else RiskHorizon.WEEKLY if horizon_days <= 7 else RiskHorizon.MONTHLY
-                
-                # Parametric VaR
-                var_parametric = await self.advanced_risk_engine.calculate_var(
-                    portfolio_weights=portfolio_weights,
-                    portfolio_value=portfolio_value,
-                    method=VaRMethod.PARAMETRIC,
-                    confidence_level=0.95,
-                    horizon=horizon
-                )
-                
-                # Historical VaR 
-                var_historical = await self.advanced_risk_engine.calculate_var(
-                    portfolio_weights=portfolio_weights,
-                    portfolio_value=portfolio_value,
-                    method=VaRMethod.HISTORICAL,
-                    confidence_level=0.95,
-                    horizon=horizon
-                )
-                
-                risk_analysis['var_analysis'][f'{horizon_days}d'] = {
-                    'parametric_var': var_parametric.var_absolute,
-                    'historical_var': var_historical.var_absolute,
-                    'cvar_absolute': var_parametric.cvar_absolute,
-                    'confidence_level': 0.95,
-                    'method_comparison': {
-                        'parametric_vs_historical_ratio': var_parametric.var_absolute / max(var_historical.var_absolute, 0.001),
-                        'recommended_method': 'historical' if var_historical.var_absolute > var_parametric.var_absolute * 1.2 else 'parametric'
-                    }
-                }
-            
-            # Run stress tests for major market scenarios
-            stress_scenarios = ['covid_2020', 'crypto_winter_2022', 'china_ban_2021']
-            
-            for scenario in stress_scenarios:
-                try:
-                    stress_result = await self.advanced_risk_engine.run_stress_test(
-                        portfolio_weights=portfolio_weights,
-                        portfolio_value=portfolio_value,
-                        scenario_name=scenario
-                    )
-                    
-                    risk_analysis['stress_tests'][scenario] = {
-                        'portfolio_loss': stress_result.portfolio_loss,
-                        'loss_percentage': stress_result.loss_percentage,
-                        'assets_affected': stress_result.asset_impacts,
-                        'recovery_estimate_days': stress_result.recovery_estimate_days
-                    }
-                    
-                    # Generate risk alerts for severe stress test results
-                    if stress_result.loss_percentage > 0.3:  # >30% loss
-                        risk_analysis['risk_alerts'].append({
-                            'type': 'severe_stress_risk',
-                            'scenario': scenario,
-                            'potential_loss': stress_result.loss_percentage,
-                            'recommendation': 'Consider reducing portfolio risk exposure'
-                        })
-                        
-                except Exception as e:
-                    logger.error(f"Stress test {scenario} failed: {e}")
-                    risk_analysis['stress_tests'][scenario] = {'error': str(e)}
-            
-            # Run Monte Carlo simulation for 1-day horizon
-            try:
-                monte_carlo_result = await self.advanced_risk_engine.run_monte_carlo_simulation(
-                    portfolio_weights=portfolio_weights,
-                    portfolio_value=portfolio_value,
-                    days=1,
-                    simulations=5000,  # Reduced for performance
-                    confidence_level=0.95
-                )
-                
-                risk_analysis['monte_carlo'] = {
-                    'var_absolute': monte_carlo_result.var_absolute,
-                    'expected_return': monte_carlo_result.expected_return,
-                    'volatility': monte_carlo_result.volatility,
-                    'skewness': monte_carlo_result.skewness,
-                    'kurtosis': monte_carlo_result.kurtosis,
-                    'simulations_run': monte_carlo_result.simulations,
-                    'tail_risk_analysis': {
-                        'extreme_loss_probability': monte_carlo_result.tail_risk_metrics.get('extreme_loss_prob', 0),
-                        'max_simulated_loss': monte_carlo_result.tail_risk_metrics.get('max_loss', 0)
-                    }
-                }
-                
-            except Exception as e:
-                logger.error(f"Monte Carlo simulation failed: {e}")
-                risk_analysis['monte_carlo'] = {'error': str(e)}
-            
-            # Calculate portfolio-level risk metrics
-            risk_analysis['portfolio_metrics'] = {
-                'total_portfolio_value': portfolio_value,
-                'number_of_assets': len(portfolio_weights),
-                'concentration_risk': max(portfolio_weights.values()),  # Largest single position
-                'diversification_ratio': 1.0 / len(portfolio_weights),  # Simple diversification measure
-                'risk_assessment': await self._assess_overall_portfolio_risk(risk_analysis),
-                'recommendation': await self._generate_risk_recommendation(risk_analysis)
-            }
-            
-            logger.info(f"Advanced risk analysis completed for {len(symbols)} assets")
-            return risk_analysis
-            
-        except Exception as e:
-            logger.error(f"Error in advanced risk analysis: {e}")
-            return {
-                'error': str(e),
-                'status': 'failed',
-                'timestamp': datetime.now().isoformat(),
-                'fallback_message': 'Risk analysis failed, using conservative estimates'
-            }
-    
+        """Return unavailable until authenticated portfolio weights are provided."""
+        return {
+            'available': False,
+            'status': 'unavailable',
+            'symbols': list(symbols),
+            'horizons_days': list(horizons),
+            'reason': 'Advanced portfolio risk requires verified portfolio weights and value'
+        }
     async def _assess_overall_portfolio_risk(self, risk_analysis: Dict[str, Any]) -> str:
         """Assess overall portfolio risk level based on analysis results"""
         try:
@@ -928,268 +783,21 @@ class MLOrchestrator:
             return 'Unable to generate recommendation due to analysis error'
     
     async def _create_ensemble_predictions(self, model_predictions: Dict[str, Any]) -> Dict[str, Any]:
-        """Create ensemble predictions from all models using weighted voting and confidence scoring"""
-        
-        # Initialize ensemble components
-        ensemble = {
-            'overall_market_sentiment': 'neutral',
-            'risk_assessment': 'moderate',
-            'recommended_action': 'hold',
-            'confidence_level': 0.0,
+        """Do not manufacture a forecast by voting over heterogeneous diagnostics."""
+        return {
+            'available': False,
+            'overall_market_sentiment': None,
+            'risk_assessment': None,
+            'recommended_action': None,
+            'confidence_level': None,
             'model_contributions': {},
-            'consensus_strength': 0.0,
-            'conflicting_signals': []
+            'consensus_strength': None,
+            'conflicting_signals': [],
+            'reason': 'No calibrated ensemble forecast is available'
         }
-        
-        try:
-            # Model weights based on historical performance and reliability
-            model_weights = {
-                'volatility': 0.20,
-                'sentiment': 0.15,
-                'regime': 0.25,
-                'correlation': 0.20,
-                'advanced_risk': 0.20  # Phase 3A integration
-            }
-            
-            # Collect sentiment signals
-            sentiment_signals = []
-            
-            # Process volatility predictions
-            if 'volatility' in model_predictions:
-                vol_data = model_predictions['volatility']
-                avg_volatility = 0
-                vol_count = 0
-                
-                for symbol_preds in vol_data.values():
-                    for horizon_pred in symbol_preds.values():
-                        if isinstance(horizon_pred, dict) and 'volatility_forecast' in horizon_pred:
-                            avg_volatility += horizon_pred['volatility_forecast']
-                            vol_count += 1
-                
-                if vol_count > 0:
-                    avg_volatility /= vol_count
-                    
-                    # High volatility suggests caution
-                    if avg_volatility > 0.4:
-                        sentiment_signals.append(('bearish', model_weights['volatility'], 'high_volatility'))
-                    elif avg_volatility > 0.25:
-                        sentiment_signals.append(('neutral', model_weights['volatility'], 'moderate_volatility'))
-                    else:
-                        sentiment_signals.append(('bullish', model_weights['volatility'], 'low_volatility'))
-                    
-                    ensemble['model_contributions']['volatility'] = {
-                        'signal': 'bearish' if avg_volatility > 0.4 else 'neutral' if avg_volatility > 0.25 else 'bullish',
-                        'confidence': min(1.0, 1.0 - avg_volatility),
-                        'data': f"avg_vol: {avg_volatility:.3f}"
-                    }
-            
-            # Process sentiment analysis
-            if 'sentiment' in model_predictions:
-                sent_data = model_predictions['sentiment']
-                sentiment_scores = []
-                
-                for symbol_sentiment in sent_data.values():
-                    if isinstance(symbol_sentiment, dict) and 'sentiment_score' in symbol_sentiment:
-                        sentiment_scores.append(symbol_sentiment['sentiment_score'])
-                
-                if sentiment_scores:
-                    avg_sentiment = sum(sentiment_scores) / len(sentiment_scores)
-                    
-                    if avg_sentiment > 0.6:
-                        sentiment_signals.append(('bullish', model_weights['sentiment'], 'positive_sentiment'))
-                    elif avg_sentiment < 0.4:
-                        sentiment_signals.append(('bearish', model_weights['sentiment'], 'negative_sentiment'))
-                    else:
-                        sentiment_signals.append(('neutral', model_weights['sentiment'], 'mixed_sentiment'))
-                    
-                    ensemble['model_contributions']['sentiment'] = {
-                        'signal': 'bullish' if avg_sentiment > 0.6 else 'bearish' if avg_sentiment < 0.4 else 'neutral',
-                        'confidence': abs(avg_sentiment - 0.5) * 2,  # Distance from neutral
-                        'data': f"avg_sentiment: {avg_sentiment:.3f}"
-                    }
-            
-            # Process regime detection
-            if 'regime' in model_predictions:
-                regime_data = model_predictions['regime']
-                regime = regime_data.get('current_regime', 'unknown')
-                regime_prob = regime_data.get('regime_probability', 0.5)
-                
-                # Map regimes to sentiment (canonical names from regime_constants)
-                from services.regime_constants import normalize_regime_name
-                regime = normalize_regime_name(regime)
-                regime_sentiment_map = {
-                    'Bear Market': 'bearish',
-                    'Correction': 'neutral',
-                    'Bull Market': 'bullish',
-                    'Expansion': 'bullish',
-                }
-
-                regime_sentiment = regime_sentiment_map.get(regime, 'neutral')
-                sentiment_signals.append((regime_sentiment, model_weights['regime'], f'regime_{regime}'))
-                
-                ensemble['model_contributions']['regime'] = {
-                    'signal': regime_sentiment,
-                    'confidence': regime_prob,
-                    'data': f"regime: {regime}, prob: {regime_prob:.3f}"
-                }
-            
-            # Process correlation analysis
-            if 'correlation' in model_predictions:
-                corr_data = model_predictions['correlation']
-                correlation_trends = []
-                
-                for pair_data in corr_data.values():
-                    if isinstance(pair_data, dict) and 'correlation_trend' in pair_data:
-                        trend = pair_data['correlation_trend']
-                        correlation_trends.append(trend)
-                
-                if correlation_trends:
-                    # High correlations suggest systemic risk
-                    increasing_corr = correlation_trends.count('increasing')
-                    total_pairs = len(correlation_trends)
-                    
-                    if increasing_corr / total_pairs > 0.6:
-                        sentiment_signals.append(('bearish', model_weights['correlation'], 'rising_correlations'))
-                    elif increasing_corr / total_pairs < 0.4:
-                        sentiment_signals.append(('bullish', model_weights['correlation'], 'diversified_correlations'))
-                    else:
-                        sentiment_signals.append(('neutral', model_weights['correlation'], 'stable_correlations'))
-                    
-                    ensemble['model_contributions']['correlation'] = {
-                        'signal': 'bearish' if increasing_corr/total_pairs > 0.6 else 'bullish' if increasing_corr/total_pairs < 0.4 else 'neutral',
-                        'confidence': abs(increasing_corr/total_pairs - 0.5) * 2,
-                        'data': f"rising_corr: {increasing_corr}/{total_pairs}"
-                    }
-            
-            # Process Advanced Risk Analysis (Phase 3A integration)
-            if 'advanced_risk' in model_predictions:
-                risk_data = model_predictions['advanced_risk']
-                
-                if isinstance(risk_data, dict) and 'portfolio_metrics' in risk_data:
-                    risk_assessment = risk_data['portfolio_metrics'].get('risk_assessment', 'unknown')
-                    
-                    # Map risk assessment to sentiment signal
-                    if risk_assessment in ['high', 'moderate_high']:
-                        sentiment_signals.append(('bearish', model_weights['advanced_risk'], f'high_portfolio_risk_{risk_assessment}'))
-                        risk_signal = 'bearish'
-                    elif risk_assessment in ['low_moderate']:
-                        sentiment_signals.append(('bullish', model_weights['advanced_risk'], f'low_portfolio_risk_{risk_assessment}'))
-                        risk_signal = 'bullish'
-                    else:  # moderate
-                        sentiment_signals.append(('neutral', model_weights['advanced_risk'], f'moderate_portfolio_risk_{risk_assessment}'))
-                        risk_signal = 'neutral'
-                    
-                    # Check for severe VaR levels
-                    var_confidence = 0.5
-                    if 'var_analysis' in risk_data and '1d' in risk_data['var_analysis']:
-                        daily_historical_var = risk_data['var_analysis']['1d'].get('historical_var', 0)
-                        if daily_historical_var > 0.05:  # >5% daily VaR indicates high confidence in bearish signal
-                            var_confidence = 0.9
-                        elif daily_historical_var > 0.03:
-                            var_confidence = 0.7
-                        else:
-                            var_confidence = 0.6
-                    
-                    ensemble['model_contributions']['advanced_risk'] = {
-                        'signal': risk_signal,
-                        'confidence': var_confidence,
-                        'data': f"risk_level: {risk_assessment}, var_1d: {daily_historical_var:.3f}" if 'daily_historical_var' in locals() else f"risk_level: {risk_assessment}",
-                        'risk_alerts': risk_data.get('risk_alerts', []),
-                        'recommendation': risk_data['portfolio_metrics'].get('recommendation', 'Monitor portfolio risk')
-                    }
-            
-            # Calculate weighted ensemble sentiment
-            if sentiment_signals:
-                weighted_scores = {
-                    'bullish': 0,
-                    'bearish': 0,
-                    'neutral': 0
-                }
-                
-                total_weight = 0
-                
-                for sentiment, weight, reason in sentiment_signals:
-                    weighted_scores[sentiment] += weight
-                    total_weight += weight
-                
-                # Normalize weights
-                if total_weight > 0:
-                    for key in weighted_scores:
-                        weighted_scores[key] /= total_weight
-                
-                # Determine overall sentiment
-                max_sentiment = max(weighted_scores.items(), key=lambda x: x[1])
-                ensemble['overall_market_sentiment'] = max_sentiment[0]
-                
-                # Calculate consensus strength
-                ensemble['consensus_strength'] = max_sentiment[1]
-                
-                # Generate recommendations based on ensemble
-                if max_sentiment[0] == 'bullish' and max_sentiment[1] > 0.6:
-                    ensemble['recommended_action'] = 'increase_risk_allocation'
-                    ensemble['risk_assessment'] = 'low_to_moderate'
-                elif max_sentiment[0] == 'bearish' and max_sentiment[1] > 0.6:
-                    ensemble['recommended_action'] = 'reduce_risk_allocation'
-                    ensemble['risk_assessment'] = 'moderate_to_high'
-                else:
-                    ensemble['recommended_action'] = 'hold_current_allocation'
-                    ensemble['risk_assessment'] = 'moderate'
-                
-                # Calculate overall confidence
-                model_confidences = []
-                for contrib in ensemble['model_contributions'].values():
-                    model_confidences.append(contrib.get('confidence', 0.5))
-                
-                if model_confidences:
-                    base_confidence = sum(model_confidences) / len(model_confidences)
-                    # Adjust confidence based on consensus strength
-                    ensemble['confidence_level'] = min(1.0, base_confidence * (0.5 + ensemble['consensus_strength']))
-                else:
-                    ensemble['confidence_level'] = 0.5
-                
-                # Identify conflicting signals
-                signal_types = [contrib['signal'] for contrib in ensemble['model_contributions'].values()]
-                unique_signals = set(signal_types)
-                
-                if len(unique_signals) > 2:
-                    ensemble['conflicting_signals'] = [
-                        f"{model}: {contrib['signal']}" 
-                        for model, contrib in ensemble['model_contributions'].items()
-                        if contrib['signal'] != ensemble['overall_market_sentiment']
-                    ]
-            
-            logger.info(f"Ensemble prediction generated: {ensemble['overall_market_sentiment']} "
-                       f"(confidence: {ensemble['confidence_level']:.2f})")
-            
-            return ensemble
-            
-        except Exception as e:
-            logger.error(f"Error creating ensemble predictions: {e}")
-            # Return safe default
-            return {
-                'overall_market_sentiment': 'neutral',
-                'risk_assessment': 'moderate', 
-                'recommended_action': 'hold_current_allocation',
-                'confidence_level': 0.0,
-                'error': str(e)
-            }
-    
     async def _calculate_confidence_scores(self, model_predictions: Dict[str, Any]) -> Dict[str, float]:
-        """Calculate confidence scores for predictions"""
-        confidence_scores = {}
-        
-        # Calculate confidence based on model agreement and individual confidences
-        model_count = len([m for m in model_predictions.values() if m])
-        base_confidence = min(0.9, model_count / len(self.models) + 0.1)
-        
-        confidence_scores['overall'] = base_confidence
-        confidence_scores['volatility'] = 0.8 if 'volatility' in model_predictions else 0.0
-        confidence_scores['sentiment'] = 0.7 if 'sentiment' in model_predictions else 0.0
-        confidence_scores['regime'] = 0.85 if 'regime' in model_predictions else 0.0
-        confidence_scores['correlation'] = 0.75 if 'correlation' in model_predictions else 0.0
-        
-        return confidence_scores
-    
+        """Confidence remains absent until it is calibrated out of sample."""
+        return {}
     async def get_model_status(self) -> Dict[str, Any]:
         """
         Get status of all ML models and data source configuration

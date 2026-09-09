@@ -5,7 +5,7 @@
 
 import { store } from './risk-dashboard-store.js';
 import { getRegimeDisplayData, getMarketRegime } from '../modules/market-regimes.js';
-import { estimateCyclePosition, getCyclePhase } from '../modules/cycle-navigator.js';
+import { estimateCyclePosition } from '../modules/cycle-navigator.js';
 import { interpretCCS } from '../modules/signals-engine.js';
 import { analyzeContradictorySignals } from '../modules/composite-score-v2.js';
 import { calculateIntelligentDecisionIndexAPI, StrategyConfig } from './strategy-api-adapter.js';
@@ -63,7 +63,7 @@ function simpleFallbackCalculation(_context) {
   console.error('❌ SPLIT-BRAIN PREVENTION: Strategy API failed, no fallback calculation');
   return {
     score: null,  // null = pas de score disponible
-    confidence: 0,
+    confidence: null,
     action: 'API_ERROR',
     source: 'api_failed_no_fallback',
     error: 'Strategy API unavailable - decision score cannot be calculated without backend'
@@ -80,7 +80,10 @@ function simpleFallbackCalculation(_context) {
  * Contributions UI: (w * score) / Σ(w * score).
  */
 function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, governanceContradiction = 0) {
-  const cycleScore = cycleData?.score ?? 50;
+  const cycleScore = cycleData?.score;
+  if (!Number.isFinite(cycleScore) || !Number.isFinite(onchainScore)) {
+    throw new Error('Cycle and on-chain scores are required for adaptive weights');
+  }
   // Utiliser governance.contradiction_index comme source primaire, fallback sur on-chain
   const contradictionLevel = governanceContradiction > 0 ?
     Math.round(governanceContradiction * 100) :
@@ -111,7 +114,7 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
 
   // RÈGLE 2: Plafond de pénalité On-Chain pour préserver floors Alts
   const onchainPenaltyFloor = cycleScore >= 90 ? 0.3 : 0.0; // Pas moins de 30% si cycle fort
-  const adjustedOnchainScore = Math.max(onchainPenaltyFloor * 100, onchainScore ?? 50);
+  const adjustedOnchainScore = Math.max(onchainPenaltyFloor * 100, onchainScore);
 
   // RÈGLE 3: Contradiction → affecte vitesse (cap), pas objectif
   let speedMultiplier = 1.0;
@@ -130,7 +133,7 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
     speedMultiplier,
     reasoning: {
       cycleBoost: cycleScore >= 90,
-      onchainFloorApplied: adjustedOnchainScore > (onchainScore ?? 50),
+      onchainFloorApplied: adjustedOnchainScore > onchainScore,
       contradictionSlowdown: speedMultiplier < 1.0
     }
   };
@@ -154,17 +157,17 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
   // 0) Stables = SOURCE DE VÉRITÉ (risk budget) avec Structure Modulation V2
   let stablesBase = rb?.target_stables_pct;
   if (typeof stablesBase !== 'number' || stablesBase < 0 || stablesBase > 100) {
-    console.debug('⚠️ target_stables_pct invalide, fallback 25%:', stablesBase);
-    stablesBase = 25;
+    throw new Error('Verified stablecoin risk budget is unavailable');
   }
 
   // 🆕 Structure Modulation V2 (Oct 2025)
   const structureScore = data?.risk?.risk_metrics?.risk_version_info?.portfolio_structure_score;
   const { deltaStables, deltaCap } = computeStructureModulation(structureScore);
 
-  // Appliquer modulation avec clamp [min_stables, max_stables]
-  const minStables = rb?.min_stables ?? 10;
-  const maxStables = rb?.max_stables ?? 60;
+  // Respect the risk-budget target. Bounds are only applied when the budget
+  // explicitly provides them; hidden defaults must not weaken a defensive target.
+  const minStables = rb?.min_stables ?? 0;
+  const maxStables = rb?.max_stables ?? 100;
   const stablesModulated = Math.max(minStables, Math.min(maxStables, stablesBase + deltaStables));
 
   // Métadonnées pour UI/logs
@@ -212,9 +215,9 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
   const phaseEngineActive = ctx?.flags?.phase_engine === 'apply';
 
   // NIVEAU 1: Sentiments extrêmes (TOUJOURS actifs)
-  const mlSentiment = ctx?.sentiment_value || 50;
-  const extremeFear = mlSentiment < 25;
-  const extremeGreed = mlSentiment > 75;
+  const mlSentiment = Number.isFinite(ctx?.sentiment_value) ? ctx.sentiment_value : null;
+  const extremeFear = mlSentiment !== null && mlSentiment < 25;
+  const extremeGreed = mlSentiment !== null && mlSentiment > 75;
 
   // NIVEAU 2 & 3: Modulateurs de base (désactivés si Phase Engine actif)
   const isBull = !phaseEngineActive && ((ctx?.regime === 'bull') || (ctx?.cycle_score >= 70));
@@ -351,6 +354,10 @@ export async function getUnifiedState() {
   const onchainScore = state.scores?.onchain ?? null;
   const riskScore = state.scores?.risk ?? null;
   const blendedScore = state.scores?.blended ?? null;
+  const activeCapFraction = state.governance?.active_policy?.cap_daily;
+  const movementCapPct = Number.isFinite(activeCapFraction) && activeCapFraction > 0
+    ? activeCapFraction * 100
+    : null;
   const ocMeta = state.scores?.onchain_metadata || {};
   const risk = state.risk?.risk_metrics || {};
 
@@ -375,12 +382,13 @@ export async function getUnifiedState() {
     cycleData = estimateCyclePosition();
     console.debug('✅ Cycle Intelligence loaded:', cycleData.phase?.phase, cycleData.score);
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Cycle Intelligence fallback:', error);
+    (window.debugLogger?.warn || console.warn)('⚠️ Cycle Intelligence unavailable:', error);
     cycleData = {
-      months: state.cycle?.months ?? null,
-      score: Math.round(state.cycle?.ccsStar ?? state.cycle?.score ?? 50),
-      phase: state.cycle?.phase || getCyclePhase(state.cycle?.months ?? 0),
-      confidence: 0.3,
+      available: false,
+      months: null,
+      score: null,
+      phase: { phase: 'unknown' },
+      confidence: null,
       multipliers: {}
     };
   }
@@ -410,7 +418,7 @@ export async function getUnifiedState() {
         scoresUsed: { blended: blendedRounded, onchain: onchainRounded, risk: riskRounded }
       });
     } else {
-      regimeData = { regime: getMarketRegime(50), recommendations: [], risk_budget: null };
+      regimeData = { regime: { name: 'Unknown', emoji: '❓' }, recommendations: [], risk_budget: null };
     }
   } catch (error) {
     (window.debugLogger?.warn || console.warn)('⚠️ Regime Intelligence fallback:', error);
@@ -423,14 +431,13 @@ export async function getUnifiedState() {
   
   try {
     const globalConfig = window.globalConfig;
-    if (globalConfig) {
-      const apiBaseUrl = globalConfig.get('api_base_url') || 'http://127.0.0.1:8000';
-      const sentimentResponse = await fetch(`${apiBaseUrl}/api/ml/sentiment/symbol/BTC?days=1`);
-      if (sentimentResponse.ok) {
-        const sentimentResult = await sentimentResponse.json();
-        if (sentimentResult.success && sentimentResult.aggregated_sentiment) {
+    if (globalConfig?.apiRequest) {
+      const sentimentResult = await globalConfig.apiRequest('/api/ml/sentiment/symbol/BTC', {
+        params: { days: 1 }
+      });
+        if (sentimentResult?.available === true && sentimentResult.aggregated_sentiment) {
           const fearGreedSource = sentimentResult.aggregated_sentiment.source_breakdown?.fear_greed;
-          if (fearGreedSource) {
+          if (Number.isFinite(fearGreedSource?.average_sentiment)) {
             const fearGreedValue = Math.max(0, Math.min(100, Math.round(50 + (fearGreedSource.average_sentiment * 50))));
             sentimentData = {
               value: fearGreedValue,
@@ -440,39 +447,50 @@ export async function getUnifiedState() {
             console.debug('✅ Multi-source sentiment loaded:', sentimentData.sources, fearGreedValue);
           }
         }
-      }
     }
   } catch (e) {
     (window.debugLogger?.warn || console.warn)('⚠️ Multi-source sentiment fallback to store data');
   }
   
   try {
-    const ccsInterpretation = interpretCCS(typeof blendedScore === 'number' ? blendedScore : 50);
-    signalsData = {
-      interpretation: ccsInterpretation?.label?.toLowerCase?.() || 'neutral',
-      confidence: 0.6,
-      signals_strength: 'medium',
-      ccs_level: ccsInterpretation?.level || 'medium',
-      ccs_color: ccsInterpretation?.color
-    };
+    if (!Number.isFinite(blendedScore)) {
+      signalsData = {
+        available: false,
+        interpretation: 'unknown',
+        confidence: null,
+        signals_strength: 'unavailable',
+        reason: 'Blended score unavailable'
+      };
+    } else {
+      const ccsInterpretation = interpretCCS(blendedScore);
+      signalsData = {
+        available: true,
+        interpretation: ccsInterpretation?.label?.toLowerCase?.() || 'unknown',
+        confidence: null,
+        signals_strength: 'unrated',
+        ccs_level: ccsInterpretation?.level,
+        ccs_color: ccsInterpretation?.color
+      };
+    }
 
     if (sentimentData && ['extreme_fear', 'extreme_greed'].includes(sentimentData.interpretation)) {
       signalsData.interpretation = sentimentData.interpretation;
-      signalsData.confidence = 0.8;
+      signalsData.available = true;
       signalsData.signals_strength = 'strong';
     }
     
     console.debug('✅ Signals Intelligence loaded:', signalsData.interpretation, signalsData.confidence);
   } catch (error) {
     (window.debugLogger?.warn || console.warn)('⚠️ Signals Intelligence fallback:', error);
-    signalsData = { interpretation: 'neutral', confidence: 0.4, signals_strength: 'weak' };
+    signalsData = { available: false, interpretation: 'unknown', confidence: null, signals_strength: 'unavailable', reason: error.message };
   }
 
   // 5. SOPHISTICATED ANALYSIS (conservé identique) - using ocCategories already declared above
   const drivers = Object.entries(ocCategories)
+    .filter(([, data]) => Number.isFinite(data?.score))
     .map(([key, data]) => ({ 
       key, 
-      score: data?.score ?? 0, 
+      score: data.score,
       desc: data?.description, 
       contributors: data?.contributorsCount ?? 0,
       consensus: data?.consensus
@@ -486,7 +504,9 @@ export async function getUnifiedState() {
   let decision;
   try {
     // BLENDING ADAPTATIF - Pondérations contextuelles avec governance unifiée
-    const governanceContradiction = state.governance?.contradiction_index || 0;
+    const governanceContradiction = Number.isFinite(state.governance?.contradiction_index)
+      ? state.governance.contradiction_index
+      : null;
     const adaptiveWeights = calculateAdaptiveWeights(cycleData, onchainScore, contradictions, governanceContradiction);
 
     // Préparer le contexte pour l'API Strategy
@@ -496,9 +516,12 @@ export async function getUnifiedState() {
       regimeData,
       signalsData,
       onchainScore,
-      onchainConfidence: ocMeta?.confidence ?? 0,
+      onchainConfidence: ocMeta?.confidence ?? null,
       riskScore,
-      contradiction: contradictions?.length > 0 ? Math.min(contradictions.length * 0.15, 0.48) : 0.1,
+      contradiction: contradictions?.length > 0
+        ? Math.min(contradictions.length * 0.15, 0.48)
+        : governanceContradiction,
+      execution: { cap_pct_per_iter: movementCapPct },
       adaptiveWeights // Nouveau - utilisé par strategy-api-adapter
     };
 
@@ -515,12 +538,12 @@ export async function getUnifiedState() {
     // Comparaison désactivée (legacy archivé)
 
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Strategy API failed, using inline fallback:', error.message);
+    (window.debugLogger?.warn || console.warn)('⚠️ Strategy API unavailable:', error.message);
 
-    // Fallback vers calcul simple en cas d'erreur API
+    // Preserve the unavailable contract through the compatibility wrapper.
     const context = {
       blendedScore, cycleData, regimeData, signalsData,
-      onchainScore, onchainConfidence: ocMeta?.confidence ?? 0, riskScore
+      onchainScore, onchainConfidence: ocMeta?.confidence ?? null, riskScore
     };
     decision = simpleFallbackCalculation(context);
   }
@@ -531,10 +554,11 @@ export async function getUnifiedState() {
     signals: state.ui?.apiStatus?.signals || 'unknown',
     lastUpdate: state.ccs?.lastUpdate || null,
     intelligence_modules: {
-      cycle: (cycleData.confidence > 0.5 || cycleData.score > 85) ? 'active' : 'limited',
+      cycle: (Number.isFinite(cycleData.confidence) && cycleData.confidence > 0.5)
+        || (Number.isFinite(cycleData.score) && cycleData.score > 85) ? 'active' : 'limited',
       regime: regimeData.recommendations?.length > 0 ? 'active' : 'limited',
       signals: signalsData.confidence > 0.6 ? 'active' : 'limited',
-      strategy_api: decision.source === 'strategy_api' ? 'active' : 'fallback'  // NOUVEAU
+      strategy_api: decision.available === true ? 'active' : 'unavailable'
     }
   };
 
@@ -579,19 +603,6 @@ export async function getUnifiedState() {
       generatedAt: regimeData?.risk_budget?.generated_at
     });
 
-    // Vérifier présence target_stables_pct avec fallback
-    if (typeof regimeData?.risk_budget?.target_stables_pct !== 'number') {
-      console.debug('⚠️ target_stables_pct missing, creating fallback:', { regimeData: regimeData?.risk_budget });
-
-      // Fallback intelligent basé sur percentages.stables ou 41% par défaut
-      const fallbackStables = regimeData?.risk_budget?.percentages?.stables ?? 41;
-      if (regimeData?.risk_budget) {
-        regimeData.risk_budget.target_stables_pct = fallbackStables;
-        regimeData.risk_budget.generated_at = regimeData.risk_budget.generated_at || new Date().toISOString();
-        console.debug('✅ Fallback target_stables_pct applied:', fallbackStables + '%');
-      }
-    }
-
     console.debug('✅ V2 invariants validated:', {
       sum: `${sum}%`,
       target_stables: regimeData?.risk_budget?.target_stables_pct,
@@ -604,7 +615,7 @@ export async function getUnifiedState() {
     decision,
     cycle: {
       months: cycleData.months,
-      score: Math.round(cycleData.score ?? 50),
+      score: Number.isFinite(cycleData.score) ? Math.round(cycleData.score) : null,
       weight: state.cycle?.weight ?? 0.3,
       phase: cycleData.phase,
       confidence: cycleData.confidence,
@@ -612,7 +623,9 @@ export async function getUnifiedState() {
     },
     onchain: {
       score: onchainScore != null ? Math.round(onchainScore) : null,
-      confidence: Math.round((ocMeta.confidence ?? 0) * 100) / 100,
+      confidence: Number.isFinite(ocMeta.confidence)
+        ? Math.round(ocMeta.confidence * 100) / 100
+        : null,
       drivers,
       criticalCount: ocMeta.criticalZoneCount || 0,
     },
@@ -625,7 +638,7 @@ export async function getUnifiedState() {
     },
     // Scores consolidés pour Decision Index Panel
     scores: {
-      cycle: Math.round(cycleData.score ?? 50),
+      cycle: Number.isFinite(cycleData.score) ? Math.round(cycleData.score) : null,
       onchain: onchainScore != null ? Math.round(onchainScore) : null,
       risk: riskScore != null ? Math.round(riskScore) : null,
       blended: blendedScore != null ? Math.round(blendedScore) : null
@@ -643,13 +656,11 @@ export async function getUnifiedState() {
                         (regimeData.risk_budget?.risky_allocation != null
                           ? Math.round(regimeData.risk_budget.risky_allocation * 100)
                           : null),
-      methodology: regimeData.risk_budget?.methodology || 'regime_based',
+      methodology: regimeData.risk_budget?.methodology ?? null,
       confidence: regimeData.risk_budget?.confidence ?? null,
       percentages: regimeData.risk_budget?.percentages || null,
       // Timestamp fiable depuis market-regimes
-      generated_at: regimeData.risk_budget?.generated_at ??
-                    regimeData.timestamp ??
-                    new Date().toISOString()
+      generated_at: regimeData.risk_budget?.generated_at ?? regimeData.timestamp ?? null
     },
 
     // SOURCE CANONIQUE UNIQUE - Cibles dynamiques calculées selon contexte réel
@@ -660,18 +671,21 @@ export async function getUnifiedState() {
         cycle_score: cycleData.score,
         cycle_direction: cycleData.direction ?? null,
         cycle_confidence: cycleData.confidence ?? null,
-        governance_mode: decision.governance_mode || 'Normal',
+        governance_mode: decision.governance_mode ?? state.governance?.active_policy?.mode ?? null,
         sentiment: sentimentData?.interpretation,
-        sentiment_value: sentimentData?.value || 50,  // Valeur numérique 0-100 pour logique contextuelle
+        sentiment_value: sentimentData?.value ?? null,
         // NOUVEAU: Feature flags pour phase engine
         flags: {
           phase_engine: typeof window !== 'undefined' ?
-            localStorage.getItem('PHASE_ENGINE_ENABLED') || 'apply' : 'off'  // Default: 'apply' (Oct 2025)
+            localStorage.getItem('PHASE_ENGINE_ENABLED') || 'off' : 'off'
         }
       };
 
       // Risk budget (SOURCE DE VÉRITÉ pour stables)
       const rb = regimeData.risk_budget;
+      if (!Number.isFinite(rb?.target_stables_pct)) {
+        return {};
+      }
 
       // Stats wallet basiques (calculés depuis allocations réelles)
       const currentAllocations = window.store?.get('allocations.current') || {};
@@ -698,7 +712,7 @@ export async function getUnifiedState() {
             mode: ctx.flags.phase_engine,
             enabled: true,
             targets: { ...dynamicTargets },
-            context: { DI: decision.score || 50, breadth_alts: 0.5 }
+            context: { DI: decision.score ?? null, breadth_alts: null }
           };
         }
 
@@ -872,10 +886,12 @@ export async function getUnifiedState() {
     })(),
 
     execution: {
-      cap_pct_per_iter: decision.governance_cap ?? 7, // From governance/strategy
+      cap_pct_per_iter: movementCapPct,
       estimated_iters_to_target: decision.execution_plan?.estimated_iters ?? null, // From allocation engine V2
-      current_iteration: 1,
-      convergence_strategy: decision.policy_hint?.toLowerCase() === 'slow' ? 'gradual' : 'standard',
+      current_iteration: null,
+      convergence_strategy: decision.policy_hint
+        ? (decision.policy_hint.toLowerCase() === 'slow' ? 'gradual' : 'standard')
+        : null,
       // Plan d'exécution calculé depuis targets_by_group (même source que cartes)
       plan_iter1: decision.execution_plan || null
     },
@@ -900,7 +916,7 @@ export async function getUnifiedState() {
     strategy: {
       enabled: StrategyConfig.getConfig().enabled,
       template_used: decision.template_used || null,
-      policy_hint: decision.policy_hint || 'Normal',
+      policy_hint: decision.policy_hint || null,
       targets: decision.targets || [],
       api_version: decision.api_version || null,
       generated_at: decision.generated_at || null
@@ -914,7 +930,7 @@ export async function getUnifiedState() {
       signalsData,
       sentimentData,
       version: 'v2',  // NOUVEAU
-      migration_status: decision.source === 'strategy_api' ? 'migrated' : 'legacy',  // NOUVEAU
+      migration_status: decision.available === true ? 'migrated' : 'unavailable',
       // Legacy allocation support - convert strategy targets to old format
       allocation: decision.targets?.length > 0 ?
         decision.targets.reduce((acc, target) => {
@@ -967,11 +983,11 @@ export async function getUnifiedState() {
         cycle_score: cycleData.score,
         cycle_direction: cycleData.direction ?? null,
         cycle_confidence: cycleData.confidence ?? null,
-        governance_mode: decision.governance_mode || 'Normal',
+        governance_mode: decision.governance_mode ?? state.governance?.active_policy?.mode ?? null,
         sentiment: sentimentData?.interpretation,
         flags: {
           phase_engine: typeof window !== 'undefined' ?
-            localStorage.getItem('PHASE_ENGINE_ENABLED') || 'apply' : 'off'  // Default: 'apply' (Oct 2025)
+            localStorage.getItem('PHASE_ENGINE_ENABLED') || 'off' : 'off'
         }
       };
 
@@ -991,7 +1007,7 @@ export async function getUnifiedState() {
   unifiedState.structure_modulation = structureMod;
 
   // Timestamp fiable
-  unifiedState.lastUpdate = rb?.generated_at || unifiedState?.lastUpdate || new Date().toISOString();
+  unifiedState.lastUpdate = rb?.generated_at || unifiedState?.lastUpdate || null;
 
   return unifiedState;
 }
@@ -1004,14 +1020,18 @@ function snapshotId(u) {
     user: u.user?.id || localStorage.getItem('activeUser'),
     source: u.meta?.data_source,
     // Scores arrondis pour stabilité (pas de timestamps qui changent)
-    blended: Math.round(u.decision?.score || 50),
-    onchain: Math.round(u.scores?.onchain || 50),
-    risk: Math.round(u.scores?.risk || 50),
-    cycle: Math.round(u.scores?.cycle || 50),
+    blended: Number.isFinite(u.decision?.score) ? Math.round(u.decision.score) : null,
+    onchain: Number.isFinite(u.scores?.onchain) ? Math.round(u.scores.onchain) : null,
+    risk: Number.isFinite(u.scores?.risk) ? Math.round(u.scores.risk) : null,
+    cycle: Number.isFinite(u.scores?.cycle) ? Math.round(u.scores.cycle) : null,
     // Governance stable
-    contradiction: Math.round((u.governance?.contradiction_index || 0) * 100),
+    contradiction: Number.isFinite(u.governance?.contradiction_index)
+      ? Math.round(u.governance.contradiction_index * 100)
+      : null,
     // Risk budget stable (arrondi)
-    stables_alloc: Math.round((u.risk?.budget?.stables_allocation || 0) * 100),
+    stables_alloc: Number.isFinite(u.risk?.budget?.stables_allocation)
+      ? Math.round(u.risk.budget.stables_allocation * 100)
+      : null,
     // Regime key (pas timestamp)
     regime_key: u.regime?.key,
     // Strategy template (pas generated_at)
@@ -1037,12 +1057,16 @@ export function deriveRecommendations(u) {
 
   console.debug('🧠 DERIVING INTELLIGENT RECOMMENDATIONS V2 - Snapshot:', currentSnapshotId.substring(0, 120) + '...');
   console.debug('📊 Snapshot Key Factors:', {
-    blended: Math.round(u.decision?.score || 50),
-    onchain: Math.round(u.scores?.onchain || 50),
-    risk: Math.round(u.scores?.risk || 50),
-    cycle: Math.round(u.scores?.cycle || 50),
-    contradiction: Math.round((u.governance?.contradiction_index || 0) * 100),
-    stables_alloc: Math.round((u.risk?.budget?.stables_allocation || 0) * 100),
+    blended: Number.isFinite(u.decision?.score) ? Math.round(u.decision.score) : null,
+    onchain: Number.isFinite(u.scores?.onchain) ? Math.round(u.scores.onchain) : null,
+    risk: Number.isFinite(u.scores?.risk) ? Math.round(u.scores.risk) : null,
+    cycle: Number.isFinite(u.scores?.cycle) ? Math.round(u.scores.cycle) : null,
+    contradiction: Number.isFinite(u.governance?.contradiction_index)
+      ? Math.round(u.governance.contradiction_index * 100)
+      : null,
+    stables_alloc: Number.isFinite(u.risk?.budget?.stables_allocation)
+      ? Math.round(u.risk.budget.stables_allocation * 100)
+      : null,
     regime_key: u.regime?.key
   });
 
@@ -1138,15 +1162,18 @@ export function deriveRecommendations(u) {
   // ✅ VALIDATION: Tenir compte du RÉGIME RÉEL (blended) pas seulement du cycle position
   if (u.cycle?.phase?.phase) {
     const cyclePhase = u.cycle.phase.phase;
-    const blendedScore = u.scores?.blended ?? 50;
+    const blendedScore = u.scores?.blended;
     const regimeKey = u.regime?.key ||
                       u.market?.regime?.key ||
-                      (blendedScore >= 76 ? 'expansion' :
-                       blendedScore >= 51 ? 'bull_market' :
-                       blendedScore >= 26 ? 'correction' : 'bear_market');
+                      (Number.isFinite(blendedScore)
+                        ? (blendedScore >= 76 ? 'expansion' :
+                          blendedScore >= 51 ? 'bull_market' :
+                          blendedScore >= 26 ? 'correction' : 'bear_market')
+                        : null);
+    const hasDecisionScore = Number.isFinite(u.decision?.score);
 
     // Take profits ONLY if cycle=peak AND (regime=bull_market OR expansion) AND DI>75
-    if (cyclePhase === 'peak' && u.decision.score > 75 && (regimeKey === 'bull_market' || regimeKey === 'expansion')) {
+    if (cyclePhase === 'peak' && hasDecisionScore && u.decision.score > 75 && (regimeKey === 'bull_market' || regimeKey === 'expansion')) {
       recos.push({
         key: 'reco:cycle:peak_profits',
         priority: 'high',
@@ -1157,7 +1184,7 @@ export function deriveRecommendations(u) {
       });
     }
     // Vigilance if cycle=peak but regime is only correction (divergence)
-    else if (cyclePhase === 'peak' && u.decision.score > 75 && regimeKey === 'correction') {
+    else if (cyclePhase === 'peak' && hasDecisionScore && u.decision.score > 75 && regimeKey === 'correction') {
       recos.push({
         key: 'reco:cycle:peak_but_correction',
         priority: 'medium',
@@ -1168,7 +1195,7 @@ export function deriveRecommendations(u) {
       });
     }
     // Accumulation classique
-    else if (cyclePhase === 'accumulation' && u.decision.score < 40) {
+    else if (cyclePhase === 'accumulation' && hasDecisionScore && u.decision.score < 40) {
       recos.push({
         key: 'reco:cycle:accumulation',
         priority: 'medium',
@@ -1248,8 +1275,6 @@ export function deriveRecommendations(u) {
 
   if (flags.stables_high) {
     const targetStables = u.risk.budget.percentages?.stables || 0;
-    const riskScore = u.scores?.risk ?? 50;
-
     // Generate tactical action based on risk profile
     let tacticalAction = '';
     if (targetStables >= 40) {

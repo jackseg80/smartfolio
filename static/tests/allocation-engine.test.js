@@ -1,6 +1,6 @@
 /**
  * Unit tests for Allocation Engine V2
- * Tests hierarchical allocation (macro → sectors → coins) with floors and incumbency
+ * Tests hierarchical allocation (macro → sectors → coins) with explicit constraints
  */
 
 import { calculateHierarchicalAllocation } from '../core/allocation-engine.js';
@@ -35,6 +35,7 @@ describe('Allocation Engine V2 - Core Functionality', () => {
   test('should respect total allocation sum to 100%', async () => {
     const context = {
       cycleScore: 60,
+      onchainScore: 55,
       riskScore: 70,
       risk_budget: { risky_allocation: 0.6, stable_allocation: 0.4 }
     };
@@ -49,51 +50,42 @@ describe('Allocation Engine V2 - Core Functionality', () => {
   });
 });
 
-describe('Allocation Engine V2 - Floors', () => {
+describe('Allocation Engine V2 - No implicit floors', () => {
 
-  test('should respect base floors (BTC ≥ 15%, ETH ≥ 12%)', async () => {
+  test('does not apply category floors by default', async () => {
     const context = {
       cycleScore: 50,
+      onchainScore: 50,
       riskScore: 50,
       risk_budget: { risky_allocation: 0.5, stable_allocation: 0.5 }
     };
 
     const result = await calculateHierarchicalAllocation(context);
 
-    if (result && result.allocations) {
-      const btc = result.allocations.find(a => a.group === 'BTC');
-      const eth = result.allocations.find(a => a.group === 'ETH');
-
-      if (btc) expect(btc.target_allocation).toBeGreaterThanOrEqual(15);
-      if (eth) expect(eth.target_allocation).toBeGreaterThanOrEqual(12);
-    }
+    expect(result.metadata.floors_applied).toEqual({});
   });
 
-  test('should apply bullish floors when cycle ≥ 90', async () => {
+  test('preserves an 80% stablecoin budget', async () => {
     const context = {
       cycleScore: 95,  // Strong bull
+      onchainScore: 80,
       riskScore: 85,
-      risk_budget: { risky_allocation: 0.8, stable_allocation: 0.2 }
+      risk_budget: { risky_allocation: 0.2, stable_allocation: 0.8 }
     };
 
     const result = await calculateHierarchicalAllocation(context);
 
-    if (result && result.allocations) {
-      const sol = result.allocations.find(a => a.group === 'SOL');
-      const defi = result.allocations.find(a => a.group === 'DeFi');
-
-      // Bullish floors: SOL ≥ 6%, DeFi ≥ 8%
-      if (sol) expect(sol.target_allocation).toBeGreaterThanOrEqual(6);
-      if (defi) expect(defi.target_allocation).toBeGreaterThanOrEqual(8);
-    }
+    const stables = result.allocations.find(a => a.group === 'Stablecoins');
+    expect(stables.target_allocation).toBe(80);
   });
 });
 
-describe('Allocation Engine V2 - Incumbency Protection', () => {
+describe('Allocation Engine V2 - No implicit incumbency', () => {
 
-  test('should protect incumbent positions with 3% minimum', async () => {
+  test('does not turn held coins into mandatory targets', async () => {
     const context = {
       cycleScore: 60,  // Neutral market (gives more room for alts)
+      onchainScore: 55,
       riskScore: 60,
       risk_budget: { risky_allocation: 0.5, stable_allocation: 0.5 }
     };
@@ -106,15 +98,8 @@ describe('Allocation Engine V2 - Incumbency Protection', () => {
 
     const result = await calculateHierarchicalAllocation(context, currentPositions);
 
-    if (result && result.allocations) {
-      const memes = result.allocations.find(a => a.group === 'Memecoins' || a.group === 'DOGE');
-      const gaming = result.allocations.find(a => a.group === 'Gaming/NFT' || a.group === 'AXS');
-
-      // Incumbent positions should get minimum allocation (capped by sector weight)
-      // In neutral market, sectors have more room, so 3% floor can be respected
-      if (memes) expect(memes.target_allocation).toBeGreaterThanOrEqual(2);  // At least 2% (sector floor)
-      if (gaming) expect(gaming.target_allocation).toBeGreaterThanOrEqual(1);  // At least 1% (sector floor)
-    }
+    expect(result.allocations.some(a => a.group === 'DOGE')).toBe(false);
+    expect(result.allocations.some(a => a.group === 'AXS')).toBe(false);
   });
 });
 
@@ -123,12 +108,14 @@ describe('Allocation Engine V2 - Risk Budget Integration', () => {
   test('should allocate more to risky assets when risk budget is high', async () => {
     const contextHighRisk = {
       cycleScore: 70,
+      onchainScore: 75,
       riskScore: 90,  // High robustness
       risk_budget: { risky_allocation: 0.8, stable_allocation: 0.2 }
     };
 
     const contextLowRisk = {
       cycleScore: 70,
+      onchainScore: 55,
       riskScore: 40,  // Low robustness
       risk_budget: { risky_allocation: 0.4, stable_allocation: 0.6 }
     };
@@ -151,7 +138,9 @@ describe('Allocation Engine V2 - Edge Cases', () => {
   test('should handle empty positions array', async () => {
     const context = {
       cycleScore: 60,
-      riskScore: 70
+      onchainScore: 60,
+      riskScore: 70,
+      risk_budget: { target_stables_pct: 30 }
     };
 
     const result = await calculateHierarchicalAllocation(context, []);
@@ -165,6 +154,7 @@ describe('Allocation Engine V2 - Edge Cases', () => {
   test('should handle extreme scores (cycle=100, risk=100)', async () => {
     const context = {
       cycleScore: 100,
+      onchainScore: 100,
       riskScore: 100,
       risk_budget: { risky_allocation: 0.9, stable_allocation: 0.1 }
     };
@@ -178,12 +168,21 @@ describe('Allocation Engine V2 - Edge Cases', () => {
     }
   });
 
-  test('should handle missing context fields with defaults', async () => {
+  test('should reject a missing stablecoin budget', async () => {
     const minimalContext = {};  // Empty context
 
     const result = await calculateHierarchicalAllocation(minimalContext);
 
-    expect(result).toBeDefined();
-    // Should use defaults: cycle=50, risk=50, etc.
+    expect(result).toBeNull();
+  });
+
+  test('should reject a missing decision score', async () => {
+    const result = await calculateHierarchicalAllocation({
+      cycleScore: 60,
+      riskScore: 70,
+      risk_budget: { target_stables_pct: 30 }
+    });
+
+    expect(result).toBeNull();
   });
 });

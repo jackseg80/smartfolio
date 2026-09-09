@@ -433,13 +433,19 @@ function renderMetadata(meta) {
  * Génère la colonne gauche avec score principal
  */
 function getLeftParts(data) {
-  const score = Math.round(data.di);
-  const gradient = getGradientForScore(score);
-  const levelText = getLevelText(score);
+  const scoreAvailable = Number.isFinite(data.di);
+  const score = scoreAvailable ? Math.round(data.di) : null;
+  const gradient = scoreAvailable ? getGradientForScore(score) : 'transparent';
+  const levelText = scoreAvailable ? getLevelText(score) : 'Unavailable';
   const m = data.meta || {};
   const s = data.scores || {};
+  const pillarsAvailable = [s.cycle, s.onchain, s.risk].every(Number.isFinite);
+  const weights = data.weights || {};
+  const weightsAvailable = [weights.cycle, weights.onchain, weights.risk].every(Number.isFinite);
 
-  const contributions = calculateRelativeContributions(data.weights || {}, s);
+  const contributions = pillarsAvailable && weightsAvailable
+    ? calculateRelativeContributions(weights, s)
+    : null;
 
   return {
     scoreBlock: `
@@ -449,17 +455,17 @@ function getLeftParts(data) {
           <button class="di-help-btn" aria-label="Aide" type="button">?</button>
         </div>
         <div class="di-score-section">
-          <div class="di-score-big">${score}</div>
+          <div class="di-score-big">${scoreAvailable ? score : '--'}</div>
           <div class="di-score-label">${levelText}</div>
         </div>
         <div class="di-main-bar-compact">
           <div class="di-bar-track">
-            <div class="di-bar-fill" style="width: ${score}%; background: ${gradient};">
+            <div class="di-bar-fill" style="width: ${scoreAvailable ? score : 0}%; background: ${gradient};">
               <div class="di-bar-glow"></div>
             </div>
             <div class="di-bar-segments">
               ${Array(10).fill(0).map((_, i) =>
-                `<div class="seg ${(i+1)*10 <= score ? 'on' : ''}"></div>`
+                `<div class="seg ${scoreAvailable && (i+1)*10 <= score ? 'on' : ''}"></div>`
               ).join('')}
             </div>
           </div>
@@ -468,9 +474,13 @@ function getLeftParts(data) {
           </div>
         </div>
       </div>`,
-    weights: renderScoresAndContributions(s, contributions),
+    weights: pillarsAvailable && weightsAvailable
+      ? renderScoresAndContributions(s, contributions)
+      : '<div class="scores-contrib-annotated"><div class="contrib-title">WEIGHTS</div><span class="no-data">Unavailable</span></div>',
     metadata: renderMetadata(m),
-    recommendation: renderRecommendation(score, m, s)
+    recommendation: scoreAvailable && pillarsAvailable
+      ? renderRecommendation(score, m, s)
+      : '<div class="di-recommendation neutral"><div class="reco-content"><div class="reco-header"><span class="reco-icon">⚠️</span><span class="reco-title">Decision unavailable</span></div><div class="reco-action">Wait for complete verified inputs</div></div></div>'
   };
 }
 

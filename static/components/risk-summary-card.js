@@ -352,7 +352,9 @@ class RiskSummaryCard extends HTMLElement {
 
         try {
             const activeUser = localStorage.getItem('activeUser');
-            const response = await fetch('/api/risk/dashboard', {
+            const source = window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
+            if (!source) throw new Error('No portfolio source is selected');
+            const response = await fetch(`/api/risk/dashboard?source=${encodeURIComponent(source)}`, {
                 headers: { 'X-User': activeUser },
                 signal: this._abortController.signal
             });

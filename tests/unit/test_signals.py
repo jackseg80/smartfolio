@@ -19,12 +19,13 @@ class TestMLSignals:
 
     def test_default_creation(self):
         signals = MLSignals()
-        assert signals.decision_score == 0.5
-        assert signals.confidence == 0.5
-        assert signals.contradiction_index == 0.0
+        assert signals.available is False
+        assert signals.decision_score == 0.0
+        assert signals.confidence == 0.0
+        assert signals.contradiction_index == 1.0
         assert signals.ttl_seconds == 1800
-        assert "BTC" in signals.volatility
-        assert "bull" in signals.regime
+        assert signals.volatility == {}
+        assert signals.regime == {}
 
     def test_custom_values(self):
         signals = MLSignals(
@@ -69,21 +70,19 @@ class TestMLSignals:
 
     def test_default_volatility(self):
         signals = MLSignals()
-        assert signals.volatility["BTC"] == 0.35
-        assert signals.volatility["ETH"] == 0.45
+        assert signals.volatility == {}
 
     def test_default_regime(self):
         signals = MLSignals()
-        assert signals.regime["bull"] == 0.5
-        assert signals.regime["bear"] == 0.25
+        assert signals.regime == {}
 
     def test_default_correlation(self):
         signals = MLSignals()
-        assert signals.correlation["avg_correlation"] == 0.5
+        assert signals.correlation == {}
 
     def test_default_sentiment(self):
         signals = MLSignals()
-        assert signals.sentiment["fear_greed"] == 50
+        assert signals.sentiment == {}
 
 
 # ── SignalExtractor ────────────────────────────────────────────────
@@ -97,9 +96,7 @@ class TestSignalExtractor:
             }
         }
         result = SignalExtractor.extract_volatility_signals(ml_status)
-        assert "BTC" in result
-        assert "ETH" in result
-        assert result["BTC"] > 0
+        assert result == {}
 
     def test_extract_volatility_no_models(self):
         ml_status = {
@@ -121,9 +118,7 @@ class TestSignalExtractor:
             }
         }
         result = SignalExtractor.extract_regime_signals(ml_status)
-        assert "bull" in result
-        assert "neutral" in result
-        assert "bear" in result
+        assert result == {}
 
     def test_extract_regime_not_loaded(self):
         ml_status = {
@@ -132,11 +127,11 @@ class TestSignalExtractor:
             }
         }
         result = SignalExtractor.extract_regime_signals(ml_status)
-        assert result == {"neutral": 1.0}
+        assert result == {}
 
     def test_extract_regime_empty(self):
         result = SignalExtractor.extract_regime_signals({})
-        assert result == {"neutral": 1.0}
+        assert result == {}
 
     def test_extract_correlation_with_cache(self):
         ml_status = {
@@ -145,9 +140,7 @@ class TestSignalExtractor:
             }
         }
         result = SignalExtractor.extract_correlation_signals(ml_status)
-        assert "avg_correlation" in result
-        assert "systemic_risk" in result
-        assert result["avg_correlation"] >= 0.4
+        assert result == {}
 
     def test_extract_correlation_high(self):
         ml_status = {
@@ -156,18 +149,15 @@ class TestSignalExtractor:
             }
         }
         result = SignalExtractor.extract_correlation_signals(ml_status)
-        assert result["avg_correlation"] > 0.6
-        assert result["systemic_risk"] == "medium"
+        assert result == {}
 
     def test_extract_correlation_empty(self):
         result = SignalExtractor.extract_correlation_signals({})
-        assert result["avg_correlation"] >= 0.4  # Floor at 0.4
+        assert result == {}
 
     def test_extract_sentiment(self):
         result = SignalExtractor.extract_sentiment_signals({})
-        assert "fear_greed" in result
-        assert "sentiment_score" in result
-        assert 45 <= result["fear_greed"] <= 75
+        assert result == {}
 
     def test_compute_contradiction_index_low(self):
         """Low volatility + neutral regime → low contradiction."""
@@ -223,12 +213,11 @@ class TestRealSignalExtractor:
             }
         }
         result = RealSignalExtractor.extract_regime_signals(ml_predictions)
-        assert "bull" in result
-        assert result["bull"] > result["bear"]
+        assert result == {"bull": 0.8}
 
     def test_extract_regime_empty(self):
         result = RealSignalExtractor.extract_regime_signals({})
-        assert result == {"neutral": 1.0}
+        assert result == {}
 
     def test_extract_regime_unknown(self):
         ml_predictions = {
@@ -240,8 +229,7 @@ class TestRealSignalExtractor:
             }
         }
         result = RealSignalExtractor.extract_regime_signals(ml_predictions)
-        # Unknown regime → equal distribution
-        assert "bull" in result
+        assert result == {}
 
     def test_extract_correlation_aggregates(self):
         ml_predictions = {
@@ -277,10 +265,9 @@ class TestRealSignalExtractor:
 
     def test_extract_correlation_empty(self):
         result = RealSignalExtractor.extract_correlation_signals({})
-        assert result["avg_correlation"] == 0.5
+        assert result == {}
 
-    def test_extract_correlation_min_floor(self):
-        """avg_correlation should never drop below 0.4."""
+    def test_extract_correlation_preserves_observed_low_value(self):
         ml_predictions = {
             "models": {
                 "correlation": {
@@ -290,7 +277,7 @@ class TestRealSignalExtractor:
             }
         }
         result = RealSignalExtractor.extract_correlation_signals(ml_predictions)
-        assert result["avg_correlation"] >= 0.4
+        assert result["avg_correlation"] == 0.1
 
     def test_extract_sentiment_real(self):
         ml_predictions = {
@@ -307,8 +294,7 @@ class TestRealSignalExtractor:
 
     def test_extract_sentiment_empty(self):
         result = RealSignalExtractor.extract_sentiment_signals({})
-        assert result["fear_greed"] == 50
-        assert result["sentiment_score"] == 0.0
+        assert result == {}
 
     def test_calculate_confidence_weighted(self):
         ml_predictions = {
@@ -326,7 +312,7 @@ class TestRealSignalExtractor:
 
     def test_calculate_confidence_empty(self):
         conf = RealSignalExtractor.calculate_confidence({})
-        assert conf == 0.5
+        assert conf == 0.0
 
     def test_calculate_confidence_partial(self):
         ml_predictions = {
@@ -349,7 +335,7 @@ class TestRealSignalExtractor:
 
     def test_compute_contradiction_no_ensemble(self):
         idx = RealSignalExtractor.compute_contradiction_index({})
-        assert idx == 0.3  # Default
+        assert idx == 1.0
 
     def test_compute_contradiction_high_conflict(self):
         ml_predictions = {
@@ -372,17 +358,16 @@ class TestCreateDefaultSignals:
 
     def test_default_values(self):
         signals = create_default_signals()
-        assert signals.decision_score == 0.5
-        assert signals.confidence == 0.5
-        assert signals.contradiction_index == 0.3
-        assert "fallback_default" in signals.sources_used
+        assert signals.available is False
+        assert signals.decision_score == 0.0
+        assert signals.confidence == 0.0
+        assert signals.contradiction_index == 1.0
+        assert signals.sources_used == []
 
     def test_volatility_defaults(self):
         signals = create_default_signals()
-        assert signals.volatility["BTC"] == 0.35
-        assert signals.volatility["ETH"] == 0.45
+        assert signals.volatility == {}
 
     def test_regime_defaults(self):
         signals = create_default_signals()
-        assert signals.regime["bull"] == 0.5
-        assert signals.regime["bear"] == 0.25
+        assert signals.regime == {}

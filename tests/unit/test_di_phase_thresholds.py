@@ -196,8 +196,8 @@ class TestSmartfolioReplicaOverrides:
         On-chain divergence: |cycle - onchain| = |94 - 64| = 30 ≥ 30 → TRIGGERS override
         stables += 10% → risky goes from 85% to 75%
 
-        Note: Production shows ~53% stables because it also applies
-        computeExposureCap() + governance cap_daily on top of risk_budget.
+        A daily movement cap is deliberately excluded: it limits execution
+        speed, not the target risky exposure.
         """
         risky = DISmartfolioReplicaStrategy._compute_risk_budget(94, 64, 78)
         # Risk budget: base=85%, but divergence override triggers → 75%

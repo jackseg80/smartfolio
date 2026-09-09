@@ -348,11 +348,19 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
  * @returns {number} Exposure cap percentage (0-100)
  */
 export function computeExposureCap({ blendedScore, riskScore, decision_score, confidence, volatility, regime, backendStatus }) {
-  const bs = Number(blendedScore ?? 0);    // 0..100
-  const rs = Number(riskScore ?? 0);       // 0..100
-  const ds = Number(decision_score ?? 0);  // 0..1
-  const dc = Number(confidence ?? 0);      // 0..1
-  let vol = Number(volatility ?? 0);       // 0..1 decimal
+  const numericInputs = { blendedScore, riskScore, decision_score, confidence, volatility };
+  const missingInputs = Object.entries(numericInputs)
+    .filter(([, value]) => !Number.isFinite(value))
+    .map(([name]) => name);
+  if (missingInputs.length > 0) {
+    throw new Error(`Exposure cap inputs unavailable: ${missingInputs.join(', ')}`);
+  }
+
+  const bs = Number(blendedScore);    // 0..100
+  const rs = Number(riskScore);       // 0..100
+  const ds = Number(decision_score);  // 0..1
+  const dc = Number(confidence);      // 0..1
+  let vol = Number(volatility);       // 0..1 decimal
 
   // Normalize volatility if passed as percentage
   if (vol > 1) vol = vol / 100;
@@ -384,14 +392,7 @@ export function computeExposureCap({ blendedScore, riskScore, decision_score, co
     base -= 15;
   }
 
-  // 5) Regime-based floor and cap (canonical names from regime-constants)
-  const minByRegime = {
-    'bear market': 20,
-    'correction': 40,
-    'bull market': 60,
-    'expansion': 75,
-  };
-
+  // 5) Regime-based maximum. No regime may force a minimum risky exposure.
   const maxByRegime = {
     'bear market': 40,
     'correction': 70,
@@ -400,22 +401,16 @@ export function computeExposureCap({ blendedScore, riskScore, decision_score, co
   };
 
   const regimeKey = normalizeRegimeName(regime?.name || regime || '').toLowerCase();
-  let regimeMin = minByRegime[regimeKey] ?? 40;
-  let regimeMax = maxByRegime[regimeKey] ?? 95;
+  const regimeMax = maxByRegime[regimeKey] ?? 95;
 
-  // Dynamic boost: If Expansion + high Risk Score (>=80), allow more aggressive allocation
-  if (regimeKey === 'expansion' && rs >= 80) {
-    regimeMin = 65;  // Boost floor from 60% to 65%
-  }
-
-  // 6) Final bounds (respect both floor and cap)
-  const finalCap = Math.max(regimeMin, Math.min(regimeMax, Math.round(base)));
+  // 6) Final maximum, without an implicit allocation floor.
+  const finalCap = Math.max(0, Math.min(regimeMax, Math.round(base)));
 
   // Debug logging
   if (window.__DEBUG_RISK__ || (typeof localStorage !== 'undefined' && localStorage.getItem('DEBUG_RISK'))) {
     debugLogger.debug('🔍 EXPOSURE CAP COMPUTED:', {
       inputs: { bs, rs, ds, dc, vol, regime: regimeKey, backendStatus },
-      intermediate: { base: base + (backendStatus === 'error' ? 25 : backendStatus === 'stale' ? 15 : 0), signalPenalty, volPenalty, regimeMin },
+      intermediate: { base: base + (backendStatus === 'error' ? 25 : backendStatus === 'stale' ? 15 : 0), signalPenalty, volPenalty, regimeMax },
       output: { finalCap }
     });
   }
@@ -443,13 +438,19 @@ export function generateSmartTargets() {
     criticalCount: onchainMetadata?.criticalZoneCount
   });
 
-  if (blendedScore == null) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Blended score not available for smart targets');
+  const requiredScores = { blendedScore, onchainScore, riskScore, cycleScore };
+  const missingScores = Object.entries(requiredScores)
+    .filter(([, value]) => !Number.isFinite(value))
+    .map(([name]) => name);
+  if (missingScores.length > 0) {
+    (window.debugLogger?.warn || console.warn)('⚠️ Smart targets unavailable:', missingScores);
     return {
-      targets: normalizeTargets(DEFAULT_MACRO_TARGETS),
-      strategy: 'Macro fallback (no blended score)',
-      mode: 'fallback',
-      confidence: 0.3,
+      available: false,
+      targets: null,
+      strategy: 'Smart targets unavailable',
+      mode: 'unavailable',
+      confidence: null,
+      error: `Required scores unavailable: ${missingScores.join(', ')}`,
       timestamp: new Date().toISOString()
     };
   }
@@ -472,7 +473,13 @@ export function generateSmartTargets() {
     const volVals = (backendSignals?.volatility && typeof backendSignals.volatility === 'object')
       ? Object.values(backendSignals.volatility).filter(v => typeof v === 'number')
       : [];
-    const avgVol = volVals.length ? (volVals.reduce((a, b) => a + b, 0) / volVals.length) : 0.0;
+    if (backendSignals?.available !== true
+        || !Number.isFinite(backendSignals?.decision_score)
+        || !Number.isFinite(backendSignals?.confidence)
+        || volVals.length === 0) {
+      throw new Error('Verified governance ML signals are unavailable');
+    }
+    const avgVol = volVals.reduce((a, b) => a + b, 0) / volVals.length;
 
     const exposureCap = computeExposureCap({
       blendedScore,
@@ -484,24 +491,11 @@ export function generateSmartTargets() {
       backendStatus: backendStatus || 'unknown'
     });
 
-    const exposureSource = (backendSignals && typeof backendSignals.decision_score === 'number') ? 'backend' : 'fallback';
+    const exposureSource = 'backend';
 
     // Final risky budget after cap
     const baseRisky = riskBudget.percentages.risky; // % risky suggested by regime/risk
     let finalRisky = Math.min(baseRisky, exposureCap);
-
-    // NIVEAU 3 FIX (Oct 2025): Lire cap backend comme limite supplémentaire si disponible
-    const backendCap = state.governance?.execution_policy?.cap_daily;  // cap_daily en fraction (0-1)
-    if (backendCap != null && typeof backendCap === 'number' && backendCap > 0 && backendCap <= 1) {
-      const backendCapPct = backendCap * 100;  // Convertir en %
-      console.debug(`🔗 Backend cap available: ${backendCapPct.toFixed(1)}% (finalRisky before: ${finalRisky.toFixed(1)}%)`);
-
-      // Appliquer cap backend comme limite MAX supplémentaire
-      finalRisky = Math.min(finalRisky, backendCapPct);
-      console.debug(`🔗 finalRisky after backend cap: ${finalRisky.toFixed(1)}%`);
-    } else {
-      console.debug(`🔗 Backend cap not available (value: ${backendCap}), using frontend cap only`);
-    }
 
     // Allocate risky budget according to regime with finalRisky
     const smartAllocation = allocateRiskyBudget(finalRisky, adjustedRegime);
@@ -513,17 +507,12 @@ export function generateSmartTargets() {
     console.debug('📊 Risk budget:', riskBudget.percentages);
     console.debug('🎯 Regime:', adjustedRegime.name);
 
-    // Déterminer source du cap final
-    let capSource = '';
-    if (backendCap != null && backendCap > 0 && finalRisky <= (backendCap * 100)) {
-      capSource = ` | Cap ${finalRisky.toFixed(1)}% (Backend Governance)`;
-    } else if (exposureCap != null) {
-      capSource = ` | Cap ${exposureCap}% (Frontend + Backend)`;
-    }
+    const capSource = ` | Risk exposure cap ${exposureCap}%`;
 
     const strategy = `${adjustedRegime.emoji} ${adjustedRegime.name} (${Math.round(blendedScore)}) | ${Math.round(100 - finalRisky)}% Stables${capSource}`;
 
     return {
+      available: true,
       targets: normalizeTargets(smartAllocation),
       strategy,
       mode: 'smart',
@@ -542,10 +531,11 @@ export function generateSmartTargets() {
   } catch (error) {
     debugLogger.error('❌ Error generating smart targets:', error);
     return {
-      targets: normalizeTargets(DEFAULT_MACRO_TARGETS),
-      strategy: 'Smart targeting failed - using macro fallback',
-      mode: 'fallback',
-      confidence: 0.2,
+      available: false,
+      targets: null,
+      strategy: 'Smart targets unavailable',
+      mode: 'unavailable',
+      confidence: null,
       error: error.message,
       timestamp: new Date().toISOString()
     };
@@ -559,8 +549,6 @@ export function proposeTargets(mode = 'blend', options = {}) {
   const state = store.snapshot();
   const ccsScore = state.ccs?.score;
   const cycleMultipliers = state.cycle?.multipliers;
-  const cycleWeight = state.cycle?.weight || 0.3;
-  const blendedCCS = state.cycle?.ccsStar;
   const finalBlendedScore = state.scores?.blended;
 
   let proposedTargets;
@@ -574,25 +562,8 @@ export function proposeTargets(mode = 'blend', options = {}) {
         break;
 
       case 'ccs':
-        if (!ccsScore) {
-          // Fallback : stratégie plus agressive (simule CCS élevé)
-          proposedTargets = {};
-          ALL_ASSET_GROUPS.forEach(group => {
-            proposedTargets[group] = 0.0;
-          });
-          proposedTargets.BTC = 45.0;
-          proposedTargets.ETH = 30.0;
-          proposedTargets.Stablecoins = 10.0;
-          proposedTargets.SOL = 6.0;
-          proposedTargets['L1/L0 majors'] = 5.0;
-          proposedTargets['L2/Scaling'] = 2.5;
-          proposedTargets.DeFi = 1.0;
-          proposedTargets['AI/Data'] = 0.5;
-          proposedTargets['Gaming/NFT'] = 0.0;
-          proposedTargets.Memecoins = 0.0;
-          proposedTargets.Others = 0.0;
-          proposedTargets.model_version = 'ccs-fallback-aggressive';
-          strategy = 'CCS Aggressive (simulated)';
+        if (!Number.isFinite(ccsScore)) {
+          throw new Error('CCS score is unavailable');
         } else {
           proposedTargets = generateCCSTargets(ccsScore);
           strategy = `CCS-based (${Math.round(ccsScore)})`;
@@ -601,24 +572,7 @@ export function proposeTargets(mode = 'blend', options = {}) {
 
       case 'cycle':
         if (!cycleMultipliers) {
-          // Fallback : stratégie cycle bear market (plus défensive)
-          proposedTargets = {};
-          ALL_ASSET_GROUPS.forEach(group => {
-            proposedTargets[group] = 0.0;
-          });
-          proposedTargets.BTC = 28.0;
-          proposedTargets.ETH = 18.0;
-          proposedTargets.Stablecoins = 40.0;
-          proposedTargets.SOL = 4.0;
-          proposedTargets['L1/L0 majors'] = 5.0;
-          proposedTargets['L2/Scaling'] = 2.5;
-          proposedTargets.DeFi = 2.0;
-          proposedTargets['AI/Data'] = 0.5;
-          proposedTargets['Gaming/NFT'] = 0.0;
-          proposedTargets.Memecoins = 0.0;
-          proposedTargets.Others = 0.0;
-          proposedTargets.model_version = 'cycle-bear-fallback';
-          strategy = 'Cycle Bear Market (defensive)';
+          throw new Error('Cycle multipliers are unavailable');
         } else {
           proposedTargets = applyCycleMultipliers(DEFAULT_MACRO_TARGETS, cycleMultipliers);
           strategy = `Cycle-adjusted (${state.cycle?.phase?.phase || 'unknown'})`;
@@ -628,40 +582,24 @@ export function proposeTargets(mode = 'blend', options = {}) {
       case 'smart':
         // New intelligent allocation based on market regimes
         const smartResult = generateSmartTargets();
+        if (smartResult.available !== true || !smartResult.targets) {
+          throw new Error(smartResult.error || 'Smart targets are unavailable');
+        }
         proposedTargets = smartResult.targets;
         strategy = smartResult.strategy;
         break;
 
       case 'blend':
       default:
-        // Use final blended score if available, fallback to blendedCCS
-        const effectiveScore = finalBlendedScore || blendedCCS;
+        // The blended mode requires the complete score produced by the decision chain.
+        const effectiveScore = finalBlendedScore;
 
-        // Deterministic priority logic - use fallback ONLY if no scores available at all
-        // FIX: Changed from (!ccsScore || ...) to (!effectiveScore) to allow using blended scores
+        // Missing components make this decision mode unavailable.
         // even when CCS is not available (external APIs can fail but we still have OnChain + Risk)
-        if (!effectiveScore) {
-          // Fallback to balanced blend when no score data
-          proposedTargets = {};
-          ALL_ASSET_GROUPS.forEach(group => {
-            proposedTargets[group] = 0.0;
-          });
-          proposedTargets.BTC = 33.0;
-          proposedTargets.ETH = 27.0;
-          proposedTargets.Stablecoins = 22.0;
-          proposedTargets.SOL = 5.0;
-          proposedTargets['L1/L0 majors'] = 6.5;
-          proposedTargets['L2/Scaling'] = 3.5;
-          proposedTargets.DeFi = 2.5;
-          proposedTargets['AI/Data'] = 0.5;
-          proposedTargets['Gaming/NFT'] = 0.0;
-          proposedTargets.Memecoins = 0.0;
-          proposedTargets.Others = 0.0;
-          proposedTargets.model_version = 'blend-fallback';
-          strategy = 'Balanced Blend (no scores available)';
+        if (!Number.isFinite(effectiveScore)) {
+          throw new Error('Blended score is unavailable');
         } else if (effectiveScore >= 70) {
           // High confidence: use effective score (blended or CCS*cycle)
-          // FIX: Use effectiveScore instead of blendedCCS which may be undefined
           proposedTargets = generateCCSTargets(effectiveScore);
           if (cycleMultipliers) {
             proposedTargets = applyCycleMultipliers(proposedTargets, cycleMultipliers);
@@ -697,22 +635,24 @@ export function proposeTargets(mode = 'blend', options = {}) {
     }
 
     return {
+      available: true,
       targets: proposedTargets,
       strategy,
       mode,
-      confidence: ccsScore && blendedCCS ? Math.min(1.0, blendedCCS / 100) : 0.5,
+      // A score level is not a calibrated prediction confidence.
+      confidence: null,
       timestamp: new Date().toISOString()
     };
 
   } catch (error) {
     debugLogger.error('Failed to propose targets:', error);
 
-    // Safe fallback
     return {
-      targets: normalizeTargets(DEFAULT_MACRO_TARGETS),
-      strategy: 'Safe fallback (error occurred)',
-      mode: 'fallback',
-      confidence: 0.3,
+      available: false,
+      targets: null,
+      strategy: 'Targets unavailable',
+      mode: 'unavailable',
+      confidence: null,
       timestamp: new Date().toISOString(),
       error: error.message
     };

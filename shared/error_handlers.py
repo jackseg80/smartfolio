@@ -31,6 +31,7 @@ def my_service_method(self):
 from functools import wraps
 from typing import Callable, Any, Dict, Optional, Union
 import logging
+import inspect
 import traceback
 from datetime import datetime
 
@@ -174,6 +175,29 @@ def handle_service_errors(
         # Returns None if attribute missing, no exception raised
     """
     def decorator(func: Callable) -> Callable:
+        if inspect.iscoroutinefunction(func):
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                try:
+                    return await func(*args, **kwargs)
+                except AttributeError as e:
+                    _log(log_level, f"Attribute not found in {func.__name__}: {e}")
+                    if silent:
+                        return default_return
+                    raise
+                except (ValueError, TypeError) as e:
+                    _log(log_level, f"Invalid value in {func.__name__}: {e}")
+                    if silent:
+                        return default_return
+                    raise
+                except Exception as e:
+                    _log("error", f"Error in {func.__name__}: {e}", exc_info=True)
+                    if silent:
+                        return default_return
+                    raise
+
+            return async_wrapper
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:

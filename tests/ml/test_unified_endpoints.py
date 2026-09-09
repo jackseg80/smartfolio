@@ -196,6 +196,8 @@ class TestMLEndpoints:
         inner = data.get("data", data)
         assert data.get("ok", data.get("success")) is True
         assert "regime_prediction" in inner
+        assert inner["regime_prediction"]["available"] is False
+        assert inner["regime_prediction"]["confidence"] is None
 
     def test_sentiment_endpoint(self):
         """Test de l'endpoint de sentiment"""
@@ -375,6 +377,9 @@ class TestMLHelperFunctions:
                 assert "volatility" in horizon_data
                 assert "expected_return" in horizon_data
                 assert "horizon_days" in horizon_data
+                assert horizon_data["available"] is False
+                assert horizon_data["volatility"] is None
+                assert horizon_data["expected_return"] is None
 
                 if include_confidence:
                     assert "confidence" in horizon_data
@@ -407,8 +412,9 @@ class TestMLHelperFunctions:
             assert "prediction_stability" in confidence
             assert "overall_confidence" in confidence
 
-            # Verifier les plages de valeurs
-            assert 0 <= confidence["overall_confidence"] <= 1
+            assert confidence["available"] is False
+            assert confidence["overall_confidence"] is None
+            assert "calibrated" in confidence["reason"]
 
 
 class TestMLEndpointIntegration:

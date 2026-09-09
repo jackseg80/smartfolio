@@ -12,7 +12,6 @@ from pathlib import Path
 import joblib
 
 from services.price_history import get_cached_history, get_symbols_with_cache
-from connectors.cointracking_api import get_current_balances
 from services.ml.safe_loader import safe_pickle_load
 
 logger = logging.getLogger(__name__)
@@ -35,55 +34,27 @@ class MLDataPipeline:
         # Cache settings
         self.cache_ttl_hours = 6  # Cache TTL for processed data
     
-    def fetch_portfolio_assets(self, source: str = "cointracking", 
+    def fetch_portfolio_assets(self, source: Optional[str] = None,
                              min_usd: float = 100) -> List[str]:
         """
-        Fetch current portfolio assets for ML training
-        Supports multiple data sources: stub, cointracking (CSV), cointracking_api
+        Legacy compatibility hook for a portfolio ML universe.
+
+        This service has no authenticated user identity and cannot safely resolve
+        a multi-tenant portfolio. The caller must use the decision portfolio
+        reference contract or pass an explicit symbol universe to training.
         
         Args:
-            source: Data source ('stub', 'cointracking', 'cointracking_api')
+            source: Legacy source label, retained for API compatibility
             min_usd: Minimum USD value threshold
             
         Returns:
             List of asset symbols
         """
-        try:
-            logger.info(f"Fetching portfolio assets from {source}")
-            
-            if source == "stub":
-                # Return diversified test portfolio for development/testing
-                return ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'AVAX', 'MATIC', 'LINK', 'ATOM', 'NEAR']
-            
-            elif source == "cointracking":
-                # Read from CSV files in data/raw directory
-                return self._fetch_assets_from_csv(min_usd)
-            
-            elif source == "cointracking_api":
-                # Fetch from CoinTracking API
-                balances_response = get_current_balances(source="cointracking_api")
-                if not balances_response or not balances_response.get("items"):
-                    logger.warning("No API data found, falling back to CSV")
-                    return self._fetch_assets_from_csv(min_usd)
-                
-                # Filter and extract symbols from API response
-                portfolio_assets = []
-                for item in balances_response["items"]:
-                    if item.get("value_usd", 0) >= min_usd:
-                        symbol = item.get("symbol", "").upper()
-                        if symbol and symbol not in portfolio_assets:
-                            portfolio_assets.append(symbol)
-                
-                logger.info(f"Found {len(portfolio_assets)} portfolio assets above ${min_usd} from API")
-                return portfolio_assets[:20]  # Limit to top 20 for performance
-            
-            else:
-                logger.warning(f"Unknown data source: {source}, using stub data")
-                return ['BTC', 'ETH', 'SOL', 'ADA']
-            
-        except Exception as e:
-            logger.error(f"Error fetching portfolio assets from {source}: {str(e)}")
-            return ['BTC', 'ETH', 'SOL', 'ADA']  # Safe fallback
+        logger.warning(
+            "Portfolio ML universe unavailable: source=%s is not bound to an authenticated user",
+            source,
+        )
+        return []
     
     def _fetch_assets_from_csv(self, min_usd: float) -> List[str]:
         """
@@ -95,108 +66,10 @@ class MLDataPipeline:
         Returns:
             List of asset symbols from CSV data
         """
-        try:
-            import pandas as pd
-            from pathlib import Path
-            
-            # Look for CSV files in data/raw directory
-            data_dir = Path("data/raw")
-            if not data_dir.exists():
-                logger.warning("data/raw directory not found, using fallback assets")
-                return ['BTC', 'ETH', 'SOL', 'ADA']
-            
-            # Try to find balance/portfolio CSV files
-            csv_files = list(data_dir.glob("*balance*.csv")) + list(data_dir.glob("*portfolio*.csv"))
-            if not csv_files:
-                # Try any CSV file as fallback
-                csv_files = list(data_dir.glob("*.csv"))
-            
-            if not csv_files:
-                logger.warning("No CSV files found in data/raw, using fallback assets")
-                return ['BTC', 'ETH', 'SOL', 'ADA']
-            
-            # Read the most recent CSV file
-            csv_file = max(csv_files, key=lambda f: f.stat().st_mtime)
-            logger.info(f"Reading portfolio data from: {csv_file}")
-            
-            df = pd.read_csv(csv_file)
-            
-            # Try to identify relevant columns (flexible column naming)
-            symbol_col = None
-            value_col = None
-            
-            for col in df.columns:
-                col_lower = col.lower()
-                if 'symbol' in col_lower or 'coin' in col_lower or 'currency' in col_lower:
-                    symbol_col = col
-                elif 'value' in col_lower and ('usd' in col_lower or '$' in col_lower):
-                    value_col = col
-                elif 'amount' in col_lower and 'usd' in col_lower:
-                    value_col = col
-            
-            if symbol_col is None:
-                # Try first text column as symbol
-                text_cols = df.select_dtypes(include=['object']).columns
-                if len(text_cols) > 0:
-                    symbol_col = text_cols[0]
-            
-            if value_col is None:
-                # Try to find any numeric column that could represent value
-                numeric_cols = df.select_dtypes(include=['number']).columns
-                for col in numeric_cols:
-                    if 'value' in col.lower() or 'usd' in col.lower() or 'amount' in col.lower():
-                        value_col = col
-                        break
-                if value_col is None and len(numeric_cols) > 0:
-                    value_col = numeric_cols[-1]  # Take last numeric column
-            
-            if symbol_col is None:
-                logger.warning("Could not identify symbol column in CSV")
-                return ['BTC', 'ETH', 'SOL', 'ADA']
-            
-            # Extract assets - VECTORIZED (performance fix)
-            # Clean and normalize symbols first
-            df_clean = df.copy()
-            df_clean['symbol_clean'] = (
-                df_clean[symbol_col]
-                .astype(str)
-                .str.strip()
-                .str.upper()
-                .str.replace(' ', '', regex=False)
-                .str.replace('-', '', regex=False)
-            )
-
-            # Filter invalid symbols
-            df_clean = df_clean[
-                (df_clean['symbol_clean'].notna()) &
-                (df_clean['symbol_clean'] != '') &
-                (~df_clean['symbol_clean'].isin(['NAN', 'NONE'])) &
-                (df_clean['symbol_clean'].str.len() >= 2) &
-                (df_clean['symbol_clean'].str.len() <= 10) &
-                (df_clean['symbol_clean'].str.isalpha())
-            ]
-
-            # Filter by value threshold if value column exists
-            if value_col is not None:
-                try:
-                    df_clean[value_col] = pd.to_numeric(df_clean[value_col], errors='coerce')
-                    df_clean = df_clean[df_clean[value_col] >= min_usd]
-                except Exception as e:
-                    logger.debug(f"Could not filter by value: {e}")
-
-            # Get unique symbols
-            portfolio_assets = df_clean['symbol_clean'].unique().tolist()
-            
-            if not portfolio_assets:
-                logger.warning("No valid assets found in CSV, using fallback")
-                return ['BTC', 'ETH', 'SOL', 'ADA']
-            
-            logger.info(f"Found {len(portfolio_assets)} assets from CSV: {portfolio_assets[:10]}")
-            return portfolio_assets[:20]  # Limit for performance
-            
-        except Exception as e:
-            logger.error(f"Error reading CSV files: {str(e)}")
-            return ['BTC', 'ETH', 'SOL', 'ADA']
+        logger.warning(
+            "Direct global CSV discovery is disabled; use an authenticated portfolio reference"
+        )
+        return []
     
     def fetch_price_data(self, symbol: str, days: int = 730) -> Optional[pd.DataFrame]:
         """

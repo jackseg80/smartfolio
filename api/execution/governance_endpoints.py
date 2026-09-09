@@ -12,12 +12,11 @@ from datetime import datetime, timedelta
 from api.auth_security import AuthenticatedUser as User
 from api.deps import get_required_user, require_any_role
 from services.execution.governance import Policy, governance_engine
-from services.execution.score_registry import get_score_registry
 from services.execution.phase_engine import get_phase_engine
 from .models import (
-    GovernanceStateResponse, ScoreComponents, CanonicalScores,
+    GovernanceStateResponse,
     PhaseInfo, ExecutionPressure, MarketSignals, CycleSignals,
-    UnifiedSignals, PortfolioMetrics, SuggestionIA,
+    UnifiedSignals,
     UnifiedApprovalRequest, FreezeRequest, ApplyPolicyRequest,
     SetModeRequest, ProposeDecisionRequest, ReviewPlanRequest,
     CancelPlanRequest, ValidateAllocationRequest
@@ -28,7 +27,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/execution/governance", tags=["governance"])
 
 @router.get("/state", response_model=GovernanceStateResponse)
-async def get_governance_state():
+async def get_governance_state(user: str = Depends(get_required_user)):
     """
     Obtenir l'état actuel du système de gouvernance - VERSION UNIFIÉE
     
@@ -59,63 +58,9 @@ async def get_governance_state():
         elif state.proposed_plan:
             current_etag = state.proposed_plan.etag
         
-        # 2. NOUVEAUX CHAMPS - Score canonique
+        # 2. Canonical scores remain unavailable until every component is
+        # supplied by a verified, versioned calculation.
         canonical_scores = None
-        try:
-            score_registry = get_score_registry()
-            
-            # Extraire les composants depuis les signaux ML existants
-            ml_signals = state.signals if state.signals else None
-            
-            if ml_signals:
-                # Mapping des signaux ML vers composants de score
-                trend_regime = 50.0  # CCS Mixte via trend_regime uniquement 
-                if hasattr(ml_signals, 'regime') and ml_signals.regime:
-                    # Convertir regime probabilities en score 0-100
-                    bull_prob = ml_signals.regime.get('bull', 0.33)
-                    trend_regime = min(100.0, max(0.0, bull_prob * 100 + 25))
-                
-                risk_component = 50.0
-                if hasattr(ml_signals, 'volatility') and ml_signals.volatility:
-                    # Volatilité inversée (high vol = low score)
-                    avg_vol = sum(ml_signals.volatility.values()) / len(ml_signals.volatility)
-                    risk_component = min(100.0, max(0.0, 100 - (avg_vol * 500)))
-                
-                breadth_rotation = 50.0  # Phase engine alimentera ceci
-                
-                sentiment_component = 50.0
-                if hasattr(ml_signals, 'sentiment') and ml_signals.sentiment:
-                    # Sentiment fear/greed → score 0-100
-                    fear_greed = ml_signals.sentiment.get('fear_greed', 50)
-                    sentiment_component = min(100.0, max(0.0, fear_greed))
-                
-                # Calculer score canonique
-                raw_scores = await score_registry.calculate_canonical_score(
-                    trend_regime=trend_regime,
-                    risk=risk_component, 
-                    breadth_rotation=breadth_rotation,
-                    sentiment=sentiment_component,
-                    contradiction_index=ml_signals.contradiction_index,
-                    confidence=ml_signals.confidence
-                )
-                
-                # Convertir en format compatible avec notre modèle d'endpoint
-                canonical_scores = CanonicalScores(
-                    decision=raw_scores.decision,
-                    confidence=raw_scores.confidence,
-                    contradiction=raw_scores.contradiction,
-                    components=ScoreComponents(
-                        trend_regime=raw_scores.components.trend_regime,
-                        risk=raw_scores.components.risk,
-                        breadth_rotation=raw_scores.components.breadth_rotation,
-                        sentiment=raw_scores.components.sentiment
-                    ),
-                    as_of=raw_scores.as_of.isoformat()
-                )
-                
-        except Exception as e:
-            logger.warning(f"Error calculating canonical scores: {e}")
-        
         # 3. Phase de rotation
         phase_info = None
         try:
@@ -159,7 +104,7 @@ async def get_governance_state():
         # 5. Bus de signaux unifié
         unified_signals = None
         try:
-            if state.signals:
+            if state.signals and state.signals.available is True:
                 market_signals = MarketSignals(
                     volatility=state.signals.volatility if hasattr(state.signals, 'volatility') else {},
                     regime=state.signals.regime if hasattr(state.signals, 'regime') else {},
@@ -167,19 +112,8 @@ async def get_governance_state():
                     sentiment=state.signals.sentiment if hasattr(state.signals, 'sentiment') else {}
                 )
                 
-                # Cycle signals enrichis par Phase Engine
-                # Map cycle position string to float (0-1 scale)
-                position_map = {
-                    'early_cycle': 0.25,
-                    'mid_cycle': 0.50,
-                    'late_cycle': 0.75,
-                    'peak': 1.0
-                }
                 cycle_signals = CycleSignals(
-                    btc_cycle={
-                        "position": position_map.get('mid_cycle', 0.5),  # Float 0-1 (Pydantic expects float)
-                        "confidence": 0.7
-                    },
+                    btc_cycle={},
                     rotation={}
                 )
                 
@@ -199,61 +133,12 @@ async def get_governance_state():
         except Exception as e:
             logger.warning(f"Error building unified signals: {e}")
         
-        # 6. Portfolio metrics (simulation pour l'instant)
-        portfolio_metrics = {
-            "metrics": PortfolioMetrics(
-                var_95_pct=2.5,  # Simulé
-                sharpe_ratio=1.2, 
-                hhi_concentration=0.35,
-                avg_correlation=0.65,
-                beta_btc=0.85,
-                exposures={"BTC": 45.0, "ETH": 25.0, "Large": 20.0, "Alt": 10.0}
-            ).model_dump()
-        }
-        
-        # 7. Suggestion IA canonique (lecture seule)
+        # Portfolio metrics require an authenticated portfolio snapshot.
+        portfolio_metrics = None
+
+        # No canonical suggestion is emitted until scores and portfolio inputs
+        # come from a verified, versioned decision calculation.
         suggestion_ia = None
-        try:
-            if canonical_scores and phase_info:
-                # Générer suggestion basée sur score et phase
-                confidence_level = canonical_scores.confidence
-                decision_score = canonical_scores.decision
-                current_phase = phase_info.phase_now
-                
-                # Logique de suggestion selon phase et score
-                if current_phase == "btc" and decision_score > 60:
-                    targets = [{"symbol": "BTC", "weight": 0.6}, {"symbol": "ETH", "weight": 0.25}, {"symbol": "SOL", "weight": 0.15}]
-                    rationale = f"Phase BTC forte (score {decision_score:.0f}) : privilégier BTC"
-                elif current_phase == "eth" and decision_score > 50:
-                    targets = [{"symbol": "BTC", "weight": 0.4}, {"symbol": "ETH", "weight": 0.4}, {"symbol": "SOL", "weight": 0.2}]
-                    rationale = f"Phase ETH (score {decision_score:.0f}) : équilibrer BTC/ETH"
-                elif current_phase in ["large", "alt"] and decision_score > 55:
-                    targets = [{"symbol": "BTC", "weight": 0.35}, {"symbol": "ETH", "weight": 0.25}, {"symbol": "SOL", "weight": 0.25}, {"symbol": "Others", "weight": 0.15}]
-                    rationale = f"Phase {current_phase.upper()} (score {decision_score:.0f}) : diversifier vers alts"
-                else:
-                    # Conservative fallback
-                    targets = [{"symbol": "BTC", "weight": 0.5}, {"symbol": "ETH", "weight": 0.3}, {"symbol": "SOL", "weight": 0.2}]
-                    rationale = f"Mode conservateur (score {decision_score:.0f}, phase {current_phase})"
-                
-                # Policy hint basée sur contradiction et confiance
-                contradiction = canonical_scores.contradiction
-                if contradiction > 0.7 or confidence_level < 0.4:
-                    policy_hint = "Slow"
-                elif contradiction < 0.3 and confidence_level > 0.8:
-                    policy_hint = "Aggressive"
-                else:
-                    policy_hint = "Normal"
-                
-                suggestion_ia = SuggestionIA(
-                    targets=targets,
-                    rationale=rationale,
-                    policy_hint=policy_hint,
-                    confidence=confidence_level,
-                    generated_at=datetime.now().isoformat()
-                )
-                
-        except Exception as e:
-            logger.warning(f"Error generating IA suggestion: {e}")
         
         # CONSTRUCTION DE LA RÉPONSE UNIFIÉE
         # Count pending approvals (plans in DRAFT or REVIEWED state)
@@ -360,7 +245,7 @@ async def unfreeze_system(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/signals")
-async def get_ml_signals() -> dict:
+async def get_ml_signals(user: str = Depends(get_required_user)) -> dict:
     """
     Obtenir les signaux ML actuels
     
@@ -370,10 +255,15 @@ async def get_ml_signals() -> dict:
     try:
         signals = await governance_engine.get_current_ml_signals()
         
-        if not signals:
+        if not signals or signals.available is not True:
             return {
-                "signals": None,
-                "message": "No ML signals available",
+                "signals": {
+                    "available": False,
+                    "unavailable_reason": getattr(signals, "unavailable_reason", "No verified ML signals available"),
+                    "timestamp": signals.as_of.isoformat() if signals and signals.as_of else None,
+                },
+                "derived_policy": None,
+                "message": "No verified ML signals available",
                 "timestamp": datetime.now().isoformat()
             }
         
@@ -417,6 +307,7 @@ async def get_ml_signals() -> dict:
 
         return {
             "signals": {
+                "available": True,
                 "volatility": signals.volatility,
                 "regime": signals.regime,
                 "correlation": signals.correlation,

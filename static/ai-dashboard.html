@@ -2080,7 +2080,7 @@
 
                 const predictionsData = await predictionsResponse.json();
 
-                if (predictionsData.btc_volatility !== undefined) {
+                if (predictionsData.available === true && Number.isFinite(predictionsData.btc_volatility)) {
                     return {
                         btc_volatility: predictionsData.btc_volatility,
                         eth_volatility: predictionsData.eth_volatility,

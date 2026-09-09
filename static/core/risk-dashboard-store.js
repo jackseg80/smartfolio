@@ -76,12 +76,12 @@ const initialStateFactory = () => ({
 
   // Governance state
   governance: {
-    current_state: 'IDLE',
-    mode: 'manual',
+    current_state: 'UNKNOWN',
+    mode: null,
     last_decision_id: null,
-    contradiction_index: 0.0,
+    contradiction_index: null,
     ml_signals_timestamp: null,
-    active_policy: { cap_daily: 0.08 },  // FIX Oct 2025: Default fallback 8% (safe conservative, not 1%)
+    active_policy: null,
     pending_approvals: [],
     next_update_time: null,
     decisions: [],
@@ -272,7 +272,7 @@ const storeActions = {
           'governance.last_decision_id': governanceState.last_decision_id,
           'governance.contradiction_index': governanceState.contradiction_index,
           'governance.ml_signals_timestamp': governanceState.ml_signals_timestamp,
-          'governance.active_policy': governanceState.active_policy ?? { cap_daily: 0.08 },  // FIX Oct 2025: Safe fallback 8%
+          'governance.active_policy': governanceState.active_policy ?? null,
           'governance.pending_approvals': Array.isArray(governanceState.pending_approvals) ? governanceState.pending_approvals : [],
           'governance.next_update_time': governanceState.next_update_time,
           'governance.last_sync': Date.now()
@@ -290,52 +290,47 @@ const storeActions = {
     return false;
   },
 
-  // Last-good fallback pour 429 rate limiting
-  _lastGoodMLSignals: null,
+  // Backoff for rate limiting. Stale signals are never reused as current data.
   _mlSignalsBackoffDelay: 1000,
 
   async syncMLSignals() {
     try {
       const response = await fetch(`${window.location.origin}/execution/governance/signals`);
 
-      // Rate limited: use last-good snapshot avec backoff exponentiel
+      // Rate limited: expose unavailability instead of reusing an unlabelled stale snapshot.
       if (response.status === 429) {
-        debugLogger.warn('⚠️ Rate limited (429), using last-good ML signals snapshot');
+        debugLogger.warn('⚠️ Rate limited (429), ML signals unavailable');
         this._mlSignalsBackoffDelay = Math.min(this._mlSignalsBackoffDelay * 2, 30000);
-
-        // Retourner last-good si disponible
-        if (this._lastGoodMLSignals) {
-          return this._lastGoodMLSignals;
-        }
+        this.update({
+          'governance.ml_signals': null,
+          'ui.apiStatus.signals': 'unavailable'
+        });
         return null;
       }
 
       if (response.ok) {
         const data = await response.json();
 
-        // Sauvegarder last-good snapshot
-        this._lastGoodMLSignals = data.signals;
         this._mlSignalsBackoffDelay = 1000; // Reset backoff
 
         this.update({
-          'governance.ml_signals': data.signals,
+          'governance.ml_signals': data.available === true ? data.signals : null,
+          'ui.apiStatus.signals': data.available === true ? 'healthy' : 'unavailable',
           'governance.last_sync': Date.now()
         });
 
-        console.debug('ML signals synced, contradiction index:', data.signals?.contradiction_index);
+        console.debug('ML signals synced, contradiction index:', data.signals?.contradiction_index ?? null);
         // Update backend health TTL
         storeActions._updateBackendStatusFromGovernance();
         return data.signals;
       }
     } catch (error) {
       debugLogger.error('Failed to sync ML signals:', error);
-      this.update({ 'ui.errors': [...(getState().ui.errors || []), `ML signals sync error: ${error.message}`] });
-
-      // Graceful degradation: retourner last-good si disponible
-      if (this._lastGoodMLSignals) {
-        debugLogger.warn('⚠️ Using last-good ML signals after error');
-        return this._lastGoodMLSignals;
-      }
+      this.update({
+        'governance.ml_signals': null,
+        'ui.apiStatus.signals': 'unavailable',
+        'ui.errors': [...(getState().ui.errors || []), `ML signals sync error: ${error.message}`]
+      });
     }
     return null;
   },
@@ -586,19 +581,17 @@ const storeActions = {
     return false;
   },
 
-  async proposeDecision(targets = null, reason = 'Test proposal from UI') {
+  async proposeDecision(targets, reason = 'Proposal from UI') {
     try {
-      const defaultTargets = [
-        { symbol: 'BTC', weight: 0.6 },
-        { symbol: 'ETH', weight: 0.3 },
-        { symbol: 'SOL', weight: 0.1 }
-      ];
+      if (!Array.isArray(targets) || targets.length === 0) {
+        throw new Error('Explicit allocation targets are required');
+      }
 
       const response = await fetch(`${window.location.origin}/execution/governance/propose`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          targets: targets || defaultTargets,
+          targets,
           reason: reason
         })
       });
@@ -625,12 +618,12 @@ const storeActions = {
     const hasSignals = !!gov.ml_signals_timestamp || !!gov.ml_signals;
     return {
       state: gov.current_state || 'UNKNOWN',
-      mode: gov.mode || 'manual',
+      mode: gov.mode || null,
       isActive: ['DRAFT', 'APPROVED', 'ACTIVE'].includes(gov.current_state),
       hasSignals,
-      contradictionLevel: gov.contradiction_index || 0,
+      contradictionLevel: Number.isFinite(gov.contradiction_index) ? gov.contradiction_index : null,
       pendingCount,
-      needsAttention: pendingCount > 0 || (gov.contradiction_index || 0) > 0.7,
+      needsAttention: pendingCount > 0 || (Number.isFinite(gov.contradiction_index) && gov.contradiction_index > 0.7),
       lastSync: gov.last_sync ? new Date(gov.last_sync) : null
     };
   },

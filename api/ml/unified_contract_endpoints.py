@@ -49,6 +49,8 @@ async def unified_predict(request: UnifiedMLRequest):
                 raw_prediction = await _get_raw_prediction(
                     asset, request.model_type, request.horizon
                 )
+                if raw_prediction is None or not np.isfinite(raw_prediction):
+                    raise ValueError("Verified model output is unavailable")
 
                 model_key = f"{request.model_type.value}_{request.horizon.value if request.horizon else 'default'}"
 
@@ -57,11 +59,13 @@ async def unified_predict(request: UnifiedMLRequest):
                     raw_prediction=raw_prediction,
                     model_key=model_key,
                     model_type=request.model_type,
-                    context={
-                        'data_age_hours': 1.0,
-                        'feature_availability': 0.9
-                    }
+                    context={}
                 )
+
+                if not accepted or gated_prediction is None:
+                    failed_assets.append(asset)
+                    warnings.append(f"{asset}: prediction rejected by quality gate")
+                    continue
 
                 if request.include_metadata:
                     gated_prediction.metadata = ModelMetadata(
@@ -135,8 +139,7 @@ async def unified_volatility_predict(
     return await unified_predict(request)
 
 
-@handle_service_errors(silent=False, default_return=0.0)
-async def _get_raw_prediction(asset: str, model_type: ModelType, horizon: Optional[Horizon]) -> float:
+async def _get_raw_prediction(asset: str, model_type: ModelType, horizon: Optional[Horizon]) -> Optional[float]:
     """
     Obtenir une prédiction brute selon le type de modèle
 
@@ -160,15 +163,14 @@ async def _get_raw_prediction(asset: str, model_type: ModelType, horizon: Option
             return float(result['prediction'])
         elif isinstance(result, (int, float)):
             return float(result)
-        else:
-            return 0.15
+        return None
 
     elif model_type == ModelType.SENTIMENT:
-        return np.random.normal(0, 0.3)
+        return None
 
     elif model_type == ModelType.RISK:
-        return np.random.uniform(0.2, 0.8)
+        return None
 
     else:
         logger.warning(f"Unsupported model type: {model_type}")
-        return 0.0
+        return None

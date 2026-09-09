@@ -2480,7 +2480,9 @@ function updateTimestamp(ts, calcTime) {
 // Test endpoint (identique à ta version)
 async function testEndpoint() {
   try {
-    const url = window.globalConfig.getApiUrl('/api/risk/dashboard');
+    const source = window.globalConfig.get('data_source');
+    if (!source) throw new Error('No portfolio source is selected');
+    const url = window.globalConfig.getApiUrl(`/api/risk/dashboard?source=${encodeURIComponent(source)}`);
     const r = await fetch(url);
     const t = await r.text();
     try { JSON.parse(t); alert('API Response received. Check console for details.'); }

@@ -122,10 +122,9 @@ async def recompute_ml_signals(
                     detail=f"NeedsRefresh: missing components {missing_components}"
                 )
 
-            # Pull components if provided; otherwise fall back to safe neutrals
-            ccs_mixte = request.ccs_mixte if request.ccs_mixte is not None else 50.0
-            onchain = request.onchain_score if request.onchain_score is not None else 50.0
-            risk = request.risk_score if request.risk_score is not None else 50.0
+            ccs_mixte = request.ccs_mixte
+            onchain = request.onchain_score
+            risk = request.risk_score
 
             # Get previous blended score for audit trail
             blended_old = getattr(signals, 'blended_score', None)
@@ -221,6 +220,8 @@ async def recompute_ml_signals(
                     logger.warning(f"Failed to cache idempotent response for key {idempotency_key}: {e}")
 
             return response_payload
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error recomputing ML signals: {e}")
             raise HTTPException(status_code=500, detail=str(e))

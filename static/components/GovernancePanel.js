@@ -97,7 +97,7 @@ class GovernancePanel {
                   <span class="status-title">Policy</span>
                 </div>
                 <div class="status-content">
-                  <span class="policy-info" id="gov-policy">Normal 8%</span>
+                  <span class="policy-info" id="gov-policy">--</span>
                 </div>
               </div>
               
@@ -107,7 +107,7 @@ class GovernancePanel {
                   <span class="status-title">Cooldown</span>
                 </div>
                 <div class="status-content">
-                  <span class="cooldown-status" id="gov-cooldown">Ready</span>
+                  <span class="cooldown-status" id="gov-cooldown">--</span>
                 </div>
               </div>
               
@@ -130,7 +130,7 @@ class GovernancePanel {
                   <span class="status-title">Contradiction</span>
                 </div>
                 <div class="status-content">
-                  <span class="contradiction-meter" id="gov-contradiction">0%</span>
+                  <span class="contradiction-meter" id="gov-contradiction">--</span>
                 </div>
               </div>
             </div>
@@ -476,13 +476,7 @@ class GovernancePanel {
         }
       } catch (govError) {
         (window.debugLogger?.warn || console.warn)('Governance state sync failed (non-critical):', govError.message);
-        // Set mock governance data to prevent UI errors
-        store.set('governance', {
-          current_state: 'IDLE',
-          mode: 'manual',
-          contradiction_index: 0.0,
-          last_update: new Date().toISOString()
-        });
+        store.set('ui.apiStatus.backend', 'unavailable');
       }
 
       // Try to sync ML signals with graceful error handling
@@ -492,11 +486,8 @@ class GovernancePanel {
         }
       } catch (mlError) {
         (window.debugLogger?.warn || console.warn)('ML signals sync failed (non-critical):', mlError.message);
-        // Set mock ML signals to prevent UI errors
-        store.set('governance.ml_signals', {
-          confidence: 0.5,
-          decision_score: 0.5
-        });
+        store.set('governance.ml_signals', null);
+        store.set('ui.apiStatus.signals', 'unavailable');
       }
 
       // Try to sync alerts with graceful error handling
@@ -580,7 +571,7 @@ class GovernancePanel {
     // Get data with safe fallbacks
     const governanceStatus = store && typeof store.getGovernanceStatus === 'function' 
       ? store.getGovernanceStatus() 
-      : { state: 'IDLE', mode: 'manual', confidence: 'Unknown', contradiction_level: 'Unknown' };
+      : { state: 'UNKNOWN', mode: null, confidence: 'Unknown', contradiction_level: 'Unknown' };
       
     const governance = store && typeof store.get === 'function' 
       ? store.get('governance') 
@@ -605,7 +596,7 @@ class GovernancePanel {
       timestampEl.style.display = 'none';
     }
     
-    document.getElementById('gov-mode').textContent = governanceStatus.mode;
+    document.getElementById('gov-mode').textContent = governanceStatus.mode || '--';
     
     // Update auto-unfreeze timer if system is frozen
     if (governanceStatus.mode === 'freeze' && governance?.auto_unfreeze_at) {
@@ -627,19 +618,21 @@ class GovernancePanel {
       const capPercent = Math.round(activePolicy.cap_daily * 100);
       document.getElementById('gov-policy').textContent = `${activePolicy.mode} ${capPercent}%`;
     } else {
-      document.getElementById('gov-policy').textContent = 'Normal 8%';
+      document.getElementById('gov-policy').textContent = '--';
     }
     
     // Update contradiction index
-    const contradiction = governance?.contradiction_index || 0;
+    const contradiction = governance?.contradiction_index;
     const contradictionEl = document.getElementById('gov-contradiction');
-    contradictionEl.textContent = `${Math.round(contradiction * 100)}%`;
-    contradictionEl.className = `contradiction-meter ${this.getContradictionClass(contradiction)}`;
+    contradictionEl.textContent = Number.isFinite(contradiction) ? `${Math.round(contradiction * 100)}%` : '--';
+    contradictionEl.className = Number.isFinite(contradiction)
+      ? `contradiction-meter ${this.getContradictionClass(contradiction)}`
+      : 'contradiction-meter';
     
-    // Update cooldown status (placeholder - would need actual API integration)
+    // Cooldown stays unavailable until the backend supplies a concrete value.
     const cooldownEl = document.getElementById('gov-cooldown');
-    cooldownEl.textContent = "Ready"; // Default, would be updated by checkCooldownStatus()
-    cooldownEl.className = "cooldown-status ready";
+    cooldownEl.textContent = '--';
+    cooldownEl.className = 'cooldown-status';
     
     // Update ETag info (optional - only if element exists)
     const etagEl = document.getElementById('gov-etag');
@@ -649,13 +642,7 @@ class GovernancePanel {
       etagEl.title = currentEtag; // Full ETag on hover
     }
     
-    // Update ML signals with safe fallbacks
-    if (mlSignals) {
-      this.updateMLSignals(mlSignals);
-    } else {
-      // Set default ML signals if none available
-      this.updateMLSignals({ confidence: 0.5, decision_score: 0.5 });
-    }
+    this.updateMLSignals(mlSignals);
     
     // Update freeze/unfreeze buttons
     const freezeBtn = document.getElementById('btn-freeze');
@@ -680,29 +667,33 @@ class GovernancePanel {
   
   updateMLSignals(signals) {
     // Update confidence card
-    const confidence = signals.confidence || 0;
+    const confidence = signals?.confidence;
     const confidenceFill = document.getElementById('confidence-fill');
     const confidenceValue = document.getElementById('confidence-value');
     const confidenceLabel = document.getElementById('confidence-label');
     
     if (confidenceFill && confidenceValue && confidenceLabel) {
-      confidenceFill.style.width = `${confidence * 100}%`;
-      confidenceFill.className = `signal-fill-compact ${this.getConfidenceClass(confidence)}`;
-      confidenceValue.textContent = `${Math.round(confidence * 100)}%`;
-      confidenceLabel.textContent = this.getConfidenceLabel(confidence);
+      confidenceFill.style.width = Number.isFinite(confidence) ? `${confidence * 100}%` : '0%';
+      confidenceFill.className = Number.isFinite(confidence)
+        ? `signal-fill-compact ${this.getConfidenceClass(confidence)}`
+        : 'signal-fill-compact';
+      confidenceValue.textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : '--';
+      confidenceLabel.textContent = Number.isFinite(confidence) ? this.getConfidenceLabel(confidence) : 'Unavailable';
     }
     
     // Update decision score card
-    const decisionScore = signals.decision_score || 0;
+    const decisionScore = signals?.decision_score;
     const decisionFill = document.getElementById('decision-fill');
     const decisionValue = document.getElementById('decision-value');
     const decisionLabel = document.getElementById('decision-label');
     
     if (decisionFill && decisionValue && decisionLabel) {
-      decisionFill.style.width = `${decisionScore * 100}%`;
-      decisionFill.className = `signal-fill-compact ${this.getDecisionClass(decisionScore)}`;
-      decisionValue.textContent = `${Math.round(decisionScore * 100)}%`;
-      decisionLabel.textContent = this.getDecisionLabel(decisionScore);
+      decisionFill.style.width = Number.isFinite(decisionScore) ? `${decisionScore * 100}%` : '0%';
+      decisionFill.className = Number.isFinite(decisionScore)
+        ? `signal-fill-compact ${this.getDecisionClass(decisionScore)}`
+        : 'signal-fill-compact';
+      decisionValue.textContent = Number.isFinite(decisionScore) ? `${Math.round(decisionScore * 100)}%` : '--';
+      decisionLabel.textContent = Number.isFinite(decisionScore) ? this.getDecisionLabel(decisionScore) : 'Unavailable';
     }
   }
   
@@ -816,10 +807,23 @@ class GovernancePanel {
       btn.disabled = true;
       btn.textContent = 'Proposing...';
 
-      const currentMode = store.getGovernanceStatus().mode;
-      const reason = `Test proposal in ${currentMode} mode`;
-      
-      const result = await store.proposeDecision(null, reason);
+      const currentMode = store.getGovernanceStatus().mode || 'unknown';
+      const proposed = store.get('targets.proposed');
+      const targets = proposed && typeof proposed === 'object'
+        ? Object.entries(proposed)
+          .filter(([symbol, weight]) => symbol !== 'model_version' && Number.isFinite(weight) && weight > 0)
+          .map(([symbol, weight]) => ({ symbol, weight: weight / 100 }))
+        : [];
+      const totalWeight = targets.reduce((sum, target) => sum + target.weight, 0);
+      if (targets.length === 0 || Math.abs(totalWeight - 1) > 0.001) {
+        this.showNotification('Select a valid target allocation before proposing a decision', 'warning');
+        btn.disabled = false;
+        btn.textContent = '📋 Propose';
+        return;
+      }
+      const reason = `Selected target allocation in ${currentMode} mode`;
+
+      const result = await store.proposeDecision(targets, reason);
       if (result) {
         this.showNotification('Decision proposed successfully', 'success');
         this.refreshState();
@@ -855,15 +859,15 @@ class GovernancePanel {
           <table class="details-table">
             <tr>
               <td>Confidence Level:</td>
-              <td><strong>${Math.round((mlSignals?.confidence || 0) * 100)}%</strong></td>
+              <td><strong>${Number.isFinite(mlSignals?.confidence) ? `${Math.round(mlSignals.confidence * 100)}%` : '--'}</strong></td>
             </tr>
             <tr>
               <td>Decision Score:</td>
-              <td><strong>${Math.round((mlSignals?.decision_score || 0) * 100)}%</strong></td>
+              <td><strong>${Number.isFinite(mlSignals?.decision_score) ? `${Math.round(mlSignals.decision_score * 100)}%` : '--'}</strong></td>
             </tr>
             <tr>
               <td>Contradiction Index:</td>
-              <td><strong>${Math.round((governance?.contradiction_index || 0) * 100)}%</strong></td>
+              <td><strong>${Number.isFinite(governance?.contradiction_index) ? `${Math.round(governance.contradiction_index * 100)}%` : '--'}</strong></td>
             </tr>
             <tr>
               <td>Market Regime:</td>
@@ -877,15 +881,15 @@ class GovernancePanel {
           <table class="details-table">
             <tr>
               <td>Mode:</td>
-              <td><strong>${governance?.mode || 'manual'}</strong></td>
+              <td><strong>${governance?.mode || '--'}</strong></td>
             </tr>
             <tr>
               <td>State:</td>
-              <td><strong>${governance?.current_state || 'IDLE'}</strong></td>
+              <td><strong>${governance?.current_state || 'UNKNOWN'}</strong></td>
             </tr>
             <tr>
               <td>Contradiction:</td>
-              <td><strong>${Math.round((governance?.contradiction_index || 0) * 100)}%</strong></td>
+              <td><strong>${Number.isFinite(governance?.contradiction_index) ? `${Math.round(governance.contradiction_index * 100)}%` : '--'}</strong></td>
             </tr>
           </table>
         </div>
