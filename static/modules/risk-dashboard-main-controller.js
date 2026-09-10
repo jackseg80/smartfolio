@@ -3127,7 +3127,9 @@ window.startAlertMonitoring = startAlertMonitoring;
 // refreshAlertsHistory: exported from risk-dashboard-alerts-history.js
 
 // Start monitoring when page loads
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.__smartfolioAuthReady && !await window.__smartfolioAuthReady) return;
+
   loadDismissedAlerts();  // Load previously dismissed alerts
   startAlertMonitoring();
 
@@ -3427,7 +3429,9 @@ function initLoadingTimeoutMonitor() {
 }
 
 // Initialize on DOM ready
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  if (window.__smartfolioAuthReady && !await window.__smartfolioAuthReady) return;
+
   debugLogger.debug('Risk Dashboard CCS MVP initializing...');
 
   // Initialize data source tracking for cross-tab synchronization

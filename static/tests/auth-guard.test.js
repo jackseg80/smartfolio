@@ -27,6 +27,7 @@ describe('Auth Guard - Token Management', () => {
     localStorage.clear();
     jest.clearAllMocks();
     global.fetch.mockClear();
+    delete window.__smartfolioAuthRedirecting;
     if (global.alert) global.alert.mockClear();
     if (window.location) window.location.href = '';
   });
@@ -141,7 +142,12 @@ describe('Auth Guard - Headers', () => {
     localStorage.setItem('activeUser', 'jack');
     global.fetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ data: { user: { id: 'jack' } } })
+      json: async () => ({
+        data: {
+          token: 'renewed-dual-token',
+          user: { id: 'jack' }
+        }
+      })
     });
     const transport = jest.fn()
       .mockResolvedValueOnce({ ok: false, status: 401 })
@@ -152,6 +158,8 @@ describe('Auth Guard - Headers', () => {
 
     expect(response.ok).toBe(true);
     expect(transport).toHaveBeenCalledTimes(2);
+    expect(transport.mock.calls[1][1].headers.get('Authorization')).toBe('Bearer renewed-dual-token');
+    expect(localStorage.getItem('authToken')).toBe('renewed-dual-token');
     expect(global.fetch).toHaveBeenCalledWith(
       'http://localhost/auth/refresh',
       expect.objectContaining({
@@ -161,6 +169,23 @@ describe('Auth Guard - Headers', () => {
       })
     );
     document.cookie = 'smartfolio_csrf=; Max-Age=0; path=/';
+  });
+
+  test('should clear authentication after an unrecoverable same-origin 401', async () => {
+    localStorage.setItem('authToken', 'expired-token');
+    localStorage.setItem('activeUser', 'jack');
+    localStorage.setItem('userInfo', JSON.stringify({ id: 'jack' }));
+    document.cookie = 'smartfolio_csrf=; Max-Age=0; path=/';
+    const transport = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+    const authenticatedFetch = createAuthenticatedFetch(transport);
+
+    const response = await authenticatedFetch('/api/risk/dashboard');
+
+    expect(response.status).toBe(401);
+    expect(window.__smartfolioAuthRedirecting).toBe(true);
+    expect(localStorage.getItem('authToken')).toBeNull();
+    expect(localStorage.getItem('activeUser')).toBeNull();
+    expect(localStorage.getItem('userInfo')).toBeNull();
   });
 });
 

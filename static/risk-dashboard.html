@@ -16,6 +16,17 @@
 
   <!-- Scripts partagés existants -->
   <script src="debug-logger.js"></script>
+  <script type="module">
+    import { checkAuth, getCurrentUser } from './core/auth-guard.js';
+
+    // Shared gate: protected modules must wait until the session is verified.
+    window.__smartfolioAuthReady = checkAuth()
+      .then(user => Boolean(user || getCurrentUser()))
+      .catch(error => {
+        console.error('Authentication check failed:', error);
+        return false;
+      });
+  </script>
     <script src="components/toast.js" type="module"></script>
   <script src="global-config.js"></script>
   <script type="module" src="components/data-freshness.js"></script>
@@ -105,17 +116,18 @@
   <!-- Navigation unifiée (conditionnelle) -->
   <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
-    import { checkAuth } from './core/auth-guard.js';
-    await checkAuth();  // Vérifie authentification + redirect si nécessaire
+    const isAuthenticated = await window.__smartfolioAuthReady;
     // =================================
 
-    // ===== VIEW MODE MANAGER (Feb 2026) =====
-    import { ViewModeManager } from './core/view-mode-manager.js';
-    ViewModeManager.init();
-    // ========================================
+    if (isAuthenticated) {
+      // ===== VIEW MODE MANAGER (Feb 2026) =====
+      const { ViewModeManager } = await import('./core/view-mode-manager.js');
+      ViewModeManager.init();
+      // ========================================
 
-    if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
-      import('./components/nav.js');
+      if (new URLSearchParams(window.location.search).get('nav') !== 'off') {
+        import('./components/nav.js');
+      }
     }
   </script>
   <script type="module" src="components/tooltips.js"></script>

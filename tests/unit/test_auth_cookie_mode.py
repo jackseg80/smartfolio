@@ -129,6 +129,29 @@ def test_refresh_rotates_cookie(auth_client: TestClient, monkeypatch):
     assert "replacement-refresh-token" in "\n".join(response.headers.get_list("set-cookie"))
 
 
+def test_dual_refresh_returns_replacement_bearer(auth_client: TestClient, monkeypatch):
+    monkeypatch.setenv("AUTH_MODE", "dual")
+    monkeypatch.setattr(
+        auth_router,
+        "rotate_refresh_session",
+        lambda _: (
+            "replacement-refresh-token",
+            {"user_id": "jack", "session_id": "session-id"},
+        ),
+    )
+    auth_client.cookies.set("smartfolio_refresh", "opaque-refresh-token")
+    auth_client.cookies.set("smartfolio_csrf", "csrf-token")
+
+    response = auth_client.post(
+        "/auth/refresh",
+        headers={"X-CSRF-Token": "csrf-token"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["token_type"] == "bearer"
+    assert response.json()["data"]["token"]
+
+
 def test_replayed_refresh_is_rejected(auth_client: TestClient, monkeypatch):
     def reject_replay(_):
         raise HTTPException(status_code=401, detail="Invalid or replayed refresh token")

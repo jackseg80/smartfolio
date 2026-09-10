@@ -339,7 +339,9 @@ export async function hydrateRiskStore() {
  * Auto-init : Hydrate le store dès que le DOM est prêt
  * Garantit que les modules de calcul sont exécutés et le store rempli
  */
-function autoInit() {
+async function autoInit() {
+  if (window.__smartfolioAuthReady && !await window.__smartfolioAuthReady) return;
+
   // Attendre que riskStore soit disponible (chargé par risk-dashboard-store.js)
   if (window.riskStore) {
     hydrateRiskStore().catch(err => {

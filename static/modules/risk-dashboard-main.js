@@ -143,6 +143,8 @@ export function toggleAutoRefresh() {
  * Initialize the dashboard
  */
 export async function initDashboard() {
+  if (window.__smartfolioAuthReady && !await window.__smartfolioAuthReady) return;
+
   debugLogger.debug('🚀 Initializing Risk Dashboard...');
 
   // Auto-calculate scores if auto_calc=true (for iframe refresh from dashboard.html)

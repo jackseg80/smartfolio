@@ -32,6 +32,21 @@ const AUTH_RETRY_EXCLUDED_PATHS = new Set([
 let sessionRefreshInFlight = null;
 let lastSessionRefreshAt = 0;
 
+function redirectExpiredSession() {
+    if (isPublicPage() || window.__smartfolioAuthRedirecting) return;
+
+    window.__smartfolioAuthRedirecting = true;
+    StorageService.clearAuth();
+    StorageService.remove('userInfo');
+
+    const loginUrl = '/static/login.html?message=session_expired';
+    try {
+        window.location.replace(loginUrl);
+    } catch (_) {
+        window.location.href = loginUrl;
+    }
+}
+
 async function ensureFreshCookieSession() {
     if (Date.now() - lastSessionRefreshAt < 5000) return true;
     if (!sessionRefreshInFlight) {
@@ -147,11 +162,20 @@ export function createAuthenticatedFetch(fetchImplementation) {
         }
 
         const refreshed = await ensureFreshCookieSession();
-        if (!refreshed) return response;
+        if (!refreshed) {
+            redirectExpiredSession();
+            return response;
+        }
 
         // The first request was rejected before executing its operation. Retry
-        // it once with the renewed same-origin cookie session.
-        return fetchImplementation(retryInput, requestOptions);
+        // it once with the renewed cookie, bearer and CSRF credentials.
+        const renewedAuthHeaders = getAuthHeaders();
+        Object.entries(renewedAuthHeaders).forEach(([name, value]) => {
+            requestOptions.headers.set(name, value);
+        });
+        const retryResponse = await fetchImplementation(retryInput, requestOptions);
+        if (retryResponse.status === 401) redirectExpiredSession();
+        return retryResponse;
     };
 }
 
@@ -186,6 +210,8 @@ async function refreshCookieSession() {
 
     const data = await response.json();
     const user = data.data?.user;
+    const token = data.data?.token;
+    if (token) StorageService.setAuthToken(token);
     if (user) {
         StorageService.setActiveUser(user.id);
         localStorage.setItem('userInfo', JSON.stringify(user));
@@ -313,9 +339,7 @@ export async function checkAuth(options = {}) {
     const isValid = await verifyToken();
     if (!isValid) {
         console.warn('Invalid or expired token, redirecting to login');
-        StorageService.clearAuth();
-        StorageService.remove('userInfo');
-        window.location.href = '/static/login.html?message=session_expired';
+        redirectExpiredSession();
         return null;
     }
 

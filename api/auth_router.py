@@ -197,9 +197,12 @@ async def refresh(
         session_id=session.get("session_id"),
     )
     csrf_token = secrets.token_urlsafe(32)
-    response = success_response(
-        {"expires_in": ACCESS_TOKEN_MINUTES * 60, "user": _user_payload(user_info)}
-    )
+    result = {"expires_in": ACCESS_TOKEN_MINUTES * 60, "user": _user_payload(user_info)}
+    # Dual mode still supports legacy JavaScript callers. Keep their bearer in
+    # sync with the rotated cookie session until the migration reaches cookie mode.
+    if get_auth_mode() == "dual":
+        result.update({"token": access_token, "token_type": "bearer"})
+    response = success_response(result)
     set_session_cookies(response, access_token, replacement, csrf_token)
     return response
 
