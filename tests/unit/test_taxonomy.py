@@ -195,6 +195,19 @@ class TestTaxonomy:
         assert t.group_for_alias("btc") == "BTC"
         assert t.group_for_alias("eth") == "ETH"
 
+    def test_group_for_alias_resolves_known_cointracking_numeric_suffix(self):
+        t = Taxonomy()
+        assert t.group_for_alias("ARB5") == "L2/Scaling"
+        assert t.group_for_alias("OP3") == "L2/Scaling"
+        assert t.group_for_alias("USD1") == "Stablecoins"
+        assert t.group_for_alias("HYPE5") == "L1/L0 majors"
+        assert t.is_known_alias("ARB5") is True
+
+    def test_group_for_alias_keeps_unknown_numeric_symbol_unclassified(self):
+        t = Taxonomy()
+        assert t.group_for_alias("UNKNOWN7") == "Others"
+        assert t.is_known_alias("UNKNOWN7") is False
+
     def test_to_dict(self):
         t = Taxonomy()
         d = t.to_dict()

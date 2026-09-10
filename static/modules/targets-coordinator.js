@@ -542,7 +542,10 @@ export function generateSmartTargets() {
     };
 
   } catch (error) {
-    debugLogger.error('❌ Error generating smart targets:', error);
+    // Governance signals can be unavailable during startup or provider
+    // downtime. Keep the proposal unavailable without raising a global toast;
+    // an explicit user action reports the failure once at the UI boundary.
+    debugLogger.warn('Smart targets unavailable:', error.message);
     return {
       available: false,
       targets: null,
@@ -658,7 +661,9 @@ export function proposeTargets(mode = 'blend', options = {}) {
     };
 
   } catch (error) {
-    debugLogger.error('Failed to propose targets:', error);
+    // Missing inputs are a normal unavailable state while data loads. The
+    // caller decides whether to display an error after an explicit user action.
+    debugLogger.warn('Targets unavailable:', error.message);
 
     return {
       available: false,

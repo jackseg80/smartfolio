@@ -113,3 +113,17 @@ Changements locaux préexistants à préserver et ne pas attribuer à ce chantie
 - `AGENTS.md`
 
 Les audits, le plan, ce relais, les nouveaux tests et les autres fichiers modifiés de la chaîne crypto appartiennent au chantier. Le dossier `outputs/audit-crypto-2026-09-09/` contient les sondes d'audit. Ne rien committer, mettre en stage, pousser, déployer ou exécuter sur un exchange sans autorisation explicite distincte.
+
+## Contrôle fonctionnel du 10 septembre 2026
+
+La comparaison entre la production du NUC et la branche de test a expliqué les écarts observés :
+
+- la production Rebalance utilisait des données de démonstration (`source=mock-data`, prix simulés), tandis que la branche de test utilisait le portefeuille CoinTracking réel; ses regroupements et montants ne constituent donc pas une référence fiable pour cette comparaison;
+- la production limitait encore implicitement les stablecoins à 60 %, même lorsque Risk recommandait 73 % ou davantage; la branche corrigée conserve le budget défensif calculé;
+- les différences du DI Backtest proviennent du nouveau calcul par actif, de la dérive réelle des poids, des frais et des jointures causales. Le libellé de l'écart avec BTC précise désormais qu'il s'agit de points de pourcentage;
+- les alertes `Failed to propose targets` et `Failed to apply strategy` venaient de l'application automatique d'une stratégie avant la fin du chargement. L'application automatique a été supprimée et les boutons restent indisponibles tant que leurs entrées ne sont pas complètes;
+- les suffixes numériques ajoutés par CoinTracking sont résolus uniquement lorsque le symbole de base existe déjà dans la taxonomie. `FRAX`, `HYPE`, `PLUME`, `RARI` et `VVV` ont reçu un groupe explicite;
+- une position inconnue reste désormais inchangée, ne peut pas financer un achat et impose une revue avant exécution. Rebalance affiche le montant protégé;
+- `LLY`, `DOTA`, `PEON` et `TRUTH` ont été retirés par l'utilisateur dans CoinTracking. Le rafraîchissement du 10 septembre à 08:27 affichait encore 192 actifs : leur disparition doit être vérifiée après propagation de la source.
+
+Validations locales après ces corrections : **70 tests Python ciblés réussis**, **101 tests JavaScript réussis** et `git diff --check` propre. Ces corrections sont encore locales au moment de cette note; elles doivent être committées, poussées puis installées sur l'environnement de test avant une nouvelle validation visuelle.

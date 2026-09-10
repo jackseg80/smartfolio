@@ -1552,12 +1552,22 @@
       $("#summary").innerHTML = html || '<span class="muted">No summary available.</span>';
     }
 
-    function renderUnknownAliases(list) {
+    function renderUnknownAliases(list, plan = {}) {
       const container = el("unknownList");
       if (!list || !list.length) { container.innerHTML = '<span class="muted">None 🎉</span>'; return; }
+      const blockedUsd = Number(plan.blocked_unknown_usd || 0);
+      const blockedPct = Number(plan.blocked_unknown_pct || 0);
+      const reviewNotice = `
+        <div class="card" style="border-color:#f59e0b; margin-bottom:var(--space-md);">
+          <strong>Review required before execution</strong>
+          <div class="muted small mt8">
+            Unclassified positions remain unchanged and cannot finance purchases.
+            ${blockedUsd > 0 ? `Protected: ${formatMoney(blockedUsd)} (${fmt2(blockedPct)}% of portfolio).` : ''}
+          </div>
+        </div>`;
       const options = ["BTC", "ETH", "Stablecoins", "SOL", "L1/L0 majors", "L2/Scaling", "DeFi", "AI/Data", "Gaming/NFT", "Memecoins", "Others"]
         .map(g => `<option value="${g}" ${g === "Others" ? 'selected' : ''}>${g}</option>`).join("");
-      container.innerHTML = list.map(a => `
+      container.innerHTML = reviewNotice + list.map(a => `
     <div class="row">
       <div class="pill">${a}</div>
       <select class="u_group">${options}</select>
@@ -1669,7 +1679,7 @@
         renderSummary(savedPlan);
         renderActions(savedPlan.actions || []);
         updatePricingBadge(savedPlan.actions || [], savedPlan);
-        renderUnknownAliases(savedPlan.unknown_aliases || []);
+        renderUnknownAliases(savedPlan.unknown_aliases || [], savedPlan);
         setTotal(savedPlan?.total_usd);
 
         // Sauvegarder les actions pour l'export JSON
@@ -1725,7 +1735,7 @@
         renderPriorityMeta(plan);
         renderActions(plan.actions || []);
         updatePricingBadge(plan.actions || [], plan);
-        renderUnknownAliases(plan.unknown_aliases || []);
+        renderUnknownAliases(plan.unknown_aliases || [], plan);
         setTotal(plan?.total_usd);
 
         // Sauvegarder les actions pour l'export JSON

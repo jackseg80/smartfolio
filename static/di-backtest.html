@@ -1588,9 +1588,9 @@
         </div>
         <div class="kpi-card">
           <div class="kpi-value ${benchmark.excess_return_pct >= 0 ? 'positive' : 'negative'}">
-            ${benchmark.excess_return_pct >= 0 ? '+' : ''}${benchmark.excess_return_pct?.toFixed(1) || '0'}%
+            ${benchmark.excess_return_pct >= 0 ? '+' : ''}${benchmark.excess_return_pct?.toFixed(1) || '0'} pp
           </div>
-          <div class="kpi-label">vs BTC B&H</div>
+          <div class="kpi-label">vs BTC B&H (return gap)</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-value neutral">${data.period?.days || '0'}</div>

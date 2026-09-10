@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from filelock import FileLock
 from typing import Dict, List
@@ -48,6 +49,7 @@ DEFAULT_ALIASES: Dict[str, str] = {
     "USDC": "Stablecoins",
     "USDP": "Stablecoins",
     "TUSD": "Stablecoins",
+    "FRAX": "Stablecoins",
 
     # L1/L0 majors
     "ADA": "L1/L0 majors",
@@ -105,6 +107,7 @@ DEFAULT_ALIASES: Dict[str, str] = {
     "OCEAN": "AI/Data",
     "GRT": "AI/Data",
     "WLD": "AI/Data",
+    "VVV": "AI/Data",
 
     # Gaming/NFT
     "AXS": "Gaming/NFT",
@@ -114,6 +117,11 @@ DEFAULT_ALIASES: Dict[str, str] = {
     "GALA": "Gaming/NFT",
     "CHZ": "Gaming/NFT",
     "FLOW": "Gaming/NFT",
+    "RARI": "Gaming/NFT",
+
+    # Network-native tokens
+    "HYPE": "L1/L0 majors",
+    "PLUME": "L1/L0 majors",
 
     # Memecoins
     "DOGE": "Memecoins",
@@ -419,6 +427,27 @@ class Taxonomy:
 
     # === API utilitaires ===
 
+    def resolve_alias(self, alias: str) -> str | None:
+        """Resolve an exact alias or a CoinTracking numeric duplicate suffix.
+
+        CoinTracking appends digits to duplicate tickers (for example ARB5 or
+        OP3). A suffix is removed only when the resulting base symbol already
+        exists in the taxonomy, so unrelated numeric symbols remain unknown.
+        """
+        if not alias:
+            return None
+        symbol = str(alias).upper()
+        if symbol in self.aliases:
+            return symbol
+        base_symbol = re.sub(r"\d+$", "", symbol)
+        if base_symbol != symbol and base_symbol in self.aliases:
+            return base_symbol
+        return None
+
+    def is_known_alias(self, alias: str) -> bool:
+        """Return whether an alias resolves to an explicit taxonomy entry."""
+        return self.resolve_alias(alias) is not None
+
     def group_for_alias(self, alias: str) -> str:
         """
         Retourne le groupe pour un alias/symbole donné.
@@ -435,7 +464,8 @@ class Taxonomy:
             return cg
 
         # lookup alias/symbole
-        grp = self.aliases.get(str(alias).upper())
+        resolved_alias = self.resolve_alias(alias)
+        grp = self.aliases.get(resolved_alias) if resolved_alias else None
         if grp:
             return _canonical_group(grp, self.groups_order)
 

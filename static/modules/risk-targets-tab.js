@@ -167,12 +167,13 @@ export async function renderTargetsContent() {
   // DEBUG: Log what blended proposal contains for display
   debugLogger.debug('🔍 DEBUG renderTargetsContent - updatedState.scores.blended:', updatedState.scores?.blended);
   debugLogger.debug('🔍 DEBUG renderTargetsContent - blendedProposal for DISPLAY:', blendedProposal);
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - blendedProposal.strategy:', blendedProposal.strategy);
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - BTC allocation for DISPLAY:', blendedProposal.targets.BTC);
+  debugLogger.debug('🔍 DEBUG renderTargetsContent - blendedProposal.strategy:', blendedProposal?.strategy);
+  debugLogger.debug('🔍 DEBUG renderTargetsContent - BTC allocation for DISPLAY:', blendedProposal?.targets?.BTC);
 
-  // Current targets from store or use blended as default display
-  const appliedTargets = updatedState.targets?.proposed || blendedProposal.targets;
-  const appliedStrategy = updatedState.targets?.strategy || blendedProposal.strategy;
+  // Show an explicitly applied proposal when present. Otherwise, show the
+  // current blended proposal only when all of its inputs are available.
+  const appliedTargets = updatedState.targets?.proposed || blendedProposal?.targets || null;
+  const appliedStrategy = updatedState.targets?.strategy || blendedProposal?.strategy || 'Targets unavailable';
 
   // Get real current portfolio allocation
   const currentAllocation = await getCurrentPortfolioAllocation();
@@ -186,8 +187,27 @@ export async function renderTargetsContent() {
   const isDev = isDevEnvironment();
   const hostname = window.location.hostname;
 
-  const buttonDisabled = isCooldownActive && !isDev ? 'disabled' : '';
-  const buttonTitle = isCooldownActive && !isDev ? `Cooldown active: ${cooldownHoursRemaining.toFixed(1)}h remaining` : '';
+  const getButtonState = (proposal) => {
+    const unavailable = proposal?.available !== true || !proposal?.targets;
+    const blockedByCooldown = isCooldownActive && !isDev;
+    const disabled = unavailable || blockedByCooldown;
+    const title = unavailable
+      ? (proposal?.error || 'This strategy is unavailable until its decision inputs load')
+      : blockedByCooldown
+        ? `Cooldown active: ${cooldownHoursRemaining.toFixed(1)}h remaining`
+        : '';
+    return {
+      disabled: disabled ? 'disabled' : '',
+      title,
+      style: disabled ? 'opacity: 0.5; cursor: not-allowed;' : ''
+    };
+  };
+
+  const macroButton = getButtonState(macroProposal);
+  const ccsButton = getButtonState(ccsProposal);
+  const cycleButton = getButtonState(cycleProposal);
+  const blendedButton = getButtonState(blendedProposal);
+  const smartButton = getButtonState(smartProposal);
 
   container.innerHTML = `
     <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
@@ -216,27 +236,27 @@ export async function renderTargetsContent() {
         ` : ''}
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); margin: var(--space-lg) 0;">
-          <button class="refresh-btn" onclick="applyStrategy('macro')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; font-weight: 600; padding: 1rem; border: 2px solid #4b5563; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+          <button class="refresh-btn" onclick="applyStrategy('macro')" ${macroButton.disabled} title="${macroButton.title}" style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; font-weight: 600; padding: 1rem; border: 2px solid #4b5563; border-radius: 8px; transition: all 0.3s ease; ${macroButton.style}">
             <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📊</div>
             <div style="font-size: 0.95rem;">Macro Only</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${macroProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('ccs')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; padding: 1rem; border: 2px solid #2563eb; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+          <button class="refresh-btn" onclick="applyStrategy('ccs')" ${ccsButton.disabled} title="${ccsButton.title}" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; padding: 1rem; border: 2px solid #2563eb; border-radius: 8px; transition: all 0.3s ease; ${ccsButton.style}">
             <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📈</div>
             <div style="font-size: 0.95rem;">CCS Based</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${ccsProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('cycle')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; padding: 1rem; border: 2px solid #d97706; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+          <button class="refresh-btn" onclick="applyStrategy('cycle')" ${cycleButton.disabled} title="${cycleButton.title}" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; padding: 1rem; border: 2px solid #d97706; border-radius: 8px; transition: all 0.3s ease; ${cycleButton.style}">
             <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔄</div>
             <div style="font-size: 0.95rem;">Cycle Adjusted</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${cycleProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('blend')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; padding: 1rem; border: 2px solid #059669; border-radius: 8px; transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+          <button class="refresh-btn" onclick="applyStrategy('blend')" ${blendedButton.disabled} title="${blendedButton.title}" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; padding: 1rem; border: 2px solid #059669; border-radius: 8px; transition: all 0.3s ease; ${blendedButton.style}">
             <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚖️</div>
             <div style="font-size: 0.95rem;">Blended Strategy</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${blendedProposal.strategy}</small>
           </button>
-          <button class="refresh-btn" onclick="applyStrategy('smart')" ${buttonDisabled} title="${buttonTitle}" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white; font-weight: 700; padding: 1rem; border: 3px solid #8b5cf6; border-radius: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: all 0.3s ease; ${buttonDisabled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+          <button class="refresh-btn" onclick="applyStrategy('smart')" ${smartButton.disabled} title="${smartButton.title}" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white; font-weight: 700; padding: 1rem; border: 3px solid #8b5cf6; border-radius: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: all 0.3s ease; ${smartButton.style}">
             <div style="font-size: 1.75rem; margin-bottom: 0.25rem;">🧠</div>
             <div style="font-size: 1rem;">SMART</div>
             <small style="opacity: 0.95; margin-top: 0.25rem; display: block; font-size: 0.75rem;">${smartProposal.strategy}</small>

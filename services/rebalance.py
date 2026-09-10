@@ -236,9 +236,14 @@ def plan_rebalance(
         if not isinstance(g, str) or g not in groups_order:
             g = "Others" if "Others" in groups_order else groups_order[0]
 
+        is_known_alias = tx.is_known_alias(alias) or _keynorm(alias) in {
+            _keynorm(group_name) for group_name in groups_order
+        }
+
         items.append({
             "group": g, "alias": alias or symbol, "symbol": symbol or alias,
             "value_usd": value_usd, "location": loc,
+            "is_known_alias": is_known_alias,
         })
 
     total_usd = sum(x["value_usd"] for x in items) or 0.0
@@ -306,7 +311,14 @@ def plan_rebalance(
                 pinned = set(str(p).upper() for p in config.get("lists", {}).get("pinned_by_group", {}).get(g, []))
 
                 scored_coins = priority_universe[g]
-                group_hold_by_alias = hold_by_gal.get(g, {})
+                known_group_aliases = {
+                    item["alias"] for item in by_group.get(g, []) if item["is_known_alias"]
+                }
+                group_hold_by_alias = {
+                    alias: locations
+                    for alias, locations in hold_by_gal.get(g, {}).items()
+                    if alias in known_group_aliases
+                }
 
                 # Obtenir les cibles prioritaires pour la vente
                 sell_targets = _prioritize_sell_targets(group_hold_by_alias, scored_coins, pinned, min_trade_usd)
@@ -336,6 +348,8 @@ def plan_rebalance(
                     # Fallback pour le reste seulement
                     agg_alias: Dict[str, float] = {}
                     for p in by_group.get(g, []):
+                        if not p["is_known_alias"]:
+                            continue
                         a = p["alias"]
                         if a.upper() not in pinned:  # Exclure les pinned
                             remaining_capacity = hold_by_gal.get(g, {}).get(a, {})
@@ -361,6 +375,8 @@ def plan_rebalance(
         # poids par alias = taille de la position
         agg_alias: Dict[str, float] = {}
         for p in by_group.get(g, []):
+            if not p["is_known_alias"]:
+                continue
             a = p["alias"]
             agg_alias[a] = agg_alias.get(a, 0.0) + p["value_usd"]
 
@@ -449,6 +465,8 @@ def plan_rebalance(
             else:
                 agg: Dict[str, float] = {}
                 for p in by_group.get(g, []):
+                    if not p["is_known_alias"]:
+                        continue
                     a = p["alias"]
                     agg[a] = agg.get(a, 0.0) + p["value_usd"]
                 buckets = list(agg.items()) if agg else [(g, 1.0)]
@@ -486,22 +504,36 @@ def plan_rebalance(
                 "est_quantity": None, "price_used": None,
             })
 
-    # ---------- Nettoyage net 0 et sortie ----------
-    # (pas d’ajustement net ici, car on a déjà capé par positions réelles)
+    # ---------- Nettoyage, financement et sortie ----------
     # filtrer les toutes petites actions
     actions = [a for a in actions if abs(a.get("usd", 0.0)) >= float(min_trade_usd or 0.0)]
 
-    unknown_aliases_set = set()
-    known_aliases = set(Taxonomy.load().aliases.keys())
-    known_groups = set(Taxonomy.load().groups_order or [])
-    known_groups_norm = {"".join(g.split()).upper() for g in known_groups}
-    for it in rows or []:
-        alias = (it.get("alias") or it.get("name") or it.get("symbol") or "").strip()
-        v = it.get("value_usd") if it.get("value_usd") is not None else it.get("usd_value")
-        if float(v or 0.0) < float(min_usd or 0.0):
-            continue
-        if alias and alias.upper() not in known_aliases and "".join(alias.split()).upper() not in known_groups_norm:
-            unknown_aliases_set.add(alias)
+    # Unknown positions are review-only and cannot finance purchases. If their
+    # protection reduces available sale proceeds, reduce all purchases by the
+    # same factor rather than creating an unfunded plan.
+    sell_budget = sum(abs(float(a.get("usd", 0.0))) for a in actions if a.get("action") == "sell")
+    buy_total = sum(float(a.get("usd", 0.0)) for a in actions if a.get("action") == "buy")
+    if buy_total > sell_budget + 0.01:
+        if sell_budget <= 0:
+            actions = [a for a in actions if a.get("action") != "buy"]
+        else:
+            buy_actions = [a for a in actions if a.get("action") == "buy"]
+            factor = sell_budget / buy_total
+            remaining_budget = round(sell_budget, 2)
+            for index, action in enumerate(buy_actions):
+                if index == len(buy_actions) - 1:
+                    scaled_usd = remaining_budget
+                else:
+                    scaled_usd = round(float(action.get("usd", 0.0)) * factor, 2)
+                    remaining_budget = round(remaining_budget - scaled_usd, 2)
+                action["usd"] = scaled_usd
+            actions = [
+                a for a in actions
+                if a.get("action") != "buy" or float(a.get("usd", 0.0)) >= float(min_trade_usd or 0.0)
+            ]
+
+    unknown_aliases_set = {item["alias"] for item in items if not item["is_known_alias"]}
+    blocked_unknown_usd = sum(item["value_usd"] for item in items if not item["is_known_alias"])
 
     # Métadonnées priority mode pour debugging/UI
     priority_meta = {}
@@ -545,6 +577,9 @@ def plan_rebalance(
         "actions": actions,
         "advice": [],
         "unknown_aliases": sorted(list(unknown_aliases_set)),
+        "requires_alias_review": bool(unknown_aliases_set),
+        "blocked_unknown_usd": round(blocked_unknown_usd, 2),
+        "blocked_unknown_pct": round(100.0 * blocked_unknown_usd / total_usd, 3) if total_usd else 0.0,
     }
 
     # Ajouter métadonnées priority si applicable

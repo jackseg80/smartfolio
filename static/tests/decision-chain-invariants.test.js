@@ -1,10 +1,11 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, jest, test } from '@jest/globals';
 
 import { calculateZeroSumCappedMoves } from '../components/unified-insights/allocation-calculator.js';
 import { renderAllocationBlock } from '../components/unified-insights/execution-plan-renderer.js';
 import { computeMacroTargetsDynamic } from '../core/unified-insights-v2.js';
 import { computeCCS, DEFAULT_CCS_WEIGHTS } from '../modules/signals-engine.js';
 import { proposeTargets } from '../modules/targets-coordinator.js';
+import { renderTargetsContent } from '../modules/risk-targets-tab.js';
 import { store } from '../core/risk-dashboard-store.js';
 
 describe('crypto decision-chain invariants', () => {
@@ -95,6 +96,33 @@ describe('crypto decision-chain invariants', () => {
     expect(Object.values(result.targets)
       .filter(Number.isFinite)
       .reduce((sum, value) => sum + value, 0)).toBeCloseTo(100, 8);
+  });
+
+  test('renders Targets as unavailable without applying an incomplete proposal', async () => {
+    document.body.innerHTML = '<div id="targets-content"></div>';
+    window.store = store;
+    window.loadScoresFromStore = jest.fn().mockResolvedValue(undefined);
+    window.updateRiskDashboardBadges = jest.fn();
+    window.loadBalanceData = jest.fn().mockResolvedValue({
+      success: true,
+      data: { items: [{ symbol: 'BTC', balance: 1, value_usd: 100 }] }
+    });
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+
+    store.setState({
+      ...store.snapshot(),
+      ccs: { ...store.snapshot().ccs, score: null },
+      cycle: { ...store.snapshot().cycle, ccsStar: null, multipliers: null },
+      scores: { ...store.snapshot().scores, onchain: 55, risk: 71, blended: null },
+      targets: { proposed: null, strategy: null }
+    }, 'test-targets-unavailable');
+
+    await expect(renderTargetsContent()).resolves.toBeUndefined();
+
+    const container = document.getElementById('targets-content');
+    expect(container.textContent).toContain('Targets unavailable');
+    expect(container.querySelector("button[onclick=\"applyStrategy('blend')\"]").disabled).toBe(true);
+    expect(window.store.get('targets.proposed')).toBeNull();
   });
 
   test('does not manufacture a CCS score when one required signal is unavailable', () => {

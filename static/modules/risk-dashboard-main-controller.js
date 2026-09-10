@@ -3486,15 +3486,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }, 500);
 
-  // Apply blended strategy as default if no strategy is already selected
-  setTimeout(() => {
-    const currentStrategy = store.get('targets.strategy');
-    if (!currentStrategy) {
-      debugLogger.debug('No strategy found, applying Blended as default...');
-      applyStrategy('blend');
-    }
-  }, 1000);
-
   // Écouter les changements de thème et source pour synchronisation cross-tab
   window.addEventListener('storage', function (e) {
     const expectedKey = (window.globalConfig?.getStorageKey && window.globalConfig.getStorageKey()) || 'crypto_rebal_settings_v1';
