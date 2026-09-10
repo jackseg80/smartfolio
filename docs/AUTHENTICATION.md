@@ -21,9 +21,9 @@ sinon la réponse est `403`.
 
 ## Session sécurisée
 
-- access token JWT de 15 minutes dans `smartfolio_access`;
-- refresh token opaque de 7 jours dans `smartfolio_refresh`;
-- token CSRF de 7 jours dans `smartfolio_csrf`;
+- access token JWT de 15 minutes par défaut dans `smartfolio_access`;
+- refresh token opaque de 7 jours par défaut dans `smartfolio_refresh`;
+- token CSRF de 7 jours par défaut dans `smartfolio_csrf`;
 - cookies `Secure`, `SameSite=Strict` et `Path=/`;
 - cookies access et refresh `HttpOnly`;
 - refresh token hashé dans Redis, rotation atomique à chaque utilisation et
@@ -36,6 +36,12 @@ sinon la réponse est `403`.
 Toutes les mutations doivent envoyer le cookie CSRF et sa valeur dans
 `X-CSRF-Token`. Le frontend commun utilise `credentials: "include"`, renouvelle
 la session avec `/auth/refresh`, puis rejoue au plus une fois la requête.
+
+Les durées se règlent au démarrage avec `AUTH_ACCESS_TOKEN_MINUTES` (5 à
+1440 minutes, 15 par défaut) et `AUTH_SESSION_DAYS` (1 à 90 jours, 7 par
+défaut). Le premier délai est technique : son expiration ne déconnecte pas
+l'utilisateur tant que la session de renouvellement reste valide. Toute
+activité qui renouvelle la session repart pour la durée définie.
 
 ## Endpoints
 
@@ -77,6 +83,8 @@ Exemple de configuration cible sur `robot2`:
 ENVIRONMENT=production
 DEBUG=false
 AUTH_MODE=dual
+AUTH_ACCESS_TOKEN_MINUTES=15
+AUTH_SESSION_DAYS=7
 AUTH_USER_STORE=persistent
 AUTH_USERS_PATH=/app/data/auth/users.json
 AUTH_ALLOW_LEGACY_USER_STORE=false

@@ -19,8 +19,28 @@ AUTH_MODES = {"legacy", "dual", "cookie"}
 ACCESS_COOKIE = "smartfolio_access"
 REFRESH_COOKIE = "smartfolio_refresh"
 CSRF_COOKIE = "smartfolio_csrf"
-ACCESS_TOKEN_MINUTES = 15
-REFRESH_TOKEN_DAYS = 7
+
+
+def _read_duration_setting(name: str, default: int, minimum: int, maximum: int) -> int:
+    """Read a bounded positive authentication duration at process startup."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} must be an integer") from exc
+    if not minimum <= value <= maximum:
+        raise RuntimeError(f"{name} must be between {minimum} and {maximum}")
+    return value
+
+
+# A short-lived access token limits exposure. The refresh session controls how
+# long the user can remain signed in and is renewed during active use.
+ACCESS_TOKEN_MINUTES = _read_duration_setting(
+    "AUTH_ACCESS_TOKEN_MINUTES", 15, 5, 1440
+)
+REFRESH_TOKEN_DAYS = _read_duration_setting("AUTH_SESSION_DAYS", 7, 1, 90)
 LEGACY_TOKEN_DAYS = 7
 DEFAULT_INSECURE_SECRET = "your-secret-key-change-in-production-please"
 SESSION_TTL_SECONDS = int(timedelta(days=REFRESH_TOKEN_DAYS).total_seconds())

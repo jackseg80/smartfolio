@@ -9,6 +9,7 @@ import {
   getUserInfo,
   getAuthHeaders,
   createAuthenticatedFetch,
+  installAuthenticatedFetch,
   verifyToken,
   logout,
   checkAuth,
@@ -122,6 +123,26 @@ describe('Auth Guard - Headers', () => {
     expect(options.headers.get('Authorization')).toBe('Bearer token-dual');
     expect(options.headers.get('X-User')).toBe('jack');
     expect(options.headers.get('Content-Type')).toBe('application/json');
+  });
+
+  test('should upgrade the bootstrap fetch wrapper to the full session wrapper', async () => {
+    const previousFetch = window.fetch;
+    const previousMarker = window.__smartfolioAuthenticatedFetchInstalled;
+    const transport = jest.fn().mockResolvedValue({ ok: true, status: 200 });
+    try {
+      window.fetch = transport;
+      window.__smartfolioAuthenticatedFetchInstalled = 'bootstrap';
+
+      installAuthenticatedFetch();
+      await window.fetch('/api/private');
+
+      expect(window.__smartfolioAuthenticatedFetchInstalled).toBe('full');
+      expect(window.fetch).not.toBe(transport);
+      expect(transport).toHaveBeenCalledTimes(1);
+    } finally {
+      window.fetch = previousFetch;
+      window.__smartfolioAuthenticatedFetchInstalled = previousMarker;
+    }
   });
 
   test('should never leak authentication headers cross-origin', async () => {

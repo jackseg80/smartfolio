@@ -57,6 +57,8 @@ services:
       # Redis connection (use service name as hostname)
       REDIS_URL: redis://redis:6379/0
       AUTH_MODE: ${AUTH_MODE:-legacy}
+      AUTH_ACCESS_TOKEN_MINUTES: ${AUTH_ACCESS_TOKEN_MINUTES:-15}
+      AUTH_SESSION_DAYS: ${AUTH_SESSION_DAYS:-7}
       AUTH_USER_STORE: ${AUTH_USER_STORE:-persistent}
       AUTH_USERS_PATH: /app/data/auth/users.json
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be configured}

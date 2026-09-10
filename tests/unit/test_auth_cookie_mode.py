@@ -8,7 +8,7 @@ import pytest
 from types import SimpleNamespace
 
 from api import auth_router
-from api.auth_security import AuthenticatedUser
+from api.auth_security import AuthenticatedUser, _read_duration_setting
 from api.deps import require_any_role, resolve_authenticated_user
 from api.middleware_setup import _is_public_path, setup_middlewares
 
@@ -57,6 +57,15 @@ def test_cookie_login_does_not_return_jwt_to_javascript(auth_client: TestClient)
     assert "HttpOnly" in cookies
     assert "Secure" in cookies
     assert "SameSite=strict" in cookies
+
+
+def test_authentication_durations_are_bounded_and_configurable(monkeypatch):
+    monkeypatch.setenv("AUTH_SESSION_DAYS", "30")
+    assert _read_duration_setting("AUTH_SESSION_DAYS", 7, 1, 90) == 30
+
+    monkeypatch.setenv("AUTH_SESSION_DAYS", "0")
+    with pytest.raises(RuntimeError, match="between 1 and 90"):
+        _read_duration_setting("AUTH_SESSION_DAYS", 7, 1, 90)
 
 
 def test_x_user_cannot_authenticate_in_cookie_mode(monkeypatch):

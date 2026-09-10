@@ -13,7 +13,7 @@
   if (
     typeof window === 'undefined'
     || typeof window.fetch !== 'function'
-    || window.__smartfolioAuthenticatedFetchInstalled
+    || window.__smartfolioAuthenticatedFetchInstalled === 'full'
   ) {
     return;
   }
@@ -58,7 +58,9 @@
       headers
     });
   };
-  window.__smartfolioAuthenticatedFetchInstalled = true;
+  // auth-guard.js upgrades this lightweight bootstrap wrapper with refresh,
+  // retry and expired-session redirection once its module is evaluated.
+  window.__smartfolioAuthenticatedFetchInstalled = 'bootstrap';
 })();
 
 // Configuration par défaut

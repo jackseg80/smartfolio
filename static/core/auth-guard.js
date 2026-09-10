@@ -183,13 +183,13 @@ export function installAuthenticatedFetch() {
     if (
         typeof window === 'undefined'
         || typeof window.fetch !== 'function'
-        || window.__smartfolioAuthenticatedFetchInstalled
+        || window.__smartfolioAuthenticatedFetchInstalled === 'full'
     ) {
         return;
     }
     const nativeFetch = window.fetch.bind(window);
     window.fetch = createAuthenticatedFetch(nativeFetch);
-    window.__smartfolioAuthenticatedFetchInstalled = true;
+    window.__smartfolioAuthenticatedFetchInstalled = 'full';
 }
 
 installAuthenticatedFetch();
