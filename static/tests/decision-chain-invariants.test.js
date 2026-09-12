@@ -1,14 +1,45 @@
 import { describe, expect, jest, test } from '@jest/globals';
 
 import { calculateZeroSumCappedMoves } from '../components/unified-insights/allocation-calculator.js';
-import { renderAllocationBlock } from '../components/unified-insights/execution-plan-renderer.js';
+import { formatSignedPercent, renderAllocationBlock } from '../components/unified-insights/execution-plan-renderer.js';
 import { computeMacroTargetsDynamic } from '../core/unified-insights-v2.js';
 import { computeCCS, DEFAULT_CCS_WEIGHTS } from '../modules/signals-engine.js';
 import { proposeTargets } from '../modules/targets-coordinator.js';
 import { renderTargetsContent } from '../modules/risk-targets-tab.js';
 import { store } from '../core/risk-dashboard-store.js';
+import { forceReloadTaxonomy, getAssetGroup } from '../shared-asset-groups.js';
 
 describe('crypto decision-chain invariants', () => {
+  test('formats execution deltas without floating-point artifacts', () => {
+    expect(formatSignedPercent(0.9999999999999991)).toBe('+1.0%');
+    expect(formatSignedPercent(-0.5283539625283885)).toBe('-0.5%');
+    expect(formatSignedPercent(-0.009341245248375374)).toBe('0.0%');
+  });
+
+  test('classifies CoinTracking duplicate suffixes like the backend taxonomy', async () => {
+    window.getApiBase = jest.fn(() => 'http://test');
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        aliases: {
+          HYPE: 'L1/L0 majors',
+          ARB: 'L2/Scaling',
+          USD: 'Stablecoins',
+          TRUMP: 'Memecoins'
+        },
+        groups: ['BTC', 'Stablecoins', 'L1/L0 majors', 'L2/Scaling', 'Memecoins', 'Others']
+      })
+    });
+
+    await forceReloadTaxonomy();
+
+    expect(getAssetGroup('HYPE5')).toBe('L1/L0 majors');
+    expect(getAssetGroup('ARB5')).toBe('L2/Scaling');
+    expect(getAssetGroup('USD1')).toBe('Stablecoins');
+    expect(getAssetGroup('TRUMP2')).toBe('Memecoins');
+    expect(getAssetGroup('A2')).toBe('Others');
+  });
+
   test('preserves a defensive stablecoin budget above the former hidden 60% cap', () => {
     const context = { flags: {} };
     const targets = computeMacroTargetsDynamic(

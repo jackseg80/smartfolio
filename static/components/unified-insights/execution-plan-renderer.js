@@ -8,6 +8,12 @@ import { store } from '../../core/risk-dashboard-store.js';
 import { resolveCapPercent, resolvePolicyCapPercent, resolveEngineCapPercent } from './utils.js';
 import * as governanceSelectors from '../../selectors/governance.js';
 
+export function formatSignedPercent(value, digits = 1) {
+  const numeric = Number(value);
+  const rounded = Number.isFinite(numeric) ? Number(numeric.toFixed(digits)) : 0;
+  return `${rounded > 0 ? '+' : ''}${rounded.toFixed(digits)}%`;
+}
+
 /**
  * Renders the complete allocation block with theoretical targets and execution plan
  */
@@ -321,7 +327,6 @@ export async function renderAllocationBlock(u, options = {}) {
           <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:.45rem; font-size:.8rem;">
             ${visible.map(({k, cur, tgt, delta, suggested}) => {
               const moveColor = suggested >= 0 ? 'var(--success)' : 'var(--danger)';
-              const sign = (v) => v > 0 ? '+' : '';
               const curW = Math.max(0, Math.min(100, cur));
               const suggestedTgt = cur + suggested; // Cible de cette itération
               const suggestedW = Math.max(0, Math.min(100, suggestedTgt));
@@ -347,7 +352,7 @@ export async function renderAllocationBlock(u, options = {}) {
                     <div style="width:${suggestedW}%; height:100%; background: var(--warning);"></div>
                   </div>
                   <div style="font-size:.7rem; color:var(--theme-text-muted); margin-bottom:.2rem; font-weight:500;">${suggestedUsdStr}</div>
-                  <div style="font-size:.75rem; color:${moveColor}; font-weight:600; text-align:right;">Δ ${sign(suggested)}${suggested}%</div>
+                  <div style="font-size:.75rem; color:${moveColor}; font-weight:600; text-align:right;">Δ ${formatSignedPercent(suggested)}</div>
                 </div>
               `;
             }).join('')}

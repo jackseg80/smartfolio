@@ -194,6 +194,14 @@ export function getAssetGroup(symbol) {
     return KNOWN_ASSET_MAPPING[upperSymbol];
   }
 
+  // CoinTracking appends digits to duplicate tickers (for example HYPE5 or
+  // ARB5). Mirror the backend taxonomy rule: remove the suffix only when the
+  // resulting base ticker is an explicit taxonomy alias.
+  const baseSymbol = upperSymbol.replace(/\d+$/, '');
+  if (baseSymbol !== upperSymbol && KNOWN_ASSET_MAPPING[baseSymbol]) {
+    return KNOWN_ASSET_MAPPING[baseSymbol];
+  }
+
   // Sinon utiliser la classification automatique (patterns)
   return autoClassifySymbolFallback(upperSymbol);
 }
