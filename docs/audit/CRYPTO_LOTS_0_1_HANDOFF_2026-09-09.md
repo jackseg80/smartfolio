@@ -151,3 +151,19 @@ Contrôle sur le NUC, environnement de test port 8082 :
 La différence de résultats avec l'ancienne production est attendue : la branche utilise les positions CoinTracking réelles, respecte le budget stablecoins calculé et applique la comptabilité corrigée. L'ancienne production ne constitue donc pas l'oracle de vérité pour les allocations ou le backtest.
 
 Cette validation clôt les lots 0 et 1 sur le plan fonctionnel. Elle ne valide pas la capacité prédictive du moteur : cette démonstration commence au lot 2 avec le jeu de données daté et les tests de causalité.
+
+## Promotion sur main et en production - 12 septembre 2026
+
+Après validation utilisateur, la branche a été intégrée à `main` par mise à jour fast-forward. La production du NUC, port 8080, utilise désormais l'image applicative construite depuis le commit fonctionnel `78a7aca`; le commit `b656d40` ajoute uniquement la présente clôture documentaire.
+
+Contrôles après promotion :
+
+- le conteneur `smartfolio-api` est `healthy` et utilise la même image que celle validée sur le port 8082;
+- `/healthz` répond correctement;
+- les pages Login et Dashboard répondent en HTTP 200;
+- aucun message `ERROR`, `CRITICAL` ou `Traceback` n'apparaît dans les journaux ciblés de démarrage;
+- l'ancienne production reste disponible sous l'étiquette `smartfolio-prod-rollback:pre-b656d40`;
+- l'environnement de test 8082 et ses anciennes images ont été retirés après promotion;
+- le nettoyage ciblé a porté l'espace libre du NUC de 49 Go à 57 Go.
+
+La production est donc alignée sur les lots 0 et 1 validés. La prochaine branche de travail doit commencer au lot 2; elle ne doit pas modifier directement cette base de production pendant les expériences de prévision.
