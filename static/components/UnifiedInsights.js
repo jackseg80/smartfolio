@@ -17,7 +17,7 @@ import {
 } from './unified-insights/utils.js';
 import { getCurrentAllocationByGroup } from './unified-insights/allocation-calculator.js';
 import { renderRecommendationsBlock, renderContradictionsBlock } from './unified-insights/recommendations-renderer.js';
-import { renderAllocationBlock } from './unified-insights/execution-plan-renderer.js';
+import { renderAllocationBlock } from './unified-insights/execution-plan-renderer.js?v=20260912-delta-format';
 import * as governanceSelectors from '../selectors/governance.js';
 
 /**
