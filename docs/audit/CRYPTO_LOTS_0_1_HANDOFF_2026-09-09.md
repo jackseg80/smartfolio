@@ -1,8 +1,8 @@
 # Relais de reprise - Lots crypto 0 et 1
 
-Date de clôture : 9 septembre 2026
+Date de clôture technique : 12 septembre 2026
 
-Ce document permet de reprendre le chantier sans recommencer l'audit. Le plan validé reste `CRYPTO_IMPLEMENTATION_PLAN_2026-09-09.md`. Les lots 0 et 1 sont terminés dans le répertoire de travail. Aucun commit, déploiement, ordre, activation automatique ou changement de stratégie financière réelle n'a été effectué.
+Ce document permet de reprendre le chantier sans recommencer l'audit. Le plan validé reste `CRYPTO_IMPLEMENTATION_PLAN_2026-09-09.md`. Les lots 0 et 1 sont terminés, commités et poussés sur la branche `codex/external-security-hardening`. Ils ont été déployés sur l'environnement isolé du NUC, port 8082, puis validés manuellement. Aucun ordre, activation automatique ou changement de stratégie financière réelle n'a été effectué.
 
 ## Objectif confirmé
 
@@ -126,4 +126,28 @@ La comparaison entre la production du NUC et la branche de test a expliqué les 
 - une position inconnue reste désormais inchangée, ne peut pas financer un achat et impose une revue avant exécution. Rebalance affiche le montant protégé;
 - `LLY`, `DOTA`, `PEON` et `TRUTH` ont été retirés par l'utilisateur dans CoinTracking. Le rafraîchissement du 10 septembre à 08:27 affichait encore 192 actifs : leur disparition doit être vérifiée après propagation de la source.
 
-Validations locales après ces corrections : **70 tests Python ciblés réussis**, **101 tests JavaScript réussis** et `git diff --check` propre. Ces corrections sont encore locales au moment de cette note; elles doivent être committées, poussées puis installées sur l'environnement de test avant une nouvelle validation visuelle.
+Validations locales après ces corrections : **70 tests Python ciblés réussis**, **101 tests JavaScript réussis** et `git diff --check` propre. Ces résultats décrivent le premier contrôle du 10 septembre; les corrections ont ensuite été committées, poussées et installées sur l'environnement de test.
+
+## Validation finale de la branche - 12 septembre 2026
+
+La branche de clôture se termine au commit `78a7aca`. Les derniers correctifs validés sont notamment :
+
+- `2026dc0` : alignement de la classification utilisée par Suggested Allocation afin que la proposition calculée puisse être appliquée sans faux rejet 409;
+- `78a7aca` : actualisation du rendu des deltas de l'Execution Plan, avec un affichage arrondi comme `+1%` au lieu de longues erreurs décimales;
+- conservation du correctif d'authentification et de renouvellement de session livré par `5201c23` et `b6520f1`;
+- conservation des corrections de calcul, de provenance, de regroupement et de comptabilité des lots 0 et 1.
+
+Contrôle sur le NUC, environnement de test port 8082 :
+
+- Risk charge et conserve les mêmes scores observés que la production de référence;
+- Analytics affiche les nouvelles cibles sans erreur de proposition;
+- Suggested Allocation (Unified) s'applique dans Rebalance;
+- les deltas de l'Execution Plan sont lisibles et correctement arrondis;
+- DI Backtest s'exécute avec la nouvelle comptabilité;
+- la suite JavaScript finale compte **105 tests réussis**;
+- l'image test `smartfolio-crypto-test:78a7aca` est saine;
+- les anciennes images de test inutiles ont été supprimées et environ 49 Go restaient disponibles après nettoyage.
+
+La différence de résultats avec l'ancienne production est attendue : la branche utilise les positions CoinTracking réelles, respecte le budget stablecoins calculé et applique la comptabilité corrigée. L'ancienne production ne constitue donc pas l'oracle de vérité pour les allocations ou le backtest.
+
+Cette validation clôt les lots 0 et 1 sur le plan fonctionnel. Elle ne valide pas la capacité prédictive du moteur : cette démonstration commence au lot 2 avec le jeu de données daté et les tests de causalité.
