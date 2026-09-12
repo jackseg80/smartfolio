@@ -11,6 +11,10 @@ class WealthContextBar {
     };
     this.context = this.loadContext();
     this.isInitialized = false;
+    this.isReady = false;
+    this.initializationPromise = new Promise(resolve => {
+      this.resolveInitialization = resolve;
+    });
     this.abortController = null; // Pour annuler fetch en cours lors du switch user
     this.bourseAbortController = null; // Pour annuler fetch Bourse
 
@@ -524,6 +528,14 @@ class WealthContextBar {
       effectiveNew = key; // Autre type de source
     }
 
+    // Toujours aligner la configuration en mémoire avec la source affichée.
+    // Au premier chargement, le backend peut déjà contenir effectiveNew : dans
+    // ce cas sourceChanged est faux, mais globalConfig est encore à null dans
+    // un navigateur neuf et loadBalanceData() échouerait sans cette affectation.
+    if (typeof window.globalConfig !== 'undefined') {
+      window.globalConfig.set('data_source', effectiveNew);
+    }
+
     // Vider caches si changement réel
     const sourceChanged = oldSource && oldSource !== effectiveNew;
     const fileChanged = effectiveNew === 'cointracking' && oldFile !== newFile;
@@ -551,10 +563,6 @@ class WealthContextBar {
         }
       });
 
-      // Mettre à jour globalConfig
-      if (typeof window.globalConfig !== 'undefined') {
-        window.globalConfig.set('data_source', effectiveNew);
-      }
     }
 
     // Mettre à jour userSettings
@@ -1113,9 +1121,24 @@ class WealthContextBar {
     this.bindEvents();
     this.isInitialized = true;
 
-    // Charger les sources de comptes de manière asynchrone
-    this.loadAndPopulateAccountSources();
-    this.loadAndPopulateBourseSources();
+    // Charger et appliquer les deux sources avant d'annoncer que le contexte
+    // est prêt. Les pages peuvent ainsi attendre la vraie source active au
+    // lieu de démarrer avec la valeur par défaut affichée temporairement.
+    Promise.allSettled([
+      this.loadAndPopulateAccountSources(),
+      this.loadAndPopulateBourseSources()
+    ]).then(results => {
+      results.forEach(result => {
+        if (result.status === 'rejected') {
+          debugLogger.warn('WealthContextBar source initialization failed:', result.reason);
+        }
+      });
+
+      this.isReady = true;
+      this.emit('wealth:change', this.context);
+      this.emit('wealth:ready', this.context);
+      this.resolveInitialization(this.getContext());
+    });
 
     // Setup listener pour changement d'utilisateur
     this.setupUserSwitchListener();
@@ -1134,10 +1157,10 @@ class WealthContextBar {
     // Initialize global status badge
     this.initGlobalBadge();
 
-    // Emit initial state
-    setTimeout(() => {
-      this.emit('wealth:change', this.context);
-    }, 100);
+  }
+
+  whenReady() {
+    return this.initializationPromise;
   }
 
   /**
@@ -1208,11 +1231,8 @@ class WealthContextBar {
     accountSelect.innerHTML = accountHTML;
     accountSelect.removeAttribute('aria-busy');
 
-    // Restaurer sélection depuis localStorage namespacé
-    const activeUser = localStorage.getItem('activeUser');
-    const userKey = `wealth_ctx:${activeUser}`;
-    const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
-    const restoredValue = stored.account || 'all';
+    // loadContext() a déjà appliqué la priorité URL > stockage > défaut.
+    const restoredValue = this.context.account || 'all';
 
     // Vérifier que la valeur existe dans les options avant de la définir
     const optionExists = Array.from(accountSelect.options).some(opt => opt.value === restoredValue);
@@ -1249,11 +1269,8 @@ class WealthContextBar {
     bourseSelect.innerHTML = bourseHTML;
     bourseSelect.removeAttribute('aria-busy');
 
-    // Restaurer sélection depuis localStorage namespacé
-    const activeUser = localStorage.getItem('activeUser');
-    const userKey = `wealth_ctx:${activeUser}`;
-    const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
-    const restoredValue = stored.bourse || 'all';
+    // loadContext() a déjà appliqué la priorité URL > stockage > défaut.
+    const restoredValue = this.context.bourse || 'all';
 
     // Vérifier que la valeur existe dans les options avant de la définir
     const optionExists = Array.from(bourseSelect.options).some(opt => opt.value === restoredValue);

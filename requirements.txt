@@ -1,5 +1,6 @@
 # Core FastAPI & Web Framework
-fastapi==0.115.0
+fastapi==0.141.1
+starlette==1.6.0
 uvicorn[standard]==0.30.6
 pydantic==2.9.2
 pydantic-settings>=2.0.0
@@ -10,7 +11,7 @@ python-dotenv>=1.0.1
 
 # Authentication & Security
 bcrypt>=4.0.0  # Password hashing (direct bcrypt, no passlib wrapper)
-python-jose[cryptography]>=3.3.0  # JWT token generation/validation
+PyJWT==2.14.0  # JWT token generation/validation (HS256)
 
 # HTTP Clients & Networking
 httpx>=0.24.0
@@ -49,7 +50,7 @@ selenium>=4.35.0  # E2E browser testing
 # Monitoring & Logging (Development)
 # Note: These are optional for basic usage
 # structlog>=23.0.0  # Structured logging
-prometheus-fastapi-instrumentator>=6.1.0
+prometheus-fastapi-instrumentator==8.1.0
 psutil>=5.9.0  # System resource monitoring (CPU, RAM usage)
 
 pyarrow

@@ -4,6 +4,7 @@ import { store } from '../core/risk-dashboard-store.js';
 import { UNIFIED_ASSET_GROUPS, getAssetGroup, groupAssetsByClassification } from '../shared-asset-groups.js';
 import { selectCapPercent, selectPolicyCapPercent, selectEngineCapPercent } from '../selectors/governance.js';
 import { formatUSD } from '../core/formatters.js';
+import { waitForWealthContextReady } from '../core/wealth-context-ready.js';
 // Note: fetchSaxoSummary imported dynamically in refreshSaxoTile()
 
 // ✅ Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
@@ -628,7 +629,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Configuration Chart.js avec thème
     initChartTheme();
 
-    // Initialize data source tracking for cross-tab synchronization
+    // Wait until the source selectors have loaded and applied their crypto and
+    // stock choices. nav.js imports the bar dynamically, so presence alone is
+    // not proof that source initialization has completed.
+    const wealthContextStatus = await waitForWealthContextReady(window, 5000);
+    if (!wealthContextStatus.ready) {
+        console.warn('[Dashboard] WealthContextBar not ready after 5s, proceeding anyway...');
+    } else {
+        debugLogger.debug('[Dashboard] WealthContextBar sources applied before initial load');
+    }
+
+    // Initialize data source tracking only after the context bar has applied
+    // the selected source to globalConfig.
     window.lastKnownDataSource = globalConfig.get('data_source');
     console.debug(`📊 Dashboard initialized with data source: ${window.lastKnownDataSource}`);
 
@@ -636,21 +648,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ✅ Store interval IDs for proper cleanup
     dashboardRefreshInterval = setInterval(loadDashboardData, 60000);
-
-    // ✅ Wait for WealthContextBar to be ready before loading tiles
-    // CRITICAL: Prevents using stale localStorage cache in production
-    const maxWait = 50; // 50 attempts x 100ms = 5 seconds max
-    let attempts = 0;
-    while (!window.wealthContextBar?.getContext()?.bourse && attempts < maxWait) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-    }
-
-    if (attempts >= maxWait) {
-        console.warn('[Dashboard] WealthContextBar not ready after 5s, proceeding anyway...');
-    } else {
-        debugLogger.debug(`[Dashboard] WealthContextBar ready after ${attempts * 100}ms`);
-    }
 
     // ✅ Initialize wealth tiles sequentially to avoid race conditions
     await refreshSaxoTile();

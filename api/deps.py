@@ -10,6 +10,9 @@ from fastapi import Cookie, Depends, Header, HTTPException, status, Query
 import logging
 import os
 
+import jwt
+from jwt import InvalidTokenError
+
 from api.config.users import (
     get_default_user,
     is_allowed_user,
@@ -41,14 +44,13 @@ def decode_access_token(token: str) -> Optional[dict]:
         dict: Payload du token si valide, None sinon
     """
     try:
-        from jose import jwt, JWTError
         ALGORITHM = "HS256"
 
         payload = jwt.decode(token, get_jwt_secret(), algorithms=[ALGORITHM])
         if is_access_token_revoked(payload):
             return None
         return payload
-    except JWTError as e:
+    except InvalidTokenError as e:
         logger.debug(f"JWT decode error: {e}")
         return None
     except Exception as e:

@@ -4,7 +4,7 @@ Unit tests for api.deps module.
 Tests FastAPI dependency functions for user validation (X-User header),
 JWT authentication, admin role checks, and dev mode bypass behaviors.
 
-All external dependencies (api.config.users, os.getenv, jose.jwt) are mocked
+All external dependencies (api.config.users, os.getenv, PyJWT) are mocked
 to avoid loading the full application or requiring real configuration files.
 """
 import pytest
@@ -325,30 +325,23 @@ class TestDecodeAccessToken:
         from api.deps import decode_access_token
 
         expected_payload = {"sub": "jack", "exp": 9999999999}
-        mock_jwt = MagicMock()
-        mock_jwt.decode.return_value = expected_payload
+        with patch("api.deps.jwt.decode", return_value=expected_payload):
+            result = decode_access_token("valid.jwt.token")
 
-        with patch(f"{MODULE}.os.getenv", return_value="test-secret"):
-            with patch.dict("sys.modules", {"jose": MagicMock(), "jose.jwt": mock_jwt}):
-                # We need to patch at the point of import inside the function
-                with patch("jose.jwt.decode", return_value=expected_payload):
-                    result = decode_access_token("valid.jwt.token")
+        assert result == expected_payload
 
-        # Since jose is imported inside the function, we mock it differently
-        assert result is not None or result is None  # Depends on environment
-
-    def test_valid_token_decoded_with_jose(self):
-        """Integration-style: use jose.jwt.encode to create a real token, then decode."""
+    def test_valid_token_decoded_with_pyjwt(self):
+        """Integration-style: use PyJWT to create a real token, then decode."""
         try:
-            from jose import jwt as jose_jwt
+            import jwt as pyjwt
         except ImportError:
-            pytest.skip("python-jose not installed")
+            pytest.skip("PyJWT not installed")
 
         from api.deps import decode_access_token
 
         secret = "test-secret-key-for-unit-tests"
         payload = {"sub": "jack", "exp": 9999999999}
-        token = jose_jwt.encode(payload, secret, algorithm="HS256")
+        token = pyjwt.encode(payload, secret, algorithm="HS256")
 
         with patch(f"{MODULE}.os.getenv", return_value=secret):
             result = decode_access_token(token)
@@ -359,15 +352,15 @@ class TestDecodeAccessToken:
     def test_expired_token_returns_none(self):
         """An expired JWT should return None."""
         try:
-            from jose import jwt as jose_jwt
+            import jwt as pyjwt
         except ImportError:
-            pytest.skip("python-jose not installed")
+            pytest.skip("PyJWT not installed")
 
         from api.deps import decode_access_token
 
         secret = "test-secret-key-for-unit-tests"
         payload = {"sub": "jack", "exp": 1}  # Expired in 1970
-        token = jose_jwt.encode(payload, secret, algorithm="HS256")
+        token = pyjwt.encode(payload, secret, algorithm="HS256")
 
         with patch(f"{MODULE}.os.getenv", return_value=secret):
             result = decode_access_token(token)
@@ -377,13 +370,13 @@ class TestDecodeAccessToken:
     def test_wrong_secret_returns_none(self):
         """A token signed with a different secret should return None."""
         try:
-            from jose import jwt as jose_jwt
+            import jwt as pyjwt
         except ImportError:
-            pytest.skip("python-jose not installed")
+            pytest.skip("PyJWT not installed")
 
         from api.deps import decode_access_token
 
-        token = jose_jwt.encode(
+        token = pyjwt.encode(
             {"sub": "jack", "exp": 9999999999},
             "correct-secret",
             algorithm="HS256",

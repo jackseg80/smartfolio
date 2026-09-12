@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
+import jwt
 from fastapi import (
     APIRouter,
     Cookie,
@@ -20,7 +21,7 @@ from fastapi import (
     Response,
     status,
 )
-from jose import JWTError, jwt
+from jwt import InvalidTokenError
 
 from api.auth_security import (
     ACCESS_COOKIE,
@@ -101,7 +102,7 @@ def decode_access_token(token: str) -> Optional[dict]:
         if is_access_token_revoked(payload):
             return None
         return payload
-    except (JWTError, RuntimeError) as exc:
+    except (InvalidTokenError, RuntimeError) as exc:
         logger.debug("JWT decode error: %s", exc)
         return None
 
