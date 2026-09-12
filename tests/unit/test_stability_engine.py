@@ -101,6 +101,30 @@ class TestAdaptiveRateLimiter:
         assert metadata['available_tokens'] == 0
 
     @pytest.mark.asyncio
+    async def test_endpoint_bursts_do_not_starve_other_dashboard_calls(self):
+        rate_limiter = AdaptiveRateLimiter(refill_rate=0.001, burst_size=2)
+        client_id = "dashboard_client"
+
+        for _ in range(2):
+            allowed, _ = await rate_limiter.check_rate_limit(
+                client_id,
+                "GET:/api/risk/dashboard",
+            )
+            assert allowed is True
+
+        blocked, _ = await rate_limiter.check_rate_limit(
+            client_id,
+            "GET:/api/risk/dashboard",
+        )
+        balances_allowed, _ = await rate_limiter.check_rate_limit(
+            client_id,
+            "GET:/balances/current",
+        )
+
+        assert blocked is False
+        assert balances_allowed is True
+
+    @pytest.mark.asyncio
     async def test_adaptive_cache_ttl(self, rate_limiter):
         client_id = "cache_client"
         endpoint = "test_endpoint"

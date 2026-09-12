@@ -67,19 +67,20 @@ class AdaptiveRateLimiter:
 
         log.info(f"🪣 Token bucket rate limiter initialized: {refill_rate} req/s burst {burst_size}")
 
-    def _get_bucket(self, client_id: str) -> TokenBucket:
-        """Get or create token bucket for client"""
+    def _get_bucket(self, client_id: str, endpoint: str = "") -> TokenBucket:
+        """Get or create a token bucket for one client and endpoint."""
         now = time.time()
+        bucket_key = f"{client_id}:{endpoint}" if endpoint else client_id
 
-        if client_id not in self.buckets:
-            self.buckets[client_id] = TokenBucket(
+        if bucket_key not in self.buckets:
+            self.buckets[bucket_key] = TokenBucket(
                 capacity=self.burst_size,
                 tokens=self.burst_size,  # Start with full bucket
                 refill_rate=self.refill_rate,
                 last_refill=now
             )
 
-        return self.buckets[client_id]
+        return self.buckets[bucket_key]
 
     async def check_rate_limit(self, client_id: str, endpoint: str = "",
                               tokens: int = 1) -> Tuple[bool, Dict]:
@@ -89,7 +90,11 @@ class AdaptiveRateLimiter:
         """
         self._maybe_cleanup()
 
-        bucket = self._get_bucket(client_id)
+        # A dashboard loads several independent endpoints concurrently. Sharing
+        # one bucket for the whole client lets a busy page exhaust the budget of
+        # another page (for example Risk blocking /balances/current). Keep the
+        # protection per client while isolating unrelated API endpoints.
+        bucket = self._get_bucket(client_id, endpoint)
         allowed = bucket.consume(tokens)
 
         # Update cache stats
