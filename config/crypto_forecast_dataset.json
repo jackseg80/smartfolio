@@ -1,0 +1,41 @@
+{
+  "schema_version": "crypto-forecast-dataset-v1",
+  "decision_frequency": "calendar_day",
+  "decision_timezone": "UTC",
+  "defensive_reference": {
+    "kind": "explicit_assumption_not_observed_market_data",
+    "name": "USD cash",
+    "total_return": 0.0
+  },
+  "excluded_observation_groups": [
+    "Stablecoins"
+  ],
+  "feature_windows_calendar_days": {
+    "distance_to_simple_moving_average": [
+      30,
+      90,
+      200
+    ],
+    "drawdown_from_rolling_peak": [
+      90
+    ],
+    "past_return": [
+      7,
+      30,
+      90
+    ],
+    "past_volatility": [
+      7,
+      30,
+      60
+    ]
+  },
+  "forecast_horizons_calendar_days": [
+    7,
+    30
+  ],
+  "group_basket_policy": "equal_weight_members_known_at_decision_weights_held_to_horizon",
+  "missing_observation_policy": "keep_row_and_mark_unavailable",
+  "purge_days": 30,
+  "volume_liquidity_status": "unavailable_without_dated_source"
+}
