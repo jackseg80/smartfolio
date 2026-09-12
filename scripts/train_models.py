@@ -12,11 +12,10 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pickle
 import math
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from torch.utils.data import DataLoader, TensorDataset
 from torch.amp import autocast, GradScaler
@@ -35,6 +34,64 @@ from services.ml_pipeline_manager import RegimeClassifier, VolatilityPredictor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def _trailing_realized_volatility(returns, end_idx: int, window: int = 7) -> float:
+    """Volatility observable at ``end_idx`` using past returns only."""
+    if window < 2 or end_idx < 0:
+        return 0.0
+    start_idx = max(0, end_idx - window + 1)
+    observed = np.asarray(returns[start_idx : end_idx + 1], dtype=float)
+    return float(np.std(observed)) if len(observed) >= 2 else 0.0
+
+
+def _chronological_split_indices(samples, purge_days: int = 30):
+    """Return shared-date train/validation/test indexes with 30-day purges.
+
+    Real samples must expose ``decision_date``. Synthetic-only samples retain
+    their deterministic sequential split because they have no market dates and
+    are never evidence of historical predictive performance.
+    """
+    n = len(samples)
+    if n < 5:
+        raise ValueError("Not enough samples for train/validation/test split")
+    raw_dates = [sample.get("decision_date") for sample in samples]
+    if not all(raw_dates):
+        train_end = int(0.6 * n)
+        val_end = int(0.8 * n)
+        return (
+            np.arange(0, train_end),
+            np.arange(train_end, val_end),
+            np.arange(val_end, n),
+            {"kind": "sequential_synthetic", "purge_days": 0},
+        )
+
+    dates = pd.DatetimeIndex(pd.to_datetime(raw_dates, utc=True)).normalize().tz_localize(None)
+    unique_dates = dates.unique().sort_values()
+    if len(unique_dates) < 10:
+        raise ValueError("Not enough distinct decision dates for temporal split")
+    validation_start = unique_dates[int(0.6 * len(unique_dates))]
+    test_start = unique_dates[int(0.8 * len(unique_dates))]
+    train_end_date = validation_start - pd.Timedelta(days=purge_days + 1)
+    validation_end = test_start - pd.Timedelta(days=purge_days + 1)
+    train_index = np.flatnonzero(dates <= train_end_date)
+    validation_index = np.flatnonzero((dates >= validation_start) & (dates <= validation_end))
+    test_index = np.flatnonzero(dates >= test_start)
+    if not len(train_index) or not len(validation_index) or not len(test_index):
+        raise ValueError("Temporal split is empty after the required purge")
+    return (
+        train_index,
+        validation_index,
+        test_index,
+        {
+            "kind": "shared_decision_dates",
+            "purge_days": purge_days,
+            "train_end": train_end_date.date().isoformat(),
+            "validation_start": validation_start.date().isoformat(),
+            "validation_end": validation_end.date().isoformat(),
+            "test_start": test_start.date().isoformat(),
+        },
+    )
 
 # GPU Configuration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -355,8 +412,13 @@ def generate_real_market_data(
                         1 if regime_label == 2 else 0,
                         1 if regime_label == 3 else 0,
                     ]
-                # Volatilité réalisée de la veille comme feature globale (répétée)
-                prev_rv = realized_vol[end_idx-1] if end_idx-1 >= 0 and np.isfinite(realized_vol[end_idx-1]) else 0.0
+                # Volatilité réalisée strictement rétrospective au pas courant.
+                # L'ancienne version décalait la cible future de 7 jours et
+                # divulguait encore des rendements postérieurs à la décision.
+                global_return_idx = end_idx - sequence_length + j
+                prev_rv = _trailing_realized_volatility(
+                    returns, global_return_idx, window=fwd_window
+                )
                 # Corrélation et beta vs BTC (fenêtre jusqu'à j)
                 corr_btc = 0.0
                 beta_btc = 0.0
@@ -394,7 +456,10 @@ def generate_real_market_data(
                 'volatility_sequence': vol_sequence,
                 'actual_volatility': target_vol,
                 'regime_name': regime_name,
-                'symbol': symbol
+                'symbol': symbol,
+                'decision_date': datetime.fromtimestamp(
+                    hist[end_idx][0], tz=timezone.utc
+                ).date().isoformat(),
             })
 
     logger.info(f"Generated {len(data)} real samples")
@@ -434,20 +499,20 @@ def train_regime_model(data, epochs: int = 200, patience: int = 15):
     logger.info("Training regime classification model...")
     
     # Préparer les données
-    X = np.array([sample['regime_features'] for sample in data])
-    y = np.array([sample['regime_label'] for sample in data])
-    
-    # Normalisation
+    samples = sorted(data, key=lambda sample: (sample.get('decision_date', ''), sample.get('symbol', '')))
+    X = np.array([sample['regime_features'] for sample in samples])
+    y = np.array([sample['regime_label'] for sample in samples])
+    train_idx, val_idx, test_idx, split_metadata = _chronological_split_indices(samples)
+
+    # Apprendre la normalisation uniquement sur la fenêtre d'entraînement.
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    
-    # Division train/val/test temporelle (évite la fuite temporelle)
-    n = len(X_scaled)
-    train_end = int(0.6 * n)
-    val_end = int(0.8 * n)
-    X_train, y_train = X_scaled[:train_end], y[:train_end]
-    X_val, y_val = X_scaled[train_end:val_end], y[train_end:val_end]
-    X_test, y_test = X_scaled[val_end:], y[val_end:]
+    X_train_raw, y_train = X[train_idx], y[train_idx]
+    X_val_raw, y_val = X[val_idx], y[val_idx]
+    X_test_raw, y_test = X[test_idx], y[test_idx]
+    scaler.fit(X_train_raw)
+    X_train = scaler.transform(X_train_raw)
+    X_val = scaler.transform(X_val_raw)
+    X_test = scaler.transform(X_test_raw)
     
     # Tenseurs CPU; on transfère en GPU dans la boucle (non_blocking)
     X_train_tensor = torch.from_numpy(X_train).float()
@@ -615,7 +680,7 @@ def train_regime_model(data, epochs: int = 200, patience: int = 15):
         "trained_at": datetime.now().isoformat(),
         "pytorch_version": torch.__version__,
         "numpy_version": np.__version__,
-        "data_source": "synthetic",
+        "data_source": "real" if all(sample.get("decision_date") for sample in samples) else "synthetic",
         "train_samples": len(X_train),
         "val_samples": len(X_val),
         "test_samples": len(X_test),
@@ -626,7 +691,8 @@ def train_regime_model(data, epochs: int = 200, patience: int = 15):
         "compiled": compiled_regime,
         "classification_report": report,
         "confusion_matrix": cm.tolist(),
-        "temperature_T": best_T
+        "temperature_T": best_T,
+        "temporal_split": split_metadata,
     }
     
     return model, scaler, metadata['input_features'], metadata
@@ -636,37 +702,32 @@ def train_volatility_model(data, symbol="BTC", epochs: int = 200, patience: int 
     
     logger.info(f"Training volatility prediction model for {symbol}...")
     
-    # Préparer les séquences
-    sequences = []
-    targets = []
-    
-    for sample in data:
-        # En mode réel, filtrer par symbole pour entraîner un modèle spécifique
-        if 'symbol' in sample and sample['symbol'] != symbol:
-            continue
-        if len(sample['volatility_sequence']) >= 30:
-            seq = np.array(sample['volatility_sequence'])
-            if len(seq) >= 30:
-                sequences.append(seq[-30:])  # 30 derniers points (harmonisé)
-                # Normaliser/clipper la volatilité cible entre 0 et 1
-                targets.append(min(sample['actual_volatility'], 1.0))
-    
-    if len(sequences) < 100:
-        logger.warning(f"Not enough data for volatility model: {len(sequences)} sequences")
+    # Préparer les séquences et conserver les dates avec chaque échantillon.
+    selected_samples = [
+        sample for sample in data
+        if ('symbol' not in sample or sample['symbol'] == symbol)
+        and len(sample['volatility_sequence']) >= 30
+    ]
+    selected_samples = sorted(
+        selected_samples,
+        key=lambda sample: (sample.get('decision_date') or '', sample.get('symbol', '')),
+    )
+    if len(selected_samples) < 100:
+        logger.warning(
+            f"Not enough data for volatility model: {len(selected_samples)} sequences"
+        )
         return None, None, None, None
-    
-    X = np.array(sequences)
-    y = np.array(targets)
+
+    X = np.array([np.array(sample['volatility_sequence'])[-30:] for sample in selected_samples])
+    y = np.array([min(sample['actual_volatility'], 1.0) for sample in selected_samples])
     
     logger.info(f"Volatility model data shape: X={X.shape}, y={y.shape}")
     
     # Division train/val/test AVANT normalisation (split temporel, pas aléatoire)
-    n = len(X)
-    train_end = int(0.6 * n)
-    val_end = int(0.8 * n)
-    X_train, y_train = X[:train_end], y[:train_end]
-    X_val, y_val = X[train_end:val_end], y[train_end:val_end]
-    X_test, y_test = X[val_end:], y[val_end:]
+    train_idx, val_idx, test_idx, split_metadata = _chronological_split_indices(selected_samples)
+    X_train, y_train = X[train_idx], y[train_idx]
+    X_val, y_val = X[val_idx], y[val_idx]
+    X_test, y_test = X[test_idx], y[test_idx]
 
     # Option: transformer la cible en log-vol
     y_train_t = np.log1p(y_train) if log_vol else y_train
@@ -873,7 +934,8 @@ def train_volatility_model(data, symbol="BTC", epochs: int = 200, patience: int 
         "target_p10": p10,
         "target_p90": p90,
         "target_transform": "log1p" if log_vol else "none",
-        "test_segments": seg_metrics
+        "test_segments": seg_metrics,
+        "temporal_split": split_metadata,
     }
     
     return model, scaler, None, metadata
