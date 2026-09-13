@@ -1,0 +1,75 @@
+{
+  "schema_version": "crypto-forecast-compact-signal-feasibility-v1",
+  "frozen_at_utc": "2026-09-13T00:00:00Z",
+  "evaluation_date_utc": "2026-09-13",
+  "required_start_date_on_or_before": "2022-06-16",
+  "minimum_calendar_span_days": 1551,
+  "minimum_independent_daily_dates": 480,
+  "minimum_covered_assets": 5,
+  "maximum_estimated_raw_bytes": 268435456,
+  "experimental_universe": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "ADA",
+    "XRP",
+    "LINK",
+    "LTC",
+    "BCH",
+    "DOT",
+    "BNB"
+  ],
+  "hard_gates": [
+    "official_primary_source",
+    "public_read_only_access",
+    "timestamp_and_availability_semantics_documented",
+    "historical_span_sufficient",
+    "independent_dates_sufficient",
+    "asset_coverage_sufficient",
+    "estimated_size_within_limit",
+    "incremental_information_not_reconstructed_from_spot_ohlcv",
+    "novel_to_smartfolio_forecasting_dataset",
+    "point_in_time_revision_policy_identified",
+    "stable_retrieval_or_archive_route",
+    "research_reuse_terms_identified"
+  ],
+  "candidate_families": [
+    {
+      "id": "binance_usdm_derivatives",
+      "signals": ["funding_rate", "premium_index", "open_interest_metrics"]
+    },
+    {
+      "id": "coin_metrics_community_onchain",
+      "signals": ["active_addresses", "transaction_count", "fees", "transfer_value"]
+    },
+    {
+      "id": "okx_derivatives",
+      "signals": ["funding_rate", "open_interest"]
+    },
+    {
+      "id": "fred_macro_control",
+      "signals": ["vix", "trade_weighted_us_dollar"]
+    },
+    {
+      "id": "alternative_me_sentiment_control",
+      "signals": ["crypto_fear_and_greed_index"]
+    }
+  ],
+  "decision_policy": {
+    "GO_PRIMARY": "all hard gates pass from official evidence",
+    "GO_PILOT": "no known hard failure, but a bounded sample or terms clarification is still required",
+    "NO_GO": "one or more hard gates fail or cannot be evidenced without lowering the frozen thresholds"
+  },
+  "forbidden_actions": [
+    "dataset_download",
+    "future_target_read",
+    "feature_materialization",
+    "model_training",
+    "backtest",
+    "production_change",
+    "real_order",
+    "commit",
+    "push",
+    "deploy"
+  ]
+}
