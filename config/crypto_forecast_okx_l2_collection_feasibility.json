@@ -1,0 +1,39 @@
+{
+  "schema_version": "crypto-forecast-okx-l2-collection-feasibility-v1",
+  "provider": "okx_public_market_data",
+  "base_url": "https://www.okx.com",
+  "endpoint": "/api/v5/market/books",
+  "instruments": ["BTC-USDT", "ETH-USDT", "SOL-USDT"],
+  "book_depth_per_side": 400,
+  "snapshots_per_day_per_instrument": 96,
+  "minimum_continuous_days": 420,
+  "chronological_design_days": {
+    "training": 180,
+    "purge_after_training": 30,
+    "validation": 60,
+    "purge_after_validation": 30,
+    "calibration": 30,
+    "purge_after_calibration": 30,
+    "final_test": 60
+  },
+  "maximum_target_horizon_days": 30,
+  "historical_complete_day_size_mb": {
+    "median": "490.61",
+    "p95": "715.3065",
+    "maximum": "767.69"
+  },
+  "maximum_local_archive_history_gib": "20",
+  "maximum_snapshot_age_ms": 60000,
+  "maximum_future_lead_ms": 5000,
+  "maximum_response_bytes_per_instrument": 131072,
+  "minimum_levels_per_side": 400,
+  "maximum_levels_per_side": 400,
+  "maximum_projected_raw_collection_gib": "10",
+  "gzip_storage_safety_multiplier": "3",
+  "maximum_projected_retained_collection_gib": "5",
+  "official_rate_limit_requests": 40,
+  "official_rate_limit_window_seconds": 2,
+  "maximum_planned_burst_requests": 3,
+  "request_timeout_seconds": 30,
+  "request_delay_seconds": 0.1
+}
