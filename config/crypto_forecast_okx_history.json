@@ -1,0 +1,23 @@
+{
+  "schema_version": "crypto-forecast-okx-history-v1",
+  "provider": "okx_spot_public_market_data",
+  "base_url": "https://www.okx.com",
+  "bar": "1Dutc",
+  "quote_asset": "USDT",
+  "start_date": "2021-01-01",
+  "page_limit": 300,
+  "request_delay_seconds": 0.11,
+  "minimum_observations": 1000,
+  "instruments": [
+    {"symbol": "BTC", "market_symbol": "BTC-USDT"},
+    {"symbol": "ETH", "market_symbol": "ETH-USDT"},
+    {"symbol": "SOL", "market_symbol": "SOL-USDT"},
+    {"symbol": "ADA", "market_symbol": "ADA-USDT"},
+    {"symbol": "XRP", "market_symbol": "XRP-USDT"},
+    {"symbol": "LINK", "market_symbol": "LINK-USDT"},
+    {"symbol": "LTC", "market_symbol": "LTC-USDT"},
+    {"symbol": "BCH", "market_symbol": "BCH-USDT"},
+    {"symbol": "BNB", "market_symbol": "BNB-USDT"},
+    {"symbol": "DOT", "market_symbol": "DOT-USDT"}
+  ]
+}

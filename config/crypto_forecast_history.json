@@ -1,0 +1,23 @@
+{
+  "schema_version": "crypto-forecast-history-acquisition-v1",
+  "provider": "binance_spot_public_market_data",
+  "base_url": "https://data-api.binance.vision",
+  "interval": "1d",
+  "quote_asset": "USDT",
+  "start_date": "2017-01-01",
+  "page_limit": 1000,
+  "request_delay_seconds": 0.1,
+  "minimum_observations": 1751,
+  "instruments": [
+    {"symbol": "BTC", "market_symbol": "BTCUSDT"},
+    {"symbol": "ETH", "market_symbol": "ETHUSDT"},
+    {"symbol": "SOL", "market_symbol": "SOLUSDT"},
+    {"symbol": "ADA", "market_symbol": "ADAUSDT"},
+    {"symbol": "XRP", "market_symbol": "XRPUSDT"},
+    {"symbol": "LINK", "market_symbol": "LINKUSDT"},
+    {"symbol": "LTC", "market_symbol": "LTCUSDT"},
+    {"symbol": "BCH", "market_symbol": "BCHUSDT"},
+    {"symbol": "BNB", "market_symbol": "BNBUSDT"},
+    {"symbol": "DOT", "market_symbol": "DOTUSDT"}
+  ]
+}

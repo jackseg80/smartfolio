@@ -23,6 +23,17 @@ def _groups(symbol):
     return {"BTC": "BTC", "ETH": "Smart", "SOL": "Smart", "USDT": "Stablecoins"}[symbol]
 
 
+def _market_data(series, *, multiplier=1.0):
+    count = len(series)
+    return pd.DataFrame(
+        {
+            "quote_asset_volume": multiplier * np.linspace(1_000_000.0, 2_000_000.0, count),
+            "trades": multiplier * np.linspace(10_000.0, 20_000.0, count),
+        },
+        index=series.index,
+    )
+
+
 def test_builds_separate_causal_features_and_future_labels():
     build = build_forecast_dataset(
         {"BTC": _series(daily_return=0.01), "ETH": _series(daily_return=0.02)},
@@ -70,6 +81,36 @@ def test_mutating_every_future_price_does_not_change_past_features():
         "target_return_30d"
     ]
     assert not past_labels.equals(changed_labels)
+
+
+def test_mutating_future_volume_does_not_change_past_features():
+    histories = {
+        "BTC": _series(days=300, daily_return=0.002),
+        "ETH": _series(days=300, daily_return=0.003),
+    }
+    market_data = {symbol: _market_data(series) for symbol, series in histories.items()}
+    cutoff = pd.Timestamp("2024-08-15")
+    original = build_forecast_dataset(
+        histories,
+        group_for_symbol=_groups,
+        market_data=market_data,
+    )
+    mutated_market_data = {symbol: frame.copy() for symbol, frame in market_data.items()}
+    for frame in mutated_market_data.values():
+        future = frame.index > cutoff
+        frame.loc[future, ["quote_asset_volume", "trades"]] *= 100.0
+    rebuilt = build_forecast_dataset(
+        histories,
+        group_for_symbol=_groups,
+        market_data=mutated_market_data,
+    )
+
+    assert causal_feature_digest(original.frame, cutoff) == causal_feature_digest(
+        rebuilt.frame, cutoff
+    )
+    assert original.manifest["volume_liquidity"] == (
+        "dated_quote_volume_and_trade_count_used_as_causal_features"
+    )
 
 
 def test_missing_group_exit_is_reported_without_constituent_renormalization():

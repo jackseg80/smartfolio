@@ -1,5 +1,7 @@
 # Lot 2 crypto - dataset causal et validation temporelle
 
+> **Archive intermédiaire.** Ce rapport décrit le premier dataset construit depuis l'ancien cache. La base actuelle est l'acquisition publique Binance enrichie en volume décrite dans `CRYPTO_LOT3_REFRESH_REPORT_2026-09-12.md`. Le point de reprise canonique est `CRYPTO_FORECAST_RESEARCH_STATUS_2026-09-13.md`.
+
 Date : 12 septembre 2026
 
 ## Statut

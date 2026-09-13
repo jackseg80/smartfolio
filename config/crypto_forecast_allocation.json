@@ -1,0 +1,36 @@
+{
+  "schema_version": "crypto-forecast-allocation-backtest-v1",
+  "annualization_days": 365,
+  "minimum_block_days": 30,
+  "rebalance_interval_days": 7,
+  "cost_per_traded_amount": 0.003,
+  "cost_multipliers": [1.0, 2.0],
+  "round_trip_cost": 0.006,
+  "market_entry_confirmations": 5,
+  "market_exit_confirmations": 2,
+  "rotation_entry_confirmations": 5,
+  "rotation_exit_confirmations": 2,
+  "forecast_market_probability_high": 0.60,
+  "forecast_market_probability_low": 0.40,
+  "forecast_rotation_probability": 0.60,
+  "forecast_defensive_probability": 0.65,
+  "forecast_defensive_confirmations": 2,
+  "btc_eth_split": {"BTC": 0.60, "ETH": 0.40},
+  "altcoin_weight_cap": 0.10,
+  "benchmarks": [
+    {"name": "cash_100", "target_weights": {"CASH": 1.0}},
+    {"name": "btc_buy_and_hold", "target_weights": {"BTC": 1.0}},
+    {"name": "btc_eth_60_40_buy_and_hold", "target_weights": {"BTC": 0.60, "ETH": 0.40}},
+    {"name": "fixed_risk_20_btc_eth", "target_weights": {"BTC": 0.12, "ETH": 0.08, "CASH": 0.80}},
+    {"name": "fixed_risk_60_btc_eth", "target_weights": {"BTC": 0.36, "ETH": 0.24, "CASH": 0.40}},
+    {"name": "fixed_risk_80_btc_eth", "target_weights": {"BTC": 0.48, "ETH": 0.32, "CASH": 0.20}}
+  ],
+  "policies": [
+    {"name": "risk_20_60_btc_eth", "risk_low": 0.20, "risk_high": 0.60, "alt_mode": "none"},
+    {"name": "risk_20_60_alt_30", "risk_low": 0.20, "risk_high": 0.60, "alt_mode": "portfolio_30"},
+    {"name": "risk_20_60_alt_60_risky", "risk_low": 0.20, "risk_high": 0.60, "alt_mode": "risky_60"},
+    {"name": "risk_20_80_btc_eth", "risk_low": 0.20, "risk_high": 0.80, "alt_mode": "none"},
+    {"name": "risk_20_80_alt_30", "risk_low": 0.20, "risk_high": 0.80, "alt_mode": "portfolio_30"},
+    {"name": "risk_20_80_alt_60_risky", "risk_low": 0.20, "risk_high": 0.80, "alt_mode": "risky_60"}
+  ]
+}

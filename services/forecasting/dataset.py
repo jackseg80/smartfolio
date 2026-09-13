@@ -35,6 +35,12 @@ BASE_FEATURE_COLUMNS = (
     "past_volatility_60d",
     "drawdown_from_90d_peak",
 )
+VOLUME_FEATURE_COLUMNS = (
+    "quote_volume_change_7d",
+    "quote_volume_change_30d",
+    "quote_volume_to_30d_mean",
+    "trade_count_to_30d_mean",
+)
 RELATIVE_FEATURE_COLUMNS = (
     "relative_btc_return_7d",
     "relative_btc_return_30d",
@@ -43,7 +49,7 @@ RELATIVE_FEATURE_COLUMNS = (
     "relative_group_return_30d",
     "relative_group_return_90d",
 )
-FEATURE_COLUMNS = BASE_FEATURE_COLUMNS + RELATIVE_FEATURE_COLUMNS
+FEATURE_COLUMNS = BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS + RELATIVE_FEATURE_COLUMNS
 
 
 @dataclass(frozen=True)
@@ -66,6 +72,7 @@ class UniverseMember:
 @dataclass(frozen=True)
 class PriceCacheLoad:
     histories: dict[str, pd.Series]
+    market_data: dict[str, pd.DataFrame]
     inputs: list[dict[str, Any]]
     rejected_files: list[dict[str, str]]
 
@@ -125,7 +132,21 @@ def load_price_cache(price_directory: str | Path) -> PriceCacheLoad:
     directory = Path(price_directory)
     if not directory.is_dir():
         raise FileNotFoundError(f"Price history directory does not exist: {directory}")
+    acquisition_path = directory / "acquisition_manifest.json"
+    if not acquisition_path.is_file():
+        acquisition_path = directory.parent / "acquisition_manifest.json"
+    provenance_by_file: dict[str, dict[str, Any]] = {}
+    acquisition_sha256: str | None = None
+    if acquisition_path.is_file():
+        acquisition = json.loads(acquisition_path.read_text(encoding="utf-8"))
+        if acquisition.get("schema_version") != "crypto-forecast-history-acquisition-v1":
+            raise ValueError(f"Unsupported acquisition manifest: {acquisition_path}")
+        acquisition_sha256 = _file_sha256(acquisition_path)
+        for record in acquisition.get("inputs", []):
+            relative = Path(str(record["price_file"]))
+            provenance_by_file[relative.name] = dict(record)
     histories: dict[str, pd.Series] = {}
+    market_data: dict[str, pd.DataFrame] = {}
     inputs: list[dict[str, Any]] = []
     rejected: list[dict[str, str]] = []
     for path in sorted(directory.glob("*_1d.json"), key=lambda item: item.name.upper()):
@@ -135,23 +156,64 @@ def load_price_cache(price_directory: str | Path) -> PriceCacheLoad:
             series = _normalise_series(raw)
             if series.empty:
                 raise ValueError("no finite positive observations")
+            provenance = provenance_by_file.get(path.name)
+            actual_hash = _file_sha256(path)
+            if provenance and provenance.get("price_file_sha256") != actual_hash:
+                raise ValueError(f"Acquisition manifest hash mismatch for {path.name}")
             histories[symbol] = series
-            inputs.append(
-                {
-                    "symbol": symbol,
-                    "file": path.name,
-                    "sha256": _file_sha256(path),
-                    "observations": int(len(series)),
-                    "first_date": series.index.min().date().isoformat(),
-                    "last_date": series.index.max().date().isoformat(),
-                    "provider_provenance": "unavailable_in_legacy_cache_format",
-                }
-            )
+            metadata = {
+                "symbol": symbol,
+                "file": path.name,
+                "sha256": actual_hash,
+                "observations": int(len(series)),
+                "first_date": series.index.min().date().isoformat(),
+                "last_date": series.index.max().date().isoformat(),
+                "provider_provenance": "unavailable_in_legacy_cache_format",
+            }
+            if provenance:
+                ohlcv_path = acquisition_path.parent / str(provenance["ohlcv_file"])
+                actual_ohlcv_hash = _file_sha256(ohlcv_path)
+                if provenance.get("ohlcv_file_sha256") != actual_ohlcv_hash:
+                    raise ValueError(f"Acquisition manifest OHLCV hash mismatch for {path.name}")
+                ohlcv = pd.read_csv(
+                    ohlcv_path,
+                    usecols=["date", "close", "quote_asset_volume", "trades"],
+                )
+                ohlcv["date"] = pd.to_datetime(ohlcv["date"], errors="raise").dt.normalize()
+                for column in ("close", "quote_asset_volume", "trades"):
+                    ohlcv[column] = pd.to_numeric(ohlcv[column], errors="raise")
+                ohlcv = ohlcv.sort_values("date").drop_duplicates("date", keep="last")
+                ohlcv = ohlcv.set_index("date")
+                aligned_close = ohlcv["close"].reindex(series.index)
+                if aligned_close.isna().any() or not np.allclose(
+                    aligned_close.to_numpy(dtype=float), series.to_numpy(dtype=float), rtol=1e-12
+                ):
+                    raise ValueError(f"OHLCV close series does not match {path.name}")
+                market_data[symbol] = ohlcv[["quote_asset_volume", "trades"]].copy()
+                metadata.update(
+                    {
+                        "provider_provenance": provenance["provider_provenance"],
+                        "market_symbol": provenance["market_symbol"],
+                        "quote_asset": provenance["quote_asset"],
+                        "exchange_status_at_acquisition": provenance[
+                            "exchange_status_at_acquisition"
+                        ],
+                        "ohlcv_file": provenance["ohlcv_file"],
+                        "ohlcv_file_sha256": provenance["ohlcv_file_sha256"],
+                        "acquisition_manifest_sha256": acquisition_sha256,
+                    }
+                )
+            inputs.append(metadata)
         except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
             rejected.append({"file": path.name, "reason": str(exc)})
     if "BTC" not in histories:
         raise ValueError("BTC history is required as the common market reference")
-    return PriceCacheLoad(histories=histories, inputs=inputs, rejected_files=rejected)
+    return PriceCacheLoad(
+        histories=histories,
+        market_data=market_data,
+        inputs=inputs,
+        rejected_files=rejected,
+    )
 
 
 def _history_inputs(histories: Mapping[str, pd.Series]) -> list[dict[str, Any]]:
@@ -228,7 +290,11 @@ def _validate_universe(
     return sorted(validated, key=lambda item: (item.group, item.symbol))
 
 
-def _asset_features(series: pd.Series, calendar: pd.DatetimeIndex) -> pd.DataFrame:
+def _asset_features(
+    series: pd.Series,
+    calendar: pd.DatetimeIndex,
+    market_data: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     prices = series.reindex(calendar)
     daily_return = prices.pct_change(fill_method=None)
     result = pd.DataFrame(index=calendar)
@@ -243,6 +309,20 @@ def _asset_features(series: pd.Series, calendar: pd.DatetimeIndex) -> pd.DataFra
         )
     peak = prices.rolling(90, min_periods=90).max()
     result["drawdown_from_90d_peak"] = prices / peak - 1.0
+    if market_data is not None:
+        quote_volume = pd.to_numeric(
+            market_data["quote_asset_volume"].reindex(calendar), errors="coerce"
+        )
+        trades = pd.to_numeric(market_data["trades"].reindex(calendar), errors="coerce")
+        result["quote_volume_change_7d"] = quote_volume / quote_volume.shift(7) - 1.0
+        result["quote_volume_change_30d"] = quote_volume / quote_volume.shift(30) - 1.0
+        result["quote_volume_to_30d_mean"] = (
+            quote_volume / quote_volume.rolling(30, min_periods=30).mean() - 1.0
+        )
+        result["trade_count_to_30d_mean"] = trades / trades.rolling(30, min_periods=30).mean() - 1.0
+    else:
+        for column in VOLUME_FEATURE_COLUMNS:
+            result[column] = np.nan
     result["decision_price"] = prices
     return result.replace([np.inf, -np.inf], np.nan)
 
@@ -441,6 +521,7 @@ def build_forecast_dataset(
     group_for_symbol: Callable[[str], str] = get_asset_group,
     excluded_groups: Iterable[str] = ("Stablecoins",),
     input_metadata: Sequence[Mapping[str, Any]] | None = None,
+    market_data: Mapping[str, pd.DataFrame] | None = None,
 ) -> DatasetBuild:
     """Build market, group, and asset rows on one UTC daily calendar."""
     normalised: dict[str, pd.Series] = {}
@@ -464,6 +545,12 @@ def build_forecast_dataset(
     inputs = (
         [dict(item) for item in input_metadata] if input_metadata else _history_inputs(normalised)
     )
+    volume_available = bool(market_data) and all(
+        member.symbol in market_data for member in eligible
+    )
+    required_feature_columns = (
+        FEATURE_COLUMNS if volume_available else BASE_FEATURE_COLUMNS + RELATIVE_FEATURE_COLUMNS
+    )
     contract = {
         "schema_version": SCHEMA_VERSION,
         "builder_code_sha256": _file_sha256(Path(__file__)),
@@ -481,7 +568,11 @@ def build_forecast_dataset(
         "group_basket": "equal_weight_members_known_at_decision_weights_held_to_horizon",
         "missing_member_policy": "mark_unavailable_never_drop_and_renormalize",
         "excluded_groups": sorted(excluded),
-        "volume_liquidity": "unavailable_not_in_legacy_dated_cache",
+        "volume_liquidity": (
+            "dated_quote_volume_and_trade_count_used_as_causal_features"
+            if volume_available
+            else "unavailable_not_in_legacy_dated_cache"
+        ),
         "probability_columns": "none_binary_event_labels_only_until_calibration",
     }
     universe_payload = [asdict(member) for member in members]
@@ -495,7 +586,14 @@ def build_forecast_dataset(
     calendar = pd.date_range(first, last, freq="D")
     for member in eligible:
         normalised.setdefault(member.symbol, pd.Series(dtype=float))
-    features = {symbol: _asset_features(series, calendar) for symbol, series in normalised.items()}
+    features = {
+        symbol: _asset_features(
+            series,
+            calendar,
+            market_data.get(symbol) if market_data is not None else None,
+        )
+        for symbol, series in normalised.items()
+    }
     forward = {
         symbol: {
             horizon: series.reindex(calendar).shift(-horizon) / series.reindex(calendar) - 1.0
@@ -511,14 +609,18 @@ def build_forecast_dataset(
     group_features: dict[str, pd.DataFrame] = {}
     group_active: dict[str, dict[pd.Timestamp, list[UniverseMember]]] = {}
     for group, group_members in sorted(by_group.items()):
-        group_frame = pd.DataFrame(index=calendar, columns=BASE_FEATURE_COLUMNS, dtype=float)
+        group_frame = pd.DataFrame(
+            index=calendar,
+            columns=BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS,
+            dtype=float,
+        )
         active_by_date: dict[pd.Timestamp, list[UniverseMember]] = {}
         for decision_date in calendar:
             active = _active_members(group_members, decision_date)
             active_by_date[decision_date] = active
             if not active:
                 continue
-            for column in BASE_FEATURE_COLUMNS:
+            for column in BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS:
                 value = _mean_complete(
                     features[member.symbol].at[decision_date, column] for member in active
                 )
@@ -538,7 +640,11 @@ def build_forecast_dataset(
             row["history_status"] = "insufficient_history"
         else:
             row["history_status"] = "available"
-        row["feature_status"], row["feature_unavailable_fields"] = _status_for_features(row)
+        missing = [
+            column for column in required_feature_columns if _float_or_none(row.get(column)) is None
+        ]
+        row["feature_status"] = "complete" if not missing else "unavailable"
+        row["feature_unavailable_fields"] = json.dumps(missing, separators=(",", ":"))
 
     btc_member = next(member for member in eligible if member.symbol == "BTC")
     for decision_date in calendar:
@@ -553,7 +659,7 @@ def build_forecast_dataset(
             member_count=1,
             membership_provenance=btc_member.membership_provenance,
         )
-        for column in BASE_FEATURE_COLUMNS:
+        for column in BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS:
             row[column] = _float_or_none(btc_features.at[decision_date, column])
         for window in (7, 30, 90):
             base = row[f"past_return_{window}d"]
@@ -588,7 +694,7 @@ def build_forecast_dataset(
                 member_count=len(active),
                 membership_provenance="dated_member_union_no_silent_removal",
             )
-            for column in BASE_FEATURE_COLUMNS:
+            for column in BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS:
                 row[column] = _float_or_none(frame.at[decision_date, column])
             for window in (7, 30, 90):
                 own = row[f"past_return_{window}d"]
@@ -630,7 +736,7 @@ def build_forecast_dataset(
                 member_count=len(active),
                 membership_provenance=member.membership_provenance,
             )
-            for column in BASE_FEATURE_COLUMNS:
+            for column in BASE_FEATURE_COLUMNS + VOLUME_FEATURE_COLUMNS:
                 row[column] = _float_or_none(symbol_features.at[decision_date, column])
             for window in (7, 30, 90):
                 own = row[f"past_return_{window}d"]
@@ -685,12 +791,12 @@ def build_forecast_dataset(
             "possible: historical listings and delistings are not recoverable from the legacy cache alone"
         ),
         "provider_provenance": (
-            "legacy cache does not identify the provider per observation; stablecoin group excluded"
+            sorted({str(item["provider_provenance"]) for item in inputs}) if inputs else []
         ),
         "feature_aggregation": (
             "group features are equal-weight means and require every member known at the decision date"
         ),
-        "feature_columns": list(FEATURE_COLUMNS),
+        "feature_columns": list(required_feature_columns),
         "label_columns_are_not_features": True,
     }
     return DatasetBuild(frame=frame, universe=members, manifest=manifest, coverage=coverage)

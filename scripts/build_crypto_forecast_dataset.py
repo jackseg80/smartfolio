@@ -56,6 +56,7 @@ def main() -> int:
         loaded.histories,
         universe=_load_universe(args.universe_manifest),
         input_metadata=loaded.inputs,
+        market_data=loaded.market_data,
     )
     artifact = write_dataset_artifact(build, args.output_dir)
     summary = {
