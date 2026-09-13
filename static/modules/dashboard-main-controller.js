@@ -555,6 +555,18 @@ let eventListenersController = null;
  * Setup export buttons for Crypto, Saxo, and Banks modules
  */
 function setupExportButtons() {
+    const globalExportBtn = document.getElementById('global-export-btn');
+    if (globalExportBtn) {
+        globalExportBtn.addEventListener('click', () => {
+            import('./export-button.js').then(({ openExportModal }) => {
+                const cryptoSource = window.globalConfig?.get('data_source') ||
+                    localStorage.getItem('data_source') || 'auto';
+                openExportModal('global', '/api/wealth/global/export-lists', 'global-overview', cryptoSource, window.currentFileKey || null);
+            });
+        });
+        console.debug('✅ Global Overview export button initialized');
+    }
+
     // Crypto export button
     const cryptoExportBtn = document.getElementById('crypto-export-btn');
     if (cryptoExportBtn) {

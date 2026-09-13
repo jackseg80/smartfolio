@@ -808,6 +808,103 @@ async def global_summary(
 
 # ==================== EXPORT LISTS ====================
 
+@router.get("/global/export-lists")
+async def export_global_lists(
+    user: str = Depends(get_required_user),
+    source: str = Query("auto", description="Crypto source resolver"),
+    min_usd_threshold: float = Query(1.0, description="Minimum USD value to filter dust assets"),
+    bourse_file_key: Optional[str] = Query(None, description="Bourse file key for a specific CSV selection"),
+    format: str = Query("json", regex="^(json|csv|markdown)$"),
+) -> dict:
+    """Export the holdings behind Global Overview in a single, traceable list."""
+    try:
+        from fastapi.responses import PlainTextResponse
+        from services.export_formatter import ExportFormatter
+        from services.portfolio_export_service import build_saxo_export_data
+        from services.wealth.wealth_service import list_items
+        from services.balance_service import balance_service
+        from shared.asset_groups import get_asset_group
+
+        items = []
+        source_totals = {"Crypto": 0.0, "Stock Market": 0.0, "Wealth": 0.0}
+        crypto_values = []
+
+        crypto_balances = await balance_service.resolve_current_balances(source=source, user_id=user)
+        for position in crypto_balances.get("items", []):
+            value_usd = float(position.get("value_usd", 0.0) or 0.0)
+            if value_usd < min_usd_threshold:
+                continue
+            symbol = str(position.get("symbol") or position.get("alias") or "").upper()
+            if not symbol:
+                continue
+            crypto_values.append(value_usd)
+            items.append({
+                "source": "Crypto",
+                "category": "Crypto",
+                "asset": symbol,
+                "type": "Cryptoasset",
+                "quantity": float(position.get("amount") or position.get("quantity") or 0.0),
+                "original_value": value_usd,
+                "currency": "USD",
+                "value_usd": value_usd,
+                "classification": get_asset_group(symbol),
+                "notes": str(position.get("location") or ""),
+            })
+        # Match the individual crypto export's summation order and precision.
+        source_totals["Crypto"] = sum(crypto_values)
+
+        saxo_export = build_saxo_export_data(user_id=user, file_key=bourse_file_key)
+        for position in saxo_export["positions"]:
+            value_usd = float(position["market_value_usd"])
+            source_totals["Stock Market"] += value_usd
+            items.append({
+                "source": "Stock Market",
+                "category": position["asset_class"],
+                "asset": position["symbol"],
+                "type": position["instrument"],
+                "quantity": position["quantity"],
+                "original_value": position["quantity"],
+                "currency": position["currency"],
+                "value_usd": value_usd,
+                "classification": position["classification"],
+                "notes": position["classification_basis"],
+            })
+
+        for item in list_items(user):
+            value_usd = float(item.value_usd or 0.0)
+            source_totals["Wealth"] += value_usd
+            items.append({
+                "source": "Wealth",
+                "category": item.category,
+                "asset": item.name,
+                "type": item.type,
+                "quantity": "",
+                "original_value": item.value,
+                "currency": item.currency,
+                "value_usd": value_usd,
+                "classification": item.category.title(),
+                "notes": item.notes or "",
+            })
+
+        export_data = {
+            "items": items,
+            "summary": {
+                "by_source_usd": source_totals,
+                "total_value_usd": sum(source_totals.values()),
+                "items_count": len(items),
+            },
+        }
+        formatter = ExportFormatter("global")
+        if format == "json":
+            return PlainTextResponse(formatter.to_json(export_data), media_type="application/json")
+        if format == "csv":
+            return PlainTextResponse(formatter.to_csv(export_data), media_type="text/csv")
+        return PlainTextResponse(formatter.to_markdown(export_data), media_type="text/markdown")
+    except Exception as exc:
+        logger.exception("Error exporting global overview")
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(exc)}")
+
+
 @router.get("/banks/export-lists")
 async def export_bank_lists(
     user: str = Depends(get_required_user),
