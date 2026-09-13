@@ -93,6 +93,7 @@ export async function openExportModal(module, endpoint, filename, source = null,
     const Modal = await loadUIModal();
 
     const moduleNames = {
+        global: 'Global Overview',
         crypto: 'Crypto Portfolio',
         saxo: 'Saxo Bank Portfolio',
         banks: 'Bank Accounts'
@@ -172,11 +173,11 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
         const activeUser = localStorage.getItem('activeUser');
         let url = `${window.globalConfig?.API_BASE_URL || ''}${endpoint}?format=${format}`;
 
-        // Add source for Crypto (passed as parameter or from context)
-        if (module === 'crypto') {
+        // Add source for Crypto and Global Overview (passed as parameter or from context)
+        if (module === 'crypto' || module === 'global') {
             const cryptoSource = source || window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
-            if (!cryptoSource) throw new Error('No portfolio source is selected');
-            url += `&source=${encodeURIComponent(cryptoSource)}`;
+            if (!cryptoSource && module === 'crypto') throw new Error('No portfolio source is selected');
+            url += `&source=${encodeURIComponent(cryptoSource || 'auto')}`;
             console.debug(`📄 Export with crypto source: ${cryptoSource}`);
         }
 
@@ -185,6 +186,11 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
             const saxoFileKey = fileKey || window.currentFileKey;
             url += `&file_key=${encodeURIComponent(saxoFileKey)}`;
             console.debug(`📄 Export with file_key: ${saxoFileKey}`);
+        }
+        if (module === 'global' && (fileKey || window.currentFileKey)) {
+            const saxoFileKey = fileKey || window.currentFileKey;
+            url += `&bourse_file_key=${encodeURIComponent(saxoFileKey)}`;
+            console.debug(`📄 Global export with bourse_file_key: ${saxoFileKey}`);
         }
 
         // Fetch export with X-User header (multi-tenant)
