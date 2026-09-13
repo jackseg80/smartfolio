@@ -1,0 +1,188 @@
+{
+  "schema_version": "crypto-forecast-compact-signal-evidence-v1",
+  "observed_at_utc": "2026-09-13T00:00:00Z",
+  "candidates": [
+    {
+      "family_id": "binance_usdm_derivatives",
+      "priority": 1,
+      "pilot_allowed": true,
+      "eligible_signals": ["funding_rate"],
+      "rejected_signals": {
+        "open_interest_metrics": "The official REST history is limited to the latest month.",
+        "premium_index": "Keep only as a later ablation companion; it is not needed to establish the funding pilot."
+      },
+      "observations": {
+        "covered_assets": ["BTC", "ETH", "SOL", "ADA", "XRP", "LINK", "LTC"],
+        "archive_start_month_checked": "2022-06",
+        "archive_end_month_checked": "2026-08",
+        "head_checks_passed": 14,
+        "head_checks_total": 14,
+        "checked_monthly_zip_bytes_min": 857,
+        "checked_monthly_zip_bytes_max": 995,
+        "estimated_compressed_bytes_for_7_assets_51_months": 355215,
+        "estimated_raw_bytes_upper_bound_at_100x_compressed": 35521500
+      },
+      "gates": {
+        "official_primary_source": "pass",
+        "public_read_only_access": "pass",
+        "timestamp_and_availability_semantics_documented": "pass",
+        "historical_span_sufficient": "unverified",
+        "independent_dates_sufficient": "unverified",
+        "asset_coverage_sufficient": "pass",
+        "estimated_size_within_limit": "pass",
+        "incremental_information_not_reconstructed_from_spot_ohlcv": "pass",
+        "novel_to_smartfolio_forecasting_dataset": "pass",
+        "point_in_time_revision_policy_identified": "pass",
+        "stable_retrieval_or_archive_route": "pass",
+        "research_reuse_terms_identified": "pass"
+      },
+      "unverified_resolution": "A bounded acquisition must verify every funding timestamp, missing day, duplicate, checksum and raw-file hash before feature creation.",
+      "official_sources": [
+        "https://github.com/binance/binance-public-data",
+        "https://data.binance.vision/",
+        "https://developers.binance.com/en/docs/catalog/core-trading-derivatives-trading-usd-s-m-futures/api/rest-api/market-data"
+      ]
+    },
+    {
+      "family_id": "coin_metrics_community_onchain",
+      "priority": 2,
+      "pilot_allowed": true,
+      "eligible_signals": ["AdrActCnt", "TxCnt"],
+      "rejected_signals": {
+        "fees": "The planned fee metric was not evidenced in the community catalog during this screen.",
+        "transfer_value": "The planned adjusted transfer-value metric was not evidenced in the community catalog during this screen."
+      },
+      "observations": {
+        "covered_assets": ["BTC", "ETH", "ADA", "XRP", "LINK", "LTC", "BCH"],
+        "common_metric_frequency": "1d",
+        "latest_catalog_time": "2026-09-12T00:00:00Z",
+        "latest_start_time_among_covered_assets": "2017-09-23T00:00:00Z",
+        "stale_or_absent_assets": ["SOL", "DOT", "BNB"],
+        "estimated_rows_for_7_assets_1551_days": 10857,
+        "estimated_raw_bytes_upper_bound": 10857000
+      },
+      "gates": {
+        "official_primary_source": "pass",
+        "public_read_only_access": "pass",
+        "timestamp_and_availability_semantics_documented": "pass",
+        "historical_span_sufficient": "pass",
+        "independent_dates_sufficient": "unverified",
+        "asset_coverage_sufficient": "pass",
+        "estimated_size_within_limit": "pass",
+        "incremental_information_not_reconstructed_from_spot_ohlcv": "pass",
+        "novel_to_smartfolio_forecasting_dataset": "pass",
+        "point_in_time_revision_policy_identified": "unverified",
+        "stable_retrieval_or_archive_route": "pass",
+        "research_reuse_terms_identified": "pass"
+      },
+      "unverified_resolution": "A bounded pilot must quantify gaps and freeze raw responses, status fields, retrieval time and metric definitions; revised historical values must never be treated as known earlier without evidence.",
+      "official_sources": [
+        "https://docs.coinmetrics.io/api",
+        "https://docs.coinmetrics.io/api/v4/",
+        "https://community-api.coinmetrics.io/v4/catalog-v2/asset-metrics",
+        "https://docs.coinmetrics.io/resources/faqs"
+      ]
+    },
+    {
+      "family_id": "okx_derivatives",
+      "priority": 3,
+      "pilot_allowed": false,
+      "eligible_signals": [],
+      "rejected_signals": {
+        "funding_rate": "The public paginated endpoint is documented, but this screen found no official fixed archive or stated retention proving the frozen span.",
+        "open_interest": "The documented endpoint exposes current open interest, not the required long history."
+      },
+      "observations": {
+        "funding_page_limit": 400,
+        "fixed_archive_identified": false,
+        "historical_open_interest_identified": false
+      },
+      "gates": {
+        "official_primary_source": "pass",
+        "public_read_only_access": "pass",
+        "timestamp_and_availability_semantics_documented": "pass",
+        "historical_span_sufficient": "fail",
+        "independent_dates_sufficient": "unverified",
+        "asset_coverage_sufficient": "unverified",
+        "estimated_size_within_limit": "unverified",
+        "incremental_information_not_reconstructed_from_spot_ohlcv": "pass",
+        "novel_to_smartfolio_forecasting_dataset": "pass",
+        "point_in_time_revision_policy_identified": "unverified",
+        "stable_retrieval_or_archive_route": "fail",
+        "research_reuse_terms_identified": "unverified"
+      },
+      "unverified_resolution": "Do not query the history merely to search for a favorable start date; reconsider only if OKX publishes fixed retention and archive guarantees.",
+      "official_sources": [
+        "https://app.okx.com/docs-v5/en/",
+        "https://www.okx.com/docs-v5/log_en/"
+      ]
+    },
+    {
+      "family_id": "fred_macro_control",
+      "priority": 4,
+      "pilot_allowed": false,
+      "eligible_signals": [],
+      "rejected_signals": {
+        "vix": "Long and compact, but already consumed by SmartFolio macro stress.",
+        "trade_weighted_us_dollar": "Long and compact, but already consumed by SmartFolio macro stress."
+      },
+      "observations": {
+        "series": ["VIXCLS", "DTWEXBGS"],
+        "frequency": "daily",
+        "existing_service": "services/macro_stress.py"
+      },
+      "gates": {
+        "official_primary_source": "pass",
+        "public_read_only_access": "pass",
+        "timestamp_and_availability_semantics_documented": "pass",
+        "historical_span_sufficient": "pass",
+        "independent_dates_sufficient": "pass",
+        "asset_coverage_sufficient": "pass",
+        "estimated_size_within_limit": "pass",
+        "incremental_information_not_reconstructed_from_spot_ohlcv": "pass",
+        "novel_to_smartfolio_forecasting_dataset": "fail",
+        "point_in_time_revision_policy_identified": "unverified",
+        "stable_retrieval_or_archive_route": "pass",
+        "research_reuse_terms_identified": "pass"
+      },
+      "unverified_resolution": "Retain as an existing control, not as the new signal sought by lot 5O.",
+      "official_sources": [
+        "https://fred.stlouisfed.org/series/VIXCLS",
+        "https://fred.stlouisfed.org/series/DTWEXBGS"
+      ]
+    },
+    {
+      "family_id": "alternative_me_sentiment_control",
+      "priority": 5,
+      "pilot_allowed": false,
+      "eligible_signals": [],
+      "rejected_signals": {
+        "crypto_fear_and_greed_index": "It is one Bitcoin-centric composite, partly built from volatility and momentum already present in OHLCV, and is already referenced by SmartFolio sentiment code."
+      },
+      "observations": {
+        "series_count": 1,
+        "asset_scope": "bitcoin-centric",
+        "history_route": "limit=0",
+        "attribution_required": true
+      },
+      "gates": {
+        "official_primary_source": "pass",
+        "public_read_only_access": "pass",
+        "timestamp_and_availability_semantics_documented": "pass",
+        "historical_span_sufficient": "pass",
+        "independent_dates_sufficient": "pass",
+        "asset_coverage_sufficient": "fail",
+        "estimated_size_within_limit": "pass",
+        "incremental_information_not_reconstructed_from_spot_ohlcv": "fail",
+        "novel_to_smartfolio_forecasting_dataset": "fail",
+        "point_in_time_revision_policy_identified": "unverified",
+        "stable_retrieval_or_archive_route": "pass",
+        "research_reuse_terms_identified": "pass"
+      },
+      "unverified_resolution": "Retain only as a descriptive external control; it cannot satisfy the cross-asset feature requirement.",
+      "official_sources": [
+        "https://alternative.me/crypto/fear-and-greed-index/"
+      ]
+    }
+  ]
+}

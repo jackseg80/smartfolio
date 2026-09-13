@@ -1,12 +1,61 @@
 # Dossier Audit SmartFolio
 
-**Dernière mise à jour:** 3 Février 2026
+**Dernière mise à jour générale:** 3 Février 2026<br>
+**Dernière mise à jour de la recherche crypto:** 13 Septembre 2026
 **Audits actifs:** Sécurité, Performance, Accessibilité, Dette Technique, Tests, CI/CD
 **Note globale:** 7.7/10 (vs 7.2 en Nov) = **+7% amélioration**
 
 ---
 
 ## 🚀 DÉMARRAGE RAPIDE
+
+### Recherche crypto — point de reprise actuel
+
+La synthèse canonique des lots crypto 0 à 5R et leur conclusion se trouvent dans [CRYPTO_FORECAST_RESEARCH_STATUS_2026-09-13.md](./CRYPTO_FORECAST_RESEARCH_STATUS_2026-09-13.md).
+
+- Lots 0 et 1 : sécurisations validées et en production.
+- Lots 2 à 4 : recherche hors ligne, sans capacité prédictive économiquement démontrée.
+- Lot 3b hurdle : hypothèse préenregistrée puis rejetée.
+- Lot 5A : contrôle quotidien Binance–OKX terminé et reproductible.
+- Lot 5B : pilote L2 terminé ; deltas rejetés faute de séquences vérifiables, snapshots autonomes à étudier séparément.
+- Lot 5C : snapshots autonomes validés techniquement sur SOL-USDT pendant une journée, sans validation prédictive.
+- Lot 5D : couverture publique complète sur 42/42 fichiers ; prochain échantillon de neuf archives borné à environ 1,13 GB, sans téléchargement effectué.
+- Lot 5E : neuf archives analysées ; 8 927 snapshots valides, mais No-Go strict car la cadence passe d'une minute en 2023–2024 à 15 minutes en 2026.
+- Lot 5F : grille causale limitée aux snapshots postérieurs ; No-Go reproductible avec 814/864 créneaux disponibles.
+- Lot 5G : alignement causal symétrique validé techniquement sur 863/864 créneaux, sans interpolation.
+- Lot 5H : historique complet rejeté localement ; collecte prospective jugée matériellement faisable.
+- Lot 5I : noyau de collecte atomique et rejouable validé, sans service permanent.
+- Lot 5J : déclenchement unique aligné validé à +14 ms, sans tâche récurrente installée.
+- Lot 5K : extraction progressive corrigée et validée ; 544,81 MB réduits à 1,08 MB pour 288 carnets JSONL lisibles.
+- Lot 5L : corpus compact corrigé et validé ; 1,18 GB réduits à 2,57 MB pour 863 carnets et un manque explicite.
+- Lot 5M : table causale de 25 features validée sur 864 lignes ; zéro divergence avec les métriques 5G, sans cible ni modèle.
+- Lot 5N : évaluation prédictive refusée ; les 864 lignes ne représentent que 3 dates indépendantes sur 480 requises.
+- Lot 5O : funding Binance retenu pour un pilote compact sur sept actifs ; Coin Metrics reste la seconde piste conditionnelle.
+- Lot 5P : 357 archives de funding Binance vérifiées sur 1 553 jours ; Go qualité, sans feature ni modèle.
+- Lot 5Q : 16 features causales sur 10 871 lignes ; trois mutations du futur, zéro divergence protégée.
+- Lot 5R : No-Go prédictif ; aucun des horizons 7 et 30 jours ne passe tous les critères gelés, donc ni lot 5S ni démonstration locale.
+
+Le rapport de faisabilité du lot 5 est disponible dans [CRYPTO_LOT5_FEASIBILITY_REPORT_2026-09-13.md](./CRYPTO_LOT5_FEASIBILITY_REPORT_2026-09-13.md).
+Le résultat quotidien Binance–OKX est documenté dans [CRYPTO_LOT5_CROSS_EXCHANGE_RESULT_2026-09-13.md](./CRYPTO_LOT5_CROSS_EXCHANGE_RESULT_2026-09-13.md).
+Le pilote de carnet OKX est documenté dans [CRYPTO_LOT5B_L2_PILOT_RESULT_2026-09-13.md](./CRYPTO_LOT5B_L2_PILOT_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5B_L2_PILOT_PLAN_2026-09-13.md](./CRYPTO_LOT5B_L2_PILOT_PLAN_2026-09-13.md).
+Le pilote snapshot-only est documenté dans [CRYPTO_LOT5C_SNAPSHOT_ONLY_RESULT_2026-09-13.md](./CRYPTO_LOT5C_SNAPSHOT_ONLY_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5C_SNAPSHOT_ONLY_PLAN_2026-09-13.md](./CRYPTO_LOT5C_SNAPSHOT_ONLY_PLAN_2026-09-13.md).
+Le relevé de couverture L2 est documenté dans [CRYPTO_LOT5D_L2_COVERAGE_RESULT_2026-09-13.md](./CRYPTO_LOT5D_L2_COVERAGE_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5D_L2_COVERAGE_PLAN_2026-09-13.md](./CRYPTO_LOT5D_L2_COVERAGE_PLAN_2026-09-13.md).
+L'échantillon snapshot-only multi-actifs est documenté dans [CRYPTO_LOT5E_L2_SAMPLE_RESULT_2026-09-13.md](./CRYPTO_LOT5E_L2_SAMPLE_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5E_L2_SAMPLE_PLAN_2026-09-13.md](./CRYPTO_LOT5E_L2_SAMPLE_PLAN_2026-09-13.md).
+La normalisation causale post-borne est documentée dans [CRYPTO_LOT5F_L2_NORMALIZATION_RESULT_2026-09-13.md](./CRYPTO_LOT5F_L2_NORMALIZATION_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5F_L2_NORMALIZATION_PLAN_2026-09-13.md](./CRYPTO_LOT5F_L2_NORMALIZATION_PLAN_2026-09-13.md).
+L'alignement causal symétrique est documenté dans [CRYPTO_LOT5G_L2_SYMMETRIC_ALIGNMENT_RESULT_2026-09-13.md](./CRYPTO_LOT5G_L2_SYMMETRIC_ALIGNMENT_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5G_L2_SYMMETRIC_ALIGNMENT_PLAN_2026-09-13.md](./CRYPTO_LOT5G_L2_SYMMETRIC_ALIGNMENT_PLAN_2026-09-13.md).
+La faisabilité de collecte est documentée dans [CRYPTO_LOT5H_L2_COLLECTION_FEASIBILITY_RESULT_2026-09-13.md](./CRYPTO_LOT5H_L2_COLLECTION_FEASIBILITY_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5H_L2_COLLECTION_FEASIBILITY_PLAN_2026-09-13.md](./CRYPTO_LOT5H_L2_COLLECTION_FEASIBILITY_PLAN_2026-09-13.md).
+Le noyau du collecteur est documenté dans [CRYPTO_LOT5I_L2_PROSPECTIVE_COLLECTOR_RESULT_2026-09-13.md](./CRYPTO_LOT5I_L2_PROSPECTIVE_COLLECTOR_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5I_L2_PROSPECTIVE_COLLECTOR_PLAN_2026-09-13.md](./CRYPTO_LOT5I_L2_PROSPECTIVE_COLLECTOR_PLAN_2026-09-13.md).
+Le déclenchement mono-instance est documenté dans [CRYPTO_LOT5J_L2_ONE_SHOT_SCHEDULER_RESULT_2026-09-13.md](./CRYPTO_LOT5J_L2_ONE_SHOT_SCHEDULER_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5J_L2_ONE_SHOT_SCHEDULER_PLAN_2026-09-13.md](./CRYPTO_LOT5J_L2_ONE_SHOT_SCHEDULER_PLAN_2026-09-13.md).
+L'extraction historique progressive est documentée dans [CRYPTO_LOT5K_L2_PROGRESSIVE_EXTRACTION_RESULT_2026-09-13.md](./CRYPTO_LOT5K_L2_PROGRESSIVE_EXTRACTION_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5K_L2_PROGRESSIVE_EXTRACTION_PLAN_2026-09-13.md](./CRYPTO_LOT5K_L2_PROGRESSIVE_EXTRACTION_PLAN_2026-09-13.md).
+Le corpus compact multi-périodes est documenté dans [CRYPTO_LOT5L_L2_COMPACT_CORPUS_RESULT_2026-09-13.md](./CRYPTO_LOT5L_L2_COMPACT_CORPUS_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5L_L2_COMPACT_CORPUS_PLAN_2026-09-13.md](./CRYPTO_LOT5L_L2_COMPACT_CORPUS_PLAN_2026-09-13.md).
+La table de features L2 causales est documentée dans [CRYPTO_LOT5M_L2_FEATURES_RESULT_2026-09-13.md](./CRYPTO_LOT5M_L2_FEATURES_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5M_L2_FEATURES_PLAN_2026-09-13.md](./CRYPTO_LOT5M_L2_FEATURES_PLAN_2026-09-13.md).
+La faisabilité des cibles et de l'évaluation L2 est documentée dans [CRYPTO_LOT5N_L2_EVALUATION_FEASIBILITY_RESULT_2026-09-13.md](./CRYPTO_LOT5N_L2_EVALUATION_FEASIBILITY_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5N_L2_EVALUATION_FEASIBILITY_PLAN_2026-09-13.md](./CRYPTO_LOT5N_L2_EVALUATION_FEASIBILITY_PLAN_2026-09-13.md).
+L'écran des signaux historiques compacts est documenté dans [CRYPTO_LOT5O_COMPACT_SIGNAL_FEASIBILITY_RESULT_2026-09-13.md](./CRYPTO_LOT5O_COMPACT_SIGNAL_FEASIBILITY_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5O_COMPACT_SIGNAL_FEASIBILITY_PLAN_2026-09-13.md](./CRYPTO_LOT5O_COMPACT_SIGNAL_FEASIBILITY_PLAN_2026-09-13.md).
+L'acquisition vérifiée du funding Binance est documentée dans [CRYPTO_LOT5P_BINANCE_FUNDING_ACQUISITION_RESULT_2026-09-13.md](./CRYPTO_LOT5P_BINANCE_FUNDING_ACQUISITION_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5P_BINANCE_FUNDING_ACQUISITION_PLAN_2026-09-13.md](./CRYPTO_LOT5P_BINANCE_FUNDING_ACQUISITION_PLAN_2026-09-13.md).
+Les features causales de funding sont documentées dans [CRYPTO_LOT5Q_BINANCE_FUNDING_FEATURES_RESULT_2026-09-13.md](./CRYPTO_LOT5Q_BINANCE_FUNDING_FEATURES_RESULT_2026-09-13.md), avec leur plan préenregistré dans [CRYPTO_LOT5Q_BINANCE_FUNDING_FEATURES_PLAN_2026-09-13.md](./CRYPTO_LOT5Q_BINANCE_FUNDING_FEATURES_PLAN_2026-09-13.md).
+La comparaison prédictive du funding est documentée dans [CRYPTO_LOT5R_FUNDING_MODEL_COMPARISON_RESULT_2026-09-13.md](./CRYPTO_LOT5R_FUNDING_MODEL_COMPARISON_RESULT_2026-09-13.md), avec son plan préenregistré dans [CRYPTO_LOT5R_FUNDING_MODEL_COMPARISON_PLAN_2026-09-13.md](./CRYPTO_LOT5R_FUNDING_MODEL_COMPARISON_PLAN_2026-09-13.md).
+
+Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points de reprise contenus dans les rapports intermédiaires.
 
 ### 👉 Nouveau dans les audits? Commencez ici:
 

@@ -1,0 +1,28 @@
+{
+  "schema_version": "crypto-forecast-binance-funding-history-v1",
+  "provider": "binance_public_data_usdm_monthly_funding_rate",
+  "base_url": "https://data.binance.vision/data/futures/um/monthly/fundingRate",
+  "start_date": "2022-06-01",
+  "end_date": "2026-08-31",
+  "first_month": "2022-06",
+  "last_month": "2026-08",
+  "expected_archive_count": 357,
+  "maximum_archive_bytes": 65536,
+  "maximum_uncompressed_bytes": 1048576,
+  "maximum_total_archive_bytes": 16777216,
+  "minimum_calendar_days": 1551,
+  "minimum_observations_per_day": 1,
+  "maximum_gap_hours": 24,
+  "concurrency": 8,
+  "timeout_seconds": 30,
+  "retry_attempts": 3,
+  "instruments": [
+    {"symbol": "BTC", "market_symbol": "BTCUSDT"},
+    {"symbol": "ETH", "market_symbol": "ETHUSDT"},
+    {"symbol": "SOL", "market_symbol": "SOLUSDT"},
+    {"symbol": "ADA", "market_symbol": "ADAUSDT"},
+    {"symbol": "XRP", "market_symbol": "XRPUSDT"},
+    {"symbol": "LINK", "market_symbol": "LINKUSDT"},
+    {"symbol": "LTC", "market_symbol": "LTCUSDT"}
+  ]
+}

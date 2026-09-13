@@ -1,0 +1,19 @@
+{
+  "schema_version": "crypto-forecast-okx-l2-symmetric-alignment-v1",
+  "provider": "okx_public_historical_market_data",
+  "source_artifact_id": "crypto-forecast-okx-l2-sample-v1-973d02b919af2d1c",
+  "source_result_sha256": "b32045a424853d22de978a8a3302873c74f64ef0d1d91203455853b713a3d6e2",
+  "source_metrics_sha256": "27c102f090b48521267b95f11e7c2aafb09327cd85cefe0ca75d4a0b4984e58e",
+  "instruments": ["BTC-USDT", "ETH-USDT", "SOL-USDT"],
+  "dates_utc": ["2023-04-01", "2024-07-01", "2026-07-01"],
+  "expected_archive_count": 9,
+  "maximum_source_rows": 10000,
+  "grid_interval_ms": 900000,
+  "maximum_absolute_offset_ms": 1000,
+  "expected_grid_slots_per_archive": 96,
+  "minimum_available_slots_per_archive": 95,
+  "expected_total_grid_slots": 864,
+  "selection_rule": "nearest_valid_snapshot_within_symmetric_window_prefer_prior_on_tie",
+  "availability_rule": "maximum_of_grid_and_source_timestamp",
+  "missing_policy": "preserve_missing_without_fill_or_interpolation"
+}

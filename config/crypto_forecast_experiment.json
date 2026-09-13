@@ -1,0 +1,105 @@
+{
+  "schema_version": "crypto-forecast-experiment-v1",
+  "random_seed": 42,
+  "purge_days": 30,
+  "minimum_training_days": 730,
+  "calibration_days": 183,
+  "test_days": 183,
+  "step_days": 183,
+  "final_holdout_days": 365,
+  "minimum_partition_rows": 120,
+  "probability_calibration": "platt_on_distinct_chronological_calibration_period",
+  "selection_policy": {
+    "regression": "lowest_mean_development_rmse",
+    "classification": "lowest_mean_development_brier_score"
+  },
+  "regression_models": {
+    "zero": {},
+    "momentum": {},
+    "ridge": {
+      "alpha": 1.0
+    },
+    "hist_gradient_boosting": {
+      "max_depth": 3,
+      "max_iter": 100,
+      "learning_rate": 0.05,
+      "random_state": 42
+    }
+  },
+  "classification_models": {
+    "train_prevalence": {},
+    "logistic": {
+      "C": 1.0,
+      "max_iter": 1000,
+      "random_state": 42
+    },
+    "hist_gradient_boosting": {
+      "max_depth": 3,
+      "max_iter": 100,
+      "learning_rate": 0.05,
+      "random_state": 42
+    }
+  },
+  "experiments": [
+    {
+      "name": "btc_absolute_return",
+      "scope": "asset",
+      "entity": "BTC",
+      "regression_target_template": "target_return_{horizon}d",
+      "classification_target_template": "label_up_{horizon}d",
+      "feature_sets": ["base", "volume"]
+    },
+    {
+      "name": "eth_absolute_return",
+      "scope": "asset",
+      "entity": "ETH",
+      "regression_target_template": "target_return_{horizon}d",
+      "classification_target_template": "label_up_{horizon}d",
+      "feature_sets": ["base", "relative_btc", "volume"]
+    },
+    {
+      "name": "eth_relative_to_btc",
+      "scope": "asset",
+      "entity": "ETH",
+      "regression_target_template": "target_relative_btc_{horizon}d",
+      "classification_target_template": "label_outperform_btc_{horizon}d",
+      "feature_sets": ["base", "relative_btc", "volume"]
+    },
+    {
+      "name": "asset_rotation_relative_to_btc",
+      "mode": "panel",
+      "scope": "asset",
+      "entity": "all_eligible_assets",
+      "minimum_panel_entities": 5,
+      "regression_target_template": "target_relative_btc_{horizon}d",
+      "classification_target_template": "label_outperform_btc_{horizon}d",
+      "feature_sets": ["base", "relative_btc", "volume"]
+    },
+    {
+      "name": "group_rotation_relative_to_btc",
+      "mode": "panel",
+      "scope": "group",
+      "entity": "all_eligible_groups",
+      "minimum_panel_entities": 3,
+      "regression_target_template": "target_relative_btc_{horizon}d",
+      "classification_target_template": "label_outperform_btc_{horizon}d",
+      "feature_sets": ["base", "relative_btc", "volume"]
+    },
+    {
+      "name": "l1_rotation_relative_to_group",
+      "mode": "panel",
+      "scope": "asset",
+      "entity": "L1/L0 majors",
+      "group_filter": "L1/L0 majors",
+      "minimum_panel_entities": 5,
+      "regression_target_template": "target_relative_group_{horizon}d",
+      "classification_target_template": "label_outperform_group_{horizon}d",
+      "feature_sets": ["base", "relative_btc", "relative_group", "volume"]
+    }
+  ],
+  "forecast_horizons_days": [7, 30],
+  "unavailable_scope_checks": {
+    "cross_sectional_minimum_assets": 5,
+    "group_rotation_minimum_groups": 3
+  }
+}

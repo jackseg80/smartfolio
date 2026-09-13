@@ -1,0 +1,32 @@
+{
+  "schema_version": "crypto-forecast-okx-l2-coverage-v1",
+  "provider": "okx_public_historical_market_data",
+  "base_url": "https://www.okx.com",
+  "endpoint": "/api/v5/public/market-data-history",
+  "module": 4,
+  "instrument_type": "SPOT",
+  "date_aggregation": "daily",
+  "instruments": ["BTC-USDT", "ETH-USDT", "SOL-USDT"],
+  "dates_utc": [
+    "2023-04-01",
+    "2023-07-01",
+    "2023-10-01",
+    "2024-01-01",
+    "2024-04-01",
+    "2024-07-01",
+    "2024-10-01",
+    "2025-01-01",
+    "2025-04-01",
+    "2025-07-01",
+    "2025-10-01",
+    "2026-01-01",
+    "2026-04-01",
+    "2026-07-01"
+  ],
+  "candidate_dates_utc": ["2023-04-01", "2024-07-01", "2026-07-01"],
+  "minimum_total_files": 38,
+  "minimum_dates_per_instrument": 12,
+  "candidate_download_limit_mb": "2000",
+  "maximum_single_file_mb": "1000",
+  "request_delay_seconds": 0.45
+}
