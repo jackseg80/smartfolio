@@ -1,0 +1,21 @@
+{
+  "schema_version": "crypto-forecast-okx-l2-pilot-v1",
+  "provider": "okx_public_historical_market_data",
+  "metadata_endpoint": "https://www.okx.com/api/v5/public/market-data-history",
+  "module": 4,
+  "instrument_type": "SPOT",
+  "instrument": "SOL-USDT",
+  "date_utc": "2026-09-10",
+  "date_aggregation": "daily",
+  "source_url": "https://static.okx.com/cdn/okx/match/orderbook/pro/L2/400lv/daily/20260910/SOL-USDT-L2orderbook-400lv-2026-09-10.tar.gz",
+  "filename": "SOL-USDT-L2orderbook-400lv-2026-09-10.tar.gz",
+  "advertised_size_mb": "47.43",
+  "expected_archive_sha256": "5021fdb3a0413e8f8f03524dcce39805cbdc53e2b922596d519f44254b0f3c46",
+  "download_limit_bytes": 55000000,
+  "uncompressed_limit_bytes": 2147483648,
+  "max_records": 10000000,
+  "max_line_bytes": 8388608,
+  "sample_interval_ms": 60000,
+  "required_sequence_coverage": 0.99,
+  "depth_bands_bps": [10, 25, 50]
+}

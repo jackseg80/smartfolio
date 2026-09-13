@@ -1,0 +1,8 @@
+{
+  "schema_version": "crypto-forecast-cross-exchange-validation-v1",
+  "minimum_common_observations": 1000,
+  "minimum_daily_return_correlation": 0.995,
+  "maximum_median_absolute_close_difference_bps": 50.0,
+  "maximum_p95_absolute_close_difference_bps": 300.0,
+  "volume_change_horizons_days": [7, 30]
+}
