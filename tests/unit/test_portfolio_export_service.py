@@ -34,6 +34,38 @@ def test_saxo_export_adds_cash_and_uses_correct_classifications(monkeypatch):
     ]
 
 
+def test_saxo_export_uses_selected_csv_for_positions_and_cash(tmp_path, monkeypatch):
+    selected_file = "current-saxo.csv"
+    config_path = tmp_path / "data/users/user/config.json"
+    data_path = tmp_path / "data/users/user/saxobank/data" / selected_file
+    config_path.parent.mkdir(parents=True)
+    data_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        '{"sources": {"bourse": {"selected_csv_file": "current-saxo.csv"}}}',
+        encoding="utf-8",
+    )
+    data_path.write_text("placeholder", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    selected_keys = []
+    monkeypatch.setattr(
+        export_service.saxo_adapter,
+        "_iter_positions",
+        lambda **kwargs: selected_keys.append(kwargs["file_key"]) or iter([]),
+    )
+    monkeypatch.setattr(
+        export_service,
+        "read_saxo_cash",
+        lambda _user_id, file_key: selected_keys.append(file_key) or {
+            "amount": 0.0, "currency": "USD", "value_usd": 0.0, "last_updated": None,
+        },
+    )
+
+    export_service.build_saxo_export_data("user")
+
+    assert selected_keys == [selected_file, selected_file]
+
+
 def test_wealth_csv_escapes_notes_and_keeps_one_item_table():
     data = {
         "summary": {"net_worth": 100.0, "total_assets": 100.0, "total_liabilities": 0.0},

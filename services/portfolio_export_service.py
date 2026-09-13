@@ -87,6 +87,42 @@ def classify_saxo_position(position: dict[str, Any]) -> tuple[str, str]:
     return EQUITY_SECTORS.get(symbol, "Unclassified Equity"), "GICS"
 
 
+def resolve_saxo_file_key(user_id: str, file_key: Optional[str]) -> Optional[str]:
+    """Resolve the one Saxo CSV used by both positions and its saved cash.
+
+    The dashboard does not always expose a ``window.currentFileKey``.  In
+    that case the per-user Sources V2 selection is authoritative.  Falling
+    back to the most recent local CSV mirrors the Saxo adapter's behaviour,
+    while keeping the cash lookup tied to the same file.
+    """
+    if file_key:
+        return file_key
+
+    data_dir = Path(f"data/users/{user_id}/saxobank/data")
+    selected_file: Optional[str] = None
+    config_path = Path(f"data/users/{user_id}/config.json")
+    try:
+        with config_path.open("r", encoding="utf-8") as handle:
+            config = json.load(handle)
+        configured = config.get("sources", {}).get("bourse", {}).get("selected_csv_file")
+        if configured:
+            selected_file = str(configured)
+    except FileNotFoundError:
+        pass
+    except (OSError, json.JSONDecodeError, TypeError, AttributeError):
+        # Exporting positions remains possible with the adapter's normal
+        # fallback even when a user configuration is unavailable or invalid.
+        pass
+
+    if selected_file and (data_dir / selected_file).is_file():
+        return selected_file
+
+    csv_files = list(data_dir.glob("*.csv")) if data_dir.is_dir() else []
+    if csv_files:
+        return max(csv_files, key=lambda path: path.stat().st_mtime).name
+    return None
+
+
 def read_saxo_cash(user_id: str, file_key: Optional[str]) -> dict[str, Any]:
     """Read one saved cash balance and normalise it to USD for aggregation."""
     cash_key = file_key or "default"
@@ -110,8 +146,9 @@ def build_saxo_export_data(user_id: str, file_key: Optional[str] = None) -> dict
     """Build positions, cash and classifications for Saxo exports."""
     positions: list[dict[str, Any]] = []
     classification_totals: dict[str, dict[str, float | int]] = {}
+    effective_file_key = resolve_saxo_file_key(user_id, file_key)
 
-    for raw in saxo_adapter._iter_positions(user_id=user_id, file_key=file_key):
+    for raw in saxo_adapter._iter_positions(user_id=user_id, file_key=effective_file_key):
         classification, basis = classify_saxo_position(raw)
         value_usd = float(raw.get("market_value_usd", 0.0) or 0.0)
         position = {
@@ -128,7 +165,7 @@ def build_saxo_export_data(user_id: str, file_key: Optional[str] = None) -> dict
         positions.append(position)
         _add_total(classification_totals, classification, value_usd)
 
-    cash = read_saxo_cash(user_id, file_key)
+    cash = read_saxo_cash(user_id, effective_file_key)
     if cash["amount"]:
         positions.append({
             "symbol": f"CASH:{cash['currency']}",
