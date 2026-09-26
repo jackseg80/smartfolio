@@ -12,8 +12,8 @@
  * - Texte petit (<14px): Recommandé 7:1
  *
  * Ratios calculés (Dec 2025):
- * Light mode: --theme-text (15.8:1) ✅, --theme-text-muted (5.2:1) ✅, --theme-text-subtle (5.1:1) ✅
- * Dark mode: --theme-text (17.2:1) ✅, --theme-text-muted (7.8:1) ✅, --theme-text-subtle (4.9:1) ✅
+ * Light mode: --theme-text (15.8:1) OK, --theme-text-muted (5.2:1) OK, --theme-text-subtle (5.1:1) OK
+ * Dark mode: --theme-text (17.2:1) OK, --theme-text-muted (7.8:1) OK, --theme-text-subtle (4.9:1) OK
  */
 
 :root {
@@ -136,7 +136,7 @@
   --theme-surface: #0e1620;
   --theme-surface-elevated: #1f2937;
   --theme-text: #e7eef7;
-  --theme-text-muted: #8fa0b3;          /* Already good: 7.8:1 ✅ */
+  --theme-text-muted: #8fa0b3;          /* Already good: 7.8:1 OK */
   --theme-text-subtle: #7d8fa3;         /* WCAG FIX: Was #6b7280 (4.1:1) → Now 4.9:1 */
   --theme-text-small: #b4c5d8;          /* NEW: For small text (<14px) - 8.2:1 */
   --theme-border: #1f2b3a;

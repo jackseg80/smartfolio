@@ -24,9 +24,9 @@ const contribOnchain = (wOnchain * scoreOnchain) / total;
 const contribRisk = (wRisk * scoreRisk) / total;
 ```
 
-**⚠️ IMPORTANT — Sémantique Risk** :
+**[Warning] IMPORTANT — Sémantique Risk** :
 
-> **⚠️ Règle Canonique — Sémantique Risk**
+> **[Warning] Règle Canonique — Sémantique Risk**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
@@ -37,11 +37,11 @@ const contribRisk = (wRisk * scoreRisk) / total;
 > DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
 > ```
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
 >
 > **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
 >
-> 📖 Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+>  Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 
 **Exemple visuel** :
 ```
@@ -59,7 +59,7 @@ const contribRisk = (wRisk * scoreRisk) / total;
 - **Cap** : Pourcentage de cap d'exécution (0..100)
 - **Mode** : Mode de fonctionnement (Live, Shadow, Simulation)
 
-**⚠️ Important** :
+**[Warning] Important** :
 - Les badges **influencent les poids** via la politique d'adaptation
 - Les badges **n'influencent PAS les scores bruts** (cycle, onchain, risk)
 
@@ -99,7 +99,7 @@ Poids Adaptatifs (Σ = 100%)
 └─────────────────────────────────┘
 ```
 
-**⚠️ Ne pas transformer** :
+**[Warning] Ne pas transformer** :
 - Afficher les poids **tels quels** (pas de `100 - wRisk`)
 - Toujours vérifier que Σ(poids) = 100%
 - Ajouter des infobulles pour expliquer les ajustements (boost, pénalité)
@@ -117,10 +117,10 @@ Poids Adaptatifs (Σ = 100%)
 **Exemple** :
 ```html
 <div class="weight-badge boost">
-  🚀 Boost Cycle (65%)
+   Boost Cycle (65%)
 </div>
 <div class="weight-badge penalty">
-  ⚠️ Pénalité Contrad (Onchain -10%, Risk -10%)
+  [Warning] Pénalité Contrad (Onchain -10%, Risk -10%)
 </div>
 ```
 
@@ -136,10 +136,10 @@ Poids Adaptatifs (Σ = 100%)
 - Afficher les poids adaptatifs
 - Afficher les badges (Confiance, Contradiction, Cap, Mode)
 
-**⚠️ Erreurs à éviter** :
-- ❌ Inverser Risk : `100 - scoreRisk`
-- ❌ Transformer les poids : `1 - wRisk`
-- ❌ Oublier de normaliser les poids (Σ ≠ 1.0)
+**[Warning] Erreurs à éviter** :
+- [Error] Inverser Risk : `100 - scoreRisk`
+- [Error] Transformer les poids : `1 - wRisk`
+- [Error] Oublier de normaliser les poids (Σ ≠ 1.0)
 
 ### 2. Governance Panel (`GovernancePanel.js`)
 
@@ -194,7 +194,7 @@ Poids Adaptatifs (Σ = 100%)
 **Indicateur visuel** :
 ```html
 <div class="user-badge">
-  👤 Active User: jack
+   Active User: jack
 </div>
 ```
 
@@ -214,16 +214,16 @@ Poids Adaptatifs (Σ = 100%)
 
 ### Règles Critiques
 
-#### ❌ À ÉVITER
+#### À ÉVITER
 
 ```css
 /* NE JAMAIS fixer une largeur max arbitraire */
 .container {
-  max-width: 1200px;  /* ❌ Limite l'espace sur grands écrans */
+  max-width: 1200px;  /* [Error] Limite l'espace sur grands écrans */
 }
 ```
 
-#### ✅ À FAIRE
+#### À FAIRE
 
 ```css
 /* Full responsive avec padding adaptatif */

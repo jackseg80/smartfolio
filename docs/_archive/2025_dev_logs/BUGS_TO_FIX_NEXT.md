@@ -79,7 +79,7 @@ ERROR api.unified_ml_endpoints: Error in sentiment analysis for BTC: unsupported
 ```python
 # Quelque part dans sentiment analysis
 sentiment = get_sentiment('BTC')  # Retourne un dict
-score = sentiment * 100  # ❌ dict × int = erreur
+score = sentiment * 100  # [Error] dict × int = erreur
 ```
 
 ### Solution Probable
@@ -88,11 +88,11 @@ score = sentiment * 100  # ❌ dict × int = erreur
 ```python
 # Avant (bug)
 sentiment = get_sentiment('BTC')  # {'score': 0.75, 'confidence': 0.8}
-score = sentiment * 100  # ❌
+score = sentiment * 100  # [Error]
 
 # Après (fix)
 sentiment = get_sentiment('BTC')
-score = sentiment.get('score', 0.5) * 100  # ✅ 75
+score = sentiment.get('score', 0.5) * 100  # [OK] 75
 ```
 
 ### Localiser le Bug
@@ -131,7 +131,7 @@ ERROR services.alerts.alert_engine: Error broadcasting alert ALR-20251009-102715
 ```python
 # services/alerts/alert_engine.py
 def broadcast_alert(alert):
-    message = alert.message  # ❌ AttributeError
+    message = alert.message  # [Error] AttributeError
     # send(message)
 ```
 
@@ -223,7 +223,7 @@ python -m uvicorn api.main:app
 # Bug #2 : "Error in sentiment analysis"
 # Bug #3 : "Error broadcasting alert"
 
-# Si une erreur disparaît → fix validé ✅
+# Si une erreur disparaît → fix validé
 ```
 
 ---

@@ -1,19 +1,19 @@
 # Résumé Hotfix : Incohérences données de wallet
 
-## 🎯 Problème résolu
+## Problème résolu
 **Phase 3A du Risk Dashboard affichait les données du compte "jack" au lieu de l'utilisateur actuel**
 
 **Cause root:** Appels `fetch()` directs sans headers `X-User`, cache non invalidé lors changements source/user
 
-## 📋 Corrections appliquées
+## Corrections appliquées
 
-### P1 Frontend Hotfix ✅
+### P1 Frontend Hotfix
 **Fichiers modifiés:**
 - `static/risk-dashboard.html` : Remplacé 3 appels fetch() par globalConfig.apiRequest()
 - `static/components/UnifiedInsights.js` : Cache avec clé `user:source:taxonomy:version`
 - Ajouté listeners `dataSourceChanged`/`activeUserChanged` pour invalidation automatique
 
-### P2 Backend "garde-fous" ✅
+### P2 Backend "garde-fous" OK
 **Fichiers modifiés:**
 - `api/risk_endpoints.py` : Ajouté bloc `meta` normalisé dans réponses
 ```json
@@ -28,17 +28,17 @@
 ```
 - Bandeau debug activable : `localStorage.setItem('debug_metadata', 'true')`
 
-### P3 Taxonomie unifiée ✅
+### P3 Taxonomie unifiée
 **Fichiers modifiés:**
 - `services/execution/strategy_registry.py` : "LARGE" → "L1/L0 majors"
 - Mapping d'alias cohérent dans tous les composants
 
-## ✅ Tests et validation
+## Tests et validation
 
 ### Tests automatisés (9/9 passent)
 ```bash
-pytest tests/unit/test_risk_dashboard_metadata.py -v     # 4/4 ✅
-pytest tests/unit/test_frontend_fixes_validation.py -v   # 5/5 ✅
+pytest tests/unit/test_risk_dashboard_metadata.py -v     # 4/4 [OK]
+pytest tests/unit/test_frontend_fixes_validation.py -v   # 5/5 [OK]
 ```
 
 **Couverture:**
@@ -49,9 +49,9 @@ pytest tests/unit/test_frontend_fixes_validation.py -v   # 5/5 ✅
 - Event listeners fonctionnels
 
 ### Check-list E2E manuelle
-📁 `POST_MERGE_CHECKLIST.md` : 9 points de validation critiques
+Folder `POST_MERGE_CHECKLIST.md` : 9 points de validation critiques
 
-## 🔧 Instructions debug
+## Instructions debug
 
 ```bash
 # Activer métadonnées debug
@@ -67,21 +67,21 @@ window.debugInvalidateCache()
 window.addEventListener('dataSourceChanged', e => console.log('Source changed:', e.detail))
 ```
 
-## 📊 Impact
+## Impact
 
-### Avant ❌
+### Avant
 - Phase 3A : Données fixes compte "jack"
 - Groupe "LARGE" fictif affiché
 - Cache non synchronisé cross-tabs
 - Pas de traçabilité user/source
 
-### Après ✅
+### Après
 - Phase 3A : Données utilisateur actuel (demo/csv_0)
 - Taxonomie standard 11 groupes ("L1/L0 majors")
 - Cache invalidé automatiquement sur changements
 - Metadata complète + logs traçabilité
 
-## 🚀 Déploiement
+## Déploiement
 **Commit:** `c5d9595` - `fix(risk-dashboard): enforce user/source context in Phase 3A using apiRequest`
 
 **Rollback si besoin:**
@@ -95,5 +95,5 @@ git revert c5d9595
 3. Switch user jack → Vérifier données différentes
 
 ---
-✅ **Status:** Corrections déployées et testées
-⏳ **Next:** Validation E2E manuelle selon checklist
+[OK] **Status:** Corrections déployées et testées
+[Pending] **Next:** Validation E2E manuelle selon checklist

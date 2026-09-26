@@ -33,9 +33,9 @@ async def download_by_importance():
             print(f"[{count}/{total}] {symbol} ({days}j)...")
             try:
                 await price_history.download_historical_data(symbol, days=days)
-                print(f"✅ {symbol}: OK")
+                print(f"[OK] {symbol}: OK")
             except Exception as e:
-                print(f"❌ {symbol}: ÉCHEC - {e}")
+                print(f"[Error] {symbol}: ÉCHEC - {e}")
             
             await asyncio.sleep(0.3)  # Pause courte
     

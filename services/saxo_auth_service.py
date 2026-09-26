@@ -75,7 +75,7 @@ class SaxoAuthService:
                 age_hours = (datetime.now() - last_update_dt).total_seconds() / 3600
 
                 if age_hours > 24:
-                    logger.warning(f"⚠️ Refresh token expired (age: {age_hours:.1f}h > 24h)")
+                    logger.warning(f" Refresh token expired (age: {age_hours:.1f}h > 24h)")
                     return False
 
             return True
@@ -114,7 +114,7 @@ class SaxoAuthService:
 
             # Refresh if < 2 minutes remaining
             if expires_at <= now + timedelta(minutes=2):
-                logger.info(f"🔄 Access token expires soon, refreshing...")
+                logger.info(f" Access token expires soon, refreshing...")
                 refresh_token = tokens.get("refresh_token")
 
                 if not refresh_token:
@@ -128,7 +128,7 @@ class SaxoAuthService:
                 return new_tokens.get("access_token")
 
             # Token still valid
-            logger.debug(f"✅ Access token valid until {expires_at.isoformat()}")
+            logger.debug(f" Access token valid until {expires_at.isoformat()}")
             return tokens.get("access_token")
 
         except Exception as e:
@@ -168,7 +168,7 @@ class SaxoAuthService:
 
             # Save to user storage
             self.user_fs.write_json(self.tokens_path, enhanced_tokens)
-            logger.info(f"✅ Tokens saved for user '{self.user_id}' (expires: {expires_at.isoformat()})")
+            logger.info(f" Tokens saved for user '{self.user_id}' (expires: {expires_at.isoformat()})")
 
         except Exception as e:
             logger.error(f"Error saving tokens: {e}")
@@ -220,13 +220,13 @@ class SaxoAuthService:
         try:
             # Delete tokens file
             self.user_fs.delete_file(self.tokens_path)
-            logger.info(f"✅ User '{self.user_id}' disconnected")
+            logger.info(f" User '{self.user_id}' disconnected")
         except FileNotFoundError:
             logger.debug("No tokens to delete - already disconnected")
         except Exception as e:
             # Log error but don't raise - disconnection is always successful
             logger.warning(f"Error during disconnect (ignored): {e}")
-            logger.info(f"✅ User '{self.user_id}' marked as disconnected despite error")
+            logger.info(f" User '{self.user_id}' marked as disconnected despite error")
 
     async def cache_positions(self, positions: List[Dict[str, Any]], cash_balance: float = 0.0, total_value: float = 0.0) -> None:
         """
@@ -254,12 +254,12 @@ class SaxoAuthService:
                 "timestamp": datetime.now().isoformat(),
                 "positions": positions,
                 "count": len(positions),
-                "cash_balance": cash_balance,  # ✅ NEW: store cash for fast access
-                "total_value": total_value      # ✅ NEW: store total for fast access
+                "cash_balance": cash_balance,  # [OK] NEW: store cash for fast access
+                "total_value": total_value      # [OK] NEW: store total for fast access
             }
 
             self.user_fs.write_json(cache_filename, cache_data)
-            logger.info(f"✅ Cached {len(positions)} positions for user '{self.user_id}' (total=${total_value:.2f}, cash=${cash_balance:.2f})")
+            logger.info(f" Cached {len(positions)} positions for user '{self.user_id}' (total=${total_value:.2f}, cash=${cash_balance:.2f})")
 
             # Cleanup old cache files (keep last 5)
             self._cleanup_old_caches()
@@ -306,14 +306,14 @@ class SaxoAuthService:
             age_hours = (datetime.now() - cache_timestamp).total_seconds() / 3600
 
             if age_hours > max_age_hours:
-                logger.warning(f"⚠️ Cache too old ({age_hours:.1f}h > {max_age_hours}h)")
+                logger.warning(f" Cache too old ({age_hours:.1f}h > {max_age_hours}h)")
                 return None
 
             positions = cache_data.get("positions", [])
             cash_balance = cache_data.get("cash_balance", 0.0)
             total_value = cache_data.get("total_value", 0.0)
 
-            logger.info(f"✅ Retrieved {len(positions)} positions from cache (age: {age_hours:.1f}h, total=${total_value:.2f})")
+            logger.info(f" Retrieved {len(positions)} positions from cache (age: {age_hours:.1f}h, total=${total_value:.2f})")
             return {
                 "positions": positions,
                 "cash_balance": cash_balance,

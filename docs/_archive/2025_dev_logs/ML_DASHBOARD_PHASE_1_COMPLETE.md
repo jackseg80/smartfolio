@@ -1,32 +1,32 @@
-# ML Dashboard Enhancement - Phase 1 Complète ✅
+# ML Dashboard Enhancement - Phase 1 Complète
 
 **Date:** 2025-12-24
-**Status:** ✅ Phase 1 implémentée (2h de travail)
+**Status:** [OK] Phase 1 implémentée (2h de travail)
 **Fichier modifié:** `static/admin-dashboard.html`
 
 ---
 
-## 🎯 Ce Qui a Été Fait
+## Ce Qui a Été Fait
 
 ### **Phase 1 - Quick Win: Exploiter l'API Existante**
 
 **Objectif:** Afficher les métadonnées riches déjà disponibles dans les endpoints `/api/ml/registry/*`
 
-**Résultat:** Zéro backend work, seulement UI frontend ! ✅
+**Résultat:** Zéro backend work, seulement UI frontend ! [OK]
 
 ---
 
-## 📝 Changements Effectués
+## Changements Effectués
 
-### **1. Modal "ℹ️ Info Détaillée"** ✅
+### **1. Modal " Info Détaillée"**
 
 **HTML ajouté** (lignes 850-946):
 - Modal avec 5 sections:
-  - 📋 Basic Information (type, version, status, file size, dates)
-  - ⚙️ Training Configuration (hyperparameters)
-  - 📊 Performance Metrics (accuracy, precision, recall, f1, etc.)
-  - 🔧 Features Used (liste des features ML)
-  - 📅 Training Data Period (dates start/end)
+  - Basic Information (type, version, status, file size, dates)
+  - Training Configuration (hyperparameters)
+  - Performance Metrics (accuracy, precision, recall, f1, etc.)
+  - Features Used (liste des features ML)
+  - Training Data Period (dates start/end)
 
 **JavaScript ajouté** (lignes 2038-2190):
 - `showModelInfo(modelName)` - Fetch `/api/ml/registry/models/{name}`
@@ -42,7 +42,7 @@ GET /api/ml/registry/models/{model_name}
 
 ---
 
-### **2. Modal "📊 Historique Versions"** ✅
+### **2. Modal " Historique Versions"**
 
 **HTML ajouté** (lignes 948-992):
 - Modal avec summary (latest version, total versions)
@@ -61,11 +61,11 @@ GET /api/ml/registry/models/{model_name}/versions
 
 ---
 
-### **3. Tableau ML Models Enrichi** ✅
+### **3. Tableau ML Models Enrichi**
 
 **Modifications** (lignes 1828-1838):
-- Bouton **ℹ️** Info détaillée (nouveau)
-- Bouton **🔄** Retrain (remplace "Retrain" texte)
+- Bouton **** Info détaillée (nouveau)
+- Bouton **** Retrain (remplace "Retrain" texte)
 - Style flex avec gap pour alignement
 
 **Avant:**
@@ -78,14 +78,14 @@ GET /api/ml/registry/models/{model_name}/versions
 **Après:**
 ```html
 <td style="display: flex; gap: 0.25rem;">
-    <button onclick="showModelInfo(...)">ℹ️</button>
-    <button onclick="triggerTraining(...)">🔄</button>
+    <button onclick="showModelInfo(...)"></button>
+    <button onclick="triggerTraining(...)"></button>
 </td>
 ```
 
 ---
 
-### **4. Exports Globaux** ✅
+### **4. Exports Globaux**
 
 **Ajouté** (lignes 2309-2310):
 ```javascript
@@ -97,27 +97,27 @@ window.showVersionHistory = showVersionHistory;
 
 ---
 
-## 🎨 UI/UX Features
+## UI/UX Features
 
 ### **States Management**
-- ✅ Loading state (spinner pendant fetch)
-- ✅ Error state (message d'erreur si API fail)
-- ✅ Content state (affichage données)
+- [OK] Loading state (spinner pendant fetch)
+- Error state (message d'erreur si API fail)
+- [OK] Content state (affichage données)
 
 ### **Smart Display**
-- ✅ Sections masquées si données vides (features_used, hyperparameters, etc.)
-- ✅ Format dates en français (`toLocaleString('fr-FR')`)
-- ✅ File size en MB (conversion bytes)
-- ✅ Metrics formatés (4 décimales pour floats)
-- ✅ Badges colorés (status, model_type)
+- [OK] Sections masquées si données vides (features_used, hyperparameters, etc.)
+- [OK] Format dates en français (`toLocaleString('fr-FR')`)
+- [OK] File size en MB (conversion bytes)
+- [OK] Metrics formatés (4 décimales pour floats)
+- [OK] Badges colorés (status, model_type)
 
 ### **Navigation**
-- ✅ Bouton "View History" dans modal Info → Ouvre modal Historique
-- ✅ Close modal Info avant ouvrir Historique (pas de double modal)
+- [OK] Bouton "View History" dans modal Info → Ouvre modal Historique
+- [OK] Close modal Info avant ouvrir Historique (pas de double modal)
 
 ---
 
-## 📊 Données Affichées
+## Données Affichées
 
 ### **Modal Info Détaillée**
 
@@ -132,7 +132,7 @@ window.showVersionHistory = showVersionHistory;
   created_at: "2025-12-20T14:32:15",
   updated_at: "2025-12-24T09:15:42",
 
-  // Training Config ⚙️
+  // Training Config
   hyperparameters: {
     epochs: 100,
     learning_rate: 0.001,
@@ -141,7 +141,7 @@ window.showVersionHistory = showVersionHistory;
     // etc.
   },
 
-  // Metrics 📊
+  // Metrics
   validation_metrics: {
     accuracy: 0.8425,
     precision: 0.8315,
@@ -154,7 +154,7 @@ window.showVersionHistory = showVersionHistory;
     // etc.
   },
 
-  // Features 🔧
+  // Features
   features_used: [
     "price_change_1d",
     "price_change_7d",
@@ -163,7 +163,7 @@ window.showVersionHistory = showVersionHistory;
     // etc. (10+ features)
   ],
 
-  // Data Period 📅
+  // Data Period
   training_data_period: {
     start_date: "2023-12-24",
     end_date: "2025-12-24"
@@ -188,7 +188,7 @@ v1.9    | TRAINED  | 15/12/2025 18:45  | regime  | 2.15 MB | accuracy: 0.789
 
 ---
 
-## 🧪 Test & Validation
+## Test & Validation
 
 ### **Pré-requis Backend**
 
@@ -220,21 +220,21 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 **Étapes:**
 1. Ouvrir `http://localhost:8080/admin-dashboard.html#ml`
 2. Login en tant que "jack" (admin role requis)
-3. Cliquer sur bouton **ℹ️** pour un modèle
+3. Cliquer sur bouton **** pour un modèle
 4. **Vérifier Modal Info:**
-   - Loading state apparaît brièvement ✅
-   - Sections Basic Info remplies ✅
-   - Section Training Config (si hyperparams existent) ✅
-   - Section Metrics (si metrics existent) ✅
-   - Section Features (si features_used existent) ✅
-   - Section Data Period (si training_data_period existe) ✅
-5. Cliquer **"📊 View History"**
+   - Loading state apparaît brièvement [OK]
+   - Sections Basic Info remplies [OK]
+   - Section Training Config (si hyperparams existent) [OK]
+   - Section Metrics (si metrics existent) [OK]
+   - Section Features (si features_used existent) [OK]
+   - Section Data Period (si training_data_period existe) [OK]
+5. Cliquer **" View History"**
 6. **Vérifier Modal Historique:**
-   - Modal Info se ferme ✅
-   - Modal Historique s'ouvre ✅
-   - Summary affiche latest version + total ✅
-   - Tableau affiche versions triées (plus récent en premier) ✅
-   - Metrics affichées (top 3 par version) ✅
+   - Modal Info se ferme [OK]
+   - Modal Historique s'ouvre [OK]
+   - Summary affiche latest version + total [OK]
+   - Tableau affiche versions triées (plus récent en premier) [OK]
+   - Metrics affichées (top 3 par version) [OK]
 7. Fermer modal
 8. Tester avec user "demo" (viewer) → Devrait avoir accès denied
 
@@ -245,8 +245,8 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 - [ ] Serveur backend démarré (`uvicorn api.main:app --port 8080`)
 - [ ] ModelRegistry a des données (`models/registry.json` existe)
 - [ ] User "jack" peut accéder à admin-dashboard.html#ml
-- [ ] Bouton ℹ️ apparaît dans tableau ML models
-- [ ] Clic sur ℹ️ ouvre modal Info
+- [ ] Bouton  apparaît dans tableau ML models
+- [ ] Clic sur  ouvre modal Info
 - [ ] Modal Info affiche données (ou message si vide)
 - [ ] Bouton "View History" ouvre modal Historique
 - [ ] Modal Historique affiche versions (ou message si vide)
@@ -256,9 +256,9 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 
 ---
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
-### **Phase 2 - Training Configuration (4-6h)** ⏸️
+### **Phase 2 - Training Configuration (4-6h)**
 
 **Objectif:** Permettre de configurer les paramètres de training
 
@@ -269,7 +269,7 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 4. Créer endpoint `/admin/ml/models/{name}/default-params`
 
 **Frontend à créer:**
-5. Modal "⚙️ Configure & Train" avec formulaire params
+5. Modal " Configure & Train" avec formulaire params
 6. Presets dropdown (Quick/Standard/Full/Deep)
 7. Estimation temps training
 
@@ -277,14 +277,14 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 
 ---
 
-### **Phase 3 - Nettoyer Doublons (1-2h)** ⏸️
+### **Phase 3 - Nettoyer Doublons (1-2h)**
 
 **Objectif:** Clarifier rôles des 2 dashboards
 
 **ai-dashboard.html:**
 - Renommer "Administration" → "État des Modèles"
 - Supprimer cache management (→ admin#cache)
-- Ajouter lien "⚙️ Configuration → Admin Dashboard"
+- Ajouter lien " Configuration → Admin Dashboard"
 
 **admin-dashboard.html#ml:**
 - Devenir page principale training
@@ -292,12 +292,12 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 **Documents créés:**
-1. ✅ [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
-2. ✅ [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
-3. ✅ [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Ce document
+1. [OK] [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
+2. [OK] [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
+3. [OK] [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Ce document
 
 **Code modifié:**
 - `static/admin-dashboard.html` (+460 lignes environ)
@@ -309,26 +309,26 @@ curl http://localhost:8080/api/ml/registry/models/btc_regime_detector/versions \
 
 ---
 
-## ✅ Résumé Phase 1
+## Résumé Phase 1
 
 **Temps passé:** ~2h (estimation)
 **Lignes code:** ~460 lignes (HTML + JavaScript)
-**Backend work:** **ZÉRO** ✅ (utilise API existante)
-**ROI:** **MAXIMUM** ✅ (affiche toutes les métadonnées déjà existantes)
+**Backend work:** **ZÉRO** [OK] (utilise API existante)
+**ROI:** **MAXIMUM** [OK] (affiche toutes les métadonnées déjà existantes)
 
 **Fonctionnalités ajoutées:**
-- ✅ Modal Info détaillée (6 sections)
-- ✅ Modal Historique versions (tableau comparatif)
-- ✅ Boutons ℹ️ et 🔄 dans tableau
-- ✅ Smart display (masque sections vides)
-- ✅ States management (loading/error/content)
-- ✅ Navigation entre modals
+- [OK] Modal Info détaillée (6 sections)
+- [OK] Modal Historique versions (tableau comparatif)
+- [OK] Boutons  et  dans tableau
+- [OK] Smart display (masque sections vides)
+- [OK] States management (loading/error/content)
+- [OK] Navigation entre modals
 
-**Prêt pour testing !** 🚀
+**Prêt pour testing !**
 
 ---
 
-## 🐛 Problèmes Potentiels & Solutions
+## Problèmes Potentiels & Solutions
 
 ### **1. Endpoints retournent 404**
 
@@ -352,7 +352,7 @@ python scripts/train_models.py --regime --real-data --days 730 --epochs 100
 **Debug:**
 ```javascript
 // Ouvrir console navigateur
-// Cliquer sur ℹ️
+// Cliquer sur
 // Regarder response dans Network tab
 
 // Vérifier structure response:
@@ -413,7 +413,7 @@ async def get_model_info(
 
 ---
 
-## 🎓 Leçons Apprises
+## Leçons Apprises
 
 **1. Ne pas réinventer la roue**
 - 90% de ce qu'on voulait existait déjà
@@ -435,7 +435,7 @@ async def get_model_info(
 
 ---
 
-## 📞 Contact & Support
+## Contact & Support
 
 **Questions Phase 1:**
 - Vérifier ce document
@@ -453,5 +453,5 @@ async def get_model_info(
 
 ---
 
-**Status:** ✅ Phase 1 complète - Ready for testing!
+**Status:** [OK] Phase 1 complète - Ready for testing!
 **Next:** Valider tests → Décider si Phase 2 nécessaire

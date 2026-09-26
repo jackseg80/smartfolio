@@ -32,7 +32,7 @@ export function setCycleParams(p) {
   CYCLE_PARAMS = { ...CYCLE_PARAMS, ...p };
   // Invalidate cache when params change
   _cyclePositionCache = null; 
-  console.debug('🔄 Cycle parameters updated:', CYCLE_PARAMS);
+  console.debug("Cycle parameters updated:", CYCLE_PARAMS);
 }
 
 // Auto-load calibrated parameters on module initialization
@@ -46,7 +46,7 @@ function autoLoadCalibrationParams() {
       const data = JSON.parse(saved);
       // CRITICAL: Check version - invalidate old calibrations (pre-2.0)
       if (!data.version || !data.version.startsWith('2.')) {
-        console.debug('🔄 Invalidating old calibration (version:', data.version, ')');
+        console.debug("Invalidating old calibration (version:", data.version, ')');
         localStorage.removeItem('bitcoin_cycle_params');
         return false;  // Force recalibration with new defaults
       }
@@ -56,12 +56,12 @@ function autoLoadCalibrationParams() {
         // CRITICAL: Invalidate cache when params are loaded
         _cyclePositionCache = null;
         _cyclePositionCacheTimestamp = 0;
-        console.debug('✅ Auto-loaded calibrated cycle parameters', CYCLE_PARAMS);
+        console.debug("[OK] Auto-loaded calibrated cycle parameters", CYCLE_PARAMS);
         return true;
       }
     }
   } catch (error) {
-    console.error('❌ Error auto-loading cycle parameters:', error);
+    console.error("Error auto-loading cycle parameters:", error);
   }
   return false;
 }
@@ -81,7 +81,7 @@ function autoCalibrate() {
     } catch (e) { /* continue to calibrate */ }
   }
 
-  console.debug('🔧 No calibrated params found, running FULL auto-calibration...');
+  console.debug("No calibrated params found, running FULL auto-calibration...");
 
   // Use the full calibration function (same as cycle-analysis.html)
   // This is defined later in the file, but will be available at runtime
@@ -96,10 +96,10 @@ function autoCalibrate() {
       version: CALIBRATION_VERSION + '-auto'
     }));
 
-    console.debug('✅ Full auto-calibration complete, params saved:', result.params, 'error:', result.score.toFixed(2));
+    console.debug("[OK] Full auto-calibration complete, params saved:", result.params, 'error:', result.score.toFixed(2));
     return true;
   } catch (e) {
-    console.warn('⚠️ Auto-calibration failed, using defaults:', e);
+    console.warn("[Warning] Auto-calibration failed, using defaults:", e);
     return false;
   }
 }
@@ -198,35 +198,35 @@ export function getCyclePhase(monthsAfterHalving) {
       phase: 'accumulation',
       description: `Accumulation Phase (${Math.round(m)}m post-halving)`,
       color: '#f59e0b',
-      emoji: '🟡'
+      emoji: ''
     };
   } else if (m <= 18) {
     return {
       phase: 'bull_build',
       description: `Bull Market Building (${Math.round(m)}m post-halving)`,
       color: '#10b981',
-      emoji: '🟢'
+      emoji: ''
     };
   } else if (m <= 24) {
     return {
       phase: 'peak',
       description: `Peak/Euphoria Phase (${Math.round(m)}m post-halving)`,
       color: '#8b5cf6',
-      emoji: '🟣'
+      emoji: ''
     };
   } else if (m <= 36) {
     return {
       phase: 'bear',
       description: `Bear Market (${Math.round(m)}m post-halving)`,
       color: '#dc2626',
-      emoji: '🔴'
+      emoji: ''
     };
   } else {
     return {
       phase: 'pre_accumulation',
       description: `Pre-Accumulation (${Math.round(m)}m post-halving)`,
       color: '#6b7280',
-      emoji: '⚫'
+      emoji: ''
     };
   }
 }
@@ -343,7 +343,7 @@ export function getCurrentCycleMonths() {
   const diffTime = now.getTime() - lastHalvingDate.getTime();
   const totalMonths = Math.max(0, diffTime / (1000 * 60 * 60 * 24 * 30.44));
 
-  console.debug('🔍 DEBUG getCurrentCycleMonths:', {
+  console.debug("DEBUG getCurrentCycleMonths:", {
     lastHalving: lastHalvingDate.toISOString(),
     now: now.toISOString(),
     diffDays: (diffTime / (1000 * 60 * 60 * 24)).toFixed(1),

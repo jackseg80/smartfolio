@@ -2,7 +2,7 @@
 
 **Date**: 13 Oct 2025
 **Priorité**: Haute (bugs affectant UX)
-**Statut**: ✅ CORRIGÉ
+**Statut**: [OK] CORRIGÉ
 
 ---
 
@@ -29,7 +29,7 @@ Le filtre ne vérifiait que le type (`csv`) sans vérifier le module:
 ```javascript
 // AVANT (bug)
 const csvs = sources
-  .filter(s => s.type === 'csv')  // ❌ Tous les CSV (cointracking + saxobank)
+  .filter(s => s.type === 'csv')  // [Error] Tous les CSV (cointracking + saxobank)
   .sort((a, b) => a.label.localeCompare(b.label));
 ```
 
@@ -38,7 +38,7 @@ Ajout du filtre `module === 'cointracking'`:
 ```javascript
 // APRÈS (fix)
 const csvs = sources
-  .filter(s => s.type === 'csv' && s.module === 'cointracking')  // ✅ Seulement cointracking
+  .filter(s => s.type === 'csv' && s.module === 'cointracking')  // [OK] Seulement cointracking
   .sort((a, b) => a.label.localeCompare(b.label));
 ```
 
@@ -57,7 +57,7 @@ Trois problèmes en cascade:
 # AVANT (bug)
 data_files = sorted(data_path.glob('*.csv'))
 if data_files:
-    latest = max(data_files, key=lambda f: os.path.getmtime(f))  # ❌ Toujours le plus récent
+    latest = max(data_files, key=lambda f: os.path.getmtime(f))  # [Error] Toujours le plus récent
     return _parse_saxo_csv(latest, "saxo_data", user_id=user_id)
 ```
 
@@ -234,13 +234,13 @@ L'objet `currentWealthContext` contenait `account: 'All Accounts'` hardcodé, et
 // AVANT (bug)
 let currentWealthContext = {
     household: 'Household 1',
-    account: 'All Accounts',  // ❌ Écrase la sélection sauvegardée
+    account: 'All Accounts',  // [Error] Écrase la sélection sauvegardée
     module: 'bourse',
     currency: 'USD'
 };
 
 function initWealthContextIntegration() {
-    window.wealthContextBar.setContext(currentWealthContext);  // ❌ Écrase account
+    window.wealthContextBar.setContext(currentWealthContext);  // [Error] Écrase account
 }
 ```
 
@@ -250,12 +250,12 @@ Ne forcer que le `module` sans toucher aux autres valeurs du contexte:
 ```javascript
 // APRÈS (fix)
 let currentWealthContext = {
-    module: 'bourse'  // ✅ Ne force que le module
+    module: 'bourse'  // [OK] Ne force que le module
 };
 
 function initWealthContextIntegration() {
     // Set initial context to bourse module only (preserve other context values)
-    window.wealthContextBar.setContext(currentWealthContext);  // ✅ Préserve account
+    window.wealthContextBar.setContext(currentWealthContext);  // [OK] Préserve account
 }
 ```
 
@@ -276,26 +276,26 @@ function initWealthContextIntegration() {
 ## Tests de Validation
 
 ### Bug #1 - Files Saxo dans menu Cointracking
-✅ **Test**: Ouvrir menu Cointracking sur n'importe quelle page
-✅ **Résultat attendu**: Uniquement fichiers de `data/users/jack/cointracking/data/`
+[OK] **Test**: Ouvrir menu Cointracking sur n'importe quelle page
+[OK] **Résultat attendu**: Uniquement fichiers de `data/users/jack/cointracking/data/`
 
 ### Bug #2 - Dashboard Saxo même données
-✅ **Test**:
+[OK] **Test**:
 1. Sélectionner premier CSV Saxo → Noter total value
 2. Sélectionner deuxième CSV Saxo → Comparer total value
-✅ **Résultat attendu**: Valeurs différentes pour chaque fichier
+[OK] **Résultat attendu**: Valeurs différentes pour chaque fichier
 
 ### Bug #3 - API option disparaît
-✅ **Test**:
+[OK] **Test**:
 1. Sélectionner "CoinTracking API" dans menu
 2. Recharger page (F5)
-✅ **Résultat attendu**: Menu affiche toujours "CoinTracking API" sélectionné
+[OK] **Résultat attendu**: Menu affiche toujours "CoinTracking API" sélectionné
 
 ### Bug #4 - Reset sur saxo-dashboard.html
-✅ **Test**:
+[OK] **Test**:
 1. Sélectionner "CoinTracking API" sur dashboard.html
 2. Naviguer vers saxo-dashboard.html
-✅ **Résultat attendu**: Menu Cointracking affiche toujours "CoinTracking API"
+[OK] **Résultat attendu**: Menu Cointracking affiche toujours "CoinTracking API"
 
 ---
 
@@ -322,7 +322,7 @@ Fixes 4 bugs in source selection system:
    - Removed hardcoded account value in context
    - Only force module, preserve other context values
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>
 "
 ```
@@ -343,5 +343,5 @@ Le filtre par `module` garantit que chaque menu ne voit que ses propres sources,
 
 ---
 
-**Statut Final**: ✅ Tous les bugs corrigés et testés
+**Statut Final**: [OK] Tous les bugs corrigés et testés
 **Impact**: Meilleure UX, sélection de sources fiable et persistante

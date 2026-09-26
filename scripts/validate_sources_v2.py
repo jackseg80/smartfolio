@@ -18,7 +18,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 def print_check(name: str, passed: bool, details: str = ""):
     """Print check result with color."""
-    icon = "✅" if passed else "❌"
+    icon = "OK" if passed else "Error"
     print(f"{icon} {name}")
     if details:
         print(f"   {details}")
@@ -28,14 +28,14 @@ def print_check(name: str, passed: bool, details: str = ""):
 def validate_sources_v2():
     """Run validation checks."""
     print("=" * 60)
-    print("🔍 Sources V2 Integration Validation")
+    print(" Sources V2 Integration Validation")
     print("=" * 60)
     print()
 
     all_passed = True
 
     # Check 1: Source registry imports
-    print("📦 Checking imports...")
+    print(" Checking imports...")
     try:
         from services.sources import (
             source_registry,
@@ -51,7 +51,7 @@ def validate_sources_v2():
         return False
 
     # Check 2: Source registry initialization
-    print("\n🏗️ Checking source registry...")
+    print("\n[In progress] Checking source registry...")
     try:
         source_ids = source_registry.source_ids
         all_passed &= print_check(
@@ -63,7 +63,7 @@ def validate_sources_v2():
         all_passed &= print_check("Source registry initialized", False, str(e))
 
     # Check 3: Expected sources registered
-    print("\n📋 Checking expected sources...")
+    print("\n Checking expected sources...")
     expected_sources = [
         "manual_crypto",
         "manual_bourse",
@@ -77,7 +77,7 @@ def validate_sources_v2():
         all_passed &= print_check(f"Source '{source_id}'", is_registered)
 
     # Check 4: Source categories
-    print("\n🏷️ Checking categories...")
+    print("\n Checking categories...")
     crypto_sources = source_registry.list_sources(SourceCategory.CRYPTO)
     bourse_sources = source_registry.list_sources(SourceCategory.BOURSE)
 
@@ -93,7 +93,7 @@ def validate_sources_v2():
     )
 
     # Check 5: Manual sources can instantiate
-    print("\n🔨 Checking source instantiation...")
+    print("\n Checking source instantiation...")
     try:
         crypto_source = source_registry.get_source(
             "manual_crypto",
@@ -118,7 +118,7 @@ def validate_sources_v2():
         all_passed &= print_check("Source instantiation", False, str(e))
 
     # Check 6: API endpoints registered
-    print("\n🌐 Checking API integration...")
+    print("\n Checking API integration...")
     try:
         from api.main import app
 
@@ -135,7 +135,7 @@ def validate_sources_v2():
         all_passed &= print_check("API integration", False, str(e))
 
     # Check 7: balance_service integration
-    print("\n⚙️ Checking balance_service integration...")
+    print("\n Checking balance_service integration...")
     try:
         from services.balance_service import balance_service, SOURCES_V2_ENABLED
 
@@ -161,7 +161,7 @@ def validate_sources_v2():
         all_passed &= print_check("balance_service integration", False, str(e))
 
     # Check 8: Migration module
-    print("\n🔄 Checking migration module...")
+    print("\n Checking migration module...")
     try:
         from services.sources.migration import SourceMigration, ensure_user_migrated
 
@@ -185,7 +185,7 @@ def validate_sources_v2():
         all_passed &= print_check("Migration module", False, str(e))
 
     # Check 9: Frontend components
-    print("\n🎨 Checking frontend components...")
+    print("\n Checking frontend components...")
     components = [
         "static/components/manual-source-editor.js",
         "static/sources-manager-v2.js",
@@ -199,7 +199,7 @@ def validate_sources_v2():
         )
 
     # Check 10: Documentation
-    print("\n📚 Checking documentation...")
+    print("\n Checking documentation...")
     docs = [
         "docs/SOURCES_V2.md",
         "docs/SOURCES_V2_INTEGRATION_CHECKLIST.md",
@@ -215,14 +215,14 @@ def validate_sources_v2():
     # Summary
     print("\n" + "=" * 60)
     if all_passed:
-        print("✅ ALL CHECKS PASSED - Sources V2 is properly integrated!")
+        print("[OK] ALL CHECKS PASSED - Sources V2 is properly integrated!")
         print("\nNext steps:")
         print("  1. Run integration tests: pytest tests/integration/test_sources_v2_integration.py")
         print("  2. Test manually following: docs/SOURCES_V2_INTEGRATION_CHECKLIST.md")
         print("  3. Monitor logs when users access the system")
         return 0
     else:
-        print("❌ SOME CHECKS FAILED - Please review errors above")
+        print("[Error] SOME CHECKS FAILED - Please review errors above")
         print("\nTroubleshooting:")
         print("  1. Check that all files are present")
         print("  2. Review import errors")
@@ -236,10 +236,10 @@ def main():
         exit_code = validate_sources_v2()
         sys.exit(exit_code)
     except KeyboardInterrupt:
-        print("\n\n⚠️ Validation interrupted by user")
+        print("\n\n[Warning] Validation interrupted by user")
         sys.exit(130)
     except Exception as e:
-        print(f"\n\n💥 Unexpected error: {e}")
+        print(f"\n\n Unexpected error: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

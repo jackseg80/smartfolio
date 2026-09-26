@@ -39,12 +39,12 @@ async function saveSourcesConfiguration() {
     // Backup localStorage pour compatibilité
     localStorage.setItem('sources_auto_refresh', autoRefresh);
 
-    showNotification('✅ Sources configuration saved', 'success');
+    showNotification("[OK] Sources configuration saved", 'success');
   } catch (error) {
     debugLogger.error('Failed to save sources settings:', error);
     // Fallback localStorage
     localStorage.setItem('sources_auto_refresh', autoRefresh);
-    showNotification('⚠️ Local save only (API unavailable)', 'warning');
+    showNotification("[Warning] Local save only (API unavailable)", 'warning');
   }
 }
 
@@ -62,7 +62,7 @@ function clearSourcesLogs() {
   }
 }
 
-// ✅ NOTE: Initialisation déplacée dans settings.html (ligne 2470-2486) pour éviter conflit
+//  NOTE: Initialisation déplacée dans settings.html (ligne 2470-2486) pour éviter conflit
 // Initialisation automatique quand l'onglet Sources est activé
 /* OBSOLETE - Ne pas utiliser, voir settings.html pour l'initialisation de Sources V2
 document.addEventListener('DOMContentLoaded', function() {

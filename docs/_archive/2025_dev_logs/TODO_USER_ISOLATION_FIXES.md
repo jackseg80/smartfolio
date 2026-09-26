@@ -1,10 +1,10 @@
 # TODO - User Isolation Fixes
 > **Date:** 2025-12-29
-> **Status:** Phase 1 COMPLÉTÉE ✅ (4 caches isolés + localStorage + HistoryManager storage)
+> **Status:** Phase 1 COMPLÉTÉE [OK] (4 caches isolés + localStorage + HistoryManager storage)
 
-## ✅ Fixes Complétés
+## Fixes Complétés
 
-### 1. localStorage Settings Isolation ✅
+### 1. localStorage Settings Isolation
 **Fichiers:** `static/global-config.js`, `static/core/auth-guard.js`, `static/modules/settings-main-controller.js`
 
 **Fix appliqué:**
@@ -16,7 +16,7 @@
 
 ---
 
-### 2. analytics_endpoints.py Cache Isolation ✅
+### 2. analytics_endpoints.py Cache Isolation
 **Fichier:** `api/analytics_endpoints.py`
 
 **Fix appliqué:**
@@ -29,7 +29,7 @@
 
 ---
 
-### 3. advanced_analytics_endpoints.py User Isolation ✅
+### 3. advanced_analytics_endpoints.py User Isolation
 
 **Fichier:** `api/advanced_analytics_endpoints.py`
 
@@ -59,7 +59,7 @@ curl -H "X-User: jack" "http://localhost:8080/analytics/advanced/metrics?days=30
 
 ---
 
-### 4. unified_ml_endpoints.py User Isolation ✅
+### 4. unified_ml_endpoints.py User Isolation
 
 **Fichier:** `api/unified_ml_endpoints.py`
 
@@ -82,11 +82,11 @@ curl -H "X-User: demo" "http://localhost:8080/api/ml/correlation/matrix/current?
 curl -H "X-User: jack" "http://localhost:8080/api/ml/correlation/matrix/current?window_days=30"
 ```
 
-**Note:** Tous les autres endpoints ML (prédictions, sentiment, modèles) sont globaux (données publiques) → Cache partagé OK ✅
+**Note:** Tous les autres endpoints ML (prédictions, sentiment, modèles) sont globaux (données publiques) → Cache partagé OK [OK]
 
 ---
 
-### 5. HistoryManager Storage Isolation ✅
+### 5. HistoryManager Storage Isolation
 
 **Fichiers:** `services/analytics/history_manager.py`, `api/analytics_endpoints.py`
 
@@ -120,19 +120,19 @@ curl -X POST "http://localhost:8080/api/analytics/sessions" -H "X-User: demo" -H
 curl -X POST "http://localhost:8080/api/analytics/sessions" -H "X-User: jack" -H "Content-Type: application/json" -d '{"target_allocations":{"BTC":50},"source":"test"}'
 
 # Vérifier isolation
-ls data/users/demo/rebalance_history.json  # ✅ Existe
-ls data/users/jack/rebalance_history.json  # ✅ Existe
+ls data/users/demo/rebalance_history.json  # [OK] Existe
+ls data/users/jack/rebalance_history.json  # [OK] Existe
 ```
 
 ---
 
-## 🔴 Problèmes CRITIQUES (À Fixer Priorité 1)
+## Problèmes CRITIQUES (À Fixer Priorité 1)
 
-**Aucun problème critique restant !** 🎉
+**Aucun problème critique restant !**
 
 ---
 
-### 6. localStorage API Keys Frontend ✅
+### 6. localStorage API Keys Frontend
 
 **Fichiers:** `static/global-config.js`, `static/components/ai-chat.js`, `static/components/ai-chat-context-builders.js`
 
@@ -170,8 +170,8 @@ window.globalConfig.set('claude_api_key', 'sk-ant-jack_key_456');
 window.globalConfig.set('aiProvider', 'claude');
 
 // Test 4: Switch back to "demo"
-console.log('Demo Groq:', window.globalConfig.get('groq_api_key')); // "gsk_demo_test_key_123" ✅
-console.log('Demo Claude:', window.globalConfig.get('claude_api_key')); // "" ✅
+console.log('Demo Groq:', window.globalConfig.get('groq_api_key')); // "gsk_demo_test_key_123" OK
+console.log('Demo Claude:', window.globalConfig.get('claude_api_key')); // "" OK
 
 // Vérifier localStorage raw keys
 Object.keys(localStorage).filter(k => k.startsWith('smartfolio_settings_'));
@@ -182,11 +182,11 @@ Object.keys(localStorage).filter(k => k.startsWith('smartfolio_settings_'));
 
 ---
 
-## 🟡 Problèmes ÉLEVÉS (Priorité 2)
+## Problèmes ÉLEVÉS (Priorité 2)
 
 ---
 
-### 7. get_active_user() → get_required_user() Migration ✅
+### 7. get_active_user() → get_required_user() Migration
 
 **Fichiers:** `api/risk_endpoints.py`, `api/portfolio_endpoints.py`, `api/wealth_endpoints.py`
 
@@ -204,7 +204,7 @@ Object.keys(localStorage).filter(k => k.startsWith('smartfolio_settings_'));
 ```python
 # Client oublie header X-User → fallback "demo" SANS erreur
 curl "http://localhost:8080/api/risk/dashboard"
-# ✅ 200 OK (données "demo") ❌ PAS DÉTECTÉ
+# 200 OK (données "demo")  PAS DÉTECTÉ
 ```
 
 **Après (erreur explicite):**
@@ -212,11 +212,11 @@ curl "http://localhost:8080/api/risk/dashboard"
 ```python
 # Client oublie header X-User → erreur 422
 curl "http://localhost:8080/api/risk/dashboard"
-# ❌ 422 {"detail":[{"loc":["header","X-User"],"msg":"field required"}]}
+# 422 {"detail":[{"loc":["header","X-User"],"msg":"field required"}]}
 
 # Avec header X-User → OK
 curl -H "X-User: demo" "http://localhost:8080/api/risk/dashboard"
-# ✅ 200 OK (données "demo")
+# 200 OK (données "demo")
 ```
 
 **Test validation:**
@@ -239,7 +239,7 @@ curl -H "X-User: demo" "http://localhost:8080/api/risk/dashboard"
 
 ---
 
-## 🟢 Problèmes MOYENS (Priorité 3)
+## Problèmes MOYENS (Priorité 3)
 
 ### 4. CoinGecko Proxy Cache
 **Fichier:** `api/coingecko_proxy_router.py:51`
@@ -275,27 +275,27 @@ _RECOMPUTE_CACHE = {}
 
 ---
 
-## 📋 Plan d'Action Recommandé
+## Plan d'Action Recommandé
 
 ### Phase 1 - Fixes Critiques (4-6h)
-1. ✅ localStorage settings isolation (COMPLÉTÉ)
-2. ✅ analytics_endpoints.py cache (COMPLÉTÉ)
-3. ✅ advanced_analytics_endpoints.py (COMPLÉTÉ - 30 min)
-4. ✅ unified_ml_endpoints.py (COMPLÉTÉ - 1h audit + 1 endpoint)
-5. ⏳ Refactor HistoryManager pour user isolation (2-3h)
+1. [OK] localStorage settings isolation (COMPLÉTÉ)
+2. [OK] analytics_endpoints.py cache (COMPLÉTÉ)
+3. [OK] advanced_analytics_endpoints.py (COMPLÉTÉ - 30 min)
+4. [OK] unified_ml_endpoints.py (COMPLÉTÉ - 1h audit + 1 endpoint)
+5. [Pending] Refactor HistoryManager pour user isolation (2-3h)
 
 ### Phase 2 - Fixes Élevés (3-4h)
-6. ⏳ Isoler localStorage API keys frontend (1h)
-7. ⏳ Migrer endpoints sensibles vers get_required_user() (2h)
-8. ⏳ Vider UserSecretsManager cache lors logout (30 min)
+6. [Pending] Isoler localStorage API keys frontend (1h)
+7. [Pending] Migrer endpoints sensibles vers get_required_user() (2h)
+8. [Pending] Vider UserSecretsManager cache lors logout (30 min)
 
 ### Phase 3 - Fixes Moyens (1-2h)
-9. ⏳ CoinGecko cache (optionnel, 15 min)
-10. ⏳ signals_endpoints.py audit (30 min)
+9. [Pending] CoinGecko cache (optionnel, 15 min)
+10. [Pending] signals_endpoints.py audit (30 min)
 
 ---
 
-## 🧪 Tests de Validation
+## Tests de Validation
 
 Après chaque fix, tester:
 
@@ -322,19 +322,19 @@ curl -H "X-User: jack" "localhost:8080/analytics/performance/summary?days_back=3
 
 ---
 
-## 📊 Métriques de Succès
+## Métriques de Succès
 
 | Métrique                      | Avant      | Actuel              | Cible         |
 |-------------------------------|------------|---------------------|---------------|
-| Caches isolés par user        | 1/6 (17%)  | 3/6 (50%) ✅        | 6/6 (100%)    |
-| localStorage isolé (settings) | 0/11 (0%)  | 11/11 (100%) ✅     | 11/11 (100%)  |
-| localStorage isolé (AI keys)  | 0/6 (0%)   | 6/6 (100%) ✅       | 6/6 (100%)    |
-| Storage backend isolé         | 0/1 (0%)   | 1/1 (100%) ✅       | 1/1 (100%)    |
-| Endpoints avec X-User requis  | 11/~50     | **38/~50 (76%)** ✅ | 80%+          |
+| Caches isolés par user        | 1/6 (17%)  | 3/6 (50%) [OK]        | 6/6 (100%)    |
+| localStorage isolé (settings) | 0/11 (0%)  | 11/11 (100%) [OK]     | 11/11 (100%)  |
+| localStorage isolé (AI keys)  | 0/6 (0%)   | 6/6 (100%) [OK]       | 6/6 (100%)    |
+| Storage backend isolé         | 0/1 (0%)   | 1/1 (100%) [OK]       | 1/1 (100%)    |
+| Endpoints avec X-User requis  | 11/~50     | **38/~50 (76%)** [OK] | 80%+          |
 
 ---
 
-## 🔗 Références
+## Références
 
 - [CLAUDE.md](../CLAUDE.md) - Multi-Tenant OBLIGATOIRE
 - [docs/AUTHENTICATION.md](AUTHENTICATION.md) - JWT Auth System

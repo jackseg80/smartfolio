@@ -3,7 +3,7 @@ Decision Engine for Portfolio Recommendations
 
 Converts scores into actionable recommendations:
 - STRONG BUY / BUY / HOLD / SELL / STRONG SELL
-- Generates rationale with emojis (✅/⚠️/❌)
+- Generates rationale with explicit status labels ([OK]/[Warning]/[Error])
 - Provides tactical advice
 """
 
@@ -125,7 +125,7 @@ class DecisionEngine:
         risk_data: Optional[Dict[str, Any]]
     ) -> List[str]:
         """
-        Generate rationale bullet points with emojis
+        Generate rationale bullet points with explicit status labels
 
         Returns:
             List of rationale strings
@@ -139,36 +139,36 @@ class DecisionEngine:
         vs_ma50 = technical_data.get("vs_ma50_pct")
 
         if tech_score > 0.6:
-            rationale.append(f"✅ Technical: RSI {rsi:.0f} ({technical_data.get('rsi_signal', 'neutral')}), MACD {macd_signal}")
+            rationale.append(f"[OK] Technical: RSI {rsi:.0f} ({technical_data.get('rsi_signal', 'neutral')}), MACD {macd_signal}")
         elif tech_score < 0.4:
-            rationale.append(f"❌ Technical: RSI {rsi:.0f} ({technical_data.get('rsi_signal', 'neutral')}), MACD {macd_signal}")
+            rationale.append(f"[Error] Technical: RSI {rsi:.0f} ({technical_data.get('rsi_signal', 'neutral')}), MACD {macd_signal}")
         else:
-            rationale.append(f"⚠️ Technical: RSI {rsi:.0f} (neutral), MACD {macd_signal}")
+            rationale.append(f"[Warning] Technical: RSI {rsi:.0f} (neutral), MACD {macd_signal}")
 
         # MA trend
         if vs_ma50 is not None:
             if vs_ma50 > 5:
-                rationale.append(f"✅ Above MA50 by {vs_ma50:.1f}%, uptrend intact")
+                rationale.append(f"[OK] Above MA50 by {vs_ma50:.1f}%, uptrend intact")
             elif vs_ma50 < -5:
-                rationale.append(f"❌ Below MA50 by {abs(vs_ma50):.1f}%, downtrend active")
+                rationale.append(f"[Error] Below MA50 by {abs(vs_ma50):.1f}%, downtrend active")
             else:
-                rationale.append(f"⚠️ Near MA50 ({vs_ma50:+.1f}%), trend unclear")
+                rationale.append(f"[Warning] Near MA50 ({vs_ma50:+.1f}%), trend unclear")
 
         # Regime alignment
         regime_score = breakdown.get("regime", 0.5)
         if regime_score > 0.6:
-            rationale.append(f"✅ {self.market_regime} regime supports this asset")
+            rationale.append(f"[OK] {self.market_regime} regime supports this asset")
         elif regime_score < 0.4:
-            rationale.append(f"❌ {self.market_regime} regime unfavorable for this asset")
+            rationale.append(f"[Error] {self.market_regime} regime unfavorable for this asset")
         else:
-            rationale.append(f"⚠️ {self.market_regime} regime neutral for this asset")
+            rationale.append(f"[Warning] {self.market_regime} regime neutral for this asset")
 
         # Relative strength
         rel_str_score = breakdown.get("relative_strength", 0.5)
         if rel_str_score > 0.6:
-            rationale.append(f"✅ Outperforming market benchmark")
+            rationale.append(f"[OK] Outperforming market benchmark")
         elif rel_str_score < 0.4:
-            rationale.append(f"❌ Underperforming market benchmark")
+            rationale.append(f"[Error] Underperforming market benchmark")
 
         # Sector momentum (if available)
         if sector_data:
@@ -177,9 +177,9 @@ class DecisionEngine:
             sector_momentum = sector_data.get("momentum", 1.0)
 
             if sector_score > 0.6:
-                rationale.append(f"✅ {sector_name} sector showing strong momentum ({sector_momentum:.2f}x)")
+                rationale.append(f"[OK] {sector_name} sector showing strong momentum ({sector_momentum:.2f}x)")
             elif sector_score < 0.4:
-                rationale.append(f"❌ {sector_name} sector weak momentum ({sector_momentum:.2f}x)")
+                rationale.append(f"[Error] {sector_name} sector weak momentum ({sector_momentum:.2f}x)")
 
         # Risk metrics (if available)
         if risk_data:
@@ -188,15 +188,15 @@ class DecisionEngine:
             drawdown = risk_data.get("drawdown_current", 0)
 
             if risk_score > 0.6:
-                rationale.append(f"✅ Good risk profile (Vol {volatility*100:.0f}%, DD {abs(drawdown)*100:.0f}%)")
+                rationale.append(f"[OK] Good risk profile (Vol {volatility*100:.0f}%, DD {abs(drawdown)*100:.0f}%)")
             elif risk_score < 0.4:
-                rationale.append(f"❌ Elevated risk (Vol {volatility*100:.0f}%, DD {abs(drawdown)*100:.0f}%)")
+                rationale.append(f"[Error] Elevated risk (Vol {volatility*100:.0f}%, DD {abs(drawdown)*100:.0f}%)")
 
         # Concentration warning (if available)
         if sector_data:
             weight_current = sector_data.get("weight_current", 0)
             if weight_current > 0.40 and action in ["STRONG BUY", "BUY"]:
-                rationale.append(f"⚠️ Sector already {weight_current*100:.0f}% of portfolio (concentration risk)")
+                rationale.append(f"[Warning] Sector already {weight_current*100:.0f}% of portfolio (concentration risk)")
 
         return rationale
 

@@ -189,7 +189,7 @@ class ExecutionEngine:
             if not dry_run:
                 can_buy, freeze_reason = governance_engine.validate_operation("new_purchases")
                 if not can_buy:
-                    logger.error(f"🛑 BUY ORDERS BLOCKED BY FREEZE: {freeze_reason}")
+                    logger.error(f" BUY ORDERS BLOCKED BY FREEZE: {freeze_reason}")
                     # Marquer tous les buy_orders comme bloqués
                     for order in buy_orders:
                         order.status = OrderStatus.CANCELLED

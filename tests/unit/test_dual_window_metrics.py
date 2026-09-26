@@ -312,7 +312,7 @@ def test_dual_window_insufficient_asset_count(portfolio_service, create_price_da
         balances=balances,
         min_history_days=180,
         min_coverage_pct=0.80,
-        min_asset_count=5  # ⚠️ Trop élevé
+        min_asset_count=5  # [Warning] Trop élevé
     )
 
     # Assert

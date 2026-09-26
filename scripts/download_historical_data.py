@@ -42,17 +42,17 @@ async def download_asset_data(symbol: str, days: int = 3650):
             source="yahoo"
         )
 
-        logger.info(f"✅ {symbol}: Downloaded {len(df)} days of data")
+        logger.info(f" {symbol}: Downloaded {len(df)} days of data")
         return symbol, len(df), True
 
     except Exception as e:
-        logger.error(f"❌ {symbol}: Failed to download - {e}")
+        logger.error(f" {symbol}: Failed to download - {e}")
         return symbol, 0, False
 
 
 async def main():
     """Download data for all test assets"""
-    print("\n📥 Downloading Historical Data for Backtesting")
+    print("\n Downloading Historical Data for Backtesting")
     print("=" * 60)
 
     # Assets to download (can expand later)
@@ -75,7 +75,7 @@ async def main():
 
     # Summary
     print("\n" + "=" * 60)
-    print("📊 Download Summary:")
+    print(" Download Summary:")
     print("=" * 60)
 
     success = 0
@@ -83,18 +83,18 @@ async def main():
 
     for symbol, days, status in results:
         if status:
-            print(f"  ✅ {symbol:6s} : {days:3d} days downloaded")
+            print(f"  [OK] {symbol:6s} : {days:3d} days downloaded")
             success += 1
         else:
-            print(f"  ❌ {symbol:6s} : Download failed")
+            print(f"  [Error] {symbol:6s} : Download failed")
             failed += 1
 
     print("\n" + "=" * 60)
-    print(f"✅ Success: {success}/{len(test_assets)}")
+    print(f" Success: {success}/{len(test_assets)}")
     if failed > 0:
-        print(f"❌ Failed: {failed}/{len(test_assets)}")
+        print(f" Failed: {failed}/{len(test_assets)}")
 
-    print("\n💡 Next step:")
+    print("\n Next step:")
     print("  python run_backtest_standalone.py")
     print("=" * 60 + "\n")
 

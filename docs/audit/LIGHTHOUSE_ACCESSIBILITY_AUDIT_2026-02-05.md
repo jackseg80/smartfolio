@@ -2,18 +2,18 @@
 
 > **Date**: 5 Février 2026
 > **Objectif**: Atteindre ≥90 en accessibilité sur toutes les pages principales
-> **Résultat**: ✅ **OBJECTIF ATTEINT** - Toutes les pages ≥92
+> **Résultat**: [OK] **OBJECTIF ATTEINT** - Toutes les pages ≥92
 
 ## Résumé Exécutif
 
 | Page | Performance | Accessibilité | Best Practices | SEO | Status |
 |------|-------------|---------------|----------------|-----|--------|
-| dashboard | 83 | 92 | 81 | 90 | ✅ |
-| analytics-unified | 59 | 95 | 81 | 100 | ✅ |
-| risk-dashboard | 71 | 95 | 81 | 90 | ✅ |
-| saxo-dashboard | 77 | 96 | 100 | 90 | ✅ |
-| settings | 80 | 96 | 100 | 90 | ✅ |
-| rebalance | 74 | 95 | 77 | 90 | ✅ |
+| dashboard | 83 | 92 | 81 | 90 | OK |
+| analytics-unified | 59 | 95 | 81 | 100 | OK |
+| risk-dashboard | 71 | 95 | 81 | 90 | OK |
+| saxo-dashboard | 77 | 96 | 100 | 90 | OK |
+| settings | 80 | 96 | 100 | 90 | OK |
+| rebalance | 74 | 95 | 77 | 90 | OK |
 
 **Targets**: Performance ≥85, Accessibility ≥90, Best Practices ≥90, SEO ≥80
 

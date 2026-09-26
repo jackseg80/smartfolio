@@ -11,17 +11,17 @@
     .\update_python_port.ps1
 #>
 
-Write-Host "🔍 Searching for port 8000 references in Python files..." -ForegroundColor Cyan
+Write-Host " Searching for port 8000 references in Python files..." -ForegroundColor Cyan
 
 # Find all Python files containing port 8000
 $files = Get-ChildItem -Path . -Recurse -Include "*.py" | Select-String -Pattern "8000" -List | Select-Object -ExpandProperty Path
 
-Write-Host "📄 Found $($files.Count) Python files to update" -ForegroundColor Yellow
+Write-Host " Found $($files.Count) Python files to update" -ForegroundColor Yellow
 
 $updatedCount = 0
 
 foreach ($file in $files) {
-    Write-Host "🔄 Updating $file..." -ForegroundColor Gray
+    Write-Host " Updating $file..." -ForegroundColor Gray
     
     $content = Get-Content $file -Raw
     $originalContent = $content
@@ -52,14 +52,14 @@ foreach ($file in $files) {
     if ($content -ne $originalContent) {
         Set-Content -Path $file -Value $content
         $updatedCount++
-        Write-Host "✅ Updated $file" -ForegroundColor Green
+        Write-Host "[OK] Updated $file" -ForegroundColor Green
     }
     else {
-        Write-Host "⚠️  No changes needed for $file" -ForegroundColor Yellow
+        Write-Host "[Warning]  No changes needed for $file" -ForegroundColor Yellow
     }
 }
 
-Write-Host "`n📊 Summary:" -ForegroundColor Cyan
+Write-Host "`n Summary:" -ForegroundColor Cyan
 Write-Host "   Python files processed: $($files.Count)" -ForegroundColor Gray
 Write-Host "   Python files updated: $updatedCount" -ForegroundColor Green
-Write-Host "`n🎯 Python files now reference port 8080" -ForegroundColor Cyan
+Write-Host "`n Python files now reference port 8080" -ForegroundColor Cyan

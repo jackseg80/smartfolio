@@ -1,9 +1,9 @@
-# 📊 RAPPORT FINAL - Audit Architecture & Cleanup
+# RAPPORT FINAL - Audit Architecture & Cleanup
 ## Crypto Rebal Starter - 30 Septembre 2025
 
 ---
 
-## 🎯 RÉSUMÉ EXÉCUTIF
+## RÉSUMÉ EXÉCUTIF
 
 **Contexte** : Audit complet du projet suite à une critique externe détaillée.
 
@@ -15,54 +15,54 @@
 
 ---
 
-## 📋 TRAVAIL ACCOMPLI
+## TRAVAIL ACCOMPLI
 
-### ✅ Commit 1: `2de5a53` - Architecture Cleanup
+### Commit 1: `2de5a53` - Architecture Cleanup
 
 **Date** : 2025-09-30 10:35
 **Fichiers modifiés** : 52 files changed, 3134 insertions(+), 3052 deletions(-)
 
-#### 🔴 CRITICAL - Fixes de duplication
+#### CRITICAL - Fixes de duplication
 
-1. **Router analytics dupliqué** ✅
+1. **Router analytics dupliqué** [OK]
    - **Problème** : `analytics_router` monté 2× dans `api/main.py` (lignes 1780 + 1782)
    - **Impact** : Routes dupliquées `/analytics/*` ET `/api/analytics/*`
    - **Solution** : Supprimé ligne 1780, gardé uniquement `/api/analytics`
    - **Fichier** : [api/main.py:1780](../api/main.py#L1780)
 
-2. **unified-insights versions multiples** ✅
+2. **unified-insights versions multiples** [OK]
    - **Problème** : 5 versions actives créant confusion (v2, v2-backup, v2-broken, v2-clean, legacy)
    - **Impact** : -80% confusion, risque d'utiliser mauvaise version
    - **Solution** : Archivé 4 versions → `static/archive/unified-insights-versions/`
    - **Fichiers actifs** : `static/core/unified-insights-v2.js` uniquement
    - **Documentation** : README.md créé dans archive
 
-3. **phase-engine versions multiples** ✅
+3. **phase-engine versions multiples** [OK]
    - **Problème** : 2 versions (production + dev)
    - **Solution** : Archivé `phase-engine-new.js` (utilisé uniquement par unified-insights-v2-broken)
    - **Fichier actif** : `static/core/phase-engine.js` uniquement
 
-#### 🟠 HIGH - Nettoyage & Organisation
+#### HIGH - Nettoyage & Organisation
 
-4. **Logs dispersés** ✅
+4. **Logs dispersés** [OK]
    - **Problème** : 6 fichiers logs à la racine (98KB)
    - **Solution** : Déplacés → `data/logs/`
    - **Fichiers** : deploy.log, migration_*.log, training.log, temp_output.txt
    - **Validation** : `.gitignore` empêche tracking futur
 
-5. **__pycache__ / .pyc massifs** ✅
+5. **__pycache__ / .pyc massifs** [OK]
    - **Problème** : 2893 fichiers .pyc + 461 dossiers __pycache__
    - **Impact** : Pollution arborescence, performance Git dégradée
    - **Solution** : Cleanup complet effectué
-   - **Validation** : `git ls-files` retourne 0 (non trackés ✓)
+   - **Validation** : `git ls-files` retourne 0 (non trackés [OK])
 
-6. **Test/debug HTML en production** ✅
+6. **Test/debug HTML en production** [OK]
    - **Problème** : 51 fichiers `test-*.html` et `debug-*.html` dans `/static`
    - **Impact** : Surface d'attaque élargie, confusion utilisateurs
    - **Solution** : Archivés → `static/archive/{tests,debug}/`
    - **Gain** : Réduction pollution `/static` de 98 → 47 fichiers HTML
 
-#### 📊 Métriques d'Impact
+#### Métriques d'Impact
 
 | Métrique | Avant | Après | Gain |
 |----------|-------|-------|------|
@@ -76,12 +76,12 @@
 
 ---
 
-### ✅ Commit 2: `66710d1` - Documentation Finale
+### Commit 2: `66710d1` - Documentation Finale
 
 **Date** : 2025-09-30 10:40
 **Fichiers créés** : 4 files, 573 lines
 
-#### 📄 Documents Créés
+#### Documents Créés
 
 1. **`static/FIXME_getApiUrl.md`** (111 lignes)
    - Documente problème duplication `/api/api` dans `getApiUrl()`
@@ -108,22 +108,22 @@
 
 ---
 
-## 🧪 VALIDATION - Smoke Tests
+## VALIDATION - Smoke Tests
 
 ### Tests Exécutés (2025-09-30 10:35)
 
 ```bash
-✅ GET /health                → 200 OK
-✅ GET /openapi.json          → 200 OK (3.1.0)
-✅ GET /api/risk/status       → 200 OK (system_status: operational)
-✅ GET /balances/current      → 200 OK
+[OK] GET /health                → 200 OK
+[OK] GET /openapi.json          → 200 OK (3.1.0)
+[OK] GET /api/risk/status       → 200 OK (system_status: operational)
+[OK] GET /balances/current      → 200 OK
 ```
 
-**Conclusion** : Tous les endpoints critiques opérationnels post-cleanup ✅
+**Conclusion** : Tous les endpoints critiques opérationnels post-cleanup [OK]
 
 ---
 
-## ⚠️ PROBLÈMES NON RÉSOLUS
+## PROBLÈMES NON RÉSOLUS
 
 ### 1. getApiUrl() - Duplication /api/api
 
@@ -133,7 +133,7 @@
 ```javascript
 // Si api_base_url = "http://localhost:8080/api"
 // Et endpoint = "/api/risk/status"
-// Résultat: "http://localhost:8080/api/api/risk/status" ❌
+// Résultat: "http://localhost:8080/api/api/risk/status" Error
 ```
 
 **Solution proposée** : Voir `static/FIXME_getApiUrl.md`
@@ -183,7 +183,7 @@ fetch(window.globalConfig.getApiUrl('/api/risk/dashboard'))
 
 ---
 
-## 🎯 ANALYSE CRITIQUE DE LA CRITIQUE EXTERNE
+## ANALYSE CRITIQUE DE LA CRITIQUE EXTERNE
 
 ### Score Détaillé
 
@@ -194,40 +194,40 @@ fetch(window.globalConfig.getApiUrl('/api/risk/dashboard'))
 | **Pragmatisme solutions** | 9/10 | Approche commits progressive et safe |
 | **Applicabilité immédiate** | 6/10 | Certaines solutions bloquées (watcher, complexité) |
 
-**SCORE GLOBAL** : **8/10** ⭐
+**SCORE GLOBAL** : **8/10**
 
 ### Points Validés (7/10)
 
-1. ✅ Router analytics dupliqué (100% exact)
-2. ✅ Versions multiples unified-insights (100% exact)
-3. ✅ URLs hardcodées (34 occurrences confirmées)
-4. ✅ Logs non nettoyés (6 fichiers confirmés)
-5. ✅ __pycache__ massif (2893 .pyc confirmés)
-6. ✅ 51 test/debug HTML en prod (exact)
-7. ✅ Phase Engine 2 versions (exact)
+1. [OK] Router analytics dupliqué (100% exact)
+2. [OK] Versions multiples unified-insights (100% exact)
+3. [OK] URLs hardcodées (34 occurrences confirmées)
+4. [OK] Logs non nettoyés (6 fichiers confirmés)
+5. [OK] __pycache__ massif (2893 .pyc confirmés)
+6. [OK] 51 test/debug HTML en prod (exact)
+7. [OK] Phase Engine 2 versions (exact)
 
 ### Points À Nuancer (2/10)
 
-8. ⚠️ **getApiUrl()** : Critique suppose qu'il n'existe pas → **FAUX**, existe déjà (ligne 242)
+8. [Warning] **getApiUrl()** : Critique suppose qu'il n'existe pas → **FAUX**, existe déjà (ligne 242)
    - Ma tentative d'ajout simple a créé doublon (ligne 157, supprimé)
    - Version existante a signature complexe (endpoint, params)
    - 6 usages actifs dans le code
 
-9. ⚠️ **Risk routers** : Critique recommande merge → **Trop complexe**
+9. [Warning] **Risk routers** : Critique recommande merge → **Trop complexe**
    - `risk_dashboard` = 331 lignes, pas "1 seul endpoint simple"
    - Logique métier dédiée avec helpers internes
    - Décision : Documenter au lieu de merger
 
 ### Points Faux (1/10)
 
-10. ❌ **Logs/pyc trackés par git** : Critique dit "utiliser `git rm --cached`" → **FAUX**
+10. [Error] **Logs/pyc trackés par git** : Critique dit "utiliser `git rm --cached`" → **FAUX**
     - `git ls-files | grep -E '\.log$|\.pyc$'` retourne 0 résultats
     - `.gitignore` fonctionne correctement
-    - Simple cleanup local suffit ✅
+    - Simple cleanup local suffit [OK]
 
 ---
 
-## 🚀 PROCHAINES ÉTAPES RECOMMANDÉES
+## PROCHAINES ÉTAPES RECOMMANDÉES
 
 ### PRIORITÉ HIGH (Blocage production)
 
@@ -256,11 +256,11 @@ rg -n 'https?://(localhost|127\.0\.0\.1)' static --glob '!static/archive/**'
 #### 3. Créer scripts maintenance (20 min)
 
 Implémenter les 4 scripts PowerShell documentés dans `scripts/maintenance/README.md` :
-- ✅ README créé (avec implémentations complètes)
-- ⏳ `clean_tree.ps1` à créer
-- ⏳ `verify_gitignore.ps1` à créer
-- ⏳ `smoke_test.ps1` à créer
-- ⏳ `archive_cleanup.ps1` à créer
+- [OK] README créé (avec implémentations complètes)
+- [Pending] `clean_tree.ps1` à créer
+- [Pending] `verify_gitignore.ps1` à créer
+- [Pending] `smoke_test.ps1` à créer
+- [Pending] `archive_cleanup.ps1` à créer
 
 #### 4. Vérifier références fantômes vers archives (10 min)
 
@@ -294,16 +294,16 @@ Si résultats trouvés → supprimer références.
 
 ---
 
-## 📊 MÉTRIQUES FINALES
+## MÉTRIQUES FINALES
 
 ### Effort vs Gain
 
 | Tâche | Temps Estimé | Temps Réel | Écart |
 |-------|--------------|------------|-------|
-| Audit initial | 30 min | 30 min | ✅ 0% |
-| Commit 1 (cleanup) | 1h30 | 1h15 | ✅ -17% |
-| Commit 2 (docs) | 30 min | 25 min | ✅ -17% |
-| **TOTAL** | **2h30** | **2h10** | **✅ -13%** |
+| Audit initial | 30 min | 30 min | [OK] 0% |
+| Commit 1 (cleanup) | 1h30 | 1h15 | [OK] -17% |
+| Commit 2 (docs) | 30 min | 25 min | [OK] -17% |
+| **TOTAL** | **2h30** | **2h10** | **[OK] -13%** |
 
 ### Qualité Code
 
@@ -319,30 +319,30 @@ Si résultats trouvés → supprimer références.
 
 | Document | Lignes | Statut |
 |----------|--------|--------|
-| FIXME_getApiUrl.md | 111 | ✅ Complet |
-| architecture-risk-routers.md | 142 | ✅ Complet |
-| WATCHER_ISSUE.md | 161 | ✅ Complet |
-| maintenance/README.md | 159 | ✅ Complet (4 scripts) |
+| FIXME_getApiUrl.md | 111 | [OK] Complet |
+| architecture-risk-routers.md | 142 | [OK] Complet |
+| WATCHER_ISSUE.md | 161 | [OK] Complet |
+| maintenance/README.md | 159 | [OK] Complet (4 scripts) |
 | **TOTAL** | **573** | **100% couverture** |
 
 ---
 
-## 🎓 LEÇONS APPRISES
+## LEÇONS APPRISES
 
-### ✅ Ce qui a bien fonctionné
+### Ce qui a bien fonctionné
 
 1. **Approche par commits séparés** : Cleanup code (commit 1) puis documentation (commit 2)
 2. **Validation externe** : Confronter critique externe avec projet réel évite faux positifs
 3. **Documentation proactive** : FIXME + architecture docs évitent répétition erreurs
 4. **Tests immédiats** : Smoke tests après cleanup valident non-régression
 
-### ⚠️ Ce qui pourrait être amélioré
+### Ce qui pourrait être amélioré
 
 1. **Watchers non identifiés en amont** : Aurait pu désactiver avant cleanup
 2. **Complexité sous-estimée** : `risk_dashboard` 331 lignes, pas "1 endpoint simple"
 3. **Dépendances cachées** : `getApiUrl()` existait déjà avec signature différente
 
-### 🔧 Process Recommandé pour Futurs Audits
+### Process Recommandé pour Futurs Audits
 
 1. **Phase 1 : Discovery** (30 min)
    - Lister tous fichiers dupliqués/obsolètes
@@ -371,15 +371,15 @@ Si résultats trouvés → supprimer références.
 
 ---
 
-## 🏆 CONCLUSION
+## CONCLUSION
 
 ### Objectifs Atteints
 
-- ✅ **90% problèmes CRITICAL/HIGH résolus** (9/10)
-- ✅ **Architecture nettoyée** (-80% confusion)
-- ✅ **Dette tech documentée** (573 lignes docs)
-- ✅ **Maintenabilité améliorée** (+33%)
-- ✅ **0 régression** (smoke tests OK)
+- [OK] **90% problèmes CRITICAL/HIGH résolus** (9/10)
+- [OK] **Architecture nettoyée** (-80% confusion)
+- [OK] **Dette tech documentée** (573 lignes docs)
+- [OK] **Maintenabilité améliorée** (+33%)
+- [OK] **0 régression** (smoke tests OK)
 
 ### Valeur Ajoutée
 
@@ -400,7 +400,7 @@ Si résultats trouvés → supprimer références.
 
 ---
 
-## 📎 RÉFÉRENCES
+## RÉFÉRENCES
 
 ### Commits
 
@@ -425,9 +425,9 @@ Si résultats trouvés → supprimer références.
 
 **Rapport généré le** : 2025-09-30 11:00
 **Auteur** : Claude (Architecture Audit Agent)
-**Validé par** : Smoke tests ✅
+**Validé par** : Smoke tests [OK]
 **Version** : 1.0 Final
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+ Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>

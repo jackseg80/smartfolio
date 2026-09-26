@@ -125,7 +125,7 @@ class ManualSourceEditor {
         if (!this.assets.length) {
             return `
                 <div class="empty-state">
-                    <div class="empty-icon">${this.category === 'crypto' ? '&#8383;' : '&#128200;'}</div>
+                    <div class="empty-icon">${this.category === 'crypto' ? '&#8383;' : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>"}</div>
                     <p>No manual entries</p>
                     <p class="hint">Add your first ${this.category === 'crypto' ? 'crypto asset' : 'bourse position'} below</p>
                 </div>
@@ -167,7 +167,7 @@ class ManualSourceEditor {
                     <td>${asset.location || '-'}</td>
                     <td class="actions">
                         <button class="btn-icon edit-btn" data-id="${id}" title="Edit">&#9998;</button>
-                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete">&#128465;</button>
+                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg></button>
                     </td>
                 </tr>
             `;
@@ -181,7 +181,7 @@ class ManualSourceEditor {
                     <td>${asset.currency || 'USD'}</td>
                     <td class="actions">
                         <button class="btn-icon edit-btn" data-id="${id}" title="Edit">&#9998;</button>
-                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete">&#128465;</button>
+                        <button class="btn-icon delete-btn" data-id="${id}" title="Delete"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg></button>
                     </td>
                 </tr>
             `;

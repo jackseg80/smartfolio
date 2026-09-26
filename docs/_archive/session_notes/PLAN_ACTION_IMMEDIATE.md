@@ -1,4 +1,4 @@
-# ⚡ Plan d'Action Immédiat - SmartFolio
+# Plan d'Action Immédiat - SmartFolio
 
 **Période:** Semaine 1 (5 jours)
 **Objectif:** Résoudre bloqueurs production + Quick wins conformité
@@ -6,7 +6,7 @@
 
 ---
 
-## 🔥 JOUR 1: SÉCURITÉ CRITIQUE (8h)
+## JOUR 1: SÉCURITÉ CRITIQUE (8h)
 
 ### 1. Révoquer Clé API CoinGecko (30 min)
 
@@ -33,7 +33,7 @@ COINGECKO_API_KEY=<NOUVELLE_CLE>
 COINGECKO_API_KEY=your_coingecko_api_key_here
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Clé révoquée sur CoinGecko
 - [ ] Nouvelle clé générée
 - [ ] `.env` mis à jour localement
@@ -49,10 +49,10 @@ COINGECKO_API_KEY=your_coingecko_api_key_here
 
 #### A. `api/unified_ml_endpoints.py:486`
 ```python
-# ❌ AVANT
+# AVANT
 expected_key = os.getenv("ADMIN_KEY", "crypto-rebal-admin-2024")
 
-# ✅ APRÈS
+# APRÈS
 expected_key = os.getenv("ADMIN_KEY")
 if not expected_key:
     raise ValueError(
@@ -63,10 +63,10 @@ if not expected_key:
 
 #### B. `tests/smoke_test_refactored_endpoints.py:147`
 ```python
-# ❌ AVANT
+# AVANT
 headers = {"X-Admin-Key": "crypto-rebal-admin-2024"}
 
-# ✅ APRÈS
+# APRÈS
 import os
 ADMIN_KEY = os.getenv("ADMIN_KEY_TEST", "test-key-please-change")
 headers = {"X-Admin-Key": ADMIN_KEY}
@@ -74,10 +74,10 @@ headers = {"X-Admin-Key": ADMIN_KEY}
 
 #### C. `setup_dev.py:122`
 ```bash
-# ❌ AVANT
+# AVANT
 DEBUG_TOKEN=dev-secret-2024
 
-# ✅ APRÈS
+# APRÈS
 DEBUG_TOKEN=$(openssl rand -hex 32)
 ```
 
@@ -91,7 +91,7 @@ openssl rand -hex 32
 echo "ADMIN_KEY=a3f2c8b9d1e4f6a7c8b9d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2" >> .env
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] `api/unified_ml_endpoints.py` modifié
 - [ ] `tests/smoke_test_refactored_endpoints.py` modifié
 - [ ] `setup_dev.py` modifié
@@ -107,7 +107,7 @@ echo "ADMIN_KEY=a3f2c8b9d1e4f6a7c8b9d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2
 
 **Changements:**
 ```javascript
-// ❌ AVANT (ligne 3724)
+// [Error] AVANT (ligne 3724)
 const onclickAttr = event.target.getAttribute('onclick');
 if (onclickAttr) {
   try {
@@ -117,7 +117,7 @@ if (onclickAttr) {
   }
 }
 
-// ✅ APRÈS - Event delegation sécurisé
+// [OK] APRÈS - Event delegation sécurisé
 const SAFE_TOAST_ACTIONS = {
   'reload': () => {
     debugLogger.info('Reloading page...');
@@ -147,15 +147,15 @@ if (actionName && SAFE_TOAST_ACTIONS[actionName]) {
 
 **Mise à jour HTML (si nécessaire):**
 ```html
-<!-- ❌ AVANT -->
+<!-- [Error] AVANT -->
 <button onclick="location.reload()">Reload</button>
 
-<!-- ✅ APRÈS -->
+<!-- [OK] APRÈS -->
 <button data-action="reload">Reload</button>
 <button data-action="viewDetails" data-details-url="/risk/dashboard">View</button>
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Code eval() remplacé
 - [ ] SAFE_TOAST_ACTIONS défini
 - [ ] HTML mis à jour (si nécessaire)
@@ -176,7 +176,7 @@ grep -r "eval(" static/ --include="*.js"
 
 #### A. `start_simple.py:18`
 ```python
-# ❌ AVANT
+# AVANT
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -184,7 +184,7 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# ✅ APRÈS
+# APRÈS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -203,7 +203,7 @@ app.add_middleware(
 allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"]
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] `start_simple.py` modifié
 - [ ] `test_risk_server.py` modifié
 - [ ] Tests unitaires exécutés
@@ -231,8 +231,8 @@ if ENVIRONMENT == "production" and DEV_OPEN_API == "1":
 
 if DEV_OPEN_API == "1":
     logger.warning("=" * 80)
-    logger.warning("⚠️  DEV MODE ACTIVE - AUTHENTICATION BYPASSED")
-    logger.warning("⚠️  DO NOT USE IN PRODUCTION")
+    logger.warning("  DEV MODE ACTIVE - AUTHENTICATION BYPASSED")
+    logger.warning("  DO NOT USE IN PRODUCTION")
     logger.warning("=" * 80)
 ```
 
@@ -242,13 +242,13 @@ if DEV_OPEN_API == "1":
 dev_mode = os.getenv("DEV_OPEN_API", "0") == "1"
 if dev_mode:
     logger.warning(
-        f"⚠️ DEV MODE: Bypassing authorization for user: {normalized_user} "
+        f"[Warning] DEV MODE: Bypassing authorization for user: {normalized_user} "
         f"(X-User header: {x_user})"
     )
     return normalized_user
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Validation startup ajoutée
 - [ ] Logging warning amélioré
 - [ ] Test avec ENVIRONMENT=production DEV_OPEN_API=1 (doit crash)
@@ -257,15 +257,15 @@ if dev_mode:
 
 ---
 
-### 🎯 Fin Jour 1 - Sécurité Sécurisée!
+### Fin Jour 1 - Sécurité Sécurisée!
 
 **Résultat:**
-- ✅ 5 vulnérabilités critiques corrigées
-- ✅ Clés API rotées
-- ✅ Credentials sécurisés
-- ✅ Code injection éliminé
-- ✅ CORS restreint
-- ✅ Validation production
+- [OK] 5 vulnérabilités critiques corrigées
+- [OK] Clés API rotées
+- [OK] Credentials sécurisés
+- [OK] Code injection éliminé
+- [OK] CORS restreint
+- [OK] Validation production
 
 **Tests:**
 ```bash
@@ -279,7 +279,7 @@ python -c "import os; os.environ['ENVIRONMENT']='production'; os.environ['DEV_OP
 
 ---
 
-## 📋 JOUR 2: CONFORMITÉ CLAUDE.MD (8h)
+## JOUR 2: CONFORMITÉ CLAUDE.MD (8h)
 
 ### 6. Migrer Endpoints Query("demo") → Depends() (6h)
 
@@ -287,7 +287,7 @@ python -c "import os; os.environ['ENVIRONMENT']='production'; os.environ['DEV_OP
 
 #### Template de migration:
 ```python
-# ❌ AVANT
+# AVANT
 @router.get("/endpoint")
 async def my_endpoint(
     user_id: str = Query("demo", description="User ID"),
@@ -296,7 +296,7 @@ async def my_endpoint(
     data = await some_service(user_id=user_id)
     return {"data": data}
 
-# ✅ APRÈS
+# APRÈS
 from api.deps import get_active_user
 
 @router.get("/endpoint")
@@ -337,12 +337,12 @@ grep -rn 'user_id.*Query.*"demo"' api/ --include="*.py"
 # 3. Renommer user_id → user dans corps fonction
 ```
 
-✅ **Checklist par fichier:**
-- [ ] `api/ml_bourse_endpoints.py` (2/2) ✅
-- [ ] `api/portfolio_monitoring.py` (4/4) ✅
-- [ ] `api/risk_bourse_endpoints.py` (3/3) ✅
-- [ ] `api/performance_endpoints.py` (1/1) ✅
-- [ ] `api/saxo_endpoints.py` (2/2) ✅
+[OK] **Checklist par fichier:**
+- [ ] `api/ml_bourse_endpoints.py` (2/2) [OK]
+- [ ] `api/portfolio_monitoring.py` (4/4) [OK]
+- [ ] `api/risk_bourse_endpoints.py` (3/3) [OK]
+- [ ] `api/performance_endpoints.py` (1/1) [OK]
+- [ ] `api/saxo_endpoints.py` (2/2) [OK]
 - [ ] Tests unitaires OK
 - [ ] Tests intégration OK
 - [ ] Smoke tests OK
@@ -365,12 +365,12 @@ pytest tests/integration/test_multi_tenant_isolation.py -v
 
 **Pattern de remplacement:**
 ```markdown
-<!-- ❌ AVANT -->
+<!-- [Error] AVANT -->
 ```bash
 uvicorn api.main:app --port 8080
 ```
 
-<!-- ✅ APRÈS -->
+<!-- [OK] APRÈS -->
 ```bash
 # IMPORTANT: N'utilisez PAS --reload flag!
 # Après modifications backend, redémarrer le serveur manuellement
@@ -397,7 +397,7 @@ find docs/ -name "*.md" -exec sed -i 's/--port/--port/g' {} +
 # Ajouter warning avant chaque commande uvicorn
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Tous les `--reload` supprimés des docs
 - [ ] Warnings ajoutés
 - [ ] Référence à CLAUDE.md ajoutée
@@ -411,20 +411,20 @@ find docs/ -name "*.md" -exec sed -i 's/--port/--port/g' {} +
 
 #### A. `static/modules/group-risk-index.js:291`
 ```javascript
-// ❌ AVANT
+// [Error] AVANT
 const diversificationComponent = Math.max(0, 100 - concentrationRisk.concentration_score);
 
-// ✅ APRÈS (renommer pour clarté)
+// [OK] APRÈS (renommer pour clarté)
 const concentrationPenalty = concentrationRisk.concentration_score; // 0-100, higher = worse
 const diversificationBonus = Math.max(0, 100 - concentrationPenalty); // Invert for bonus
 ```
 
 #### B. `static/modules/group-risk-index.js:294`
 ```javascript
-// ❌ AVANT (confusion)
+// [Error] AVANT (confusion)
 return acc + group.weight * (100 - group.risk_score);
 
-// ✅ APRÈS (clarifier intention)
+// [OK] APRÈS (clarifier intention)
 // Note: risk_score est en fait robustness_score (higher = better)
 // Pas besoin d'inversion si convention correcte
 return acc + group.weight * group.robustness_score;
@@ -432,10 +432,10 @@ return acc + group.weight * group.robustness_score;
 
 #### C. `scripts/benchmark_portfolios.py:117`
 ```python
-# ❌ AVANT (inversion)
+# AVANT (inversion)
 risk_score = 100 - (stables_factor * 0.3 + concentration_factor * 0.7)
 
-# ✅ APRÈS (clarifier)
+# APRÈS (clarifier)
 # Calculer penalty (higher = worse)
 portfolio_penalty = stables_factor * 0.3 + concentration_factor * 0.7
 
@@ -452,7 +452,7 @@ robustness_score = 100 - portfolio_penalty
 // NEVER use: 100 - robustness_score (violates convention)
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Variables renommées pour clarté
 - [ ] Commentaires convention ajoutés
 - [ ] Tests vérifiés (scores cohérents)
@@ -460,17 +460,17 @@ robustness_score = 100 - portfolio_penalty
 
 ---
 
-### 🎯 Fin Jour 2 - Conformité 90%!
+### Fin Jour 2 - Conformité 90%!
 
 **Résultat:**
-- ✅ 13 endpoints conformes multi-tenant
-- ✅ Documentation --reload corrigée
-- ✅ Risk Score inversions clarifiées
-- ✅ Conformité CLAUDE.md: 75% → 90%
+- [OK] 13 endpoints conformes multi-tenant
+- [OK] Documentation --reload corrigée
+- [OK] Risk Score inversions clarifiées
+- [OK] Conformité CLAUDE.md: 75% → 90%
 
 ---
 
-## 🚀 JOUR 3: QUICK WINS (8h)
+## JOUR 3: QUICK WINS (8h)
 
 ### 9. Settings API Save (2h)
 
@@ -547,7 +547,7 @@ async function saveSourceSettings() {
 }
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Endpoint POST créé
 - [ ] Endpoint GET créé
 - [ ] Frontend intégration
@@ -562,11 +562,11 @@ async function saveSourceSettings() {
 
 **Pattern:**
 ```python
-# ❌ AVANT
+# AVANT
 print(f"Debug: {data}")
 print("Generating report...")
 
-# ✅ APRÈS
+# APRÈS
 import logging
 logger = logging.getLogger(__name__)
 
@@ -591,7 +591,7 @@ grep -rn "print(" services/ --include="*.py" | grep -v "# print"
 - Scripts CLI interactifs (print voulu)
 - Commentaires
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] 18 print() remplacés
 - [ ] Imports logging ajoutés
 - [ ] Tests exécutés (pas de régression)
@@ -605,7 +605,7 @@ grep -rn "print(" services/ --include="*.py" | grep -v "# print"
 
 **Backend (Python):**
 ```python
-# ✅ Créer: services/constants.py
+# Créer: services/constants.py
 
 """Application-wide constants with business justification"""
 
@@ -634,7 +634,7 @@ class RiskConstants:
 
 **Frontend (JavaScript):**
 ```javascript
-// ✅ Créer: static/constants.js
+// [OK] Créer: static/constants.js
 
 export const ALLOCATION_CONSTANTS = {
   FLOORS: {
@@ -660,14 +660,14 @@ export const PHASE_CONSTANTS = {
 // allocation-engine.js
 import { ALLOCATION_CONSTANTS } from '../constants.js';
 
-// ❌ AVANT
+// [Error] AVANT
 'BTC': 0.15,
 
-// ✅ APRÈS
+// [OK] APRÈS
 'BTC': ALLOCATION_CONSTANTS.FLOORS.BTC.base,
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] `services/constants.py` créé
 - [ ] `static/constants.js` créé
 - [ ] Top 20 magic numbers migrés
@@ -677,7 +677,7 @@ import { ALLOCATION_CONSTANTS } from '../constants.js';
 
 ---
 
-## 🎯 JOUR 4-5: TESTS & CI/CD (16h)
+## JOUR 4-5: TESTS & CI/CD (16h)
 
 ### 12. Ajouter Coverage Reports (4h)
 
@@ -715,7 +715,7 @@ start htmlcov/index.html
 pytest --cov=services --cov-report=term-missing
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] pytest-cov installé
 - [ ] pyproject.toml configuré
 - [ ] Rapport HTML généré
@@ -799,7 +799,7 @@ class TestBalanceService:
 pytest tests/unit/test_balance_service.py -v
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Fichier test créé
 - [ ] 4+ tests balance service
 - [ ] Tests multi-user isolation
@@ -866,7 +866,7 @@ class TestPricingService:
         assert prices.get('INVALID_COIN') is None
 ```
 
-✅ **Checklist:**
+[OK] **Checklist:**
 - [ ] Fichier test créé
 - [ ] Tests avec mocks CoinGecko
 - [ ] Tests caching
@@ -875,28 +875,28 @@ class TestPricingService:
 
 ---
 
-### 🎯 FIN SEMAINE 1 - SUCCÈS!
+### FIN SEMAINE 1 - SUCCÈS!
 
-## ✅ RÉSULTATS ATTENDUS
+## RÉSULTATS ATTENDUS
 
 ### Sécurité
-- ✅ 0 vulnérabilités critiques
-- ✅ Clés API rotées
-- ✅ Credentials sécurisés
-- ✅ Score sécurité: 6/10 → 8/10
+- [OK] 0 vulnérabilités critiques
+- [OK] Clés API rotées
+- [OK] Credentials sécurisés
+- [OK] Score sécurité: 6/10 → 8/10
 
 ### Conformité
-- ✅ 13 endpoints conformes
-- ✅ Documentation corrigée
-- ✅ Conformité CLAUDE.md: 75% → 90%
+- [OK] 13 endpoints conformes
+- [OK] Documentation corrigée
+- [OK] Conformité CLAUDE.md: 75% → 90%
 
 ### Qualité
-- ✅ Settings API implémenté
-- ✅ 18 print() éliminés
-- ✅ Top 20 magic numbers → constants
-- ✅ Balance Service testé
-- ✅ Pricing Service testé
-- ✅ Coverage reports actifs
+- [OK] Settings API implémenté
+- [OK] 18 print() éliminés
+- [OK] Top 20 magic numbers → constants
+- [OK] Balance Service testé
+- [OK] Pricing Service testé
+- [OK] Coverage reports actifs
 
 ### Métriques
 - Test coverage: 50% → 55%
@@ -906,7 +906,7 @@ class TestPricingService:
 
 ---
 
-## 📋 CHECKLIST GLOBALE
+## CHECKLIST GLOBALE
 
 ### Sécurité (Jour 1)
 - [ ] Clé CoinGecko révoquée + rotée
@@ -932,7 +932,7 @@ class TestPricingService:
 
 ---
 
-## 🚀 PROCHAINES ÉTAPES
+## PROCHAINES ÉTAPES
 
 **Semaine 2:**
 - God Services Phase 1 (Governance refactoring)

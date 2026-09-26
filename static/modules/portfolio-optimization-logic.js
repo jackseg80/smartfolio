@@ -31,12 +31,12 @@ function setLoadingState(isLoading) {
 
   if (isLoading) {
     runBtn.disabled = true;
-    runBtn.innerHTML = '⏳ Optimization in progress...';
+    runBtn.innerHTML = "[Pending] Optimization in progress...";
     compareBtn.disabled = true;
     resetBtn.disabled = true;
   } else {
     runBtn.disabled = false;
-    runBtn.innerHTML = '🚀 Optimize';
+    runBtn.innerHTML = "Optimize";
     compareBtn.disabled = false;
     resetBtn.disabled = false;
   }
@@ -204,11 +204,11 @@ async function runOptimization() {
       displayOptimizationResults(result, algorithm);
     }
 
-    setStatus('✅ Optimization completed successfully');
+    setStatus("[OK] Optimization completed successfully");
 
   } catch (error) {
     (window.debugLogger || console).error('Optimization error:', error);
-    setStatus('❌ Optimization error');
+    setStatus("[Error] Optimization error");
     showError(`Error: ${error.message}`);
   } finally {
     setLoadingState(false);
@@ -439,7 +439,7 @@ function renderKPIs(result, algorithm) {
     { label: 'Sharpe Ratio', value: formatNum(result.sharpe_ratio) },
     { label: 'Diversification Ratio', value: formatNum(result.diversification_ratio) },
     { label: 'Optimization Score', value: formatNum(result.optimization_score) },
-    { label: 'Constraints OK', value: result.constraints_satisfied ? '✅' : '⚠️' }
+    { label: 'Constraints OK', value: result.constraints_satisfied ? "OK" : "Warning" }
   ];
 
   // KPIs spécifiques par algorithme
@@ -472,7 +472,7 @@ function renderKPIs(result, algorithm) {
       .slice(0, 5);
 
     additionalHTML += `
-      <h4 style="margin: 1rem 0 0.5rem 0;">🎯 Top 5 Contributions au Risque</h4>
+      <h4 style="margin: 1rem 0 0.5rem 0;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Top 5 Contributions au Risque</h4>
       <div class="grid-3">
         ${topRisks.map(([asset, contrib]) =>
           `<div class="kpi">
@@ -486,7 +486,7 @@ function renderKPIs(result, algorithm) {
 
   if (result.sector_exposures) {
     additionalHTML += `
-      <h4 style="margin: 1rem 0 0.5rem 0;">🏢 Sector Exposures</h4>
+      <h4 style="margin: 1rem 0 0.5rem 0;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Company" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-office-2"></use></svg> Sector Exposures</h4>
       <div class="grid-3">
         ${Object.entries(result.sector_exposures).map(([sector, expo]) =>
           `<div class="kpi">
@@ -589,7 +589,7 @@ async function compareAlgorithms() {
   const resetBtn = document.getElementById('resetBtn');
 
   compareBtn.disabled = true;
-  compareBtn.innerHTML = '⏳ Comparison in progress...';
+  compareBtn.innerHTML = "[Pending] Comparison in progress...";
   runBtn.disabled = true;
   resetBtn.disabled = true;
 
@@ -640,11 +640,11 @@ async function compareAlgorithms() {
     }
 
     renderComparisonTable(results);
-    setStatus('✅ Comparison completed');
+    setStatus("[OK] Comparison completed");
   } finally {
     // Réactiver boutons
     compareBtn.disabled = false;
-    compareBtn.innerHTML = '📊 Compare Algorithms';
+    compareBtn.innerHTML = "Compare Algorithms";
     runBtn.disabled = false;
     resetBtn.disabled = false;
   }

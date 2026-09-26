@@ -5,7 +5,7 @@
 
 ---
 
-## 🐛 Problèmes Identifiés
+## Problèmes Identifiés
 
 ### 1. **Seuils Binaires Exacts**
 - Divergence On-Chain `> 25` → override apparaît/disparaît autour de 25 pts
@@ -34,7 +34,7 @@
 
 ---
 
-## ✅ Solutions Implémentées
+## Solutions Implémentées
 
 ### 1. **Snapshot-Based Cache** (`unified-insights-v2.js`)
 
@@ -109,14 +109,14 @@ const uniqueRecos = Array.from(new Map(recos.map(r => [r.key, r])).values())
 export function getRegimeDisplayData(blendedScore, onchainScore, riskScore) {
   const base = getMarketRegime(blendedScore);
   const adjusted = applyMarketOverrides(base, onchainScore, riskScore);
-  const effective = getMarketRegime(adjusted.score);  // ✅ Recalcul après overrides
+  const effective = getMarketRegime(adjusted.score);  // [OK] Recalcul après overrides
 
   // Copier overrides pour traçabilité
   effective.overrides = adjusted.overrides;
   effective.allocation_bias = adjusted.allocation_bias;
 
   return {
-    regime: effective,  // ✅ Key correct
+    regime: effective,  // [OK] Key correct
     base_regime: base,
     adjusted_regime: adjusted,
     // ...
@@ -184,7 +184,7 @@ export function calculateRiskBudget(blendedScore, riskScore) {
 async function renderUnifiedInsights(containerId = 'unified-root') {
   // MUTEX
   if (window.__unified_rendering) {
-    console.debug('🔒 Render already in progress, skipping duplicate call');
+    console.debug(' Render already in progress, skipping duplicate call');
     return;
   }
   window.__unified_rendering = true;
@@ -214,7 +214,7 @@ async syncMLSignals() {
     const response = await fetch('/execution/governance/signals');
 
     if (response.status === 429) {
-      console.warn('⚠️ Rate limited, using last-good snapshot');
+      console.warn(' Rate limited, using last-good snapshot');
       this._mlSignalsBackoffDelay = Math.min(this._mlSignalsBackoffDelay * 2, 30000);
       return this._lastGoodMLSignals;
     }
@@ -238,7 +238,7 @@ async syncMLSignals() {
 
 ---
 
-## 📊 Résultat Attendu
+## Résultat Attendu
 
 ### Avant (Instable)
 ```
@@ -255,48 +255,48 @@ Refresh 1-2-3: Stables 46%, Expansion, Divergence 26 pts, Budget risque élevé
 
 ---
 
-## 🧪 Validation
+## Validation
 
 ### Fichiers modifiés
-- ✅ `static/core/unified-insights-v2.js` (40939 chars)
-- ✅ `static/modules/market-regimes.js` (12393 chars)
-- ✅ `static/core/risk-dashboard-store.js` (21822 chars)
-- ✅ `static/analytics-unified.html` (mutex ajouté)
+- [OK] `static/core/unified-insights-v2.js` (40939 chars)
+- [OK] `static/modules/market-regimes.js` (12393 chars)
+- [OK] `static/core/risk-dashboard-store.js` (21822 chars)
+- [OK] `static/analytics-unified.html` (mutex ajouté)
 
 ### Tests recommandés
 1. **Refresh rapide** : Rafraîchir analytics-unified.html 5× en 10s
-   - ✅ Recos identiques (cache snapshot)
-   - ✅ Pas de doublons
-   - ✅ Ordre stable
+   - [OK] Recos identiques (cache snapshot)
+   - [OK] Pas de doublons
+   - [OK] Ordre stable
 
 2. **Oscillation seuils** : Modifier manuellement `governanceContradiction` de 0.29 à 0.31
-   - ✅ Pas de changement (zone morte 25%-35%)
+   - [OK] Pas de changement (zone morte 25%-35%)
 
 3. **Rate limiting** : Simuler 429 sur `/execution/governance/signals`
-   - ✅ Last-good snapshot utilisé
-   - ✅ Pas de crash
+   - [OK] Last-good snapshot utilisé
+   - [OK] Pas de crash
 
 4. **Changement réel** : Modifier un score significativement
-   - ✅ Nouvelles recos après 30s (invalidation cache)
+   - [OK] Nouvelles recos après 30s (invalidation cache)
 
 ---
 
-## 🔧 Debug
+## Debug
 
 ### Logs utiles
 ```javascript
 // Snapshot ID
-console.log('🔑 Snapshot ID:', currentSnapshotId.substring(0, 80));
+console.log(' Snapshot ID:', currentSnapshotId.substring(0, 80));
 
 // Flags hysteresis
-console.log('🔒 Flags:', window.__recoFlags, window.__marketOverrideFlags);
+console.log(' Flags:', window.__recoFlags, window.__marketOverrideFlags);
 
 // Cache hits
-console.log('🎯 Recommendations from snapshot cache:', _recoCache.recos.length);
-console.log('💰 Risk Budget from cache:', cacheKey);
+console.log(' Recommendations from snapshot cache:', _recoCache.recos.length);
+console.log(' Risk Budget from cache:', cacheKey);
 
 // Backoff 429
-console.warn('⚠️ Rate limited, using last-good snapshot');
+console.warn(' Rate limited, using last-good snapshot');
 ```
 
 ### Exposer debug helpers
@@ -310,7 +310,7 @@ window.__unified_rendering     // Mutex état
 
 ---
 
-## 📝 Notes
+## Notes
 
 1. **Cache TTL 30s** : Ajustable selon besoins (ligne 818 unified-insights-v2.js, ligne 220 market-regimes.js)
 2. **Zones mortes** : Ajustables si oscillations persistent (contradiction 25-35%, stables 37-45%, divergence 23-27)
@@ -319,4 +319,4 @@ window.__unified_rendering     // Mutex état
 
 ---
 
-**✅ Toutes les corrections sont implémentées et validées.**
+**[OK] Toutes les corrections sont implémentées et validées.**

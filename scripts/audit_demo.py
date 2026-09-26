@@ -85,5 +85,5 @@ if inputs:
     print(f"Total penalties: -{total_pen:.2f}")
     print(f"Score calculé: {score_calc:.2f}")
     print(f"Score API: {rv['structural_score_v2']:.2f}")
-    print(f"Match: {'✅ OUI' if abs(score_calc - rv['structural_score_v2']) < 0.1 else '❌ NON'}")
+    print(f"Match: {'[OK] OUI' if abs(score_calc - rv['structural_score_v2']) < 0.1 else '[Error] NON'}")
 

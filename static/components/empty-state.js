@@ -3,7 +3,7 @@
  *
  * Usage:
  *   <empty-state
- *       icon="📭"
+ *       icon="inbox"
  *       title="No data available"
  *       description="Try adjusting your filters or add some data."
  *       action-text="Add Data"
@@ -11,7 +11,7 @@
  *   </empty-state>
  *
  * Attributs:
- *   - icon: Emoji ou icône (default: "📭")
+ *   - icon: Nom Heroicons solid (default: "inbox")
  *   - title: Titre principal (default: "No data")
  *   - description: Description optionnelle
  *   - action-text: Texte du bouton d'action
@@ -22,6 +22,8 @@
  * @version 1.0.0
  * @since Feb 2026
  */
+
+import { setIcon } from '../core/icons.js';
 
 const template = document.createElement('template');
 template.innerHTML = `
@@ -205,8 +207,8 @@ class EmptyState extends HTMLElement {
 
     _render() {
         // Icon
-        const icon = this.getAttribute('icon') || '📭';
-        this._iconEl.textContent = icon;
+        const icon = this.getAttribute('icon') || 'inbox';
+        setIcon(this._iconEl, icon);
 
         // Title
         const title = this.getAttribute('title') || 'No data';

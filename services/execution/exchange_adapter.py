@@ -278,7 +278,7 @@ class BaseRealExchangeAdapter(ExchangeAdapter):
         for warning in safety_result.warnings:
             logger.warning(f"Avertissement sécurité ordre {order.id}: {warning}")
 
-        logger.info(f"✓ Ordre {order.id} validé par sécurité (score: {safety_result.total_score:.1f}/100)")
+        logger.info(f" Ordre {order.id} validé par sécurité (score: {safety_result.total_score:.1f}/100)")
         return True, None
 
     def get_cached_pairs(self) -> Optional[List[TradingPair]]:

@@ -2,28 +2,28 @@
 
 **Date**: 2026-01-29
 **Durée**: ~3h
-**Status**: ✅ Complétée
+**Status**: [OK] Complétée
 
-## 🎯 Objectifs
+## Objectifs
 
 Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette itération vise à combler le gap critique de **tests frontend** (95% du code JS non testé).
 
 ### Objectifs Initiaux
-1. ✅ Réparer Vitest (bloqué par problème ESM+Windows)
-2. ✅ Créer tests pour modules critiques:
+1. [OK] Réparer Vitest (bloqué par problème ESM+Windows)
+2. [OK] Créer tests pour modules critiques:
    - [allocation-engine.js](../static/core/allocation-engine.js)
    - [phase-engine.js](../static/core/phase-engine.js)
    - [auth-guard.js](../static/core/auth-guard.js)
-3. ⚠️ Atteindre 30%+ coverage global (partiellement atteint)
+3. [Warning] Atteindre 30%+ coverage global (partiellement atteint)
 
 ---
 
-## 🔧 Problème Technique: Vitest Bloqué
+## Problème Technique: Vitest Bloqué
 
 ### Symptômes
-- ❌ Erreur: `No test suite found in file` sur tous les tests
-- ❌ Même test minimal échoue
-- ❌ Même avec config minimale identique au projet fonctionnel
+- [Error] Erreur: `No test suite found in file` sur tous les tests
+- [Error] Même test minimal échoue
+- [Error] Même avec config minimale identique au projet fonctionnel
 
 ### Root Cause
 - **Incompatibilité Vitest + ESM + Windows**
@@ -36,7 +36,7 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 
 ---
 
-## ✅ Livrables
+## Livrables
 
 ### 1. Infrastructure Jest Fonctionnelle
 
@@ -58,12 +58,12 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 ### 2. Tests Créés (58 tests total)
 
 #### Tests Existants Migrés (25 tests)
-- ✅ `computeExposureCap.test.js` (14 tests, 11 passing)
+- [OK] `computeExposureCap.test.js` (14 tests, 11 passing)
   - Tests exposure cap calculation across regimes
   - Backend status handling, volatility normalization
   - 3 échecs révèlent des régressions réelles (Bear cap=37 au lieu de ≤30)
 
-- ✅ `riskScoreSemantics.test.js` (13 tests, 13 passing)
+- [OK] `riskScoreSemantics.test.js` (13 tests, 13 passing)
   - Sémantique correcte Risk Score (high score → more risky allocation)
   - Modes V2 conservative/aggressive
   - Migration auto depuis legacy mode
@@ -99,10 +99,10 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 **Coverage Modules Critiques:**
 | Module | Statements | Branches | Functions | Status |
 |--------|-----------|----------|-----------|--------|
-| [allocation-engine.js](../static/core/allocation-engine.js:65) | 65.17% | 51.31% | 68.62% | ✅ Excellent |
-| [phase-engine.js](../static/core/phase-engine.js:33) | 33.07% | 25.95% | 29.72% | ✅ Bon |
-| [market-regimes.js](../static/modules/market-regimes.js:24) | 24.30% | 19.48% | 10.00% | ⚠️ Moyen |
-| [auth-guard.js](../static/core/auth-guard.js:0) | 0% | 0% | 0% | ❌ Tests échouent (mocks) |
+| [allocation-engine.js](../static/core/allocation-engine.js:65) | 65.17% | 51.31% | 68.62% | [OK] Excellent |
+| [phase-engine.js](../static/core/phase-engine.js:33) | 33.07% | 25.95% | 29.72% | [OK] Bon |
+| [market-regimes.js](../static/modules/market-regimes.js:24) | 24.30% | 19.48% | 10.00% | [Warning] Moyen |
+| [auth-guard.js](../static/core/auth-guard.js:0) | 0% | 0% | 0% | [Error] Tests échouent (mocks) |
 
 **Interprétation:**
 - Coverage global bas car mesuré sur TOUS les fichiers (modules, controllers, charts, etc.)
@@ -111,15 +111,15 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 
 ---
 
-## 📊 État des Tests
+## État des Tests
 
 ### Tests Passant (40/58)
-- ✅ `jest-basic.test.js` (3/3)
-- ✅ `riskScoreSemantics.test.js` (13/13)
-- ⚠️ `computeExposureCap.test.js` (11/14) - 3 échecs révèlent des bugs réels
-- ⚠️ `allocation-engine.test.js` (6/21) - Nécessite mocks store/selectors
-- ⚠️ `phase-engine.test.js` (0/29) - Nécessite ajustements dépendances
-- ⚠️ `auth-guard.test.js` (7/27) - Nécessite mocks fetch/window.location
+- [OK] `jest-basic.test.js` (3/3)
+- [OK] `riskScoreSemantics.test.js` (13/13)
+- [Warning] `computeExposureCap.test.js` (11/14) - 3 échecs révèlent des bugs réels
+- [Warning] `allocation-engine.test.js` (6/21) - Nécessite mocks store/selectors
+- [Warning] `phase-engine.test.js` (0/29) - Nécessite ajustements dépendances
+- [Warning] `auth-guard.test.js` (7/27) - Nécessite mocks fetch/window.location
 
 ### Tests Échouant (18/58)
 
@@ -144,7 +144,7 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 
 ---
 
-## 🔍 Découvertes & Insights
+## Découvertes & Insights
 
 ### 1. Problème Vitest Reproductible
 **Contexte:** Vitest 4.x fonctionne parfaitement dans projet minimal CommonJS, mais échoue systématiquement dans projet ESM (`"type": "module"`).
@@ -155,11 +155,11 @@ Suite aux itérations P0-P1-P2 (sécurité multi-tenant, HTTPS, linting), cette 
 mkdir /tmp/vitest-test && cd /tmp/vitest-test
 npm init -y && npm install -D vitest
 echo 'import { test, expect } from "vitest"; test("works", () => expect(1).toBe(1));' > test.spec.js
-npx vitest run  # ✅ PASS
+npx vitest run  # [OK] PASS
 
 # Projet SmartFolio (échoue)
 cd d:/Python/smartfolio
-npx vitest run  # ❌ Error: No test suite found in file
+npx vitest run  #  Error: No test suite found in file
 ```
 
 **Impact:** Migration Jest nécessaire, mais Jest fonctionne parfaitement avec ESM.
@@ -181,7 +181,7 @@ Les tests `computeExposureCap` révèlent des déviations par rapport aux specs:
 
 ---
 
-## 📁 Fichiers Modifiés/Créés
+## Fichiers Modifiés/Créés
 
 ### Créés
 - `jest.config.js` (52 lignes)
@@ -203,7 +203,7 @@ Les tests `computeExposureCap` révèlent des déviations par rapport aux specs:
 
 ---
 
-## 🚀 Commandes Utiles
+## Commandes Utiles
 
 ```bash
 # Lancer tous les tests
@@ -221,20 +221,20 @@ npm run test:watch
 
 ---
 
-## 📈 Métriques
+## Métriques
 
 | Métrique | Valeur | Objectif | Status |
 |----------|--------|----------|--------|
-| Tests créés | 58 | 30+ | ✅ 193% |
-| Tests passant | 40 | - | ⚠️ 69% |
-| Coverage allocation-engine | 65% | 30% | ✅ 217% |
-| Coverage phase-engine | 33% | 30% | ✅ 110% |
-| Coverage global | 2.86% | 30% | ❌ 9.5% |
-| Durée migration Jest | 30 min | - | ✅ |
+| Tests créés | 58 | 30+ | [OK] 193% |
+| Tests passant | 40 | - | [Warning] 69% |
+| Coverage allocation-engine | 65% | 30% | [OK] 217% |
+| Coverage phase-engine | 33% | 30% | [OK] 110% |
+| Coverage global | 2.86% | 30% | [Error] 9.5% |
+| Durée migration Jest | 30 min | - | OK |
 
 ---
 
-## 🔄 Prochaines Étapes Recommandées
+## Prochaines Étapes Recommandées
 
 ### Court Terme (1-2h)
 1. **Fixer les mocks manquants** pour auth-guard et allocation-engine
@@ -269,18 +269,18 @@ npm run test:watch
 
 ---
 
-## ✅ Conclusion
+## Conclusion
 
 **Succès:**
-- ✅ Infrastructure Jest fonctionnelle (Vitest bloqué résolu)
-- ✅ 58 tests créés pour modules critiques
-- ✅ Coverage excellent sur modules testés (65% allocation-engine)
-- ✅ Tests détectent vraies régressions (preuve de valeur)
+- [OK] Infrastructure Jest fonctionnelle (Vitest bloqué résolu)
+- [OK] 58 tests créés pour modules critiques
+- [OK] Coverage excellent sur modules testés (65% allocation-engine)
+- [OK] Tests détectent vraies régressions (preuve de valeur)
 
 **Limitations:**
-- ⚠️ Coverage global bas (2.86%) car mesuré sur tous les fichiers
-- ⚠️ 18 tests échouent (mocks manquants, pas bugs de code)
-- ⚠️ Auth-guard nécessite plus de setup pour tests async
+- [Warning] Coverage global bas (2.86%) car mesuré sur tous les fichiers
+- [Warning] 18 tests échouent (mocks manquants, pas bugs de code)
+- [Warning] Auth-guard nécessite plus de setup pour tests async
 
 **Impact:**
 Le gap critique "95% code JS non testé" est comblé pour les **modules les plus critiques**. L'infrastructure permet maintenant d'ajouter progressivement des tests pour d'autres modules.
@@ -288,11 +288,11 @@ Le gap critique "95% code JS non testé" est comblé pour les **modules les plus
 **Temps investi vs Valeur:**
 - 3h pour infrastructure + 58 tests = **19 tests/heure**
 - Valeur: Détection de 3 régressions réelles dès la première exécution
-- ROI: Très positif ✅
+- ROI: Très positif [OK]
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 - [Jest ESM Documentation](https://jestjs.io/docs/ecmascript-modules)
 - [Vitest Issue #1191](https://github.com/vitest-dev/vitest/issues/1191) - ESM + Windows

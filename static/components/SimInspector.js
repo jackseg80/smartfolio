@@ -3,7 +3,7 @@
  * Affiche la hiérarchie avant→après avec deltas et résumé en langage naturel
  */
 
-console.debug('🔍 SIM: SimInspector loaded');
+console.debug("SIM: SimInspector loaded");
 
 export class SimInspector {
   constructor(containerId) {
@@ -22,30 +22,30 @@ export class SimInspector {
     this.container.innerHTML = `
       <div class="sim-inspector-wrapper">
         <div class="inspector-header">
-          <h3>🔍 Pipeline Inspector</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Pipeline Inspector</h3>
           <div class="inspector-controls">
-            <button id="export-log" class="btn secondary">📋 Export Log</button>
+            <button id="export-log" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Export Log</button>
           </div>
         </div>
 
         <div class="inspector-content">
           <div id="pipeline-tree" class="pipeline-tree">
             <div class="empty-state">
-              <div class="empty-icon">🎭</div>
+              <div class="empty-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Scenario" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#square-3-stack-3d"></use></svg></div>
               <p>No simulation in progress</p>
               <small>Adjust the controls to see the pipeline execute</small>
             </div>
           </div>
 
           <div id="natural-language" class="natural-language">
-            <h4>📝 Summary</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Summary</h4>
             <div class="summary-content">
               <p class="empty-summary">Waiting for simulation...</p>
             </div>
           </div>
 
           <div id="delta-comparison" class="delta-comparison">
-            <h4>🔄 Alignment & Comparison</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Alignment & Comparison</h4>
             <div class="delta-content">
               <!-- Sera rempli dynamiquement -->
             </div>
@@ -73,7 +73,7 @@ export class SimInspector {
   }
 
   updateInspector(simulationResult) {
-    console.debug('🔍 SIM: updateInspector called');
+    console.debug("SIM: updateInspector called");
 
     this.currentData = simulationResult;
     this.renderPipelineTree(simulationResult.explanation.explainTree);
@@ -104,8 +104,8 @@ export class SimInspector {
       <div class="tree-node ${indentClass}" data-node-id="${currentPath}">
         <div class="tree-node-header" data-node-id="${currentPath}">
           ${hasChildren ?
-            `<span class="tree-toggle">${isExpanded ? '📂' : '📁'}</span>` :
-            '<span class="tree-leaf">📄</span>'
+            `<span class="tree-toggle">${isExpanded ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Folder\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#folder\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Folder\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#folder\"></use></svg>"}</span>` :
+            "<span class=\"tree-leaf\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"File\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#document-text\"></use></svg></span>"
           }
           <span class="tree-status">${statusIcon}</span>
           <span class="tree-label">${node.label}</span>
@@ -160,7 +160,7 @@ export class SimInspector {
     }
 
     if (typeof value === 'boolean') {
-      return value ? '✅' : '❌';
+      return value ? "OK" : "Error";
     }
 
     if (Array.isArray(value)) {
@@ -181,14 +181,14 @@ export class SimInspector {
 
   getStatusIcon(status) {
     const icons = {
-      'completed': '✅',
-      'warning': '⚠️',
-      'error': '❌',
-      'action': '🎯',
-      'idle': '⭕',
-      'in_progress': '🔄'
+      'completed': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>",
+      'warning': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>",
+      'error': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg>",
+      'action': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Target\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cursor-arrow-rays\"></use></svg>",
+      'idle': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Status\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>",
+      'in_progress': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>"
     };
-    return icons[status] || '📋';
+    return icons[status] || "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Overview\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#clipboard-document-list\"></use></svg>";
   }
 
   renderNaturalLanguage(summaryNL) {
@@ -219,7 +219,7 @@ export class SimInspector {
     if (alignmentHtml) {
       sections.push(`
         <div class="comparison-section">
-          <h5>🎯 Current → Target Alignment</h5>
+          <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Current → Target Alignment</h5>
           ${alignmentHtml}
         </div>
       `);
@@ -235,7 +235,7 @@ export class SimInspector {
     if (pipelineHtml) {
       sections.push(`
         <div class="comparison-section">
-          <h5>🧮 Pipeline Targets</h5>
+          <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Calculate" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#calculator"></use></svg> Pipeline Targets</h5>
           ${pipelineHtml}
         </div>
       `);
@@ -244,7 +244,7 @@ export class SimInspector {
     const ordersSummary = this.createOrdersSummary(orders);
     sections.push(`
       <div class="comparison-section">
-        <h5>⚡ Execution Plan</h5>
+        <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Execution Plan</h5>
         ${ordersSummary}
       </div>
     `);
@@ -285,7 +285,7 @@ export class SimInspector {
 
       const delta = target - base;
       const deltaClass = delta > deltaThreshold ? 'positive' : delta < -deltaThreshold ? 'negative' : 'neutral';
-      const deltaIcon = delta > deltaThreshold ? '📈' : delta < -deltaThreshold ? '📉' : '➖';
+      const deltaIcon = delta > deltaThreshold ? "Growth" : delta < -deltaThreshold ? "Decline" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Neutral\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#minus\"></use></svg>";
 
       if (Math.abs(delta) > deltaThreshold) {
         hasDelta = true;
@@ -343,7 +343,7 @@ export class SimInspector {
           <div class="stat-item">
             <span class="stat-label">Status:</span>
             <span class="stat-value ${summary.shouldExecute ? 'execute' : 'idle'}">
-              ${summary.shouldExecute ? '🟢 Execute' : '🔴 Wait'}
+              ${summary.shouldExecute ? "[Positive] Execute" : "[Negative] Wait"}
             </span>
           </div>
         </div>
@@ -353,7 +353,7 @@ export class SimInspector {
     if (ordersList.length > 0) {
       html += '<div class="orders-list">';
       ordersList.forEach((order, index) => {
-        const actionIcon = order.action === 'BUY' ? '🟢' : '🔴';
+        const actionIcon = order.action === 'BUY' ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Negative\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg>";
         const priorityClass = order.priority === 'HIGH' ? 'high-priority' : 'normal-priority';
 
         html += `
@@ -421,7 +421,7 @@ export class SimInspector {
     if (treeContainer) {
       treeContainer.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">🎭</div>
+          <div class="empty-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Scenario" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#square-3-stack-3d"></use></svg></div>
           <p>No simulation in progress</p>
           <small>Adjust the controls to see the pipeline execute</small>
         </div>

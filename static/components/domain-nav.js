@@ -26,20 +26,20 @@
 
 const DOMAINS = {
     risk: [
-        { href: 'risk-dashboard.html', label: 'Overview', icon: '🛡️' },
-        { href: 'market-regimes.html', label: 'Market Regimes', icon: '📈' },
-        { href: 'advanced-risk.html', label: 'Advanced', icon: '🔬' },
-        { href: 'cycle-analysis.html', label: 'Bitcoin Cycle', icon: '🔄' }
+        { href: 'risk-dashboard.html', label: 'Overview', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg>" },
+        { href: 'market-regimes.html', label: 'Market Regimes', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>" },
+        { href: 'advanced-risk.html', label: 'Advanced', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Simulation\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#beaker\"></use></svg>" },
+        { href: 'cycle-analysis.html', label: 'Bitcoin Cycle', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>" }
     ],
     bourse: [
-        { href: 'saxo-dashboard.html', label: 'Dashboard', icon: '📊' },
-        { href: 'bourse-analytics.html', label: 'Analytics', icon: '📉' },
-        { href: 'bourse-recommendations.html', label: 'Opportunities', icon: '💡' }
+        { href: 'saxo-dashboard.html', label: 'Dashboard', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Analytics\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#chart-bar\"></use></svg>" },
+        { href: 'bourse-analytics.html', label: 'Analytics', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Decline\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-down\"></use></svg>" },
+        { href: 'bourse-recommendations.html', label: 'Opportunities', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Insight\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#light-bulb\"></use></svg>" }
     ],
     analytics: [
-        { href: 'analytics-unified.html', label: 'ML Intelligence', icon: '🧠' },
-        { href: 'simulations.html', label: 'Simulations', icon: '🎮' },
-        { href: 'di-backtest.html', label: 'DI Backtest', icon: '📜' }
+        { href: 'analytics-unified.html', label: 'ML Intelligence', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Model\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cpu-chip\"></use></svg>" },
+        { href: 'simulations.html', label: 'Simulations', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Simulation\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#beaker\"></use></svg>" },
+        { href: 'di-backtest.html', label: 'DI Backtest', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"File\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#document-text\"></use></svg>" }
     ]
 };
 

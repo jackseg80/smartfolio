@@ -181,4 +181,4 @@ if __name__ == "__main__":
     test_strategy_registry_no_large_group()
     test_debug_metadata_functionality()
     test_event_listener_logic()
-    print("✅ All frontend validation tests passed!")
+    print("[OK] All frontend validation tests passed!")

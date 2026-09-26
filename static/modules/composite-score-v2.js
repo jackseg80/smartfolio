@@ -51,12 +51,12 @@ function applyCorrelationReduction(indicators, category) {
   const correlationGroups = {};
   const reducedIndicators = [];
   
-  console.debug(`🔍 Analyzing correlations for category "${category}" with ${indicators.length} indicators`);
+  console.debug(`Analyzing correlations for category "${category}" with ${indicators.length} indicators`);
   
   // Grouper les indicateurs par groupe de corrélation
   indicators.forEach(indicator => {
     const group = indicator.classification.correlationGroup;
-    console.debug(`  📊 ${indicator.name}: correlationGroup = ${group}`);
+    console.debug(`  Analytics ${indicator.name}: correlationGroup = ${group}`);
     
     if (group) {
       if (!correlationGroups[group]) {
@@ -69,7 +69,7 @@ function applyCorrelationReduction(indicators, category) {
     }
   });
   
-  console.debug(`🔗 Found correlation groups:`, Object.keys(correlationGroups));
+  console.debug(`Found correlation groups:`, Object.keys(correlationGroups));
   
   // Pour chaque groupe corrélé, réduire l'impact global
   Object.entries(correlationGroups).forEach(([groupName, groupIndicators]) => {
@@ -106,7 +106,7 @@ function applyCorrelationReduction(indicators, category) {
       });
     });
     
-    console.debug(`🔗 Correlation group "${groupName}": ${groupIndicators.length} indicators, dominant: ${dominantIndicator.name}`);
+    console.debug(`Correlation group "${groupName}": ${groupIndicators.length} indicators, dominant: ${dominantIndicator.name}`);
   });
   
   return reducedIndicators;
@@ -154,7 +154,7 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
     
     let rawValue = data.value_numeric || data.value || 0;
     if (typeof rawValue !== 'number') {
-      (window.debugLogger?.warn || console.warn)(`⚠️ Invalid numeric value for ${indicatorName}: ${rawValue}`);
+      (window.debugLogger?.warn || console.warn)(`[Warning] Invalid numeric value for ${indicatorName}: ${rawValue}`);
       return;
     }
 
@@ -259,7 +259,7 @@ export function calculateCompositeScoreV2(indicators, useDynamicWeighting = fals
     dynamicWeightingResult = calculateDynamicWeights(preliminaryCompositeScore, marketContext);
     finalCategoryWeights = dynamicWeightingResult.weights;
     
-    console.debug(`🤖 Dynamic weighting applied: ${dynamicWeightingResult.phase.name} phase`);
+    console.debug(`Dynamic weighting applied: ${dynamicWeightingResult.phase.name} phase`);
   } else {
     // Utiliser les poids statiques standard
     Object.keys(categoryScores).forEach(category => {

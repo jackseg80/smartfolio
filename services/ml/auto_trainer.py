@@ -56,7 +56,7 @@ class MLAutoTrainer:
             EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
         )
 
-        logger.info("✅ ML Auto-Trainer initialized")
+        logger.info(" ML Auto-Trainer initialized")
 
     def start(self):
         """Start the auto-trainer scheduler"""
@@ -94,7 +94,7 @@ class MLAutoTrainer:
         self.scheduler.start()
         self._is_running = True
 
-        logger.info("🚀 ML Auto-Trainer started")
+        logger.info(" ML Auto-Trainer started")
         logger.info("   • Regime models: Daily at 3am")
         logger.info("   • Volatility models: Daily at midnight")
         logger.info("   • Correlation models: Every Sunday at 4am")
@@ -107,7 +107,7 @@ class MLAutoTrainer:
 
         self.scheduler.shutdown(wait=False)
         self._is_running = False
-        logger.info("🛑 ML Auto-Trainer stopped")
+        logger.info(" ML Auto-Trainer stopped")
 
     def get_status(self) -> Dict[str, Any]:
         """Get scheduler status and next run times"""
@@ -166,7 +166,7 @@ class MLAutoTrainer:
 
         Uses MLTrainingScheduler to determine if retraining is needed.
         """
-        logger.info("🔄 Auto-training: Checking regime models...")
+        logger.info(" Auto-training: Checking regime models...")
 
         models_to_check = [
             ("stock_regime_detector", "regime"),
@@ -190,11 +190,11 @@ class MLAutoTrainer:
                     )
 
                     if result.get("ok"):
-                        logger.info(f"   ✅ {model_name} training started (job: {result.get('job_id')})")
+                        logger.info(f"    {model_name} training started (job: {result.get('job_id')})")
                     else:
-                        logger.error(f"   ❌ Failed to train {model_name}: {result.get('error')}")
+                        logger.error(f"    Failed to train {model_name}: {result.get('error')}")
                 else:
-                    logger.debug(f"   ⏭️  {model_name} is up-to-date, skipping")
+                    logger.debug(f"     {model_name} is up-to-date, skipping")
 
             except Exception as e:
                 logger.error(f"Error checking {model_name}: {e}", exc_info=True)
@@ -207,7 +207,7 @@ class MLAutoTrainer:
 
         Uses MLTrainingScheduler to determine if retraining is needed.
         """
-        logger.info("🔄 Auto-training: Checking volatility models...")
+        logger.info(" Auto-training: Checking volatility models...")
 
         models_to_check = [
             ("volatility_forecaster", "volatility")
@@ -228,11 +228,11 @@ class MLAutoTrainer:
                     )
 
                     if result.get("ok"):
-                        logger.info(f"   ✅ {model_name} training started (job: {result.get('job_id')})")
+                        logger.info(f"    {model_name} training started (job: {result.get('job_id')})")
                     else:
-                        logger.error(f"   ❌ Failed to train {model_name}: {result.get('error')}")
+                        logger.error(f"    Failed to train {model_name}: {result.get('error')}")
                 else:
-                    logger.debug(f"   ⏭️  {model_name} is up-to-date, skipping")
+                    logger.debug(f"     {model_name} is up-to-date, skipping")
 
             except Exception as e:
                 logger.error(f"Error checking {model_name}: {e}", exc_info=True)
@@ -245,10 +245,10 @@ class MLAutoTrainer:
 
         Uses MLTrainingScheduler to determine if retraining is needed.
         """
-        logger.info("🔄 Auto-training: Checking correlation models...")
+        logger.info(" Auto-training: Checking correlation models...")
 
         # Placeholder: correlation models not implemented yet
-        logger.debug("   ⏭️  Correlation models not implemented, skipping")
+        logger.debug("     Correlation models not implemented, skipping")
 
         self._last_run['correlation_training_weekly'] = datetime.now().isoformat()
 
@@ -281,9 +281,9 @@ class MLAutoTrainer:
         job_id = event.job_id
 
         if event.exception:
-            logger.error(f"❌ Job {job_id} failed: {event.exception}")
+            logger.error(f" Job {job_id} failed: {event.exception}")
         else:
-            logger.info(f"✅ Job {job_id} completed successfully")
+            logger.info(f" Job {job_id} completed successfully")
 
 
 # Global singleton instance

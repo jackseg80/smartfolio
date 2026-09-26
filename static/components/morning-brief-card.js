@@ -229,7 +229,7 @@ briefTemplate.innerHTML = `
 <div class="brief-container">
   <div class="brief-header">
     <div class="header-left">
-      <span>&#x2600;&#xFE0F;</span>
+      <span><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Light" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sun"></use></svg></span>
       <h3>Morning Brief</h3>
       <span class="brief-time"></span>
     </div>

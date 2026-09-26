@@ -1,7 +1,7 @@
 # Flyout Panel - Final Status Report
 
 **Date**: 2025-10-01
-**Status**: ✅ **Option A Implemented** | 📋 **Option B Documented**
+**Status**: [OK] **Option A Implemented** |  **Option B Documented**
 
 ---
 
@@ -10,11 +10,11 @@
 **Objective**: Create a unified flyout panel showing risk metrics across all pages (risk-dashboard, analytics-unified, rebalance).
 
 **Achieved**:
-- ✅ Web Component architecture (Shadow DOM, ARIA accessible)
-- ✅ Pixel-perfect parity with original risk-dashboard.html sidebar
-- ✅ Clean UX with conditional section visibility (no "N/A" displays)
-- ✅ Works on risk-dashboard.html (store-based, complete data)
-- ✅ Works on analytics-unified.html + rebalance.html (API polling, partial data)
+- [OK] Web Component architecture (Shadow DOM, ARIA accessible)
+- [OK] Pixel-perfect parity with original risk-dashboard.html sidebar
+- [OK] Clean UX with conditional section visibility (no "N/A" displays)
+- [OK] Works on risk-dashboard.html (store-based, complete data)
+- [OK] Works on analytics-unified.html + rebalance.html (API polling, partial data)
 
 **Result**: Production-ready flyout panel with graceful degradation when data is incomplete.
 
@@ -56,18 +56,18 @@
 ### 3. Page Integration
 
 **`static/risk-dashboard.html`**:
-- ✅ Flyout panel added with `poll-ms="0"` (uses store, no polling)
-- ✅ Old sidebar hidden via `display: none` (lines 2106)
-- ✅ Layout adjusted to full width (grid: 1fr)
+- [OK] Flyout panel added with `poll-ms="0"` (uses store, no polling)
+- [OK] Old sidebar hidden via `display: none` (lines 2106)
+- [OK] Layout adjusted to full width (grid: 1fr)
 
 **`static/analytics-unified.html`**:
-- ✅ Flyout panel added with `poll-ms="30000"` (API polling every 30s)
-- ✅ Shows: Risk Score, Governance, Alerts (what API provides)
-- ✅ Hides: CCS, On-Chain, Blended, Cycle (not in API response)
+- [OK] Flyout panel added with `poll-ms="30000"` (API polling every 30s)
+- [OK] Shows: Risk Score, Governance, Alerts (what API provides)
+- [OK] Hides: CCS, On-Chain, Blended, Cycle (not in API response)
 
 **`static/rebalance.html`**:
-- ✅ Flyout panel added with `poll-ms="30000"` (API polling)
-- ✅ Same behavior as analytics-unified.html
+- [OK] Flyout panel added with `poll-ms="30000"` (API polling)
+- [OK] Same behavior as analytics-unified.html
 
 ---
 
@@ -75,24 +75,24 @@
 
 ### risk-dashboard.html
 - **Data Source**: `riskStore` (complete, reactive)
-- **Sections Visible**: All 10 sections ✅
+- **Sections Visible**: All 10 sections [OK]
 - **UX**: Perfect parity with original sidebar
 - **Performance**: No polling, instant updates via store subscription
 
 ### analytics-unified.html
 - **Data Source**: `/api/risk/dashboard` polling (every 30s)
 - **Sections Visible**:
-  - ✅ Risk Score (from `risk_metrics.risk_score`)
-  - ✅ Governance (stub data: contradiction=0, cap=0.01)
-  - ✅ Alerts (from API)
-  - ✅ API Health (stub)
+  - [OK] Risk Score (from `risk_metrics.risk_score`)
+  - [OK] Governance (stub data: contradiction=0, cap=0.01)
+  - [OK] Alerts (from API)
+  - [OK] API Health (stub)
 - **Sections Hidden**:
-  - ❌ CCS Mixte (no `ccs.score` or `cycle.ccsStar` in API)
-  - ❌ On-Chain (no `scores.onchain` in API)
-  - ❌ Blended (no `scores.blended` in API)
-  - ❌ Market Regime (no `regime.phase` in API)
-  - ❌ Cycle Position (no `cycle.months`/`phase` in API)
-  - ❌ Targets (no `targets.changes` in API)
+  - [Error] CCS Mixte (no `ccs.score` or `cycle.ccsStar` in API)
+  - [Error] On-Chain (no `scores.onchain` in API)
+  - [Error] Blended (no `scores.blended` in API)
+  - [Error] Market Regime (no `regime.phase` in API)
+  - [Error] Cycle Position (no `cycle.months`/`phase` in API)
+  - [Error] Targets (no `targets.changes` in API)
 - **UX**: Clean, no "N/A", doesn't look broken
 - **Performance**: 1 API call every 30s
 
@@ -136,19 +136,19 @@
 │ (dashboard) │  │ (other pages)      │
 │             │  │                    │
 │ Complete    │  │ Partial data:      │
-│ data:       │  │ - risk_metrics ✅  │
-│ - ccs ✅    │  │ - alerts ✅        │
-│ - scores ✅ │  │ - ccs ❌           │
-│ - cycle ✅  │  │ - cycle ❌         │
-│ - targets ✅│  │ - scores.onchain❌ │
-│ - gov ✅    │  │ - scores.blended❌ │
-│ - alerts ✅ │  │                    │
+│ data:       │  │ - risk_metrics [OK]  │
+│ - ccs [OK]    │  │ - alerts [OK]        │
+│ - scores [OK] │  │ - ccs [Error]           │
+│ - cycle [OK]  │  │ - cycle [Error]         │
+│ - targets [OK]│  │ - scores.onchain[Error] │
+│ - gov [OK]    │  │ - scores.blended[Error] │
+│ - alerts [OK] │  │                    │
 └─────────────┘  └────────────────────┘
 ```
 
 ---
 
-## Option A: Conditional Visibility (✅ Implemented)
+## Option A: Conditional Visibility ( Implemented)
 
 **Strategy**: Hide sections when data is unavailable instead of showing "N/A".
 
@@ -159,29 +159,29 @@
 - No "N/A" text anywhere
 
 **Result**:
-- ✅ Clean UX on all pages
-- ✅ No misleading placeholders
-- ✅ Works with current API structure
-- ⚠️ Partial data on analytics/rebalance (acceptable trade-off)
+- [OK] Clean UX on all pages
+- [OK] No misleading placeholders
+- [OK] Works with current API structure
+- [Warning] Partial data on analytics/rebalance (acceptable trade-off)
 
 **Code Reference**: `static/components/risk-sidebar-full.js:195-361`
 
 ---
 
-## Option B: Unified Endpoint (📋 Documented, Not Implemented)
+## Option B: Unified Endpoint ( Documented, Not Implemented)
 
 **Strategy**: Create `/api/risk/unified` endpoint that returns complete data structure, eliminating need for frontend calculations and conditional hiding.
 
 **Benefits**:
-- ✅ All sections visible on all pages
-- ✅ Consistent UX everywhere
-- ✅ Single source of truth
-- ✅ Centralized calculation logic
+- [OK] All sections visible on all pages
+- [OK] Consistent UX everywhere
+- [OK] Single source of truth
+- [OK] Centralized calculation logic
 
 **Trade-offs**:
-- ⚠️ Backend work required (2-3 days dev)
-- ⚠️ More complex endpoint (orchestrates multiple APIs)
-- ⚠️ Migration/rollout effort (1 week)
+- [Warning] Backend work required (2-3 days dev)
+- [Warning] More complex endpoint (orchestrates multiple APIs)
+- [Warning] Migration/rollout effort (1 week)
 
 **Documentation**: `docs/OPTION_B_UNIFIED_RISK_ENDPOINT.md`
 
@@ -322,17 +322,17 @@
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
-| Unified flyout panel component | ✅ Done | Web Components with Shadow DOM |
-| Works on risk-dashboard.html | ✅ Done | Store-based, all sections visible |
-| Works on analytics-unified.html | ✅ Done | API polling, partial data |
-| Works on rebalance.html | ✅ Done | API polling, partial data |
-| Pixel-perfect parity with original | ✅ Done | CSS replicated exactly |
-| No "N/A" displays | ✅ Done | Sections hidden instead |
-| Keyboard accessible | ✅ Done | ESC, Tab, ARIA labels |
-| Mobile responsive | ✅ Done | 280px + 36px handle |
-| Pin/unpin persists | ✅ Done | localStorage per page |
-| No busy-loops | ✅ Done | Event-based store connection |
-| Documentation complete | ✅ Done | 5 docs, 800+ lines |
+| Unified flyout panel component |  Done | Web Components with Shadow DOM |
+| Works on risk-dashboard.html |  Done | Store-based, all sections visible |
+| Works on analytics-unified.html |  Done | API polling, partial data |
+| Works on rebalance.html |  Done | API polling, partial data |
+| Pixel-perfect parity with original |  Done | CSS replicated exactly |
+| No "N/A" displays |  Done | Sections hidden instead |
+| Keyboard accessible |  Done | ESC, Tab, ARIA labels |
+| Mobile responsive |  Done | 280px + 36px handle |
+| Pin/unpin persists |  Done | localStorage per page |
+| No busy-loops |  Done | Event-based store connection |
+| Documentation complete |  Done | 5 docs, 800+ lines |
 
 ---
 
@@ -348,6 +348,6 @@
 
 ---
 
-**Status**: ✅ **Complete** (Option A) | 📋 **Documented** (Option B)
+**Status**:  **Complete** (Option A) |  **Documented** (Option B)
 **Author**: Claude Code
 **Date**: 2025-10-01

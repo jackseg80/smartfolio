@@ -1,18 +1,18 @@
 # Dynamic Knowledge Base System - Documentation
 
-> **Status:** ✅ Production Ready (Dec 2025)
+> **Status:** [OK] Production Ready (Dec 2025)
 > **Dernière mise à jour:** Dec 27, 2025
 
 ---
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 
 Le système AI Chat utilise maintenant une **Knowledge Base dynamique** qui lit directement depuis les fichiers markdown au lieu de texte hardcodé.
 
 ### Avant (Statique)
 
 ```python
-# ❌ PROBLÈME: Texte hardcodé dans le code Python
+# PROBLÈME: Texte hardcodé dans le code Python
 SMARTFOLIO_KNOWLEDGE = """
 === SMARTFOLIO SYSTEM KNOWLEDGE ===
 ... 200 lignes de texte hardcodé ...
@@ -20,15 +20,15 @@ SMARTFOLIO_KNOWLEDGE = """
 ```
 
 **Problèmes:**
-- ❌ Modifications docs → Pas de sync automatique
-- ❌ Nécessite redémarrage serveur pour mettre à jour
-- ❌ Duplication de contenu (CLAUDE.md vs ai_knowledge_base.py)
-- ❌ Maintenance complexe
+- [Error] Modifications docs → Pas de sync automatique
+- [Error] Nécessite redémarrage serveur pour mettre à jour
+- [Error] Duplication de contenu (CLAUDE.md vs ai_knowledge_base.py)
+- [Error] Maintenance complexe
 
 ### Après (Dynamique)
 
 ```python
-# ✅ SOLUTION: Lecture dynamique depuis .md files
+# SOLUTION: Lecture dynamique depuis .md files
 def _build_core_knowledge() -> str:
     """Build core knowledge base from CLAUDE.md"""
     claude_md_path = PROJECT_ROOT / "CLAUDE.md"
@@ -37,14 +37,14 @@ def _build_core_knowledge() -> str:
 ```
 
 **Avantages:**
-- ✅ Modifications docs → IA voit immédiatement (après cache expiry)
-- ✅ Pas de redémarrage serveur nécessaire
-- ✅ Source unique de vérité (CLAUDE.md)
-- ✅ Maintenance simplifiée
+- [OK] Modifications docs → IA voit immédiatement (après cache expiry)
+- [OK] Pas de redémarrage serveur nécessaire
+- [OK] Source unique de vérité (CLAUDE.md)
+- [OK] Maintenance simplifiée
 
 ---
 
-## 🔧 Architecture
+## Architecture
 
 ### Fichiers Modifiés (2 fichiers)
 
@@ -75,7 +75,7 @@ ai_knowledge_base.py
 
 ---
 
-## 📚 Sources de Documentation
+## Sources de Documentation
 
 ### Fichiers Lus Dynamiquement
 
@@ -83,10 +83,10 @@ ai_knowledge_base.py
 - `CLAUDE.md` - Guide agent IA (règles critiques, patterns, pièges)
 
 **Sections extraites:**
-- 🎯 Règles Critiques (Multi-tenant, Risk Score, Decision Index)
-- 💾 Système de Données (Sources, structure user)
-- 🔧 Patterns de Code (Multi-tenant, Safe ML, Response formatting)
-- 🚨 Pièges Fréquents (Erreurs courantes à éviter)
+- Règles Critiques (Multi-tenant, Risk Score, Decision Index)
+- Système de Données (Sources, structure user)
+- Patterns de Code (Multi-tenant, Safe ML, Response formatting)
+- [Alert] Pièges Fréquents (Erreurs courantes à éviter)
 
 **Future expansion possible:**
 - `docs/DECISION_INDEX_V2.md` - Système dual scoring
@@ -95,7 +95,7 @@ ai_knowledge_base.py
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Cache TTL
 
@@ -118,7 +118,7 @@ Si `CLAUDE.md` est illisible, le système utilise un fallback minimal hardcodé 
 
 ---
 
-## 🔄 Endpoints API
+## Endpoints API
 
 ### 1. Refresh Knowledge Cache
 
@@ -197,7 +197,7 @@ curl "http://localhost:8080/api/ai/knowledge-stats" \
 
 ---
 
-## 🔍 Fonctionnement Interne
+## Fonctionnement Interne
 
 ### Flux de Lecture
 
@@ -221,12 +221,12 @@ pattern = rf'#{1,3}\s+{re.escape(section_name)}.*?\n(.*?)(?=\n#{1,3}\s+|\Z)'
 
 **Exemple:**
 ```markdown
-## 🎯 Règles Critiques
+## Règles Critiques
 
 Texte de la section...
 Plus de contenu...
 
-## 💾 Système de Données  ← Stop ici (next header)
+## Système de Données  ← Stop ici (next header)
 ```
 
 **Résultat:**
@@ -251,20 +251,20 @@ _knowledge_cache = {
 
 ---
 
-## 📊 Impact Performance
+## Impact Performance
 
 ### Avant (Statique)
 
-- ✅ **Latence:** 0ms (texte en mémoire)
-- ❌ **Maintenance:** Manuelle (copier-coller CLAUDE.md → code)
-- ❌ **Sync:** Jamais (docs et code divergent)
+- [OK] **Latence:** 0ms (texte en mémoire)
+- [Error] **Maintenance:** Manuelle (copier-coller CLAUDE.md → code)
+- [Error] **Sync:** Jamais (docs et code divergent)
 
 ### Après (Dynamique)
 
-- ⚠️ **Latence (première lecture):** ~5-10ms (lecture fichier + regex)
-- ✅ **Latence (cache hit):** 0ms (lecture mémoire)
-- ✅ **Maintenance:** Automatique (modifier .md suffir)
-- ✅ **Sync:** Auto toutes les 5 min
+- [Warning] **Latence (première lecture):** ~5-10ms (lecture fichier + regex)
+- [OK] **Latence (cache hit):** 0ms (lecture mémoire)
+- [OK] **Maintenance:** Automatique (modifier .md suffir)
+- [OK] **Sync:** Auto toutes les 5 min
 
 **Benchmark (estimé):**
 - Lecture `CLAUDE.md` (13.1k tokens) : ~5ms
@@ -279,7 +279,7 @@ _knowledge_cache = {
 
 ---
 
-## 🚀 Workflow Utilisateur
+## Workflow Utilisateur
 
 ### Scénario 1: Modifier Documentation
 
@@ -306,7 +306,7 @@ _knowledge_cache = {
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Problème: IA utilise anciennes docs
 
@@ -333,7 +333,7 @@ _knowledge_cache = {
 
 ### Problème: Erreur "Pattern not found"
 
-**Symptôme:** Logs montrent "Section '🎯 Règles Critiques' not found"
+**Symptôme:** Logs montrent "Section ' Règles Critiques' not found"
 
 **Cause:** Header markdown modifié dans CLAUDE.md
 
@@ -342,7 +342,7 @@ Synchroniser headers dans `_build_core_knowledge()` avec CLAUDE.md réel.
 
 ---
 
-## 📖 Exemples de Code
+## Exemples de Code
 
 ### Utilisation Directe (Python)
 
@@ -398,19 +398,19 @@ async function getKnowledgeStats() {
 
 ---
 
-## 📝 Changelog
+## Changelog
 
 **Dec 27, 2025** - Implémentation initiale
-- ✅ Système de lecture dynamique depuis CLAUDE.md
-- ✅ Cache avec TTL 5 minutes
-- ✅ Endpoint `/api/ai/refresh-knowledge`
-- ✅ Endpoint `/api/ai/knowledge-stats`
-- ✅ Fallback si fichiers indisponibles
-- ✅ Documentation complète
+- [OK] Système de lecture dynamique depuis CLAUDE.md
+- [OK] Cache avec TTL 5 minutes
+- [OK] Endpoint `/api/ai/refresh-knowledge`
+- [OK] Endpoint `/api/ai/knowledge-stats`
+- [OK] Fallback si fichiers indisponibles
+- [OK] Documentation complète
 
 ---
 
-## 🎯 Prochaines Étapes (Optionnel)
+## Prochaines Étapes (Optionnel)
 
 ### Extension Possible
 
@@ -436,7 +436,7 @@ async function getKnowledgeStats() {
 
 ---
 
-## 🔗 Références
+## Références
 
 - **Knowledge Base Code:** [api/services/ai_knowledge_base.py](../api/services/ai_knowledge_base.py)
 - **AI Chat Router:** [api/ai_chat_router.py](../api/ai_chat_router.py)
@@ -445,7 +445,7 @@ async function getKnowledgeStats() {
 
 ---
 
-**Status:** ✅ Production Ready
+**Status:** [OK] Production Ready
 **Version:** 1.0
 **Auteur:** SmartFolio Team
 **Date:** Dec 27, 2025

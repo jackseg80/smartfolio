@@ -815,7 +815,7 @@
   border: 1px solid var(--danger);
 }
 
-/* ✅ NEW (Nov 2025): Error state for loading timeouts */
+/* OK NEW (Nov 2025): Error state for loading timeouts */
 .error-state {
   text-align: center;
   padding: 2rem;

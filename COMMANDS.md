@@ -2,7 +2,7 @@
 
 Guide rapide des commandes pour le développement quotidien de SmartFolio.
 
-## 🎯 Commandes Slash Claude Code
+## Commandes Slash Claude Code
 
 ### Operations Rapides
 
@@ -26,11 +26,11 @@ Guide rapide des commandes pour le développement quotidien de SmartFolio.
 |----------|-------------|
 | `/doc-commit` | Mettre à jour docs + commit sans co-auteur |
 
-**📚 Documentation complète:** [.claude/commands/README.md](.claude/commands/README.md)
+** Documentation complète:** [.claude/commands/README.md](.claude/commands/README.md)
 
 ---
 
-## 🐚 Commandes Shell
+## Commandes Shell
 
 ### Démarrage Serveur
 
@@ -132,7 +132,7 @@ docker system prune -f
 
 ---
 
-## 🔌 Commandes API (curl)
+## Commandes API (curl)
 
 ### Health & Config
 
@@ -231,7 +231,7 @@ curl -X POST "http://localhost:8080/api/sources/upload" \
 
 ---
 
-## 🛠️ Makefile (Commandes Make)
+## Makefile (Commandes Make)
 
 Si Make est installé (Linux/macOS/WSL/Git Bash):
 
@@ -300,7 +300,7 @@ make ci               # Pipeline CI complète
 
 ---
 
-## 🎨 npm Scripts
+## npm Scripts
 
 ```bash
 # Tests JavaScript
@@ -319,7 +319,7 @@ npm run test:e2e:report # Show report
 
 ---
 
-## 📊 Monitoring & Logs
+## Monitoring & Logs
 
 ### Logs Application
 
@@ -347,7 +347,7 @@ URLs à surveiller:
 
 ---
 
-## 🔐 Git
+## Git
 
 ### Commits
 
@@ -395,7 +395,7 @@ git commit --no-verify -m "hotfix: critical fix"
 
 ---
 
-## 🚀 Déploiement Production
+## Déploiement Production
 
 ### Docker Deployment
 
@@ -423,7 +423,7 @@ tar -xzf backups/smartfolio-backup-YYYYMMDD-HHMMSS.tar.gz
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Générer Docs API
 
@@ -445,7 +445,7 @@ python scripts/dev_tools/gen_broken_refs.py
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### Port déjà utilisé
 
@@ -496,7 +496,7 @@ pytest tests/unit -v -s --pdb
 
 ---
 
-## 📞 Support
+## Support
 
 - **Issues GitHub:** Créer une issue
 - **Documentation:** [docs/troubleshooting.md](docs/troubleshooting.md)

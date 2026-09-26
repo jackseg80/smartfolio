@@ -1,7 +1,7 @@
 # Migration OnChain Score V1 → V2
 
 **Date:** 2 octobre 2025
-**Statut:** ✅ Complété
+**Statut:** [OK] Complété
 
 ## Contexte
 
@@ -33,9 +33,9 @@ Le système utilisait deux versions de calcul du score OnChain:
 - Refresh normal (F5): Risk = 50
 
 **Cause:**
-- Orchestrator hydratait le store avec Risk = 50 ✅
+- Orchestrator hydratait le store avec Risk = 50 [OK]
 - `loadUnifiedData()` dans analytics-unified.html chargeait ensuite le Risk depuis cache/API
-- Cache contenait l'ancienne valeur (37) qui écrasait la bonne (50) ❌
+- Cache contenait l'ancienne valeur (37) qui écrasait la bonne (50) [Error]
 
 ### 3. Checkbox "Adaptation contextuelle" Obsolète
 
@@ -52,33 +52,33 @@ Le système utilisait deux versions de calcul du score OnChain:
 1. **`static/core/risk-data-orchestrator.js`**
    - Ligne 8: Import `calculateCompositeScoreV2` de `composite-score-v2.js`
    - Ligne 178: Appel `calculateCompositeScoreV2(indicators, true)` (force dynamic weighting)
-   - ✅ Orchestrator utilise maintenant V2
+   - [OK] Orchestrator utilise maintenant V2
 
 2. **`static/risk-dashboard.html`**
    - Lignes 5443-5446: Checkbox "Adaptation contextuelle" supprimée
    - Lignes 3619-3663: Fonctions `toggleDynamicWeighting()` et `initializeDynamicWeightingToggle()` supprimées
    - Lignes 3366, 5051: Force `calculateCompositeScoreV2(indicators, true)`
-   - ✅ V2 toujours actif, UI simplifiée
+   - [OK] V2 toujours actif, UI simplifiée
 
 3. **`static/analytics-unified.html`**
    - Lignes 751-753: Détection hard refresh ajoutée
    - Lignes 773, 788: Force `calculateCompositeScoreV2(indicators, true)`
-   - ✅ V2 toujours actif, hard refresh détecté
+   - [OK] V2 toujours actif, hard refresh détecté
 
 4. **`static/simulations.html`**
    - Ligne 1245: Force `calculateCompositeScoreV2(indicators, true)`
-   - ✅ V2 toujours actif
+   - [OK] V2 toujours actif
 
 5. **`static/modules/onchain-indicators.js`**
    - Ligne 36: Import `calculateCompositeScoreV2` de `composite-score-v2.js`
    - Ligne 1512: Fonction `calculateCompositeScore()` V1 supprimée (132 lignes)
    - Lignes 1653, 1684: `enhanceCycleScore()` et `analyzeDivergence()` utilisent V2
-   - ✅ V1 complètement supprimé
+   - [OK] V1 complètement supprimé
 
 6. **`static/modules/historical-validator.js`**
    - Ligne 12: Import V1 supprimé
    - Lignes 223-236: Code de comparaison V1 vs V2 supprimé
-   - ✅ Plus de référence à V1
+   - [OK] Plus de référence à V1
 
 ### B. Fix Race Condition Risk Score
 
@@ -91,7 +91,7 @@ if (!force && isCacheValid(CACHE_CONFIG.risk.key, CACHE_CONFIG.risk.ttl)) {
   const riskData = getCache(CACHE_CONFIG.risk.key);
   store.set('risk', riskData);
   const rs = riskData?.risk_metrics?.risk_score;
-  if (typeof rs === 'number') store.set('scores.risk', rs); // ❌ Écrase orchestrator
+  if (typeof rs === 'number') store.set('scores.risk', rs); // [Error] Écrase orchestrator
 }
 ```
 
@@ -100,7 +100,7 @@ if (!force && isCacheValid(CACHE_CONFIG.risk.key, CACHE_CONFIG.risk.ttl)) {
 // 1) Risk (backend) - Use orchestrator's hydrated value (DON'T OVERWRITE)
 const existingRiskScore = store.get('scores.risk');
 if (typeof existingRiskScore === 'number') {
-  console.log(`✅ Risk score already hydrated by orchestrator: ${existingRiskScore}`);
+  console.log(` Risk score already hydrated by orchestrator: ${existingRiskScore}`);
   loadedFromCache++;
 } else {
   // Wait for orchestrator hydration if not ready
@@ -122,10 +122,10 @@ if (typeof existingRiskScore === 'number') {
 
 | Score | Valeur | Source | Cohérence |
 |-------|--------|--------|-----------|
-| **OnChain** | 36 | V2 (dynamic weighting) | ✅ Partout |
-| **Risk** | 50 | Orchestrator | ✅ Partout (même hard refresh) |
-| **CCS Mixte** | Variable | Signals Engine | ✅ Cohérent |
-| **Cycle** | 100 | Cycle Navigator | ✅ Cohérent |
+| **OnChain** | 36 | V2 (dynamic weighting) | [OK] Partout |
+| **Risk** | 50 | Orchestrator | [OK] Partout (même hard refresh) |
+| **CCS Mixte** | Variable | Signals Engine | [OK] Cohérent |
+| **Cycle** | 100 | Cycle Navigator | [OK] Cohérent |
 
 ### Vérification
 
@@ -144,7 +144,7 @@ if (typeof existingRiskScore === 'number') {
 **Test 3: Recherche Code V1**
 ```bash
 grep -r "calculateCompositeScore(" static/ --include="*.js" --include="*.html" | grep -v "V2"
-# Résultat: Aucune référence V1 ✅
+# Résultat: Aucune référence V1
 ```
 
 ## Architecture Finale

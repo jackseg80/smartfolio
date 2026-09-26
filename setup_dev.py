@@ -12,19 +12,19 @@ from pathlib import Path
 
 def print_step(step: str):
     """Print step with formatting"""
-    print(f"\n🔧 {step}")
+    print(f"\n {step}")
 
 def print_success(message: str):
     """Print success message"""
-    print(f"✅ {message}")
+    print(f"[OK] {message}")
 
 def print_warning(message: str):
     """Print warning message"""
-    print(f"⚠️  {message}")
+    print(f"[Warning]  {message}")
 
 def print_error(message: str):
     """Print error message"""
-    print(f"❌ {message}")
+    print(f"[Error] {message}")
 
 def check_python_version():
     """Check if Python version is compatible"""
@@ -178,10 +178,10 @@ def check_ports():
 def print_next_steps():
     """Print next steps for the developer"""
     print("\n" + "="*60)
-    print("🎉 SETUP COMPLETE!")
+    print(" SETUP COMPLETE!")
     print("="*60)
     
-    print("\n📋 NEXT STEPS:")
+    print("\n NEXT STEPS:")
     print("1. Activate your virtual environment:")
     
     if os.name == 'nt':  # Windows
@@ -197,24 +197,24 @@ def print_next_steps():
     print("\n4. Open the dashboard:")
     print("   http://localhost:8080/static/dashboard.html")
     
-    print("\n📁 USEFUL DIRECTORIES:")
+    print("\n USEFUL DIRECTORIES:")
     print("   /debug/        - Development tools and debug scripts")
     print("   /tests/        - Organized test suite")
     print("   /api/utils/    - Reusable utilities")
     print("   /shared/       - Common constants and assets groups")
     
-    print("\n🧪 RUN TESTS:")
+    print("\n RUN TESTS:")
     print("   pytest tests/unit/           # Unit tests")
     print("   pytest tests/integration/    # Integration tests")
     print("   pytest tests/e2e/           # End-to-end tests")
     
-    print("\n🐛 DEBUG TOOLS:")
+    print("\n DEBUG TOOLS:")
     print("   python debug/scripts/debug_coingecko.py")
     print("   http://localhost:8080/debug/html/debug-dashboard.html")
 
 def main():
     """Main setup function"""
-    print("🚀 Crypto Rebalancer Development Setup")
+    print(" Crypto Rebalancer Development Setup")
     print("=====================================")
     
     # Check system requirements

@@ -2,7 +2,7 @@
 
 **Date:** Septembre 2025
 **Version:** v1.0
-**Status:** ✅ Production Ready
+**Status:** [OK] Production Ready
 
 ## Problème Identifié
 
@@ -20,10 +20,10 @@ curl "http://localhost:8080/balances/current?source=cointracking_api&user_id=jac
 
 ### Comportement Observé
 
-- ✅ Dashboard: 190+ assets affichés correctement
-- ✅ Risk Dashboard: Données correctes
-- ❌ Simulator Live mode: 0 assets
-- ❌ Simulator Test Source button: "accessible mais vide"
+- [OK] Dashboard: 190+ assets affichés correctement
+- [OK] Risk Dashboard: Données correctes
+- [Error] Simulator Live mode: 0 assets
+- [Error] Simulator Test Source button: "accessible mais vide"
 
 ## Cause Racine
 
@@ -51,7 +51,7 @@ window.loadBalanceData = async function(forceRefresh = false) {
 async apiRequest(endpoint, options = {}) {
   const url = this.getApiUrl(endpoint, options.params || {});
 
-  // ✅ Ajoute automatiquement le header X-User
+  // [OK] Ajoute automatiquement le header X-User
   const activeUser = localStorage.getItem('activeUser') || 'demo';
 
   const requestOptions = {
@@ -78,7 +78,7 @@ const balancesData = await balancesResponse.json();
 
 **Après (fonction unifiée):**
 ```javascript
-// ✅ USE UNIFIED loadBalanceData() like dashboard.html
+// [OK] USE UNIFIED loadBalanceData() like dashboard.html
 const balanceResult = await window.loadBalanceData(true); // forceRefresh=true
 
 // Parse balances (same logic as dashboard.html lines 1150-1166)
@@ -112,7 +112,7 @@ const response = await fetch(`${apiBase}/balances/current?source=${source}&user_
 
 **Après (loadBalanceData avec source temporaire):**
 ```javascript
-// ✅ USE UNIFIED loadBalanceData() with temporary source change
+// [OK] USE UNIFIED loadBalanceData() with temporary source change
 const originalSource = window.globalConfig.get('data_source');
 window.globalConfig.set('data_source', source);
 
@@ -165,15 +165,15 @@ Ajouté dans `simulations.html` (lignes 712-771) les fonctions nécessaires pour
 2. Sélectionner user "jack" dans le menu
 3. Sélectionner source "cointracking_api"
 4. Cliquer "Live"
-5. ✅ Vérifie: 190+ assets chargés, valeur totale correcte
+5. [OK] Vérifie: 190+ assets chargés, valeur totale correcte
 
 ### Test Manual Test Source Button
 
 1. Ouvrir `http://localhost:8080/static/simulations.html`
 2. Sélectionner user "jack"
 3. Sélectionner source "cointracking_api" dans dropdown
-4. Cliquer bouton "🧪 Test"
-5. ✅ Vérifie: Alert "✅ Source OK - 190+ assets trouvés"
+4. Cliquer bouton " Test"
+5. [OK] Vérifie: Alert "[OK] Source OK - 190+ assets trouvés"
 
 ### Test Backend API
 
@@ -203,11 +203,11 @@ console.log(result);
 
 ## Bénéfices
 
-1. ✅ **Isolation Multi-tenant Correcte**: Chaque utilisateur voit ses propres données
-2. ✅ **Cohérence Architecture**: Simulateur utilise les mêmes méthodes que Dashboard/Risk
-3. ✅ **Cache Unifié**: Bénéficie du cache par user dans `loadBalanceData()`
-4. ✅ **Maintenance Simplifiée**: Une seule méthode de chargement à maintenir
-5. ✅ **Support CSV & API**: Gestion transparente des deux sources
+1. [OK] **Isolation Multi-tenant Correcte**: Chaque utilisateur voit ses propres données
+2. [OK] **Cohérence Architecture**: Simulateur utilise les mêmes méthodes que Dashboard/Risk
+3. [OK] **Cache Unifié**: Bénéficie du cache par user dans `loadBalanceData()`
+4. [OK] **Maintenance Simplifiée**: Une seule méthode de chargement à maintenir
+5. [OK] **Support CSV & API**: Gestion transparente des deux sources
 
 ## Documentation Connexe
 

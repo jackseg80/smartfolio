@@ -70,13 +70,13 @@ class SaxoUICResolver:
             from api.deps import get_redis_client
             client = get_redis_client()
             if client:
-                logger.debug(f"✅ Redis connected for UIC resolver (user: {self.user_id})")
+                logger.debug(f" Redis connected for UIC resolver (user: {self.user_id})")
                 return client
             else:
-                logger.warning(f"⚠️ Redis unavailable for UIC resolver - Using in-memory cache")
+                logger.warning(f" Redis unavailable for UIC resolver - Using in-memory cache")
                 return None
         except Exception as e:
-            logger.warning(f"⚠️ Redis error for UIC resolver: {e} - Using in-memory cache")
+            logger.warning(f" Redis error for UIC resolver: {e} - Using in-memory cache")
             return None
 
     async def resolve_uic(
@@ -112,11 +112,11 @@ class SaxoUICResolver:
         # Try cache first
         cached = self._get_from_cache(cache_key)
         if cached:
-            logger.debug(f"💾 Cache HIT for UIC {uic} ({asset_type})")
+            logger.debug(f" Cache HIT for UIC {uic} ({asset_type})")
             return cached
 
         # Cache miss → fetch from API
-        logger.debug(f"🔄 Cache MISS for UIC {uic} ({asset_type}) - Fetching from API")
+        logger.debug(f" Cache MISS for UIC {uic} ({asset_type}) - Fetching from API")
 
         oauth_client = SaxoOAuthClient(user_id=self.user_id)
         instrument_data = await oauth_client.get_instrument_details(
@@ -126,14 +126,14 @@ class SaxoUICResolver:
         )
 
         if not instrument_data:
-            logger.warning(f"⚠️ Failed to resolve UIC {uic} ({asset_type})")
+            logger.warning(f" Failed to resolve UIC {uic} ({asset_type})")
             return None
 
         # Extract relevant fields
         symbol_raw = instrument_data.get("Symbol", "")
         symbol = symbol_raw.split(":")[0] if ":" in symbol_raw else symbol_raw
 
-        # ✅ Extract GICS sector if available
+        # [OK] Extract GICS sector if available
         gics_sector = instrument_data.get("Gics", {}).get("SectorName", "") if isinstance(instrument_data.get("Gics"), dict) else ""
 
         resolved = {
@@ -141,13 +141,13 @@ class SaxoUICResolver:
             "name": instrument_data.get("Description", f"Instrument {uic}"),
             "isin": instrument_data.get("Isin", ""),
             "currency": instrument_data.get("Currency", ""),
-            "gics_sector": gics_sector  # ✅ Add GICS sector for chart grouping
+            "gics_sector": gics_sector  # [OK] Add GICS sector for chart grouping
         }
 
         # Cache result
         self._set_in_cache(cache_key, resolved)
 
-        logger.info(f"✅ Resolved UIC {uic} → {resolved['symbol']} ({resolved['name']})")
+        logger.info(f" Resolved UIC {uic} → {resolved['symbol']} ({resolved['name']})")
 
         return resolved
 
@@ -180,7 +180,7 @@ class SaxoUICResolver:
             if resolved:
                 results[uic] = resolved
 
-        logger.info(f"✅ Batch resolved {len(results)}/{len(uic_list)} UICs")
+        logger.info(f" Batch resolved {len(results)}/{len(uic_list)} UICs")
 
         return results
 
@@ -201,7 +201,7 @@ class SaxoUICResolver:
                 if cached_json:
                     return json.loads(cached_json)
             except Exception as e:
-                logger.warning(f"⚠️ Redis cache read error: {e}")
+                logger.warning(f" Redis cache read error: {e}")
 
         # Fallback to in-memory
         return _uic_cache.get(key)
@@ -223,9 +223,9 @@ class SaxoUICResolver:
                     ttl_seconds,
                     json.dumps(value)
                 )
-                logger.debug(f"💾 Cached in Redis: {key} (TTL: {self.ttl_days} days)")
+                logger.debug(f" Cached in Redis: {key} (TTL: {self.ttl_days} days)")
             except Exception as e:
-                logger.warning(f"⚠️ Redis cache write error: {e}")
+                logger.warning(f" Redis cache write error: {e}")
 
         # Store in-memory (fallback) with size limit
         # Performance fix (Dec 2025): Prevent unbounded memory growth
@@ -234,7 +234,7 @@ class SaxoUICResolver:
             keys_to_remove = list(_uic_cache.keys())[:(_UIC_CACHE_MAX_SIZE // 5)]
             for old_key in keys_to_remove:
                 del _uic_cache[old_key]
-            logger.info(f"🗑️ UIC fallback cache cleanup: removed {len(keys_to_remove)} old entries (size was {_UIC_CACHE_MAX_SIZE})")
+            logger.info(f" UIC fallback cache cleanup: removed {len(keys_to_remove)} old entries (size was {_UIC_CACHE_MAX_SIZE})")
 
         _uic_cache[key] = value
 
@@ -257,9 +257,9 @@ class SaxoUICResolver:
                     keys = self.redis_client.keys(pattern)
                     if keys:
                         self.redis_client.delete(*keys)
-                        logger.info(f"🗑️ Cleared Redis cache for UIC {uic}")
+                        logger.info(f" Cleared Redis cache for UIC {uic}")
                 except Exception as e:
-                    logger.warning(f"⚠️ Redis cache clear error: {e}")
+                    logger.warning(f" Redis cache clear error: {e}")
 
             # Clear in-memory
             keys_to_delete = [k for k in _uic_cache if f":uic:{uic}:" in k]
@@ -274,9 +274,9 @@ class SaxoUICResolver:
                     keys = self.redis_client.keys(pattern)
                     if keys:
                         self.redis_client.delete(*keys)
-                        logger.info(f"🗑️ Cleared all Redis UIC cache")
+                        logger.info(f" Cleared all Redis UIC cache")
                 except Exception as e:
-                    logger.warning(f"⚠️ Redis cache clear error: {e}")
+                    logger.warning(f" Redis cache clear error: {e}")
 
             _uic_cache.clear()
-            logger.info(f"🗑️ Cleared all in-memory UIC cache")
+            logger.info(f" Cleared all in-memory UIC cache")

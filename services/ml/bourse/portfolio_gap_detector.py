@@ -71,7 +71,7 @@ class PortfolioGapDetector:
             Dict with suggested sales and impact analysis
         """
         try:
-            logger.info(f"🔍 Detecting sales for {len(positions)} positions, need ${total_capital_needed:,.0f}")
+            logger.info(f" Detecting sales for {len(positions)} positions, need ${total_capital_needed:,.0f}")
 
             # Calculate total portfolio value
             # Note: Saxo positions use "market_value" field (already in USD)
@@ -100,8 +100,8 @@ class PortfolioGapDetector:
 
             # 3. Score each position for sale potential
             scored_positions = []
-            logger.info(f"📊 Evaluating {len(positions)} positions for sale potential")
-            logger.info(f"🔒 Protected symbols: {protected_symbols}")
+            logger.info(f" Evaluating {len(positions)} positions for sale potential")
+            logger.info(f" Protected symbols: {protected_symbols}")
 
             for pos in positions:
                 symbol = pos.get("symbol") or pos.get("instrument_id")
@@ -110,11 +110,11 @@ class PortfolioGapDetector:
 
                 # Skip protected holdings
                 if symbol in protected_symbols:
-                    logger.info(f"  ⛔ {symbol}: Protected (top {self.TOP_N_PROTECTED} holding)")
+                    logger.info(f"   {symbol}: Protected (top {self.TOP_N_PROTECTED} holding)")
                     continue
 
                 score_data = await self._score_position_for_sale(pos, total_value)
-                logger.info(f"  🎯 {symbol}: weight={weight:.1f}%, score={score_data['sale_score']:.1f}, sellable={score_data['sellable']}, rationale={score_data['sale_rationale']}")
+                logger.info(f"   {symbol}: weight={weight:.1f}%, score={score_data['sale_score']:.1f}, sellable={score_data['sellable']}, rationale={score_data['sale_rationale']}")
 
                 if score_data["sellable"]:
                     scored_positions.append({
@@ -126,7 +126,7 @@ class PortfolioGapDetector:
             # Sort by sale score (descending = best candidates to sell)
             scored_positions.sort(key=lambda p: p.get("sale_score", 0), reverse=True)
 
-            logger.info(f"📋 {len(scored_positions)} positions eligible for sale (from {len(positions)} evaluated)")
+            logger.info(f" {len(scored_positions)} positions eligible for sale (from {len(positions)} evaluated)")
 
             # 4. Select positions to sell until capital target met
             suggested_sales = []
@@ -163,7 +163,7 @@ class PortfolioGapDetector:
             # 5. Check if sufficient capital raised
             sufficient = total_freed >= total_capital_needed * 0.95  # 95% threshold
 
-            logger.info(f"✅ Suggested {len(suggested_sales)} sales, frees ${total_freed:,.0f} (sufficient: {sufficient})")
+            logger.info(f" Suggested {len(suggested_sales)} sales, frees ${total_freed:,.0f} (sufficient: {sufficient})")
 
             return {
                 "suggested_sales": suggested_sales,

@@ -2,12 +2,12 @@
 
 > **Date:** 28 octobre 2025
 > **User:** jack
-> **Status:** 🟡 Fonctionnel avec bugs mineurs à corriger
+> **Status:** [Pending] Fonctionnel avec bugs mineurs à corriger
 > **Portfolio:** 29 positions, $127,822
 
 ---
 
-## ✅ Ce qui a été implémenté
+## Ce qui a été implémenté
 
 ### Backend (4 modules créés)
 
@@ -54,7 +54,7 @@
 
 ---
 
-## 🟢 État Actuel (Ce qui fonctionne)
+## État Actuel (Ce qui fonctionne)
 
 ### Résultats du dernier test (user jack, 28 oct 11:30)
 
@@ -69,7 +69,7 @@
 - Technology: 28.7%
 - Consumer Cyclical: 14.5%
 - Communication Services: 7.2%
-- Unknown: 42.1% ⚠️
+- Unknown: 42.1% [Warning]
 - Healthcare: 2.7%
 - Financial Services: 2.0%
 - Consumer Defensive: 2.9%
@@ -80,7 +80,7 @@
 
 ---
 
-## 🔴 Problèmes Restants
+## Problèmes Restants
 
 ### Problème 1: "Unknown" 42.1% (CRITIQUE)
 
@@ -119,7 +119,7 @@ if "HTTP Error 404" and len(symbol) <= 4:
 
 **Logs:**
 ```
-INFO: ✅ Suggested 0 sales, frees $0 (sufficient: False)
+INFO: [OK] Suggested 0 sales, frees $0 (sufficient: False)
 ```
 
 **Causes possibles:**
@@ -182,7 +182,7 @@ sector = SECTOR_MAPPING.get(sector_raw, sector_raw)
 
 ---
 
-## 📋 Fichiers Modifiés (pour référence)
+## Fichiers Modifiés (pour référence)
 
 ### Créés
 ```
@@ -202,7 +202,7 @@ CLAUDE.md                                         # +50 lignes (doc feature)
 
 ---
 
-## 🧪 Comment Tester
+## Comment Tester
 
 ### 1. Redémarrer le serveur
 
@@ -245,13 +245,13 @@ Get-Content logs\app.log -Wait -Tail 30
 ```
 
 Chercher:
-- `📍 AAPL → Technology` (secteurs enrichis)
-- `❌ UBSG → Error` (erreurs 404 à corriger)
-- `✅ Suggested N sales` (ventes suggérées)
+- ` AAPL → Technology` (secteurs enrichis)
+- `[Error] UBSG → Error` (erreurs 404 à corriger)
+- `[OK] Suggested N sales` (ventes suggérées)
 
 ---
 
-## 🔧 Points Techniques Importants
+## Points Techniques Importants
 
 ### 1. Champs données Saxo
 
@@ -266,10 +266,10 @@ Colonnes disponibles: `Instruments, Quantité, Prix entrée, Valeur actuelle (EU
 **Positions Saxo utilisent `market_value` (pas `market_value_usd`)**
 
 ```python
-# ✅ Correct
+# Correct
 total_value = sum(p.get("market_value", 0) for p in positions)
 
-# ❌ Incorrect (ancien code)
+# Incorrect (ancien code)
 total_value = sum(p.get("market_value_usd", 0) for p in positions)
 ```
 
@@ -283,12 +283,12 @@ market_value=market_value_usd,  # Valeur en USD, mais champ nommé "market_value
 **Utiliser `globalConfig.getApiUrl()` + `safeFetch()`**
 
 ```javascript
-// ✅ Correct
+// [OK] Correct
 const url = `/api/bourse/opportunities?user_id=${user}`;
 const response = await safeFetch(globalConfig.getApiUrl(url));
 const data = response.data || response;
 
-// ❌ Incorrect
+// [Error] Incorrect
 const url = `${window.API_BASE_URL}/api/bourse/opportunities`;
 const response = await fetch(url);
 const data = await response.json();
@@ -307,7 +307,7 @@ pos["sector"] = sector_raw  # Cache pour éviter re-fetch
 
 ---
 
-## 🎯 Prochaines Actions Recommandées
+## Prochaines Actions Recommandées
 
 ### P0 (Bugs critiques à corriger)
 
@@ -338,7 +338,7 @@ pos["sector"] = sector_raw  # Cache pour éviter re-fetch
 
 ---
 
-## 📊 Données User Jack (Référence)
+## Données User Jack (Référence)
 
 **Portfolio:**
 - 29 positions
@@ -356,11 +356,11 @@ D:\Python\smartfolio\data\users\jack\saxobank\data\20251028_101518_Positions_28-
 
 ---
 
-## 🐛 Logs Clés pour Debug
+## Logs Clés pour Debug
 
 ### Logs d'enrichissement secteurs
 ```powershell
-Get-Content logs\app.log | Select-String "📍|❓|❌" | Select-Object -Last 30
+Get-Content logs\app.log | Select-String "Location|Unknown|Error" | Select-Object -Last 30
 ```
 
 ### Logs de ventes suggérées
@@ -380,7 +380,7 @@ Get-Content logs\app.log | Select-String "Market opportunities|Scanning opportun
 
 ---
 
-## 📚 Documentation Complète
+## Documentation Complète
 
 **Documentation système détaillée:**
 - [docs/MARKET_OPPORTUNITIES_SYSTEM.md](../docs/MARKET_OPPORTUNITIES_SYSTEM.md)
@@ -403,7 +403,7 @@ Frontend: saxo-dashboard.html → Onglet "Market Opportunities"
 
 ---
 
-## ✅ Checklist Reprise Session
+## Checklist Reprise Session
 
 Avant de continuer, vérifier:
 

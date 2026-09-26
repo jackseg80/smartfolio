@@ -10,7 +10,7 @@ param(
 )
 
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-Write-Host "📸 Creating daily portfolio snapshot - $timestamp" -ForegroundColor Cyan
+Write-Host " Creating daily portfolio snapshot - $timestamp" -ForegroundColor Cyan
 
 # Construire l'URL
 $url = "$BaseUrl/portfolio/snapshot?source=$Source&user_id=$UserId&min_usd=$MinUsd"
@@ -20,7 +20,7 @@ try {
     $response = Invoke-RestMethod -Uri $url -Method POST -TimeoutSec 30
 
     if ($response.ok -eq $true) {
-        Write-Host "✅ Snapshot created successfully" -ForegroundColor Green
+        Write-Host "[OK] Snapshot created successfully" -ForegroundColor Green
         Write-Host "   User: $UserId" -ForegroundColor Gray
         Write-Host "   Source: $Source" -ForegroundColor Gray
         Write-Host "   Min USD: $MinUsd" -ForegroundColor Gray
@@ -32,12 +32,12 @@ try {
 
         exit 0
     } else {
-        Write-Host "❌ Snapshot creation failed: $($response.error)" -ForegroundColor Red
+        Write-Host "[Error] Snapshot creation failed: $($response.error)" -ForegroundColor Red
         exit 1
     }
 
 } catch {
-    Write-Host "❌ Error calling API: $_" -ForegroundColor Red
+    Write-Host " Error calling API: $_" -ForegroundColor Red
 
     # Log l'erreur
     $logFile = "data\logs\snapshots.log"

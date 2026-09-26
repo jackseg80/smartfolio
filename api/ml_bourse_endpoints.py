@@ -657,7 +657,7 @@ async def get_portfolio_recommendations(
                     "action": "BUY",
                     "confidence": 0.68,
                     "score": 0.58,
-                    "rationale": ["✅ Technical...", "⚠️ RSI..."],
+                    "rationale": ["[OK] Technical...", "[Warning] RSI..."],
                     "tactical_advice": "Enter on pullback...",
                     "price_targets": {...},
                     "position_sizing": {...}
@@ -682,7 +682,7 @@ async def get_portfolio_recommendations(
 
         # Log cash amount if provided
         if cash_amount and cash_amount > 0:
-            logger.info(f"💵 Cash/liquidities provided: ${cash_amount:,.2f}")
+            logger.info(f" Cash/liquidities provided: ${cash_amount:,.2f}")
 
         # Validate timeframe
         if timeframe not in ["short", "medium", "long"]:
@@ -807,7 +807,7 @@ async def get_portfolio_recommendations(
 
         # Sanitize inf/nan values
         result = sanitize_inf_nan(result)
-        logger.info(f"✅ Portfolio recommendations sanitized ({len(result.get('recommendations', []))} positions)")
+        logger.info(f" Portfolio recommendations sanitized ({len(result.get('recommendations', []))} positions)")
 
         # Serialize to JSON string manually with strict inf/nan handling
         # allow_nan=False will raise an error if any inf/nan slipped through
@@ -815,7 +815,7 @@ async def get_portfolio_recommendations(
         try:
             json_str = json.dumps(result, ensure_ascii=False, indent=None, allow_nan=False)
         except ValueError as e:
-            logger.error(f"❌ Inf/nan values still present after sanitization: {e}")
+            logger.error(f" Inf/nan values still present after sanitization: {e}")
             # Force a second sanitization pass
             result = sanitize_inf_nan(result)
             json_str = json.dumps(result, ensure_ascii=False, indent=None, allow_nan=False)
@@ -856,7 +856,7 @@ async def get_market_opportunities(
         GET /api/bourse/opportunities?user_id=jack&horizon=medium&min_gap_pct=5.0
     """
     try:
-        logger.info(f"🔍 Market opportunities requested (user={user}, horizon={horizon})")
+        logger.info(f" Market opportunities requested (user={user}, horizon={horizon})")
 
         # Validate horizon
         if horizon not in ["short", "medium", "long"]:
@@ -950,8 +950,8 @@ async def get_market_opportunities(
 
         # Debug: Log position format
         if positions and len(positions) > 0:
-            logger.debug(f"📊 Sample position keys: {list(positions[0].keys())}")
-            logger.debug(f"📊 Sample position: {positions[0]}")
+            logger.debug(f" Sample position keys: {list(positions[0].keys())}")
+            logger.debug(f" Sample position: {positions[0]}")
 
         # 2. Scan for opportunities
         from services.ml.bourse.opportunity_scanner import OpportunityScanner

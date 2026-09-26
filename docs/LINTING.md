@@ -139,11 +139,11 @@ Installer: `pip install pre-commit && pre-commit install`
 ### F401 - Import inutilisé
 
 ```python
-# ❌ Avant
+# Avant
 from typing import List, Dict
 def foo(): return {}  # List non utilisé
 
-# ✅ Après
+# Après
 from typing import Dict
 def foo(): return {}
 ```
@@ -153,10 +153,10 @@ def foo(): return {}
 Black gère automatiquement, mais si impossible:
 
 ```python
-# ❌ Avant
+# Avant
 result = some_very_long_function_name(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 
-# ✅ Après (black auto)
+# Après (black auto)
 result = some_very_long_function_name(
     arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8
 )
@@ -165,12 +165,12 @@ result = some_very_long_function_name(
 ### Imports mal triés
 
 ```python
-# ❌ Avant
+# Avant
 from services.portfolio import get_portfolio
 import os
 from typing import Dict
 
-# ✅ Après (isort auto)
+# Après (isort auto)
 import os
 from typing import Dict
 

@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Vue d'Ensemble
+## Vue d'Ensemble
 
 **Objectif:** Enrichir admin-dashboard.html#ml pour exploiter l'API ML riche existante
 
@@ -16,11 +16,11 @@
 
 ---
 
-## 🎯 Phase 1 - Quick Win (2-3h) ✅ **EN COURS**
+## Phase 1 - Quick Win (2-3h)  **EN COURS**
 
 ### **Objectif:** Afficher les métadonnées riches existantes
 
-### **A. Modal "ℹ️ Info Détaillée"**
+### **A. Modal " Info Détaillée"**
 
 **Fichier:** `static/admin-dashboard.html`
 
@@ -31,7 +31,7 @@
 <div id="modelInfoModal" class="modal">
     <div class="modal-content" style="max-width: 800px;">
         <div class="modal-header">
-            <h3>ℹ️ Model Information - <span id="model-info-name"></span></h3>
+            <h3> Model Information - <span id="model-info-name"></span></h3>
             <button class="modal-close" onclick="closeModal('modelInfoModal')">&times;</button>
         </div>
         <div class="modal-body">
@@ -48,7 +48,7 @@
                 <!-- Section 1: Basic Info -->
                 <div style="margin-bottom: 2rem;">
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                        📋 Basic Information
+                         Basic Information
                     </h4>
                     <div class="info-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                         <div class="info-item">
@@ -81,7 +81,7 @@
                 <!-- Section 2: Training Configuration -->
                 <div style="margin-bottom: 2rem;" id="model-info-training-section">
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                        ⚙️ Training Configuration
+                         Training Configuration
                     </h4>
                     <div id="model-info-hyperparams" style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.9em;">
                         <!-- Hyperparameters will be injected here -->
@@ -91,7 +91,7 @@
                 <!-- Section 3: Performance Metrics -->
                 <div style="margin-bottom: 2rem;" id="model-info-metrics-section">
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                        📊 Performance Metrics
+                         Performance Metrics
                     </h4>
                     <div class="metrics-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
                         <!-- Metrics cards will be injected here -->
@@ -102,7 +102,7 @@
                 <!-- Section 4: Features Used -->
                 <div style="margin-bottom: 2rem;" id="model-info-features-section">
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                        🔧 Features Used
+                         Features Used
                     </h4>
                     <div id="model-info-features" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                         <!-- Feature badges will be injected here -->
@@ -112,7 +112,7 @@
                 <!-- Section 5: Training Data -->
                 <div style="margin-bottom: 1rem;" id="model-info-data-section">
                     <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                        📅 Training Data Period
+                         Training Data Period
                     </h4>
                     <div id="model-info-data-period">-</div>
                 </div>
@@ -120,7 +120,7 @@
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary" onclick="closeModal('modelInfoModal')">Close</button>
-            <button class="btn btn-primary" onclick="showVersionHistory(currentModelName)">📊 View History</button>
+            <button class="btn btn-primary" onclick="showVersionHistory(currentModelName)"> View History</button>
         </div>
     </div>
 </div>
@@ -300,11 +300,11 @@ Chercher ligne ~1684 (dans le bloc `models.map(model => {`)
 // APRÈS (remplacer par):
 <td style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
     <button class="btn btn-small btn-secondary" onclick="showModelInfo('${model.name}')" title="View detailed information">
-        ℹ️
+        Info
     </button>
     ${!model.has_active_job ?
         `<button class="btn btn-small btn-primary" onclick="triggerTraining('${model.name}', '${model.model_type || 'unknown'}')" title="Retrain model">
-            🔄
+            Refresh
         </button>` :
         '<span style="color: var(--text-muted); font-size: 0.85em;">Training...</span>'
     }
@@ -319,7 +319,7 @@ window.showModelInfo = showModelInfo;
 
 ---
 
-### **B. Modal "📊 Historique Versions"**
+### **B. Modal " Historique Versions"**
 
 **HTML à ajouter (après modelInfoModal):**
 
@@ -328,7 +328,7 @@ window.showModelInfo = showModelInfo;
 <div id="versionHistoryModal" class="modal">
     <div class="modal-content" style="max-width: 900px;">
         <div class="modal-header">
-            <h3>📊 Version History - <span id="version-history-name"></span></h3>
+            <h3> Version History - <span id="version-history-name"></span></h3>
             <button class="modal-close" onclick="closeModal('versionHistoryModal')">&times;</button>
         </div>
         <div class="modal-body">
@@ -487,14 +487,14 @@ GET /api/ml/registry/models/btc_regime_detector/versions
 
 **Test UI:**
 1. Ouvrir admin-dashboard.html#ml
-2. Cliquer sur ℹ️ pour un modèle
+2. Cliquer sur  pour un modèle
 3. Vérifier que le modal affiche les données
 4. Cliquer "View History"
 5. Vérifier tableau versions
 
 ---
 
-## 🎯 Phase 2 - Training Config (4-6h) ⚠️ **Backend + Frontend**
+## Phase 2 - Training Config (4-6h)  **Backend + Frontend**
 
 **Status:** Pas encore commencé (attendre Phase 1 validée)
 
@@ -507,7 +507,7 @@ GET /api/ml/registry/models/btc_regime_detector/versions
 
 ---
 
-## 🎯 Phase 3 - Nettoyer Doublons (1-2h)
+## Phase 3 - Nettoyer Doublons (1-2h)
 
 **Status:** Pas encore commencé
 
@@ -517,21 +517,21 @@ GET /api/ml/registry/models/btc_regime_detector/versions
 
 ---
 
-## 📊 Progression
+## Progression
 
-**Phase 1:** ⏳ En cours
+**Phase 1:**  En cours
 - [x] Roadmap créée
 - [ ] Modal Info implémenté
 - [ ] Modal Historique implémenté
 - [ ] Boutons ajoutés au tableau
 - [ ] Tests validation
 
-**Phase 2:** ⏸️ En attente
-**Phase 3:** ⏸️ En attente
+**Phase 2:**  En attente
+**Phase 3:**  En attente
 
 ---
 
-## 🔧 Notes Techniques
+## Notes Techniques
 
 ### Endpoints Utilisés (Phase 1)
 
@@ -550,11 +550,11 @@ GET /api/ml/registry/models/{model_name}/versions
 - Roadmap: ~7k tokens
 - Implémentation Phase 1: ~15k estimé
 - **Total estimé Phase 1:** ~30k tokens
-- **Remaining:** ~108k tokens ✅ **SUFFISANT**
+- **Remaining:** ~108k tokens [OK] **SUFFISANT**
 
 ---
 
-## 🚀 Pour Reprendre Plus Tard
+## Pour Reprendre Plus Tard
 
 **Si interruption, commencer par:**
 1. Lire ce document (roadmap)
@@ -569,7 +569,7 @@ GET /api/ml/registry/models/{model_name}/versions
 
 ---
 
-## ✅ Validation
+## Validation
 
 **Phase 1 complète quand:**
 - [ ] Modal Info s'ouvre et affiche toutes les sections

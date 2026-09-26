@@ -2,11 +2,11 @@
 // Macro → Secteurs → Coins avec contraintes explicites uniquement
 
 import { getAssetGroup, UNIFIED_ASSET_GROUPS, GROUP_ORDER, loadTaxonomyDataSync } from '../shared-asset-groups.js';
-// ✅ MODIFIÉ (Phase 1.2): Utiliser selectEffectiveCap pour cohérence staleness/alert/policy
+//  MODIFIÉ (Phase 1.2): Utiliser selectEffectiveCap pour cohérence staleness/alert/policy
 import { selectEffectiveCap } from '../selectors/governance.js';
 
 /**
- * 🆕 STRUCTURE MODULATION V2 (Oct 2025)
+ *  STRUCTURE MODULATION V2 (Oct 2025)
  * Applique deltaCap depuis structure modulation au cap effectif de gouvernance
  *
  * @param {object} state - Store state (pour selectEffectiveCap)
@@ -66,10 +66,10 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
   const enableFloors = options.enableFloors === true;
   const respectIncumbency = options.respectIncumbency === true;
 
-  console.debug('🏗️ Allocation Engine called:', { enableV2, contextualScores: !!context.adaptiveWeights });
+  console.debug("Allocation Engine called:", { enableV2, contextualScores: !!context.adaptiveWeights });
 
   if (!enableV2) {
-    console.debug('⚠️ Allocation Engine V2 disabled, using fallback');
+    console.debug("[Warning] Allocation Engine V2 disabled, using fallback");
     return null; // Fallback vers V1
   }
 
@@ -77,9 +77,9 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     // Ensure taxonomy data is loaded before proceeding
     try {
       loadTaxonomyDataSync(); // Fonction synchrone, pas d'await
-      console.debug('✅ Taxonomy data loaded for allocation engine');
+      console.debug("[OK] Taxonomy data loaded for allocation engine");
     } catch (taxonomyError) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy loading failed, continuing with fallback:', taxonomyError.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] Taxonomy loading failed, continuing with fallback:", taxonomyError.message);
       // Continue quand même, getAssetGroup aura ses fallbacks
     }
     // 1. EXTRACTION DU CONTEXTE
@@ -90,9 +90,9 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
       adaptiveWeights = {},
       risk_budget = {},
       contradiction = 0,
-      // ✅ NOUVEAU (Phase 1.3): Récupérer meme_cap depuis regime.allocation_bias
+      //  NOUVEAU (Phase 1.3): Récupérer meme_cap depuis regime.allocation_bias
       regime = {},
-      // 🆕 NOUVEAU (Oct 2025): Structure Modulation V2 pour deltaCap
+      //  NOUVEAU (Oct 2025): Structure Modulation V2 pour deltaCap
       structure_modulation = {}
     } = context;
 
@@ -103,7 +103,7 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
     // Extraire meme_cap depuis le régime de marché
     const meme_cap = regime?.allocation_bias?.meme_cap ?? null;
 
-    // 🆕 Extraire deltaCap depuis structure modulation
+    //  Extraire deltaCap depuis structure modulation
     const deltaCap = structure_modulation?.delta_cap ?? 0;
 
     // 2. DÉTECTION PHASE MARCHÉ
@@ -113,20 +113,20 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
       ? (isBullishPhase ? { ...FLOORS_CONFIG.base, ...FLOORS_CONFIG.bullish } : FLOORS_CONFIG.base)
       : {};
 
-    console.debug('📊 Market phase detection:', { cycleScore, isBullishPhase, isModeratePhase });
+    console.debug("Market phase detection:", { cycleScore, isBullishPhase, isModeratePhase });
 
     // 3. ALLOCATION NIVEAU 1 - MACRO
     const macroAllocation = calculateMacroAllocation(context, selectedFloors);
-    console.debug('🌍 Macro allocation:', macroAllocation);
+    console.debug("Macro allocation:", macroAllocation);
 
     // 4. ALLOCATION NIVEAU 2 - SECTEURS
     const sectorAllocation = calculateSectorAllocation(macroAllocation, selectedFloors, isBullishPhase);
-    console.debug('🏭 Sector allocation:', sectorAllocation);
+    console.debug("Sector allocation:", sectorAllocation);
 
     // 5. ALLOCATION NIVEAU 3 - COINS. Incumbency is opt-in only.
     const positionsForAllocation = respectIncumbency ? currentPositions : [];
     const coinAllocation = calculateCoinAllocation(sectorAllocation, positionsForAllocation, selectedFloors, meme_cap);
-    console.debug('🪙 Coin allocation:', coinAllocation);
+    console.debug("Coin allocation:", coinAllocation);
 
     // 6. CALCUL ITERATIONS ESTIMÉES
     const executionPlan = calculateExecutionPlan(coinAllocation, currentPositions, context.execution);
@@ -137,18 +137,18 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
 
     // CONTRÔLES HIÉRARCHIQUES
     const hierarchyCheck = validateHierarchy(coinAllocation, currentPositions);
-    console.debug('🔍 Hierarchy validation:', hierarchyCheck);
+    console.debug("Hierarchy validation:", hierarchyCheck);
 
     // GUARD: target_sum_mismatch
     const targetSum = Object.values(coinAllocation).reduce((sum, val) =>
       sum + (typeof val === 'number' && !isNaN(val) ? val : 0), 0
     );
     if (Math.abs(targetSum - 1.0) > 0.01) {
-      (window.debugLogger?.warn || console.warn)(`⚠️ target_sum_mismatch: somme secteurs = ${(targetSum * 100).toFixed(1)}% (≠ 100%)`);
+      (window.debugLogger?.warn || console.warn)(`[Warning] target_sum_mismatch: somme secteurs = ${(targetSum * 100).toFixed(1)}% (≠ 100%)`);
     }
 
     // CHECKSUM DÉTAILLÉ
-    console.debug('💯 CHECKSUM:', {
+    console.debug("CHECKSUM:", {
       total_allocation: totalCheck.total,
       entries_count: allocationEntries.length,
       valid_entries: allocationEntries.filter(([k, v]) => v > 0.001).length,
@@ -209,13 +209,13 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
         floors_applied: selectedFloors,
         adaptive_weights: adaptiveWeights,
         total_check: validateTotalAllocation(coinAllocation),
-        // ✅ NOUVEAU (Phase 1.3): Métadonnées meme_cap
+        //  NOUVEAU (Phase 1.3): Métadonnées meme_cap
         meme_cap: typeof window !== 'undefined' ? window._allocationMetadata?.meme_cap : {
           defined: meme_cap !== null,
           value: meme_cap,
           applied: false
         },
-        // 🆕 NOUVEAU (Oct 2025): Structure Modulation V2
+        //  NOUVEAU (Oct 2025): Structure Modulation V2
         structure_modulation: structure_modulation?.enabled ? {
           ...structure_modulation,
           cap_after: executionPlan.cap_pct_per_iter // Cap effectif APRÈS deltaCap
@@ -223,11 +223,11 @@ export async function calculateHierarchicalAllocation(context, currentPositions 
       }
     };
 
-    console.debug('🎯 Final V2 allocation result:', result);
+    console.debug("Final V2 allocation result:", result);
     return result;
 
   } catch (error) {
-    (window.debugLogger?.error || console.error)('❌ Allocation Engine V2 failed:', error);
+    (window.debugLogger?.error || console.error)("[Error] Allocation Engine V2 failed:", error);
     return null; // Fallback vers V1
   }
 }
@@ -312,8 +312,8 @@ function calculateSectorAllocation(macroAllocation, floors, isBullishPhase) {
   const altsTotal = macroAllocation.Alts;
 
   // Debug: log the floors being used
-  console.debug('🏗️ Sector allocation floors:', floors);
-  console.debug('📊 Bullish phase:', isBullishPhase, 'Alts total:', altsTotal);
+  console.debug("Sector allocation floors:", floors);
+  console.debug("Bullish phase:", isBullishPhase, 'Alts total:', altsTotal);
 
   // Secteurs alts à distribuer
   const altSectors = ['SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'Memecoins', 'Gaming/NFT', 'AI/Data', 'Others'];
@@ -358,7 +358,7 @@ function calculateSectorAllocation(macroAllocation, floors, isBullishPhase) {
 
   if (totalSectorWeights > availableForSectors) {
     const scale = availableForSectors / totalSectorWeights;
-    console.debug(`🔧 Sector floors exceed budget alts (${(totalSectorWeights * 100).toFixed(1)}% > ${(availableForSectors * 100).toFixed(1)}%), scaling by ${scale.toFixed(3)}`);
+    console.debug(`Sector floors exceed budget alts (${(totalSectorWeights * 100).toFixed(1)}% > ${(availableForSectors * 100).toFixed(1)}%), scaling by ${scale.toFixed(3)}`);
     Object.keys(sectorWeights).forEach(sector => {
       sectorWeights[sector] *= scale;
     });
@@ -384,24 +384,24 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
   const coinAllocation = {};
   const heldAssets = new Set(currentPositions.map(pos => pos.symbol?.toUpperCase()).filter(Boolean));
 
-  console.debug('🔒 Incumbency protection for held assets:', Array.from(heldAssets));
-  console.debug('🎭 Meme cap from regime:', meme_cap !== null ? `${meme_cap}%` : 'none');
+  console.debug("Incumbency protection for held assets:", Array.from(heldAssets));
+  console.debug("Meme cap from regime:", meme_cap !== null ? `${meme_cap}%` : 'none');
 
   // Debug: check how assets are classified
   currentPositions.forEach(pos => {
     const symbol = pos.symbol?.toUpperCase();
     const group = getAssetGroup(symbol);
-    console.debug(`🏷️ Asset ${symbol} → Group: ${group}`);
+    console.debug(`Asset ${symbol} → Group: ${group}`);
   });
 
   // Debug: show UNIFIED_ASSET_GROUPS structure
-  console.debug('🏗️ UNIFIED_ASSET_GROUPS:', UNIFIED_ASSET_GROUPS);
+  console.debug("UNIFIED_ASSET_GROUPS:", UNIFIED_ASSET_GROUPS);
 
   // Calculer total portfolio pour seuil minimum incumbency (1%)
   const totalPortfolioValue = currentPositions.reduce((sum, pos) => sum + (parseFloat(pos.value_usd) || 0), 0);
   const INCUMBENCY_MIN_THRESHOLD = 0.01; // 1% du portfolio total
 
-  console.debug('💼 Total portfolio value:', totalPortfolioValue.toFixed(2), 'USD');
+  console.debug("Total portfolio value:", totalPortfolioValue.toFixed(2), 'USD');
 
   // Pour chaque secteur, distribuer vers les coins
   Object.entries(sectorAllocation).forEach(([sector, sectorWeight]) => {
@@ -425,7 +425,7 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
         // Cas: incumbency dépasserait le secteur → répartir équitablement
         actualIncumbencyFloor = validSectorWeight / heldInSector.length;
         remainingWeight = 0;
-        console.debug(`⚠️ Incumbency capped for ${sector}: ${heldInSector.length} × ${desiredIncumbencyFloor.toFixed(3)} → ${actualIncumbencyFloor.toFixed(3)} each`);
+        console.debug(`[Warning] Incumbency capped for ${sector}: ${heldInSector.length} × ${desiredIncumbencyFloor.toFixed(3)} → ${actualIncumbencyFloor.toFixed(3)} each`);
       } else {
         // Cas normal: incumbency + reste
         actualIncumbencyFloor = desiredIncumbencyFloor;
@@ -434,7 +434,7 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
 
       // HIERARCHIE STRICTE: soit secteur global, soit coins individuels, jamais les deux
       if (heldInSector.length === 1) {
-        // 🆕 SEUIL MINIMUM: Ne pas exposer individuellement si < 1% du portfolio
+        //  SEUIL MINIMUM: Ne pas exposer individuellement si < 1% du portfolio
         const assetPosition = currentPositions.find(pos => pos.symbol?.toUpperCase() === heldInSector[0]);
         const assetValue = assetPosition ? parseFloat(assetPosition.value_usd) || 0 : 0;
         const assetPercentage = totalPortfolioValue > 0 ? assetValue / totalPortfolioValue : 0;
@@ -442,11 +442,11 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
         if (assetPercentage >= INCUMBENCY_MIN_THRESHOLD) {
           // Asset >= 1% du portfolio → l'exposer directement
           coinAllocation[heldInSector[0]] = validSectorWeight;
-          console.debug(`✅ Individual exposure for ${heldInSector[0]} (${(assetPercentage * 100).toFixed(2)}% of portfolio)`);
+          console.debug(`[OK] Individual exposure for ${heldInSector[0]} (${(assetPercentage * 100).toFixed(2)}% of portfolio)`);
         } else {
           // Asset < 1% du portfolio → utiliser le groupe
           coinAllocation[sector] = validSectorWeight;
-          console.debug(`⚠️ Using group ${sector} instead of ${heldInSector[0]} (only ${(assetPercentage * 100).toFixed(2)}% of portfolio)`);
+          console.debug(`[Warning] Using group ${sector} instead of ${heldInSector[0]} (only ${(assetPercentage * 100).toFixed(2)}% of portfolio)`);
         }
         // NE PAS ajouter le secteur global pour éviter double-comptage
       } else if (heldInSector.length > 1) {
@@ -460,7 +460,7 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
     }
   });
 
-  // ✅ NOUVEAU (Phase 1.3): Appliquer meme_cap APRÈS calcul initial, AVANT normalisation
+  //  NOUVEAU (Phase 1.3): Appliquer meme_cap APRÈS calcul initial, AVANT normalisation
   let memeCapApplied = false;
   if (meme_cap !== null && typeof meme_cap === 'number') {
     const memeCapDecimal = meme_cap / 100; // Convertir % en décimal (0-1)
@@ -522,7 +522,7 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
       }
 
       memeCapApplied = true;
-      console.debug(`🎭 Meme cap applied: ${(totalMemecoins * 100).toFixed(1)}% → ${meme_cap}% (excess ${(excess * 100).toFixed(2)}% → BTC/ETH coins: ${[...heldBtc, ...heldEth].join(', ')})`);
+      console.debug(`Meme cap applied: ${(totalMemecoins * 100).toFixed(1)}% → ${meme_cap}% (excess ${(excess * 100).toFixed(2)}% → BTC/ETH coins: ${[...heldBtc, ...heldEth].join(', ')})`);
     }
   }
 
@@ -536,13 +536,13 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
     };
   }
 
-  // 🔧 NORMALISATION PRÉVENTIVE: corriger les erreurs d'arrondi accumulées
+  //  NORMALISATION PRÉVENTIVE: corriger les erreurs d'arrondi accumulées
   const allocSum = Object.values(coinAllocation).reduce((sum, val) =>
     sum + (typeof val === 'number' && !isNaN(val) ? val : 0), 0
   );
 
   if (Math.abs(allocSum - 1.0) > 0.001) {
-    console.debug(`🔧 Normalizing coin allocation: ${(allocSum * 100).toFixed(2)}% → 100%`);
+    console.debug(`Normalizing coin allocation: ${(allocSum * 100).toFixed(2)}% → 100%`);
     const scale = 1.0 / allocSum;
     Object.keys(coinAllocation).forEach(key => {
       if (typeof coinAllocation[key] === 'number' && !isNaN(coinAllocation[key])) {
@@ -556,16 +556,16 @@ function calculateCoinAllocation(sectorAllocation, currentPositions, floors, mem
 
 /**
  * Calcul du plan d'exécution (iterations estimées)
- * 🆕 MODIFIÉ (Oct 2025): Support Structure Modulation V2 deltaCap
+ *  MODIFIÉ (Oct 2025): Support Structure Modulation V2 deltaCap
  */
 function calculateExecutionPlan(targetAllocation, currentPositions, executionContext = {}) {
   let capPct = executionContext.cap_pct_per_iter;
 
-  // 🆕 Extraire deltaCap depuis structure_modulation
+  //  Extraire deltaCap depuis structure_modulation
   const deltaCap = executionContext.structure_modulation?.delta_cap ?? 0;
 
-  // ✅ MODIFIÉ (Phase 1.2): Utiliser selectEffectiveCap au lieu de selectCapPercent
-  // 🆕 MODIFIÉ (Oct 2025): Appliquer deltaCap depuis structure modulation
+  //  MODIFIÉ (Phase 1.2): Utiliser selectEffectiveCap au lieu de selectCapPercent
+  //  MODIFIÉ (Oct 2025): Appliquer deltaCap depuis structure modulation
   // Gère automatiquement: backend error (5%), staleness (8%), alert override, policy, engine + structure deltaCap
   if (capPct == null) {
     const contextState = executionContext.state || executionContext.unified_state || null;
@@ -620,7 +620,7 @@ function calculateExecutionPlan(targetAllocation, currentPositions, executionCon
 
   const estimatedIters = capPerIter > 0 ? Math.ceil(maxDelta / capPerIter) : Infinity;
 
-  console.debug('🔄 Convergence calculation:', {
+  console.debug("Convergence calculation:", {
     maxDeltaPct: (maxDelta * 100).toFixed(1),
     maxDeltaGroup,
     capPerIter: capPct,
@@ -662,7 +662,7 @@ function validateTotalAllocation(allocation) {
   const isValid = Math.abs(total - 1) < 0.001; // Tolérance 0.1%
 
   if (!isValid) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Total allocation mismatch:', total, 'from values:', validValues);
+    (window.debugLogger?.warn || console.warn)("[Warning] Total allocation mismatch:", total, 'from values:', validValues);
   }
 
   return { total, isValid };
@@ -675,7 +675,7 @@ function validateHierarchy(allocation, currentPositions) {
   const issues = [];
   const allocationKeys = Object.keys(allocation);
 
-  // 🔍 ÉTAPE 0: Identifier en amont les groupes avec coins éponymes (BTC, ETH, SOL, Stablecoins)
+  //  ÉTAPE 0: Identifier en amont les groupes avec coins éponymes (BTC, ETH, SOL, Stablecoins)
   const topLevelGroups = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
   const eponymousGroups = new Set();
   topLevelGroups.forEach(group => {
@@ -686,7 +686,7 @@ function validateHierarchy(allocation, currentPositions) {
   });
 
   // Vérifier double-comptage: un coin ne doit pas coexister avec son groupe parent
-  // ✅ FIX: Skip validation si le groupe parent est éponyme
+  //  FIX: Skip validation si le groupe parent est éponyme
   currentPositions.forEach(pos => {
     const symbol = pos.symbol?.toUpperCase();
     const group = getAssetGroup(symbol);
@@ -714,7 +714,7 @@ function validateHierarchy(allocation, currentPositions) {
     // On doit skip la validation hiérarchique pour ce groupe ET tous ses enfants.
     const hasEponymousChild = eponymousGroups.has(group);
     if (hasEponymousChild && groupWeight > 0) {
-      console.debug(`🔍 group_eponymous: ${group} contains child with same name, allocation[${group}]=${(groupWeight * 100).toFixed(1)}% is treated as coin, not parent group`);
+      console.debug(`group_eponymous: ${group} contains child with same name, allocation[${group}]=${(groupWeight * 100).toFixed(1)}% is treated as coin, not parent group`);
       return; // Skip validation for this group
     }
 
@@ -727,7 +727,7 @@ function validateHierarchy(allocation, currentPositions) {
     if (groupWeight > 0 && childrenWeights > 0) {
       const childrenList = groupAssets.filter(asset => asset !== group && allocation[asset]).map(asset => `${asset}=${(allocation[asset] * 100).toFixed(2)}%`).join(', ');
       const issue = `Groupe ${group} (${(groupWeight * 100).toFixed(2)}%) coexiste avec enfants (${(childrenWeights * 100).toFixed(2)}%: ${childrenList})`;
-      (window.debugLogger?.warn || console.warn)(`⚠️ HIERARCHY: ${issue}`);
+      (window.debugLogger?.warn || console.warn)(`[Warning] HIERARCHY: ${issue}`);
       issues.push(issue);
     }
 
@@ -735,33 +735,33 @@ function validateHierarchy(allocation, currentPositions) {
     const isTerminal = ['BTC', 'ETH', 'Stablecoins', 'Others'].includes(group);
     if (groupWeight > 0.001 && childrenWeights === 0 && groupAssets.length > 0) {
       if (isTerminal) {
-        console.debug(`🔍 group_without_descent (terminal): ${group} (${groupWeight.toFixed(3)}) - OK pour terminal`);
+        console.debug(`group_without_descent (terminal): ${group} (${groupWeight.toFixed(3)}) - OK pour terminal`);
       } else {
-        console.debug(`🔍 group_without_descent (secteur): ${group} (${groupWeight.toFixed(3)}) - drill-down vide autorisé`);
+        console.debug(`group_without_descent (secteur): ${group} (${groupWeight.toFixed(3)}) - drill-down vide autorisé`);
       }
     }
   });
 
   // GUARD: child_at_top_level - WARN seulement si parent a poids > 0 (vrai double-comptage)
-  // ✅ FIX: Skip validation pour les enfants de groupes éponymes (BTC, ETH)
+  //  FIX: Skip validation pour les enfants de groupes éponymes (BTC, ETH)
   allocationKeys.forEach(key => {
     if (!topLevelGroups.includes(key) && allocation[key] > 0.001) {
       const parentGroup = getAssetGroup(key);
       const parentWeight = allocation[parentGroup] || 0;
 
-      // 🔍 NOUVEAU: Si le parent est un groupe éponyme, skip la validation
+      //  NOUVEAU: Si le parent est un groupe éponyme, skip la validation
       // car tous les coins du groupe (BTC, TBTC, WBTC / ETH, STETH, RETH, WSTETH)
       // sont des allocations individuelles, pas des double-comptages
       if (eponymousGroups.has(parentGroup)) {
-        console.debug(`🔍 child_in_eponymous_group: ${key} belongs to eponymous group ${parentGroup} - skip validation`);
+        console.debug(`child_in_eponymous_group: ${key} belongs to eponymous group ${parentGroup} - skip validation`);
         return;
       }
 
       if (parentGroup !== key && parentGroup !== 'Others' && parentWeight > 0.001) {
-        (window.debugLogger?.warn || console.warn)(`⚠️ child_at_top_level: ${key} (${allocation[key].toFixed(3)}) + parent ${parentGroup} (${parentWeight.toFixed(3)}) = vrai double-comptage`);
+        (window.debugLogger?.warn || console.warn)(`[Warning] child_at_top_level: ${key} (${allocation[key].toFixed(3)}) + parent ${parentGroup} (${parentWeight.toFixed(3)}) = vrai double-comptage`);
         issues.push(`child_at_top_level: ${key} → ${parentGroup}`);
       } else if (parentGroup !== key) {
-        console.debug(`🔍 child_at_top_level: ${key} (${allocation[key].toFixed(3)}) mais parent ${parentGroup} = 0 - OK`);
+        console.debug(`child_at_top_level: ${key} (${allocation[key].toFixed(3)}) mais parent ${parentGroup} = 0 - OK`);
       }
     }
   });
@@ -773,17 +773,17 @@ function validateHierarchy(allocation, currentPositions) {
 }
 
 function logAllocationDecisions(data) {
-  console.group('🏗️ Allocation Engine Decisions');
-  console.debug('📊 Input context:', {
+  console.group("Allocation Engine Decisions");
+  console.debug("Input context:", {
     cycle: data.context.cycleScore,
     onchain: data.context.onchainScore,
     contradiction: data.context.contradiction,
     adaptive_weights: data.context.adaptiveWeights
   });
-  console.debug('🌍 Macro allocation:', data.macro);
-  console.debug('🏭 Sector allocation:', data.sectors);
-  console.debug('🪙 Final coin allocation:', data.coins);
-  console.debug('⏱️ Execution plan:', data.execution);
+  console.debug("Macro allocation:", data.macro);
+  console.debug("Sector allocation:", data.sectors);
+  console.debug("Final coin allocation:", data.coins);
+  console.debug("[Pending] Execution plan:", data.execution);
   console.groupEnd();
 }
 

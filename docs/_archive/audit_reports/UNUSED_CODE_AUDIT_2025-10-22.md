@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 Résumé Exécutif
+## Résumé Exécutif
 
 ### Statistiques Globales
 
@@ -31,7 +31,7 @@
 
 ---
 
-## 1. 🐍 Fichiers Python Non Utilisés
+## 1.  Fichiers Python Non Utilisés
 
 ### [CERTAIN] Routes API Non Montées
 
@@ -48,7 +48,7 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 ```
 
 **Impact:** 307 lignes de code mort
-**Recommandation:** ✅ **SUPPRIMER**
+**Recommandation:** [OK] **SUPPRIMER**
 
 ---
 
@@ -59,7 +59,7 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Raison: "Conflit route /api/risk/dashboard avec risk_router"
 - Fonctionnalité déjà gérée par `risk_router`
 
-**Recommandation:** ✅ **SUPPRIMER** le fichier entier
+**Recommandation:** [OK] **SUPPRIMER** le fichier entier
 
 ---
 
@@ -72,7 +72,7 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Endpoint rarement appelé
 - Aucun appel trouvé dans les fichiers JS du frontend
 
-**Recommandation:** 📦 **ARCHIVER** - Garder pour référence future
+**Recommandation:**  **ARCHIVER** - Garder pour référence future
 
 ---
 
@@ -82,7 +82,7 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Module d'orchestration non utilisé
 - Aucune référence trouvée dans le codebase
 
-**Recommandation:** ✅ **SUPPRIMER**
+**Recommandation:** [OK] **SUPPRIMER**
 
 ---
 
@@ -94,11 +94,11 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Deux implémentations du même pipeline
 - Seule la version `optimized` est importée dans `api/main.py:696`
 
-**Recommandation:** ✅ **SUPPRIMER** la version non-optimized après validation
+**Recommandation:** [OK] **SUPPRIMER** la version non-optimized après validation
 
 ---
 
-## 2. 🌐 Routes API Obsolètes
+## 2.  Routes API Obsolètes
 
 ### [PROBABLE] Endpoints Non Appelés par le Frontend
 
@@ -108,7 +108,7 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Aucun appel `fetch()` trouvé dans `static/`
 - Alternative: `/api/risk/dashboard` fournit des données similaires
 
-**Recommandation:** ⚠️ **DEPRECATE** → ajouter warning, supprimer dans 1 mois
+**Recommandation:** [Warning] **DEPRECATE** → ajouter warning, supprimer dans 1 mois
 
 ---
 
@@ -119,11 +119,11 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 - Endpoint fonctionnel mais rarement utilisé
 - Nécessite clé API FRED
 
-**Recommandation:** ✅ **CONSERVER** mais documenter usage
+**Recommandation:** [OK] **CONSERVER** mais documenter usage
 
 ---
 
-## 3. 🎨 Composants Frontend Non Utilisés
+## 3.  Composants Frontend Non Utilisés
 
 ### [CERTAIN] Pages HTML Non Référencées
 
@@ -137,22 +137,22 @@ grep "execution_dashboard" api/main.py  # → Aucun résultat
 2. **`performance-monitor.html`**
    - Remplacé par `performance-monitor-unified.html` (?)
    - Référencé dans nav.js cleanup menu
-   - **Recommandation:** ✅ **SUPPRIMER** si unified est complet
+   - **Recommandation:** [OK] **SUPPRIMER** si unified est complet
 
 3. **`cycle-analysis.html`**
    - Intégré dans `analytics-unified.html` (tab Cycles)
    - Page standalone non nécessaire
-   - **Recommandation:** ✅ **SUPPRIMER** - redirection vers analytics-unified
+   - **Recommandation:** [OK] **SUPPRIMER** - redirection vers analytics-unified
 
 4. **`execution_history.html`**
    - Fonctionnalité intégrée dans `execution.html`
    - Page standalone redondante
-   - **Recommandation:** ✅ **SUPPRIMER** après validation
+   - **Recommandation:** [OK] **SUPPRIMER** après validation
 
 5. **`analytics-equities.html`**
    - Fonctionnalité intégrée dans `saxo-dashboard.html`
    - Références trouvées: 2 fichiers (equities-utils.js, legacy-redirects.js)
-   - **Recommandation:** ⚠️ **CONSERVER** si utilisé pour analyses spécifiques Bourse
+   - **Recommandation:** [Warning] **CONSERVER** si utilisé pour analyses spécifiques Bourse
 
 ---
 
@@ -178,7 +178,7 @@ debug-allocation-console.html     debug-onchain-loading.html
 test-onchain-simple.html          test-memory-leak.html
 ```
 
-**Recommandation:** 📦 **ARCHIVER** dans `static/archive/tests/` ou ✅ **SUPPRIMER**
+**Recommandation:**  **ARCHIVER** dans `static/archive/tests/` ou [OK] **SUPPRIMER**
 
 ---
 
@@ -190,7 +190,7 @@ test-onchain-simple.html          test-memory-leak.html
 - Aucune référence trouvée dans les HTML principaux
 - But: Migration de données anciennes (one-time use)
 
-**Recommandation:** 📦 **ARCHIVER** - garder pour rollback
+**Recommandation:**  **ARCHIVER** - garder pour rollback
 
 ---
 
@@ -199,11 +199,11 @@ test-onchain-simple.html          test-memory-leak.html
 **Problème:**
 - Recherche d'imports → aucun résultat
 
-**Recommandation:** ✅ **SUPPRIMER** si vraiment inutilisé
+**Recommandation:** [OK] **SUPPRIMER** si vraiment inutilisé
 
 ---
 
-## 4. 📦 Imports et Dead Code
+## 4.  Imports et Dead Code
 
 ### [CERTAIN] Dead Code dans api/main.py
 
@@ -213,22 +213,22 @@ test-onchain-simple.html          test-memory-leak.html
 # from connectors.cointracking_api import get_current_balances as ct_api_get_current_balances, _debug_probe
 ```
 
-**Recommandation:** ✅ **SUPPRIMER** les commentaires
+**Recommandation:** [OK] **SUPPRIMER** les commentaires
 
 ---
 
 ### [PROBABLE] Services Importés - Analyse
 
 **Dans `api/main.py`:**
-- ✅ `services.rebalance.plan_rebalance` → Utilisé (ligne 488)
-- ✅ `services.pricing.get_prices_usd` → Utilisé indirectement
-- ✅ `services.portfolio.portfolio_analytics` → Utilisé (ligne 108-112)
+- [OK] `services.rebalance.plan_rebalance` → Utilisé (ligne 488)
+- [OK] `services.pricing.get_prices_usd` → Utilisé indirectement
+- [OK] `services.portfolio.portfolio_analytics` → Utilisé (ligne 108-112)
 
 **Conclusion:** Aucun import inutilisé critique détecté dans les fichiers principaux.
 
 ---
 
-## 5. 💾 Fichiers de Données Obsolètes
+## 5.  Fichiers de Données Obsolètes
 
 ### [CERTAIN] Backups de Migration
 
@@ -236,7 +236,7 @@ test-onchain-simple.html          test-memory-leak.html
 - Taille: ~2 MB (CSV dupliqués)
 - Date: 28 septembre 2025
 
-**Recommandation:** 📦 **ARCHIVER** sur stockage externe après 3 mois
+**Recommandation:**  **ARCHIVER** sur stockage externe après 3 mois
 
 ---
 
@@ -245,7 +245,7 @@ test-onchain-simple.html          test-memory-leak.html
 **`data/monitoring/metrics_*_2025-08-23.json`** et `2025-08-24.json`
 - Date: Août 2025 (3 mois+)
 
-**Recommandation:** 📦 **ARCHIVER** ou ✅ **SUPPRIMER** selon politique de rétention
+**Recommandation:**  **ARCHIVER** ou [OK] **SUPPRIMER** selon politique de rétention
 
 ---
 
@@ -257,25 +257,25 @@ test-onchain-simple.html          test-memory-leak.html
 
 2. **`data/id_overrides.json`**
    - Usage: Possiblement utilisé par taxonomy
-   - **Recommandation:** ✅ **CONSERVER** - validation manuelle requise
+   - **Recommandation:** [OK] **CONSERVER** - validation manuelle requise
 
 3. **`data/rebalance_history.json`**
    - Usage: Historique des plans de rebalancing
-   - **Recommandation:** ✅ **CONSERVER** - données utiles
+   - **Recommandation:** [OK] **CONSERVER** - données utiles
 
 ---
 
-## 6. 📚 Documentation Obsolète
+## 6.  Documentation Obsolète
 
 ### [CERTAIN] Documentation Contradictoire
 
 1. **`docs/_archive/CLAUDE_root.md`**
    - Problème: Version archivée mais existe aussi à la racine
-   - **Recommandation:** ✅ **SUPPRIMER** la version archivée
+   - **Recommandation:** [OK] **SUPPRIMER** la version archivée
 
 2. **`docs/_archive/README_FULL.md`**
    - Problème: Références vers fichiers inexistants (wealth-modules.md)
-   - **Recommandation:** ✅ **SUPPRIMER** ou mettre à jour les liens
+   - **Recommandation:** [OK] **SUPPRIMER** ou mettre à jour les liens
 
 ---
 
@@ -288,7 +288,7 @@ Fichiers dans `docs/_archive/`:
 - `TESTING_PHASE1.md`
 
 **Statut:** Anciennes plans/summaries dépassés
-**Recommandation:** ✅ **SUPPRIMER** (déjà dans _archive/)
+**Recommandation:** [OK] **SUPPRIMER** (déjà dans _archive/)
 
 ---
 
@@ -300,21 +300,21 @@ Fichiers dans `docs/_archive/`:
 
 2. **`docs/AUDIT_REPORT_2025-09-30.md`**
    - Date: 30 septembre 2025
-   - **Recommandation:** ✅ **CONSERVER** - référence historique
+   - **Recommandation:** [OK] **CONSERVER** - référence historique
 
 ---
 
-## 7. 🔧 Scripts et Utilities
+## 7.  Scripts et Utilities
 
 ### [CERTAIN] Scripts Root Level
 
 **`audit_demo.py`** (root)
 - Usage: Script de démonstration, jamais importé
-- **Recommandation:** 📦 **ARCHIVER** dans `scripts/demos/`
+- **Recommandation:**  **ARCHIVER** dans `scripts/demos/`
 
 **`deploy.py`** (root)
 - Usage: Script de déploiement, vérifié = utilisé
-- **Recommandation:** ✅ **CONSERVER**
+- **Recommandation:** [OK] **CONSERVER**
 
 ---
 
@@ -322,55 +322,55 @@ Fichiers dans `docs/_archive/`:
 
 **`debug/scripts/debug_*.py`** (4 fichiers)
 - Usage: Scripts de debugging ponctuels
-- **Recommandation:** 📦 **ARCHIVER** ou ✅ **SUPPRIMER** si > 3 mois
+- **Recommandation:**  **ARCHIVER** ou [OK] **SUPPRIMER** si > 3 mois
 
 ---
 
-## 🎯 Recommandations Prioritaires
+## Recommandations Prioritaires
 
-### 🔴 PRIORITÉ 1 - Action Immédiate (Impact: Élevé, Effort: Faible)
+### PRIORITÉ 1 - Action Immédiate (Impact: Élevé, Effort: Faible)
 
-1. ✅ **SUPPRIMER** `api/execution_dashboard.py` - Route non montée, 307 lignes inutiles
-2. ✅ **SUPPRIMER** `api/risk_dashboard_endpoints.py` - Déjà commenté, conflit résolu
-3. 📦 **ARCHIVER** 28+ pages de test/debug dans `static/archive/tests/`
-4. ✅ **SUPPRIMER** imports commentés dans `api/main.py` (lignes 88-90)
+1. [OK] **SUPPRIMER** `api/execution_dashboard.py` - Route non montée, 307 lignes inutiles
+2. [OK] **SUPPRIMER** `api/risk_dashboard_endpoints.py` - Déjà commenté, conflit résolu
+3. **ARCHIVER** 28+ pages de test/debug dans `static/archive/tests/`
+4. [OK] **SUPPRIMER** imports commentés dans `api/main.py` (lignes 88-90)
 
 **Gain immédiat:** ~1000 lignes de code, clarté architecture
 
 ---
 
-### 🟡 PRIORITÉ 2 - Court Terme (Impact: Moyen, Effort: Moyen)
+### PRIORITÉ 2 - Court Terme (Impact: Moyen, Effort: Moyen)
 
-5. ⚠️ **DÉCIDER** sur `performance-monitor.html` vs `performance-monitor-unified.html`
-6. ✅ **SUPPRIMER** `cycle-analysis.html` (intégré dans analytics-unified)
-7. ✅ **SUPPRIMER** `execution_history.html` (intégré dans execution)
-8. 📦 **ARCHIVER** `services/orchestration/hybrid_orchestrator.py`
-9. 📦 **CLEANUP** `data/backups/migration_20250928_*/` (archivage externe)
+5. [Warning] **DÉCIDER** sur `performance-monitor.html` vs `performance-monitor-unified.html`
+6. [OK] **SUPPRIMER** `cycle-analysis.html` (intégré dans analytics-unified)
+7. [OK] **SUPPRIMER** `execution_history.html` (intégré dans execution)
+8. **ARCHIVER** `services/orchestration/hybrid_orchestrator.py`
+9. **CLEANUP** `data/backups/migration_20250928_*/` (archivage externe)
 
 **Gain estimé:** ~500 lignes, 2 MB d'espace
 
 ---
 
-### 🟢 PRIORITÉ 3 - Moyen Terme (Impact: Faible, Effort: Élevé)
+### PRIORITÉ 3 - Moyen Terme (Impact: Faible, Effort: Élevé)
 
-10. 📚 **AUDITER** et mettre à jour documentation dans `docs/` (25 fichiers)
-11. ⚠️ **VALIDER** usage de `services/performance_optimizer.py`
-12. ⚠️ **DÉCIDER** sur `portfolio-optimization-advanced.html` (intégrer ou supprimer)
-13. ✅ **CLEANUP** `services/ml_pipeline_manager.py` (version non-optimized)
+10. **AUDITER** et mettre à jour documentation dans `docs/` (25 fichiers)
+11. [Warning] **VALIDER** usage de `services/performance_optimizer.py`
+12. [Warning] **DÉCIDER** sur `portfolio-optimization-advanced.html` (intégrer ou supprimer)
+13. [OK] **CLEANUP** `services/ml_pipeline_manager.py` (version non-optimized)
 
 **Gain estimé:** Maintenance future simplifiée
 
 ---
 
-## ⚠️ Pièges à Éviter
+## Pièges à Éviter
 
 ### NE PAS SUPPRIMER
 
-1. ✅ `api/unified_data.py` - Utilisé par main.py (lignes 440, 457)
-2. ✅ `services/balance_service.py` - Core service, 50+ imports
-3. ✅ `static/components/WealthContextBar.js` - Utilisé par nav.js
-4. ✅ `static/global-config.js` - Configuration critique
-5. ✅ `data/portfolio_history.json` - Données P&L importantes
+1. [OK] `api/unified_data.py` - Utilisé par main.py (lignes 440, 457)
+2. [OK] `services/balance_service.py` - Core service, 50+ imports
+3. [OK] `static/components/WealthContextBar.js` - Utilisé par nav.js
+4. [OK] `static/global-config.js` - Configuration critique
+5. [OK] `data/portfolio_history.json` - Données P&L importantes
 
 ---
 
@@ -383,7 +383,7 @@ Fichiers dans `docs/_archive/`:
 
 ---
 
-## 📋 Plan d'Action Recommandé
+## Plan d'Action Recommandé
 
 ### Phase 1: Cleanup Immédiat (1-2h)
 
@@ -423,7 +423,7 @@ mv static/force-*.html static/archive/tests/
 
 ---
 
-## 📎 Annexes
+## Annexes
 
 ### A. Commandes de Vérification
 

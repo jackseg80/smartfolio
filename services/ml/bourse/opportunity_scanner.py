@@ -267,7 +267,7 @@ class OpportunityScanner:
             Dict with gaps, scored opportunities, and recommendations
         """
         try:
-            logger.info(f"🔍 Scanning opportunities for {len(positions)} positions (horizon: {horizon})")
+            logger.info(f" Scanning opportunities for {len(positions)} positions (horizon: {horizon})")
 
             # 1. Extract current sector allocation
             current_allocation = self._extract_sector_allocation(positions)
@@ -289,7 +289,7 @@ class OpportunityScanner:
             # 4. Get top opportunities (top 5 gaps)
             top_gaps = scored_gaps[:5]
 
-            logger.info(f"✅ Scan complete: {len(scored_gaps)} gaps scored, top {len(top_gaps)} selected")
+            logger.info(f" Scan complete: {len(scored_gaps)} gaps scored, top {len(top_gaps)} selected")
 
             return {
                 "all_gaps": scored_gaps,
@@ -300,7 +300,7 @@ class OpportunityScanner:
             }
 
         except Exception as e:
-            logger.error(f"❌ Error scanning opportunities: {e}", exc_info=True)
+            logger.error(f" Error scanning opportunities: {e}", exc_info=True)
             raise
 
     def _enrich_position_with_sector(self, symbol: str) -> str:
@@ -339,7 +339,7 @@ class OpportunityScanner:
             # Check ETF mapping FIRST (Yahoo Finance doesn't return sectors for ETFs)
             if base_symbol in ETF_SECTOR_MAPPING:
                 sector = ETF_SECTOR_MAPPING[base_symbol]
-                logger.info(f"🏦 {symbol} → {sector} (ETF mapping)")
+                logger.info(f" {symbol} → {sector} (ETF mapping)")
                 return sector
 
             if ':' in symbol:
@@ -360,9 +360,9 @@ class OpportunityScanner:
                 if exchange in SAXO_TO_YAHOO_EXCHANGE:
                     suffix = SAXO_TO_YAHOO_EXCHANGE[exchange]
                     yahoo_symbol = f"{base_symbol}{suffix}"
-                    logger.info(f"🔄 Saxo '{symbol}' → Yahoo '{yahoo_symbol}'")
+                    logger.info(f" Saxo '{symbol}' → Yahoo '{yahoo_symbol}'")
                 else:
-                    logger.info(f"⚠️ Unknown exchange '{exchange}' for {symbol}, trying as-is")
+                    logger.info(f" Unknown exchange '{exchange}' for {symbol}, trying as-is")
 
             # Try fetching with converted symbol
             ticker = yf.Ticker(yahoo_symbol)
@@ -372,14 +372,14 @@ class OpportunityScanner:
             sector = info.get('sector') or info.get('sectorKey') or info.get('industry')
 
             if sector:
-                logger.info(f"📍 {symbol} → {sector}")
+                logger.info(f" {symbol} → {sector}")
                 return sector
             else:
-                logger.info(f"❓ {yahoo_symbol} → No sector found in Yahoo Finance")
+                logger.info(f" {yahoo_symbol} → No sector found in Yahoo Finance")
                 return "Unknown"
 
         except Exception as e:
-            logger.info(f"❌ {symbol} → Error fetching sector: {e}")
+            logger.info(f" {symbol} → Error fetching sector: {e}")
             return "Unknown"
 
     def _extract_sector_allocation(self, positions: List[Dict[str, Any]]) -> Dict[str, float]:

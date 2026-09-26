@@ -7,30 +7,30 @@
 
 ---
 
-## 🎯 Vue d'Ensemble Rapide
+## Vue d'Ensemble Rapide
 
 | Dimension | Score | Tendance | Statut | Dernier Audit |
 |-----------|-------|----------|--------|---------------|
-| **Sécurité** | 7.5/10 | ⬆️ +0.5 | 🟡 EN COURS | **Feb 10, 2026** |
-| **Performance** | 7.5/10 | ➡️ Stable | 🟡 EN COURS | Dec 2025 |
-| **Accessibilité** | ~80/100 | ⬇️ -12 | 🟡 MOYEN | **Feb 8, 2026** |
-| **Dette Technique** | 8.0/10 | ⬆️ +0.5 | 🟢 BON | **Feb 9, 2026** |
-| **Tests** | 8.5/10 | ⬆️ +1.0 | 🟢 BON | **Feb 10, 2026** |
-| **CI/CD** | 8/10 | ➡️ Stable | 🟢 BON | Dec 2025 |
-| **API Contract** | 7.0/10 | ⬆️ +1.0 | 🟡 MOYEN | **Feb 9, 2026** |
-| **Error Handling** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
-| **Data Integrity** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
-| **Logging** | 8.0/10 | 🆕 NEW | 🟢 BON | **Feb 9, 2026** |
-| **Concurrency** | 8.5/10 | ⬆️ +1.0 | 🟢 BON | **Feb 9, 2026** |
+| **Sécurité** | 7.5/10 |  +0.5 |  EN COURS | **Feb 10, 2026** |
+| **Performance** | 7.5/10 |  Stable |  EN COURS | Dec 2025 |
+| **Accessibilité** | ~80/100 |  -12 | [Pending] MOYEN | **Feb 8, 2026** |
+| **Dette Technique** | 8.0/10 |  +0.5 | [Positive] BON | **Feb 9, 2026** |
+| **Tests** | 8.5/10 |  +1.0 | [Positive] BON | **Feb 10, 2026** |
+| **CI/CD** | 8/10 |  Stable | [Positive] BON | Dec 2025 |
+| **API Contract** | 7.0/10 |  +1.0 | [Pending] MOYEN | **Feb 9, 2026** |
+| **Error Handling** | 8.0/10 |  NEW | [Positive] BON | **Feb 9, 2026** |
+| **Data Integrity** | 8.0/10 |  NEW | [Positive] BON | **Feb 9, 2026** |
+| **Logging** | 8.0/10 |  NEW | [Positive] BON | **Feb 9, 2026** |
+| **Concurrency** | 8.5/10 |  +1.0 | [Positive] BON | **Feb 9, 2026** |
 
 **Note Globale:** **8.2/10** (was 6.0 at audit start → 7.7 after P0-P3 → 7.9 after filelock+tests+response format → 8.0 after JWT auth → 8.1 after coverage push 46% → 8.2 after Plan v5 complete: notifications, backups, freshness, morning brief, PDF export, mobile UX, Sentry, scheduler Redis)
 
 ---
 
-## 🔒 Sécurité: 7.5/10 - EN COURS
+## Sécurité: 7.5/10 - EN COURS
 
 ### Statut
-🟡 **Réévalué Feb 2026** - 9 CVEs fixed, auth gaps fixed (P0), JWT validation on all 188 endpoints (Feb 10)
+[Pending] **Réévalué Feb 2026** - 9 CVEs fixed, auth gaps fixed (P0), JWT validation on all 188 endpoints (Feb 10)
 
 ### Métriques Clés
 - **Vulnérabilités critiques:** 0 (était 3)
@@ -45,22 +45,22 @@
 2. [SECURITY_FIXES_2025-11-22.md](./SECURITY_FIXES_2025-11-22.md) - Corrections implémentées
 
 ### Corrections Majeures (Nov 2025)
-- ✅ Clé API CoinGecko migrée vers UserSecretsManager
-- ✅ Credentials hardcodés supprimés
-- ✅ eval() JavaScript éliminé (système whitelist)
-- ✅ MD5 avec `usedforsecurity=False` (6 occurrences)
-- ✅ urllib → httpx (2 occurrences)
-- ✅ Safe ML Loader system créé (path traversal protection)
+- [OK] Clé API CoinGecko migrée vers UserSecretsManager
+- [OK] Credentials hardcodés supprimés
+- [OK] eval() JavaScript éliminé (système whitelist)
+- [OK] MD5 avec `usedforsecurity=False` (6 occurrences)
+- [OK] urllib → httpx (2 occurrences)
+- [OK] Safe ML Loader system créé (path traversal protection)
 
 ### Automatisation (Dec 2025)
-- ✅ GitHub Actions security scan automatique (chaque PR)
-- ✅ Workflow hebdomadaire scheduled (lundi 9h UTC)
-- ✅ Artifacts reports (90 jours rétention)
-- ✅ Issue auto-création si vulnérabilités détectées
+- [OK] GitHub Actions security scan automatique (chaque PR)
+- [OK] Workflow hebdomadaire scheduled (lundi 9h UTC)
+- [OK] Artifacts reports (90 jours rétention)
+- [OK] Issue auto-création si vulnérabilités détectées
 
 ### Actions Requises
-- [ ] ⚠️ Review 24 MEDIUM issues restantes (majoritairement pickle/PyTorch ML - acceptable)
-- [ ] 🔄 Rotation API keys (trimestrielle - prochaine: Mars 2026)
+- [ ] [Warning] Review 24 MEDIUM issues restantes (majoritairement pickle/PyTorch ML - acceptable)
+- [ ]  Rotation API keys (trimestrielle - prochaine: Mars 2026)
 
 **Documentation:** [docs/SECURITY.md](../SECURITY.md)
 
@@ -70,7 +70,7 @@
 
 ### Statut
 
-✅ **COMPLET ET VALIDÉ** - Toutes les phases terminées, tests passés
+[OK] **COMPLET ET VALIDÉ** - Toutes les phases terminées, tests passés
 
 ### Contexte
 
@@ -83,17 +83,17 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 | Phase | Description | Status |
 |-------|-------------|--------|
-| Phase 1 | Urgence Vitale (garde-fous) | ✅ |
-| Phase 2 | Assainissement (split-brain) | ✅ |
-| Phase 3 | Évolution Stratégique (macro DXY/VIX) | ✅ |
+| Phase 1 | Urgence Vitale (garde-fous) | OK |
+| Phase 2 | Assainissement (split-brain) | OK |
+| Phase 3 | Évolution Stratégique (macro DXY/VIX) | OK |
 
 ### Tests de Validation (3 Feb 2026)
 
 | Test | Description | Résultat |
 |------|-------------|----------|
-| Test 1 | Volatilité garde-fou clamp 5% | ✅ PASS |
-| Test 2 | Freeze bloque achats | ✅ PASS |
-| Test 3 | Poids frontend harmonisés | ✅ PASS |
+| Test 1 | Volatilité garde-fou clamp 5% | [OK] PASS |
+| Test 2 | Freeze bloque achats | [OK] PASS |
+| Test 3 | Poids frontend harmonisés | [OK] PASS |
 
 ### Commits
 
@@ -112,7 +112,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ## Performance: 7.5/10 - EN COURS
 
 ### Statut
-🔄 **40% Résolu** - 19/47 problèmes corrigés
+ **40% Résolu** - 19/47 problèmes corrigés
 
 ### Métriques Clés
 - **Problèmes identifiés:** 47 (Backend 12, API 11, Frontend 12, Cache 12)
@@ -145,14 +145,14 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ♿ Accessibilité: ~80/100 - MOYEN
+## Accessibilité: ~80/100 - MOYEN
 
 ### Statut
-✅ **BON** - Phase 1 Quick Wins complétée (23 Dec 2025)
+[OK] **BON** - Phase 1 Quick Wins complétée (23 Dec 2025)
 
 ### Métriques Clés
 - **Score WCAG 2.1 AA:** 83/100 (était 68, +15 pts)
-- **Phase 1 Quick Wins:** ✅ 7/7 fixes implémentés
+- **Phase 1 Quick Wins:** [OK] 7/7 fixes implémentés
 - **Issues résolues:** WCAG 2.4.7 (focus), WCAG 2.3.3 (motion)
 - **Commit:** 59523ee (6 fichiers modifiés)
 - **Dernier scan:** 23 Décembre 2025
@@ -161,24 +161,24 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 1. [ACCESSIBILITY_AUDIT_2025-12-23.md](./ACCESSIBILITY_AUDIT_2025-12-23.md) - Audit complet WCAG 2.1
 
 ### Issues Critiques
-1. 🔴 **Contraste couleurs insuffisant** - Variables `--theme-text-muted` < 4.5:1
-2. 🔴 **Canvas charts sans description textuelle** - Screen readers bloqués
-3. 🔴 **Tableaux complexes sans scope/headers** - Navigation impossible
+1. [Negative] **Contraste couleurs insuffisant** - Variables `--theme-text-muted` < 4.5:1
+2. [Negative] **Canvas charts sans description textuelle** - Screen readers bloqués
+3. [Negative] **Tableaux complexes sans scope/headers** - Navigation impossible
 
 ### Quick Wins (2h pour +15 pts)
-- ✅ Focus-visible global (5 min)
-- ✅ Prefers-reduced-motion (10 min)
-- ✅ Labels inputs (15 min)
-- ✅ Aria-hidden emojis (10 min)
-- ✅ Canvas descriptions (20 min)
-- ✅ Table scope (20 min)
-- ✅ Liens externes aria-label (15 min)
+- [OK] Focus-visible global (5 min)
+- [OK] Prefers-reduced-motion (10 min)
+- [OK] Labels inputs (15 min)
+- [OK] Aria-hidden emojis (10 min)
+- [OK] Canvas descriptions (20 min)
+- [OK] Table scope (20 min)
+- [OK] Liens externes aria-label (15 min)
 
 ### Plan d'Action
 - **Phase 1 - Quick Wins** (2h): 68 → 83/100
 - **Phase 2 - Contraste** (4h): 83 → 91/100
 - **Phase 3 - Navigation** (6h): 91 → 96/100
-- **Phase 4 - Charts** (8h): 96 → 100/100 ✅
+- **Phase 4 - Charts** (8h): 96 → 100/100 [OK]
 
 **Total effort:** 20h sur 2 semaines pour WCAG 2.1 AA complet
 
@@ -186,10 +186,10 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 🛠️ Dette Technique: 8.0/10 - BON
+## Dette Technique: 8.0/10 - BON
 
 ### Statut
-✅ **AMÉLIORÉ** - God Services refactorisés (governance -44%, risk_management -54%)
+[OK] **AMÉLIORÉ** - God Services refactorisés (governance -44%, risk_management -54%)
 
 ### Métriques Clés
 - **TODOs actifs:** ~20 (increase vs 8, mostly LOW backlog items)
@@ -206,9 +206,9 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 | Service | Avant | Après | Delta | Statut |
 |---------|-------|-------|-------|--------|
-| `governance.py` | 2,092 | **1,163** | **-44%** | ✅ DONE |
-| `risk_management.py` | 2,159 | **990** | **-54%** | ✅ DONE |
-| `alert_engine.py` | 1,583 | **1,324** | **-16%** | 🟠 Partiel |
+| `governance.py` | 2,092 | **1,163** | **-44%** |  DONE |
+| `risk_management.py` | 2,159 | **990** | **-54%** |  DONE |
+| `alert_engine.py` | 1,583 | **1,324** | **-16%** | [Pending] Partiel |
 
 ### Conformité CLAUDE.md
 - **Score:** 90% (était 75%, +15 pts)
@@ -225,10 +225,10 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## ✅ Tests: 8.5/10 - BON
+## Tests: 8.5/10 - BON
 
 ### Statut
-🟢 **Coverage push Feb 10, 2026** - Coverage **~47%**, **3,198 passing, 0 failures** (unit), 10 skipped. 25+ nouveaux fichiers de tests (backtesting, trading strategies, taxonomy, bourse metrics, risk_scoring 100%, etc.). Plan v5 complete (11/11 items).
+[Positive] **Coverage push Feb 10, 2026** - Coverage **~47%**, **3,198 passing, 0 failures** (unit), 10 skipped. 25+ nouveaux fichiers de tests (backtesting, trading strategies, taxonomy, bourse metrics, risk_scoring 100%, etc.). Plan v5 complete (11/11 items).
 
 ### Métriques Clés
 
@@ -248,57 +248,57 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 3. [COMPREHENSIVE_AUDIT_2026-02-08.md](./COMPREHENSIVE_AUDIT_2026-02-08.md) - Section A2
 
 ### Infrastructure
-- ✅ pytest + pytest-asyncio configuré
-- ✅ pytest-cov avec rapports HTML/XML
-- ✅ pyproject.toml avec markers et coverage baseline (30%)
-- ✅ GitHub Actions avec coverage upload
-- ✅ Multi-tenant isolation testée
-- ✅ ML pipeline tests (14 optimized pipeline + 19 unified endpoints + 13 performance)
-- ✅ MarketRegime enum fix validé (42 tests ml_models)
+- [OK] pytest + pytest-asyncio configuré
+- [OK] pytest-cov avec rapports HTML/XML
+- [OK] pyproject.toml avec markers et coverage baseline (30%)
+- [OK] GitHub Actions avec coverage upload
+- [OK] Multi-tenant isolation testée
+- [OK] ML pipeline tests (14 optimized pipeline + 19 unified endpoints + 13 performance)
+- [OK] MarketRegime enum fix validé (42 tests ml_models)
 
 ### Services Maintenant Testés (Feb 9-10)
 
-- ✅ Pricing Service — 29 tests
-- ✅ Export Formatter — 72 tests
-- ✅ Error Handling — 69 tests (95% coverage)
-- ✅ Price Utils — 49 tests
-- ✅ Advanced Analytics — 50 tests
-- ✅ Universe — 73 tests
-- ✅ Notification Sender — 43 tests
-- ✅ Macro Stress — 30 tests
-- ✅ Performance Optimizer — 45 tests
-- ✅ Exceptions — 62 tests (89% coverage)
-- ✅ User Management — 40 tests
-- ✅ Cache Utils — 23 tests
-- ✅ ML Cache Utils — 30 tests
-- ✅ Cache Manager — 30 tests
-- ✅ Scheduler — 57 tests
-- ✅ **Backtesting Engine — 43 tests** (NEW Feb 10)
-- ✅ **Trading Strategies — 70 tests** (NEW Feb 10)
-- ✅ **Taxonomy — 30 tests** (67% coverage) (NEW Feb 10)
-- ✅ **Regime Constants — 43 tests** (NEW Feb 10)
-- ✅ **Data Processing — 48 tests** (NEW Feb 10)
-- ✅ **Idempotency Manager — 25 tests** (NEW Feb 10)
-- ✅ **Monte Carlo — 9 tests** (NEW Feb 10)
-- ✅ **Stress Testing — 20 tests** (NEW Feb 10)
-- ✅ **VaR Calculator — 37 tests** (70% coverage)
-- ✅ **Circuit Breaker — 50+ tests** (100% coverage)
-- ✅ **Trailing Stop Calculator — 40+ tests**
-- ✅ **Utils Formatters — extended +30 tests**
-- ✅ **Bourse Metrics — 48 tests** (~96% coverage) (NEW Feb 10)
-- ✅ **Alert Types — 50 tests** (~70% coverage) (NEW Feb 10)
-- ✅ **Signals — 50 tests** (~60% coverage) (NEW Feb 10)
-- ✅ **Advanced Rebalancing — 50 tests** (~30% coverage) (NEW Feb 10)
-- ✅ **Risk Scoring — 80 tests** (100% coverage) (NEW Feb 10)
-- ✅ **Instruments Registry — 45 tests** (90% coverage) (NEW Feb 10)
-- ✅ **Portfolio Metrics Service — 42 tests** (~40% coverage) (NEW Feb 10)
-- ✅ **Structural Score V2 — 28 tests** (~80% coverage) (NEW Feb 10)
+- [OK] Pricing Service — 29 tests
+- [OK] Export Formatter — 72 tests
+- Error Handling — 69 tests (95% coverage)
+- [OK] Price Utils — 49 tests
+- [OK] Advanced Analytics — 50 tests
+- [OK] Universe — 73 tests
+- [OK] Notification Sender — 43 tests
+- [OK] Macro Stress — 30 tests
+- [OK] Performance Optimizer — 45 tests
+- [OK] Exceptions — 62 tests (89% coverage)
+- [OK] User Management — 40 tests
+- [OK] Cache Utils — 23 tests
+- [OK] ML Cache Utils — 30 tests
+- [OK] Cache Manager — 30 tests
+- [OK] Scheduler — 57 tests
+- [OK] **Backtesting Engine — 43 tests** (NEW Feb 10)
+- [OK] **Trading Strategies — 70 tests** (NEW Feb 10)
+- [OK] **Taxonomy — 30 tests** (67% coverage) (NEW Feb 10)
+- [OK] **Regime Constants — 43 tests** (NEW Feb 10)
+- [OK] **Data Processing — 48 tests** (NEW Feb 10)
+- [OK] **Idempotency Manager — 25 tests** (NEW Feb 10)
+- [OK] **Monte Carlo — 9 tests** (NEW Feb 10)
+- [OK] **Stress Testing — 20 tests** (NEW Feb 10)
+- [OK] **VaR Calculator — 37 tests** (70% coverage)
+- [OK] **Circuit Breaker — 50+ tests** (100% coverage)
+- [OK] **Trailing Stop Calculator — 40+ tests**
+- [OK] **Utils Formatters — extended +30 tests**
+- [OK] **Bourse Metrics — 48 tests** (~96% coverage) (NEW Feb 10)
+- [OK] **Alert Types — 50 tests** (~70% coverage) (NEW Feb 10)
+- [OK] **Signals — 50 tests** (~60% coverage) (NEW Feb 10)
+- [OK] **Advanced Rebalancing — 50 tests** (~30% coverage) (NEW Feb 10)
+- [OK] **Risk Scoring — 80 tests** (100% coverage) (NEW Feb 10)
+- [OK] **Instruments Registry — 45 tests** (90% coverage) (NEW Feb 10)
+- [OK] **Portfolio Metrics Service — 42 tests** (~40% coverage) (NEW Feb 10)
+- [OK] **Structural Score V2 — 28 tests** (~80% coverage) (NEW Feb 10)
 
 ### Services Non Testés (Backlog)
 
-- ❌ FX Service (0%)
-- ❌ Wealth Service (0%)
-- ❌ Saxo Auth Service (0%)
+- [Error] FX Service (0%)
+- [Error] Wealth Service (0%)
+- [Error] Saxo Auth Service (0%)
 
 ### Frontend Testing
 - **Status:** 1% (1 fichier: `computeExposureCap.test.js`)
@@ -316,19 +316,19 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 🔄 CI/CD: 8/10 - BON
+## CI/CD: 8/10 - BON
 
 ### Statut
-✅ **AUTOMATISÉ** - Scans sécurité + coverage depuis Dec 2025
+[OK] **AUTOMATISÉ** - Scans sécurité + coverage depuis Dec 2025
 
 ### Composants
-- ✅ Tests unitaires + intégration
-- ✅ Lint (ruff)
-- ✅ Type check (mypy)
-- ✅ Coverage reports (xml + html)
-- ✅ Security scan (Safety + Bandit)
-- ✅ Artifacts upload (90 jours)
-- ✅ Docker build
+- [OK] Tests unitaires + intégration
+- [OK] Lint (ruff)
+- [OK] Type check (mypy)
+- [OK] Coverage reports (xml + html)
+- [OK] Security scan (Safety + Bandit)
+- [OK] Artifacts upload (90 jours)
+- [OK] Docker build
 
 ### Workflows
 1. **ci.yml** - Pipeline principal (chaque PR + push main/develop)
@@ -349,15 +349,15 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - **Artifacts:** Coverage + Security reports (3 mois rétention)
 
 ### Manquants
-- ❌ E2E tests (Playwright) - Planifié Q2 2026
-- ❌ Performance benchmarks - Planifié Q3 2026
-- ❌ Deployment automation - Planifié Q4 2026
+- [Error] E2E tests (Playwright) - Planifié Q2 2026
+- [Error] Performance benchmarks - Planifié Q3 2026
+- [Error] Deployment automation - Planifié Q4 2026
 
 **Workflows:** [.github/workflows/](../../.github/workflows/)
 
 ---
 
-## 📚 Tous les Audits Disponibles
+## Tous les Audits Disponibles
 
 ### Audits Complets
 1. [AUDIT_COMPLET_2025_11_09.md](./AUDIT_COMPLET_2025_11_09.md) - Vue globale Nov 2025
@@ -396,9 +396,9 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 🎯 Roadmap Globale
+## Roadmap Globale
 
-### ✅ Complété (Nov-Dec 2025)
+### Complété (Nov-Dec 2025)
 - [x] Audit sécurité complet + corrections (Score 6 → 8.5)
 - [x] Bloqueurs production éliminés (5 → 0)
 - [x] Tests BalanceService créés (0% → 66%)
@@ -407,7 +407,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] CI/CD automation sécurité
 - [x] Audit accessibilité complet (NOUVEAU)
 
-### ✅ Complété (Feb 8-9, 2026 — Comprehensive Audit)
+### Complété (Feb 8-9, 2026 — Comprehensive Audit)
 
 - [x] Comprehensive re-audit (11 dimensions, 5 new domains)
 - [x] 9 CVEs fixed (starlette, urllib3, python-multipart, protobuf, filelock, pyasn1)
@@ -431,7 +431,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] Bug fix: get_required_user 403→500 (missing except HTTPException)
 - [x] Alert Storage + Portfolio Optimization + Risk Management tests (154 new tests → 2476 passing, coverage 45%)
 
-### ✅ Complété (Feb 10, 2026 — Plan v5 Complete)
+### Complété (Feb 10, 2026 — Plan v5 Complete)
 
 - [x] Plan d'Amelioration v5: 11/11 items complete, 3,198 tests, 0 failures
 - [x] 1.1 Atomic writes (user_management + alert_storage)
@@ -448,7 +448,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] Hotfix: encoding (BOM + CP1252 mojibake on 22 HTML files)
 - [x] Coverage push 42.9% → ~47% (390+ new tests in 4 phases)
 
-### 🔄 En Cours (Q1 2026)
+### En Cours (Q1 2026)
 
 - [ ] Performance: Top 5 priorités restantes (18h)
 - [ ] Push backend coverage to 50% (at ~47% — 3,198 tests)
@@ -457,19 +457,19 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 - [x] ~~Standardize response format~~ → **DONE** (27 bare returns migrated, Feb 9)
 - [x] ~~FileLock expanded~~ → **DONE** (5 → 11 services, Feb 9)
 
-### 📅 Planifié Court Terme (Q1 2026)
+### Planifié Court Terme (Q1 2026)
 
 - [ ] Accessibilité: Phases 2-3 (10h, 83 → 96/100)
 - [ ] God Services Phase 3: alert_engine.py refactoring
 
-### 📅 Planifié Moyen Terme (Q2 2026)
+### Planifié Moyen Terme (Q2 2026)
 
 - [ ] Frontend tests: Vitest setup + JS coverage (4 sem)
 - [ ] E2E tests CI/CD (Playwright)
 - [x] ~~JWT auth on all endpoints~~ → **DONE** (soft mode: validates JWT on all 188 endpoints, Feb 10)
 - [ ] Frontend God Controllers refactoring (5 files >2,000 lines)
 
-### 📅 Planifié Long Terme (Q3-Q4 2026)
+### Planifié Long Terme (Q3-Q4 2026)
 
 - [ ] 60% test coverage global
 - [ ] Performance: Tous les 47 problèmes résolus
@@ -479,24 +479,24 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 📊 Métriques d'Évolution
+## Métriques d'Évolution
 
 ### Tendances Oct 2025 → Feb 2026
 
 | Métrique | Oct 2025 | Dec 2025 | Feb 2026 | Évolution |
 |----------|----------|----------|----------|-----------|
-| **Score Global** | 7.2/10 | 7.7/10 | **8.1/10** | +13% ✅ |
+| **Score Global** | 7.2/10 | 7.7/10 | **8.1/10** | +13% [OK] |
 | **Sécurité** | 6/10 | 8.5/10 | **7.5/10** | Réévalué (CVEs+JWT) |
-| **Vulns critiques** | 3 | 0 | **0** | -100% ✅ |
-| **Performance fixes** | 0 | 19/47 | 19/47 | +40% ✅ |
-| **Accessibilité** | ? | 68/100 | **~80/100** | +18% ✅ |
-| **Dette Technique** | 7.5 | 7.5 | **8.0** | +7% ✅ |
-| **Tests coverage** | ~20% | ~20% | **~47%** | +135% ✅ |
-| **Tests passing** | ~810 | ~810 | **3,198** | +295% ✅ |
-| **CI/CD automation** | ❌ | ✅ | ✅ | ✅ |
-| **New: Error Handling** | -- | -- | **8.0/10** | 🆕 |
-| **New: Data Integrity** | -- | -- | **8.0/10** | 🆕 |
-| **New: Logging** | -- | -- | **8.0/10** | 🆕 |
+| **Vulns critiques** | 3 | 0 | **0** | -100% [OK] |
+| **Performance fixes** | 0 | 19/47 | 19/47 | +40% [OK] |
+| **Accessibilité** | ? | 68/100 | **~80/100** | +18% [OK] |
+| **Dette Technique** | 7.5 | 7.5 | **8.0** | +7% [OK] |
+| **Tests coverage** | ~20% | ~20% | **~47%** | +135% [OK] |
+| **Tests passing** | ~810 | ~810 | **3,198** | +295% [OK] |
+| **CI/CD automation** | Error | OK | OK | OK |
+| **New: Error Handling** | -- | -- | **8.0/10** | New |
+| **New: Data Integrity** | -- | -- | **8.0/10** | New |
+| **New: Logging** | -- | -- | **8.0/10** | New |
 
 ### Effort Total Investi
 
@@ -515,13 +515,13 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ---
 
-## 🚀 Actions Recommandées Prioritaires
+## Actions Recommandées Prioritaires
 
 ### Prochaine Session
 
-1. ~~**Fix 23 failing tests**~~ → ✅ **DONE** (2,476 passing, 0 failures)
+1. ~~**Fix 23 failing tests**~~ →  **DONE** (2,476 passing, 0 failures)
 2. **Push coverage to 50%** (1h remaining) - at ~47%, need ~3% more (fx_service, wealth, saxo_auth)
-3. ~~**Standardize response format**~~ → ✅ **DONE** (27 bare returns migrated)
+3. ~~**Standardize response format**~~ →  **DONE** (27 bare returns migrated)
 
 ### Ce Mois (Feb-Mars 2026)
 
@@ -531,13 +531,13 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 
 ### Ce Trimestre (Q1-Q2 2026)
 
-7. ~~**JWT auth everywhere**~~ → ✅ **DONE** (soft mode Feb 10, strict mode via REQUIRE_JWT=1)
+7. ~~**JWT auth everywhere**~~ →  **DONE** (soft mode Feb 10, strict mode via REQUIRE_JWT=1)
 8. **Frontend tests setup** (2 sem) - Vitest infrastructure
 9. **Frontend God Controllers** (4 sem) - 5 fichiers >2,000 lignes
 
 ---
 
-## 📞 Support & Documentation
+## Support & Documentation
 
 ### Pour Commencer
 - **Vue d'ensemble:** [README.md](./README.md)
@@ -558,7 +558,7 @@ Audit Gemini + Investigation Claude ont révélé des vulnérabilités critiques
 ### Questions Fréquentes
 
 **Q: Le projet est-il prêt pour production?**
-A: ✅ OUI - Tous les bloqueurs critiques sont résolus (sécurité 8.5/10, 0 vulns critiques)
+A: [OK] OUI - Tous les bloqueurs critiques sont résolus (sécurité 8.5/10, 0 vulns critiques)
 
 **Q: Quelle est la priorité #1 actuellement?**
 A: Accessibilité Quick Wins (2h pour +15 pts) puis God Services refactoring
@@ -571,23 +571,23 @@ A: Majoritairement OUI (Nov-Dec 2025), prochaine revue complète prévue Q2 2026
 
 ---
 
-## ✅ Conclusion
+## Conclusion
 
 SmartFolio a fait des **progrès excellents** sur les 3 derniers mois:
 
 **Forces:**
-- ✅ **Production ready** (sécurité, tests, conformité)
-- ✅ **Dette technique en baisse** (-67% TODOs)
-- ✅ **CI/CD automatisé** (security + coverage)
-- ✅ **Documentation exhaustive** (21 audits, 25,000+ lignes)
+- [OK] **Production ready** (sécurité, tests, conformité)
+- [OK] **Dette technique en baisse** (-67% TODOs)
+- [OK] **CI/CD automatisé** (security + coverage)
+- [OK] **Documentation exhaustive** (21 audits, 25,000+ lignes)
 
 **Opportunités:**
-- 🎯 **Performance** (28/47 problèmes restants, effort: 20h)
-- 🎯 **Accessibilité** (68 → 100/100, effort: 20h)
-- 🎯 **God Services** (5,834 lignes, effort: 6 sem)
-- 🎯 **Tests frontend** (1% → 40%, effort: 4 sem)
+- **Performance** (28/47 problèmes restants, effort: 20h)
+- **Accessibilité** (68 → 100/100, effort: 20h)
+- **God Services** (5,834 lignes, effort: 6 sem)
+- **Tests frontend** (1% → 40%, effort: 4 sem)
 
-**Niveau de confiance:** 🟢 **TRÈS ÉLEVÉ** - Projet mature et bien audité
+**Niveau de confiance:** [Positive] **TRÈS ÉLEVÉ** - Projet mature et bien audité
 
 **Prochaine étape recommandée:** Accessibilité Quick Wins (Janvier 2026, 2h)
 

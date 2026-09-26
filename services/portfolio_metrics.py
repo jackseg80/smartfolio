@@ -161,7 +161,7 @@ class PortfolioMetrics:
     positive_months_pct: float
     win_loss_ratio: float
 
-    # ✅ Risk Assessment (docs/RISK_SEMANTICS.md)
+    # [OK] Risk Assessment (docs/RISK_SEMANTICS.md)
     # overall_risk_level: str  # "very_low", "low", "medium", "high", "very_high", "critical"
     # risk_score: float        # Score 0-100 (robustesse: plus haut = moins risqué)
     overall_risk_level: str = "medium"
@@ -234,7 +234,7 @@ class PortfolioMetricsService:
         # Calculer les rendements pondérés du portfolio
         portfolio_returns = self._calculate_weighted_portfolio_returns(price_data, balances)
 
-        # ✅ FIX: Reduce minimum to 28 to account for pct_change() consuming 1-2 rows
+        # [OK] FIX: Reduce minimum to 28 to account for pct_change() consuming 1-2 rows
         # With 30 days of price data, pct_change() produces 29 valid returns
         min_required_points = 28
         if len(portfolio_returns) < min_required_points:
@@ -258,7 +258,7 @@ class PortfolioMetricsService:
         CRYPTO_MIN_VOLATILITY = 0.05  # 5% annualisé = seuil minimum réaliste crypto
         if volatility < CRYPTO_MIN_VOLATILITY:
             logger.warning(
-                f"⚠️ VOLATILITY ANOMALY DETECTED: {volatility:.2%} < {CRYPTO_MIN_VOLATILITY:.0%} minimum. "
+                f"[Warning] VOLATILITY ANOMALY DETECTED: {volatility:.2%} < {CRYPTO_MIN_VOLATILITY:.0%} minimum. "
                 f"Possible data corruption or cash-heavy portfolio. "
                 f"Risk Score calculation may be unreliable."
             )
@@ -287,7 +287,7 @@ class PortfolioMetricsService:
         positive_months = self._calculate_positive_months_pct(portfolio_returns)
         win_loss_ratio = self._calculate_win_loss_ratio(portfolio_returns)
 
-        # 🆕 Calculate structural metrics for risk scoring
+        # [New] Calculate structural metrics for risk scoring
         memecoins_pct = 0.0
         hhi = 0.0
         gri = 5.0  # Default neutral
@@ -348,7 +348,7 @@ class PortfolioMetricsService:
         )
         diversification_ratio = correlation_metrics.diversification_ratio
 
-        # ✅ Risk Assessment (docs/RISK_SEMANTICS.md)
+        # [OK] Risk Assessment (docs/RISK_SEMANTICS.md)
         # Risk Score = indicateur POSITIF de robustesse [0-100]
         # Plus haut = plus robuste (risque perçu plus faible)
         # IMPORTANT: Utilise la fonction centralisée pour éviter duplication
@@ -358,7 +358,7 @@ class PortfolioMetricsService:
             sharpe_ratio=sharpe_ratio,
             max_drawdown=drawdown_metrics['max_drawdown'],
             volatility=volatility,
-            # 🆕 Structural penalties (V2+ scoring)
+            # [New] Structural penalties (V2+ scoring)
             memecoins_pct=memecoins_pct,
             hhi=hhi,
             gri=gri,
@@ -416,7 +416,7 @@ class PortfolioMetricsService:
         Returns:
             Dict avec 'long_term', 'full_intersection', 'exclusions_metadata'
         """
-        logger.info(f"🔍 Dual Window: min_history={min_history_days}d, min_coverage={min_coverage_pct*100}%, min_assets={min_asset_count}")
+        logger.info(f" Dual Window: min_history={min_history_days}d, min_coverage={min_coverage_pct*100}%, min_assets={min_asset_count}")
 
         # Calculer la valeur totale du portfolio
         total_portfolio_value = sum(float(b.get('value_usd', 0)) for b in balances)
@@ -445,7 +445,7 @@ class PortfolioMetricsService:
         # Essayer cascade fallback
         for target_days, min_cov in cascade_configs:
             if target_days > len(price_data):
-                logger.warning(f"⏭️  Skip cascade {target_days}d (only {len(price_data)} points available)")
+                logger.warning(f"  Skip cascade {target_days}d (only {len(price_data)} points available)")
                 continue
 
             # Construire la cohorte pour cette fenêtre
@@ -476,17 +476,17 @@ class PortfolioMetricsService:
             coverage_pct = cohort_value / total_portfolio_value if total_portfolio_value > 0 else 0
 
             if coverage_pct >= min_cov and len(cohort_balances) >= min_asset_count:
-                logger.info(f"✅ Cohort found: {target_days}d, {len(cohort_balances)} assets, {coverage_pct*100:.1f}% value")
+                logger.info(f" Cohort found: {target_days}d, {len(cohort_balances)} assets, {coverage_pct*100:.1f}% value")
 
                 # Calculer les métriques sur cette cohorte
-                # ⚠️ IMPORTANT: Filtrer les colonnes de la cohorte AVANT de nettoyer les NaN
+                # [Warning] IMPORTANT: Filtrer les colonnes de la cohorte AVANT de nettoyer les NaN
                 cohort_symbols = [b.get('symbol', '').upper() for b in cohort_balances]
                 cohort_price_data = price_data[cohort_symbols].dropna().tail(target_days)
 
-                # ✅ FIX: Verify minimum data points BEFORE calculating metrics
+                # [OK] FIX: Verify minimum data points BEFORE calculating metrics
                 min_required_points = 28  # Same as calculate_portfolio_metrics requirement (accounting for pct_change loss)
                 if len(cohort_price_data) < min_required_points:
-                    logger.warning(f"⚠️  Cohort {target_days}d has insufficient data points: {len(cohort_price_data)} < {min_required_points} (after dropna)")
+                    logger.warning(f"  Cohort {target_days}d has insufficient data points: {len(cohort_price_data)} < {min_required_points} (after dropna)")
                     continue  # Skip to next cascade config
 
                 try:
@@ -518,22 +518,22 @@ class PortfolioMetricsService:
                     break  # Sortir de la cascade
 
                 except Exception as e:
-                    logger.warning(f"⚠️  Cohort {target_days}d failed calculation: {e}")
+                    logger.warning(f"  Cohort {target_days}d failed calculation: {e}")
                     continue
             else:
-                logger.warning(f"❌ Cohort {target_days}d insufficient: {len(cohort_balances)} assets, {coverage_pct*100:.1f}% (need {min_cov*100}%)")
+                logger.warning(f" Cohort {target_days}d insufficient: {len(cohort_balances)} assets, {coverage_pct*100:.1f}% (need {min_cov*100}%)")
 
         # Fallback si aucune cohorte trouvée
         if long_term_result is None:
-            logger.warning("⚠️  No valid long-term cohort found, using full intersection as fallback")
+            logger.warning("  No valid long-term cohort found, using full intersection as fallback")
             exclusions_metadata['reason'] = 'no_valid_cohort_found'
 
         # Calculer la fenêtre Full Intersection (tous les assets)
         try:
-            # ⚠️ IMPORTANT: dropna() pour éliminer les lignes avec NaN (intersection temporelle)
+            # [Warning] IMPORTANT: dropna() pour éliminer les lignes avec NaN (intersection temporelle)
             full_intersection_price_data = price_data.dropna()
 
-            # ✅ FIX: Verify minimum data points for full intersection
+            # [OK] FIX: Verify minimum data points for full intersection
             min_required_points = 28  # Accounting for pct_change() consuming 1-2 rows
             if len(full_intersection_price_data) < min_required_points:
                 raise ValueError(
@@ -555,12 +555,12 @@ class PortfolioMetricsService:
                 'coverage_pct': 1.0
             }
         except Exception as e:
-            # ✅ FIX: Log data quality issues as warnings, not errors
+            # [OK] FIX: Log data quality issues as warnings, not errors
             error_msg = str(e)
             if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
-                logger.warning(f"⚠️ Full intersection data quality issue: {e}")
+                logger.warning(f" Full intersection data quality issue: {e}")
             else:
-                logger.error(f"❌ Full intersection calculation failed: {e}")
+                logger.error(f" Full intersection calculation failed: {e}")
             raise
 
         return {
@@ -824,7 +824,7 @@ class PortfolioMetricsService:
 
         return correlations[:10]  # Top 10
 
-    # ⚠️ REMOVED: _assess_overall_risk_level() is now centralized in services/risk_scoring.py
+    # [Warning] REMOVED: _assess_overall_risk_level() is now centralized in services/risk_scoring.py
     # Import from there to avoid duplication and ensure consistency across the codebase
 
 

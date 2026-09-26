@@ -1,4 +1,4 @@
-# 🐳 SmartFolio - Docker Deployment Guide
+# SmartFolio - Docker Deployment Guide
 
 Guide de déploiement et de maintenance de SmartFolio en production avec Docker.
 Ce document est la source de vérité pour le déploiement.
@@ -8,16 +8,16 @@ Ce document est la source de vérité pour le déploiement.
 
 ---
 
-## 📋 Table des Matières
+## Table des Matières
 
 1. [Architecture Cible](#architecture-cible)
-2. [Déploiement Rapide (TL;DR)](#-déploiement-rapide-tldr)
-3. [Installation & Configuration](#-installation--configuration)
-4. [Déploiement Automatisé (deploy.sh)](#-déploiement-automatisé-deploysh)
+2. [Déploiement Rapide (TL;DR)](#déploiement-rapide-tldr)
+3. [Installation & Configuration](#installation--configuration)
+4. [Déploiement Automatisé (deploy.sh)](#déploiement-automatisé-deploysh)
 5. [Commandes Manuelles](#-commandes-manuelles)
-6. [Workflow de Mise à Jour](#-workflow-de-mise-à-jour)
-7. [Maintenance et Dépannage](#-maintenance-et-dépannage)
-8. [Backup & Restore](#-backup--restore)
+6. [Workflow de Mise à Jour](#workflow-de-mise-à-jour)
+7. [Maintenance et Dépannage](#maintenance-et-dépannage)
+8. [Backup & Restore](#backup--restore)
 
 ---
 
@@ -61,7 +61,7 @@ L'application est conçue pour tourner dans un environnement conteneurisé gér�
 
 ---
 
-## 🚀 Déploiement Rapide (TL;DR)
+## Déploiement Rapide (TL;DR)
 
 Sur le serveur de production :
 ```bash
@@ -83,7 +83,7 @@ curl http://localhost:8080/docs
 
 ---
 
-## 🔧 Installation & Configuration
+## Installation & Configuration
 
 ### Prérequis Serveur
 - Docker Engine 24.0+
@@ -146,7 +146,7 @@ curl http://localhost:8080/docs
 
 ---
 
-## 🚀 Déploiement Automatisé (deploy.sh)
+## Déploiement Automatisé (deploy.sh)
 
 Le script `deploy.sh` est la méthode **recommandée** pour tous les déploiements et mises à jour en production. Il automatise le processus pour être rapide, sûr et répétable.
 
@@ -175,7 +175,7 @@ Le script exécute les étapes suivantes :
 
 ---
 
-## ⚙️ Commandes Manuelles
+## Commandes Manuelles
 
 Utilisez ces commandes pour une gestion plus fine ou pour le débogage.
 
@@ -220,7 +220,7 @@ docker compose exec redis redis-cli
 
 ---
 
-## 🔄 Workflow de Mise à Jour
+## Workflow de Mise à Jour
 
 Le workflow de développement et de mise en production est simple :
 
@@ -251,7 +251,7 @@ Le script s'occupe de tout.
 
 ---
 
-## 🔧 Maintenance et Dépannage
+## Maintenance et Dépannage
 
 ### Le service ne démarre pas ou est "unhealthy"
 1.  **Consultez les logs** : C'est la première source d'information.
@@ -276,7 +276,7 @@ docker system prune --volumes
 
 ---
 
-## 💾 Backup & Restore
+## Backup & Restore
 
 ### Stratégie de Backup
 Il est crucial de sauvegarder régulièrement :
@@ -305,7 +305,7 @@ cp /opt/smartfolio/.env "$BACKUP_DIR/.env.backup"
 tar -czf "$BACKUP_DIR.tar.gz" -C "/backup/smartfolio" "$(basename $BACKUP_DIR)"
 rm -rf "$BACKUP_DIR"
 
-echo "✅ Backup créé: $BACKUP_DIR.tar.gz"
+echo "[OK] Backup créé: $BACKUP_DIR.tar.gz"
 ```
 
 ### Restauration

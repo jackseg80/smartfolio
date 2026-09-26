@@ -10,7 +10,7 @@
 
 ---
 
-## 📐 Table of Contents
+## Table of Contents
 
 1. [Contradiction Policy & Adaptive Weights](#1-contradiction-policy--adaptive-weights)
 2. [Phase Engine Detection Rules](#2-phase-engine-detection-rules)
@@ -69,7 +69,7 @@ Before modulation: {cycle: 0.4, onchain: 0.35, risk: 0.25}
 After modulation:  {cycle: 0.330, onchain: 0.324, risk: 0.3125}
 After bounds:      {cycle: 0.330, onchain: 0.324, risk: 0.3125}
 After renormalization: {cycle: 0.3415, onchain: 0.3354, risk: 0.3231}
-Sum: 1.0000 ✓
+Sum: 1.0000 [OK]
 ```
 
 ### 1.2 Contradiction Classification
@@ -582,7 +582,7 @@ d_gri = clamp((gri - 4.0) × 2.0, 0.0, 10.0)
 
 ---
 
-## 📚 References
+## References
 
 ### Related Documentation
 - [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) - Decision Index vs Regime Score

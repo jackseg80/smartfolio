@@ -12,7 +12,7 @@ Ce document décrit le fonctionnement du Risk Dashboard, les fenêtres d'estimat
 - Dans `static/settings.html`, l’onglet “Source” et le sélecteur rapide du “Résumé” sont générés dynamiquement à partir de cette liste.
 - Groupes affichés: “Sources de démo” (kind: `stub`) et “Sources CoinTracking” (kind: `csv`/`api`).
 
-### ⚠️ Limitation de Couverture
+### Limitation de Couverture
 - Seules ~51 cryptos sur 183 possèdent un historique de prix complet
 - Les métriques de risque ne couvrent que ~28% du portefeuille en nombre d'assets
 - Impact: VaR et corrélations potentiellement sous-estimées pour les cryptos sans historique

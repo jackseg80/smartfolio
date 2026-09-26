@@ -4,7 +4,7 @@
 
 ---
 
-## 🎯 Tests Basiques
+## Tests Basiques
 
 ### Questions Générales
 
@@ -22,7 +22,7 @@ Quel est mon patrimoine total (crypto + bourse + liquidités) ?
 
 ---
 
-## 📊 Dashboard (Crypto Portfolio)
+## Dashboard (Crypto Portfolio)
 
 ```
 Résumé portefeuille
@@ -50,7 +50,7 @@ Quelle est ma position la plus risquée et pourquoi ?
 
 ---
 
-## ⚠️ Risk Dashboard
+## Risk Dashboard
 
 ```
 Score de risque
@@ -82,7 +82,7 @@ Quelles sont les 3 métriques de risque les plus importantes à surveiller ?
 
 ---
 
-## 📈 Analytics Unified
+## Analytics Unified
 
 ```
 Decision Index
@@ -122,7 +122,7 @@ C'est quoi le ML Sentiment et comment il influence l'allocation ?
 
 ---
 
-## 💰 Wealth Dashboard
+## Wealth Dashboard
 
 ```
 Patrimoine net
@@ -146,7 +146,7 @@ Quel est mon ratio actifs/passifs ?
 
 ---
 
-## 🧠 Knowledge Base (Concepts SmartFolio)
+## Knowledge Base (Concepts SmartFolio)
 
 ### Decision Index
 
@@ -224,7 +224,7 @@ Comment fonctionne le Trailing Stop (NEW Oct 2025) ?
 
 ---
 
-## 🔧 Patterns de Code (Développeurs)
+## Patterns de Code (Développeurs)
 
 ```
 Comment dois-je récupérer les balances d'un portfolio en frontend ?
@@ -248,7 +248,7 @@ Quels sont les pièges fréquents liés au multi-tenant ?
 
 ---
 
-## 🚨 Tests Erreurs Courantes
+## Tests Erreurs Courantes
 
 ### Inversion Risk Score (Doit détecter)
 
@@ -256,7 +256,7 @@ Quels sont les pièges fréquents liés au multi-tenant ?
 Mon risk score est de 68/100. Ça veut dire que mon portfolio est à 32% de robustesse ?
 ```
 
-**Réponse attendue:** ❌ NON, 68/100 = 68% robust (pas 32%). Higher = more robust.
+**Réponse attendue:** [Error] NON, 68/100 = 68% robust (pas 32%). Higher = more robust.
 
 ### Confusion DI vs Regime (Doit clarifier)
 
@@ -272,11 +272,11 @@ Mon Decision Index est 65 et mon Regime Score est 55. Pourquoi c'est différent 
 Le Decision Index est calculé comme 0.65×Cycle + 0.25×OnChain + 0.10×Risk ?
 ```
 
-**Réponse attendue:** ❌ NON, DI = 65 (valid) ou 45 (invalid) basé sur total_check.isValid. PAS une somme pondérée.
+**Réponse attendue:** [Error] NON, DI = 65 (valid) ou 45 (invalid) basé sur total_check.isValid. PAS une somme pondérée.
 
 ---
 
-## 🔄 Tests Dynamic Knowledge Base
+## Tests Dynamic Knowledge Base
 
 ### Vérifier Lecture CLAUDE.md
 
@@ -298,15 +298,15 @@ Quelles sont les erreurs courantes à éviter dans SmartFolio ?
 ```
 
 **Réponse attendue:**
-- ❌ Oublier user_id
-- ❌ Hardcoder user_id='demo'
-- ❌ fetch() direct au lieu de window.loadBalanceData()
-- ❌ Inverser Risk Score
-- ❌ Mélanger DI et Regime
+- [Error] Oublier user_id
+- [Error] Hardcoder user_id='demo'
+- [Error] fetch() direct au lieu de window.loadBalanceData()
+- [Error] Inverser Risk Score
+- [Error] Mélanger DI et Regime
 
 ---
 
-## 🧪 Tests Contexte Multi-Page
+## Tests Contexte Multi-Page
 
 ### Dashboard → Voit Portfolio
 
@@ -334,7 +334,7 @@ Quel est mon net worth actuel et comment il se décompose ?
 
 ---
 
-## 📚 Tests Concepts Avancés
+## Tests Concepts Avancés
 
 ### Overrides
 
@@ -373,7 +373,7 @@ Quels sont les TTL des différents caches SmartFolio ?
 
 ---
 
-## 🔍 Tests Edge Cases
+## Tests Edge Cases
 
 ### Portfolio Vide
 
@@ -401,7 +401,7 @@ Quelle est ma VaR 95% ?
 
 ---
 
-## 📝 Tests Réponses Qualité
+## Tests Réponses Qualité
 
 ### Réponse Courte
 
@@ -429,7 +429,7 @@ Donne-moi un exemple concret de réallocation topdown hierarchical.
 
 ---
 
-## 🎯 Tests Validation Finale
+## Tests Validation Finale
 
 ### Test Complet 1
 
@@ -458,7 +458,7 @@ Explique-moi le système SmartFolio en 5 points clés pour un nouveau utilisateu
 
 ---
 
-## 🚀 Commandes API (Curl)
+## Commandes API (Curl)
 
 ### Refresh Knowledge
 
@@ -486,15 +486,15 @@ curl "http://localhost:8080/api/ai/quick-questions/dashboard"
 
 ---
 
-## ✅ Résultats Attendus
+## Résultats Attendus
 
 Si tous les prompts donnent des réponses correctes:
 
-- ✅ **Context Builders:** IA voit données réelles de chaque page
-- ✅ **Knowledge Base:** IA connaît CLAUDE.md (concepts, patterns, pièges)
-- ✅ **Qualité:** Réponses précises, pas de confusion DI/Regime, pas d'inversion Risk
-- ✅ **Dynamic Sync:** Modifications CLAUDE.md visibles après refresh
-- ✅ **Multi-Provider:** Groq/Claude fonctionnent
+- [OK] **Context Builders:** IA voit données réelles de chaque page
+- [OK] **Knowledge Base:** IA connaît CLAUDE.md (concepts, patterns, pièges)
+- [OK] **Qualité:** Réponses précises, pas de confusion DI/Regime, pas d'inversion Risk
+- [OK] **Dynamic Sync:** Modifications CLAUDE.md visibles après refresh
+- [OK] **Multi-Provider:** Groq/Claude fonctionnent
 
 ---
 

@@ -77,8 +77,8 @@ Le système utilise la gating matrix existante pour moduler les alertes CORR_SPI
 **Exemple** :
 - Corrélation actuelle BTC/ETH : 0.85
 - Moyenne historique : 0.60  
-- Variation relative : (0.85-0.60)/0.60 = 41.7% ✓
-- Variation absolue : 0.85-0.60 = 0.25 ✓
+- Variation relative : (0.85-0.60)/0.60 = 41.7% [OK]
+- Variation absolue : 0.85-0.60 = 0.25 [OK]
 - → SPIKE DÉTECTÉ
 
 **Niveaux de sévérité** :

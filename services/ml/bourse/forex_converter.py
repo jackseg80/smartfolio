@@ -2,7 +2,7 @@
 Forex Currency Converter for Multi-Currency Portfolios
 Convertit les prix entre devises avec cache intelligent
 
-⚠️ DEPRECATED: This module now uses the unified fx_service internally.
+[Warning] DEPRECATED: This module now uses the unified fx_service internally.
 For new code, import directly from services.fx_service instead.
 
 Migration: This wrapper maintains backward compatibility (async API)
@@ -21,7 +21,7 @@ class ForexConverter:
     """
     Service de conversion de devises (wrapper vers fx_service unifié).
 
-    ⚠️ DEPRECATED: Utilise maintenant fx_service en backend.
+    [Warning] DEPRECATED: Utilise maintenant fx_service en backend.
     Pour nouveau code, importer directement depuis services.fx_service.
 
     Maintient la compatibilité async pour code existant.
@@ -49,7 +49,7 @@ class ForexConverter:
         Args:
             from_currency: Devise source (ex: "CHF", "EUR", "PLN")
             to_currency: Devise cible (ex: "USD")
-            date: Date pour taux historique (⚠️ IGNORÉ - fx_service ne supporte pas les taux historiques)
+            date: Date pour taux historique ([Warning] IGNORÉ - fx_service ne supporte pas les taux historiques)
 
         Returns:
             Taux de change (ex: 1.15 pour CHF→USD)
@@ -81,7 +81,7 @@ class ForexConverter:
             amount: Montant à convertir
             from_currency: Devise source
             to_currency: Devise cible
-            date: Date pour taux historique (⚠️ IGNORÉ)
+            date: Date pour taux historique ([Warning] IGNORÉ)
 
         Returns:
             Montant converti dans la devise cible
@@ -123,7 +123,7 @@ class ForexConverter:
         """
         Vide le cache des taux de change.
 
-        ⚠️ Note: fx_service gère son propre cache (4h TTL), cette méthode est no-op.
+        [Warning] Note: fx_service gère son propre cache (4h TTL), cette méthode est no-op.
         """
         logger.debug("clear_cache() called but fx_service manages its own cache")
 

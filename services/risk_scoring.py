@@ -4,7 +4,7 @@ Centralized Risk Scoring Logic - Single Source of Truth
 This module contains the canonical implementation of risk score calculation
 and risk level mapping according to Option A semantics (docs/RISK_SEMANTICS.md).
 
-⚠️ CRITICAL: This is the ONLY place where score-to-level mapping should exist.
+[Warning] CRITICAL: This is the ONLY place where score-to-level mapping should exist.
 Any other module needing risk assessment MUST import from here.
 
 Semantic Rule (Option A):
@@ -77,7 +77,7 @@ def assess_risk_level(
     sharpe_ratio: float,
     max_drawdown: float,
     volatility: float,
-    # 🆕 Structural penalties (optional, for V2+ scoring)
+    # [New] Structural penalties (optional, for V2+ scoring)
     memecoins_pct: float = 0.0,
     hhi: float = 0.0,
     gri: float = 5.0,
@@ -90,7 +90,7 @@ def assess_risk_level(
     - Risk Score = robustness indicator [0..100]
     - Good metrics (low VaR, high Sharpe) → score increases
     - Bad metrics (high VaR, low Sharpe) → score decreases
-    - 🆕 BAD structure (memes, concentration) → score decreases
+    - [New] BAD structure (memes, concentration) → score decreases
 
     Args:
         var_metrics: Dict with 'var_95', 'var_99', 'cvar_95', 'cvar_99'
@@ -114,11 +114,11 @@ def assess_risk_level(
     # VaR impact (higher VaR = LESS robust → score decreases)
     var_95 = abs(var_metrics.get("var_95", 0.0))
     if var_95 > 0.25:
-        delta = -30  # ❌ Very high VaR → score drops
+        delta = -30  # [Error] Very high VaR → score drops
     elif var_95 > 0.15:
         delta = -15
     elif var_95 < 0.05:
-        delta = +10  # ✅ Low VaR → score rises
+        delta = +10  # [OK] Low VaR → score rises
     elif var_95 < 0.10:
         delta = +5
     else:
@@ -128,9 +128,9 @@ def assess_risk_level(
 
     # Sharpe ratio impact (higher Sharpe = MORE robust → score increases)
     if sharpe_ratio < 0:
-        delta = -15  # ❌ Negative Sharpe → score drops
+        delta = -15  # [Error] Negative Sharpe → score drops
     elif sharpe_ratio > 2.0:
-        delta = +20  # ✅ Excellent Sharpe → score rises
+        delta = +20  # [OK] Excellent Sharpe → score rises
     elif sharpe_ratio > 1.5:
         delta = +15
     elif sharpe_ratio > 1.0:
@@ -144,19 +144,19 @@ def assess_risk_level(
 
     # Debug log
     import logging
-    logging.getLogger(__name__).debug(f"🔍 Risk Score calc: sharpe={sharpe_ratio:.4f}, delta={delta}, score after={score:.1f}")
+    logging.getLogger(__name__).debug(f" Risk Score calc: sharpe={sharpe_ratio:.4f}, delta={delta}, score after={score:.1f}")
 
     # Max Drawdown impact (higher DD = LESS robust → score decreases)
-    # 🔧 Oct 2025: Adouci pénalités DD pour éviter score=0 sur portfolios altcoins
+    # Oct 2025: Adouci pénalités DD pour éviter score=0 sur portfolios altcoins
     abs_dd = abs(max_drawdown)
     if abs_dd > 0.70:
-        delta = -22  # ❌ Drawdown > 70% → score drops
+        delta = -22  # [Error] Drawdown > 70% → score drops
     elif abs_dd > 0.50:
-        delta = -15  # ❌ Drawdown > 50% → significant penalty (était -25)
+        delta = -15  # [Error] Drawdown > 50% → significant penalty (était -25)
     elif abs_dd > 0.30:
-        delta = -10  # ⚠️ Drawdown > 30% → moderate penalty (était -15)
+        delta = -10  # [Warning] Drawdown > 30% → moderate penalty (était -15)
     elif abs_dd < 0.10:
-        delta = +10  # ✅ Low drawdown → score rises
+        delta = +10  # [OK] Low drawdown → score rises
     elif abs_dd < 0.20:
         delta = +5
     else:
@@ -166,11 +166,11 @@ def assess_risk_level(
 
     # Volatility impact (higher vol = LESS robust → score decreases)
     if volatility > 1.0:
-        delta = -10  # ❌ Volatility > 100% → score drops
+        delta = -10  # [Error] Volatility > 100% → score drops
     elif volatility > 0.60:
         delta = -5
     elif volatility < 0.20:
-        delta = +10  # ✅ Low volatility → score rises
+        delta = +10  # [OK] Low volatility → score rises
     elif volatility < 0.40:
         delta = +5
     else:
@@ -178,56 +178,56 @@ def assess_risk_level(
     score += delta
     breakdown['volatility'] = delta
 
-    # 🆕 STRUCTURAL PENALTIES (V2+ scoring)
+    # [New] STRUCTURAL PENALTIES (V2+ scoring)
     # These penalties apply ALWAYS, not just in dual-window mode
 
     # Memecoins penalty (higher % = LESS robust → score decreases)
-    # 🔧 Oct 2025: Adouci les pénalités pour éviter score=0 systématique sur portfolios degen
-    # 🆕 Hystérésis autour des seuils critiques pour éviter flip-flop
+    # Oct 2025: Adouci les pénalités pour éviter score=0 systématique sur portfolios degen
+    # [New] Hystérésis autour des seuils critiques pour éviter flip-flop
     if memecoins_pct > 0.70:
-        delta = -22  # ❌ >70% memes → major penalty
+        delta = -22  # [Error] >70% memes → major penalty
     elif memecoins_pct > 0.52:
         # Zone franche >52% : pénalité confirmée
-        delta = -15  # ❌ >50% memes → significant penalty (était -30)
+        delta = -15  # [Error] >50% memes → significant penalty (était -30)
     elif memecoins_pct >= 0.48:
         # Zone transition 48-52% : interpolation linéaire pour éviter flip-flop
         t = (memecoins_pct - 0.48) / 0.04  # 0.0 à 1.0
         delta = -10 + t * (-15 - (-10))  # Transition douce de -10 à -15
         delta = round(delta, 1)
     elif memecoins_pct > 0.30:
-        delta = -10  # ⚠️ >30% memes → moderate penalty (était -20)
+        delta = -10  # [Warning] >30% memes → moderate penalty (était -20)
     elif memecoins_pct > 0.15:
-        delta = -6   # ⚠️ >15% memes → light penalty (était -10)
+        delta = -6   # [Warning] >15% memes → light penalty (était -10)
     elif memecoins_pct > 0.05:
-        delta = -3   # ⚠️ >5% memes → minimal penalty (était -5)
+        delta = -3   # [Warning] >5% memes → minimal penalty (était -5)
     else:
-        delta = 0    # ✅ Low memes → no penalty
+        delta = 0    # [OK] Low memes → no penalty
     score += delta
     breakdown['memecoins'] = delta
 
     # Concentration penalty (HHI: higher = more concentrated = LESS robust)
-    # 🔧 Oct 2025: Réduit pénalités HHI pour éviter over-penalization
+    # Oct 2025: Réduit pénalités HHI pour éviter over-penalization
     if hhi > 0.40:
-        delta = -12  # ❌ Very concentrated → score drops (était -15)
+        delta = -12  # [Error] Very concentrated → score drops (était -15)
     elif hhi > 0.25:
-        delta = -8   # ⚠️ Concentrated (était -10)
+        delta = -8   # [Warning] Concentrated (était -10)
     elif hhi > 0.15:
-        delta = -3   # ⚠️ Slight concentration (était -5)
+        delta = -3   # [Warning] Slight concentration (était -5)
     else:
-        delta = 0    # ✅ Well diversified → no penalty
+        delta = 0    # [OK] Well diversified → no penalty
     score += delta
     breakdown['concentration'] = delta
 
     # Group Risk Index penalty (GRI: higher = riskier groups)
-    # 🔧 Oct 2025: Réduit pénalités GRI pour éviter over-penalization
+    # Oct 2025: Réduit pénalités GRI pour éviter over-penalization
     if gri > 7.0:
-        delta = -10  # ❌ Very risky groups → score drops (était -15)
+        delta = -10  # [Error] Very risky groups → score drops (était -15)
     elif gri > 6.0:
-        delta = -7   # ⚠️ Risky groups (était -10)
+        delta = -7   # [Warning] Risky groups (était -10)
     elif gri > 5.0:
-        delta = -4   # ⚠️ Moderate risk (était -5)
+        delta = -4   # [Warning] Moderate risk (était -5)
     elif gri < 3.0:
-        delta = +5   # ✅ Safe groups → score rises
+        delta = +5   # [OK] Safe groups → score rises
     else:
         delta = 0
     score += delta
@@ -235,11 +235,11 @@ def assess_risk_level(
 
     # Diversification penalty (lower ratio = LESS robust)
     if diversification_ratio < 0.4:
-        delta = -10  # ❌ Very low diversification → score drops
+        delta = -10  # [Error] Very low diversification → score drops
     elif diversification_ratio < 0.6:
         delta = -5
     elif diversification_ratio > 0.8:
-        delta = +5   # ✅ High diversification → score rises
+        delta = +5   # [OK] High diversification → score rises
     else:
         delta = 0
     score += delta

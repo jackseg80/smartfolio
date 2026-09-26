@@ -7,7 +7,7 @@
 
 ---
 
-## 📋 Table des Matières
+## Table des Matières
 
 1. [Vue d'ensemble](#vue-densemble)
 2. [Tests Backend (API)](#tests-backend-api)
@@ -20,7 +20,7 @@
 
 ---
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 
 Suite de tests complète pour valider le refactoring des 4 modules du Risk Dashboard :
 
@@ -31,70 +31,70 @@ Suite de tests complète pour valider le refactoring des 4 modules du Risk Dashb
 
 ### Objectifs de Tests
 
-✅ **Validation fonctionnelle** : Tous les endpoints API retournent les données attendues
-✅ **Performance** : P95 < 500ms pour endpoints critiques
-✅ **Robustesse** : Gestion des erreurs, cas limites, services indisponibles
-✅ **Isolation multi-tenant** : Données séparées par `(user_id, source)`
-✅ **Régression** : Aucune régression suite au refactoring
+[OK] **Validation fonctionnelle** : Tous les endpoints API retournent les données attendues
+[OK] **Performance** : P95 < 500ms pour endpoints critiques
+[OK] **Robustesse** : Gestion des erreurs, cas limites, services indisponibles
+[OK] **Isolation multi-tenant** : Données séparées par `(user_id, source)`
+[OK] **Régression** : Aucune régression suite au refactoring
 
 ---
 
-## 🔧 Tests Backend (API)
+## Tests Backend (API)
 
-**Fichier** : `tests/integration/test_risk_dashboard_modules_fixed.py` ✅
+**Fichier** : `tests/integration/test_risk_dashboard_modules_fixed.py` OK
 **Framework** : pytest + FastAPI TestClient
 **Couverture** : 20 tests (19 passés, 1 skippé) → **95% de succès**
 
-> ⚠️ **Note** : `test_risk_dashboard_modules.py` (ancien fichier, 42.9% succès) est deprecated. Utiliser `test_risk_dashboard_modules_fixed.py`.
+> [Warning] **Note** : `test_risk_dashboard_modules.py` (ancien fichier, 42.9% succès) est deprecated. Utiliser `test_risk_dashboard_modules_fixed.py`.
 
 ### Structure des Tests
 
 ```
 test_risk_dashboard_modules.py
 ├── TestRiskAlertsTabAPI (6 tests)
-│   ├── test_get_active_alerts_success ✅
-│   ├── test_get_active_alerts_with_filters ⏭️ (service indisponible)
-│   ├── test_acknowledge_alert ⏭️
-│   ├── test_snooze_alert ⏭️
-│   ├── test_get_alert_types ✅
-│   └── test_get_alert_metrics ⏭️
+│   ├── test_get_active_alerts_success [OK]
+│   ├── test_get_active_alerts_with_filters  (service indisponible)
+│   ├── test_acknowledge_alert
+│   ├── test_snooze_alert
+│   ├── test_get_alert_types [OK]
+│   └── test_get_alert_metrics
 │
 ├── TestRiskOverviewTabAPI (5 tests)
-│   ├── test_get_risk_dashboard_default ✅
-│   ├── test_get_risk_dashboard_dual_window ✅
-│   ├── test_get_risk_dashboard_v2_shadow ✅
-│   ├── test_get_risk_advanced ❌ (404)
-│   └── test_get_onchain_score ❌ (404)
+│   ├── test_get_risk_dashboard_default [OK]
+│   ├── test_get_risk_dashboard_dual_window [OK]
+│   ├── test_get_risk_dashboard_v2_shadow [OK]
+│   ├── test_get_risk_advanced [Error] (404)
+│   └── test_get_onchain_score [Error] (404)
 │
 ├── TestRiskCyclesTabAPI (4 tests)
-│   ├── test_get_bitcoin_historical_price ❌ (404)
-│   ├── test_get_cycle_score ❌ (404)
-│   ├── test_get_onchain_indicators ❌ (404)
-│   └── test_bitcoin_price_fallback_sources ❌ (404)
+│   ├── test_get_bitcoin_historical_price [Error] (404)
+│   ├── test_get_cycle_score [Error] (404)
+│   ├── test_get_onchain_indicators [Error] (404)
+│   └── test_bitcoin_price_fallback_sources [Error] (404)
 │
 ├── TestRiskTargetsTabAPI (5 tests)
-│   ├── test_get_governance_state ❌ (structure différente)
-│   ├── test_get_allocation_strategies ❌ (404)
-│   ├── test_get_rebalance_plan ❌ (405)
-│   ├── test_get_decision_history ✅
-│   └── test_get_exposure_caps ✅
+│   ├── test_get_governance_state [Error] (structure différente)
+│   ├── test_get_allocation_strategies [Error] (404)
+│   ├── test_get_rebalance_plan [Error] (405)
+│   ├── test_get_decision_history [OK]
+│   └── test_get_exposure_caps [OK]
 │
 ├── TestRiskDashboardIntegration (3 tests)
-│   ├── test_full_risk_dashboard_flow ❌
-│   ├── test_risk_score_consistency ❌
-│   └── test_multi_user_isolation ✅
+│   ├── test_full_risk_dashboard_flow [Error]
+│   ├── test_risk_score_consistency [Error]
+│   └── test_multi_user_isolation [OK]
 │
 └── TestRiskDashboardErrorHandling (5 tests)
-    ├── test_missing_user_id ✅
-    ├── test_invalid_source ✅
-    ├── test_empty_portfolio ✅
-    ├── test_malformed_parameters ✅
-    └── test_concurrent_requests ✅
+    ├── test_missing_user_id [OK]
+    ├── test_invalid_source [OK]
+    ├── test_empty_portfolio [OK]
+    ├── test_malformed_parameters [OK]
+    └── test_concurrent_requests [OK]
 ```
 
 ### Endpoints Testés
 
-#### ✅ Fonctionnels
+#### Fonctionnels
 
 ```python
 # Risk Overview
@@ -110,7 +110,7 @@ GET /execution/governance/decisions/history
 GET /api/alerts/types
 ```
 
-#### ❌ À Vérifier (404/405)
+#### À Vérifier (404/405)
 
 ```python
 # Risk Advanced
@@ -159,54 +159,54 @@ if response.status_code == 503:
 
 ---
 
-## 🖥️ Tests Frontend (JS)
+## Tests Frontend (JS)
 
-**Fichier** : `tests/html_debug/test_risk_modules_v2.html` ✅
+**Fichier** : `tests/html_debug/test_risk_modules_v2.html` OK
 **Framework** : Mini test framework custom (JavaScript externe, CSP-compliant)
 **Couverture** : 13 tests unitaires JS
 
-> ⚠️ **Note** : Versions dépréciées bloquées par CSP ou problèmes ES6. Utilisez `test_risk_modules_v2.html`.
+> [Warning] **Note** : Versions dépréciées bloquées par CSP ou problèmes ES6. Utilisez `test_risk_modules_v2.html`.
 
 ### Tests Implémentés
 
 #### risk-alerts-tab.js (3 tests)
 
 ```javascript
-✅ doit filtrer les alertes par severité
-✅ doit paginer les alertes correctement (25 items → 3 pages)
-✅ doit calculer les stats correctement (S1:2, S2:1, S3:1)
+[OK] doit filtrer les alertes par severité
+[OK] doit paginer les alertes correctement (25 items → 3 pages)
+[OK] doit calculer les stats correctement (S1:2, S2:1, S3:1)
 ```
 
 #### risk-overview-tab.js (3 tests)
 
 ```javascript
-✅ doit valider Risk Score entre 0 et 100
-✅ doit détecter dual window disponible (365j vs 55j)
-✅ doit calculer la divergence Risk Score V2 (legacy 65 - v2 35 = 30)
+[OK] doit valider Risk Score entre 0 et 100
+[OK] doit détecter dual window disponible (365j vs 55j)
+[OK] doit calculer la divergence Risk Score V2 (legacy 65 - v2 35 = 30)
 ```
 
 #### risk-cycles-tab.js (3 tests)
 
 ```javascript
-✅ doit formater les données pour Chart.js (dates.length === prices.length)
-✅ doit calculer le composite score on-chain (weights × indicators)
-✅ doit gérer le cache hash-based (données identiques → même hash)
+[OK] doit formater les données pour Chart.js (dates.length === prices.length)
+[OK] doit calculer le composite score on-chain (weights × indicators)
+[OK] doit gérer le cache hash-based (données identiques → même hash)
 ```
 
 #### risk-targets-tab.js (3 tests)
 
 ```javascript
-✅ doit comparer allocation actuelle vs objectifs (delta BTC +10%)
-✅ doit générer plan d'action (buy/sell)
-✅ doit gérer les 5 stratégies disponibles (macro, ccs, cycle, blend, smart)
+[OK] doit comparer allocation actuelle vs objectifs (delta BTC +10%)
+[OK] doit générer plan d'action (buy/sell)
+[OK] doit gérer les 5 stratégies disponibles (macro, ccs, cycle, blend, smart)
 ```
 
 #### Performance & Edge Cases (1 test)
 
 ```javascript
-✅ doit gérer un grand nombre d'alertes (1000+ en < 50ms)
-✅ doit gérer les données manquantes gracieusement (null safety)
-✅ doit cacher les Chart.js correctement (Map cache)
+[OK] doit gérer un grand nombre d'alertes (1000+ en < 50ms)
+[OK] doit gérer les données manquantes gracieusement (null safety)
+[OK] doit cacher les Chart.js correctement (Map cache)
 ```
 
 ### Lancer les Tests Frontend
@@ -218,26 +218,26 @@ python -m uvicorn api.main:app --port 8080
 # 2. Ouvrir dans le navigateur
 http://localhost:8080/tests/html_debug/test_risk_modules_v2.html
 
-# 3. Cliquer sur "▶️ Lancer les Tests"
+# 3. Cliquer sur " Lancer les Tests"
 ```
 
 **Interface de Tests**
 
-- ✅ **Pass** : Badge vert, temps d'exécution affiché
-- ❌ **Fail** : Badge rouge, stack trace complète affichée
-- ⏭️ **Skip** : Badge orange
+- [OK] **Pass** : Badge vert, temps d'exécution affiché
+- [Error] **Fail** : Badge rouge, stack trace complète affichée
+- **Skip** : Badge orange
 
 **Exemple de résultat**
 
 ```
-[15:23:45] ✓ risk-alerts-tab.js > doit filtrer les alertes par severité (2.34ms)
-[15:23:45] ✓ risk-overview-tab.js > doit valider Risk Score entre 0 et 100 (1.12ms)
-[15:23:45] ✗ risk-cycles-tab.js > doit calculer le composite score on-chain: Expected 0.665, got 0.670
+[15:23:45] [OK] risk-alerts-tab.js > doit filtrer les alertes par severité (2.34ms)
+[15:23:45] [OK] risk-overview-tab.js > doit valider Risk Score entre 0 et 100 (1.12ms)
+[15:23:45] [Error] risk-cycles-tab.js > doit calculer le composite score on-chain: Expected 0.665, got 0.670
 ```
 
 ---
 
-## ⚡ Tests de Performance
+## Tests de Performance
 
 **Fichier** : `tests/performance/test_risk_dashboard_performance.py`
 **Framework** : pytest + concurrent.futures
@@ -340,7 +340,7 @@ pytest tests/performance/test_risk_dashboard_performance.py::TestRiskDashboardPe
 
 ---
 
-## 🔍 Tests d'Edge Cases
+## Tests d'Edge Cases
 
 Cas limites et erreurs testés :
 
@@ -401,7 +401,7 @@ assert success_count + rate_limited == 100
 
 ---
 
-## 🚀 Lancer les Tests
+## Lancer les Tests
 
 ### Prérequis
 
@@ -417,7 +417,7 @@ pip install pytest pytest-asyncio psutil
 ### Tous les Tests
 
 ```bash
-# Backend (20 tests) ✅ CORRIGÉS
+# Backend (20 tests)  CORRIGÉS
 pytest tests/integration/test_risk_dashboard_modules_fixed.py -v
 
 # Performance (10 tests)
@@ -455,56 +455,56 @@ pytest tests/integration/test_risk_dashboard_modules.py -k "test_get_risk_dashbo
 
 ---
 
-## 📊 Résultats et Benchmarks
+## Résultats et Benchmarks
 
-### Coverage Actuelle (Octobre 2025) ✅
+### Coverage Actuelle (Octobre 2025)
 
 ```
-Backend Tests:       20 tests → 19 passed, 1 skipped (95.0%) ✅
-Frontend Tests:      13 tests → 13 passed (100%) ✅
+Backend Tests:       20 tests → 19 passed, 1 skipped (95.0%) [OK]
+Frontend Tests:      13 tests → 13 passed (100%) [OK]
 Performance Tests:   10 tests (à lancer avec -s pour voir résultats)
 Total Coverage:      43 tests → 32 passed (74.4%)
 
-Success Rate Backend:   95.0% (19/20) ✅ OBJECTIF DÉPASSÉ (>80%)
-Success Rate Frontend:  100% (13/13) ✅
+Success Rate Backend:   95.0% (19/20) [OK] OBJECTIF DÉPASSÉ (>80%)
+Success Rate Frontend:  100% (13/13) [OK]
 ```
 
-**📈 Amélioration** : +52.1% de succès backend (42.9% → 95.0%)
+** Amélioration** : +52.1% de succès backend (42.9% → 95.0%)
 
 ### Corrections Appliquées (Option A)
 
 **Problèmes résolus** :
 
-1. **Endpoints 404** (9 tests) → **✅ Corrigés**
+1. **Endpoints 404** (9 tests) → ** Corrigés**
    - Remplacés par endpoints réels équivalents
    - Ex: `/api/risk/advanced` → `/api/risk/metrics`
    - Ex: `/api/ml/bitcoin-historical-price` → `/api/ml/status`
 
-2. **Service 503** (5 tests) → **✅ Gérés gracieusement**
+2. **Service 503** (5 tests) → **[OK] Gérés gracieusement**
    - `pytest.skip()` au lieu d'échec pour AlertEngine optionnel
    - 5 échecs → 1 skip propre
 
-3. **Structure inattendue** (2 tests) → **✅ Adaptés**
+3. **Structure inattendue** (2 tests) → **[OK] Adaptés**
    - Tests flexibles acceptant plusieurs formats de réponse
    - Ex: `assert "timestamp" in data or "current_state" in data`
 
-4. **Méthode HTTP** (1 test) → **✅ Corrigé**
+4. **Méthode HTTP** (1 test) → **[OK] Corrigé**
    - Accepte 405 comme statut valide (POST attendu)
 
-**📋 Rapport détaillé** : [TEST_FIXES_REPORT.md](./TEST_FIXES_REPORT.md)
+** Rapport détaillé** : [TEST_FIXES_REPORT.md](./TEST_FIXES_REPORT.md)
 
 ### Performance Mesurée (approximatif)
 
 | Endpoint | Mean | P95 | Status |
 |----------|------|-----|--------|
-| `/api/risk/dashboard` | ~300ms | ~500ms | ✅ |
-| `/api/risk/dashboard?dual_window` | ~600ms | ~1000ms | ✅ |
-| `/execution/governance/state` | ~50ms | ~100ms | ✅ |
-| `/api/alerts/active` | ~45ms | ~80ms | ✅ |
+| `/api/risk/dashboard` | ~300ms | ~500ms | OK |
+| `/api/risk/dashboard?dual_window` | ~600ms | ~1000ms | OK |
+| `/execution/governance/state` | ~50ms | ~100ms | OK |
+| `/api/alerts/active` | ~45ms | ~80ms | OK |
 
 ---
 
-## 🛣️ Roadmap
+## Roadmap
 
 ### Court Terme (v1.1)
 
@@ -539,7 +539,7 @@ Success Rate Frontend:  100% (13/13) ✅
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 ### Documentation Liée
 
@@ -563,7 +563,7 @@ Success Rate Frontend:  100% (13/13) ✅
 
 ---
 
-## ✅ Checklist Avant Commit
+## Checklist Avant Commit
 
 - [ ] Tests backend passent (au moins les critiques)
 - [ ] Tests frontend passent (ouvrir navigateur)

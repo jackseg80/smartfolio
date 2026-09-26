@@ -57,13 +57,13 @@ def zip_project(src: Path, dest_zip: Path):
     # Supprimer le zip existant s'il existe
     if dest_zip.exists():
         dest_zip.unlink()
-        print(f"⚠️ Fichier existant supprimé : {dest_zip}")
+        print(f"[Warning] Fichier existant supprimé : {dest_zip}")
 
     with zipfile.ZipFile(dest_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
         for file in src.rglob("*"):
             if file.is_file() and not should_exclude(file.relative_to(src)):
                 zipf.write(file, arcname=file.relative_to(src))
-    print(f"✅ Projet zippé dans : {dest_zip}")
+    print(f"[OK] Projet zippé dans : {dest_zip}")
 
 if __name__ == "__main__":
     zip_project(source_dir, output_zip)

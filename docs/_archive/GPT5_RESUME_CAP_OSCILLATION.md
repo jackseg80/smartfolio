@@ -98,10 +98,10 @@ cap_final=1.00%  ← Re-spike
 **Logs** :
 ```javascript
 // Ligne 90 - Stub governance
-governance: { cap_daily: 0.01 }  // ❌ PROBLÈME
+governance: { cap_daily: 0.01 }  // [Error] PROBLÈME
 
 // Ligne 124 - Fallback complet
-governance: { cap_daily: 0.01 }  // ❌ PROBLÈME
+governance: { cap_daily: 0.01 }  // [Error] PROBLÈME
 ```
 
 **Scénario** :
@@ -147,24 +147,24 @@ cap_alert = cap_engine - self._alert_cap_reduction  # Pas de floor
 
 # Ligne 648
 if cap_error is None and cap_stale is None:
-    self._last_cap = cap  # Stocke cap AVEC reduction ❌
+    self._last_cap = cap  # Stocke cap AVEC reduction [Error]
 ```
 
 **Scénario spiral down** :
 ```
 T0: Alert triggers → reduction=3%
     cap_engine=7.41%, cap_alert=4.41%, cap_final=4.41%
-    _last_cap = 4.41% ✅ stocké
+    _last_cap = 4.41% [OK] stocké
 
 T1: Alert encore active
     cap_raw=7.00%, smoothing=0.70×4.41+0.30×7.00=5.19%
     cap_engine=5.19%, cap_alert=5.19%-3%=2.19%
-    _last_cap = 2.19% ✅ re-stocké (double pénalité)
+    _last_cap = 2.19% [OK] re-stocké (double pénalité)
 
 T2: Alert encore active
     cap_raw=7.00%, smoothing=0.70×2.19+0.30×7.00=3.63%
     cap_engine=3.63%, cap_alert=3.63%-3%=0.63%
-    cap_final = max(0.01, 0.63%) = 1.00% ❌ BOUNDED
+    cap_final = max(0.01, 0.63%) = 1.00% [Error] BOUNDED
 
 T3+: Stuck à 1%
     Smoothing part de 1% → cap ne remonte jamais
@@ -182,7 +182,7 @@ T3+: Stuck à 1%
 ```
 T0: Alert EXEC_COST_SPIKE → _alert_cap_reduction = 3%
 T+60min: Alert clears (acknowledged ou auto-resolved)
-T+infinity: _alert_cap_reduction RESTE à 3% ❌
+T+infinity: _alert_cap_reduction RESTE à 3% [Error]
 → Cap stuck à 4% forever
 ```
 
@@ -199,10 +199,10 @@ T+infinity: _alert_cap_reduction RESTE à 3% ❌
 **Changements** :
 ```javascript
 // static/components/utils.js:90
-governance: { cap_daily: 0.08 }  // ✅ Safe default
+governance: { cap_daily: 0.08 }  // [OK] Safe default
 
 // static/components/utils.js:124
-governance: { cap_daily: 0.08 }  // ✅ Safe default
+governance: { cap_daily: 0.08 }  // [OK] Safe default
 ```
 
 **Impact** :
@@ -241,7 +241,7 @@ cap_smoothed = 0.80 * self._last_cap + 0.20 * cap_raw
 ```
 cap_raw=7%, last_cap=7.41%
 Avant (70/30): 0.70×7.41 + 0.30×7.00 = 7.29% (-12 bps)
-Après (80/20): 0.80×7.41 + 0.20×7.00 = 7.33% (-8 bps) ✅ Plus stable
+Après (80/20): 0.80×7.41 + 0.20×7.00 = 7.33% (-8 bps) [OK] Plus stable
 ```
 
 #### C. Logging CAP_FLOW Complet
@@ -296,21 +296,21 @@ if cap_error is None and cap_stale is None and self._alert_cap_reduction == 0:
 ```
 T0: Alert triggers → reduction=3%
     cap_engine=7.41%, cap_alert=4.41%, cap_final=4.41%
-    _last_cap = 7.41% ✅ PRESERVED (pas updater)
+    _last_cap = 7.41% [OK] PRESERVED (pas updater)
 
 T1: Alert encore active
     cap_raw=7.00%, smoothing=0.80×7.41+0.20×7.00=7.33%
     cap_engine=7.33%, cap_alert=max(3%, 7.33%-3%)=4.33%
-    _last_cap = 7.41% ✅ PRESERVED (no update)
+    _last_cap = 7.41% [OK] PRESERVED (no update)
 
 T2: Alert encore active
     cap_raw=7.00%, smoothing=0.80×7.41+0.20×7.00=7.33%
     cap_engine=7.33%, cap_alert=4.33%
-    _last_cap = 7.41% ✅ PRESERVED
+    _last_cap = 7.41% [OK] PRESERVED
 
 T3: Alert clears → reduction=0%
-    cap_engine=7.41%, cap_final=7.41% ✅ RECOVERED
-    _last_cap = 7.41% ✅ Update normal resumes
+    cap_engine=7.41%, cap_final=7.41% [OK] RECOVERED
+    _last_cap = 7.41% [OK] Update normal resumes
 ```
 
 ---
@@ -351,7 +351,7 @@ if self._alert_cap_reduction > 0:
 T+0min:  Alert triggers → reduction=3%, cap=4%
 T+30min: Auto-clear #1  → reduction=2%, cap=5%
 T+60min: Auto-clear #2  → reduction=1%, cap=6%
-T+90min: Auto-clear #3  → reduction=0%, cap=7% ✅ FULLY RECOVERED
+T+90min: Auto-clear #3  → reduction=0%, cap=7% [OK] FULLY RECOVERED
 ```
 
 ---
@@ -382,10 +382,10 @@ prudent_mode=True, mode=Slow [ALERT_REDUCTION(-3.0%)]
 - Auto-clear #1 attendu : 10:35:56 (dans 8 min)
 
 **Validation des fixes** :
-- ✅ Floor 3% : `cap_alert = max(0.03, 0.0741 - 0.03) = 0.0441`
-- ✅ _last_cap préservé : `cap_smoothed = 0.0741` (stable)
-- ✅ Pas de spiral down : cap_final stable à 4.41% (pas 1%)
-- ⏳ Auto-clear : En cours (prochain dans 8 min)
+- [OK] Floor 3% : `cap_alert = max(0.03, 0.0741 - 0.03) = 0.0441`
+- [OK] _last_cap préservé : `cap_smoothed = 0.0741` (stable)
+- [OK] Pas de spiral down : cap_final stable à 4.41% (pas 1%)
+- [Pending] Auto-clear : En cours (prochain dans 8 min)
 
 ---
 
@@ -449,7 +449,7 @@ findstr "cap_final" logs | Select-Object -Last 20
 
 ### Critères de Succès
 
-**✅ Normal (Sain)** :
+**[OK] Normal (Sain)** :
 ```
 cap_final=7.41%
 cap_final=7.39%  # -2 bps
@@ -462,13 +462,13 @@ cap_final=7.35%  # 0 bps → STABLE
 - Converge en 5-10 runs
 - Stable ensuite
 
-**❌ Anormal (Problème)** :
+**[Error] Anormal (Problème)** :
 ```
 cap_final=7.41%
-cap_final=8.00%  # +59 bps ❌
-cap_final=7.20%  # -80 bps ❌
-cap_final=8.00%  # +80 bps ❌ oscillation
-cap_final=3.00%  # -500 bps ❌ spike
+cap_final=8.00%  # +59 bps [Error]
+cap_final=7.20%  # -80 bps [Error]
+cap_final=8.00%  # +80 bps [Error] oscillation
+cap_final=3.00%  # -500 bps [Error] spike
 ```
 - Variation > 50 bps par run
 - Pas de convergence
@@ -506,7 +506,7 @@ T+30:  Auto progressive clear: 3.0% → 2.0%
 T+60:  Auto progressive clear: 2.0% → 1.0%
        cap_final=6.41%
 T+90:  Auto progressive clear: 1.0% → 0.0%
-       cap_final=7.41% ✅ RECOVERED
+       cap_final=7.41% [OK] RECOVERED
 ```
 
 **Succès** : Cap remonte de 4% → 7% en 90 min
@@ -718,11 +718,11 @@ grep "time_since_last_clear > 1800" services/execution/governance.py
 ## Conclusion
 
 **Système maintenant stable** :
-- ✅ Cap entre 3-8% toujours (plus jamais 1%)
-- ✅ Variation < 10 bps par run
-- ✅ Convergence en 5-10 runs
-- ✅ Auto-recovery après alerts
-- ✅ Visibilité complète via logs
+- [OK] Cap entre 3-8% toujours (plus jamais 1%)
+- [OK] Variation < 10 bps par run
+- [OK] Convergence en 5-10 runs
+- [OK] Auto-recovery après alerts
+- [OK] Visibilité complète via logs
 
 **User peut** :
 - Monitorer en temps réel (logs CAP_FLOW)

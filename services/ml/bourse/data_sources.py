@@ -147,19 +147,19 @@ class StocksDataSource:
             cache_age = datetime.now() - datetime.fromtimestamp(cache_file.stat().st_mtime)
             if cache_age < timedelta(hours=24):
                 age_hours = cache_age.seconds // 3600
-                logger.info(f"📦 Cache hit for {benchmark} ({lookback_days}d, age={age_hours}h)")
+                logger.info(f" Cache hit for {benchmark} ({lookback_days}d, age={age_hours}h)")
                 return pd.read_parquet(cache_file)
             else:
-                logger.info(f"⏰ Cache expired for {benchmark} ({cache_age.days}d old), refreshing...")
+                logger.info(f" Cache expired for {benchmark} ({cache_age.days}d old), refreshing...")
 
         # Cache miss - télécharger depuis yfinance (60-90s pour 20 ans)
-        logger.info(f"⬇️ Downloading {benchmark} ({lookback_days}d, ~60-90s)...")
+        logger.info(f" Downloading {benchmark} ({lookback_days}d, ~60-90s)...")
         data = await self.get_benchmark_data(benchmark, lookback_days)
 
         # Sauvegarder dans cache
         try:
             data.to_parquet(cache_file)
-            logger.info(f"💾 Cached {benchmark} to {cache_file} ({len(data)} rows)")
+            logger.info(f" Cached {benchmark} to {cache_file} ({len(data)} rows)")
         except Exception as e:
             logger.warning(f"Failed to cache {benchmark}: {e}")
 

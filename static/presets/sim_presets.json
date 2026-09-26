@@ -7,7 +7,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🐂 Bull Run - Early",
+      "name": " Bull Run - Early",
       "desc": "Moderate optimism, controlled risk",
       "tooltip": "Early bull market: progressive rotation toward quality alts, stablecoins reduced cautiously",
       "inputs": {
@@ -50,7 +50,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🚀 Bull Run - Euphoria",
+      "name": " Bull Run - Euphoria",
       "desc": "Bull peak, maximum euphoria",
       "tooltip": "Euphoria → distribution transition: cautious defensive rotation, early top signals",
       "inputs": {
@@ -98,7 +98,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🌊 ETH Expansion",
+      "name": " ETH Expansion",
       "desc": "L2 and Ethereum ecosystem on fire",
       "tooltip": "ETH expansion phase: L2/Scaling outperform, rotation toward Ethereum ecosystem",
       "inputs": {
@@ -141,7 +141,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🎆 Altseason - Large Caps",
+      "name": " Altseason - Large Caps",
       "desc": "Major L1s and top 50 growing",
       "tooltip": "Altseason concentrated on major L1s (SOL, AVAX) and top 50, BTC/ETH stagnate",
       "inputs": {
@@ -184,7 +184,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🔥 Altseason - Full",
+      "name": " Altseason - Full",
       "desc": "Memecoins and micro-caps on fire",
       "tooltip": "Full altseason: memecoins and Others explode, irrational euphoria, high danger",
       "inputs": {
@@ -227,7 +227,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "⚠️ Crash Imminent",
+      "name": "[Warning] Crash Imminent",
       "desc": "Max contradictions, extreme danger",
       "tooltip": "Top signals: cycle very high but contradictions explode, emergency exit recommended",
       "inputs": {
@@ -275,7 +275,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🐻 Bear Market - Early",
+      "name": " Bear Market - Early",
       "desc": "Correction, protection needed",
       "tooltip": "Early bear market: progressive risk reduction, rotation toward quality and stablecoins",
       "inputs": {
@@ -318,7 +318,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "💀 Capitulation",
+      "name": " Capitulation",
       "desc": "Maximum fear, survival mode",
       "tooltip": "Market in capitulation: maximum stablecoins, circuit-breakers active, focus on capital preservation",
       "inputs": {
@@ -366,7 +366,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🎢 Dead Cat Bounce",
+      "name": " Dead Cat Bounce",
       "desc": "Temporary bounce in bear market",
       "tooltip": "Technical bounce in a bear: caution maintained, low confidence, no FOMO",
       "inputs": {
@@ -409,7 +409,7 @@
     {
       "version": "2.0",
       "created_with": "simulator-v2",
-      "name": "🌱 Post-Bear Recovery",
+      "name": " Post-Bear Recovery",
       "desc": "First signs of recovery",
       "tooltip": "Bear market exit: progressive accumulation, onchain recovering, cautious allocation",
       "inputs": {

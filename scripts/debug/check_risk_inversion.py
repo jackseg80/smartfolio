@@ -35,7 +35,7 @@ def check_file(path):
 
     for pat in PATTERNS:
         if re.search(pat, text, flags=re.IGNORECASE):
-            return f"❌ {path}: Risk inversion détectée (pattern: `{pat}`)"
+            return f"[Error] {path}: Risk inversion détectée (pattern: `{pat}`)"
     return None
 
 def main(args):
@@ -51,7 +51,7 @@ def main(args):
 
     if errors:
         print("\n".join(errors))
-        print("\n💡 Voir docs/RISK_SEMANTICS.md — Risk ∈ [0..100], plus haut = plus robuste ; ne jamais faire `100 - risk`.")
+        print("\n Voir docs/RISK_SEMANTICS.md — Risk ∈ [0..100], plus haut = plus robuste ; ne jamais faire `100 - risk`.")
         sys.exit(1)
 
     sys.exit(0)

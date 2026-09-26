@@ -24,7 +24,7 @@ def test_execution_workflow():
     print("=" * 50)
     
     # 1. Générer un plan de rebalancement
-    print("\n1️⃣ Génération du plan de rebalancement...")
+    print("\n1. Génération du plan de rebalancement...")
     
     rebalance_payload = {
         "primary_symbols": {
@@ -49,17 +49,17 @@ def test_execution_workflow():
     )
     
     if response.status_code != 200:
-        print(f"❌ Erreur génération plan: {response.status_code}")
+        print(f"[Error] Erreur génération plan: {response.status_code}")
         print(response.text)
         return False
     
     rebalance_plan = response.json()
     actions = rebalance_plan.get("actions", [])
     
-    print(f"✅ Plan généré: {len(actions)} actions, ${rebalance_plan.get('total_usd', 0):,.2f} total")
+    print(f"[OK] Plan généré: {len(actions)} actions, ${rebalance_plan.get('total_usd', 0):,.2f} total")
     
     # 2. Valider le plan d'exécution
-    print("\n2️⃣ Validation du plan d'exécution...")
+    print("\n2. Validation du plan d'exécution...")
     
     validation_payload = {
         "rebalance_actions": actions,
@@ -78,51 +78,51 @@ def test_execution_workflow():
     )
     
     if response.status_code != 200:
-        print(f"❌ Erreur validation: {response.status_code}")
+        print(f"[Error] Erreur validation: {response.status_code}")
         print(response.text)
         return False
     
     validation = response.json()
     plan_id = validation["plan_id"]
     
-    print(f"✅ Plan validé: {validation['total_orders']} ordres, "
+    print(f"[OK] Plan validé: {validation['total_orders']} ordres, "
           f"${validation['total_volume']:,.2f} volume")
     
     if validation["errors"]:
-        print(f"⚠️ Erreurs: {validation['errors']}")
+        print(f"[Warning] Erreurs: {validation['errors']}")
         return False
     
     if validation["warnings"]:
-        print(f"⚠️ Avertissements: {validation['warnings']}")
+        print(f"[Warning] Avertissements: {validation['warnings']}")
     
     # 3. Connecter les exchanges
-    print("\n3️⃣ Connexion aux exchanges...")
+    print("\n3. Connexion aux exchanges...")
     
     response = requests.post(f"{API_BASE}/execution/exchanges/connect")
     if response.status_code == 200:
         connect_result = response.json()
-        print(f"✅ Exchanges connectés: {connect_result['message']}")
+        print(f"[OK] Exchanges connectés: {connect_result['message']}")
     else:
-        print(f"⚠️ Problème connexion exchanges: {response.status_code}")
+        print(f"[Warning] Problème connexion exchanges: {response.status_code}")
     
     # 4. Lancer l'exécution
-    print("\n4️⃣ Lancement de l'exécution (dry-run)...")
+    print("\n4. Lancement de l'exécution (dry-run)...")
     
     response = requests.post(
         f"{API_BASE}/execution/execute-plan?plan_id={plan_id}&dry_run=true&max_parallel=2"
     )
     
     if response.status_code != 200:
-        print(f"❌ Erreur lancement exécution: {response.status_code}")
+        print(f"[Error] Erreur lancement exécution: {response.status_code}")
         print(response.text)
         return False
     
     execution = response.json()
-    print(f"✅ Exécution lancée: {execution['message']}")
-    print(f"⏱️ Durée estimée: {execution.get('estimated_duration_seconds', 0):.1f}s")
+    print(f"[OK] Exécution lancée: {execution['message']}")
+    print(f"[Pending] Durée estimée: {execution.get('estimated_duration_seconds', 0):.1f}s")
     
     # 5. Monitoring du progrès
-    print("\n5️⃣ Monitoring du progrès...")
+    print("\n5. Monitoring du progrès...")
     
     max_wait = 60  # 60 secondes max
     start_time = time.time()
@@ -133,20 +133,20 @@ def test_execution_workflow():
         if response.status_code == 200:
             status = response.json()
             
-            print(f"📊 Progrès: {status['completion_percentage']:.1f}% - "
+            print(f" Progrès: {status['completion_percentage']:.1f}% - "
                   f"{status['completed_orders']}/{status['total_orders']} ordres - "
                   f"Succès: {status['success_rate']:.1f}%")
             
             if not status['is_active']:
-                print(f"🏁 Exécution terminée: {status['status']}")
+                print(f" Exécution terminée: {status['status']}")
                 break
         else:
-            print(f"⚠️ Erreur statut: {response.status_code}")
+            print(f"[Warning] Erreur statut: {response.status_code}")
         
         time.sleep(2)
     
     # 6. Résultats finaux
-    print("\n6️⃣ Résultats finaux...")
+    print("\n6. Résultats finaux...")
     
     response = requests.get(f"{API_BASE}/execution/orders/{plan_id}")
     if response.status_code == 200:
@@ -157,40 +157,40 @@ def test_execution_workflow():
         failed = sum(1 for o in orders if o["status"] == "failed")
         total_fees = sum(o["fees"] for o in orders)
         
-        print("📈 Résultats détaillés:")
-        print(f"   ✅ Complétés: {completed}/{len(orders)}")
-        print(f"   ❌ Échecs: {failed}/{len(orders)}")
-        print(f"   💰 Frais totaux: ${total_fees:.4f}")
+        print(" Résultats détaillés:")
+        print(f"   [OK] Complétés: {completed}/{len(orders)}")
+        print(f"   [Error] Échecs: {failed}/{len(orders)}")
+        print(f"    Frais totaux: ${total_fees:.4f}")
         
         # Afficher quelques ordres exemple
-        print("\n📋 Exemples d'ordres:")
+        print("\n Exemples d'ordres:")
         for i, order in enumerate(orders[:3]):
-            status_emoji = "✅" if order["status"] == "filled" else "❌" if order["status"] == "failed" else "⏳"
+            status_emoji = "OK" if order["status"] == "filled" else "Error" if order["status"] == "failed" else "Pending"
             avg_price = order.get('avg_fill_price') or 0
             print(f"   {status_emoji} {order['alias']}: {order['action']} ${abs(order['usd_amount']):.2f} "
                   f"@ ${avg_price:.2f}")
     
     # 7. Statut global du pipeline
-    print("\n7️⃣ Statut du pipeline...")
+    print("\n7. Statut du pipeline...")
     
     response = requests.get(f"{API_BASE}/execution/pipeline-status")
     if response.status_code == 200:
         pipeline = response.json()
-        print(f"🔧 Pipeline: {pipeline['pipeline_status']}")
-        print(f"📊 Statistiques: {pipeline['statistics']['total_plans']} plans, "
+        print(f" Pipeline: {pipeline['pipeline_status']}")
+        print(f" Statistiques: {pipeline['statistics']['total_plans']} plans, "
               f"{pipeline['statistics']['success_rate']:.1f}% succès")
     
-    print("\n🎉 Test E2E terminé avec succès!")
+    print("\n Test E2E terminé avec succès!")
     return True
 
 if __name__ == "__main__":
     try:
         success = test_execution_workflow()
         if success:
-            print("\n✅ Tous les tests sont passés!")
+            print("\n[OK] Tous les tests sont passés!")
         else:
-            print("\n❌ Certains tests ont échoué!")
+            print("\n[Error] Certains tests ont échoué!")
     except Exception as e:
-        print(f"\n💥 Erreur durant les tests: {e}")
+        print(f"\n Erreur durant les tests: {e}")
         import traceback
         traceback.print_exc()

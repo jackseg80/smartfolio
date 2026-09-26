@@ -365,7 +365,7 @@ async def main():
                 logger.warning(f"  ERREUR config '{label}' sur {period_name}: {e}")
                 continue
 
-        logger.info(f"  ✓ {period_name} terminée ({len(all_configs)} configs)")
+        logger.info(f"   {period_name} terminée ({len(all_configs)} configs)")
 
     # Écrire le CSV
     logger.info(f"\n{'=' * 70}")
@@ -376,7 +376,7 @@ async def main():
         writer.writeheader()
         writer.writerows(results_rows)
 
-    logger.info(f"✓ Fichier créé: {output_file}")
+    logger.info(f" Fichier créé: {output_file}")
 
     # Résumé rapide
     print_summary(results_rows)

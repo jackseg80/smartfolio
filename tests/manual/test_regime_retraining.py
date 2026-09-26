@@ -16,26 +16,26 @@ logging.basicConfig(
 async def test_regime_training():
     """Test regime detection with forced retraining"""
     print("\n" + "="*60)
-    print("🧪 Testing Regime Detection with Class Balancing")
+    print(" Testing Regime Detection with Class Balancing")
     print("="*60 + "\n")
 
     adapter = StocksMLAdapter()
 
     # Force regime detection (will trigger training if model missing)
-    print("📊 Detecting market regime (SPY benchmark)...")
+    print(" Detecting market regime (SPY benchmark)...")
     result = await adapter.detect_market_regime(
         benchmark="SPY",
         lookback_days=365
     )
 
     print("\n" + "-"*60)
-    print("📈 RESULTS:")
+    print(" RESULTS:")
     print("-"*60)
     print(f"Current Regime: {result['current_regime']}")
     print(f"Confidence: {result['confidence']:.1%}")
     print(f"Model Type: {result.get('model_type', 'ML Neural Network')}")
 
-    print("\n🎲 Regime Probabilities:")
+    print("\n Regime Probabilities:")
     probs = result.get('regime_probabilities', {})
     for regime, prob in sorted(probs.items(), key=lambda x: -x[1]):
         bar = "█" * int(prob * 50)
@@ -47,11 +47,11 @@ async def test_regime_training():
 
     print("\n" + "-"*60)
     if has_absurd:
-        print("❌ PROBLÈME: Probabilités absurdes détectées!")
+        print("[Error] PROBLÈME: Probabilités absurdes détectées!")
         print("   → Le modèle prédit toujours la même classe")
         print("   → Class balancing n'a pas fonctionné")
     else:
-        print("✅ SUCCÈS: Probabilités réalistes!")
+        print("[OK] SUCCÈS: Probabilités réalistes!")
         print("   → Class balancing fonctionne correctement")
         print("   → Le modèle est bien calibré")
     print("-"*60 + "\n")

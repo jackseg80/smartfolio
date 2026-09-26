@@ -144,7 +144,7 @@ class ExportFormatter:
         lines = []
 
         # Header
-        lines.append(f"# 💰 Crypto Portfolio Export")
+        lines.append(f"#  Crypto Portfolio Export")
         lines.append(f"")
         lines.append(f"**Exported:** {self.timestamp}")
         lines.append(f"")
@@ -158,7 +158,7 @@ class ExportFormatter:
         lines.append(f"")
 
         # Assets section
-        lines.append(f"## 📊 Assets")
+        lines.append(f"##  Assets")
         lines.append(f"")
         lines.append("| Symbol | Group | Amount | Value USD | Location |")
         lines.append("|--------|-------|--------|-----------|----------|")
@@ -177,7 +177,7 @@ class ExportFormatter:
         lines.append(f"")
 
         # Groups section
-        lines.append(f"## 🗂️ Groups (11 Categories)")
+        lines.append(f"##  Groups (11 Categories)")
         lines.append(f"")
         lines.append("| Group | Symbols | Value USD | Allocation % |")
         lines.append("|-------|---------|-----------|--------------|")
@@ -228,7 +228,7 @@ class ExportFormatter:
         lines = []
 
         # Header
-        lines.append(f"# 📈 Saxo Bank Portfolio Export")
+        lines.append(f"#  Saxo Bank Portfolio Export")
         lines.append(f"")
         lines.append(f"**Exported:** {self.timestamp}")
         lines.append(f"")
@@ -245,7 +245,7 @@ class ExportFormatter:
         lines.append(f"")
 
         # Positions section
-        lines.append(f"## 📊 Positions")
+        lines.append(f"##  Positions")
         lines.append(f"")
         lines.append("| Symbol | Instrument | Asset Class | Quantity | Market Value USD | Currency | Classification |")
         lines.append("|--------|------------|-------------|----------|------------------|----------|----------------|")
@@ -266,7 +266,7 @@ class ExportFormatter:
         lines.append(f"")
 
         # Sectors section
-        lines.append(f"## 🗂️ Classifications (GICS for equities; exposure for funds)")
+        lines.append(f"##  Classifications (GICS for equities; exposure for funds)")
         lines.append(f"")
         lines.append("| Classification | Value USD | Allocation % | Assets |")
         lines.append("|--------|-----------|--------------|--------|")
@@ -311,7 +311,7 @@ class ExportFormatter:
         lines = []
 
         # Header
-        lines.append(f"# 🏦 Bank Accounts Export")
+        lines.append(f"#  Bank Accounts Export")
         lines.append(f"")
         lines.append(f"**Exported:** {self.timestamp}")
         lines.append(f"")
@@ -326,7 +326,7 @@ class ExportFormatter:
         lines.append(f"")
 
         # Accounts section
-        lines.append(f"## 💳 Accounts")
+        lines.append(f"##  Accounts")
         lines.append(f"")
         lines.append("| Bank Name | Account Type | Balance | Currency | Balance USD |")
         lines.append("|-----------|--------------|---------|----------|-------------|")
@@ -376,7 +376,7 @@ class ExportFormatter:
         lines = []
 
         # Header
-        lines.append(f"# 💰 Wealth Export")
+        lines.append(f"#  Wealth Export")
         lines.append(f"")
         lines.append(f"**Exported:** {self.timestamp}")
         lines.append(f"")
@@ -387,7 +387,7 @@ class ExportFormatter:
         total_assets = summary.get('total_assets', 0)
         total_liabilities = summary.get('total_liabilities', 0)
 
-        lines.append(f"## 📊 Summary")
+        lines.append(f"##  Summary")
         lines.append(f"")
         lines.append(f"- **Net Worth:** ${net_worth:,.2f}")
         lines.append(f"- **Total Assets:** ${total_assets:,.2f}")
@@ -399,14 +399,14 @@ class ExportFormatter:
         # Breakdown by category
         breakdown = summary.get('breakdown', {})
         counts = summary.get('counts', {})
-        lines.append(f"## 📈 Breakdown by Category")
+        lines.append(f"##  Breakdown by Category")
         lines.append(f"")
         lines.append("| Category | Total USD | Count |")
         lines.append("|----------|-----------|-------|")
-        lines.append(f"| 💵 Liquidity | ${breakdown.get('liquidity', 0):,.2f} | {counts.get('liquidity', 0)} |")
-        lines.append(f"| 🏠 Tangible Assets | ${breakdown.get('tangible', 0):,.2f} | {counts.get('tangible', 0)} |")
-        lines.append(f"| 🛡️ Insurance | ${breakdown.get('insurance', 0):,.2f} | {counts.get('insurance', 0)} |")
-        lines.append(f"| ⚠️ Liabilities | ${breakdown.get('liability', 0):,.2f} | {counts.get('liability', 0)} |")
+        lines.append(f"|  Liquidity | ${breakdown.get('liquidity', 0):,.2f} | {counts.get('liquidity', 0)} |")
+        lines.append(f"|  Tangible Assets | ${breakdown.get('tangible', 0):,.2f} | {counts.get('tangible', 0)} |")
+        lines.append(f"|  Insurance | ${breakdown.get('insurance', 0):,.2f} | {counts.get('insurance', 0)} |")
+        lines.append(f"| [Warning] Liabilities | ${breakdown.get('liability', 0):,.2f} | {counts.get('liability', 0)} |")
         lines.append(f"")
         lines.append(f"---")
         lines.append(f"")
@@ -414,16 +414,16 @@ class ExportFormatter:
         # Items by category
         items_by_category = data.get('items_by_category', {})
         category_labels = {
-            'liquidity': ('💵', 'Liquidities'),
-            'tangible': ('🏠', 'Tangible Assets'),
-            'insurance': ('🛡️', 'Insurance'),
-            'liability': ('⚠️', 'Liabilities')
+            'liquidity': 'Liquidities',
+            'tangible': 'Tangible Assets',
+            'insurance': 'Insurance',
+            'liability': 'Liabilities'
         }
 
-        for category, (emoji, label) in category_labels.items():
+        for category, label in category_labels.items():
             items = items_by_category.get(category, [])
             if items:
-                lines.append(f"## {emoji} {label}")
+                lines.append(f"## {label}")
                 lines.append(f"")
                 lines.append("| Name | Type | Value | Currency | Value USD | Acquisition Date | Notes |")
                 lines.append("|------|------|-------|----------|-----------|------------------|-------|")

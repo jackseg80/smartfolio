@@ -61,7 +61,7 @@ console.log('='.repeat(80));
 console.log('ACTION REQUISE:');
 console.log('1. Dans analytics-unified.html avec wallet Low_Risk:');
 console.log('   - Ouvrir la console navigateur (F12)');
-console.log('   - Chercher les logs: "💰 Risk Budget calculated:"');
+console.log('   - Chercher les logs: "Balance Risk Budget calculated:"');
 console.log('   - Noter les valeurs: blended_score, risk_score');
 console.log('');
 console.log('2. Comparer "Budget stables théorique" affiché:');

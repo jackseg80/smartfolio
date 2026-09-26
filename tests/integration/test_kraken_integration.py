@@ -69,7 +69,7 @@ async def test_kraken_api_direct():
                 print("  WARNING Pas de credentials API - test privé ignoré")
                 
     except Exception as e:
-        print(f"❌ Erreur test API directe: {e}")
+        print(f"[Error] Erreur test API directe: {e}")
         return False
     
     return True
@@ -77,7 +77,7 @@ async def test_kraken_api_direct():
 async def test_kraken_adapter():
     """Test de l'adaptateur Kraken dans le système d'exécution"""
     print("\n" + "="*60)
-    print("🔌 TEST 2: Adaptateur Kraken")
+    print(" TEST 2: Adaptateur Kraken")
     print("="*60)
     
     try:
@@ -85,46 +85,46 @@ async def test_kraken_adapter():
         
         # Vérifier que Kraken est enregistré
         exchanges = exchange_registry.list_exchanges()
-        print(f"📋 Exchanges disponibles: {', '.join(exchanges)}")
+        print(f" Exchanges disponibles: {', '.join(exchanges)}")
         
         if "kraken" not in exchanges:
-            print("❌ Kraken n'est pas enregistré dans le registre")
+            print("[Error] Kraken n'est pas enregistré dans le registre")
             return False
         
         # Obtenir l'adaptateur Kraken
         kraken_adapter = exchange_registry.get_adapter("kraken")
-        print(f"✅ Adaptateur Kraken récupéré: {kraken_adapter.__class__.__name__}")
+        print(f"[OK] Adaptateur Kraken récupéré: {kraken_adapter.__class__.__name__}")
         
         # Test de connexion
-        print("\n🔗 Test de connexion...")
+        print("\n Test de connexion...")
         connected = await kraken_adapter.connect()
         if not connected:
-            print("⚠️  Connexion échouée - probablement pas de credentials")
+            print("[Warning]  Connexion échouée - probablement pas de credentials")
             return True  # Pas d'erreur si pas de credentials
         
-        print("✅ Connexion réussie!")
+        print("[OK] Connexion réussie!")
         
         # Test des paires de trading
-        print("\n📊 Test des paires de trading...")
+        print("\n Test des paires de trading...")
         pairs = await kraken_adapter.get_trading_pairs()
-        print(f"  ✅ {len(pairs)} paires chargées")
+        print(f"  [OK] {len(pairs)} paires chargées")
         
         # Afficher quelques paires
         for pair in pairs[:5]:
             print(f"    • {pair.symbol} (min: ${pair.min_order_size})")
         
         # Test des soldes
-        print("\n💰 Test des soldes...")
+        print("\n Test des soldes...")
         try:
             btc_balance = await kraken_adapter.get_balance("BTC")
             usd_balance = await kraken_adapter.get_balance("USD")
             print(f"  • BTC: {btc_balance:,.8f}")
             print(f"  • USD: {usd_balance:,.2f}")
         except Exception as e:
-            print(f"  ⚠️  Erreur soldes: {e}")
+            print(f"  [Warning]  Erreur soldes: {e}")
         
         # Test des prix
-        print("\n💲 Test des prix...")
+        print("\n Test des prix...")
         try:
             btc_price = await kraken_adapter.get_current_price("BTC/USD")
             eth_price = await kraken_adapter.get_current_price("ETH/USD")
@@ -133,14 +133,14 @@ async def test_kraken_adapter():
             if eth_price:
                 print(f"  • ETH/USD: ${eth_price:,.2f}")
         except Exception as e:
-            print(f"  ⚠️  Erreur prix: {e}")
+            print(f"  [Warning]  Erreur prix: {e}")
         
         # Déconnexion
         await kraken_adapter.disconnect()
-        print("✅ Déconnexion propre")
+        print("[OK] Déconnexion propre")
         
     except Exception as e:
-        print(f"❌ Erreur test adaptateur: {e}")
+        print(f"[Error] Erreur test adaptateur: {e}")
         return False
     
     return True
@@ -148,7 +148,7 @@ async def test_kraken_adapter():
 async def test_execution_engine_with_kraken():
     """Test du moteur d'exécution avec Kraken"""
     print("\n" + "="*60)
-    print("⚡ TEST 3: Moteur d'Exécution avec Kraken")
+    print(" TEST 3: Moteur d'Exécution avec Kraken")
     print("="*60)
     
     try:
@@ -168,7 +168,7 @@ async def test_execution_engine_with_kraken():
             exchange_hint="kraken"
         )
         
-        print(f"📝 Ordre de test créé:")
+        print(f" Ordre de test créé:")
         print(f"  • Symbol: {test_order.symbol}")
         print(f"  • Action: {test_order.action}")
         print(f"  • Montant: ${test_order.usd_amount}")
@@ -178,16 +178,16 @@ async def test_execution_engine_with_kraken():
         engine = ExecutionEngine()
         
         # Test de validation d'ordre (sans exécution réelle)
-        print("\n🔍 Test de validation de sécurité...")
+        print("\n Test de validation de sécurité...")
         
         # Pour ce test, on ne va pas vraiment exécuter l'ordre
         # mais juste valider que le système peut le traiter
         
-        print("✅ Test du moteur d'exécution avec Kraken réussi")
+        print("[OK] Test du moteur d'exécution avec Kraken réussi")
         print("  (Aucun ordre réel placé)")
         
     except Exception as e:
-        print(f"❌ Erreur test moteur d'exécution: {e}")
+        print(f"[Error] Erreur test moteur d'exécution: {e}")
         return False
     
     return True
@@ -195,7 +195,7 @@ async def test_execution_engine_with_kraken():
 async def test_kraken_order_validation():
     """Test de validation d'ordre Kraken (mode dry-run)"""
     print("\n" + "="*60)
-    print("🛡️ TEST 4: Validation d'Ordre Kraken (Dry-run)")
+    print(" TEST 4: Validation d'Ordre Kraken (Dry-run)")
     print("="*60)
     
     try:
@@ -206,7 +206,7 @@ async def test_kraken_order_validation():
         
         # Test avec l'API Kraken en mode validation
         if os.getenv('KRAKEN_API_KEY') and os.getenv('KRAKEN_API_SECRET'):
-            print("🔑 Credentials détectées - test en mode validation")
+            print(" Credentials détectées - test en mode validation")
             
             config = KrakenConfig()
             async with KrakenAPI(config) as client:
@@ -220,35 +220,35 @@ async def test_kraken_order_validation():
                         validate=True  # MODE VALIDATION SEULE
                     )
                     
-                    print("✅ Validation d'ordre réussie:")
+                    print("[OK] Validation d'ordre réussie:")
                     print(f"  • Résultat: {result}")
                     
                 except Exception as e:
-                    print(f"⚠️  Erreur validation (normale si solde insuffisant): {e}")
+                    print(f"[Warning]  Erreur validation (normale si solde insuffisant): {e}")
         else:
-            print("⚠️  Pas de credentials - test validation ignoré")
+            print("[Warning]  Pas de credentials - test validation ignoré")
         
-        print("✅ Test de validation d'ordre terminé")
+        print("[OK] Test de validation d'ordre terminé")
         
     except Exception as e:
-        print(f"❌ Erreur test validation: {e}")
+        print(f"[Error] Erreur test validation: {e}")
         return False
     
     return True
 
 async def main():
     """Fonction principale de test"""
-    print("🚀 TESTS D'INTÉGRATION KRAKEN")
+    print(" TESTS D'INTÉGRATION KRAKEN")
     print("="*60)
     
     # Vérifier les variables d'environnement
     kraken_key = os.getenv('KRAKEN_API_KEY')
     kraken_secret = os.getenv('KRAKEN_API_SECRET')
     
-    print(f"🔑 Credentials Kraken: {'✅ Configurées' if kraken_key and kraken_secret else '⚠️ Manquantes'}")
+    print(f" Credentials Kraken: {'[OK] Configurées' if kraken_key and kraken_secret else '[Warning] Manquantes'}")
     
     if not kraken_key or not kraken_secret:
-        print("   📝 Pour tester les endpoints privés, configurez:")
+        print("    Pour tester les endpoints privés, configurez:")
         print("   export KRAKEN_API_KEY='your_api_key'")
         print("   export KRAKEN_API_SECRET='your_api_secret'")
     
@@ -272,24 +272,24 @@ async def main():
     
     # Résumé final
     print("\n" + "="*60)
-    print("📊 RÉSUMÉ DES TESTS")
+    print(" RÉSUMÉ DES TESTS")
     print("="*60)
     
     passed = 0
     for test_name, success in results:
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[OK] PASS" if success else "[Error] FAIL"
         print(f"{status} - {test_name}")
         if success:
             passed += 1
     
-    print(f"\n🎯 Résultat: {passed}/{len(results)} tests réussis")
+    print(f"\n Résultat: {passed}/{len(results)} tests réussis")
     
     if passed == len(results):
-        print("🎉 Intégration Kraken complètement fonctionnelle!")
+        print(" Intégration Kraken complètement fonctionnelle!")
     elif passed > 0:
-        print("⚠️  Intégration partiellement fonctionnelle")
+        print("[Warning]  Intégration partiellement fonctionnelle")
     else:
-        print("❌ Intégration Kraken non fonctionnelle")
+        print("[Error] Intégration Kraken non fonctionnelle")
     
     return passed == len(results)
 
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("\n⛔ Test interrompu par l'utilisateur")
+        print("\n[Blocked] Test interrompu par l'utilisateur")
     except Exception as e:
         logger.error(f"Erreur fatale: {e}")
         exit(1)

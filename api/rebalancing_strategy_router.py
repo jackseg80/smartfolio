@@ -19,7 +19,7 @@ REBALANCING_STRATEGIES: Dict[str, dict] = {
         "name": "Conservative",
         "description": "Stratégie prudente privilégiant la stabilité",
         "risk_level": "Faible",
-        "icon": "🛡️",
+        "icon": "Protection",
         "allocations": {
             "BTC": 40,
             "ETH": 25,
@@ -38,7 +38,7 @@ REBALANCING_STRATEGIES: Dict[str, dict] = {
         "name": "Balanced",
         "description": "Équilibre entre croissance et stabilité",
         "risk_level": "Moyen",
-        "icon": "⚖️",
+        "icon": "Balanced",
         "allocations": {
             "BTC": 35,
             "ETH": 30,
@@ -58,7 +58,7 @@ REBALANCING_STRATEGIES: Dict[str, dict] = {
         "name": "Growth",
         "description": "Croissance agressive avec plus d'altcoins",
         "risk_level": "Élevé",
-        "icon": "🚀",
+        "icon": "Growth",
         "allocations": {
             "BTC": 25,
             "ETH": 25,
@@ -78,7 +78,7 @@ REBALANCING_STRATEGIES: Dict[str, dict] = {
         "name": "DeFi Focus",
         "description": "Spécialisé dans l'écosystème DeFi",
         "risk_level": "Élevé",
-        "icon": "🔄",
+        "icon": "Refresh",
         "allocations": {
             "ETH": 30,
             "DeFi": 35,
@@ -97,7 +97,7 @@ REBALANCING_STRATEGIES: Dict[str, dict] = {
         "name": "Accumulation",
         "description": "Accumulation long terme des majors",
         "risk_level": "Faible-Moyen",
-        "icon": "📈",
+        "icon": "Growth",
         "allocations": {
             "BTC": 50,
             "ETH": 35,

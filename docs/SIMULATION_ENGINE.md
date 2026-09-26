@@ -54,17 +54,17 @@ Modules clés :
 
 ## 5. QA Checklist
 
-- ✅ DI simulé = DI prod avec mêmes inputs
-- ✅ Pas d'accès direct à API hors sandbox
-- ✅ Risk score appliqué positivement (pas de `100 - risk`)
-- ✅ Governance caps déclenchés identiques à prod
-- ✅ Tests UI : badge + contradiction visibles
+- [OK] DI simulé = DI prod avec mêmes inputs
+- [OK] Pas d'accès direct à API hors sandbox
+- [OK] Risk score appliqué positivement (pas de `100 - risk`)
+- [OK] Governance caps déclenchés identiques à prod
+- [OK] Tests UI : badge + contradiction visibles
 
 ---
 
 ## Sémantique Risk
 
-> **⚠️ Règle Canonique — Sémantique Risk**
+> **[Warning] Règle Canonique — Sémantique Risk**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
@@ -75,11 +75,11 @@ Modules clés :
 > DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
 > ```
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
 >
 > **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
 >
-> 📖 Source : [docs/RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+>  Source : [docs/RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 
 ---
 

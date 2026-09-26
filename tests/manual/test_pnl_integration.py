@@ -25,7 +25,7 @@ async def create_snapshot(user_id: str = "demo", source: str = "cointracking"):
             f"{BASE_URL}/portfolio/snapshot",
             params={"user_id": user_id, "source": source}
         )
-        print(f"✅ Snapshot créé: {response.status_code}")
+        print(f"[OK] Snapshot créé: {response.status_code}")
         print(f"   Response: {response.json()}")
         return response.json()
 
@@ -36,7 +36,7 @@ async def get_pnl_summary(user_id: str = "demo", source: str = "cointracking", a
             f"{BASE_URL}/api/performance/summary",
             params={"user_id": user_id, "source": source, "anchor": anchor}
         )
-        print(f"\n📊 P&L Summary (anchor={anchor}):")
+        print(f"\n P&L Summary (anchor={anchor}):")
         print(f"   Status: {response.status_code}")
 
         if response.status_code == 200:
@@ -51,7 +51,7 @@ async def get_pnl_summary(user_id: str = "demo", source: str = "cointracking", a
             print(f"   Base snapshot: {perf.get('base_snapshot_at')}")
 
             # Headers de cache
-            print(f"\n🔧 Cache Headers:")
+            print(f"\n Cache Headers:")
             print(f"   ETag: {response.headers.get('etag')}")
             print(f"   Cache-Control: {response.headers.get('cache-control')}")
 
@@ -68,7 +68,7 @@ async def test_etag_caching():
         response1 = await client.get(f"{BASE_URL}/api/performance/summary")
         etag = response1.headers.get("etag")
 
-        print(f"\n🔄 Test ETag Caching:")
+        print(f"\n Test ETag Caching:")
         print(f"   Premier appel: {response1.status_code}, ETag: {etag}")
 
         # Deuxième appel avec If-None-Match
@@ -79,16 +79,16 @@ async def test_etag_caching():
         print(f"   Deuxième appel (avec ETag): {response2.status_code} (attendu: 304)")
 
         if response2.status_code == 304:
-            print("   ✅ Cache ETag fonctionne correctement!")
+            print("   [OK] Cache ETag fonctionne correctement!")
         else:
-            print("   ⚠️  Cache ETag n'a pas retourné 304")
+            print("   [Warning]  Cache ETag n'a pas retourné 304")
 
 @requires_server
 async def test_anchor_points():
     """Test des différents anchor points"""
     anchors = ["prev_close", "midnight", "session"]
 
-    print(f"\n🎯 Test des anchor points:")
+    print(f"\n Test des anchor points:")
     for anchor in anchors:
         await get_pnl_summary(anchor=anchor)
         print("-" * 60)
@@ -100,12 +100,12 @@ async def main():
     print("=" * 80)
 
     # Étape 1: Créer un snapshot baseline
-    print("\n📸 Étape 1: Création du snapshot baseline")
+    print("\n Étape 1: Création du snapshot baseline")
     await create_snapshot()
 
     # Étape 2: Récupérer le P&L actuel
     print("\n" + "=" * 80)
-    print("📈 Étape 2: Calcul du P&L")
+    print(" Étape 2: Calcul du P&L")
     await get_pnl_summary(anchor="midnight")
 
     # Étape 3: Test des anchor points
@@ -115,7 +115,7 @@ async def main():
     await test_etag_caching()
 
     print("\n" + "=" * 80)
-    print("✅ Test terminé!")
+    print("[OK] Test terminé!")
     print("=" * 80)
 
 if __name__ == "__main__":

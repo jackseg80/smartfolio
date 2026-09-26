@@ -1,6 +1,6 @@
 # Option B: Unified Risk Endpoint Specification
 
-**Status**: 📝 Specification (Not Implemented)
+**Status**:  Specification (Not Implemented)
 **Date**: 2025-10-01
 **Context**: Fix for flyout panel data loading issues (analytics-unified.html, rebalance.html)
 
@@ -14,9 +14,9 @@ Currently, the risk sidebar component (`risk-sidebar-full.js`) needs data from m
 2. **On-Chain Score** - Calculated frontend-side via multiple API calls + JS aggregation
 3. **Cycle Data** - Calculated frontend-side (months, phase, ccsStar)
 4. **Blended Decision** - Calculated frontend-side with weighted formula
-5. **Risk Score** - Available in `/api/risk/dashboard` ✅
-6. **Governance** - Partially available ✅
-7. **Alerts** - Available ✅
+5. **Risk Score** - Available in `/api/risk/dashboard` OK
+6. **Governance** - Partially available [OK]
+7. **Alerts** - Available [OK]
 
 **Current State**:
 - `risk-dashboard.html` works because it calculates everything frontend-side
@@ -97,7 +97,7 @@ curl "http://localhost:8080/api/risk/unified?source=cointracking&min_usd=1.0" \
     "ccsStar": 81.2,
     "phase": {
       "phase": "EXPANSION",
-      "emoji": "📈",
+      "emoji": "Growth",
       "confidence": 0.87
     },
     "multiplier": 1.05,
@@ -427,16 +427,16 @@ async def calculate_onchain_score(holdings: List[dict]) -> float:
 
 **Definition of Done**:
 
-1. ✅ Endpoint `/api/risk/unified` returns complete data structure
-2. ✅ All 10 sidebar sections visible on analytics-unified.html
-3. ✅ All 10 sidebar sections visible on rebalance.html
-4. ✅ risk-dashboard.html maintains pixel-perfect parity
-5. ✅ No "N/A" or hidden sections due to missing data
-6. ✅ Response time < 200ms (p95)
-7. ✅ Cache hit rate > 80%
-8. ✅ Multi-tenant isolation verified
-9. ✅ Fallback to Option A works if endpoint unavailable
-10. ✅ Documentation updated (API_REFERENCE.md)
+1. [OK] Endpoint `/api/risk/unified` returns complete data structure
+2. [OK] All 10 sidebar sections visible on analytics-unified.html
+3. [OK] All 10 sidebar sections visible on rebalance.html
+4. [OK] risk-dashboard.html maintains pixel-perfect parity
+5. [OK] No "N/A" or hidden sections due to missing data
+6. [OK] Response time < 200ms (p95)
+7. [OK] Cache hit rate > 80%
+8. [OK] Multi-tenant isolation verified
+9. [OK] Fallback to Option A works if endpoint unavailable
+10. [OK] Documentation updated (API_REFERENCE.md)
 
 ---
 
@@ -444,13 +444,13 @@ async def calculate_onchain_score(holdings: List[dict]) -> float:
 
 | Aspect | Option A (Current) | Option B (Unified) |
 |--------|-------------------|-------------------|
-| **Data Completeness** | ❌ Partial (only API data) | ✅ Complete (all sections) |
-| **UX** | ⚠️ Hidden sections | ✅ Full visibility |
-| **Performance** | ✅ Fast (1 API call) | ✅ Fast (1 API call + cache) |
-| **Consistency** | ❌ Different per page | ✅ Identical everywhere |
-| **Maintenance** | ⚠️ Conditional logic | ✅ Centralized backend |
-| **Frontend Complexity** | ⚠️ Section hiding logic | ✅ Simple render |
-| **Backend Complexity** | ✅ Simple APIs | ⚠️ Orchestration layer |
+| **Data Completeness** | [Error] Partial (only API data) |  Complete (all sections) |
+| **UX** | [Warning] Hidden sections | [OK] Full visibility |
+| **Performance** | [OK] Fast (1 API call) | [OK] Fast (1 API call + cache) |
+| **Consistency** | [Error] Different per page | [OK] Identical everywhere |
+| **Maintenance** | [Warning] Conditional logic | [OK] Centralized backend |
+| **Frontend Complexity** | [Warning] Section hiding logic | [OK] Simple render |
+| **Backend Complexity** | [OK] Simple APIs | [Warning] Orchestration layer |
 
 ---
 
@@ -476,7 +476,7 @@ async def calculate_onchain_score(holdings: List[dict]) -> float:
 
 ---
 
-**Status**: 📋 Ready for review and prioritization
+**Status**:  Ready for review and prioritization
 **Author**: Claude Code
 **Date**: 2025-10-01
 

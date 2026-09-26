@@ -55,7 +55,7 @@ export async function getCurrentPortfolioAllocation() {
 
   try {
     // Utiliser la source de données configurée
-    debugLogger.debug('🔍 Loading portfolio allocation using configured source...');
+    debugLogger.debug("Loading portfolio allocation using configured source...");
     const balanceResult = await window.loadBalanceData();
 
     if (!balanceResult.success) {
@@ -87,14 +87,14 @@ export async function getCurrentPortfolioAllocation() {
       const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
       const rate = (window.currencyManager && window.currencyManager.getRateSync(cur)) || 1;
       if (cur !== 'USD' && (!rate || rate <= 0)) {
-        debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total: —');
+        debugLogger.debug("DEBUG getCurrentPortfolioAllocation: Using real CSV data -", realBalances.length, 'assets, total: —');
       } else {
         const val = realBalances.reduce((s, i) => s + i.value_usd, 0) * rate;
         try {
           const dec = (cur === 'BTC') ? 8 : 2;
-          debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total:', new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val));
+          debugLogger.debug("DEBUG getCurrentPortfolioAllocation: Using real CSV data -", realBalances.length, 'assets, total:', new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: dec, maximumFractionDigits: dec }).format(val));
         } catch (_) {
-          debugLogger.debug('🔍 DEBUG getCurrentPortfolioAllocation: Using real CSV data -', realBalances.length, 'assets, total:', (val).toFixed(cur === 'BTC' ? 8 : 2), cur);
+          debugLogger.debug("DEBUG getCurrentPortfolioAllocation: Using real CSV data -", realBalances.length, 'assets, total:', (val).toFixed(cur === 'BTC' ? 8 : 2), cur);
         }
       }
     })();
@@ -136,8 +136,8 @@ export async function renderTargetsContent() {
   // IMPORTANT: Ensure scores are calculated first
   const state = window.store.snapshot();
   if (!state.scores?.blended) {
-    debugLogger.debug('🔄 Blended score not available, recalculating scores...');
-    // ✅ Load scores from orchestrator (no need for riskData/ccsData params)
+    debugLogger.debug("Blended score not available, recalculating scores...");
+    //  Load scores from orchestrator (no need for riskData/ccsData params)
     await window.loadScoresFromStore();
   }
 
@@ -165,10 +165,10 @@ export async function renderTargetsContent() {
   const smartProposal = proposeTargets('smart');
 
   // DEBUG: Log what blended proposal contains for display
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - updatedState.scores.blended:', updatedState.scores?.blended);
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - blendedProposal for DISPLAY:', blendedProposal);
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - blendedProposal.strategy:', blendedProposal?.strategy);
-  debugLogger.debug('🔍 DEBUG renderTargetsContent - BTC allocation for DISPLAY:', blendedProposal?.targets?.BTC);
+  debugLogger.debug("DEBUG renderTargetsContent - updatedState.scores.blended:", updatedState.scores?.blended);
+  debugLogger.debug("DEBUG renderTargetsContent - blendedProposal for DISPLAY:", blendedProposal);
+  debugLogger.debug("DEBUG renderTargetsContent - blendedProposal.strategy:", blendedProposal?.strategy);
+  debugLogger.debug("DEBUG renderTargetsContent - BTC allocation for DISPLAY:", blendedProposal?.targets?.BTC);
 
   // Show an explicitly applied proposal when present. Otherwise, show the
   // current blended proposal only when all of its inputs are available.
@@ -213,13 +213,13 @@ export async function renderTargetsContent() {
     <div style="max-width: 1400px; margin: 0 auto; width: 100%;">
       <!-- Strategy Selection -->
       <div class="risk-card" style="margin-bottom: var(--space-lg);">
-        <h3>🎯 Strategic Targeting</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Strategic Targeting</h3>
 
         <!-- Cooldown Status Banner -->
         ${isCooldownActive ? `
           <div style="margin-bottom: var(--space-md); padding: var(--space-md); border-radius: var(--radius-md); background: ${isDev ? 'color-mix(in oklab, var(--info) 10%, transparent)' : 'color-mix(in oklab, var(--warning) 10%, transparent)'}; border: 1px solid ${isDev ? 'var(--info)' : 'var(--warning)'};">
             <div style="display: flex; align-items: center; gap: var(--space-sm);">
-              <span style="font-size: 1.25rem;">${isDev ? 'ℹ️' : '⏳'}</span>
+              <span style="font-size: 1.25rem;">${isDev ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Pending\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#clock\"></use></svg>"}</span>
               <div style="flex: 1;">
                 <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 0.25rem;">
                   ${isDev ? 'Cooldown Active (Dev Auto-Bypass Enabled)' : 'Plan Publication Cooldown Active'}
@@ -237,27 +237,27 @@ export async function renderTargetsContent() {
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-md); margin: var(--space-lg) 0;">
           <button class="refresh-btn" onclick="applyStrategy('macro')" ${macroButton.disabled} title="${macroButton.title}" style="background: linear-gradient(135deg, #6b7280, #4b5563); color: white; font-weight: 600; padding: 1rem; border: 2px solid #4b5563; border-radius: 8px; transition: all 0.3s ease; ${macroButton.style}">
-            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📊</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
             <div style="font-size: 0.95rem;">Macro Only</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${macroProposal.strategy}</small>
           </button>
           <button class="refresh-btn" onclick="applyStrategy('ccs')" ${ccsButton.disabled} title="${ccsButton.title}" style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; font-weight: 600; padding: 1rem; border: 2px solid #2563eb; border-radius: 8px; transition: all 0.3s ease; ${ccsButton.style}">
-            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📈</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></div>
             <div style="font-size: 0.95rem;">CCS Based</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${ccsProposal.strategy}</small>
           </button>
           <button class="refresh-btn" onclick="applyStrategy('cycle')" ${cycleButton.disabled} title="${cycleButton.title}" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: white; font-weight: 600; padding: 1rem; border: 2px solid #d97706; border-radius: 8px; transition: all 0.3s ease; ${cycleButton.style}">
-            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">🔄</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg></div>
             <div style="font-size: 0.95rem;">Cycle Adjusted</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${cycleProposal.strategy}</small>
           </button>
           <button class="refresh-btn" onclick="applyStrategy('blend')" ${blendedButton.disabled} title="${blendedButton.title}" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 600; padding: 1rem; border: 2px solid #059669; border-radius: 8px; transition: all 0.3s ease; ${blendedButton.style}">
-            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">⚖️</div>
+            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg></div>
             <div style="font-size: 0.95rem;">Blended Strategy</div>
             <small style="opacity: 0.9; margin-top: 0.25rem; display: block;">${blendedProposal.strategy}</small>
           </button>
           <button class="refresh-btn" onclick="applyStrategy('smart')" ${smartButton.disabled} title="${smartButton.title}" style="background: linear-gradient(135deg, #8b5cf6, #06b6d4); color: white; font-weight: 700; padding: 1rem; border: 3px solid #8b5cf6; border-radius: 8px; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3); transition: all 0.3s ease; ${smartButton.style}">
-            <div style="font-size: 1.75rem; margin-bottom: 0.25rem;">🧠</div>
+            <div style="font-size: 1.75rem; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg></div>
             <div style="font-size: 1rem;">SMART</div>
             <small style="opacity: 0.95; margin-top: 0.25rem; display: block; font-size: 0.75rem;">${smartProposal.strategy}</small>
           </button>
@@ -268,13 +268,13 @@ export async function renderTargetsContent() {
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); gap: var(--space-lg); margin-bottom: var(--space-lg);">
         <!-- Current Allocation -->
         <div class="risk-card">
-          <h3>📋 Current Allocation</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Current Allocation</h3>
           ${renderTargetsTable(currentAllocation, 'Portfolio Actuel')}
         </div>
 
         <!-- Proposed Targets -->
         <div class="risk-card">
-          <h3>🎯 Proposed Targets</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Proposed Targets</h3>
           ${renderTargetsTable(appliedTargets, appliedStrategy)}
           ${renderExposureDelta(smartProposal)}
         </div>
@@ -309,7 +309,7 @@ export function renderTargetsTable(targets, strategy) {
   // Robustly handle invalid inputs
   if (!targets || typeof targets !== 'object') {
     debugLogger.warn('[renderTargetsTable] Invalid targets:', targets);
-    return `<div style="color: var(--warning); font-size: 0.875rem;">⚠️ Invalid allocation data</div>`;
+    return `<div style="color: var(--warning); font-size: 0.875rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Invalid allocation data</div>`;
   }
 
   const { model_version, ...allocations } = targets;
@@ -330,7 +330,7 @@ export function renderTargetsTable(targets, strategy) {
       <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: var(--space-sm);">
         ${strategy} (${model_version || 'unknown'})
       </div>
-      <div style="color: var(--warning); font-size: 0.875rem;">⚠️ No valid allocations found</div>
+      <div style="color: var(--warning); font-size: 0.875rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> No valid allocations found</div>
     `;
   }
 
@@ -347,16 +347,16 @@ export function renderTargetsTable(targets, strategy) {
     const icons = {
       'BTC': '₿',
       'ETH': 'Ξ',
-      'STABLES': '💵',
-      'L1': '🔷',
-      'L2': '⚡',
-      'DEFI': '🔄',
-      'MEMES': '🐸',
-      'GAMING': '🎮',
-      'AI': '🤖',
-      'REAL_WORLD_ASSETS': '🏛️',
-      'PRIVACY': '🔒',
-      'INFRA': '🛠️'
+      'STABLES': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Balance\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#wallet\"></use></svg>",
+      'L1': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Item\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#squares-2x2\"></use></svg>",
+      'L2': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Activity\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bolt\"></use></svg>",
+      'DEFI': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>",
+      'MEMES': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Asset\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#circle-stack\"></use></svg>",
+      'GAMING': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Simulation\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#beaker\"></use></svg>",
+      'AI': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Model\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cpu-chip\"></use></svg>",
+      'REAL_WORLD_ASSETS': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Bank\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#building-library\"></use></svg>",
+      'PRIVACY': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Locked\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#lock-closed\"></use></svg>",
+      'INFRA': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Tools\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#wrench-screwdriver\"></use></svg>"
     };
     return icons[asset] || '●';
   };
@@ -414,7 +414,7 @@ export function renderExposureDelta(smart) {
       <div style="margin-top: var(--space-lg); padding: var(--space-md); border-radius: var(--radius-md); border: 2px solid ${cap != null ? 'var(--theme-border)' : 'var(--warning)'}; background: var(--theme-bg);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: ${hasOverflow ? 'var(--space-sm)' : '0'};">
           <span style="font-size: 0.95rem; font-weight: 600; color: var(--theme-text);">
-            🛡️ Cap d'exposition risky
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Cap d'exposition risky
           </span>
           <span style="font-size: 1.1rem; font-weight: 700; font-family: monospace; color: ${capColor};">
             ${capText}
@@ -422,13 +422,13 @@ export function renderExposureDelta(smart) {
         </div>
         ${backendStatus === 'error' ? `
           <div style="margin-top: var(--space-xs); font-size: 0.85rem; color: var(--warning);">
-            ⚠️ Backend risk budget unavailable — prudent mode (conservative cap)
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Backend risk budget unavailable — prudent mode (conservative cap)
           </div>
         ` : ''}
         ${hasOverflow ? `
           <div style="margin-top: var(--space-xs); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: color-mix(in oklab, var(--warning) 10%, transparent); border: 1px solid color-mix(in oklab, var(--warning) 30%, transparent);">
             <div style="font-size: 0.9rem; color: var(--warning); font-weight: 600;">
-              ⚠️ Cap appliqué : ${Math.round(base)}% → ${Math.round(fin)}%
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Cap appliqué : ${Math.round(base)}% → ${Math.round(fin)}%
             </div>
             <div style="font-size: 0.85rem; color: var(--theme-text-muted); margin-top: 0.2rem;">
               −${delta}% d'exposition non exécutable (protection contre surrisque)
@@ -456,8 +456,8 @@ export function renderActionPlan(current, proposed) {
     if (plan.actions.length === 0) {
       return `
         <div class="risk-card">
-          <h3>📝 Action Plan</h3>
-          <p style="text-align: center; color: var(--success);">✅ No changes needed - targets already optimal</p>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Action Plan</h3>
+          <p style="text-align: center; color: var(--success);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> No changes needed - targets already optimal</p>
         </div>
       `;
     }
@@ -468,7 +468,7 @@ export function renderActionPlan(current, proposed) {
 
     return `
       <div class="risk-card" style="margin-bottom: var(--space-lg);">
-        <h3>📝 Action Plan</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Action Plan</h3>
 
         <!-- Summary Stats (Responsive) -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); padding: var(--space-md); background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
@@ -492,7 +492,7 @@ export function renderActionPlan(current, proposed) {
           <!-- Buy Actions -->
           <div>
             <div style="display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 2px solid var(--success);">
-              <span style="font-size: 1.1rem;">🟢</span>
+              <span style="font-size: 1.1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Positive" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               <span style="font-size: 0.95rem; font-weight: 700; color: var(--success); text-transform: uppercase; letter-spacing: 0.05em;">Buy (${buyActions.length})</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
@@ -524,7 +524,7 @@ export function renderActionPlan(current, proposed) {
           <!-- Sell Actions -->
           <div>
             <div style="display: flex; align-items: center; gap: var(--space-xs); margin-bottom: var(--space-md); padding-bottom: var(--space-xs); border-bottom: 2px solid var(--danger);">
-              <span style="font-size: 1.1rem;">🔴</span>
+              <span style="font-size: 1.1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Negative" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               <span style="font-size: 0.95rem; font-weight: 700; color: var(--danger); text-transform: uppercase; letter-spacing: 0.05em;">Sell (${sellActions.length})</span>
             </div>
             <div style="display: flex; flex-direction: column; gap: var(--space-xs);">
@@ -572,7 +572,7 @@ export function renderDecisionHistory() {
   if (history.length === 0) {
     return `
       <div class="risk-card" style="margin-bottom: var(--space-lg);">
-        <h3>📚 Decision History</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Documentation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#book-open"></use></svg> Decision History</h3>
         <p style="text-align: center; color: var(--theme-text-muted);">No previous decisions</p>
       </div>
     `;
@@ -580,7 +580,7 @@ export function renderDecisionHistory() {
 
   return `
     <div class="risk-card" style="margin-bottom: var(--space-lg);">
-      <h3>📚 Decision History</h3>
+      <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Documentation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#book-open"></use></svg> Decision History</h3>
       <div style="font-size: 0.85rem; color: var(--theme-text-muted); margin-bottom: var(--space-md);">
         Last ${history.length} decisions
       </div>
@@ -609,15 +609,15 @@ export function renderDecisionHistory() {
  */
 window.applyStrategy = async function (mode) {
   try {
-    debugLogger.debug('🔍 DEBUG applyStrategy called with mode:', mode);
-    debugLogger.debug('🔍 DEBUG store state before:', window.store.snapshot());
+    debugLogger.debug("DEBUG applyStrategy called with mode:", mode);
+    debugLogger.debug("DEBUG store state before:", window.store.snapshot());
 
     const proposal = proposeTargets(mode);
     if (proposal.available !== true || !proposal.targets) {
       throw new Error(proposal.error || 'Selected targets are unavailable');
     }
-    debugLogger.debug('🔍 DEBUG proposal result:', proposal);
-    debugLogger.debug('🔍 DEBUG proposal BTC allocation:', proposal.targets.BTC);
+    debugLogger.debug("DEBUG proposal result:", proposal);
+    debugLogger.debug("DEBUG proposal BTC allocation:", proposal.targets.BTC);
 
     // Instead of direct applyTargets, create governance decision
     const currentAllocation = await getCurrentPortfolioAllocation();
@@ -632,15 +632,15 @@ window.applyStrategy = async function (mode) {
         weight: target_pct / 100 // Convert percentage to fraction (35% -> 0.35)
       }));
 
-    debugLogger.debug('🔍 Creating governance decision with targets:', targets);
-    debugLogger.debug('🔍 Proposal strategy:', proposal.strategy);
+    debugLogger.debug("Creating governance decision with targets:", targets);
+    debugLogger.debug("Proposal strategy:", proposal.strategy);
 
     // Sync governance state first
     await window.store.syncGovernanceState();
     const governanceStatus = window.store.getGovernanceStatus();
 
     if (governanceStatus.state === 'FROZEN') {
-      debugLogger.warn('❄️ System is frozen. Cannot create new decisions.');
+      debugLogger.warn("System is frozen. Cannot create new decisions.");
       return;
     }
 
@@ -673,7 +673,7 @@ window.applyStrategy = async function (mode) {
       const result = await response.json();
 
       if (result.success) {
-        debugLogger.debug(`✅ Proposition créée avec succès - Plan ID: ${result.plan_id}, Statut: ${result.state}`);
+        debugLogger.debug(`[OK] Proposition créée avec succès - Plan ID: ${result.plan_id}, Statut: ${result.state}`);
 
         // Update local store with proposed targets for display
         await applyTargets(proposal);
@@ -687,7 +687,7 @@ window.applyStrategy = async function (mode) {
       debugLogger.error('Failed to create governance proposal:', error);
 
       // Fallback to local apply if API fails (backward compatibility)
-      debugLogger.warn('⚠️ Governance API unavailable, falling back to local targets:', error.message);
+      debugLogger.warn("[Warning] Governance API unavailable, falling back to local targets:", error.message);
       await applyTargets(proposal);
       window.store.set('targets.governance_mode', 'manual');
       window.store.set('targets.strategy', `${proposal.strategy} (local - governance unavailable)`);
@@ -702,6 +702,6 @@ window.applyStrategy = async function (mode) {
     debugLogger.debug(`Governance mode: ${governanceStatus.mode}, state: ${governanceStatus.state}`);
 
   } catch (error) {
-    debugLogger.error('❌ Failed to apply strategy:', error.message, error);
+    debugLogger.error("Failed to apply strategy:", error.message, error);
   }
 };

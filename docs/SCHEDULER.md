@@ -251,12 +251,12 @@ All jobs log to the standard application logger with structured format:
 
 ```
 2025-10-02 14:30:00 INFO [pnl_intraday] Starting P&L intraday snapshot...
-2025-10-02 14:30:00 INFO [pnl_intraday] ✅ P&L snapshot completed in 245ms
+2025-10-02 14:30:00 INFO [pnl_intraday] [OK] P&L snapshot completed in 245ms
 ```
 
 **Error logs:**
 ```
-2025-10-02 14:30:00 ERROR [pnl_intraday] ❌ P&L snapshot failed: API timeout
+2025-10-02 14:30:00 ERROR [pnl_intraday] [Error] P&L snapshot failed: API timeout
 ```
 
 ### Snapshot Logs
@@ -308,7 +308,7 @@ If you prefer Windows native scheduling over in-process:
 
 ### Scheduler Not Starting
 
-**Symptom:** Log shows "⏸️ Scheduler disabled"
+**Symptom:** Log shows " Scheduler disabled"
 
 **Solution:**
 ```bash
@@ -488,18 +488,18 @@ async def job_my_custom_task():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting custom task...")
+        logger.info(f" [{job_id}] Starting custom task...")
 
         # Your logic here
         result = await some_async_function()
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.info(f"✅ [{job_id}] Completed in {duration_ms:.0f}ms")
+        logger.info(f" [{job_id}] Completed in {duration_ms:.0f}ms")
         await _update_job_status(job_id, "success", duration_ms)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] Exception")
+        logger.exception(f" [{job_id}] Exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 ```
 
@@ -561,5 +561,5 @@ Set up alerts for:
 
 **Last Updated:** Feb 2026
 **Maintainer:** FastAPI Team
-**Status:** ✅ Production Ready (Redis persistent job status added Feb 2026)
+**Status:** [OK] Production Ready (Redis persistent job status added Feb 2026)
 

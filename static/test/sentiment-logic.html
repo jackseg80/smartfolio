@@ -88,7 +88,7 @@
     </style>
 </head>
 <body>
-    <h1>🧪 ML Sentiment + Regime Contextual Logic Test (Option 1)</h1>
+    <h1><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> ML Sentiment + Regime Contextual Logic Test (Option 1)</h1>
     <p>This test validates the <strong>priority hierarchy</strong>: Extreme Sentiments (Level 1) → Phase Engine (Level 2) → Base Modulators (Level 3)</p>
     <p>5 scenarios tested including 1 new one with active Phase Engine.</p>
 
@@ -334,7 +334,7 @@
                 else failCount++;
 
                 html += `<div class="test-case ${test.pass ? 'pass' : 'fail'}">
-                    <h3>${test.pass ? '✅' : '❌'} ${test.name}</h3>
+                    <h3>${test.pass ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg>"} ${test.name}</h3>
 
                     <div class="input">
                         <strong>Input:</strong><br>
@@ -362,7 +362,7 @@
 
                     <div class="output">
                         <strong>Checks:</strong>
-                        ${test.checks.map(c => `${c.pass ? '✓' : '✗'} ${c.name}`).join('\n')}
+                        ${test.checks.map(c => `${c.pass ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg>"} ${c.name}`).join('\n')}
                     </div>
                 </div>`;
             });
@@ -375,12 +375,12 @@
             summaryDiv.innerHTML = `
                 <h2>Test Results</h2>
                 <p style="font-size: 24px; margin: 20px 0;">
-                    ${passCount === tests.length ? '🎉' : '⚠️'}
+                    ${passCount === tests.length ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Complete\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-badge\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>"}
                     <strong>${passCount}/${tests.length}</strong> tests passed
                 </p>
                 ${failCount === 0 ?
-                    '<p style="color: #66bb6a;">✅ All scenarios are working correctly!</p>' :
-                    '<p style="color: #ef5350;">❌ Some scenarios failed. Check the details below.</p>'
+                    "<p style=\"color: #66bb6a;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg> All scenarios are working correctly!</p>" :
+                    "<p style=\"color: #ef5350;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Some scenarios failed. Check the details below.</p>"
                 }
             `;
         };
@@ -395,7 +395,7 @@
         };
 
         // Auto-run on load
-        console.log('🧪 Test suite loaded. Click "Run All Tests" to run.');
+        console.log("Test suite loaded. Click \"Run All Tests\" to run.");
     </script>
 </body>
 </html>

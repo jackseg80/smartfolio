@@ -15,8 +15,8 @@ Ce dossier contient les endpoints API archivés qui ne sont plus utilisés mais 
 **Conflit de route** avec l'implémentation moderne dans `api/risk_endpoints.py`.
 
 Les deux fichiers définissaient la même route `/api/risk/dashboard` :
-- **risk_dashboard_endpoints.py** (version simple) - ❌ Désactivé
-- **risk_endpoints.py** (version V2 avec Shadow Mode) - ✅ Active
+- **risk_dashboard_endpoints.py** (version simple) - [Error] Désactivé
+- **risk_endpoints.py** (version V2 avec Shadow Mode) - [OK] Active
 
 #### Fonctionnalités Remplacées
 
@@ -24,13 +24,13 @@ Toutes les fonctionnalités de `risk_dashboard_endpoints_legacy.py` sont disponi
 
 | Feature | Legacy | risk_endpoints.py |
 |---------|--------|-------------------|
-| Risk Dashboard | ✅ | ✅ |
-| Portfolio Risk Metrics | ✅ | ✅ |
-| Correlation Matrix | ✅ | ✅ |
-| Risk Score V2 Shadow Mode | ❌ | ✅ |
-| Dual-Window System | ❌ | ✅ |
-| Cache avec CSV hint | ❌ | ✅ |
-| Paramètre `risk_version` | ❌ | ✅ (legacy/v2_shadow/v2_active) |
+| Risk Dashboard | OK | OK |
+| Portfolio Risk Metrics | OK | OK |
+| Correlation Matrix | OK | OK |
+| Risk Score V2 Shadow Mode | Error | OK |
+| Dual-Window System | Error | OK |
+| Cache avec CSV hint | Error | OK |
+| Paramètre `risk_version` | Error | [OK] (legacy/v2_shadow/v2_active) |
 
 #### Route Moderne (Remplacement)
 

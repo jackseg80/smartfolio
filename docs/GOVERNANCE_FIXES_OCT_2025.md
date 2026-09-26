@@ -158,17 +158,17 @@ api/unified_ml_endpoints.py (1 fix: #5)
 
 ## Tests Effectués
 
-✅ **Fix #6** : `curl http://localhost:8080/execution/governance/state` → `pending_approvals` dynamique
-✅ **Fix #7** : `curl http://localhost:8080/execution/governance/signals` → `derived_policy` calculé
-✅ **Fix #4** : POST `/governance/signals/recompute` → `backend_status` vérifié dans logs
-✅ **Fix #5** : `curl http://localhost:8080/api/ml/monitoring/health` → 4 modèles listés
+[OK] **Fix #6** : `curl http://localhost:8080/execution/governance/state` → `pending_approvals` dynamique
+[OK] **Fix #7** : `curl http://localhost:8080/execution/governance/signals` → `derived_policy` calculé
+[OK] **Fix #4** : POST `/governance/signals/recompute` → `backend_status` vérifié dans logs
+[OK] **Fix #5** : `curl http://localhost:8080/api/ml/monitoring/health` → 4 modèles listés
 
 ## Impact Production
 
-- ✅ Pas de breaking changes
-- ✅ Compatibilité backend maintenue
-- ✅ Performance : +15ms sur `/monitoring/health` (fallback disque si cache vide)
-- ✅ Logging amélioré pour debug
+- [OK] Pas de breaking changes
+- [OK] Compatibilité backend maintenue
+- [OK] Performance : +15ms sur `/monitoring/health` (fallback disque si cache vide)
+- [OK] Logging amélioré pour debug
 
 ## Notes Techniques
 

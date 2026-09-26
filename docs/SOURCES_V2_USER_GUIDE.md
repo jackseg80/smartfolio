@@ -1,6 +1,6 @@
 # Guide Utilisateur - Sources V2
 
-## 🎯 Qu'est-ce qui a changé ?
+## Qu'est-ce qui a changé ?
 
 ### Avant (V1) - Une source pour tout
 ```
@@ -20,7 +20,7 @@ Settings → Sources
 
 ---
 
-## 🆕 Nouvelles Fonctionnalités
+## Nouvelles Fonctionnalités
 
 ### 1. **Sources Indépendantes**
 - **Crypto** et **Bourse** ont chacune leur propre source
@@ -32,20 +32,20 @@ Settings → Sources
 - Idéal pour wallets cold storage, assets offline, etc.
 
 ### 3. **Intégration avec la Wealth Bar**
-- Les dropdowns Crypto et Bourse incluent maintenant l'option "📝 Saisie Manuelle"
+- Les dropdowns Crypto et Bourse incluent maintenant l'option " Saisie Manuelle"
 - Changez de source directement depuis la WealthBar (pas besoin d'aller dans Settings)
 - Le changement de source recharge automatiquement les données
 
 ---
 
-## 📝 Comment Utiliser le Mode Manuel
+## Comment Utiliser le Mode Manuel
 
 ### Méthode 1 : Depuis la WealthBar (Recommandé)
 
 **Activer le mode manuel directement depuis le dashboard :**
 
 1. Dans la barre en haut du dashboard, trouvez les dropdowns **Crypto** et **Bourse**
-2. Cliquez sur le dropdown → Sélectionnez **"📝 Saisie Manuelle"**
+2. Cliquez sur le dropdown → Sélectionnez **" Saisie Manuelle"**
 3. La page se recharge automatiquement avec vos données manuelles (vides au début)
 4. Allez dans Settings → Sources pour ajouter vos assets
 
@@ -94,7 +94,7 @@ Settings → Sources → Section BOURSE → Sélectionner "○ Saisie manuelle"
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Pourquoi je ne vois rien dans le dashboard après avoir activé "Manuel" ?
 **R:** Le mode manuel démarre vide. Vous devez **d'abord ajouter des assets** dans Settings → Sources avant qu'ils n'apparaissent sur le dashboard.
@@ -126,7 +126,7 @@ Vos données CSV sont toujours là, rien n'a été supprimé.
 
 ---
 
-## 🔄 Migration Automatique
+## Migration Automatique
 
 Si vous étiez en mode **cointracking** ou **saxobank** avant :
 
@@ -149,19 +149,19 @@ Si vous étiez en mode **cointracking** ou **saxobank** avant :
 cat "data/users/[votre_user]/config.json"
 ```
 
-Cherchez `"data_source": "category_based"` → Migration OK ✅
+Cherchez `"data_source": "category_based"` → Migration OK [OK]
 
 ---
 
-## 🎨 Interface Settings → Sources
+## Interface Settings → Sources
 
 ### Structure
 ```
 ┌──────────────────────────────────────┐
-│ 📊 Sources de Données                │
+│  Sources de Données                │
 ├──────────────────────────────────────┤
 │                                      │
-│ 🪙 CRYPTO                            │
+│  CRYPTO                            │
 │ ○ Saisie manuelle                    │
 │ ● Import CSV (CoinTracking)          │
 │ ○ API temps réel (CoinTracking)      │
@@ -170,7 +170,7 @@ Cherchez `"data_source": "category_based"` → Migration OK ✅
 │                                      │
 ├──────────────────────────────────────┤
 │                                      │
-│ 📈 BOURSE                            │
+│  BOURSE                            │
 │ ○ Saisie manuelle                    │
 │ ● Import CSV (Saxo Bank)             │
 │                                      │
@@ -183,22 +183,22 @@ Cherchez `"data_source": "category_based"` → Migration OK ✅
 - **Sélectionner source** : Cliquer sur le bouton radio
 - **Configurer** : La section de config apparaît automatiquement
 - **Ajouter asset manuel** : Remplir le formulaire → Ajouter
-- **Modifier asset** : Cliquer ✏️ → Modifier
-- **Supprimer asset** : Cliquer 🗑️ → Confirmer
+- **Modifier asset** : Cliquer  → Modifier
+- **Supprimer asset** : Cliquer  → Confirmer
 
 ---
 
-## 🔗 Intégration avec le Reste du Projet
+## Intégration avec le Reste du Projet
 
 ### Wealth Bar
 Affiche maintenant :
 ```
-📊 Sources: Crypto: Manuel • Bourse: Saxo CSV
+ Sources: Crypto: Manuel • Bourse: Saxo CSV
 CoinTracking CSV: [Sélecteur wallets]  ← Change en "Manuel:" si vous passez en manuel
 Bourse: [Sélecteur comptes]
 ```
 
-Cliquez sur "📊 Sources" pour ouvrir Settings directement.
+Cliquez sur " Sources" pour ouvrir Settings directement.
 
 ### Dashboard
 - Charge automatiquement les sources actives
@@ -211,7 +211,7 @@ Cliquez sur "📊 Sources" pour ouvrir Settings directement.
 
 ---
 
-## 💡 Cas d'Usage
+## Cas d'Usage
 
 ### Scénario 1 : Tout en Manuel
 ```
@@ -236,7 +236,7 @@ Bourse: Saxo CSV (snapshot périodiques)
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Problème : "Chargement..." infini dans Settings
 **Solution :** Rafraîchir la page (Ctrl+Shift+R)
@@ -265,7 +265,7 @@ curl -X POST -H "X-User: [votre_user]" "http://localhost:8080/api/sources/v2/mig
 
 ---
 
-## 📊 Fichiers de Données
+## Fichiers de Données
 
 ### Manuel
 ```
@@ -285,7 +285,7 @@ data/users/[user]/
 
 ---
 
-## 🚀 Prochaines Améliorations
+## Prochaines Améliorations
 
 - [ ] Auto-pricing pour sources manuelles (CoinGecko/Yahoo)
 - [ ] Import CSV → Manuel (batch)
@@ -295,7 +295,7 @@ data/users/[user]/
 
 ---
 
-## 📚 Documentation Technique
+## Documentation Technique
 
 Pour développeurs :
 - [Architecture V2](./SOURCES_V2.md)

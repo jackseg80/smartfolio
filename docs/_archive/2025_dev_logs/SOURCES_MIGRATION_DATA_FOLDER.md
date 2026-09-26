@@ -1,7 +1,7 @@
 # Migration du Système Sources vers data/
 
 **Date**: 13 octobre 2025
-**Status**: ✅ Complété
+**Status**: [OK] Complété
 
 ## Résumé
 
@@ -125,10 +125,10 @@ def _load_from_sources_fallback(user_id):
 
 ### 1. sources-manager.js
 **Actions simplifiées**:
-- ✅ Scanner (liste les sources disponibles)
-- ✅ Uploader (upload direct vers `data/`)
-- ✅ Refresh API (pour CoinTracking API)
-- ❌ Importer (supprimé - plus nécessaire)
+- [OK] Scanner (liste les sources disponibles)
+- [OK] Uploader (upload direct vers `data/`)
+- [OK] Refresh API (pour CoinTracking API)
+- [Error] Importer (supprimé - plus nécessaire)
 
 **Commentaire ajouté**:
 ```javascript
@@ -191,35 +191,35 @@ async function buildQuickSourceDropdown() {
    ```
 
 3. **Vérification**:
-   - ✅ 7 sources détectées (4 CoinTracking + 2 Saxo + 1 API)
-   - ✅ Balance endpoint: 183 items
-   - ✅ Saxo dashboard: 28 positions
-   - ✅ Structure finale propre
+   - [OK] 7 sources détectées (4 CoinTracking + 2 Saxo + 1 API)
+   - [OK] Balance endpoint: 183 items
+   - [OK] Saxo dashboard: 28 positions
+   - [OK] Structure finale propre
 
 ## Tests de Validation
 
 ### 1. Sources Endpoint
 ```bash
 curl "http://localhost:8080/api/users/sources" -H "X-User: jack"
-# ✅ 7 sources (CSV + API)
+# 7 sources (CSV + API)
 ```
 
 ### 2. Balance Endpoint
 ```bash
 curl "http://localhost:8080/balances/current?source=cointracking&user_id=jack"
-# ✅ 183 items
+# 183 items
 ```
 
 ### 3. Saxo Dashboard
 ```bash
 curl "http://localhost:8080/api/saxo/portfolios" -H "X-User: jack"
-# ✅ 1 portfolio, 28 positions
+# 1 portfolio, 28 positions
 ```
 
 ### 4. Structure Filesystem
 ```bash
 ls -R data/users/jack/
-# ✅ Uniquement data/ présent, plus de uploads/imports/snapshots
+# Uniquement data/ présent, plus de uploads/imports/snapshots
 ```
 
 ## Impact Utilisateur
@@ -278,9 +278,9 @@ ls -R data/users/jack/
 
 ## Documentation Mise à Jour
 
-- ✅ `CLAUDE.md` - Guide agent mis à jour
-- ✅ `docs/SOURCES_MIGRATION_DATA_FOLDER.md` - Ce document
-- ✅ Code comments dans les fichiers modifiés
+- [OK] `CLAUDE.md` - Guide agent mis à jour
+- [OK] `docs/SOURCES_MIGRATION_DATA_FOLDER.md` - Ce document
+- [OK] Code comments dans les fichiers modifiés
 
 ## Fichiers Modifiés
 
@@ -300,10 +300,10 @@ ls -R data/users/jack/
 
 ## Prochaines Étapes
 
-1. ✅ **Immédiat**: Restart serveur FastAPI pour appliquer les changements
-2. ⏳ **Court terme**: Monitoring des uploads utilisateur
-3. ⏳ **Moyen terme**: Ajouter limite de rétention (ex: garder 10 derniers fichiers)
-4. ⏳ **Long terme**: Interface pour supprimer les anciens fichiers
+1. [OK] **Immédiat**: Restart serveur FastAPI pour appliquer les changements
+2. [Pending] **Court terme**: Monitoring des uploads utilisateur
+3. [Pending] **Moyen terme**: Ajouter limite de rétention (ex: garder 10 derniers fichiers)
+4. [Pending] **Long terme**: Interface pour supprimer les anciens fichiers
 
 ## Leçons Apprises
 
@@ -314,15 +314,15 @@ ls -R data/users/jack/
 
 ## Résultat Final
 
-- 🎯 **Objectif atteint**: Système sources unifié et intuitif
-- 📉 **Complexité réduite**: 3 dossiers → 1 dossier
-- ⚡ **Performance**: Pas de changement (même nombre de fichiers lus)
-- 🚀 **UX**: Upload → Disponible immédiatement (0 étapes intermédiaires)
-- 🧹 **Code**: ~150 lignes supprimées (legacy patterns)
+- **Objectif atteint**: Système sources unifié et intuitif
+- **Complexité réduite**: 3 dossiers → 1 dossier
+- **Performance**: Pas de changement (même nombre de fichiers lus)
+- **UX**: Upload → Disponible immédiatement (0 étapes intermédiaires)
+- **Code**: ~150 lignes supprimées (legacy patterns)
 
 ---
 
 **Auteur**: Claude Code
 **Review**: Validé par tests fonctionnels
-**Status**: Production-ready ✅
+**Status**: Production-ready [OK]
 

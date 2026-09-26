@@ -160,13 +160,13 @@ class TestDegenPortfolios:
         """Portfolio degen extrême (75% memes, DD 80%, Sharpe négatif) peut scorer 0 (catastrophique)"""
         result = assess_risk_level(
             var_metrics={"var_95": 0.15, "var_99": 0.25},
-            sharpe_ratio=-0.2,  # ❌ Sharpe négatif
-            max_drawdown=-0.80,  # ❌ DD 80%
-            volatility=0.85,     # ❌ Vol 85%
-            memecoins_pct=0.75,  # ❌ 75% memes
-            hhi=0.35,            # ❌ Concentré
-            gri=8.5,             # ❌ Groupes très risqués
-            diversification_ratio=0.5  # ❌ Faible diversification
+            sharpe_ratio=-0.2,  # [Error] Sharpe négatif
+            max_drawdown=-0.80,  # [Error] DD 80%
+            volatility=0.85,     # [Error] Vol 85%
+            memecoins_pct=0.75,  # [Error] 75% memes
+            hhi=0.35,            # [Error] Concentré
+            gri=8.5,             # [Error] Groupes très risqués
+            diversification_ratio=0.5  # [Error] Faible diversification
         )
 
         # Ce portfolio est tellement catastrophique qu'un score 0 est acceptable

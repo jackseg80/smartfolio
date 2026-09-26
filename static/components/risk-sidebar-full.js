@@ -182,7 +182,7 @@ class RiskSidebarFull extends HTMLElement {
     const push = () => {
       const state = window.riskStore?.getState?.() || {};
 
-      // ✅ Vérifier hydratation complète avant affichage
+      //  Vérifier hydratation complète avant affichage
       if (!state._hydrated) {
         // Only log once per session
         if (!this._loggedWaiting) {
@@ -199,7 +199,7 @@ class RiskSidebarFull extends HTMLElement {
     push();
     this._unsub = window.riskStore.subscribe(push);
 
-    // ✅ Écouter hydratation si pas encore faite
+    //  Écouter hydratation si pas encore faite
     if (!window.riskStore.getState()?._hydrated) {
       const handler = (e) => {
         if (e.detail?.hydrated) {
@@ -343,7 +343,7 @@ class RiskSidebarFull extends HTMLElement {
         const overrides = state.regime.overrides;
         if (Array.isArray(overrides) && overrides.length > 0) {
           overridesEl.innerHTML = overrides.map(o =>
-            `<div style="font-size: 0.7rem; color: var(--color-warning-700, #92400e); margin-top: 2px;">⚠ ${o.message}</div>`
+            `<div style="font-size: 0.7rem; color: var(--color-warning-700, #92400e); margin-top: 2px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${o.message}</div>`
           ).join('');
         } else {
           overridesEl.innerHTML = '';
@@ -402,7 +402,7 @@ class RiskSidebarFull extends HTMLElement {
           .map(([name, _]) => name);
 
         if (activeConstraints.length > 0) {
-          this.$.governanceConstraints.textContent = `⚠️ Active: ${activeConstraints.join(', ')}`;
+          this.$.governanceConstraints.textContent = `[Warning] Active: ${activeConstraints.join(', ')}`;
         } else {
           this.$.governanceConstraints.textContent = '';
         }
@@ -686,7 +686,7 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- CCS Mixte -->
       <div class="sidebar-section" id="section-ccs">
-        <div class="sidebar-title">🎯 CCS Mixte (Directeur)</div>
+        <div class="sidebar-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> CCS Mixte (Directeur)</div>
         <div class="ccs-gauge">
           <div class="ccs-score" id="ccs-ccs-mix">--</div>
           <div class="ccs-label" id="ccs-mixte-label">Loading...</div>
@@ -695,7 +695,7 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- On-Chain Composite -->
       <div class="sidebar-section" id="section-onchain">
-        <div class="sidebar-title">🔗 On-Chain Composite</div>
+        <div class="sidebar-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain Composite</div>
         <div class="ccs-gauge">
           <div class="ccs-score" id="kpi-onchain">--</div>
           <div class="ccs-label" id="onchain-label">Loading...</div>
@@ -704,7 +704,7 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- Risk Score Portfolio -->
       <div class="sidebar-section" id="section-risk">
-        <div class="sidebar-title">🛡️ Risk Score</div>
+        <div class="sidebar-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk Score</div>
         <div class="ccs-gauge">
           <div class="ccs-score" id="kpi-risk">--</div>
           <div class="ccs-label" id="risk-label">Loading...</div>
@@ -714,7 +714,7 @@ class RiskSidebarFull extends HTMLElement {
       <!-- Blended Decision Score -->
       <div class="sidebar-section" id="section-blended" style="margin-top:1.5rem;">
         <div class="sidebar-title" style="font-size:1rem; font-weight:700;">
-          ⚖️ Regime Score
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg> Regime Score
         </div>
         <div class="ccs-gauge decision-card">
           <div class="ccs-score" id="kpi-blended">--</div>
@@ -725,7 +725,7 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- Market Regime -->
       <div class="sidebar-section" id="section-regime">
-        <div class="sidebar-title">📊 Market Regime</div>
+        <div class="sidebar-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Market Regime</div>
         <div class="status-indicator">
           <div class="status-dot" id="regime-dot"></div>
           <div class="status-text" id="regime-text">Loading...</div>
@@ -779,14 +779,14 @@ class RiskSidebarFull extends HTMLElement {
 
       <!-- Active Alerts -->
       <div class="sidebar-section" id="section-alerts">
-        <div class="sidebar-title">🚨 Active Alerts</div>
+        <div class="sidebar-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg> Active Alerts</div>
         <div class="status-indicator">
           <div class="status-dot" id="alerts-dot"></div>
           <div class="status-text" id="alerts-text">Loading...</div>
         </div>
         <div id="alerts-list"></div>
         <div style="text-align: center; margin-top: 8px;">
-          <button id="alerts-button">📋 View All History</button>
+          <button id="alerts-button"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> View All History</button>
         </div>
       </div>
     `;

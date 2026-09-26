@@ -16,7 +16,7 @@ export function createMigrationControls(container) {
   controlPanel.className = 'migration-controls';
   controlPanel.innerHTML = `
     <div class="migration-panel">
-      <h4>🚀 Strategy API Migration (PR-C)</h4>
+      <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Strategy API Migration (PR-C)</h4>
       
       <div class="migration-toggle">
         <label>
@@ -273,7 +273,7 @@ export function createMigrationIndicator(container, onToggle) {
   indicator.className = 'migration-indicator';
   indicator.innerHTML = `
     <div class="indicator-content">
-      <span class="indicator-icon">🚀</span>
+      <span class="indicator-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></span>
       <span class="indicator-text">Strategy API</span>
       <button class="indicator-toggle" title="Toggle Strategy API">
         <span class="toggle-switch"></span>

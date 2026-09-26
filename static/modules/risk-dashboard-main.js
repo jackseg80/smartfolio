@@ -20,7 +20,7 @@ let isRefreshing = false;
  * @param {boolean} forceReload - Force reload even if content exists
  */
 export async function switchTab(tabName, forceReload = false) {
-  debugLogger.debug(`🔄 Switching to tab: ${tabName} (forceReload: ${forceReload})`);
+  debugLogger.debug(`Switching to tab: ${tabName} (forceReload: ${forceReload})`);
 
   // Update tab buttons (classes + ARIA attributes)
   document.querySelectorAll('.tab-button').forEach(btn => {
@@ -44,9 +44,9 @@ export async function switchTab(tabName, forceReload = false) {
       return;
     }
 
-    // ✅ SPECIAL: Skip 'risk' tab - handled by legacy controller (risk-dashboard-main-controller.js)
+    //  SPECIAL: Skip 'risk' tab - handled by legacy controller (risk-dashboard-main-controller.js)
     if (tabName === 'risk') {
-      debugLogger.debug('⏸️ Risk tab handled by legacy controller');
+      debugLogger.debug("Risk tab handled by legacy controller");
       return;
     }
 
@@ -81,7 +81,7 @@ export async function switchTab(tabName, forceReload = false) {
  */
 export async function refreshDashboard(forceRefresh = false) {
   if (isRefreshing) {
-    debugLogger.debug('⏸️ Refresh already in progress, skipping...');
+    debugLogger.debug("Refresh already in progress, skipping...");
     return;
   }
 
@@ -89,11 +89,11 @@ export async function refreshDashboard(forceRefresh = false) {
   const refreshBtn = document.getElementById('refresh-btn');
   if (refreshBtn) {
     refreshBtn.disabled = true;
-    refreshBtn.textContent = '🔄 Refreshing...';
+    refreshBtn.textContent = "Refreshing...";
   }
 
   try {
-    debugLogger.debug(`🔄 Refreshing dashboard (force: ${forceRefresh})`);
+    debugLogger.debug(`Refreshing dashboard (force: ${forceRefresh})`);
 
     // Refresh current tab with forceReload flag
     await switchTab(currentTab, forceRefresh);
@@ -104,14 +104,14 @@ export async function refreshDashboard(forceRefresh = false) {
       timestamp.textContent = `Last update: ${new Date().toLocaleTimeString('en-US')}`;
     }
 
-    debugLogger.debug('✅ Dashboard refreshed successfully');
+    debugLogger.debug("[OK] Dashboard refreshed successfully");
   } catch (error) {
-    debugLogger.error('❌ Failed to refresh dashboard:', error);
+    debugLogger.error("Failed to refresh dashboard:", error);
   } finally {
     isRefreshing = false;
     if (refreshBtn) {
       refreshBtn.disabled = false;
-      refreshBtn.textContent = '🔄 Refresh';
+      refreshBtn.textContent = "Refresh";
     }
   }
 }
@@ -127,15 +127,15 @@ export function toggleAutoRefresh() {
     // Disable auto-refresh
     clearInterval(autoRefreshInterval);
     autoRefreshInterval = null;
-    btn.textContent = '⏱️ Enable Auto-Refresh (30s)';
+    btn.textContent = "[Pending] Enable Auto-Refresh (30s)";
     btn.style.background = 'var(--brand-primary)';
-    debugLogger.debug('⏸️ Auto-refresh disabled');
+    debugLogger.debug("Auto-refresh disabled");
   } else {
     // Enable auto-refresh
     autoRefreshInterval = setInterval(() => refreshDashboard(false), 30000);
-    btn.textContent = '⏸️ Disable Auto-Refresh';
+    btn.textContent = "Disable Auto-Refresh";
     btn.style.background = 'var(--success)';
-    debugLogger.debug('▶️ Auto-refresh enabled (30s)');
+    debugLogger.debug("Auto-refresh enabled (30s)");
   }
 }
 
@@ -145,13 +145,13 @@ export function toggleAutoRefresh() {
 export async function initDashboard() {
   if (window.__smartfolioAuthReady && !await window.__smartfolioAuthReady) return;
 
-  debugLogger.debug('🚀 Initializing Risk Dashboard...');
+  debugLogger.debug("Initializing Risk Dashboard...");
 
   // Auto-calculate scores if auto_calc=true (for iframe refresh from dashboard.html)
   const urlParams = new URLSearchParams(window.location.search);
   const autoCalc = urlParams.get('auto_calc') === 'true';
   if (autoCalc) {
-    debugLogger.debug('🤖 Auto-calc mode detected, will trigger refresh after init...');
+    debugLogger.debug("Auto-calc mode detected, will trigger refresh after init...");
   }
 
   try {
@@ -165,30 +165,30 @@ export async function initDashboard() {
 
     // Listen for data source changes
     window.addEventListener('dataSourceChanged', (event) => {
-      debugLogger.debug(`🔄 Data source changed: ${event.detail.oldSource} → ${event.detail.newSource}`);
+      debugLogger.debug(`Data source changed: ${event.detail.oldSource} → ${event.detail.newSource}`);
       // Let the legacy controller handle it to preserve advanced sections (GRI, Phase 3A, VaR, etc.)
-      debugLogger.debug('⏸️ Modular system defers to legacy controller for source changes');
+      debugLogger.debug("Modular system defers to legacy controller for source changes");
     });
 
     // Initialize first tab
     await switchTab('risk');
 
-    debugLogger.debug('✅ Risk Dashboard initialized successfully');
+    debugLogger.debug("[OK] Risk Dashboard initialized successfully");
 
     // Trigger auto-refresh if auto_calc=true
     if (autoCalc) {
-      debugLogger.debug('🔄 Triggering automatic scores calculation...');
+      debugLogger.debug("Triggering automatic scores calculation...");
       setTimeout(async () => {
         try {
           await refreshDashboard(true);
-          debugLogger.debug('✅ Auto-calc completed, scores persisted to localStorage');
+          debugLogger.debug("[OK] Auto-calc completed, scores persisted to localStorage");
         } catch (error) {
-          debugLogger.error('❌ Auto-calc failed:', error);
+          debugLogger.error("[Error] Auto-calc failed:", error);
         }
       }, 1000);
     }
   } catch (error) {
-    debugLogger.error('❌ Failed to initialize dashboard:', error);
+    debugLogger.error("Failed to initialize dashboard:", error);
   }
 }
 

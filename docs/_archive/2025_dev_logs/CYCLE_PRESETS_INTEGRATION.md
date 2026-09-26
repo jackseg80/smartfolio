@@ -1,7 +1,7 @@
 # Cycle Phase Presets - Integration dans SimControls
 
 **Date**: 2025-09-30
-**Status**: ✅ Complété
+**Status**: [OK] Complété
 **Objectif**: Intégrer les presets de phases de cycle dans le panneau de contrôle existant pour créer un Analytics Playground.
 
 ---
@@ -25,8 +25,8 @@ Transformation du simulateur en **Analytics Playground** permettant de faire du 
 2. **`static/components/SimControls.js`** (modifié)
    - Chargement dual: presets simulation + presets cycle
    - Dropdown avec 2 optgroups:
-     - 🎛️ Presets Simulation (existants)
-     - 🎭 What-If Scenarios (nouveaux)
+     - Presets Simulation (existants)
+     - What-If Scenarios (nouveaux)
    - Méthodes: `loadCyclePreset()` + `loadSimPreset()`
 
 3. **`static/simulations.html`** (nettoyé)
@@ -53,7 +53,7 @@ async loadPresets() {
     const cycleResponse = await fetch('./presets/cycle_phase_presets.json');
     cyclePresets = await cycleResponse.json();
   } catch (error) {
-    console.warn('🎭 SIM: Cycle phase presets not available:', error);
+    console.warn(' SIM: Cycle phase presets not available:', error);
   }
 
   const select = document.getElementById('sim-preset-select');
@@ -61,7 +61,7 @@ async loadPresets() {
     // Groupe 1: Presets Simulation
     if (simPresets.presets && simPresets.presets.length > 0) {
       const simGroup = document.createElement('optgroup');
-      simGroup.label = '🎛️ Presets Simulation';
+      simGroup.label = ' Presets Simulation';
       simPresets.presets.forEach((preset, index) => {
         const option = document.createElement('option');
         option.value = `sim:${index}`;
@@ -74,7 +74,7 @@ async loadPresets() {
     // Groupe 2: What-If Scenarios
     if (cyclePresets.presets && cyclePresets.presets.length > 0) {
       const cycleGroup = document.createElement('optgroup');
-      cycleGroup.label = '🎭 What-If Scenarios (Phases Marché)';
+      cycleGroup.label = ' What-If Scenarios (Phases Marché)';
       cyclePresets.presets.forEach((preset, index) => {
         if (preset.id !== 'current') {
           const option = document.createElement('option');
@@ -145,7 +145,7 @@ loadCyclePreset(presetIndex) {
   this.isLoadingPreset = false;
   this.debouncedUpdate();
 
-  console.log('🎭 SIM: cyclePresetLoaded -', {
+  console.log(' SIM: cyclePresetLoaded -', {
     name: preset.name,
     id: preset.id,
     overrides
@@ -157,19 +157,19 @@ loadCyclePreset(presetIndex) {
 
 #### Supprimé (lignes 545-551 - ancien code)
 ```html
-<!-- ❌ SUPPRIMÉ: Dropdown séparé créé par erreur -->
+<!-- [Error] SUPPRIMÉ: Dropdown séparé créé par erreur -->
 <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-  <label for="cycle-preset-select">🎭 Scénario:</label>
+  <label for="cycle-preset-select"> Scénario:</label>
   <select id="cycle-preset-select">
     <option value="">Charger les presets...</option>
   </select>
-  <button id="apply-preset-btn">▶️ Appliquer</button>
+  <button id="apply-preset-btn"> Appliquer</button>
 </div>
 ```
 
 #### Supprimé (lignes 905-973 - ancien code)
 ```javascript
-// ❌ SUPPRIMÉ: Fonctions standalone redondantes
+// [Error] SUPPRIMÉ: Fonctions standalone redondantes
 let cyclePresets = null;
 async function loadCyclePresets() { /* ... */ }
 async function applyPreset() { /* ... */ }
@@ -177,13 +177,13 @@ async function applyPreset() { /* ... */ }
 
 #### Supprimé (ligne 912 - ancien code)
 ```javascript
-// ❌ SUPPRIMÉ: Appel redondant
+// [Error] SUPPRIMÉ: Appel redondant
 await loadCyclePresets();
 ```
 
 #### Supprimé (lignes 979-980 - ancien code)
 ```javascript
-// ❌ SUPPRIMÉ: Event listener redondant
+// [Error] SUPPRIMÉ: Event listener redondant
 document.getElementById('apply-preset-btn')?.addEventListener('click', applyPreset);
 ```
 
@@ -197,19 +197,19 @@ http://localhost:8080/static/simulations.html
 ```
 
 ### 2. Ouvrir le Panneau de Contrôle
-Cliquer sur "🎛️ Contrôles" (flyout à droite)
+Cliquer sur " Contrôles" (flyout à droite)
 
 ### 3. Sélectionner un Preset
 Dans le dropdown en haut du panneau:
-- **🎛️ Presets Simulation**: Scénarios complets avec tous paramètres
-- **🎭 What-If Scenarios**: Phases de marché appliquées aux données réelles
+- ** Presets Simulation**: Scénarios complets avec tous paramètres
+- ** What-If Scenarios**: Phases de marché appliquées aux données réelles
 
 ### 4. Exemples de Presets Cycle
-- 🐂 Bull Run - Début (cycle 70, onchain 55, risk 45)
-- 🎢 Bull Run - Euphorie (cycle 95, onchain 85, contradiction 60%)
-- 🐻 Bear Market - Début (cycle 30, onchain 35, risk 65)
-- 💀 Capitulation (cycle 5, onchain 10, risk 90)
-- 🌊 Marché Latéral (cycle 50, onchain 45, risk 50)
+- Bull Run - Début (cycle 70, onchain 55, risk 45)
+- Bull Run - Euphorie (cycle 95, onchain 85, contradiction 60%)
+- Bear Market - Début (cycle 30, onchain 35, risk 65)
+- Capitulation (cycle 5, onchain 10, risk 90)
+- Marché Latéral (cycle 50, onchain 45, risk 50)
 
 ### 5. Résultat
 - Les sliders se mettent à jour automatiquement
@@ -221,7 +221,7 @@ Dans le dropdown en haut du panneau:
 
 ## Roadmap
 
-### Phase 1: Infrastructure ✅ (Complété)
+### Phase 1: Infrastructure  (Complété)
 - [x] Créer `cycle_phase_presets.json` avec 10 scénarios
 - [x] Intégrer chargement dans `SimControls.loadPresets()`
 - [x] Dispatcher `sim:X` vs `cycle:X`
@@ -274,19 +274,19 @@ Si `cycle_phase_presets.json` est absent, le système continue avec les presets 
 
 ## Lessons Learned
 
-### ❌ Erreur Initiale
+### Erreur Initiale
 Création d'un nouveau dropdown séparé au lieu de réutiliser le composant existant.
 
 **User feedback**: "attends, il faut réutiliser le panneau contrôle pour les presets qui sont déjà dedans. Ne refait pas tout, inspires-toi de ce qui existe !"
 
-### ✅ Solution
+### Solution
 Intégration propre dans `SimControls` avec:
 - Chargement centralisé
 - Optgroups pour séparation visuelle
 - Réutilisation du système de state existant
 - Zero duplication de code
 
-### 🎓 Principe
+### Principe
 **Toujours auditer le code existant avant d'ajouter des fonctionnalités.**
 
 Si un composant existe déjà pour une tâche similaire → l'étendre au lieu de recréer.

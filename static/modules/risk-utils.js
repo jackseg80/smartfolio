@@ -210,12 +210,12 @@ export function getMetricHealth(key, value) {
  */
 export function formatAlertType(alertType) {
   const typeMap = {
-    'concentration': '🎯 Concentration Risk',
-    'volatility': '📊 High Volatility',
-    'drawdown': '📉 Large Drawdown',
-    'correlation': '🔗 High Correlation',
-    'diversification': '🌐 Low Diversification',
-    'rebalance': '⚖️ Rebalance Needed'
+    'concentration': "Concentration Risk",
+    'volatility': "High Volatility",
+    'drawdown': "Large Drawdown",
+    'correlation': "High Correlation",
+    'diversification': "Low Diversification",
+    'rebalance': "Rebalance Needed"
   };
   return typeMap[alertType] || alertType;
 }
@@ -230,7 +230,7 @@ export function formatAlertType(alertType) {
 export function showLoading(container, message = 'Loading...') {
   container.innerHTML = `
     <div class="loading-center">
-      🔄 ${message}
+      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> ${message}
     </div>
   `;
 }
@@ -244,7 +244,7 @@ export function showLoading(container, message = 'Loading...') {
 export function showError(container, message, hint = '') {
   container.innerHTML = `
     <div class="error">
-      <div class="error-title">⚠️ Error</div>
+      <div class="error-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Error</div>
       <div class="error-message">${message}</div>
       ${hint ? `<div class="error-hint">${hint}</div>` : ''}
     </div>
@@ -336,7 +336,7 @@ export function clearAllRiskCaches() {
     }
   });
 
-  debugLogger.debug('✅ All risk dashboard caches cleared');
+  debugLogger.debug("[OK] All risk dashboard caches cleared");
 }
 
 // ===== Export all utilities =====

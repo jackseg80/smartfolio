@@ -17,12 +17,12 @@ Write-Host "[Test 1] demo / cointracking (CSV)" -ForegroundColor Yellow
 $response1 = Invoke-RestMethod "http://localhost:8080/portfolio/metrics?source=cointracking&user_id=demo"
 
 if ($response1.ok) {
-    Write-Host "  ✓ Total Value: $([math]::Round($response1.metrics.total_value_usd, 2)) USD" -ForegroundColor Green
-    Write-Host "  ✓ Asset Count: $($response1.metrics.asset_count)" -ForegroundColor Green
-    Write-Host "  ✓ Historical Entries: $($response1.performance.historical_entries_count)" -ForegroundColor Green
-    Write-Host "  ✓ P&L Today: $([math]::Round($response1.performance.absolute_change_usd, 2)) USD" -ForegroundColor Green
+    Write-Host "  [OK] Total Value: $([math]::Round($response1.metrics.total_value_usd, 2)) USD" -ForegroundColor Green
+    Write-Host "  [OK] Asset Count: $($response1.metrics.asset_count)" -ForegroundColor Green
+    Write-Host "  [OK] Historical Entries: $($response1.performance.historical_entries_count)" -ForegroundColor Green
+    Write-Host "  [OK] P&L Today: $([math]::Round($response1.performance.absolute_change_usd, 2)) USD" -ForegroundColor Green
 } else {
-    Write-Host "  ✗ Failed to fetch metrics" -ForegroundColor Red
+    Write-Host "   Failed to fetch metrics" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -32,16 +32,16 @@ Write-Host "[Test 2] jack / cointracking_api (API)" -ForegroundColor Yellow
 $response2 = Invoke-RestMethod "http://localhost:8080/portfolio/metrics?source=cointracking_api&user_id=jack"
 
 if ($response2.ok) {
-    Write-Host "  ✓ Total Value: $([math]::Round($response2.metrics.total_value_usd, 2)) USD" -ForegroundColor Green
-    Write-Host "  ✓ Asset Count: $($response2.metrics.asset_count)" -ForegroundColor Green
-    Write-Host "  ✓ Historical Entries: $($response2.performance.historical_entries_count)" -ForegroundColor Green
-    Write-Host "  ✓ P&L Today: $([math]::Round($response2.performance.absolute_change_usd, 2)) USD" -ForegroundColor Green
+    Write-Host "  [OK] Total Value: $([math]::Round($response2.metrics.total_value_usd, 2)) USD" -ForegroundColor Green
+    Write-Host "  [OK] Asset Count: $($response2.metrics.asset_count)" -ForegroundColor Green
+    Write-Host "  [OK] Historical Entries: $($response2.performance.historical_entries_count)" -ForegroundColor Green
+    Write-Host "  [OK] P&L Today: $([math]::Round($response2.performance.absolute_change_usd, 2)) USD" -ForegroundColor Green
 
     if ($response2.metrics.asset_count -eq 0) {
-        Write-Host "  ⚠ Warning: API returned 0 assets (rate limit or auth issue?)" -ForegroundColor Yellow
+        Write-Host "   Warning: API returned 0 assets (rate limit or auth issue?)" -ForegroundColor Yellow
     }
 } else {
-    Write-Host "  ✗ Failed to fetch metrics" -ForegroundColor Red
+    Write-Host "   Failed to fetch metrics" -ForegroundColor Red
 }
 
 Write-Host ""
@@ -52,10 +52,10 @@ $historyCount1 = $response1.performance.historical_entries_count
 $historyCount2 = $response2.performance.historical_entries_count
 
 if ($historyCount1 -ne $historyCount2) {
-    Write-Host "  ✓ History counts are different ($historyCount1 vs $historyCount2)" -ForegroundColor Green
-    Write-Host "  ✓ P&L tracking is properly isolated per (user_id, source)" -ForegroundColor Green
+    Write-Host "  [OK] History counts are different ($historyCount1 vs $historyCount2)" -ForegroundColor Green
+    Write-Host "  [OK] P&L tracking is properly isolated per (user_id, source)" -ForegroundColor Green
 } else {
-    Write-Host "  ⚠ History counts are the same - might indicate isolation issue" -ForegroundColor Yellow
+    Write-Host "  [Warning] History counts are the same - might indicate isolation issue" -ForegroundColor Yellow
 }
 
 Write-Host ""
@@ -70,9 +70,9 @@ if (Test-Path $historyFile) {
     $demoEntries = @($history | Where-Object { $_.user_id -eq "demo" -and $_.source -eq "cointracking" })
     $jackEntries = @($history | Where-Object { $_.user_id -eq "jack" -and $_.source -eq "cointracking_api" })
 
-    Write-Host "  ✓ Total entries: $($history.Count)" -ForegroundColor Green
-    Write-Host "  ✓ demo/cointracking: $($demoEntries.Count)" -ForegroundColor Green
-    Write-Host "  ✓ jack/cointracking_api: $($jackEntries.Count)" -ForegroundColor Green
+    Write-Host "  [OK] Total entries: $($history.Count)" -ForegroundColor Green
+    Write-Host "  [OK] demo/cointracking: $($demoEntries.Count)" -ForegroundColor Green
+    Write-Host "  [OK] jack/cointracking_api: $($jackEntries.Count)" -ForegroundColor Green
 
     # Check all entries have required fields
     $allHaveUserIdAndSource = $true
@@ -84,12 +84,12 @@ if (Test-Path $historyFile) {
     }
 
     if ($allHaveUserIdAndSource) {
-        Write-Host "  ✓ All entries have user_id and source fields" -ForegroundColor Green
+        Write-Host "  [OK] All entries have user_id and source fields" -ForegroundColor Green
     } else {
-        Write-Host "  ✗ Some entries missing user_id or source fields" -ForegroundColor Red
+        Write-Host "  [Error] Some entries missing user_id or source fields" -ForegroundColor Red
     }
 } else {
-    Write-Host "  ✗ History file not found" -ForegroundColor Red
+    Write-Host "  [Error] History file not found" -ForegroundColor Red
 }
 
 Write-Host ""

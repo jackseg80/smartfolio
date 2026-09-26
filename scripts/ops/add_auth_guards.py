@@ -85,7 +85,7 @@ def add_auth_guard_to_file(file_path, apply=False):
         bool: True si modifié, False sinon
     """
     if not file_path.exists():
-        print(f"⏭️  Skip: {file_path.name} (not found)")
+        print(f"  Skip: {file_path.name} (not found)")
         return False
 
     # Lire le contenu
@@ -93,14 +93,14 @@ def add_auth_guard_to_file(file_path, apply=False):
 
     # Vérifier si déjà protégé
     if has_auth_guard(content):
-        print(f"⏭️  Skip: {file_path.name} (already protected)")
+        print(f"  Skip: {file_path.name} (already protected)")
         return False
 
     # Trouver la balise <script type="module">
     script_start, script_end = find_script_module_tag(content)
 
     if script_start is None:
-        print(f"⚠️  Warning: {file_path.name} has no <script type=\"module\">")
+        print(f"  Warning: {file_path.name} has no <script type=\"module\">")
         return False
 
     # Insérer l'auth guard au début du script
@@ -112,9 +112,9 @@ def add_auth_guard_to_file(file_path, apply=False):
 
     if apply:
         file_path.write_text(new_content, encoding='utf-8')
-        print(f"✅ Protected: {file_path.name}")
+        print(f"[OK] Protected: {file_path.name}")
     else:
-        print(f"🔍 Would protect: {file_path.name}")
+        print(f" Would protect: {file_path.name}")
 
     return True
 
@@ -162,9 +162,9 @@ def main():
     print()
     print("=" * 60)
     if args.apply:
-        print(f"✅ {modified_count} file(s) protected with auth guards")
+        print(f"[OK] {modified_count} file(s) protected with auth guards")
     else:
-        print(f"🔍 {modified_count} file(s) would be protected")
+        print(f" {modified_count} file(s) would be protected")
         print("Run with --apply to apply changes")
     print("=" * 60)
 

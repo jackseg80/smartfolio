@@ -2,7 +2,7 @@
 
 Ce système permet de créer automatiquement des **snapshots quotidiens** de votre portfolio pour le **tracking P&L**.
 
-## 📸 Fichiers
+## Fichiers
 
 - **`daily_snapshot.ps1`** : Script principal qui crée le snapshot
 - **`setup_daily_snapshot_task.ps1`** : Configure la tâche planifiée Windows
@@ -10,7 +10,7 @@ Ce système permet de créer automatiquement des **snapshots quotidiens** de vot
 
 ---
 
-## 🚀 Installation (une seule fois)
+## Installation (une seule fois)
 
 ### 1. Ouvrir PowerShell en tant qu'Administrateur
 
@@ -40,7 +40,7 @@ Ouvrir **"Planificateur de tâches"** Windows :
 
 ---
 
-## ✅ Test Manuel
+## Test Manuel
 
 ### Tester le script directement
 
@@ -65,7 +65,7 @@ Get-Content data\logs\snapshots.log -Tail 10
 
 ---
 
-## 📊 Vérifier les Snapshots
+## Vérifier les Snapshots
 
 ### Via API
 
@@ -84,7 +84,7 @@ Get-Content data\portfolio_history.json | ConvertFrom-Json | Format-Table date, 
 
 ---
 
-## 🔧 Gestion de la Tâche
+## Gestion de la Tâche
 
 ### Voir le statut
 
@@ -112,7 +112,7 @@ Unregister-ScheduledTask -TaskPath "\CryptoRebal\" -TaskName "Crypto Portfolio D
 
 ---
 
-## 📝 Logs
+## Logs
 
 Les logs sont enregistrés dans **`data/logs/snapshots.log`** :
 
@@ -129,7 +129,7 @@ Get-Content data\logs\snapshots.log -Tail 20
 
 ---
 
-## 🎯 Fonctionnement
+## Fonctionnement
 
 1. **Chaque jour à minuit** (ou heure configurée), la tâche planifiée s'exécute
 2. Le script appelle `POST /portfolio/snapshot`
@@ -138,7 +138,7 @@ Get-Content data\logs\snapshots.log -Tail 20
 
 ---
 
-## 🐛 Dépannage
+## Dépannage
 
 ### La tâche ne s'exécute pas
 
@@ -158,7 +158,7 @@ L'API CoinTracking a des limites de rate. Attendez quelques minutes et réessaye
 
 ---
 
-## 📅 Historique de Rétention
+## Historique de Rétention
 
 Par défaut, le système garde **365 snapshots maximum** par utilisateur/source (voir `services/portfolio.py:384`).
 

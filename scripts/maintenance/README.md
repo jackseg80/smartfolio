@@ -2,7 +2,7 @@
 
 Hub central pour les utilitaires de maintenance du projet.
 
-## 🧹 Scripts Disponibles
+## Scripts Disponibles
 
 ### `clean_tree.ps1` (À créer)
 
@@ -22,25 +22,25 @@ Nettoyage automatique de l'arborescence de développement.
 **Contenu suggéré** :
 ```powershell
 # clean_tree.ps1
-Write-Host "🧹 Nettoyage de l'arborescence..." -ForegroundColor Cyan
+Write-Host " Nettoyage de l'arborescence..." -ForegroundColor Cyan
 
 # Supprimer __pycache__
 Get-ChildItem -Path . -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force
-Write-Host "✅ __pycache__ supprimés" -ForegroundColor Green
+Write-Host "[OK] __pycache__ supprimés" -ForegroundColor Green
 
 # Supprimer .pyc / .pyo
 Get-ChildItem -Path . -Recurse -Include "*.pyc", "*.pyo" -File | Remove-Item -Force
-Write-Host "✅ Fichiers .pyc/.pyo supprimés" -ForegroundColor Green
+Write-Host "[OK] Fichiers .pyc/.pyo supprimés" -ForegroundColor Green
 
 # Supprimer logs à la racine (garder data/logs/)
 Get-ChildItem -Path . -Filter "*.log" -File -Depth 0 | Remove-Item -Force
-Write-Host "✅ Logs racine supprimés" -ForegroundColor Green
+Write-Host "[OK] Logs racine supprimés" -ForegroundColor Green
 
 # Supprimer temporaires
 Get-ChildItem -Path . -Recurse -Include "temp_*.json", "*_temp.json", "*.tmp", "*.bak" -File | Remove-Item -Force
-Write-Host "✅ Fichiers temporaires supprimés" -ForegroundColor Green
+Write-Host "[OK] Fichiers temporaires supprimés" -ForegroundColor Green
 
-Write-Host "🎉 Nettoyage terminé!" -ForegroundColor Green
+Write-Host " Nettoyage terminé!" -ForegroundColor Green
 ```
 
 ---
@@ -62,7 +62,7 @@ Vérifie que les fichiers générés ne sont pas trackés par git.
 **Contenu suggéré** :
 ```powershell
 # verify_gitignore.ps1
-Write-Host "🔍 Vérification .gitignore..." -ForegroundColor Cyan
+Write-Host " Vérification .gitignore..." -ForegroundColor Cyan
 
 $errors = @()
 
@@ -85,11 +85,11 @@ if ($envTracked) {
 }
 
 if ($errors.Count -gt 0) {
-    Write-Host "❌ Erreurs détectées:" -ForegroundColor Red
+    Write-Host "[Error] Erreurs détectées:" -ForegroundColor Red
     $errors | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
     exit 1
 } else {
-    Write-Host "✅ .gitignore correct" -ForegroundColor Green
+    Write-Host "[OK] .gitignore correct" -ForegroundColor Green
 }
 ```
 
@@ -135,14 +135,14 @@ param(
     [string]$BaseUrl = "http://localhost:8080"
 )
 
-Write-Host "🚀 Smoke tests - $BaseUrl" -ForegroundColor Cyan
+Write-Host " Smoke tests - $BaseUrl" -ForegroundColor Cyan
 
 $errors = @()
 
 # Test 1: Health check
 try {
     $health = Invoke-RestMethod -Uri "$BaseUrl/health" -TimeoutSec 5
-    Write-Host "✅ /health OK" -ForegroundColor Green
+    Write-Host "[OK] /health OK" -ForegroundColor Green
 } catch {
     $errors += "/health FAIL: $_"
 }
@@ -151,7 +151,7 @@ try {
 try {
     $openapi = Invoke-RestMethod -Uri "$BaseUrl/openapi.json" -TimeoutSec 5
     if (-not $openapi.info) { throw "Invalid OpenAPI response" }
-    Write-Host "✅ /openapi.json OK" -ForegroundColor Green
+    Write-Host "[OK] /openapi.json OK" -ForegroundColor Green
 } catch {
     $errors += "/openapi.json FAIL: $_"
 }
@@ -160,7 +160,7 @@ try {
 try {
     $risk = Invoke-RestMethod -Uri "$BaseUrl/api/risk/status" -TimeoutSec 5
     if ($risk.success -ne $true) { throw "Risk status returned success=false" }
-    Write-Host "✅ /api/risk/status OK" -ForegroundColor Green
+    Write-Host "[OK] /api/risk/status OK" -ForegroundColor Green
 } catch {
     $errors += "/api/risk/status FAIL: $_"
 }
@@ -168,24 +168,24 @@ try {
 # Test 4: Balances
 try {
     $balances = Invoke-RestMethod -Uri "$BaseUrl/balances/current?source=stub_balanced" -TimeoutSec 10
-    Write-Host "✅ /balances/current OK" -ForegroundColor Green
+    Write-Host "[OK] /balances/current OK" -ForegroundColor Green
 } catch {
     $errors += "/balances/current FAIL: $_"
 }
 
 # Résumé
 if ($errors.Count -gt 0) {
-    Write-Host "`n❌ Tests échoués:" -ForegroundColor Red
+    Write-Host "`n[Error] Tests échoués:" -ForegroundColor Red
     $errors | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
     exit 1
 } else {
-    Write-Host "`n🎉 Tous les tests sont passés!" -ForegroundColor Green
+    Write-Host "`n Tous les tests sont passés!" -ForegroundColor Green
 }
 ```
 
 ---
 
-## 🔧 Utilisation Recommandée
+## Utilisation Recommandée
 
 ### Avant commit
 ```powershell
@@ -205,7 +205,7 @@ if ($errors.Count -gt 0) {
 
 ---
 
-## 📋 TODO
+## TODO
 
 - [ ] Créer `clean_tree.ps1`
 - [ ] Créer `verify_gitignore.ps1`

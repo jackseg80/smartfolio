@@ -272,18 +272,18 @@ class RealtimeAlertBroadcaster:
     def _get_alert_icon(self, alert_type: AlertType) -> str:
         """Icône d'affichage selon le type"""
         icons = {
-            AlertType.VAR_BREACH: "⚠️",
-            AlertType.STRESS_TEST_FAILED: "💥",
-            AlertType.MONTE_CARLO_EXTREME: "🎲",
-            AlertType.RISK_CONCENTRATION: "📊",
-            AlertType.CORR_HIGH: "🔗",
-            AlertType.VOL_Q90_CROSS: "📈",
-            AlertType.REGIME_FLIP: "🔄",
-            AlertType.CONTRADICTION_SPIKE: "❗",
-            AlertType.DECISION_DROP: "⬇️",
-            AlertType.EXEC_COST_SPIKE: "💰"
+            AlertType.VAR_BREACH: "Warning",
+            AlertType.STRESS_TEST_FAILED: "Event",
+            AlertType.MONTE_CARLO_EXTREME: "Risk",
+            AlertType.RISK_CONCENTRATION: "Analytics",
+            AlertType.CORR_HIGH: "Link",
+            AlertType.VOL_Q90_CROSS: "Growth",
+            AlertType.REGIME_FLIP: "Refresh",
+            AlertType.CONTRADICTION_SPIKE: "Alert",
+            AlertType.DECISION_DROP: "Down",
+            AlertType.EXEC_COST_SPIKE: "Balance"
         }
-        return icons.get(alert_type, "🔔")
+        return icons.get(alert_type, "Notifications")
     
     def _get_urgency_level(self, severity: AlertSeverity) -> int:
         """Niveau d'urgence numérique (1-3)"""

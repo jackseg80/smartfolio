@@ -278,7 +278,7 @@ class RecommendationsOrchestrator:
 
         # CFD-specific tactical advice adjustment (P0 Enhancement - Oct 2025)
         if is_cfd:
-            cfd_warning = f"⚠️ CFD/Leveraged Position ({leverage:.0f}x) - Use tighter stops. "
+            cfd_warning = f"[Warning] CFD/Leveraged Position ({leverage:.0f}x) - Use tighter stops. "
             if decision_result['action'] in ['STRONG BUY', 'BUY']:
                 cfd_warning += "Reduce position size by 50% due to leverage risk. "
             elif decision_result['action'] == 'HOLD':

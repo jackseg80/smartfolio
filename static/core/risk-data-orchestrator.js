@@ -8,12 +8,12 @@ import { fetchAllIndicators, enhanceCycleScore } from '../modules/onchain-indica
 import { calculateCompositeScoreV2 } from '../modules/composite-score-v2.js';
 import { getRegimeDisplayData } from '../modules/market-regimes.js';
 
-// ✅ Singleton guard: empêche doubles initialisations
+//  Singleton guard: empêche doubles initialisations
 if (window.__risk_orchestrator_init) {
-  debugLogger.debug('⚠️ Risk orchestrator already initialized, skipping duplicate');
+  debugLogger.debug("[Warning] Risk orchestrator already initialized, skipping duplicate");
 } else {
   window.__risk_orchestrator_init = true;
-  debugLogger.debug('✅ Risk orchestrator initialized (singleton)');
+  debugLogger.debug("[OK] Risk orchestrator initialized (singleton)");
 }
 
 /**
@@ -29,15 +29,15 @@ export async function hydrateRiskStore() {
     throw new Error('riskStore not available - ensure core/risk-dashboard-store.js is loaded first');
   }
 
-  debugLogger.debug('🔄 Starting risk store hydration...');
+  debugLogger.debug("Starting risk store hydration...");
   const startTime = performance.now();
 
-  // ✅ Détecter hard refresh (Ctrl+Shift+R) pour forcer cache bust
+  //  Détecter hard refresh (Ctrl+Shift+R) pour forcer cache bust
   const isHardRefresh = performance.navigation?.type === 1 ||
                         performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
   const forceRefresh = isHardRefresh || false;
   if (forceRefresh) {
-    debugLogger.debug('🔄 Hard refresh detected, forcing cache refresh');
+    debugLogger.debug("Hard refresh detected, forcing cache refresh");
   }
 
   try {
@@ -45,7 +45,7 @@ export async function hydrateRiskStore() {
     const fetchAlerts = async () => {
       try {
         if (!window.globalConfig?.apiRequest) {
-          debugLogger.warn('⚠️ globalConfig.apiRequest not available for alerts');
+          debugLogger.warn("[Warning] globalConfig.apiRequest not available for alerts");
           return [];
         }
         const alertsData = await window.globalConfig.apiRequest('/api/alerts/active', {
@@ -53,7 +53,7 @@ export async function hydrateRiskStore() {
         });
         return Array.isArray(alertsData) ? alertsData : [];
       } catch (err) {
-        debugLogger.warn('⚠️ Alerts fetch failed:', err);
+        debugLogger.warn("[Warning] Alerts fetch failed:", err);
         return [];
       }
     };
@@ -62,37 +62,37 @@ export async function hydrateRiskStore() {
     const fetchRiskData = async () => {
       try {
         if (!window.globalConfig?.apiRequest) {
-          debugLogger.warn('⚠️ globalConfig.apiRequest not available for risk data');
+          debugLogger.warn("[Warning] globalConfig.apiRequest not available for risk data");
           return null;
         }
 
-        // 🔧 FIX: Get current source from globalConfig (MULTI-TENANT CRITICAL - Nov 2025)
+        //  FIX: Get current source from globalConfig (MULTI-TENANT CRITICAL - Nov 2025)
         const currentSource = window.globalConfig.get('data_source');
         if (!currentSource) {
           debugLogger.warn('Risk data unavailable: no portfolio source is selected');
           return null;
         }
 
-        // 🔧 FIX: Add _csv_hint to invalidate backend cache when CSV changes (Nov 2025)
+        //  FIX: Add _csv_hint to invalidate backend cache when CSV changes (Nov 2025)
         const csvFile = window.userSettings?.csv_selected_file || 'latest';
         const cacheBuster = csvFile !== 'latest' ? csvFile : Date.now().toString().substring(0, 10);
 
-        debugLogger.debug(`🔍 hydrateRiskStore - fetching risk data with source: '${currentSource}', _csv_hint: '${cacheBuster}'`);
+        debugLogger.debug(`hydrateRiskStore - fetching risk data with source: '${currentSource}', _csv_hint: '${cacheBuster}'`);
 
         const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
           params: {
-            source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+            source: currentSource,  //  FIX: Pass source parameter for multi-tenant isolation
             min_usd: 1.0,
             price_history_days: 365,
             lookback_days: 90,
             use_dual_window: true,  // Cohérent avec risk-dashboard-main-controller.js
             risk_version: 'v2_active',
-            _csv_hint: cacheBuster  // 🔧 Invalide cache backend quand CSV change
+            _csv_hint: cacheBuster  //  Invalide cache backend quand CSV change
           }
         });
         return riskData;
       } catch (err) {
-        debugLogger.warn('⚠️ Risk data fetch failed:', err);
+        debugLogger.warn("[Warning] Risk data fetch failed:", err);
         return null;
       }
     };
@@ -101,17 +101,17 @@ export async function hydrateRiskStore() {
     const fetchGovernanceState = async () => {
       try {
         if (!window.globalConfig?.apiRequest) {
-          debugLogger.warn('⚠️ globalConfig.apiRequest not available for governance state');
+          debugLogger.warn("[Warning] globalConfig.apiRequest not available for governance state");
           return null;
         }
         return await window.globalConfig.apiRequest('/execution/governance/state');
       } catch (err) {
-        debugLogger.warn('⚠️ Governance state fetch failed:', err);
+        debugLogger.warn("[Warning] Governance state fetch failed:", err);
         return null;
       }
     };
 
-    // ✅ Utiliser risk_score déjà calculé par l'API backend (source de vérité)
+    //  Utiliser risk_score déjà calculé par l'API backend (source de vérité)
     const calculateRiskScore = (riskData) => {
       if (!riskData?.risk_metrics) return null;
 
@@ -120,12 +120,12 @@ export async function hydrateRiskStore() {
       const riskScore = riskData.risk_metrics.risk_score;
 
       if (riskScore != null && typeof riskScore === 'number') {
-        console.debug('✅ Risk score from backend API:', riskScore);
+        console.debug("[OK] Risk score from backend API:", riskScore);
         return Math.max(0, Math.min(100, riskScore));
       }
 
-      // ❌ Fallback: si risk_score manque, retourner null (ne pas calculer côté client)
-      debugLogger.warn('⚠️ risk_score missing from API response, using fallback');
+      //  Fallback: si risk_score manque, retourner null (ne pas calculer côté client)
+      debugLogger.warn("[Warning] risk_score missing from API response, using fallback");
       return null;
     };
 
@@ -133,19 +133,19 @@ export async function hydrateRiskStore() {
     // NOTE: estimateCyclePosition() est SYNCHRONE, on le wrap dans Promise.resolve()
     const [ccsResult, cycleResult, indicatorsResult, alertsResult, riskResult, governanceResult] = await Promise.allSettled([
       fetchAndComputeCCS().catch(err => {
-        debugLogger.warn('⚠️ CCS calculation failed:', err);
+        debugLogger.warn("[Warning] CCS calculation failed:", err);
         return null;
       }),
       Promise.resolve().then(() => {
         try {
           return estimateCyclePosition();
         } catch (err) {
-          debugLogger.warn('⚠️ Cycle estimation failed:', err);
+          debugLogger.warn("[Warning] Cycle estimation failed:", err);
           return null;
         }
       }),
       fetchAllIndicators({ force: forceRefresh }).catch(err => {
-        debugLogger.warn('⚠️ On-chain indicators fetch failed:', err);
+        debugLogger.warn("[Warning] On-chain indicators fetch failed:", err);
         return null;
       }),
       fetchAlerts(),
@@ -180,7 +180,7 @@ export async function hydrateRiskStore() {
         // calculateCompositeScoreV2 returns { score, confidence, contributors, ... }
         onchainScore = compositeResult?.score ?? null;
       } catch (err) {
-        debugLogger.warn('⚠️ On-chain composite score calculation failed:', err);
+        debugLogger.warn("[Warning] On-chain composite score calculation failed:", err);
       }
     }
 
@@ -196,7 +196,7 @@ export async function hydrateRiskStore() {
         // blendCCS returns { originalCCS, cycleScore, blendedCCS, cycleWeight, phase }
         ccsStar = blendResult?.blendedCCS ?? null;
       } catch (err) {
-        debugLogger.warn('⚠️ CCS blend calculation failed:', err);
+        debugLogger.warn("[Warning] CCS blend calculation failed:", err);
       }
     }
 
@@ -224,7 +224,7 @@ export async function hydrateRiskStore() {
         // getRegimeDisplayData returns { regime: {...}, risk_budget, allocation, recommendations }
         regime = regimeData?.regime ?? null;
       } catch (err) {
-        debugLogger.warn('⚠️ Market regime calculation failed:', err);
+        debugLogger.warn("[Warning] Market regime calculation failed:", err);
       }
     }
 
@@ -281,7 +281,7 @@ export async function hydrateRiskStore() {
       _hydrated: true,
       _hydration_timestamp: new Date().toISOString(),
       _hydration_duration_ms: Math.round(performance.now() - startTime),
-      _hydration_source: 'risk-data-orchestrator'  // ✅ Traçabilité source
+      _hydration_source: 'risk-data-orchestrator'  //  Traçabilité source
     };
 
     // Mise à jour atomique du store
@@ -308,7 +308,7 @@ export async function hydrateRiskStore() {
     }));
 
     const duration = Math.round(performance.now() - startTime);
-    debugLogger.debug(`✅ Risk store hydrated successfully in ${duration}ms`, {
+    debugLogger.debug(`[OK] Risk store hydrated successfully in ${duration}ms`, {
       ccs: ccs ? `${ccs.score} (${ccs.interpretation?.label || ccs.interpretation})` : 'N/A',
       cycle: cycle ? `${cycle.phase?.phase || cycle.phase} (${cycle.months}mo)` : 'N/A',
       onchain: onchainScore !== null && typeof onchainScore === 'number' ? onchainScore.toFixed(1) : (onchainScore || 'N/A'),
@@ -320,7 +320,7 @@ export async function hydrateRiskStore() {
     });
 
   } catch (err) {
-    debugLogger.error('❌ Failed to hydrate risk store:', err);
+    debugLogger.error("Failed to hydrate risk store:", err);
 
     // Marquer échec d'hydratation dans le store
     const currentState = window.riskStore.getState();
@@ -349,14 +349,14 @@ async function autoInit() {
     });
   } else {
     // Retry après 100ms si store pas encore chargé
-    debugLogger.debug('⏳ Waiting for riskStore to be available...');
+    debugLogger.debug("[Pending] Waiting for riskStore to be available...");
     setTimeout(autoInit, 100);
   }
 }
 
 // Listen for data source changes and re-hydrate store
 window.addEventListener('dataSourceChanged', (event) => {
-  debugLogger.debug(`🔄 Data source changed in orchestrator: ${event.detail.oldSource} → ${event.detail.newSource}`);
+  debugLogger.debug(`Data source changed in orchestrator: ${event.detail.oldSource} → ${event.detail.newSource}`);
 
   // Clear risk store to force fresh data fetch
   if (window.riskStore) {
@@ -374,7 +374,7 @@ window.addEventListener('dataSourceChanged', (event) => {
       _cleared_timestamp: new Date().toISOString()
     };
     window.riskStore.setState(clearedState);
-    debugLogger.debug('✅ Risk store cleared for source change');
+    debugLogger.debug("[OK] Risk store cleared for source change");
   }
 
   // Re-hydrate store with new source data

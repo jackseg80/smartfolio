@@ -1,17 +1,17 @@
 # Admin Dashboard - Session Résumé (20 Déc 2025)
 
-## 📋 Résumé Exécutif
+## Résumé Exécutif
 
 **Projet:** Admin Dashboard SmartFolio avec ML Training RÉEL + Metrics Parsing
 **Durée:** Session complète Phase 1 → Phase 3.6
-**Status:** ✅ **90% Terminé** (7.5/8 phases)
+**Status:** [OK] **90% Terminé** (7.5/8 phases)
 **Derniers commits:** `79541c4`, `f1c4691`, `d50ce85`, `8d4d141`, `095f51d`, `ef816b3`
 
 ---
 
-## 🎯 Ce Qui a Été Fait
+## Ce Qui a Été Fait
 
-### ✅ Phase 1 - Infrastructure RBAC (100%)
+### Phase 1 - Infrastructure RBAC (100%)
 **Commit:** `77ac0c7` (19 déc 2025)
 
 **Backend:**
@@ -33,7 +33,7 @@
 
 ---
 
-### ✅ Phase 2 - User Management + Logs (100%)
+### Phase 2 - User Management + Logs (100%)
 **Commits:** `4f3fa7d`, `65aae48` (19 déc 2025)
 
 **Backend:**
@@ -54,7 +54,7 @@
 
 ---
 
-### ✅ Phase 3 - Cache + ML Models (100%)
+### Phase 3 - Cache + ML Models (100%)
 **Commit:** `842e50e` (19 déc 2025)
 
 **Backend:**
@@ -85,7 +85,7 @@
 
 ---
 
-### ✅ Phase 3.5 - REAL ML Training (100%)
+### Phase 3.5 - REAL ML Training (100%)
 **Commits:** `ef816b3`, `a4a4447`, `c878a21`, `4429e58`, `095f51d`, `8d4d141`, `d50ce85` (19-20 déc 2025)
 
 **Changement majeur:** Remplacement du **mock training** par **vrai PyTorch training**
@@ -112,7 +112,7 @@
 
 ---
 
-### ✅ Phase 3.6 - Real Metrics Parsing (100%)
+### Phase 3.6 - Real Metrics Parsing (100%)
 
 **Commit:** `79541c4` (20 déc 2025)
 
@@ -154,20 +154,20 @@ SOL: test_mse=0.037188, r2=0.3746, samples=213
 
 **Bénéfices:**
 
-- ✅ Admin Dashboard affiche **vrais metrics** (plus de hardcode)
-- ✅ Metrics mis à jour **automatiquement** après chaque training
-- ✅ Traçabilité complète (trained_at, samples, etc.)
-- ✅ Fallback robuste si fichiers manquants
+- [OK] Admin Dashboard affiche **vrais metrics** (plus de hardcode)
+- [OK] Metrics mis à jour **automatiquement** après chaque training
+- [OK] Traçabilité complète (trained_at, samples, etc.)
+- [OK] Fallback robuste si fichiers manquants
 
 **Tests:**
 
-- Parsing regime metadata: ✅ OK (10 features, 1623 samples)
-- Parsing volatility metadata: ✅ OK (3 modèles BTC/ETH/SOL)
-- Error handling: ✅ OK (fallback values si metadata manquante)
+- Parsing regime metadata:  OK (10 features, 1623 samples)
+- Parsing volatility metadata:  OK (3 modèles BTC/ETH/SOL)
+- Error handling:  OK (fallback values si metadata manquante)
 
 ---
 
-## 🐛 Bugs Corrigés
+## Bugs Corrigés
 
 | # | Bug | Fichier | Commit | Description |
 |---|-----|---------|--------|-------------|
@@ -181,7 +181,7 @@ SOL: test_mse=0.037188, r2=0.3746, samples=213
 
 ---
 
-## 📊 Statistiques Finales
+## Statistiques Finales
 
 ### Code
 - **Fichiers créés:** 5 services (cache_manager, training_executor, user_management, log_reader, + RBAC)
@@ -202,9 +202,9 @@ SOL: test_mse=0.037188, r2=0.3746, samples=213
 
 ---
 
-## 🔄 Phase 4 - À Faire (Optionnel)
+## Phase 4 - À Faire (Optionnel)
 
-**Status:** 🔴 0% (non commencé)
+**Status:** [Negative] 0% (non commencé)
 
 ### API Keys Management
 - Service `services/key_masker.py` - Masking clés API
@@ -224,7 +224,7 @@ SOL: test_mse=0.037188, r2=0.3746, samples=213
 
 ---
 
-## 🧪 Comment Tester
+## Comment Tester
 
 ### 1. Démarrer le serveur
 ```powershell
@@ -262,7 +262,7 @@ http://localhost:8080/admin-dashboard.html
 - Attendre 2-5 min (GPU) ou 10-20 min (CPU)
 - Training RÉEL avec PyTorch sur vraies données
 - Fichiers .pth/.pkl sauvegardés dans `models/`
-- Last Updated MIS À JOUR avec datetime actuel ✅
+- Last Updated MIS À JOUR avec datetime actuel [OK]
 - Status passe à TRAINED
 - Click "View Training Jobs" → Liste jobs avec statuts
 
@@ -283,7 +283,7 @@ curl "http://localhost:8080/admin/ml/jobs" -H "X-User: jack"
 
 ---
 
-## 📁 Fichiers Clés Modifiés
+## Fichiers Clés Modifiés
 
 ### Backend
 ```
@@ -313,24 +313,24 @@ ADMIN_DASHBOARD_SESSION_RESUME.md  # Ce fichier
 
 ---
 
-## 🚀 État Actuel du Système
+## État Actuel du Système
 
-### ✅ Ce qui fonctionne
+### Ce qui fonctionne
 1. **RBAC complet** - Protection tous les endpoints /admin/*
 2. **User Management** - CRUD complet avec soft delete
 3. **Logs Viewer** - Lecture logs avec filtres + pagination
 4. **Cache Management** - Stats + clear caches (7 caches trackés)
 5. **ML Models** - Liste 4 modèles avec metadata
 6. **ML Training RÉEL** - PyTorch training sur GPU/CPU avec vraies données
-7. **ModelRegistry** - Mise à jour automatique après training (Last Updated fonctionne ✅)
+7. **ModelRegistry** - Mise à jour automatique après training (Last Updated fonctionne [OK])
 8. **Training Jobs** - Tracking complet (pending → running → completed)
-9. **Real Metrics Parsing** - Metrics parsés depuis metadata.pkl (accuracy 0.81, r2 0.56, etc.) ✅
+9. **Real Metrics Parsing** - Metrics parsés depuis metadata.pkl (accuracy 0.81, r2 0.56, etc.) [OK]
 
-### ⚠️ Limitations connues
+### Limitations connues
 1. **Phase 4 manquante** - API Keys Management pas implémenté
 2. **Tests** - Pas de tests unitaires/intégration automatisés
 
-### 🎯 Prochaines Étapes Recommandées
+### Prochaines Étapes Recommandées
 
 **Option 1: Terminer Phase 4 (API Keys)**
 
@@ -351,27 +351,27 @@ ADMIN_DASHBOARD_SESSION_RESUME.md  # Ce fichier
 
 ---
 
-## 🔑 Points Clés pour Nouvelle Session
+## Points Clés pour Nouvelle Session
 
 1. **Serveur:** `python -m uvicorn api.main:app --port 8080` (PAS de --reload)
 2. **User admin:** `jack` (seul user avec role admin)
 3. **URL Dashboard:** `http://localhost:8080/admin-dashboard.html`
 4. **Training ML:** Prend 2-5 min (GPU) / 10-20 min (CPU), c'est NORMAL
-5. **Last Updated:** Fonctionne maintenant ✅ (bug `get_model_manifest()` corrigé)
+5. **Last Updated:** Fonctionne maintenant [OK] (bug `get_model_manifest()` corrigé)
 6. **Registry:** `models/registry.json` contient 4 modèles + metadata
-7. **Logs training:** Dans terminal serveur, chercher "🚀 Starting REAL training job"
+7. **Logs training:** Dans terminal serveur, chercher " Starting REAL training job"
 
 ---
 
-## 📚 Documentation Complète
+## Documentation Complète
 
-- **Guide principal:** `CLAUDE.md` (section ## 🔧 Admin Dashboard)
+- **Guide principal:** `CLAUDE.md` (section ##  Admin Dashboard)
 - **Architecture:** `docs/ADMIN_DASHBOARD.md`
 - **Ce résumé:** `ADMIN_DASHBOARD_SESSION_RESUME.md`
 
 ---
 
-## ✅ Checklist Reprise Session
+## Checklist Reprise Session
 
 Avant de continuer sur Phase 4 ou autre:
 
@@ -379,13 +379,13 @@ Avant de continuer sur Phase 4 ou autre:
 - [ ] User `jack` sélectionné dans WealthContextBar
 - [ ] Admin Dashboard accessible (`http://localhost:8080/admin-dashboard.html`)
 - [ ] Tous les onglets fonctionnels (Overview, Users, Logs, Cache, ML Models)
-- [ ] Au moins 1 training job testé et completé (Last Updated vérifié ✅)
+- [ ] Au moins 1 training job testé et completé (Last Updated vérifié [OK])
 - [ ] Registry.json contient données à jour
 
 ---
 
 **Session terminée le:** 20 Décembre 2025, 11:15
 **Progression totale:** 87.5% (7/8 phases)
-**Status:** ✅ Production-ready pour Phases 1-3
+**Status:** [OK] Production-ready pour Phases 1-3
 
-🎉 **Admin Dashboard opérationnel avec ML Training RÉEL !**
+ **Admin Dashboard opérationnel avec ML Training RÉEL !**

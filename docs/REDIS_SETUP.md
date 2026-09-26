@@ -3,7 +3,7 @@
 > Installation et configuration de Redis pour smartfolio
 > Date: Oct 2025
 
-## 🎯 Pourquoi Redis ?
+## Pourquoi Redis ?
 
 Redis est une base de données en mémoire (RAM) ultra-rapide utilisée pour:
 
@@ -16,7 +16,7 @@ Redis est une base de données en mémoire (RAM) ultra-rapide utilisée pour:
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### Option 1: WSL2 (Recommandé pour Windows)
 
@@ -83,7 +83,7 @@ sudo systemctl start redis
 
 ---
 
-## ⚙️ Configuration Projet
+## Configuration Projet
 
 ### 1. Variable d'Environnement
 
@@ -126,7 +126,7 @@ Test-NetConnection -ComputerName localhost -Port 6379
 
 ---
 
-## 🔍 Utilisation dans le Projet
+## Utilisation dans le Projet
 
 ### Streams Redis Actifs
 
@@ -134,10 +134,10 @@ Le serveur FastAPI utilise Redis Streams pour le temps réel:
 
 ```python
 # Streams enregistrés au démarrage (voir logs)
-✅ Registered consumer for stream: risk_events
-✅ Registered consumer for stream: alerts
-✅ Registered consumer for stream: market_data
-✅ Registered consumer for stream: portfolio_updates
+[OK] Registered consumer for stream: risk_events
+[OK] Registered consumer for stream: alerts
+[OK] Registered consumer for stream: market_data
+[OK] Registered consumer for stream: portfolio_updates
 ```
 
 ### Services Utilisant Redis
@@ -173,7 +173,7 @@ cached = cache_get("portfolio_metrics")
 
 ---
 
-## 🧪 Tests et Debug
+## Tests et Debug
 
 ### Vérifier les Logs Serveur
 
@@ -231,7 +231,7 @@ redis-cli PUBLISH test_channel "Test message"
 
 ---
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Problème: "Connection refused" (Error 22)
 
@@ -286,7 +286,7 @@ sudo service redis-server restart
 
 ---
 
-## 🔒 Sécurité
+## Sécurité
 
 ### Développement Local
 
@@ -319,7 +319,7 @@ sudo ufw deny 6379
 
 ---
 
-## 📊 Performance
+## Performance
 
 ### Benchmarks Typiques
 
@@ -340,7 +340,7 @@ redis-cli INFO all
 
 ---
 
-## 🔗 Ressources
+## Ressources
 
 - Documentation officielle: https://redis.io/docs/
 - Redis commands: https://redis.io/commands/

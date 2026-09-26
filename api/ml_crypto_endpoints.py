@@ -539,7 +539,7 @@ async def validate_regime_detector(
                     'max_drawdown': bear['max_dd']
                 })
 
-                logger.info(f"{bear['name']}: Detected as {regime['regime_name']} ({'✅' if detected_as_bear else '❌'})")
+                logger.info(f"{bear['name']}: Detected as {regime['regime_name']} ({'OK' if detected_as_bear else 'Error'})")
 
             except Exception as e:
                 logger.error(f"Failed to validate {bear['name']}: {e}")

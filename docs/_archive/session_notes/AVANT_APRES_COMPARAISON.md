@@ -1,20 +1,20 @@
-# 📊 Comparaison Avant/Après - Système Multi-Devises
+# Comparaison Avant/Après - Système Multi-Devises
 
 **Date:** 25 octobre 2025
 
 ---
 
-## 🎯 Comparaison des Prix Fetchés
+## Comparaison des Prix Fetchés
 
 ### Assets Suisses (CHF)
 
 | Asset | Anciennes Reco (FAUX) | Nouveau Système (CORRECT) | Amélioration |
 |-------|------------------------|---------------------------|--------------|
-| **ROG** (Roche) | $87.06 ❌ | **271.20 CHF** ✅ | **+211.5%** corrigé |
-| **SLHn** (Swiss Life) | $99.76 ❌ | **871.20 CHF** ✅ | **+773.3%** corrigé |
-| **UBSG** (UBS) | $96.54 ❌ | **30.39 CHF** ✅ | **+68.5%** corrigé |
-| **UHRN** (Swatch) | $88.63 ❌ | **35.34 CHF** ✅ | **+60.1%** corrigé |
-| **WORLD** (ETF) | $103.72 ❌ | **3.48 CHF** ✅ | **+96.6%** corrigé |
+| **ROG** (Roche) | $87.06 [Error] | **271.20 CHF** [OK] | **+211.5%** corrigé |
+| **SLHn** (Swiss Life) | $99.76 [Error] | **871.20 CHF** [OK] | **+773.3%** corrigé |
+| **UBSG** (UBS) | $96.54 [Error] | **30.39 CHF** [OK] | **+68.5%** corrigé |
+| **UHRN** (Swatch) | $88.63 [Error] | **35.34 CHF** [OK] | **+60.1%** corrigé |
+| **WORLD** (ETF) | $103.72 [Error] | **3.48 CHF** [OK] | **+96.6%** corrigé |
 
 **Analyse:** Le système fetchait depuis Yahoo US sans le suffixe `.SW`, récupérant des prix complètement faux ou des assets différents.
 
@@ -26,7 +26,7 @@
 
 | Asset | Anciennes Reco (FAUX) | Nouveau Système (CORRECT) | Amélioration |
 |-------|------------------------|---------------------------|--------------|
-| **IFX** (Infineon) | $98.45 ❌ | **33.49 EUR** ✅ | **+66.0%** corrigé |
+| **IFX** (Infineon) | $98.45 [Error] | **33.49 EUR** [OK] | **+66.0%** corrigé |
 
 **Analyse:** Fetchait depuis Yahoo US au lieu de XETRA (bourse allemande).
 
@@ -38,7 +38,7 @@
 
 | Asset | Anciennes Reco (FAUX) | Nouveau Système (CORRECT) | Amélioration |
 |-------|------------------------|---------------------------|--------------|
-| **CDR** (CD Projekt) | $92.50 ❌ | **259.50 PLN** ✅ | **+180.5%** corrigé |
+| **CDR** (CD Projekt) | $92.50 [Error] | **259.50 PLN** [OK] | **+180.5%** corrigé |
 
 **Analyse:** Pas de support Warsaw Stock Exchange.
 
@@ -50,11 +50,11 @@
 
 | Asset | Anciennes Reco (FAUX) | Nouveau Système (CORRECT) | Amélioration |
 |-------|------------------------|---------------------------|--------------|
-| **ITEK** | $132.73 ❌ | **16.60 EUR** ✅ | **+87.5%** corrigé |
-| **AGGS** | $42.02 ❌ | **4.61 CHF** ✅ | **+89.0%** corrigé |
-| **BTEC** | $83.09 ❌ | **7.57 USD** ✅ | **+90.9%** corrigé |
-| **XGDU** | $129.76 ❌ | **54.57 EUR** ✅ | **+58.0%** corrigé |
-| **IWDA** | $88.04 ❌ | **110.58 EUR** ✅ | **+25.6%** corrigé |
+| **ITEK** | $132.73 [Error] | **16.60 EUR** [OK] | **+87.5%** corrigé |
+| **AGGS** | $42.02 [Error] | **4.61 CHF** [OK] | **+89.0%** corrigé |
+| **BTEC** | $83.09 [Error] | **7.57 USD** [OK] | **+90.9%** corrigé |
+| **XGDU** | $129.76 [Error] | **54.57 EUR** [OK] | **+58.0%** corrigé |
+| **IWDA** | $88.04 [Error] | **110.58 EUR** [OK] | **+25.6%** corrigé |
 
 **Analyse:** ETFs européens ont différents symboles selon la bourse (Paris, Amsterdam, Swiss).
 
@@ -62,23 +62,23 @@
 
 ---
 
-### Actions US (USD) - Déjà Correctes ✅
+### Actions US (USD) - Déjà Correctes
 
 | Asset | Anciennes Reco | Nouveau Système | Divergence |
 |-------|----------------|-----------------|------------|
-| **AAPL** | $259.58 | **$262.82** | **1.25%** ✅ |
-| **GOOGL** | $253.08 | **$259.92** | **2.70%** ✅ |
-| **MSFT** | $520.56 | **$523.55** | **0.57%** ✅ |
-| **TSLA** | $448.98 | **$433.62** | **3.42%** ✅ |
-| **META** | $734.00 | **$738.36** | **0.59%** ✅ |
-| **NVDA** | $182.16 | **$186.26** | **2.25%** ✅ |
-| **AMZN** | $221.09 | **$224.21** | **1.41%** ✅ |
-| **INTC** | $38.16 | **$38.28** | **0.31%** ✅ |
-| **AMD** | $234.99 | **$252.92** | **7.63%** ✅ |
-| **KO** | $69.94 | **$69.71** | **0.33%** ✅ |
-| **PFE** | $24.67 | **$24.76** | **0.36%** ✅ |
-| **BAX** | $22.99 | **$23.02** | **0.13%** ✅ |
-| **COIN** | $322.76 | **$354.46** | **9.82%** ✅ |
+| **AAPL** | $259.58 | **$262.82** | **1.25%** [OK] |
+| **GOOGL** | $253.08 | **$259.92** | **2.70%** [OK] |
+| **MSFT** | $520.56 | **$523.55** | **0.57%** [OK] |
+| **TSLA** | $448.98 | **$433.62** | **3.42%** [OK] |
+| **META** | $734.00 | **$738.36** | **0.59%** [OK] |
+| **NVDA** | $182.16 | **$186.26** | **2.25%** [OK] |
+| **AMZN** | $221.09 | **$224.21** | **1.41%** [OK] |
+| **INTC** | $38.16 | **$38.28** | **0.31%** [OK] |
+| **AMD** | $234.99 | **$252.92** | **7.63%** [OK] |
+| **KO** | $69.94 | **$69.71** | **0.33%** [OK] |
+| **PFE** | $24.67 | **$24.76** | **0.36%** [OK] |
+| **BAX** | $22.99 | **$23.02** | **0.13%** [OK] |
+| **COIN** | $322.76 | **$354.46** | **9.82%** [OK] |
 
 **Analyse:** Actions US déjà correctes car Yahoo Finance US est la bonne source.
 
@@ -86,7 +86,7 @@
 
 ---
 
-## 📈 Résumé des Améliorations
+## Résumé des Améliorations
 
 ### Avant (Système Original)
 
@@ -114,7 +114,7 @@
 
 ---
 
-## 🔍 Causes des Erreurs (Ancien Système)
+## Causes des Erreurs (Ancien Système)
 
 ### 1. Assets Suisses (5 assets)
 **Problème:** yfinance fetchait `ROG` depuis US au lieu de `ROG.SW` depuis SIX Swiss
@@ -149,7 +149,7 @@
 
 ---
 
-## ✅ Solutions Implémentées
+## Solutions Implémentées
 
 ### 1. CurrencyExchangeDetector
 - Détection automatique de la bourse via ISIN ou exchange hint
@@ -173,7 +173,7 @@
 
 ---
 
-## 🎯 Impact sur les Recommandations Futures
+## Impact sur les Recommandations Futures
 
 ### Anciennes Recommandations (24 Oct, avant fix)
 ```
@@ -181,7 +181,7 @@ ROG (Roche):
   Prix utilisé: $87.06 (FAUX)
   Action: STRONG BUY
   Price Target: $94.89
-  → Complètement inutilisable ❌
+  → Complètement inutilisable [Error]
 ```
 
 ### Nouvelles Recommandations (avec système multi-devises)
@@ -191,12 +191,12 @@ ROG (Roche):
   Converti en USD: ~$340.52 pour comparaison
   Action: STRONG BUY
   Price Target: $370.00
-  → Fiable et actionable ✅
+  → Fiable et actionable [OK]
 ```
 
 ---
 
-## 📋 Prochaines Étapes
+## Prochaines Étapes
 
 Pour profiter du nouveau système multi-devises, vous devez **générer de nouvelles recommandations** :
 
@@ -209,10 +209,10 @@ python -m uvicorn api.main:app --port 8080
 ```
 
 Les nouvelles recommandations utiliseront automatiquement:
-- ✅ Détection automatique des bourses
-- ✅ Prix exacts en devises natives
-- ✅ Conversions forex correctes
-- ✅ Indicateurs techniques précis
+- [OK] Détection automatique des bourses
+- [OK] Prix exacts en devises natives
+- [OK] Conversions forex correctes
+- [OK] Indicateurs techniques précis
 
 **Résultat:** Recommandations fiables pour **TOUS** vos assets, pas seulement les US !
 

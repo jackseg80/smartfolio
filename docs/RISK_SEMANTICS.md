@@ -1,6 +1,6 @@
 # Risk Semantics — Source de Vérité
 
-> **⚠️ Règle Canonique — Sémantique Risk (Option A)**
+> **[Warning] Règle Canonique — Sémantique Risk (Option A)**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
@@ -11,25 +11,25 @@
 > DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
 > ```
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk` (calculs, visualisations, contributions).
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk` (calculs, visualisations, contributions).
 >
 > **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
 >
-> 📖 **Source de vérité** : [docs/RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+>  **Source de vérité** : [docs/RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 
 ---
 
 ## Architecture Centralisée (Oct 2025)
 
-### 🏛️ Single Source of Truth
+### Single Source of Truth
 
 **Module central** : [`services/risk_scoring.py`](../services/risk_scoring.py)
 
 Toute logique de calcul Risk Score et mapping score→level **DOIT** être importée depuis ce module.
 
-**❌ Anti-pattern** : Dupliquer la logique dans d'autres services (risque de divergence).
+**[Error] Anti-pattern** : Dupliquer la logique dans d'autres services (risque de divergence).
 
-### 📊 Dual Score System
+### Dual Score System
 
 | Score | Type | Base de calcul | Usage |
 |-------|------|---------------|--------|
@@ -41,7 +41,7 @@ Toute logique de calcul Risk Score et mapping score→level **DOIT** être impor
 final_level = max(level(risk_score), level(risk_score_structural))
 ```
 
-### 🔢 Mapping Canonique Score → Level
+### Mapping Canonique Score → Level
 
 ```python
 # Thresholds (services/risk_scoring.py:RISK_LEVEL_THRESHOLDS)
@@ -53,9 +53,9 @@ score >= 20  → "very_high"    # Très fragile
 score < 20   → "critical"     # Critique
 ```
 
-**⚠️ CRITIQUE** : Ce mapping est **inversé** car score = robustesse (score élevé = risque faible).
+**[Warning] CRITIQUE** : Ce mapping est **inversé** car score = robustesse (score élevé = risque faible).
 
-### 📝 Formule Risk Score (Quantitatif - Autoritaire)
+### Formule Risk Score (Quantitatif - Autoritaire)
 
 ```python
 score = 50.0  # Baseline neutre
@@ -80,7 +80,7 @@ score = clamp(score, 0, 100)
 level = score_to_level(score)
 ```
 
-### 🔧 Pénalités Adoucies (Oct 2025) 🆕
+### Pénalités Adoucies (Oct 2025)
 
 **Problème résolu** : Portfolios "degen" (55% memecoins + DD 61%) scoraient systématiquement à 0/100 à cause de pénalités cumulatives trop sévères.
 
@@ -114,11 +114,11 @@ level = score_to_level(score)
 Base:           50
 VaR 95% (6.2%): +5  → 55
 Sharpe (0.33):  +0  → 55
-DD (61.7%):    -15  → 40  ✅ (était -25)
+DD (61.7%):    -15  → 40  [OK] (était -25)
 Vol (64.96%):   -5  → 35
-Memes (54.99%):-15  → 20  ✅ (était -30)
-HHI (0.218):    -3  → 17  ✅ (était -5)
-GRI (7.44):    -10  → 7   ✅ (était -15)
+Memes (54.99%):-15  → 20  [OK] (était -30)
+HHI (0.218):    -3  → 17  [OK] (était -5)
+GRI (7.44):    -10  → 7   [OK] (était -15)
 Div (1.09):     +5  → 12
 
 Score final: 12/100 → Risk Level "critical" (<20)
@@ -161,9 +161,9 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 ```
 **Interprétation** : Portfolio ultra-extrême avec Sharpe négatif + DD 80% + 75% memes. Score 0 est acceptable pour ce niveau de risque catastrophique.
 
-**🎯 Règle d'or** : Un portfolio degen "normal" (Sharpe positif, DD < 70%, < 70% memes) doit scorer **10-25**, pas 0.
+** Règle d'or** : Un portfolio degen "normal" (Sharpe positif, DD < 70%, < 70% memes) doit scorer **10-25**, pas 0.
 
-### 🏗️ Formule Risk Score Structural
+### Formule Risk Score Structural
 
 **Base** : `risk_score` (autoritaire)
 
@@ -176,7 +176,7 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 - Risk Score : 65 (robuste historiquement)
 - Risk Structural : 37 (pénalisé pour concentration)
 
-### 📊 Metadata Audit & Traçabilité
+### Metadata Audit & Traçabilité
 
 **Réponse API** (`/api/risk/dashboard`) :
 ```json
@@ -202,7 +202,7 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 }
 ```
 
-### 🧪 Tests Non-Régression
+### Tests Non-Régression
 
 **Fichier** : [`tests/unit/test_risk_scoring.py`](../tests/unit/test_risk_scoring.py)
 
@@ -214,7 +214,7 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 
 ---
 
-## Dual Window System (Oct 2025) 🆕
+## Dual Window System (Oct 2025)
 
 ### Problème Résolu
 
@@ -224,7 +224,7 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 
 **Solution** : Système Dual-Window avec 2 vues :
 
-#### 1️⃣ Long-Term Window (Autoritaire)
+#### Long-Term Window (Autoritaire)
 - **Objectif** : Métriques stables sur historique long
 - **Cohorte** : Exclut assets récents, garde ≥80% valeur portfolio
 - **Cascade Fallback** :
@@ -235,7 +235,7 @@ Score final: 0/100 → Risk Level "critical" (clamped)
 - **Garde-fous** : min 5 assets, min 180j historique
 - **Usage** : Score autoritaire pour Decision Index et communication
 
-#### 2️⃣ Full Intersection Window (Référence)
+#### Full Intersection Window (Référence)
 - **Objectif** : Vue complète incluant TOUS les assets
 - **Période** : Intersection commune minimale (peut être courte)
 - **Usage** : Détection divergences, alertes temporelles
@@ -310,23 +310,23 @@ min_asset_count: int = 5         # Nombre assets minimum
 ### Frontend Display
 
 **Badges Dual-Window** (risk-dashboard.html:4217) :
-- 📈 **Long-Term** : Fenêtre + couverture + Sharpe (vert/autoritaire)
-- 🔍 **Full Intersection** : Fenêtre + divergence vs LT (rouge si écart > 0.5)
-- ⚠️ **Alerte Exclusion** : Si > 20% valeur exclue
-- ✓ **Source** : Indique quelle fenêtre est autoritaire
+- **Long-Term** : Fenêtre + couverture + Sharpe (vert/autoritaire)
+- **Full Intersection** : Fenêtre + divergence vs LT (rouge si écart > 0.5)
+- [Warning] **Alerte Exclusion** : Si > 20% valeur exclue
+- [OK] **Source** : Indique quelle fenêtre est autoritaire
 
 ### Tests
 
 **Fichier** : `tests/unit/test_dual_window_metrics.py`
 
 **Couverture** :
-- ✅ Cohorte long-term disponible (cas nominal)
-- ✅ Cascade fallback (365 → 180j)
-- ✅ Aucune cohorte valide (fallback full intersection)
-- ✅ Divergence Sharpe entre fenêtres
-- ✅ Métadonnées exclusions précises
-- ✅ Asset count insuffisant
-- ✅ Fenêtres identiques quand tous assets ont historique long
+- [OK] Cohorte long-term disponible (cas nominal)
+- [OK] Cascade fallback (365 → 180j)
+- [OK] Aucune cohorte valide (fallback full intersection)
+- [OK] Divergence Sharpe entre fenêtres
+- [OK] Métadonnées exclusions précises
+- [OK] Asset count insuffisant
+- [OK] Fenêtres identiques quand tous assets ont historique long
 
 **Commande** :
 ```bash
@@ -335,18 +335,18 @@ pytest tests/unit/test_dual_window_metrics.py -v
 
 ### Cas d'Usage
 
-#### ✅ Bon Cas : Portfolio Mature
+#### Bon Cas : Portfolio Mature
 - 5 assets, tous 365j+ historique
 - Long-Term = Full Intersection
 - Risk Score stable et fiable
 
-#### ⚠️ Attention : Portfolio Mixte
+#### Attention : Portfolio Mixte
 - 3 assets anciens (365j, 80% valeur)
 - 2 assets récents (55j, 20% valeur)
 - Long-Term exclut récents → score stable
 - Full Intersection inclut récents → score instable (alerte)
 
-#### ❌ Limitation : Portfolio Récent
+#### Limitation : Portfolio Récent
 - Tous assets < 90j
 - Aucune cohorte long-term
 - Fallback full intersection uniquement (warning)
@@ -355,12 +355,12 @@ pytest tests/unit/test_dual_window_metrics.py -v
 
 **Corrigé** : `api/risk_endpoints.py:73-84`
 
-**Avant** (❌ Inversé) :
+**Avant** ([Error] Inversé) :
 ```python
 if perf_ratio < 0.5: d_perf = +10  # Mauvais Sharpe augmentait le score
 ```
 
-**Après** (✅ Correct) :
+**Après** ([OK] Correct) :
 ```python
 if perf_ratio < 0:     d_perf = -15  # Négatif diminue score
 elif perf_ratio < 0.5: d_perf = -10  # Faible diminue score
@@ -369,7 +369,7 @@ elif perf_ratio > 2.0: d_perf = +15  # Excellent augmente score
 
 ---
 
-## Ajustements Structurels V2 (Nov 2025) 🆕
+## Ajustements Structurels V2 (Nov 2025)
 
 ### Problème Résolu
 
@@ -427,9 +427,9 @@ final_risk_score_v2 = clamp(blended_risk_score + penalties + adj_structural_tota
 
 | Portfolio | Stables | Majors | Altcoins | Ajustements | Score avant | **Score après** |
 |-----------|---------|--------|----------|-------------|-------------|-----------------|
-| **Low Risk** | 12% | 53% | 35% | +10 +5 -5 = **+10** | 59 | **69** ✅ |
-| **Medium Risk** | 0% | 54% | 46% | -10 +5 -10 = **-15** | 57 | **47** ⚠️ |
-| **API (192 assets)** | 6% | 60%+ | <30% | +5 +10 +0 = **+15** | 62 | **77** ✅ |
+| **Low Risk** | 12% | 53% | 35% | +10 +5 -5 = **+10** | 59 | **69** [OK] |
+| **Medium Risk** | 0% | 54% | 46% | -10 +5 -10 = **-15** | 57 | **47** [Warning] |
+| **API (192 assets)** | 6% | 60%+ | <30% | +5 +10 +0 = **+15** | 62 | **77** [OK] |
 
 **Différenciation obtenue** : Low (69) vs Medium (47) = **22 points** (×11 amélioration vs 2 pts avant)
 
@@ -444,10 +444,10 @@ final_risk_score_v2 = clamp(blended_risk_score + penalties + adj_structural_tota
 - [ ] **NOUVEAU** : Endpoint n'override PAS le `overall_risk_level` du service (pas de re-mapping)
 - [ ] **NOUVEAU** : Tests non-régression passent (`pytest tests/unit/test_risk_scoring.py`)
 - [ ] **NOUVEAU** : API expose `structural_breakdown` et `window_used` pour audit
-- [ ] **🆕 Dual-Window** : Long-Term window disponible quand possible (≥80% couverture)
-- [ ] **🆕 Dual-Window** : Alerte exclusion si > 20% valeur exclue
-- [ ] **🆕 Dual-Window** : Tests dual-window passent (`pytest tests/unit/test_dual_window_metrics.py`)
-- [ ] **🆕 Score Structural** : Sharpe/Volatility non inversés (bon → +score)
+- [ ] **[New] Dual-Window** : Long-Term window disponible quand possible (≥80% couverture)
+- [ ] **[New] Dual-Window** : Alerte exclusion si > 20% valeur exclue
+- [ ] **[New] Dual-Window** : Tests dual-window passent (`pytest tests/unit/test_dual_window_metrics.py`)
+- [ ] **[New] Score Structural** : Sharpe/Volatility non inversés (bon → +score)
 
 ---
 
@@ -455,7 +455,7 @@ final_risk_score_v2 = clamp(blended_risk_score + penalties + adj_structural_tota
 
 À partir du commit **[MIGRATE-TO-V2]**, le **Risk Score V2** (Dual-Window Blend + pénalités existantes) devient le moteur autoritaire pour l'API et l'UI.
 
-### 🎯 Changements
+### Changements
 
 **API:**
 - Défaut `risk_version="v2_active"` (était `"v2_shadow"`)
@@ -465,7 +465,7 @@ final_risk_score_v2 = clamp(blended_risk_score + penalties + adj_structural_tota
   - `risk_metrics.risk_version_info.risk_score_legacy` → Legacy (comparaison)
 
 **Dashboard:**
-- Affiche V2 comme score principal avec badge ✓ (vert)
+- Affiche V2 comme score principal avec badge [OK] (vert)
 - Legacy disponible pour comparaison (atténué, à droite)
 - Badge "Comparaison des Versions" remplace "Shadow Mode V2"
 
@@ -473,7 +473,7 @@ final_risk_score_v2 = clamp(blended_risk_score + penalties + adj_structural_tota
 - Aucune modification (Dual-Window Blend + pénalités Oct 2025 inchangés)
 - Voir sections "Dual Window System" et "Pénalités Adoucies (Oct 2025)"
 
-### 🔍 Raison
+### Raison
 
 V2 est plus stable et représentatif grâce au système **Dual-Window** qui gère mieux les assets récents:
 - **Long-Term Window** : Cohorte stable (≥180j historique, ≥80% valeur)
@@ -481,11 +481,11 @@ V2 est plus stable et représentatif grâce au système **Dual-Window** qui gèr
 - **Blend dynamique** : Pondération selon couverture Long-Term + pénalités exclusions/memecoins
 
 Avantages:
-- ✅ Sharpe stable même avec assets récents (pas de biais fenêtre courte)
-- ✅ Détection portfolios degen (pénalités memecoins jeunes + exclusions)
-- ✅ Transparence (métadonnées dual-window exposées dans API)
+- [OK] Sharpe stable même avec assets récents (pas de biais fenêtre courte)
+- [OK] Détection portfolios degen (pénalités memecoins jeunes + exclusions)
+- [OK] Transparence (métadonnées dual-window exposées dans API)
 
-### 📋 Migration pour Utilisateurs API
+### Migration pour Utilisateurs API
 
 **Breaking Change Mineur:**
 Si vos appels dépendaient du comportement Legacy par défaut, ajoutez explicitement `?risk_version=legacy` à vos requêtes:
@@ -501,7 +501,7 @@ GET /api/risk/dashboard?source=cointracking&user_id=demo&risk_version=legacy
 **Bénéfice:**
 V2 offre des scores plus stables sur portfolios avec assets récents. Divergence Legacy/V2 indique problèmes structurels (memecoins jeunes, exclusions importantes).
 
-### 🧪 Validation
+### Validation
 
 Tests existants passent sans modification (V2 déjà implémenté et testé):
 ```bash

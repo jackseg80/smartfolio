@@ -1,9 +1,9 @@
-# 🏗️ God Services Refactoring Plan
+# God Services Refactoring Plan
 ## Date: 20 Octobre 2025
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 
 **Objectif:** Décomposer 3 "God Services" (5,740 lignes) en 12 modules focused
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 1️⃣ services/execution/governance.py (2,015 lignes)
+## services/execution/governance.py (2,015 lignes)
 
 ### Problèmes Identifiés
 
@@ -198,7 +198,7 @@ class GovernanceEngine:
 
 ---
 
-## 2️⃣ services/risk_management.py (2,159 lignes)
+## services/risk_management.py (2,159 lignes)
 
 ### Problèmes Identifiés
 
@@ -401,7 +401,7 @@ class AdvancedRiskManager:
 
 ---
 
-## 3️⃣ services/alerts/alert_engine.py (1,566 lignes)
+## services/alerts/alert_engine.py (1,566 lignes)
 
 ### Problèmes Identifiés
 
@@ -551,7 +551,7 @@ class AlertEngine:
 
 ---
 
-## 📋 Plan d'Exécution
+## Plan d'Exécution
 
 ### Phase 1: Refactor Governance (Semaine 1-2)
 
@@ -599,7 +599,7 @@ git commit -m "refactor(governance): split GovernanceEngine into 4 modules
 
 GovernanceEngine becomes slim orchestrator (2,015 → ~565 lines)
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -648,7 +648,7 @@ touch services/alerts/alert_governance_bridge.py
 
 ---
 
-## 🎯 Bénéfices Attendus
+## Bénéfices Attendus
 
 ### Maintenabilité
 - **God objects éliminés:** 3 → 0
@@ -696,7 +696,7 @@ services/
 
 ---
 
-## 🚨 Risques & Mitigation
+## Risques & Mitigation
 
 ### Risque 1: Breaking Changes
 **Mitigation:**
@@ -718,7 +718,7 @@ services/
 
 ---
 
-## ✅ Checklist Avant de Commencer
+## Checklist Avant de Commencer
 
 - [x] Analyse complète des 3 God Services
 - [x] Plan de refactoring documenté

@@ -65,7 +65,7 @@
     }
   </style>
   <script>
-    // ⚡ Critical theme loading - DOIT être synchrone pour éviter FOUC
+    //  Critical theme loading - DOIT être synchrone pour éviter FOUC
     (function() {
       const theme = localStorage.getItem('theme') || 'dark';
       document.documentElement.setAttribute('data-theme', theme);
@@ -98,19 +98,19 @@
   <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script defer>
-    // ✅ Enregistrement datalabels (idempotent) - s'exécute après chargement
+    //  Enregistrement datalabels (idempotent) - s'exécute après chargement
     window.addEventListener('DOMContentLoaded', () => {
       if (window.Chart && window.ChartDataLabels && !window.__di_dl_registered__) {
         window.Chart.register(window.ChartDataLabels);
         window.Chart.defaults.set('plugins.datalabels', { display: false });
         window.__di_dl_registered__ = true;
-        console.debug('✅ chartjs-plugin-datalabels registered (global display: false)');
+        console.debug("[OK] chartjs-plugin-datalabels registered (global display: false)");
       }
 
       if (window.Chart && window.ChartAnnotation && !window.__di_annotation_registered__) {
         window.Chart.register(window.ChartAnnotation);
         window.__di_annotation_registered__ = true;
-        console.debug('✅ chartjs-plugin-annotation registered');
+        console.debug("[OK] chartjs-plugin-annotation registered");
       }
     });
   </script>
@@ -190,13 +190,13 @@
   <a href="#analytics-tabs" class="skip-link">Skip to main content</a>
 
   <div id="backend-fallback-banner">
-    ⚠ Backend unavailable — prudent mode (reduced cap).
+    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Backend unavailable — prudent mode (reduced cap).
   </div>
 
   <div class="wrap">
     <!-- Page Header (Feb 2026) -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <h1 style="margin: 0; font-size: 1.5rem; color: var(--theme-text);">🧠 ML Intelligence</h1>
+      <h1 style="margin: 0; font-size: 1.5rem; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Intelligence</h1>
       <div style="display:flex;align-items:center;gap:8px;">
         <button id="pdf-export-btn" class="btn btn-secondary pdf-hide" style="font-size:0.8rem;padding:6px 12px;" title="Export page as PDF" onclick="import('./modules/pdf-export.js').then(m=>m.exportPageToPDF({element:document.querySelector('.wrap'),title:'ML Intelligence',filename:'ml-intelligence',button:this}))">Export PDF</button>
         <view-toggle></view-toggle>
@@ -223,7 +223,7 @@
           "></div>
           <div>
             <div style="font-size: 1.1rem; font-weight: 700; color: var(--theme-text, #c0caf5);">
-              🎯 Decision Index
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Decision Index
             </div>
             <div style="font-size: 0.85rem; color: var(--theme-text-muted, #6b7280);">
               Loading data...
@@ -245,7 +245,7 @@
         </div>
 
         <div style="position: absolute; bottom: 1rem; right: 1rem; font-size: 0.75rem; color: var(--theme-text-muted, #6b7280); display: flex; align-items: center; gap: 0.5rem;">
-          <span style="animation: di-pulse 1.2s ease-in-out infinite;">⏳</span>
+          <span style="animation: di-pulse 1.2s ease-in-out infinite;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg></span>
           <span>Fetching ML scores, cycles and on-chain data...</span>
         </div>
 
@@ -263,15 +263,15 @@
         <button class="tab-btn" data-target="#tab-performance" role="tab" aria-selected="false" aria-controls="tab-performance" id="tab-btn-performance">Performance</button>
         <button class="tab-btn pro-only" data-target="#tab-cycles" role="tab" aria-selected="false" aria-controls="tab-cycles" id="tab-btn-cycles">Cycles</button>
         <button class="tab-btn pro-only" data-target="#tab-monitoring" role="tab" aria-selected="false" aria-controls="tab-monitoring" id="tab-btn-monitoring">Monitoring</button>
-        <button class="tab-btn pro-only" data-target="#tab-intelligence-ml" role="tab" aria-selected="false" aria-controls="tab-intelligence-ml" id="tab-btn-intelligence-ml">🤖 Intelligence ML</button>
+        <button class="tab-btn pro-only" data-target="#tab-intelligence-ml" role="tab" aria-selected="false" aria-controls="tab-intelligence-ml" id="tab-btn-intelligence-ml"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Intelligence ML</button>
       </div>
-      <button class="btn-refresh" id="manual-refresh-onchain" title="Force refresh of on-chain indicators" aria-label="Refresh on-chain indicators">🔄 Refresh</button>
+      <button class="btn-refresh" id="manual-refresh-onchain" title="Force refresh of on-chain indicators" aria-label="Refresh on-chain indicators"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh</button>
     </div>
 
     <!-- Tab Panels - min-height prevents CLS during dynamic content load -->
     <section class="tab-panel active" id="tab-risk" role="tabpanel" aria-labelledby="tab-btn-risk" style="min-height: 500px;">
     <div class="panel-card">
-      <h2>🛡️ Risk Dashboard</h2>
+      <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk Dashboard</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="risk-var">
           <h3>VaR Portfolio</h3>
@@ -326,17 +326,17 @@
       </div>
       <div class="actions-row">
         <a href="risk-dashboard.html?nav=off" target="_blank" class="action-link">
-          📊 Full Risk Dashboard
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Full Risk Dashboard
         </a>
         <a href="simulations.html?nav=off" target="_blank" class="action-link action-link--success">
-          🧪 Full Pipeline Simulator
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Full Pipeline Simulator
         </a>
       </div>
       </div>
     </section>
     <section class="tab-panel" id="tab-performance" role="tabpanel" aria-labelledby="tab-btn-performance">
     <div class="panel-card">
-      <h2>📊 Performance Monitor</h2>
+      <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Performance Monitor</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="perf-cache-size">
           <h3>Memory Cache Size</h3>
@@ -369,14 +369,14 @@
       </div>
       <div class="actions-row">
         <a href="performance-monitor-unified.html" target="_blank" class="action-link">
-          📈 Unified Performance Monitor (New)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Unified Performance Monitor (New)
         </a>
       </div>
       </div>
     </section>
     <section class="tab-panel" id="tab-cycles" role="tabpanel" aria-labelledby="tab-btn-cycles">
     <div class="panel-card">
-      <h2>🔄 Cycle Analysis</h2>
+      <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Cycle Analysis</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="cycle-phase">
           <h3>Phase Actuelle</h3>
@@ -412,14 +412,14 @@
       </div>
       <div class="actions-row">
         <a href="cycle-analysis.html?nav=off" target="_blank" class="action-link">
-          🔄 Full Cycle Analysis
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Full Cycle Analysis
         </a>
       </div>
       </div>
     </section>
     <section class="tab-panel" id="tab-monitoring" role="tabpanel" aria-labelledby="tab-btn-monitoring">
     <div class="panel-card">
-      <h2>📈 Advanced Analytics</h2>
+      <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Advanced Analytics</h2>
       <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
         <div class="metric-card" data-metric="monitor-total-return">
           <h3>Total Return</h3>
@@ -448,7 +448,7 @@
       </div>
       <div class="actions-row">
         <a href="performance-monitor-unified.html" target="_blank" class="action-link">
-          📊 Unified Performance Monitor
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Unified Performance Monitor
         </a>
       </div>
       </div>
@@ -457,14 +457,14 @@
     <!-- Intelligence ML Tab Panel -->
     <section class="tab-panel" id="tab-intelligence-ml" role="tabpanel" aria-labelledby="tab-btn-intelligence-ml">
     <div class="panel-card">
-      <h2>🤖 ML Intelligence - Full Analysis View</h2>
+      <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Intelligence - Full Analysis View</h2>
       <p>
         Detailed ML model analysis, real-time predictions and advanced administration
       </p>
 
       <!-- Stats ML Globales -->
       <div class="ml-stats-section">
-        <h3>📊 Statistiques ML Globales</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Statistiques ML Globales</h3>
         <div class="metrics-grid-200" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
             <h4>Active Models</h4>
@@ -486,26 +486,26 @@
 
       <!-- Vue Modèles Détaillée -->
       <div class="ml-models-section">
-        <h3>🧠 Model Health</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Model Health</h3>
         <div class="metrics-grid-250" aria-live="polite" aria-atomic="false">
           <div class="metric-card">
-            <h4>🌊 Volatility LSTM</h4>
-            <div class="metric-value" id="ml-vol-model-status">⚪ Unknown</div>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Cycle" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Volatility LSTM</h4>
+            <div class="metric-value" id="ml-vol-model-status"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Neutral" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Unknown</div>
             <small id="ml-vol-model-details">Model status</small>
           </div>
           <div class="metric-card">
-            <h4>🔄 Regime HMM</h4>
-            <div class="metric-value" id="ml-regime-model-status">⚪ Unknown</div>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Regime HMM</h4>
+            <div class="metric-value" id="ml-regime-model-status"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Neutral" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Unknown</div>
             <small id="ml-regime-model-details">Model status</small>
           </div>
           <div class="metric-card">
-            <h4>🔗 Correlation Transformer</h4>
-            <div class="metric-value" id="ml-corr-model-status">⚪ Unknown</div>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> Correlation Transformer</h4>
+            <div class="metric-value" id="ml-corr-model-status"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Neutral" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Unknown</div>
             <small id="ml-corr-model-details">Model status</small>
           </div>
           <div class="metric-card">
-            <h4>💭 Sentiment Composite</h4>
-            <div class="metric-value" id="ml-sent-model-status">⚪ Unknown</div>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Comment" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chat-bubble-left-right"></use></svg> Sentiment Composite</h4>
+            <div class="metric-value" id="ml-sent-model-status"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Neutral" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Unknown</div>
             <small id="ml-sent-model-details">Model status</small>
           </div>
         </div>
@@ -513,7 +513,7 @@
 
       <!-- Prédictions Temps Réel -->
       <div class="ml-predictions-section">
-        <h3>🔮 Real-Time Predictions</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Forecast" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sparkles"></use></svg> Real-Time Predictions</h3>
         <div id="ml-predictions-container" aria-live="polite">
           <div class="prediction-grid metrics-grid-250" aria-atomic="false">
             <!-- Volatilité -->
@@ -546,7 +546,7 @@
       <!-- Administration ML (repliable, RBAC protected) -->
       <details class="ml-admin-section">
         <summary class="ml-admin-summary">
-          🔧 Administration ML (Admin Only)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Tools" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Administration ML (Admin Only)
         </summary>
         <div class="ml-admin-content">
           <div id="ml-admin-ops-container"></div>
@@ -554,16 +554,16 @@
           <!-- Actions Admin -->
           <div class="admin-actions">
             <button class="btn secondary" id="btn-retrain">
-              🔄 Retrain Models
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retrain Models
             </button>
             <button class="btn secondary" id="btn-clear-cache">
-              🗑️ Clear Cache
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Clear Cache
             </button>
             <button class="btn secondary" id="btn-logs">
-              📥 Download Logs
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Download Logs
             </button>
             <button class="btn secondary" id="btn-debug">
-              🔍 Debug Info
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Debug Info
             </button>
           </div>
 
@@ -580,7 +580,7 @@
       <!-- Lien vers Command Center -->
       <div class="actions-row">
         <a href="ai-dashboard.html" target="_blank" class="action-link">
-          🤖 Open ML Command Center (Ops View)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Open ML Command Center (Ops View)
         </a>
       </div>
 
@@ -601,7 +601,7 @@
   </script>
 
   <flyout-panel position="left" width="340" persist-key="analytics_flyout">
-    <span slot="title">🎯 Risk Dashboard</span>
+    <span slot="title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Dashboard</span>
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
 

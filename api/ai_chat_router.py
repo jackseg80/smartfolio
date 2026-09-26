@@ -138,6 +138,7 @@ Capacités d'analyse:
 Règles:
 - Réponds toujours en français
 - Sois concis et précis (maximum 250 mots par réponse)
+- Adopte un ton professionnel et factuel, sans emojis ni formules promotionnelles
 - Utilise des chiffres et pourcentages quand pertinent
 - **CRITIQUE:** Quand tu analyses les Market Opportunities, commente spécifiquement les recommandations du système (scores, gaps sectoriels, suggestions de vente)
 - Ne recommande jamais d'acheter ou vendre spécifiquement (pas de conseil financier personnalisé)
@@ -572,29 +573,29 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
 
     # Risk metrics
     if "risk_score" in context:
-        lines.append(f"⚠️ Risk score: {context['risk_score']}/100 (higher = more robust)")
+        lines.append(f"[Warning] Risk score: {context['risk_score']}/100 (higher = more robust)")
 
     if "var_95" in context:
-        lines.append(f"📊 VaR 95%: ${context['var_95']:,.2f} (max expected loss)")
+        lines.append(f" VaR 95%: ${context['var_95']:,.2f} (max expected loss)")
 
     if "max_drawdown" in context:
-        lines.append(f"📉 Max Drawdown: {context['max_drawdown']:.2%}")
+        lines.append(f" Max Drawdown: {context['max_drawdown']:.2%}")
 
     if "sharpe_ratio" in context:
-        lines.append(f"📈 Sharpe Ratio: {context['sharpe_ratio']:.2f}")
+        lines.append(f" Sharpe Ratio: {context['sharpe_ratio']:.2f}")
 
     if "sortino_ratio" in context:
-        lines.append(f"📈 Sortino Ratio: {context['sortino_ratio']:.2f}")
+        lines.append(f" Sortino Ratio: {context['sortino_ratio']:.2f}")
 
     if "hhi" in context:
         hhi = context["hhi"]
         concentration_level = "high" if hhi > 2500 else ("moderate" if hhi > 1500 else "low")
-        lines.append(f"🎯 HHI (concentration): {hhi:.0f} ({concentration_level})")
+        lines.append(f" HHI (concentration): {hhi:.0f} ({concentration_level})")
 
     # Active alerts
     if "alerts" in context and context["alerts"]:
         lines.append("")
-        lines.append(f"🚨 Active alerts ({len(context['alerts'])}):")
+        lines.append(f"[Alert] Active alerts ({len(context['alerts'])}):")
         for alert in context["alerts"][:5]:  # Top 5 alerts
             severity = alert.get("severity", "info")
             message = alert.get("message", "")
@@ -603,16 +604,16 @@ def _format_risk_context(context: Dict[str, Any]) -> list:
     # Market cycles
     if "cycle_score" in context:
         lines.append("")
-        lines.append("🔄 Cycle Analysis:")
+        lines.append(" Cycle Analysis:")
         lines.append(f"  - Cycle Score: {context['cycle_score']:.1f}/100")
 
         if "market_phase" in context:
-            phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(context["market_phase"], "❓")
-            lines.append(f"  - Market phase: {phase_emoji} {context['market_phase'].capitalize()}")
+
+            lines.append(f"  - Market phase: {context['market_phase'].capitalize()}")
 
         if "dominance_phase" in context:
-            dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(context["dominance_phase"], "❓")
-            lines.append(f"  - Dominance: {dom_emoji} {context['dominance_phase'].upper()}")
+
+            lines.append(f"  - Dominance: {context['dominance_phase'].upper()}")
 
         if "phase_confidence" in context:
             lines.append(f"  - Confidence: {context['phase_confidence']:.1%}")
@@ -628,7 +629,7 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
     if "decision_index" in context:
         di = context["decision_index"]
         di_status = "VALID (65)" if di == 65 else "INVALID (45)"
-        lines.append(f"📊 Decision Index: {di_status}")
+        lines.append(f" Decision Index: {di_status}")
         lines.append("")
 
     # ML Sentiment
@@ -648,35 +649,35 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
         else:
             sentiment_label = "Extreme Greed"
 
-        lines.append(f"🧠 ML Sentiment: {ml_sent}/100 ({sentiment_label})")
+        lines.append(f" ML Sentiment: {ml_sent}/100 ({sentiment_label})")
 
     # Market regime (string)
     if "regime" in context:
         regime_name = context["regime"]
         confidence = context.get("regime_confidence", 0)
-        lines.append(f"🎯 Market regime: {regime_name} (confidence: {confidence:.0%})")
+        lines.append(f" Market regime: {regime_name} (confidence: {confidence:.0%})")
 
     # Market phase (bearish/moderate/bullish)
     if "market_phase" in context:
         phase = context["market_phase"]
-        phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(phase, "❓")
-        lines.append(f"📈 Market phase: {phase_emoji} {phase.capitalize()}")
+
+        lines.append(f" Market phase: {phase.capitalize()}")
 
     # Cycle score
     if "cycle_score" in context:
-        lines.append(f"🔄 Cycle Score: {context['cycle_score']:.1f}/100")
+        lines.append(f" Cycle Score: {context['cycle_score']:.1f}/100")
 
     # Dominance phase (btc/eth/large/alt)
     if "dominance_phase" in context:
         dom = context["dominance_phase"]
-        dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(dom, "❓")
-        lines.append(f"🏆 Dominance: {dom_emoji} {dom.upper()}")
+
+        lines.append(f" Dominance: {dom.upper()}")
         lines.append("")
 
     # Regime components (dict with cycle/onchain/risk)
     if "regime_components" in context:
         components = context["regime_components"]
-        lines.append("🎯 Regime Scores (components):")
+        lines.append(" Regime Scores (components):")
 
         if "cycle" in components:
             lines.append(f"  - CCS (Cycle): {components['cycle']:.1f}/100")
@@ -694,7 +695,7 @@ def _format_analytics_context(context: Dict[str, Any]) -> list:
     # Volatility forecasts
     if "volatility_forecasts" in context:
         lines.append("")
-        lines.append("📊 Volatility forecasts:")
+        lines.append(" Volatility forecasts:")
         for asset, forecast in context["volatility_forecasts"].items():
             lines.append(f"  - {asset}: {forecast:.2%}")
 
@@ -707,19 +708,19 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
 
     # Net worth
     if "net_worth" in context:
-        lines.append(f"💰 Net Worth: ${context['net_worth']:,.2f}")
+        lines.append(f" Net Worth: ${context['net_worth']:,.2f}")
         lines.append("")
 
     # Total assets and liabilities
     if "total_assets" in context:
-        lines.append(f"📊 Total Assets: ${context['total_assets']:,.2f}")
+        lines.append(f" Total Assets: ${context['total_assets']:,.2f}")
 
     if "total_liabilities" in context and context["total_liabilities"] > 0:
-        lines.append(f"📊 Total Liabilities: ${context['total_liabilities']:,.2f}")
+        lines.append(f" Total Liabilities: ${context['total_liabilities']:,.2f}")
         lines.append("")
 
     # Asset breakdown
-    lines.append("🏠 Asset Breakdown:")
+    lines.append(" Asset Breakdown:")
     if "liquidity" in context:
         lines.append(f"  - Liquidity: ${context['liquidity']:,.2f}")
 
@@ -732,13 +733,13 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
     # Liabilities (from breakdown, not dict)
     if "liabilities" in context and context["liabilities"] > 0:
         lines.append("")
-        lines.append(f"💳 Liabilities: ${context['liabilities']:,.2f}")
+        lines.append(f" Liabilities: ${context['liabilities']:,.2f}")
 
     # Item counts
     if "counts" in context:
         counts = context["counts"]
         lines.append("")
-        lines.append("📋 Item counts:")
+        lines.append(" Item counts:")
         lines.append(f"  - Liquidity: {counts.get('liquidity', 0)}")
         lines.append(f"  - Tangible assets: {counts.get('tangible', 0)}")
         lines.append(f"  - Liabilities: {counts.get('liability', 0)}")
@@ -751,7 +752,7 @@ def _format_wealth_context(context: Dict[str, Any]) -> list:
     if total_assets > 0 and total_liabilities > 0:
         debt_ratio = (total_liabilities / total_assets) * 100
         lines.append("")
-        lines.append(f"📊 Debt ratio: {debt_ratio:.1f}%")
+        lines.append(f" Debt ratio: {debt_ratio:.1f}%")
 
     return lines
 
@@ -763,7 +764,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Crypto portfolio
     if "crypto" in context:
         crypto = context["crypto"]
-        lines.append("💰 Crypto Portfolio:")
+        lines.append(" Crypto Portfolio:")
         lines.append(f"  - Total value: ${crypto.get('total_value', 0):,.2f}")
         lines.append(f"  - Number of positions: {crypto.get('positions_count', 0)}")
 
@@ -781,7 +782,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Bourse/Saxo portfolio
     if "bourse" in context:
         bourse = context["bourse"]
-        lines.append("📈 Stock Portfolio:")
+        lines.append(" Stock Portfolio:")
         lines.append(f"  - Total value: ${bourse.get('total_value', 0):,.2f}")
         lines.append(f"  - Number of positions: {bourse.get('positions_count', 0)}")
 
@@ -797,7 +798,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Wealth items
     if "wealth" in context:
         patri = context["wealth"]
-        lines.append("🏦 Wealth:")
+        lines.append(" Wealth:")
         lines.append(f"  - Net Worth: ${patri.get('net_worth', 0):,.2f}")
         lines.append(f"  - Liquidity: ${patri.get('liquidity', 0):,.2f}")
         lines.append(f"  - Tangible assets: ${patri.get('tangible', 0):,.2f}")
@@ -807,7 +808,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
 
     # Market analytics
     if "decision_index" in context or "ml_sentiment" in context or "regime" in context:
-        lines.append("📊 Market Analysis:")
+        lines.append(" Market Analysis:")
 
         if "decision_index" in context:
             di = context["decision_index"]
@@ -831,7 +832,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Risk score
     if "risk_score" in context:
         risk = context["risk_score"]
-        lines.append(f"⚠️ Risk Score: {risk:.1f}/100")
+        lines.append(f"[Warning] Risk Score: {risk:.1f}/100")
         lines.append("")
 
     return lines
@@ -843,27 +844,27 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
 
     # Portfolio summary
     if "total_value" in context:
-        lines.append(f"💰 Total portfolio value: ${context['total_value']:,.2f}")
+        lines.append(f" Total portfolio value: ${context['total_value']:,.2f}")
 
     if "total_positions" in context:
-        lines.append(f"📊 Number of positions: {context['total_positions']}")
+        lines.append(f" Number of positions: {context['total_positions']}")
 
     if "cash" in context and context.get("cash", 0) > 0:
-        lines.append(f"💵 Cash: ${context['cash']:,.2f}")
+        lines.append(f" Cash: ${context['cash']:,.2f}")
 
     # P&L
     if "total_pnl" in context:
         pnl = context["total_pnl"]
         pnl_pct = context.get("total_pnl_pct", 0)
         sign = "+" if pnl >= 0 else ""
-        emoji = "📈" if pnl >= 0 else "📉"
+        emoji = "Growth" if pnl >= 0 else "Decline"
         lines.append(f"{emoji} P&L total: {sign}${pnl:,.2f} ({sign}{pnl_pct:.1f}%)")
 
     lines.append("")
 
     # Top positions
     if "positions" in context and context["positions"]:
-        lines.append(f"🏆 Top {min(len(context['positions']), 10)} positions:")
+        lines.append(f" Top {min(len(context['positions']), 10)} positions:")
         for i, pos in enumerate(context["positions"][:10], 1):
             symbol = pos.get("symbol", "?")
             name = pos.get("name", "")
@@ -891,7 +892,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
 
     # Sector allocation
     if "sectors" in context and context["sectors"]:
-        lines.append("📊 Sector allocation:")
+        lines.append(" Sector allocation:")
         sorted_sectors = sorted(context["sectors"].items(), key=lambda x: x[1], reverse=True)
         for sector, weight in sorted_sectors:
             if isinstance(weight, (int, float)) and weight > 0:
@@ -900,7 +901,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Asset allocation
     if "asset_allocation" in context and context["asset_allocation"]:
         lines.append("")
-        lines.append("🎯 Asset class allocation:")
+        lines.append(" Asset class allocation:")
         sorted_assets = sorted(context["asset_allocation"].items(), key=lambda x: x[1], reverse=True)
         for asset, weight in sorted_assets:
             if isinstance(weight, (int, float)) and weight > 0:
@@ -909,7 +910,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Currency exposure
     if "currencies" in context and context["currencies"]:
         lines.append("")
-        lines.append("💱 Currency exposure:")
+        lines.append(" Currency exposure:")
         sorted_currencies = sorted(context["currencies"].items(), key=lambda x: x[1], reverse=True)
         for currency, weight in sorted_currencies[:5]:  # Top 5 currencies
             if isinstance(weight, (int, float)) and weight > 0:
@@ -918,16 +919,16 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     # Risk metrics
     if "risk_score" in context:
         lines.append("")
-        lines.append(f"⚠️ Risk score: {context['risk_score']}/100")
+        lines.append(f"[Warning] Risk score: {context['risk_score']}/100")
 
     if "volatility" in context:
-        lines.append(f"📊 Volatility: {context['volatility']:.2%}")
+        lines.append(f" Volatility: {context['volatility']:.2%}")
 
     # Detailed risk metrics
     if "risk_metrics_detailed" in context:
         rm = context["risk_metrics_detailed"]
         lines.append("")
-        lines.append("📊 Detailed risk metrics:")
+        lines.append(" Detailed risk metrics:")
         if rm.get("sharpe_ratio") is not None:
             lines.append(f"  - Sharpe Ratio: {rm['sharpe_ratio']:.2f}")
         if rm.get("sortino_ratio") is not None:
@@ -945,12 +946,12 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
     if "market_opportunities" in context:
         opps = context["market_opportunities"]
         lines.append("")
-        lines.append(f"🎯 Market Opportunities (Horizon: {opps.get('horizon', 'medium')}):")
+        lines.append(f" Market Opportunities (Horizon: {opps.get('horizon', 'medium')}):")
 
         # Gaps
         if opps.get("gaps"):
             lines.append("")
-            lines.append("  📉 Under-represented sectors (Gaps):")
+            lines.append("   Under-represented sectors (Gaps):")
             for gap in opps["gaps"][:5]:  # Top 5 gaps
                 sector = gap.get("sector", "?")
                 current = gap.get("current", 0)
@@ -961,7 +962,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
         # Top opportunities
         if opps.get("top_opportunities"):
             lines.append("")
-            lines.append("  💡 Top 10 recommended opportunities:")
+            lines.append("   Top 10 recommended opportunities:")
             for i, opp in enumerate(opps["top_opportunities"][:10], 1):
                 symbol = opp.get("symbol", "?")
                 name = opp.get("name", "")
@@ -979,7 +980,7 @@ def _format_portfolio_context(context: Dict[str, Any]) -> list:
         # Suggested sales
         if opps.get("suggested_sales"):
             lines.append("")
-            lines.append("  🔻 Suggested sales (rebalancing):")
+            lines.append("   Suggested sales (rebalancing):")
             for sale in opps["suggested_sales"][:5]:  # Top 5 sales
                 symbol = sale.get("symbol", "?")
                 current = sale.get("current_weight", 0)
@@ -1006,7 +1007,7 @@ def _format_context(context: Dict[str, Any], include_docs: bool = True) -> str:
 
     # Error handling
     if "error" in context:
-        lines.append(f"⚠️ {context['error']}")
+        lines.append(f"[Warning] {context['error']}")
         return "\n".join(lines)
 
     # Route to appropriate formatter based on page type and context structure

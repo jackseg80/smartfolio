@@ -6,7 +6,7 @@
 
 ---
 
-## 🔍 Diagnostic
+## Diagnostic
 
 ### Symptômes
 En mode Live, le Pipeline Inspector affichait :
@@ -63,7 +63,7 @@ const onchainScore = unifiedState.onchain?.score ?? 50;
 Le simulateur mettait uniquement :
 ```javascript
 window.store.set('scores.onchain', 62);
-window.store.set('onchain.confidence', 0.91); // ❌ Mauvaise clé
+window.store.set('onchain.confidence', 0.91); // [Error] Mauvaise clé
 ```
 
 Mais `unified-insights-v2.js` lit :
@@ -98,18 +98,18 @@ const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
 
 ---
 
-## ✅ Corrections apportées
+## Corrections apportées
 
 ### Fichier : `static/simulations.html`
 
 #### 1. Initialisation du store unifié
 ```javascript
-// AVANT (❌)
+// AVANT (Error)
 if (!window.store) {
   window.store = { data: {}, set() {}, get() {} };
 }
 
-// APRÈS (✅)
+// APRÈS (OK)
 if (!window.store) {
   const { store: riskStore } = await import('./core/risk-dashboard-store.js');
   window.store = riskStore;
@@ -118,11 +118,11 @@ if (!window.store) {
 
 #### 2. Métadonnées onchain correctes
 ```javascript
-// AVANT (❌)
+// AVANT (Error)
 window.store.set('scores.onchain', composite.score);
 window.store.set('onchain.confidence', composite.confidence);
 
-// APRÈS (✅)
+// APRÈS (OK)
 window.store.set('scores.onchain', composite.score);
 window.store.set('scores.onchain_metadata', {
   confidence: composite.confidence || 0.6,
@@ -133,19 +133,19 @@ window.store.set('scores.onchain_metadata', {
 
 #### 3. Lecture correcte du score onchain
 ```javascript
-// AVANT (❌)
+// AVANT (Error)
 const onchainScore = unifiedState.onchain?.composite_score ?? 50;
 
-// APRÈS (✅)
+// APRÈS (OK)
 const onchainScore = unifiedState.onchain?.score ?? 50;
 ```
 
 #### 4. API Risk via globalConfig.apiRequest
 ```javascript
-// AVANT (❌)
+// AVANT (Error)
 const response = await fetch(`${apiBase}/api/risk/dashboard?...`);
 
-// APRÈS (✅)
+// APRÈS (OK)
 const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
   params: { price_history_days: 365, lookback_days: 90, min_usd: 1 }
 });
@@ -154,13 +154,13 @@ const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
 ### Fichier : `static/modules/simulation-engine.js`
 
 ```javascript
-// AVANT (❌)
+// AVANT (Error)
 const store = {
   get: (path) => { return null; },
   snapshot: () => ({ wallet: { balances: [], total: 0 } })
 };
 
-// APRÈS (✅)
+// APRÈS (OK)
 const store = window.store || {
   get: (path) => { return null; },
   snapshot: () => ({ wallet: { balances: [], total: 0 } })
@@ -169,21 +169,21 @@ const store = window.store || {
 
 ---
 
-## 🎯 Résultat
+## Résultat
 
 Maintenant en mode Live :
 ```
-✅ scores: cycle: 100, onchain: 37, risk: 40
-✅ confidences: cycle: 0.46, onchain: 0.84, regime: 0.50
+[OK] scores: cycle: 100, onchain: 37, risk: 40
+[OK] confidences: cycle: 0.46, onchain: 0.84, regime: 0.50
 ```
 
-**Parité complète avec Analytics Unified** ! 🚀
+**Parité complète avec Analytics Unified** !
 
 ---
 
-## 📚 Leçons apprises : Problèmes de Cache et Store
+## Leçons apprises : Problèmes de Cache et Store
 
-### ⚠️ POUR LES IA : Pièges fréquents à vérifier EN PREMIER
+### POUR LES IA : Pièges fréquents à vérifier EN PREMIER
 
 Quand des données semblent incorrectes ou par défaut (50, null, 0), **TOUJOURS** vérifier :
 
@@ -195,7 +195,7 @@ import { store } from './store-a.js';
 // Module B
 const store = { /* store local */ };
 
-// ❌ PROBLÈME : 2 stores différents !
+// [Error] PROBLÈME : 2 stores différents !
 ```
 
 **Diagnostic** : Ajouter des logs pour vérifier l'identité du store :
@@ -210,7 +210,7 @@ console.log('Store snapshot BEFORE call:', window.store.snapshot());
 store.set('onchain.confidence', 0.84);
 
 // Lecture (ailleurs)
-const meta = store.get('scores.onchain_metadata'); // ❌ Clé différente !
+const meta = store.get('scores.onchain_metadata'); // [Error] Clé différente !
 ```
 
 **Solution** : Chercher TOUTES les occurrences de `store.get()` et `store.set()` pour identifier les patterns.
@@ -220,7 +220,7 @@ const meta = store.get('scores.onchain_metadata'); // ❌ Clé différente !
 // Cache avec user_id et source dans la clé
 const cacheKey = `analytics_unified_onchain_${user}_${source}`;
 
-// ❌ Si user ou source change, cache invalide !
+// [Error] Si user ou source change, cache invalide !
 ```
 
 **Diagnostic** :
@@ -249,7 +249,7 @@ console.log('API response structure:', {
 ```javascript
 const { getUnifiedState } = await import('./unified-insights-v2.js');
 
-// ❌ Le module peut être en cache avec d'anciennes données
+// [Error] Le module peut être en cache avec d'anciennes données
 ```
 
 **Solution** : Cache bust avec timestamp dans l'URL :
@@ -259,7 +259,7 @@ const { getUnifiedState } = await import(`./unified-insights-v2.js?v=${Date.now(
 
 ---
 
-## 🔧 Checklist de diagnostic pour problèmes de données
+## Checklist de diagnostic pour problèmes de données
 
 Quand des valeurs semblent incorrectes (valeurs par défaut, null, anciennes valeurs) :
 
@@ -274,7 +274,7 @@ Quand des valeurs semblent incorrectes (valeurs par défaut, null, anciennes val
 
 ---
 
-## 📖 Références
+## Références
 
 - Architecture multi-tenant : `CLAUDE.md` section 3
 - Store système : `static/core/risk-dashboard-store.js`

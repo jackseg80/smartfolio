@@ -96,7 +96,7 @@ Mapping des symbols/aliases vers les IDs CoinGecko :
 
 ### Interface utilisateur
 
-Dans `static/rebalance.html`, section **⚙️ Paramètres d'Allocation** :
+Dans `static/rebalance.html`, section ** Paramètres d'Allocation** :
 
 - **Toggle Mode** : Proportionnel ↔ Priorité
 - **Trade minimum** : Montant USD minimum par transaction
@@ -268,4 +268,4 @@ print(plan.get("priority_meta"))
 ---
 
 **Documentation générée pour smartfolio v1.0**
-**Mode priority implémenté en septembre 2025** 🚀
+**Mode priority implémenté en septembre 2025**

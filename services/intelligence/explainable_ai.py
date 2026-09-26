@@ -510,13 +510,13 @@ class ExplainableAIEngine:
         if isinstance(prediction, (int, float)):
             explanation_parts.append(f"\nPrédiction: {prediction:.3f}")
             if prediction > 0.8:
-                explanation_parts.append("⚠️ Niveau de risque critique")
+                explanation_parts.append("[Warning] Niveau de risque critique")
             elif prediction > 0.6:
-                explanation_parts.append("⚡ Niveau de risque élevé")
+                explanation_parts.append(" Niveau de risque élevé")
             elif prediction > 0.4:
-                explanation_parts.append("📊 Niveau de risque modéré")
+                explanation_parts.append(" Niveau de risque modéré")
             else:
-                explanation_parts.append("✅ Niveau de risque acceptable")
+                explanation_parts.append("[OK] Niveau de risque acceptable")
         
         # Top 3 facteurs contributeurs
         explanation_parts.append("\nFacteurs clés influençant cette décision:")
@@ -549,21 +549,21 @@ class ExplainableAIEngine:
         
         if isinstance(prediction, (int, float)):
             if prediction > 0.8:
-                recommendations.append("🛑 Intervention immédiate recommandée")
+                recommendations.append("[Blocked] Intervention immédiate recommandée")
                 recommendations.append("• Considérer un arrêt temporaire des opérations")
                 recommendations.append("• Réviser les limites de risque")
                 
             elif prediction > 0.6:
-                recommendations.append("⚠️ Surveillance renforcée nécessaire")
+                recommendations.append("[Warning] Surveillance renforcée nécessaire")
                 recommendations.append("• Réduire les expositions")
                 recommendations.append("• Augmenter la fréquence de monitoring")
                 
             elif prediction > 0.4:
-                recommendations.append("📊 Monitoring standard avec vigilance")
+                recommendations.append(" Monitoring standard avec vigilance")
                 recommendations.append("• Maintenir les positions actuelles")
                 recommendations.append("• Préparer des mesures préventives")
             else:
-                recommendations.append("✅ Situation sous contrôle")
+                recommendations.append("[OK] Situation sous contrôle")
                 recommendations.append("• Opportunité d'augmenter l'exposition")
         
         # Recommandations spécifiques aux features

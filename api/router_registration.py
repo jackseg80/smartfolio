@@ -34,7 +34,7 @@ def register_routers(app: FastAPI) -> None:
     Args:
         app: FastAPI application instance
     """
-    logger.info("📦 Starting router registration...")
+    logger.info(" Starting router registration...")
 
     # ========== Authentication & Admin ==========
     from api.admin_router import router as admin_router
@@ -42,7 +42,7 @@ def register_routers(app: FastAPI) -> None:
 
     app.include_router(auth_router)  # Authentication (login/logout JWT)
     app.include_router(admin_router)  # Admin dashboard (RBAC protected)
-    logger.info("✅ Auth & Admin routers registered")
+    logger.info(" Auth & Admin routers registered")
 
     # ========== Taxonomy & Classification ==========
     from api.smart_taxonomy_endpoints import router as smart_taxonomy_router
@@ -50,7 +50,7 @@ def register_routers(app: FastAPI) -> None:
 
     app.include_router(taxonomy_router)
     app.include_router(smart_taxonomy_router)
-    logger.info("✅ Taxonomy routers registered")
+    logger.info(" Taxonomy routers registered")
 
     # ========== Execution & Monitoring ==========
     # Execution endpoints - modular routers (Phase 2.1)
@@ -73,7 +73,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(execution_history_router)
     app.include_router(monitoring_advanced_router)
     app.include_router(portfolio_monitoring_router)
-    logger.info("✅ Execution & Monitoring routers registered")
+    logger.info(" Execution & Monitoring routers registered")
 
     # ========== Analytics & ML ==========
     from api.advanced_analytics_endpoints import router as advanced_analytics_router
@@ -92,7 +92,7 @@ def register_routers(app: FastAPI) -> None:
         ml_crypto_router, prefix="/api/ml/crypto", tags=["ML Crypto"]
     )  # ML regime detection pour Bitcoin
     app.include_router(intelligence_router)
-    logger.info("✅ Analytics & ML routers registered")
+    logger.info(" Analytics & ML routers registered")
 
     # ========== ML Lazy Loading Router ==========
     # ML endpoints avec chargement ultra-lazy (pas d'import au démarrage)
@@ -131,7 +131,7 @@ def register_routers(app: FastAPI) -> None:
         }
 
     app.include_router(ml_router_lazy)
-    logger.info("✅ ML Lazy Loading router registered")
+    logger.info(" ML Lazy Loading router registered")
 
     # ========== Risk Management ==========
     from api.advanced_risk_endpoints import router as advanced_risk_router
@@ -141,7 +141,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(risk_router)
     app.include_router(risk_bourse_router)  # Risk management pour Bourse/Saxo
     app.include_router(advanced_risk_router)
-    logger.info("✅ Risk Management routers registered")
+    logger.info(" Risk Management routers registered")
 
     # ========== Portfolio & Performance ==========
     from api.advanced_rebalancing_endpoints import router as advanced_rebalancing_router
@@ -155,7 +155,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(performance_router)
     app.include_router(advanced_rebalancing_router)
     app.include_router(rebalancing_strategy_router)
-    logger.info("✅ Portfolio & Performance routers registered")
+    logger.info(" Portfolio & Performance routers registered")
 
     # ========== Strategy & Backtesting ==========
     from api.backtesting_endpoints import router as backtesting_router
@@ -167,7 +167,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(backtesting_router)
     app.include_router(di_backtest_router)  # DI Backtest - validation rétroactive Decision Index
     app.include_router(multi_asset_router)
-    logger.info("✅ Strategy & Backtesting routers registered (incl. DI Backtest)")
+    logger.info(" Strategy & Backtesting routers registered (incl. DI Backtest)")
 
     # ========== Alerts, Notifications & Real-time ==========
     from api.alerts_endpoints import router as alerts_router
@@ -179,7 +179,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(morning_brief_router)
     app.include_router(notification_router)
     app.include_router(realtime_router)
-    logger.info("✅ Alerts, Notifications, Morning Brief & Real-time routers registered")
+    logger.info(" Alerts, Notifications, Morning Brief & Real-time routers registered")
 
     # ========== Market Data & Pricing ==========
     from api.coingecko_proxy_router import router as coingecko_proxy_router
@@ -189,13 +189,13 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(market_router)
     app.include_router(pricing_router)
     app.include_router(coingecko_proxy_router)  # CoinGecko CORS proxy with caching
-    logger.info("✅ Market Data & Pricing routers registered")
+    logger.info(" Market Data & Pricing routers registered")
 
     # ========== Wealth Management ==========
     from api.wealth_endpoints import router as wealth_router
 
     app.include_router(wealth_router)
-    logger.info("✅ Wealth Management router registered")
+    logger.info(" Wealth Management router registered")
 
     # ========== Integrations ==========
     # Saxo Bank
@@ -204,13 +204,13 @@ def register_routers(app: FastAPI) -> None:
 
     app.include_router(saxo_router)
     app.include_router(saxo_auth_router)  # Saxo OAuth2 authentication
-    logger.info("✅ Saxo Bank routers registered")
+    logger.info(" Saxo Bank routers registered")
 
     # Kraken
     from api.kraken_endpoints import router as kraken_router
 
     app.include_router(kraken_router)
-    logger.info("✅ Kraken router registered")
+    logger.info(" Kraken router registered")
 
     # ========== Data Sources ==========
     from api.csv_endpoints import router as csv_router
@@ -220,31 +220,31 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(sources_router)
     app.include_router(sources_v2_router)  # Sources V2 - category-based modular sources
     app.include_router(csv_router)
-    logger.info("✅ Data Sources routers registered")
+    logger.info(" Data Sources routers registered")
 
     # ========== FX & Currency ==========
     from api.fx_endpoints import router as fx_router
 
     app.include_router(fx_router)
-    logger.info("✅ FX router registered")
+    logger.info(" FX router registered")
 
     # ========== User Settings ==========
     from api.user_settings_endpoints import router as user_settings_router
 
     app.include_router(user_settings_router)
-    logger.info("✅ User Settings router registered")
+    logger.info(" User Settings router registered")
 
     # ========== Phase 3 Unified Orchestration ==========
     from api.unified_phase3_endpoints import router as unified_phase3_router
 
     app.include_router(unified_phase3_router)
-    logger.info("✅ Phase 3 Unified Orchestration router registered")
+    logger.info(" Phase 3 Unified Orchestration router registered")
 
     # ========== AI Chat ==========
     from api.ai_chat_router import router as ai_chat_router
 
     app.include_router(ai_chat_router)  # AI Chat with Groq (free tier)
-    logger.info("✅ AI Chat router registered")
+    logger.info(" AI Chat router registered")
 
     # ========== Crypto Toolbox (Optional) ==========
     # Crypto-Toolbox router (native FastAPI with Playwright)
@@ -252,10 +252,10 @@ def register_routers(app: FastAPI) -> None:
         from api.crypto_toolbox_endpoints import router as crypto_toolbox_router
 
         app.include_router(crypto_toolbox_router)
-        logger.info("🎭 Crypto-Toolbox: FastAPI native scraper enabled")
+        logger.info(" Crypto-Toolbox: FastAPI native scraper enabled")
     except (ImportError, ModuleNotFoundError) as e:
-        logger.error(f"❌ Failed to load crypto_toolbox router: {e}")
-        logger.warning("⚠️  Crypto-toolbox endpoints will not be available")
+        logger.error(f" Failed to load crypto_toolbox router: {e}")
+        logger.warning("  Crypto-toolbox endpoints will not be available")
 
     # ========== Utilities ==========
     from api.config_router import router as config_router
@@ -265,11 +265,11 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(debug_router)
     app.include_router(health_router)
     app.include_router(config_router)
-    logger.info("✅ Utility routers registered (debug, health, config)")
+    logger.info(" Utility routers registered (debug, health, config)")
 
     # Test simple endpoint pour debugging ML pipeline
     @app.get("/api/ml/pipeline/test")
     async def test_pipeline():
         return {"message": "Pipeline API is working!"}
 
-    logger.info("🎯 All routers registered successfully")
+    logger.info(" All routers registered successfully")

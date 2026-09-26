@@ -12,7 +12,7 @@ Ce document résume les modifications apportées pour sécuriser l'application e
 
 ---
 
-## Phase 1 : Documentation & Configuration ✅
+## Phase 1 : Documentation & Configuration
 
 ### 1.1 Variables d'Environnement (.env.example)
 
@@ -25,9 +25,9 @@ ENABLE_ALERTS_TEST_ENDPOINTS=false
 ```
 
 **Impact** :
-- ✅ Documentation complète des flags
-- ✅ Valeurs par défaut sécurisées (false)
-- ✅ Commentaires explicites (DEV ONLY)
+- [OK] Documentation complète des flags
+- [OK] Valeurs par défaut sécurisées (false)
+- [OK] Commentaires explicites (DEV ONLY)
 
 **Fichier modifié** : `.env.example:34-35`
 
@@ -37,11 +37,11 @@ ENABLE_ALERTS_TEST_ENDPOINTS=false
 
 **Création de `docs/DEV_TO_PROD_CHECKLIST.md`** - Guide complet avec :
 
-- ✅ Liste exhaustive des variables à vérifier
-- ✅ Endpoints à neutraliser avant prod
-- ✅ Tests de sécurité à lancer (CORS, rate limiting, CSP)
-- ✅ Checklist finale (12 points de contrôle)
-- ✅ Commandes bash pour tests automatisés
+- [OK] Liste exhaustive des variables à vérifier
+- [OK] Endpoints à neutraliser avant prod
+- [OK] Tests de sécurité à lancer (CORS, rate limiting, CSP)
+- [OK] Checklist finale (12 points de contrôle)
+- [OK] Commandes bash pour tests automatisés
 
 **Structure** :
 - Variables d'environnement obligatoires
@@ -55,7 +55,7 @@ ENABLE_ALERTS_TEST_ENDPOINTS=false
 
 ---
 
-## Phase 2 : Décorateur Dev Guard ✅
+## Phase 2 : Décorateur Dev Guard
 
 ### 2.1 Module de Protection
 
@@ -106,9 +106,9 @@ validate_websocket_token(token)  # Validation auth optionnelle
 ```
 
 **Impact** :
-- ✅ Cache clearing bloqué en prod
-- ✅ Benchmarks lourds désactivés
-- ✅ Pré-calculs désactivés
+- [OK] Cache clearing bloqué en prod
+- [OK] Benchmarks lourds désactivés
+- [OK] Pré-calculs désactivés
 
 **Fichier modifié** : `api/performance_endpoints.py:48,71,212`
 
@@ -126,15 +126,15 @@ validate_websocket_token(token)  # Validation auth optionnelle
 ```
 
 **Impact** :
-- ✅ Page démo désactivée en prod
-- ✅ Simulation events protégée par flag
-- ✅ Start/stop moteur temps réel bloqués
+- [OK] Page démo désactivée en prod
+- [OK] Simulation events protégée par flag
+- [OK] Start/stop moteur temps réel bloqués
 
 **Fichier modifié** : `api/realtime_endpoints.py:237,238,471,486`
 
 ---
 
-## Phase 3 : Auth WebSocket ✅
+## Phase 3 : Auth WebSocket
 
 ### 3.1 Validation Token Optionnelle
 
@@ -163,7 +163,7 @@ async def websocket_endpoint(
 
 ---
 
-## Phase 4 : Fixtures Pytest ✅
+## Phase 4 : Fixtures Pytest
 
 ### 4.1 Services Mockés
 
@@ -177,9 +177,9 @@ mock_ml_orchestrator       # Évite chargement modèles ML
 ```
 
 **Impact** :
-- ✅ Tests unitaires 10x plus rapides
-- ✅ Pas d'appels réseau en tests
-- ✅ Pas de fichiers requis
+- [OK] Tests unitaires 10x plus rapides
+- [OK] Pas d'appels réseau en tests
+- [OK] Pas de fichiers requis
 
 ---
 
@@ -234,9 +234,9 @@ def test_endpoint(test_client):  # Fixture injectée
 ```
 
 **Impact** :
-- ✅ Pas d'import app au chargement module
-- ✅ Contrôle fin mock vs intégration
-- ✅ Tests isolés et reproductibles
+- [OK] Pas d'import app au chargement module
+- [OK] Contrôle fin mock vs intégration
+- [OK] Tests isolés et reproductibles
 
 **Fichier modifié** : `tests/test_performance_endpoints.py`
 
@@ -302,23 +302,23 @@ pytest tests/test_performance_endpoints.py -v
 
 ### Avant Déploiement
 
-1. ✅ **Variables d'env** : Éditer `.env` selon `DEV_TO_PROD_CHECKLIST.md`
-2. ✅ **Tests sécurité** : Lancer suite tests checklist
-3. ✅ **Logs** : Vérifier aucun secret/token en clair
-4. ✅ **Backup** : Sauvegarder données + config
+1. [OK] **Variables d'env** : Éditer `.env` selon `DEV_TO_PROD_CHECKLIST.md`
+2. [OK] **Tests sécurité** : Lancer suite tests checklist
+3. [OK] **Logs** : Vérifier aucun secret/token en clair
+4. [OK] **Backup** : Sauvegarder données + config
 
 ### Pendant Déploiement
 
-1. ✅ **Build** : Vérifier que code compile sans erreur
-2. ✅ **Smoke tests** : Tester endpoints principaux
-3. ✅ **Monitoring** : Activer alertes (500, 429, uptime)
+1. [OK] **Build** : Vérifier que code compile sans erreur
+2. [OK] **Smoke tests** : Tester endpoints principaux
+3. [OK] **Monitoring** : Activer alertes (500, 429, uptime)
 
 ### Après Déploiement
 
-1. ✅ **Vérifier protections** : Tester qu'endpoints debug retournent 403
-2. ✅ **Rate limiting** : Vérifier que 429 après burst
-3. ✅ **CORS** : Vérifier origins strict
-4. ✅ **CSP** : Vérifier headers de sécurité
+1. [OK] **Vérifier protections** : Tester qu'endpoints debug retournent 403
+2. [OK] **Rate limiting** : Vérifier que 429 après burst
+3. [OK] **CORS** : Vérifier origins strict
+4. [OK] **CSP** : Vérifier headers de sécurité
 
 ---
 
@@ -365,25 +365,25 @@ pytest tests/test_performance_endpoints.py -v
 
 ## Résultat Final
 
-### ✅ Sécurité Renforcée
+### Sécurité Renforcée
 
 - 7 endpoints dangereux protégés en production
 - WebSocket avec auth optionnelle (dev) / requise (prod)
 - Variables d'env documentées et sécurisées
 
-### ✅ Tests Améliorés
+### Tests Améliorés
 
 - Fixtures pytest pour isolation complète
 - Tests 10x plus rapides (pas d'I/O réseau/fichiers)
 - Distinction claire unit vs intégration
 
-### ✅ Documentation Complète
+### Documentation Complète
 
 - Checklist production avec 12 points de contrôle
 - Tests de sécurité bash automatisables
 - Guide migration dev → prod
 
-### ✅ Rétrocompatibilité
+### Rétrocompatibilité
 
 - Aucun breaking change en mode développement
 - Toutes protections désactivables via `.env`

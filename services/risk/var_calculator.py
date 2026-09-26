@@ -177,7 +177,7 @@ class VaRCalculator:
             logger.error(f"Impossible d'importer price_history: {e}")
             return await self._generate_historical_returns_fallback(symbols, days)
 
-        logger.info(f"📈 Calcul rendements réels depuis cache pour {len(symbols)} symboles ({days}j)")
+        logger.info(f" Calcul rendements réels depuis cache pour {len(symbols)} symboles ({days}j)")
 
         # Collecter l'historique pour tous les symboles
         symbol_histories = {}
@@ -188,12 +188,12 @@ class VaRCalculator:
             if history and len(history) >= 2:  # Minimum 2 points pour calculer 1 rendement
                 symbol_histories[symbol] = history
                 available_symbols.append(symbol)
-                logger.debug(f"✅ {symbol}: {len(history)} points de prix")
+                logger.debug(f" {symbol}: {len(history)} points de prix")
             else:
-                logger.warning(f"⚠️ {symbol}: historique insuffisant ou absent")
+                logger.warning(f" {symbol}: historique insuffisant ou absent")
 
         if not available_symbols:
-            logger.warning("❌ Aucun historique de prix disponible - fallback simulation")
+            logger.warning(" Aucun historique de prix disponible - fallback simulation")
             return await self._generate_historical_returns_fallback(symbols, days)
 
         # Calculer les rendements pour chaque symbole
@@ -207,14 +207,14 @@ class VaRCalculator:
         MIN_RETURNS = 10
         symbol_returns = {s: r for s, r in symbol_returns.items() if len(r) >= MIN_RETURNS}
         if not symbol_returns:
-            logger.warning("❌ Rendements insuffisants après filtrage - fallback simulation")
+            logger.warning(" Rendements insuffisants après filtrage - fallback simulation")
             return await self._generate_historical_returns_fallback(symbols, days)
 
         # Construire une fenêtre cible fixe sans la rétrécir à l'asset le plus court
         max_length = max(len(r) for r in symbol_returns.values())
         target_length = min(days, max_length)
         if target_length < MIN_RETURNS:
-            logger.warning("❌ Fenêtre disponible < seuil après filtrage - fallback simulation")
+            logger.warning(" Fenêtre disponible < seuil après filtrage - fallback simulation")
             return await self._generate_historical_returns_fallback(symbols, days)
 
         # Aligner/padder toutes les séries sur la longueur cible (pad au début avec 0.0 si nécessaire)
@@ -240,14 +240,14 @@ class VaRCalculator:
             returns_series.append(day_returns)
 
         coverage = len(available_symbols) / len(symbols) * 100
-        logger.info(f"✅ {len(returns_series)} jours de rendements réels générés ({coverage:.1f}% couverture)")
+        logger.info(f" {len(returns_series)} jours de rendements réels générés ({coverage:.1f}% couverture)")
 
         # Log de quelques statistiques pour validation
         if returns_series:
             sample_returns = [day.get('BTC', 0.0) for day in returns_series[-30:]]  # 30 derniers jours BTC
             if sample_returns and any(r != 0 for r in sample_returns):
                 vol_annualized = np.std(sample_returns) * np.sqrt(252)
-                logger.debug(f"🔍 Validation BTC: volatilité 30j annualisée = {vol_annualized:.1%}")
+                logger.debug(f" Validation BTC: volatilité 30j annualisée = {vol_annualized:.1%}")
 
         return returns_series
 
@@ -258,7 +258,7 @@ class VaRCalculator:
     ) -> List[Dict[str, float]]:
         """Fallback avec simulation uniquement si données réelles indisponibles"""
 
-        logger.warning(f"🟡 FALLBACK: Génération de rendements simulés pour {len(symbols)} symboles")
+        logger.warning(f" FALLBACK: Génération de rendements simulés pour {len(symbols)} symboles")
 
         returns_series = []
 
@@ -283,7 +283,7 @@ class VaRCalculator:
 
             returns_series.append(day_returns)
 
-        logger.info(f"⚠️ Généré {len(returns_series)} jours de données simulées (FALLBACK)")
+        logger.info(f" Généré {len(returns_series)} jours de données simulées (FALLBACK)")
         return returns_series
 
     def _calculate_portfolio_returns(
@@ -451,7 +451,7 @@ class VaRCalculator:
         """
         Évalue le niveau de risque global du portfolio.
 
-        ✅ Sémantique Risk (docs/RISK_SEMANTICS.md):
+        [OK] Sémantique Risk (docs/RISK_SEMANTICS.md):
         - Risk Score = indicateur POSITIF de robustesse [0-100]
         - Plus haut = plus robuste (risque perçu plus faible)
         - Donc: bonnes métriques → score augmente, mauvaises → score diminue
@@ -463,47 +463,47 @@ class VaRCalculator:
         # VaR impact (plus VaR est élevé, MOINS robuste → score diminue)
         var_95 = abs(var_metrics.get("var_95", 0.0))  # abs() car VaR est négatif
         if var_95 > 0.25:
-            score -= 30  # ❌ VaR très élevé → score baisse
+            score -= 30  # [Error] VaR très élevé → score baisse
         elif var_95 > 0.15:
             score -= 20
         elif var_95 > 0.10:
             score -= 10
         elif var_95 < 0.05:
-            score += 10  # ✅ VaR faible → score monte
+            score += 10  # [OK] VaR faible → score monte
 
         # Volatilité impact (plus vol est élevée, MOINS robuste → score diminue)
         vol = perf_metrics.get("volatility", 0.0)
         if vol > 1.0:
-            score -= 25  # ❌ Volatilité extrême → score baisse
+            score -= 25  # [Error] Volatilité extrême → score baisse
         elif vol > 0.6:
             score -= 15
         elif vol > 0.4:
             score -= 5
         elif vol < 0.2:
-            score += 15  # ✅ Volatilité faible → score monte
+            score += 15  # [OK] Volatilité faible → score monte
 
         # Max drawdown impact (plus DD est élevé, MOINS robuste → score diminue)
         max_dd = abs(drawdown_metrics.get("max_drawdown", 0.0))  # abs() car DD est négatif
         if max_dd > 0.50:
-            score -= 20  # ❌ Drawdown sévère → score baisse
+            score -= 20  # [Error] Drawdown sévère → score baisse
         elif max_dd > 0.30:
             score -= 10
         elif max_dd < 0.10:
-            score += 10  # ✅ Drawdown limité → score monte
+            score += 10  # [OK] Drawdown limité → score monte
 
         # Sharpe ratio impact (plus Sharpe est élevé, PLUS robuste → score augmente)
         sharpe = perf_metrics.get("sharpe", 0.0)
         if sharpe < 0:
-            score -= 15  # ❌ Sharpe négatif → score baisse
+            score -= 15  # [Error] Sharpe négatif → score baisse
         elif sharpe > 1.5:
-            score += 15  # ✅ Excellent Sharpe → score monte
+            score += 15  # [OK] Excellent Sharpe → score monte
         elif sharpe > 1.0:
-            score += 10  # ✅ Bon Sharpe → score monte
+            score += 10  # [OK] Bon Sharpe → score monte
 
         # Normaliser le score [0-100]
         score = max(0, min(100, score))
 
-        # ✅ Déterminer le niveau de risque INVERSÉ (score élevé = risque faible)
+        # [OK] Déterminer le niveau de risque INVERSÉ (score élevé = risque faible)
         # Attention: level représente le RISQUE, donc inverse du score
         if score >= 80:
             level = RiskLevel.VERY_LOW  # Score élevé = risque très faible

@@ -62,10 +62,10 @@
     </style>
 </head>
 <body>
-    <h1>🔍 AUDIT FRONTEND STATE</h1>
+    <h1>Search AUDIT FRONTEND STATE</h1>
 
     <button onclick="runAudit()">▶️ Run Audit</button>
-    <button onclick="clearLogs()">🗑️ Clear Logs</button>
+    <button onclick="clearLogs()">Delete Clear Logs</button>
 
     <div id="output"></div>
 
@@ -77,7 +77,7 @@
             const output = document.getElementById('output');
             let html = '';
 
-            html += '<h2>📦 LOCALSTORAGE STATE</h2>';
+            html += '<h2>Package LOCALSTORAGE STATE</h2>';
 
             // Risk Semantics Mode
             const riskMode = localStorage.getItem('RISK_SEMANTICS_MODE');
@@ -85,14 +85,14 @@
             html += `<div class="section ${riskModeClass}">`;
             html += `<strong>RISK_SEMANTICS_MODE:</strong> <code>${riskMode || 'NOT SET (defaults to legacy)'}</code><br>`;
             if (riskMode === 'legacy') {
-                html += `<span style="color: #ff9900">⚠️ Using LEGACY mode (inverted formula, BUG!)</span><br>`;
+                html += `<span style="color: #ff9900">Warning Using LEGACY mode (inverted formula, BUG!)</span><br>`;
                 html += `Formula: <code>risk_factor = 1 - 0.5 × (Risk/100)</code><br>`;
                 html += `Recommend: <code>localStorage.setItem('RISK_SEMANTICS_MODE', 'v2_conservative')</code>`;
             } else if (riskMode === 'v2_conservative') {
-                html += `<span style="color: #00ff00">✅ Using V2 CONSERVATIVE (correct formula)</span><br>`;
+                html += `<span style="color: #00ff00">OK Using V2 CONSERVATIVE (correct formula)</span><br>`;
                 html += `Formula: <code>risk_factor = 0.5 + 0.5 × (Risk/100)</code>`;
             } else if (riskMode === 'v2_aggressive') {
-                html += `<span style="color: #00ff00">✅ Using V2 AGGRESSIVE (correct formula)</span><br>`;
+                html += `<span style="color: #00ff00">OK Using V2 AGGRESSIVE (correct formula)</span><br>`;
                 html += `Formula: <code>risk_factor = 0.4 + 0.7 × (Risk/100)</code>`;
             }
             html += `</div>`;
@@ -111,7 +111,7 @@
             html += `</div>`;
 
             // Store snapshot
-            html += '<h2>🏪 STORE SNAPSHOT</h2>';
+            html += '<h2> STORE SNAPSHOT</h2>';
             const state = store.snapshot();
 
             html += `<div class="section">`;
@@ -130,12 +130,12 @@
                 html += `├─ contradiction_index: <code>${sig.contradiction_index?.toFixed(3) || 'N/A'}</code><br>`;
                 html += `└─ blended_score: <code>${sig.blended_score || 'N/A'}</code>`;
             } else {
-                html += `<span style="color: #ff9900">⚠️ NOT AVAILABLE</span>`;
+                html += `<span style="color: #ff9900">Warning NOT AVAILABLE</span>`;
             }
             html += `</div>`;
 
             // Risk Budget Simulation
-            html += '<h2>💰 RISK BUDGET SIMULATION</h2>';
+            html += '<h2>Balance RISK BUDGET SIMULATION</h2>';
 
             const blended = state.scores?.blended || 65;
             const risk = state.scores?.risk || 90;
@@ -195,7 +195,7 @@
             html += `</div>`;
 
             // Feature Flags
-            html += '<h2>🚩 FEATURE FLAGS (Phase Tilts)</h2>';
+            html += '<h2> FEATURE FLAGS (Phase Tilts)</h2>';
             try {
                 const flags = getFeatureFlags();
                 html += `<div class="section">`;
@@ -209,7 +209,7 @@
             }
 
             // Diagnostic
-            html += '<h2>🔍 DIAGNOSTIC</h2>';
+            html += '<h2>Search DIAGNOSTIC</h2>';
 
             const issues = [];
             if (!riskMode || riskMode === 'legacy') {
@@ -237,7 +237,7 @@
             }
 
             if (issues.length === 0) {
-                html += `<div class="section success">✅ No major issues detected</div>`;
+                html += `<div class="section success">OK No major issues detected</div>`;
             } else {
                 issues.forEach(issue => {
                     html += `<div class="section ${issue.type}">`;

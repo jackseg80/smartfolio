@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📈 Stock Market Dashboard - SmartFolio</title>
+    <title>Stock Market Dashboard - SmartFolio</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
@@ -71,13 +71,13 @@
         <div class="dashboard-header">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <div>
-                    <h1>📈 Stock Dashboard (Saxo Bank)</h1>
+                    <h1><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Stock Dashboard (Saxo Bank)</h1>
                     <p style="color: var(--theme-text-muted); margin: 0;">Analysis of your stock portfolio</p>
                 </div>
                 <span
                     id="cacheIndicator"
                     style="display: none; padding: 0.25rem 0.75rem; background: var(--success); color: white; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600;">
-                    ⚡ Cached
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Cached
                 </span>
             </div>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -87,7 +87,7 @@
                     onclick="loadCurrentSaxoData(true)"
                     style="padding: 0.75rem 1.25rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-size: 0.875rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;"
                     title="Force data reload (bypass cache)">
-                    🔄 Refresh
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh
                 </button>
             </div>
         </div>
@@ -98,7 +98,7 @@
 
         <!-- Main Content (initially empty, filled by loadCurrentSaxoData) -->
         <div id="mainContent">
-            <div class="loading">📊 Loading...</div>
+            <div class="loading"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Loading...</div>
         </div>
 
         <!-- Dashboard Content (hidden by default) -->
@@ -190,7 +190,7 @@
 
         // Initialize wealth context integration
         function initWealthContextIntegration() {
-            debugLogger.debug('🏦 Initializing WealthContextBar integration for Saxo dashboard...');
+            debugLogger.debug("Initializing WealthContextBar integration for Saxo dashboard...");
 
             if (!window.wealthContextBar) {
                 debugLogger.warn('WealthContextBar not available');
@@ -209,7 +209,7 @@
                 updateContextualDisplay();
             });
 
-            debugLogger.debug('✅ WealthContextBar integrated for Saxo dashboard');
+            debugLogger.debug("[OK] WealthContextBar integrated for Saxo dashboard");
         }
 
         function updateContextualDisplay() {
@@ -226,7 +226,7 @@
             if (!activeTab) return;
 
             const tabId = activeTab.id;
-            debugLogger.debug(`🔄 Refreshing active tab: ${tabId}`);
+            debugLogger.debug(`Refreshing active tab: ${tabId}`);
 
             // Reload data for the active tab
             if (currentPortfolioData) {
@@ -363,7 +363,7 @@
         // 2. Parallel API calls (list + cash) → ~200ms gain
         // 3. Force refresh option to bypass cache
         async function loadCurrentSaxoData(forceRefresh = false) {
-            debugLogger.debug('🏦 Loading Saxo data from active source...');
+            debugLogger.debug("Loading Saxo data from active source...");
 
             try {
                 // Hide cache indicator on fresh load
@@ -374,16 +374,16 @@
 
                 // Show loading state
                 document.getElementById('mainContent').style.display = 'block';
-                document.getElementById('mainContent').innerHTML = '<div class="loading">📊 Loading stock data...</div>';
+                document.getElementById('mainContent').innerHTML = "<div class=\"loading\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Analytics\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#chart-bar\"></use></svg> Loading stock data...</div>";
                 document.getElementById('dashboardContent').style.display = 'none';
 
                 const activeUser = localStorage.getItem('activeUser') || '';
 
-                // ✅ FIX: Read bourseSource dynamically (don't trust window.saxoSourceType which may be stale)
+                //  FIX: Read bourseSource dynamically (don't trust window.saxoSourceType which may be stale)
                 let bourseSource = window.wealthContextBar?.getContext()?.bourse;
                 if (!bourseSource) {
                     bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
-                    debugLogger.debug(`⚠️ wealthContextBar not ready, using localStorage fallback: ${bourseSource}`);
+                    debugLogger.debug(`[Warning] wealthContextBar not ready, using localStorage fallback: ${bourseSource}`);
                 }
 
                 // Determine source type from bourseSource
@@ -391,7 +391,7 @@
                 const isApiSource = bourseSource && bourseSource.startsWith('api:');
                 const isCsvSource = bourseSource && bourseSource.startsWith('saxo:');
 
-                debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${isManualSource ? 'MANUAL' : isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
+                debugLogger.debug(`Source detection: ${bourseSource} → ${isManualSource ? 'MANUAL' : isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
 
                 // CRITICAL: Update window.saxoSourceType for other functions (Risk, Recommendations, etc.)
                 if (isManualSource) {
@@ -403,7 +403,7 @@
                 } else {
                     window.saxoSourceType = null;
                 }
-                debugLogger.debug(`🔧 window.saxoSourceType set to: ${window.saxoSourceType}`);
+                debugLogger.debug(`window.saxoSourceType set to: ${window.saxoSourceType}`);
 
                 // Include source type in cache key to avoid mixing API and CSV data
                 const sourcePrefix = isManualSource ? 'manual' : isApiSource ? 'api' : (currentFileKey || 'default');
@@ -417,8 +417,8 @@
                         if (cached) {
                             const { data, timestamp, cashAmount } = JSON.parse(cached);
                             if (Date.now() - timestamp < CACHE_TTL) {
-                                debugLogger.debug(`⚡ Using cached portfolio data (cacheKey: ${cacheKey})`);
-                                debugLogger.debug(`💰 Cached cash amount: $${cashAmount || 0}`);
+                                debugLogger.debug(`Using cached portfolio data (cacheKey: ${cacheKey})`);
+                                debugLogger.debug(`Cached cash amount: $${cashAmount || 0}`);
                                 currentPortfolioData = data;
                                 window.portfolioCash = cashAmount || 0;
 
@@ -439,7 +439,7 @@
                                 refreshActiveTab();
 
 
-                                debugLogger.debug('✅ Portfolio loaded from cache');
+                                debugLogger.debug("[OK] Portfolio loaded from cache");
                                 return;
                             }
                         }
@@ -452,7 +452,7 @@
 
                 // Load from Sources V2 if manual mode
                 if (isManualSource) {
-                    debugLogger.debug('📝 Loading Saxo data from Sources V2 (manual)...');
+                    debugLogger.debug("Loading Saxo data from Sources V2 (manual)...");
 
                     try {
                         // Use fetch directly (safeFetch may not be loaded yet due to race condition)
@@ -469,7 +469,7 @@
                         const data = apiResponse.data || apiResponse;
 
                         // Debug: log full response
-                        console.log('🔍 V2 API Response:', {
+                        console.log("V2 API Response:", {
                             ok,
                             hasData: !!data,
                             dataKeys: data ? Object.keys(data) : [],
@@ -526,17 +526,17 @@
                         // Manual entries don't have separate cash
                         window.portfolioCash = 0;
 
-                        debugLogger.debug(`✅ Loaded ${positions.length} manual positions from Sources V2`);
+                        debugLogger.debug(`[OK] Loaded ${positions.length} manual positions from Sources V2`);
 
                     } catch (error) {
                         debugLogger.error('Erreur lors du chargement depuis Sources V2:', error);
-                        showNoDataState(`❌ Sources V2 Error: ${error.message}`);
+                        showNoDataState(`[Error] Sources V2 Error: ${error.message}`);
                         return;
                     }
 
                 // Load from API or CSV based on source type
                 } else if (isApiSource) {
-                    debugLogger.debug('🌐 Loading Saxo data from API...');
+                    debugLogger.debug("Loading Saxo data from API...");
 
                     // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
                     // Use fetch directly (safeFetch may not be loaded yet due to race condition)
@@ -549,7 +549,7 @@
 
                     if (!apiResponse.ok) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
-                        showNoDataState('❌ Error loading from Saxo API');
+                        showNoDataState("Error loading from Saxo API");
                         return;
                     }
 
@@ -559,15 +559,15 @@
 
                     if (!apiOk || !apiData) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
-                        showNoDataState('❌ Error loading from Saxo API');
+                        showNoDataState("Error loading from Saxo API");
                         return;
                     }
 
                     // Extract nested data from API response (safeFetch wraps success_response twice)
                     const innerData = apiData.data || apiData;
 
-                    // 🔍 DEBUG: Log API response structure
-                    console.log('🔍 DEBUG API Response:', {
+                    //  DEBUG: Log API response structure
+                    console.log("DEBUG API Response:", {
                         total_value: innerData.total_value,
                         cash_balance: innerData.cash_balance,
                         positions_count: innerData.positions?.length
@@ -584,7 +584,7 @@
                     }));
 
                     // Calculate total portfolio value
-                    // ⚠️ CRITICAL: innerData.total_value from API already includes cash!
+                    //  CRITICAL: innerData.total_value from API already includes cash!
                     const totalValue = innerData.total_value || normalizedPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0);
                     const totalValueIncludesCash = !!innerData.total_value; // Flag: true if from API (includes cash)
 
@@ -604,7 +604,7 @@
                     // Extract cash balance from API
                     if (innerData.cash_balance !== undefined) {
                         window.portfolioCash = innerData.cash_balance;
-                        debugLogger.debug(`💰 Cash balance from API: ${innerData.cash_balance} ${innerData.currency || 'EUR'}`);
+                        debugLogger.debug(`Cash balance from API: ${innerData.cash_balance} ${innerData.currency || 'EUR'}`);
                     } else {
                         // Fallback: calculate from total_value - positions
                         window.portfolioCash = Math.max(0, totalValue - normalizedPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0));
@@ -612,41 +612,41 @@
 
                     // Show warning if using cached API data
                     if (innerData.warning) {
-                        debugLogger.warn(`⚠️ API Cache Fallback: ${innerData.warning}`);
+                        debugLogger.warn(`[Warning] API Cache Fallback: ${innerData.warning}`);
                     }
 
-                    debugLogger.debug(`✅ Loaded ${portfolioData.positions.length} positions from API (Total: ${totalValue.toLocaleString()} ${innerData.currency || 'EUR'})`);
+                    debugLogger.debug(`[OK] Loaded ${portfolioData.positions.length} positions from API (Total: ${totalValue.toLocaleString()} ${innerData.currency || 'EUR'})`);
 
                     // Show info message for empty Sim accounts
                     if (normalizedPositions.length === 0 && innerData.source === 'api') {
                         const envLabel = window.availableSources?.find(s => s.key === 'saxobank_api')?.environment || 'sim';
                         if (envLabel === 'sim') {
-                            debugLogger.info('ℹ️ Compte Saxo Simulation vide - Utilisez le portail Saxo pour ajouter des positions de test');
+                            debugLogger.info("Compte Saxo Simulation vide - Utilisez le portail Saxo pour ajouter des positions de test");
                         }
                     }
 
                 } else {
                     // Load from CSV
-                    debugLogger.debug('📄 Loading Saxo data from CSV...');
+                    debugLogger.debug("Loading Saxo data from CSV...");
 
-                    // ✅ Use currentFileKey which has been resolved by resolveFileKeyFromSource()
+                    //  Use currentFileKey which has been resolved by resolveFileKeyFromSource()
                     // No need to re-resolve here (already done at init or on source change)
                     const fileKey = currentFileKey;
-                    debugLogger.debug(`📄 Using file_key: ${fileKey || 'null (backend will resolve from config)'}`);
+                    debugLogger.debug(`Using file_key: ${fileKey || 'null (backend will resolve from config)'}`);
 
                     // Build URLs
                     let portfoliosUrl = '/api/saxo/portfolios';
                     if (fileKey) {
                         portfoliosUrl += `?file_key=${encodeURIComponent(fileKey)}`;
-                        debugLogger.debug(`🔍 Loading portfolio with file_key: ${fileKey}`);
+                        debugLogger.debug(`Loading portfolio with file_key: ${fileKey}`);
                     } else {
-                        debugLogger.debug(`🔍 Loading portfolio without file_key (backend auto-select from config)`);
+                        debugLogger.debug(`Loading portfolio without file_key (backend auto-select from config)`);
                     }
 
                     // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
                     // Use fetch directly (safeFetch may not be loaded yet due to race condition)
                     const fullUrl = `${window.getApiBase()}${portfoliosUrl}`;
-                    debugLogger.debug(`🌐 Calling API: ${fullUrl} with X-User: ${activeUser}`);
+                    debugLogger.debug(`Calling API: ${fullUrl} with X-User: ${activeUser}`);
 
                     const [listResponse, cashResult] = await Promise.all([
                         fetch(fullUrl, {
@@ -656,19 +656,19 @@
                     ]);
 
                     if (!listResponse.ok) {
-                        debugLogger.warn(`❌ HTTP ${listResponse.status}: ${listResponse.statusText}`);
-                        showNoDataState(`❌ HTTP Error ${listResponse.status}: ${listResponse.statusText}`);
+                        debugLogger.warn(`[Error] HTTP ${listResponse.status}: ${listResponse.statusText}`);
+                        showNoDataState(`[Error] HTTP Error ${listResponse.status}: ${listResponse.statusText}`);
                         return;
                     }
 
                     const listResult = await listResponse.json();
 
-                    // ✅ FIX: /api/saxo/portfolios returns {portfolios: [...]} directly (no wrapper)
+                    //  FIX: /api/saxo/portfolios returns {portfolios: [...]} directly (no wrapper)
                     const portfolios = listResult.portfolios || [];
 
                     // Debug: log FULL response structure
-                    debugLogger.debug('📦 Full API Response:', listResult);
-                    debugLogger.debug('📦 Portfolio data:', {
+                    debugLogger.debug("Full API Response:", listResult);
+                    debugLogger.debug("Portfolio data:", {
                         hasPortfolios: portfolios.length > 0,
                         portfolioCount: portfolios.length,
                         firstPortfolioId: portfolios[0]?.portfolio_id
@@ -676,7 +676,7 @@
 
                     if (!portfolios || portfolios.length === 0) {
                         debugLogger.warn('âš ï¸ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
-                        showNoDataState('📂 No Saxo CSV found. Please import a Saxo Bank CSV file.');
+                        showNoDataState("No Saxo CSV found. Please import a Saxo Bank CSV file.");
                         return;
                     }
 
@@ -686,7 +686,7 @@
 
                     if (!portfolioId) {
                         debugLogger.warn('Portfolio ID manquant.');
-                        showNoDataState('❌ Error: Portfolio ID missing');
+                        showNoDataState("Error: Portfolio ID missing");
                         return;
                     }
 
@@ -703,20 +703,20 @@
 
                     if (!detailResponse.ok) {
                         debugLogger.warn('Error loading portfolio.');
-                        showNoDataState('❌ Error loading portfolio');
+                        showNoDataState("Error loading portfolio");
                         return;
                     }
 
-                    // ✅ FIX: /api/saxo/portfolios/{id} returns portfolio object directly (no wrapper)
+                    //  FIX: /api/saxo/portfolios/{id} returns portfolio object directly (no wrapper)
                     portfolioData = await detailResponse.json();
 
                     if (!portfolioData || !portfolioData.portfolio_id) {
                         debugLogger.warn('Error loading portfolio.');
-                        showNoDataState('❌ Error loading portfolio');
+                        showNoDataState("Error loading portfolio");
                         return;
                     }
 
-                    debugLogger.debug('✅ Portfolio loaded:', {
+                    debugLogger.debug("[OK] Portfolio loaded:", {
                         id: portfolioData.portfolio_id,
                         positionsCount: portfolioData.positions?.length || 0,
                         totalValue: portfolioData.total_value_usd
@@ -727,7 +727,7 @@
                 currentPortfolioData = portfolioData;
 
                 // Debug: log final portfolio structure before displaying
-                debugLogger.debug('📊 Final portfolio data to display:', {
+                debugLogger.debug("Final portfolio data to display:", {
                     portfolioId: currentPortfolioData?.portfolio_id,
                     positionsCount: currentPortfolioData?.positions?.length || 0,
                     totalValue: currentPortfolioData?.total_value_usd || currentPortfolioData?.summary?.total_value_usd,
@@ -738,13 +738,13 @@
                 // Save to cache
                 try {
                     const cashToCache = window.portfolioCash || 0;
-                    debugLogger.debug(`💾 Caching portfolio (cacheKey: ${cacheKey}, cash: $${cashToCache})`);
+                    debugLogger.debug(`Caching portfolio (cacheKey: ${cacheKey}, cash: $${cashToCache})`);
                     localStorage.setItem(cacheKey, JSON.stringify({
                         data: portfolioData,
                         cashAmount: cashToCache,
                         timestamp: Date.now()
                     }));
-                    debugLogger.debug('💾 Portfolio cached for 5 minutes');
+                    debugLogger.debug("Portfolio cached for 5 minutes");
                 } catch (cacheError) {
                     debugLogger.warn('Failed to cache portfolio:', cacheError);
                 }
@@ -759,7 +759,7 @@
                 // Refresh active tab content after data load
                 refreshActiveTab();
 
-                debugLogger.debug('✅ Saxo data loaded successfully');
+                debugLogger.debug("[OK] Saxo data loaded successfully");
 
                 // Add export button once (check if already exists to avoid duplicates)
                 const overviewSection = document.getElementById('overview');
@@ -777,7 +777,7 @@
 
             } catch (error) {
                 debugLogger.error('Error loading Saxo data:', error);
-                showError('❌ Error loading data: ' + error.message);
+                showError("Error loading data: " + error.message);
             }
         }
 
@@ -792,7 +792,7 @@
             // Get saved cash value for this portfolio
             const savedCash = window.portfolioCash || 0;
 
-            // ⚠️ CRITICAL: If total_value comes from API, it already includes cash!
+            //  CRITICAL: If total_value comes from API, it already includes cash!
             // Only add cash if totalValue was calculated from positions (CSV mode)
             const totalValueIncludesCash = data?.totalValueIncludesCash || false;
             const totalWithCash = totalValueIncludesCash ? totalValue : (totalValue + savedCash);
@@ -947,7 +947,7 @@
                     url += `&file_key=${encodeURIComponent(key)}`;
                 }
 
-                debugLogger.debug(`💵 Loading cash from backend (file_key: ${key || 'null -> backend will resolve from config'})`);
+                debugLogger.debug(`Loading cash from backend (file_key: ${key || 'null -> backend will resolve from config'})`);
 
                 // Use fetch directly (safeFetch may not be loaded yet due to race condition)
                 const response = await fetch(`${window.getApiBase()}${url}`, {
@@ -957,9 +957,9 @@
                     const result = await response.json();
                     const data = result.data || result;
                     window.portfolioCash = Number(data.cash_amount || 0);
-                    debugLogger.debug(`💵 Loaded cash amount from backend: $${window.portfolioCash}`);
+                    debugLogger.debug(`Loaded cash amount from backend: $${window.portfolioCash}`);
                 } else {
-                    debugLogger.warn(`💵 Failed to load cash (HTTP ${response.status}), defaulting to 0`);
+                    debugLogger.warn(`Failed to load cash (HTTP ${response.status}), defaulting to 0`);
                     window.portfolioCash = 0;
                 }
             } catch (error) {
@@ -1000,7 +1000,7 @@
             modal.innerHTML = `
                 <div style="background: var(--theme-surface); border-radius: var(--radius-lg); padding: 2rem; max-width: 500px; width: 90%; box-shadow: var(--shadow-lg);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;">💵 Edit Cash</h3>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Edit Cash</h3>
                         <button onclick="closeCashModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--theme-text-muted);">×</button>
                     </div>
 
@@ -1022,7 +1022,7 @@
                     </div>
 
                     <div id="conversionDisplay" style="padding: 1rem; background: var(--brand-primary-alpha); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.875rem;">
-                        <strong>💱 USD Equivalent:</strong> <span id="usdEquivalent">Loading exchange rates...</span>
+                        <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg> USD Equivalent:</strong> <span id="usdEquivalent">Loading exchange rates...</span>
                     </div>
 
                     <div style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); margin-bottom: 1.5rem; font-size: 0.875rem; color: var(--theme-text-muted);">
@@ -1034,7 +1034,7 @@
                             Cancel
                         </button>
                         <button id="saveCashBtn" onclick="saveCashAmount()" disabled style="padding: 0.75rem 1.5rem; background: var(--brand-primary); color: white; border: none; border-radius: var(--radius-md); cursor: not-allowed; font-weight: 600; opacity: 0.5;">
-                            ⏳ Loading...
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Loading...
                         </button>
                     </div>
                 </div>
@@ -1072,7 +1072,7 @@
                     saveBtn.disabled = false;
                     saveBtn.style.cursor = 'pointer';
                     saveBtn.style.opacity = '1';
-                    saveBtn.textContent = '💾 Save';
+                    saveBtn.textContent = "Save";
                 }
                 updateConversion();
                 document.getElementById('cashInput')?.focus();
@@ -1084,7 +1084,7 @@
                     saveBtn.disabled = false;
                     saveBtn.style.cursor = 'pointer';
                     saveBtn.style.opacity = '1';
-                    saveBtn.textContent = '💾 Save';
+                    saveBtn.textContent = "Save";
                 }
                 updateConversion();
                 document.getElementById('cashInput')?.focus();
@@ -1134,7 +1134,7 @@
                     const rate = window.currencyManager.getRateSync(currency);
                     if (rate > 0) {
                         cashAmountUSD = cashAmount / rate;
-                        debugLogger.info(`💱 Converting ${cashAmount} ${currency} to USD using rate ${rate.toFixed(4)}`);
+                        debugLogger.info(`Converting ${cashAmount} ${currency} to USD using rate ${rate.toFixed(4)}`);
                     } else {
                         throw new Error(`Exchange rate ${currency}/USD not available. Please check your internet connection.`);
                     }
@@ -1149,7 +1149,7 @@
                     url += `&file_key=${encodeURIComponent(currentFileKey)}`;
                 }
 
-                debugLogger.debug(`💾 Saving cash: ${cashAmountUSD} USD with file_key: ${currentFileKey || 'default'}`);
+                debugLogger.debug(`Saving cash: ${cashAmountUSD} USD with file_key: ${currentFileKey || 'default'}`);
 
                 // Use fetch directly (safeFetch may not be loaded yet due to race condition)
                 const response = await fetch(globalConfig.getApiUrl(url), {
@@ -1171,7 +1171,7 @@
                 // Update local value (in USD)
                 window.portfolioCash = cashAmountUSD;
 
-                // ✅ FIX: Update cache with new cash amount to persist across refreshes
+                //  FIX: Update cache with new cash amount to persist across refreshes
                 try {
                     const activeUser = localStorage.getItem('activeUser') || '';
                     const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
@@ -1187,7 +1187,7 @@
                         cacheObj.cashAmount = cashAmountUSD;
                         cacheObj.timestamp = Date.now(); // Update timestamp to extend cache validity
                         localStorage.setItem(cacheKey, JSON.stringify(cacheObj));
-                        debugLogger.debug(`💾 Updated cache with new cash amount: $${cashAmountUSD.toFixed(2)}`);
+                        debugLogger.debug(`Updated cache with new cash amount: $${cashAmountUSD.toFixed(2)}`);
                     }
                 } catch (e) {
                     debugLogger.warn('Failed to update cache with new cash amount', e);
@@ -1201,7 +1201,7 @@
                     loadOverviewData(currentPortfolioData);
                 }
 
-                debugLogger.info(`💾 Cash amount saved: ${cashAmount} ${currency} → $${cashAmountUSD.toFixed(2)} USD`);
+                debugLogger.info(`Cash amount saved: ${cashAmount} ${currency} → $${cashAmountUSD.toFixed(2)} USD`);
 
             } catch (error) {
                 debugLogger.error('Failed to save cash amount', error);
@@ -1257,15 +1257,15 @@
                     <table class="positions-table" id="positionsTable">
                         <thead>
                             <tr>
-                                <th scope="col" onclick="sortPositionsTable('instrument')" style="cursor: pointer; user-select: none;">Instrument <span id="sortIcon-instrument">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('instrument')" style="cursor: pointer; user-select: none;">Instrument <span id="sortIcon-instrument"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('market_value')" style="cursor: pointer; user-select: none;">Market Value <span id="sortIcon-market_value">▼</span></th>
-                                <th scope="col" onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class">↕️</span></th>
-                                <th scope="col" onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight">↕️</span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1279,7 +1279,7 @@
 
                         const lotsCount = position.lots_count || 0;
                         const fragmentationBadge = lotsCount > 1 ?
-                            `<span style="display: inline-block; margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.4rem; background: #ef4444; color: white; border-radius: 3px; font-weight: 600;" title="${lotsCount} lots detected - Consider consolidation to reduce fees">⚠️ ${lotsCount} lots</span>` : '';
+                            `<span style="display: inline-block; margin-left: 0.5rem; font-size: 0.65rem; padding: 0.15rem 0.4rem; background: #ef4444; color: white; border-radius: 3px; font-weight: 600;" title="${lotsCount}lots detected - Consider consolidation to reduce fees">[Warning] ${lotsCount} lots</span>` : '';
 
                         return `
                                 <tr
@@ -1369,7 +1369,7 @@
                     if (header === column) {
                         icon.textContent = positionsSortState.ascending ? '▲' : '▼';
                     } else {
-                        icon.textContent = '↕️';
+                        icon.textContent = "Exchange";
                     }
                 }
             });
@@ -1504,7 +1504,7 @@
         function showNoDataState(message) {
             document.getElementById('mainContent').innerHTML = `
                 <div class="no-data">
-                    <h3>📂 No data available</h3>
+                    <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Folder" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#folder"></use></svg> No data available</h3>
                     <p>${message}</p>
                 </div>
             `;
@@ -1523,12 +1523,12 @@
             // Detect Manual source (Sources V2)
             if (bourseSource === 'manual_bourse') {
                 window.saxoSourceType = 'manual';
-                debugLogger.debug(`📝 Manual source detected: ${bourseSource}`);
+                debugLogger.debug(`Manual source detected: ${bourseSource}`);
             }
             // Detect API source (starts with 'api:')
             else if (bourseSource && bourseSource.startsWith('api:')) {
                 window.saxoSourceType = 'api';
-                debugLogger.debug(`🌐 API source detected: ${bourseSource}`);
+                debugLogger.debug(`API source detected: ${bourseSource}`);
             }
             // Detect CSV source (starts with 'saxo:')
             else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
@@ -1553,13 +1553,13 @@
                     if (source?.file_path) {
                         // Sources V1: specific file path provided
                         currentFileKey = source.file_path.split(/[/\\]/).pop();
-                        debugLogger.debug(`📄 Resolved file_key: ${currentFileKey}`);
+                        debugLogger.debug(`Resolved file_key: ${currentFileKey}`);
                     } else if (source) {
                         // Sources V2: generic source without specific file (backend auto-loads)
                         currentFileKey = null;
-                        debugLogger.debug(`📄 Using Sources V2 (backend will auto-load): ${key}`);
+                        debugLogger.debug(`Using Sources V2 (backend will auto-load): ${key}`);
                     } else {
-                        debugLogger.warn(`⚠️ Source not found: ${key}`);
+                        debugLogger.warn(`[Warning] Source not found: ${key}`);
                     }
                 } catch (err) {
                     debugLogger.warn('[Saxo Dashboard] Failed to resolve file_key:', err);
@@ -1568,12 +1568,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLogger.debug('🏦 Saxo Dashboard initialized');
+            debugLogger.debug("Saxo Dashboard initialized");
 
             // Initialize wealth context integration
             initWealthContextIntegration();
 
-            // ✅ FIX: Initialize currentFileKey from bourseSource BEFORE first load
+            //  FIX: Initialize currentFileKey from bourseSource BEFORE first load
             const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
             await resolveFileKeyFromSource(bourseSource);
 
@@ -1582,21 +1582,21 @@
 
             // Listen for Bourse source changes from WealthContextBar (with debounce)
             window.addEventListener('bourseSourceChanged', async (event) => {
-                debugLogger.debug('🔄 Bourse source changed:', event.detail);
+                debugLogger.debug("Bourse source changed:", event.detail);
 
                 // Invalidate all Saxo caches (critical for source switching)
                 const activeUser = localStorage.getItem('activeUser') || '';
                 Object.keys(localStorage).forEach(key => {
                     if (key.startsWith(`saxo_portfolio_${activeUser}_`)) {
                         localStorage.removeItem(key);
-                        debugLogger.debug(`🧹 Cleared cache: ${key}`);
+                        debugLogger.debug(`Cleared cache: ${key}`);
                     }
                 });
 
                 // Clear previous timeout to debounce rapid changes
                 if (sourceChangeTimeout) {
                     clearTimeout(sourceChangeTimeout);
-                    debugLogger.debug('⏱️ Debouncing source change...');
+                    debugLogger.debug("[Pending] Debouncing source change...");
                 }
 
                 // Debounce: wait 300ms before loading

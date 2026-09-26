@@ -386,18 +386,18 @@
         data-source="Real-time connectivity tests">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div>
-            <h3>📊 Global Status</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Global Status</h3>
             <div id="status-summary">Loading configuration...</div>
           </div>
           <div>
-            <button class="btn secondary small" onclick="resetToDefaults()">🔄 Reset</button>
+            <button class="btn secondary small" onclick="resetToDefaults()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Reset</button>
           </div>
         </div>
       </div>
 
       <!-- Quick Settings: options les plus utilisées -->
       <div class="card" data-tooltip="Most common quick settings" data-source="globalConfig">
-        <h3>⚙️ Quick Settings</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Quick Settings</h3>
         <div class="form-row">
           <div style="flex:1; min-width: 240px;">
             <label for="quick_data_source">Data source</label>
@@ -407,8 +407,8 @@
           <div style="flex:1; min-width: 240px;">
             <label for="quick_pricing">Pricing mode</label>
             <select id="quick_pricing" aria-label="Pricing mode">
-              <option value="local">🏠 Local</option>
-              <option value="auto">🚀 Auto</option>
+              <option value="local">Local</option>
+              <option value="auto">Auto</option>
             </select>
             <div class="help">Local = prices from data, Auto = market prices</div>
           </div>
@@ -431,9 +431,9 @@
           <div style="flex:1; min-width: 240px;">
             <label for="quick_theme">Theme</label>
             <select id="quick_theme" aria-label="Theme">
-              <option value="auto">🌓 Automatic</option>
-              <option value="light">☀️ Clair</option>
-              <option value="dark">🌙 Sombre</option>
+              <option value="auto">Automatic</option>
+              <option value="light">Clair</option>
+              <option value="dark">Sombre</option>
             </select>
           </div>
           <div style="flex:1; min-width: 240px;">
@@ -443,7 +443,7 @@
           </div>
         </div>
         <div style="display:flex; gap:8px; margin-top: 8px; align-items: center;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Changes saved automatically</span>
         </div>
       </div>
     </section>
@@ -453,17 +453,17 @@
       <div class="card"
         data-tooltip="Reference pricing and currency configuration for portfolio value calculations."
         data-source="CoinGecko, CoinGlass, or manual prices">
-        <h3>💰 Pricing & Currencies</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Pricing & Currencies</h3>
         <div class="form-group">
           <label>Pricing mode</label>
           <div class="radio-group">
             <div class="radio-option" onclick="selectPricing('local')">
               <input type="radio" name="pricing" value="local" id="pricing_local">
-              <label for="pricing_local">🏠 <strong>Local</strong> - Prices from data</label>
+              <label for="pricing_local"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Property" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#home"></use></svg> <strong>Local</strong> - Prices from data</label>
             </div>
             <div class="radio-option" onclick="selectPricing('auto')">
               <input type="radio" name="pricing" value="auto" id="pricing_auto">
-              <label for="pricing_auto">🚀 <strong>Auto</strong> - Prix automatiques</label>
+              <label for="pricing_auto"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> <strong>Auto</strong> - Prix automatiques</label>
             </div>
           </div>
           <div class="help">Local uses prices in your data, Auto fetches current prices via API.</div>
@@ -484,7 +484,7 @@
           </div>
         </div>
         <div style="margin-top: 12px;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Changes saved automatically</span>
         </div>
       </div>
     </section>
@@ -494,19 +494,19 @@
       <div class="card"
         data-tooltip="Secure API key management for exchanges and data services (encrypted local storage)."
         data-source="Secure local storage + API validation">
-        <h3>🔑 API Keys</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Key" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#key"></use></svg> API Keys</h3>
 
         <!-- Grid responsive pour les sections de clés API -->
         <div class="api-keys-grid">
 
         <!-- ========== DATA SOURCES CRYPTO ========== -->
         <div style="margin-top: 24px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📊 Crypto Data Sources</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Crypto Data Sources</h4>
 
           <!-- CoinTracking API Keys (groupées ensemble) -->
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <div style="margin-bottom: 12px;">
-              <strong style="color: var(--brand-primary);">📈 CoinTracking API</strong>
+              <strong style="color: var(--brand-primary);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> CoinTracking API</strong>
               <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(API Key + Secret requis ensemble)</span>
             </div>
 
@@ -515,7 +515,7 @@
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="password" id="cointracking_api_key" placeholder="Required for API source" style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_key')"
-                  style="min-width: 60px;">👁️</button>
+                  style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                 <span id="cointracking_key_status" class="status-indicator status-warning"
                   style="font-size: 10px;">Empty</span>
               </div>
@@ -528,7 +528,7 @@
                 <input type="password" id="cointracking_api_secret" placeholder="Required for API source"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('cointracking_api_secret')"
-                  style="min-width: 60px;">👁️</button>
+                  style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                 <span id="cointracking_secret_status" class="status-indicator status-warning"
                   style="font-size: 10px;">Empty</span>
               </div>
@@ -539,7 +539,7 @@
 
         <!-- ========== MARKET DATA ========== -->
         <div style="margin-top: 32px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">📉 Market Data</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Decline" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-down"></use></svg> Market Data</h4>
 
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <div class="form-group" style="margin-bottom: 12px;">
@@ -548,7 +548,7 @@
                 <input type="password" id="coingecko_api_key" placeholder="Optional - for more requests"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('coingecko_api_key')"
-                  style="min-width: 60px;">👁️</button>
+                  style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                 <span id="coingecko_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
               <div class="help">CoinGecko Demo API key for automatic classification and real-time crypto prices.</div>
@@ -560,7 +560,7 @@
                 <input type="password" id="fred_api_key" placeholder="Key for historical Bitcoin data"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('fred_api_key')"
-                  style="min-width: 60px;">👁️</button>
+                  style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                 <span id="fred_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
               <div class="help">Free FRED API key for complete Bitcoin history since 2014 (vs 365d CoinGecko).</div>
@@ -570,23 +570,23 @@
 
         <!-- ========== AI CHAT ASSISTANTS ========== -->
         <div style="margin-top: 32px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);">🤖 AI Assistants (Choose one)</h4>
+          <h4 style="margin: 0 0 16px 0; font-size: 15px; font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> AI Assistants (Choose one)</h4>
 
           <!-- AI Chat Keys (groupées ensemble comme alternatives) -->
           <div style="background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
             <div style="margin-bottom: 12px;">
-              <strong style="color: var(--brand-primary);">💬 AI Chat Assistants</strong>
+              <strong style="color: var(--brand-primary);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Comment" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chat-bubble-left-right"></use></svg> AI Chat Assistants</strong>
               <span style="color: var(--theme-text-muted); font-size: 12px; margin-left: 8px;">(Choose one or more)</span>
             </div>
 
             <!-- Groq API Key (FREE) -->
             <div class="form-group" style="margin-bottom: 12px;">
-              <label>🤖 Groq API Key (Free - Recommended)</label>
+              <label><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Groq API Key (Free - Recommended)</label>
               <div style="display: flex; gap: 8px; align-items: center;">
                 <input type="password" id="groq_api_key" placeholder="gsk_... (get your key at console.groq.com)"
                   style="flex: 1;">
                 <button class="btn small secondary" onclick="toggleApiKeyVisibility('groq_api_key')"
-                  style="min-width: 60px;">👁️</button>
+                  style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                 <span id="groq_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
               </div>
               <div class="help">Free Groq API key for AI chat (Llama 3.3 70B). <a href="https://console.groq.com/keys" target="_blank" style="color: var(--brand-primary);">Get a free key →</a></div>
@@ -596,7 +596,7 @@
             <div style="margin: 20px 0; padding-top: 16px; border-top: 2px solid var(--theme-border);">
               <button id="toggle-premium-keys-btn" class="btn secondary" onclick="togglePremiumKeys()"
                 style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 16px;">
-                <span>💎 API Keys Premium (Payantes)</span>
+                <span><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Asset" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#circle-stack"></use></svg> API Keys Premium (Payantes)</span>
                 <span id="premium-keys-icon">▼</span>
               </button>
             </div>
@@ -604,36 +604,36 @@
             <!-- Premium API Keys (Collapsible, closed by default) -->
             <div id="premium-keys-section" style="display: none; margin-top: 16px;">
               <div class="form-group" style="margin-bottom: 12px;">
-                <label>🧠 Claude API Key (Premium - Plus intelligent)</label>
+                <label><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Claude API Key (Premium - Plus intelligent)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <input type="password" id="claude_api_key" placeholder="sk-ant-... (get your key at console.anthropic.com)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('claude_api_key')"
-                    style="min-width: 60px;">👁️</button>
+                    style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                   <span id="claude_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
                 <div class="help">Claude API key (paid) for premium AI chat (Sonnet 3.5, more intelligent). <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
               </div>
 
               <div class="form-group" style="margin-bottom: 12px;">
-                <label>🚀 Grok API Key (xAI - Premium)</label>
+                <label><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Grok API Key (xAI - Premium)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <input type="password" id="grok_api_key" placeholder="xai-... (get your key at console.x.ai)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('grok_api_key')"
-                    style="min-width: 60px;">👁️</button>
+                    style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                   <span id="grok_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
                 <div class="help">Grok API key (xAI) for AI chat (Grok Beta). <a href="https://console.x.ai" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
               </div>
 
               <div class="form-group" style="margin-bottom: 0;">
-                <label>🤖 OpenAI API Key (Premium - GPT)</label>
+                <label><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> OpenAI API Key (Premium - GPT)</label>
                 <div style="display: flex; gap: 8px; align-items: center;">
                   <input type="password" id="openai_api_key" placeholder="sk-... (get your key at platform.openai.com)"
                     style="flex: 1;">
                   <button class="btn small secondary" onclick="toggleApiKeyVisibility('openai_api_key')"
-                    style="min-width: 60px;">👁️</button>
+                    style="min-width: 60px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg></button>
                   <span id="openai_status" class="status-indicator status-warning" style="font-size: 10px;">Empty</span>
                 </div>
                 <div class="help">OpenAI API key (paid) for AI chat (GPT-4o). <a href="https://platform.openai.com/api-keys" target="_blank" style="color: var(--brand-primary);">Get a key →</a></div>
@@ -646,7 +646,7 @@
 
         <!-- SaxoBank OAuth Section -->
         <div class="form-group" style="margin-top: 32px; padding-top: 24px; border-top: 2px solid var(--theme-border);">
-          <h3 style="margin-bottom: 16px;">🏦 SaxoBank OpenAPI (OAuth2)</h3>
+          <h3 style="margin-bottom: 16px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Bank" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-library"></use></svg> SaxoBank OpenAPI (OAuth2)</h3>
 
           <div id="saxo-status-banner" class="status-indicator" style="margin-bottom: 16px;">
             <!-- Dynamically populated by JavaScript -->
@@ -655,13 +655,13 @@
 
           <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
             <button id="saxo-connect-btn" class="btn" onclick="initSaxoLogin()">
-              🔐 Connect to Saxo
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg> Connect to Saxo
             </button>
             <button id="saxo-disconnect-btn" class="btn danger" onclick="disconnectSaxo()" style="display: none;">
-              🔓 Disconnect
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Unlocked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-open"></use></svg> Disconnect
             </button>
             <button id="saxo-refresh-btn" class="btn secondary" onclick="refreshSaxoToken()" style="display: none;">
-              🔄 Refresh
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh
             </button>
           </div>
 
@@ -672,21 +672,21 @@
           </div>
 
           <div class="help" style="margin-top: 8px;">
-            ⚠️ Reconnection required every 24h (Self-Developer account limitation)
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Reconnection required every 24h (Self-Developer account limitation)
           </div>
         </div>
 
         <!-- Actions spécifiques API Keys -->
         <div style="display:flex; flex-direction: column; gap:8px; margin: 8px 0 12px 0;">
-          <button class="btn" onclick="saveAllSettings()">💾 Save API Keys</button>
+          <button class="btn" onclick="saveAllSettings()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Save" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Save API Keys</button>
           <span style="color: var(--theme-text-muted); font-size: 13px;">
-            ⚠️ API keys require manual save for security reasons
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> API keys require manual save for security reasons
           </span>
         </div>
 
 
         <div class="test-section">
-          <button class="btn secondary small" onclick="testApiKeys()">🧪 Tester les APIs</button>
+          <button class="btn secondary small" onclick="testApiKeys()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Tester les APIs</button>
           <div id="api-keys-test"></div>
         </div>
       </div>
@@ -700,22 +700,22 @@
       <div class="card"
         data-tooltip="User interface customization: themes, language, number format and shortcuts."
         data-source="Local user preferences">
-        <h3>🎨 Interface & Preferences</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Theme" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#swatch"></use></svg> Interface & Preferences</h3>
 
         <div class="form-group">
           <label>Interface theme</label>
           <div class="radio-group">
             <div class="radio-option" onclick="selectTheme('auto')">
               <input type="radio" name="theme" value="auto" id="theme_auto">
-              <label for="theme_auto">🌓 <strong>Automatic</strong> - Follows system preferences</label>
+              <label for="theme_auto"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Dark" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#moon"></use></svg> <strong>Automatic</strong> - Follows system preferences</label>
             </div>
             <div class="radio-option" onclick="selectTheme('light')">
               <input type="radio" name="theme" value="light" id="theme_light">
-              <label for="theme_light">☀️ <strong>Clair</strong> - Mode jour</label>
+              <label for="theme_light"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Light" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sun"></use></svg> <strong>Clair</strong> - Mode jour</label>
             </div>
             <div class="radio-option" onclick="selectTheme('dark')">
               <input type="radio" name="theme" value="dark" id="theme_dark">
-              <label for="theme_dark">🌙 <strong>Sombre</strong> - Mode nuit</label>
+              <label for="theme_dark"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Dark" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#moon"></use></svg> <strong>Sombre</strong> - Mode nuit</label>
             </div>
           </div>
           <div class="help">The theme applies automatically on all pages of the application.</div>
@@ -794,7 +794,7 @@
           </div>
         </div>
         <div style="margin-top: 12px;">
-          <span style="color: var(--theme-text-muted); font-size: 13px;">✓ Changes saved automatically</span>
+          <span style="color: var(--theme-text-muted); font-size: 13px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Changes saved automatically</span>
         </div>
       </div>
     </section>
@@ -803,7 +803,7 @@
 <section class="tab-panel" id="tab-sources">
   <div class="card" data-tooltip="Manage your data sources by category (Crypto, Stock)"
     data-source="Modular sources system V2">
-    <h3>📊 Data Sources</h3>
+    <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Data Sources</h3>
     <div class="help" style="margin-bottom: 16px;">
       Manage your crypto and stock sources independently. Each category can use a different source (manual entry, CSV import, real-time API).
     </div>
@@ -2110,11 +2110,11 @@
       <div class="card"
         data-tooltip="User configuration backup and restore."
         data-source="Internal system functions">
-        <h3>💾 Configuration & Data</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Save" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Configuration & Data</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-          <button class="btn secondary" onclick="exportSettings()">📤 Export Config</button>
-          <button class="btn secondary" onclick="importSettings()">📥 Import Config</button>
-          <button class="btn danger" onclick="resetAllData()">⚠️ Full Reset</button>
+          <button class="btn secondary" onclick="exportSettings()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Upload" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up-tray"></use></svg> Export Config</button>
+          <button class="btn secondary" onclick="importSettings()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Import Config</button>
+          <button class="btn danger" onclick="resetAllData()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Full Reset</button>
         </div>
       </div>
 
@@ -2122,11 +2122,11 @@
       <div class="card"
         data-tooltip="Advanced local and backend cache management to optimize performance."
         data-source="Redis + LocalStorage">
-        <h3>🗄️ Cache Management</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Archive" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#archive-box"></use></svg> Cache Management</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-          <button class="btn secondary" onclick="clearLocalCache()">🗑️ Clear Local Cache</button>
-          <button class="btn secondary" onclick="clearBackendCache()">🔄 Clear Backend Cache</button>
-          <button class="btn secondary" onclick="showCacheStats()">📊 Cache Statistics</button>
+          <button class="btn secondary" onclick="clearLocalCache()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Clear Local Cache</button>
+          <button class="btn secondary" onclick="clearBackendCache()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Clear Backend Cache</button>
+          <button class="btn secondary" onclick="showCacheStats()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Cache Statistics</button>
         </div>
         <div id="cache-stats-display" style="font-size: 13px; color: var(--theme-text-muted);"></div>
       </div>
@@ -2135,11 +2135,11 @@
       <div class="card"
         data-tooltip="System log viewer and network diagnostics."
         data-source="Logs backend + API health checks">
-        <h3>📋 Logs & Diagnostics</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Logs & Diagnostics</h3>
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px;">
-          <button class="btn secondary" onclick="viewRecentLogs()">👁️ View Recent Logs</button>
-          <button class="btn secondary" onclick="downloadLogs()">📥 Download Logs</button>
-          <button class="btn secondary" onclick="pingBackend()">🏓 Latency Test</button>
+          <button class="btn secondary" onclick="viewRecentLogs()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg> View Recent Logs</button>
+          <button class="btn secondary" onclick="downloadLogs()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Download Logs</button>
+          <button class="btn secondary" onclick="pingBackend()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Ping" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#signal"></use></svg> Latency Test</button>
         </div>
         <div id="logs-display" style="max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 12px; background: var(--theme-surface-elevated); padding: 8px; border-radius: 6px; display: none;"></div>
         <div id="ping-results" style="margin-top: 8px; font-size: 13px;"></div>
@@ -2149,16 +2149,16 @@
       <div class="card"
         data-tooltip="Individual component tests for precise diagnostics."
         data-source="Tests API granulaires">
-        <h3>🔍 Detailed Diagnostics</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Detailed Diagnostics</h3>
         <div class="test-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 12px;">
-          <button class="btn small secondary" onclick="testRedis()">🔴 Redis</button>
-          <button class="btn small secondary" onclick="testMLModels()">🤖 ML Models</button>
-          <button class="btn small secondary" onclick="testRiskAPI()">🛡️ Risk API</button>
-          <button class="btn small secondary" onclick="testAlerts()">🔔 Alerts</button>
-          <button class="btn small secondary" onclick="testSaxo()">📊 Saxo</button>
-          <button class="btn small secondary" onclick="testWealth()">💰 Wealth</button>
-          <button class="btn small secondary" onclick="testSources()">📁 Sources</button>
-          <button class="btn small secondary" onclick="testGovernance()">⚙️ Governance</button>
+          <button class="btn small secondary" onclick="testRedis()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Negative" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Redis</button>
+          <button class="btn small secondary" onclick="testMLModels()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Models</button>
+          <button class="btn small secondary" onclick="testRiskAPI()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk API</button>
+          <button class="btn small secondary" onclick="testAlerts()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Notifications" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bell"></use></svg> Alerts</button>
+          <button class="btn small secondary" onclick="testSaxo()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Saxo</button>
+          <button class="btn small secondary" onclick="testWealth()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Wealth</button>
+          <button class="btn small secondary" onclick="testSources()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Folder" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#folder"></use></svg> Sources</button>
+          <button class="btn small secondary" onclick="testGovernance()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Governance</button>
         </div>
         <div id="detailed-test-results" class="test-result" style="margin-top: 12px;"></div>
       </div>
@@ -2167,11 +2167,11 @@
       <div class="card"
         data-tooltip="Global test of all critical system components."
         data-source="Tests API complets">
-        <h3>🧪 Complete System Test</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Complete System Test</h3>
         <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
           Runs a complete battery of tests covering all components: Backend, Redis, ML, Risk, Alerts, Saxo, Wealth, Sources, Governance, and more.
         </p>
-        <button class="btn" onclick="runFullSystemTest()">🚀 Lancer Test Complet</button>
+        <button class="btn" onclick="runFullSystemTest()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Lancer Test Complet</button>
         <div id="full-system-test"></div>
       </div>
 
@@ -2179,12 +2179,12 @@
       <div class="card" id="admin-quick-access" style="display: none;"
         data-tooltip="Quick access to admin dashboard (administrators only)."
         data-source="RBAC - Admin role required">
-        <h3>👑 Administration</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Premium" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#star"></use></svg> Administration</h3>
         <p style="font-size: 13px; color: var(--theme-text-muted); margin-bottom: 12px;">
           Quick access to system administration functions.
         </p>
         <button class="btn" onclick="location.href='admin-dashboard.html'">
-          🎛️ Open Admin Dashboard
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg> Open Admin Dashboard
         </button>
       </div>
 
@@ -2217,7 +2217,7 @@
       if (status === 'error' && window.opener) {
         // Connection failed in popup
         const message = urlParams.get('message') || 'Unknown error';
-        alert('❌ OAuth Error: ' + decodeURIComponent(message));
+        alert("[Error] OAuth Error: " + decodeURIComponent(message));
         window.close();
         return;
       }
@@ -2279,7 +2279,7 @@
         if (connectionState === 'connected') {
           // Connected state
           statusBanner.className = 'status-indicator status-ok';
-          statusText.textContent = '✅ Connected to Saxo Bank API';
+          statusText.textContent = "Connected to Saxo Bank API";
 
           connectBtn.style.display = 'none';
           disconnectBtn.style.display = 'inline-block';
@@ -2303,7 +2303,7 @@
 
           // Afficher comme déconnecté
           statusBanner.className = 'status-indicator status-warning';
-          statusText.textContent = '⚠️ Session expired - Please reconnect';
+          statusText.textContent = "[Warning] Session expired - Please reconnect";
 
           connectBtn.style.display = 'inline-block';
           disconnectBtn.style.display = 'none';  // Déjà déconnecté
@@ -2312,7 +2312,7 @@
         } else {
           // Disconnected state (no tokens)
           statusBanner.className = 'status-indicator status-warning';
-          statusText.textContent = '⚠️ Not connected';
+          statusText.textContent = "[Warning] Not connected";
 
           connectBtn.style.display = 'inline-block';
           disconnectBtn.style.display = 'none';
@@ -2324,7 +2324,7 @@
         const statusBanner = document.getElementById('saxo-status-banner');
         const statusText = document.getElementById('saxo-status-text');
         statusBanner.className = 'status-indicator status-error';
-        statusText.textContent = '❌ Error retrieving status';
+        statusText.textContent = "Error retrieving status";
       }
     }
 
@@ -2359,13 +2359,13 @@
             await updateSaxoOAuthStatus();
             const banner = document.getElementById('saxo-status-banner');
             if (banner.className.includes('status-ok')) {
-              alert('✅ Saxo connection successful!');
+              alert("[OK] Saxo connection successful!");
             }
           }
         }, 2000);
       } catch (error) {
         console.error('Error initiating Saxo login:', error);
-        alert('❌ Error connecting to Saxo: ' + error.message);
+        alert("Error connecting to Saxo: " + error.message);
       }
     }
 
@@ -2385,17 +2385,17 @@
         await updateSaxoOAuthStatus();
 
         if (response.ok) {
-          alert('✅ Successfully disconnected');
+          alert("[OK] Successfully disconnected");
         } else {
           // Disconnect endpoint is now graceful, but show warning if unexpected error
           console.warn('Disconnect returned non-ok status, but state cleared');
-          alert('⚠️ Tokens deleted (session may have already expired)');
+          alert("[Warning] Tokens deleted (session may have already expired)");
         }
       } catch (error) {
         console.error('Error disconnecting from Saxo:', error);
         // Still try to update status
         await updateSaxoOAuthStatus();
-        alert('⚠️ Network error, but local tokens removed');
+        alert("[Warning] Network error, but local tokens removed");
       }
     }
 
@@ -2410,7 +2410,7 @@
         if (!response.ok) {
           const data = await response.json();
           if (response.status === 401) {
-            alert('⚠️ Token expired - please reconnect');
+            alert("[Warning] Token expired - please reconnect");
             await updateSaxoOAuthStatus();
             return;
           }
@@ -2418,10 +2418,10 @@
         }
 
         await updateSaxoOAuthStatus();
-        alert('✅ Token refreshed successfully');
+        alert("[OK] Token refreshed successfully");
       } catch (error) {
         console.error('Error refreshing Saxo token:', error);
-        alert('❌ Error refreshing: ' + error.message);
+        alert("Error refreshing: " + error.message);
       }
     }
 
@@ -2447,11 +2447,11 @@
         if (container) {
           container.innerHTML = `
             <div class="error-state" style="text-align: center; padding: 40px 20px; color: var(--danger);">
-              <div style="font-size: 48px; margin-bottom: 12px;">❌</div>
+              <div style="font-size: 48px; margin-bottom: 12px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg></div>
               <div style="font-size: 16px; font-weight: 600;">Loading Error</div>
               <div style="font-size: 13px; margin-top: 8px; color: var(--theme-text-muted);">${error.message}</div>
               <button class="btn secondary" onclick="initializeSourcesV2()" style="margin-top: 16px;">
-                🔄 Retry
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry
               </button>
             </div>
           `;

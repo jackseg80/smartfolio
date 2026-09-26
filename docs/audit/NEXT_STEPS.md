@@ -1,18 +1,18 @@
-# 🚀 Prochaines Étapes - Audit SmartFolio
+# Prochaines Étapes - Audit SmartFolio
 
 **Dernière mise à jour:** 10 novembre 2025
 **État actuel:** 95% audit complété, projet prêt production
 
 ---
 
-## 📊 CONTEXTE RAPIDE
+## CONTEXTE RAPIDE
 
 ### **Ce qui a été fait (Jours 1-2):**
-✅ 5/5 bloqueurs production résolus (100%)
-✅ Conformité CLAUDE.md: 90% (objectif 85%)
-✅ Score sécurité: 8.5/10 (objectif 8/10)
-✅ Tests BalanceService: 18 tests, 66% coverage
-✅ Multi-tenant: 14 endpoints migrés
+[OK] 5/5 bloqueurs production résolus (100%)
+[OK] Conformité CLAUDE.md: 90% (objectif 85%)
+[OK] Score sécurité: 8.5/10 (objectif 8/10)
+[OK] Tests BalanceService: 18 tests, 66% coverage
+[OK] Multi-tenant: 14 endpoints migrés
 
 **Commits clés:**
 - `db88466` - Tests BalanceService + pytest config
@@ -28,9 +28,9 @@
 
 ---
 
-## 🎯 OPTIONS DISPONIBLES
+## OPTIONS DISPONIBLES
 
-### **Option A: Validation & Déploiement** ⭐ RECOMMANDÉ
+### **Option A: Validation & Déploiement**  RECOMMANDÉ
 
 **Action immédiate (5 min):**
 1. Redémarrer serveur (fix `effective_user` appliqué)
@@ -96,10 +96,10 @@ grep -r "TODO:" --include="*.py" --include="*.js" | grep -i "critical\|blocker\|
 
 **Migration pattern:**
 ```python
-# ❌ AVANT
+# AVANT
 return {"ok": True, "data": items}
 
-# ✅ APRÈS
+# APRÈS
 from api.utils import success_response
 return success_response(items, meta={"count": len(items)})
 ```
@@ -120,7 +120,7 @@ return success_response(items, meta={"count": len(items)})
 
 ---
 
-## 🔧 PROMPT DE REPRISE
+## PROMPT DE REPRISE
 
 **Copiez-collez ceci dans une nouvelle discussion Claude Code:**
 
@@ -129,10 +129,10 @@ Reprendre audit de sécurité SmartFolio après commit 1be7e75 (10 nov 2025).
 
 **Contexte:**
 Session précédente a complété Jours 1-2 de l'audit:
-- ✅ 5/5 bloqueurs production résolus
-- ✅ Conformité CLAUDE.md: 90% (objectif 85% dépassé)
-- ✅ Tests BalanceService: 18 tests, 66% coverage
-- ✅ Multi-tenant: 14 endpoints migrés
+- [OK] 5/5 bloqueurs production résolus
+- [OK] Conformité CLAUDE.md: 90% (objectif 85% dépassé)
+- [OK] Tests BalanceService: 18 tests, 66% coverage
+- [OK] Multi-tenant: 14 endpoints migrés
 
 **État actuel:**
 - Projet PRÊT PRODUCTION (score sécurité 8.5/10)
@@ -165,7 +165,7 @@ Session précédente a complété Jours 1-2 de l'audit:
 
 ---
 
-## 📌 NOTES IMPORTANTES
+## NOTES IMPORTANTES
 
 ### **AVANT de continuer:**
 
@@ -189,7 +189,7 @@ pytest tests/unit/test_balance_service.py -v
 
 ### **Convention CLAUDE.md à respecter:**
 
-✅ **Multi-tenant OBLIGATOIRE:**
+[OK] **Multi-tenant OBLIGATOIRE:**
 ```python
 from api.deps import get_active_user
 
@@ -198,11 +198,11 @@ async def endpoint(user: str = Depends(get_active_user)):
     # TOUJOURS utiliser user, JAMAIS Query("demo")
 ```
 
-✅ **Pas de --reload:**
+[OK] **Pas de --reload:**
 - Après modifs backend → restart manuel serveur
 - Docs doivent refléter cette convention
 
-✅ **Response formatters (si Option C):**
+[OK] **Response formatters (si Option C):**
 ```python
 from api.utils import success_response, error_response
 
@@ -212,7 +212,7 @@ return error_response("Error message", code=400)
 
 ---
 
-## 🎓 GUIDE RAPIDE CLAUDE CODE
+## GUIDE RAPIDE CLAUDE CODE
 
 ### **Lire contexte projet:**
 ```
@@ -243,7 +243,7 @@ grep -rn "Query.*demo" api/ --include="*.py"
 
 ---
 
-## ✅ CHECKLIST AVANT COMMIT
+## CHECKLIST AVANT COMMIT
 
 Avant tout commit de la suite:
 
@@ -259,29 +259,29 @@ Avant tout commit de la suite:
 
   Détails...
 
-  🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   Generated with [Claude Code](https://claude.com/claude-code)
 
   Co-Authored-By: Claude <noreply@anthropic.com>
   ```
 
 ---
 
-## 🚨 RAPPELS CRITIQUES
+## RAPPELS CRITIQUES
 
 ### **NE PAS:**
-- ❌ Utiliser `Query("demo")` dans nouveaux endpoints
-- ❌ Ajouter `--reload` flag dans commandes uvicorn
-- ❌ Inverser Risk Score sans commentaires (100 - robustness_score)
-- ❌ Committer `.env` ou clés API
-- ❌ Modifier tests BalanceService (déjà validés)
+- [Error] Utiliser `Query("demo")` dans nouveaux endpoints
+- [Error] Ajouter `--reload` flag dans commandes uvicorn
+- [Error] Inverser Risk Score sans commentaires (100 - robustness_score)
+- [Error] Committer `.env` ou clés API
+- [Error] Modifier tests BalanceService (déjà validés)
 
 ### **TOUJOURS:**
-- ✅ Utiliser `Depends(get_active_user)` pour user_id
-- ✅ Demander confirmation avant gros changements
-- ✅ Tester après modifications backend
-- ✅ Documenter décisions dans commit messages
+- [OK] Utiliser `Depends(get_active_user)` pour user_id
+- [OK] Demander confirmation avant gros changements
+- [OK] Tester après modifications backend
+- [OK] Documenter décisions dans commit messages
 
 ---
 
-**Document préparé pour reprise facile par Claude Code Agent** 🤖
+**Document préparé pour reprise facile par Claude Code Agent**
 **Date limite recommandée:** Semaine 2 (optionnel - projet déjà prêt!)

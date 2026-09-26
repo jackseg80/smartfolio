@@ -3,10 +3,10 @@
 ## Objectif
 
 Moderniser `static/saxo-dashboard.html` pour :
-- ✅ Supprimer le sélecteur de portfolio local redondant
-- ✅ Aligner sur le pattern global WealthContextBar
-- ✅ Assurer la cohérence UX avec le reste du projet (CoinTracking, etc.)
-- ✅ Réduire ~100 lignes de code obsolète
+- [OK] Supprimer le sélecteur de portfolio local redondant
+- [OK] Aligner sur le pattern global WealthContextBar
+- [OK] Assurer la cohérence UX avec le reste du projet (CoinTracking, etc.)
+- [OK] Réduire ~100 lignes de code obsolète
 
 ## Architecture Avant/Après
 
@@ -16,7 +16,7 @@ Moderniser `static/saxo-dashboard.html` pour :
 <div class="portfolio-selector">
     <label for="portfolioSelect">Portfolio:</label>
     <select id="portfolioSelect" onchange="loadPortfolio()">...</select>
-    <button onclick="refreshPortfolios()">🔄</button>
+    <button onclick="refreshPortfolios()"></button>
 </div>
 ```
 
@@ -30,11 +30,11 @@ Moderniser `static/saxo-dashboard.html` pour :
 <!-- Bannières info + lien vers settings -->
 <div style="display: flex; align-items: center; gap: 1rem;">
     <div class="sources-banner">
-        <span>📊 Source active: <strong id="current-source-name">Chargement...</strong></span>
+        <span> Source active: <strong id="current-source-name">Chargement...</strong></span>
         <a href="settings.html#tab-sources">Gérer Sources →</a>
     </div>
     <div class="sources-banner">
-        <span>📊 Fraîcheur — <span id="saxo-staleness-main">...</span></span>
+        <span> Fraîcheur — <span id="saxo-staleness-main">...</span></span>
     </div>
 </div>
 ```
@@ -88,22 +88,22 @@ async function loadCurrentSaxoData() {
 ```
 
 **Points clés** :
-- ✅ Utilise `/api/saxo/portfolios/{id}` (données complètes avec métadonnées)
-- ❌ N'utilise PAS `/api/saxo/positions` (données minimales sans name/symbol/asset_class)
+- [OK] Utilise `/api/saxo/portfolios/{id}` (données complètes avec métadonnées)
+- [Error] N'utilise PAS `/api/saxo/positions` (données minimales sans name/symbol/asset_class)
 
 ### 3. Écoute Event WealthContextBar
 
 **Ajouté dans DOMContentLoaded** :
 ```javascript
 window.addEventListener('bourseSourceChanged', (event) => {
-    debugLogger.debug('🔄 Bourse source changed:', event.detail);
+    debugLogger.debug(' Bourse source changed:', event.detail);
     loadCurrentSaxoData(); // Reload auto des données
 });
 ```
 
 **Workflow utilisateur** :
 1. User clique menu "Bourse:" dans WealthContextBar
-2. Sélectionne une nouvelle source (ex: `📄 Positions 23 sept.csv`)
+2. Sélectionne une nouvelle source (ex: ` Positions 23 sept.csv`)
 3. WealthContextBar émet event `bourseSourceChanged`
 4. `saxo-dashboard.html` écoute et recharge automatiquement les données
 
@@ -133,8 +133,8 @@ async def no_cache_dev_middleware(request: Request, call_next):
 ```
 
 **Impact** :
-- ✅ Changes visibles immédiatement en développement
-- ✅ Pas d'impact en production (middleware actif uniquement si DEBUG=True)
+- [OK] Changes visibles immédiatement en développement
+- [OK] Pas d'impact en production (middleware actif uniquement si DEBUG=True)
 
 ### 5. Fix Affichage Données
 
@@ -156,8 +156,8 @@ async def no_cache_dev_middleware(request: Request, call_next):
 | `/api/saxo/portfolios/{id}` | Full Portfolio | name, symbol, asset_class, market_value_usd, + tous les champs |
 
 **Résultat** :
-- ✅ Tous les champs affichés correctement
-- ✅ Valeurs, noms, symboles, pourcentages corrects
+- [OK] Tous les champs affichés correctement
+- [OK] Valeurs, noms, symboles, pourcentages corrects
 
 ## Tests
 
@@ -166,38 +166,38 @@ async def no_cache_dev_middleware(request: Request, call_next):
 1. Démarrer le serveur : `uvicorn api.main:app --port 8080`
 2. Ouvrir `http://localhost:8080/static/saxo-dashboard.html`
 3. Vérifier :
-   - ✅ Bannière "Source active" affiche la source correcte
-   - ✅ Données du portfolio affichées (noms, symboles, valeurs, %)
-   - ✅ Pas de sélecteur de portfolio local
+   - [OK] Bannière "Source active" affiche la source correcte
+   - [OK] Données du portfolio affichées (noms, symboles, valeurs, %)
+   - [OK] Pas de sélecteur de portfolio local
 4. Changer source via WealthContextBar (menu "Bourse:")
 5. Vérifier :
-   - ✅ Page se recharge automatiquement
-   - ✅ Nouvelles données affichées instantanément
+   - [OK] Page se recharge automatiquement
+   - [OK] Nouvelles données affichées instantanément
 
 ### Test Cache (Développement)
 
 1. Modifier `saxo-dashboard.html`
 2. Recharger la page (Ctrl+R, pas F5)
 3. Vérifier :
-   - ✅ Changes visibles immédiatement
-   - ✅ Pas besoin de hard refresh (F5)
+   - [OK] Changes visibles immédiatement
+   - [OK] Pas besoin de hard refresh (F5)
 
 ## Bénéfices
 
 ### Cohérence Architecture
-- ✅ Alignement total avec pattern CoinTracking
-- ✅ WealthContextBar = source unique de vérité pour sélection
-- ✅ Event-driven architecture cohérente
+- [OK] Alignement total avec pattern CoinTracking
+- [OK] WealthContextBar = source unique de vérité pour sélection
+- [OK] Event-driven architecture cohérente
 
 ### Maintenabilité
-- ✅ ~100 lignes de code supprimées
-- ✅ Logique simplifiée (1 fonction au lieu de 2)
-- ✅ Moins de duplication = moins de bugs
+- [OK] ~100 lignes de code supprimées
+- [OK] Logique simplifiée (1 fonction au lieu de 2)
+- [OK] Moins de duplication = moins de bugs
 
 ### UX
-- ✅ Sélection de source cohérente dans tout le projet
-- ✅ Changement de source instantané
-- ✅ Pas de confusion avec 2 sélecteurs différents
+- [OK] Sélection de source cohérente dans tout le projet
+- [OK] Changement de source instantané
+- [OK] Pas de confusion avec 2 sélecteurs différents
 
 ## Fichiers Modifiés
 
@@ -215,7 +215,7 @@ docs/SAXO_DASHBOARD_MODERNIZATION.md  # Documentation (ce fichier)
 
 ## Statut
 
-✅ **COMPLETE** (October 2025)
+ **COMPLETE** (October 2025)
 
 - [x] Suppression sélecteur local
 - [x] Intégration WealthContextBar

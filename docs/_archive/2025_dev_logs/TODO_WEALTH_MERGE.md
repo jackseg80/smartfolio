@@ -4,11 +4,11 @@ But : unifier Bourse/Banques avec Crypto, tout en conservant des **vues dédiée
 
 ## État actuel (Phase 2 complétée - Sept 2025)
 - Crypto : OK (analytics-unified, risk-dashboard, rebalance)
-- Bourse : **🏦 Phase 2 terminée** - Tuile Dashboard + Upload Settings + pages dédiées stables
+- Bourse : ** Phase 2 terminée** - Tuile Dashboard + Upload Settings + pages dédiées stables
 - Banques : non intégré
 - Wealth (`/api/wealth/*`) : endpoints disponibles, modèles créés, lecture legacy active
 
-## Phase 2 Accomplie ✅
+## Phase 2 Accomplie
 
 ### 1) Contrats communs (Backend)
 - [x] Créer `models/wealth.py` : `AccountModel`, `InstrumentModel`, `PositionModel`, `PricePoint`, `ProposedTrade`

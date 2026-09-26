@@ -1,35 +1,35 @@
-# 📊 Audit Dette Technique - SmartFolio
+# Audit Dette Technique - SmartFolio
 
 **Date:** 9 novembre 2025
 **Note:** 7/10 - Bon avec progrès excellent
-**Tendance:** ⬆️ Amélioration continue
+**Tendance:**  Amélioration continue
 
 ---
 
-## 📈 RÉSUMÉ EXÉCUTIF
+## RÉSUMÉ EXÉCUTIF
 
 **TODOs Actifs:** 8 (vs 26 en Oct 2025) = **-67% réduction**
 
 **Breakdown:**
-- 🔴 0 items CRITICAL (100% résolu)
-- 🟠 0 items HIGH (100% résolu)
-- 🟡 2 items MEDIUM
-- 🟢 6 items LOW (feature backlog)
+- [Negative] 0 items CRITICAL (100% résolu)
+- [Pending] 0 items HIGH (100% résolu)
+- [Pending] 2 items MEDIUM
+- [Positive] 6 items LOW (feature backlog)
 
 **Effort total restant:** ~21 semaines (5 mois) avec 1 dev
 
 ---
 
-## 🎯 VUE D'ENSEMBLE
+## VUE D'ENSEMBLE
 
-### Progrès Oct-Nov 2025 ✅
+### Progrès Oct-Nov 2025
 
 **Nettoyage réalisé:**
-- ✅ Supprimé 3,650+ lignes code obsolète
-- ✅ Éliminé 9 tests vides
-- ✅ Archivé 17 session notes
-- ✅ Complété 3 items MEDIUM
-- ✅ Complété 2 items HIGH
+- [OK] Supprimé 3,650+ lignes code obsolète
+- [OK] Éliminé 9 tests vides
+- [OK] Archivé 17 session notes
+- [OK] Complété 3 items MEDIUM
+- [OK] Complété 2 items HIGH
 
 **Fichiers supprimés:**
 - `InteractiveDashboard.js` (1,229 lignes)
@@ -38,7 +38,7 @@
 
 ---
 
-## 🔴 DETTE CRITIQUE
+## DETTE CRITIQUE
 
 ### 1. God Services (5,834 lignes)
 
@@ -46,9 +46,9 @@
 
 | Service | Lignes | Responsabilités | Priorité |
 |---------|--------|-----------------|----------|
-| `governance.py` | 2,092 | 7 domaines | 🔴 P0 |
-| `risk_management.py` | 2,159 | 6 domaines | 🔴 P0 |
-| `alert_engine.py` | 1,583 | 8 domaines | 🟠 P1 |
+| `governance.py` | 2,092 | 7 domaines | [Negative] P0 |
+| `risk_management.py` | 2,159 | 6 domaines | [Negative] P0 |
+| `alert_engine.py` | 1,583 | 8 domaines | [Pending] P1 |
 
 **Plan de refactoring:** `GOD_SERVICES_REFACTORING_PLAN.md`
 
@@ -75,7 +75,7 @@ services/execution/governance/
 ```
 services/risk/
 ├── __init__.py (200 lignes) - Risk manager orchestrator
-├── var_calculator.py (500 lignes) - VaR/CVaR ✅ existe déjà!
+├── var_calculator.py (500 lignes) - VaR/CVaR [OK] existe déjà!
 ├── correlation_engine.py (450 lignes) - Matrices corrélation
 ├── stress_tester.py (400 lignes) - Stress testing
 ├── performance_attribution.py (350 lignes) - Attribution
@@ -105,11 +105,11 @@ services/alerts/
 
 **Pattern à migrer:**
 ```python
-# ❌ AVANT
+# AVANT
 async def endpoint(user_id: str = Query("demo")):
     ...
 
-# ✅ APRÈS
+# APRÈS
 async def endpoint(user: str = Depends(get_active_user)):
     ...
 ```
@@ -123,20 +123,20 @@ async def endpoint(user: str = Depends(get_active_user)):
 - `api/wealth_endpoints.py` (1)
 
 **Effort:** 1 jour (recherche/remplacement + tests)
-**Priorité:** 🔴 CRITIQUE (conformité CLAUDE.md)
+**Priorité:** [Negative] CRITIQUE (conformité CLAUDE.md)
 
 ---
 
-## 🟠 DETTE HAUTE
+## DETTE HAUTE
 
 ### 3. Large Frontend Controllers
 
 | Fichier | Lignes | Status |
 |---------|--------|--------|
-| `saxo-dashboard.html` | 6,118 | ⚠️ Monolithique |
-| `risk-dashboard-main-controller.js` | 4,035 | ✅ Refactorisé Oct 2025 |
-| `dashboard-main-controller.js` | 3,068 | ⚠️ À refactoriser |
-| `rebalance-controller.js` | 2,626 | ⚠️ À refactoriser |
+| `saxo-dashboard.html` | 6,118 | [Warning] Monolithique |
+| `risk-dashboard-main-controller.js` | 4,035 | [OK] Refactorisé Oct 2025 |
+| `dashboard-main-controller.js` | 3,068 | [Warning] À refactoriser |
+| `rebalance-controller.js` | 2,626 | [Warning] À refactoriser |
 
 **Plan:** Suivre pattern Risk Dashboard (succès Oct 2025)
 
@@ -151,13 +151,13 @@ static/modules/
 ```
 
 **Effort:** 1 semaine par dashboard
-**Priorité:** 🟠 HAUTE (maintenabilité)
+**Priorité:** [Pending] HAUTE (maintenabilité)
 
 ---
 
 ### 4. Code Dupliqué
 
-**Utilities créées Oct 2025 ✅:**
+**Utilities créées Oct 2025 [OK]:**
 - `api/utils/formatters.py` - Response formatting
 - `api/utils/user.py` - User extraction
 - `api/utils/pagination.py` - Pagination logic
@@ -173,27 +173,27 @@ static/modules/
 
 ---
 
-## 🟡 DETTE MOYENNE
+## DETTE MOYENNE
 
 ### 5. CI/CD Incomplet
 
 **Existant:**
 ```yaml
-✅ Unit tests (pytest)
-✅ Integration tests (pytest)
-✅ Lint (ruff)
-✅ Type check (mypy)
-✅ Docker build
+[OK] Unit tests (pytest)
+[OK] Integration tests (pytest)
+[OK] Lint (ruff)
+[OK] Type check (mypy)
+[OK] Docker build
 ```
 
 **Manquant:**
 ```yaml
-❌ Coverage reports (--cov flag)
-❌ E2E tests (Playwright)
-❌ Security scan (safety check)
-❌ Deployment automation
-❌ Performance benchmarks
-❌ Dependency vuln scan
+[Error] Coverage reports (--cov flag)
+[Error] E2E tests (Playwright)
+[Error] Security scan (safety check)
+[Error] Deployment automation
+[Error] Performance benchmarks
+[Error] Dependency vuln scan
 ```
 
 **Plan Semaine 1:**
@@ -212,7 +212,7 @@ static/modules/
 ```
 
 **Effort:** 2 semaines complètes
-**Priorité:** 🟡 MOYENNE (mais impact production)
+**Priorité:** [Pending] MOYENNE (mais impact production)
 
 ---
 
@@ -244,11 +244,11 @@ static/modules/
 - **Couverture:** 1%
 
 **Fichiers critiques non testés:**
-- `allocation-engine.js` (2,000+ lignes) ❌
-- `unified-insights-v2.js` (1,500+ lignes) ❌
-- `phase-engine.js` (827 lignes) ❌
-- Tous les components/ ❌
-- Tous les modules/ contrôleurs ❌
+- `allocation-engine.js` (2,000+ lignes) [Error]
+- `unified-insights-v2.js` (1,500+ lignes) [Error]
+- `phase-engine.js` (827 lignes) [Error]
+- Tous les components/ [Error]
+- Tous les modules/ contrôleurs [Error]
 
 **Setup Vitest:**
 ```javascript
@@ -266,11 +266,11 @@ export default {
 ```
 
 **Effort:** 4 semaines (20% → 40% coverage)
-**Priorité:** 🟡 MOYENNE
+**Priorité:** [Pending] MOYENNE
 
 ---
 
-## 🟢 DETTE BASSE
+## DETTE BASSE
 
 ### 8. TODOs Restants (8 items)
 
@@ -309,10 +309,10 @@ export default {
 ### 10. Documentation
 
 **Excellente base:**
-- ✅ 174 fichiers markdown
-- ✅ CLAUDE.md complet
-- ✅ Plans refactoring détaillés
-- ✅ TECHNICAL_DEBT.md maintenu
+- [OK] 174 fichiers markdown
+- [OK] CLAUDE.md complet
+- [OK] Plans refactoring détaillés
+- [OK] TECHNICAL_DEBT.md maintenu
 
 **Améliorations possibles:**
 - JSDoc comments (53 fichiers JS)
@@ -321,26 +321,26 @@ export default {
 - Onboarding guide
 
 **Effort:** 1 semaine
-**Priorité:** 🟢 BASSE (déjà excellent)
+**Priorité:** [Positive] BASSE (déjà excellent)
 
 ---
 
-## 📊 MÉTRIQUES ÉVOLUTION
+## MÉTRIQUES ÉVOLUTION
 
 ### Trend Oct → Nov 2025
 
 | Métrique | Oct | Nov | Δ |
 |----------|-----|-----|---|
-| TODOs actifs | 26 | 8 | **-67%** ✅ |
-| HIGH priority | 2 | 0 | **-100%** ✅ |
-| Lignes obsolètes | +3,650 | 0 | **Supprimées** ✅ |
-| Tests vides | 9 | 0 | **-100%** ✅ |
-| God Services | 3 | 3 | **Plan ready** 📋 |
-| Documentation | 157 | 174 | **+11%** ✅ |
+| TODOs actifs | 26 | 8 | **-67%** [OK] |
+| HIGH priority | 2 | 0 | **-100%** [OK] |
+| Lignes obsolètes | +3,650 | 0 | **Supprimées** [OK] |
+| Tests vides | 9 | 0 | **-100%** [OK] |
+| God Services | 3 | 3 | **Plan ready**  |
+| Documentation | 157 | 174 | **+11%** [OK] |
 
 ---
 
-## 🎯 PLAN EXÉCUTION
+## PLAN EXÉCUTION
 
 ### Semaine 1 (CRITIQUE)
 - [ ] Migrer 13 endpoints non-conformes
@@ -399,7 +399,7 @@ export default {
 
 ---
 
-## 💰 ESTIMATION TOTALE
+## ESTIMATION TOTALE
 
 | Catégorie | Effort | Devs | Timeline |
 |-----------|--------|------|----------|
@@ -415,34 +415,34 @@ export default {
 
 ---
 
-## ✅ SUCCÈS À CÉLÉBRER
+## SUCCÈS À CÉLÉBRER
 
 **Progrès Oct-Nov 2025:**
-1. ✅ Réduction TODOs -67% en 1 mois
-2. ✅ 3,650 lignes obsolètes supprimées
-3. ✅ 0 items HIGH/CRITICAL restants
-4. ✅ Risk Dashboard refactoring complet
-5. ✅ Utilities anti-duplication créés
-6. ✅ Plans détaillés documentés
+1. [OK] Réduction TODOs -67% en 1 mois
+2. [OK] 3,650 lignes obsolètes supprimées
+3. [OK] 0 items HIGH/CRITICAL restants
+4. [OK] Risk Dashboard refactoring complet
+5. [OK] Utilities anti-duplication créés
+6. [OK] Plans détaillés documentés
 
-**Dette en baisse active = Excellent signal qualité! 🎉**
+**Dette en baisse active = Excellent signal qualité! **
 
 ---
 
-## 🎓 RECOMMANDATIONS
+## RECOMMANDATIONS
 
 ### Stratégie Recommandée: Progressive Improvement
 
 **Ne PAS:**
-- ❌ Big bang refactoring (risque élevé)
-- ❌ Réécriture complète
-- ❌ Pause features pour dette
+- [Error] Big bang refactoring (risque élevé)
+- [Error] Réécriture complète
+- [Error] Pause features pour dette
 
 **FAIRE:**
-- ✅ Refactoring incrémental (1 God Service / 2 sem)
-- ✅ Tests AVANT refactoring
-- ✅ Feature flags pour rollback
-- ✅ Review code systématique
+- [OK] Refactoring incrémental (1 God Service / 2 sem)
+- [OK] Tests AVANT refactoring
+- [OK] Feature flags pour rollback
+- [OK] Review code systématique
 
 ### Pattern de Succès Observé
 
@@ -455,7 +455,7 @@ export default {
 
 ---
 
-## 📚 RÉFÉRENCES
+## RÉFÉRENCES
 
 - `GOD_SERVICES_REFACTORING_PLAN.md` - Plan détaillé phases 1-3
 - `DUPLICATE_CODE_CONSOLIDATION.md` - Utilities créés

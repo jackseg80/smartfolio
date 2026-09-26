@@ -132,7 +132,7 @@ class SourcesManagerV2 {
             const data = await response.json();
             console.debug(`[SourcesManagerV2] Set ${category} source to ${sourceId}`);
 
-            // ✅ FIX: Si source CSV, s'assurer qu'un fichier est sélectionné dans la config V2
+            //  FIX: Si source CSV, s'assurer qu'un fichier est sélectionné dans la config V2
             if (sourceId.endsWith('_csv')) {
                 await this.ensureCSVFileSelected(category, sourceId);
             }
@@ -231,7 +231,7 @@ class SourcesManagerV2 {
         const sourceStatus = status?.status || 'not_configured';
 
         const title = category === 'crypto' ? 'Crypto Assets' : 'Stocks (Equities, ETF)';
-        const icon = category === 'crypto' ? '&#8383;' : '&#128200;';
+        const icon = category === 'crypto' ? '&#8383;' : "Growth";
 
         // Get sources by mode
         const manualSources = categoryInfo.manual || [];
@@ -246,13 +246,13 @@ class SourcesManagerV2 {
                     <div class="category-header-actions">
                         <span class="status-badge ${sourceStatus}">${this.formatStatus(sourceStatus)}</span>
                         <button class="btn-icon-small" onclick="sourcesManagerV2.showSourceComparison('${category}')" title="Comparer les sources">
-                            📊
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg>
                         </button>
                         <button class="btn-icon-small" onclick="sourcesManagerV2.showSourceHistory('${category}')" title="Change history">
-                            📜
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg>
                         </button>
                         <button class="btn-icon-small" onclick="sourcesManagerV2.showRecommendations('${category}')" title="Recommendations">
-                            💡
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg>
                         </button>
                     </div>
                 </div>
@@ -447,7 +447,7 @@ class SourcesManagerV2 {
             console.error('[SourcesManagerV2] Error loading CSV files:', error);
             container.innerHTML = `
                 <div style="padding: 16px; color: var(--danger); text-align: center;">
-                    ❌ Error: ${error.message}
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error: ${error.message}
                 </div>
             `;
         }
@@ -467,7 +467,7 @@ class SourcesManagerV2 {
                     ${activeFile ? `
                         <div class="active-file-card">
                             <div class="file-info">
-                                <div class="file-icon">🟢</div>
+                                <div class="file-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Positive" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></div>
                                 <div class="file-details">
                                     <div class="file-name">${activeFile.filename}</div>
                                     <div class="file-meta">
@@ -478,10 +478,10 @@ class SourcesManagerV2 {
                             </div>
                             <div class="file-actions">
                                 <button class="btn-icon" onclick="sourcesManagerV2.previewCSV('${category}', '${activeFile.filename}')" title="Preview">
-                                    👁️
+                                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg>
                                 </button>
                                 <button class="btn-icon" onclick="sourcesManagerV2.downloadCSV('${category}', '${activeFile.filename}')" title="Download">
-                                    📥
+                                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg>
                                 </button>
                             </div>
                         </div>
@@ -496,14 +496,14 @@ class SourcesManagerV2 {
                 ${files.length > 1 ? `
                     <div class="other-files-section">
                         <button class="dropdown-toggle" onclick="sourcesManagerV2.toggleCSVDropdown('${category}')">
-                            <span>📂 Other files (${otherFiles.length})</span>
+                            <span><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Folder" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#folder"></use></svg> Other files (${otherFiles.length})</span>
                             <span class="dropdown-icon" id="${category}-dropdown-icon">▼</span>
                         </button>
                         <div class="dropdown-content hidden" id="${category}-dropdown-content">
                             ${otherFiles.map(file => `
                                 <div class="file-item">
                                     <div class="file-info">
-                                        <div class="file-icon">📄</div>
+                                        <div class="file-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg></div>
                                         <div class="file-details">
                                             <div class="file-name-small">${file.filename}</div>
                                             <div class="file-meta-small">
@@ -513,16 +513,16 @@ class SourcesManagerV2 {
                                     </div>
                                     <div class="file-actions-small">
                                         <button class="btn-icon-small activate-btn" onclick="sourcesManagerV2.selectCSVFile('${category}', '${file.filename}')" title="Activate this file">
-                                            ✅
+                                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg>
                                         </button>
                                         <button class="btn-icon-small" onclick="sourcesManagerV2.previewCSV('${category}', '${file.filename}')" title="Preview">
-                                            👁️
+                                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Show" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#eye"></use></svg>
                                         </button>
                                         <button class="btn-icon-small" onclick="sourcesManagerV2.downloadCSV('${category}', '${file.filename}')" title="Download">
-                                            📥
+                                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg>
                                         </button>
                                         <button class="btn-icon-small danger" onclick="sourcesManagerV2.deleteCSV('${category}', '${file.filename}')" title="Delete">
-                                            🗑️
+                                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg>
                                         </button>
                                     </div>
                                 </div>
@@ -536,19 +536,19 @@ class SourcesManagerV2 {
                     <!-- Drag & Drop Zone -->
                     <div class="drag-drop-zone" id="${category}-drag-drop" data-category="${category}">
                         <div class="drag-drop-content">
-                            <span class="drag-icon">📁</span>
+                            <span class="drag-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Folder" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#folder"></use></svg></span>
                             <p class="drag-text">Glissez un fichier CSV ici</p>
                             <p class="drag-hint">ou</p>
                             <button class="btn primary" onclick="sourcesManagerV2.showUploadDialog('${category}')">
-                                📤 Parcourir les fichiers
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Upload" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up-tray"></use></svg> Parcourir les fichiers
                             </button>
                         </div>
                     </div>
                     ${files.length > 3 ? `
                         <button class="btn secondary" onclick="sourcesManagerV2.cleanOldFiles('${category}')" style="margin-top: 12px;">
-                            🗑️ Nettoyer anciens fichiers
-                        </button>
-                    ` : ''}
+ Nettoyer anciens fichiers
+ </button>
+ ` : ''}
                 </div>
             </div>
         `;
@@ -651,9 +651,9 @@ class SourcesManagerV2 {
     getSourceIcon(iconName) {
         const icons = {
             'pencil': '&#9998;',
-            'upload': '&#128190;',
-            'api': '&#9889;',
-            'default': '&#128196;'
+            'upload': "Save",
+            'api': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Activity\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bolt\"></use></svg>",
+            'default': "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"File\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#document-text\"></use></svg>"
         };
         return icons[iconName] || icons.default;
     }
@@ -675,7 +675,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay upload-modal" id="uploadModalV2">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 500px;">
                     <div class="modal-header">
-                        <h3>📁 Upload de fichiers - ${title}</h3>
+                        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Folder" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#folder"></use></svg> Upload de fichiers - ${title}</h3>
                         <button class="close-modal" onclick="document.getElementById('uploadModalV2').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -684,7 +684,7 @@ class SourcesManagerV2 {
 
                         <div class="upload-area" id="uploadAreaV2" style="border: 2px dashed var(--theme-border); border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; margin: 16px 0;">
                             <div class="upload-placeholder">
-                                📄 Cliquez ici ou glissez-déposez vos fichiers
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Cliquez ici ou glissez-déposez vos fichiers
                             </div>
                             <input type="file" id="fileInputV2" accept=".csv" style="display: none;">
                         </div>
@@ -796,7 +796,7 @@ class SourcesManagerV2 {
                 throw new Error(error.message || error.error || 'Upload error');
             }
 
-            this.showToast('✅ File uploaded successfully', 'success');
+            this.showToast("[OK] File uploaded successfully", 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${module}_csv`);
@@ -1069,7 +1069,7 @@ class SourcesManagerV2 {
                 throw new Error(error.message || 'Upload error');
             }
 
-            this.showToast('✅ File uploaded successfully', 'success');
+            this.showToast("[OK] File uploaded successfully", 'success');
 
             // Refresh file list
             await this.loadCSVFileList(category, `${module}_csv`);
@@ -1089,7 +1089,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay csv-preview-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 900px;">
                     <div class="modal-header">
-                        <h3>📄 Preview: ${preview.filename}</h3>
+                        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Preview: ${preview.filename}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1114,7 +1114,7 @@ class SourcesManagerV2 {
                         <!-- Validation -->
                         ${preview.validation.warnings.length > 0 ? `
                             <div class="validation-warnings" style="background: var(--warning-bg); border: 1px solid var(--warning); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
-                                <strong>⚠️ Avertissements:</strong>
+                                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Avertissements:</strong>
                                 <ul style="margin: 8px 0 0 20px;">
                                     ${preview.validation.warnings.map(w => `<li>${w}</li>`).join('')}
                                 </ul>
@@ -1199,7 +1199,7 @@ class SourcesManagerV2 {
         if (metrics.error) {
             return `
                 <div class="health-bar error">
-                    <span class="health-icon">⚠️</span>
+                    <span class="health-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></span>
                     <span class="health-text">Error loading data</span>
                 </div>
             `;
@@ -1208,7 +1208,7 @@ class SourcesManagerV2 {
         if (!metrics.hasData) {
             return `
                 <div class="health-bar warning">
-                    <span class="health-icon">📭</span>
+                    <span class="health-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Empty" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#inbox"></use></svg></span>
                     <span class="health-text">No data available</span>
                 </div>
             `;
@@ -1217,17 +1217,17 @@ class SourcesManagerV2 {
         return `
             <div class="health-bar success">
                 <div class="health-metric">
-                    <span class="metric-icon">📈</span>
+                    <span class="metric-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></span>
                     <span class="metric-value">${metrics.totalAssets}</span>
                     <span class="metric-label">assets</span>
                 </div>
                 <div class="health-metric">
-                    <span class="metric-icon">💰</span>
+                    <span class="metric-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg></span>
                     <span class="metric-value">$${this.formatLargeNumber(metrics.totalValue)}</span>
                     <span class="metric-label">total value</span>
                 </div>
                 <div class="health-metric">
-                    <span class="metric-icon">🕒</span>
+                    <span class="metric-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg></span>
                     <span class="metric-value">${this.formatDateTime(metrics.lastUpdate)}</span>
                     <span class="metric-label">last update</span>
                 </div>
@@ -1296,7 +1296,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay comparison-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>📊 Source Comparison - ${category === 'crypto' ? 'Crypto' : 'Stocks'}</h3>
+                        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Source Comparison - ${category === 'crypto' ? 'Crypto' : 'Stocks'}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1350,7 +1350,7 @@ class SourcesManagerV2 {
         if (available.length === 0) {
             return `
                 <div class="insights-section">
-                    <h5>💡 Recommandation</h5>
+                    <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Recommandation</h5>
                     <p>No source is currently configured. Set up at least one source to view your data.</p>
                 </div>
             `;
@@ -1359,7 +1359,7 @@ class SourcesManagerV2 {
         if (available.length === 1) {
             return `
                 <div class="insights-section">
-                    <h5>💡 Recommandation</h5>
+                    <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Recommandation</h5>
                     <p>You are only using <strong>${available[0].name}</strong>. Consider setting up an additional source for redundancy and comparison.</p>
                 </div>
             `;
@@ -1376,7 +1376,7 @@ class SourcesManagerV2 {
         if (divergencePercent > 10) {
             return `
                 <div class="insights-section warning">
-                    <h5>⚠️ Divergence Detected</h5>
+                    <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Divergence Detected</h5>
                     <p>Significant difference between sources (${divergencePercent.toFixed(1)}%). Check your data consistency.</p>
                 </div>
             `;
@@ -1384,7 +1384,7 @@ class SourcesManagerV2 {
 
         return `
             <div class="insights-section success">
-                <h5>✅ Sources Consistent</h5>
+                <h5><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Sources Consistent</h5>
                 <p>Data is consistent across your sources (divergence < 10%).</p>
             </div>
         `;
@@ -1479,7 +1479,7 @@ class SourcesManagerV2 {
             <div class="modal-overlay history-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>📜 Change History - ${categoryName}</h3>
+                        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Change History - ${categoryName}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -1511,7 +1511,7 @@ class SourcesManagerV2 {
 
         return `
             <div class="history-entry">
-                <div class="history-icon">🔄</div>
+                <div class="history-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg></div>
                 <div class="history-content">
                     <div class="history-change">
                         <span class="old-source">${this.formatSourceId(entry.old_source)}</span>
@@ -1529,9 +1529,9 @@ class SourcesManagerV2 {
      */
     formatSourceId(sourceId) {
         if (sourceId === 'none') return 'No source';
-        if (sourceId.includes('manual')) return '✍️ Manual Entry';
-        if (sourceId.includes('csv')) return '📄 CSV Import';
-        if (sourceId.includes('api')) return '🔌 Real-Time API';
+        if (sourceId.includes('manual')) return "Manual Entry";
+        if (sourceId.includes('csv')) return "CSV Import";
+        if (sourceId.includes('api')) return "Real-Time API";
         return sourceId;
     }
 
@@ -1658,13 +1658,13 @@ class SourcesManagerV2 {
             <div class="modal-overlay recommendations-modal" onclick="this.remove()">
                 <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>💡 Recommendations - ${categoryName}</h3>
+                        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Recommendations - ${categoryName}</h3>
                         <button class="close-modal" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                     </div>
                     <div class="modal-body">
                         ${recommendations.length === 0 ? `
                             <div class="empty-state">
-                                <p>✅ Everything is well configured!</p>
+                                <p><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Everything is well configured!</p>
                                 <p style="font-size: 13px; color: var(--theme-text-muted); margin-top: 8px;">
                                     No particular recommendation at this time.
                                 </p>
@@ -1689,14 +1689,14 @@ class SourcesManagerV2 {
      */
     renderRecommendation(rec) {
         const icons = {
-            warning: '⚠️',
-            info: 'ℹ️',
-            success: '✅'
+            warning: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>",
+            info: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>",
+            success: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>"
         };
 
         return `
             <div class="recommendation-card ${rec.type} priority-${rec.priority}">
-                <div class="rec-icon">${icons[rec.type] || 'ℹ️'}</div>
+                <div class="rec-icon">${icons[rec.type] || "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>"}</div>
                 <div class="rec-content">
                     <div class="rec-title">${rec.title}</div>
                     <div class="rec-message">${rec.message}</div>

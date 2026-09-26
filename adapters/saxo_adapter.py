@@ -55,7 +55,7 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
             # Si file_key fourni, chercher le fichier correspondant
             effective_file_key = file_key
 
-            # ✅ FIX: Si pas de file_key, lire la config V2 pour trouver le fichier sélectionné
+            # [OK] FIX: Si pas de file_key, lire la config V2 pour trouver le fichier sélectionné
             if not effective_file_key:
                 try:
                     config_path = Path(project_root) / "data" / "users" / user_id / "config.json"
@@ -80,15 +80,15 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
                         break
 
                 if target_file:
-                    logger.info(f"[saxo_adapter] ✅ Using Saxo file (user choice) for user {user_id}: {target_file}")
+                    logger.info(f"[saxo_adapter]  Using Saxo file (user choice) for user {user_id}: {target_file}")
                     parsed = _parse_saxo_csv(target_file, "saxo_data", user_id=user_id)
                     # Calculate total from positions, not portfolios
                     total_from_positions = 0.0
                     for portfolio in parsed.get("portfolios", []):
                         for position in portfolio.get("positions", []):
                             total_from_positions += float(position.get("market_value_usd", 0) or 0.0)
-                    logger.info(f"[saxo_adapter] ✅ Loaded file total from positions: ${total_from_positions:.2f}")
-                    logger.info(f"[saxo_adapter] 📊 Portfolio summary total: ${portfolio.get('summary', {}).get('total_value_usd', 0):.2f}")
+                    logger.info(f"[saxo_adapter]  Loaded file total from positions: ${total_from_positions:.2f}")
+                    logger.info(f"[saxo_adapter]  Portfolio summary total: ${portfolio.get('summary', {}).get('total_value_usd', 0):.2f}")
                     return parsed
                 else:
                     logger.warning(f"Requested file_key '{effective_file_key}' not found, falling back to latest")
@@ -105,9 +105,9 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
             legacy_files.extend(user_fs.glob_files(pattern))
 
         if legacy_files:
-            logger.warning(f"[saxo_adapter] ⚠️ Using legacy folders for user {user_id} ({len(legacy_files)} files). Consider migrating to data/ folder.")
+            logger.warning(f"[saxo_adapter]  Using legacy folders for user {user_id} ({len(legacy_files)} files). Consider migrating to data/ folder.")
             latest_legacy = max(legacy_files, key=lambda f: os.path.getmtime(f))
-            logger.info(f"[saxo_adapter] 📂 Loading from legacy: {Path(latest_legacy).name}")
+            logger.info(f"[saxo_adapter]  Loading from legacy: {Path(latest_legacy).name}")
             return _parse_saxo_csv(latest_legacy, "saxo_legacy", user_id=user_id)
 
         logger.debug(f"No Saxo data found for user {user_id}")
@@ -130,7 +130,7 @@ def _parse_saxo_csv(csv_path: str, source_type: str, user_id: Optional[str] = No
         positions = result["positions"]
         portfolio_id = f"saxo_{source_type}"
 
-        # ✅ Extract real file date instead of parsing date
+        # [OK] Extract real file date instead of parsing date
         import os
         file_date = None
         try:
@@ -164,7 +164,7 @@ def _parse_saxo_csv(csv_path: str, source_type: str, user_id: Optional[str] = No
                 "name": f"Saxo Portfolio ({source_type})",
                 "positions": positions,
                 "summary": result.get("summary", {}),
-                "last_updated": file_date,  # ✅ Use real file date instead of parsing date
+                "last_updated": file_date,  # [OK] Use real file date instead of parsing date
                 "source": source_type
             }]
         }
@@ -515,13 +515,13 @@ async def list_positions(user_id: Optional[str] = None, file_key: Optional[str] 
         quantity = float(position.get("quantity") or 0.0)
         if not symbol or quantity == 0:
             continue
-        # ✅ FIX: Use market_value_usd instead of market_value (which is in local currency EUR/CHF/etc)
+        # [OK] FIX: Use market_value_usd instead of market_value (which is in local currency EUR/CHF/etc)
         # The PositionModel.market_value field should contain USD values for aggregation
         market_value_usd = float(position.get("market_value_usd") or 0.0) or None
         weight = (market_value_usd or 0.0) / total if total else None
         tags = [f"asset_class:{position.get('asset_class')}"]
 
-        # ✅ P&L: Use pnl_value from CSV (in account base currency, typically EUR)
+        # [OK] P&L: Use pnl_value from CSV (in account base currency, typically EUR)
         # Convert to USD for consistency (added Dec 2025)
         pnl_value_local = float(position.get("pnl_value") or 0.0)
         account_base_currency = position.get("account_base_currency", "EUR")
@@ -532,10 +532,10 @@ async def list_positions(user_id: Optional[str] = None, file_key: Optional[str] 
             PositionModel(
                 instrument_id=symbol,
                 quantity=quantity,
-                avg_price=position.get("avg_price"),  # ✅ FIX: Use actual avg_price for trailing stop
-                currency="USD",  # ✅ FIX: Always USD since market_value is now in USD
-                market_value=market_value_usd,  # ✅ FIX: Use USD value
-                pnl=pnl_usd,  # ✅ P&L in USD (added Dec 2025)
+                avg_price=position.get("avg_price"),  # [OK] FIX: Use actual avg_price for trailing stop
+                currency="USD",  # [OK] FIX: Always USD since market_value is now in USD
+                market_value=market_value_usd,  # [OK] FIX: Use USD value
+                pnl=pnl_usd,  # [OK] P&L in USD (added Dec 2025)
                 weight=weight,
                 tags=tags,
             )

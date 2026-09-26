@@ -36,7 +36,7 @@ export function applyHysteresis(newValue, state) {
 
   // Staleness gating: freeze adaptive weights if stale
   if (isDataStale && !stabilityState.staleness_frozen) {
-    (window.debugLogger?.warn || console.warn)('🔒 Staleness gating: freezing adaptive weights at last stable value');
+    (window.debugLogger?.warn || console.warn)("Staleness gating: freezing adaptive weights at last stable value");
     stabilityState.staleness_frozen = true;
     // Return last stable value to freeze weights
     return stabilityState.last_stable_value ?? newValue;
@@ -44,7 +44,7 @@ export function applyHysteresis(newValue, state) {
 
   // Reset staleness flag when data is fresh
   if (!isDataStale && stabilityState.staleness_frozen) {
-    debugLogger.info('🔓 Staleness gating: resuming adaptive weights');
+    debugLogger.info("Staleness gating: resuming adaptive weights");
     stabilityState.staleness_frozen = false;
   }
 
@@ -85,7 +85,7 @@ export function applyHysteresis(newValue, state) {
     stabilityState.last_stable_value = finalValue;
     stabilityState.direction_buffer = []; // Reset buffer after change
 
-    console.debug(`🎯 Hysteresis: stable change detected (${(previousStable*100).toFixed(1)}% → ${(finalValue*100).toFixed(1)}%)`);
+    console.debug(`Hysteresis: stable change detected (${(previousStable*100).toFixed(1)}% → ${(finalValue*100).toFixed(1)}%)`);
   }
 
   // Update internal state
@@ -140,7 +140,7 @@ export function resetStabilityState() {
     last_update: null,
     staleness_frozen: false
   };
-  debugLogger.info('🔄 Stability state reset');
+  debugLogger.info("Stability state reset");
 }
 
 /**
@@ -149,7 +149,7 @@ export function resetStabilityState() {
  */
 export function forceStalenessFrozen(forced) {
   stabilityState.staleness_frozen = forced;
-  debugLogger.info(`🧪 Staleness gating ${forced ? 'forced ON' : 'forced OFF'}`);
+  debugLogger.info(`Staleness gating ${forced ? 'forced ON' : 'forced OFF'}`);
 }
 
 // Export for global debugging

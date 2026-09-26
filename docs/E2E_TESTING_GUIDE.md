@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 Vue d'Ensemble
+## Vue d'Ensemble
 
 ### Tests Créés
 
@@ -23,36 +23,36 @@ Total: 68 tests E2E
 ### Flux Testés
 
 **Risk Dashboard** :
-- ✅ Navigation entre 4 onglets (Alerts, Overview, Cycles, Targets)
-- ✅ Chargement données + affichage métriques
-- ✅ Dual-Window Metrics + Risk Score V2 Shadow Mode
-- ✅ Filtres alertes, pagination, charts Chart.js
-- ✅ Génération plan d'action
+- [OK] Navigation entre 4 onglets (Alerts, Overview, Cycles, Targets)
+- [OK] Chargement données + affichage métriques
+- [OK] Dual-Window Metrics + Risk Score V2 Shadow Mode
+- [OK] Filtres alertes, pagination, charts Chart.js
+- [OK] Génération plan d'action
 
 **Rebalance** :
-- ✅ Sélection stratégie (5 options: macro, ccs, cycle, blend, smart)
-- ✅ Mode Priority vs Proportional
-- ✅ Calcul plan de rebalancing
-- ✅ Affichage actions (BUY/SELL/HOLD)
-- ✅ Soumission pour approbation
+- [OK] Sélection stratégie (5 options: macro, ccs, cycle, blend, smart)
+- [OK] Mode Priority vs Proportional
+- [OK] Calcul plan de rebalancing
+- [OK] Affichage actions (BUY/SELL/HOLD)
+- [OK] Soumission pour approbation
 
 **Analytics** :
-- ✅ ML predictions (volatilité, sentiment, regime)
-- ✅ Decision Index Panel avec Trend Chip + Regime Ribbon
-- ✅ Sources injection (Store → API fallback)
-- ✅ Charts Chart.js + timeframe selection
-- ✅ Unified Insights (weights adaptatifs, confidence, contradiction)
+- [OK] ML predictions (volatilité, sentiment, regime)
+- [OK] Decision Index Panel avec Trend Chip + Regime Ribbon
+- [OK] Sources injection (Store → API fallback)
+- [OK] Charts Chart.js + timeframe selection
+- [OK] Unified Insights (weights adaptatifs, confidence, contradiction)
 
 **Simulateur** :
-- ✅ 10 presets (Euphorie, Accumulation, Risk-off, etc.)
-- ✅ Lancement simulation + résultats (DI, allocations, actions)
-- ✅ Inspector tree (arbre d'explication)
-- ✅ Comparaison scenarios side-by-side
-- ✅ Export CSV/JSON
+- [OK] 10 presets (Euphorie, Accumulation, Risk-off, etc.)
+- [OK] Lancement simulation + résultats (DI, allocations, actions)
+- [OK] Inspector tree (arbre d'explication)
+- [OK] Comparaison scenarios side-by-side
+- [OK] Export CSV/JSON
 
 ---
 
-## 🚀 Commandes
+## Commandes
 
 ### Installation
 
@@ -96,7 +96,7 @@ npx playwright show-report tests/e2e-report
 
 ---
 
-## 📁 Structure Fichiers
+## Structure Fichiers
 
 ### Configuration
 
@@ -127,51 +127,51 @@ test.describe('Risk Dashboard - Navigation & Loading', () => {
 
 ---
 
-## 🛠️ Bonnes Pratiques
+## Bonnes Pratiques
 
 ### 1. Sélecteurs Robustes
 
 ```javascript
-// ✅ BON : Sélecteurs sémantiques
+// [OK] BON : Sélecteurs sémantiques
 await page.getByRole('tab', { name: /alerts/i })
 await page.getByRole('button', { name: /calculer/i })
 
-// ✅ BON : Data attributes
+// [OK] BON : Data attributes
 await page.locator('[data-section="ml"]')
 await page.locator('[data-metric="risk-score"]')
 
-// ❌ ÉVITER : Classes CSS (fragile)
+// [Error] ÉVITER : Classes CSS (fragile)
 await page.locator('.btn-primary')
 ```
 
 ### 2. Attentes Explicites
 
 ```javascript
-// ✅ BON : Attendre élément visible
+// [OK] BON : Attendre élément visible
 await expect(page.locator('[data-section="ml"]')).toBeVisible({ timeout: 10000 });
 
-// ✅ BON : Attendre navigation
+// [OK] BON : Attendre navigation
 await page.waitForURL(/execution/i, { timeout: 5000 });
 
-// ❌ ÉVITER : Attentes fixes (flakiness)
+// [Error] ÉVITER : Attentes fixes (flakiness)
 await page.waitForTimeout(5000); // Uniquement si vraiment nécessaire
 ```
 
 ### 3. Gestion Erreurs
 
 ```javascript
-// ✅ BON : Fallback gracieux
+// [OK] BON : Fallback gracieux
 const count = await errorMsg.count();
 const hasError = await errorMsg.isVisible().catch(() => false);
 
-// ✅ BON : Conditions multiples
+// [OK] BON : Conditions multiples
 expect(hasEmptyMsg || rowCount === 0).toBeTruthy();
 ```
 
 ### 4. Tests Conditionnels
 
 ```javascript
-// ✅ BON : Vérifier existence avant interaction
+// [OK] BON : Vérifier existence avant interaction
 if (await calculateButton.count() > 0) {
   await calculateButton.first().click();
   // ... assertions
@@ -180,7 +180,7 @@ if (await calculateButton.count() > 0) {
 
 ---
 
-## 📈 Métriques Performance
+## Métriques Performance
 
 ### Objectifs
 
@@ -203,7 +203,7 @@ test('should load initial view in less than 5 seconds', async ({ page }) => {
 
 ---
 
-## 🐛 Debugging
+## Debugging
 
 ### Mode Debug
 
@@ -239,7 +239,7 @@ npx playwright show-trace tests/e2e-report/traces/risk-dashboard-should-load.zip
 
 ---
 
-## 🔄 CI/CD Integration
+## CI/CD Integration
 
 ### GitHub Actions (exemple)
 
@@ -280,61 +280,61 @@ jobs:
 
 ---
 
-## 📊 Coverage par Flux
+## Coverage par Flux
 
 ### Risk Dashboard (21 tests)
 
 | Fonctionnalité | Tests | Statut |
 |----------------|-------|--------|
-| Navigation onglets | 4 | ✅ |
-| Risk Alerts Tab | 4 | ✅ |
-| Risk Overview Tab | 4 | ✅ |
-| Risk Cycles Tab | 3 | ✅ |
-| Risk Targets Tab | 3 | ✅ |
-| Cross-tab integration | 2 | ✅ |
-| Performance | 2 | ✅ |
+| Navigation onglets | 4 | OK |
+| Risk Alerts Tab | 4 | OK |
+| Risk Overview Tab | 4 | OK |
+| Risk Cycles Tab | 3 | OK |
+| Risk Targets Tab | 3 | OK |
+| Cross-tab integration | 2 | OK |
+| Performance | 2 | OK |
 
 ### Rebalance (14 tests)
 
 | Fonctionnalité | Tests | Statut |
 |----------------|-------|--------|
-| Page loading | 2 | ✅ |
-| Strategy selection | 2 | ✅ |
-| Mode selection | 1 | ✅ |
-| Plan calculation | 3 | ✅ |
-| Plan submission | 1 | ✅ |
-| Edge cases | 3 | ✅ |
-| Performance | 1 | ✅ |
-| Integration | 1 | ✅ |
+| Page loading | 2 | OK |
+| Strategy selection | 2 | OK |
+| Mode selection | 1 | OK |
+| Plan calculation | 3 | OK |
+| Plan submission | 1 | OK |
+| Edge cases | 3 | OK |
+| Performance | 1 | OK |
+| Integration | 1 | OK |
 
 ### Analytics (17 tests)
 
 | Fonctionnalité | Tests | Statut |
 |----------------|-------|--------|
-| Page loading | 2 | ✅ |
-| ML predictions | 4 | ✅ |
-| Decision Index Panel | 5 | ✅ |
-| Charts | 2 | ✅ |
-| Sources injection | 3 | ✅ |
-| Performance | 2 | ✅ |
-| Error handling | 2 | ✅ |
+| Page loading | 2 | OK |
+| ML predictions | 4 | OK |
+| Decision Index Panel | 5 | OK |
+| Charts | 2 | OK |
+| Sources injection | 3 | OK |
+| Performance | 2 | OK |
+| Error handling | 2 | OK |
 
 ### Simulateur (16 tests)
 
 | Fonctionnalité | Tests | Statut |
 |----------------|-------|--------|
-| Page loading | 2 | ✅ |
-| Preset selection | 2 | ✅ |
-| Simulation execution | 4 | ✅ |
-| Inspector tree | 2 | ✅ |
-| Scenario comparison | 1 | ✅ |
-| Export | 2 | ✅ |
-| Edge cases | 3 | ✅ |
-| Performance | 2 | ✅ |
+| Page loading | 2 | OK |
+| Preset selection | 2 | OK |
+| Simulation execution | 4 | OK |
+| Inspector tree | 2 | OK |
+| Scenario comparison | 1 | OK |
+| Export | 2 | OK |
+| Edge cases | 3 | OK |
+| Performance | 2 | OK |
 
 ---
 
-## 🎯 Prochaines Étapes
+## Prochaines Étapes
 
 ### Court Terme
 
@@ -358,7 +358,7 @@ jobs:
 
 ---
 
-## 📝 Troubleshooting
+## Troubleshooting
 
 ### Le serveur ne démarre pas automatiquement
 
@@ -402,7 +402,7 @@ retries: 2
 
 ---
 
-## ✅ Checklist Validation
+## Checklist Validation
 
 Avant de committer des changements frontend :
 
@@ -418,5 +418,5 @@ Avant de committer des changements frontend :
 **Date** : Octobre 2025
 **Version** : 1.0.0
 
-**Status** : ✅ **68 Tests E2E Créés (Playwright + Chromium)**
+**Status** : [OK] **68 Tests E2E Créés (Playwright + Chromium)**
 

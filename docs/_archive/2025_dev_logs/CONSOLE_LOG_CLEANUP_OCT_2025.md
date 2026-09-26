@@ -1,53 +1,53 @@
 # Console.log Cleanup - Migration vers debugLogger (October 2025)
 
-## 📋 Résumé
+## Résumé
 
 **Date** : 10 octobre 2025
 **Priorité** : MEDIUM
-**Statut** : 🚧 En cours (1/112 fichiers migrés)
+**Statut** :  En cours (1/112 fichiers migrés)
 
 Migration des `console.log` vers le système de logging centralisé `debugLogger` pour permettre l'activation/désactivation des logs de debug en production.
 
 ---
 
-## 🎯 Objectif
+## Objectif
 
 Remplacer les **986 occurrences** de `console.log/warn/error` dans **112 fichiers** par des appels au `debugLogger` centralisé.
 
 ### Problème Actuel
 
 ```javascript
-// ❌ Logs toujours actifs, polluent la console en production
+// [Error] Logs toujours actifs, polluent la console en production
 console.log('Chargement data...');
 console.warn('Cache expiré');
 console.error('Erreur API:', err);
 ```
 
 **Impact** :
-- ❌ Console polluée en production
-- ❌ Impossible de désactiver les logs debug
-- ❌ Pas de structure/catégories
-- ❌ Difficile de filtrer les messages
+- [Error] Console polluée en production
+- [Error] Impossible de désactiver les logs debug
+- [Error] Pas de structure/catégories
+- [Error] Difficile de filtrer les messages
 
 ### Solution (debugLogger)
 
 ```javascript
-// ✅ Logs contrôlables, désactivables en production
+// [OK] Logs contrôlables, désactivables en production
 debugLogger.debug('Chargement data...');
 debugLogger.warn('Cache expiré');
 debugLogger.error('Erreur API:', err);
 ```
 
 **Avantages** :
-- ✅ Activable/désactivable via `toggleDebug()`, `debugOn()`, `debugOff()`
-- ✅ Auto-désactivé en production (sauf localhost)
-- ✅ Catégories structurées (`.api()`, `.ui()`, `.perf()`)
-- ✅ Console propre en production
-- ✅ Hooks pour `console.debug()` et `fetch()` tracer
+- [OK] Activable/désactivable via `toggleDebug()`, `debugOn()`, `debugOff()`
+- [OK] Auto-désactivé en production (sauf localhost)
+- [OK] Catégories structurées (`.api()`, `.ui()`, `.perf()`)
+- [OK] Console propre en production
+- Hooks pour `console.debug()` et `fetch()` tracer
 
 ---
 
-## 📊 État Actuel
+## État Actuel
 
 ### Statistiques Globales
 
@@ -62,32 +62,32 @@ Types             : log (600+), warn (200+), error (100+), info (50+)
 
 | Fichier                              | console.log | Total | Priorité |
 |--------------------------------------|-------------|-------|----------|
-| risk-dashboard.html                  | 72          | 72    | 🔴 HIGH  |
-| rebalance.html                       | 67          | 67    | 🔴 HIGH  |
-| analytics-unified.html               | 60          | 60    | 🔴 HIGH  |
-| simulations.html                     | 35          | 35    | 🟡 MED   |
-| dashboard.html                       | 30          | 51    | ✅ DONE  |
-| components/InteractiveDashboard.js   | 32          | 32    | 🟡 MED   |
-| ai-dashboard.html                    | 36          | 36    | 🟡 MED   |
-| lazy-loader.js                       | 27          | 27    | 🟡 MED   |
-| sources-manager.js                   | 25          | 25    | 🟡 MED   |
-| modules/onchain-indicators.js        | 23          | 23    | 🟡 MED   |
-| modules/risk-cycles-tab.js           | 21          | 21    | 🟡 MED   |
-| modules/risk-targets-tab.js          | 18          | 18    | 🟡 MED   |
-| components/UnifiedInsights.js        | 13          | 13    | 🟢 LOW   |
-| modules/simulation-engine.js         | 12          | 12    | 🟢 LOW   |
-| modules/historical-validator.js      | 10          | 10    | 🟢 LOW   |
-| global-config.js                     | 10          | 10    | 🟢 LOW   |
-| shared-asset-groups.js               | 9           | 9     | 🟢 LOW   |
-| modules/risk-dashboard-main.js       | 9           | 9     | 🟢 LOW   |
-| components/WealthContextBar.js       | 9           | 9     | 🟢 LOW   |
-| components/risk-sidebar-full.js      | 9           | 9     | 🟢 LOW   |
+| risk-dashboard.html                  | 72          | 72    | [Negative] HIGH  |
+| rebalance.html                       | 67          | 67    | [Negative] HIGH  |
+| analytics-unified.html               | 60          | 60    | [Negative] HIGH  |
+| simulations.html                     | 35          | 35    | [Pending] MED   |
+| dashboard.html                       | 30          | 51    |  DONE  |
+| components/InteractiveDashboard.js   | 32          | 32    | [Pending] MED   |
+| ai-dashboard.html                    | 36          | 36    | [Pending] MED   |
+| lazy-loader.js                       | 27          | 27    | [Pending] MED   |
+| sources-manager.js                   | 25          | 25    | [Pending] MED   |
+| modules/onchain-indicators.js        | 23          | 23    | [Pending] MED   |
+| modules/risk-cycles-tab.js           | 21          | 21    | [Pending] MED   |
+| modules/risk-targets-tab.js          | 18          | 18    | [Pending] MED   |
+| components/UnifiedInsights.js        | 13          | 13    | [Positive] LOW   |
+| modules/simulation-engine.js         | 12          | 12    | [Positive] LOW   |
+| modules/historical-validator.js      | 10          | 10    | [Positive] LOW   |
+| global-config.js                     | 10          | 10    | [Positive] LOW   |
+| shared-asset-groups.js               | 9           | 9     | [Positive] LOW   |
+| modules/risk-dashboard-main.js       | 9           | 9     | [Positive] LOW   |
+| components/WealthContextBar.js       | 9           | 9     | [Positive] LOW   |
+| components/risk-sidebar-full.js      | 9           | 9     | [Positive] LOW   |
 
 **Note** : Fichiers dans `archive/`, `debug/`, `tests/` exclus du décompte (non production).
 
 ---
 
-## 🛠️ Système debugLogger
+## Système debugLogger
 
 ### Fichier Source
 
@@ -110,13 +110,13 @@ window.log          // Raccourci (alias)
 ```javascript
 // === Méthodes de Log ===
 
-// ❌ AVANT
+// [Error] AVANT
 console.log('Message debug');
 console.warn('Attention!');
 console.error('Erreur fatale:', err);
 console.info('Information');
 
-// ✅ APRÈS
+// [OK] APRÈS
 debugLogger.debug('Message debug');       // Visible seulement si debug ON
 debugLogger.warn('Attention!');           // Toujours visible
 debugLogger.error('Erreur fatale:', err); // Toujours visible
@@ -126,11 +126,11 @@ debugLogger.info('Information');          // Visible seulement si debug ON
 
 // API calls
 debugLogger.api('/api/portfolio/metrics', { user_id: 'demo' });
-// Output: 🌐 API /api/portfolio/metrics { user_id: 'demo' }
+// Output:  API /api/portfolio/metrics { user_id: 'demo' }
 
 // UI events
 debugLogger.ui('Button clicked', { button: 'save' });
-// Output: 🎨 UI Button clicked { button: 'save' }
+// Output:  UI Button clicked { button: 'save' }
 
 // Performance tracking
 debugLogger.perf('loadData');
@@ -190,7 +190,7 @@ debugLogger.stats()
 
 ---
 
-## 🔧 Script de Migration Automatique
+## Script de Migration Automatique
 
 ### Fichier Script
 
@@ -214,7 +214,7 @@ python tools/replace-console-log.py --file dashboard.html --dry-run
 # 4. Appliquer sur un fichier
 python tools/replace-console-log.py --file dashboard.html --apply
 
-# 5. Appliquer sur tous les fichiers (⚠️ ATTENTION)
+# 5. Appliquer sur tous les fichiers ( ATTENTION)
 python tools/replace-console-log.py --apply
 
 # 6. Générer rapport JSON
@@ -258,7 +258,7 @@ cp static/dashboard.html.backup static/dashboard.html
 
 ---
 
-## 📝 Procédure de Migration Manuelle
+## Procédure de Migration Manuelle
 
 Si vous préférez migrer manuellement (sans script) :
 
@@ -285,28 +285,28 @@ window.debugLogger
 // === LOGS DEBUG ===
 // AVANT
 console.log('Loading data...');
-console.log('✅ Data loaded:', data);
+console.log(' Data loaded:', data);
 
 // APRÈS
 debugLogger.debug('Loading data...');
-debugLogger.debug('✅ Data loaded:', data);
+debugLogger.debug(' Data loaded:', data);
 
 // === WARNINGS ===
 // AVANT
-console.warn('⚠️ Cache expired');
+console.warn(' Cache expired');
 console.warn('API slow response:', latency);
 
 // APRÈS
-debugLogger.warn('⚠️ Cache expired');
+debugLogger.warn(' Cache expired');
 debugLogger.warn('API slow response:', latency);
 
 // === ERRORS ===
 // AVANT
-console.error('❌ API failed:', error);
+console.error(' API failed:', error);
 console.error('Network error:', err.message);
 
 // APRÈS
-debugLogger.error('❌ API failed:', error);
+debugLogger.error(' API failed:', error);
 debugLogger.error('Network error:', err.message);
 
 // === APIS (optionnel, plus structuré) ===
@@ -348,13 +348,13 @@ debugOn()   // Logs réapparaissent
 
 ---
 
-## ✅ Résultats (Oct 2025)
+## Résultats (Oct 2025)
 
 ### Fichiers Migrés
 
 | Fichier          | console.log | Remplacés | Statut   | Date       |
 |------------------|-------------|-----------|----------|------------|
-| dashboard.html   | 30          | 51 total  | ✅ DONE  | 2025-10-10 |
+| dashboard.html   | 30          | 51 total  |  DONE  | 2025-10-10 |
 
 **Total migré** : **1/112 fichiers** (0.9%)
 **Occurrences migrées** : **51/986** (5.2%)
@@ -381,9 +381,9 @@ console.debug: 46 (inchangé, géré par hooks)
 
 ---
 
-## 🚀 Roadmap de Migration
+## Roadmap de Migration
 
-### Phase 1 : Fichiers Critiques (HIGH Priority) ⏳ En cours
+### Phase 1 : Fichiers Critiques (HIGH Priority)  En cours
 
 **Cible** : 3 fichiers, ~200 occurrences
 **Durée estimée** : 1-2h avec script
@@ -452,14 +452,14 @@ python tools/replace-console-log.py --file analytics-unified.html --apply
 - [ ] Supprimer fichiers `.backup` après validation
 - [ ] Mettre à jour cette documentation
 
-**Commande globale** (⚠️ Attention, migre TOUT) :
+**Commande globale** ([Warning] Attention, migre TOUT) :
 ```bash
 python tools/replace-console-log.py --apply --report final-report.json
 ```
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Test 1 : Vérifier debugLogger fonctionne
 
@@ -506,7 +506,7 @@ python tools/replace-console-log.py --file dashboard.html --apply
 
 ---
 
-## ⚠️ Pièges & Solutions
+## Pièges & Solutions
 
 ### Piège 1 : debugLogger pas chargé
 
@@ -561,7 +561,7 @@ find static/ -name "*.backup" -delete
 
 ---
 
-## 📊 Impact Codebase
+## Impact Codebase
 
 ### Avant Migration
 
@@ -587,7 +587,7 @@ debugLogger.debug/warn/error: 986 appels structurés
 
 ---
 
-## 🔗 Liens Utiles
+## Liens Utiles
 
 **Fichiers clés** :
 - `static/debug-logger.js` - Système de logging centralisé
@@ -616,17 +616,17 @@ debugLogger.stats()  // Voir statistiques
 
 ---
 
-## 📅 Historique
+## Historique
 
 **10 octobre 2025** - v1.0.0 Initial
-- ✅ Scan complet : 986 occurrences dans 112 fichiers
-- ✅ Script Python de migration automatique créé
-- ✅ Migration dashboard.html : 51 remplacements
-- ✅ Documentation complète
+- [OK] Scan complet : 986 occurrences dans 112 fichiers
+- [OK] Script Python de migration automatique créé
+- [OK] Migration dashboard.html : 51 remplacements
+- [OK] Documentation complète
 
 ---
 
 **Auteur** : Claude Code
-**Status** : 🚧 En cours (1/112 fichiers migrés)
+**Status** :  En cours (1/112 fichiers migrés)
 **Next Step** : Migrer fichiers HIGH priority (risk-dashboard, rebalance, analytics-unified)
 

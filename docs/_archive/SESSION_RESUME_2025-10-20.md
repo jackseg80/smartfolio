@@ -1,14 +1,14 @@
-# 📋 Résumé Session Audit & Refactoring - 20 Octobre 2025
+# Résumé Session Audit & Refactoring - 20 Octobre 2025
 
-## 🎯 Contexte
+## Contexte
 
 Session de travail sur l'**AUDIT_REPORT_2025-10-19.md** - Correction des points critiques identifiés dans l'audit du projet.
 
 ---
 
-## ✅ Ce qui a été ACCOMPLI aujourd'hui
+## Ce qui a été ACCOMPLI aujourd'hui
 
-### 1. Refactoring api/main.py (Phases 1+2+3) - ✅ TERMINÉ
+### 1. Refactoring api/main.py (Phases 1+2+3) -  TERMINÉ
 
 **Objectif:** Réduire le god object `api/main.py` de 1,603 lignes
 
@@ -53,11 +53,11 @@ api/services/
 
 ---
 
-### 2. Tests Critical Paths - ✅ TERMINÉ
+### 2. Tests Critical Paths -  TERMINÉ
 
 **Objectif:** Ajouter tests pour fonctions critiques (URGENT per audit)
 
-**Résultat:** **34 nouveaux tests créés, tous passent** ✅
+**Résultat:** **34 nouveaux tests créés, tous passent** [OK]
 
 #### Tests Unitaires (tests/unit/test_services_phase3.py)
 **22 tests** pour services Phase 3:
@@ -72,7 +72,7 @@ api/services/
 - `api/services/price_enricher.py` (5 tests)
   - get_data_age_minutes, enrich_actions_with_prices
 
-**Résultat:** ✅ 22/22 passed in 0.24s
+**Résultat:** [OK] 22/22 passed in 0.24s
 
 #### Tests Intégration (tests/integration/test_balance_resolution.py)
 **12 tests** pour resolve_current_balances:
@@ -90,14 +90,14 @@ api/services/
   - Invalid source fallback
   - Graceful errors
 
-**Résultat:** ✅ 12/12 passed in 6.07s
+**Résultat:** [OK] 12/12 passed in 6.07s
 
 **Commit créé:**
 - `08116ed` - test: add critical path tests for Phase 3 refactored services
 
 ---
 
-## 📊 État Actuel du Projet
+## État Actuel du Projet
 
 ### Commits Session (5 total)
 ```
@@ -112,14 +112,14 @@ bd084d3 - refactor(api): extract helper services from main.py (Phase 2)
 
 **Avant refactoring:**
 - api/main.py: 1,603 lignes (god object)
-- Complexité: 🔴 TRÈS HIGH
-- Testabilité: 🔴 FAIBLE
+- Complexité: [Negative] TRÈS HIGH
+- Testabilité: [Negative] FAIBLE
 - Score: 7.2/10
 
 **Après refactoring:**
 - api/main.py: 1,018 lignes (clean)
-- Complexité: 🟢 MEDIUM
-- Testabilité: 🟢 BONNE
+- Complexité: [Positive] MEDIUM
+- Testabilité: [Positive] BONNE
 - Score: 8.0/10
 
 ### Architecture Finale
@@ -135,29 +135,29 @@ api/
 
 ---
 
-## 📋 Progrès AUDIT_REPORT_2025-10-19.md
+## Progrès AUDIT_REPORT_2025-10-19.md
 
-### 🔴 URGENT (Semaine 1-2)
+### URGENT (Semaine 1-2)
 
 | # | Tâche | Effort | Impact | Statut |
 |---|-------|--------|--------|--------|
-| **1** | **Split api/main.py** | 1-2 sem | ⭐⭐⭐⭐⭐ | ✅ **FAIT** |
-| **2** | **Fix Broad Exception Handlers** | 3-5 jours | ⭐⭐⭐⭐ | 🟡 **EN COURS** |
-| **3** | **Add Tests Critical Paths** | 1 sem | ⭐⭐⭐⭐⭐ | ✅ **FAIT** |
+| **1** | **Split api/main.py** | 1-2 sem |  | [OK] **FAIT** |
+| **2** | **Fix Broad Exception Handlers** | 3-5 jours |  |  **EN COURS** |
+| **3** | **Add Tests Critical Paths** | 1 sem |  | [OK] **FAIT** |
 
 **Progrès URGENT:** 2/3 complétés (67%), 1 en cours
 
-### 🟡 HIGH PRIORITY (Semaine 3-6)
+### HIGH PRIORITY (Semaine 3-6)
 
 | # | Tâche | Effort | Impact | Statut |
 |---|-------|--------|--------|--------|
-| **4** | **Refactor God Services** | 2-3 sem | ⭐⭐⭐⭐ | ❌ **À FAIRE** |
-| **5** | **Consolidate Duplicate Code** | 1 sem | ⭐⭐⭐ | ⚠️ **PARTIEL** |
-| **6** | **Implement Dependency Injection** | 1 sem | ⭐⭐⭐⭐ | ❌ **À FAIRE** |
+| **4** | **Refactor God Services** | 2-3 sem |  | [Error] **À FAIRE** |
+| **5** | **Consolidate Duplicate Code** | 1 sem |  | [Warning] **PARTIEL** |
+| **6** | **Implement Dependency Injection** | 1 sem |  | [Error] **À FAIRE** |
 
 ---
 
-## 🚧 Ce qui reste à FAIRE
+## Ce qui reste à FAIRE
 
 ### IMMÉDIAT: Fix Broad Exception Handlers (Point #2 URGENT)
 
@@ -202,7 +202,7 @@ api/
 
 #### Pattern de correction (exemple)
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     data = await fetch_data()
@@ -210,7 +210,7 @@ except Exception as e:
     logger.error(f"Error: {e}")
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 try:
     data = await fetch_data()
@@ -258,18 +258,18 @@ git commit -m "fix: replace broad Exception handlers with specific types"
 - `services/alerts/alert_engine.py` (1,566 lignes → 3 modules)
 
 **Effort:** 2-3 semaines
-**Impact:** ⭐⭐⭐⭐ HIGH
+**Impact:**  HIGH
 
 #### 5. Consolidate Duplicate Code (1 semaine)
 
 **Identifié:**
-- ⚠️ CSV parsing dupliqué (3 fichiers) - **PARTIEL** (déjà fait en Phase 3)
-- ⚠️ Exchange location logic (3 fichiers) - **PARTIEL** (déjà fait en Phase 3)
-- ❌ Response formatting utilities
-- ❌ User data router helpers
+- [Warning] CSV parsing dupliqué (3 fichiers) - **PARTIEL** (déjà fait en Phase 3)
+- [Warning] Exchange location logic (3 fichiers) - **PARTIEL** (déjà fait en Phase 3)
+- [Error] Response formatting utilities
+- [Error] User data router helpers
 
 **Effort:** 3-5 jours (réduit grâce à Phase 3)
-**Impact:** ⭐⭐⭐ MEDIUM
+**Impact:**  MEDIUM
 
 #### 6. Implement Dependency Injection (1 semaine)
 
@@ -300,11 +300,11 @@ async def startup():
 ```
 
 **Effort:** 1 semaine
-**Impact:** ⭐⭐⭐⭐ HIGH
+**Impact:**  HIGH
 
 ---
 
-## 🎯 Plan pour Prochaine Session
+## Plan pour Prochaine Session
 
 ### Session 1: Fix Broad Exceptions (3-5 jours)
 
@@ -336,7 +336,7 @@ async def startup():
 
 ---
 
-## 📂 Fichiers Importants Créés
+## Fichiers Importants Créés
 
 ```
 tests/
@@ -354,7 +354,7 @@ SESSION_RESUME_2025-10-20.md                 # Ce fichier
 
 ---
 
-## 🚀 Commandes Utiles
+## Commandes Utiles
 
 ### Tests
 ```bash
@@ -394,7 +394,7 @@ grep "services/portfolio.py" exceptions_audit.txt | wc -l
 
 ---
 
-## 📊 Métriques Session
+## Métriques Session
 
 **Temps estimé:** 6-8 heures de travail effectif
 
@@ -413,9 +413,9 @@ grep "services/portfolio.py" exceptions_audit.txt | wc -l
 
 ---
 
-## 💡 Notes pour Reprise
+## Notes pour Reprise
 
-1. **Le serveur fonctionne** - Tous les tests passent ✅
+1. **Le serveur fonctionne** - Tous les tests passent [OK]
 2. **Architecture propre** - 1,018 lignes est un excellent sweet spot
 3. **Prochaine priorité claire** - Fix broad exceptions (66 identifiées)
 4. **Token usage:** Cette session a utilisé ~142k tokens (71%)
@@ -423,7 +423,7 @@ grep "services/portfolio.py" exceptions_audit.txt | wc -l
 
 ---
 
-## ✅ Checklist Avant de Continuer
+## Checklist Avant de Continuer
 
 - [x] Serveur fonctionne (testé)
 - [x] Tous les tests passent (34/34)
@@ -434,6 +434,6 @@ grep "services/portfolio.py" exceptions_audit.txt | wc -l
 
 ---
 
-**Prêt pour la prochaine session! 🚀**
+**Prêt pour la prochaine session! **
 
 *Session du 20 Octobre 2025 - Claude Code Agent*

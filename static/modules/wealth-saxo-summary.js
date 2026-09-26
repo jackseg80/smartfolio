@@ -30,25 +30,25 @@ function loadCacheFromStorage(activeUser, bourseSource) {
         const { summary, timestamp, source } = parsed;
         const age = Date.now() - timestamp;
 
-        // ✅ CRITICAL: Invalidate old cache format (without source field) to prevent corruption
+        //  CRITICAL: Invalidate old cache format (without source field) to prevent corruption
         if (!source) {
-            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Old cache format detected (no source field), invalidating`);
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] [Warning] Old cache format detected (no source field), invalidating`);
             localStorage.removeItem(cacheKey);
             return null;
         }
 
-        // ✅ CRITICAL: Validate cache source matches requested source (prevent race condition cache corruption)
+        //  CRITICAL: Validate cache source matches requested source (prevent race condition cache corruption)
         if (source !== bourseSource) {
-            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Cache source mismatch (cached: ${source}, requested: ${bourseSource}), invalidating`);
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] [Warning] Cache source mismatch (cached: ${source}, requested: ${bourseSource}), invalidating`);
             localStorage.removeItem(cacheKey);
             return null;
         }
 
         if (age < CACHE_TTL) {
-            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Loaded from localStorage (age: ${Math.round(age/1000)}s)`);
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] Loaded from localStorage (age: ${Math.round(age/1000)}s)`);
             return { summary, timestamp };
         } else {
-            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ❌ localStorage cache expired (age: ${Math.round(age/1000)}s)`);
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] [Error] localStorage cache expired (age: ${Math.round(age/1000)}s)`);
             localStorage.removeItem(cacheKey);
             return null;
         }
@@ -64,9 +64,9 @@ function loadCacheFromStorage(activeUser, bourseSource) {
 function saveCacheToStorage(activeUser, bourseSource, summary, timestamp) {
     try {
         const cacheKey = `${CACHE_KEY_PREFIX}${activeUser}_${bourseSource}`;
-        // ✅ CRITICAL: Store source in cache to validate on load (prevent race condition corruption)
+        //  CRITICAL: Store source in cache to validate on load (prevent race condition corruption)
         localStorage.setItem(cacheKey, JSON.stringify({ summary, timestamp, source: bourseSource }));
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] 💾 Saved to localStorage: ${cacheKey}`);
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Saved to localStorage: ${cacheKey}`);
     } catch (err) {
         (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to save to localStorage:', err);
     }
@@ -128,12 +128,12 @@ export async function fetchSaxoSummary() {
     const activeUser = localStorage.getItem('activeUser');
 
     // Get current source FIRST (before checking cache)
-    // ✅ CRITICAL: Do NOT use localStorage fallback - wait for wealthContextBar to be ready
+    //  CRITICAL: Do NOT use localStorage fallback - wait for wealthContextBar to be ready
     let bourseSource = window.wealthContextBar?.getContext()?.bourse;
 
     if (!bourseSource) {
         // wealthContextBar not ready yet - return empty state instead of using stale localStorage cache
-        (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ wealthContextBar not ready yet, returning empty state`);
+        (window.debugLogger?.warn || console.warn)(`[Saxo Summary] [Warning] wealthContextBar not ready yet, returning empty state`);
         return {
             total_value: 0,
             positions_count: 0,
@@ -152,7 +152,7 @@ export async function fetchSaxoSummary() {
         _cacheTimestamp = 0;
         _cachedForUser = null;
         _cachedForSource = null;
-        // ✅ CRITICAL: Also invalidate localStorage and availableSources cache
+        //  CRITICAL: Also invalidate localStorage and availableSources cache
         try {
             const oldCacheKey = `${CACHE_KEY_PREFIX}${_cachedForUser}_${_cachedForSource}`;
             localStorage.removeItem(oldCacheKey);
@@ -161,13 +161,13 @@ export async function fetchSaxoSummary() {
         window._availableSourcesUser = null;
     }
 
-    // 1️⃣ Check memory cache first (fastest)
+    //  Check memory cache first (fastest)
     if (_cachedSummary && _cachedForUser === activeUser && _cachedForSource === bourseSource && (now - _cacheTimestamp) < CACHE_TTL) {
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] ⚡ Returning memory cache (age: ${Math.round((now - _cacheTimestamp)/1000)}s)`);
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] Returning memory cache (age: ${Math.round((now - _cacheTimestamp)/1000)}s)`);
         return _cachedSummary;
     }
 
-    // 2️⃣ Try localStorage cache (cross-page sharing)
+    //  Try localStorage cache (cross-page sharing)
     const cachedFromStorage = loadCacheFromStorage(activeUser, bourseSource);
     if (cachedFromStorage) {
         _cachedSummary = cachedFromStorage.summary;
@@ -177,8 +177,8 @@ export async function fetchSaxoSummary() {
         return _cachedSummary;
     }
 
-    // 3️⃣ No cache available, fetch from API
-    (window.debugLogger?.debug || console.log)(`[Saxo Summary] 🌐 No cache, fetching from API...`);
+    //  No cache available, fetch from API
+    (window.debugLogger?.debug || console.log)(`[Saxo Summary] No cache, fetching from API...`);
 
     try {
         // Check if Sources V2 mode (manual_bourse or any V2 source)
@@ -198,7 +198,7 @@ export async function fetchSaxoSummary() {
                 const apiData = await response.json();
 
                 // Debug: log full response
-                console.debug('🔍 [Saxo Summary] V2 API Response:', {
+                console.debug("[Saxo Summary] V2 API Response:", {
                     ok: apiData.ok,
                     hasData: !!apiData.data,
                     dataKeys: apiData.data ? Object.keys(apiData.data) : [],
@@ -228,7 +228,7 @@ export async function fetchSaxoSummary() {
                 _cachedForSource = bourseSource;
                 saveCacheToStorage(activeUser, bourseSource, summary);
 
-                (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ V2 manual source loaded: ${items.length} items`);
+                (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] V2 manual source loaded: ${items.length} items`);
                 return summary;
             } catch (error) {
                 (window.debugLogger?.error || console.error)(`[Saxo Summary] V2 API error:`, error);
@@ -265,7 +265,7 @@ export async function fetchSaxoSummary() {
 
             try {
                 // Load available sources to resolve file_key
-                // ✅ CRITICAL: Reload sources if user changed
+                //  CRITICAL: Reload sources if user changed
                 if (!window.availableSources || window._availableSourcesUser !== activeUser) {
                     const response = await fetch('/api/users/sources', {
                         headers: { 'X-User': activeUser }
@@ -291,7 +291,7 @@ export async function fetchSaxoSummary() {
 
         (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching from: ${apiUrl} for user: ${activeUser}`);
 
-        // ⚠️ IMPORTANT: Don't use globalConfig.getApiUrl() for Saxo API endpoints
+        //  IMPORTANT: Don't use globalConfig.getApiUrl() for Saxo API endpoints
         // It adds incompatible params (source, pricing, min_usd) that cause 400 errors
         const finalUrl = apiUrl.includes('/api/saxo/api-')
             ? apiUrl  // Direct URL for Saxo API (no globalConfig params)
@@ -302,12 +302,12 @@ export async function fetchSaxoSummary() {
             {
                 timeout: 30000,  // 30s for API calls (Live mode can be slow)
                 headers: {
-                    'X-User': activeUser  // ✅ CRITICAL: Always pass user
+                    'X-User': activeUser  //  CRITICAL: Always pass user
                 }
             }
         );
 
-        // ✅ CRITICAL DEBUG: Log the exact structure of the API response
+        //  CRITICAL DEBUG: Log the exact structure of the API response
         (window.debugLogger?.debug || console.log)(`[Saxo Summary] API response:`, {
             ok,
             hasData: !!data,
@@ -349,12 +349,12 @@ export async function fetchSaxoSummary() {
             return emptySummary;
         }
 
-        // ✅ FIXED: safeFetch wraps backend response, so we need data.data.positions
+        //  FIXED: safeFetch wraps backend response, so we need data.data.positions
         const positions = Array.isArray(data.data?.positions) ? data.data.positions :
                          Array.isArray(data.positions) ? data.positions :
                          Array.isArray(data) ? data : [];
 
-        (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Positions extracted:`, {
+        (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] Positions extracted:`, {
             count: positions.length,
             source: Array.isArray(data.data?.positions) ? 'data.data.positions' :
                     Array.isArray(data.positions) ? 'data.positions' :
@@ -377,7 +377,7 @@ export async function fetchSaxoSummary() {
             return summary;
         }
 
-        // ✅ CRITICAL: Always use backend total_value if available (includes cash + positions)
+        //  CRITICAL: Always use backend total_value if available (includes cash + positions)
         let totalValue = 0;
         let cashBalance = 0;
 
@@ -386,7 +386,7 @@ export async function fetchSaxoSummary() {
             // Backend provides total_value - use it directly (includes positions + cash)
             totalValue = data.data.total_value;
             cashBalance = data.data?.cash_balance || 0;
-            (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Using backend values: total=$${totalValue.toFixed(2)}, cash=$${cashBalance.toFixed(2)}`);
+            (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] Using backend values: total=$${totalValue.toFixed(2)}, cash=$${cashBalance.toFixed(2)}`);
         } else {
             // CSV mode: calculate manually from positions
             totalValue = positions.reduce((sum, pos) => {
@@ -418,7 +418,7 @@ export async function fetchSaxoSummary() {
                 if (cashResponse?.ok && cashResponse.data?.cash_amount) {
                     cashBalance = Number(cashResponse.data.cash_amount || 0);
                     totalValue += cashBalance;
-                    (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Added cash: $${cashBalance}, new total: $${totalValue}`);
+                    (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] Added cash: $${cashBalance}, new total: $${totalValue}`);
                 }
             } catch (cashError) {
                 // Non-blocking: continue without cash if endpoint fails
@@ -429,7 +429,7 @@ export async function fetchSaxoSummary() {
         // Trouver la date la plus récente (asof)
         let latestDate = 'Unknown date';
         try {
-            // ✅ PRIORITY 1: Use asof from API response (backend now returns this for CSV mode)
+            //  PRIORITY 1: Use asof from API response (backend now returns this for CSV mode)
             if (data.data?.asof || data.asof) {
                 const apiAsof = data.data?.asof || data.asof;
                 const date = new Date(apiAsof);
@@ -440,7 +440,7 @@ export async function fetchSaxoSummary() {
                     hour: '2-digit',
                     minute: '2-digit'
                 });
-                (window.debugLogger?.debug || console.log)(`[Saxo Summary] ✅ Using asof from API: ${latestDate}`);
+                (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] Using asof from API: ${latestDate}`);
             } else {
                 // Fallback: Extract from positions if API doesn't provide asof
                 const dates = positions
@@ -471,10 +471,10 @@ export async function fetchSaxoSummary() {
             isEmpty: false
         };
 
-        // ✅ CRITICAL: Verify source didn't change during async fetch (race condition protection)
+        //  CRITICAL: Verify source didn't change during async fetch (race condition protection)
         const currentSource = window.wealthContextBar?.getContext()?.bourse;
         if (currentSource && currentSource !== bourseSource) {
-            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] ⚠️ Source changed during fetch (${bourseSource} → ${currentSource}), discarding result`);
+            (window.debugLogger?.warn || console.warn)(`[Saxo Summary] [Warning] Source changed during fetch (${bourseSource} → ${currentSource}), discarding result`);
             // Don't cache - source changed, data is stale
             return {
                 total_value: 0,
@@ -524,7 +524,7 @@ export function invalidateSaxoCache(clearAll = false) {
     _cachedForUser = null;
     _cachedForSource = null;
 
-    // ✅ CRITICAL: Also clear localStorage caches for saxo
+    //  CRITICAL: Also clear localStorage caches for saxo
     try {
         const keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
@@ -548,13 +548,13 @@ export function invalidateSaxoCache(clearAll = false) {
         (window.debugLogger?.warn || console.warn)('[Saxo Summary] Failed to clear localStorage:', err);
     }
 
-    // ✅ CRITICAL: Also invalidate availableSources cache
+    //  CRITICAL: Also invalidate availableSources cache
     window.availableSources = null;
     window._availableSourcesUser = null;
     (window.debugLogger?.debug || console.log)('[Saxo Summary] All caches invalidated');
 }
 
-// ✅ EXPOSE globally for debug console access
+//  EXPOSE globally for debug console access
 window.invalidateSaxoCache = invalidateSaxoCache;
 
 // formatCurrency is now re-exported from ../core/formatters.js (see top of file)

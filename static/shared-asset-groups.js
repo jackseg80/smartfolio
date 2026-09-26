@@ -40,10 +40,10 @@ function autoClassifySymbolFallback(symbol) {
 export const taxonomyReady = loadTaxonomyData()
   .then(data => {
     updateGlobalVariables(data);
-    (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded:', Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
+    (window.debugLogger?.info || console.log)("[OK] Taxonomy data loaded:", Object.keys(KNOWN_ASSET_MAPPING).length, 'aliases,', GROUP_ORDER.length, 'groups');
   })
   .catch(error => {
-    (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy load failed, using fallback:', error.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] Taxonomy load failed, using fallback:", error.message);
     updateGlobalVariables({ aliases: {}, groups: FALLBACK_GROUPS });
   });
 
@@ -88,11 +88,11 @@ async function loadTaxonomyData() {
     };
     cacheTimestamp = now;
 
-    (window.debugLogger?.info || console.log)('✅ Taxonomy data loaded from API:', Object.keys(taxonomyCache.aliases).length, 'aliases,', taxonomyCache.groups.length, 'groups');
+    (window.debugLogger?.info || console.log)("[OK] Taxonomy data loaded from API:", Object.keys(taxonomyCache.aliases).length, 'aliases,', taxonomyCache.groups.length, 'groups');
 
     return taxonomyCache;
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy API unavailable, using fallback:', error.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] Taxonomy API unavailable, using fallback:", error.message);
 
     // Fallback si API indisponible
     taxonomyCache = {
@@ -114,7 +114,7 @@ export function loadTaxonomyDataSync() {
   }
 
   // Pas de cache: utiliser les fallback (l'async chargera les vraies données)
-  (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy not yet loaded, using fallback');
+  (window.debugLogger?.warn || console.warn)("[Warning] Taxonomy not yet loaded, using fallback");
   const fallbackData = {
     aliases: {},
     groups: FALLBACK_GROUPS
@@ -174,17 +174,17 @@ export function getAssetGroup(symbol) {
 
   // Si les données ne sont pas encore chargées, essayer de charger depuis l'API de façon synchrone
   if (Object.keys(KNOWN_ASSET_MAPPING).length === 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Taxonomy data not loaded yet, trying sync load...');
+    (window.debugLogger?.warn || console.warn)("[Warning] Taxonomy data not loaded yet, trying sync load...");
     try {
       loadTaxonomyDataSync();
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Sync load failed, using fallback:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] Sync load failed, using fallback:", error.message);
       return autoClassifySymbolFallback(upperSymbol);
     }
 
     // Vérifier encore après le chargement sync
     if (Object.keys(KNOWN_ASSET_MAPPING).length === 0) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Sync load returned empty mapping, using fallback');
+      (window.debugLogger?.warn || console.warn)("[Warning] Sync load returned empty mapping, using fallback");
       return autoClassifySymbolFallback(upperSymbol);
     }
   }
@@ -255,7 +255,7 @@ export async function getGroupsFormat() {
 
 // Force reload taxonomy data (clear cache)
 export async function forceReloadTaxonomy() {
-  (window.debugLogger?.debug || console.log)('🔄 Forcing taxonomy reload...');
+  (window.debugLogger?.debug || console.log)("Forcing taxonomy reload...");
   taxonomyCache = null;
   cacheTimestamp = 0;
 
@@ -272,7 +272,7 @@ export async function forceReloadTaxonomy() {
     updateGlobalVariables({ aliases: {}, groups: FALLBACK_GROUPS });
   }
 
-  (window.debugLogger?.info || console.log)('✅ Taxonomy reload completed');
+  (window.debugLogger?.info || console.log)("[OK] Taxonomy reload completed");
 }
 
 // Debug: afficher la classification complète

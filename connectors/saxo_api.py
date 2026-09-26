@@ -63,13 +63,13 @@ class SaxoOAuthClient:
             self.auth_url = "https://live.logonvalidation.net/authorize"
             self.token_url = "https://live.logonvalidation.net/token"
             self.api_base = "https://gateway.saxobank.com/openapi"
-            logger.info(f"🔴 SaxoOAuthClient initialized in LIVE mode (user={user_id or 'env'})")
+            logger.info(f" SaxoOAuthClient initialized in LIVE mode (user={user_id or 'env'})")
         else:
             # Simulation configuration (default)
             self.auth_url = "https://sim.logonvalidation.net/authorize"
             self.token_url = "https://sim.logonvalidation.net/token"
             self.api_base = "https://gateway.saxobank.com/sim/openapi"
-            logger.info(f"🟢 SaxoOAuthClient initialized in SIMULATION mode (user={user_id or 'env'})")
+            logger.info(f" SaxoOAuthClient initialized in SIMULATION mode (user={user_id or 'env'})")
 
         # Get redirect URIs from credentials (supports multiple comma-separated)
         redirect_uris_str = creds["redirect_uri"]
@@ -77,7 +77,7 @@ class SaxoOAuthClient:
         self.redirect_uri = self.redirect_uris[0]  # Use first as default
 
         if not self.client_id or not self.client_secret:
-            logger.warning(f"⚠️ Saxo {self.environment.upper()} credentials not configured for user {user_id or 'env'}")
+            logger.warning(f" Saxo {self.environment.upper()} credentials not configured for user {user_id or 'env'}")
 
     def generate_pkce_pair(self) -> Dict[str, str]:
         """
@@ -125,7 +125,7 @@ class SaxoOAuthClient:
         }
 
         url = f"{self.auth_url}?{urlencode(params)}"
-        logger.debug(f"📝 Authorization URL generated for state '{state[:8]}...'")
+        logger.debug(f" Authorization URL generated for state '{state[:8]}...'")
         return url
 
     async def exchange_code_for_tokens(
@@ -161,7 +161,7 @@ class SaxoOAuthClient:
         }
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            logger.info(f"🔄 Exchanging code for tokens (env: {self.environment})")
+            logger.info(f" Exchanging code for tokens (env: {self.environment})")
             response = await client.post(
                 self.token_url,
                 data=data,
@@ -170,7 +170,7 @@ class SaxoOAuthClient:
             response.raise_for_status()
 
             tokens = response.json()
-            logger.info("✅ Token exchange successful")
+            logger.info(" Token exchange successful")
             return tokens
 
     async def refresh_access_token(self, refresh_token: str) -> Dict[str, Any]:
@@ -199,7 +199,7 @@ class SaxoOAuthClient:
         }
 
         async with httpx.AsyncClient(timeout=15.0) as client:
-            logger.info(f"🔄 Refreshing access token (env: {self.environment})")
+            logger.info(f" Refreshing access token (env: {self.environment})")
             response = await client.post(
                 self.token_url,
                 data=data,
@@ -207,7 +207,7 @@ class SaxoOAuthClient:
             )
 
             if response.status_code == 401:
-                logger.warning("⚠️ Refresh token expired - user must reconnect")
+                logger.warning(" Refresh token expired - user must reconnect")
                 raise httpx.HTTPStatusError(
                     "Refresh token expired",
                     request=response.request,
@@ -216,7 +216,7 @@ class SaxoOAuthClient:
 
             response.raise_for_status()
             tokens = response.json()
-            logger.info("✅ Token refresh successful")
+            logger.info(" Token refresh successful")
             return tokens
 
     async def get_positions(

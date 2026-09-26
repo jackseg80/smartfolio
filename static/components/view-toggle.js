@@ -131,12 +131,12 @@ template.innerHTML = `
 <div class="view-toggle" role="radiogroup" aria-label="Mode d'affichage">
     <button class="view-btn" data-mode="simple" role="radio" aria-checked="false"
             data-tooltip="Vue simplifi\u00e9e : m\u00e9triques cl\u00e9s uniquement">
-        <span class="icon" aria-hidden="true">\ud83d\udcca</span>
+        <span class="icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></span>
         <span class="label">Simple</span>
     </button>
     <button class="view-btn" data-mode="pro" role="radio" aria-checked="true"
             data-tooltip="Vue pro : toutes les donn\u00e9es et graphiques">
-        <span class="icon" aria-hidden="true">\ud83d\udd2c</span>
+        <span class="icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg></span>
         <span class="label">Pro</span>
     </button>
 </div>

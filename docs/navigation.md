@@ -69,9 +69,9 @@ Accès aux fonctionnalités avancées du portefeuille Bourse (Saxo Bank) via un 
 
 ### Sous-menus
 
-- **📊 Dashboard** → `saxo-dashboard.html` (Overview + Positions)
-- **📈 Analytics** → `bourse-analytics.html` (Risk Analysis + Advanced Analytics)
-- **💡 Recommendations** → `bourse-recommendations.html` (Recommendations + Market Opportunities)
+- ** Dashboard** → `saxo-dashboard.html` (Overview + Positions)
+- ** Analytics** → `bourse-analytics.html` (Risk Analysis + Advanced Analytics)
+- ** Recommendations** → `bourse-recommendations.html` (Recommendations + Market Opportunities)
 
 ### Pages détaillées
 

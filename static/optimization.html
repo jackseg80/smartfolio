@@ -365,7 +365,7 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-          🧮 Advanced Portfolio Optimization
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Calculate" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#calculator"></use></svg> Advanced Portfolio Optimization
         </div>
         <p style="margin: 0.5rem 0 0 0; color: var(--theme-text-muted); font-size: 0.95rem;">
           Sophisticated optimal allocation algorithms: Markowitz, Black-Litterman, Risk Parity, CVaR, and more
@@ -385,7 +385,7 @@
         <div>
           <label for="lookback">
             History (days)
-            <span class="tooltip-icon" data-tooltip="Historical period for computing returns and volatility. Short (90d) = trend-reactive, Long (730d) = more stable">ℹ</span>
+            <span class="tooltip-icon" data-tooltip="Historical period for computing returns and volatility. Short (90d) = trend-reactive, Long (730d) = more stable"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
           </label>
           <input id="lookback" type="number" min="30" max="2000" value="365" />
           <div class="help-text">Longer = more stable, shorter = more reactive</div>
@@ -397,7 +397,7 @@
         <div>
           <label for="risk-free-rate">
             Risk-free rate (%)
-            <span class="tooltip-icon" data-tooltip="Return rate of a risk-free asset (e.g., government bonds). Used in the Sharpe ratio calculation = (Return - Risk-free rate) / Volatility">ℹ</span>
+            <span class="tooltip-icon" data-tooltip="Return rate of a risk-free asset (e.g., government bonds). Used in the Sharpe ratio calculation = (Return - Risk-free rate) / Volatility"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
           </label>
           <input id="risk-free-rate" type="number" min="0" max="10" step="0.1" value="2.0" />
           <div class="help-text">Used for Sharpe ratio calculation</div>
@@ -416,7 +416,7 @@
 
       <!-- Configuration Max Sharpe -->
       <div id="config-max_sharpe" class="algorithm-config active">
-        <h4>📈 Sharpe Ratio Maximization</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Sharpe Ratio Maximization</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Optimizes the return/risk ratio. Classic Markowitz algorithm.
         </p>
@@ -437,7 +437,7 @@
 
       <!-- Configuration Black-Litterman -->
       <div id="config-black_litterman" class="algorithm-config">
-        <h4>🔮 Black-Litterman with Market Views</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Forecast" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sparkles"></use></svg> Black-Litterman with Market Views</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Integrates your views on future returns with market equilibrium.
         </p>
@@ -460,7 +460,7 @@
 
       <!-- Configuration Risk Parity -->
       <div id="config-risk_parity" class="algorithm-config">
-        <h4>⚖️ Risk Parity</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg> Risk Parity</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Equalizes each asset's risk contribution. Optimal diversification.
         </p>
@@ -470,7 +470,7 @@
             <div>
               <label for="target-vol-rp">
                 Target volatility (%)
-                <span class="tooltip-icon" data-tooltip="Risk Parity equalizes each asset's risk contribution (not weights). Setting a target volatility controls the total portfolio risk">ℹ</span>
+                <span class="tooltip-icon" data-tooltip="Risk Parity equalizes each asset's risk contribution (not weights). Setting a target volatility controls the total portfolio risk"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </label>
               <input id="target-vol-rp" type="number" min="5" max="50" step="1" value="15" />
               <div class="help-text">Leave empty for unconstrained optimization</div>
@@ -481,7 +481,7 @@
 
       <!-- Configuration Max Diversification -->
       <div id="config-max_diversification" class="algorithm-config">
-        <h4>🌐 Diversification Maximization</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Global" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#globe-alt"></use></svg> Diversification Maximization</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Maximizes the diversification ratio (weighted individual volatilities / portfolio volatility).
         </p>
@@ -502,7 +502,7 @@
 
       <!-- Configuration CVaR -->
       <div id="config-cvar_optimization" class="algorithm-config">
-        <h4>📉 Conditional Value at Risk (CVaR)</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Decline" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-down"></use></svg> Conditional Value at Risk (CVaR)</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Minimizes extreme losses. Tail distribution optimization.
         </p>
@@ -512,7 +512,7 @@
             <div>
               <label for="confidence-level">
                 Confidence level (%)
-                <span class="tooltip-icon" data-tooltip="CVaR (Conditional Value at Risk) measures the average loss in worst-case scenarios. 95% = optimizes to limit losses in the worst 5% of cases">ℹ</span>
+                <span class="tooltip-icon" data-tooltip="CVaR (Conditional Value at Risk) measures the average loss in worst-case scenarios. 95% = optimizes to limit losses in the worst 5% of cases"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </label>
               <input id="confidence-level" type="number" min="90" max="99" value="95" />
               <div class="help-text">95% = optimizes for the worst 5% scenarios</div>
@@ -520,7 +520,7 @@
             <div>
               <label for="cvar-weight">
                 CVaR vs Sharpe weight
-                <span class="tooltip-icon" data-tooltip="Balance between extreme risk minimization (CVaR) and return/risk maximization (Sharpe). 1.0 = 100% focus on protection, 0.0 = 100% focus on performance">ℹ</span>
+                <span class="tooltip-icon" data-tooltip="Balance between extreme risk minimization (CVaR) and return/risk maximization (Sharpe). 1.0 = 100% focus on protection, 0.0 = 100% focus on performance"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </label>
               <input id="cvar-weight" type="number" min="0" max="1" step="0.1" value="0.7" />
               <div class="help-text">1.0 = 100% CVaR, 0.0 = 100% Sharpe</div>
@@ -531,7 +531,7 @@
 
       <!-- Configuration Efficient Frontier -->
       <div id="config-efficient_frontier" class="algorithm-config">
-        <h4>📊 Efficient Frontier</h4>
+        <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Efficient Frontier</h4>
         <p style="color: var(--theme-text-muted); margin-bottom: var(--space-md);">
           Computes the set of optimal portfolios for different risk levels.
         </p>
@@ -554,9 +554,9 @@
       </div>
 
       <div class="actions">
-        <button class="btn" id="runBtn">🚀 Optimize</button>
-        <button class="btn secondary" id="compareBtn">📊 Compare Algorithms</button>
-        <button class="btn secondary" id="resetBtn">🔄 Reset</button>
+        <button class="btn" id="runBtn"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Optimize</button>
+        <button class="btn secondary" id="compareBtn"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Compare Algorithms</button>
+        <button class="btn secondary" id="resetBtn"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Reset</button>
         <span id="status" style="margin-left: auto; color: var(--theme-text-muted); font-size: 0.9rem;"></span>
       </div>
     </div>
@@ -564,7 +564,7 @@
     <!-- Résultats -->
     <div class="grid" id="results-container" style="display: none;">
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">📈 Optimal Allocation</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Optimal Allocation</div>
         <div class="chart-container">
           <canvas id="weightsChart" role="img" aria-label="Optimal portfolio weights allocation chart"></canvas>
         </div>
@@ -572,28 +572,28 @@
       </div>
 
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">📊 Performance Metrics</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Performance Metrics</div>
         <div class="kpis" id="kpis"></div>
         <div id="additional-metrics"></div>
       </div>
 
       <div class="card">
-        <div class="card-title" style="margin-bottom: var(--space-md);">🔄 Rebalancing Plan</div>
+        <div class="card-title" style="margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Rebalancing Plan</div>
         <table id="tradesTable"></table>
       </div>
 
       <!-- Export Actions -->
       <div class="card" style="grid-column: 1 / -1;">
         <div style="display: flex; gap: 0.5rem; justify-content: center;">
-          <button class="btn secondary small" id="exportJsonBtn">📥 Export JSON</button>
-          <button class="btn secondary small" id="exportCsvBtn">📥 Export CSV</button>
+          <button class="btn secondary small" id="exportJsonBtn"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export JSON</button>
+          <button class="btn secondary small" id="exportCsvBtn"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export CSV</button>
         </div>
       </div>
     </div>
 
     <!-- Efficient Frontier -->
     <div class="card" id="frontier-container" style="display: none;">
-      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Efficient Frontier</div>
+      <div class="card-title" style="margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Efficient Frontier</div>
       <div class="chart-container">
         <canvas id="frontierChart" role="img" aria-label="Efficient frontier risk-return chart"></canvas>
       </div>
@@ -602,7 +602,7 @@
 
     <!-- Comparaison d'algorithmes -->
     <div class="card" id="comparison-container" style="display: none;">
-      <div class="card-title" style="margin-bottom: var(--space-md);">📊 Algorithm Comparison</div>
+      <div class="card-title" style="margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Algorithm Comparison</div>
       <table id="comparisonTable" class="comparison-table"></table>
     </div>
   </div>

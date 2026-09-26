@@ -64,7 +64,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     </head>
     <body>
         <div class="container">
-            <h1>🧪 Phase 3 E2E Test Report</h1>
+            <h1> Phase 3 E2E Test Report</h1>
             <p><strong>Generated:</strong> {timestamp}</p>
             
             <div class="summary">
@@ -86,7 +86,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     
     # Intégration
     if "integration" in results and "var" in results["integration"]:
-        integration_score = "✅ PASS" if results["integration"]["var"]["status"] == "PASS" else "❌ FAIL"
+        integration_score = "[OK] PASS" if results["integration"]["var"]["status"] == "PASS" else "[Error] FAIL"
         var_time = results["integration"]["var"]["duration_ms"]
         summary_cards.append(f"""
             <div class="card success">
@@ -135,7 +135,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     if "integration" in results:
         test_sections.append(f"""
             <div class="test-section">
-                <h2>🔌 Integration Tests</h2>
+                <h2> Integration Tests</h2>
                 <div class="details">{json.dumps(results["integration"], indent=2)}</div>
             </div>
         """)
@@ -144,7 +144,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     if "resilience" in results:
         test_sections.append(f"""
             <div class="test-section">
-                <h2>🛡️ Resilience Tests</h2>
+                <h2> Resilience Tests</h2>
                 <div class="details">{json.dumps(results["resilience"], indent=2)}</div>
             </div>
         """)
@@ -153,7 +153,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     if "performance" in results:
         test_sections.append(f"""
             <div class="test-section">
-                <h2>🏃 Performance Benchmarks</h2>
+                <h2> Performance Benchmarks</h2>
                 <div class="details">{json.dumps(results["performance"], indent=2)}</div>
             </div>
         """)
@@ -162,7 +162,7 @@ def generate_html_report(results: Dict[str, Any]) -> str:
     if "compatibility" in results:
         test_sections.append(f"""
             <div class="test-section">
-                <h2>🌐 Compatibility Tests</h2>
+                <h2> Compatibility Tests</h2>
                 <div class="details">{json.dumps(results["compatibility"], indent=2)}</div>
             </div>
         """)
@@ -184,18 +184,18 @@ def generate_markdown_report(results: Dict[str, Any]) -> str:
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     md = f"""
-# 🧪 Phase 3 E2E Test Report
+# Phase 3 E2E Test Report
 
 **Generated:** {timestamp}
 
-## 📊 Executive Summary
+## Executive Summary
 
 """
     
     # Ajouter les résumés de chaque test
     if "integration" in results:
         md += """
-### ✅ Integration Tests
+### [OK] Integration Tests
 - **Status:** COMPLETED
 - **VaR API Response Time:** Available in detailed results
 - **WebSocket System:** Functional
@@ -204,7 +204,7 @@ def generate_markdown_report(results: Dict[str, Any]) -> str:
     if "resilience" in results and "summary" in results["resilience"]:
         resilience_score = results["resilience"]["summary"]["overall_resilience_score"]
         md += f"""
-### 🛡️ Resilience Tests  
+### Resilience Tests
 - **Overall Score:** {resilience_score}/100
 - **WebSocket Resilience:** {results["resilience"]["summary"]["websocket_resilience"]}
 - **Error Recovery:** {results["resilience"]["summary"]["error_recovery"]}
@@ -213,7 +213,7 @@ def generate_markdown_report(results: Dict[str, Any]) -> str:
     if "performance" in results and "summary" in results["performance"]:
         perf = results["performance"]["summary"]
         md += f"""
-### 🏃 Performance Benchmarks
+### Performance Benchmarks
 - **Performance Score:** {perf["performance_score"]}/100  
 - **VaR API Average:** {perf["var_api_avg_ms"]}ms
 - **VaR API P95:** {perf["var_api_p95_ms"]}ms
@@ -223,7 +223,7 @@ def generate_markdown_report(results: Dict[str, Any]) -> str:
     if "compatibility" in results and "summary" in results["compatibility"]:
         compat = results["compatibility"]["summary"]
         md += f"""
-### 🌐 Compatibility Tests
+### Compatibility Tests
 - **Overall Score:** {compat["overall_compatibility_score"]}/100
 - **Rating:** {compat["compatibility_rating"]}
 - **JavaScript Score:** {compat["javascript_score"]}/100
@@ -231,7 +231,7 @@ def generate_markdown_report(results: Dict[str, Any]) -> str:
 """
     
     md += """
-## 📋 Detailed Results
+## Detailed Results
 
 See individual JSON files for complete metrics:
 - `phase3_test_results.json` - Integration test details
@@ -274,10 +274,10 @@ def main():
     with open("phase3_e2e_summary.json", "w") as f:
         json.dump(summary, f, indent=2)
     
-    print("✅ Reports generated:")
-    print("   📄 phase3_e2e_report.html - Interactive HTML report")  
-    print("   📝 phase3_e2e_report.md - Markdown summary")
-    print("   📊 phase3_e2e_summary.json - JSON summary")
+    print("[OK] Reports generated:")
+    print("    phase3_e2e_report.html - Interactive HTML report")
+    print("    phase3_e2e_report.md - Markdown summary")
+    print("    phase3_e2e_summary.json - JSON summary")
     
     return summary
 

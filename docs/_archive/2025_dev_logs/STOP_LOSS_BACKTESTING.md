@@ -4,11 +4,11 @@
 > **Status:** Ready to Test
 > **Module:** ML Bourse - Stop Loss Validation
 
-## 🎯 Objectif
+## Objectif
 
 Valider empiriquement que **ATR 2x > Fixed %** sur données historiques réelles avant d'investir dans des améliorations plus complexes (Support Detection, Personnalisation).
 
-## 📁 Fichiers Créés
+## Fichiers Créés
 
 ### Backend (Python)
 ```
@@ -30,7 +30,7 @@ docs/STOP_LOSS_BACKTESTING.md      [CE FICHIER]
 
 ---
 
-## 🚀 Comment Utiliser
+## Comment Utiliser
 
 ### Option 1 : Installation Propre (Recommandé)
 
@@ -90,7 +90,7 @@ print(results['aggregate'])
 
 ---
 
-## 📊 Fonctionnement du Backtest
+## Fonctionnement du Backtest
 
 ### 1. Stratégie de Simulation
 
@@ -160,12 +160,12 @@ for entry_date in dates[::7]:
 
 ---
 
-## 📈 Résultats Attendus
+## Résultats Attendus
 
-### Scénario 1 : ATR Supérieur (🎯 Objectif)
+### Scénario 1 : ATR Supérieur ( Objectif)
 
 ```
-🎯 AGGREGATE RESULTS (3 assets):
+ AGGREGATE RESULTS (3 assets):
 
   ┌─────────────────────┬──────────────┬──────────────┐
   │ Metric              │ ATR 2x       │ Fixed %      │
@@ -176,18 +176,18 @@ for entry_date in dates[::7]:
   │ Assets Won          │            3 │            0 │
   └─────────────────────┴──────────────┴──────────────┘
 
-  🏆 Overall Winner: ATR 2x
-  💰 P&L Difference: $+1,270 (+59.1%)
+   Overall Winner: ATR 2x
+   P&L Difference: $+1,270 (+59.1%)
 ```
 
-**Verdict :** ✅ ATR 2x validé → Procéder à Phase 2 (Support Detection)
+**Verdict :** [OK] ATR 2x validé → Procéder à Phase 2 (Support Detection)
 
 ---
 
-### Scénario 2 : Résultats Mixtes (⚠️ Investigation)
+### Scénario 2 : Résultats Mixtes ( Investigation)
 
 ```
-🎯 AGGREGATE RESULTS (3 assets):
+ AGGREGATE RESULTS (3 assets):
 
   ┌─────────────────────┬──────────────┬──────────────┐
   │ Total P&L (all)     │     $+2,800  │     $+2,650  │
@@ -196,11 +196,11 @@ for entry_date in dates[::7]:
   │ Assets Won          │            2 │            1 │
   └─────────────────────┴──────────────┴──────────────┘
 
-  🏆 Overall Winner: ATR 2x
-  💰 P&L Difference: $+150 (+5.7%)
+   Overall Winner: ATR 2x
+   P&L Difference: $+150 (+5.7%)
 ```
 
-**Verdict :** ⚠️ Amélioration marginale (<10%) → Analyser asset par asset pour comprendre
+**Verdict :** [Warning] Amélioration marginale (<10%) → Analyser asset par asset pour comprendre
 
 **Actions :**
 - Si NVDA (high vol) : ATR gagne beaucoup → ATR utile pour assets volatils
@@ -209,10 +209,10 @@ for entry_date in dates[::7]:
 
 ---
 
-### Scénario 3 : Fixed Supérieur (❌ Problème)
+### Scénario 3 : Fixed Supérieur ( Problème)
 
 ```
-🎯 AGGREGATE RESULTS (3 assets):
+ AGGREGATE RESULTS (3 assets):
 
   ┌─────────────────────┬──────────────┬──────────────┐
   │ Total P&L (all)     │     $+1,900  │     $+2,800  │
@@ -221,11 +221,11 @@ for entry_date in dates[::7]:
   │ Assets Won          │            0 │            3 │
   └─────────────────────┴──────────────┴──────────────┘
 
-  🏆 Overall Winner: Fixed %
-  💰 P&L Difference: $-900 (-32%)
+   Overall Winner: Fixed %
+   P&L Difference: $-900 (-32%)
 ```
 
-**Verdict :** ❌ ATR underperforms → Investigation requise
+**Verdict :** [Error] ATR underperforms → Investigation requise
 
 **Causes possibles :**
 1. **Multiplier trop élevé** (2.5x) → Tester 2.0x ou 1.5x
@@ -236,7 +236,7 @@ for entry_date in dates[::7]:
 
 ---
 
-## 🔍 Analyse Post-Backtest
+## Analyse Post-Backtest
 
 ### 1. Fichiers Générés
 
@@ -295,44 +295,44 @@ def calculate_max_drawdown(trades):
 
 ---
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
 ### Si ATR > Fixed (+10% ou plus) :
 
-✅ **Phase 2 : ATR-Anchored Support Detection**
+[OK] **Phase 2 : ATR-Anchored Support Detection**
 - Implémenter détection MA50 + niveaux psychologiques
 - Ajustement limité ±2% du stop ATR
 - Backtest à nouveau pour mesurer amélioration
 
-📅 **Temps estimé :** 2-3h
+ **Temps estimé :** 2-3h
 
 ---
 
 ### Si Résultats Mixtes (+5% à +10%) :
 
-⚠️ **Investigation Granulaire**
+[Warning] **Investigation Granulaire**
 - Séparer assets par volatilité (high/medium/low)
 - Tester multipliers ATR adaptatifs (1.5x, 2.0x, 2.5x)
 - Comparer par régime de marché (Bull vs Bear)
 
-📅 **Temps estimé :** 1 jour
+ **Temps estimé :** 1 jour
 
 ---
 
 ### Si Fixed > ATR :
 
-❌ **Debug & Réajustement**
+[Error] **Debug & Réajustement**
 1. Vérifier calcul ATR (période 14 jours correct ?)
 2. Tester sur période plus longue (365 jours au lieu de 180)
 3. Tester multipliers plus conservateurs (1.5x au lieu de 2.5x)
 4. Vérifier market regime (peut-être Bear au lieu de Bull)
 5. Augmenter nombre d'assets testés (10-15 au lieu de 3)
 
-📅 **Temps estimé :** 1-2 jours
+ **Temps estimé :** 1-2 jours
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Erreur : "No cache file found for {SYMBOL}"
 
@@ -380,7 +380,7 @@ results = backtester.run_multi_asset_backtest(
 
 ---
 
-## 📚 Références
+## Références
 
 ### Code Source
 - **Main Module** : [`services/ml/bourse/stop_loss_backtest.py`](../services/ml/bourse/stop_loss_backtest.py)
@@ -397,7 +397,7 @@ results = backtester.run_multi_asset_backtest(
 
 ---
 
-## 📞 Support
+## Support
 
 **Logs :** `logs/app.log` (5 MB rotatifs, 3 backups)
 
@@ -411,4 +411,4 @@ logging.basicConfig(level=logging.DEBUG)
 
 ---
 
-**✅ Module prêt à tester - Temps total de développement : ~2h**
+**[OK] Module prêt à tester - Temps total de développement : ~2h**

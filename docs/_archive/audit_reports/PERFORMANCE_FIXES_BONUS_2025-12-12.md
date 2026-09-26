@@ -1,7 +1,7 @@
 # Corrections de Performance Bonus - 12 Décembre 2025
 
 **Suite de**: [PERFORMANCE_FIXES_2025-12-12.md](PERFORMANCE_FIXES_2025-12-12.md)
-**Status**: ✅ Complété (3 fixes bonus)
+**Status**: [OK] Complété (3 fixes bonus)
 **Impact**: Event loop non-bloquant + cache bounded + throttling frontend
 
 ---
@@ -19,7 +19,7 @@
 
 ---
 
-## Fix #8: Cache UIC Bounded 🔧
+## Fix #8: Cache UIC Bounded
 
 **Problème**: Cache fallback in-memory sans limite de taille
 
@@ -46,7 +46,7 @@ if len(_uic_cache) >= _UIC_CACHE_MAX_SIZE:
     keys_to_remove = list(_uic_cache.keys())[:(_UIC_CACHE_MAX_SIZE // 5)]
     for old_key in keys_to_remove:
         del _uic_cache[old_key]
-    logger.info(f"🗑️ UIC fallback cache cleanup: removed {len(keys_to_remove)} old entries")
+    logger.info(f" UIC fallback cache cleanup: removed {len(keys_to_remove)} old entries")
 ```
 
 **Impact**:
@@ -56,7 +56,7 @@ if len(_uic_cache) >= _UIC_CACHE_MAX_SIZE:
 
 ---
 
-## Fix #9: Subprocess Async ⚡
+## Fix #9: Subprocess Async
 
 **Problème**: Appels subprocess.run() bloquent l'event loop pendant 5 minutes max
 
@@ -105,7 +105,7 @@ stdout, stderr = await asyncio.wait_for(
 
 ---
 
-## Fix #10: Async File I/O ⚡
+## Fix #10: Async File I/O
 
 **Problème**: Opérations I/O synchrones bloquent l'event loop
 
@@ -171,7 +171,7 @@ pip install aiofiles>=23.0.0
 
 ---
 
-## Fix #11: Frontend Event Throttling ⚡
+## Fix #11: Frontend Event Throttling
 
 **Problème**: Storage events non throttled causent spam UI
 
@@ -241,22 +241,22 @@ Les 3 "problèmes critiques" de l'audit initial ont été **vérifiés et confir
 
 1. **Crypto Toolbox** (`crypto_toolbox_endpoints.py:97`)
    - `REDIS_CACHE_KEY = "crypto_toolbox:data"` (pas d'isolation user)
-   - ✅ **OK** : Données publiques (signaux marché identiques pour tous)
+   - **OK** : Données publiques (signaux marché identiques pour tous)
 
 2. **FX Service** (`fx_service.py:28-30`)
    - `_RATES_TO_USD` (cache global sans user_id)
-   - ✅ **OK** : Taux FX publics (USD/EUR identique pour tous)
+   - **OK** : Taux FX publics (USD/EUR identique pour tous)
 
 3. **Saxo UIC Resolver** (`saxo_uic_resolver.py:31`)
    - `_uic_cache` (fallback in-memory)
-   - ⚠️ **CORRIGÉ** : Ajout maxsize=1000 (fix #8)
+   - [Warning] **CORRIGÉ** : Ajout maxsize=1000 (fix #8)
 
 ### I/O Synchrones
 
 **Vérifiés dans l'audit** :
-- ✅ `services/pricing.py:139-152` → Corrigé (fix #10)
-- ✅ `services/alerts/alert_storage.py:97-106` → OK (FileLock fallback acceptable)
-- ✅ `services/coingecko.py:78-116` → OK (aiohttp déjà actif ligne 99)
+- [OK] `services/pricing.py:139-152` → Corrigé (fix #10)
+- [OK] `services/alerts/alert_storage.py:97-106` → OK (FileLock fallback acceptable)
+- [OK] `services/coingecko.py:78-116` → OK (aiohttp déjà actif ligne 99)
 
 ---
 
@@ -322,8 +322,8 @@ for (let i = 0; i < 10; i++) {
 ### Problèmes Restants du Backlog
 
 Sur les **47 problèmes initiaux** de l'audit :
-- ✅ **10 résolus** (7 fixes + 3 fixes bonus)
-- 🔄 **37 restants** (optimisations structurelles non critiques)
+- [OK] **10 résolus** (7 fixes + 3 fixes bonus)
+- **37 restants** (optimisations structurelles non critiques)
 
 **Top priorités restantes** :
 1. Partitionner `portfolio_history.json` (scalabilité) - 4h effort

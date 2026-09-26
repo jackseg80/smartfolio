@@ -244,7 +244,7 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
   if (typeof localStorage !== 'undefined') {
     const storedMode = localStorage.getItem('RISK_SEMANTICS_MODE');
     if (storedMode === 'legacy') {
-      console.warn('⚠️ LEGACY mode detected and auto-migrated to v2_conservative (legacy removed in Jan 2026)');
+      console.warn("[Warning] LEGACY mode detected and auto-migrated to v2_conservative (legacy removed in Jan 2026)");
       localStorage.setItem('RISK_SEMANTICS_MODE', 'v2_conservative');
       riskSemanticsMode = 'v2_conservative';
     } else {
@@ -258,32 +258,32 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
 
   // CACHE RÉACTIVÉ (Oct 2025) - TTL 30s pour stabilité
   if (_riskBudgetCache.key === cacheKey && now - _riskBudgetCache.timestamp < 30000) {
-    console.debug('💰 Risk Budget from cache:', cacheKey);
+    console.debug("Risk Budget from cache:", cacheKey);
     return JSON.parse(JSON.stringify(_riskBudgetCache.data));
   }
-  console.debug('💰 Cache MISS - Calculating fresh Risk Budget (key:', cacheKey, ')');
+  console.debug("Cache MISS - Calculating fresh Risk Budget (key:", cacheKey, ')');
 
-  (window.debugLogger?.info || console.log)('💰 Calculating Risk Budget:', {
+  (window.debugLogger?.info || console.log)("Calculating Risk Budget:", {
     original: { blended: blendedScore, risk: riskScore },
     rounded: { blended: blendedRounded, risk: riskRounded },
     mode: riskSemanticsMode
   });
 
   // Calculate risk_factor based on Risk Score (higher score = more robust portfolio)
-  // ✅ CORRECT SEMANTICS: Risk Score = robustesse (haut=robuste → plus de risky autorisé)
+  //  CORRECT SEMANTICS: Risk Score = robustesse (haut=robuste → plus de risky autorisé)
   let risk_factor;
 
   if (riskSemanticsMode === 'v2_conservative') {
     // V2 CONSERVATIVE: risk_factor = 0.5 + 0.5 × (RiskScore/100)
     // Range: [0.5 .. 1.0]
     risk_factor = 0.5 + 0.5 * (riskRounded / 100);
-    console.debug('✅ V2 CONSERVATIVE: risk_factor =', risk_factor.toFixed(3));
+    console.debug("[OK] V2 CONSERVATIVE: risk_factor =", risk_factor.toFixed(3));
   } else if (riskSemanticsMode === 'v2_aggressive') {
     // V2 AGGRESSIVE: risk_factor = 0.4 + 0.7 × (RiskScore/100)
     // Plus de différenciation entre portfolios fragiles/robustes
     // Range: [0.4 .. 1.1]
     risk_factor = 0.4 + 0.7 * (riskRounded / 100);
-    console.debug('✅ V2 AGGRESSIVE: risk_factor =', risk_factor.toFixed(3));
+    console.debug("[OK] V2 AGGRESSIVE: risk_factor =", risk_factor.toFixed(3));
   } else {
     // Fallback to conservative if unknown mode
     risk_factor = 0.5 + 0.5 * (riskRounded / 100);
@@ -295,7 +295,7 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
   if ([cycleDirection, cycleScore, cycleConfidence].every(Number.isFinite) && cycleScore > 80) {
     const dirPenalty = Math.max(0, -cycleDirection) * cycleConfidence * 0.15;
     risk_factor *= (1 - dirPenalty);
-    console.debug('📉 Direction penalty applied:', { cycleDirection, confidence: cycleConfidence, dirPenalty: dirPenalty.toFixed(4) });
+    console.debug("Direction penalty applied:", { cycleDirection, confidence: cycleConfidence, dirPenalty: dirPenalty.toFixed(4) });
   }
 
   // BaseRisky = clamp((Blended - 35)/45, 0, 1) - utiliser score arrondi
@@ -312,7 +312,7 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
   const stablesPct = 100 - riskyPct;
 
   // DEBUG - Vérifier l'arrondi
-  console.debug('🔍 ARRONDI DEBUG:', {
+  console.debug("ARRONDI DEBUG:", {
     riskyAllocation,
     stablesAllocation,
     riskyRaw: riskyAllocation * 100,
@@ -348,7 +348,7 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
     timestamp: now
   };
 
-  (window.debugLogger?.info || console.log)('💰 Risk Budget calculated:', result);
+  (window.debugLogger?.info || console.log)("Risk Budget calculated:", result);
   return result;
 }
 
@@ -357,7 +357,7 @@ export function calculateRiskBudget(blendedScore, riskScore, cycleScore = null, 
  */
 export function allocateRiskyBudget(riskyPercentage, regime) {
   if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-    debugLogger.debug('🚨 [allocateRiskyBudget] CALLED - riskyPercentage:', riskyPercentage, 'regime:', regime?.name, 'bias:', regime?.allocation_bias);
+    debugLogger.debug("[Alert] [allocateRiskyBudget] CALLED - riskyPercentage:", riskyPercentage, 'regime:', regime?.name, 'bias:', regime?.allocation_bias);
   }
 
   // Base par défaut : BTC 50% / ETH 30% / Midcaps 20%
@@ -369,7 +369,7 @@ export function allocateRiskyBudget(riskyPercentage, regime) {
   };
 
   if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-    debugLogger.debug('🚨 [allocateRiskyBudget] BEFORE bias - allocation:', {...allocation});
+    debugLogger.debug("[Alert] [allocateRiskyBudget] BEFORE bias - allocation:", {...allocation});
   }
 
   // Ajustements selon le régime
@@ -381,13 +381,13 @@ export function allocateRiskyBudget(riskyPercentage, regime) {
   allocation.meme = Math.min(allocation.meme, bias.meme_cap || 5);
 
   if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-    debugLogger.debug('🚨 [allocateRiskyBudget] AFTER bias - allocation:', {...allocation});
+    debugLogger.debug("[Alert] [allocateRiskyBudget] AFTER bias - allocation:", {...allocation});
   }
 
   // Normaliser à 100% (déterministe: arrondir puis ajuster le reste sur BTC)
   const total = allocation.btc + allocation.eth + allocation.midcaps + allocation.meme;
   if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-    debugLogger.debug('🚨 [allocateRiskyBudget] Total before normalization:', total);
+    debugLogger.debug("[Alert] [allocateRiskyBudget] Total before normalization:", total);
   }
   if (total !== 100) {
     const factor = 100 / total;
@@ -422,7 +422,7 @@ export function allocateRiskyBudget(riskyPercentage, regime) {
   const stablesAlloc = 100 - totalRisky;
 
   if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-    debugLogger.debug('🚨 [allocateRiskyBudget] FINAL RESULT:', {
+    debugLogger.debug("[Alert] [allocateRiskyBudget] FINAL RESULT:", {
       riskyPercentage,
       BTC: btcAlloc.toFixed(2),
       ETH: ethAlloc.toFixed(2),
@@ -564,7 +564,7 @@ export function getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycl
   const recommendations = generateRegimeRecommendations(effective, riskBudget);
 
   return {
-    regime: effective,  // ✅ Utiliser effective avec le bon key
+    regime: effective,  //  Utiliser effective avec le bon key
     base_regime: base,
     adjusted_regime: adjusted,
     risk_budget: riskBudget,

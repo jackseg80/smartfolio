@@ -2,13 +2,13 @@
 
 **Durée:** ~2h
 **Contexte:** Application Docker en production totalement non fonctionnelle (erreurs 429)
-**Résultat:** ✅ Tous les problèmes résolus
+**Résultat:** [OK] Tous les problèmes résolus
 
 ---
 
-## 🎯 Problèmes Résolus
+## Problèmes Résolus
 
-### 1. Rate Limiting 429 Errors (CRITIQUE) ✅
+### 1. Rate Limiting 429 Errors (CRITIQUE)
 
 **Symptômes:**
 - Erreurs 429 (Too Many Requests) sur TOUS les endpoints
@@ -22,8 +22,8 @@
 - Dashboard fait 20-30 requêtes parallèles → épuisait les 12 tokens → cascade 429
 
 **Solution:**
-- ✅ [docker-compose.yml:72-73](../docker-compose.yml#L72-L73) - Ajout mapping variables SECURITY_*
-- ✅ [.env.production.example:35-36](../.env.production.example#L35-L36) - Valeurs optimisées:
+- [OK] [docker-compose.yml:72-73](../docker-compose.yml#L72-L73) - Ajout mapping variables SECURITY_*
+- [OK] [.env.production.example:35-36](../.env.production.example#L35-L36) - Valeurs optimisées:
   ```env
   SECURITY_RATE_LIMIT_REFILL_RATE=20.0  # 20 req/sec (1200/min)
   SECURITY_RATE_LIMIT_BURST_SIZE=50     # Burst 50 requêtes
@@ -35,7 +35,7 @@
 
 ---
 
-### 2. CSP Violations (Warning) ✅
+### 2. CSP Violations (Warning)
 
 **Symptômes:**
 - `Connecting to 'https://cdn.jsdelivr.net/...' violates CSP`
@@ -43,7 +43,7 @@
 - Funding rate fallback activé (API Binance bloquée)
 
 **Solution:**
-- ✅ [config/settings.py:76-77](../config/settings.py#L76-L77) - Ajout dans `csp_connect_src`:
+- [OK] [config/settings.py:76-77](../config/settings.py#L76-L77) - Ajout dans `csp_connect_src`:
   ```python
   "https://cdn.jsdelivr.net",  # Chart.js sourcemaps
   "https://fapi.binance.com"   # Funding rate API
@@ -55,7 +55,7 @@
 
 ---
 
-### 3. CoinTracking API Non Visible (Régression) ✅
+### 3. CoinTracking API Non Visible (Régression)
 
 **Symptômes:**
 - API CoinTracking n'apparaissait PAS dans WealthBar dropdown
@@ -67,7 +67,7 @@
 - Pas dans `data_router.settings` (config.json)
 
 **Solution:**
-- ✅ [api/user_settings_endpoints.py:276-278](../api/user_settings_endpoints.py#L276-L278)
+- [OK] [api/user_settings_endpoints.py:276-278](../api/user_settings_endpoints.py#L276-L278)
   ```python
   # Avant (BROKEN):
   has_ct_credentials = (
@@ -88,7 +88,7 @@
 
 ---
 
-### 4. WealthBar Totalement Vide (CRITIQUE) ✅
+### 4. WealthBar Totalement Vide (CRITIQUE)
 
 **Symptômes:**
 - **AUCUNE** source visible dans WealthBar (même pas CSV!)
@@ -103,7 +103,7 @@
 - → WealthBar ne recevait rien
 
 **Solution:**
-- ✅ [api/user_settings_endpoints.py:315](../api/user_settings_endpoints.py#L315)
+- [OK] [api/user_settings_endpoints.py:315](../api/user_settings_endpoints.py#L315)
   ```python
   # Avant (BROKEN):
   "current_source": user_settings.get("data_source", "csv"),
@@ -118,24 +118,24 @@
 **Note importante:**
 - Ce bug a été introduit PUIS corrigé dans la MÊME session
 - Démontre l'importance de tester immédiatement après chaque modification
-- ⚠️ **Serveur local nécessite restart manuel** (pas de --reload flag)
+- [Warning] **Serveur local nécessite restart manuel** (pas de --reload flag)
 
 ---
 
-## 📊 Métriques Avant/Après
+## Métriques Avant/Après
 
 | Problème | Avant | Après |
 |----------|-------|-------|
-| Erreurs 429 | 100% endpoints | 0% ✅ |
-| Dashboard charge | Échoue | Instantané ✅ |
-| CSP warnings | 2 types | 0 ✅ |
-| WealthBar sources | Vide | Toutes visibles ✅ |
-| CoinTracking API | Invisible | Visible si clés ✅ |
-| Clés API Settings | Vides | Visibles ✅ |
+| Erreurs 429 | 100% endpoints | 0% [OK] |
+| Dashboard charge | Échoue | Instantané [OK] |
+| CSP warnings | 2 types | 0 [OK] |
+| WealthBar sources | Vide | Toutes visibles [OK] |
+| CoinTracking API | Invisible | Visible si clés [OK] |
+| Clés API Settings | Vides | Visibles [OK] |
 
 ---
 
-## 🚀 Commits de la Session
+## Commits de la Session
 
 1. **f485246** - `fix(production): resolve 429 errors with proper rate limiting config`
    - Mapping SECURITY_* dans docker-compose.yml
@@ -149,7 +149,7 @@
 
 3. **6efb244** - `fix(sources): CoinTracking API now visible in WealthBar when keys configured`
    - Fix vérification clés API (api_credentials vs settings)
-   - ⚠️ Introduit régression WealthBar
+   - [Warning] Introduit régression WealthBar
 
 4. **69f9b22** - `fix(sources): repair broken WealthBar by fixing user_settings reference`
    - Corrige régression introduite par 6efb244
@@ -157,7 +157,7 @@
 
 ---
 
-## 📦 Fichiers Modifiés
+## Fichiers Modifiés
 
 **Configuration:**
 - `docker-compose.yml` - Mapping variables SECURITY_*
@@ -174,7 +174,7 @@
 
 ---
 
-## 🔄 Déploiement Serveur
+## Déploiement Serveur
 
 **Sur serveur Linux:**
 
@@ -194,12 +194,12 @@ SECURITY_RATE_LIMIT_BURST_SIZE=50
 
 # 4. Vérifier
 docker-compose logs smartfolio | grep "Token bucket"
-# → "🪣 Token bucket rate limiter initialized: 20.0 req/s burst 50"
+# → " Token bucket rate limiter initialized: 20.0 req/s burst 50"
 ```
 
 ---
 
-## ⚠️ Leçons Apprises
+## Leçons Apprises
 
 ### 1. Rate Limiting en Production
 
@@ -222,7 +222,7 @@ grep "SECURITY_RATE_LIMIT" .env.production.example
 
 **Process:**
 1. Modifier code
-2. Informer utilisateur: "⚠️ Veuillez redémarrer le serveur"
+2. Informer utilisateur: "[Warning] Veuillez redémarrer le serveur"
 3. Attendre confirmation
 4. Tester
 5. Commit
@@ -252,7 +252,7 @@ curl -s http://localhost:8080/api/users/sources -H "X-User: jack" | jq '.sources
 
 ---
 
-## 📖 Documentation Connexe
+## Documentation Connexe
 
 - [PROD_DEPLOYMENT_FIX_429.md](PROD_DEPLOYMENT_FIX_429.md) - Guide rate limiting
 - [PROD_FIX_CHANGELOG_2025-12-04.md](PROD_FIX_CHANGELOG_2025-12-04.md) - Changelog
@@ -263,4 +263,4 @@ curl -s http://localhost:8080/api/users/sources -H "X-User: jack" | jq '.sources
 
 **Résumé:** Session intensive de debug production qui a résolu tous les problèmes bloquants. L'application est maintenant 100% fonctionnelle en production Docker. Deux bugs critiques introduits puis corrigés dans la même session (rate limiting + WealthBar).
 
-**État final:** ✅ Production opérationnelle
+**État final:** [OK] Production opérationnelle

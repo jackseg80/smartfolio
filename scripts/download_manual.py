@@ -26,9 +26,9 @@ async def download_manual():
         print(f"[{i}/{len(SYMBOLS_TO_DOWNLOAD)}] {symbol}...")
         try:
             await price_history.download_historical_data(symbol, days=DAYS)
-            print(f"✅ {symbol}: OK")
+            print(f"[OK] {symbol}: OK")
         except Exception as e:
-            print(f"❌ {symbol}: ÉCHEC - {e}")
+            print(f"[Error] {symbol}: ÉCHEC - {e}")
         
         # Pause entre chaque téléchargement
         if i < len(SYMBOLS_TO_DOWNLOAD):

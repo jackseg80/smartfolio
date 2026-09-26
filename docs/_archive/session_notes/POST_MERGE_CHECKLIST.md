@@ -1,9 +1,9 @@
 # Check-list de vérification post-merge
 
-## Tests automatisés ✅
-- [✅] Tests unitaires risk dashboard metadata passent
-- [✅] Tests de validation frontend passent
-- [✅] Aucune régression détectée
+## Tests automatisés
+- [OK] Tests unitaires risk dashboard metadata passent
+- [OK] Tests de validation frontend passent
+- [OK] Aucune régression détectée
 
 ## Validation E2E manuelle
 
@@ -57,7 +57,7 @@
 - [ ] Démarrer le serveur et surveiller les logs
 - [ ] Faire quelques requêtes Risk Dashboard
 - [ ] **Vérifier** : Logs contiennent metadata (user, source, taxonomy)
-- [ ] **Vérifier** : Format `🏷️ Risk dashboard metadata: user=X, source=Y`
+- [ ] **Vérifier** : Format ` Risk dashboard metadata: user=X, source=Y`
 
 ## Performance et Caches
 
@@ -96,5 +96,5 @@ window.addEventListener('dataSourceChanged', e => console.log('Source changed:',
 ```
 
 ---
-**Status** : ⏳ En attente de validation manuelle
+**Status** : [Pending] En attente de validation manuelle
 **Critique** : Les points 1-4 sont critiques - ils valident directement le fix du problème initial.

@@ -35,7 +35,7 @@ export function getContradictionPctCompat(state) {
   if (Number.isFinite(primary) && primary > 0) return primary;
 
   // Fallback vers anciennes sources (à supprimer progressivement)
-  (window.debugLogger?.warn || console.warn)("⚠️ Fallback to legacy contradiction source - update code to use governance.contradiction_index");
+  (window.debugLogger?.warn || console.warn)("[Warning] Fallback to legacy contradiction source - update code to use governance.contradiction_index");
   const legacyCount = state?.scores?.contradictory_signals?.length ??
                      state?.contradictions?.length ?? 0;
   return Math.min(100, legacyCount * 20); // 0-5 signals → 0-100%

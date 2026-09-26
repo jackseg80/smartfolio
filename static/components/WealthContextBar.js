@@ -199,7 +199,7 @@ class WealthContextBar {
     let html = '<option value="all">All</option>';
 
     // Ajouter option Manuel (Sources V2)
-    html += '<option value="manual_crypto" data-type="manual">📝 Manual Entry</option>';
+    html += "<option value=\"manual_crypto\" data-type=\"manual\">Manual Entry</option>";
 
     if (apis.length > 0) {
       html += '<option disabled>──── API ────</option>';
@@ -297,14 +297,14 @@ class WealthContextBar {
     let html = '<option value="all">All</option>';
 
     // Ajouter option Manuel (Sources V2)
-    html += '<option value="manual_bourse" data-type="manual">📝 Manual Entry</option>';
+    html += "<option value=\"manual_bourse\" data-type=\"manual\">Manual Entry</option>";
 
     // Section API (en premier pour visibilité)
     if (saxoAPIs.length > 0) {
       html += '<option disabled>──── API ────</option>';
       saxoAPIs.forEach(s => {
         const value = `api:${s.key}`;
-        const envIndicator = s.environment === 'live' ? '🔴' : '🟢';
+        const envIndicator = s.environment === 'live' ? "Negative" : "Positive";
         html += `<option value="${value}" data-type="api">${envIndicator} ${s.label}</option>`;
       });
     }
@@ -398,7 +398,7 @@ class WealthContextBar {
         return;
       }
 
-      // ✅ FIX: Mettre à jour globalConfig pour que loadBalanceData() utilise la bonne source
+      //  FIX: Mettre à jour globalConfig pour que loadBalanceData() utilise la bonne source
       if (typeof window.globalConfig !== 'undefined') {
         window.globalConfig.set('data_source', 'manual_crypto');
       }
@@ -420,7 +420,7 @@ class WealthContextBar {
       }
 
       if (!skipNotification && typeof window.showNotification === 'function') {
-        window.showNotification('✅ Manual mode activated for Crypto. Manage your assets in Settings → Sources', 'info');
+        window.showNotification("[OK] Manual mode activated for Crypto. Manage your assets in Settings → Sources", 'info');
       }
 
       // Déclencher le reload automatique comme pour les autres sources
@@ -559,7 +559,7 @@ class WealthContextBar {
             key.includes('ccs') ||
             key.includes('cycle')) {
           localStorage.removeItem(key);
-          (window.debugLogger?.debug || console.log)(`🧹 Cleared cache: ${key}`);
+          (window.debugLogger?.debug || console.log)(`Cleared cache: ${key}`);
         }
       });
 
@@ -585,7 +585,7 @@ class WealthContextBar {
 
     // Sauvegarder dans le backend AVANT d'émettre l'événement (évite race condition)
     if (sourceChanged || fileChanged) {
-      // ✅ FIX: Mettre à jour Sources V2 pour désactiver manual_crypto
+      //  FIX: Mettre à jour Sources V2 pour désactiver manual_crypto
       // Mapper la source V1 vers l'ID source V2 correspondant
       let sourcesV2Id = null;
       if (type === 'csv') {
@@ -607,7 +607,7 @@ class WealthContextBar {
             body: JSON.stringify({ source_id: sourcesV2Id })
           });
 
-          // ✅ FIX: Si source CSV, aussi sélectionner le fichier spécifique
+          //  FIX: Si source CSV, aussi sélectionner le fichier spécifique
           if (type === 'csv' && source) {
             // Extraire le filename depuis file_path ou key
             let filename = null;
@@ -648,7 +648,7 @@ class WealthContextBar {
         contextAccount: this.context.account
       };
 
-      console.debug(`🔍 WealthContextBar: About to persist - csv_selected_file='${window.userSettings.csv_selected_file}', saxo_selected_file='${window.userSettings.saxo_selected_file}'`);
+      console.debug(`WealthContextBar: About to persist - csv_selected_file='${window.userSettings.csv_selected_file}', saxo_selected_file='${window.userSettings.saxo_selected_file}'`);
       const persistResult = await this.persistSettingsSafely(window.userSettings, source);
 
       if (!persistResult.ok && !persistResult.aborted) {
@@ -677,13 +677,13 @@ class WealthContextBar {
 
         // Notification erreur
         if (typeof window.showNotification === 'function') {
-          window.showNotification(`❌ Source change failed: ${persistResult.error?.message || 'Network error'}`, 'error');
+          window.showNotification(`[Error] Source change failed: ${persistResult.error?.message || 'Network error'}`, 'error');
         }
 
         return; // Arrêter ici, pas de reload
       }
 
-      // ✅ Si succès : Émettre événement dataSourceChanged APRÈS sauvegarde backend
+      //  Si succès : Émettre événement dataSourceChanged APRÈS sauvegarde backend
       if (persistResult.ok) {
         console.debug(`WealthContextBar: Settings persisted, emitting dataSourceChanged event (${oldSource} → ${effectiveNew})`);
 
@@ -702,7 +702,7 @@ class WealthContextBar {
       if (persistResult.ok && !persistResult.skipped && !skipNotification) {
         // Notification visuelle avec reload automatique
         if (typeof window.showNotification === 'function') {
-          window.showNotification(`✅ Source changed: ${source.label}`, 'success');
+          window.showNotification(`[OK] Source changed: ${source.label}`, 'success');
         }
 
         // Reload conditionnel (intelligent)
@@ -733,7 +733,7 @@ class WealthContextBar {
         return;
       }
 
-      // ✅ FIX: Mettre à jour globalConfig pour que les modules bourse utilisent la bonne source
+      //  FIX: Mettre à jour globalConfig pour que les modules bourse utilisent la bonne source
       if (typeof window.globalConfig !== 'undefined') {
         window.globalConfig.set('saxo_source', 'manual_bourse');
       }
@@ -755,7 +755,7 @@ class WealthContextBar {
       }
 
       if (!skipNotification && typeof window.showNotification === 'function') {
-        window.showNotification('✅ Manual mode activated for Stocks. Manage your positions in Settings → Sources', 'info');
+        window.showNotification("[OK] Manual mode activated for Stocks. Manage your positions in Settings → Sources", 'info');
       }
 
       // Attendre un peu pour que le backend persiste le config et que les listeners se registrent
@@ -814,7 +814,7 @@ class WealthContextBar {
       }
     }
 
-    // ✅ FIX: Synchroniser Sources V2 pour Bourse
+    //  FIX: Synchroniser Sources V2 pour Bourse
     // Mapper vers l'ID source V2 correspondant
     let sourcesV2Id = 'saxobank_csv'; // Par défaut, assumer CSV Saxo
     if (_sourceType === 'api') {
@@ -833,7 +833,7 @@ class WealthContextBar {
         body: JSON.stringify({ source_id: sourcesV2Id })
       });
 
-      // ✅ FIX: Si source CSV, aussi sélectionner le fichier spécifique
+      //  FIX: Si source CSV, aussi sélectionner le fichier spécifique
       if (_sourceType === 'saxo' && source) {
         // Extraire le filename depuis file_path ou key
         let filename = null;
@@ -884,7 +884,7 @@ class WealthContextBar {
 
     // Notification visuelle
     if (!skipNotification && typeof window.showNotification === 'function') {
-      window.showNotification(`✅ Stock source changed: ${source.label}`, 'success');
+      window.showNotification(`[OK] Stock source changed: ${source.label}`, 'success');
     }
   }
 
@@ -1409,9 +1409,9 @@ class WealthContextBar {
       if (badgeContainer) {
         // Connect to real data sources
         this.connectToRealData(badgeContainer, renderBadges);
-        (window.debugLogger?.info || console.log)('✅ Global status badge initialized with real data sources');
+        (window.debugLogger?.info || console.log)("[OK] Global status badge initialized with real data sources");
       } else {
-        (window.debugLogger?.warn || console.warn)('⚠️ global-status-badge container not found');
+        (window.debugLogger?.warn || console.warn)("[Warning] global-status-badge container not found");
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Failed to initialize global status badge:', error);
@@ -1439,7 +1439,7 @@ class WealthContextBar {
 
       // Render with fresh data
       renderBadges(badgeContainer);
-      (window.debugLogger?.info || console.log)('✅ Badge updated with real API data');
+      (window.debugLogger?.info || console.log)("[OK] Badge updated with real API data");
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('API data fetch failed:', error);
       renderBadges(badgeContainer); // Fallback to default
@@ -1448,16 +1448,16 @@ class WealthContextBar {
 
   async fetchAndUpdateRealData() {
     try {
-      // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+      //  FIX Nov 2025: Récupérer l'user actif pour multi-tenant
       const activeUser = localStorage.getItem('activeUser');
       const source = window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
       if (!source) throw new Error('No portfolio source is selected');
 
       // Parallel fetch of all available APIs
-      // ✅ Utilise window.loadBalanceData() au lieu de fetch direct (règle CLAUDE.md)
+      //  Utilise window.loadBalanceData() au lieu de fetch direct (règle CLAUDE.md)
       const [riskData, balancesData] = await Promise.allSettled([
         fetch(`/api/risk/dashboard?source=${encodeURIComponent(source)}`, {
-          headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+          headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
         }).then(r => r.json()),
         window.loadBalanceData
           ? window.loadBalanceData(false)
@@ -1475,9 +1475,9 @@ class WealthContextBar {
       try {
         const { getUnifiedMLStatus } = await import('../shared-ml-functions.js');
         mlStatus = await getUnifiedMLStatus();
-        (window.debugLogger?.info || console.log)('✅ ML status loaded from unified source');
+        (window.debugLogger?.info || console.log)("[OK] ML status loaded from unified source");
       } catch (error) {
-        (window.debugLogger?.warn || console.warn)('⚠️ Unified ML source failed:', error.message);
+        (window.debugLogger?.warn || console.warn)("[Warning] Unified ML source failed:", error.message);
         mlStatus = null;
       }
 
@@ -1503,18 +1503,18 @@ class WealthContextBar {
           policyCapDaily = mlStatus.derivedPolicy.cap_daily;
         }
 
-        (window.debugLogger?.debug || console.log)(`🎯 Unified ML: ${modelsLoaded}/${mlStatus.totalModels} models, source: ${dataSource}, contrad: ${contradictionIndex}`);
+        (window.debugLogger?.debug || console.log)(`Unified ML: ${modelsLoaded}/${mlStatus.totalModels} models, source: ${dataSource}, contrad: ${contradictionIndex}`);
       } else if (risk?.risk_metrics) {
         // Risk backend available but no governance data
         dataSource = 'risk_backend';
         timestamp = risk.timestamp || new Date().toISOString();
         apiStatus = 'healthy';
-        (window.debugLogger?.debug || console.log)(`📊 Risk Backend: no governance data available`);
+        (window.debugLogger?.debug || console.log)(`Risk Backend: no governance data available`);
       } else {
         // No data at all
         dataSource = 'fallback';
         apiStatus = 'stale';
-        (window.debugLogger?.debug || console.log)(`⚠️ No real data available for badge`);
+        (window.debugLogger?.debug || console.log)(`[Warning] No real data available for badge`);
       }
 
       // Detect overrides from portfolio state
@@ -1553,7 +1553,7 @@ class WealthContextBar {
         }
       };
 
-      (window.debugLogger?.debug || console.log)(`🔗 Unified data: source=${dataSource}, models=${modelsLoaded}, contrad=${contradictionIndex}, overrides=${overrides.length}`);
+      (window.debugLogger?.debug || console.log)(`Unified data: source=${dataSource}, models=${modelsLoaded}, contrad=${contradictionIndex}, overrides=${overrides.length}`);
 
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Failed to fetch real API data:', error);
@@ -1577,7 +1577,7 @@ class WealthContextBar {
   setupRealDataIntegration(badgeContainer, renderBadges) {
     // Listen for governance state changes
     if (window.store && typeof window.store.subscribe === 'function') {
-      (window.debugLogger?.debug || console.log)('🔗 Connected to window.store for real-time updates');
+      (window.debugLogger?.debug || console.log)("Connected to window.store for real-time updates");
       window.store.subscribe(() => {
         try {
           renderBadges(badgeContainer);
@@ -1602,7 +1602,7 @@ class WealthContextBar {
       setTimeout(() => renderBadges(badgeContainer), 100);
     });
 
-    (window.debugLogger?.debug || console.log)('🔗 Real data event listeners setup for badge updates');
+    (window.debugLogger?.debug || console.log)("Real data event listeners setup for badge updates");
   }
 
   /**
@@ -1640,7 +1640,7 @@ class WealthContextBar {
       this.settingsPutController = null;
     }
 
-    (window.debugLogger?.debug || console.log)('✅ WealthContextBar cleaned up');
+    (window.debugLogger?.debug || console.log)("[OK] WealthContextBar cleaned up");
   }
 }
 

@@ -1,7 +1,7 @@
 # Module Patrimoine - Documentation
 
 > **Version:** 1.0 (Nov 2025)
-> **Status:** ✅ Production Ready
+> **Status:** [OK] Production Ready
 
 ## Vue d'ensemble
 
@@ -84,12 +84,12 @@ Structure :
 ```
 
 **Features UI :**
-- ✅ Système d'onglets responsive
-- ✅ Tables par type d'asset (bank accounts, real estate, mortgages, etc.)
-- ✅ Modal CRUD avec champs dynamiques selon le type
-- ✅ Conversion USD automatique
-- ✅ Multi-user isolation (localStorage activeUser)
-- ✅ Design full-width responsive
+- [OK] Système d'onglets responsive
+- [OK] Tables par type d'asset (bank accounts, real estate, mortgages, etc.)
+- [OK] Modal CRUD avec champs dynamiques selon le type
+- [OK] Conversion USD automatique
+- [OK] Multi-user isolation (localStorage activeUser)
+- [OK] Design full-width responsive
 
 **Navigation** ([static/components/nav.js](../static/components/nav.js:219))
 - Menu principal : "Banque" → "Patrimoine"

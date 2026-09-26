@@ -423,12 +423,12 @@ class DeploymentManager:
         for check_name, check_func in validation_checks:
             try:
                 if check_func():
-                    self.log(f"✓ {check_name}", 'SUCCESS')
+                    self.log(f"[OK] {check_name}", 'SUCCESS')
                 else:
-                    self.log(f"✗ {check_name}", 'ERROR')
+                    self.log(f"[Error] {check_name}", 'ERROR')
                     failed_checks.append(check_name)
             except Exception as e:
-                self.log(f"✗ {check_name}: {e}", 'ERROR')
+                self.log(f"[Error] {check_name}: {e}", 'ERROR')
                 failed_checks.append(check_name)
         
         if failed_checks:

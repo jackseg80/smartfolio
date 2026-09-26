@@ -158,7 +158,7 @@ class PortfolioAdjuster:
                 # Update tactical advice
                 original_advice = consolidated_rec.get('tactical_advice', '')
                 consolidated_rec['tactical_advice'] = (
-                    f"⚠️ {len(recs)} lots d'achat séparés détectés (total consolidé: ${total_value:,.0f}). "
+                    f"[Warning] {len(recs)} lots d'achat séparés détectés (total consolidé: ${total_value:,.0f}). "
                     f"CSV Saxo contient {len(recs)} lignes distinctes pour ce symbole (achats à différentes dates/prix). "
                     f"Recommandation: Garder tels quels dans broker, mais tracker comme position unique dans votre suivi. "
                     f"{original_advice}"

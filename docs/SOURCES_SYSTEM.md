@@ -75,28 +75,28 @@ Si la sauvegarde backend échoue :
 
 1. Sélectionner un fichier CSV (ex: `Low_Risk.csv`)
 2. Rafraîchir la page (F5)
-3. ✅ Vérifier que le bon radio est coché
+3. [OK] Vérifier que le bon radio est coché
 
 ### 2. Fichier supprimé
 
 1. Sélectionner `Medium_Risk.csv`
 2. Supprimer physiquement le fichier
 3. Rafraîchir la page
-4. ✅ Vérifier le toast warning + fallback gracieux
+4. [OK] Vérifier le toast warning + fallback gracieux
 
 ### 3. Basculement API ↔ CSV
 
 1. Sélectionner `Low_Risk.csv`
 2. Basculer vers `CoinTracking API`
-3. Rafraîchir la page → ✅ API reste sélectionnée
+3. Rafraîchir la page → [OK] API reste sélectionnée
 4. Rebasculer vers `Low_Risk.csv`
-5. Rafraîchir la page → ✅ CSV reste sélectionné
+5. Rafraîchir la page → [OK] CSV reste sélectionné
 
 ### 4. Multi-tenant
 
 1. User `jack` sélectionne `High_Risk.csv`
 2. Changer de user (dropdown) vers `demo`
-3. ✅ Vérifier que les sources de `jack` ne sont pas visibles pour `demo`
+3. [OK] Vérifier que les sources de `jack` ne sont pas visibles pour `demo`
 
 ## Endpoints API
 
@@ -170,7 +170,7 @@ Si la sauvegarde PUT échoue :
 
 ## Bug Fixes - Janvier 2026
 
-### 🐛 Bug #1: Upload vers mauvais répertoire utilisateur
+### Bug #1: Upload vers mauvais répertoire utilisateur
 
 **Symptôme**: Les fichiers CSV uploadés pour Saxo Bank étaient systématiquement sauvegardés dans `data/users/demo/saxobank/data/` au lieu du répertoire de l'utilisateur connecté (ex: `data/users/jack/saxobank/data/`).
 
@@ -190,11 +190,11 @@ function getCurrentUser() {
 }
 ```
 
-**Impact**: ✅ Les fichiers sont maintenant uploadés dans le bon répertoire utilisateur.
+**Impact**: [OK] Les fichiers sont maintenant uploadés dans le bon répertoire utilisateur.
 
 ---
 
-### 🐛 Bug #2: Drag & Drop ne fonctionnait pas
+### Bug #2: Drag & Drop ne fonctionnait pas
 
 **Symptôme**: Glisser-déposer des fichiers sur la zone d'upload ne remplissait pas l'input file.
 
@@ -216,13 +216,13 @@ uploadArea.addEventListener('drop', (e) => {
 });
 ```
 
-**Impact**: ✅ Le drag & drop fonctionne correctement.
+**Impact**: [OK] Le drag & drop fonctionne correctement.
 
 ---
 
-### 🐛 Bug #3: Bouton Upload ne réagissait pas
+### Bug #3: Bouton Upload ne réagissait pas
 
-**Symptôme**: Cliquer sur le bouton "📤 Uploader" ne déclenchait aucune action, pas d'erreur dans la console.
+**Symptôme**: Cliquer sur le bouton " Uploader" ne déclenchait aucune action, pas d'erreur dans la console.
 
 **Cause**: Conflit entre les handlers `onclick` inline dans le HTML et les `addEventListener` en JavaScript:
 
@@ -231,11 +231,11 @@ uploadArea.addEventListener('drop', (e) => {
 
 **Fix**: Suppression des handlers `onclick` inline et de la vérification `disabled` dans le gestionnaire d'événements.
 
-**Impact**: ✅ Le bouton d'upload fonctionne correctement.
+**Impact**: [OK] Le bouton d'upload fonctionne correctement.
 
 ---
 
-### 🐛 Bug #4: Event listeners attachés trop tôt
+### Bug #4: Event listeners attachés trop tôt
 
 **Symptôme**: Parfois, les event listeners de la modal n'étaient pas attachés car les éléments DOM n'existaient pas encore.
 
@@ -259,19 +259,19 @@ function showUploadDialog(moduleName) {
 }
 ```
 
-**Impact**: ✅ Les event listeners sont toujours attachés correctement.
+**Impact**: [OK] Les event listeners sont toujours attachés correctement.
 
 ---
 
-### 🐛 Bug #5: Logs de debug excessifs
+### Bug #5: Logs de debug excessifs
 
-**Symptôme**: Console saturée de logs avec emojis (🎯🎯🎯, 📤, 📦, 👤, etc.) rendant le debugging difficile.
+**Symptôme**: Console saturée de logs avec emojis (, Upload, Package, User, etc.) rendant le debugging difficile.
 
 **Cause**: Logs de debug ajoutés pendant la phase de troubleshooting.
 
 **Fix**: Nettoyage des logs excessifs, conservation uniquement des logs critiques (erreurs et succès).
 
-**Impact**: ✅ Console propre et logs pertinents seulement.
+**Impact**: [OK] Console propre et logs pertinents seulement.
 
 ---
 

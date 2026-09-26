@@ -127,7 +127,7 @@ export function generateHistoricalData(period, date, useDeterministicSeed = true
   }
   
   // SUPPRIMÉ: Génération de données mockées - utiliser données réelles
-  debugLogger.error('⚠️ historical-validator.js: Mock data generation disabled. Use real historical data sources.');
+  debugLogger.error("[Warning] historical-validator.js: Mock data generation disabled. Use real historical data sources.");
   
   const emptyData = {
     _metadata: {
@@ -151,7 +151,7 @@ export async function validatePeriod(period, scoringFunction, label = 'System') 
     throw new Error(`Unknown period: ${period}`);
   }
   
-  (window.debugLogger?.debug || console.log)(`🧪 Validating ${label} for period: ${periodConfig.name}`);
+  (window.debugLogger?.debug || console.log)(`Validating ${label} for period: ${periodConfig.name}`);
   
   let correctSignals = 0;
   let totalSignals = 0;
@@ -185,7 +185,7 @@ export async function validatePeriod(period, scoringFunction, label = 'System') 
         }
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)(`⚠️ Error validating date ${date}:`, error.message);
+      (window.debugLogger?.warn || console.warn)(`Error validating date ${date}:`, error.message);
     }
   }
   
@@ -209,7 +209,7 @@ export async function validatePeriod(period, scoringFunction, label = 'System') 
  * Compare les performances V1 vs V2 sur toutes les périodes
  */
 export async function runFullBacktest() {
-  (window.debugLogger?.debug || console.log)('🚀 Starting full historical backtest...');
+  (window.debugLogger?.debug || console.log)("Starting full historical backtest...");
   
   const results = {
     v1: {},
@@ -218,13 +218,13 @@ export async function runFullBacktest() {
   };
   
   for (const period of Object.keys(HISTORICAL_PERIODS)) {
-    (window.debugLogger?.debug || console.log)(`\n📊 Testing period: ${HISTORICAL_PERIODS[period].name}`);
+    (window.debugLogger?.debug || console.log)(`\n Testing period: ${HISTORICAL_PERIODS[period].name}`);
 
     // Test V2 system (V1 removed - production uses V2 only)
     const v2Results = await validatePeriod(period, calculateCompositeScoreV2, 'V2');
     results.v2[period] = v2Results;
 
-    (window.debugLogger?.debug || console.log)(`✅ ${HISTORICAL_PERIODS[period].name}:`);
+    (window.debugLogger?.debug || console.log)(`OK ${HISTORICAL_PERIODS[period].name}:`);
     (window.debugLogger?.debug || console.log)(`   V2: ${v2Results.accuracy.toFixed(1)}% accuracy`);
   }
   
@@ -239,7 +239,7 @@ export async function runFullBacktest() {
     periodsImproved: Object.values(results.comparison).filter(c => c.accuracyImprovement > 0).length
   };
   
-  (window.debugLogger?.debug || console.log)('\n🎯 Overall Results:');
+  (window.debugLogger?.debug || console.log)("\n Overall Results:");
   (window.debugLogger?.debug || console.log)(`V1 Average: ${overallV1Accuracy.toFixed(1)}%`);
   (window.debugLogger?.debug || console.log)(`V2 Average: ${overallV2Accuracy.toFixed(1)}%`);
   (window.debugLogger?.debug || console.log)(`Improvement: +${results.overall.overallImprovement.toFixed(1)}%`);

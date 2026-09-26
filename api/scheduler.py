@@ -197,7 +197,7 @@ async def job_pnl_intraday():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting P&L intraday snapshot...")
+        logger.info(f" [{job_id}] Starting P&L intraday snapshot...")
 
         # Import here to avoid circular dependencies
         from scripts.pnl_snapshot import create_snapshot
@@ -213,11 +213,11 @@ async def job_pnl_intraday():
                     if user.get("status") == "active"
                 ]
         except Exception as e:
-            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            logger.warning(f" [{job_id}] Failed to load users config: {e}, using fallback")
             active_users = ["jack"]
 
         if not active_users:
-            logger.warning(f"⚠️ [{job_id}] No active users found, skipping")
+            logger.warning(f" [{job_id}] No active users found, skipping")
             await _update_job_status(job_id, "skipped", 0, "No active users")
             return
 
@@ -230,11 +230,11 @@ async def job_pnl_intraday():
             users_with_credentials = [u for u in active_users if _user_has_cointracking_credentials(u)]
             skipped_users = [u for u in active_users if u not in users_with_credentials]
             if skipped_users:
-                logger.info(f"   ℹ️ Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
+                logger.info(f"    Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
             active_users = users_with_credentials
 
         if not active_users:
-            logger.info(f"ℹ️ [{job_id}] No users with valid credentials for source={source}, skipping")
+            logger.info(f" [{job_id}] No users with valid credentials for source={source}, skipping")
             await _update_job_status(job_id, "skipped", 0, "No users with credentials")
             return
 
@@ -249,35 +249,35 @@ async def job_pnl_intraday():
             try:
                 result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd)
                 if result.get("ok"):
-                    logger.debug(f"   ✅ Snapshot created for [{user_id}]")
+                    logger.debug(f"    Snapshot created for [{user_id}]")
                     success_count += 1
                 else:
                     error_msg = result.get("error", "Unknown error")
-                    logger.warning(f"   ⚠️ Snapshot failed for [{user_id}]: {error_msg}")
+                    logger.warning(f"    Snapshot failed for [{user_id}]: {error_msg}")
                     fail_count += 1
                     errors.append(f"{user_id}: {error_msg}")
             except Exception as e:
-                logger.warning(f"   ❌ Snapshot exception for [{user_id}]: {e}")
+                logger.warning(f"    Snapshot exception for [{user_id}]: {e}")
                 fail_count += 1
                 errors.append(f"{user_id}: {str(e)}")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
         if fail_count == 0:
-            logger.info(f"✅ [{job_id}] All {success_count} P&L snapshots completed in {duration_ms:.0f}ms")
+            logger.info(f" [{job_id}] All {success_count} P&L snapshots completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         elif success_count > 0:
             error_summary = f"{success_count} OK, {fail_count} failed: {'; '.join(errors[:3])}"
-            logger.warning(f"⚠️ [{job_id}] Partial success: {error_summary}")
+            logger.warning(f" [{job_id}] Partial success: {error_summary}")
             await _update_job_status(job_id, "partial", duration_ms, error_summary)
         else:
             error_summary = f"All {fail_count} snapshots failed: {'; '.join(errors[:3])}"
-            logger.error(f"❌ [{job_id}] {error_summary}")
+            logger.error(f" [{job_id}] {error_summary}")
             await _update_job_status(job_id, "failed", duration_ms, error_summary)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] P&L snapshot exception")
+        logger.exception(f" [{job_id}] P&L snapshot exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -287,7 +287,7 @@ async def job_pnl_eod():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting P&L EOD snapshot...")
+        logger.info(f" [{job_id}] Starting P&L EOD snapshot...")
 
         from scripts.pnl_snapshot import create_snapshot
         import json
@@ -302,11 +302,11 @@ async def job_pnl_eod():
                     if user.get("status") == "active"
                 ]
         except Exception as e:
-            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            logger.warning(f" [{job_id}] Failed to load users config: {e}, using fallback")
             active_users = ["jack"]
 
         if not active_users:
-            logger.warning(f"⚠️ [{job_id}] No active users found, skipping")
+            logger.warning(f" [{job_id}] No active users found, skipping")
             await _update_job_status(job_id, "skipped", 0, "No active users")
             return
 
@@ -319,11 +319,11 @@ async def job_pnl_eod():
             users_with_credentials = [u for u in active_users if _user_has_cointracking_credentials(u)]
             skipped_users = [u for u in active_users if u not in users_with_credentials]
             if skipped_users:
-                logger.info(f"   ℹ️ Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
+                logger.info(f"    Skipping {len(skipped_users)} users without API credentials: {', '.join(skipped_users)}")
             active_users = users_with_credentials
 
         if not active_users:
-            logger.info(f"ℹ️ [{job_id}] No users with valid credentials for source={source}, skipping")
+            logger.info(f" [{job_id}] No users with valid credentials for source={source}, skipping")
             await _update_job_status(job_id, "skipped", 0, "No users with credentials")
             return
 
@@ -338,35 +338,35 @@ async def job_pnl_eod():
             try:
                 result = await create_snapshot(user_id=user_id, source=source, min_usd=min_usd, is_eod=True)
                 if result.get("ok"):
-                    logger.debug(f"   ✅ EOD snapshot created for [{user_id}]")
+                    logger.debug(f"    EOD snapshot created for [{user_id}]")
                     success_count += 1
                 else:
                     error_msg = result.get("error", "Unknown error")
-                    logger.warning(f"   ⚠️ EOD snapshot failed for [{user_id}]: {error_msg}")
+                    logger.warning(f"    EOD snapshot failed for [{user_id}]: {error_msg}")
                     fail_count += 1
                     errors.append(f"{user_id}: {error_msg}")
             except Exception as e:
-                logger.warning(f"   ❌ EOD snapshot exception for [{user_id}]: {e}")
+                logger.warning(f"    EOD snapshot exception for [{user_id}]: {e}")
                 fail_count += 1
                 errors.append(f"{user_id}: {str(e)}")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
         if fail_count == 0:
-            logger.info(f"✅ [{job_id}] All {success_count} EOD P&L snapshots completed in {duration_ms:.0f}ms")
+            logger.info(f" [{job_id}] All {success_count} EOD P&L snapshots completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         elif success_count > 0:
             error_summary = f"{success_count} OK, {fail_count} failed: {'; '.join(errors[:3])}"
-            logger.warning(f"⚠️ [{job_id}] Partial success: {error_summary}")
+            logger.warning(f" [{job_id}] Partial success: {error_summary}")
             await _update_job_status(job_id, "partial", duration_ms, error_summary)
         else:
             error_summary = f"All {fail_count} snapshots failed: {'; '.join(errors[:3])}"
-            logger.error(f"❌ [{job_id}] {error_summary}")
+            logger.error(f" [{job_id}] {error_summary}")
             await _update_job_status(job_id, "failed", duration_ms, error_summary)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] P&L EOD snapshot exception")
+        logger.exception(f" [{job_id}] P&L EOD snapshot exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -376,7 +376,7 @@ async def job_ohlcv_daily():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting OHLCV daily update...")
+        logger.info(f" [{job_id}] Starting OHLCV daily update...")
 
         # Import and run the existing script
         import sys
@@ -403,20 +403,20 @@ async def job_ohlcv_daily():
         stderr_text = stderr.decode('utf-8', errors='replace') if stderr else ""
 
         if process.returncode == 0:
-            logger.info(f"✅ [{job_id}] OHLCV daily update completed in {duration_ms:.0f}ms")
+            logger.info(f" [{job_id}] OHLCV daily update completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         else:
-            logger.error(f"❌ [{job_id}] OHLCV daily update failed:\n{stderr_text}")
+            logger.error(f" [{job_id}] OHLCV daily update failed:\n{stderr_text}")
             await _update_job_status(job_id, "failed", duration_ms, stderr_text[:200])
 
     except asyncio.TimeoutError:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.error(f"❌ [{job_id}] OHLCV daily update timeout (>5min)")
+        logger.error(f" [{job_id}] OHLCV daily update timeout (>5min)")
         await _update_job_status(job_id, "timeout", duration_ms, "Timeout after 5 minutes")
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] OHLCV daily update exception")
+        logger.exception(f" [{job_id}] OHLCV daily update exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -426,7 +426,7 @@ async def job_ohlcv_hourly():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting OHLCV hourly update...")
+        logger.info(f" [{job_id}] Starting OHLCV hourly update...")
 
         import sys
         from pathlib import Path
@@ -452,20 +452,20 @@ async def job_ohlcv_hourly():
         stderr_text = stderr.decode('utf-8', errors='replace') if stderr else ""
 
         if process.returncode == 0:
-            logger.info(f"✅ [{job_id}] OHLCV hourly update completed in {duration_ms:.0f}ms")
+            logger.info(f" [{job_id}] OHLCV hourly update completed in {duration_ms:.0f}ms")
             await _update_job_status(job_id, "success", duration_ms)
         else:
-            logger.error(f"❌ [{job_id}] OHLCV hourly update failed:\n{stderr_text}")
+            logger.error(f" [{job_id}] OHLCV hourly update failed:\n{stderr_text}")
             await _update_job_status(job_id, "failed", duration_ms, stderr_text[:200])
 
     except asyncio.TimeoutError:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.error(f"❌ [{job_id}] OHLCV hourly update timeout (>2min)")
+        logger.error(f" [{job_id}] OHLCV hourly update timeout (>2min)")
         await _update_job_status(job_id, "timeout", duration_ms, "Timeout after 2 minutes")
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] OHLCV hourly update exception")
+        logger.exception(f" [{job_id}] OHLCV hourly update exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -475,7 +475,7 @@ async def job_staleness_monitor():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting staleness monitoring...")
+        logger.info(f" [{job_id}] Starting staleness monitoring...")
 
         # Check Saxo data staleness
         from api.services.sources_resolver import get_effective_source_info
@@ -527,17 +527,17 @@ async def job_staleness_monitor():
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
         if saxo_issues:
-            logger.warning(f"⚠️ [{job_id}] Found {len(saxo_issues)} stale Saxo sources")
+            logger.warning(f" [{job_id}] Found {len(saxo_issues)} stale Saxo sources")
             for issue in saxo_issues:
                 logger.warning(f"   - {issue['user_id']}: {issue['staleness_hours']:.1f}h stale")
             await _update_job_status(job_id, "warning", duration_ms, f"{len(saxo_issues)} stale sources")
         else:
-            logger.info(f"✅ [{job_id}] Staleness check completed in {duration_ms:.0f}ms - all fresh")
+            logger.info(f" [{job_id}] Staleness check completed in {duration_ms:.0f}ms - all fresh")
             await _update_job_status(job_id, "success", duration_ms)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] Staleness monitoring exception")
+        logger.exception(f" [{job_id}] Staleness monitoring exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -547,7 +547,7 @@ async def job_api_warmers():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting API warmers...")
+        logger.info(f" [{job_id}] Starting API warmers...")
 
         import httpx
         import json
@@ -562,11 +562,11 @@ async def job_api_warmers():
                     if user.get("status") == "active"
                 ]
         except Exception as e:
-            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            logger.warning(f" [{job_id}] Failed to load users config: {e}, using fallback")
             active_users = ["jack"]  # Fallback to jack if config fails
 
         if not active_users:
-            logger.warning(f"⚠️ [{job_id}] No active users found, skipping warmers")
+            logger.warning(f" [{job_id}] No active users found, skipping warmers")
             await _update_job_status(job_id, "skipped", 0, "No active users")
             return
 
@@ -590,11 +590,11 @@ async def job_api_warmers():
                 response = await client.get(url, headers=headers)
 
                 if response.status_code == 200:
-                    logger.debug(f"   ✅ Warmed [{user_id}]: {endpoint}")
+                    logger.debug(f"    Warmed [{user_id}]: {endpoint}")
                 else:
-                    logger.warning(f"   ⚠️ Warm failed [{user_id}] ({response.status_code}): {endpoint}")
+                    logger.warning(f"    Warm failed [{user_id}] ({response.status_code}): {endpoint}")
             except Exception as e:
-                logger.warning(f"   ❌ Warm error [{user_id}]: {endpoint} - {e}")
+                logger.warning(f"    Warm error [{user_id}]: {endpoint} - {e}")
 
         async with httpx.AsyncClient(timeout=10.0) as client:
             # Create warmup tasks for all users x endpoints
@@ -607,12 +607,12 @@ async def job_api_warmers():
             await asyncio.gather(*tasks, return_exceptions=True)
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.info(f"✅ [{job_id}] API warmers completed in {duration_ms:.0f}ms")
+        logger.info(f" [{job_id}] API warmers completed in {duration_ms:.0f}ms")
         await _update_job_status(job_id, "success", duration_ms)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] API warmers exception")
+        logger.exception(f" [{job_id}] API warmers exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -625,7 +625,7 @@ async def job_crypto_toolbox_refresh():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting crypto-toolbox indicators refresh...")
+        logger.info(f" [{job_id}] Starting crypto-toolbox indicators refresh...")
 
         import httpx
 
@@ -643,13 +643,13 @@ async def job_crypto_toolbox_refresh():
         indicators_count = data.get("total_count", 0)
         critical_count = data.get("critical_count", 0)
 
-        logger.info(f"✅ [{job_id}] Crypto-toolbox refresh completed in {duration_ms:.0f}ms")
-        logger.info(f"   📊 {indicators_count} indicators scraped ({critical_count} critical)")
+        logger.info(f" [{job_id}] Crypto-toolbox refresh completed in {duration_ms:.0f}ms")
+        logger.info(f"    {indicators_count} indicators scraped ({critical_count} critical)")
         await _update_job_status(job_id, "success", duration_ms)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] Crypto-toolbox refresh failed")
+        logger.exception(f" [{job_id}] Crypto-toolbox refresh failed")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -666,7 +666,7 @@ async def job_daily_ml_training():
     start = datetime.now()
 
     try:
-        logger.info(f"🤖 [{job_id}] Starting daily ML training (20 years data)...")
+        logger.info(f" [{job_id}] Starting daily ML training (20 years data)...")
 
         from services.ml.bourse.stocks_adapter import StocksMLAdapter
 
@@ -681,7 +681,7 @@ async def job_daily_ml_training():
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
-        logger.info(f"✅ [{job_id}] Regime model trained: {regime_result['current_regime']} "
+        logger.info(f" [{job_id}] Regime model trained: {regime_result['current_regime']} "
                    f"({regime_result['confidence']:.1%} confidence) in {duration_ms:.0f}ms")
 
         await _update_job_status(job_id, "success", duration_ms)
@@ -691,7 +691,7 @@ async def job_daily_ml_training():
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] Daily ML training failed")
+        logger.exception(f" [{job_id}] Daily ML training failed")
         await _update_job_status(job_id, "error", duration_ms, str(e))
         # Ne pas lever exception - retry demain
 
@@ -702,7 +702,7 @@ async def job_morning_brief():
     start = datetime.now()
 
     try:
-        logger.info(f"🔄 [{job_id}] Starting Morning Brief generation...")
+        logger.info(f" [{job_id}] Starting Morning Brief generation...")
 
         import json
         from services.morning_brief_service import morning_brief_service
@@ -717,7 +717,7 @@ async def job_morning_brief():
                     if user.get("status") == "active"
                 ]
         except Exception as e:
-            logger.warning(f"⚠️ [{job_id}] Failed to load users config: {e}, using fallback")
+            logger.warning(f" [{job_id}] Failed to load users config: {e}, using fallback")
             active_users = ["jack"]
 
         if not active_users:
@@ -757,26 +757,26 @@ async def job_morning_brief():
                                         actions=[],
                                     )
                                     await tg_notifier.send(notif_alert, send_config)
-                                    logger.info(f"   📱 Morning brief sent via Telegram for [{user_id}]")
+                                    logger.info(f"    Morning brief sent via Telegram for [{user_id}]")
                 except Exception as send_err:
-                    logger.warning(f"   ⚠️ Morning brief notification failed for [{user_id}]: {send_err}")
+                    logger.warning(f"    Morning brief notification failed for [{user_id}]: {send_err}")
 
                 success_count += 1
-                logger.debug(f"   ✅ Morning brief generated for [{user_id}]")
+                logger.debug(f"    Morning brief generated for [{user_id}]")
             except Exception as e:
-                logger.warning(f"   ❌ Morning brief failed for [{user_id}]: {e}")
+                logger.warning(f"    Morning brief failed for [{user_id}]: {e}")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
         if success_count == len(active_users):
-            logger.info(f"✅ [{job_id}] Morning Brief completed in {duration_ms:.0f}ms ({success_count} users)")
+            logger.info(f" [{job_id}] Morning Brief completed in {duration_ms:.0f}ms ({success_count} users)")
             await _update_job_status(job_id, "success", duration_ms)
         else:
-            logger.warning(f"⚠️ [{job_id}] Morning Brief partial: {success_count}/{len(active_users)}")
+            logger.warning(f" [{job_id}] Morning Brief partial: {success_count}/{len(active_users)}")
             await _update_job_status(job_id, "partial", duration_ms)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f"❌ [{job_id}] Morning Brief exception")
+        logger.exception(f" [{job_id}] Morning Brief exception")
         await _update_job_status(job_id, "error", duration_ms, str(e))
 
 
@@ -974,7 +974,7 @@ async def initialize_scheduler() -> bool:
 
         # Log scheduled jobs
         jobs = _scheduler.get_jobs()
-        logger.info(f"✅ APScheduler started with {len(jobs)} jobs:")
+        logger.info(f" APScheduler started with {len(jobs)} jobs:")
         for job in jobs:
             next_run = job.next_run_time.strftime("%Y-%m-%d %H:%M:%S %Z") if job.next_run_time else "N/A"
             logger.info(f"   - {job.id}: next run at {next_run}")
@@ -982,7 +982,7 @@ async def initialize_scheduler() -> bool:
         return True
 
     except Exception as e:
-        logger.exception(f"❌ Failed to initialize scheduler: {e}")
+        logger.exception(f" Failed to initialize scheduler: {e}")
         _scheduler = None
         return False
 

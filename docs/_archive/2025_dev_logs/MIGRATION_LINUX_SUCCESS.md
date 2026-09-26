@@ -1,10 +1,10 @@
 # Migration Linux - Résolution Finale (Nov 2025)
 
-## ✅ Status : SUCCÈS
+## Status : SUCCÈS
 
 La migration de SmartFolio de Windows vers Linux Ubuntu 24.04.2 LTS (NUC 7i5BHN) est **terminée avec succès**.
 
-## 🐛 Problème Rencontré
+## Problème Rencontré
 
 L'API CoinTracking retournait l'erreur :
 
@@ -12,7 +12,7 @@ L'API CoinTracking retournait l'erreur :
 RuntimeError: CT_API_KEY / CT_API_SECRET manquants (ou vides)
 ```
 
-## 🔍 Diagnostic
+## Diagnostic
 
 Le problème avait **deux causes** :
 
@@ -50,7 +50,7 @@ Le problème avait **deux causes** :
 curl -H "X-User: jack" "http://localhost:8080/balances/current?source=cointracking_api"
 ```
 
-## 📝 Modifications Apportées
+## Modifications Apportées
 
 ### Commits
 
@@ -65,25 +65,25 @@ curl -H "X-User: jack" "http://localhost:8080/balances/current?source=cointracki
 2. **services/balance_service.py** - Passage des clés API + catch RuntimeError + logs debug
 3. **api/services/data_router.py** - Logs debug du chargement des credentials
 
-## 🧪 Validation
+## Validation
 
 ### Test Réussi
 
 ```bash
 curl -H "X-User: jack" "http://localhost:8080/balances/current?source=cointracking_api"
-# ✅ Retourne 479 items avec succès
+# Retourne 479 items avec succès
 ```
 
 ### Logs Confirmant le Succès
 
 ```
-INFO services.balance_service: 🔑 DEBUG [_try_api_mode]: api_key='9f878d12a6...', len_key=32, len_secret=48
-INFO services.balance_service: 🔄 DEBUG [_try_api_mode]: Calling CoinTracking API for user jack...
-INFO services.balance_service: ✅ DEBUG [_try_api_mode]: CoinTracking API returned 479 items
-INFO services.balance_service: ✅ API mode successful for user jack: 479 items
+INFO services.balance_service:  DEBUG [_try_api_mode]: api_key='9f878d12a6...', len_key=32, len_secret=48
+INFO services.balance_service:  DEBUG [_try_api_mode]: Calling CoinTracking API for user jack...
+INFO services.balance_service: [OK] DEBUG [_try_api_mode]: CoinTracking API returned 479 items
+INFO services.balance_service: [OK] API mode successful for user jack: 479 items
 ```
 
-## 📋 Configuration NUC
+## Configuration NUC
 
 ### Système
 
@@ -106,14 +106,14 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-## 🎯 Points Clés à Retenir
+## Points Clés à Retenir
 
 1. **config.json doit avoir des clés PLATES** (underscore), pas imbriquées (dot notation)
 2. **secrets.json n'est PAS utilisé** par le code actuel (fichier orphelin)
 3. **Le header X-User est OBLIGATOIRE** pour l'authentification multi-utilisateur
 4. **L'appel direct ?user_id=jack ne suffit PAS** - c'est le header qui compte
 
-## 🔗 Références
+## Références
 
 - Architecture : `docs/ARCHITECTURE.md`
 - Code CLAUDE.md : `CLAUDE.md` (règles multi-tenant)
@@ -122,4 +122,4 @@ docker-compose logs -f
 ---
 
 **Date :** 11 novembre 2025
-**Status :** ✅ Production Ready sur NUC
+**Status :** [OK] Production Ready sur NUC

@@ -397,10 +397,10 @@ class EnhancedSimulator(ExchangeAdapter):
         )
         
         if success:
-            logger.info(f"✓ Simulated {order.action}: {filled_quantity:.6f} {order.symbol.split('/')[0]} @ ${execution_price:.2f} "
+            logger.info(f" Simulated {order.action}: {filled_quantity:.6f} {order.symbol.split('/')[0]} @ ${execution_price:.2f} "
                        f"(slippage: {slippage_bps:.1f}bps, fees: ${fees:.4f})")
         else:
-            logger.warning(f"✗ Simulation failed: {error_message}")
+            logger.warning(f" Simulation failed: {error_message}")
         
         return result
     

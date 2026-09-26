@@ -4,11 +4,11 @@
 > Version: 2.0
 > Auteur: Dashboard V2 Implementation
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 
 Le Dashboard V2 introduit une **hiérarchie visuelle en 3 niveaux** pour améliorer l'expérience utilisateur et clarifier l'organisation des informations.
 
-## 📊 Architecture
+## Architecture
 
 ### Niveau 1 - Patrimoine (4 tuiles)
 **Bordure orange** - Vue d'ensemble du patrimoine et actifs
@@ -88,7 +88,7 @@ Le Dashboard V2 introduit une **hiérarchie visuelle en 3 niveaux** pour amélio
    - Liens vers Optimization
    - Liens vers Debug Menu
 
-## 🎨 Améliorations Visuelles
+## Améliorations Visuelles
 
 ### CSS Thème-Aware
 ```css
@@ -105,7 +105,7 @@ Les badges "Niveau 1/2/3" ont été supprimés car redondants avec les bordures 
 ### Boutons Refresh Supprimés
 Les boutons refresh manuels ont été supprimés car le dashboard se rafraîchit automatiquement toutes les 1-2 minutes.
 
-## 🔧 Fonctionnalités Techniques
+## Fonctionnalités Techniques
 
 ### Graphiques Camembert (Chart.js)
 ```javascript
@@ -168,7 +168,7 @@ Certains endpoints peuvent retourner 404 sans affecter l'affichage :
 - `/api/ml/stock/regime` → Affiche "N/A"
 - `/execution/governance/alerts` → Message informatif
 
-## 📁 Fichiers Modifiés
+## Fichiers Modifiés
 
 ### Frontend
 - `static/dashboard.html` - Structure HTML 3 niveaux
@@ -184,15 +184,15 @@ Certains endpoints peuvent retourner 404 sans affecter l'affichage :
 - `api/saxo_endpoints.py` - Ajout `user_id` + `file_key` à tous les endpoints
 - `api/wealth_endpoints.py` - Ajout `file_key` support pour Saxo
 
-## 🚨 Tuiles Supprimées
+## Tuiles Supprimées
 
 Les tuiles suivantes ont été supprimées ou fusionnées :
 
-- ❌ **Scores** - Fusionnée dans Global Insight
-- ❌ **Exchange Connections** - Fusionnée dans System Status
-- ❌ **System Health** - Fusionnée dans System Status
+- [Error] **Scores** - Fusionnée dans Global Insight
+- [Error] **Exchange Connections** - Fusionnée dans System Status
+- [Error] **System Health** - Fusionnée dans System Status
 
-## 📊 Comparaison Avant/Après
+## Comparaison Avant/Après
 
 | Aspect | Avant | Après |
 |--------|-------|-------|
@@ -202,10 +202,10 @@ Les tuiles suivantes ont été supprimées ou fusionnées :
 | Niveau 2 | Patrimoine (4 tuiles) | Décision (3 tuiles) |
 | Graphiques | Crypto uniquement | Crypto + Bourse + Banque |
 | Mode clair/sombre | Couleurs hardcodées | Variables CSS thème |
-| Multi-user Saxo | ❌ Broken | ✅ Fixed |
+| Multi-user Saxo | [Error] Broken | [OK] Fixed |
 | Boutons refresh | 4 manuels | Auto-refresh uniquement |
 
-## 🔗 Endpoints API
+## Endpoints API
 
 ### Nouveaux Endpoints Utilisés
 ```
@@ -220,7 +220,7 @@ Ces endpoints peuvent retourner 404, le dashboard gère gracieusement :
 - `/execution/governance/alerts` → Message informatif
 - `/exchanges/status` → Affiche "N/A"
 
-## 🐛 Bugs Corrigés
+## Bugs Corrigés
 
 1. **Cache Multi-User Saxo**
    - Problème: Cache partagé entre utilisateurs
@@ -238,23 +238,23 @@ Ces endpoints peuvent retourner 404, le dashboard gère gracieusement :
    - Problème: Ne s'adaptaient pas au mode sombre
    - Fix: Variables CSS `var(--warning)`, `var(--success)`, etc.
 
-## 📝 Notes de Déploiement
+## Notes de Déploiement
 
 ### Migration
 Aucune migration DB nécessaire. Le déploiement se fait par simple redémarrage du serveur.
 
 ### Compatibilité
-- ✅ Compatible avec mode clair/sombre
-- ✅ Compatible multi-user
-- ✅ Compatible responsive (mobile/tablet/desktop)
-- ✅ Rétro-compatible avec l'API existante
+- [OK] Compatible avec mode clair/sombre
+- [OK] Compatible multi-user
+- [OK] Compatible responsive (mobile/tablet/desktop)
+- [OK] Rétro-compatible avec l'API existante
 
 ### Performance
 - Auto-refresh : 1-2 minutes par tuile
 - Cache Saxo : 30 secondes par utilisateur
 - Pas d'impact notable sur les performances
 
-## 🎯 Prochaines Étapes
+## Prochaines Étapes
 
 Fonctionnalités futures possibles :
 - [ ] Graphique historique Decision Index
@@ -265,7 +265,7 @@ Fonctionnalités futures possibles :
 
 ---
 
-## 📝 Changelog
+## Changelog
 
 ### 2025-10-22 - Inversion Niveaux + Graphiques
 - **Niveau 1** : Maintenant Patrimoine (bordure orange) - 4 tuiles
@@ -282,4 +282,4 @@ Fonctionnalités futures possibles :
 ---
 
 **Documentation mise à jour le 2025-10-22**
-**Dashboard V2 est maintenant en production** ✅
+**Dashboard V2 est maintenant en production** [OK]

@@ -134,7 +134,7 @@ async def saxo_login(
         # Generate authorization URL
         authorization_url = oauth_client.get_authorization_url(state, code_challenge)
 
-        logger.info(f"🔐 OAuth login initiated for user '{user}'")
+        logger.info(f" OAuth login initiated for user '{user}'")
 
         return success_response({
             "authorization_url": authorization_url,
@@ -195,7 +195,7 @@ async def saxo_callback(
         auth_service = SaxoAuthService(user_id)
         await auth_service.save_tokens(tokens)
 
-        logger.info(f"✅ OAuth callback successful for user '{user_id}'")
+        logger.info(f" OAuth callback successful for user '{user_id}'")
 
         # Redirect to settings page with success (absolute URL)
         return RedirectResponse(url=f"{base_url}/static/settings.html?status=connected")
@@ -282,7 +282,7 @@ async def saxo_refresh(
         # Get new expiration
         status = auth_service.get_connection_status()
 
-        logger.info(f"✅ Token refreshed for user '{user}'")
+        logger.info(f" Token refreshed for user '{user}'")
 
         return success_response({
             "refreshed": True,
@@ -325,7 +325,7 @@ async def saxo_disconnect(
         auth_service = SaxoAuthService(user)
         await auth_service.disconnect()
 
-        logger.info(f"✅ User '{user}' disconnected from Saxo")
+        logger.info(f" User '{user}' disconnected from Saxo")
 
         return success_response({"disconnected": True})
 
@@ -424,10 +424,10 @@ async def resolve_instruments(
                     failed_uics.append(uic)
 
             except Exception as e:
-                logger.warning(f"⚠️ Failed to resolve UIC {uic}: {e}")
+                logger.warning(f" Failed to resolve UIC {uic}: {e}")
                 failed_uics.append(uic)
 
-        logger.info(f"✅ Resolved {len(resolved_data)}/{len(uic_list)} UICs for user '{user}'")
+        logger.info(f" Resolved {len(resolved_data)}/{len(uic_list)} UICs for user '{user}'")
 
         return success_response(resolved_data, meta={
             "requested": len(uic_list),
@@ -503,7 +503,7 @@ async def get_saxo_api_positions(
             cached_data = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
             if cached_data:
                 positions = cached_data.get("positions", [])
-                logger.info(f"📦 Returning cached positions for user '{user}'")
+                logger.info(f" Returning cached positions for user '{user}'")
                 return success_response({
                     "positions": positions,
                     "cash_balance": cached_data.get("cash_balance", 0.0),
@@ -549,7 +549,7 @@ async def get_saxo_api_positions(
 
             # DEBUG: Log first position structure
             if positions_raw:
-                logger.info(f"📋 First position structure (sample): {positions_raw[0]}")
+                logger.info(f" First position structure (sample): {positions_raw[0]}")
 
             # Resolve UICs to symbols (Live mode only)
             uic_metadata = await _resolve_uics_for_positions(positions_raw, access_token, user)
@@ -559,14 +559,14 @@ async def get_saxo_api_positions(
 
             # Extract cash balance
             # DEBUG: Log all balance fields to identify correct cash field
-            logger.info(f"🔍 Saxo API balances_data keys: {list(balances_data.keys())}")
-            logger.info(f"🔍 Saxo API full balances: {balances_data}")
+            logger.info(f" Saxo API balances_data keys: {list(balances_data.keys())}")
+            logger.info(f" Saxo API full balances: {balances_data}")
 
             cash_balance = balances_data.get("CashBalance", 0.0)
             total_value_api = balances_data.get("TotalValue", 0.0)
             currency = balances_data.get("Currency", "EUR")
 
-            # ✅ CRITICAL: Convert EUR → USD for frontend consistency
+            # [OK] CRITICAL: Convert EUR → USD for frontend consistency
             # Frontend expects USD everywhere, Saxo returns EUR
             # Use dynamic FX rate from service (4h cache + live API fallback)
             EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")
@@ -582,7 +582,7 @@ async def get_saxo_api_positions(
                 if pos.get("pnl"):
                     pos["pnl"] = pos["pnl"] * EUR_TO_USD_RATE
 
-            # ✅ CRITICAL: ALWAYS use Saxo API TotalValue (already includes positions + cash)
+            # [OK] CRITICAL: ALWAYS use Saxo API TotalValue (already includes positions + cash)
             # The API knows best - don't recalculate!
             total_value_eur = total_value_api
             cash_balance_eur = cash_balance
@@ -594,9 +594,9 @@ async def get_saxo_api_positions(
             total_value_calculated_usd = positions_total_usd + cash_balance_usd
 
             if abs(total_value_usd - total_value_calculated_usd) > 1.0:
-                logger.warning(f"⚠️ Manual calculation mismatch: API=${total_value_usd:.2f} vs Calculated=${total_value_calculated_usd:.2f} USD")
+                logger.warning(f" Manual calculation mismatch: API=${total_value_usd:.2f} vs Calculated=${total_value_calculated_usd:.2f} USD")
 
-            logger.info(f"✅ Saxo API: {len(positions_normalized)} positions, cash={cash_balance_eur:.2f} EUR (${cash_balance_usd:.2f} USD), total={total_value_eur:.2f} EUR (${total_value_usd:.2f} USD)")
+            logger.info(f" Saxo API: {len(positions_normalized)} positions, cash={cash_balance_eur:.2f} EUR (${cash_balance_usd:.2f} USD), total={total_value_eur:.2f} EUR (${total_value_usd:.2f} USD)")
 
             # Cache for offline fallback (including cash_balance and total_value)
             await auth_service.cache_positions(positions_normalized, cash_balance_usd, total_value_usd)
@@ -617,13 +617,13 @@ async def get_saxo_api_positions(
 
         except Exception as api_error:
             # API call failed → try cache fallback
-            logger.warning(f"⚠️ Saxo API call failed: {api_error}")
+            logger.warning(f" Saxo API call failed: {api_error}")
 
             cached_data = await auth_service.get_cached_positions(max_age_hours=max_cache_age_hours)
 
             if cached_data:
                 positions = cached_data.get("positions", [])
-                logger.info(f"📦 Returning cached positions (API failed) for user '{user}'")
+                logger.info(f" Returning cached positions (API failed) for user '{user}'")
                 return success_response({
                     "positions": positions,
                     "cash_balance": cached_data.get("cash_balance", 0.0),
@@ -694,7 +694,7 @@ async def _resolve_uics_for_positions(
     # Resolve UICs using cache
     resolver = SaxoUICResolver(user_id=user_id)
 
-    logger.info(f"🔍 Resolving {len(uic_list)} UICs for user '{user_id}'...")
+    logger.info(f" Resolving {len(uic_list)} UICs for user '{user_id}'...")
 
     for uic, asset_type in uic_list:
         try:
@@ -708,13 +708,13 @@ async def _resolve_uics_for_positions(
                 uic_metadata[uic] = metadata
 
         except Exception as e:
-            logger.warning(f"⚠️ Failed to resolve UIC {uic}: {e}")
+            logger.warning(f" Failed to resolve UIC {uic}: {e}")
             continue
 
     resolved_count = len(uic_metadata)
     cache_hit_rate = (resolved_count / len(uic_list) * 100) if uic_list else 0
 
-    logger.info(f"✅ Resolved {resolved_count}/{len(uic_list)} UICs ({cache_hit_rate:.1f}% success)")
+    logger.info(f" Resolved {resolved_count}/{len(uic_list)} UICs ({cache_hit_rate:.1f}% success)")
 
     return uic_metadata
 
@@ -743,7 +743,7 @@ async def _get_account_key(
     # Check tokens cache first
     account_key = auth_service.get_account_key()
     if account_key:
-        logger.debug(f"✅ Account key found in tokens for user '{user_id}'")
+        logger.debug(f" Account key found in tokens for user '{user_id}'")
         return account_key
 
     # Check user config (data/users/{user_id}/config.json)
@@ -753,7 +753,7 @@ async def _get_account_key(
         account_key = user_config.get("saxo_api", {}).get("account_key")
 
         if account_key:
-            logger.debug(f"✅ Account key found in config for user '{user_id}'")
+            logger.debug(f" Account key found in config for user '{user_id}'")
             return account_key
     except FileNotFoundError:
         logger.debug(f"No config.json found for user '{user_id}'")
@@ -768,7 +768,7 @@ async def _get_account_key(
 
         import httpx
         async with httpx.AsyncClient(timeout=30.0) as client:
-            logger.info(f"🔍 Fetching account key from Saxo API for user '{user_id}'")
+            logger.info(f" Fetching account key from Saxo API for user '{user_id}'")
             response = await client.get(url, headers=headers)
             response.raise_for_status()
 
@@ -776,12 +776,12 @@ async def _get_account_key(
             accounts = data.get("Data", [])
 
             if not accounts:
-                logger.warning(f"⚠️ No accounts found for user '{user_id}'")
+                logger.warning(f" No accounts found for user '{user_id}'")
                 return None
 
             # Use first account
             first_account = accounts[0]
-            logger.info(f"📋 Account data from Saxo: {first_account}")  # DEBUG: voir structure complète
+            logger.info(f" Account data from Saxo: {first_account}")  # DEBUG: voir structure complète
 
             # Try ClientKey first (Live), then AccountKey (Sim)
             account_key = first_account.get("ClientKey") or first_account.get("AccountKey")
@@ -792,7 +792,7 @@ async def _get_account_key(
                 if tokens:
                     tokens["account_key"] = account_key
                     await auth_service.save_tokens(tokens)
-                    logger.info(f"✅ Account key cached for user '{user_id}'")
+                    logger.info(f" Account key cached for user '{user_id}'")
 
             return account_key
 
@@ -877,7 +877,7 @@ def _normalize_positions(
                 isin = pos.get("Isin", "")
                 currency = pos.get("Currency", "EUR")
 
-            # ✅ Build tags for frontend compatibility (dashboard chart grouping)
+            # [OK] Build tags for frontend compatibility (dashboard chart grouping)
             tags = []
             if asset_type:
                 tags.append(f"asset_class:{asset_type}")
@@ -903,12 +903,12 @@ def _normalize_positions(
                 "isin": isin,
                 "currency": currency,
                 "uic": uic,  # Preserve UIC for debugging (None for Sim positions)
-                "tags": tags,  # ✅ CRITICAL: Add tags for frontend chart grouping
-                "sector": sector  # ✅ Add sector for filtering/grouping
+                "tags": tags,  # [OK] CRITICAL: Add tags for frontend chart grouping
+                "sector": sector  # [OK] Add sector for filtering/grouping
             })
 
         except Exception as e:
-            logger.warning(f"⚠️ Failed to normalize position: {e}")
+            logger.warning(f" Failed to normalize position: {e}")
             continue
 
     return normalized

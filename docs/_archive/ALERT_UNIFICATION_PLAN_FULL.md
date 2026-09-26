@@ -4,25 +4,25 @@
 
 We have **4 independent alert systems** with overlapping functionality:
 
-### 1. Main AlertEngine (services/alerts/alert_engine.py) ✅ KEEP
+### 1. Main AlertEngine (services/alerts/alert_engine.py)  KEEP
 - **Purpose**: Sophisticated ML-powered risk alerts, Phase 2/3 system
 - **Features**: Multi-timeframe analysis, cross-asset correlation, VaR alerts, phase-aware alerting
 - **Alert Types**: VOL_Q90_CROSS, REGIME_FLIP, CORR_HIGH, CONTRADICTION_SPIKE, etc.
 - **Status**: Primary system, fully featured, this is our TARGET
 
-### 2. RiskAlert + AlertSystem (services/risk_management.py) ❌ MIGRATE
+### 2. RiskAlert + AlertSystem (services/risk_management.py)  MIGRATE
 - **Purpose**: Basic risk threshold monitoring
 - **Features**: VaR thresholds, correlation alerts, concentration alerts
 - **Alert Types**: RISK_THRESHOLD, CORRELATION, CONCENTRATION, MARKET_STRESS
 - **Status**: Redundant with AlertEngine's advanced risk features
 
-### 3. Alert + AlertManager (services/notifications/alert_manager.py) ❌ MIGRATE  
+### 3. Alert + AlertManager (services/notifications/alert_manager.py)  MIGRATE
 - **Purpose**: General execution/system alerts
 - **Features**: Portfolio drift, execution failures, performance anomalies
 - **Alert Types**: PORTFOLIO_DRIFT, EXECUTION_FAILURE, PERFORMANCE_ANOMALY, API_CONNECTIVITY
 - **Status**: Should be integrated into AlertEngine as new alert types
 
-### 4. Connection Monitor Alert (services/monitoring/connection_monitor.py) ❌ MIGRATE
+### 4. Connection Monitor Alert (services/monitoring/connection_monitor.py)  MIGRATE
 - **Purpose**: Exchange connection health monitoring
 - **Features**: Connection status, response time, success rate tracking
 - **Alert Types**: Connection degradation, API failures
@@ -87,12 +87,12 @@ RISK_CONCENTRATION_LEGACY = "risk_concentration_legacy"  # distinguish from exis
 
 ## Implementation Steps
 
-1. ✅ **Fix AlertEngine bugs** (completed)
-2. 🔄 **Add new alert types to AlertEngine**
-3. 📝 **Create migration adapters** 
-4. 🔧 **Update alert generators**
-5. 🎨 **Update alert consumers**
-6. 🧹 **Remove dead code**
+1. [OK] **Fix AlertEngine bugs** (completed)
+2. **Add new alert types to AlertEngine**
+3. **Create migration adapters**
+4. **Update alert generators**
+5. **Update alert consumers**
+6. **Remove dead code**
 
 ## Risk Mitigation
 

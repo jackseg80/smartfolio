@@ -244,9 +244,9 @@ class SafetyValidator:
         
         # Log du résultat
         if passed:
-            logger.info(f"✓ Ordre {order.id} validé avec succès (score: {result.total_score:.1f}/100)")
+            logger.info(f" Ordre {order.id} validé avec succès (score: {result.total_score:.1f}/100)")
         else:
-            logger.error(f"✗ Ordre {order.id} rejeté (score: {result.total_score:.1f}/100)")
+            logger.error(f" Ordre {order.id} rejeté (score: {result.total_score:.1f}/100)")
             for error in errors:
                 logger.error(f"  - {error}")
         
