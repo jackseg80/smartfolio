@@ -185,36 +185,26 @@ echo -e "${GREEN}[OK] Docker containers started${NC}"
 # Step 7: Health check
 echo ""
 echo -e "${YELLOW} Step 7/7: Waiting for services to be healthy...${NC}"
-sleep 10
-
-# Check Docker containers
-if docker ps | grep -q "smartfolio-api"; then
-    echo -e "${GREEN}[OK] Container smartfolio-api: running${NC}"
-else
-    echo -e "${RED}[Error] Container smartfolio-api: not found${NC}"
-    docker-compose logs --tail 50
-    exit 1
-fi
-
-# Check API health from inside the container. The host port may be bound to a LAN IP,
-# so probing localhost on the host can produce a false failure.
-echo -n "   Testing API endpoint... "
+# Probe API readiness inside the container. Retrying also covers the interval where
+# Compose has created the container but its process is not ready for `docker exec` yet.
+echo -n "   Testing API container and health endpoint... "
 API_READY=0
-for attempt in $(seq 1 12); do
+for attempt in $(seq 1 20); do
     if docker exec smartfolio-api curl -sf --connect-timeout 2 --max-time 2 http://127.0.0.1:8080/healthz > /dev/null 2>&1; then
         API_READY=1
         break
     fi
-    if [ "$attempt" -lt 12 ]; then
+    if [ "$attempt" -lt 20 ]; then
         sleep 3
     fi
 done
 
 if [ "$API_READY" -eq 1 ]; then
-    echo -e "${GREEN}[OK]${NC}"
+    echo -e "${GREEN}[OK] Container smartfolio-api is running and healthy${NC}"
 else
     echo -e "${RED} Failed${NC}"
-    echo -e "${YELLOW}   API did not become healthy within 60 seconds. Recent logs:${NC}"
+    echo -e "${YELLOW}   API container did not become healthy within 60 seconds. Recent status and logs:${NC}"
+    docker-compose ps
     docker-compose logs --tail 100
     exit 1
 fi
