@@ -196,23 +196,37 @@ else
     exit 1
 fi
 
-# Check API health
+# Check API health from inside the container. The host port may be bound to a LAN IP,
+# so probing localhost on the host can produce a false failure.
 echo -n "   Testing API endpoint... "
-if curl -sf http://localhost:8080/docs > /dev/null 2>&1; then
+API_READY=0
+for attempt in $(seq 1 12); do
+    if docker exec smartfolio-api curl -sf --connect-timeout 2 --max-time 2 http://127.0.0.1:8080/healthz > /dev/null 2>&1; then
+        API_READY=1
+        break
+    fi
+    if [ "$attempt" -lt 12 ]; then
+        sleep 3
+    fi
+done
+
+if [ "$API_READY" -eq 1 ]; then
     echo -e "${GREEN}[OK]${NC}"
 else
     echo -e "${RED} Failed${NC}"
-    echo -e "${YELLOW}   API may still be starting up. Check logs with:${NC}"
-    echo -e "   docker-compose logs -f"
+    echo -e "${YELLOW}   API did not become healthy within 60 seconds. Recent logs:${NC}"
+    docker-compose logs --tail 100
+    exit 1
 fi
 
-# Check scheduler
+# Scheduler readiness is reported by application startup logs. Avoid an unauthenticated
+# host-side self-request, which is invalid when the API is bound to a LAN address.
 echo -n "   Testing scheduler... "
-SCHEDULER_STATUS=$(curl -sf http://localhost:8080/api/scheduler/health 2>/dev/null | grep -o '"enabled":[^,]*' | cut -d':' -f2)
-if [ "$SCHEDULER_STATUS" == "true" ]; then
+SCHEDULER_READY=$(docker logs --tail 200 smartfolio-api 2>&1 | grep -c "Task scheduler initialized successfully" || true)
+if [ "$SCHEDULER_READY" -gt 0 ]; then
     echo -e "${GREEN}[OK] Enabled${NC}"
 else
-    echo -e "${YELLOW}[Warning]  Unknown${NC}"
+    echo -e "${YELLOW}[Warning]  Scheduler readiness not confirmed; inspect API logs${NC}"
 fi
 
 # Final summary
