@@ -393,8 +393,9 @@ class TestScanOpportunities:
             min_gap_pct=5.0
         )
 
-        # Should detect all standard sectors as gaps
-        assert len(result["all_gaps"]) > 0
+        # No classified exposure: do not invent missing sectors.
+        assert result["all_gaps"] == []
+        assert result["classification_coverage"] == 0
         assert result["current_allocation"] == {}
 
     @pytest.mark.asyncio
@@ -495,3 +496,9 @@ class TestConstants:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+@pytest.fixture(autouse=True)
+def disable_external_score_cache(monkeypatch):
+    """Unit tests must not wait for, read or write an external Redis server."""
+    monkeypatch.setattr('services.ml.bourse.sector_analyzer.REDIS_AVAILABLE', False)

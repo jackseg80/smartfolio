@@ -60,3 +60,9 @@ def test_missing_sector_reduces_coverage_and_agreement():
     assert result['data_coverage'] == .8
     assert result['confidence'] == .8
     assert result['breakdown']['sector'] is None
+
+
+@pytest.fixture(autouse=True)
+def disable_external_score_cache(monkeypatch):
+    """Unit tests must not wait for, read or write an external Redis server."""
+    monkeypatch.setattr('services.ml.bourse.sector_analyzer.REDIS_AVAILABLE', False)

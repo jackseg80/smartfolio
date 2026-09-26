@@ -27,6 +27,14 @@ class CurrencyExchangeDetector:
         # Add more special cases as needed
     }
 
+    # Yahoo history verified 2026-09-26: WRDUSW.SW is CHF (EBS), despite
+    # the issuer using WRDUSWC for the CHF line. Always verify fetched currency.
+    # Issuer/ISIN: https://swissfunddata.ch/sfdpub/docs/fsm-8522_03_03-20260131-de.pdf
+    SAXO_CURRENCY_LISTINGS = {
+        ('WRDUSW_CHF', '.SW'): ('WRDUSW.SW', 'CHF', 'IE00BD4TXV59'),
+        ('WRDUSW_USD', '.SW'): ('WRDUSW.SW', 'USD', 'IE00BD4TXV59'),
+    }
+
     # Mapping symboles → devise/bourse
     # Format: symbol → (exchange_suffix, native_currency, exchange_name)
     SYMBOL_EXCHANGE_MAP = {
@@ -179,12 +187,23 @@ class CurrencyExchangeDetector:
         # or a generic symbol map must not override it (e.g. SAP on NYSE).
         if exchange_hint:
             suffix, currency, exchange = self._parse_exchange_hint(symbol, exchange_hint)
+            if re.search(r'_[A-Z]{3}$', symbol.upper()):
+                listing = self.SAXO_CURRENCY_LISTINGS.get((symbol.upper(), suffix))
+                if listing is None:
+                    raise ValueError(f"Unverified Saxo currency listing: {symbol}")
+                provider_symbol, expected_currency, expected_isin = listing
+                if isin and isin.upper() != expected_isin:
+                    raise ValueError(f"Conflicting ISIN for {symbol}")
+                return provider_symbol, expected_currency, exchange
             known_suffixes = ('.SW', '.DE', '.PA', '.L', '.MI', '.AS', '.WA', '.BR', '.LS', '.MC', '.ST', '.CO', '.HE', '.OL', '.TO', '.V')
             if symbol.endswith(known_suffixes):
                 if not suffix or not symbol.endswith(suffix):
                     raise ValueError(f"Conflicting exchange information for {symbol}")
                 return symbol, currency, exchange
             return f"{symbol}{suffix}", currency, exchange
+
+        if re.search(r'_[A-Z]{3}$', symbol.upper()):
+            raise ValueError(f'An explicit verified exchange is required for {symbol}')
 
         # 1. Check direct mapping first
         if symbol in self.full_map:

@@ -157,6 +157,10 @@ class BourseDataFetcher:
             exchange_hint=exchange_hint
         )
 
+        # A currency-qualified Saxo line must never use another trading currency.
+        expected_currency = (base_symbol.rsplit('_', 1)[1].upper()
+                             if re.search(r'_[A-Z]{3}$', base_symbol.upper()) else None)
+
         # Verified 1:1 corporate action: ROG was replaced by ROP on SIX.
         # Source: https://www.roche.com/investors/updates/inv-update-2026-03-16
         corporate_action = None
@@ -174,6 +178,7 @@ class BourseDataFetcher:
         # Check in-memory cache first
         if cache_key in self.cache:
             self._require_fresh_prices(self.cache[cache_key], ticker, end_date)
+            self._require_listing_currency(self.cache[cache_key], ticker, expected_currency)
             logger.debug(f"Using in-memory cached data for {ticker}")
             return self.cache[cache_key]
 
@@ -184,6 +189,7 @@ class BourseDataFetcher:
                 df = pd.read_parquet(cache_file)
                 if not df.empty and df.attrs.get('price_origin') == source:
                     self._require_fresh_prices(df, ticker, end_date)
+                    self._require_listing_currency(df, ticker, expected_currency)
                     self.cache[cache_key] = df  # Load into memory cache
                     logger.debug(f"Using file-cached data for {ticker}")
                     return df
@@ -211,6 +217,7 @@ class BourseDataFetcher:
             raise ValueError(f"Unknown data source: {source}")
 
         self._require_fresh_prices(df, ticker, end_date)
+        self._require_listing_currency(df, ticker, expected_currency)
 
         # Cache result (in-memory + file)
         self.cache[cache_key] = df
@@ -224,6 +231,14 @@ class BourseDataFetcher:
 
         logger.info(f"Fetched {len(df)} days of data for {ticker} ({yf_symbol}, {native_currency}) from {source}")
         return df
+
+    @staticmethod
+    def _require_listing_currency(prices, ticker, expected_currency):
+        actual = prices.attrs.get('native_currency')
+        if expected_currency and actual != expected_currency:
+            raise MarketDataUnavailableError(
+                f"Quote currency mismatch for {ticker}: expected {expected_currency}, received {actual or 'unknown'}"
+            )
 
     async def _fetch_yahoo_finance(
         self,

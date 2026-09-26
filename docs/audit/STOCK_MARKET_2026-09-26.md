@@ -94,3 +94,49 @@ Les champs Saxo distinguent devise du compte, valeurs de base et valeurs d’ins
 ## État de publication et suites
 
 Les corrections ont été fusionnées dans `main` via la [PR #60](https://github.com/jackseg80/smartfolio/pull/60), commit `13bd9461`. Les contrôles GitHub de tests, lint et sécurité ont réussi. Aucun déploiement applicatif n'a été effectué. Le serveur local de validation écoute sur `http://127.0.0.1:8081` lorsqu'il est démarré ; son export Saxo est daté du 18 janvier 2026. Le rapprochement avec le compte actuel et un backtest hors échantillon restent nécessaires avant d’affirmer qu’une opportunité à 1–3 mois est pertinente financièrement.
+
+
+## Complément du 26 septembre 2026 : correctifs restants
+
+Base vérifiée : `origin/main` au commit `a3d7a700` (après la correction du déploiement Robot2). Travail isolé sur `codex/stock-market-followup`. Les constats et preuves de la PR #60 ci-dessus sont conservés comme historique ; ils ne prouvent pas un déploiement du présent complément.
+
+### Déjà corrigé dans main
+
+- Prix indisponibles non remplacés par des valeurs synthétiques ; absence de score complet si la couverture manque.
+- Conversion des rendements en USD avec change historique, dates alignées, cash de la source sélectionnée et résolution explicite des places de cotation.
+- Lecture ML sans entraînement implicite ; modèles soumis à validation temporelle et comparaison à une référence ; repli identifié comme observation historique.
+- Confiance des recommandations identifiée comme accord des signaux ; opportunités `REVIEW`, composantes manquantes non inventées.
+- Les anciennes captures de Sources V2 provenaient d'une copie locale incomplète et ne suffisent pas à conclure à une panne actuelle de la configuration crypto de Robot2.
+
+### Corrections de ce complément
+
+| Sujet | Correction |
+| --- | --- |
+| Cotation Saxo | Résolution explicite de `WRDUSW_CHF:xswx` vers `WRDUSW.SW`. Vérification de la devise réellement renvoyée, y compris en mémoire et dans les fichiers de cache. Les alias non vérifiés ou les ISIN contradictoires sont refusés. La ligne USD ne peut pas réutiliser des cours CHF. |
+| Horizons | Contrats centralisés séparant durée de détention, fenêtre de signal et profondeur historique. Le scan 1–3 mois utilise 42 séances sur 120 jours demandés ; 6–12 mois : 189 séances sur 365 jours ; 2–3 ans : 756 séances sur 1 200 jours. Les historiques trop courts ne produisent pas de momentum. Les métadonnées indiquent explicitement l'absence de validation des rendements futurs. |
+| Source des opportunités | Le paramètre `file_key` est maintenant transmis à la lecture du CSV sélectionné, avec l'identité authentifiée. |
+| Objectifs sectoriels | Objectifs personnalisables dans l'interface et validés par l'API : secteurs GICS connus, pourcentages finis entre 0 et 100, total 100 %. Sans personnalisation, la référence générique est indiquée. Les choix restent dans la page, sans stockage partagé entre utilisateurs. |
+| Couverture sectorielle | L'exposition non classifiée n'est plus assimilée à un secteur absent. Un écart minimum conservateur retire l'exposition non classifiée de l'écart apparent. Sans transparisation des fonds diversifiés, le scan peut donc ne proposer aucun écart. |
+| Présentation | Affichage de REVIEW, couverture des données, composantes réellement disponibles, absence de diversification mesurée et budget commun aux candidats d'un même secteur. Le budget n'est pas à additionner par candidat. |
+| Résultats périmés | Changer la source, l'horizon ou les objectifs invalide les résultats et l'export. Une réponse ancienne ne remplace pas le nouveau réglage. |
+| Reprise Analytics | Succès mémorisés par section ; erreurs réessayables en revenant à l'onglet. Requêtes simultanées dédupliquées par section et générations invalidées lors d'un rafraîchissement/source différente. Le sélecteur de titres reste initialisé. |
+
+La table de cotation s'appuie sur la [fiche officielle du fonds et son ISIN IE00BD4TXV59](https://swissfunddata.ch/sfdpub/docs/fsm-8522_03_03-20260131-de.pdf), puis sur le contrôle effectif du fournisseur : les codes Bloomberg/Reuters ne sont pas des symboles Yahoo interchangeables. Yahoo fournit actuellement la ligne CHF sous `WRDUSW.SW` ; `WRDUSWC.SW` ne fournissait aucun historique lors du diagnostic. Le contrôle de devise reste obligatoire après cette correspondance ; une réponse Yahoo ne constitue pas, à elle seule, une preuve indépendante de l'ISIN.
+
+### Validation technique
+
+- 3 161 tests unitaires réussis, 12 ignorés ; couverture globale 47,32 %, seuil configuré de 30 % atteint. Le mode `--assert=plain` a permis de contourner une exception native Windows dans la réécriture des assertions pytest ; les assertions Python restent exécutées.
+- 35 contrôles ciblés finaux réussis, dont les nouveaux contrats et les 7 tests d'intégration risque/authentification. Après la dernière revue, 46 contrôles du scan et des nouveaux contrats ont aussi réussi, dont le cas d'un écart nul avec seuil zéro. Les sous-ensembles déjà exécutés ne sont pas ajoutés au total des tests unitaires.
+- Test de la page avec DOM JavaScript : sélection du CSV, objectifs transmis, changement d'horizon, réponse obsolète, pourcentages invalides, affichage des scores et échappement des noms de titres. Réponses de marché simulées pour ce test ; ce n'est pas une validation visuelle de Robot2.
+- Contrôle public par le chargeur corrigé : `WRDUSW_CHF:xswx`, 64 observations sur 90 jours demandés, devise CHF, dernière séance renvoyée le 24 septembre 2026, cours ajustés des divisions et dividendes. Aucune position privée ni ordre utilisé.
+- Les hôtes `testserver,localhost,127.0.0.1` ont été autorisés uniquement dans le processus de tests. Aucun réglage de production modifié.
+
+### Limites financières et livraison
+
+Une fenêtre de signal plus courte que la durée de détention n'est pas, en soi, une erreur. Les fenêtres ci-dessus restent des paramètres de filtrage historique ; elles ne sont pas présentées comme optimisées ou rentables hors échantillon.
+
+La preuve de pertinence financière reste ouverte : conserver des signaux et fondamentaux datés, mesurer à 21/42/63 séances puis aux horizons longs, appliquer coûts et change, comparer au benchmark et au maintien du portefeuille, séparer entraînement/validation/test, contrôler les périodes qui se recouvrent et les régimes de marché. Aucun résultat synthétique ou test logiciel ne doit devenir une probabilité de gain. La comparaison des modèles à une référence sur une métrique statistique ne prouve pas la rentabilité d'une stratégie.
+
+Les listes de candidats restent un univers limité ; disponibilité chez Saxo, liquidité, frais, contraintes fiscales, transparisation des fonds et validation financière hors échantillon ne sont pas attestés par ce complément. Le portefeuille de production actuel n'a pas été rapproché d'un export récent.
+
+État de ce complément : modifications locales testées et documentées, pas encore committées/poussées/fusionnées ni déployées sur Robot2. Un simple `deploy.sh` ne peut pas récupérer ce travail tant qu'il n'est pas publié dans `main`.

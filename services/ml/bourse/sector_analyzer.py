@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+from services.ml.bourse.horizons import OPPORTUNITY_HORIZONS
 import logging
 import json
 import os
@@ -34,7 +35,7 @@ except ImportError:
 
 # Cache TTL: 4 hours (aligned with on-chain metrics cache)
 STOCK_SCORE_CACHE_TTL = 4 * 3600  # 14400 seconds
-STOCK_SCORE_CACHE_VERSION = "verified_v3"
+STOCK_SCORE_CACHE_VERSION = "verified_v4"
 
 
 # ETF Full Names (for better UI display)
@@ -631,12 +632,7 @@ class SectorAnalyzer:
 
     def _get_lookback_days(self, horizon: str) -> int:
         """Get lookback days based on horizon"""
-        lookback_map = {
-            "short": 120,    # 1-3 months with indicator warm-up
-            "medium": 240,   # 6-12 months
-            "long": 450      # 2-3 years: recent trend plus warm-up
-        }
-        return lookback_map.get(horizon, 180)
+        return OPPORTUNITY_HORIZONS[horizon].history_calendar_days
 
     def _calculate_momentum_score(
         self,
@@ -665,8 +661,8 @@ class SectorAnalyzer:
                 return None
 
             scores = []
-            period = {"short": 42, "medium": 126, "long": 252}.get(horizon, 126)
-            returns = etf_data['close'].pct_change().dropna().tail(period)
+            period = OPPORTUNITY_HORIZONS[horizon].signal_sessions
+            returns = etf_data['close'].pct_change(fill_method=None).dropna().tail(period)
             if len(returns) < max(20, int(period * 0.8)):
                 return None
             realized_vol = returns.std()

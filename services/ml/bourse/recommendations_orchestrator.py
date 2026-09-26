@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+from services.ml.bourse.horizons import RECOMMENDATION_HORIZONS
 import logging
 
 from services.ml.bourse.technical_indicators import TechnicalIndicators
@@ -74,8 +75,9 @@ class RecommendationsOrchestrator:
             adjuster = PortfolioAdjuster()
 
             # Get benchmark data
-            signal_days = {"short": 10, "medium": 21, "long": 63}[timeframe]
-            history_days = max(lookback_days, int(signal_days * 1.6) + 30)
+            horizon_spec = RECOMMENDATION_HORIZONS[timeframe]
+            signal_days = horizon_spec.signal_sessions
+            history_days = max(lookback_days, horizon_spec.history_calendar_days)
             benchmark_data = await self._get_benchmark_data(benchmark, history_days)
             if benchmark_data is None or len(benchmark_data) <= signal_days:
                 raise ValueError("Benchmark history is unavailable for the selected timeframe")
@@ -161,6 +163,7 @@ class RecommendationsOrchestrator:
                 "recommendations": recommendations,
                 "summary": summary,
                 "timeframe": timeframe,
+                "horizon_details": {**horizon_spec.metadata(), "history_calendar_days": history_days},
                 "signal_window_trading_days": signal_days,
                 "history_window_calendar_days": history_days,
                 "market_regime": market_regime,
