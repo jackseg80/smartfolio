@@ -165,7 +165,7 @@ class UserManagementService:
                 json.dump(default_sources, f, indent=2)
             logger.info(f"Created sources.json for user: {user_id}")
 
-        logger.info(f"✅ User folder structure created for: {user_id}")
+        logger.info(f" User folder structure created for: {user_id}")
 
     def create_user(
         self,
@@ -222,7 +222,7 @@ class UserManagementService:
         self._create_user_folder_structure(normalized_user_id)
 
         # Audit log
-        logger.info(f"✅ User created: {normalized_user_id} by {admin_user}")
+        logger.info(f" User created: {normalized_user_id} by {admin_user}")
 
         return new_user
 
@@ -272,7 +272,7 @@ class UserManagementService:
         self._save_users_config(config)
 
         # Audit log
-        logger.info(f"✅ User updated: {normalized_user_id} by {admin_user}, fields: {list(data.keys())}")
+        logger.info(f" User updated: {normalized_user_id} by {admin_user}, fields: {list(data.keys())}")
 
         return config["users"][user_index]
 
@@ -334,11 +334,11 @@ class UserManagementService:
             if user_path.exists():
                 try:
                     shutil.rmtree(str(user_path))
-                    logger.info(f"✅ User folder deleted permanently: {user_path}")
+                    logger.info(f" User folder deleted permanently: {user_path}")
                 except Exception as e:
                     logger.error(f"Failed to delete user folder: {e}")
 
-            logger.info(f"✅ User deleted (HARD): {normalized_user_id} by {admin_user}")
+            logger.info(f" User deleted (HARD): {normalized_user_id} by {admin_user}")
 
             return {
                 "user_id": normalized_user_id,
@@ -361,11 +361,11 @@ class UserManagementService:
 
                 try:
                     shutil.move(str(user_path), str(deleted_path))
-                    logger.info(f"✅ User folder renamed: {user_path} → {deleted_path}")
+                    logger.info(f" User folder renamed: {user_path} → {deleted_path}")
                 except Exception as e:
                     logger.error(f"Failed to rename user folder: {e}")
 
-            logger.info(f"✅ User deleted (soft): {normalized_user_id} by {admin_user}")
+            logger.info(f" User deleted (soft): {normalized_user_id} by {admin_user}")
 
             return {
                 "user_id": normalized_user_id,

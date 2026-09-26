@@ -24,7 +24,7 @@ RESET = "\033[0m"
 
 def run_command(cmd: list[str], description: str) -> tuple[int, str]:
     """Exécute une commande et retourne le code de sortie + output."""
-    print(f"\n{BLUE}▶ {description}{RESET}")
+    print(f"\n{BLUE} {description}{RESET}")
     result = subprocess.run(cmd, capture_output=True, text=True)
     output = result.stdout + result.stderr
     return result.returncode, output
@@ -44,7 +44,7 @@ def main():
     print(f"{BLUE}{'='*60}")
     print(f"SmartFolio - Linting Python")
     print(f"{'='*60}{RESET}")
-    print(f"Mode: {'🔧 FIX' if fix_mode else '✓ CHECK'}")
+    print(f"Mode: {' FIX' if fix_mode else '[OK] CHECK'}")
     print(f"Paths: {', '.join(paths)}")
 
     results = {}
@@ -91,16 +91,16 @@ def main():
     print(f"{'='*60}{RESET}")
 
     for tool, passed in results.items():
-        status = f"{GREEN}✓ PASS{RESET}" if passed else f"{RED}✗ FAIL{RESET}"
+        status = f"{GREEN}[OK] PASS{RESET}" if passed else f"{RED}[Error] FAIL{RESET}"
         print(f"{tool:12s} : {status}")
 
     all_passed = all(results.values())
     if all_passed:
-        print(f"\n{GREEN}✓ Tous les checks sont passés !{RESET}")
+        print(f"\n{GREEN}[OK] Tous les checks sont passés !{RESET}")
         return 0
     else:
         print(
-            f"\n{YELLOW}⚠ Certains checks ont échoué. "
+            f"\n{YELLOW}[Warning] Certains checks ont échoué. "
             f"Utilisez --fix pour corriger automatiquement.{RESET}"
         )
         return 1

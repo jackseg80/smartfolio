@@ -7,31 +7,31 @@
 
 ---
 
-## 📊 Résumé Exécutif
+## Résumé Exécutif
 
 ### Accomplissements
 
-✅ **Extraction modulaire de risk_management.py**
+[OK] **Extraction modulaire de risk_management.py**
 - Création de `services/risk/models.py` (208 lignes) - Dataclasses et enums
 - Création de `services/risk/alert_system.py` (197 lignes) - Système d'alertes
 - Création de `services/risk/var_calculator.py` (536 lignes) - Calculs VaR/CVaR
 - **Impact:** ~940 lignes extraites sur 2159 (44% du code modularisé)
 
-✅ **Amélioration de la gestion d'erreurs**
+[OK] **Amélioration de la gestion d'erreurs**
 - Ajout de 4 custom exceptions dans `api/exceptions.py`
 - Création d'un guide complet de migration (`EXCEPTION_HANDLING_MIGRATION_GUIDE.md`)
 - Refactoring de 2 exemples concrets dans `services/execution/governance.py`
 
-✅ **Documentation**
+[OK] **Documentation**
 - Guide de migration des exceptions (15 pages)
 - Patterns et anti-patterns documentés
 - Checklist de migration par fichier
 
 ---
 
-## 🎯 Problèmes Identifiés (Audit Complet)
+## Problèmes Identifiés (Audit Complet)
 
-### Problèmes Critiques ❌
+### Problèmes Critiques
 
 | Catégorie | Détails | Impact |
 |-----------|---------|--------|
@@ -41,7 +41,7 @@
 
 ### Top 5 Fichiers avec `except Exception`
 
-1. `services/execution/governance.py` - **42 occurrences** ⚠️
+1. `services/execution/governance.py` - **42 occurrences** [Warning]
 2. `services/alerts/alert_storage.py` - **37 occurrences**
 3. `services/execution/exchange_adapter.py` - **24 occurrences**
 4. `services/alerts/alert_engine.py` - **24 occurrences**
@@ -51,16 +51,16 @@
 
 | Fichier | Lignes | Status |
 |---------|--------|--------|
-| `services/risk_management.py` | 2,159 | ✅ **Partiellement refactoré** (44% extrait) |
-| `services/execution/governance.py` | 2,016 | ⚠️ À splitter |
-| `api/unified_ml_endpoints.py` | 1,686 | ⚠️ À splitter |
-| `api/risk_endpoints.py` | 1,576 | ⚠️ À splitter |
-| `services/alerts/alert_engine.py` | 1,583 | ⚠️ À splitter |
-| `static/modules/risk-dashboard-main-controller.js` | 3,987 | ⚠️ À splitter |
+| `services/risk_management.py` | 2,159 | [OK] **Partiellement refactoré** (44% extrait) |
+| `services/execution/governance.py` | 2,016 | [Warning] À splitter |
+| `api/unified_ml_endpoints.py` | 1,686 | [Warning] À splitter |
+| `api/risk_endpoints.py` | 1,576 | [Warning] À splitter |
+| `services/alerts/alert_engine.py` | 1,583 | [Warning] À splitter |
+| `static/modules/risk-dashboard-main-controller.js` | 3,987 | [Warning] À splitter |
 
 ---
 
-## ✅ Travail Accompli
+## Travail Accompli
 
 ### 1. Refactoring de services/risk_management.py
 
@@ -85,7 +85,7 @@ services/risk/
 - **Maintenabilité:** Fichiers <600 lignes plus faciles à maintenir
 - **Réutilisabilité:** Modules importables séparément
 
-**Backward Compatibility:** ✅ Maintenue via `services/risk/__init__.py`
+**Backward Compatibility:** [OK] Maintenue via `services/risk/__init__.py`
 
 ```python
 # Ancien import - fonctionne toujours
@@ -151,11 +151,11 @@ except Exception as e:
     logger.exception(f"Unexpected error: {e}")
 ```
 
-**Compilation:** ✅ Testée et validée
+**Compilation:** [OK] Testée et validée
 
 ---
 
-## 🚧 Travail Restant
+## Travail Restant
 
 ### Priority 1: Exception Handling (2-3 jours)
 
@@ -214,7 +214,7 @@ class TestBalanceService:
 
 ---
 
-## 📈 Métriques de Progrès
+## Métriques de Progrès
 
 ### Code Quality
 
@@ -238,7 +238,7 @@ class TestBalanceService:
 
 ---
 
-## 🛠️ Commandes Utiles
+## Commandes Utiles
 
 ### Vérification Compilation
 
@@ -277,9 +277,9 @@ done | sort -rn | head -10
 
 ---
 
-## 🎯 Roadmap
+## Roadmap
 
-### Phase 1 (Fait ✅)
+### Phase 1 (Fait )
 - [x] Audit complet du projet
 - [x] Identification des problèmes critiques
 - [x] Extraction partielle risk_management.py
@@ -303,7 +303,7 @@ done | sort -rn | head -10
 
 ---
 
-## 📚 Ressources Créées
+## Ressources Créées
 
 1. **`docs/EXCEPTION_HANDLING_MIGRATION_GUIDE.md`** - Guide complet de migration (15 pages)
 2. **`docs/REFACTORING_OCT_2025.md`** - Ce rapport
@@ -314,17 +314,17 @@ done | sort -rn | head -10
 
 ---
 
-## ✅ Points Forts Identifiés
+## Points Forts Identifiés
 
-- ✅ Architecture multi-tenant solide
-- ✅ Sécurité excellente (pas de secrets commités)
-- ✅ Documentation projet exceptionnelle (CLAUDE.md)
-- ✅ Tests nombreux (3,394 fichiers - ratio 17.6%)
-- ✅ Response formatters standardisés
+- [OK] Architecture multi-tenant solide
+- [OK] Sécurité excellente (pas de secrets commités)
+- [OK] Documentation projet exceptionnelle (CLAUDE.md)
+- [OK] Tests nombreux (3,394 fichiers - ratio 17.6%)
+- [OK] Response formatters standardisés
 
 ---
 
-## 🔍 Références
+## Références
 
 - **Audit complet:** Session Oct 29, 2025
 - **CLAUDE.md:** Guide agent IA (source canonique)

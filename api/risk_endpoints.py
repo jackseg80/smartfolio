@@ -211,7 +211,7 @@ def _calculate_risk_score_v2(
     breakdown['drawdown'] = d_dd
 
     # Volatility annualized
-    # ✅ Option A semantics: Low volatility → more robust → score increases
+    # [OK] Option A semantics: Low volatility → more robust → score increases
     vol = float(getattr(risk_metrics, 'volatility_annualized', 0.0) or 0.0)
     if vol < 0.20:
         d_vol = +10.0   # Very low volatility → score increases
@@ -227,7 +227,7 @@ def _calculate_risk_score_v2(
     breakdown['volatility'] = d_vol
 
     # Sharpe/Sortino (use the worse)
-    # ✅ Option A semantics: Good performance → score increases (robustness)
+    # [OK] Option A semantics: Good performance → score increases (robustness)
     sharpe = float(getattr(risk_metrics, 'sharpe_ratio', 0.0) or 0.0)
     sortino = float(getattr(risk_metrics, 'sortino_ratio', sharpe) or sharpe)
     perf_ratio = min(sharpe, sortino)
@@ -467,10 +467,10 @@ async def get_correlation_matrix(
         if (src_used.startswith('stub') or src_used == 'none') and not COMPUTE_ON_STUB_SOURCES:
             return CorrelationResponse(success=False, message="No real data: stub source in use")
         balances = balances_response.get('items', [])
-        logger.info(f"🔍 Correlation endpoint: received {len(balances)} holdings from unified data source='{source}'")
+        logger.info(f" Correlation endpoint: received {len(balances)} holdings from unified data source='{source}'")
         
         if not balances or len(balances) == 0:
-            logger.warning(f"❌ No holdings found for correlation calculation with source='{source}'")
+            logger.warning(f" No holdings found for correlation calculation with source='{source}'")
             return CorrelationResponse(
                 success=False,
                 message=f"Aucun holding trouvé dans le portfolio via le système unifié (source: {source})"
@@ -924,7 +924,7 @@ async def get_risk_dashboard(
     min_history_days: int = Query(180, ge=90, le=365, description="Minimum days for long-term cohort"),
     min_coverage_pct: float = Query(0.80, ge=0.5, le=1.0, description="Minimum value coverage percentage for the cohort"),
     min_asset_count: int = Query(5, ge=3, le=20, description="Minimum number of assets in cohort"),
-    # 🔧 FIX: CSV hint for cache invalidation (Oct 2025)
+    # FIX: CSV hint for cache invalidation (Oct 2025)
     _csv_hint: Optional[str] = Query(None, description="Hint for cache invalidation when CSV changes (filename or timestamp)")
 ) -> dict:
     """
@@ -935,18 +935,18 @@ async def get_risk_dashboard(
         start_time = datetime.now()
 
         # Check cache (TTL: 30 min = 1800 seconds, optimized per CACHE_TTL_OPTIMIZATION.md)
-        # 🔧 FIX: Include _csv_hint in cache key to invalidate when CSV changes (Oct 2025)
+        # FIX: Include _csv_hint in cache key to invalidate when CSV changes (Oct 2025)
         csv_hint_part = f":{_csv_hint}" if _csv_hint else ""
         cache_key = f"risk_dashboard:{user}:{source}:{min_usd}:{risk_version}{csv_hint_part}"
 
-        logger.info(f"🔍 Risk dashboard request: user={user}, source={source}, csv_hint={_csv_hint}, cache_key={cache_key}")
+        logger.info(f" Risk dashboard request: user={user}, source={source}, csv_hint={_csv_hint}, cache_key={cache_key}")
 
         cached_result = cache_get(_risk_cache, cache_key, 1800)
         if cached_result:
-            logger.info(f"✅ Returning cached risk dashboard (cache hit)")
+            logger.info(f" Returning cached risk dashboard (cache hit)")
             return cached_result
 
-        logger.info(f"❌ Cache miss, computing fresh metrics...")
+        logger.info(f" Cache miss, computing fresh metrics...")
 
         # Récupération unifiée des balances (supporte stub | cointracking | cointracking_api)
         from api.unified_data import get_unified_filtered_balances
@@ -991,9 +991,9 @@ async def get_risk_dashboard(
                     balances=balances,
                     confidence_level=0.95
                 )
-                logger.info(f"📊 LEGACY Risk Score calculated: {risk_metrics_legacy.risk_score:.1f}")
+                logger.info(f" LEGACY Risk Score calculated: {risk_metrics_legacy.risk_score:.1f}")
             except Exception as e:
-                logger.error(f"❌ Legacy calculation failed: {e}")
+                logger.error(f" Legacy calculation failed: {e}")
                 risk_metrics_legacy = None
 
         # V2 dual-window calculation
@@ -1008,17 +1008,17 @@ async def get_risk_dashboard(
                 )
 
             except Exception as e:
-                # ✅ FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
+                # [OK] FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
                 error_msg = str(e)
                 if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
-                    logger.warning(f"⚠️ Dual window V2 data quality issue: {e}")
+                    logger.warning(f" Dual window V2 data quality issue: {e}")
                 else:
-                    logger.error(f"❌ Dual window V2 calculation failed: {e}")
+                    logger.error(f" Dual window V2 calculation failed: {e}")
                 risk_metrics_v2 = None
 
         # Fallback si V2 demandé mais échec
         if compute_v2 and risk_metrics_v2 is None:
-            logger.warning("⚠️  V2 requested but failed, falling back to legacy calculation")
+            logger.warning("  V2 requested but failed, falling back to legacy calculation")
             risk_metrics_v2 = portfolio_metrics_service.calculate_portfolio_metrics(
                 price_data=price_df,
                 balances=balances,
@@ -1051,13 +1051,13 @@ async def get_risk_dashboard(
 
         # Construction de la réponse dashboard avec métriques centralisées
         
-        # ✅ Utiliser le Risk Score autoritaire du service (docs/RISK_SEMANTICS.md)
+        # [OK] Utiliser le Risk Score autoritaire du service (docs/RISK_SEMANTICS.md)
         # Le service calcule déjà risk_score (robustesse 0-100) et overall_risk_level (enum)
         # avec la sémantique correcte : score élevé = robuste = risque faible
         risk_score_authoritative = risk_metrics.risk_score
         overall_risk_level = getattr(risk_metrics.overall_risk_level, "value", str(risk_metrics.overall_risk_level))
 
-        # 🆕 Phase 4: Calculer les 2 versions du Structural Score si nécessaire
+        # [New] Phase 4: Calculer les 2 versions du Structural Score si nécessaire
         from services.risk.structural_score_v2 import compute_structural_score_v2, get_structural_level
 
         # Variables pour shadow mode
@@ -1097,8 +1097,8 @@ async def get_risk_dashboard(
         risk_score_structural = structural_score_v2 if risk_version == "v2_active" else (risk_score_structural_legacy or structural_score_v2)
         structural_breakdown = structural_breakdown_v2 if risk_version == "v2_active" else (structural_breakdown_legacy or structural_breakdown_v2)
 
-        # 🆕 DEBUG: Log avant création du dict
-        logger.info(f"🧪 SHADOW V2 DEBUG: About to create dashboard_data with risk_version={risk_version}, active_version={active_version}, structural_score_v2={structural_score_v2}")
+        # [New] DEBUG: Log avant création du dict
+        logger.info(f" SHADOW V2 DEBUG: About to create dashboard_data with risk_version={risk_version}, active_version={active_version}, structural_score_v2={structural_score_v2}")
 
         dashboard_data = {
             "success": True,
@@ -1109,7 +1109,7 @@ async def get_risk_dashboard(
                 "confidence_level": risk_metrics.confidence_level
             },
             "risk_metrics": {
-                # ⚡ MÉTRIQUES CENTRALISÉES - Cohérentes avec tous les modules
+                # MÉTRIQUES CENTRALISÉES - Cohérentes avec tous les modules
                 "var_95_1d": risk_metrics.var_95_1d,
                 "var_99_1d": risk_metrics.var_99_1d,
                 "cvar_95_1d": risk_metrics.cvar_95_1d,
@@ -1124,12 +1124,12 @@ async def get_risk_dashboard(
                 "ulcer_index": risk_metrics.ulcer_index,
                 "skewness": risk_metrics.skewness,
                 "kurtosis": risk_metrics.kurtosis,
-                # ✅ Scores et niveau autoritaires (source de vérité)
+                # [OK] Scores et niveau autoritaires (source de vérité)
                 "overall_risk_level": overall_risk_level,
                 "risk_score": risk_score_authoritative,        # Autoritaire (VaR + Sharpe + DD + Vol) - ACTIF
                 "risk_score_structural": risk_score_structural,  # Structurel (+ GRI + Concentration)
                 "structural_breakdown": structural_breakdown,    # Détail contributions (audit)
-                # 🆕 Phase 5 + 4: Shadow Mode - Version info (Risk + Structure)
+                # [New] Phase 5 + 4: Shadow Mode - Version info (Risk + Structure)
                 "risk_version_info": (lambda: _clean_for_json({
                     "active_version": active_version,                                      # legacy | v2
                     "requested_version": risk_version,                                     # legacy | v2_shadow | v2_active
@@ -1138,7 +1138,7 @@ async def get_risk_dashboard(
                     "risk_score_v2": risk_metrics_v2.risk_score if risk_metrics_v2 else None,
                     "sharpe_legacy": risk_metrics_legacy.sharpe_ratio if risk_metrics_legacy else None,
                     "sharpe_v2": risk_metrics_v2.sharpe_ratio if risk_metrics_v2 else None,
-                    # 🆕 Portfolio Structure Score - Structure pure (HHI, memes, GRI, diversité)
+                    # [New] Portfolio Structure Score - Structure pure (HHI, memes, GRI, diversité)
                     "portfolio_structure_score": structural_score_v2,
                     "structure_breakdown": structural_breakdown_v2,
                     "structure_label": "structure_pure",
@@ -1155,12 +1155,12 @@ async def get_risk_dashboard(
                 "calculation_date": risk_metrics.calculation_date.isoformat(),
                 "data_points": risk_metrics.data_points,
                 "confidence_level": risk_metrics.confidence_level,
-                # ✅ Metadata fenêtres temporelles (traçabilité + dual-window)
+                # [OK] Metadata fenêtres temporelles (traçabilité + dual-window)
                 "window_used": {
                     "price_history_days": price_history_days,
                     "lookback_days": lookback_days,
                     "actual_data_points": risk_metrics.data_points,
-                    # 🆕 Dual Window Metadata
+                    # [New] Dual Window Metadata
                     "dual_window_enabled": use_dual_window and dual_window_result is not None,
                     "risk_score_source": dual_window_result['risk_score_source'] if dual_window_result else 'single_window'
                 },
@@ -1182,7 +1182,7 @@ async def get_risk_dashboard(
             else:
                 dual_info = f" [Dual-Window: FI fallback only]"
 
-        logger.info(f"✅ Centralized metrics calculated: Sharpe={risk_metrics.sharpe_ratio:.2f}, Vol={risk_metrics.volatility_annualized:.2f}, MaxDD={risk_metrics.max_drawdown:.2%}, RiskScore={risk_score_authoritative:.1f}, RiskStructural={risk_score_structural:.1f}{dual_info}")
+        logger.info(f" Centralized metrics calculated: Sharpe={risk_metrics.sharpe_ratio:.2f}, Vol={risk_metrics.volatility_annualized:.2f}, MaxDD={risk_metrics.max_drawdown:.2%}, RiskScore={risk_score_authoritative:.1f}, RiskStructural={risk_score_structural:.1f}{dual_info}")
 
         end_time = datetime.now()
         calculation_time = f"{(end_time - start_time).total_seconds():.2f}s"
@@ -1204,34 +1204,34 @@ async def get_risk_dashboard(
         }
 
         # Log metadata for traceability
-        logger.info(f"🏷️ Risk dashboard metadata: user={user}, source={source_used}, taxonomy={taxonomy_version}:{groups_hash}")
+        logger.info(f" Risk dashboard metadata: user={user}, source={source_used}, taxonomy={taxonomy_version}:{groups_hash}")
 
-        # 🆕 DEBUG: Log risk_version_info avant retour
+        # [New] DEBUG: Log risk_version_info avant retour
         sanitized_dashboard = _clean_for_json(dashboard_data)
 
         logger.info(
-            "🧪 SHADOW V2 DEBUG: dashboard_data['risk_metrics']['risk_version_info'] = %s",
+            " SHADOW V2 DEBUG: dashboard_data['risk_metrics']['risk_version_info'] = %s",
             sanitized_dashboard.get('risk_metrics', {}).get('risk_version_info')
         )
 
-        # 🚨 CHECK 0: Marqueurs uniques pour prouver l'endpoint atteint
+        # [Alert] CHECK 0: Marqueurs uniques pour prouver l'endpoint atteint
         import time
         sanitized_dashboard["__served_by__"] = "risk_endpoints.py:v2_shadow"
         sanitized_dashboard["__ts__"] = time.time()
 
         # Cache the result (30 min TTL)
         cache_set(_risk_cache, cache_key, sanitized_dashboard)
-        logger.info(f"✅ Risk dashboard computed and cached: {cache_key}")
+        logger.info(f" Risk dashboard computed and cached: {cache_key}")
 
         return sanitized_dashboard
         
     except Exception as e:
-        # ✅ FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
+        # [OK] FIX: Differentiate data quality issues (WARNING) from real errors (ERROR)
         error_msg = str(e)
         if "Insufficient data points" in error_msg or "sparse price coverage" in error_msg:
-            logger.warning(f"⚠️ Risk dashboard data quality issue: {e}")
+            logger.warning(f" Risk dashboard data quality issue: {e}")
         else:
-            logger.error(f"❌ Erreur dashboard risque: {e}")
+            logger.error(f" Erreur dashboard risque: {e}")
 
         return {
             "success": False,

@@ -4,9 +4,9 @@
 > **Status:** Production
 > **Asset:** Bitcoin (BTC), Ethereum (ETH), Solana (SOL)
 
-> 📖 **Document lié** : [HYBRID_REGIME_DETECTOR.md](HYBRID_REGIME_DETECTOR.md) — Version Equity Markets (SPY, QQQ) - architecture de base
+>  **Document lié** : [HYBRID_REGIME_DETECTOR.md](HYBRID_REGIME_DETECTOR.md) — Version Equity Markets (SPY, QQQ) - architecture de base
 
-## 🎯 Executive Summary
+## Executive Summary
 
 The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based + HMM system (originally designed for equity markets) to cryptocurrency markets, with thresholds adjusted for Bitcoin's 3x higher volatility.
 
@@ -26,7 +26,7 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 ---
 
-## 📊 Problem Statement
+## Problem Statement
 
 ### Original HMM Limitation (Same as Equities)
 
@@ -40,9 +40,9 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 ```
 
 **Root Cause:** HMM calculates **statistical averages** without cumulative context:
-- ❌ Cannot see -77% drawdown from peak ($69k → $15.5k)
-- ❌ Cannot see 6-month persistence of crash
-- ❌ Mixes crash + recovery into ONE cluster
+- [Error] Cannot see -77% drawdown from peak ($69k → $15.5k)
+- [Error] Cannot see 6-month persistence of crash
+- [Error] Mixes crash + recovery into ONE cluster
 
 **Result:** 0% Bear Market detected on Bitcoin historical data (2014 Mt.Gox, 2018 Winter, 2022 Luna/FTX).
 
@@ -57,7 +57,7 @@ The **Bitcoin Hybrid Regime Detector** adapts the successful Hybrid Rule-Based +
 
 ---
 
-## 🔬 Solution: Hybrid Architecture for Crypto
+## Solution: Hybrid Architecture for Crypto
 
 ### Three-Layer System
 
@@ -178,20 +178,20 @@ def _fuse_predictions(rule_based, hmm_result):
 
 ---
 
-## ✅ Validation Results
+## Validation Results
 
 ### Threshold Implementation (5/5 PASS)
 
 | Check | Status | Details |
 |-------|--------|---------|
-| Bear drawdown -0.30 + trend ≤ -10% | ✅ PASS | Source code verification |
-| Bear duration 20d | ✅ PASS | Source code verification |
-| Expansion +15%/m + DD < -15% | ✅ PASS | Source code verification |
-| Bull volatility 0.60 | ✅ PASS | Source code verification |
-| Bull (recovery) rule exists | ✅ PASS | Source code verification |
-| Correction rule (vol OR flat) | ✅ PASS | Source code verification |
-| Smoothing 7d min duration | ✅ PASS | Source code verification |
-| Symbol-specific HMM models | ✅ PASS | ETH/SOL use own models |
+| Bear drawdown -0.30 + trend ≤ -10% | [OK] PASS | Source code verification |
+| Bear duration 20d | [OK] PASS | Source code verification |
+| Expansion +15%/m + DD < -15% | [OK] PASS | Source code verification |
+| Bull volatility 0.60 | [OK] PASS | Source code verification |
+| Bull (recovery) rule exists | [OK] PASS | Source code verification |
+| Correction rule (vol OR flat) | [OK] PASS | Source code verification |
+| Smoothing 7d min duration | [OK] PASS | Source code verification |
+| Symbol-specific HMM models | [OK] PASS | ETH/SOL use own models |
 
 ### Current Regime Detection (Oct 2025)
 
@@ -205,7 +205,7 @@ def _fuse_predictions(rule_based, hmm_result):
 }
 ```
 
-**Validation**: ✅ PASS
+**Validation**: [OK] PASS
 - Drawdown -11.8% correctly identified as Correction (not Bear)
 - Rule 4 successfully prevented HMM false positive
 - Confidence 85% (reasonable for moderate drawdown)
@@ -225,7 +225,7 @@ def _fuse_predictions(rule_based, hmm_result):
 
 ---
 
-## 📡 API Usage
+## API Usage
 
 ### Endpoint 1: Current Regime
 
@@ -317,7 +317,7 @@ await initializeBTCRegimeChart('btc-regime-section');
 
 ---
 
-## 🔧 Implementation Details
+## Implementation Details
 
 ### File Structure
 
@@ -370,7 +370,7 @@ cache_key = f"{symbol}_{lookback_days}"  # e.g., "BTC_365"
 
 ---
 
-## 🚨 Limitations & Future Work
+## Limitations & Future Work
 
 ### Current Limitations
 
@@ -406,7 +406,7 @@ cache_key = f"{symbol}_{lookback_days}"  # e.g., "BTC_365"
 
 ---
 
-## 📚 References
+## References
 
 ### Related Documents
 

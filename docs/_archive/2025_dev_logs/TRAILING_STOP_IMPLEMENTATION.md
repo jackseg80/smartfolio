@@ -4,16 +4,16 @@
 > **Status:** Production
 > **Module:** Stop Loss Calculator (Method #6)
 
-## 🎯 Executive Summary
+## Executive Summary
 
 The **Trailing Stop** system protects unrealized gains on long-term winning positions (legacy holdings) by using wider, adaptive stop losses based on All-Time High (ATH) rather than current price.
 
 **Key Benefits:**
-- ✅ Lets winners run: +2400% positions get -30% trailing stops (vs -6% standard)
-- ✅ Protects capital: Minimum gain threshold prevents premature exits
-- ✅ Adaptive tiers: 5 gain ranges with different trail percentages
-- ✅ Automatic detection: No manual tagging required
-- ✅ Reusable: Works for stocks, crypto, commodities
+- [OK] Lets winners run: +2400% positions get -30% trailing stops (vs -6% standard)
+- [OK] Protects capital: Minimum gain threshold prevents premature exits
+- [OK] Adaptive tiers: 5 gain ranges with different trail percentages
+- [OK] Automatic detection: No manual tagging required
+- [OK] Reusable: Works for stocks, crypto, commodities
 
 **Example:**
 ```
@@ -21,13 +21,13 @@ Position bought 10 years ago:
   Entry: $20
   Current: $500 (+2400%)
   ATH: $550
-  Standard stop (6%): $470 ❌ (too tight, forces exit on minor correction)
-  Trailing stop (30%): $385 ✅ (lets position breathe, protects +1825% min)
+  Standard stop (6%): $470 [Error] (too tight, forces exit on minor correction)
+  Trailing stop (30%): $385 [OK] (lets position breathe, protects +1825% min)
 ```
 
 ---
 
-## 📐 Architecture
+## Architecture
 
 ### System Flow
 
@@ -50,7 +50,7 @@ CSV Saxo → SaxoImportConnector (extract avg_price)
            ↓
      Stop loss result (Method #6)
            ↓
-  UI: Badge 🏆 + Modal highlight
+  UI: Badge  + Modal highlight
 ```
 
 ### Files Modified/Created
@@ -64,11 +64,11 @@ CSV Saxo → SaxoImportConnector (extract avg_price)
 | Modified | `services/ml/bourse/stop_loss_calculator.py` | Add trailing stop as Method #6 |
 | Modified | `services/ml/bourse/price_targets.py` | Add avg_price parameter |
 | Modified | `services/ml/bourse/recommendations_orchestrator.py` | Pass avg_price to targets |
-| Modified | `static/saxo-dashboard.html` | Add 🏆 Legacy badge + modal highlight |
+| Modified | `static/saxo-dashboard.html` | Add  Legacy badge + modal highlight |
 
 ---
 
-## 🔢 Gain Tiers & Trailing Percentages
+## Gain Tiers & Trailing Percentages
 
 The system uses **5 adaptive tiers** based on unrealized gains:
 
@@ -117,13 +117,13 @@ Result: Protects +1825% minimum
 
 ---
 
-## 🧮 ATH Estimation
+## ATH Estimation
 
 **Why estimate ATH instead of tracking in real-time?**
-- ✅ No database tracking required (performance)
-- ✅ Fast calculation from existing price history
-- ✅ Good enough: 1-year lookback captures recent peaks
-- ✅ Conservative: Uses max(historical_high, current_price)
+- [OK] No database tracking required (performance)
+- [OK] Fast calculation from existing price history
+- [OK] Good enough: 1-year lookback captures recent peaks
+- [OK] Conservative: Uses max(historical_high, current_price)
 
 ### Estimation Algorithm
 
@@ -160,7 +160,7 @@ def _estimate_ath(price_history: pd.DataFrame, current_price: float) -> float:
 
 ---
 
-## 🏗️ Code Structure
+## Code Structure
 
 ### TrailingStopCalculator Class
 
@@ -261,28 +261,28 @@ class StopLossCalculator:
 
 ---
 
-## 🎨 UI Implementation
+## UI Implementation
 
 ### Table Badge (Minimal)
 
-Small 🏆 badge appears next to symbol when trailing stop is active:
+Small  badge appears next to symbol when trailing stop is active:
 
 ```javascript
 // In renderRecommendationsTable()
 const isTrailingStop = rec.price_targets?.stop_loss_analysis?.recommended_method === 'trailing_stop';
 const gainPct = trailingInfo?.gain_pct || 0;
 const legacyBadge = isTrailingStop ?
-    `<span style="..." title="Legacy position +${gainPct}% (trailing stop active)">🏆</span>` : '';
+    `<span style="..." title="Legacy position +${gainPct}% (trailing stop active)"></span>` : '';
 
 // Symbol cell
 <td>${rec.symbol}${legacyBadge}</td>
 ```
 
 **Design Principles:**
-- ✅ Small badge (0.65rem font)
-- ✅ Green background (#10b981)
-- ✅ Tooltip with gain percentage
-- ✅ Only shown when trailing stop is active
+- [OK] Small badge (0.65rem font)
+- [OK] Green background (#10b981)
+- [OK] Tooltip with gain percentage
+- [OK] Only shown when trailing stop is active
 
 ### Modal Highlight
 
@@ -298,14 +298,14 @@ const trailingNote = isTrailingStop ?
 ```
 
 **Design:**
-- ✅ Method labeled as "🏆 Trailing Stop (Legacy)"
-- ✅ Small note showing gain percentage
-- ✅ Green highlight when recommended
-- ✅ Reasoning displayed below table
+- [OK] Method labeled as " Trailing Stop (Legacy)"
+- [OK] Small note showing gain percentage
+- [OK] Green highlight when recommended
+- [OK] Reasoning displayed below table
 
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
 ### Test Cases
 
@@ -403,16 +403,16 @@ assert 'trailing_stop' not in result['stop_loss_levels']
 - [ ] Upload new Saxo CSV with "Prix entrée" column
 - [ ] Verify avg_price is extracted in position data
 - [ ] Navigate to Recommendations tab
-- [ ] Check for 🏆 badge next to legacy positions (if any)
+- [ ] Check for  badge next to legacy positions (if any)
 - [ ] Open recommendation modal for legacy position
-- [ ] Verify "🏆 Trailing Stop (Legacy)" appears in stop loss table
+- [ ] Verify " Trailing Stop (Legacy)" appears in stop loss table
 - [ ] Check reasoning includes ATH and gain percentage
 - [ ] Verify stop loss is wider than Fixed Variable
 - [ ] Test with recent position (no trailing stop should appear)
 
 ---
 
-## 🔄 Extension for Crypto
+## Extension for Crypto
 
 The `TrailingStopCalculator` is **generic** and can be used for crypto with minimal changes:
 
@@ -475,24 +475,24 @@ if result and result['applicable']:
 
 ---
 
-## 📊 Performance Comparison
+## Performance Comparison
 
 | Position Type | Standard Stop (6%) | Trailing Stop (30%) | Improvement |
 |---------------|-------------------|---------------------|-------------|
-| Recent (+10%) | $103.40 ✅ | Not applicable | N/A |
-| Short-term (+35%) | $126.90 | $119.00 ❌ | -6% (tighter) |
-| Mid-term (+75%) | $164.50 | $140.00 ✅ | +18% (wider) |
-| Long-term (+200%) | $282.00 | $225.00 ✅ | +25% (wider) |
-| Legacy (+2400%) | $470.00 ❌ | $385.00 ✅ | +22% (much wider) |
+| Recent (+10%) | $103.40 [OK] | Not applicable | N/A |
+| Short-term (+35%) | $126.90 | $119.00 [Error] | -6% (tighter) |
+| Mid-term (+75%) | $164.50 | $140.00 [OK] | +18% (wider) |
+| Long-term (+200%) | $282.00 | $225.00 [OK] | +25% (wider) |
+| Legacy (+2400%) | $470.00 [Error] | $385.00 [OK] | +22% (much wider) |
 
 **Key Insights:**
-- ✅ Short-term positions (<50% gain): Standard stop is better
-- ✅ Mid-term positions (50-100%): Trailing stop provides breathing room
-- ✅ Legacy positions (>500%): Trailing stop is **essential** to avoid premature exits
+- [OK] Short-term positions (<50% gain): Standard stop is better
+- [OK] Mid-term positions (50-100%): Trailing stop provides breathing room
+- [OK] Legacy positions (>500%): Trailing stop is **essential** to avoid premature exits
 
 ---
 
-## 🚀 Deployment Notes
+## Deployment Notes
 
 ### Prerequisites
 - Python 3.9+
@@ -533,7 +533,7 @@ If issues arise, the system gracefully falls back:
 
 ---
 
-## 📈 Future Enhancements
+## Future Enhancements
 
 ### Phase 2 (Optional)
 - [ ] **Real-time ATH tracking** - Store ATH in DB for exact tracking
@@ -550,7 +550,7 @@ If issues arise, the system gracefully falls back:
 
 ---
 
-## 📚 References
+## References
 
 - [STOP_LOSS_SYSTEM.md](STOP_LOSS_SYSTEM.md) - Main stop loss documentation
 - [STOP_LOSS_BACKTEST_RESULTS.md](STOP_LOSS_BACKTEST_RESULTS.md) - Fixed Variable backtest
@@ -560,9 +560,9 @@ If issues arise, the system gracefully falls back:
 
 ---
 
-## 🧪 Test Suite (October 27, 2025)
+## Test Suite (October 27, 2025)
 
-**Status:** ✅ Production-ready with comprehensive test coverage
+**Status:** [OK] Production-ready with comprehensive test coverage
 
 **Test Files Created:**
 - `tests/unit/test_trailing_stop_calculator.py` - 44 unit tests
@@ -577,18 +577,18 @@ If issues arise, the system gracefully falls back:
 - **HTML Report:** `htmlcov/index.html`
 
 **Key Validations:**
-- ✅ All 5 tiers tested (20%, 50%, 100%, 500%)
-- ✅ Real AAPL position validated (+186% gain)
-- ✅ ATH estimation from price history
-- ✅ Integration with StopLossCalculator (Method #6)
-- ✅ avg_price extraction from Saxo CSV
-- ✅ Multi-user isolation
+- [OK] All 5 tiers tested (20%, 50%, 100%, 500%)
+- [OK] Real AAPL position validated (+186% gain)
+- [OK] ATH estimation from price history
+- [OK] Integration with StopLossCalculator (Method #6)
+- [OK] avg_price extraction from Saxo CSV
+- [OK] Multi-user isolation
 
 **See:** [TRAILING_STOP_TESTS.md](TRAILING_STOP_TESTS.md) for complete test documentation.
 
 ---
 
-## 🤝 Contributors
+## Contributors
 
 - **AI System** - Initial design and implementation (Oct 2025)
 - **User (Jack)** - Requirements and testing

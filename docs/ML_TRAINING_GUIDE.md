@@ -7,26 +7,26 @@ Si ton training du modèle `stock_regime_detector` ne prend que 2-3 secondes, c'
 ### Symptômes
 
 ```
-✅ Training job stock_regime_detector completed in 2.4s
-📊 Class distribution: [0, 200, 493, 0]
-   - Bear Market: 0 samples ❌
+[OK] Training job stock_regime_detector completed in 2.4s
+ Class distribution: [0, 200, 493, 0]
+   - Bear Market: 0 samples [Error]
    - Correction: 200 samples
    - Bull Market: 493 samples
-   - Expansion: 0 samples ❌
+   - Expansion: 0 samples [Error]
 ```
 
 ### Causes
 
-1. **Preset "Deep" = Seulement 3 Ans de Données** 🔴
+1. **Preset "Deep" = Seulement 3 Ans de Données** [Negative]
    - Le preset "Deep Research" (1095 jours) ne couvre que 2023-2026
    - Période 100% haussière → Pas de Bear Market ni Expansion
    - Le modèle ne peut pas détecter ce qu'il n'a jamais vu !
 
-2. **Cache Parquet Corrompu** ⚠️
+2. **Cache Parquet Corrompu** [Warning]
    - Fichiers comme `SPY_1095d.parquet` contiennent seulement 752 jours au lieu de 1095
    - Données tronquées = Training incomplet
 
-3. **Class Imbalance Sévère** 📊
+3. **Class Imbalance Sévère**
    - Training samples: 554 (trop peu pour 4 régimes)
    - Validation Accuracy 95.7% artificielle (le modèle devine toujours "Bull Market")
 
@@ -45,23 +45,23 @@ python scripts/clear_ml_cache.py --benchmarks
 
 **Sortie attendue:**
 ```
-🗑️  Nettoyage du cache des benchmarks...
-   🗑️  Supprimé: SPY_1095d.parquet
-   🗑️  Supprimé: QQQ_1095d.parquet
-   🗑️  Supprimé: IWM_1095d.parquet
-   🗑️  Supprimé: DIA_1095d.parquet
-✅ 4 fichiers benchmark supprimés
-ℹ️  Les benchmarks seront re-téléchargés au prochain training
+  Nettoyage du cache des benchmarks...
+     Supprimé: SPY_1095d.parquet
+     Supprimé: QQQ_1095d.parquet
+     Supprimé: IWM_1095d.parquet
+     Supprimé: DIA_1095d.parquet
+[OK] 4 fichiers benchmark supprimés
+  Les benchmarks seront re-téléchargés au prochain training
 ```
 
 ### Étape 2: Entraîner avec le Preset "Ultra Deep"
 
 1. **Accède à** [admin-dashboard.html](http://localhost:8080/static/admin-dashboard.html) avec l'utilisateur `jack`
-2. **Va dans l'onglet** "🤖 ML Models"
+2. **Va dans l'onglet** " ML Models"
 3. **Trouve** `stock_regime_detector` dans la table
-4. **Clique sur** "⚙️ Configure & Train"
+4. **Clique sur** " Configure & Train"
 5. **Sélectionne** le preset **"Ultra Deep (7300d, 200 epochs)"** dans le dropdown
-6. **Clique sur** "🚀 Start Training"
+6. **Clique sur** " Start Training"
 
 **Paramètres appliqués:**
 - Historical Data: **7300 jours (20 ans)** → Couvre 2006-2026
@@ -74,32 +74,32 @@ python scripts/clear_ml_cache.py --benchmarks
 Les logs backend devraient montrer:
 
 ```
-✅ Downloading SPY (7300d, ~60-90s)...
-✅ Downloading QQQ (7300d, ~60-90s)...
-✅ Downloading IWM (7300d, ~60-90s)...
-✅ Downloading DIA (7300d, ~60-90s)...
-📥 Input data: 4 assets
+[OK] Downloading SPY (7300d, ~60-90s)...
+[OK] Downloading QQQ (7300d, ~60-90s)...
+[OK] Downloading IWM (7300d, ~60-90s)...
+[OK] Downloading DIA (7300d, ~60-90s)...
+ Input data: 4 assets
    SPY: 5200+ days of data (from 2006-XX-XX to 2026-01-30)
    QQQ: 5200+ days of data
    IWM: 5200+ days of data
    DIA: 5200+ days of data
-📊 Class distribution: [850, 1200, 2800, 350]  ✅ Tous les régimes présents !
-   - Bear Market: 850 samples ✅
-   - Correction: 1200 samples ✅
-   - Bull Market: 2800 samples ✅
-   - Expansion: 350 samples ✅
+ Class distribution: [850, 1200, 2800, 350]  [OK] Tous les régimes présents !
+   - Bear Market: 850 samples [OK]
+   - Correction: 1200 samples [OK]
+   - Bull Market: 2800 samples [OK]
+   - Expansion: 350 samples [OK]
 Training samples: 4200, Validation: 1050
 Epoch 0: Train Loss 1.32, Val Loss 0.89, Val Acc 0.65
 ...
 Epoch 200: Train Loss 0.15, Val Loss 0.21, Val Acc 0.91
-✅ Training completed in 1200s (20 min)
+[OK] Training completed in 1200s (20 min)
 ```
 
 **Indicateurs de succès:**
-- ✅ Durée: 15-40 minutes (pas 2-3 secondes !)
-- ✅ Données: 5000+ jours par benchmark
-- ✅ 4 régimes avec samples > 100 chacun
-- ✅ Val Accuracy: 85-92% (réaliste)
+- [OK] Durée: 15-40 minutes (pas 2-3 secondes !)
+- [OK] Données: 5000+ jours par benchmark
+- [OK] 4 régimes avec samples > 100 chacun
+- [OK] Val Accuracy: 85-92% (réaliste)
 
 ---
 
@@ -125,10 +125,10 @@ Si tu veux configurer manuellement:
 | Période | Régime | Événement |
 |---------|--------|-----------|
 | 2006-2007 | Bull Market | Bulle immobilière |
-| **2008-2009** | **Bear Market** ❗ | Crise financière (-50% SPY) |
+| **2008-2009** | **Bear Market** [Alert] | Crise financière (-50% SPY) |
 | 2009-2010 | **Expansion** | Reprise post-crise |
 | 2010-2019 | Bull Market | QE + croissance |
-| **2020 (Mar-Avr)** | **Bear Market** ❗ | COVID crash (-35% SPY) |
+| **2020 (Mar-Avr)** | **Bear Market** [Alert] | COVID crash (-35% SPY) |
 | 2020-2021 | **Expansion** | Rebond violent QE |
 | 2022 | Correction | Hawkish Fed |
 | **2023-2026** | Bull Market | AI boom |
@@ -154,10 +154,10 @@ Avec **20 ans de données**, le modèle apprend:
 **Avec 20 ans (2006-2026):**
 ```json
 {
-  "Bear Market": 0.013,   // ✅ Peut détecter les crashs
-  "Correction": 0.068,    // ✅ Détection précise
-  "Bull Market": 0.903,   // ✅ Confiance calibrée
-  "Expansion": 0.016      // ✅ Détecte les rebounds violents
+  "Bear Market": 0.013,   // [OK] Peut détecter les crashs
+  "Correction": 0.068,    // [OK] Détection précise
+  "Bull Market": 0.903,   // [OK] Confiance calibrée
+  "Expansion": 0.016      // [OK] Détecte les rebounds violents
 }
 ```
 
@@ -222,10 +222,10 @@ Le cache Parquet a un **TTL de 24h**, donc il se rafraîchit automatiquement cha
 
 Pour un training **robuste** du détecteur de régime:
 
-1. ✅ Utilise **"Ultra Deep" (7300 jours = 20 ans)**
-2. ✅ Nettoie le cache si nécessaire (`clear_ml_cache.py --benchmarks`)
-3. ✅ Vérifie que les 4 régimes sont présents dans les logs
-4. ✅ Training doit prendre **15-40 minutes** (pas 2-3 secondes !)
-5. ✅ Val Accuracy finale: **85-92%** (pas 95%+)
+1. [OK] Utilise **"Ultra Deep" (7300 jours = 20 ans)**
+2. [OK] Nettoie le cache si nécessaire (`clear_ml_cache.py --benchmarks`)
+3. [OK] Vérifie que les 4 régimes sont présents dans les logs
+4. [OK] Training doit prendre **15-40 minutes** (pas 2-3 secondes !)
+5. [OK] Val Accuracy finale: **85-92%** (pas 95%+)
 
 **Rappel:** Un modèle entraîné sur 3 ans de Bull Market ne pourra **JAMAIS** détecter un Bear Market, même avec 99% d'accuracy. La diversité temporelle est **critique** !

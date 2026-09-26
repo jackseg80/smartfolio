@@ -3,18 +3,18 @@
 **Date**: 2025-10-02
 **Problem**: OnChain Score varie entre 36 et 42 selon les refreshes
 **Root Cause**: Backend `/api/crypto-toolbox` timeout → cache SWR retourne données stales
-**Status**: ⚠️ **BACKEND ISSUE** - nécessite fix côté serveur Flask (port 8801)
+**Status**: [Warning] **BACKEND ISSUE** - nécessite fix côté serveur Flask (port 8801)
 
 ---
 
-## 🔍 Diagnostic Complet
+## Diagnostic Complet
 
 ### Symptômes Observés
 
 **Frontend (risk-dashboard.html)**:
-- Hard refresh (Ctrl+Shift+R): **OnChain = 36** ❌
-- Soft refresh (F5): **OnChain = 42** ✅
-- Après quelques minutes: **OnChain = 36** ❌
+- Hard refresh (Ctrl+Shift+R): **OnChain = 36** [Error]
+- Soft refresh (F5): **OnChain = 42** [OK]
+- Après quelques minutes: **OnChain = 36** [Error]
 
 **Pattern**: Le score **dégrade progressivement** de 42 → 36 au fil du temps
 
@@ -53,20 +53,20 @@ if (_circuitBreakerState.isOpen) {
 **Test 1: Endpoint `/api/crypto-toolbox/indicators`**
 ```bash
 $ curl http://localhost:8080/api/crypto-toolbox/indicators
-{"detail":"Not Found"}  # ❌ Endpoint n'existe pas
+{"detail":"Not Found"}  # [Error] Endpoint n'existe pas
 ```
 
 **Test 2: Endpoint `/api/crypto-toolbox`** (le bon)
 ```bash
 $ curl -m 5 http://localhost:8080/api/crypto-toolbox
-# ❌ TIMEOUT après 5 secondes!
+# TIMEOUT après 5 secondes!
 ```
 
 **Test 3: API Risk Dashboard**
 ```bash
 $ curl http://localhost:8080/api/risk/dashboard
 {
-  "onchain_indicators": {},  # ❌ Vide!
+  "onchain_indicators": {},  # [Error] Vide!
   "risk_metrics": {
     "risk_score": 37.0
   }
@@ -82,7 +82,7 @@ $ curl http://localhost:8080/api/risk/dashboard
    Frontend → http://localhost:8080/api/crypto-toolbox
             ↓ (proxy)
             → http://localhost:8801/api/crypto-toolbox
-            ❌ TIMEOUT (>5s)
+            [Error] TIMEOUT (>5s)
    ```
 
 2. **Cache SWR Fallback**
@@ -108,9 +108,9 @@ $ curl http://localhost:8080/api/risk/dashboard
 
 ---
 
-## 🔧 Solutions
+## Solutions
 
-### Solution 1: Fix Backend Scraper (RECOMMANDÉ ✅)
+### Solution 1: Fix Backend Scraper (RECOMMANDÉ )
 
 **Problème**: Flask scraper (port 8801) ne répond pas
 
@@ -134,12 +134,12 @@ pip list | grep -E "requests|beautifulsoup|selenium"
 ```
 
 **Causes possibles**:
-- ❌ Scraper pas démarré (process mort)
-- ❌ Rate limiting externe (APIs tierces bloquées)
-- ❌ Timeout scraping (sites web lents)
-- ❌ Erreur Python non catchée (crash silencieux)
+- [Error] Scraper pas démarré (process mort)
+- [Error] Rate limiting externe (APIs tierces bloquées)
+- [Error] Timeout scraping (sites web lents)
+- [Error] Erreur Python non catchée (crash silencieux)
 
-### Solution 2: Augmenter Timeout Frontend (WORKAROUND ⚠️)
+### Solution 2: Augmenter Timeout Frontend (WORKAROUND )
 
 **Si backend est intrinsèquement lent (>5s pour scraper):**
 
@@ -152,14 +152,14 @@ response = await performanceMonitoredFetch(proxyUrl, {
 
 **Inconvénient**: UX dégradée (attente 30s!)
 
-### Solution 3: Fallback Gracieux (PALLIATIF 🩹)
+### Solution 3: Fallback Gracieux (PALLIATIF )
 
 **Accepter que backend est instable, montrer état clairement:**
 
 ```javascript
 // onchain-indicators.js après timeout
 if (cached) {
-  console.warn('⚠️ Backend timeout, using stale cache (age: Xmin)');
+  console.warn(' Backend timeout, using stale cache (age: Xmin)');
   cached._stale = true;
   cached._backend_available = false;
   return cached;
@@ -174,7 +174,7 @@ if (onchainData._stale) {
 }
 ```
 
-### Solution 4: Mock Data (DEV ONLY 🧪)
+### Solution 4: Mock Data (DEV ONLY )
 
 **Pour tests frontend sans backend:**
 
@@ -187,7 +187,7 @@ if (import.meta.env?.DEV || window.location.hostname === 'localhost') {
 
 ---
 
-## 📊 Impact Actuel
+## Impact Actuel
 
 **Scores Calculés**:
 - **OnChain = 36**: Cache **très ancien** (30min+, backend timeout)
@@ -212,7 +212,7 @@ Recommandations incohérentes
 
 ---
 
-## 🧪 Tests de Validation
+## Tests de Validation
 
 ### Test 1: Vérifier Backend Disponibilité
 
@@ -235,9 +235,9 @@ localStorage.clear(); // Vider tout cache
 location.reload();    // Hard refresh
 
 // Observer logs:
-// ✅ "🌐 SWR: Forcing network (cache cleared)"
-// ✅ "Indicators count: 30"
-// ✅ "OnChain Score: 42"
+// [OK] " SWR: Forcing network (cache cleared)"
+// [OK] "Indicators count: 30"
+// [OK] "OnChain Score: 42"
 ```
 
 ### Test 3: Simuler Timeout Backend
@@ -252,7 +252,7 @@ const proxyUrl = 'http://localhost:9999/fake'; // Endpoint inexistant
 
 ---
 
-## 📝 Recommandations Finales
+## Recommandations Finales
 
 ### Court Terme (Aujourd'hui)
 
@@ -288,7 +288,7 @@ const proxyUrl = 'http://localhost:9999/fake'; // Endpoint inexistant
 
 ---
 
-## 🔗 Liens Utiles
+## Liens Utiles
 
 **Code Frontend**:
 - [risk-data-orchestrator.js:145](../static/core/risk-data-orchestrator.js#L145) - Appel fetchAllIndicators
@@ -306,6 +306,6 @@ const proxyUrl = 'http://localhost:9999/fake'; // Endpoint inexistant
 ---
 
 **Auteur**: Claude
-**Status**: ⚠️ BLOQUÉ - Nécessite fix backend Flask scraper
+**Status**: [Warning] BLOQUÉ - Nécessite fix backend Flask scraper
 **Priority**: HIGH (impact: scores incorrects, recommandations fausses)
 

@@ -19,21 +19,21 @@ const response = await fetch(`${apiBaseUrl}/api/alerts/acknowledge/${currentAler
 ```
 
 ### 3. Tests effectués
-- **Test du système de stockage** : ✅ FONCTIONNE
+- **Test du système de stockage** : [OK] FONCTIONNE
   - La méthode `_update_alert_field()` trouve et met à jour correctement les alertes
   - Test avec l'ID `ALR-20250910-053909-2fbf1f4b` : succès
   
-- **Test de l'endpoint acknowledge** : ⚠️ FONCTIONNEL AVEC ERREUR
+- **Test de l'endpoint acknowledge** : [Warning] FONCTIONNEL AVEC ERREUR
   - L'acknowledge fonctionne : l'alerte `ALR-20250910-054014-95600ae9` a été marquée comme acknowledged
   - Mais l'endpoint retourne "Internal server error" (500)
   - L'alerte est quand même correctement modifiée dans `data/alerts.json`
 
 ### 4. État actuel
-- ✅ La fonction `acknowledgeCurrentAlert()` utilise le bon endpoint
-- ✅ Le système de stockage des alertes fonctionne
-- ✅ L'acknowledge fonctionne techniquement (mise à jour des données)
-- ⚠️ L'endpoint API retourne une erreur 500 mais fonctionne quand même
-- ✅ Le serveur FastAPI est démarré et l'AlertEngine initialisé
+- [OK] La fonction `acknowledgeCurrentAlert()` utilise le bon endpoint
+- [OK] Le système de stockage des alertes fonctionne
+- [OK] L'acknowledge fonctionne techniquement (mise à jour des données)
+- [Warning] L'endpoint API retourne une erreur 500 mais fonctionne quand même
+- [OK] Le serveur FastAPI est démarré et l'AlertEngine initialisé
 
 ### 5. Problème restant
 Il y a une erreur 500 dans l'endpoint `/api/alerts/acknowledge/{alert_id}` qui cause :

@@ -2,11 +2,11 @@
 
 > **Version**: 2.0
 > **Date**: Octobre 2025
-> **Statut**: ✅ Production
+> **Statut**: [OK] Production
 >
 > See also: [dynamic-allocation-system.md](dynamic-allocation-system.md) for the frontend dynamic targets workflow.
 
-## 📊 Vue d'Ensemble
+## Vue d'Ensemble
 
 L'Allocation Engine V2 calcule l'allocation optimale du portfolio via une **descente hiérarchique à 3 niveaux** avec floors contextuels, incumbency protection et renormalisation proportionnelle.
 
@@ -14,7 +14,7 @@ L'Allocation Engine V2 calcule l'allocation optimale du portfolio via une **desc
 
 ---
 
-## 🏗️ Architecture Hiérarchique
+## Architecture Hiérarchique
 
 ### Niveau 1 - MACRO
 **Distribution entre grandes classes d'actifs** :
@@ -42,7 +42,7 @@ L'Allocation Engine V2 calcule l'allocation optimale du portfolio via une **desc
 
 ---
 
-## 🎯 Mécanismes Clés
+## Mécanismes Clés
 
 ### 1. Floors Contextuels
 
@@ -191,9 +191,9 @@ TOTAL:       100%
 ```
 
 **Garanties** :
-- ✅ Stables **JAMAIS** affectés par tilts risky
-- ✅ Proportions relatives risky **préservées**
-- ✅ Somme = 100% **toujours**
+- [OK] Stables **JAMAIS** affectés par tilts risky
+- [OK] Proportions relatives risky **préservées**
+- [OK] Somme = 100% **toujours**
 
 ---
 
@@ -228,7 +228,7 @@ Scénario extrême (Stables=60%):
 const targetSum = Object.values(coinAllocation).reduce((sum, val) => sum + val, 0);
 
 if (Math.abs(targetSum - 1.0) > 0.01) {
-  console.warn(`⚠️ target_sum_mismatch: ${(targetSum * 100).toFixed(1)}%`);
+  console.warn(` target_sum_mismatch: ${(targetSum * 100).toFixed(1)}%`);
 }
 ```
 
@@ -248,13 +248,13 @@ if (!totalCheck.isValid) {
   Object.keys(coinAllocation).forEach(key => {
     coinAllocation[key] *= scale;
   });
-  console.warn('⚠️ Allocation normalized to sum to 1.0');
+  console.warn(' Allocation normalized to sum to 1.0');
 }
 ```
 
 ---
 
-## 🔗 Intégration avec Autres Systèmes
+## Intégration avec Autres Systèmes
 
 ### Structure Modulation V2
 
@@ -306,7 +306,7 @@ Le Phase Engine est **transparent** : il modifie les targets AVANT qu'Allocation
 
 ---
 
-## 📊 Métadonnées Résultat
+## Métadonnées Résultat
 
 L'engine retourne un objet avec métadonnées complètes (lignes 175-198):
 
@@ -351,7 +351,7 @@ L'engine retourne un objet avec métadonnées complètes (lignes 175-198):
 
 ---
 
-## 🧪 Exemples Complets
+## Exemples Complets
 
 ### Exemple 1 : Bull Market (Cycle = 92)
 
@@ -444,34 +444,34 @@ L'engine retourne un objet avec métadonnées complètes (lignes 175-198):
 
 ---
 
-## 🔍 Debug & Logs
+## Debug & Logs
 
 ### Logs Console
 
 ```javascript
-console.debug('🏗️ Allocation Engine called:', {
+console.debug(' Allocation Engine called:', {
   enableV2: true,
   contextualScores: true
 });
 
-console.debug('📊 Market phase detection:', {
+console.debug(' Market phase detection:', {
   cycleScore: 92,
   isBullishPhase: true,
   isModeratePhase: false
 });
 
-console.debug('🌍 Macro allocation:', {
+console.debug(' Macro allocation:', {
   BTC: 0.2125,
   ETH: 0.17,
   Stablecoins: 0.15,
   Alts: 0.4675
 });
 
-console.debug('🏭 Sector allocation:', { ... });
+console.debug(' Sector allocation:', { ... });
 
-console.debug('🪙 Coin allocation:', { ... });
+console.debug(' Coin allocation:', { ... });
 
-console.debug('💯 CHECKSUM:', {
+console.debug(' CHECKSUM:', {
   total_allocation: 1.0,
   entries_count: 11,
   valid_entries: 11,
@@ -497,7 +497,7 @@ console.log(u.intelligence?.allocation);
 
 ---
 
-## 📚 Références
+## Références
 
 ### Documentation
 - [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) - Decision Index vs Score de Régime
@@ -520,7 +520,7 @@ console.log(u.intelligence?.allocation);
 
 ---
 
-## ✅ Checklist IA
+## Checklist IA
 
 Avant de modifier l'Allocation Engine V2 :
 
@@ -536,4 +536,4 @@ Avant de modifier l'Allocation Engine V2 :
 
 **Dernière mise à jour** : 2025-10-22
 **Auteur** : Claude Code Analysis
-**Statut** : ✅ Documentation complète et validée
+**Statut** : [OK] Documentation complète et validée

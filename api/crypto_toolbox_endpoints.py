@@ -118,13 +118,13 @@ async def startup_playwright():
         return
 
     try:
-        logger.info("🎭 Initializing Playwright browser...")
+        logger.info(" Initializing Playwright browser...")
         _playwright_instance = await async_playwright().start()
         _browser = await _playwright_instance.chromium.launch(
             headless=True,
             args=["--no-sandbox", "--disable-dev-shm-usage"]
         )
-        logger.info("✅ Playwright browser launched successfully")
+        logger.info(" Playwright browser launched successfully")
 
         # Initialize Redis if available
         if REDIS_AVAILABLE:
@@ -136,12 +136,12 @@ async def startup_playwright():
                     decode_responses=True
                 )
                 await _redis_client.ping()
-                logger.info(f"✅ Redis cache initialized for crypto-toolbox ({redis_url})")
+                logger.info(f" Redis cache initialized for crypto-toolbox ({redis_url})")
             except Exception as e:
-                logger.warning(f"⚠️ Redis cache not available: {e}")
+                logger.warning(f" Redis cache not available: {e}")
                 _redis_client = None
     except Exception as e:
-        logger.error(f"❌ Failed to launch Playwright browser: {e}")
+        logger.error(f" Failed to launch Playwright browser: {e}")
         raise
 
 
@@ -158,19 +158,19 @@ async def shutdown_playwright():
     if _redis_client:
         try:
             await _redis_client.close()
-            logger.info("✅ Redis connection closed")
+            logger.info(" Redis connection closed")
         except Exception as e:
-            logger.warning(f"⚠️ Error closing Redis: {e}")
+            logger.warning(f" Error closing Redis: {e}")
         finally:
             _redis_client = None
 
     if _browser:
         try:
-            logger.info("🛑 Closing Playwright browser...")
+            logger.info(" Closing Playwright browser...")
             await _browser.close()
-            logger.info("✅ Playwright browser closed")
+            logger.info(" Playwright browser closed")
         except Exception as e:
-            logger.warning(f"⚠️ Error closing browser: {e}")
+            logger.warning(f" Error closing browser: {e}")
         finally:
             _browser = None
 
@@ -178,13 +178,13 @@ async def shutdown_playwright():
         try:
             await _playwright_instance.stop()
         except Exception as e:
-            logger.warning(f"⚠️ Error stopping Playwright: {e}")
+            logger.warning(f" Error stopping Playwright: {e}")
         finally:
             _playwright_instance = None
 
     # Log skip only if nothing was initialized
     if not browser_was_active:
-        logger.debug("⏭️ Playwright shutdown skipped (never initialized)")
+        logger.debug(" Playwright shutdown skipped (never initialized)")
 
 
 async def _ensure_browser() -> Browser:
@@ -200,7 +200,7 @@ async def _ensure_browser() -> Browser:
     global _browser
 
     if _browser is None or not _browser.is_connected():
-        logger.warning("⚠️ Browser not connected, re-launching...")
+        logger.warning(" Browser not connected, re-launching...")
         await startup_playwright()
 
     if _browser is None:
@@ -259,7 +259,7 @@ async def _scrape_crypto_toolbox() -> Dict[str, Any]:
     async with _concurrency:
         page: Page = await browser.new_page()
         try:
-            logger.info(f"🌐 Loading {CRYPTO_TOOLBOX_URL}")
+            logger.info(f" Loading {CRYPTO_TOOLBOX_URL}")
             await page.goto(CRYPTO_TOOLBOX_URL, timeout=15000)
             # Wait for table instead of networkidle (faster)
             await page.wait_for_selector("table tbody tr", timeout=10000)
@@ -267,7 +267,7 @@ async def _scrape_crypto_toolbox() -> Dict[str, Any]:
 
             # Parse table rows
             rows = await page.locator("table tbody tr").all()
-            logger.info(f"🔍 Found {len(rows)} table rows")
+            logger.info(f" Found {len(rows)} table rows")
 
             indicators = []
 
@@ -330,23 +330,23 @@ async def _scrape_crypto_toolbox() -> Dict[str, Any]:
                             'raw_threshold': thr_raw
                         })
 
-            logger.info(f"✅ Successfully scraped {len(indicators)} indicators")
+            logger.info(f" Successfully scraped {len(indicators)} indicators")
 
-            # ✅ Validation: Detect invalid data (all zeros)
+            # [OK] Validation: Detect invalid data (all zeros)
             if indicators:
                 non_zero_count = sum(1 for ind in indicators if ind.get("value_numeric", 0) != 0)
                 zero_percentage = 100 - (non_zero_count / len(indicators) * 100)
 
                 # Reject if more than 80% of indicators are zero (likely scraping failure)
                 if zero_percentage > 80:
-                    logger.error(f"❌ Invalid scraping result: {zero_percentage:.1f}% of indicators are zero (likely page load failure)")
+                    logger.error(f" Invalid scraping result: {zero_percentage:.1f}% of indicators are zero (likely page load failure)")
                     raise Exception(f"Scraping validation failed: {zero_percentage:.1f}% indicators at zero - rejecting invalid data")
 
                 # Warning if 50-80% are zero
                 if zero_percentage > 50:
-                    logger.warning(f"⚠️ Suspicious scraping result: {zero_percentage:.1f}% of indicators are zero")
+                    logger.warning(f" Suspicious scraping result: {zero_percentage:.1f}% of indicators are zero")
 
-                logger.debug(f"✅ Data validation passed: {non_zero_count}/{len(indicators)} indicators have non-zero values")
+                logger.debug(f" Data validation passed: {non_zero_count}/{len(indicators)} indicators have non-zero values")
 
             return {
                 "success": True,
@@ -386,7 +386,7 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
                 cached_data = json.loads(cached_json)
                 ttl = await _redis_client.ttl(REDIS_CACHE_KEY)
                 age = CACHE_TTL - ttl if ttl > 0 else 0
-                logger.info(f"💾 Returning Redis cached data (age: {age}s)")
+                logger.info(f" Returning Redis cached data (age: {age}s)")
                 return {
                     **cached_data,
                     "cached": True,
@@ -394,12 +394,12 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
                     "cache_source": "redis"
                 }
         except Exception as e:
-            logger.warning(f"⚠️ Redis cache read error: {e}")
+            logger.warning(f" Redis cache read error: {e}")
 
     # Check memory cache (unless force refresh)
     if not force and _cache["data"] and (now - _cache["timestamp"] < CACHE_TTL):
         age = int(now - _cache["timestamp"])
-        logger.info(f"💾 Returning memory cached data (age: {age}s)")
+        logger.info(f" Returning memory cached data (age: {age}s)")
         return {
             **_cache["data"],
             "cached": True,
@@ -421,11 +421,11 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
             }
 
         # Scrape fresh data
-        logger.info("🔄 Scraping fresh data...")
+        logger.info(" Scraping fresh data...")
         try:
             data = await _scrape_crypto_toolbox()
 
-            # ✅ Validation before caching: Don't cache if data looks invalid
+            # [OK] Validation before caching: Don't cache if data looks invalid
             indicators = data.get("indicators", [])
             if indicators:
                 non_zero_count = sum(1 for ind in indicators if ind.get("value_numeric", 0) != 0)
@@ -433,7 +433,7 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
 
                 # If >80% zeros, keep old cache (don't overwrite good data with bad)
                 if zero_percentage > 80 and _cache["data"]:
-                    logger.error(f"❌ Not caching invalid data ({zero_percentage:.1f}% zeros) - keeping previous cache")
+                    logger.error(f" Not caching invalid data ({zero_percentage:.1f}% zeros) - keeping previous cache")
                     cache_age = int(time.time() - _cache["timestamp"])
                     return {
                         **_cache["data"],
@@ -456,9 +456,9 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
                         CACHE_TTL,
                         json.dumps(data)
                     )
-                    logger.debug("✅ Data cached in Redis")
+                    logger.debug(" Data cached in Redis")
                 except Exception as e:
-                    logger.warning(f"⚠️ Redis cache write error: {e}")
+                    logger.warning(f" Redis cache write error: {e}")
 
             return {
                 **data,
@@ -469,7 +469,7 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
         except Exception as scrape_error:
             # If scraping fails completely, return old cache if available
             if _cache["data"]:
-                logger.error(f"❌ Scraping failed: {scrape_error} - falling back to stale cache")
+                logger.error(f" Scraping failed: {scrape_error} - falling back to stale cache")
                 cache_age = int(time.time() - _cache["timestamp"])
                 return {
                     **_cache["data"],
@@ -504,7 +504,7 @@ async def get_crypto_toolbox_data(force: bool = Query(False, description="Force 
     try:
         return await _get_data(force=force)
     except Exception as e:
-        logger.exception("❌ Crypto-toolbox scraping error")
+        logger.exception(" Crypto-toolbox scraping error")
         raise HTTPException(
             status_code=502,
             detail=f"Upstream scraping error: {str(e)}"
@@ -559,9 +559,9 @@ async def clear_cache() -> dict:
     if _redis_client:
         try:
             await _redis_client.delete(REDIS_CACHE_KEY)
-            logger.info("🧹 Redis cache cleared")
+            logger.info(" Redis cache cleared")
         except Exception as e:
-            logger.warning(f"⚠️ Redis cache clear error: {e}")
+            logger.warning(f" Redis cache clear error: {e}")
 
-    logger.info("🧹 Memory cache cleared")
+    logger.info(" Memory cache cleared")
     return {"message": "Cache cleared successfully (memory + redis)"}

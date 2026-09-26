@@ -57,7 +57,7 @@ const initialStateFactory = () => ({
     multiplier: 1.0
   },
 
-  // ✅ FIX: Scores data (must be persisted to survive F5)
+  //  FIX: Scores data (must be persisted to survive F5)
   scores: {
     onchain: null,
     risk: null,
@@ -155,7 +155,7 @@ const storeActions = {
     const toSave = {
       ccs: state.ccs,
       cycle: state.cycle,
-      scores: state.scores,  // ✅ FIX: Persist scores to survive F5
+      scores: state.scores,  //  FIX: Persist scores to survive F5
       targets: state.targets,
       governance: state.governance,
       timestamp: Date.now(),
@@ -164,7 +164,7 @@ const storeActions = {
 
     try {
       localStorage.setItem(key, JSON.stringify(toSave));
-      console.debug('✅ Store persisted with scores for user:', userId, {
+      console.debug("[OK] Store persisted with scores for user:", userId, {
         onchain: state.scores?.onchain,
         risk: state.scores?.risk,
         blended: state.scores?.blended
@@ -186,24 +186,24 @@ const storeActions = {
 
         // Verify this data belongs to the current user
         if (savedUserId && savedUserId !== userId) {
-          console.debug('⚠️ Persisted state belongs to different user, skipping hydration');
+          console.debug("[Warning] Persisted state belongs to different user, skipping hydration");
           return;
         }
 
-        // ✅ OPTIMIZED TTL: 6h (balance between performance and freshness for crypto)
+        //  OPTIMIZED TTL: 6h (balance between performance and freshness for crypto)
         const TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
         if (Date.now() - timestamp < TTL_MS) {
           setState(prevState => ({
             ...prevState,
             ccs: { ...prevState.ccs, ...ccs },
             cycle: { ...prevState.cycle, ...cycle },
-            scores: { ...prevState.scores, ...scores },  // ✅ FIX: Restore scores after F5
+            scores: { ...prevState.scores, ...scores },  //  FIX: Restore scores after F5
             targets: { ...prevState.targets, ...targets },
             governance: { ...prevState.governance, ...governance },
-            _hydration_timestamp: timestamp  // ✅ FIX: Add timestamp for dashboard.html compatibility
+            _hydration_timestamp: timestamp  //  FIX: Add timestamp for dashboard.html compatibility
           }), 'hydrate');
 
-          console.debug('✅ Store hydrated from localStorage for user:', userId, {
+          console.debug("[OK] Store hydrated from localStorage for user:", userId, {
             onchain: scores?.onchain,
             risk: scores?.risk,
             blended: scores?.blended,
@@ -211,10 +211,10 @@ const storeActions = {
             age_hours: Math.round((Date.now() - timestamp) / (60 * 60 * 1000) * 10) / 10
           });
         } else {
-          console.debug('⚠️ Persisted state too old (>6h), skipping hydration');
+          console.debug("[Warning] Persisted state too old (>6h), skipping hydration");
         }
       } else {
-        console.debug('📭 No persisted state found for user:', userId);
+        console.debug("No persisted state found for user:", userId);
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Failed to hydrate state:', error);
@@ -224,7 +224,7 @@ const storeActions = {
   // Clear store and reload for new user
   clearAndRehydrate() {
     const userId = localStorage.getItem('activeUser');
-    console.debug('🔄 Clearing store and rehydrating for user:', userId);
+    console.debug("Clearing store and rehydrating for user:", userId);
 
     // Reset to initial state
     setState(initialStateFactory(), 'clearAndRehydrate');
@@ -299,7 +299,7 @@ const storeActions = {
 
       // Rate limited: expose unavailability instead of reusing an unlabelled stale snapshot.
       if (response.status === 429) {
-        debugLogger.warn('⚠️ Rate limited (429), ML signals unavailable');
+        debugLogger.warn("[Warning] Rate limited (429), ML signals unavailable");
         this._mlSignalsBackoffDelay = Math.min(this._mlSignalsBackoffDelay * 2, 30000);
         this.update({
           'governance.ml_signals': null,
@@ -431,13 +431,13 @@ const storeActions = {
       if (typeof debugLogger !== 'undefined') {
         const ageDisplay = age === Number.POSITIVE_INFINITY ? '∞' : Math.round(age/1000) + 's';
         const tsDisplay = ts ? new Date(ts).toISOString() : 'null';
-        debugLogger.debug(`🩺 Backend status: ${current} → ${next} (age: ${ageDisplay}, ttl: ${ttlMinutes}min, ts: ${tsDisplay}, raw: ${rawTimestamp})`);
+        debugLogger.debug(`Backend status: ${current} → ${next} (age: ${ageDisplay}, ttl: ${ttlMinutes}min, ts: ${tsDisplay}, raw: ${rawTimestamp})`);
       }
 
       if (next !== current) this.update({ 'ui.apiStatus.backend': next });
     } catch (e) {
       if (typeof debugLogger !== 'undefined') {
-        debugLogger.error('❌ Error in _updateBackendStatusFromGovernance:', e);
+        debugLogger.error("Error in _updateBackendStatusFromGovernance:", e);
       }
     }
   },
@@ -644,9 +644,9 @@ const storeActions = {
         getStabilityDebugInfo
       };
 
-      (window.debugLogger?.debug || console.log)('🎯 Stability Engine intégré au store');
+      (window.debugLogger?.debug || console.log)("Stability Engine intégré au store");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Stability Engine non disponible:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] Stability Engine non disponible:", error.message);
       // Fallback simple sans hystérésis
       this._stabilityEngine = {
         getStableContradiction: (state) => state?.governance?.contradiction_index ?? 0,
@@ -683,7 +683,7 @@ const storeActions = {
   resetStability() {
     if (storeActions._stabilityEngine) {
       storeActions._stabilityEngine.resetStabilityState();
-      (window.debugLogger?.debug || console.log)('🔄 Stability Engine reset');
+      (window.debugLogger?.debug || console.log)("Stability Engine reset");
     }
   },
 
@@ -734,7 +734,7 @@ subscribe(() => {
   persistTimeout = setTimeout(() => storeActions.persist(), 1000);
 });
 
-// ✅ FIX: Auto-hydrate on module load to restore scores after F5
+//  FIX: Auto-hydrate on module load to restore scores after F5
 storeActions.hydrate();
 
 export function selectFreshness(s) {

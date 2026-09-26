@@ -6,9 +6,9 @@
 
 ---
 
-## 🎯 Vue d'Ensemble
+## Vue d'Ensemble
 
-**Phase 1 (Complétée)**: ✅ Migration tests multi-tenant (95% conformité)
+**Phase 1 (Complétée)**: [OK] Migration tests multi-tenant (95% conformité)
 **Phase 2 (En cours)**: Qualité code, tests manquants, formatters, UI/UX
 
 ### Objectifs Mesurables
@@ -19,13 +19,13 @@
 | **Endpoints avec formatters** | 85% | 100% | +15% |
 | **Pages full responsive** | 75% | 100% | +25% |
 | **Fichiers >1000 lignes** | 5 | 2 | -3 |
-| **Code Quality Score** | B+ | A | ⬆️ |
+| **Code Quality Score** | B+ | A | Up |
 
 ---
 
-## 📋 Tâches Prioritaires
+## Tâches Prioritaires
 
-### **🔴 Priorité 1 - Tests Unitaires Critiques** (Effort: 3-4h)
+### ** Priorité 1 - Tests Unitaires Critiques** (Effort: 3-4h)
 
 #### 1.1 Tests pour `services/risk_scoring.py` (CRITIQUE)
 
@@ -106,18 +106,18 @@ class TestSchedulerJobs:
 
 ---
 
-### **🟠 Priorité 2 - Response Formatters (15% restants)** (Effort: 2-3h)
+### ** Priorité 2 - Response Formatters (15% restants)** (Effort: 2-3h)
 
 **Problème**: Inconsistance dans les réponses API
 
-**❌ Pattern actuel (certains endpoints)**:
+**[Error] Pattern actuel (certains endpoints)**:
 ```python
 @router.get("/endpoint")
 async def get_data():
     return {"ok": True, "data": {...}}  # Raw dict
 ```
 
-**✅ Pattern cible (uniformisé)**:
+**[OK] Pattern cible (uniformisé)**:
 ```python
 from api.utils import success_response, error_response
 
@@ -148,7 +148,7 @@ grep -rn "return {" api/*.py | grep -v "success_response\|error_response"
 
 ---
 
-### **🟡 Priorité 3 - Harmonisation Max-Width** (Effort: 1h)
+### ** Priorité 3 - Harmonisation Max-Width** (Effort: 1h)
 
 **Problème**: 4 pages avec `max-width` fixe violant règle "full responsive"
 
@@ -162,13 +162,13 @@ grep -rn "return {" api/*.py | grep -v "success_response\|error_response"
 **Pattern de correction**:
 
 ```css
-/* ❌ Avant */
+/* [Error] Avant */
 .wrap {
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* ✅ Après (selon CLAUDE.md) */
+/* [OK] Après (selon CLAUDE.md) */
 .wrap {
     max-width: none;  /* Ou 95vw pour breathing room sur XL screens */
     margin: 0 auto;
@@ -190,7 +190,7 @@ grep -rn "max-width:.*px" static/*.html | grep -v "none\|95vw"
 
 ---
 
-### **🟢 Priorité 4 - Documentation Inline** (Effort: 1-2h)
+### ** Priorité 4 - Documentation Inline** (Effort: 1-2h)
 
 **Problème**: Code complexe sans docstrings (ex: hystérésis dans risk_scoring.py)
 
@@ -224,7 +224,7 @@ def _apply_memecoin_penalty(memecoins_pct: float) -> float:
 
 ---
 
-## 🗓️ Planning Suggéré
+## Planning Suggéré
 
 ### **Semaine 1 - Tests Critiques** (3-4 jours)
 
@@ -251,7 +251,7 @@ def _apply_memecoin_penalty(memecoins_pct: float) -> float:
 
 ---
 
-## 📊 Métriques de Succès
+## Métriques de Succès
 
 ### Tests Unitaires
 
@@ -291,7 +291,7 @@ grep -rn "max-width:.*px" static/*.html | wc -l
 
 ---
 
-## 🔧 Outils & Commandes
+## Outils & Commandes
 
 ### Lancer Tests avec Coverage
 
@@ -319,7 +319,7 @@ rg "max-width:\s*\d+px" static/ --type html
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 ### Documentation Existante
 
@@ -336,7 +336,7 @@ rg "max-width:\s*\d+px" static/ --type html
 
 ---
 
-## 🚀 Quick Start - Phase 2
+## Quick Start - Phase 2
 
 ```bash
 # 1. Créer premier test unitaire
@@ -364,7 +364,7 @@ pytest tests/unit/test_risk_scoring.py -v
 
 ---
 
-## 🎯 Objectif Final Phase 2
+## Objectif Final Phase 2
 
 | Aspect | Avant | Après |
 |--------|-------|-------|
@@ -372,7 +372,7 @@ pytest tests/unit/test_risk_scoring.py -v
 | **Response formatters** | 85% | **100%** |
 | **Pages responsive** | 75% | **100%** |
 | **Code quality** | B+ | **A** |
-| **Production confidence** | ⚠️ Bon | ✅ **Excellent** |
+| **Production confidence** | [Warning] Bon | [OK] **Excellent** |
 
 ---
 

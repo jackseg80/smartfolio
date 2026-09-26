@@ -99,9 +99,9 @@ Seuil par défaut: `minDelta = 0.1`
 ### Sanitization (`loadHistory`)
 
 Filtrage strict:
-- `typeof entry === 'object'` ✅
-- `typeof entry.date === 'string'` ✅
-- `Number.isFinite(entry.di)` ✅
+- `typeof entry === 'object'` OK
+- `typeof entry.date === 'string'` OK
+- `Number.isFinite(entry.di)` OK
 - Rejet: `NaN`, `Infinity`, `null`, `undefined`
 
 ### Rolling Window
@@ -160,7 +160,7 @@ const suffix = isSimulation ? '_sim' : '_prod';
 if (diHistory.length === 0 && s?.di_history) {
   diHistory = diHistoryModule.migrateLegacy(s.di_history, 30);
   diHistoryModule.saveHistory(historyKey, diHistory);
-  console.debug('✅ Legacy migration done:', { count: diHistory.length });
+  console.debug(' Legacy migration done:', { count: diHistory.length });
 }
 ```
 
@@ -174,14 +174,14 @@ if (diHistory.length === 0 && s?.di_history) {
 ### Suite complète: `static/test-di-history.html`
 
 8 test cases:
-1. ✅ `getTodayCH()` - Format YYYY-MM-DD
-2. ✅ `makeKey()` - Clés scopées user/source/suffix
-3. ✅ `loadHistory()` - Chargement + validation
-4. ✅ `saveHistory()` - Persistence
-5. ✅ `pushIfNeeded()` - Logique conditionnelle (3 cas)
-6. ✅ `migrateLegacy()` - Migration ancien format
-7. ✅ Sanitization - Filtrage NaN/Infinity/invalides
-8. ✅ Max Limit - Rolling window 30 entrées
+1. [OK] `getTodayCH()` - Format YYYY-MM-DD
+2. [OK] `makeKey()` - Clés scopées user/source/suffix
+3. [OK] `loadHistory()` - Chargement + validation
+4. [OK] `saveHistory()` - Persistence
+5. [OK] `pushIfNeeded()` - Logique conditionnelle (3 cas)
+6. [OK] `migrateLegacy()` - Migration ancien format
+7. [OK] Sanitization - Filtrage NaN/Infinity/invalides
+8. [OK] Max Limit - Rolling window 30 entrées
 
 **Exécution:**
 ```bash
@@ -206,7 +206,7 @@ window.__DI_HISTORY__.loadHistory('di_history_demo_cointracking_prod')
 
 ```javascript
 // Ajout réussi
-📊 DI history updated: {
+ DI history updated: {
   count: 12,
   latest: 67,
   context: 'production',
@@ -214,15 +214,15 @@ window.__DI_HISTORY__.loadHistory('di_history_demo_cointracking_prod')
 }
 
 // Migration legacy
-📦 Migration legacy DI history...
-✅ Legacy migration done: { count: 15 }
+ Migration legacy DI history...
+[OK] Legacy migration done: { count: 15 }
 ```
 
 ### Nettoyage
 
 ```javascript
 // Via test-di-history.html
-// Bouton "🗑️ Clear Storage"
+// Bouton " Clear Storage"
 
 // Via console
 Object.keys(localStorage)

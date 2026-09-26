@@ -71,7 +71,7 @@ jobs:
           github.rest.issues.create({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            title: '🔒 Weekly Security Scan - Vulnerabilities Detected',
+            title: ' Weekly Security Scan - Vulnerabilities Detected',
             body: `Weekly security scan has detected potential vulnerabilities.\n\nPlease review the artifacts from workflow run #${{ github.run_number }}.\n\n**Action Required:**\n- Review safety-report.json\n- Review pip-audit-report.json\n- Review bandit-report.json\n\n[View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`,
             labels: ['security', 'automated']
           })

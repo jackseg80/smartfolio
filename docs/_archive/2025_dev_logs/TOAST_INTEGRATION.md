@@ -5,9 +5,9 @@
 
 ---
 
-## ✅ Ce qui a été fait
+## Ce qui a été fait
 
-### 1. debug-logger.js modifié ✅
+### 1. debug-logger.js modifié
 
 **Ajouts**:
 - Import dynamique du système Toast
@@ -22,12 +22,12 @@
 debugLogger.error('API failed'); // Console seulement
 
 // Après
-debugLogger.error('API failed'); // Console + Toast visuel ⚠️
+debugLogger.error('API failed'); // Console + Toast visuel
 ```
 
 ---
 
-## 🔧 Intégration dans les Pages
+## Intégration dans les Pages
 
 ### Option 1: Script tag global (Recommandé)
 
@@ -74,7 +74,7 @@ async _loadToast() {
 
 ---
 
-## 📋 Pages à Mettre à Jour
+## Pages à Mettre à Jour
 
 ### Liste des pages HTML
 
@@ -98,7 +98,7 @@ async _loadToast() {
 
 ---
 
-## 🚀 Script de Migration Automatique
+## Script de Migration Automatique
 
 ```python
 import os
@@ -116,7 +116,7 @@ for file in html_files:
 
     # Skip si toast.js déjà présent
     if 'toast.js' in content:
-        print(f"⏭️  {file.name} - Already has toast.js")
+        print(f"  {file.name} - Already has toast.js")
         continue
 
     # Insérer après debug-logger.js
@@ -127,11 +127,11 @@ for file in html_files:
         )
         file.write_text(new_content, encoding='utf-8')
         updated += 1
-        print(f"✅ {file.name} - Toast script added")
+        print(f"[OK] {file.name} - Toast script added")
     else:
-        print(f"⚠️  {file.name} - No debug-logger.js found")
+        print(f"  {file.name} - No debug-logger.js found")
 
-print(f"\n✅ {updated} files updated")
+print(f"\n[OK] {updated} files updated")
 ```
 
 **Usage**:
@@ -141,7 +141,7 @@ python migrate_toast.py
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Test 1: Vérifier Toast charge correctement
 
@@ -156,11 +156,11 @@ Dans la console navigateur:
 ```javascript
 // Test error
 debugLogger.error('Test error message');
-// ✅ Doit afficher: console + toast rouge
+// [OK] Doit afficher: console + toast rouge
 
 // Test warning
 debugLogger.warn('Test warning message');
-// ✅ Doit afficher: console + toast orange
+// [OK] Doit afficher: console + toast orange
 ```
 
 ### Test 3: Erreurs API réelles
@@ -168,11 +168,11 @@ debugLogger.warn('Test warning message');
 1. Arrêter le backend
 2. Recharger une page (ex: risk-dashboard)
 3. Observer les erreurs API
-4. ✅ Toasts doivent apparaître en bas à droite
+4. [OK] Toasts doivent apparaître en bas à droite
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Désactiver les toasts temporairement
 
@@ -193,7 +193,7 @@ La préférence est sauvegardée dans `localStorage`:
 
 ---
 
-## 🎨 Personnalisation
+## Personnalisation
 
 ### Durées d'affichage
 
@@ -225,7 +225,7 @@ const shortMessage = cleanMessage.length > 150
 
 ---
 
-## 🐛 Dépannage
+## Dépannage
 
 ### Problème: Toasts n'apparaissent pas
 
@@ -241,7 +241,7 @@ const shortMessage = cleanMessage.length > 150
 
 ### Problème: Import échoue
 
-Console: `ℹ️ Toast system not available, using console only`
+Console: ` Toast system not available, using console only`
 
 **Cause**: Import dynamique échoué
 
@@ -279,7 +279,7 @@ _showToast(type, message) {
 
 ---
 
-## 📊 Statistiques d'Utilisation
+## Statistiques d'Utilisation
 
 ### Appels debugLogger dans le projet
 
@@ -296,22 +296,22 @@ grep -r "debugLogger.warn" static/ | wc -l    # Nombre de warnings
 
 ---
 
-## ✨ Bénéfices
+## Bénéfices
 
 ### Avant
-- ❌ Erreurs visibles seulement dans console (F12)
-- ❌ Utilisateurs non-tech ne voient pas les problèmes
-- ❌ Debugging difficile sans console ouverte
+- [Error] Erreurs visibles seulement dans console (F12)
+- [Error] Utilisateurs non-tech ne voient pas les problèmes
+- [Error] Debugging difficile sans console ouverte
 
 ### Après
-- ✅ Erreurs visibles visuellement (toasts)
-- ✅ UX améliorée (utilisateur informé)
-- ✅ Feedback immédiat sur problèmes API
-- ✅ Logs console toujours disponibles (double affichage)
+- [OK] Erreurs visibles visuellement (toasts)
+- [OK] UX améliorée (utilisateur informé)
+- [OK] Feedback immédiat sur problèmes API
+- [OK] Logs console toujours disponibles (double affichage)
 
 ---
 
-## 🔄 Prochaines Étapes
+## Prochaines Étapes
 
 1. **Exécuter script de migration** pour ajouter toast.js dans toutes les pages
 2. **Tester sur 3-4 pages** principales

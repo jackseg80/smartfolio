@@ -7,7 +7,7 @@
 
 `static/core/unified-insights-v2.js` est le module **production** de calcul du Decision Index (DI) et de gestion des poids adaptatifs. Il est utilisé par Analytics Unified et synchronisé avec le Simulateur (`simulation-engine.js`).
 
-> ⚠️ **Note Importante**: Le Decision Index (DI) est **différent** du "Score Décisionnel" (formule canonique 50/30/20).
+> [Warning] **Note Importante**: Le Decision Index (DI) est **différent** du "Score Décisionnel" (formule canonique 50/30/20).
 > Voir [DECISION_INDEX_V2.md](DECISION_INDEX_V2.md) pour comprendre le système dual et les overrides.
 
 ---
@@ -21,9 +21,9 @@
 DI = wCycle × scoreCycle + wOnchain × scoreOnchain + wRisk × scoreRisk
 ```
 
-**⚠️ IMPORTANT — Sémantique Risk** :
+**[Warning] IMPORTANT — Sémantique Risk** :
 
-> **⚠️ Règle Canonique — Sémantique Risk**
+> **[Warning] Règle Canonique — Sémantique Risk**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
@@ -34,11 +34,11 @@ DI = wCycle × scoreCycle + wOnchain × scoreOnchain + wRisk × scoreRisk
 > DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
 > ```
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
 >
 > **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
 >
-> 📖 Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+>  Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 
 ### 2. Poids Adaptatifs
 
@@ -75,7 +75,7 @@ Ceci est **intentionnel** : les poids adaptatifs forment la base, le scaling par
 
 ## Propagation des Poids à l'UI
 
-**⚠️ CRITIQUE — Ne pas transformer les poids** :
+**[Warning] CRITIQUE — Ne pas transformer les poids** :
 - Les poids post-adaptatifs (wCycle, wOnchain, wRisk) doivent être **propagés tels quels** à l'UI
 - **Erreur fréquente** : Inverser Risk avec `100 - scoreRisk` ou `1 - wRisk`
 - **Correct** : Passer `{ cycle: wCycle, onchain: wOnchain, risk: wRisk }` directement
@@ -116,11 +116,11 @@ const contribRisk = (wRisk * scoreRisk) / total; // PAS de 100 - scoreRisk
 ## Check-list QA
 
 **Avant déploiement, vérifier** :
-1. ✅ Aucune occurrence de `100 - risk` ou `100 - scoreRisk` dans le code
-2. ✅ `calculateAdaptiveWeights` retourne poids normalisés (Σ = 1.0)
-3. ✅ Poids post-adaptatifs propagés tels quels à l'UI (pas de transformation)
-4. ✅ Contributions relatives calculées avec `(w × s) / Σ(w × s)` sans inversion Risk
-5. ✅ Écart DI Analytics vs Simulateur < 0.1 avec mêmes inputs
+1. [OK] Aucune occurrence de `100 - risk` ou `100 - scoreRisk` dans le code
+2. [OK] `calculateAdaptiveWeights` retourne poids normalisés (Σ = 1.0)
+3. [OK] Poids post-adaptatifs propagés tels quels à l'UI (pas de transformation)
+4. [OK] Contributions relatives calculées avec `(w × s) / Σ(w × s)` sans inversion Risk
+5. [OK] Écart DI Analytics vs Simulateur < 0.1 avec mêmes inputs
 
 **Validation** :
 ```javascript

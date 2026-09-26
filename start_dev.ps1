@@ -52,7 +52,7 @@ param(
 
 # Check virtual environment exists
 if (-not (Test-Path ".venv\Scripts\python.exe")) {
-    Write-Host "`n❌ Virtual environment not found!" -ForegroundColor Red
+    Write-Host "`n[Error] Virtual environment not found!" -ForegroundColor Red
     Write-Host "   Please create it first:" -ForegroundColor Yellow
     Write-Host "   1. python -m venv .venv" -ForegroundColor Gray
     Write-Host "   2. .venv\Scripts\Activate.ps1" -ForegroundColor Gray
@@ -61,14 +61,14 @@ if (-not (Test-Path ".venv\Scripts\python.exe")) {
 }
 
 # Check and start Redis
-Write-Host "🔍 Checking Redis..." -ForegroundColor Cyan
+Write-Host " Checking Redis..." -ForegroundColor Cyan
 
 # Try localhost first
 $redisRunning = Test-NetConnection -ComputerName localhost -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue
 $redisHost = "localhost"
 
 if ($redisRunning) {
-    Write-Host "✅ Redis is running on localhost" -ForegroundColor Green
+    Write-Host "[OK] Redis is running on localhost" -ForegroundColor Green
     $env:REDIS_URL = "redis://localhost:6379/0"
     Write-Host "   Using REDIS_URL=$env:REDIS_URL" -ForegroundColor Gray
 }
@@ -95,29 +95,29 @@ else {
                 $redisRunning = Test-NetConnection -ComputerName $wslIP -Port 6379 -InformationLevel Quiet -WarningAction SilentlyContinue
 
                 if ($redisRunning) {
-                    Write-Host "✅ Redis started on WSL2" -ForegroundColor Green
+                    Write-Host "[OK] Redis started on WSL2" -ForegroundColor Green
                     $redisHost = $wslIP
                     # Set REDIS_URL to WSL2 IP (accessible from Windows)
                     $env:REDIS_URL = "redis://${wslIP}:6379/0"
                     Write-Host "   Using REDIS_URL=$env:REDIS_URL (WSL2 IP)" -ForegroundColor Gray
                 }
                 else {
-                    Write-Host "⚠️  Redis not accessible - server will run in degraded mode" -ForegroundColor Yellow
+                    Write-Host "[Warning]  Redis not accessible - server will run in degraded mode" -ForegroundColor Yellow
                 }
             }
         }
         else {
-            Write-Host "⚠️  WSL2 not available - Redis not started" -ForegroundColor Yellow
+            Write-Host "[Warning]  WSL2 not available - Redis not started" -ForegroundColor Yellow
         }
     }
     catch {
-        Write-Host "⚠️  Could not start Redis - continuing without it" -ForegroundColor Yellow
+        Write-Host "[Warning]  Could not start Redis - continuing without it" -ForegroundColor Yellow
     }
 }
 
 # Validate Playwright installation if using new mode
 if ($CryptoToolboxMode -eq 1) {
-    Write-Host "🎭 Checking Playwright installation..." -ForegroundColor Cyan
+    Write-Host " Checking Playwright installation..." -ForegroundColor Cyan
 
     $playwrightCheck = & .venv\Scripts\python.exe -c "try:
     from playwright.async_api import async_playwright
@@ -126,12 +126,12 @@ except ImportError:
     print('MISSING')" 2>$null
 
     if ($playwrightCheck -ne "OK") {
-        Write-Host "❌ Playwright not installed!" -ForegroundColor Red
+        Write-Host "[Error] Playwright not installed!" -ForegroundColor Red
         Write-Host "   Install with: pip install playwright && playwright install chromium" -ForegroundColor Yellow
         exit 1
     }
 
-    Write-Host "✅ Playwright ready" -ForegroundColor Green
+    Write-Host "[OK] Playwright ready" -ForegroundColor Green
 }
 
 # Determine reload mode
@@ -139,21 +139,21 @@ $UseReload = $Reload -and -not $EnableScheduler -and ($CryptoToolboxMode -ne 1)
 
 # Display configuration
 Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Blue
-Write-Host "🚀 Starting Crypto Rebal Development Server" -ForegroundColor Cyan
+Write-Host " Starting Crypto Rebal Development Server" -ForegroundColor Cyan
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Blue
 
 # Crypto-Toolbox mode
 if ($CryptoToolboxMode -eq 1) {
-    Write-Host "📦 Crypto-Toolbox: FastAPI native (Playwright)" -ForegroundColor Green
+    Write-Host " Crypto-Toolbox: FastAPI native (Playwright)" -ForegroundColor Green
 }
 else {
-    Write-Host "📦 Crypto-Toolbox: Flask proxy (legacy)" -ForegroundColor Yellow
-    Write-Host "   ⚠️  Make sure Flask server is running on port 8001" -ForegroundColor Yellow
+    Write-Host " Crypto-Toolbox: Flask proxy (legacy)" -ForegroundColor Yellow
+    Write-Host "   [Warning]  Make sure Flask server is running on port 8001" -ForegroundColor Yellow
 }
 
 # Scheduler mode
 if ($EnableScheduler) {
-    Write-Host "⏰ Task Scheduler: ENABLED" -ForegroundColor Green
+    Write-Host " Task Scheduler: ENABLED" -ForegroundColor Green
     Write-Host "   • P&L snapshots (intraday 15min, EOD 23:59)" -ForegroundColor Gray
     Write-Host "   • OHLCV updates (daily 03:10, hourly :05)" -ForegroundColor Gray
     Write-Host "   • Staleness monitor (hourly :15)" -ForegroundColor Gray
@@ -161,16 +161,16 @@ if ($EnableScheduler) {
     Write-Host "   • Crypto-Toolbox indicators (2x daily: 08:00, 20:00)" -ForegroundColor Gray
 }
 else {
-    Write-Host "⏰ Task Scheduler: DISABLED" -ForegroundColor Yellow
+    Write-Host " Task Scheduler: DISABLED" -ForegroundColor Yellow
     Write-Host "   Run manual scripts for P&L/OHLCV updates" -ForegroundColor Gray
 }
 
 # Reload mode
 if ($UseReload) {
-    Write-Host "🔄 Hot Reload: ENABLED" -ForegroundColor Green
+    Write-Host " Hot Reload: ENABLED" -ForegroundColor Green
 }
 else {
-    Write-Host "🔄 Hot Reload: DISABLED" -ForegroundColor Yellow
+    Write-Host " Hot Reload: DISABLED" -ForegroundColor Yellow
     if ($EnableScheduler) {
         Write-Host "   (auto-disabled: prevents double execution with scheduler)" -ForegroundColor Gray
     }
@@ -179,10 +179,10 @@ else {
     }
 }
 
-Write-Host "`n🌐 Server: http://localhost:$Port" -ForegroundColor Cyan
-Write-Host "📚 API Docs: http://localhost:$Port/docs" -ForegroundColor Cyan
-Write-Host "🩺 Scheduler Health: http://localhost:$Port/api/scheduler/health" -ForegroundColor Cyan
-Write-Host "👷 Workers: 1 (single worker mode for Playwright compatibility)" -ForegroundColor Cyan
+Write-Host "`n Server: http://localhost:$Port" -ForegroundColor Cyan
+Write-Host " API Docs: http://localhost:$Port/docs" -ForegroundColor Cyan
+Write-Host " Scheduler Health: http://localhost:$Port/api/scheduler/health" -ForegroundColor Cyan
+Write-Host " Workers: 1 (single worker mode for Playwright compatibility)" -ForegroundColor Cyan
 Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Blue
 
 # Set environment variables
@@ -190,14 +190,14 @@ $env:CRYPTO_TOOLBOX_NEW = $CryptoToolboxMode
 
 if ($EnableScheduler) {
     $env:RUN_SCHEDULER = "1"
-    Write-Host "✅ Environment: RUN_SCHEDULER=1" -ForegroundColor Green
+    Write-Host "[OK] Environment: RUN_SCHEDULER=1" -ForegroundColor Green
 }
 else {
     $env:RUN_SCHEDULER = "0"
 }
 
 # Start server
-Write-Host "🔌 Checking if port $Port is available..." -ForegroundColor Cyan
+Write-Host " Checking if port $Port is available..." -ForegroundColor Cyan
 Start-Sleep -Milliseconds 200 # Brief pause to allow ports to be released
 
 $portInUse = $null
@@ -209,14 +209,14 @@ catch {
 }
 
 if ($portInUse) {
-    Write-Host "`n❌ Port $Port is already in use by another process!" -ForegroundColor Red
+    Write-Host "`n[Error] Port $Port is already in use by another process!" -ForegroundColor Red
     Write-Host "   Please stop the existing process or use a different port." -ForegroundColor Yellow
     Write-Host "   To find the process, run: Get-Process -Id (Get-NetTCPConnection -LocalPort $Port).OwningProcess" -ForegroundColor Gray
     Write-Host "   Example: .\start_dev.ps1 -Port 8001`n" -ForegroundColor Gray
     exit 1
 }
 
-Write-Host "🚀 Starting Uvicorn...`n" -ForegroundColor Cyan
+Write-Host " Starting Uvicorn...`n" -ForegroundColor Cyan
 
 if ($UseReload) {
     # For --reload, uvicorn uses single worker (--workers flag is incompatible)

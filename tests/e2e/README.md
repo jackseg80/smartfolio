@@ -4,7 +4,7 @@ Tests end-to-end automatisés pour valider les flux complets utilisateur.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Lancer Tous les Tests
 
@@ -43,7 +43,7 @@ npm run test:e2e:headed
 
 ---
 
-## 📊 Tests Disponibles
+## Tests Disponibles
 
 ### `risk-dashboard.spec.js` (21 tests)
 
@@ -127,7 +127,7 @@ npx playwright test simulator.spec.js --headed
 
 ---
 
-## 🛠️ Configuration
+## Configuration
 
 **Fichier** : `playwright.config.js` (racine du projet)
 
@@ -145,7 +145,7 @@ npx playwright test simulator.spec.js --headed
 
 ---
 
-## 📈 Voir les Résultats
+## Voir les Résultats
 
 ### Rapport HTML
 
@@ -174,7 +174,7 @@ npx playwright show-trace tests/e2e-report/traces/<test-name>.zip
 
 ---
 
-## 🐛 Debugging
+## Debugging
 
 ### Test Spécifique en Debug
 
@@ -198,7 +198,7 @@ En cas d'échec, Playwright sauvegarde automatiquement :
 
 ---
 
-## ✅ Checklist Avant Commit
+## Checklist Avant Commit
 
 1. **Lancer tests** :
    ```bash
@@ -216,7 +216,7 @@ En cas d'échec, Playwright sauvegarde automatiquement :
 
 ---
 
-## 📖 Documentation Complète
+## Documentation Complète
 
 Voir [`docs/E2E_TESTING_GUIDE.md`](../../docs/E2E_TESTING_GUIDE.md) pour :
 - Bonnes pratiques
@@ -230,5 +230,5 @@ Voir [`docs/E2E_TESTING_GUIDE.md`](../../docs/E2E_TESTING_GUIDE.md) pour :
 **Total Tests** : 68 tests E2E
 **Framework** : Playwright v1.56
 **Navigateur** : Chromium
-**Status** : ✅ Prêt à l'emploi
+**Status** : [OK] Prêt à l'emploi
 

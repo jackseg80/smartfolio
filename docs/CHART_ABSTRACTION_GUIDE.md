@@ -7,11 +7,11 @@
 
 Le fichier `static/core/chart-config.js` fournit une abstraction unifiée pour Chart.js avec :
 
-- ✅ **Configuration par défaut** : Couleurs, thème, tooltips cohérents
-- ✅ **Theme-aware** : Support automatique dark/light mode
-- ✅ **Palette de couleurs** : Couleurs cohérentes pour séries multiples
-- ✅ **Helper simplifié** : Moins de code répétitif
-- ✅ **Presets** : Configurations prêtes pour cas d'usage communs
+- [OK] **Configuration par défaut** : Couleurs, thème, tooltips cohérents
+- [OK] **Theme-aware** : Support automatique dark/light mode
+- [OK] **Palette de couleurs** : Couleurs cohérentes pour séries multiples
+- [OK] **Helper simplifié** : Moins de code répétitif
+- [OK] **Presets** : Configurations prêtes pour cas d'usage communs
 
 ---
 
@@ -358,22 +358,22 @@ Pour chaque fichier utilisant Chart.js :
 ### Avant Abstraction
 
 **Problèmes** :
-- ❌ Code répétitif (30-50 lignes de config par chart)
-- ❌ Couleurs hardcodées (`#3b82f6`, `rgba(59, 130, 246, 0.2)`)
-- ❌ Pas de support dark/light mode automatique
-- ❌ Incohérence visuelle entre charts
-- ❌ Difficile à maintenir (changement = modifier tous les charts)
+- [Error] Code répétitif (30-50 lignes de config par chart)
+- [Error] Couleurs hardcodées (`#3b82f6`, `rgba(59, 130, 246, 0.2)`)
+- [Error] Pas de support dark/light mode automatique
+- [Error] Incohérence visuelle entre charts
+- [Error] Difficile à maintenir (changement = modifier tous les charts)
 
 ### Après Abstraction
 
 **Avantages** :
-- ✅ Code concis (-60% de lignes)
-- ✅ Couleurs theme-aware (variables CSS)
-- ✅ Support dark/light mode automatique
-- ✅ Cohérence visuelle garantie
-- ✅ Maintenance centralisée (modifier 1 fichier = tous les charts)
-- ✅ Presets pour cas d'usage communs
-- ✅ Palette de couleurs unifiée
+- [OK] Code concis (-60% de lignes)
+- [OK] Couleurs theme-aware (variables CSS)
+- [OK] Support dark/light mode automatique
+- [OK] Cohérence visuelle garantie
+- [OK] Maintenance centralisée (modifier 1 fichier = tous les charts)
+- [OK] Presets pour cas d'usage communs
+- [OK] Palette de couleurs unifiée
 
 ---
 

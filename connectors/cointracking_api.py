@@ -412,7 +412,7 @@ def _extract_rows_from_groupedBalance(payload: Dict[str, Any]) -> List[Dict[str,
         except (ValueError, TypeError):
             return 0.0
 
-    # 👉 lire au bon niveau
+    # lire au bon niveau
     root = payload.get("result") or payload
     details = root.get("details")
     if not isinstance(details, dict):

@@ -21,13 +21,13 @@ ERR_BLOCKED_BY_CLIENT: http://localhost:8080/balances/current
 **Avant :**
 ```yaml
 ports:
-  - "8000:8000"  # ❌ Incohérent avec Dockerfile (8080)
+  - "8000:8000"  # [Error] Incohérent avec Dockerfile (8080)
 ```
 
 **Après :**
 ```yaml
 ports:
-  - "8080:8080"  # ✅ Aligné avec Dockerfile.prod
+  - "8080:8080"  # [OK] Aligné avec Dockerfile.prod
 environment:
   - API_BASE_URL=${API_BASE_URL:-http://0.0.0.0:8080}
 ```
@@ -104,8 +104,8 @@ Le script deploy.sh :
 
 **Dans le navigateur (DevTools Console) :**
 ```
-✅ API_BASE_URL loaded from backend: http://192.168.1.200:8080
-🚀 Balance data loaded from cache (user: demo, file: latest)
+[OK] API_BASE_URL loaded from backend: http://192.168.1.200:8080
+ Balance data loaded from cache (user: demo, file: latest)
 ```
 
 **Si les erreurs persistent :**
@@ -155,11 +155,11 @@ curl http://192.168.1.200:8080/api/config/api-base-url
 
 ## Fichiers Modifiés
 
-1. ✅ `docker-compose.yml` - Port 8000→8080 (dev)
-2. ✅ `docker-compose.prod.yml` - Déjà correct (8080)
-3. ✅ `.env.production` - Nouveau fichier avec config production
-4. ✅ `static/global-config.js` - Auto-load API_BASE_URL depuis backend
-5. ✅ `DOCKER_FIX_NOTES.md` - Ce document
+1. [OK] `docker-compose.yml` - Port 8000→8080 (dev)
+2. [OK] `docker-compose.prod.yml` - Déjà correct (8080)
+3. [OK] `.env.production` - Nouveau fichier avec config production
+4. [OK] `static/global-config.js` - Auto-load API_BASE_URL depuis backend
+5. [OK] `DOCKER_FIX_NOTES.md` - Ce document
 
 ## Notes Importantes
 
@@ -264,5 +264,5 @@ En cas de problème persistant :
 ---
 
 **Date :** November 27, 2025
-**Status :** ✅ Résolu
+**Status :** [OK] Résolu
 **Impact :** Production Docker Linux déployé avec succès

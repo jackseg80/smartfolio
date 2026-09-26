@@ -65,7 +65,7 @@ ErrorCode.TIMEOUT_ERROR
 
 ## Patterns Recommandés
 
-### ✅ Pattern 1: Catches Spécifiques en Cascade
+### Pattern 1: Catches Spécifiques en Cascade
 
 **Recommandé** : Catcher les exceptions connues d'abord, `Exception` en dernier recours uniquement.
 
@@ -92,7 +92,7 @@ def fetch_portfolio_data(user_id: str):
         raise converted
 ```
 
-**✅ Pourquoi c'est acceptable** :
+**[OK] Pourquoi c'est acceptable** :
 - Exceptions spécifiques catchées en premier
 - `Exception` comme safety net de dernier recours
 - Logging avec stacktrace complet (`logger.exception`)
@@ -100,7 +100,7 @@ def fetch_portfolio_data(user_id: str):
 
 ---
 
-### ✅ Pattern 2: Fallback Sécurisé avec Logging
+### Pattern 2: Fallback Sécurisé avec Logging
 
 **Recommandé** : Si vous devez retourner un fallback sûr en cas d'erreur inattendue.
 
@@ -125,7 +125,7 @@ def derive_execution_policy(signals: dict) -> Policy:
         return Policy(mode="Freeze", cap_daily=0.08, notes=f"Error fallback: {e}")
 ```
 
-**✅ Pourquoi c'est acceptable** :
+**[OK] Pourquoi c'est acceptable** :
 - Système critique nécessitant un fallback sûr en toutes circonstances
 - Logging avec stacktrace (`logger.exception`)
 - Fallback explicitement marqué dans les notes
@@ -133,7 +133,7 @@ def derive_execution_policy(signals: dict) -> Policy:
 
 ---
 
-### ✅ Pattern 3: Helper de Conversion
+### Pattern 3: Helper de Conversion
 
 **Recommandé** : Utiliser `convert_standard_exception()` pour auto-conversion.
 
@@ -164,12 +164,12 @@ Convertit automatiquement :
 
 ## Patterns à Éviter
 
-### ❌ Anti-Pattern 1: Bare `except Exception` Sans Catches Spécifiques
+### Anti-Pattern 1: Bare `except Exception` Sans Catches Spécifiques
 
 **Problème** : Masque toutes les erreurs sans distinction.
 
 ```python
-# ❌ À ÉVITER
+# À ÉVITER
 def process_data(data):
     try:
         return complex_calculation(data)
@@ -178,10 +178,10 @@ def process_data(data):
         return None
 ```
 
-**✅ Correction** :
+**[OK] Correction** :
 
 ```python
-# ✅ CORRIGÉ
+# CORRIGÉ
 def process_data(data):
     try:
         return complex_calculation(data)
@@ -200,12 +200,12 @@ def process_data(data):
 
 ---
 
-### ❌ Anti-Pattern 2: Silent Failure
+### Anti-Pattern 2: Silent Failure
 
 **Problème** : Catch sans logging ni action.
 
 ```python
-# ❌ À ÉVITER
+# À ÉVITER
 def load_config():
     try:
         with open("config.json") as f:
@@ -214,10 +214,10 @@ def load_config():
         return {}  # Silent failure - aucun log !
 ```
 
-**✅ Correction** :
+**[OK] Correction** :
 
 ```python
-# ✅ CORRIGÉ
+# CORRIGÉ
 def load_config():
     try:
         with open("config.json") as f:
@@ -235,12 +235,12 @@ def load_config():
 
 ---
 
-### ❌ Anti-Pattern 3: Masquer les Stack Traces
+### Anti-Pattern 3: Masquer les Stack Traces
 
 **Problème** : `logger.error()` au lieu de `logger.exception()` pour erreurs inattendues.
 
 ```python
-# ❌ À ÉVITER
+# À ÉVITER
 def critical_operation():
     try:
         do_something_complex()
@@ -249,10 +249,10 @@ def critical_operation():
         raise
 ```
 
-**✅ Correction** :
+**[OK] Correction** :
 
 ```python
-# ✅ CORRIGÉ
+# CORRIGÉ
 def critical_operation():
     try:
         do_something_complex()
@@ -274,7 +274,7 @@ def critical_operation():
 
 ### Quand Garder `except Exception`
 
-✅ **Acceptable** dans ces cas :
+[OK] **Acceptable** dans ces cas :
 
 1. **Après des catches spécifiques** (catch-all de dernier recours)
 2. **Systèmes critiques** nécessitant un fallback sûr (Governance, AlertEngine)
@@ -284,7 +284,7 @@ def critical_operation():
 
 ### Quand Remplacer `except Exception`
 
-🔄 **À refactorer** si :
+ **À refactorer** si :
 
 1. **Seul catch** dans le bloc try/except
 2. **Pas de logging** ou logging incomplet
@@ -347,10 +347,10 @@ async def fetch_exchange_rate(base: str, quote: str) -> float:
 ```
 
 **Points forts** :
-- ✅ Catches spécifiques pour tous les cas prévisibles
-- ✅ Exceptions personnalisées avec contexte
-- ✅ `Exception` en dernier recours seulement
-- ✅ Conversion automatique avec `convert_standard_exception()`
+- [OK] Catches spécifiques pour tous les cas prévisibles
+- [OK] Exceptions personnalisées avec contexte
+- [OK] `Exception` en dernier recours seulement
+- [OK] Conversion automatique avec `convert_standard_exception()`
 
 ---
 
@@ -398,10 +398,10 @@ def calculate_daily_cap(signals: dict, risk_level: str) -> float:
 ```
 
 **Points forts** :
-- ✅ Catches spécifiques pour erreurs de données attendues
-- ✅ Fallback explicite et sécurisé (3% conservative, 1% emergency)
-- ✅ Logging avec stacktrace (`logger.exception`)
-- ✅ Valeurs de retour sécuritaires documentées
+- [OK] Catches spécifiques pour erreurs de données attendues
+- [OK] Fallback explicite et sécurisé (3% conservative, 1% emergency)
+- Logging avec stacktrace (`logger.exception`)
+- [OK] Valeurs de retour sécuritaires documentées
 
 ---
 
@@ -483,9 +483,9 @@ select = ["BLE001"]  # Do not catch blind exception: `Exception`
 **Règle d'or** : Évitez `except Exception` sauf en dernier recours avec logging complet.
 
 **Ordre de préférence** :
-1. ✅ Catches spécifiques (`ValueError`, `KeyError`, etc.)
-2. ✅ Exceptions personnalisées (`DataException`, `APIException`, etc.)
-3. ✅ `convert_standard_exception()` pour auto-conversion
-4. ⚠️ `except Exception` uniquement comme safety net avec `logger.exception()`
+1. [OK] Catches spécifiques (`ValueError`, `KeyError`, etc.)
+2. [OK] Exceptions personnalisées (`DataException`, `APIException`, etc.)
+3. [OK] `convert_standard_exception()` pour auto-conversion
+4. `except Exception` uniquement comme safety net avec `logger.exception()`
 
 **Questions ?** Consultez `shared/exceptions.py` ou demandez une review.

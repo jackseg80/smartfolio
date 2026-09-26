@@ -165,7 +165,7 @@ curl "http://localhost:8080/api/cointracking/import?user_id=jack"
 
 ## Sécurité
 
-### ⚠️ NE JAMAIS COMMITTER
+### NE JAMAIS COMMITTER
 
 ```bash
 # .gitignore contient déjà:
@@ -173,7 +173,7 @@ data/users/*/secrets.json
 data/users/*/config.json
 ```
 
-### ✅ Bonnes Pratiques
+### Bonnes Pratiques
 
 1. **Secrets** : Uniquement dans `secrets.json`
 2. **Backup** : Garder copie locale sécurisée de `secrets.json`

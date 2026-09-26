@@ -324,7 +324,7 @@ async def get_demo_page():
     </head>
     <body>
         <div class="container">
-            <h1>🔄 Phase 3B - Real-time Streaming Demo</h1>
+            <h1> Phase 3B - Real-time Streaming Demo</h1>
             
             <div id="status" class="status disconnected">
                 Status: Disconnected

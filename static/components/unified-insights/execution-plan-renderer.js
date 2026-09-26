@@ -27,9 +27,9 @@ export async function renderAllocationBlock(u, options = {}) {
     };
 
     // SOURCE CANONIQUE UNIQUE: Utiliser targets_by_group (même source que plan d'exécution)
-    (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: Using u.targets_by_group as canonical source');
+    (window.debugLogger?.debug || console.debug)("UNIFIED SOURCE: Using u.targets_by_group as canonical source");
     let allocation = u.targets_by_group;
-    (window.debugLogger?.debug || console.debug)('🔥 UNIFIED SOURCE: targets_by_group result:', allocation);
+    (window.debugLogger?.debug || console.debug)("UNIFIED SOURCE: targets_by_group result:", allocation);
 
     if (!allocation || Object.keys(allocation).length === 0) {
       clearSuggestedAllocation('verified_targets_unavailable');
@@ -37,7 +37,7 @@ export async function renderAllocationBlock(u, options = {}) {
     }
     if (Object.values(allocation).some(value => !Number.isFinite(value) || value < 0)) {
       clearSuggestedAllocation('verified_targets_invalid');
-      return '<div class="error-message">❌ Error: allocation targets contain invalid values</div>';
+      return "<div class=\"error-message\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Error: allocation targets contain invalid values</div>";
     }
 
     // GARDE-FOUS - Checksum et validation
@@ -45,7 +45,7 @@ export async function renderAllocationBlock(u, options = {}) {
     if (Math.abs(total - 100) > 0.5) {
       clearSuggestedAllocation('verified_targets_sum_mismatch');
       (window.debugLogger?.error || console.error)(`Target sum mismatch: ${total.toFixed(1)}%`);
-      return `<div class="error-message">❌ Error: allocation targets sum to ${total.toFixed(1)}%</div>`;
+      return `<div class="error-message"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error: allocation targets sum to ${total.toFixed(1)}%</div>`;
     }
 
     if (allocation && Object.keys(allocation).length > 0) {
@@ -90,7 +90,7 @@ export async function renderAllocationBlock(u, options = {}) {
       const current = await getCurrentAllocationByGroup(configuredMinUsd);
 
       // DEBUG: Verify allocation before assigning to targetAdj
-      console.debug('🎯 ALLOCATION DEBUG before targetAdj:', {
+      console.debug("ALLOCATION DEBUG before targetAdj:", {
         allocation_keys: allocation ? Object.keys(allocation) : 'no allocation',
         allocation_values: allocation,
         allocation_total: allocation ? Object.values(allocation).reduce((a, b) => a + b, 0) : 'no allocation'
@@ -103,28 +103,28 @@ export async function renderAllocationBlock(u, options = {}) {
       // LECTURE DIRECTE: Objectifs théoriques = source canonique dynamique
       if (u.targets_by_group && Object.keys(u.targets_by_group).length > 0) {
         executionTargets = { ...u.targets_by_group };
-        (window.debugLogger?.info || console.log)('✅ DYNAMIC TARGETS utilisés (plus de presets!):', {
+        (window.debugLogger?.info || console.log)("[OK] DYNAMIC TARGETS utilisés (plus de presets!):", {
           source: 'u.targets_by_group (computed dynamically)',
           targets: Object.entries(executionTargets).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
           stables_pct: executionTargets['Stablecoins']?.toFixed(1) + '%',
           sum: Object.values(executionTargets).reduce((a,b) => a+b, 0).toFixed(1) + '%'
         });
       } else {
-        (window.debugLogger?.warn || console.warn)('⚠️ targets_by_group manquant, fallback sur allocation actuelle');
+        (window.debugLogger?.warn || console.warn)("[Warning] targets_by_group manquant, fallback sur allocation actuelle");
       }
 
       const targetAdj = executionTargets;
 
       // CORRECTION UNIFICATION: Forcer l'affichage théorique à utiliser les mêmes targets
       // pour éviter l'incohérence entre objectifs théoriques et plan d'exécution
-      console.debug('🔄 BEFORE UNIFICATION:', {
+      console.debug("BEFORE UNIFICATION:", {
         allocation_before: allocation ? Object.entries(allocation).map(([k,v]) => `${k}: ${v.toFixed(1)}%`) : 'null',
         executionTargets: Object.entries(executionTargets).map(([k,v]) => `${k}: ${v.toFixed(1)}%`)
       });
 
       allocation = executionTargets;
 
-      console.debug('🔄 AFTER UNIFICATION: Objectifs théoriques forcés à utiliser les mêmes targets que le plan d\'exécution:', {
+      console.debug("AFTER UNIFICATION: Objectifs théoriques forcés à utiliser les mêmes targets que le plan d'exécution:", {
         allocation_after: Object.entries(allocation).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
         unified_targets: Object.entries(executionTargets).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
         note: 'Objectifs et plan maintenant cohérents'
@@ -143,7 +143,7 @@ export async function renderAllocationBlock(u, options = {}) {
       });
 
       // DEBUG: Log execution plan calculation details
-      console.debug('🎯 EXECUTION PLAN DELTAS DEBUG:', {
+      console.debug("EXECUTION PLAN DELTAS DEBUG:", {
         cap_limit: mode.cap + '%',
         all_deltas: entries.map(e => ({
           asset: e.k,
@@ -169,7 +169,7 @@ export async function renderAllocationBlock(u, options = {}) {
         iter1Targets[entry.k] = entry.cur + entry.suggested;
       });
 
-      console.debug('🎯 ITER1 TARGETS computed (governance-capped):', {
+      console.debug("ITER1 TARGETS computed (governance-capped):", {
         iter1: Object.entries(iter1Targets).map(([k,v]) => `${k}: ${v.toFixed(1)}%`),
         cap_used: mode.cap,
         sum: Object.values(iter1Targets).reduce((a,b) => a+b, 0).toFixed(1) + '%'
@@ -186,7 +186,7 @@ export async function renderAllocationBlock(u, options = {}) {
           const isTopLevel = TOP_LEVEL_GROUPS.includes(e.k);
 
           if (!isTopLevel && isSignificant) {
-            console.debug(`🚫 Coin ${e.k} excluded from top-level (child of group)`);
+            console.debug(`[Blocked] Coin ${e.k} excluded from top-level (child of group)`);
           }
 
           return isSignificant && isTopLevel;
@@ -199,7 +199,7 @@ export async function renderAllocationBlock(u, options = {}) {
         if (targetAdj && Object.keys(targetAdj).length > 0) {
           // Utiliser le plan d'exécution pré-calculé (même source que cartes)
           const executionPlan = u.execution?.plan_iter1 || {};
-          console.debug('🔄 Using pre-calculated execution plan:', executionPlan);
+          console.debug("Using pre-calculated execution plan:", executionPlan);
 
           const payload = {
             targets: targetAdj, // Final theoretical targets
@@ -219,7 +219,7 @@ export async function renderAllocationBlock(u, options = {}) {
           };
           localStorage.setItem('unified_suggested_allocation', JSON.stringify(payload));
           window.dispatchEvent(new CustomEvent('unifiedSuggestedAllocationUpdated', { detail: payload }));
-          console.debug('✅ Unified suggested allocation persisted:', {
+          console.debug("[OK] Unified suggested allocation persisted:", {
             targetsCount: Object.keys(targetAdj).length,
             visibleCount: visible.length,
             execPlanCount: Object.keys(executionPlan).length,
@@ -227,7 +227,7 @@ export async function renderAllocationBlock(u, options = {}) {
             hasCurrentData: !!(current && current.groups)
           });
         } else {
-          (window.debugLogger?.warn || console.warn)('⚠️ No targetAdj data to persist', { targetAdj, keys: Object.keys(targetAdj || {}) });
+          (window.debugLogger?.warn || console.warn)("[Warning] No targetAdj data to persist", { targetAdj, keys: Object.keys(targetAdj || {}) });
         }
       } catch (e) {
         (window.debugLogger?.warn || console.warn)('Persist unified suggested allocation failed:', e?.message || e);
@@ -266,13 +266,13 @@ export async function renderAllocationBlock(u, options = {}) {
         if (Math.abs(totalTgt - 100) > 0.5) {
           (window.debugLogger?.error || console.error)('[ASSERT] UI RENDER: Somme targets visible ≠ 100%', { totalTgt, visible });
         }
-        console.debug(`✅ UI RENDER: Verrous OK - Stables ${stablesEntry?.tgt?.toFixed(1) || 0}%, Total ${totalTgt.toFixed(1)}%`);
+        console.debug(`[OK] UI RENDER: Verrous OK - Stables ${stablesEntry?.tgt?.toFixed(1) || 0}%, Total ${totalTgt.toFixed(1)}%`);
       }
 
       return `
         ${card(`
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem;">
-            <div style="font-weight:700;">💡 Theoretical Targets</div>
+            <div style="font-weight:700;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Theoretical Targets</div>
             <div style="font-size:.75rem; color:var(--theme-text-muted); background: var(--theme-bg); border:1px solid var(--theme-border); padding:.2rem .6rem; border-radius: 999px;">
               Budget Risque: ${riskBudget.methodology || 'regime_based'}
             </div>
@@ -310,15 +310,15 @@ export async function renderAllocationBlock(u, options = {}) {
             }).join('')}
           </div>
           ${stablesTheorique ? `<div style="margin-top:.6rem; font-size:.75rem; color:var(--theme-text-muted); padding:.4rem; background: var(--theme-bg); border-radius: 6px; border: 1px solid var(--theme-border);">
-            💰 Budget stables théorique: <b>${stablesTheorique}%</b> (calculé par algorithme de risque)
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Budget stables théorique: <b>${stablesTheorique}%</b> (calculé par algorithme de risque)
           </div>` : ''}
         `, { title: 'Budget & Objectifs' })}
 
         ${card(`
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem;">
-            <div style="font-weight:700;">🎯 Execution Plan (Iteration ${execution.current_iteration || 1})</div>
+            <div style="font-weight:700;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Execution Plan (Iteration ${execution.current_iteration || 1})</div>
             <div style="display: flex; gap: 0.5rem; align-items: center;">
-              ${activePolicy ? `<div style="font-size:.7rem; color: var(--success); background: var(--theme-bg); border:1px solid var(--success); padding:.1rem .4rem; border-radius: 999px;">🏛️ Governance</div>` : ''}
+              ${activePolicy ? `<div style="font-size:.7rem; color: var(--success); background: var(--theme-bg); border:1px solid var(--success); padding:.1rem .4rem; border-radius: 999px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Bank" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-library"></use></svg> Governance</div>` : ''}
               <div style="font-size:.75rem; color:var(--theme-text-muted); background: var(--theme-bg); border:1px solid var(--theme-border); padding:.2rem .6rem; border-radius: 999px;">
                 Cap ±${mode.cap}%
               </div>
@@ -358,7 +358,7 @@ export async function renderAllocationBlock(u, options = {}) {
             }).join('')}
           </div>
           <div style="margin-top:.6rem; font-size:.75rem; color:var(--theme-text-muted); padding:.4rem; background: var(--theme-bg); border-radius: 6px; border: 1px solid var(--theme-border);">
-            ⏱️ Convergence estimée: <b>${estimatedIters} rebalances</b> pour atteindre les objectifs théoriques
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Convergence estimée: <b>${estimatedIters} rebalances</b> pour atteindre les objectifs théoriques
           </div>
         `, { title: 'Execution Cap ±' + mode.cap + '%' })}
       `;

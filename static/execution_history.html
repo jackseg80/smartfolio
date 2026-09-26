@@ -1163,9 +1163,9 @@
 
                             // Déterminer la classe CSS basée sur le contenu
                             let className = 'info';
-                            if (insight.includes('⚠️') || insight.includes('degrading') || insight.includes('needs improvement')) {
+                            if (insight.includes("Warning") || insight.includes('degrading') || insight.includes('needs improvement')) {
                                 className = 'warning';
-                            } else if (insight.includes('✅') || insight.includes('📈') || insight.includes('🎯')) {
+                            } else if (insight.includes("OK") || insight.includes("Growth") || insight.includes("Target")) {
                                 className = '';  // Success (default)
                             }
 

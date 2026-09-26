@@ -31,10 +31,10 @@ def _extract_volatility_features(self, price_data: Dict) -> Dict[str, float]:
     """Extrait features de volatilité"""
     # TODO: Implémenter avec données prix réelles
     return {
-        "vol_1h": 0.02,      # ❌ STUB
-        "vol_4h": 0.04,      # ❌ STUB
-        "vol_of_vol": 0.001, # ❌ STUB
-        "vol_skew": 0.0      # ❌ STUB
+        "vol_1h": 0.02,      # [Error] STUB
+        "vol_4h": 0.04,      # [Error] STUB
+        "vol_of_vol": 0.001, # [Error] STUB
+        "vol_skew": 0.0      # [Error] STUB
     }
 ```
 
@@ -135,9 +135,9 @@ def _extract_momentum_features(self, price_data: Dict) -> Dict[str, float]:
     """Extrait features de momentum"""
     # TODO: Implémenter avec données prix réelles
     return {
-        "momentum_1h": 0.01,          # ❌ STUB
-        "momentum_4h": 0.02,          # ❌ STUB
-        "volume_momentum": 0.0        # ❌ STUB
+        "momentum_1h": 0.01,          # [Error] STUB
+        "momentum_4h": 0.02,          # [Error] STUB
+        "volume_momentum": 0.0        # [Error] STUB
     }
 ```
 
@@ -220,7 +220,7 @@ def _extract_momentum_features(self, price_data: Dict) -> Dict[str, float]:
 def _calculate_large_alt_spread(self, correlation_data: Dict) -> float:
     """Calcule spread corrélation entre large caps et alt coins"""
     # TODO: Implémenter logique spécifique
-    return 0.0  # ❌ STUB
+    return 0.0  # [Error] STUB
 ```
 
 ### Solution
@@ -289,7 +289,7 @@ def _calculate_cluster_stability(self, correlation_data: Dict) -> float:
         return 1.0  # Stable si pas de clusters
 
     # TODO: Implémenter métrique de stabilité
-    return 0.5  # ❌ STUB
+    return 0.5  # [Error] STUB
 ```
 
 ### Solution
@@ -448,21 +448,21 @@ services/alerts/ml_alert_predictor.py (+282 lignes, -22 lignes)
 
 ### Avant (Stub Data)
 
-- ❌ Volatility features toujours identiques (0.02, 0.04, 0.001, 0.0)
-- ❌ Momentum features toujours identiques (0.01, 0.02, 0.0)
-- ❌ Large alt spread toujours 0.0 (pas de détection altseason)
-- ❌ Cluster stability toujours 0.5 (neutre inutile)
-- ❌ Assets toujours BTC/ETH (pas de ciblage précis)
-- ❌ **Prédictions ML complètement inexactes et inutilisables**
+- [Error] Volatility features toujours identiques (0.02, 0.04, 0.001, 0.0)
+- [Error] Momentum features toujours identiques (0.01, 0.02, 0.0)
+- [Error] Large alt spread toujours 0.0 (pas de détection altseason)
+- [Error] Cluster stability toujours 0.5 (neutre inutile)
+- [Error] Assets toujours BTC/ETH (pas de ciblage précis)
+- [Error] **Prédictions ML complètement inexactes et inutilisables**
 
 ### Après (Real Data)
 
-- ✅ Volatility features dynamiques selon conditions réelles de marché
-- ✅ Momentum features capturent tendances et RSI réels
-- ✅ Large alt spread détecte altseasons et risk-off
-- ✅ Cluster stability mesure stabilité corrélation réelle
-- ✅ Assets déduits intelligemment selon contexte
-- ✅ **Prédictions ML précises et actionnables**
+- [OK] Volatility features dynamiques selon conditions réelles de marché
+- [OK] Momentum features capturent tendances et RSI réels
+- [OK] Large alt spread détecte altseasons et risk-off
+- [OK] Cluster stability mesure stabilité corrélation réelle
+- [OK] Assets déduits intelligemment selon contexte
+- [OK] **Prédictions ML précises et actionnables**
 
 ## Exemples de Résultats Attendus
 
@@ -488,15 +488,15 @@ features = {
 
 ```python
 features = {
-    "vol_1h": 0.75,                # 🔴 Volatilité très élevée
+    "vol_1h": 0.75,                # [Negative] Volatilité très élevée
     "vol_4h": 0.82,
-    "vol_of_vol": 0.045,           # 🔴 Forte instabilité
-    "vol_skew": 0.6,               # 🔴 Forte asymétrie downside (panique)
+    "vol_of_vol": 0.045,           # [Negative] Forte instabilité
+    "vol_skew": 0.6,               # [Negative] Forte asymétrie downside (panique)
     "momentum_1h": -0.03,          # Momentum négatif
     "momentum_4h": -0.05,
     "volume_momentum": -0.7,       # RSI < 30 (survente)
     "large_alt_spread": -0.08,     # BTC domine (risk-off)
-    "cluster_stability": 0.35      # 🔴 Corrélations instables
+    "cluster_stability": 0.35      # [Negative] Corrélations instables
 }
 ```
 
@@ -515,7 +515,7 @@ features = {
     "momentum_1h": 0.02,           # Momentum positif
     "momentum_4h": 0.04,
     "volume_momentum": 0.6,        # RSI > 70 (suracheté)
-    "large_alt_spread": 0.15,      # 🟢 Alts surperforment massivement
+    "large_alt_spread": 0.15,      # [Positive] Alts surperforment massivement
     "cluster_stability": 0.55      # Corrélations changeantes
 }
 ```
@@ -604,12 +604,12 @@ async def test_ml_prediction_pipeline():
 **Avant implémentation** :
 - Prédictions ML : 0% accuracy (stub data aléatoire)
 - Assets concernés : Toujours BTC/ETH (hardcodé)
-- Utilisabilité production : ❌ Inutilisable
+- Utilisabilité production : [Error] Inutilisable
 
 **Après implémentation** :
 - Prédictions ML : Basées sur données réelles
 - Assets concernés : Déduction intelligente contextuelle
-- Utilisabilité production : ✅ Production-ready
+- Utilisabilité production : [OK] Production-ready
 
 **Métriques attendues** (après training sur données réelles) :
 - Precision > 0.70 (70% alertes valides)
@@ -621,10 +621,10 @@ async def test_ml_prediction_pipeline():
 
 ## Compatibilité
 
-- ✅ **API inchangée** : Signatures de fonctions publiques identiques
-- ✅ **Backward compatible** : Fallbacks sur valeurs stub en cas d'erreur
-- ✅ **Performance** : Impact négligeable (+50ms max pour calculs features)
-- ✅ **Dépendances** : Aucune nouvelle dépendance externe
+- [OK] **API inchangée** : Signatures de fonctions publiques identiques
+- [OK] **Backward compatible** : Fallbacks sur valeurs stub en cas d'erreur
+- [OK] **Performance** : Impact négligeable (+50ms max pour calculs features)
+- [OK] **Dépendances** : Aucune nouvelle dépendance externe
 
 ---
 

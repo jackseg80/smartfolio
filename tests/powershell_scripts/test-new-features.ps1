@@ -1,11 +1,11 @@
 # Test script for new advanced features
 $base = "http://127.0.0.1:8080"
 
-Write-Host "🧪 Testing Advanced Features" -ForegroundColor Green
+Write-Host " Testing Advanced Features" -ForegroundColor Green
 Write-Host "=============================" -ForegroundColor Green
 
 # Test 1: Portfolio Optimization
-Write-Host "`n1. 📊 Testing Portfolio Optimization" -ForegroundColor Yellow
+Write-Host "`n1.  Testing Portfolio Optimization" -ForegroundColor Yellow
 
 # Get available objectives
 $objectives = irm "$base/api/portfolio/optimization/objectives"
@@ -16,7 +16,7 @@ $constraints = irm "$base/api/portfolio/optimization/constraints/defaults?conser
 Write-Host "Conservative constraints loaded" -ForegroundColor Cyan
 
 # Test 2: Backtesting
-Write-Host "`n2. 🎯 Testing Backtesting Engine" -ForegroundColor Yellow
+Write-Host "`n2.  Testing Backtesting Engine" -ForegroundColor Yellow
 
 # Get available strategies
 $strategies = irm "$base/api/backtesting/strategies"
@@ -28,7 +28,7 @@ $metrics = irm "$base/api/backtesting/metrics/definitions"
 Write-Host "Performance metrics defined: $($metrics.performance_metrics.Count)" -ForegroundColor Cyan
 
 # Test 3: Machine Learning
-Write-Host "`n3. 🤖 Testing ML Models" -ForegroundColor Yellow
+Write-Host "`n3.  Testing ML Models" -ForegroundColor Yellow
 
 # Check ML models status
 $mlStatus = irm "$base/api/ml/models/status"
@@ -44,7 +44,7 @@ try {
 }
 
 # Test 4: API Documentation
-Write-Host "`n4. 📚 Testing API Documentation" -ForegroundColor Yellow
+Write-Host "`n4.  Testing API Documentation" -ForegroundColor Yellow
 
 try {
     $openapi = irm "$base/openapi.json"
@@ -65,7 +65,7 @@ try {
 }
 
 # Test 5: Performance Test
-Write-Host "`n5. ⚡ Performance Test" -ForegroundColor Yellow
+Write-Host "`n5.  Performance Test" -ForegroundColor Yellow
 
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -109,15 +109,15 @@ $avgTime = ($results | Measure-Object -Property TotalMilliseconds -Average).Aver
 Write-Host "Average response time: $([math]::Round($avgTime, 2))ms" -ForegroundColor Cyan
 
 # Summary
-Write-Host "`n🎉 Test Summary" -ForegroundColor Green
+Write-Host "`n Test Summary" -ForegroundColor Green
 Write-Host "===============" -ForegroundColor Green
-Write-Host "✅ Portfolio Optimization: Ready" -ForegroundColor Green
-Write-Host "✅ Backtesting Engine: Ready" -ForegroundColor Green  
-Write-Host "⚠️  ML Models: Need Training" -ForegroundColor Yellow
-Write-Host "✅ API Documentation: Complete" -ForegroundColor Green
-Write-Host "✅ Performance: Good" -ForegroundColor Green
+Write-Host "[OK] Portfolio Optimization: Ready" -ForegroundColor Green
+Write-Host "[OK] Backtesting Engine: Ready" -ForegroundColor Green
+Write-Host "[Warning]  ML Models: Need Training" -ForegroundColor Yellow
+Write-Host "[OK] API Documentation: Complete" -ForegroundColor Green
+Write-Host "[OK] Performance: Good" -ForegroundColor Green
 
-Write-Host "`n📋 Next Steps:" -ForegroundColor Cyan
+Write-Host "`n Next Steps:" -ForegroundColor Cyan
 Write-Host "1. Open Portfolio Optimization: http://localhost:8080/static/portfolio-optimization.html" -ForegroundColor Gray
 Write-Host "2. View API Docs: http://localhost:8080/docs" -ForegroundColor Gray
 Write-Host "3. Train ML models via API or interface" -ForegroundColor Gray

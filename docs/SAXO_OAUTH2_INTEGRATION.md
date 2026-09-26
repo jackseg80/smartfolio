@@ -1,24 +1,24 @@
 # Intégration OAuth2 PKCE SaxoBank API
 
 **Date**: Novembre 2025
-**Status**: ✅ **Production Ready** - OAuth2 PKCE flow complet implémenté
+**Status**: [OK] **Production Ready** - OAuth2 PKCE flow complet implémenté
 
 ---
 
-## 🎯 Objectifs
+## Objectifs
 
 Intégration complète de l'API SaxoBank via OAuth2 PKCE (Proof Key for Code Exchange) pour récupérer les positions en temps réel du portefeuille boursier.
 
 ### Avantages vs CSV
-- ✅ **Temps réel**: Données à jour automatiquement
-- ✅ **Automatisation**: Plus besoin d'upload manuel CSV
-- ✅ **Sécurité**: OAuth2 PKCE standard (pas de secret client)
-- ✅ **Multi-tenant**: Isolation complète par utilisateur
-- ✅ **Refresh auto**: Tokens rafraîchis automatiquement
+- [OK] **Temps réel**: Données à jour automatiquement
+- [OK] **Automatisation**: Plus besoin d'upload manuel CSV
+- [OK] **Sécurité**: OAuth2 PKCE standard (pas de secret client)
+- [OK] **Multi-tenant**: Isolation complète par utilisateur
+- [OK] **Refresh auto**: Tokens rafraîchis automatiquement
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Composants Principaux
 
@@ -100,38 +100,38 @@ data/users/{user_id}/saxobank/
 | `/api/saxo/auth` | GET | Initie flow OAuth (redirige vers Saxo) | - |
 | `/api/saxo/callback` | GET | Callback OAuth (échange code → tokens) | - |
 | `/api/saxo/status` | GET | Statut connexion (connecté/déconnecté) | - |
-| `/api/saxo/disconnect` | POST | Révoque tokens + déconnexion | ✅ Fix revoke flow |
-| `/api/saxo/api-positions` | GET | Positions temps réel (API) | ✅ Fix param `max_age_hours` |
+| `/api/saxo/disconnect` | POST | Révoque tokens + déconnexion | [OK] Fix revoke flow |
+| `/api/saxo/api-positions` | GET | Positions temps réel (API) | [OK] Fix param `max_age_hours` |
 | `/api/saxo/api-account-summary` | GET | Résumé compte (total, cash, P&L) | - |
 
 **Corrections Novembre 2025**:
-- ✅ **Fix param naming**: `max_cache_age_hours` → `max_age_hours` (ligne 496, 575)
-- ✅ **Fix disconnect flow**: Gestion tokens expirés lors de la déconnexion
+- [OK] **Fix param naming**: `max_cache_age_hours` → `max_age_hours` (ligne 496, 575)
+- [OK] **Fix disconnect flow**: Gestion tokens expirés lors de la déconnexion
 
 #### 4. Frontend Integration
 
 **Settings Page** (`static/settings.html`):
-- ✅ Bouton "Connect Saxo" (démarre flow OAuth)
-- ✅ Statut connexion temps réel
-- ✅ Bouton "Disconnect" (révoque tokens)
-- ✅ Indicateur environnement (Simulation/Live)
+- [OK] Bouton "Connect Saxo" (démarre flow OAuth)
+- [OK] Statut connexion temps réel
+- [OK] Bouton "Disconnect" (révoque tokens)
+- [OK] Indicateur environnement (Simulation/Live)
 
 **Saxo Dashboard** (`static/saxo-dashboard.html`):
-- ✅ Sélecteur source: CSV vs API (`window.saxoSourceType`)
-- ✅ Cache local positions (5 min TTL)
-- ✅ Auto-refresh au changement source
-- ✅ Fallback CSV si API échoue
+- [OK] Sélecteur source: CSV vs API (`window.saxoSourceType`)
+- [OK] Cache local positions (5 min TTL)
+- [OK] Auto-refresh au changement source
+- [OK] Fallback CSV si API échoue
 
 **WealthContextBar** (`static/components/WealthContextBar.js`):
-- ✅ Dropdown source Bourse avec options:
+- [OK] Dropdown source Bourse avec options:
   - `api:saxobank_api` (mode API temps réel)
   - `saxo:{file_key}` (mode CSV)
-- ✅ Synchronisation localStorage `bourseSource`
-- ✅ Event `bourseSourceChanged` pour refresh
+- [OK] Synchronisation localStorage `bourseSource`
+- [OK] Event `bourseSourceChanged` pour refresh
 
 ---
 
-## 🔐 Flux OAuth2 PKCE
+## Flux OAuth2 PKCE
 
 ### 1. Initiation (Frontend → Backend → Saxo)
 ```
@@ -232,7 +232,7 @@ POST /api/saxo/disconnect?user_id=jack
     ↓
 Backend:
   1. Charge tokens
-  2. Révoque tokens (POST /token/revoke)  # ✅ Fix Nov 2025
+  2. Révoque tokens (POST /token/revoke)  # [OK] Fix Nov 2025
   3. Supprime auth_tokens.json
   4. Clear cache positions
     ↓
@@ -243,7 +243,7 @@ Frontend:
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Backend (.env)
 ```env
@@ -303,7 +303,7 @@ async function loadSaxoDataFromAPI() {
     return loadSaxoDataFromCSV();
 }
 
-// Initialiser source type (✅ Fix Nov 2025)
+// Initialiser source type ([OK] Fix Nov 2025)
 const bourseSource = localStorage.getItem('bourseSource') || 'api:saxobank_api';
 if (bourseSource.startsWith('api:')) {
     window.saxoSourceType = 'api';
@@ -314,7 +314,7 @@ if (bourseSource.startsWith('api:')) {
 
 ---
 
-## 🧪 Tests & Validation
+## Tests & Validation
 
 ### Tests Manuels
 
@@ -354,8 +354,8 @@ curl -H "X-User: jack" http://localhost:8080/api/saxo/api-account-summary
 # Appeler API → Doit auto-refresh transparently
 curl -H "X-User: jack" http://localhost:8080/api/saxo/api-positions
 # Logs backend:
-# "🔄 Access token expired, refreshing..."
-# "✅ Token refreshed successfully"
+# " Access token expired, refreshing..."
+# " Token refreshed successfully"
 ```
 
 #### 4. Disconnect
@@ -380,14 +380,14 @@ curl -H "X-User: jack" http://localhost:8080/api/saxo/api-positions
 curl -H "X-User: alice" http://localhost:8080/api/saxo/api-positions
 # → 45 positions (alice)
 
-# Isolation vérifiée ✅
+# Isolation vérifiée
 ```
 
 ---
 
-## 🐛 Issues Connues & Fixes
+## Issues Connues & Fixes
 
-### ❌ Issue #1: Risk tab ne charge pas API (Nov 2025)
+### Issue #1: Risk tab ne charge pas API (Nov 2025)
 **Symptôme**: Risk tab affiche données CSV au lieu de l'API
 
 **Cause**:
@@ -418,16 +418,16 @@ if (bourseSource.startsWith('api:')) {
 }
 ```
 
-**Status**: ⚠️ **Partiellement résolu** - Backend fix OK, mais frontend Risk tab toujours sur CSV (TODO)
+**Status**: [Warning] **Partiellement résolu** - Backend fix OK, mais frontend Risk tab toujours sur CSV (TODO)
 
-### ❌ Issue #2: Stock Market tile affiche CSV (Nov 2025)
+### Issue #2: Stock Market tile affiche CSV (Nov 2025)
 **Symptôme**: Tuile "Stock Market" sur dashboard.html affiche seulement CSV
 
 **Cause**: Tile ne vérifie pas `bourseSource` pour charger API
 
-**Status**: ⏳ **TODO** - À corriger
+**Status**: [Pending] **TODO** - À corriger
 
-### ✅ Issue #3: Disconnect flow avec tokens expirés (Nov 2025)
+### Issue #3: Disconnect flow avec tokens expirés (Nov 2025)
 **Symptôme**: Erreur lors de déconnexion si tokens déjà expirés
 
 **Fix Appliqué**:
@@ -442,11 +442,11 @@ async def disconnect_saxo():
         auth_service.clear_local_tokens()
 ```
 
-**Status**: ✅ **Résolu**
+**Status**: [OK] **Résolu**
 
 ---
 
-## 📋 TODO Next Steps
+## TODO Next Steps
 
 ### Priorité Haute
 - [ ] **Fix Risk tab API loading** (Issue #1)
@@ -480,7 +480,7 @@ async def disconnect_saxo():
 
 ---
 
-## 🔗 Références
+## Références
 
 ### Documentation Officielle
 - **Saxo OpenAPI Docs**: https://www.developer.saxo/openapi/learn
@@ -504,19 +504,19 @@ async def disconnect_saxo():
 
 ---
 
-## 🎉 Conclusion
+## Conclusion
 
 L'intégration OAuth2 PKCE SaxoBank est **fonctionnelle en production** avec :
 
-✅ Flow OAuth2 PKCE complet (secure, no client secret)
-✅ Token refresh automatique (20 min access token)
-✅ Multi-tenant avec isolation complète
-✅ Cache positions (fallback offline)
-✅ Frontend UI complet (connect/status/disconnect)
-✅ Fixes tokens expirés lors disconnect
-✅ Fixes paramètres `max_age_hours`
+[OK] Flow OAuth2 PKCE complet (secure, no client secret)
+[OK] Token refresh automatique (20 min access token)
+[OK] Multi-tenant avec isolation complète
+[OK] Cache positions (fallback offline)
+[OK] Frontend UI complet (connect/status/disconnect)
+[OK] Fixes tokens expirés lors disconnect
+[OK] Fixes paramètres `max_age_hours`
 
-⚠️ **Issues restants**:
+[Warning] **Issues restants**:
 - Risk tab ne charge pas API (backend OK, frontend bug)
 - Stock Market tile affiche seulement CSV
 

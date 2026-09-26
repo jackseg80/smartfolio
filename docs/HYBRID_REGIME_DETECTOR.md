@@ -4,9 +4,9 @@
 > **Status:** Production
 > **Asset:** Equity Markets (SPY, QQQ, etc.)
 
-> 📖 **Document lié** : [BTC_HYBRID_REGIME_DETECTOR.md](BTC_HYBRID_REGIME_DETECTOR.md) — Version Bitcoin/Crypto avec seuils adaptés
+>  **Document lié** : [BTC_HYBRID_REGIME_DETECTOR.md](BTC_HYBRID_REGIME_DETECTOR.md) — Version Bitcoin/Crypto avec seuils adaptés
 
-## 🎯 Executive Summary
+## Executive Summary
 
 The **Hybrid Regime Detector** combines rule-based detection (for clear cases) with HMM neural networks (for nuanced cases) to accurately identify market regimes while overcoming the temporal blindness of statistical models.
 
@@ -14,7 +14,7 @@ The **Hybrid Regime Detector** combines rule-based detection (for clear cases) w
 
 ---
 
-## 📊 Problem Statement
+## Problem Statement
 
 ### Original HMM Limitation
 
@@ -28,15 +28,15 @@ The **Hybrid Regime Detector** combines rule-based detection (for clear cases) w
 ```
 
 **Root Cause:** HMM calculates **statistical averages** without cumulative context:
-- ❌ Cannot see -55% drawdown from peak
-- ❌ Cannot see 6-month persistence
-- ❌ Mixes crash + recovery into ONE cluster
+- [Error] Cannot see -55% drawdown from peak
+- [Error] Cannot see 6-month persistence
+- [Error] Mixes crash + recovery into ONE cluster
 
 **Result:** 0% Bear Market detected on 30 years of data including major crises.
 
 ---
 
-## 🔬 Solution: Hybrid Architecture
+## Solution: Hybrid Architecture
 
 ### Three-Layer System
 
@@ -116,7 +116,7 @@ def _fuse_predictions(rule_based, hmm_result):
 
 ---
 
-## ✅ Validation Results
+## Validation Results
 
 ### Historical Bear Markets Detection
 
@@ -124,12 +124,12 @@ def _fuse_predictions(rule_based, hmm_result):
 
 | Period | Drawdown | Duration | HMM Alone | Hybrid | Status |
 |--------|----------|----------|-----------|--------|--------|
-| **Dot-com (2001-2005)** | -47.5% | 1719 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
-| **2008 Crisis (2008-2011)** | -55.2% | 935 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
-| **Euro Crisis (2011-2012)** | -23.5% | 155 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
-| **COVID (2020)** | -33.7% | 76 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
-| **2022 Inflation (Jun-Aug)** | -23.0% | 60 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
-| **2022 Continued (Sep-2023)** | -24.5% | 253 days | ❌ Missed (0%) | ✅ Detected (95%) | **FIXED** |
+| **Dot-com (2001-2005)** | -47.5% | 1719 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
+| **2008 Crisis (2008-2011)** | -55.2% | 935 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
+| **Euro Crisis (2011-2012)** | -23.5% | 155 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
+| **COVID (2020)** | -33.7% | 76 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
+| **2022 Inflation (Jun-Aug)** | -23.0% | 60 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
+| **2022 Continued (Sep-2023)** | -24.5% | 253 days | [Error] Missed (0%) | [OK] Detected (95%) | **FIXED** |
 
 **Recall:** 100% on major crises (6/6 detected)
 
@@ -148,7 +148,7 @@ def _fuse_predictions(rule_based, hmm_result):
 
 ---
 
-## 🔧 Implementation Details
+## Implementation Details
 
 ### Files Modified
 
@@ -188,7 +188,7 @@ features['trend_30d'] = price.pct_change(30)
 
 ---
 
-## 📈 Usage
+## Usage
 
 ### API Endpoint
 
@@ -222,7 +222,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=10950
 
 ---
 
-## 🎓 Technical Deep Dive
+## Technical Deep Dive
 
 ### Why HMM Failed: Mathematical Proof
 
@@ -253,7 +253,7 @@ if drawdown <= -0.15:  # Sees the -55% directly!
 
 ---
 
-## 🚨 Limitations & Caveats
+## Limitations & Caveats
 
 ### Current Limitations
 
@@ -274,7 +274,7 @@ if drawdown <= -0.15:  # Sees the -55% directly!
 
 ---
 
-## 📊 Performance Metrics
+## Performance Metrics
 
 ### Recall (Sensitivity)
 
@@ -295,7 +295,7 @@ if drawdown <= -0.15:  # Sees the -55% directly!
 
 ---
 
-## 🔬 Future Enhancements
+## Future Enhancements
 
 ### Potential Improvements
 
@@ -313,7 +313,7 @@ if drawdown <= -0.15:  # Sees the -55% directly!
 
 ---
 
-## 📝 References
+## References
 
 ### Internal Documentation
 
@@ -329,7 +329,7 @@ if drawdown <= -0.15:  # Sees the -55% directly!
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 ### Testing New Rules
 
@@ -356,7 +356,7 @@ if drawdown <= -0.10 and latest['market_volatility'] > 0.40:
 
 ---
 
-## 📞 Support
+## Support
 
 **Issues:** https://github.com/anthropics/smartfolio/issues
 **Docs:** `docs/`
@@ -364,5 +364,5 @@ if drawdown <= -0.10 and latest['market_volatility'] > 0.40:
 
 ---
 
-**🤖 Generated with [Claude Code](https://claude.com/claude-code)**
+** Generated with [Claude Code](https://claude.com/claude-code)**
 **Co-Authored-By:** Claude <noreply@anthropic.com>

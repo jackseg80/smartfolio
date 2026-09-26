@@ -6,7 +6,7 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 ---
 
-## 🎯 Modes Disponibles
+## Modes Disponibles
 
 ### Mode 1: Dev Standard (Défaut)
 
@@ -18,12 +18,12 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 **Configuration:**
 
-- ✅ **FastAPI** + Playwright (crypto-toolbox natif)
-- ✅ **ML Models** (lazy loading)
-- ✅ **Governance Engine**
-- ✅ **Alert Engine**
-- ❌ **Task Scheduler** (désactivé)
-- ❌ **Hot Reload** (désactivé pour Playwright sur Windows)
+- [OK] **FastAPI** + Playwright (crypto-toolbox natif)
+- [OK] **ML Models** (lazy loading)
+- [OK] **Governance Engine**
+- [OK] **Alert Engine**
+- [Error] **Task Scheduler** (désactivé)
+- [Error] **Hot Reload** (désactivé pour Playwright sur Windows)
 
 **Quand utiliser:**
 
@@ -53,16 +53,16 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 **Configuration:**
 
-- ✅ **FastAPI** + Playwright
-- ✅ **ML Models**
-- ✅ **Governance Engine**
-- ✅ **Alert Engine**
-- ✅ **Task Scheduler** (activé)
+- [OK] **FastAPI** + Playwright
+- [OK] **ML Models**
+- [OK] **Governance Engine**
+- [OK] **Alert Engine**
+- [OK] **Task Scheduler** (activé)
   - P&L snapshots (intraday 15min, EOD 23:59)
   - OHLCV updates (daily 03:10, hourly :05)
   - Staleness monitor (hourly :15)
   - API warmers (every 10min)
-- ❌ **Hot Reload** (désactivé pour éviter double exécution)
+- [Error] **Hot Reload** (désactivé pour éviter double exécution)
 
 **Quand utiliser:**
 
@@ -72,7 +72,7 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 **Tâches automatiques:**
 
-- ✅ Tout se fait automatiquement selon les horaires
+- [OK] Tout se fait automatiquement selon les horaires
 - Vérifier statut: `http://localhost:8080/api/scheduler/health`
 
 ---
@@ -87,13 +87,13 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 **Configuration:**
 
-- ✅ **FastAPI** (proxy Flask pour crypto-toolbox)
-- ✅ **ML Models**
-- ✅ **Governance Engine**
-- ✅ **Alert Engine**
-- ❌ **Playwright** (utilise Flask externe)
-- ❌ **Task Scheduler**
-- ✅ **Hot Reload** (activé)
+- [OK] **FastAPI** (proxy Flask pour crypto-toolbox)
+- [OK] **ML Models**
+- [OK] **Governance Engine**
+- [OK] **Alert Engine**
+- [Error] **Playwright** (utilise Flask externe)
+- [Error] **Task Scheduler**
+- [OK] **Hot Reload** (activé)
 
 **Prérequis:**
 
@@ -117,8 +117,8 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 **Configuration:**
 
-- ✅ Tout activé (FastAPI, Playwright, Scheduler)
-- ❌ Hot reload (mode production)
+- [OK] Tout activé (FastAPI, Playwright, Scheduler)
+- [Error] Hot reload (mode production)
 
 **Quand utiliser:**
 
@@ -128,22 +128,22 @@ Ce document explique les différents modes de démarrage de l'application via `s
 
 ---
 
-## 📊 Tableau Comparatif
+## Tableau Comparatif
 
 | Feature | Dev Standard | + Scheduler | Flask Legacy | Production-like |
 |---------|-------------|-------------|--------------|-----------------|
-| FastAPI | ✅ | ✅ | ✅ | ✅ |
-| Playwright | ✅ | ✅ | ❌ | ✅ |
-| ML Models | ✅ | ✅ | ✅ | ✅ |
-| Governance | ✅ | ✅ | ✅ | ✅ |
-| Alerts | ✅ | ✅ | ✅ | ✅ |
-| **Scheduler** | ❌ | ✅ | ❌ | ✅ |
-| Hot Reload | ❌ | ❌ | ✅ | ❌ |
+| FastAPI | OK | OK | OK | OK |
+| Playwright | OK | OK | Error | OK |
+| ML Models | OK | OK | OK | OK |
+| Governance | OK | OK | OK | OK |
+| Alerts | OK | OK | OK | OK |
+| **Scheduler** | Error | OK | Error | OK |
+| Hot Reload | Error | Error | OK | Error |
 | **Tâches manuelles** | P&L, OHLCV | Aucune | P&L, OHLCV | Aucune |
 
 ---
 
-## 🛠️ Paramètres du Script
+## Paramètres du Script
 
 ### Windows (PowerShell)
 
@@ -173,7 +173,7 @@ Options:
 
 ---
 
-## 🔍 Vérifications
+## Vérifications
 
 ### Vérifier le mode actif
 
@@ -181,15 +181,15 @@ Options:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚀 Starting Crypto Rebal Development Server
+ Starting Crypto Rebal Development Server
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📦 Crypto-Toolbox: FastAPI native (Playwright)
-⏰ Task Scheduler: ENABLED
+ Crypto-Toolbox: FastAPI native (Playwright)
+ Task Scheduler: ENABLED
    • P&L snapshots (intraday 15min, EOD 23:59)
    • OHLCV updates (daily 03:10, hourly :05)
    • Staleness monitor (hourly :15)
    • API warmers (every 10min)
-🔄 Hot Reload: DISABLED
+ Hot Reload: DISABLED
    (auto-disabled: prevents double execution with scheduler)
 ```
 
@@ -235,18 +235,18 @@ curl http://localhost:8080/api/scheduler/health
 
 ---
 
-## ⚠️ Limitations & Contraintes
+## Limitations & Contraintes
 
 ### Hot Reload
 
 **Incompatible avec:**
 
-- ✅ Scheduler activé (double exécution des jobs)
-- ✅ Playwright sur Windows (subprocess asyncio issue)
+- [OK] Scheduler activé (double exécution des jobs)
+- [OK] Playwright sur Windows (subprocess asyncio issue)
 
 **Compatible avec:**
 
-- ✅ Flask legacy mode (CryptoToolboxMode 0)
+- [OK] Flask legacy mode (CryptoToolboxMode 0)
 
 ### Playwright
 
@@ -272,7 +272,7 @@ curl http://localhost:8080/api/scheduler/health
 
 ---
 
-## 🚀 Cas d'Usage Recommandés
+## Cas d'Usage Recommandés
 
 ### Développement Frontend
 
@@ -307,7 +307,7 @@ curl http://localhost:8080/api/scheduler/health
 
 ---
 
-## 📝 Scripts Manuels (Mode sans Scheduler)
+## Scripts Manuels (Mode sans Scheduler)
 
 ### P&L Snapshots
 
@@ -340,7 +340,7 @@ curl http://localhost:8080/api/sources/list?user_id=jack
 
 ---
 
-## 🐳 Docker / Production
+## Docker / Production
 
 En production, utilisez les variables d'environnement :
 
@@ -363,7 +363,7 @@ SNAPSHOT_SOURCE=cointracking_api
 
 ---
 
-## 📚 Documentation Liée
+## Documentation Liée
 
 - [SCHEDULER.md](SCHEDULER.md) - Détails complets du scheduler
 - [CRYPTO_TOOLBOX.md](CRYPTO_TOOLBOX.md) - Migration Flask → FastAPI

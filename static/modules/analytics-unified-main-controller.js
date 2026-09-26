@@ -12,7 +12,7 @@
   };
 
   try {
-    console.debug('💾 Saving unified data for rebalance.html...');
+    console.debug("Saving unified data for rebalance.html...");
 
     // Import du système unified-insights-v2
     const { getUnifiedState } = await import('../core/unified-insights-v2.js');
@@ -86,7 +86,7 @@
     // Sauvegarder dans localStorage avec l'ancienne clé pour compatibilité
     localStorage.setItem('unified_suggested_allocation', JSON.stringify(unifiedData));
 
-    debugLogger.debug('✅ Unified data saved for rebalance.html:', {
+    debugLogger.debug("[OK] Unified data saved for rebalance.html:", {
       targets_keys: Object.keys(unifiedData.targets),
       stables_pct: unifiedData.targets.Stablecoins,
       has_iter1_targets: !!unifiedData.iter1_targets,
@@ -98,7 +98,7 @@
 
   } catch (error) {
     clearSuggestedAllocation('verified_targets_refresh_failed');
-    debugLogger.error('❌ Failed to save unified data:', error);
+    debugLogger.error("Failed to save unified data:", error);
   }
 }
 
@@ -106,12 +106,12 @@
 async function renderUnifiedInsights(containerId = 'unified-root') {
   // ANTI-DOUBLE RENDER MUTEX
   if (window.__unified_rendering) {
-    console.debug('🔒 Render already in progress, skipping duplicate call');
+    console.debug("Render already in progress, skipping duplicate call");
     return;
   }
   window.__unified_rendering = true;
 
-  console.debug('🔥 LOCAL FUNCTION UNIFIED: analytics-unified.html renderUnifiedInsights called', {
+  console.debug("LOCAL FUNCTION UNIFIED: analytics-unified.html renderUnifiedInsights called", {
     containerId,
     timestamp: new Date().toISOString()
   });
@@ -168,7 +168,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
         <div>
           <div style="font-size: 1.1rem; font-weight: 700; color: var(--theme-text);">
-            🎯 Decision Index
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Decision Index
           </div>
           <div style="font-size: 0.85rem; color: var(--theme-text-muted);">
             Loading data...
@@ -203,14 +203,14 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         align-items: center;
         gap: 0.5rem;
       ">
-        <span class="di-loading-spinner">⏳</span>
+        <span class="di-loading-spinner"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg></span>
         <span>Fetching ML scores, cycles and on-chain data...</span>
       </div>
     </div>
   `;
 
   try {
-    console.debug('🔥 LOCAL: Loading corrected UnifiedInsights logic...');
+    console.debug("LOCAL: Loading corrected UnifiedInsights logic...");
 
     // Check if we have real balance data
     let realBalances = store.get('wallet.balances');
@@ -235,7 +235,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     if (!realBalances || realBalances.length === 0 || !totalValue || totalValue === 0) {
       el.innerHTML = `
         <div style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-xl); text-align: center;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
           <div style="font-size: 1.2rem; font-weight: 600; color: var(--theme-text); margin-bottom: 0.5rem;">
             No crypto data available
           </div>
@@ -260,7 +260,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const originalFunction = window.buildTheoreticalTargets;
 
     window.buildTheoreticalTargets = async function(blendedScore, currentPortfolio, riskScore) {
-      debugLogger.debug('🎯 TARGETS RÉELS (Fix Sources System):', { blendedScore, riskScore, hasCurrentPortfolio: !!currentPortfolio });
+      debugLogger.debug("TARGETS RÉELS (Fix Sources System):", { blendedScore, riskScore, hasCurrentPortfolio: !!currentPortfolio });
 
       try {
         // 1) Récupérer les vraies données de balance depuis le store ou recharger
@@ -269,7 +269,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
 
         // Si pas de données dans le store, essayer de les recharger
         if (!realBalances || !totalValue) {
-          debugLogger.debug('🔄 No balance data in store, attempting to reload...');
+          debugLogger.debug("No balance data in store, attempting to reload...");
           if (typeof window.loadBalanceData === 'function') {
             try {
               const balanceResult = await window.loadBalanceData();
@@ -282,7 +282,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
                 store.set('wallet.total', totalValue);
                 store.set('wallet.source_used', balanceResult.data?.source_used || balanceResult.source || null);
 
-                debugLogger.debug('✅ Balance data reloaded successfully');
+                debugLogger.debug("[OK] Balance data reloaded successfully");
               }
             } catch (e) {
               debugLogger.warn('Failed to reload balance data:', e.message);
@@ -301,7 +301,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
             realTargets[group.label] = group.value; // Valeur USD réelle
           });
 
-          debugLogger.debug('🎯 REAL TARGETS (from grouped data):', {
+          debugLogger.debug("REAL TARGETS (from grouped data):", {
             targets: realTargets,
             totalValue,
             groupsCount: groupedData.length,
@@ -313,12 +313,12 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
 
         // 4) Fallback: utiliser le currentPortfolio si fourni
         if (currentPortfolio && typeof currentPortfolio === 'object') {
-          debugLogger.debug('🎯 Using currentPortfolio as fallback');
+          debugLogger.debug("Using currentPortfolio as fallback");
           return currentPortfolio;
         }
 
         // 5) Dernier fallback: logique artificielle mais basée sur un scoring réaliste
-        debugLogger.warn('⚠️ Falling back to artificial targets (no real data available)');
+        debugLogger.warn("[Warning] Falling back to artificial targets (no real data available)");
 
         let stablesTarget, btcTarget, ethTarget, altsTarget;
         if (blendedScore >= 70) {
@@ -343,11 +343,11 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
           'Others': 0
         };
 
-        debugLogger.debug('🎯 FALLBACK TARGETS:', artificialTargets);
+        debugLogger.debug("FALLBACK TARGETS:", artificialTargets);
         return artificialTargets;
 
       } catch (error) {
-        debugLogger.error('❌ Error in buildTheoreticalTargets:', error);
+        debugLogger.error("Error in buildTheoreticalTargets:", error);
 
         // Fallback d'urgence
         return {
@@ -360,7 +360,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     };
 
     // 1) Rendre UnifiedInsights SANS son ancien header (on injecte le nouveau DI v5 au-dessus)
-    console.debug('🔥 LOCAL: Calling originalRender with fixes applied + hideHeader:true');
+    console.debug("LOCAL: Calling originalRender with fixes applied + hideHeader:true");
     await originalRender(containerId, { hideHeader: true });
 
     // Restaurer la fonction originale après utilisation
@@ -380,8 +380,8 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
 
     // Récupérer l'état unifié (MÊME source que UnifiedInsights)
     const u = await getUnifiedState();
-    console.debug('🔍 Unified state for DI panel:', u);
-    console.debug('🔍 Scores object in unified state:', u.scores);
+    console.debug("Unified state for DI panel:", u);
+    console.debug("Scores object in unified state:", u.scores);
 
     // Récupérer le stress macro (VIX/DXY) pour Override #4 (Feb 2026)
     let macroStress = null;
@@ -392,13 +392,13 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
       });
       if (macroResp.ok) {
         macroStress = await macroResp.json();
-        console.debug('🌍 Macro stress data:', macroStress);
+        console.debug("Macro stress data:", macroStress);
       }
     } catch (macroErr) {
-      console.debug('⚠️ Failed to fetch macro stress (non-blocking):', macroErr.message);
+      console.debug("Failed to fetch macro stress (non-blocking):", macroErr.message);
     }
-    console.debug('🔍 Risk score from unified state:', u.scores?.risk);
-    console.debug('🔍 Risk score from store:', store.get('scores.risk'));
+    console.debug("Risk score from unified state:", u.scores?.risk);
+    console.debug("Risk score from store:", store.get('scores.risk'));
 
     const cycleScore = u.cycle?.score ?? null;
     const onchainScore = u.onchain?.score ?? null;
@@ -407,7 +407,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
       ? u.decision.score
       : null;
 
-    console.debug('🔍 Final scores used in DI panel:', { cycleScore, onchainScore, riskScore, blendedScore });
+    console.debug("Final scores used in DI panel:", { cycleScore, onchainScore, riskScore, blendedScore });
 
     // Weights (depuis unified state)
     const wCycle = u.decision?.weights?.cycle ?? null;
@@ -454,7 +454,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     // Alpha si disponible dans signals
     const alpha = s?.signals?.alpha;
 
-    // 📊 Historique Decision Index (persistance localStorage via di-history.js)
+    //  Historique Decision Index (persistance localStorage via di-history.js)
     const activeUser = localStorage.getItem('activeUser');
     const dataSource = window.globalConfig?.get('data_source') || null;
 
@@ -478,10 +478,10 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     // Migration douce depuis legacy s?.di_history si première utilisation
     if (activeUser && dataSource && diHistory.length === 0
         && s?.di_history && Array.isArray(s.di_history) && s.di_history.length > 0) {
-      console.debug('📦 Migration legacy DI history...');
+      console.debug("Migration legacy DI history...");
       diHistory = diHistoryModule.migrateLegacy(s.di_history, 30);
       diHistoryModule.saveHistory(historyKey, diHistory);
-      console.debug('✅ Legacy migration done:', { count: diHistory.length });
+      console.debug("[OK] Legacy migration done:", { count: diHistory.length });
     }
 
     // Ajouter score actuel si nécessaire (date différente OU delta > 0.1)
@@ -500,7 +500,7 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     }
 
     if (added) {
-      console.debug('📊 DI history updated:', {
+      console.debug("DI history updated:", {
         count: diHistory.length,
         latest: blendedScore,
         context: isSimulation ? 'simulation' : 'production',
@@ -543,10 +543,10 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
           alts: (altsTotal / walletTotal) * 100
         };
 
-        console.debug('📊 Allocation Ring data:', allocationData);
+        console.debug("Allocation Ring data:", allocationData);
       }
     } catch (allocErr) {
-      console.warn('⚠️ Failed to compute allocation for ring:', allocErr.message);
+      console.warn("Failed to compute allocation for ring:", allocErr.message);
     }
 
     const panelData = {
@@ -560,14 +560,14 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         backend: s.ui?.apiStatus?.backend === 'healthy',
         signals: s.ui?.apiStatus?.signals === 'healthy',
         governance_mode: s.governance?.current_state || 'IDLE',
-        cap: capPercent,                       // ✅ entier %
-        mode: modeLabel,                       // ✅ "Manual", "Slow", ...
-        confidence: blendedConfidence,         // ✅ [0..1]
-        contradiction: contrad01,              // ✅ [0..1]
+        cap: capPercent,                       //  entier %
+        mode: modeLabel,                       //  "Manual", "Slow", ...
+        confidence: blendedConfidence,         //  [0..1]
+        contradiction: contrad01,              //  [0..1]
         cycle_confidence: cycleConf,           // pour badge bas
         updated: updatedISO,                   // pour horodatage
         signals_status: s.ui?.apiStatus?.signals || 'limited',
-        alpha: alpha,                          // ✅ alpha si dispo [0..1]
+        alpha: alpha,                          //  alpha si dispo [0..1]
 
         // Blended Score (régime) pour affichage dans métadonnées
         blended_score: u.scores?.blended ?? blendedScore ?? null,
@@ -599,9 +599,9 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
         dxy_change_30d: macroStress?.dxy?.pct_change_30d || null,
         dxy_stress: macroStress?.dxy?.is_stress || false
       },
-      history: diHistory.map(h => h.di),                                       // ✅ di history (array de scores)
-      regimeHistory: (s?.regime?.history || s?.regime_history || []),          // ✅ regime history (2 clés possibles)
-      allocation: allocationData                                                // ✅ allocation ring data (BTC/ETH/Stables/Alts)
+      history: diHistory.map(h => h.di),                                       //  di history (array de scores)
+      regimeHistory: (s?.regime?.history || s?.regime_history || []),          //  regime history (2 clés possibles)
+      allocation: allocationData                                                //  allocation ring data (BTC/ETH/Stables/Alts)
     };
 
     // Créer conteneur pour le Decision Index Panel (inclut maintenant les tuiles)
@@ -611,19 +611,19 @@ async function renderUnifiedInsights(containerId = 'unified-root') {
     const newPanelEl = document.getElementById('new-di-panel');
     if (newPanelEl) {
       renderDecisionIndexPanel(newPanelEl, panelData, { showFooter: true });
-      console.debug('✅ New Decision Index panel v5 injected with integrated tiles');
+      console.debug("[OK] New Decision Index panel v5 injected with integrated tiles");
     }
 
-    console.debug('🔥 LOCAL: Unified rendering completed with fixes');
+    console.debug("LOCAL: Unified rendering completed with fixes");
 
     // NOUVEAU: Sauvegarder les données unified pour rebalance.html
     await saveUnifiedDataForRebalance();
   } catch (error) {
-    debugLogger.error('❌ Failed to load corrected UnifiedInsights:', error);
+    debugLogger.error("Failed to load corrected UnifiedInsights:", error);
     el.innerHTML = `
       <div style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-md);">
         <div style="color: var(--danger); text-align: center;">
-          <h3>⚠️ Loading Error (Fixed)</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Loading Error (Fixed)</h3>
           <p>Unable to load corrected unified insights: ${error.message}</p>
           <button onclick="location.reload()" style="background: var(--brand-primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); cursor: pointer;">
             Reload
@@ -693,7 +693,7 @@ function readRiskDashboardCache() {
     const cached = localStorage.getItem(cacheKey);
 
     if (!cached) {
-      debugLogger.debug('⏭️ No risk-dashboard cache found');
+      debugLogger.debug("No risk-dashboard cache found");
       return null;
     }
 
@@ -719,12 +719,12 @@ function readRiskDashboardCache() {
     const ttl = 6 * 60 * 60 * 1000; // 6 heures (même TTL que risk-dashboard)
 
     if (age > ttl) {
-      debugLogger.debug(`⏰ Risk dashboard cache expired (age: ${Math.round(age / 60000)} min > 360 min)`);
+      debugLogger.debug(`Risk dashboard cache expired (age: ${Math.round(age / 60000)} min > 360 min)`);
       return null;
     }
 
     const ageMin = Math.round(age / 60000);
-    debugLogger.debug(`✅ CROSS-PAGE CACHE HIT: Using risk-dashboard cache (age: ${ageMin} min, TTL: 6h)`);
+    debugLogger.debug(`[OK] CROSS-PAGE CACHE HIT: Using risk-dashboard cache (age: ${ageMin} min, TTL: 6h)`);
 
     return {
       onchainScore: cacheData.onchainScore,
@@ -735,7 +735,7 @@ function readRiskDashboardCache() {
       source: 'risk_dashboard_6h_cache'
     };
   } catch (e) {
-    debugLogger.warn('❌ Failed to read risk-dashboard cache:', e.message);
+    debugLogger.warn("Failed to read risk-dashboard cache:", e.message);
     return null;
   }
 }
@@ -784,7 +784,7 @@ function updateAnalyticsBadges() {
       });
     }
 
-    debugLogger.debug('🏷️ Analytics badges updated');
+    debugLogger.debug("Analytics badges updated");
   } catch (error) {
     debugLogger.warn('Badge update failed:', error);
   }
@@ -869,7 +869,7 @@ function updateRiskMetrics() {
         : 'Synthesis unavailable';
     }
 
-    debugLogger.debug('📊 Risk metrics updated with dynamic data');
+    debugLogger.debug("Risk metrics updated with dynamic data");
   } catch (error) {
     debugLogger.warn('Risk metrics update failed:', error);
   }
@@ -963,7 +963,7 @@ async function ensureRiskBudgetReady(getRiskBudget, options = {}) {
 
 // Lightweight unified data loader with INTELLIGENT CACHING
 async function loadUnifiedData(force = false) {
-  debugLogger.debug('🧠 Loading unified data with intelligent caching...', { force });
+  debugLogger.debug("Loading unified data with intelligent caching...", { force });
   let loadedFromCache = 0;
 
   try {
@@ -973,33 +973,33 @@ async function loadUnifiedData(force = false) {
     if (!force) {
       const dashboardCache = readRiskDashboardCache();
       if (dashboardCache) {
-        debugLogger.debug('🎯 CROSS-PAGE CACHE FOUND - Hydrating store with cached scores...');
+        debugLogger.debug("CROSS-PAGE CACHE FOUND - Hydrating store with cached scores...");
         // Hydrate store immediately with cached scores
         if (typeof dashboardCache.onchainScore === 'number') {
           store.set('scores.onchain', dashboardCache.onchainScore);
-          debugLogger.debug(`⚡ FAST: On-Chain from cache: ${dashboardCache.onchainScore}`);
+          debugLogger.debug(`FAST: On-Chain from cache: ${dashboardCache.onchainScore}`);
           loadedFromCache++;
         }
         if (typeof dashboardCache.riskScore === 'number') {
           store.set('scores.risk', dashboardCache.riskScore);
-          debugLogger.debug(`⚡ FAST: Risk from cache: ${dashboardCache.riskScore}`);
+          debugLogger.debug(`FAST: Risk from cache: ${dashboardCache.riskScore}`);
           loadedFromCache++;
         }
         if (typeof dashboardCache.blendedScore === 'number') {
           store.set('scores.blended', dashboardCache.blendedScore);
-          debugLogger.debug(`⚡ FAST: Blended from cache: ${dashboardCache.blendedScore}`);
+          debugLogger.debug(`FAST: Blended from cache: ${dashboardCache.blendedScore}`);
         }
 
         // Skip slow API calls if cache is fresh
         const cacheAge = Math.round((Date.now() - dashboardCache.timestamp) / 60000);
-        debugLogger.debug(`✅ Skipping slow Risk/On-Chain API calls - using ${cacheAge}min old cache (TTL: 6h)`);
-        debugLogger.debug('📊 Store now has scores:', {
+        debugLogger.debug(`[OK] Skipping slow Risk/On-Chain API calls - using ${cacheAge}min old cache (TTL: 6h)`);
+        debugLogger.debug("Store now has scores:", {
           onchain: store.get('scores.onchain'),
           risk: store.get('scores.risk'),
           blended: store.get('scores.blended')
         });
       } else {
-        debugLogger.debug('📊 No cross-page cache - will use slower API calls');
+        debugLogger.debug("No cross-page cache - will use slower API calls");
       }
     }
 
@@ -1007,15 +1007,15 @@ async function loadUnifiedData(force = false) {
     // Orchestrator already loaded risk score via risk-data-orchestrator.js
     const existingRiskScore = store.get('scores.risk');
     if (typeof existingRiskScore === 'number') {
-      debugLogger.debug(`✅ Risk score already hydrated by orchestrator: ${existingRiskScore}`);
+      debugLogger.debug(`[OK] Risk score already hydrated by orchestrator: ${existingRiskScore}`);
       loadedFromCache++;
     } else {
-      debugLogger.debug('⚠️ Risk score not yet hydrated, waiting for orchestrator...');
+      debugLogger.debug("[Warning] Risk score not yet hydrated, waiting for orchestrator...");
       // Wait for orchestrator hydration if not ready
       await new Promise(resolve => {
         const handler = (e) => {
           if (e.detail?.hydrated) {
-            debugLogger.debug('✅ Orchestrator hydrated, risk score available');
+            debugLogger.debug("[OK] Orchestrator hydrated, risk score available");
             resolve();
           }
         };
@@ -1038,7 +1038,7 @@ async function loadUnifiedData(force = false) {
           const cacheTimestamp = rawCache ? JSON.parse(rawCache).timestamp : 0;
           // If params are newer than cache, invalidate
           if (paramsData.timestamp > cacheTimestamp) {
-            debugLogger.debug('🔄 Cycle params newer than cache, forcing recalc');
+            debugLogger.debug("Cycle params newer than cache, forcing recalc");
             cycleCacheValid = false;
           }
         }
@@ -1046,7 +1046,7 @@ async function loadUnifiedData(force = false) {
     }
 
     if (cycleCacheValid) {
-      debugLogger.debug('✅ Cycle data loaded from cache');
+      debugLogger.debug("[OK] Cycle data loaded from cache");
       const cycleData = getCache(CACHE_CONFIG.cycle.key);
       store.set('cycle.months', cycleData.months);
       store.set('cycle.score', cycleData.score);
@@ -1063,7 +1063,7 @@ async function loadUnifiedData(force = false) {
         store.set('cycle.months', c.months);
         store.set('cycle.score', score);
         store.set('cycle.phase', phase);
-        debugLogger.debug('✅ Cycle data calculated and cached', { score });
+        debugLogger.debug("[OK] Cycle data calculated and cached", { score });
       } catch (e) { debugLogger.warn('Cycle data load failed:', e.message); }
     }
 
@@ -1075,10 +1075,10 @@ async function loadUnifiedData(force = false) {
     // Check if already loaded from dashboard cache
     const existingOnchainScore = store.get('scores.onchain');
     if (!manualRefresh && typeof existingOnchainScore === 'number') {
-      debugLogger.debug('✅ On-Chain already in store from dashboard cache, skipping API');
+      debugLogger.debug("[OK] On-Chain already in store from dashboard cache, skipping API");
       loadedFromCache++;
     } else if (!manualRefresh && isCacheValid(CACHE_CONFIG.onchain.key, CACHE_CONFIG.onchain.ttl)) {
-      debugLogger.debug('✅ On-Chain data loaded from legacy cache');
+      debugLogger.debug("[OK] On-Chain data loaded from legacy cache");
       const onchainData = getCache(CACHE_CONFIG.onchain.key);
       if (typeof onchainData.score === 'number') {
         store.set('scores.onchain', onchainData.score);
@@ -1088,7 +1088,7 @@ async function loadUnifiedData(force = false) {
       store.set('ui.apiStatus.signals', 'healthy');
       loadedFromCache++;
     } else {
-      debugLogger.debug('🔄 On-Chain refresh - Using SWR cache for optimal performance...');
+      debugLogger.debug("On-Chain refresh - Using SWR cache for optimal performance...");
       try {
         const onchain = await import('../modules/onchain-indicators.js');
         const v2 = await import('../modules/composite-score-v2.js');
@@ -1111,7 +1111,7 @@ async function loadUnifiedData(force = false) {
                   _metadata: { available_count: 1 }
                 };
                 finalComposite = v2.calculateCompositeScoreV2(minimal, true);
-                debugLogger.debug('✅ On-Chain fallback (Fear & Greed) used in unified loader');
+                debugLogger.debug("[OK] On-Chain fallback (Fear & Greed) used in unified loader");
               }
             }
           } catch (fe) { debugLogger.warn('On-chain FG fallback failed:', fe.message); }
@@ -1135,7 +1135,7 @@ async function loadUnifiedData(force = false) {
         store.set('scores.onchain_metadata', onchainData.metadata);
         store.set('scores.contradictory_signals', onchainData.contradictory_signals);
         store.set('ui.apiStatus.signals', 'healthy');
-        debugLogger.debug('✅ On-Chain data calculated and cached');
+        debugLogger.debug("[OK] On-Chain data calculated and cached");
       } catch (e) {
         debugLogger.warn('On-chain load failed:', e.message);
         store.set('ui.apiStatus.signals', 'error');
@@ -1144,7 +1144,7 @@ async function loadUnifiedData(force = false) {
 
     // PATCH B - TOUJOURS exécuter l'injection de données (même avec cache)
     try {
-      // DEBUG A - Vérification parité Rebalance ↔ Analytics
+      // DEBUG A - Vérification parité Rebalance  Analytics
       debugLogger.debug('[whoami]', {
         currentUser: localStorage.getItem('activeUser'),
         currentSource: window.globalConfig?.get('data_source') || 'unknown'
@@ -1163,7 +1163,7 @@ async function loadUnifiedData(force = false) {
             store.set('wallet.total', totalValue);
             store.set('wallet.source_used', balanceResult.data?.source_used || balanceResult.source || null);
 
-            debugLogger.debug('🔧 PATCH: Analytics FORCE injection même avec cache:', {
+            debugLogger.debug("PATCH: Analytics FORCE injection même avec cache:", {
               items: realBalances.length,
               first5: realBalances.slice(0,5),
               total: totalValue,
@@ -1176,7 +1176,7 @@ async function loadUnifiedData(force = false) {
             try {
               const { groupAssetsByClassification } = await import('../shared-asset-groups.js');
               const groupedData = groupAssetsByClassification(realBalances);
-              debugLogger.debug('🔍 POST-INJECTION GROUPING (Analytics):', {
+              debugLogger.debug("POST-INJECTION GROUPING (Analytics):", {
                 groups: groupedData.map(g => ({
                   label: g.label,
                   value: g.value,
@@ -1189,7 +1189,7 @@ async function loadUnifiedData(force = false) {
             }
           }
         } catch (e) {
-          debugLogger.warn('🔧 PATCH failed, but continuing:', e.message);
+          debugLogger.warn("PATCH failed, but continuing:", e.message);
         }
       }
     } catch (e) {
@@ -1220,7 +1220,7 @@ async function loadUnifiedData(force = false) {
       store.set('market.regime', null);
       debugLogger.debug('Regime Score unavailable: current CCS Mixed, on-chain and Risk Scores are required', blendInputs);
     } else if (cachedInputsMatch) {
-      debugLogger.debug('✅ Blended score loaded from cache');
+      debugLogger.debug("[OK] Blended score loaded from cache");
       store.set('scores.blended', cachedBlendedData.score);
       store.set('market.regime', cachedBlendedData.regime);
       loadedFromCache++;
@@ -1229,7 +1229,7 @@ async function loadUnifiedData(force = false) {
       try {
         const s = store.snapshot();
 
-        // DEBUG A - Vérification parité Rebalance ↔ Analytics
+        // DEBUG A - Vérification parité Rebalance  Analytics
         debugLogger.debug('[whoami]', {
           currentUser: localStorage.getItem('activeUser'),
           currentSource: window.globalConfig?.get('data_source') || 'unknown'
@@ -1259,14 +1259,14 @@ async function loadUnifiedData(force = false) {
                 const { groupAssetsByClassification, getAssetGroup } = await import('../shared-asset-groups.js');
                 const groupedData = groupAssetsByClassification(realBalances);
 
-                debugLogger.debug('🔧 PATCH: Analytics now using same data as Rebalance:', {
+                debugLogger.debug("PATCH: Analytics now using same data as Rebalance:", {
                   items: realBalances.length,
                   first5: realBalances.slice(0,5),
                   total: totalValue,
                   source: balanceResult.source
                 });
 
-                debugLogger.debug('🔍 GROUPING TEST (même fonction que Rebalance):', {
+                debugLogger.debug("GROUPING TEST (même fonction que Rebalance):", {
                   groups: groupedData.map(g => ({
                     label: g.label,
                     value: g.value,
@@ -1278,7 +1278,7 @@ async function loadUnifiedData(force = false) {
                 });
 
                 // DEBUG - Asset par asset avec classification
-                debugLogger.debug('🔍 ASSET CLASSIFICATION:', realBalances.slice(0,10).map(item => ({
+                debugLogger.debug("ASSET CLASSIFICATION:", realBalances.slice(0,10).map(item => ({
                   symbol: item.symbol,
                   value: item.value_usd,
                   group: getAssetGroup(item.symbol)
@@ -1289,11 +1289,11 @@ async function loadUnifiedData(force = false) {
               }
             }
           } catch (e) {
-            debugLogger.warn('🔧 PATCH failed, fallback to store data:', e.message);
+            debugLogger.warn("PATCH failed, fallback to store data:", e.message);
           }
         }
 
-        // ✅ UNIFORMISATION avec risk-dashboard.html (même formule canonique)
+        //  UNIFORMISATION avec risk-dashboard.html (même formule canonique)
         // Formule : 50% CCS Mixte + 30% On-Chain + 20% Risk (sans inversion)
         // Respecte docs/RISK_SEMANTICS.md
 
@@ -1316,7 +1316,7 @@ async function loadUnifiedData(force = false) {
           + (riskScore * wRisk);
         const blendedScore = Math.round(Math.max(0, Math.min(100, blended)));
 
-        console.debug('🎯 Blended Score (formule canonique):', {
+        console.debug("Blended Score (formule canonique):", {
           ccsMixte: ccsMixteScore,
           onchain: onchainScore,
           risk: riskScore,
@@ -1337,13 +1337,13 @@ async function loadUnifiedData(force = false) {
 
         store.set('scores.blended', blendedScore);
         store.set('market.regime', regimeData);
-        debugLogger.debug('✅ Blended score calculated and cached');
+        debugLogger.debug("[OK] Blended score calculated and cached");
       } catch (e) { debugLogger.warn('Blended compute failed:', e.message); }
     }
 
     const cacheEfficiency = loadedFromCache > 0 ? `${loadedFromCache}/4 from cache` : 'full calculation';
     const crossPageUsed = store.get('scores.onchain') && store.get('scores.risk') ? ' (6h cross-page cache)' : '';
-    debugLogger.debug(`🎯 Unified data loading completed - ${cacheEfficiency}${crossPageUsed}${loadedFromCache > 0 ? ' ⚡ FAST' : ''}`);
+    debugLogger.debug(`Unified data loading completed - ${cacheEfficiency}${crossPageUsed}${loadedFromCache > 0 ? "FAST" : ''}`);
 
     // CONTRÔLES D - Invariants obligatoires (3 assertions critiques)
     try {
@@ -1379,7 +1379,7 @@ async function loadUnifiedData(force = false) {
       if (!rb) {
         rb = await ensureRiskBudgetReady(() => window.__store?.riskBudget);
         if (!rb) {
-          console.debug('⚠️ Skip invariant checks this tick: risk budget not ready');
+          console.debug("[Warning] Skip invariant checks this tick: risk budget not ready");
           // Don't return, continue with other operations
         }
       }
@@ -1397,7 +1397,7 @@ async function loadUnifiedData(force = false) {
         );
       }
 
-      console.debug('✅ Invariants Analytics validés:', {
+      console.debug("[OK] Invariants Analytics validés:", {
         sumCheck: riskBudget?.percentages ? `${risky}+${stables}=${risky+stables}%` : 'N/A',
         targetStables: `${targetStablesPct}%`,
         targetsCount: targets.length,
@@ -1405,7 +1405,7 @@ async function loadUnifiedData(force = false) {
       });
 
     } catch (assertError) {
-      debugLogger.error('❌ ASSERTION FAILED:', assertError.message);
+      debugLogger.error("[Error] ASSERTION FAILED:", assertError.message);
     }
 
     // Update badges with latest data
@@ -1423,10 +1423,10 @@ async function loadUnifiedData(force = false) {
 
     if (hasMinimalData) {
       store.set('ui.apiStatus.backend', 'healthy');
-      debugLogger.debug('✅ Backend marked healthy (minimal data available)');
+      debugLogger.debug("[OK] Backend marked healthy (minimal data available)");
     } else {
       store.set('ui.apiStatus.backend', 'degraded');
-      debugLogger.debug('📊 Backend loading (minimal data pending)');
+      debugLogger.debug("Backend loading (minimal data pending)");
     }
 
   } catch (e) {
@@ -1437,7 +1437,7 @@ async function loadUnifiedData(force = false) {
 }
 // Track data source changes for cache invalidation
 let lastKnownDataSource = globalConfig.get('data_source');
-debugLogger.debug(`📊 Analytics Unified initialized with data source: ${lastKnownDataSource}`);
+debugLogger.debug(`Analytics Unified initialized with data source: ${lastKnownDataSource}`);
 
 // Listen for data source changes
 window.addEventListener('storage', function (e) {
@@ -1447,7 +1447,7 @@ window.addEventListener('storage', function (e) {
 
     const currentSource = globalConfig.get('data_source');
     if (currentSource && currentSource !== lastKnownDataSource) {
-      console.debug(`🔄 Data source changed from ${lastKnownDataSource} to ${currentSource}, clearing cache and reloading...`);
+      console.debug(`Data source changed from ${lastKnownDataSource} to ${currentSource}, clearing cache and reloading...`);
       lastKnownDataSource = currentSource;
       // Clear all cache for this source change
       Object.values(CACHE_CONFIG).forEach(config => {
@@ -1463,7 +1463,7 @@ window.addEventListener('storage', function (e) {
 });
 
 window.addEventListener('dataSourceChanged', (event) => {
-  console.debug(`🔄 Explicit data source change in analytics-unified: ${event.detail.oldSource} → ${event.detail.newSource}`);
+  console.debug(`Explicit data source change in analytics-unified: ${event.detail.oldSource} → ${event.detail.newSource}`);
   lastKnownDataSource = event.detail.newSource;
   // Clear cache and reload
   loadUnifiedData();
@@ -1472,12 +1472,12 @@ window.addEventListener('dataSourceChanged', (event) => {
 });
 
 // OVERRIDE PRÉCOCE - Avant même le DOMContentLoaded
-debugLogger.debug('🔥 EARLY OVERRIDE: Setting renderUnifiedInsights before any other imports');
+debugLogger.debug("EARLY OVERRIDE: Setting renderUnifiedInsights before any other imports");
 delete window.renderUnifiedInsights;
 window.renderUnifiedInsights = renderUnifiedInsights;
 
 // FORCE CACHE BUST: Ajouter timestamp pour forcer le rechargement
-debugLogger.debug('🆘 CACHE BUST ANALYTICS UNIFIED:', new Date().toISOString());
+debugLogger.debug("CACHE BUST ANALYTICS UNIFIED:", new Date().toISOString());
 
 // Suppress chrome extension errors
 window.addEventListener('error', function(e) {
@@ -1492,27 +1492,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize governance panel
   const governanceContainer = document.getElementById('governance-container');
   if (governanceContainer) {
-    debugLogger.debug('🏛️ Initializing Governance Panel in analytics dashboard...');
+    debugLogger.debug("Initializing Governance Panel in analytics dashboard...");
     const governancePanel = new GovernancePanel(governanceContainer);
     window.governancePanel = governancePanel; // For debugging
   }
 
 
   // OVERRIDE FINAL AVANT INITIAL PAINT
-  debugLogger.debug('🆘 DOM READY - FINAL OVERRIDE:', new Date().toISOString());
+  debugLogger.debug("DOM READY - FINAL OVERRIDE:", new Date().toISOString());
 
   // FORCE OVERRIDE - Supprimer toute fonction existante d'abord
   delete window.renderUnifiedInsights;
   window.renderUnifiedInsights = renderUnifiedInsights;
 
   // VERIFICATION de l'override
-  debugLogger.debug('🔍 VERIFICATION OVERRIDE:', {
+  debugLogger.debug("VERIFICATION OVERRIDE:", {
     isLocalFunction: window.renderUnifiedInsights === renderUnifiedInsights,
-    functionSource: window.renderUnifiedInsights.toString().includes('🔥 LOCAL FUNCTION UNIFIED')
+    functionSource: window.renderUnifiedInsights.toString().includes("LOCAL FUNCTION UNIFIED")
   });
 
   // CORRECTION TIMING: Charger les données AVANT le rendu initial
-  debugLogger.debug('🔄 LOADING DATA FIRST, THEN RENDERING...');
+  debugLogger.debug("LOADING DATA FIRST, THEN RENDERING...");
 
   // 0) Force reload taxonomie pour éviter fallback "Others"
   try {
@@ -1520,19 +1520,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     await taxonomyModule.forceReloadTaxonomy();
     // Lire via module.* pour obtenir le live binding (pas de destructuration stale)
     if (!Object.keys(taxonomyModule.UNIFIED_ASSET_GROUPS || {}).length) {
-      debugLogger.warn('⚠️ Taxonomy non chargée – risque de "Others" gonflé. Vérifie API base_url.');
+      debugLogger.warn("[Warning] Taxonomy non chargée – risque de \"Others\" gonflé. Vérifie API base_url.");
     } else {
-      debugLogger.debug('✅ Taxonomy forcée:', Object.keys(taxonomyModule.UNIFIED_ASSET_GROUPS).length, 'groupes chargés');
+      debugLogger.debug("[OK] Taxonomy forcée:", Object.keys(taxonomyModule.UNIFIED_ASSET_GROUPS).length, 'groupes chargés');
     }
   } catch (taxonomyError) {
-    debugLogger.warn('❌ Force reload taxonomy failed:', taxonomyError.message);
+    debugLogger.warn("[Error] Force reload taxonomy failed:", taxonomyError.message);
   }
 
   // 1) Charger les données d'abord (detect hard refresh)
   const isHardRefresh = performance.navigation?.type === 1 ||
                         performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
   if (isHardRefresh) {
-    debugLogger.debug('🔄 Hard refresh detected, forcing cache refresh for all data');
+    debugLogger.debug("Hard refresh detected, forcing cache refresh for all data");
   }
   await loadUnifiedData(isHardRefresh);
 
@@ -1551,13 +1551,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Skip if already rendering
     if (window.__uiMutex.busy) {
-      console.debug('🔒 UI Mutex: Skipping render (already in progress)');
+      console.debug("UI Mutex: Skipping render (already in progress)");
       return;
     }
 
     // Skip if rendered too recently
     if (now - window.__uiMutex.lastRender < window.__uiMutex.MIN_RENDER_INTERVAL) {
-      console.debug('🔒 Rate limit: Skipping render (too frequent)');
+      console.debug("Rate limit: Skipping render (too frequent)");
       return;
     }
 
@@ -1574,12 +1574,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const isFirstRender = window.__uiMutex.lastRender === 0;
 
     if (currentHash === window.__uiMutex.lastHash && hasScores && !isFirstRender) {
-      console.debug('🔒 State unchanged: Skipping render (scores OK)');
+      console.debug("State unchanged: Skipping render (scores OK)");
       return;
     }
 
     if (!hasScores) {
-      debugLogger.warn('⚠️ Rendering with incomplete scores:', {
+      debugLogger.warn("[Warning] Rendering with incomplete scores:", {
         cycle: storeSnapshot?.scores?.cycle,
         onchain: storeSnapshot?.scores?.onchain,
         risk: storeSnapshot?.scores?.risk,
@@ -1593,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       await renderUnifiedInsights('unified-root');
-      console.debug('✅ Render completed', { hasScores });
+      console.debug("[OK] Render completed", { hasScores });
     } finally {
       window.__uiMutex.busy = false;
     }
@@ -1610,10 +1610,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 2) Initialize governance system BEFORE first render
   setTimeout(async () => {
     try {
-      debugLogger.debug('🏛️ Initializing governance system in analytics dashboard...');
+      debugLogger.debug("Initializing governance system in analytics dashboard...");
       await store.syncGovernanceState();
       await store.syncMLSignals();
-      debugLogger.debug('✅ Governance system initialized in analytics dashboard');
+      debugLogger.debug("[OK] Governance system initialized in analytics dashboard");
 
       // 3) Premier rendu avec données fraîches ET governance synchronisée
       // IMPORTANT: Attendre que le rendu soit terminé pour éviter race condition
@@ -1624,31 +1624,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.governancePanel.refreshState({ silent: true });
       }
     } catch (error) {
-      debugLogger.warn('⚠️ Failed to initialize governance in analytics:', error);
+      debugLogger.warn("Failed to initialize governance in analytics:", error);
     }
   }, 500);
 
   // Manual refresh button handler
   document.getElementById('manual-refresh-onchain')?.addEventListener('click', async function() {
-    debugLogger.debug('🔄 Manual refresh triggered by user');
+    debugLogger.debug("Manual refresh triggered by user");
     this.disabled = true;
-    this.textContent = '⏳ Actualisation...';
+    this.textContent = "[Pending] Actualisation...";
 
     try {
       // Force refresh onchain data
       await loadUnifiedData();
       await renderUnifiedInsightsOnce();
 
-      this.textContent = '✅ Updated';
+      this.textContent = "[OK] Updated";
       setTimeout(() => {
-        this.textContent = '🔄 Refresh';
+        this.textContent = "Refresh";
         this.disabled = false;
       }, 2000);
     } catch (error) {
       debugLogger.error('Manual refresh failed:', error);
-      this.textContent = '❌ Error';
+      this.textContent = "Error";
       setTimeout(() => {
-        this.textContent = '🔄 Refresh';
+        this.textContent = "Refresh";
         this.disabled = false;
       }, 3000);
     }
@@ -1678,10 +1678,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, 500); // Increased from 250ms to 500ms for better batching
   });
 
-  // ✅ CRITIQUE: Attendre hydratation orchestrator avant 1er updateRiskMetrics
+  //  CRITIQUE: Attendre hydratation orchestrator avant 1er updateRiskMetrics
   window.addEventListener('riskStoreReady', (e) => {
     if (e.detail?.hydrated) {
-      debugLogger.debug('✅ Orchestrator hydrated, refreshing risk metrics');
+      debugLogger.debug("[OK] Orchestrator hydrated, refreshing risk metrics");
       updateRiskMetrics();
     }
   }, { once: true });
@@ -1689,7 +1689,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Listen for user changes to clear and reload all data
   window.addEventListener('activeUserChanged', async (event) => {
     const { oldUser, newUser } = event.detail;
-    debugLogger.debug(`🔄 User changed from ${oldUser} to ${newUser}, reloading analytics data...`);
+    debugLogger.debug(`User changed from ${oldUser} to ${newUser}, reloading analytics data...`);
 
     try {
       // Clear store and reload for new user
@@ -1705,9 +1705,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       await renderUnifiedInsightsOnce();
       updateRiskMetrics();
 
-      debugLogger.debug('✅ Analytics data reloaded for new user');
+      debugLogger.debug("[OK] Analytics data reloaded for new user");
     } catch (error) {
-      debugLogger.error('❌ Failed to reload analytics for new user:', error);
+      debugLogger.error("Failed to reload analytics for new user:", error);
     }
   });
 
@@ -1726,12 +1726,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // DERNIÈRE CHANCE - Override après TOUS les imports et définitions
-debugLogger.debug('🔥 FINAL FINAL OVERRIDE - After all scripts loaded');
+debugLogger.debug("FINAL FINAL OVERRIDE - After all scripts loaded");
 setTimeout(() => {
   delete window.renderUnifiedInsights;
   window.renderUnifiedInsights = renderUnifiedInsights;
-  debugLogger.debug('🔥 LATE OVERRIDE APPLIED:', {
+  debugLogger.debug("LATE OVERRIDE APPLIED:", {
     isOurFunction: window.renderUnifiedInsights === renderUnifiedInsights,
-    hasOurMarker: window.renderUnifiedInsights.toString().includes('🔥 LOCAL FUNCTION UNIFIED')
+    hasOurMarker: window.renderUnifiedInsights.toString().includes("LOCAL FUNCTION UNIFIED")
   });
 }, 100);

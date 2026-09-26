@@ -1,7 +1,7 @@
 # Corrections de Performance - 12 Décembre 2025
 
 **Suite de**: [PERFORMANCE_AUDIT_2025-12-12.md](PERFORMANCE_AUDIT_2025-12-12.md)
-**Status**: ✅ Complété (7 fixes)
+**Status**: [OK] Complété (7 fixes)
 **Impact**: -80-99% latence sur endpoints critiques
 
 ---
@@ -22,7 +22,7 @@
 
 ---
 
-## Fix #1: Cache Taxonomy N+1 ⚡
+## Fix #1: Cache Taxonomy N+1
 
 **Problème**: Taxonomy.json rechargé 50+ fois par calcul de portfolio
 
@@ -61,7 +61,7 @@ group = self.taxonomy.group_for_alias(symbol)  # Cached!
 
 ---
 
-## Fix #2: Vectorisation Pandas ⚡
+## Fix #2: Vectorisation Pandas
 
 **Problème**: Utilisation de `iterrows()` (100x plus lent que vectorisé)
 
@@ -139,7 +139,7 @@ return pd.Series(data=portfolio_returns.values)
 
 ---
 
-## Fix #3: Activation Cache Risk Endpoints ⚡
+## Fix #3: Activation Cache Risk Endpoints
 
 **Problème**: Cache déclaré mais jamais utilisé dans `/api/risk/metrics`
 
@@ -186,7 +186,7 @@ async def get_portfolio_risk_metrics(...):
 
 ---
 
-## Fix #4: TTL User Secrets (Sécurité) 🔒
+## Fix #4: TTL User Secrets (Sécurité)
 
 **Problème**: Credentials API en mémoire indéfiniment
 
@@ -238,7 +238,7 @@ class UserSecretsManager:
 
 ---
 
-## Fix #5: CoinGecko Cache Cleanup (Memory Leak) 🔧
+## Fix #5: CoinGecko Cache Cleanup (Memory Leak)
 
 **Problème**: Entrées expirées jamais supprimées du cache
 
@@ -312,7 +312,7 @@ async def trigger_cache_cleanup():
 
 ---
 
-## Fix #6: Scheduler Warmup Parallelization ⚡
+## Fix #6: Scheduler Warmup Parallelization
 
 **Problème**: Appels API séquentiels avec délais
 
@@ -359,7 +359,7 @@ async with httpx.AsyncClient(timeout=10.0) as client:
 
 ---
 
-## Fix #7: Pagination Endpoints 📄
+## Fix #7: Pagination Endpoints
 
 **Problème**: Endpoints retournent tous les résultats sans pagination
 
@@ -460,7 +460,7 @@ async def list_patrimoine_items(
 - `api/crypto_toolbox_endpoints.py:97` → `REDIS_CACHE_KEY = "crypto_toolbox:data"`
 - `services/fx_service.py:30` → `_RATES_CACHE_TTL = 14400`
 
-**Résultat**: ✅ **Pas de collision**
+**Résultat**: [OK] **Pas de collision**
 - Crypto-toolbox: Signaux publics de marché (même data pour tous users)
 - FX Service: Taux de change publics (USD/EUR identique pour tous)
 - **Comportement intentionnel**: Données market-wide partagées
@@ -471,7 +471,7 @@ async def list_patrimoine_items(
 - `static/ai-components.js:33-36` → `cleanup()` avec `clearInterval(this.updateInterval)`
 - `static/components/risk-sidebar-full.js:94-101` → `disconnectedCallback()` avec cleanup
 
-**Résultat**: ✅ **Cleanup déjà implémenté**
+**Résultat**: [OK] **Cleanup déjà implémenté**
 - Tous les composants ont `disconnectedCallback()`
 - Tous les intervals sont cleared
 - Pattern AbortController présent où nécessaire

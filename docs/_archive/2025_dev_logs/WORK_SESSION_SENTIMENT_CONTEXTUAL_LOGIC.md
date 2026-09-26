@@ -1,24 +1,24 @@
-# 🎯 Session de Travail: Logique Contextuelle ML Sentiment + Régime
+# Session de Travail: Logique Contextuelle ML Sentiment + Régime
 
 **Date:** 22 Octobre 2025
-**Statut:** ✅ IMPLÉMENTÉ ET TESTÉ
+**Statut:** [OK] IMPLÉMENTÉ ET TESTÉ
 **Priorité:** Haute - Logique métier fondamentale
 
 **Implémentation Complète (22 Oct 2025 19:15):**
 
-- ✅ Logique hiérarchique 3 niveaux (Sentiments Extrêmes > Phase Engine > Modulateurs)
-- ✅ Persistence buffers Phase Engine (localStorage, TTL 7j)
-- ✅ Fallback intelligent (utilise DI + breadth si données partielles)
-- ✅ Default 'apply' mode (Phase Engine actif par défaut)
-- ✅ Tests validés: 5 scénarios passent (Bull+Neutral, Bear+Fear, Bull+Fear, Extreme Greed, Bull+Fear+PhaseEngine)
-- ✅ Panneau Beta supprimé (système autonome)
-- ✅ Documentation mise à jour (CLAUDE.md)
+- [OK] Logique hiérarchique 3 niveaux (Sentiments Extrêmes > Phase Engine > Modulateurs)
+- [OK] Persistence buffers Phase Engine (localStorage, TTL 7j)
+- [OK] Fallback intelligent (utilise DI + breadth si données partielles)
+- [OK] Default 'apply' mode (Phase Engine actif par défaut)
+- [OK] Tests validés: 5 scénarios passent (Bull+Neutral, Bear+Fear, Bull+Fear, Extreme Greed, Bull+Fear+PhaseEngine)
+- [OK] Panneau Beta supprimé (système autonome)
+- [OK] Documentation mise à jour (CLAUDE.md)
 
 ---
 
-## 📋 Contexte Initial
+## Contexte Initial
 
-### Problème Découvert #1: Incohérence ML Sentiment (RÉSOLU ✅)
+### Problème Découvert #1: Incohérence ML Sentiment (RÉSOLU )
 
 **Symptôme:**
 - Vue d'ensemble (ai-dashboard): 80/100
@@ -85,13 +85,13 @@ async def _get_sentiment_analysis(self, symbols: List[str]) -> Dict[str, Any]:
 
 ---
 
-## 🎯 Problème Principal: Logique Contextuelle Manquante
+## Problème Principal: Logique Contextuelle Manquante
 
 ### Constat
 
 **Documentation vs Réalité:**
-- ✅ **Documenté** dans `docs/DECISION_INDEX_V2.md` (lignes 162-169)
-- ❌ **PAS implémenté** dans le code
+- [OK] **Documenté** dans `docs/DECISION_INDEX_V2.md` (lignes 162-169)
+- [Error] **PAS implémenté** dans le code
 
 **Ce qui est documenté (mais pas codé):**
 ```javascript
@@ -109,7 +109,7 @@ if (mlSentiment < 25) {
 
 ---
 
-## 🔍 Analyse de l'Existant
+## Analyse de l'Existant
 
 ### 1. Detection de Contradiction (Backend)
 
@@ -122,16 +122,16 @@ sentiment_data = self._extract_sentiment_signals(ml_status)
 sentiment_extreme_fear = sentiment_data.get("fear_greed", 50) < 25
 sentiment_extreme_greed = sentiment_data.get("fear_greed", 50) > 75
 
-# ✅ DÉTECTE la contradiction
+# DÉTECTE la contradiction
 if (sentiment_extreme_greed and not regime_bull) or (sentiment_extreme_fear and regime_bull):
     contradictions += 0.25  # Ajouté au contradiction_index
 total_checks += 1.0
 ```
 
 **Utilisation actuelle:**
-- ✅ Ajuste la **policy** (mode: Normal/Slow/Freeze)
-- ✅ Ajuste le **cap_daily** (vitesse de rebalancing)
-- ❌ **N'ajuste PAS l'allocation** stables/risky
+- [OK] Ajuste la **policy** (mode: Normal/Slow/Freeze)
+- [OK] Ajuste le **cap_daily** (vitesse de rebalancing)
+- [Error] **N'ajuste PAS l'allocation** stables/risky
 
 ---
 
@@ -191,7 +191,7 @@ if (bear || hedge || fear) {  // ← Fear TOUJOURS traité comme bear!
 
 ---
 
-## 💡 Solution Proposée
+## Solution Proposée
 
 ### Philosophie Adoptée: Logique Contextuelle Intelligente
 
@@ -219,14 +219,14 @@ if (bear || hedge || fear) {  // ← Fear TOUJOURS traité comme bear!
 ```
 
 **Exemples historiques:**
-- ✅ Bull + Fear: COVID crash Mars 2020 (BTC $3.8k, Fear 10) → +1500% après
-- ✅ Bull + Fear: Mai 2021 correction (ETH -50%, Fear 12) → +300% après
-- ❌ Bear + Fear: Luna crash 2022 (Fear 10) → Capitulation totale
-- ❌ Bear + Fear: FTX collapse (Fear 8) → Contagion systémique
+- [OK] Bull + Fear: COVID crash Mars 2020 (BTC $3.8k, Fear 10) → +1500% après
+- [OK] Bull + Fear: Mai 2021 correction (ETH -50%, Fear 12) → +300% après
+- [Error] Bear + Fear: Luna crash 2022 (Fear 10) → Capitulation totale
+- [Error] Bear + Fear: FTX collapse (Fear 8) → Contagion systémique
 
 ---
 
-## 🔧 Implémentation Proposée
+## Implémentation Proposée
 
 ### Modification Unique: `unified-insights-v2.js`
 
@@ -245,7 +245,7 @@ const mlSentiment = ctx?.sentiment_value || 50; // Valeur numérique 0-100
 const extremeFear = mlSentiment < 25;
 const extremeGreed = mlSentiment > 75;
 
-console.debug('🔍 Market conditions:', {
+console.debug(' Market conditions:', {
   isBull, isBear, isHedge, mlSentiment, extremeFear, extremeGreed,
   cycle_score: ctx?.cycle_score,
   regime: ctx?.regime
@@ -260,42 +260,42 @@ if (isBull && !extremeFear) {
   base.ETH *= 1.08;
   base['L2/Scaling'] *= 1.15;
   base.SOL *= 1.10;
-  console.debug('🚀 Bull mode: boost ETH/L2/SOL');
+  console.debug(' Bull mode: boost ETH/L2/SOL');
 }
 
 // 2. NOUVEAU: Logique Contextuelle ML Sentiment
 if (extremeFear && isBull) {
-  // 🐂 Bull + Fear = OPPORTUNITÉ (contrarian buy)
+  //  Bull + Fear = OPPORTUNITÉ (contrarian buy)
   base.ETH *= 1.15;
   base.SOL *= 1.20;
   base['L2/Scaling'] *= 1.20;
   base.DeFi *= 1.10;
   base.Memecoins = Math.max(base.Memecoins * 1.5, 0.02); // Accepte plus de risque
-  overrideReason = `🐂 Bull Market + Extreme Fear (${mlSentiment}) → Opportunité d'achat`;
-  console.debug('💎 Opportunistic allocation: Bull + Fear detected');
+  overrideReason = ` Bull Market + Extreme Fear (${mlSentiment}) → Opportunité d'achat`;
+  console.debug(' Opportunistic allocation: Bull + Fear detected');
 }
 else if (extremeFear && isBear) {
-  // 🐻 Bear + Fear = DANGER (capitulation)
+  //  Bear + Fear = DANGER (capitulation)
   base.Memecoins *= 0.3;
   base['Gaming/NFT'] *= 0.5;
   base.DeFi *= 0.7;
   base['AI/Data'] *= 0.8;
-  overrideReason = `🐻 Bear Market + Extreme Fear (${mlSentiment}) → Protection`;
-  console.debug('🛡️ Defensive allocation: Bear + Fear detected');
+  overrideReason = ` Bear Market + Extreme Fear (${mlSentiment}) → Protection`;
+  console.debug(' Defensive allocation: Bear + Fear detected');
 }
 else if (extremeFear) {
-  // 😐 Neutral + Fear = Prudence légère
+  //  Neutral + Fear = Prudence légère
   base.Memecoins *= 0.7;
   base['Gaming/NFT'] *= 0.8;
-  overrideReason = `😐 Neutral + Fear (${mlSentiment}) → Prudence`;
-  console.debug('⚖️ Cautious allocation: Neutral + Fear detected');
+  overrideReason = ` Neutral + Fear (${mlSentiment}) → Prudence`;
+  console.debug(' Cautious allocation: Neutral + Fear detected');
 }
 else if (isBear || isHedge) {
   // Bear/Hedge sans fear extrême: défensif standard
   base.Memecoins *= 0.5;
   base['Gaming/NFT'] *= 0.7;
   base.DeFi *= 0.85;
-  console.debug('🛡️ Standard defensive mode');
+  console.debug(' Standard defensive mode');
 }
 
 // 3. NOUVEAU: Extreme Greed = TOUJOURS prise de profits
@@ -306,8 +306,8 @@ if (extremeGreed) {
   base.DeFi *= 0.8;
   overrideReason = overrideReason
     ? `${overrideReason} + Extreme Greed (${mlSentiment}) → Prise de profits`
-    : `⚠️ Extreme Greed (${mlSentiment}) → Prise de profits`;
-  console.debug('⚠️ Profit-taking: Extreme Greed detected');
+    : `[Warning] Extreme Greed (${mlSentiment}) → Prise de profits`;
+  console.debug(' Profit-taking: Extreme Greed detected');
 }
 
 // Stocker reason dans ctx pour UI
@@ -333,25 +333,25 @@ const ctx = {
 
 ---
 
-## 📊 Impact de la Modification
+## Impact de la Modification
 
 ### Ce qui CHANGE:
-- ✅ **Allocation targets** - Différents selon contexte (bull+fear vs bear+fear)
-- ✅ **simulations.html** - Reflète nouveaux targets
-- ✅ **analytics-unified.html** - Reflète nouveaux targets
-- ✅ **dashboard.html** - Reflète nouveaux targets
-- ✅ **Logs** - Nouveaux messages explicatifs
+- [OK] **Allocation targets** - Différents selon contexte (bull+fear vs bear+fear)
+- [OK] **simulations.html** - Reflète nouveaux targets
+- [OK] **analytics-unified.html** - Reflète nouveaux targets
+- [OK] **dashboard.html** - Reflète nouveaux targets
+- [OK] **Logs** - Nouveaux messages explicatifs
 
 ### Ce qui NE CHANGE PAS:
-- ❌ **Decision Index (DI)** - Calcul inchangé
-- ❌ **Risk Score** - Calcul inchangé
-- ❌ **Cycle/On-Chain/Risk** - Calculs inchangés
-- ❌ **Contradiction Detection** - Backend inchangé (governance.py)
-- ❌ **Risk Budget** - Stables base inchangé (modulé seulement)
+- [Error] **Decision Index (DI)** - Calcul inchangé
+- [Error] **Risk Score** - Calcul inchangé
+- [Error] **Cycle/On-Chain/Risk** - Calculs inchangés
+- [Error] **Contradiction Detection** - Backend inchangé (governance.py)
+- [Error] **Risk Budget** - Stables base inchangé (modulé seulement)
 
 ---
 
-## 🧪 Tests de Non-Régression
+## Tests de Non-Régression
 
 ### Scénarios à Tester:
 
@@ -388,7 +388,7 @@ Expected: Prise de profits (-70% memecoins)
 
 ---
 
-## 📝 Valeurs Actuelles du Système
+## Valeurs Actuelles du Système
 
 **État du marché (22 Oct 2025):**
 ```json
@@ -412,7 +412,7 @@ Expected: Prise de profits (-70% memecoins)
 
 ---
 
-## 🚀 Étapes d'Implémentation
+## Étapes d'Implémentation
 
 ### Checklist:
 
@@ -446,7 +446,7 @@ Expected: Prise de profits (-70% memecoins)
 
 ---
 
-## 📚 Références
+## Références
 
 ### Fichiers Clés:
 - `services/ml/orchestrator.py` (lignes 480-543) - Sentiment real data
@@ -466,7 +466,7 @@ Expected: Prise de profits (-70% memecoins)
 
 ---
 
-## ⚠️ Points d'Attention
+## Points d'Attention
 
 1. **Phase Engine:** Si activé en mode "apply", désactive les modulateurs simples (déjà géré ligne 193)
 2. **Structure Modulation:** Continue de fonctionner (lignes 151-169)
@@ -475,7 +475,7 @@ Expected: Prise de profits (-70% memecoins)
 
 ---
 
-## 🎯 Décision en Attente
+## Décision en Attente
 
 **Question de l'utilisateur:**
 > "Veux-tu que j'implémente cette logique maintenant?"

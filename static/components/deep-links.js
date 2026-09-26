@@ -105,10 +105,10 @@ const initDeepLinks = (sectionAnchors = {}) => {
           if (existingElement) {
             section = existingElement.closest('section, div, main') || existingElement;
             section.id = anchorId;
-            console.debug(`🔗 Deep link anchor created: ${anchorId} → ${title}`);
+            console.debug(`Deep link anchor created: ${anchorId} → ${title}`);
           } else {
             // Ne pas créer de section placeholder - just skip
-            console.debug(`🔗 Deep link anchor skipped (no content): ${anchorId} → ${title}`);
+            console.debug(`Deep link anchor skipped (no content): ${anchorId} → ${title}`);
           }
         }
       });

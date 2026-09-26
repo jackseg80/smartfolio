@@ -1,10 +1,10 @@
 # Stress Testing & Monte Carlo Simulation
 
-> **Status:** ✅ Production Ready (Dec 2025)
+> **Status:** [OK] Production Ready (Dec 2025)
 > **Location:** `risk-dashboard.html` → Advanced Risk tab
 > **Backend:** `services/risk/stress_testing.py` + `services/risk/monte_carlo.py`
 
-## 📋 Table des Matières
+## Table des Matières
 
 - [Vue d'Ensemble](#vue-densemble)
 - [Stress Testing](#stress-testing)
@@ -50,12 +50,12 @@ Applique des **shocks calibrés** (basés sur crises historiques) à votre portf
 
 | Scénario | Impact | Durée | Probabilité (10 ans) |
 |----------|--------|-------|---------------------|
-| 📉 **Crise Financière 2008** | -45% à -60% | 6-12 mois | 2% |
-| 🦠 **COVID-19 Mars 2020** | -35% à -50% | 2-6 mois | 5% |
-| 🇨🇳 **Interdiction Crypto Chine** | -25% à -40% | 3-9 mois | 10% |
-| 💰 **Effondrement Tether** | -30% à -55% | 1-4 mois | 8% |
-| 🏦 **Hausse Taux Fed d'Urgence** | -20% à -35% | 6-18 mois | 15% |
-| 🔓 **Hack Exchange Majeur** | -15% à -30% | 1-3 mois | 20% |
+|  **Crise Financière 2008** | -45% à -60% | 6-12 mois | 2% |
+|  **COVID-19 Mars 2020** | -35% à -50% | 2-6 mois | 5% |
+|  **Interdiction Crypto Chine** | -25% à -40% | 3-9 mois | 10% |
+|  **Effondrement Tether** | -30% à -55% | 1-4 mois | 8% |
+|  **Hausse Taux Fed d'Urgence** | -20% à -35% | 6-18 mois | 15% |
+|  **Hack Exchange Majeur** | -15% à -30% | 1-3 mois | 20% |
 
 ### Shocks par Groupe
 
@@ -84,7 +84,7 @@ Les shocks sont **différenciés par groupe Taxonomy**. Exemple pour **Crise 200
 
 ```json
 {
-  "scenario_name": "📉 Crise Financière 2008",
+  "scenario_name": " Crise Financière 2008",
   "portfolio_impact": {
     "loss_pct": -52.3,
     "loss_usd": -12450,
@@ -201,9 +201,9 @@ cvar_95 = -mean(returns[returns <= percentile(returns, 5)])
 ### Graphique Interactif (Chart.js)
 
 - **Histogramme coloré**:
-  - 🟢 Vert: Rendements positifs (gains)
-  - 🟠 Orange: Rendements négatifs (pertes modérées)
-  - 🔴 Rouge: Pertes extrêmes (au-delà VaR 95%)
+  - [Positive] Vert: Rendements positifs (gains)
+  - [Pending] Orange: Rendements négatifs (pertes modérées)
+  - [Negative] Rouge: Pertes extrêmes (au-delà VaR 95%)
 - **Marqueurs**:
   - Ligne rouge pointillée: VaR 95%
   - Ligne bleue pointillée: Rendement médian
@@ -227,7 +227,7 @@ GET /api/risk/stress-scenarios
   "scenarios": [
     {
       "id": "crisis_2008",
-      "name": "📉 Crise Financière 2008",
+      "name": " Crise Financière 2008",
       "impact_range": {"min": -45, "max": -60},
       "probability_10y": 0.02,
       "duration": "6-12 mois"
@@ -289,12 +289,12 @@ Headers: X-User: jack
 2. **Onglet** "Advanced Risk"
 3. **Stress Testing**: Cliquer sur scénario → Modal avec impact réel
 4. **Monte Carlo**:
-   - Voir bouton "🚀 Lancer la Simulation"
+   - Voir bouton " Lancer la Simulation"
    - Cliquer → Attendre 10-30 sec (loading animé)
    - Résultats + graphique affichés
-   - Badge "📦 Mis en cache" (sessionStorage)
+   - Badge " Mis en cache" (sessionStorage)
 5. **Refresh page** → Résultats Monte Carlo instantanés (cache)
-6. **Re-calculer**: Bouton "🔄 Re-calculer" pour données fraîches
+6. **Re-calculer**: Bouton " Re-calculer" pour données fraîches
 
 ### Code Frontend (Exemple)
 
@@ -352,7 +352,7 @@ window.runMonteCarloSimulation = async function() {
 - Avantages:
   - Évite recalcul 10-30s à chaque refresh
   - Résultats instantanés après 1er calcul
-  - Bouton "🔄 Re-calculer" pour forcer update
+  - Bouton " Re-calculer" pour forcer update
 
 ### Optimisations SVD
 
@@ -390,9 +390,9 @@ except np.linalg.LinAlgError:
 **Cause:** Matrice de covariance singulière (collinéarité parfaite entre assets)
 
 **Solution:**
-- ✅ Régularisation epsilon 1e-6 (déjà implémentée)
-- ✅ `check_valid='ignore'` (déjà implémenté)
-- ✅ Fallback graceful (déjà implémenté)
+- [OK] Régularisation epsilon 1e-6 (déjà implémentée)
+- [OK] `check_valid='ignore'` (déjà implémenté)
+- [OK] Fallback graceful (déjà implémenté)
 
 Si erreur persiste:
 - Vérifier nombre d'assets (min 2 requis)
@@ -412,7 +412,7 @@ Si erreur persiste:
 
 **Solution:**
 - Normal behavior (cache session uniquement)
-- Utiliser "🔄 Re-calculer" pour rafraîchir
+- Utiliser " Re-calculer" pour rafraîchir
 - Future: localStorage avec TTL pour cache persistant
 
 ### Graphique Monte Carlo ne s'affiche pas

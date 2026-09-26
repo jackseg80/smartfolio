@@ -29,9 +29,9 @@ async def test_risk_divergence(user_id="demo"):
     unified = await get_unified_filtered_balances(source="cointracking", min_usd=1.0, user_id=user_id)
     balances = unified.get("items", [])
 
-    logger.info(f"🔍 Testing risk divergence for user: {user_id}")
+    logger.info(f" Testing risk divergence for user: {user_id}")
 
-    logger.info(f"📦 Loaded {len(balances)} assets")
+    logger.info(f" Loaded {len(balances)} assets")
 
     # Récupérer price data
     price_data = {}
@@ -47,14 +47,14 @@ async def test_risk_divergence(user_id="demo"):
                     values = [p[1] for p in prices]
                     price_data[symbol] = pd.Series(values, index=timestamps)
             except Exception as e:
-                logger.warning(f"⚠️  Failed to get price data for {symbol}: {e}")
+                logger.warning(f"  Failed to get price data for {symbol}: {e}")
 
     if len(price_data) < 2:
-        logger.error("❌ Insufficient price data")
+        logger.error(" Insufficient price data")
         return
 
     price_df = pd.DataFrame(price_data).ffill().dropna()
-    logger.info(f"📊 Price DataFrame: {len(price_df)} rows, {len(price_df.columns)} assets")
+    logger.info(f" Price DataFrame: {len(price_df)} rows, {len(price_df.columns)} assets")
     if len(price_df) < 29:
         pytest.skip(
             f"Manual divergence check requires at least 29 aligned price rows; "
@@ -62,19 +62,19 @@ async def test_risk_divergence(user_id="demo"):
         )
 
     # Calcul LEGACY (single window)
-    logger.info("\n🔷 CALCUL LEGACY (Single Window)...")
+    logger.info("\n CALCUL LEGACY (Single Window)...")
     legacy_metrics = portfolio_metrics_service.calculate_portfolio_metrics(
         price_data=price_df,
         balances=balances,
         confidence_level=0.95
     )
 
-    logger.info(f"✅ Legacy Risk Score: {legacy_metrics.risk_score:.1f}")
+    logger.info(f" Legacy Risk Score: {legacy_metrics.risk_score:.1f}")
     logger.info(f"   Sharpe: {legacy_metrics.sharpe_ratio:.2f}")
     logger.info(f"   Vol: {legacy_metrics.volatility_annualized:.2%}")
 
     # Calcul V2 (Dual-Window avec pénalités)
-    logger.info("\n🔶 CALCUL V2 (Dual-Window + Pénalités)...")
+    logger.info("\n CALCUL V2 (Dual-Window + Pénalités)...")
     dual_result = portfolio_metrics_service.calculate_dual_window_metrics(
         price_data=price_df,
         balances=balances,
@@ -126,7 +126,7 @@ async def test_risk_divergence(user_id="demo"):
         final_risk_score_v2 = max(0, min(100, base_risk_score + penalty_excluded + penalty_memes_age))
         mode = "full_intersection_only"
 
-    logger.info(f"✅ Risk Score V2: {final_risk_score_v2:.1f} (mode: {mode})")
+    logger.info(f" Risk Score V2: {final_risk_score_v2:.1f} (mode: {mode})")
     logger.info(f"   w_full={w_full:.2f}, w_long={w_long:.2f}")
     logger.info(f"   Penalty Excluded: {penalty_excluded:.1f}")
     logger.info(f"   Penalty Young Memes: {penalty_memes_age:.1f} ({len(young_memes)} memes, {young_memes_pct*100:.1f}% value)")
@@ -134,18 +134,18 @@ async def test_risk_divergence(user_id="demo"):
 
     # Divergence
     divergence = final_risk_score_v2 - legacy_metrics.risk_score
-    logger.info(f"\n📊 DIVERGENCE: {divergence:+.1f} points")
+    logger.info(f"\n DIVERGENCE: {divergence:+.1f} points")
 
     if abs(divergence) < 5:
-        logger.info("✅ Portfolio sain : Legacy ≈ V2 (écart < 5 points)")
+        logger.info(" Portfolio sain : Legacy ≈ V2 (écart < 5 points)")
     elif divergence < -10:
-        logger.info("⚠️  Portfolio DEGEN détecté : V2 << Legacy (pénalités actives)")
+        logger.info("  Portfolio DEGEN détecté : V2 << Legacy (pénalités actives)")
     else:
-        logger.info("ℹ️  Écart modéré entre Legacy et V2")
+        logger.info("  Écart modéré entre Legacy et V2")
 
     # Afficher assets exclus
     if excluded_assets:
-        logger.info(f"\n🚫 Assets exclus de Long-Term cohort ({len(excluded_assets)}):")
+        logger.info(f"\n Assets exclus de Long-Term cohort ({len(excluded_assets)}):")
         for asset in excluded_assets[:5]:  # Top 5
             logger.info(f"   - {asset.get('symbol')}: {asset.get('reason')}")
 

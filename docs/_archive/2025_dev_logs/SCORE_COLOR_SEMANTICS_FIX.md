@@ -1,7 +1,7 @@
 # Fix: Score Color Semantics Inversion
 
 **Date:** 8 octobre 2025
-**Statut:** ✅ Complété
+**Statut:** [OK] Complété
 
 ## Contexte
 
@@ -17,8 +17,8 @@ DI = wCycle × scoreCycle + wOnchain × scoreOnchain + wRisk × scoreRisk
 ```
 
 **Bug observé** :
-- Score Risk 90/100 → affiché en **rouge** (danger) ❌
-- Score On-Chain 33/100 → devrait être **rouge** mais affiché en **vert** ❌
+- Score Risk 90/100 → affiché en **rouge** (danger) [Error]
+- Score On-Chain 33/100 → devrait être **rouge** mais affiché en **vert** [Error]
 
 ## Solution Implémentée
 
@@ -43,9 +43,9 @@ const colorRisk = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' 
 **Impact** : `colorRisk()` maintenant identique à `colorPositive()` - tous les scores suivent la même sémantique.
 
 **Lignes affectées** :
-- L658 : Score Cycle (utilisé dans carte "🔄 Cycle")
-- L667 : Score On-Chain (utilisé dans carte "🔗 On-Chain")
-- L674 : Score Risk (utilisé dans carte "🛡️ Risque & Budget")
+- L658 : Score Cycle (utilisé dans carte " Cycle")
+- L667 : Score On-Chain (utilisé dans carte " On-Chain")
+- L674 : Score Risk (utilisé dans carte " Risque & Budget")
 
 ### B. Correction des Couleurs dans analytics-unified.html
 
@@ -77,7 +77,7 @@ scoreElement.style.color = riskScore > 70 ? 'var(--success)' :
 
 #### C.1 Ajout des Paliers Manquants
 
-**Avant** : Seulement 2 cas (< 30 et > 80), **aucune recommandation pour 30-80** ❌
+**Avant** : Seulement 2 cas (< 30 et > 80), **aucune recommandation pour 30-80** [Error]
 
 **Après** : 5 paliers complets
 
@@ -104,14 +104,14 @@ if (enhanced_score > 80) {
 **Avant** :
 ```javascript
 const enhanced = await enhanceCycleScore(sigmoidScore, 0.25); // 75% cycle + 25% onchain
-const recos = generateRecommendations(enhanced); // ❌ Score élevé même si onchain faible
+const recos = generateRecommendations(enhanced); // [Error] Score élevé même si onchain faible
 ```
 
 **Après** :
 ```javascript
 const composite = calculateCompositeScoreV2(indicators, true); // Score pur on-chain
 const recosData = { enhanced_score: composite.score, contributors: composite.contributors, confidence: composite.confidence };
-const recos = generateRecommendations(recosData); // ✅ Score on-chain pur (33)
+const recos = generateRecommendations(recosData); // [OK] Score on-chain pur (33)
 ```
 
 **Pourquoi** :
@@ -138,9 +138,9 @@ const cycleModule = await import(`./modules/cycle-navigator.js${cacheBuster}`);
 
 | Score | Couleur | Interprétation | Sémantique |
 |-------|---------|----------------|------------|
-| 80-100 | 🟢 Vert (success) | Excellent signal | Euphorie/Bull fort |
-| 40-79 | 🟠 Orange (warning) | Signal moyen | Transition/Modéré |
-| 0-39 | 🔴 Rouge (danger) | Signal faible | Bearish/Faible momentum |
+| 80-100 | [Positive] Vert (success) | Excellent signal | Euphorie/Bull fort |
+| 40-79 | [Pending] Orange (warning) | Signal moyen | Transition/Modéré |
+| 0-39 | [Negative] Rouge (danger) | Signal faible | Bearish/Faible momentum |
 
 ### Échelle de Recommandations On-Chain
 
@@ -159,12 +159,12 @@ const cycleModule = await import(`./modules/cycle-navigator.js${cacheBuster}`);
 **Score On-Chain** : 33/100
 
 **Avant** :
-- ❌ Couleur : Vert (success) → incohérent
-- ❌ Recommandation : "Zone de Distribution Probable - Score élevé" → incohérent
+- [Error] Couleur : Vert (success) → incohérent
+- [Error] Recommandation : "Zone de Distribution Probable - Score élevé" → incohérent
 
 **Après** :
-- ✅ Couleur : Rouge (danger) → cohérent avec score faible
-- ✅ Recommandation : "Momentum Faible Détecté - Score faible - Indicateurs on-chain pessimistes" → cohérent
+- [OK] Couleur : Rouge (danger) → cohérent avec score faible
+- [OK] Recommandation : "Momentum Faible Détecté - Score faible - Indicateurs on-chain pessimistes" → cohérent
 
 ### Tests de Régression
 

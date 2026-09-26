@@ -45,13 +45,13 @@ function fixFile(filePath) {
 
         if (changed) {
             fs.writeFileSync(filePath, content, 'utf8');
-            console.log(`✅ Fixed ${path.basename(filePath)}`);
+            console.log(`OK Fixed ${path.basename(filePath)}`);
             return true;
         }
 
         return false;
     } catch (error) {
-        console.error(`❌ Error fixing ${filePath}:`, error.message);
+        console.error(`Error Error fixing ${filePath}:`, error.message);
         return false;
     }
 }
@@ -80,7 +80,7 @@ function findJSFiles() {
 }
 
 function main() {
-    console.log('🔧 Fixing debugLogger dependencies...\n');
+    console.log('Tools Fixing debugLogger dependencies...\n');
 
     const files = findJSFiles();
     let fixedCount = 0;
@@ -91,13 +91,13 @@ function main() {
         }
     }
 
-    console.log(`\n📊 Summary: Fixed ${fixedCount} files out of ${files.length} processed`);
+    console.log(`\nAnalytics Summary: Fixed ${fixedCount} files out of ${files.length} processed`);
 
     if (fixedCount > 0) {
-        console.log('\n✅ All debugLogger dependency issues should now be resolved!');
-        console.log('💡 The frontend should load properly now.');
+        console.log('\nOK All debugLogger dependency issues should now be resolved!');
+        console.log('Insight The frontend should load properly now.');
     } else {
-        console.log('\n🤔 No files needed fixing. The issue might be elsewhere.');
+        console.log('\n No files needed fixing. The issue might be elsewhere.');
     }
 }
 

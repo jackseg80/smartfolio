@@ -27,7 +27,7 @@ class DebugLogger {
 
         // Note: Can't use debugLogger.debug here since debugLogger isn't created yet
         if (this.debugEnabled) {
-            console.log(`🔧 DebugLogger initialized - Debug mode: ${this.debugEnabled ? 'ON' : 'OFF'}, Toasts: ${this._toastEnabled ? 'ON' : 'OFF'}`);
+            console.log(`DebugLogger initialized - Debug mode: ${this.debugEnabled ? 'ON' : 'OFF'}, Toasts: ${this._toastEnabled ? 'ON' : 'OFF'}`);
         }
 
         // Synchroniser avec globalConfig si présent
@@ -60,7 +60,7 @@ class DebugLogger {
             // Toast pas disponible, on continue sans
             this._toastEnabled = false;
             if (this.debugEnabled) {
-                console.log('ℹ️ Toast system not available, using console only');
+                console.log("Toast system not available, using console only");
             }
         }
     }
@@ -80,8 +80,8 @@ class DebugLogger {
         if (!this._toastEnabled || !this._toastInstance) return;
 
         try {
-            // Nettoyer le message des emojis pour le toast (déjà dans l'icône)
-            const cleanMessage = message.replace(/^[⚠️❌ℹ️🔍]+\s*/, '');
+            // Retirer le préfixe de niveau, déjà représenté par le toast
+            const cleanMessage = message.replace(/^\[(?:Warning|Error|Info)\]\s*/, '');
 
             // Limiter la longueur du message
             const shortMessage = cleanMessage.length > 150
@@ -141,7 +141,7 @@ class DebugLogger {
     setDebugMode(enabled) {
         this.debugEnabled = enabled;
         localStorage.setItem('crypto_debug_mode', enabled.toString());
-        debugLogger.debug(`🔧 Debug mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
+        debugLogger.debug(`Debug mode ${enabled ? 'ENABLED' : 'DISABLED'}`);
         // Mettre à jour les hooks
         this.applyConsoleOverride();
     }
@@ -150,7 +150,7 @@ class DebugLogger {
      * Log de niveau ERROR (toujours affiché + toast)
      */
     error(message, ...args) {
-        console.error(`❌ ${message}`, ...args);
+        console.error(`Error ${message}`, ...args);
         // Vérifier que this existe et que _showToast est défini avant d'appeler
         if (this && typeof this._showToast === 'function') {
             this._showToast('error', message);
@@ -161,7 +161,7 @@ class DebugLogger {
      * Log de niveau WARN (toujours affiché + toast)
      */
     warn(message, ...args) {
-        console.warn(`⚠️ ${message}`, ...args);
+        console.warn(`Warning ${message}`, ...args);
         // Vérifier que this existe et que _showToast est défini avant d'appeler
         if (this && typeof this._showToast === 'function') {
             this._showToast('warn', message);
@@ -173,7 +173,7 @@ class DebugLogger {
      */
     info(message, ...args) {
         if (this && this.debugEnabled) {
-            console.log(`ℹ️ ${message}`, ...args);
+            console.log(`Info ${message}`, ...args);
         }
     }
 
@@ -182,7 +182,7 @@ class DebugLogger {
      */
     debug(message, ...args) {
         if (this && this.debugEnabled) {
-            console.log(`🔍 DEBUG ${message}`, ...args);
+            console.log(`DEBUG ${message}`, ...args);
         }
     }
     
@@ -192,7 +192,7 @@ class DebugLogger {
     perf(message, ...args) {
         if (this.debugEnabled) {
             console.time(message);
-            debugLogger.debug(`⚡ PERF ${message}`, ...args);
+            debugLogger.debug(`PERF ${message}`, ...args);
         }
     }
     
@@ -210,7 +210,7 @@ class DebugLogger {
      */
     api(endpoint, data = null) {
         if (this.debugEnabled) {
-            console.group(`🌐 API ${endpoint}`);
+            console.group(`API ${endpoint}`);
             if (data) debugLogger.debug('Data:', data);
             console.groupEnd();
         }
@@ -221,7 +221,7 @@ class DebugLogger {
      */
     ui(action, details = null) {
         if (this.debugEnabled) {
-            debugLogger.debug(`🎨 UI ${action}`, details || '');
+            debugLogger.debug(`UI ${action}`, details || '');
         }
     }
     
@@ -230,7 +230,7 @@ class DebugLogger {
      */
     stats() {
         if (this.debugEnabled) {
-            console.group('📊 Debug Statistics');
+            console.group("Debug Statistics");
             debugLogger.debug('Debug mode:', this.debugEnabled);
             debugLogger.debug('Environment:', window.location.hostname);
             debugLogger.debug('Config available:', !!window.globalConfig);
@@ -292,12 +292,12 @@ class DebugLogger {
                     ok = resp.ok; status = resp.status;
                     return resp;
                 } catch (err) {
-                    if (trace) debugLogger.warn('🌐 fetch error', { url: urlStr, err: err?.message });
+                    if (trace) debugLogger.warn("fetch error", { url: urlStr, err: err?.message });
                     throw err;
                 } finally {
                     if (trace) {
                         const dur = (performance.now() - start).toFixed(0);
-                        console.debug('🌐 fetch', { url: urlStr, ok, status, ms: Number(dur) });
+                        console.debug("fetch", { url: urlStr, ok, status, ms: Number(dur) });
                     }
                 }
             };
@@ -334,4 +334,4 @@ window.toggleDebug = () => {
 window.debugOn = () => { debugLogger.setDebugMode(true); window.globalConfig?.setDebugMode?.(true); return 'Debug ON'; };
 window.debugOff = () => { debugLogger.setDebugMode(false); window.globalConfig?.setDebugMode?.(false); return 'Debug OFF'; };
 
-debugLogger.debug('🚀 Debug Logger loaded - Type toggleDebug() to switch modes');
+debugLogger.debug("Debug Logger loaded - Type toggleDebug() to switch modes");

@@ -126,7 +126,7 @@ def create_manual_test_data():
     
     manual_test_script = '''
 // Manual test script - paste this into browser console on rebalance.html
-console.log("🧪 Manual Apply Targets Test");
+console.log(" Manual Apply Targets Test");
 
 // Simulate what Apply Targets would save
 const testTargetsData = {
@@ -145,12 +145,12 @@ const testTargetsData = {
     source: "risk-dashboard-ccs"
 };
 
-console.log("💾 Saving test data to localStorage...");
+console.log(" Saving test data to localStorage...");
 localStorage.setItem('last_targets', JSON.stringify(testTargetsData));
 
-console.log("✅ Test data saved!");
-console.log("🔍 Watch for 'New CCS targets detected' message in next 2 seconds...");
-console.log("🎯 Look for 'Targets dynamiques' indicator to appear");
+console.log(" Test data saved!");
+console.log(" Watch for 'New CCS targets detected' message in next 2 seconds...");
+console.log(" Look for 'Targets dynamiques' indicator to appear");
 '''
     
     print("=" * 60)

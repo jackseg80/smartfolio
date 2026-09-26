@@ -1,23 +1,23 @@
 # Phase 3: Dual-Window Blend - Résumé d'Implémentation
 
 **Date:** 2025-10-03
-**Status:** ✅ Implémenté + Tests validés
+**Status:** [OK] Implémenté + Tests validés
 **Problème résolu:** Risk Score incohérent pour wallet degen (60/100 au lieu de ~30/100)
 
 ---
 
-## 🎯 Problème Initial
+## Problème Initial
 
 Portfolio **High_Risk** (55% memecoins, PEPE+BONK jeunes) affichait:
-- **Risk Score v1:** 60/100 (medium risk) ❌
-- **Structural Score:** 77/100 ❌
-- **Attente:** ~30/100 (high risk) ✅
+- **Risk Score v1:** 60/100 (medium risk) [Error]
+- **Structural Score:** 77/100 [Error]
+- **Attente:** ~30/100 (high risk) [OK]
 
 **Cause racine:** Sharpe Ratio calculé sur Long-Term window (180j, 3 assets) excluant PEPE+BONK → Sharpe=1.70 → bonus +15pts injustifié.
 
 ---
 
-## 🔧 Solution Implémentée
+## Solution Implémentée
 
 ### 1. Formule Blend Dynamique
 
@@ -67,7 +67,7 @@ final_risk_score = max(0, min(100,
 
 ---
 
-## 📊 Résultats Validés
+## Résultats Validés
 
 ### Test Case: Degen Wallet
 
@@ -95,27 +95,27 @@ Sharpe: +5pts
 Pénalité exclusion: 0pts (exactement 20% exclus)
 Pénalité memes jeunes: -25pts (45% jeunes > 30% seuil)
 
-Final Risk Score: 55 - 25 = 30/100 ✅
+Final Risk Score: 55 - 25 = 30/100 [OK]
 ```
 
 **Avant vs Après:**
-- **Avant:** 60/100 (medium) ❌
-- **Après:** 30/100 (high risk) ✅
+- **Avant:** 60/100 (medium) [Error]
+- **Après:** 30/100 (high risk) [OK]
 - **Baisse:** -30pts (-50%)
 
 ---
 
-## 🧪 Suite de Tests
+## Suite de Tests
 
 **Fichier:** `tests/unit/test_risk_dual_window_blend.py`
 
 **5 tests validés:**
 
-1. ✅ `test_degen_wallet_blend` - Cas principal (60→30)
-2. ✅ `test_conservative_wallet_blend` - Portfolio stable (score=70)
-3. ✅ `test_aggressive_exclusion_penalty` - 50% exclusion → -28pts
-4. ✅ `test_young_memes_threshold` - Seuil 30% précis
-5. ✅ `test_blend_weight_bounds` - Limites [0.6..1.0] respectées
+1. [OK] `test_degen_wallet_blend` - Cas principal (60→30)
+2. [OK] `test_conservative_wallet_blend` - Portfolio stable (score=70)
+3. [OK] `test_aggressive_exclusion_penalty` - 50% exclusion → -28pts
+4. [OK] `test_young_memes_threshold` - Seuil 30% précis
+5. [OK] `test_blend_weight_bounds` - Limites [0.6..1.0] respectées
 
 **Commande:**
 ```bash
@@ -124,7 +124,7 @@ Final Risk Score: 55 - 25 = 30/100 ✅
 
 ---
 
-## 📁 Fichiers Modifiés
+## Fichiers Modifiés
 
 1. **api/risk_endpoints.py** (lignes 573-634)
    - Ajout blend dynamique
@@ -137,7 +137,7 @@ Final Risk Score: 55 - 25 = 30/100 ✅
 
 ---
 
-## 🚀 Prochaines Étapes (Phase 4)
+## Prochaines Étapes (Phase 4)
 
 1. **Tester avec portfolios réels** - Besoin données historiques suffisantes
 2. **Redesign Structural Score** - Intégrer pénalités HHI, GRI, memes
@@ -146,7 +146,7 @@ Final Risk Score: 55 - 25 = 30/100 ✅
 
 ---
 
-## 🔍 Impact Attendu
+## Impact Attendu
 
 ### Portfolios Degen
 - Risk Score: 60→30 (-50%)

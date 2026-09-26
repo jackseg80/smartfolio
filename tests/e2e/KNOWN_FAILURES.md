@@ -6,11 +6,11 @@
 
 ---
 
-## 📊 Résumé des Échecs
+## Résumé des Échecs
 
 ```
-✅ Tests passés    : 36/72 (50%)
-❌ Tests échoués   : 36/72 (50%)
+[OK] Tests passés    : 36/72 (50%)
+[Error] Tests échoués   : 36/72 (50%)
 
 Répartition par catégorie:
 - Erreurs syntaxe CSS  : 19 tests (53%)
@@ -20,7 +20,7 @@ Répartition par catégorie:
 
 ---
 
-## 🔴 Catégorie 1 : Erreurs Syntaxe CSS (19 tests)
+## Catégorie 1 : Erreurs Syntaxe CSS (19 tests)
 
 ### Problème
 
@@ -29,12 +29,12 @@ Répartition par catégorie:
 ### Exemples
 
 ```javascript
-// ❌ MAUVAIS (cause parse error)
+// [Error] MAUVAIS (cause parse error)
 page.locator('[data-section="ml"], text=/prediction/i')
 page.locator('[data-metric="decision-index"], .decision-index-value')
 page.locator('input[value="priority"], [data-mode="priority"]')
 
-// ✅ BON (guillemets simples ou méthode séparée)
+// [OK] BON (guillemets simples ou méthode séparée)
 page.locator("[data-section='ml']").or(page.getByText(/prediction/i))
 page.locator("[data-metric='decision-index']").or(page.locator('.decision-index-value'))
 page.locator("[data-mode='priority']").or(page.getByRole('radio', { name: /priority/i }))
@@ -92,7 +92,7 @@ const element = page.locator("[data-metric='risk-score']")
 
 ---
 
-## ⏱️ Catégorie 2 : Timeouts Navigation (16 tests)
+## Catégorie 2 : Timeouts Navigation (16 tests)
 
 ### Problème
 
@@ -101,7 +101,7 @@ const element = page.locator("[data-metric='risk-score']")
 ### Exemples
 
 ```javascript
-// ❌ ÉCHOUE (onglet non trouvé)
+// [Error] ÉCHOUE (onglet non trouvé)
 await page.getByRole('tab', { name: /alerts/i }).click();
 // TimeoutError: locator.click: Timeout 10000ms exceeded.
 ```
@@ -178,7 +178,7 @@ await page.locator('.nav-link:has-text("Alertes")').click();
 
 ---
 
-## ⚠️ Catégorie 3 : Erreur RegExp (1 test)
+## Catégorie 3 : Erreur RegExp (1 test)
 
 ### Problème
 
@@ -187,11 +187,11 @@ await page.locator('.nav-link:has-text("Alertes")').click();
 ### Exemple
 
 ```javascript
-// ❌ MAUVAIS
+// [Error] MAUVAIS
 page.locator('text=/euphorie/i, [data-preset="euphorie"]')
 // Error: Invalid flags supplied to RegExp constructor 'i, [data-preset="euphorie"]'
 
-// ✅ BON
+// [OK] BON
 page.locator('text=/euphorie/i').first()
 // Ou:
 page.locator('[data-preset="euphorie"]')
@@ -215,7 +215,7 @@ const euphoriePreset = page.locator('text=/euphorie/i').first();
 
 ---
 
-## 🚀 Plan de Correction (Pour Plus Tard)
+## Plan de Correction (Pour Plus Tard)
 
 ### Court Terme (1-2h)
 
@@ -264,7 +264,7 @@ const euphoriePreset = page.locator('text=/euphorie/i').first();
 
 ---
 
-## 📝 Commandes Utiles
+## Commandes Utiles
 
 ### Relancer Tests Spécifiques
 
@@ -298,7 +298,7 @@ node analyze_failed_tests.cjs
 
 ---
 
-## ✅ Checklist Validation (Post-Correction)
+## Checklist Validation (Post-Correction)
 
 - [ ] 20 tests syntaxe CSS corrigés
 - [ ] 16 tests Risk Dashboard adaptés
@@ -313,5 +313,5 @@ node analyze_failed_tests.cjs
 **Date** : Octobre 2025
 **Version** : 1.0.0
 
-**Status** : ⚠️ **36/72 Tests Échoués (Corrections Documentées)**
+**Status** : [Warning] **36/72 Tests Échoués (Corrections Documentées)**
 

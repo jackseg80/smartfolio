@@ -7,7 +7,7 @@
 
 ---
 
-## 🔍 Problème Identifié
+## Problème Identifié
 
 ### Symptômes
 - **risk-dashboard.html**: Risk Score = 37 (main) vs 40 (panel)
@@ -19,20 +19,20 @@
 
 **1. Formules calculateRiskScore() Divergentes**
 ```javascript
-// risk-dashboard.html (LOCAL - SUPPRIMÉ ❌)
+// risk-dashboard.html (LOCAL - SUPPRIMÉ [Error])
 score += dd < 0.1 ? 15 : dd < 0.2 ? 5 : -15;  // Max Drawdown
 
-// risk-data-orchestrator.js (SSOT ✅)
+// risk-data-orchestrator.js (SSOT [OK])
 score += dd < 0.15 ? 10 : dd < 0.3 ? 0 : -10;  // Max Drawdown
 ```
 
 **2. Architecture Fragmentée**
 | Page | Calcul | Cache | Hydration |
 |------|--------|-------|-----------|
-| risk-dashboard.html | ❌ Local | ❌ Local | ❌ Race condition |
-| analytics-unified.html | ✅ Orchestrator | ✅ Store | ✅ Event-based |
-| rebalance.html | ✅ Orchestrator | ✅ Store | ✅ Event-based |
-| execution.html | ✅ Orchestrator | ✅ Store | ✅ Event-based |
+| risk-dashboard.html | [Error] Local | [Error] Local | [Error] Race condition |
+| analytics-unified.html | [OK] Orchestrator | [OK] Store | [OK] Event-based |
+| rebalance.html | [OK] Orchestrator | [OK] Store | [OK] Event-based |
+| execution.html | [OK] Orchestrator | [OK] Store | [OK] Event-based |
 
 **3. Race Condition Panel vs Main**
 - Panel (`<risk-sidebar-full>`) lit store immédiatement (`poll-ms="0"`)
@@ -41,7 +41,7 @@ score += dd < 0.15 ? 10 : dd < 0.3 ? 0 : -10;  // Max Drawdown
 
 ---
 
-## ✅ Solution Implémentée
+## Solution Implémentée
 
 ### Architecture Unifiée (SSOT)
 
@@ -88,7 +88,7 @@ score += dd < 0.15 ? 10 : dd < 0.3 ? 0 : -10;  // Max Drawdown
 ```javascript
 // Singleton guard (ligne 10-16)
 if (window.__risk_orchestrator_init) {
-  console.log('⚠️ Risk orchestrator already initialized, skipping duplicate');
+  console.log(' Risk orchestrator already initialized, skipping duplicate');
 } else {
   window.__risk_orchestrator_init = true;
 }
@@ -104,10 +104,10 @@ _hydration_source: 'risk-data-orchestrator'
 ```
 
 ```javascript
-// ❌ SUPPRIMÉ: calculateRiskScore() (lignes 3436-3472)
-// ❌ SUPPRIMÉ: calculateAllScores() (lignes 3500-3606)
+// [Error] SUPPRIMÉ: calculateRiskScore() (lignes 3436-3472)
+// [Error] SUPPRIMÉ: calculateAllScores() (lignes 3500-3606)
 
-// ✅ NOUVEAU: loadScoresFromStore() (lignes 3500-3566)
+// [OK] NOUVEAU: loadScoresFromStore() (lignes 3500-3566)
 async function loadScoresFromStore() {
   // Attendre hydratation complète
   if (!store.getState()?._hydrated) {
@@ -136,7 +136,7 @@ _connectStore() {
   const push = () => {
     const state = window.riskStore?.getState?.() || {};
 
-    // ✅ Vérifier hydratation complète
+    // [OK] Vérifier hydratation complète
     if (!state._hydrated) {
       console.log('[risk-sidebar-full] Store not hydrated yet, waiting...');
       return;  // Ne pas afficher tant que pas hydraté
@@ -149,7 +149,7 @@ _connectStore() {
   push();
   this._unsub = window.riskStore.subscribe(push);
 
-  // ✅ Écouter hydratation si pas encore faite
+  // [OK] Écouter hydratation si pas encore faite
   if (!window.riskStore.getState()?._hydrated) {
     window.addEventListener('riskStoreReady', (e) => {
       if (e.detail?.hydrated) push();
@@ -160,7 +160,7 @@ _connectStore() {
 
 ---
 
-## 🧪 Validation
+## Validation
 
 ### Tests Console
 
@@ -175,7 +175,7 @@ console.log({
   source: state._hydration_source,
   hydrated: state._hydrated
 });
-// ✅ Doit retourner EXACTEMENT les mêmes valeurs partout!
+// [OK] Doit retourner EXACTEMENT les mêmes valeurs partout!
 ```
 
 **Test 2: Vérifier panel synchronisé**
@@ -185,41 +185,41 @@ const panelRisk = document.querySelector('risk-sidebar-full')
   .shadowRoot.querySelector('#risk-score').textContent;
 const mainRisk = document.getElementById('risk-score').textContent;
 console.log('Panel:', panelRisk, 'Main:', mainRisk);
-// ✅ Doit être identique (ex: "37" == "37")
+// [OK] Doit être identique (ex: "37" == "37")
 ```
 
 **Test 3: Logs attendus**
 ```
-✅ Risk orchestrator initialized (singleton)
-🔄 Starting risk store hydration...
-✅ Risk store hydrated successfully in 250ms
+[OK] Risk orchestrator initialized (singleton)
+ Starting risk store hydration...
+[OK] Risk store hydrated successfully in 250ms
 [risk-sidebar-full] Store hydrated, source: risk-data-orchestrator
-📊 Scores loaded from orchestrator: {onchain: 42, risk: 37, blended: 54, source: 'risk-data-orchestrator'}
+ Scores loaded from orchestrator: {onchain: 42, risk: 37, blended: 54, source: 'risk-data-orchestrator'}
 ```
 
 ### Critères d'Acceptation
 
-✅ **Consistance Inter-Pages**
+[OK] **Consistance Inter-Pages**
 - risk-dashboard.html: Risk=37, OnChain=42, Blended=54
 - analytics-unified.html: Risk=37, OnChain=42, Blended=54
 - rebalance.html: Risk=37, OnChain=42, Blended=54
 - execution.html: Risk=37, OnChain=42, Blended=54
 
-✅ **Consistance Intra-Page**
+[OK] **Consistance Intra-Page**
 - risk-dashboard main: Risk=37
 - risk-dashboard panel: Risk=37 (plus de 37 vs 40!)
 
-✅ **Traçabilité**
+[OK] **Traçabilité**
 - Tous les stores contiennent `_hydration_source: 'risk-data-orchestrator'`
 - Logs montrent "Store hydrated, source: risk-data-orchestrator"
 
-✅ **Performance**
+[OK] **Performance**
 - Hydratation complète en <500ms
 - Pas de race condition (panel attend _hydrated=true)
 
 ---
 
-## 🔧 Dépannage
+## Dépannage
 
 **Problème**: Panel affiche encore "N/A" ou valeurs différentes
 
@@ -242,7 +242,7 @@ window.dispatchEvent(new CustomEvent('riskStoreReady', {
 **Vérification**:
 ```javascript
 // Si vous voyez 2 fois ce log, il y a un problème:
-// "✅ Risk orchestrator initialized (singleton)"
+// "[OK] Risk orchestrator initialized (singleton)"
 
 // Vérifier qu'il n'y a qu'UN SEUL <script src="core/risk-data-orchestrator.js">
 document.querySelectorAll('script[src*="risk-data-orchestrator"]').length  // doit être 1
@@ -250,7 +250,7 @@ document.querySelectorAll('script[src*="risk-data-orchestrator"]').length  // do
 
 ---
 
-## 📊 Impact
+## Impact
 
 **Fichiers modifiés**: 3
 - `static/core/risk-data-orchestrator.js` (+8 lignes)
@@ -269,7 +269,7 @@ document.querySelectorAll('script[src*="risk-data-orchestrator"]').length  // do
 
 ---
 
-## 🚀 Prochaines Étapes (Optionnel)
+## Prochaines Étapes (Optionnel)
 
 1. **Unifier formule backend Python** (cohérence cross-system)
    - `services/risk_management.py` utilise formule différente
@@ -288,4 +288,4 @@ document.querySelectorAll('script[src*="risk-data-orchestrator"]').length  // do
 
 **Auteur**: Claude
 **Validation**: En cours
-**Status**: ✅ Implémenté, à tester
+**Status**: [OK] Implémenté, à tester

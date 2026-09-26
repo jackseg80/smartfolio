@@ -149,7 +149,7 @@ export function normalizeTargets(targets) {
 
   // Si le total est déjà très proche de 100%, ne pas renormaliser (évite les erreurs d'arrondi)
   if (Math.abs(total - 100) < 0.01) {
-    console.debug('✅ Targets already normalized, skipping renormalization (total:', total, ')');
+    console.debug("[OK] Targets already normalized, skipping renormalization (total:", total, ')');
     return { ...completeTargets }; // Retourner une copie sans modifier
   }
 
@@ -162,7 +162,7 @@ export function normalizeTargets(targets) {
   // Add model version back
   normalized.model_version = model_version || 'unknown';
 
-  console.debug('🔄 Normalized targets (total was', total, ')');
+  console.debug("Normalized targets (total was", total, ')');
   return normalized;
 }
 
@@ -286,7 +286,7 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
     const criticalRatio = criticalZoneCount / totalIndicators;
 
     if (criticalRatio > 0.3) { // Plus de 30% en zone critique
-      adjustments.push('🚨 Critical zone detected');
+      adjustments.push("[Alert] Critical zone detected");
 
       // Force defensive allocation
       adjustedRegime.risk_tolerance = Math.min(adjustedRegime.risk_tolerance, 0.4);
@@ -302,11 +302,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const onchainScore = categoryBreakdown.onchain_fundamentals.score;
 
       if (onchainScore < 30) { // Fondamentaux très bullish (scores inversés)
-        adjustments.push('🔗 Bullish fundamentals');
+        adjustments.push("Bullish fundamentals");
         adjustedRegime.confidence += 0.1;
 
       } else if (onchainScore > 70) { // Fondamentaux très bearish
-        adjustments.push('🔗 Bearish fundamentals');
+        adjustments.push("Bearish fundamentals");
         adjustedRegime.risk_tolerance *= 0.8; // Réduire le risque
       }
     }
@@ -316,11 +316,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const cycleScore = categoryBreakdown.cycle_technical.score;
 
       if (cycleScore > 75) { // Signaux de cycle bearish
-        adjustments.push('📊 Top signals');
+        adjustments.push("Top signals");
         adjustedRegime.risk_tolerance *= 0.7; // Très défensif
 
       } else if (cycleScore < 25) { // Signaux de cycle bullish  
-        adjustments.push('📊 Bottom signals');
+        adjustments.push("Bottom signals");
         adjustedRegime.confidence += 0.15;
       }
     }
@@ -330,11 +330,11 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
       const sentimentScore = categoryBreakdown.sentiment.score;
 
       if (sentimentScore > 80) { // Fear extreme = contrarian bullish
-        adjustments.push('😨 Extreme fear');
+        adjustments.push("Extreme fear");
         adjustedRegime.confidence += 0.05;
 
       } else if (sentimentScore < 20) { // Greed extreme = bearish
-        adjustments.push('🤑 Extreme greed');
+        adjustments.push("Extreme greed");
         adjustedRegime.risk_tolerance *= 0.9;
       }
     }
@@ -342,7 +342,7 @@ function applyOnChainIntelligence(baseRegime, onchainMetadata) {
 
   // Log des ajustements appliqués
   if (adjustments.length > 0) {
-    console.debug('🧠 On-chain intelligence adjustments:', adjustments.join(', '));
+    console.debug("On-chain intelligence adjustments:", adjustments.join(', '));
   }
 
   return adjustedRegime;
@@ -421,7 +421,7 @@ export function computeExposureCap({ blendedScore, riskScore, decision_score, co
 
   // Debug logging
   if (window.__DEBUG_RISK__ || (typeof localStorage !== 'undefined' && localStorage.getItem('DEBUG_RISK'))) {
-    debugLogger.debug('🔍 EXPOSURE CAP COMPUTED:', {
+    debugLogger.debug("EXPOSURE CAP COMPUTED:", {
       inputs: { bs, rs, ds, dc, vol, regime: regimeKey, backendStatus },
       intermediate: { base: base + (backendStatus === 'error' ? 25 : backendStatus === 'stale' ? 15 : 0), signalPenalty, volPenalty, regimeMax },
       output: { finalCap }
@@ -444,7 +444,7 @@ export function generateSmartTargets() {
   const backendSignals = state.governance?.ml_signals || null;
   const backendStatus = state.ui?.apiStatus?.backend || 'unknown';
 
-  console.debug('🧠 Generating SMART targets with scores:', {
+  console.debug("Generating SMART targets with scores:", {
     blendedScore,
     onchainScore,
     riskScore,
@@ -456,7 +456,7 @@ export function generateSmartTargets() {
     .filter(([, value]) => !Number.isFinite(value))
     .map(([name]) => name);
   if (missingScores.length > 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Smart targets unavailable:', missingScores);
+    (window.debugLogger?.warn || console.warn)("[Warning] Smart targets unavailable:", missingScores);
     return {
       available: false,
       targets: null,
@@ -516,9 +516,9 @@ export function generateSmartTargets() {
     // Generate recommendations
     const recommendations = generateRegimeRecommendations(adjustedRegime, riskBudget);
 
-    console.debug('🧠 Smart allocation calculated:', smartAllocation);
-    console.debug('📊 Risk budget:', riskBudget.percentages);
-    console.debug('🎯 Regime:', adjustedRegime.name);
+    console.debug("Smart allocation calculated:", smartAllocation);
+    console.debug("Risk budget:", riskBudget.percentages);
+    console.debug("Regime:", adjustedRegime.name);
 
     const capSource = ` | Risk exposure cap ${exposureCap}%`;
 
@@ -639,7 +639,7 @@ export function proposeTargets(mode = 'blend', options = {}) {
 
     // DEBUG: Log before normalization (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
-      console.debug('🔍 DEBUG proposeTargets - before normalization BTC:', proposedTargets.BTC);
+      console.debug("DEBUG proposeTargets - before normalization BTC:", proposedTargets.BTC);
     }
 
     // Final normalization
@@ -647,7 +647,7 @@ export function proposeTargets(mode = 'blend', options = {}) {
 
     // DEBUG: Log after normalization (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
-      console.debug('🔍 DEBUG proposeTargets - after normalization BTC:', proposedTargets.BTC);
+      console.debug("DEBUG proposeTargets - after normalization BTC:", proposedTargets.BTC);
     }
 
     return {
@@ -739,8 +739,8 @@ export async function applyTargets(proposalResult) {
   try {
     // DEBUG: Log what we're about to save (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
-      console.debug('🔍 DEBUG applyTargets - proposalResult.targets:', proposalResult.targets);
-      console.debug('🔍 DEBUG applyTargets - BTC allocation:', proposalResult.targets.BTC);
+      console.debug("DEBUG applyTargets - proposalResult.targets:", proposalResult.targets);
+      console.debug("DEBUG applyTargets - BTC allocation:", proposalResult.targets.BTC);
     }
 
     // Update store with new targets (normalized version for display)
@@ -790,10 +790,10 @@ export async function applyTargets(proposalResult) {
 
     // DEBUG: Log save operations (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
-      console.debug('🔍 DEBUG applyTargets - Full proposal result:', proposalResult);
-      console.debug('🔍 DEBUG applyTargets - Targets being saved:', proposalResult.targets);
-      console.debug('🔍 DEBUG applyTargets - BTC before save:', dataToSave?.targets?.BTC);
-      console.debug('🔍 DEBUG applyTargets - ETH before save:', dataToSave?.targets?.ETH);
+      console.debug("DEBUG applyTargets - Full proposal result:", proposalResult);
+      console.debug("DEBUG applyTargets - Targets being saved:", proposalResult.targets);
+      console.debug("DEBUG applyTargets - BTC before save:", dataToSave?.targets?.BTC);
+      console.debug("DEBUG applyTargets - ETH before save:", dataToSave?.targets?.ETH);
     }
 
     if (dataToSave) {
@@ -805,8 +805,8 @@ export async function applyTargets(proposalResult) {
     // DEBUG: Verify what was actually saved (only if verbose debug enabled)
     if (window.__DEBUG_TARGETS_VERBOSE__) {
       const savedData = JSON.parse(localStorage.getItem('last_targets') || 'null');
-      console.debug('🔍 DEBUG applyTargets - BTC after save:', savedData?.targets?.BTC);
-      console.debug('🔍 DEBUG applyTargets - ETH after save:', savedData?.targets?.ETH);
+      console.debug("DEBUG applyTargets - BTC after save:", savedData?.targets?.BTC);
+      console.debug("DEBUG applyTargets - ETH after save:", savedData?.targets?.ETH);
     }
 
     // Dispatch event for external listeners (rebalance.html)

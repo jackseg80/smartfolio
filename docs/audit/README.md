@@ -7,7 +7,7 @@
 
 ---
 
-## 🚀 DÉMARRAGE RAPIDE
+## DÉMARRAGE RAPIDE
 
 ### Recherche crypto — point de reprise actuel
 
@@ -59,14 +59,14 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 
 ### 👉 Nouveau dans les audits? Commencez ici:
 
-**1️⃣ [AUDIT_STATUS.md](./AUDIT_STATUS.md)** - **Point d'entrée principal** ⭐
+**1. [AUDIT_STATUS.md](./AUDIT_STATUS.md)** - **Point d'entrée principal**
 - Vue d'ensemble rapide (scores actuels)
 - Tous les audits disponibles
 - Roadmap globale
 - Actions recommandées
 - **5 min de lecture** pour comprendre l'état complet du projet
 
-**2️⃣ Puis consultez les audits spécifiques selon vos besoins:**
+**2. Puis consultez les audits spécifiques selon vos besoins:**
 - Sécurité: [SECURITY_AUDIT_2025-11-22.md](./SECURITY_AUDIT_2025-11-22.md)
 - Performance: [PERFORMANCE_AUDIT_2025-12-12.md](./PERFORMANCE_AUDIT_2025-12-12.md)
 - Accessibilité: [ACCESSIBILITY_AUDIT_2025-12-23.md](./ACCESSIBILITY_AUDIT_2025-12-23.md)
@@ -74,27 +74,27 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 
 ---
 
-## 📊 Scores Actuels (Février 2026)
+## Scores Actuels (Février 2026)
 
 | Dimension | Score | Tendance | Priorité |
 |-----------|-------|----------|----------|
-| **Sécurité** | 7.0/10 | ⬇️ -1.5 (9 CVEs, auth gaps) | 🟡 EN COURS |
-| **Performance** | 7.5/10 | ➡️ Stable | 🔄 EN COURS |
-| **Accessibilité** | ~80/100 | ⬆️ +12 (Quick Wins Phase 1) | 🟡 MOYEN |
-| **Dette Technique** | 7.0/10 | ⬇️ -0.5 | 🟡 MOYEN |
-| **Tests** | 5.0/10 | ⬇️ -3.0 (real: 20.5%) | 🔴 FAIBLE |
-| **CI/CD** | 8/10 | ➡️ Stable | ✅ BON |
-| **API Contract** | 4.0/10 | 🆕 NEW | 🔴 FAIBLE |
-| **Error Handling** | 6.5/10 | 🆕 NEW | 🟡 MOYEN |
-| **Data Integrity** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE |
-| **Logging** | 5.0/10 | 🆕 NEW | 🔴 FAIBLE |
-| **Concurrency** | 5.5/10 | 🆕 NEW | 🔴 FAIBLE |
+| **Sécurité** | 7.0/10 |  -1.5 (9 CVEs, auth gaps) |  EN COURS |
+| **Performance** | 7.5/10 |  Stable |  EN COURS |
+| **Accessibilité** | ~80/100 |  +12 (Quick Wins Phase 1) | [Pending] MOYEN |
+| **Dette Technique** | 7.0/10 |  -0.5 | [Pending] MOYEN |
+| **Tests** | 5.0/10 |  -3.0 (real: 20.5%) | [Negative] FAIBLE |
+| **CI/CD** | 8/10 |  Stable | [OK] BON |
+| **API Contract** | 4.0/10 |  NEW | [Negative] FAIBLE |
+| **Error Handling** | 6.5/10 |  NEW | [Pending] MOYEN |
+| **Data Integrity** | 5.5/10 |  NEW | [Negative] FAIBLE |
+| **Logging** | 5.0/10 |  NEW | [Negative] FAIBLE |
+| **Concurrency** | 5.5/10 |  NEW | [Negative] FAIBLE |
 
 **Note Globale:** **6.0/10** (was 7.7) — See [COMPREHENSIVE_AUDIT_2026-02-08.md](./COMPREHENSIVE_AUDIT_2026-02-08.md)
 
 ---
 
-## 📚 Index des Audits par Catégorie
+## Index des Audits par Catégorie
 
 ### Stock Market (26 septembre 2026)
 
@@ -114,15 +114,15 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
    - eval() elimination
    - MD5 usedforsecurity=False
 
-3. ⭐ [PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md](../_archive/audit_reports/PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md) - **Plan d'amélioration sécurité multi-tenant** (archived)
-   - 🔄 EN COURS - Itération 1 (P0)
-   - ✅ P0-2: Supprimé user_id="demo" (11 fichiers, 19 occurrences)
-   - ✅ P0-3: Sécurisé logs API keys
-   - 🔄 P0-1: Migration get_active_user (100 endpoints restants)
+3. [PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md](../_archive/audit_reports/PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md) - **Plan d'amélioration sécurité multi-tenant** (archived)
+   - EN COURS - Itération 1 (P0)
+   - [OK] P0-2: Supprimé user_id="demo" (11 fichiers, 19 occurrences)
+   - [OK] P0-3: Sécurisé logs API keys
+   - P0-1: Migration get_active_user (100 endpoints restants)
    - 6 itérations planifiées (P0 → P1 → P2)
    - Document de suivi vivant (mis à jour au fur et à mesure)
 
-**Status:** ✅ Production ready | 🔄 Amélioration continue en cours
+**Status:** [OK] Production ready |  Amélioration continue en cours
 
 ---
 
@@ -145,7 +145,7 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 - `b084475` - Intégration DXY/VIX stress
 - `26b6570` - Calibration default params
 
-**Status:** ✅ COMPLET ET VALIDÉ (3 Feb 2026)
+**Status:** [OK] COMPLET ET VALIDÉ (3 Feb 2026)
 
 ---
 
@@ -168,11 +168,11 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 6. [PORTFOLIO_HISTORY_PARTITIONING_2025-12-12.md](./PORTFOLIO_HISTORY_PARTITIONING_2025-12-12.md) - Scalabilité
 7. [PERFORMANCE_FIXES_BONUS_2025-12-12.md](./PERFORMANCE_FIXES_BONUS_2025-12-12.md) - Bonus fixes
 
-**Status:** 🔄 40% résolu (19/47), -60% à -80% latence sur endpoints critiques
+**Status:**  40% résolu (19/47), -60% à -80% latence sur endpoints critiques
 
 ---
 
-### ♿ Accessibilité (68/100 - MOYEN)
+### Accessibilité (68/100 - MOYEN)
 
 **Audits complets:**
 1. [ACCESSIBILITY_AUDIT_2025-12-23.md](./ACCESSIBILITY_AUDIT_2025-12-23.md) - Audit WCAG 2.1 AA
@@ -181,11 +181,11 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
    - Quick wins: 2h pour +15 pts
    - Plan 20h pour 100/100
 
-**Status:** 🆕 Premier audit, plan d'action en 4 phases
+**Status:** [New] Premier audit, plan d'action en 4 phases
 
 ---
 
-### 🛠️ Dette Technique (7.5/10 - BON)
+### Dette Technique (7.5/10 - BON)
 
 **Audits complets:**
 1. [AUDIT_DETTE_TECHNIQUE.md](./AUDIT_DETTE_TECHNIQUE.md) - Rapport complet
@@ -193,21 +193,21 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
    - 3 God Services (5,834 lignes)
    - Plan refactoring 6 semaines
 
-**Status:** ✅ En baisse active, conformité 90%
+**Status:** [OK] En baisse active, conformité 90%
 
 ---
 
-### ✅ Tests (8/10 - BON)
+### Tests (8/10 - BON)
 
 **Audits complets:**
 1. [TEST_COVERAGE_REPORT_2025-11-22.md](./TEST_COVERAGE_REPORT_2025-11-22.md) - Rapport coverage
 2. [TEST_FIXES_SESSION_2025-11-22.md](./TEST_FIXES_SESSION_2025-11-22.md) - Tests créés
 
-**Status:** ✅ 66% BalanceService, infrastructure pytest en place
+**Status:** [OK] 66% BalanceService, infrastructure pytest en place
 
 ---
 
-### 🔄 CI/CD (8/10 - BON)
+### CI/CD (8/10 - BON)
 
 **Workflows:**
 1. [.github/workflows/ci.yml](../../.github/workflows/ci.yml) - Pipeline principal
@@ -219,11 +219,11 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
    - Lundi 9h UTC automatique
    - Auto-création issue si vulnérabilités
 
-**Status:** ✅ Automatisé depuis Dec 2025
+**Status:** [OK] Automatisé depuis Dec 2025
 
 ---
 
-## 📋 Audits Historiques & Tracking
+## Audits Historiques & Tracking
 
 ### Audits Globaux
 - [AUDIT_COMPLET_2025_11_09.md](./AUDIT_COMPLET_2025_11_09.md) - Audit complet Nov 2025 (baseline)
@@ -240,7 +240,7 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 
 ---
 
-## 🎯 Actions Recommandées par Rôle
+## Actions Recommandées par Rôle
 
 ### Pour le Product Owner / Manager
 
@@ -249,9 +249,9 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 2. Roadmap globale (dans AUDIT_STATUS.md)
 
 **Décisions clés:**
-- ✅ Projet production ready
-- 🎯 Prioriser: Accessibilité (2h) → Performance (20h) → God Services (6 sem)
-- 📅 Timeline: Q1 2026 pour quick wins, Q2-Q3 pour refactoring
+- [OK] Projet production ready
+- Prioriser: Accessibilité (2h) → Performance (20h) → God Services (6 sem)
+- Timeline: Q1 2026 pour quick wins, Q2-Q3 pour refactoring
 
 ---
 
@@ -290,7 +290,7 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 
 ---
 
-## 📈 Évolution des Scores
+## Évolution des Scores
 
 ### Timeline Oct → Dec 2025
 
@@ -305,35 +305,35 @@ CI/CD:            5/10 █████░░░░░ → 8/10 █████�
 NOTE GLOBALE:     7.2/10 ███████░░░ → 7.7/10 ███████░░░ (+7%)
 ```
 
-**Tendance:** ⬆️ Amélioration continue sur tous les domaines
+**Tendance:**  Amélioration continue sur tous les domaines
 
 ---
 
-## 🔄 Calendrier de Revue
+## Calendrier de Revue
 
 ### Audits Complétés
-- ✅ Oct 2025: Audit initial (baseline)
-- ✅ Nov 2025: Sécurité + Dette + Tests
-- ✅ Dec 2025: Performance + Accessibilité + CI/CD
+- [OK] Oct 2025: Audit initial (baseline)
+- [OK] Nov 2025: Sécurité + Dette + Tests
+- [OK] Dec 2025: Performance + Accessibilité + CI/CD
 
 ### Prochaines Revues
-- 📅 **Janvier 2026:** Status post-Quick Wins (a11y + performance)
-- 📅 **Mars 2026:** Revue trimestre Q1 (God Services Phase 1)
-- 📅 **Juin 2026:** Revue semestrielle complète
-- 📅 **Décembre 2026:** Audit annuel final
+- **Janvier 2026:** Status post-Quick Wins (a11y + performance)
+- **Mars 2026:** Revue trimestre Q1 (God Services Phase 1)
+- **Juin 2026:** Revue semestrielle complète
+- **Décembre 2026:** Audit annuel final
 
 **Fréquence recommandée:** Trimestielle (Q1, Q2, Q3, Q4)
 
 ---
 
-## 🛠️ Outils & Automation
+## Outils & Automation
 
 ### Scans Automatiques Actifs
-- ✅ **Safety** (dependency CVE scan) - Chaque PR + hebdomadaire
-- ✅ **Bandit** (code security scan) - Chaque PR + hebdomadaire
-- ✅ **pytest-cov** (coverage reports) - Chaque PR
-- ✅ **ruff** (linting) - Chaque PR
-- ✅ **mypy** (type checking) - Chaque PR
+- [OK] **Safety** (dependency CVE scan) - Chaque PR + hebdomadaire
+- [OK] **Bandit** (code security scan) - Chaque PR + hebdomadaire
+- [OK] **pytest-cov** (coverage reports) - Chaque PR
+- [OK] **ruff** (linting) - Chaque PR
+- [OK] **mypy** (type checking) - Chaque PR
 
 ### Outils Recommandés (à ajouter)
 - [ ] **Lighthouse** (accessibility) - Manuel pour l'instant
@@ -348,7 +348,7 @@ NOTE GLOBALE:     7.2/10 ███████░░░ → 7.7/10 ████�
 
 ---
 
-## 📞 Support & Ressources
+## Support & Ressources
 
 ### Documentation Projet
 - **Guide principal:** [CLAUDE.md](../../CLAUDE.md)
@@ -367,7 +367,7 @@ NOTE GLOBALE:     7.2/10 ███████░░░ → 7.7/10 ████�
 
 ---
 
-## ✅ Checklist Utilisation des Audits
+## Checklist Utilisation des Audits
 
 ### Avant de commencer une tâche
 - [ ] Lire [AUDIT_STATUS.md](./AUDIT_STATUS.md) (5 min)
@@ -389,38 +389,38 @@ NOTE GLOBALE:     7.2/10 ███████░░░ → 7.7/10 ████�
 
 ---
 
-## 📝 Changelog des Audits
+## Changelog des Audits
 
 ### Décembre 2025
-- ✅ Audit accessibilité complet WCAG 2.1 AA
-- ✅ CI/CD automation (Security + Coverage)
-- ✅ AUDIT_STATUS.md créé (point d'entrée principal)
-- ✅ 19 problèmes performance résolus
-- ✅ README.md restructuré
+- [OK] Audit accessibilité complet WCAG 2.1 AA
+- [OK] CI/CD automation (Security + Coverage)
+- [OK] AUDIT_STATUS.md créé (point d'entrée principal)
+- [OK] 19 problèmes performance résolus
+- [OK] README.md restructuré
 
 ### Novembre 2025
-- ✅ Tous bloqueurs production résolus (5 → 0)
-- ✅ Sécurité: 3 vulns critiques → 0
-- ✅ Tests BalanceService créés (66% coverage)
-- ✅ Conformité CLAUDE.md: 75% → 90%
-- ✅ 6 audits complets générés
+- [OK] Tous bloqueurs production résolus (5 → 0)
+- [OK] Sécurité: 3 vulns critiques → 0
+- [OK] Tests BalanceService créés (66% coverage)
+- [OK] Conformité CLAUDE.md: 75% → 90%
+- [OK] 6 audits complets générés
 
 ### Octobre 2025
-- ✅ Audit initial (baseline 7.2/10)
+- [OK] Audit initial (baseline 7.2/10)
 
 ---
 
-## 🎉 Conclusion
+## Conclusion
 
 SmartFolio dispose d'un **système d'audit complet et automatisé**:
-- ✅ **21 documents** couvrant tous les aspects qualité
-- ✅ **CI/CD automation** pour prévenir les régressions
-- ✅ **Roadmap claire** avec efforts estimés
-- ✅ **Production ready** après corrections Nov 2025
+- [OK] **21 documents** couvrant tous les aspects qualité
+- [OK] **CI/CD automation** pour prévenir les régressions
+- [OK] **Roadmap claire** avec efforts estimés
+- [OK] **Production ready** après corrections Nov 2025
 
 **Prochaine étape recommandée:** Lire [AUDIT_STATUS.md](./AUDIT_STATUS.md) puis implémenter les quick wins accessibilité (2h)
 
-**Niveau de confiance:** 🟢 **TRÈS ÉLEVÉ** - Projet mature et bien audité
+**Niveau de confiance:** [Positive] **TRÈS ÉLEVÉ** - Projet mature et bien audité
 
 ---
 

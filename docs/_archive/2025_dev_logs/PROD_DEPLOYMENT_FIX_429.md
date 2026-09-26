@@ -1,19 +1,19 @@
 # Fix Erreurs 429 en Production Docker
 
-**Statut:** ✅ RÉSOLU
+**Statut:** [OK] RÉSOLU
 **Date:** 2025-12-04
 **Problème:** Erreurs 429 (Too Many Requests) en cascade sur production Linux Docker
 
 ---
 
-## 🔍 Diagnostic
+## Diagnostic
 
 ### Symptômes
-- ❌ Erreur 429 sur TOUS les endpoints (/api/wealth/global/summary, /api/ml/sentiment, /api/risk/dashboard, etc.)
-- ❌ WebSocket connection failed
-- ❌ CSP violation pour Chart.js sourcemaps
-- ❌ 401 Unauthorized sur /api/saxo/api-positions
-- ❌ Clés API non visibles dans settings.html
+- [Error] Erreur 429 sur TOUS les endpoints (/api/wealth/global/summary, /api/ml/sentiment, /api/risk/dashboard, etc.)
+- [Error] WebSocket connection failed
+- [Error] CSP violation pour Chart.js sourcemaps
+- [Error] 401 Unauthorized sur /api/saxo/api-positions
+- [Error] Clés API non visibles dans settings.html
 
 ### Cause Racine
 **Rate limiter Token Bucket trop strict en production :**
@@ -27,13 +27,13 @@
 
 ---
 
-## ✅ Solutions Appliquées
+## Solutions Appliquées
 
 ### 1. Fix Rate Limiting (CRITIQUE)
 
 **Modifications :**
-- ✅ [docker-compose.yml](../docker-compose.yml#L72-L73) - Ajout mapping variables SECURITY_*
-- ✅ [.env.production.example](../.env.production.example#L35-L36) - Nouvelles valeurs recommandées
+- [OK] [docker-compose.yml](../docker-compose.yml#L72-L73) - Ajout mapping variables SECURITY_*
+- [OK] [.env.production.example](../.env.production.example#L35-L36) - Nouvelles valeurs recommandées
 
 **Nouvelles valeurs par défaut :**
 ```yaml
@@ -49,7 +49,7 @@ SECURITY_RATE_LIMIT_BURST_SIZE: 50     # Burst 50 requêtes simultanées
 ### 2. Fix CSP Chart.js (Warning)
 
 **Modification :**
-- ✅ [config/settings.py](../config/settings.py#L76) - Ajout `https://cdn.jsdelivr.net` dans `csp_connect_src`
+- [OK] [config/settings.py](../config/settings.py#L76) - Ajout `https://cdn.jsdelivr.net` dans `csp_connect_src`
 
 **Impact :**
 - Supprime warning CSP "violates connect-src" pour Chart.js sourcemaps
@@ -62,9 +62,9 @@ SECURITY_RATE_LIMIT_BURST_SIZE: 50     # Burst 50 requêtes simultanées
 **Solution utilisateur :**
 1. Aller dans [Settings > Clés API](http://192.168.1.200:8080/settings.html)
 2. Section "SaxoBank OpenAPI"
-3. Cliquer "🔐 Se connecter à Saxo"
+3. Cliquer " Se connecter à Saxo"
 4. Popup OAuth → Accepter → Ferme automatiquement
-5. Status passe à "✅ Connecté"
+5. Status passe à "[OK] Connecté"
 
 ### 4. Clés API non visibles (À investiguer)
 
@@ -92,7 +92,7 @@ curl -H "X-User: jack" http://192.168.1.200:8080/api/settings/get
 
 ---
 
-## 📋 Checklist Déploiement
+## Checklist Déploiement
 
 ### Sur votre machine Windows (préparation)
 
@@ -138,7 +138,7 @@ curl -H "X-User: jack" http://192.168.1.200:8080/api/settings/get
 
    # Check logs rate limiter
    docker-compose logs -f smartfolio | grep "Token bucket"
-   # Devrait afficher: "🪣 Token bucket rate limiter initialized: 20.0 req/s burst 50"
+   # Devrait afficher: " Token bucket rate limiter initialized: 20.0 req/s burst 50"
 
    # Test endpoint
    curl -v http://192.168.1.200:8080/api/wealth/global/summary?source=stub_balanced
@@ -153,7 +153,7 @@ curl -H "X-User: jack" http://192.168.1.200:8080/api/settings/get
 
 ---
 
-## 🚨 Si Problèmes Persistent
+## Si Problèmes Persistent
 
 ### Option A : Désactiver complètement le rate limiting
 
@@ -189,7 +189,7 @@ docker-compose logs -f smartfolio | grep -E "(Rate limit|Token bucket|429)"
 
 ---
 
-## 📊 Métriques Attendues
+## Métriques Attendues
 
 ### Avant fix (BROKEN)
 ```
@@ -212,7 +212,7 @@ Dashboard charge: 25 requêtes en 2 secondes
 
 ---
 
-## 🔗 Références
+## Références
 
 - [Token Bucket Rate Limiter](../services/rate_limiter.py) - Implémentation
 - [SecurityConfig](../config/settings.py#L53-L98) - Configuration
@@ -223,7 +223,7 @@ Dashboard charge: 25 requêtes en 2 secondes
 ---
 
 **Notes :**
-- ⚠️ Les valeurs recommandées (20 req/sec, burst 50) sont adaptées pour un **serveur LAN local** sans exposition internet
-- ⚠️ Si exposition internet future → réduire à 10 req/sec, burst 30 + ajouter IP whitelisting
-- ✅ Token bucket est préféré à fixed window (évite burst DOS)
-- ✅ Adaptive cache TTL optimise performance (cache hit ratio)
+- [Warning] Les valeurs recommandées (20 req/sec, burst 50) sont adaptées pour un **serveur LAN local** sans exposition internet
+- [Warning] Si exposition internet future → réduire à 10 req/sec, burst 30 + ajouter IP whitelisting
+- [OK] Token bucket est préféré à fixed window (évite burst DOS)
+- [OK] Adaptive cache TTL optimise performance (cache hit ratio)

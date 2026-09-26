@@ -2,20 +2,20 @@
 
 let mlTabInitialized = false;
 
-// 🆕 Smart polling ML avec Page Visibility - Nov 2025 optimization
+//  Smart polling ML avec Page Visibility - Nov 2025 optimization
 let mlPollInterval = null;
 let mlPipelineInterval = null;
 
 // Initialisation quand l'onglet ML est sélectionné
 function initializeMLTab() {
-  debugLogger.debug('🤖 Initializing Intelligence ML tab...');
+  debugLogger.debug("Initializing Intelligence ML tab...");
 
   try {
     // Démarrer les prédictions temps réel
     loadMLPredictions();
     loadMLPipelineStatus();
 
-    // 🆕 Smart refresh périodique (seulement si page visible)
+    //  Smart refresh périodique (seulement si page visible)
     if (!document.hidden) {
       mlPollInterval = setInterval(() => {
         if (!document.hidden) loadMLPredictions();
@@ -27,15 +27,15 @@ function initializeMLTab() {
     }
 
     mlTabInitialized = true;
-    debugLogger.debug('✅ Intelligence ML tab initialized');
+    debugLogger.debug("[OK] Intelligence ML tab initialized");
 
   } catch (error) {
-    debugLogger.error('❌ ML tab initialization failed:', error);
+    debugLogger.error("[Error] ML tab initialization failed:", error);
     showMLError('Initialization failed: ' + error.message);
   }
 }
 
-// 🆕 Pause/Resume ML polling selon visibilité
+//  Pause/Resume ML polling selon visibilité
 function handleMLPollingVisibility() {
   if (document.hidden) {
     // Pause ML polling
@@ -47,7 +47,7 @@ function handleMLPollingVisibility() {
       clearInterval(mlPipelineInterval);
       mlPipelineInterval = null;
     }
-    debugLogger.debug('⏸️ ML polling paused (page hidden)');
+    debugLogger.debug("ML polling paused (page hidden)");
   } else if (mlTabInitialized) {
     // Resume ML polling si tab ML déjà initialisé
     loadMLPredictions(); // Refresh immédiat
@@ -61,14 +61,14 @@ function handleMLPollingVisibility() {
       if (!document.hidden) loadMLPipelineStatus();
     }, 120000);
 
-    debugLogger.debug('▶️ ML polling resumed');
+    debugLogger.debug("ML polling resumed");
   }
 }
 
 // Chargement du statut ML global et prédictions - UTILISE SOURCE CENTRALISÉE
 async function loadMLPredictions() {
   try {
-    // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+    //  FIX Nov 2025: Récupérer l'user actif pour multi-tenant
     const activeUser = localStorage.getItem('activeUser');
 
     // 1) Statut ML global depuis source unifiée
@@ -97,8 +97,7 @@ async function loadMLPredictions() {
       const volStatusEl = document.getElementById('ml-vol-model-status');
       const volDetailsEl = document.getElementById('ml-vol-model-details');
       if (volStatusEl && volDetailsEl) {
-        const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
-        volStatusEl.textContent = `${icons[volStatus]} ${volStatus.charAt(0).toUpperCase() + volStatus.slice(1)}`;
+        volStatusEl.textContent = `${volStatus.charAt(0).toUpperCase() + volStatus.slice(1)}`;
         volDetailsEl.textContent = `${volModelsLoaded} models • ${volSymbols} symbols`;
       }
 
@@ -107,8 +106,7 @@ async function loadMLPredictions() {
       const regimeStatusEl = document.getElementById('ml-regime-model-status');
       const regimeDetailsEl = document.getElementById('ml-regime-model-details');
       if (regimeStatusEl && regimeDetailsEl) {
-        const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
-        regimeStatusEl.textContent = `${icons[regimeStatus]} ${regimeStatus.charAt(0).toUpperCase() + regimeStatus.slice(1)}`;
+        regimeStatusEl.textContent = `${regimeStatus.charAt(0).toUpperCase() + regimeStatus.slice(1)}`;
         regimeDetailsEl.textContent = individual.regime.available ? 'Model available' : 'Not available';
       }
 
@@ -118,8 +116,7 @@ async function loadMLPredictions() {
       const corrStatusEl = document.getElementById('ml-corr-model-status');
       const corrDetailsEl = document.getElementById('ml-corr-model-details');
       if (corrStatusEl && corrDetailsEl) {
-        const icons = { 'active': '🟢', 'ready': '🟢', 'training': '🔄', 'error': '🔴', 'inactive': '⚪', 'unknown': '❓' };
-        corrStatusEl.textContent = `${icons[corrStatus]} ${corrStatus.charAt(0).toUpperCase() + corrStatus.slice(1)}`;
+        corrStatusEl.textContent = `${corrStatus.charAt(0).toUpperCase() + corrStatus.slice(1)}`;
         corrDetailsEl.textContent = `${corrModelsLoaded} models loaded`;
       }
 
@@ -128,21 +125,20 @@ async function loadMLPredictions() {
       const sentDetailsEl = document.getElementById('ml-sent-model-details');
       if (sentStatusEl && sentDetailsEl) {
         const sentStatus = individual.sentiment.loaded > 0 ? 'active' : 'inactive';
-        const icons = { 'active': '🟢', 'inactive': '⚪' };
-        sentStatusEl.textContent = `${icons[sentStatus]} ${sentStatus.charAt(0).toUpperCase() + sentStatus.slice(1)}`;
+        sentStatusEl.textContent = `${sentStatus.charAt(0).toUpperCase() + sentStatus.slice(1)}`;
         sentDetailsEl.textContent = individual.sentiment.available ? 'Composite API available' : 'Not available';
       }
 
-      debugLogger.debug(`✅ ML Status chargé depuis source centralisée: ${mlStatus.source}`);
+      debugLogger.debug(`[OK] ML Status chargé depuis source centralisée: ${mlStatus.source}`);
     } else {
-      debugLogger.warn('⚠️ Impossible de charger le statut ML unifié, utilisation des API individuelles...');
+      debugLogger.warn("[Warning] Impossible de charger le statut ML unifié, utilisation des API individuelles...");
       // Fallback vers l'ancien système si source centralisée échoue
       await loadMLPredictionsFallback();
     }
 
     // 2) Volatilité BTC/ETH
     const volResponse = await fetch('/api/ml/volatility/predict/BTC?horizon_days=1', {
-      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
     });
     if (volResponse.ok) {
       const volData = await volResponse.json();
@@ -152,7 +148,7 @@ async function loadMLPredictions() {
     }
 
     const volETHResponse = await fetch('/api/ml/volatility/predict/ETH?horizon_days=1', {
-      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
     });
     if (volETHResponse.ok) {
       const volETHData = await volETHResponse.json();
@@ -163,7 +159,7 @@ async function loadMLPredictions() {
 
     // 3) Régime de marché
     const regimeResponse = await fetch('/api/ml/regime/current', {
-      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
     });
     if (regimeResponse.ok) {
       const regimeData = await regimeResponse.json();
@@ -178,7 +174,7 @@ async function loadMLPredictions() {
 
     // 4) ML Sentiment
     const sentResponse = await fetch('/api/ml/sentiment/symbol/BTC?days=1', {
-      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
     });
     if (sentResponse.ok) {
       const sentData = await sentResponse.json();
@@ -203,12 +199,12 @@ async function loadMLPredictions() {
 // Fallback vers ancien système si source centralisée échoue
 async function loadMLPredictionsFallback() {
   try {
-    // 🆕 FIX Nov 2025: Récupérer l'user actif pour multi-tenant
+    //  FIX Nov 2025: Récupérer l'user actif pour multi-tenant
     const activeUser = localStorage.getItem('activeUser');
 
     // Ancien système comme fallback
     const statusResponse = await fetch('/api/ml/status', {
-      headers: { 'X-User': activeUser }  // 🆕 FIX: Passer l'user actif
+      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
     });
     if (statusResponse.ok) {
       const statusData = await statusResponse.json();
@@ -224,7 +220,7 @@ async function loadMLPredictionsFallback() {
       document.getElementById('ml-last-update').textContent =
         lastUpdate ? new Date(lastUpdate).toLocaleTimeString('en-US') : '--';
 
-      debugLogger.debug('⚠️ Using ML fallback system');
+      debugLogger.debug("[Warning] Using ML fallback system");
     }
   } catch (error) {
     debugLogger.error('ML fallback also failed:', error);
@@ -249,15 +245,15 @@ async function loadMLPipelineStatus() {
         <div>Status: <span style="color: var(--success);">${data.status || 'Unknown'}</span></div>
       `;
     } else if (response.status === 401 || response.status === 403) {
-      container.innerHTML = '<div style="color: var(--warning);">⚠️ Admin access required for pipeline info</div>';
+      container.innerHTML = "<div style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> Admin access required for pipeline info</div>";
     } else {
-      container.innerHTML = '<div style="color: var(--danger);">❌ Pipeline status unavailable</div>';
+      container.innerHTML = "<div style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Pipeline status unavailable</div>";
     }
 
   } catch (error) {
     debugLogger.warn('Pipeline status update failed:', error);
     document.getElementById('ml-pipeline-container').innerHTML =
-      '<div style="color: var(--danger);">❌ Connection error</div>';
+      "<div style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Connection error</div>";
   }
 }
 
@@ -272,12 +268,12 @@ async function triggerMLRetraining() {
     });
 
     if (response.ok) {
-      alert('✅ Retraining started in the background');
+      alert("[OK] Retraining started in the background");
     } else {
-      alert('❌ Error during startup: ' + response.statusText);
+      alert("Error during startup: " + response.statusText);
     }
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert("Error: " + error.message);
   }
 }
 
@@ -291,13 +287,13 @@ async function clearMLCache() {
     });
 
     if (response.ok) {
-      alert('✅ ML cache cleared');
+      alert("[OK] ML cache cleared");
       location.reload();
     } else {
-      alert('❌ Error: ' + response.statusText);
+      alert("Error: " + response.statusText);
     }
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert("Error: " + error.message);
   }
 }
 
@@ -327,17 +323,17 @@ async function showMLDebug() {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank', 'width=800,height=600');
     } else {
-      alert('❌ Admin access required');
+      alert("[Error] Admin access required");
     }
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    alert("Error: " + error.message);
   }
 }
 
 function showMLError(message) {
   document.getElementById('tab-intelligence-ml').innerHTML = `
     <div class="panel-card" style="text-align: center; padding: 4rem; color: var(--danger);">
-      <h3>⚠️ Intelligence ML Error</h3>
+      <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Intelligence ML Error</h3>
       <p>${message}</p>
       <button onclick="location.reload()" style="background: var(--brand-primary); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: var(--radius-md); cursor: pointer;">
         Retry
@@ -418,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialisation préventive des données ML (même si l'onglet n'est pas actif)
   // Cela permet d'avoir les données prêtes quand l'utilisateur clique sur l'onglet
   setTimeout(() => {
-    debugLogger.debug('🤖 Pre-loading ML data for Intelligence tab...');
+    debugLogger.debug("Pre-loading ML data for Intelligence tab...");
     loadMLPredictions();
     loadMLPipelineStatus();
     mlTabInitialized = true;
@@ -449,6 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTabsAria(activeTab);
   }
 
-  // 🆕 Hook ML polling visibility management
+  //  Hook ML polling visibility management
   document.addEventListener('visibilitychange', handleMLPollingVisibility);
 });

@@ -73,7 +73,7 @@ class TrainingExecutor:
         self.model_registry = ModelRegistry()
         self._jobs: Dict[str, TrainingJob] = {}
         self._jobs_lock = threading.Lock()
-        logger.info("✅ Training Executor initialized")
+        logger.info(" Training Executor initialized")
 
     def list_available_models(self) -> List[Dict[str, Any]]:
         """
@@ -147,7 +147,7 @@ class TrainingExecutor:
             with self._jobs_lock:
                 self._jobs[job_id] = job
 
-            logger.info(f"✅ Training job created: {job_id} for model {model_name} by {admin_user} (custom_config={config is not None})")
+            logger.info(f" Training job created: {job_id} for model {model_name} by {admin_user} (custom_config={config is not None})")
 
             # Start training in background
             thread = threading.Thread(target=self._run_training_job, args=(job_id,))
@@ -237,7 +237,7 @@ class TrainingExecutor:
             job.status = JobStatus.CANCELLED
             job.completed_at = datetime.utcnow()
 
-        logger.info(f"✅ Job {job_id} cancelled")
+        logger.info(f" Job {job_id} cancelled")
         return {"ok": True, "job_id": job_id, "status": JobStatus.CANCELLED.value}
 
     def _load_model_metadata(self, model_type: str, symbol: Optional[str] = None) -> Optional[Dict[str, Any]]:
@@ -261,35 +261,35 @@ class TrainingExecutor:
                 metadata_path = models_dir / "regime" / "regime_metadata.pkl"
 
                 if not metadata_path.exists():
-                    logger.warning(f"⚠️ Metadata file not found: {metadata_path}")
+                    logger.warning(f" Metadata file not found: {metadata_path}")
                     return None
 
                 metadata = safe_pickle_load(metadata_path)
-                logger.info(f"✅ Loaded regime metadata from {metadata_path}")
+                logger.info(f" Loaded regime metadata from {metadata_path}")
                 return metadata
 
             elif model_type == "volatility" or "volatility" in str(model_type).lower():
                 # Load volatility metadata (needs symbol)
                 if not symbol:
-                    logger.warning("⚠️ Symbol required for volatility model metadata")
+                    logger.warning(" Symbol required for volatility model metadata")
                     return None
 
                 metadata_path = models_dir / "volatility" / f"{symbol}_metadata.pkl"
 
                 if not metadata_path.exists():
-                    logger.warning(f"⚠️ Metadata file not found: {metadata_path}")
+                    logger.warning(f" Metadata file not found: {metadata_path}")
                     return None
 
                 metadata = safe_pickle_load(metadata_path)
-                logger.info(f"✅ Loaded {symbol} volatility metadata from {metadata_path}")
+                logger.info(f" Loaded {symbol} volatility metadata from {metadata_path}")
                 return metadata
 
             else:
-                logger.warning(f"⚠️ Unknown model type: {model_type}")
+                logger.warning(f" Unknown model type: {model_type}")
                 return None
 
         except Exception as e:
-            logger.error(f"❌ Failed to load metadata: {e}")
+            logger.error(f" Failed to load metadata: {e}")
             return None
 
     def _run_real_training(
@@ -324,7 +324,7 @@ class TrainingExecutor:
 
             from train_models import save_models
 
-            logger.info(f"📚 Training {model_type} model: {model_name} (custom_config={config is not None})")
+            logger.info(f" Training {model_type} model: {model_name} (custom_config={config is not None})")
 
             # Determine training parameters based on model type
             # PRIORITY 1: Stock market regime detector (use StocksMLAdapter)
@@ -336,7 +336,7 @@ class TrainingExecutor:
                 epochs = config.get("epochs", 100) if config else 100
                 patience = config.get("patience", 15) if config else 15
 
-                logger.info(f"📊 Stock regime training params: days={days}, epochs={epochs}, patience={patience}")
+                logger.info(f" Stock regime training params: days={days}, epochs={epochs}, patience={patience}")
 
                 # Use StocksMLAdapter for stock market training
                 import asyncio
@@ -376,7 +376,7 @@ class TrainingExecutor:
                 epochs = config.get("epochs", 100) if config else 100
                 patience = config.get("patience", 15) if config else 15
 
-                logger.info(f"📊 Crypto regime training params: days={days}, epochs={epochs}, patience={patience}")
+                logger.info(f" Crypto regime training params: days={days}, epochs={epochs}, patience={patience}")
 
                 save_models(
                     symbols=[],  # No volatility models
@@ -422,7 +422,7 @@ class TrainingExecutor:
                 min_r2 = config.get("min_r2", 0.5) if config else 0.5
                 symbols = config.get("symbols", ['BTC', 'ETH', 'SOL']) if config else ['BTC', 'ETH', 'SOL']
 
-                logger.info(f"📊 Volatility training params: days={days}, epochs={epochs}, patience={patience}, hidden_size={hidden_size}, min_r2={min_r2}, symbols={symbols}")
+                logger.info(f" Volatility training params: days={days}, epochs={epochs}, patience={patience}, hidden_size={hidden_size}, min_r2={min_r2}, symbols={symbols}")
 
                 save_models(
                     symbols=symbols,  # From config or default
@@ -474,7 +474,7 @@ class TrainingExecutor:
                 raise ValueError(f"No training implementation for model type '{model_type}'")
 
         except Exception as e:
-            logger.error(f"❌ Real training failed: {e}")
+            logger.error(f" Real training failed: {e}")
             raise
 
     def _run_training_job(self, job_id: str):
@@ -494,7 +494,7 @@ class TrainingExecutor:
                 job.status = JobStatus.RUNNING
                 job.started_at = datetime.utcnow()
 
-            logger.info(f"🚀 Starting REAL training job {job_id} for {job.model_name}")
+            logger.info(f" Starting REAL training job {job_id} for {job.model_name}")
 
             # REAL TRAINING: Call actual training script
             start_time = time.time()
@@ -518,10 +518,10 @@ class TrainingExecutor:
                 try:
                     # Try to get the model with existing version
                     self.model_registry.get_manifest(job.model_name, model_version)
-                    logger.info(f"📝 Updating existing model {job.model_name}:{model_version} in registry")
+                    logger.info(f" Updating existing model {job.model_name}:{model_version} in registry")
                 except (ValueError, KeyError):
                     # Model doesn't exist, register it first
-                    logger.info(f"📝 Registering new model {job.model_name}:{model_version} in registry")
+                    logger.info(f" Registering new model {job.model_name}:{model_version} in registry")
 
                     # Determine model file path based on type
                     from pathlib import Path
@@ -559,10 +559,10 @@ class TrainingExecutor:
                     ModelStatus.TRAINED
                 )
 
-                logger.info(f"✅ ModelRegistry updated for {job.model_name}")
+                logger.info(f" ModelRegistry updated for {job.model_name}")
 
             except Exception as e:
-                logger.error(f"❌ Failed to update ModelRegistry: {e}")
+                logger.error(f" Failed to update ModelRegistry: {e}")
                 import traceback
                 logger.error(traceback.format_exc())
 
@@ -571,10 +571,10 @@ class TrainingExecutor:
                 job.completed_at = datetime.utcnow()
                 job.metrics = metrics
 
-            logger.info(f"✅ Training job {job_id} completed successfully")
+            logger.info(f" Training job {job_id} completed successfully")
 
         except Exception as e:
-            logger.error(f"❌ Training job {job_id} failed: {e}")
+            logger.error(f" Training job {job_id} failed: {e}")
 
             with self._jobs_lock:
                 job = self._jobs[job_id]

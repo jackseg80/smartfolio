@@ -220,7 +220,7 @@ Affichage standardisé pour les états vides.
 
 ```html
 <empty-state
-    icon="📭"
+    icon="Empty"
     title="No data available"
     description="Try adjusting your filters."
     action-text="Add Data"

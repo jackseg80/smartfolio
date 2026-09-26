@@ -182,7 +182,7 @@ The CCS integration is now ready for testing. Follow these steps:
 
 5. TEST REBALANCE COMMUNICATION:
    - Open new tab: {BASE_URL}/static/rebalance.html
-   - Within 2 seconds, look for "🎯 Targets dynamiques" indicator in top-right
+   - Within 2 seconds, look for " Targets dynamiques" indicator in top-right
    - Check console for "New CCS targets detected from localStorage"
 
 6. TEST REBALANCE INTEGRATION:
@@ -192,11 +192,11 @@ The CCS integration is now ready for testing. Follow these steps:
 
 EXPECTED RESULTS:
 =================
-✓ Strategy buttons update proposed targets table
-✓ Apply Targets shows success feedback  
-✓ Rebalance page automatically detects new targets
-✓ Dynamic targets indicator appears
-✓ Generated plans use CCS allocations
+[OK] Strategy buttons update proposed targets table
+[OK] Apply Targets shows success feedback
+[OK] Rebalance page automatically detects new targets
+[OK] Dynamic targets indicator appears
+[OK] Generated plans use CCS allocations
 
 TROUBLESHOOTING:
 ================

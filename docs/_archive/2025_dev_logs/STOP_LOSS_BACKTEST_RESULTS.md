@@ -7,27 +7,27 @@
 
 ---
 
-## 🎯 Question Initiale
+## Question Initiale
 
 **"Quelle méthode de stop loss est la meilleure : ATR dynamique ou Fixed % ?"**
 
 ---
 
-## 📊 Résultats Finaux (Fair Comparison)
+## Résultats Finaux (Fair Comparison)
 
 ### Aggregate Performance
 
 | Méthode | Total P&L | Performance | Verdict |
 |---------|-----------|-------------|---------|
-| **Fixed Variable** | **$105,232** | **Baseline** | ✅ **WINNER** |
+| **Fixed Variable** | **$105,232** | **Baseline** | [OK] **WINNER** |
 | Fixed 5% | $97,642 | -7.2% | Acceptable |
-| ATR 2x | $41,176 | -60.9% | ❌ Abandonné |
+| ATR 2x | $41,176 | -60.9% | [Error] Abandonné |
 
 **Winner : Fixed Variable (4-6-8% selon volatilité)**
 
 ---
 
-## 🔬 Méthodologie
+## Méthodologie
 
 ### Assets Testés
 
@@ -62,7 +62,7 @@
 
 ---
 
-## 📈 Résultats Détaillés
+## Résultats Détaillés
 
 ### MSFT (5 ans) - Signal Fort
 
@@ -70,7 +70,7 @@
 Période: 2020-10-26 to 2025-10-23 (1255 jours)
 Régimes: COVID, Bear 2022, Bull 2024
 
-Fixed 5%:       $47,717  ✅ WINNER
+Fixed 5%:       $47,717  [OK] WINNER
 Fixed Variable: $42,375  (-11%)
 ATR 2x:         $17,574  (-63%)
 
@@ -89,7 +89,7 @@ ATR 2x:         36.3%
 Période: 2024-09-20 to 2025-10-17 (270 jours)
 Volatilité: 50% (high)
 
-Fixed Variable 8%: $9,035   ✅ WINNER (+16% vs Fixed 5%)
+Fixed Variable 8%: $9,035   [OK] WINNER (+16% vs Fixed 5%)
 Fixed 5%:          $7,792
 ATR 2x:            -$926   (stops trop larges)
 
@@ -107,7 +107,7 @@ ATR 2x:            35.0%
 Période: 2024-09-19 to 2025-10-17 (271 jours)
 Volatilité: 60% (high)
 
-ATR 2x:            $17,428  ✅ WINNER (+2% vs Fixed Var)
+ATR 2x:            $17,428  [OK] WINNER (+2% vs Fixed Var)
 Fixed Variable 8%: $17,102  (très proche)
 Fixed 5%:          $14,776  (-15%)
 
@@ -126,7 +126,7 @@ Fixed 5%:          48.7%
 Période: 2024-10-23 to 2025-10-22 (250 jours)
 Volatilité: 18% (low)
 
-Fixed Variable 4%: $32,316  ✅ WINNER (+12% vs Fixed 5%)
+Fixed Variable 4%: $32,316  [OK] WINNER (+12% vs Fixed 5%)
 Fixed 5%:          $28,832
 ATR 2x:            $7,798   (-73%)
 
@@ -140,7 +140,7 @@ ATR 2x:            58.8%
 
 ---
 
-## 💡 Insights Clés
+## Insights Clés
 
 ### 1. Fixed Variable Gagne Globalement
 
@@ -184,9 +184,9 @@ ATR 2x:            58.8%
 
 ---
 
-## 🎯 Recommandation Finale
+## Recommandation Finale
 
-### ✅ Implémenter Fixed Variable
+### Implémenter Fixed Variable
 
 ```python
 def calculate_stop_loss(current_price, historical_data):
@@ -217,18 +217,18 @@ def calculate_stop_loss(current_price, historical_data):
 ```
 
 **Avantages :**
-- ✅ +8% performance vs Fixed 5%
-- ✅ S'adapte à volatilité (logique intuitive)
-- ✅ Simple à implémenter (3 règles)
-- ✅ Pas de calcul complexe (juste std dev)
+- [OK] +8% performance vs Fixed 5%
+- [OK] S'adapte à volatilité (logique intuitive)
+- [OK] Simple à implémenter (3 règles)
+- [OK] Pas de calcul complexe (juste std dev)
 
 **Inconvénients :**
-- ⚠️ Nécessite calcul volatilité (mais trivial)
-- ⚠️ Perd sur MSFT 5 ans vs Fixed 5% (-11%)
+- [Warning] Nécessite calcul volatilité (mais trivial)
+- [Warning] Perd sur MSFT 5 ans vs Fixed 5% (-11%)
 
 ---
 
-## 📊 Impact Attendu
+## Impact Attendu
 
 ### Sur Portefeuille Type
 
@@ -252,9 +252,9 @@ def calculate_stop_loss(current_price, historical_data):
 
 ---
 
-## 🚀 Implémentation
+## Implémentation
 
-### Backend (Python) - ✅ Fait
+### Backend (Python) -  Fait
 
 Fichier : `services/ml/bourse/stop_loss_calculator.py`
 
@@ -302,7 +302,7 @@ const stopLoss = currentPrice * (1 - stopPct);
 
 ---
 
-## 📝 Leçons Apprises
+## Leçons Apprises
 
 ### 1. Simple Beats Complex
 
@@ -334,7 +334,7 @@ const stopLoss = currentPrice * (1 - stopPct);
 
 ---
 
-## 🔬 Limitations & Next Steps
+## Limitations & Next Steps
 
 ### Limitations Actuelles
 
@@ -368,7 +368,7 @@ const stopLoss = currentPrice * (1 - stopPct);
 
 ---
 
-## 📚 Références
+## Références
 
 ### Fichiers Créés
 
@@ -406,22 +406,22 @@ git commit -m "feat(stop-loss): implement Fixed Variable as winner (+8% validate
 - +156% performance vs ATR 2x
 - Simpler than ATR (3 rules vs complex calculations)
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
 
-## ✅ Conclusion
+## Conclusion
 
 **Question :** ATR dynamique ou Fixed % ?
 **Réponse :** **Ni l'un ni l'autre - Fixed Variable (4-6-8%)**
 
 **Performance :**
-- Fixed Variable : $105,232 ✅
+- Fixed Variable : $105,232 [OK]
 - Fixed 5% : $97,642 (-7%)
 - ATR 2x : $41,176 (-61%)
 
-**Implémentation :** Backend ✅ Fait | Frontend ⏳ À faire
+**Implémentation :** Backend [OK] Fait | Frontend [Pending] À faire
 
-**Status :** **Recommandé pour Production** 🚀
+**Status :** **Recommandé pour Production**

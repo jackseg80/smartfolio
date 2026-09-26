@@ -28,10 +28,10 @@ Le système de **Flyout Panel** permet d'afficher une **sidebar Risk unifiée** 
 
 | Page | Status | Implémentation |
 |------|--------|----------------|
-| `risk-dashboard.html` | ✅ **HTML statique** | Sidebar intégrée (lignes 2106-2240), pas de flyout |
-| `analytics-unified.html` | ✅ **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
-| `rebalance.html` | ✅ **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
-| `archive/demos/execution.html` | ✅ **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
+| `risk-dashboard.html` | [OK] **HTML statique** | Sidebar intégrée (lignes 2106-2240), pas de flyout |
+| `analytics-unified.html` | [OK] **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
+| `rebalance.html` | [OK] **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
+| `archive/demos/execution.html` | [OK] **Flyout dynamique** | Utilise `risk-sidebar.js` + `flyout-panel.js` |
 
 ## Utilisation
 
@@ -68,8 +68,8 @@ localStorage.setItem('__ui.flyout.enabled', '1');
     // 3. Initialiser le flyout
     createFlyoutPanel({
       sourceSelector: '.risk-sidebar-source',
-      title: '🎯 Risk Snapshot',
-      handleText: '🎯 Risk',
+      title: ' Risk Snapshot',
+      handleText: ' Risk',
       persistKey: 'ma_page',  // Unique par page
       removeToggleButton: true,
       pushContainers: ['.wrap', '.container'],  // Containers à décaler quand pinned
@@ -136,8 +136,8 @@ GET /api/alerts?limit=5&status=active
 ### Flyout
 
 - **Hover** : Survol de la zone gauche (40px) → sidebar apparaît
-- **Pin** : Clic sur 📌 → sidebar reste affichée, layout se décale
-- **Unpin** : Clic sur ❌ → sidebar se cache, layout revient
+- **Pin** : Clic sur  → sidebar reste affichée, layout se décale
+- **Unpin** : Clic sur [Error] → sidebar se cache, layout revient
 - **Persistance** : État pin/unpin sauvegardé dans `localStorage` par page
 
 ### Layout Push
@@ -187,27 +187,27 @@ La sidebar contient (dans l'ordre) :
 
 ### Le flyout n'apparaît pas
 
-1. ✅ Vérifier le feature flag : `localStorage.getItem('__ui.flyout.enabled') === '1'`
-2. ✅ Vérifier la console : erreurs d'import ?
-3. ✅ Vérifier que les CSS sont chargés (DevTools > Network)
+1. [OK] Vérifier le feature flag : `localStorage.getItem('__ui.flyout.enabled') === '1'`
+2. [OK] Vérifier la console : erreurs d'import ?
+3. [OK] Vérifier que les CSS sont chargés (DevTools > Network)
 
 ### Les données ne se chargent pas
 
-1. ✅ Vérifier les APIs dans la console réseau
-2. ✅ Vérifier les CORS (backend doit autoriser `/static/*`)
-3. ✅ Vérifier les logs console : `[Risk Sidebar] ...`
+1. [OK] Vérifier les APIs dans la console réseau
+2. [OK] Vérifier les CORS (backend doit autoriser `/static/*`)
+3. [OK] Vérifier les logs console : `[Risk Sidebar] ...`
 
 ### risk-dashboard.html ne fonctionne plus
 
-1. ✅ Vérifier que le HTML statique est présent (lignes 2106-2240)
-2. ✅ Vérifier que `createRiskSidebar()` n'est PAS appelé sur cette page
-3. ✅ Vérifier que `refreshDashboard()` et `updateSidebar()` fonctionnent
+1. [OK] Vérifier que le HTML statique est présent (lignes 2106-2240)
+2. [OK] Vérifier que `createRiskSidebar()` n'est PAS appelé sur cette page
+3. [OK] Vérifier que `refreshDashboard()` et `updateSidebar()` fonctionnent
 
 ### Les scores affichent tous "--"
 
-1. ✅ Attendre 30s (premier refresh)
-2. ✅ Vérifier que `/api/risk/metrics` répond (200)
-3. ✅ Vérifier la structure de la réponse JSON
+1. [OK] Attendre 30s (premier refresh)
+2. [OK] Vérifier que `/api/risk/metrics` répond (200)
+3. [OK] Vérifier la structure de la réponse JSON
 
 ## Historique
 

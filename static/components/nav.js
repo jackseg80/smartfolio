@@ -44,7 +44,7 @@ const initUserDisplay = async () => {
   }
 };
 
-// ✅ Define global getCurrentUser for safeFetch and other modules
+//  Define global getCurrentUser for safeFetch and other modules
 // Delegates to auth-guard.js if available, with localStorage fallback
 window.getCurrentUser = () => {
   if (window.authGuard?.getCurrentUser) {
@@ -63,7 +63,7 @@ const checkAdminRole = () => {
       location.hostname.includes('dev') || location.port === '8080';
 
     if (isDev) {
-      console.debug('🔧 Dev mode detected - Admin role forced');
+      console.debug("Dev mode detected - Admin role forced");
       return true;
     }
 
@@ -174,10 +174,10 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="risk-dashboard.html" data-route="risk-dashboard.html">Risk</a>
               <div class="submenu">
-                <a href="risk-dashboard.html" data-route="risk-dashboard.html">🛡️ Risk Dashboard</a>
-                <a href="cycle-analysis.html" data-route="cycle-analysis.html">🔄 Cycle Analysis</a>
-                <a href="market-regimes.html" data-route="market-regimes.html">📈 Market Regimes</a>
-                <a href="advanced-risk.html" data-route="advanced-risk.html">🎯 Advanced Risk</a>
+                <a href="risk-dashboard.html" data-route="risk-dashboard.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk Dashboard</a>
+                <a href="cycle-analysis.html" data-route="cycle-analysis.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Cycle Analysis</a>
+                <a href="market-regimes.html" data-route="market-regimes.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Market Regimes</a>
+                <a href="advanced-risk.html" data-route="advanced-risk.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Advanced Risk</a>
               </div>
             </li>
 
@@ -185,9 +185,9 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="analytics-unified.html" data-route="analytics-unified.html">Analytics</a>
               <div class="submenu">
-                <a href="analytics-unified.html" data-route="analytics-unified.html">📊 Analytics Dashboard</a>
-                <a href="simulations.html" data-route="simulations.html">🧪 Simulations</a>
-                <a href="di-backtest.html" data-route="di-backtest.html">📈 DI Backtest</a>
+                <a href="analytics-unified.html" data-route="analytics-unified.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Analytics Dashboard</a>
+                <a href="simulations.html" data-route="simulations.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Simulations</a>
+                <a href="di-backtest.html" data-route="di-backtest.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> DI Backtest</a>
               </div>
             </li>
 
@@ -195,9 +195,9 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="rebalance.html" data-route="rebalance.html">Actions</a>
               <div class="submenu">
-                <a href="rebalance.html" data-route="rebalance.html">⚖️ Rebalance</a>
-                <a href="execution.html" data-route="execution.html">🎯 Execution</a>
-                <a href="optimization.html" data-route="optimization.html">🧮 Optimization</a>
+                <a href="rebalance.html" data-route="rebalance.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg> Rebalance</a>
+                <a href="execution.html" data-route="execution.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Execution</a>
+                <a href="optimization.html" data-route="optimization.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Calculate" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#calculator"></use></svg> Optimization</a>
               </div>
             </li>
 
@@ -208,9 +208,9 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">Stock Market</a>
               <div class="submenu">
-                <a href="saxo-dashboard.html" data-route="saxo-dashboard.html">📊 Dashboard</a>
-                <a href="bourse-analytics.html" data-route="bourse-analytics.html">📈 Analytics</a>
-                <a href="bourse-recommendations.html" data-route="bourse-recommendations.html">💡 Recommendations</a>
+                <a href="saxo-dashboard.html" data-route="saxo-dashboard.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Dashboard</a>
+                <a href="bourse-analytics.html" data-route="bourse-analytics.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Analytics</a>
+                <a href="bourse-recommendations.html" data-route="bourse-recommendations.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Recommendations</a>
               </div>
             </li>
 
@@ -224,11 +224,11 @@ const initUnifiedNav = () => {
             <li class="has-submenu">
               <a href="settings.html" data-route="settings.html">Tools</a>
               <div class="submenu">
-                <a href="settings.html" data-route="settings.html">⚙️ Settings</a>
+                <a href="settings.html" data-route="settings.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Settings</a>
                 <div class="menu-separator"></div>
-                <a href="ai-dashboard.html" data-route="ai-dashboard.html">🤖 AI Dashboard</a>
-                <a href="monitoring.html" data-route="monitoring.html">📊 Monitoring</a>
-                <a href="alias-manager.html" data-route="alias-manager.html">🔍 Alias Manager</a>
+                <a href="ai-dashboard.html" data-route="ai-dashboard.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> AI Dashboard</a>
+                <a href="monitoring.html" data-route="monitoring.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Monitoring</a>
+                <a href="alias-manager.html" data-route="alias-manager.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Alias Manager</a>
               </div>
             </li>
           </ul>
@@ -237,7 +237,7 @@ const initUnifiedNav = () => {
         <!-- Notification Badge for Human-in-the-loop -->
         <div class="notifications" id="nav-notifications">
           <button class="notification-badge" id="human-loop-badge" onclick="openHumanLoopPanel()" style="display: none;">
-            <span class="badge-icon">🧠</span>
+            <span class="badge-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg></span>
             <span class="badge-count" id="badge-count">0</span>
           </button>
         </div>
@@ -246,13 +246,13 @@ const initUnifiedNav = () => {
         <!-- User Info & Logout -->
         <div class="user-info" style="display: flex; align-items: center; gap: 1rem;">
           <div class="current-user" style="display: flex; align-items: center; gap: 0.5rem;">
-            <span style="font-size: 0.85em; color: var(--theme-text-muted);">👤</span>
+            <span style="font-size: 0.85em; color: var(--theme-text-muted);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="User" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#user"></use></svg></span>
             <span id="current-user-display" style="font-size: 0.9em; font-weight: 500; color: var(--theme-text);">
               Loading...
             </span>
           </div>
           <button id="logout-btn" class="logout-btn" title="Logout" style="padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-bg-secondary); color: var(--theme-text); font-size: 0.85em; cursor: pointer; transition: all 0.2s;">
-            🚪 Logout
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Logout" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-right-on-rectangle"></use></svg> Logout
           </button>
         </div>
 
@@ -260,13 +260,13 @@ const initUnifiedNav = () => {
         <div class="admin">
           <button class="admin-btn" id="admin-toggle" aria-haspopup="true" aria-expanded="false">Admin ▾</button>
           <div class="dropdown" id="admin-dropdown" role="menu">
-            <a href="admin-dashboard.html">📊 Dashboard</a>
+            <a href="admin-dashboard.html"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Dashboard</a>
             <div class="menu-separator"></div>
-            <a href="admin-dashboard.html#users">👥 User Management</a>
-            <a href="admin-dashboard.html#logs">📝 Logs Viewer</a>
-            <a href="admin-dashboard.html#cache">⚡ Cache Management</a>
-            <a href="admin-dashboard.html#ml">🤖 ML Models</a>
-            <a href="admin-dashboard.html#apikeys">🔑 API Keys</a>
+            <a href="admin-dashboard.html#users"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Users" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#user-group"></use></svg> User Management</a>
+            <a href="admin-dashboard.html#logs"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Logs Viewer</a>
+            <a href="admin-dashboard.html#cache"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Cache Management</a>
+            <a href="admin-dashboard.html#ml"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Models</a>
+            <a href="admin-dashboard.html#apikeys"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Key" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#key"></use></svg> API Keys</a>
           </div>
         </div>
         ` : ''}

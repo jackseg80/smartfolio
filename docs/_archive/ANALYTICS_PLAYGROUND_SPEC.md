@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2025-09-30
-**Status:** 🚧 En développement
+**Status:** [Warning] En développement
 
 ## Objectif
 
@@ -22,88 +22,88 @@ Créer un outil de **What-If Analysis** permettant de simuler différentes phase
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  📊 Analytics Playground                                     │
+│   Analytics Playground                                     │
 ├─────────────────────────────────────────────────────────────┤
 │  Header                                                      │
-│  ├─ Source: [cointracking_api ▼]  [🧪 Test]                │
+│  ├─ Source: [cointracking_api ▼]  [ Test]                │
 │  ├─ User: jack                                               │
-│  └─ Mode: [💼 Actuel] [🎭 Simulation]                       │
+│  └─ Mode: [ Actuel] [ Simulation]                       │
 ├─────────────────────────────────────────────────────────────┤
-│  🎮 Contrôles (Flyout Panel - Left Side)                    │
+│   Contrôles (Flyout Panel - Left Side)                    │
 │  ┌───────────────────────────────────────────────┐          │
-│  │ 🎯 Presets de Phases                          │          │
-│  │  • 💼 Données Actuelles (baseline)            │          │
-│  │  • 🐂 Bull Run - Début                        │          │
-│  │  • 🚀 Bull Run - Euphorie                    │          │
-│  │  • 🐻 Bear Market - Entrée                   │          │
-│  │  • ❄️ Bear Market - Capitulation             │          │
-│  │  • 🌱 Phase de Récupération                  │          │
-│  │  • 🌊 Altseason Approche                     │          │
-│  │  • 🎆 Altseason - Pic                        │          │
-│  │  • ⚠️ Crash Imminent                         │          │
+│  │  Presets de Phases                          │          │
+│  │  •  Données Actuelles (baseline)            │          │
+│  │  •  Bull Run - Début                        │          │
+│  │  •  Bull Run - Euphorie                    │          │
+│  │  •  Bear Market - Entrée                   │          │
+│  │  • [Frozen] Bear Market - Capitulation             │          │
+│  │  •  Phase de Récupération                  │          │
+│  │  •  Altseason Approche                     │          │
+│  │  •  Altseason - Pic                        │          │
+│  │  • [Warning] Crash Imminent                         │          │
 │  │  • ↔️ Marché Latéral                         │          │
 │  ├───────────────────────────────────────────────┤          │
-│  │ 🎚️ Overrides Manuels                         │          │
+│  │  Overrides Manuels                         │          │
 │  │  Cycle Score:   [████░░░░░░] 70               │          │
 │  │  Onchain:       [███████░░░] 55               │          │
 │  │  Risk Score:    [█████░░░░░] 45               │          │
 │  │  Contradiction: [██░░░░░░░░] 20%              │          │
 │  │  Risk Appetite: [Conservative|Balanced|Aggr]  │          │
 │  ├───────────────────────────────────────────────┤          │
-│  │ 🔄 Actions                                     │          │
-│  │  [🔄 Recalculer] [↻ Reset to Current]        │          │
+│  │  Actions                                     │          │
+│  │  [ Recalculer] [↻ Reset to Current]        │          │
 │  └───────────────────────────────────────────────┘          │
 ├─────────────────────────────────────────────────────────────┤
-│  📊 Vue Comparative (Split Screen)                          │
+│   Vue Comparative (Split Screen)                          │
 │  ┌──────────────────────────┬──────────────────────────┐   │
-│  │ 💼 WALLET ACTUEL         │ 🎭 SIMULATION            │   │
+│  │  WALLET ACTUEL         │  SIMULATION            │   │
 │  │ (Données réelles)         │ (Preset: Bear Entry)     │   │
 │  ├──────────────────────────┼──────────────────────────┤   │
-│  │ 🎯 Decision Index        │                          │   │
-│  │   65/100 (80%)           │ 35/100 (75%) ⚠️ -30     │   │
+│  │  Decision Index        │                          │   │
+│  │   65/100 (80%)           │ 35/100 (75%) [Warning] -30     │   │
 │  ├──────────────────────────┼──────────────────────────┤   │
-│  │ 📊 Scores Composites     │                          │   │
-│  │   Cycle:   100 🟢        │ Cycle:   35 🟡 -65       │   │
-│  │   Onchain:  72 🟢        │ Onchain:  40 🟡 -32      │   │
-│  │   Risk:     34 🟢        │ Risk:     55 🟠 +21      │   │
-│  │   Contrad:  48% 🟠       │ Contrad:  45% 🟠 -3%     │   │
+│  │  Scores Composites     │                          │   │
+│  │   Cycle:   100 [Positive]        │ Cycle:   35 [Pending] -65       │   │
+│  │   Onchain:  72 [Positive]        │ Onchain:  40 [Pending] -32      │   │
+│  │   Risk:     34 [Positive]        │ Risk:     55 [Pending] +21      │   │
+│  │   Contrad:  48% [Pending]       │ Contrad:  45% [Pending] -3%     │   │
 │  ├──────────────────────────┼──────────────────────────┤   │
-│  │ 💰 Risk Budget           │                          │   │
-│  │   34% stables            │ 48% stables ⬆️ +14%     │   │
-│  │   66% risky              │ 52% risky ⬇️ -14%       │   │
+│  │  Risk Budget           │                          │   │
+│  │   34% stables            │ 48% stables  +14%     │   │
+│  │   66% risky              │ 52% risky  -14%       │   │
 │  ├──────────────────────────┼──────────────────────────┤   │
-│  │ 📈 Allocations Groupes   │                          │   │
-│  │   BTC:         44.3%     │ BTC:     35.0% ⬇️ -9.3%  │   │
-│  │   ETH:         22.8%     │ ETH:     17.0% ⬇️ -5.8%  │   │
-│  │   Stablecoins: 34.2%     │ Stables: 48.0% ⬆️ +13.8% │   │
-│  │   SOL:          2.3%     │ SOL:      0.0% ⬇️ -2.3%  │   │
-│  │   L1/L0:       10.5%     │ L1/L0:    8.0% ⬇️ -2.5%  │   │
-│  │   L2/Scaling:   4.1%     │ L2:       2.0% ⬇️ -2.1%  │   │
-│  │   DeFi:         3.2%     │ DeFi:     1.5% ⬇️ -1.7%  │   │
-│  │   Memecoins:    1.8%     │ Memes:    0.5% ⬇️ -1.3%  │   │
-│  │   Others:       8.8%     │ Others:   5.0% ⬇️ -3.8%  │   │
+│  │  Allocations Groupes   │                          │   │
+│  │   BTC:         44.3%     │ BTC:     35.0%  -9.3%  │   │
+│  │   ETH:         22.8%     │ ETH:     17.0%  -5.8%  │   │
+│  │   Stablecoins: 34.2%     │ Stables: 48.0%  +13.8% │   │
+│  │   SOL:          2.3%     │ SOL:      0.0%  -2.3%  │   │
+│  │   L1/L0:       10.5%     │ L1/L0:    8.0%  -2.5%  │   │
+│  │   L2/Scaling:   4.1%     │ L2:       2.0%  -2.1%  │   │
+│  │   DeFi:         3.2%     │ DeFi:     1.5%  -1.7%  │   │
+│  │   Memecoins:    1.8%     │ Memes:    0.5%  -1.3%  │   │
+│  │   Others:       8.8%     │ Others:   5.0%  -3.8%  │   │
 │  ├──────────────────────────┼──────────────────────────┤   │
-│  │ 🔄 Plan d'Exécution      │                          │   │
+│  │  Plan d'Exécution      │                          │   │
 │  │   Total Delta: 37.8%     │ Total Delta: 58.6%       │   │
 │  │   Itérations: 5 rebals   │ Itérations: 8 rebals     │   │
 │  │   Temps estimé: 5 jours  │ Temps: 8 jours           │   │
 │  │                           │                          │   │
 │  │   Top Moves:             │ Top Moves:               │   │
-│  │   • Stables: +1.0%       │ • Stables: +1.0% ⬆️      │   │
-│  │   • BTC: -1.0%           │ • BTC: -1.0% ⬇️          │   │
-│  │   • ETH: -1.0%           │ • ETH: -1.0% ⬇️          │   │
+│  │   • Stables: +1.0%       │ • Stables: +1.0%       │   │
+│  │   • BTC: -1.0%           │ • BTC: -1.0%           │   │
+│  │   • ETH: -1.0%           │ • ETH: -1.0%           │   │
 │  └──────────────────────────┴──────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────┤
-│  📝 Résumé & Recommandations                                │
+│   Résumé & Recommandations                                │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │ ⚠️ IMPACT MAJEUR DÉTECTÉ                            │   │
+│  │ [Warning] IMPACT MAJEUR DÉTECTÉ                            │   │
 │  │                                                       │   │
 │  │ En cas d'entrée en bear market:                      │   │
 │  │ • Decision Index chuterait de 65 → 35 (-46%)        │   │
 │  │ • Stables passeraient de 34% → 48% (+41%)           │   │
 │  │ • Réduction forte des alts (-24.8% au total)        │   │
 │  │                                                       │   │
-│  │ 📊 Actions suggérées:                                │   │
+│  │  Actions suggérées:                                │   │
 │  │ 1. Augmenter stables progressivement (+1%/jour)     │   │
 │  │ 2. Réduire exposition SOL/L2/Memecoins en priorité  │   │
 │  │ 3. Maintenir core BTC/ETH (quality bias)            │   │
@@ -114,7 +114,7 @@ Créer un outil de **What-If Analysis** permettant de simuler différentes phase
 
 ## Flux de Données
 
-### Mode Actuel (💼 Baseline)
+### Mode Actuel ( Baseline)
 ```
 1. Load user wallet (loadBalanceData)
 2. Load unified data (loadUnifiedData)
@@ -127,7 +127,7 @@ Créer un outil de **What-If Analysis** permettant de simuler différentes phase
 4. Display in LEFT column
 ```
 
-### Mode Simulation (🎭 What-If)
+### Mode Simulation ( What-If)
 ```
 1. User selects preset "Bear Entry"
 2. Load preset overrides:
@@ -145,7 +145,7 @@ Créer un outil de **What-If Analysis** permettant de simuler différentes phase
 
 ## Implémentation
 
-### Phase 1: Initialisation Correcte du Store ✅
+### Phase 1: Initialisation Correcte du Store
 ```javascript
 // Dans loadLiveData() du simulateur
 async function loadPlaygroundData() {
@@ -159,7 +159,7 @@ async function loadPlaygroundData() {
 }
 ```
 
-### Phase 2: Charger et Appliquer Presets 🚧
+### Phase 2: Charger et Appliquer Presets
 ```javascript
 // Charger presets
 const presets = await fetch('/static/presets/cycle_phase_presets.json').then(r => r.json());
@@ -185,7 +185,7 @@ async function applyPreset(presetId) {
 }
 ```
 
-### Phase 3: Affichage Comparatif 🚧
+### Phase 3: Affichage Comparatif
 ```javascript
 function displayComparison(currentState, simulatedState) {
   // Left column: current
@@ -213,7 +213,7 @@ function displayComparison(currentState, simulatedState) {
 }
 ```
 
-### Phase 4: Overrides Manuels 🚧
+### Phase 4: Overrides Manuels
 ```html
 <div class="manual-overrides">
   <label>Cycle Score</label>
@@ -241,7 +241,7 @@ document.getElementById('cycle-override').addEventListener('input', (e) => {
 Afficher 3 colonnes: Actuel | Bear Entry | Bull Peak
 
 ### 2. Export Rapport
-Bouton "📄 Export PDF" générant un rapport avec:
+Bouton " Export PDF" générant un rapport avec:
 - Snapshot du wallet actuel
 - Scénario simulé
 - Deltas détaillés
@@ -253,7 +253,7 @@ Sauvegarder les simulations précédentes dans localStorage pour revue
 ### 4. Alertes Intelligentes
 ```javascript
 if (Math.abs(deltaDI) > 20) {
-  alert(`⚠️ IMPACT MAJEUR: Le DI changerait de ${deltaDI > 0 ? '+' : ''}${deltaDI} points!`);
+  alert(`[Warning] IMPACT MAJEUR: Le DI changerait de ${deltaDI > 0 ? '+' : ''}${deltaDI} points!`);
 }
 ```
 
@@ -262,14 +262,14 @@ Animer les changements entre Actuel → Simulé avec gsap/framer-motion
 
 ## Problèmes à Résoudre
 
-### ❌ Problème 1: getUnifiedState() retourne valeurs par défaut
+### Problème 1: getUnifiedState() retourne valeurs par défaut
 **Symptôme:** DI toujours 50, contradiction 0%
 
 **Cause:** Store pas initialisé avant l'appel
 
 **Solution:** Appeler `loadUnifiedData()` d'analytics-unified.html AVANT `getUnifiedState()`
 
-### ❌ Problème 2: Overrides non pris en compte
+### Problème 2: Overrides non pris en compte
 **Cause:** getUnifiedState() n'accepte pas de paramètre overrides actuellement
 
 **Solution:** Modifier unified-insights-v2.js pour accepter overrides optionnels
@@ -318,26 +318,26 @@ assert(simulatedStables < 20, 'Stables should be minimal in euphoria');
 
 ## Roadmap
 
-### ✅ Phase 1 (Complétée)
+### Phase 1 (Complétée)
 - [x] Créer presets de phases (cycle_phase_presets.json)
 - [x] 10 scénarios définis avec overrides
 
-### 🚧 Phase 2 (En cours)
+### Phase 2 (En cours)
 - [ ] Initialiser store correctement dans simulateur
 - [ ] Intégrer loadUnifiedData() depuis analytics
 - [ ] Appeler getUnifiedState() avec données complètes
 
-### 📋 Phase 3 (Prochaine)
+### Phase 3 (Prochaine)
 - [ ] Affichage split AVANT ↔ APRÈS
 - [ ] Calcul et affichage des deltas
 - [ ] Sélecteur de presets fonctionnel
 
-### 📋 Phase 4 (Future)
+### Phase 4 (Future)
 - [ ] Overrides manuels avec sliders
 - [ ] Bouton "Recalculer" temps réel
 - [ ] Résumé & recommandations intelligentes
 
-### 📋 Phase 5 (Future)
+### Phase 5 (Future)
 - [ ] Export PDF
 - [ ] Historique simulations
 - [ ] Comparaison multi-presets
@@ -362,7 +362,7 @@ assert(simulatedStables < 20, 'Stables should be minimal in euphoria');
 1. **Ouvrir** http://localhost:8080/static/analytics-playground.html
 2. **Sélectionner** ton user (jack) et source (cointracking_api)
 3. **Voir** colonne gauche = état actuel de ton wallet
-4. **Choisir** un preset dans le panneau (ex: "🐻 Bear Market - Entrée")
+4. **Choisir** un preset dans le panneau (ex: " Bear Market - Entrée")
 5. **Comparer** colonne droite = ce qui arriverait dans ce scénario
 6. **Analyser** les deltas (changements) colorés
 7. **Ajuster** manuellement les paramètres si besoin
@@ -380,4 +380,4 @@ assert(simulatedStables < 20, 'Stables should be minimal in euphoria');
 
 **Dernière mise à jour:** 2025-09-30
 **Auteur:** Claude Code
-**Status:** 🚧 Spécification en développement actif
+**Status:** [Warning] Spécification en développement actif

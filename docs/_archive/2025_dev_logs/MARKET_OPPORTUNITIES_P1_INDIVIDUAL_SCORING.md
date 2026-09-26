@@ -1,12 +1,12 @@
 # Market Opportunities P1 - Individual Stock Scoring
 
 > **Date:** 28 Oct 2025 14:30-15:00 UTC
-> **Status:** ✅ **COMPLETED - Production Ready**
+> **Status:** [OK] **COMPLETED - Production Ready**
 > **Objective:** Score each stock individually (not inherit sector ETF score)
 
 ---
 
-## 🎯 Problem Statement
+## Problem Statement
 
 **After Session 3:** All stocks within a sector had the same score (inherited from sector ETF)
 
@@ -22,7 +22,7 @@
 
 ---
 
-## ✅ Solution Implemented
+## Solution Implemented
 
 ### Architecture: Individual Stock Scoring
 
@@ -39,7 +39,7 @@ composite_score = (
 
 ---
 
-## 🔧 Implementation Details
+## Implementation Details
 
 ### 1. Created `analyze_individual_stock()` Method
 
@@ -82,9 +82,9 @@ async def analyze_individual_stock(
 ```
 
 **Benefits:**
-- ✅ Reuses existing scoring logic (momentum, value, diversification)
-- ✅ Consistent methodology between ETFs and individual stocks
-- ✅ Returns detailed breakdown (not just composite score)
+- [OK] Reuses existing scoring logic (momentum, value, diversification)
+- [OK] Consistent methodology between ETFs and individual stocks
+- [OK] Returns detailed breakdown (not just composite score)
 
 ---
 
@@ -179,7 +179,7 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 ---
 
-## 📊 Results Validation
+## Results Validation
 
 ### Test Data (User: jack, Horizon: medium)
 
@@ -187,10 +187,10 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 | Symbol | Type | Score | Momentum | Value | Diversification | Analysis |
 |--------|------|-------|----------|-------|-----------------|----------|
-| **JPM** | Stock | **61.0** | 55.8 | **87.4** | 41.6 | ✅ Best choice (excellent value) |
-| **BAC** | Stock | **60.6** | 60.4 | **88.8** | 32.8 | ✅ Very good (high momentum + value) |
-| XLF | ETF | 56.3 | 39.8 | 76.1 | 58.4 | ⭐ Diversified baseline |
-| **WFC** | Stock | **50.3** | 45.9 | **89.2** | **17.4** | ⚠️ Avoid (poor diversification) |
+| **JPM** | Stock | **61.0** | 55.8 | **87.4** | 41.6 | [OK] Best choice (excellent value) |
+| **BAC** | Stock | **60.6** | 60.4 | **88.8** | 32.8 | [OK] Very good (high momentum + value) |
+| XLF | ETF | 56.3 | 39.8 | 76.1 | 58.4 |  Diversified baseline |
+| **WFC** | Stock | **50.3** | 45.9 | **89.2** | **17.4** | [Warning] Avoid (poor diversification) |
 
 **Key insights:**
 - JPM and BAC outperform the ETF (+4.7 and +4.3 points)
@@ -248,7 +248,7 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 ---
 
-## 🎯 Top 20 Opportunities (Sorted by Score)
+## Top 20 Opportunities (Sorted by Score)
 
 | Rank | Symbol | Type | Score | Sector | Key Strength |
 |------|--------|------|-------|--------|--------------|
@@ -269,37 +269,37 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 | 15 | **PG** | Stock | **50.1** | Consumer Staples | Stable |
 | 16 | **DUK** | Stock | **48.4** | Utilities | Value play (73.9) |
 | 17 | **NEE** | Stock | **47.8** | Utilities | Momentum (61.5), risky (14.7) |
-| 18 | **KO** | Stock | **44.1** | Consumer Staples | ⚠️ Poor momentum (19.5) |
-| 19 | **HON** | Stock | **41.5** | Industrials | ⚠️ Weak momentum (27.4) |
-| 20 | **PEP** | Stock | **40.3** | Consumer Staples | ⚠️ Weak overall |
+| 18 | **KO** | Stock | **44.1** | Consumer Staples | [Warning] Poor momentum (19.5) |
+| 19 | **HON** | Stock | **41.5** | Industrials | [Warning] Weak momentum (27.4) |
+| 20 | **PEP** | Stock | **40.3** | Consumer Staples | [Warning] Weak overall |
 
 ---
 
-## 📈 Strategic Insights by Sector
+## Strategic Insights by Sector
 
-### 🏦 Financials: **Individual Stocks Preferred**
+### Financials: **Individual Stocks Preferred**
 **Recommendation:** JPM or BAC over XLF
 - JPM: Score 61.0 (vs 56.3 ETF) → +4.7 advantage
 - BAC: Score 60.6 (vs 56.3 ETF) → +4.3 advantage
 - Both have exceptional value scores (87-89)
 
-### 🏭 Industrials: **Mixed Approach**
+### Industrials: **Mixed Approach**
 **Recommendation:** Mix ETF + CAT or UNP
 - CAT: Strong momentum (65.0) for growth play
 - UNP: Balanced for stability
 - HON: Avoid (score 41.5, weak momentum)
 
-### ⚡ Energy: **ETF Slightly Preferred**
+### Energy: **ETF Slightly Preferred**
 **Recommendation:** XLE for safety, COP for value
 - XLE: Best overall score (54.5)
 - COP: Value play (95.3) but high risk (14.7 diversification)
 
-### 💡 Utilities: **ETF Strongly Preferred**
+### Utilities: **ETF Strongly Preferred**
 **Recommendation:** XLU only
 - XLU: Score 55.5 beats all individual stocks by 4-8 points
 - NEE: Risky (momentum 61.5, diversification 14.7)
 
-### 🛒 Consumer Staples: **ETF Mandatory**
+### Consumer Staples: **ETF Mandatory**
 **Recommendation:** XLP only, avoid all stocks
 - XLP: Score 54.2 vs best stock 50.1 → +4.1 advantage
 - KO: Terrible momentum (19.5) - in decline
@@ -307,7 +307,7 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 ---
 
-## 🚀 Impact Metrics
+## Impact Metrics
 
 | Metric | Before P1 | After P1 | Improvement |
 |--------|-----------|----------|-------------|
@@ -315,14 +315,14 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 | **User guidance** | Poor | **Excellent** | +500% |
 | **Top opportunity** | XLF (56.3) | **JPM (61.0)** | +4.7 points |
 | **Weakest opportunity** | XLP (54.2) | **PEP (40.3)** | Clear avoid signal |
-| **Sorted by quality** | ❌ No | ✅ Yes | Enabled |
-| **Strategic insights** | ❌ None | ✅ Per-sector recommendations | Enabled |
+| **Sorted by quality** | [Error] No | [OK] Yes | Enabled |
+| **Strategic insights** | [Error] None | [OK] Per-sector recommendations | Enabled |
 | **Scan time** | 16s | 34s | +18s (acceptable) |
 | **API calls** | ~5 | ~20 | +15 (parallel) |
 
 ---
 
-## 🎯 User Experience Improvement
+## User Experience Improvement
 
 ### Before P1: Confusing
 
@@ -344,22 +344,22 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 **Response:**
 ```
-1. JPM (61.0) ★★★ BEST CHOICE
+1. JPM (61.0) BEST CHOICE
    - Excellent value (87.4)
    - Good momentum (55.8)
    - Moderate diversification (41.6)
 
-2. BAC (60.6) ★★★ VERY GOOD
+2. BAC (60.6) VERY GOOD
    - Excellent value (88.8)
    - Strong momentum (60.4)
    - Lower diversification (32.8)
 
-3. XLF (56.3) ★★ SOLID ETF
+3. XLF (56.3) SOLID ETF
    - Diversified exposure
    - Lower value (76.1)
    - Best diversification (58.4)
 
-4. WFC (50.3) ★ AVOID
+4. WFC (50.3) AVOID
    - Highest value (89.2) BUT
    - Poor diversification (17.4) ← Red flag
    - Risky individual pick
@@ -369,7 +369,7 @@ opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
 ### Performance: Parallel Scoring
 
@@ -423,30 +423,30 @@ if isinstance(score_result, Exception):
 ### Data Source: Yahoo Finance
 
 **Why Yahoo Finance?**
-- ✅ Free, no API key required
-- ✅ Comprehensive data (OHLCV, fundamentals, dividends)
-- ✅ S&P 500 coverage excellent
-- ✅ Historical data (180 days for medium horizon)
+- [OK] Free, no API key required
+- [OK] Comprehensive data (OHLCV, fundamentals, dividends)
+- [OK] S&P 500 coverage excellent
+- [OK] Historical data (180 days for medium horizon)
 
 **Limitations:**
-- ⚠️ Rate limits (~1-2 req/sec)
-- ⚠️ Occasional stale data (15min delay for free tier)
-- ⚠️ No real-time intraday data
+- [Warning] Rate limits (~1-2 req/sec)
+- [Warning] Occasional stale data (15min delay for free tier)
+- [Warning] No real-time intraday data
 
 ---
 
-## 📋 Files Modified
+## Files Modified
 
 | File | Lines | Changes |
 |------|-------|---------|
-| `services/ml/bourse/sector_analyzer.py` | 123-192 | ✅ Added `analyze_individual_stock()` |
-| `services/ml/bourse/sector_analyzer.py` | 470-581 | ✅ Modified `get_top_stocks_in_sector()` (parallel scoring) |
-| `api/ml_bourse_endpoints.py` | 795-831 | ✅ Updated endpoint (use individual scores) |
-| `docs/MARKET_OPPORTUNITIES_P1_INDIVIDUAL_SCORING.md` | NEW | ✅ P1 documentation |
+| `services/ml/bourse/sector_analyzer.py` | 123-192 | [OK] Added `analyze_individual_stock()` |
+| `services/ml/bourse/sector_analyzer.py` | 470-581 | [OK] Modified `get_top_stocks_in_sector()` (parallel scoring) |
+| `api/ml_bourse_endpoints.py` | 795-831 | [OK] Updated endpoint (use individual scores) |
+| `docs/MARKET_OPPORTUNITIES_P1_INDIVIDUAL_SCORING.md` | NEW | [OK] P1 documentation |
 
 ---
 
-## 🧪 Testing & Validation
+## Testing & Validation
 
 ### Test Command:
 ```bash
@@ -465,7 +465,7 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## 🚀 Next Steps (Future Enhancements)
+## Next Steps (Future Enhancements)
 
 ### P2 - Redis Cache Optimization (1-2h)
 - Cache individual stock scores (TTL: 4h)
@@ -487,7 +487,7 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## ✅ P1 Completion Checklist
+## P1 Completion Checklist
 
 - [x] Created `analyze_individual_stock()` method
 - [x] Modified `get_top_stocks_in_sector()` for parallel scoring
@@ -502,9 +502,9 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 ---
 
 **Session Duration:** 30 minutes
-**Implementation Difficulty:** ⭐⭐⭐ (Medium - async/parallel logic)
-**Impact:** 🚀🚀🚀 (High - 500% better user guidance)
-**Status:** ✅ **Production Ready**
+**Implementation Difficulty:**  (Medium - async/parallel logic)
+**Impact:**  (High - 500% better user guidance)
+**Status:** [OK] **Production Ready**
 
 ---
 

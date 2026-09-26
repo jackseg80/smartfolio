@@ -189,7 +189,7 @@ async def list_positions(
     total = len(normalized)
     window = normalized[offset : offset + limit]
 
-    # ✅ Extract asof date from snapshot metadata
+    # [OK] Extract asof date from snapshot metadata
     asof = None
     try:
         from adapters.saxo_adapter import _load_snapshot
@@ -203,7 +203,7 @@ async def list_positions(
 
     return {
         "positions": window,
-        "asof": asof,  # ✅ Include CSV date for frontend display
+        "asof": asof,  # [OK] Include CSV date for frontend display
         "pagination": {
             "total": total,
             "limit": limit,
@@ -268,36 +268,36 @@ async def get_portfolio_cash(
     cash_key = file_key
     if not cash_key:
         config_path = Path(f"data/users/{user}/config.json")
-        logger.info(f"💵 GET /api/saxo/cash - file_key not provided, resolving from config: {config_path}")
+        logger.info(f" GET /api/saxo/cash - file_key not provided, resolving from config: {config_path}")
         if config_path.exists():
             try:
                 with open(config_path, 'r', encoding='utf-8') as f:
                     config = json.load(f)
                 # Get selected CSV file from bourse source configuration
                 selected_csv = config.get("sources", {}).get("bourse", {}).get("selected_csv_file")
-                logger.info(f"💵 Config read - sources.bourse.selected_csv_file: {selected_csv}")
+                logger.info(f" Config read - sources.bourse.selected_csv_file: {selected_csv}")
                 if selected_csv:
                     cash_key = selected_csv
-                    logger.info(f"✅ Resolved cash_key from config: {cash_key}")
+                    logger.info(f" Resolved cash_key from config: {cash_key}")
                 else:
-                    logger.warning(f"⚠️ Config has no selected_csv_file in sources.bourse")
+                    logger.warning(f" Config has no selected_csv_file in sources.bourse")
             except Exception as e:
-                logger.error(f"❌ Failed to read user config for cash resolution: {e}")
+                logger.error(f" Failed to read user config for cash resolution: {e}")
         else:
-            logger.warning(f"⚠️ Config file not found: {config_path}")
+            logger.warning(f" Config file not found: {config_path}")
 
     # Fallback to "default" if no key found
     cash_key = cash_key or "default"
-    logger.info(f"💵 Final cash_key: {cash_key}")
+    logger.info(f" Final cash_key: {cash_key}")
 
     # Build cash file path
     cash_dir = Path(f"data/users/{user}/saxobank/cash")
     cash_file = cash_dir / f"{cash_key}_cash.json"
-    logger.info(f"💵 Looking for cash file: {cash_file} (exists: {cash_file.exists()})")
+    logger.info(f" Looking for cash file: {cash_file} (exists: {cash_file.exists()})")
 
     if not cash_file.exists():
         # Return default 0 if no cash saved
-        logger.warning(f"⚠️ Cash file not found, returning 0")
+        logger.warning(f" Cash file not found, returning 0")
         return {
             "cash_amount": 0.0,
             "currency": "USD",
@@ -309,7 +309,7 @@ async def get_portfolio_cash(
             data = json.load(f)
 
         cash_amount = float(data.get("cash_amount", 0.0))
-        logger.info(f"✅ Loaded cash from {cash_file.name}: ${cash_amount:.2f} {data.get('currency', 'USD')}")
+        logger.info(f" Loaded cash from {cash_file.name}: ${cash_amount:.2f} {data.get('currency', 'USD')}")
 
         return {
             "cash_amount": cash_amount,
@@ -392,7 +392,7 @@ async def save_portfolio_cash(
         with open(cash_file, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        logger.info(f"💾 Saved cash amount ${cash_amount} for user {user}, file_key={cash_key}")
+        logger.info(f" Saved cash amount ${cash_amount} for user {user}, file_key={cash_key}")
 
         return {
             "success": True,

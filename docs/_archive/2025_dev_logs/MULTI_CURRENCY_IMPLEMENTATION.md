@@ -2,25 +2,25 @@
 
 **Date:** 25 octobre 2025
 **Version:** 2.0
-**Status:** ✅ Production Ready (migré vers système FX unifié)
+**Status:** [OK] Production Ready (migré vers système FX unifié)
 
-> **✅ Migration Complète (Oct 2025) :** Ce module utilise maintenant le système FX unifié ([FX_SYSTEM.md](FX_SYSTEM.md)) en backend. `ForexConverter` est maintenant un wrapper léger vers `fx_service` pour compatibilité. Voir section "Migration FX_SYSTEM" en bas.
+> **[OK] Migration Complète (Oct 2025) :** Ce module utilise maintenant le système FX unifié ([FX_SYSTEM.md](FX_SYSTEM.md)) en backend. `ForexConverter` est maintenant un wrapper léger vers `fx_service` pour compatibilité. Voir section "Migration FX_SYSTEM" en bas.
 
 ---
 
-## 📊 Résumé Exécutif
+## Résumé Exécutif
 
 Implémentation complète du support multi-devises pour les recommandations de portfolio, permettant de gérer des assets cotés sur différentes bourses européennes, américaines et asiatiques.
 
 **Impact:**
-- ✅ **100% des assets validés** (vs 46.4% avant)
-- ✅ **Divergences prix < 0.02%** (vs jusqu'à 773% avant)
-- ✅ Support de **9 devises** (USD, CHF, EUR, GBP, PLN, etc.)
-- ✅ Support de **12 bourses** (NYSE, NASDAQ, SIX Swiss, XETRA, WSE, etc.)
+- [OK] **100% des assets validés** (vs 46.4% avant)
+- [OK] **Divergences prix < 0.02%** (vs jusqu'à 773% avant)
+- [OK] Support de **9 devises** (USD, CHF, EUR, GBP, PLN, etc.)
+- [OK] Support de **12 bourses** (NYSE, NASDAQ, SIX Swiss, XETRA, WSE, etc.)
 
 ---
 
-## 🎯 Problème Résolu
+## Problème Résolu
 
 ### Avant (Système Original)
 
@@ -28,9 +28,9 @@ Le système fetchait TOUS les prix depuis Yahoo Finance US avec des symboles US 
 
 | Asset | Symbole utilisé | Bourse | Prix fetchéhé | Prix réel | Divergence |
 |-------|----------------|--------|---------------|-----------|------------|
-| Roche (CHF) | `ROG` | US (❌) | $87.06 | 271.20 CHF (~$340) | **259%** |
-| Infineon (EUR) | `IFX` | US (❌) | $98.45 | 33.49 EUR (~$39) | **85%** |
-| Swiss Life (CHF) | `SLHn` | US (❌) | $99.76 | 871.20 CHF (~$1094) | **773%** |
+| Roche (CHF) | `ROG` | US (Error) | $87.06 | 271.20 CHF (~$340) | **259%** |
+| Infineon (EUR) | `IFX` | US (Error) | $98.45 | 33.49 EUR (~$39) | **85%** |
+| Swiss Life (CHF) | `SLHn` | US (Error) | $99.76 | 871.20 CHF (~$1094) | **773%** |
 
 **Résultat:** 53.6% des recommandations avaient des prix complètement faux.
 
@@ -40,15 +40,15 @@ Le système détecte automatiquement la bourse et la devise, puis fetch depuis l
 
 | Asset | Symbole yfinance | Bourse | Prix fetché | Prix réel | Divergence |
 |-------|------------------|--------|-------------|-----------|------------|
-| Roche (CHF) | `ROG.SW` | SIX Swiss (✅) | 271.20 CHF | 271.20 CHF | **0.00%** |
-| Infineon (EUR) | `IFX.DE` | XETRA (✅) | 33.49 EUR | 33.49 EUR | **0.00%** |
-| Swiss Life (CHF) | `SLHn.SW` | SIX Swiss (✅) | 871.20 CHF | 871.20 CHF | **0.00%** |
+| Roche (CHF) | `ROG.SW` | SIX Swiss (OK) | 271.20 CHF | 271.20 CHF | **0.00%** |
+| Infineon (EUR) | `IFX.DE` | XETRA (OK) | 33.49 EUR | 33.49 EUR | **0.00%** |
+| Swiss Life (CHF) | `SLHn.SW` | SIX Swiss (OK) | 871.20 CHF | 871.20 CHF | **0.00%** |
 
 **Résultat:** 100% des recommandations ont maintenant des prix parfaitement exacts.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### 1. CurrencyExchangeDetector
 
@@ -85,15 +85,15 @@ yf_symbol, currency, exchange = detector.detect_currency_and_exchange(
 ```
 
 **Bourses supportées:**
-- 🇺🇸 **US:** NYSE, NASDAQ (symboles sans suffixe)
-- 🇨🇭 **Swiss:** SIX Swiss (`.SW`)
-- 🇩🇪 **German:** XETRA (`.DE`)
-- 🇵🇱 **Polish:** Warsaw (`.WA`)
-- 🇬🇧 **UK:** London (`.L`)
-- 🇫🇷 **French:** Euronext Paris (`.PA`)
-- 🇮🇹 **Italian:** Borsa Italiana (`.MI`)
-- 🇳🇱 **Dutch:** Euronext Amsterdam (`.AS`)
-- 🇮🇪 **Irish:** Irish SE (`.IR`)
+- **US:** NYSE, NASDAQ (symboles sans suffixe)
+- **Swiss:** SIX Swiss (`.SW`)
+- **German:** XETRA (`.DE`)
+- **Polish:** Warsaw (`.WA`)
+- **UK:** London (`.L`)
+- **French:** Euronext Paris (`.PA`)
+- **Italian:** Borsa Italiana (`.MI`)
+- **Dutch:** Euronext Amsterdam (`.AS`)
+- **Irish:** Irish SE (`.IR`)
 
 ### 2. ForexConverter
 
@@ -102,10 +102,10 @@ yf_symbol, currency, exchange = detector.detect_currency_and_exchange(
 **Fonction:** Convertit les prix entre devises avec cache intelligent.
 
 **Source de données:** API Frankfurter (Banque Centrale Européenne)
-- ✅ Gratuite, pas besoin de clé API
-- ✅ Données officielles BCE
-- ✅ Support de 30+ devises
-- ✅ Taux quotidiens mis à jour
+- [OK] Gratuite, pas besoin de clé API
+- [OK] Données officielles BCE
+- [OK] Support de 30+ devises
+- [OK] Taux quotidiens mis à jour
 
 **Cache:** TTL 12h (les taux changent 1x/jour)
 
@@ -137,9 +137,9 @@ rates = await converter.get_multiple_rates('CHF', ['USD', 'EUR', 'GBP'])
 **Fichier:** `services/risk/bourse/data_fetcher.py`
 
 **Changements:**
-- ✅ Intégré `CurrencyExchangeDetector`
-- ✅ Paramètres `isin` et `exchange_hint` ajoutés
-- ✅ Metadata (devise, bourse) stockée dans `df.attrs`
+- [OK] Intégré `CurrencyExchangeDetector`
+- [OK] Paramètres `isin` et `exchange_hint` ajoutés
+- [OK] Metadata (devise, bourse) stockée dans `df.attrs`
 
 **Avant:**
 ```python
@@ -163,8 +163,8 @@ df = await fetcher.fetch_historical_prices(
 **Fichier:** `services/ml/bourse/data_sources.py`
 
 **Changements:**
-- ✅ Méthode `get_ohlcv_data()` accepte `isin` et `exchange_hint`
-- ✅ Passe les paramètres à `BourseDataFetcher`
+- [OK] Méthode `get_ohlcv_data()` accepte `isin` et `exchange_hint`
+- [OK] Passe les paramètres à `BourseDataFetcher`
 
 **Utilisation dans les recommandations:**
 ```python
@@ -182,7 +182,7 @@ df = await data_source.get_ohlcv_data(
 
 ---
 
-## 🧪 Validation
+## Validation
 
 ### Tests Automatisés
 
@@ -191,7 +191,7 @@ df = await data_source.get_ohlcv_data(
 **4 tests exécutés:**
 
 #### Test 1: Détection Devise/Bourse
-✅ **12/12 symboles détectés correctement**
+[OK] **12/12 symboles détectés correctement**
 
 | Symbol | YF Symbol | Currency | Exchange |
 |--------|-----------|----------|----------|
@@ -201,7 +201,7 @@ df = await data_source.get_ohlcv_data(
 | AAPL | AAPL | USD | NASDAQ |
 
 #### Test 2: Conversion Forex
-✅ **6/6 conversions exactes**
+[OK] **6/6 conversions exactes**
 
 | Montant | Devise → Devise | Résultat | Taux |
 |---------|-----------------|----------|------|
@@ -210,15 +210,15 @@ df = await data_source.get_ohlcv_data(
 | 100 PLN → USD | 27.38 USD | 0.2738 |
 
 #### Test 3: Fetch Données Bourse
-✅ **4/4 assets fetchés avec succès**
+[OK] **4/4 assets fetchés avec succès**
 
-- Roche (CHF): 5 jours, 271.20 CHF, SIX Swiss ✅
-- Infineon (EUR): 5 jours, 33.49 EUR, XETRA ✅
-- Apple (USD): 5 jours, 262.82 USD, NASDAQ ✅
-- UBS MSCI World (CHF): 5 jours, 3.48 CHF, SIX Swiss ✅
+- Roche (CHF): 5 jours, 271.20 CHF, SIX Swiss [OK]
+- Infineon (EUR): 5 jours, 33.49 EUR, XETRA [OK]
+- Apple (USD): 5 jours, 262.82 USD, NASDAQ [OK]
+- UBS MSCI World (CHF): 5 jours, 3.48 CHF, SIX Swiss [OK]
 
 #### Test 4: Validation Prix Portfolio
-✅ **7/7 prix exacts (divergence < 0.02%)**
+[OK] **7/7 prix exacts (divergence < 0.02%)**
 
 | Symbol | Prix attendu | Prix fetché | Divergence |
 |--------|--------------|-------------|------------|
@@ -240,7 +240,7 @@ df = await data_source.get_ohlcv_data(
 
 ---
 
-## 📝 Migration Guide
+## Migration Guide
 
 ### Pour les Développeurs
 
@@ -305,7 +305,7 @@ Le système détecte automatiquement les devises depuis les CSV Saxo. Les recomm
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Variables d'Environnement (Optionnel)
 
@@ -328,7 +328,7 @@ Pour ajouter de nouveaux assets, éditer le dictionnaire `SYMBOL_EXCHANGE_MAP` o
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problème: Prix toujours incorrects pour un asset
 
@@ -370,7 +370,7 @@ rate = await converter.get_exchange_rate('CHF', 'USD')
 
 ---
 
-## 📊 Performance
+## Performance
 
 ### Impact Cache
 
@@ -396,7 +396,7 @@ rate = await converter.get_exchange_rate('CHF', 'USD')
 
 ---
 
-## 🔮 Améliorations Futures
+## Améliorations Futures
 
 **P1 - Court Terme:**
 - [ ] Ajout support crypto (BTC, ETH) avec devises crypto
@@ -415,7 +415,7 @@ rate = await converter.get_exchange_rate('CHF', 'USD')
 
 ---
 
-## 📚 Références
+## Références
 
 **APIs Utilisées:**
 - **Frankfurter:** [frankfurter.app](https://www.frankfurter.app/) (Forex rates)
@@ -434,9 +434,9 @@ rate = await converter.get_exchange_rate('CHF', 'USD')
 
 ---
 
-## 🔄 Migration FX_SYSTEM (✅ Complétée)
+## Migration FX_SYSTEM ( Complétée)
 
-> **✅ Migration terminée (Oct 2025) :** `ForexConverter` utilise maintenant `fx_service` en backend.
+> **[OK] Migration terminée (Oct 2025) :** `ForexConverter` utilise maintenant `fx_service` en backend.
 
 ### Status actuel
 
@@ -462,11 +462,11 @@ class ForexConverter:
 ```
 
 **Avantages de la migration :**
-- ✅ Une seule source de taux (cohérence parfaite)
-- ✅ 165+ devises au lieu de 9
-- ✅ Fallback synchronisé
-- ✅ Pas de duplication de code
-- ✅ Cache unifié (4h)
+- [OK] Une seule source de taux (cohérence parfaite)
+- [OK] 165+ devises au lieu de 9
+- [OK] Fallback synchronisé
+- [OK] Pas de duplication de code
+- [OK] Cache unifié (4h)
 
 ### Compatibilité
 
@@ -505,4 +505,4 @@ usd_amount = convert(100, 'CHF', 'USD')  # Synchrone, plus simple
 
 *Documentation générée le 25 octobre 2025*
 *Version: 2.0 (migration vers fx_service complétée)*
-*Status: ✅ Production Ready (système unifié)*
+*Status: [OK] Production Ready (système unifié)*

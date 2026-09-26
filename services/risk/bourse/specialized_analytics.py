@@ -223,7 +223,7 @@ class SpecializedBourseAnalytics:
                     'type': 'concentration_risk',
                     'sector': sector,
                     'weight': weight,
-                    'message': f"⚠️ High concentration: {sector} represents {weight:.1f}% of portfolio (>{CONCENTRATION_THRESHOLD}%)",
+                    'message': f"[Warning] High concentration: {sector} represents {weight:.1f}% of portfolio (>{CONCENTRATION_THRESHOLD}%)",
                     'suggestion': f"Consider reducing {sector} to 35-40% and diversifying into other sectors"
                 })
 
@@ -242,7 +242,7 @@ class SpecializedBourseAnalytics:
                     'weight': weight,
                     'momentum': momentum,
                     'return': ret,
-                    'message': f"🔥 {sector}: Strong momentum ({momentum:.2f}x) but only {weight:.1f}% allocated",
+                    'message': f" {sector}: Strong momentum ({momentum:.2f}x) but only {weight:.1f}% allocated",
                     'suggestion': f"Consider increasing {sector} to 5-8% to capitalize on momentum"
                 })
 
@@ -261,7 +261,7 @@ class SpecializedBourseAnalytics:
                     'weight': weight,
                     'momentum': momentum,
                     'return': ret,
-                    'message': f"❄️ {sector}: Weak momentum ({momentum:.2f}x) but {weight:.1f}% allocated",
+                    'message': f"[Frozen] {sector}: Weak momentum ({momentum:.2f}x) but {weight:.1f}% allocated",
                     'suggestion': f"Consider reducing {sector} to 2-3% and reallocating to stronger sectors"
                 })
 
@@ -280,7 +280,7 @@ class SpecializedBourseAnalytics:
                     'sector': sector,
                     'weight': weight,
                     'momentum': momentum,
-                    'message': f"📉 {sector}: Large position ({weight:.1f}%) but momentum slowing ({momentum:.2f}x)",
+                    'message': f" {sector}: Large position ({weight:.1f}%) but momentum slowing ({momentum:.2f}x)",
                     'suggestion': f"Monitor closely - consider partial profit-taking if momentum continues to weaken"
                 })
 

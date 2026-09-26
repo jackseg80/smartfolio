@@ -2,13 +2,13 @@
 
 > **Date:** 24 Octobre 2025
 > **Durée:** ~6 heures (backend + frontend)
-> **Statut:** Backend ✅ Complété | Frontend ✅ Complété | TP Adaptatifs ✅ Implémentés
+> **Statut:** Backend [OK] Complété | Frontend [OK] Complété | TP Adaptatifs [OK] Implémentés
 > **Résultat:** Fixed Variable (4-6-8%) validé comme gagnant (+8% performance)
 > **Bonus:** Take Profits adaptatifs (Option C) garantissent R/R minimums
 
 ---
 
-## 🎯 Contexte & Question Initiale
+## Contexte & Question Initiale
 
 **Question :** "Quelle méthode de stop loss utiliser : ATR dynamique ou Fixed % ?"
 
@@ -21,26 +21,26 @@
 
 ---
 
-## 📊 Résultats du Backtest (Fair Comparison)
+## Résultats du Backtest (Fair Comparison)
 
 ### 3 Méthodes Testées
 
 1. **ATR 2x** (Dynamique)
    - Calcul : `stop = prix - (ATR_14j × 2.5)`
    - Complexité : Haute
-   - **Résultat : $41,176 (-61% vs gagnant)** ❌
+   - **Résultat : $41,176 (-61% vs gagnant)** [Error]
 
 2. **Fixed 5%** (Simple - Injuste)
    - Stop : 5% pour TOUS les assets
    - Complexité : Très faible
-   - **Résultat : $97,642 (-7% vs gagnant)** ⚠️
+   - **Résultat : $97,642 (-7% vs gagnant)** [Warning]
 
 3. **Fixed Variable** (Recommandé)
    - High vol (>40%) : Stop 8%
    - Moderate vol (25-40%) : Stop 6%
    - Low vol (<25%) : Stop 4%
    - Complexité : Faible
-   - **Résultat : $105,232 (WINNER)** ✅
+   - **Résultat : $105,232 (WINNER)** [OK]
 
 ### Assets Testés
 
@@ -58,14 +58,14 @@
 ### Performance Aggregate
 
 ```
-Fixed Variable:  $105,232  ✅ WINNER (+8.0% vs Fixed 5%)
+Fixed Variable:  $105,232  [OK] WINNER (+8.0% vs Fixed 5%)
 Fixed 5%:        $ 97,642  (-7.2% vs Fixed Var)
 ATR 2x:          $ 41,176  (-60.9% vs Fixed Var)
 ```
 
 ---
 
-## ✅ Ce qui a été FAIT (Backend)
+## Ce qui a été FAIT (Backend)
 
 ### 1. Modules de Backtesting Créés
 
@@ -189,9 +189,9 @@ def get_volatility_bucket(price_data):
 
 ---
 
-## ⏳ Ce qui RESTE À FAIRE (Frontend)
+## Ce qui RESTE À FAIRE (Frontend)
 
-### 🎯 Objectif
+### Objectif
 
 Implémenter Fixed Variable dans `static/saxo-dashboard.html` pour remplacer le stop loss actuel.
 
@@ -355,42 +355,42 @@ Ajouter section détaillée (voir `docs/STOP_LOSS_FRONTEND_IMPLEMENTATION.md` li
 
 ---
 
-## 📁 Structure Fichiers Projet
+## Structure Fichiers Projet
 
 ```
 crypto-rebal-starter/
 ├── services/ml/bourse/
-│   ├── stop_loss_calculator.py        ✅ MODIFIÉ (Fixed Variable ajouté)
-│   ├── stop_loss_backtest.py          ✅ CRÉÉ (2-way comparison)
-│   └── stop_loss_backtest_v2.py       ✅ CRÉÉ (3-way comparison)
+│   ├── stop_loss_calculator.py        [OK] MODIFIÉ (Fixed Variable ajouté)
+│   ├── stop_loss_backtest.py          [OK] CRÉÉ (2-way comparison)
+│   └── stop_loss_backtest_v2.py       [OK] CRÉÉ (3-way comparison)
 │
 ├── docs/
-│   ├── STOP_LOSS_BACKTEST_RESULTS.md           ✅ CRÉÉ (500+ lignes)
-│   ├── STOP_LOSS_FRONTEND_IMPLEMENTATION.md    ✅ CRÉÉ (400+ lignes)
-│   ├── BACKTEST_5_YEARS_RATIONALE.md           ✅ CRÉÉ (600+ lignes)
-│   └── STOP_LOSS_SYSTEM.md                     ⚠️ À METTRE À JOUR
+│   ├── STOP_LOSS_BACKTEST_RESULTS.md           [OK] CRÉÉ (500+ lignes)
+│   ├── STOP_LOSS_FRONTEND_IMPLEMENTATION.md    [OK] CRÉÉ (400+ lignes)
+│   ├── BACKTEST_5_YEARS_RATIONALE.md           [OK] CRÉÉ (600+ lignes)
+│   └── STOP_LOSS_SYSTEM.md                     [Warning] À METTRE À JOUR
 │
 ├── data/
-│   ├── backtest_results.json                   ✅ Résultats test initial
-│   ├── backtest_results_extended.json          ✅ Résultats 10 assets
-│   └── backtest_results_fair.json              ✅ Résultats FINAUX (3-way)
+│   ├── backtest_results.json                   [OK] Résultats test initial
+│   ├── backtest_results_extended.json          [OK] Résultats 10 assets
+│   └── backtest_results_fair.json              [OK] Résultats FINAUX (3-way)
 │
 ├── static/
-│   └── saxo-dashboard.html                     ⏳ À MODIFIER (frontend)
+│   └── saxo-dashboard.html                     [Pending] À MODIFIER (frontend)
 │
-├── run_backtest_standalone.py                  ✅ CRÉÉ
-├── run_backtest_extended.py                    ✅ CRÉÉ
-├── run_backtest_fair.py                        ✅ CRÉÉ (test final)
-├── download_historical_data.py                 ✅ CRÉÉ
-├── clean_cache.py                              ✅ CRÉÉ
-├── verify_data.py                              ✅ CRÉÉ
-├── diagnose_cache.py                           ✅ CRÉÉ
-└── SESSION_RESUME_STOP_LOSS_2025-10-24.md     ✅ CE FICHIER
+├── run_backtest_standalone.py                  [OK] CRÉÉ
+├── run_backtest_extended.py                    [OK] CRÉÉ
+├── run_backtest_fair.py                        [OK] CRÉÉ (test final)
+├── download_historical_data.py                 [OK] CRÉÉ
+├── clean_cache.py                              [OK] CRÉÉ
+├── verify_data.py                              [OK] CRÉÉ
+├── diagnose_cache.py                           [OK] CRÉÉ
+└── SESSION_RESUME_STOP_LOSS_2025-10-24.md     [OK] CE FICHIER
 ```
 
 ---
 
-## 🔧 Problèmes Rencontrés & Solutions
+## Problèmes Rencontrés & Solutions
 
 ### Problème 1 : Données Partielles
 
@@ -444,7 +444,7 @@ crypto-rebal-starter/
 
 ---
 
-## 💡 Insights Clés (À Retenir)
+## Insights Clés (À Retenir)
 
 ### 1. Simple > Complex
 
@@ -476,7 +476,7 @@ crypto-rebal-starter/
 
 ---
 
-## 📝 TODO List pour Nouvelle Session
+## TODO List pour Nouvelle Session
 
 ### Priority 1 : Frontend Implementation (1-2h)
 
@@ -555,7 +555,7 @@ crypto-rebal-starter/
   ## Next Steps
   - Frontend implementation (1-2h) - see implementation guide
 
-  🤖 Generated with Claude Code
+   Generated with Claude Code
   Co-Authored-By: Claude <noreply@anthropic.com>"
   ```
 
@@ -583,7 +583,7 @@ crypto-rebal-starter/
 
 ---
 
-## 🚀 Comment Reprendre le Travail
+## Comment Reprendre le Travail
 
 ### Commande Rapide
 
@@ -609,13 +609,13 @@ code static/saxo-dashboard.html
 **Réponse :** Fixed Variable (4-6-8% selon volatilité)
 **Validé par :** Backtest 372 trades, 6 assets, 1-5 ans
 **Performance :** +8% vs Fixed 5%, +156% vs ATR
-**Backend :** ✅ Fait
-**Frontend :** ⏳ À faire (1-2h)
+**Backend :** [OK] Fait
+**Frontend :** [Pending] À faire (1-2h)
 **Guide :** `docs/STOP_LOSS_FRONTEND_IMPLEMENTATION.md`
 
 ---
 
-## 📚 Fichiers Essentiels à Connaître
+## Fichiers Essentiels à Connaître
 
 ### Pour Reprendre le Travail
 
@@ -646,9 +646,9 @@ code static/saxo-dashboard.html
 
 ---
 
-## ✅ Validation Finale
+## Validation Finale
 
-### Backend ✅
+### Backend
 
 - [x] Backtest 3-way complété (ATR vs Fixed 5% vs Fixed Variable)
 - [x] Winner identifié : Fixed Variable (+8%)
@@ -657,16 +657,16 @@ code static/saxo-dashboard.html
 - [x] Méthode recommandée changée à `fixed_variable`
 - [x] Documentation complète créée
 
-### Frontend ✅ COMPLÉTÉ
+### Frontend  COMPLÉTÉ
 
 - [x] Ajout label "Fixed Variable (Adaptive)" dans `getMethodLabel()`
 - [x] Mise à jour texte recommandation (backtested +8% vs Fixed 5%, +156% vs ATR)
 - [x] Changement titre "4 Methods" → "5 Methods Compared"
-- [x] Validation sur positions réelles (NVDA R/R 1.50 ✅)
+- [x] Validation sur positions réelles (NVDA R/R 1.50 [OK])
 
 ---
 
-## 🎯 BONUS : Take Profits Adaptatifs (Option C)
+## BONUS : Take Profits Adaptatifs (Option C)
 
 > **Implémenté :** 24 Octobre 2025 (même session)
 > **Fichier :** `services/ml/bourse/price_targets.py`
@@ -675,14 +675,14 @@ code static/saxo-dashboard.html
 ### Problème identifié
 
 **Système ancien :**
-- Stop Loss : Adaptatif selon volatilité (4-6-8%) ✅
-- Take Profits : Fixes (+8% / +15%) ❌
+- Stop Loss : Adaptatif selon volatilité (4-6-8%) [OK]
+- Take Profits : Fixes (+8% / +15%) [Error]
 
 **Résultat :** R/R uniformes
 ```
-Low vol (stop 4%) + TP 8% → R/R = 2.00 ✅
-Moderate vol (stop 6%) + TP 8% → R/R = 1.33 ⚠️
-High vol (stop 8%) + TP 8% → R/R = 1.00 ❌
+Low vol (stop 4%) + TP 8% → R/R = 2.00 [OK]
+Moderate vol (stop 6%) + TP 8% → R/R = 1.33 [Warning]
+High vol (stop 8%) + TP 8% → R/R = 1.00 [Error]
 ```
 
 ### Solution : TP = Multiples du Risque
@@ -709,7 +709,7 @@ R/R 1.50 : 11 positions (39%) - Moderate vol assets
 R/R 1.20 : 4 positions  (14%) - High vol assets
 N/A      : 4 positions  (14%)
 
-→ 70% du portfolio avec R/R ≥ 1.50 ✅
+→ 70% du portfolio avec R/R ≥ 1.50 [OK]
 ```
 
 **Exemples validés :**
@@ -719,10 +719,10 @@ N/A      : 4 positions  (14%)
 
 ### Bénéfices
 
-1. ✅ **R/R minimums garantis** pour toutes positions
-2. ✅ **Plus de R/R uniformes** (exit 1.33 partout)
-3. ✅ **Cohérence système** : Stop ET TP basés volatilité
-4. ✅ **Logique trading réelle** : Prendre profits vite sur high vol
+1. [OK] **R/R minimums garantis** pour toutes positions
+2. [OK] **Plus de R/R uniformes** (exit 1.33 partout)
+3. [OK] **Cohérence système** : Stop ET TP basés volatilité
+4. [OK] **Logique trading réelle** : Prendre profits vite sur high vol
 
 ### Fichiers modifiés
 
@@ -732,9 +732,9 @@ N/A      : 4 positions  (14%)
 
 ---
 
-## ✅ Validation Finale - Session Complète
+## Validation Finale - Session Complète
 
-### Backend ✅
+### Backend
 
 - [x] Backtest 3-way complété (ATR vs Fixed 5% vs Fixed Variable)
 - [x] Winner identifié : Fixed Variable (+8%)
@@ -744,7 +744,7 @@ N/A      : 4 positions  (14%)
 - [x] `price_targets.py` : TP adaptatifs (Option C) implémentés
 - [x] Documentation backend complète créée
 
-### Frontend ✅
+### Frontend
 
 - [x] Label "Fixed Variable (Adaptive)" ajouté
 - [x] Texte recommandation mis à jour avec résultats backtest
@@ -752,7 +752,7 @@ N/A      : 4 positions  (14%)
 - [x] Tests validation (NVDA, TSLA) confirmés
 - [x] R/R diversifiés (2.00, 1.50, 1.20) vs uniformes (1.33)
 
-### Documentation ✅
+### Documentation
 
 - [x] `docs/STOP_LOSS_SYSTEM.md` : Ajout Fixed Variable + TP adaptatifs
 - [x] `CLAUDE.md` : Mise à jour recommandation
@@ -760,15 +760,15 @@ N/A      : 4 positions  (14%)
 
 ---
 
-## 🎯 Résumé Ultra-Court
+## Résumé Ultra-Court
 
 **Stop Loss Winner :** Fixed Variable (high=8%, mod=6%, low=4%)
 **Performance :** +8% vs Fixed 5%, +156% vs ATR
-**Backend :** ✅ Done
-**Frontend :** ✅ Done
-**TP Adaptatifs :** ✅ Done (Option C)
-**R/R Portfolio :** 70% ≥ 1.50 ✅
+**Backend :**  Done
+**Frontend :**  Done
+**TP Adaptatifs :**  Done (Option C)
+**R/R Portfolio :** 70% ≥ 1.50 [OK]
 
 ---
 
-**✅ Session complétée avec succès ! 🎉**
+**[OK] Session complétée avec succès ! **

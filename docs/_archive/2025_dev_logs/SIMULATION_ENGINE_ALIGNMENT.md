@@ -8,38 +8,38 @@
 
 ---
 
-## 🐛 Divergences Identifiées
+## Divergences Identifiées
 
-### 1. BASE_WEIGHTS Différents ❌
+### 1. BASE_WEIGHTS Différents
 **Problème** :
 - `unified-insights-v2.js` : `wCycle=0.5, wOnchain=0.3, wRisk=0.2`
 - `simulation-engine.js` : `{ cycle: 0.4, onchain: 0.35, risk: 0.25 }`
 
 **Impact** : Decision Index différent dès le départ
 
-### 2. Boost Cycle ≥ 90 Manquant ❌
+### 2. Boost Cycle ≥ 90 Manquant
 **Problème** : Analytics v2 booste `wCycle` à 0.65 si cycle ≥ 90, mais Simulation n'avait pas cette règle.
 
 **Impact** : Exposition alts sous-estimée en phase bullish
 
-### 3. Poids Adaptatifs Non Appliqués ❌ (BUG CRITIQUE)
+### 3. Poids Adaptatifs Non Appliqués  (BUG CRITIQUE)
 **Problème** :
 - Ligne 1118: `weights` calculé via `calculateAdaptiveWeights`
 - Ligne 434-436: `computeDecisionIndex` **ignore `context.weights`** et réinitialise à `0.50/0.30/0.20`
 
 **Impact** : Les poids adaptatifs sont calculés mais jamais utilisés
 
-**⚠️ IMPORTANT — Sémantique Risk** :
+**[Warning] IMPORTANT — Sémantique Risk** :
 Risk est un score **positif** (0..100, plus haut = mieux). **Ne jamais inverser** avec `100 - scoreRisk`. Le DI utilise directement `wRisk × scoreRisk`.
 
-### 4. Contradiction Source Différente ❌
+### 4. Contradiction Source Différente
 **Problème** :
 - Analytics : Utilise `governance.contradiction_index` comme source primaire
 - Simulation : Heuristique `scoreSpread` (écart entre cycle/onchain)
 
 **Impact** : Niveau de contradiction différent → caps différents
 
-### 5. Risk Budget Source ❌
+### 5. Risk Budget Source
 **Problème** :
 - Analytics : Utilise `regimeData.risk_budget` depuis `market-regimes.js`
 - Simulation : Calcul local linéaire/sigmoïde
@@ -48,7 +48,7 @@ Risk est un score **positif** (0..100, plus haut = mieux). **Ne jamais inverser*
 
 ---
 
-## ✅ Corrections Appliquées
+## Corrections Appliquées
 
 ### 1. Alignement BASE_WEIGHTS
 **Fichier** : `static/modules/simulation-engine.js` ligne 1028
@@ -78,11 +78,11 @@ let wRisk = context.weights?.risk ?? context.weights?.wRisk ?? 0.20;
 **Fichier** : `static/modules/simulation-engine.js` lignes 33-71
 
 Nouvelle implémentation qui réplique `unified-insights-v2.js` :
-- ✅ Lecture de `governance.contradiction_index`
-- ✅ Boost si `cycle ≥ 90` : `wCycle=0.65, wOnchain=0.25, wRisk=0.1`
-- ✅ Boost si `cycle ≥ 70` : `wCycle=0.55, wOnchain=0.28, wRisk=0.17`
-- ✅ Pénalité on-chain si `contradiction ≥ 50` : `-10%` (max)
-- ✅ Normalisation des poids (somme = 1.0)
+- [OK] Lecture de `governance.contradiction_index`
+- [OK] Boost si `cycle ≥ 90` : `wCycle=0.65, wOnchain=0.25, wRisk=0.1`
+- [OK] Boost si `cycle ≥ 70` : `wCycle=0.55, wOnchain=0.28, wRisk=0.17`
+- [OK] Pénalité on-chain si `contradiction ≥ 50` : `-10%` (max)
+- [OK] Normalisation des poids (somme = 1.0)
 
 ### 4. Priorité regimeData.risk_budget
 **Fichier** : `static/modules/simulation-engine.js` lignes 1165-1177
@@ -101,7 +101,7 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 
 ---
 
-## 🧪 Tests de Non-Régression
+## Tests de Non-Régression
 
 ### Cas A : Cycle Élevé + Contradictions
 **Input** :
@@ -115,10 +115,10 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 ```
 
 **Expected** :
-- ✅ `wCycle` boosted à `0.65`
-- ✅ `wOnchain` réduit à `0.25` × 0.9 = `0.225` (pénalité contradiction)
-- ✅ `wRisk = 0.1`
-- ✅ Decision Index Analytics vs Simulations : **±0.1**
+- [OK] `wCycle` boosted à `0.65`
+- [OK] `wOnchain` réduit à `0.25` × 0.9 = `0.225` (pénalité contradiction)
+- [OK] `wRisk = 0.1`
+- [OK] Decision Index Analytics vs Simulations : **±0.1**
 
 **Test** :
 1. Ouvrir `analytics-unified.html` avec preset `cycle=92, contradiction=0.6`
@@ -138,8 +138,8 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 ```
 
 **Expected** :
-- ✅ Risk budget = `25%` (même source)
-- ✅ Console log : `"✅ SIM: Using regimeData.risk_budget as source of truth"`
+- [OK] Risk budget = `25%` (même source)
+- [OK] Console log : `"[OK] SIM: Using regimeData.risk_budget as source of truth"`
 
 **Test** :
 1. Vérifier que `market-regimes.js` retourne un `risk_budget`
@@ -150,10 +150,10 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 **Input** : Forcer échec import `unified-insights-v2.js`
 
 **Expected** :
-- ✅ Fallback `calculateAdaptiveWeights` actif
-- ✅ Console log : `"⚠️ SIM: Using fallback contradiction modules"`
-- ✅ Boost cycle ≥ 90 toujours appliqué
-- ✅ Résultats cohérents (pas identiques à Analytics mais raisonnables)
+- [OK] Fallback `calculateAdaptiveWeights` actif
+- [OK] Console log : `"[Warning] SIM: Using fallback contradiction modules"`
+- [OK] Boost cycle ≥ 90 toujours appliqué
+- [OK] Résultats cohérents (pas identiques à Analytics mais raisonnables)
 
 **Test** :
 1. Temporairement renommer `unified-insights-v2.js`
@@ -162,25 +162,25 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 
 ---
 
-## 📊 Validation Console
+## Validation Console
 
 ### Logs Attendus (Cas A - Cycle 92 + Contradiction 0.6)
 
 ```
-🚀 SIM: Adaptive weights - Cycle ≥ 90 → boost cycle influence
-🔸 SIM: High contradiction → reduced onchain weight
-⚖️ Adaptive weights calculated: {
+ SIM: Adaptive weights - Cycle ≥ 90 → boost cycle influence
+ SIM: High contradiction → reduced onchain weight
+ Adaptive weights calculated: {
   wCycle: 0.65,
   wOnchain: 0.225,
   wRisk: 0.125
 }
-🎭 SIM: diComputed - { di: 78, source: 'ccs_mixed', confidence: 0.85 }
+ SIM: diComputed - { di: 78, source: 'ccs_mixed', confidence: 0.85 }
 ```
 
 ### Logs Attendus (Cas B - regimeData présent)
 
 ```
-✅ SIM: Using regimeData.risk_budget as source of truth: {
+[OK] SIM: Using regimeData.risk_budget as source of truth: {
   target_stables_pct: 25,
   source: 'market-regimes (v2)',
   regime_based: true
@@ -189,19 +189,19 @@ if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
 
 ---
 
-## 🎯 Résultats Attendus
+## Résultats Attendus
 
 | Métrique | Avant | Après |
 |----------|-------|-------|
-| BASE_WEIGHTS | `0.4/0.35/0.25` | ✅ `0.5/0.3/0.2` |
-| Boost cycle ≥ 90 | ❌ Absent | ✅ `wCycle=0.65` |
-| Poids appliqués | ❌ Ignorés | ✅ Branchés |
-| Risk budget source | Calcul local | ✅ `regimeData` si dispo |
-| DI Analytics vs Sim | ±5-10 | ✅ ±0.1 |
+| BASE_WEIGHTS | `0.4/0.35/0.25` | OK `0.5/0.3/0.2` |
+| Boost cycle ≥ 90 | [Error] Absent | OK `wCycle=0.65` |
+| Poids appliqués | [Error] Ignorés | [OK] Branchés |
+| Risk budget source | Calcul local | OK `regimeData` si dispo |
+| DI Analytics vs Sim | ±5-10 | [OK] ±0.1 |
 
 ---
 
-## 📝 Commandes de Test Rapide
+## Commandes de Test Rapide
 
 ### 1. Test Console (Cas A)
 ```javascript
@@ -236,7 +236,7 @@ console.log('Weights:', weights);
 
 ---
 
-## ⚠️ Points d'Attention
+## Points d'Attention
 
 ### 1. Scaling par Confidences
 `computeDecisionIndex` applique encore un scaling par confidences **après** avoir reçu les poids adaptatifs.
@@ -254,11 +254,11 @@ Si `regimeData` est absent, le calcul linéaire/sigmoïde reste actif. C'est vou
 
 ### 4. Check-list QA / Pièges Courants
 
-**⚠️ Erreur fréquente à éviter** :
-- ❌ **Ne JAMAIS appliquer** `100 - scoreRisk` dans les calculs ou visualisations
-- ❌ **Ne JAMAIS inverser** Risk lors du passage à l'UI (contributions relatives)
-- ✅ **TOUJOURS utiliser** `wRisk × scoreRisk` directement dans la formule DI
-- ✅ **TOUJOURS propager** les poids post-adaptatifs (wCycle, wOnchain, wRisk) à l'UI sans transformation
+**[Warning] Erreur fréquente à éviter** :
+- [Error] **Ne JAMAIS appliquer** `100 - scoreRisk` dans les calculs ou visualisations
+- [Error] **Ne JAMAIS inverser** Risk lors du passage à l'UI (contributions relatives)
+- [OK] **TOUJOURS utiliser** `wRisk × scoreRisk` directement dans la formule DI
+- [OK] **TOUJOURS propager** les poids post-adaptatifs (wCycle, wOnchain, wRisk) à l'UI sans transformation
 
 **Validation avant déploiement** :
 1. Chercher `100 - risk` ou `100 - scoreRisk` dans le code → doit retourner 0 résultats
@@ -268,7 +268,7 @@ Si `regimeData` est absent, le calcul linéaire/sigmoïde reste actif. C'est vou
 
 ---
 
-## 🔄 Prochaines Étapes (Optionnel)
+## Prochaines Étapes (Optionnel)
 
 ### 1. Retry Import avec Backoff
 Actuellement, si l'import de `unified-insights-v2.js` échoue au chargement, on reste en fallback.
@@ -283,7 +283,7 @@ Ajouter tests Jest/Vitest pour valider les cas A, B, C de façon automatique.
 
 ---
 
-## 📚 Références
+## Références
 
 - **unified-insights-v2.js** : Source de vérité pour poids adaptatifs (lignes 42-94)
 - **simulation-engine.js** : Réplique maintenant la logique v2 (lignes 33-71)
@@ -292,9 +292,9 @@ Ajouter tests Jest/Vitest pour valider les cas A, B, C de façon automatique.
 
 ---
 
-## 🔴 Mode Live vs 🎭 Mode Simulation
+## Mode Live vs  Mode Simulation
 
-### Mode Live 📊
+### Mode Live
 **Objectif** : Afficher les données **réelles** calculées par Analytics Unified
 
 **Sources de données** :
@@ -308,7 +308,7 @@ Ajouter tests Jest/Vitest pour valider les cas A, B, C de façon automatique.
 - Comparer avec les simulations
 - Vérifier la cohérence Analytics ↔ Simulator
 
-### Mode Simulation 🎭
+### Mode Simulation
 **Objectif** : Tester des scénarios **hypothétiques** avec contrôles personnalisés
 
 **Sources de données** :
@@ -330,8 +330,8 @@ Ajouter tests Jest/Vitest pour valider les cas A, B, C de façon automatique.
 | **Risk Budget** | market-regimes.js | computeRiskBudget() ou regimeData |
 | **Targets** | Strategy API v3 | computeMacroTargetsDynamic() |
 | **Poids adaptatifs** | unified-insights-v2.js | Réplique locale (fallback) |
-| **Éditable** | ❌ Non | ✅ Oui (sliders) |
-| **Temps réel** | ✅ Oui | ❌ Non (snapshot) |
+| **Éditable** | [Error] Non | [OK] Oui (sliders) |
+| **Temps réel** | [OK] Oui | [Error] Non (snapshot) |
 
 ### Convergence Attendue
 

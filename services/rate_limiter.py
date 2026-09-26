@@ -65,7 +65,7 @@ class AdaptiveRateLimiter:
         self._cleanup_interval = 300  # 5 minutes
         self._last_cleanup = time.time()
 
-        log.info(f"🪣 Token bucket rate limiter initialized: {refill_rate} req/s burst {burst_size}")
+        log.info(f" Token bucket rate limiter initialized: {refill_rate} req/s burst {burst_size}")
 
     def _get_bucket(self, client_id: str, endpoint: str = "") -> TokenBucket:
         """Get or create a token bucket for one client and endpoint."""
@@ -117,7 +117,7 @@ class AdaptiveRateLimiter:
         }
 
         if not allowed:
-            log.warning(f"🚫 Rate limit exceeded for {client_id}:{endpoint} "
+            log.warning(f"[Blocked] Rate limit exceeded for {client_id}:{endpoint} "
                        f"(next available in {metadata['time_until_available']:.1f}s)")
 
         return allowed, metadata
@@ -182,7 +182,7 @@ class AdaptiveRateLimiter:
             del self.cache_stats[key]
 
         if stale_clients or stale_cache_keys:
-            log.info(f"🧹 Cleanup: removed {len(stale_clients)} buckets, "
+            log.info(f" Cleanup: removed {len(stale_clients)} buckets, "
                     f"{len(stale_cache_keys)} cache entries")
 
         self._last_cleanup = now

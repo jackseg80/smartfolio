@@ -1,13 +1,13 @@
 # Crypto Regime Detector - Documentation Finale
 
-> **Statut**: ✅ PROJET 100% TERMINÉ | Dernière mise à jour: 2025-10-21
+> **Statut**: [OK] PROJET 100% TERMINÉ | Dernière mise à jour: 2025-10-21
 > **Objectif**: Système hybride de détection de régimes multi-assets (Stock/BTC/ETH) avec UI centralisée
 
 ---
 
-## 📊 Résumé du Projet
+## Résumé du Projet
 
-### ✅ Phases Complétées (100%)
+### Phases Complétées (100%)
 
 **Phase 1 - Backend (100%)**
 - Système hybride Rule-Based + HMM adapté pour Bitcoin
@@ -24,10 +24,10 @@
 **Phase 3 - Validation (100%)**
 - Script `validate_btc_regime.py` (5/5 tests passent)
 - Thresholds validés
-- Current regime: Correction @ 85% ✅
+- Current regime: Correction @ 85% [OK]
 
 **Phase 4 - Restructuration UI (100%)**
-- Nouvel onglet "📈 Régimes de Marché" dans `ai-dashboard.html`
+- Nouvel onglet " Régimes de Marché" dans `ai-dashboard.html`
 - Centralisation Stock Market + Bitcoin regime detection
 - Tableau comparatif cross-asset
 - ~~Redirect notice dans `analytics-unified.html`~~ (supprimé lors du nettoyage Oct 2025)
@@ -40,11 +40,11 @@
 
 ---
 
-## 🏗️ Architecture Finale
+## Architecture Finale
 
 ### Navigation
 ```
-ai-dashboard.html → Onglet "📈 Régimes de Marché"
+ai-dashboard.html → Onglet " Régimes de Marché"
 │
 ├─ Section 1: Stock Market Regime Detection (HMM)
 │  ├─ API: /api/ml/bourse/regime?benchmark=SPY
@@ -81,7 +81,7 @@ ai-dashboard.html → Onglet "📈 Régimes de Marché"
 
 ---
 
-## 🔧 Configuration Thresholds
+## Configuration Thresholds
 
 | Regime | Bitcoin/Ethereum | Stock Market | Justification |
 |--------|------------------|--------------|---------------|
@@ -100,7 +100,7 @@ ai-dashboard.html → Onglet "📈 Régimes de Marché"
 
 ---
 
-## 🎯 Système Hybride
+## Système Hybride
 
 **Problème**: HMM seul rate 100% des bear markets (temporal blindness)
 
@@ -116,7 +116,7 @@ ai-dashboard.html → Onglet "📈 Régimes de Marché"
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### 1. Current Regime Detection (Crypto)
 ```bash
@@ -190,7 +190,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-## 📝 Commits Effectués
+## Commits Effectués
 
 ### Phase 4 - UI Restructuration (4 commits)
 
@@ -205,7 +205,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
    - Styles responsive
 
 3. **`5d9b4f1`** - Debug logging amélioré
-   - Logging détaillé (📡, ✅, ❌, ⚠️)
+   - Logging détaillé (Connection, OK, Error, Warning)
    - Gestion 3 formats de réponse API Bitcoin
    - Meilleurs messages d'erreur
 
@@ -225,7 +225,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 2. **Stock Regime Probabilities Modal**
    - Nouveau module `stock-regime-history.js` (296 lignes)
    - Modal affichant les probabilités HMM de chaque état
-   - Bouton "📊 View Probabilities" dans section Stock Market
+   - Bouton " View Probabilities" dans section Stock Market
    - Graphique en barres avec couleurs par régime
 
 3. **Cross-Asset Comparison étendu**
@@ -256,13 +256,13 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Accès Frontend
 1. Ouvrir `http://localhost:8080/static/ai-dashboard.html`
-2. Cliquer sur l'onglet **"📈 Régimes de Marché"** (4ème onglet)
+2. Cliquer sur l'onglet **" Régimes de Marché"** (4ème onglet)
 3. Observer les sections :
-   - **Stock Market Regime** (HMM) - avec bouton "📊 View Probabilities"
+   - **Stock Market Regime** (HMM) - avec bouton " View Probabilities"
    - **Bitcoin Regime** (Hybrid) - avec charts timeline + probabilities
    - **Ethereum Regime** (Hybrid) - lightweight summary
    - **Cross-Asset Comparison** - tableau 3 assets (Stock/BTC/ETH)
@@ -278,7 +278,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-## 🐛 Bugs Fixés
+## Bugs Fixés
 
 ### Bug 1: Régime Bear Permanent
 - **Symptôme**: Toujours détecté en "Bear Market" même avec DD -11.8%
@@ -306,28 +306,28 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-## ✅ Validation
+## Validation
 
 **Script**: `scripts/validate_btc_regime.py`
 
 **Tests Passés (5/5)**:
-- ✅ Bear drawdown -0.50
-- ✅ Bear duration 30d
-- ✅ Expansion +0.30/month
-- ✅ Bull volatility 0.60
-- ✅ Correction rule exists
+- [OK] Bear drawdown -0.50
+- [OK] Bear duration 30d
+- [OK] Expansion +0.30/month
+- [OK] Bull volatility 0.60
+- [OK] Correction rule exists
 
 **Current Regime Detection**:
 - Detected: Correction @ 85%
 - Method: rule_based
-- Valid: YES ✅
+- Valid: YES [OK]
 
 ---
 
-## 🎯 Prochaines Étapes Potentielles
+## Prochaines Étapes Potentielles
 
-1. ~~**Ethereum Regime Detection**~~ - ✅ **TERMINÉ Phase 5**
-2. ~~**Stock Regime Probabilities Modal**~~ - ✅ **TERMINÉ Phase 5**
+1. ~~**Ethereum Regime Detection**~~ - [OK] **TERMINÉ Phase 5**
+2. ~~**Stock Regime Probabilities Modal**~~ - [OK] **TERMINÉ Phase 5**
 3. **Export Functionality** - CSV/JSON export pour tableau comparatif
 4. **Alertes Automatiques** - Notifications sur changement de régime
 5. **Altseason Detection** - Régime spécifique altcoins vs BTC
@@ -336,7 +336,7 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-## 📚 Documentation Complémentaire
+## Documentation Complémentaire
 
 - **`docs/BTC_HYBRID_REGIME_DETECTOR.md`** - Documentation technique détaillée
 - **`docs/HYBRID_REGIME_DETECTOR.md`** - Système bourse (Stock Market)
@@ -344,5 +344,5 @@ GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=365
 
 ---
 
-**Projet Multi-Asset Regime Detection**: ✅ **100% Terminé (Phase 5)** | Oct 2025
+**Projet Multi-Asset Regime Detection**: [OK] **100% Terminé (Phase 5)** | Oct 2025
 

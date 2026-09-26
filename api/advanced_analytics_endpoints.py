@@ -83,17 +83,17 @@ async def get_advanced_metrics(
     Calculer les métriques de performance avancées
     """
     # CACHE DÉSACTIVÉ pour forcer l'utilisation des vraies données!
-    logger.info(f"🚫 Cache désactivé - calcul en direct des métriques pour user={user}, {days} jours")
+    logger.info(f" Cache désactivé - calcul en direct des métriques pour user={user}, {days} jours")
     
     try:
-        # ⚡ NOUVEAU: Utiliser le service centralisé de métriques pour garantir la cohérence avec Risk Dashboard
+        # NOUVEAU: Utiliser le service centralisé de métriques pour garantir la cohérence avec Risk Dashboard
         try:
             from services.portfolio_metrics import portfolio_metrics_service
             from connectors.cointracking_api import get_current_balances
             from services.price_history import get_cached_history
             import pandas as pd
             
-            logger.info(f"🎯 STARTING centralized metrics service for Advanced Analytics - user={user}, {days} days")
+            logger.info(f" STARTING centralized metrics service for Advanced Analytics - user={user}, {days} days")
 
             # Récupérer les balances actuelles (isolées par user)
             balances_response = await get_current_balances(source="cointracking", user_id=user)
@@ -124,7 +124,7 @@ async def get_advanced_metrics(
             # Créer DataFrame des prix
             price_df = pd.DataFrame(price_data).ffill().dropna()
             
-            # ⚡ CALCULER AVEC LE SERVICE CENTRALISÉ (même calculs que Risk Dashboard)
+            # CALCULER AVEC LE SERVICE CENTRALISÉ (même calculs que Risk Dashboard)
             centralized_metrics = portfolio_metrics_service.calculate_portfolio_metrics(
                 price_data=price_df,
                 balances=balances,
@@ -155,20 +155,20 @@ async def get_advanced_metrics(
                 win_loss_ratio=centralized_metrics.win_loss_ratio
             )
             
-            logger.info(f"✅ CENTRALIZED metrics for Advanced Analytics: Sharpe={centralized_metrics.sharpe_ratio:.2f}, Vol={centralized_metrics.volatility_annualized:.2%}, MaxDD={centralized_metrics.max_drawdown:.2%}")
+            logger.info(f" CENTRALIZED metrics for Advanced Analytics: Sharpe={centralized_metrics.sharpe_ratio:.2f}, Vol={centralized_metrics.volatility_annualized:.2%}, MaxDD={centralized_metrics.max_drawdown:.2%}")
             
         except Exception as e:
-            logger.error(f"❌ CENTRALIZED METRICS FAILED: {e}")
-            logger.error(f"❌ Exception type: {type(e)}")
+            logger.error(f" CENTRALIZED METRICS FAILED: {e}")
+            logger.error(f" Exception type: {type(e)}")
             import traceback
-            logger.error(f"❌ Traceback: {traceback.format_exc()}")
+            logger.error(f" Traceback: {traceback.format_exc()}")
             # Fallback to mock data (avoid recursive calls)
             mock_data = _generate_mock_performance_data(days)
             metrics = _calculate_advanced_metrics(mock_data)
-            logger.warning("⚠️ USING MOCK DATA - Metrics will NOT match Risk Dashboard!")
+            logger.warning(" USING MOCK DATA - Metrics will NOT match Risk Dashboard!")
         
         # PAS DE CACHE pour garantir les vraies données
-        logger.info("🔥 Calcul sans cache terminé - données temps réel")
+        logger.info(" Calcul sans cache terminé - données temps réel")
         
         return metrics
         
@@ -186,7 +186,7 @@ async def get_timeseries_data(
     Récupérer les données de série temporelle pour les graphiques
     """
     # CACHE DÉSACTIVÉ pour forcer les vraies données temporelles!
-    logger.info(f"🚫 Cache timeseries désactivé - calcul en direct pour user={user}, {days} jours")
+    logger.info(f" Cache timeseries désactivé - calcul en direct pour user={user}, {days} jours")
     
     try:
         # Utiliser la même logique centralisée que les métriques pour la cohérence
@@ -240,7 +240,7 @@ async def get_timeseries_data(
                         rolling_volatility=rolling_volatility
                     )
                     
-                    logger.info(f"✅ Generated centralized timeseries: {len(portfolio_returns)} points")
+                    logger.info(f" Generated centralized timeseries: {len(portfolio_returns)} points")
                 else:
                     logger.error("Insufficient centralized data for timeseries generation")
                     raise HTTPException(status_code=503, detail="Insufficient centralized data")
@@ -264,7 +264,7 @@ async def get_timeseries_data(
             )
         
         # PAS DE CACHE pour garantir données temps réel
-        logger.info("🔥 Timeseries calculé sans cache - données réelles")
+        logger.info(" Timeseries calculé sans cache - données réelles")
         
         return timeseries
         
@@ -413,13 +413,13 @@ async def get_risk_metrics(
 async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, Any]:
     """Générer des données de performance réelles en utilisant le service centralisé (PLUS D'APPELS API)"""
     try:
-        # 🎯 UTILISATION DIRECTE DU SERVICE CENTRALISÉ - Plus d'appels HTTP récursifs!
+        # UTILISATION DIRECTE DU SERVICE CENTRALISÉ - Plus d'appels HTTP récursifs!
         from services.portfolio_metrics import portfolio_metrics_service
         from connectors.cointracking_api import get_current_balances
         from services.price_history import get_cached_history
         import pandas as pd
 
-        logger.info(f"🚀 GENERATING TIMESERIES DATA using centralized service - user={user_id}, {days} days (no HTTP calls)")
+        logger.info(f" GENERATING TIMESERIES DATA using centralized service - user={user_id}, {days} days (no HTTP calls)")
 
         # Récupérer les données avec la même logique que les métriques (isolées par user)
         balances_response = await get_current_balances(source="cointracking", user_id=user_id)
@@ -450,7 +450,7 @@ async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, 
         # Créer DataFrame des prix
         price_df = pd.DataFrame(price_data).ffill().dropna()
         
-        # 📊 CALCULER AVEC LE SERVICE CENTRALISÉ pour les métriques ET les rendements
+        # CALCULER AVEC LE SERVICE CENTRALISÉ pour les métriques ET les rendements
         centralized_metrics = portfolio_metrics_service.calculate_portfolio_metrics(
             price_data=price_df,
             balances=balances,
@@ -492,7 +492,7 @@ async def _generate_real_performance_data(days: int, user_id: str) -> Dict[str, 
                 rolling_sharpe.append(0)
                 rolling_volatility.append(0)
         
-        logger.info(f"✅ Generated centralized timeseries: {len(portfolio_history)} points")
+        logger.info(f" Generated centralized timeseries: {len(portfolio_history)} points")
         logger.info(f"Metrics consistency - Sharpe={centralized_metrics.sharpe_ratio:.2f}, Vol={centralized_metrics.volatility_annualized:.2%}, MaxDD={centralized_metrics.max_drawdown:.2%}")
         
         return {
@@ -592,7 +592,7 @@ def _calculate_advanced_metrics(data: Dict[str, Any]) -> AdvancedMetrics:
     if data.get("centralized_direct") and data.get("centralized_metrics"):
         centralized_metrics = data["centralized_metrics"]
         
-        # 🎯 UTILISER LES MÉTRIQUES CENTRALISÉES DIRECTEMENT (zéro calcul supplémentaire)
+        # UTILISER LES MÉTRIQUES CENTRALISÉES DIRECTEMENT (zéro calcul supplémentaire)
         total_return = data["cumulative_returns"][-1] if data["cumulative_returns"] else 0
         annualized_return = centralized_metrics.annualized_return_pct
         volatility = centralized_metrics.volatility_annualized * 100  # Convert to %
@@ -606,7 +606,7 @@ def _calculate_advanced_metrics(data: Dict[str, Any]) -> AdvancedMetrics:
         kurtosis = centralized_metrics.kurtosis
         max_drawdown_duration = centralized_metrics.max_drawdown_duration_days
         
-        logger.info(f"✅ Using DIRECT centralized metrics - Sharpe: {sharpe_ratio:.2f}, Vol: {volatility:.1f}%, Max DD: {max_drawdown:.1f}%")
+        logger.info(f" Using DIRECT centralized metrics - Sharpe: {sharpe_ratio:.2f}, Vol: {volatility:.1f}%, Max DD: {max_drawdown:.1f}%")
         
     else:
         # Calculs classiques pour les données non-harmonisées

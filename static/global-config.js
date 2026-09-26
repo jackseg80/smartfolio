@@ -78,11 +78,11 @@ function detectDefaultApiBase() {
 // Source de vérité centralisée des sources de données disponibles
 // Ajoutez/retirez des entrées ici pour les rendre disponibles partout
 window.DATA_SOURCES = {
-  stub_conservative: { label: 'Demo Conservative', icon: '🛡️', kind: 'stub' },
-  stub_balanced: { label: 'Demo Balanced', icon: '⚖️', kind: 'stub' },
-  stub_shitcoins: { label: 'Demo Risky', icon: '🎲', kind: 'stub' },
-  cointracking: { label: 'CoinTracking CSV', icon: '📄', kind: 'csv' },
-  cointracking_api: { label: 'CoinTracking API', icon: '🌐', kind: 'api' }
+  stub_conservative: { label: 'Demo Conservative', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg>", kind: 'stub' },
+  stub_balanced: { label: 'Demo Balanced', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Balanced\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#scale\"></use></svg>", kind: 'stub' },
+  stub_shitcoins: { label: 'Demo Risky', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Risk\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#variable\"></use></svg>", kind: 'stub' },
+  cointracking: { label: 'CoinTracking CSV', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"File\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#document-text\"></use></svg>", kind: 'csv' },
+  cointracking_api: { label: 'CoinTracking API', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Global\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#globe-alt\"></use></svg>", kind: 'api' }
 };
 
 /**
@@ -135,7 +135,7 @@ window.getDataSourceKeys = function () {
 window.getDataSourceLabel = function (key) {
   const meta = window.DATA_SOURCES[key];
   if (!meta) return key;
-  return `${meta.icon || ''} ${meta.label || key}`.trim();
+  return meta.label || key;
 };
 
 window.isValidDataSource = function (key) {
@@ -144,7 +144,7 @@ window.isValidDataSource = function (key) {
 
 const DEFAULT_SETTINGS = {
   data_source: null,
-  pricing: 'auto', // 🔧 FIX: Changed default from 'local' to 'auto' (real-time prices recommended)
+  pricing: 'auto', //  FIX: Changed default from 'local' to 'auto' (real-time prices recommended)
   display_currency: 'USD',
   min_usd_threshold: 1.00,
   coingecko_api_key: '',
@@ -206,7 +206,7 @@ class GlobalConfig {
         // page.  Do not reuse a persisted server-side address here: a LAN URL
         // would be blocked by CSP (and mixed-content rules) on the HTTPS site.
         this.settings.api_base_url = detectDefaultApiBase();
-        console.debug(`✅ Settings loaded from localStorage for user: ${storageKey}`);
+        console.debug(`[OK] Settings loaded from localStorage for user: ${storageKey}`);
       }
     } catch (error) {
       (window.debugLogger?.warn || console.warn)('Erreur chargement configuration:', error);
@@ -221,7 +221,7 @@ class GlobalConfig {
     try {
       const storageKey = this.getStorageKey();
       localStorage.setItem(storageKey, JSON.stringify(this.settings));
-      console.debug(`✅ Settings saved to localStorage for user: ${storageKey}`);
+      console.debug(`[OK] Settings saved to localStorage for user: ${storageKey}`);
     } catch (error) {
       debugLogger.error('Erreur sauvegarde configuration:', error);
     }
@@ -231,7 +231,7 @@ class GlobalConfig {
    * Bascule vers un nouvel utilisateur (vide le cache actuel et recharge)
    */
   switchUser(newUserId) {
-    console.debug(`🔄 Switching user context: ${this.getStorageKey()} → smartfolio_settings_${newUserId}`);
+    console.debug(`Switching user context: ${this.getStorageKey()} → smartfolio_settings_${newUserId}`);
     // Vider le cache actuel
     this.settings = { ...DEFAULT_SETTINGS };
     // activeUser sera changé par l'appelant avant d'appeler cette méthode
@@ -278,7 +278,7 @@ class GlobalConfig {
 
       // Auto-invalidation des caches quand la source change
       if (oldValue && oldValue !== newValue) {
-        (window.debugLogger?.debug || console.log)(`🔄 Global config data source changed: ${oldValue} -> ${newValue}, clearing caches`);
+        (window.debugLogger?.debug || console.log)(`Global config data source changed: ${oldValue} -> ${newValue}, clearing caches`);
 
         // Vider le cache balance pour tous les utilisateurs
         if (typeof balanceCache !== 'undefined') {
@@ -294,7 +294,7 @@ class GlobalConfig {
             key.includes('portfolio_')
           );
           cacheKeys.forEach(key => localStorage.removeItem(key));
-          (window.debugLogger?.debug || console.log)(`🧹 Cleared ${cacheKeys.length} localStorage cache entries`);
+          (window.debugLogger?.debug || console.log)(`Cleared ${cacheKeys.length} localStorage cache entries`);
         } catch (e) {
           console.debug('Cache clearing error (non-critical):', e);
         }
@@ -332,7 +332,7 @@ class GlobalConfig {
     const storageKey = this.getStorageKey();
     this.settings = { ...DEFAULT_SETTINGS };
     localStorage.removeItem(storageKey);
-    console.debug(`🔄 Settings reset for user: ${storageKey}`);
+    console.debug(`Settings reset for user: ${storageKey}`);
   }
 
   /**
@@ -443,9 +443,9 @@ class GlobalConfig {
   async testConnection() {
     try {
       const health = await this.apiRequest('/healthz');
-      const currentSource = this.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+      const currentSource = this.get('data_source') || 'cointracking';  //  FIX: Multi-tenant isolation
       const balances = await this.apiRequest('/balances/current', {
-        params: { source: currentSource }  // 🔧 FIX: Pass source parameter for consistency
+        params: { source: currentSource }  //  FIX: Pass source parameter for consistency
       });
 
       return {
@@ -612,7 +612,7 @@ class GlobalConfig {
     // Sauvegarder le thème effectif pour les CSS qui en ont besoin
     document.documentElement.style.setProperty('--effective-theme', effectiveTheme);
 
-    console.debug(`🎨 Thème appliqué: ${this.settings.theme} (effectif: ${effectiveTheme})`);
+    console.debug(`Thème appliqué: ${this.settings.theme} (effectif: ${effectiveTheme})`);
   }
 
   /**
@@ -620,7 +620,7 @@ class GlobalConfig {
    */
   setDebugMode(enabled) {
     this.set('debug_mode', enabled);
-    console.debug(`🛠️ Mode debug ${enabled ? 'activé' : 'désactivé'}`);
+    console.debug(`Mode debug ${enabled ? 'activé' : 'désactivé'}`);
 
     // Émettre un événement spécifique pour le mode debug
     const event = new CustomEvent('debugModeChanged', {
@@ -681,7 +681,7 @@ window.refreshBalanceData = () => window.loadBalanceData(true); // Force refresh
 
 // Fonction pour forcer le refresh de toutes les données
 window.refreshAllData = () => {
-  (window.debugLogger?.debug || console.log)('🔄 Refreshing all data sources...');
+  (window.debugLogger?.debug || console.log)("Refreshing all data sources...");
 
   // Vider tous les caches
   if (typeof balanceCache !== 'undefined') balanceCache.clear();
@@ -704,7 +704,7 @@ window.refreshAllData = () => {
   // Émettre un événement pour que les autres composants se rechargent
   window.dispatchEvent(new CustomEvent('dataRefreshRequested'));
 
-  (window.debugLogger?.debug || console.log)(`🧹 Cleared ${cacheKeys.length} cache entries and requested data refresh`);
+  (window.debugLogger?.debug || console.log)(`Cleared ${cacheKeys.length} cache entries and requested data refresh`);
 };
 
 /**
@@ -731,7 +731,7 @@ const balanceCache = {
 
   clear(user = null) {
     if (user) {
-      // 🔧 FIX: Clear all cache entries for this user (including different CSV files)
+      //  FIX: Clear all cache entries for this user (including different CSV files)
       if (this.data) {
         const prefix = `${user}:`;
         Object.keys(this.data).forEach(key => {
@@ -762,13 +762,13 @@ window.loadBalanceData = async function (forceRefresh = false) {
     };
   }
 
-  // 🔧 FIX: Include csv_selected_file in cache key for proper isolation
+  //  FIX: Include csv_selected_file in cache key for proper isolation
   const csvFile = window.userSettings?.csv_selected_file || 'latest';
   const cacheKey = `${currentUser}:${dataSource}:${csvFile}`;
 
   // Vérifier cache (sauf si refresh forcé)
   if (!forceRefresh && balanceCache.isValid(cacheKey)) {
-    console.debug(`🚀 Balance data loaded from cache (user: ${currentUser}, file: ${csvFile})`);
+    console.debug(`Balance data loaded from cache (user: ${currentUser}, file: ${csvFile})`);
     const cachedData = balanceCache.get(cacheKey);
     return {
       success: true,
@@ -780,13 +780,13 @@ window.loadBalanceData = async function (forceRefresh = false) {
 
   // Cache miss ou refresh forcé - charger depuis API
   const timestamp = forceRefresh ? Date.now() : '';
-  console.debug(`🔍 Loading balance data using source: ${dataSource} (user: ${currentUser}, file: ${csvFile}, cache-bust: ${timestamp || 'none'})`);
+  console.debug(`Loading balance data using source: ${dataSource} (user: ${currentUser}, file: ${csvFile}, cache-bust: ${timestamp || 'none'})`);
 
   try {
     switch (dataSource) {
       case 'manual_crypto': {
-        // ✅ Sources V2: Manual crypto entry
-        console.debug('📝 Using Manual Crypto source (Sources V2)');
+        //  Sources V2: Manual crypto entry
+        console.debug("Using Manual Crypto source (Sources V2)");
         const params = { source: 'manual_crypto' };
         if (forceRefresh) params._t = timestamp;
 
@@ -801,7 +801,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
 
       case 'cointracking_api': {
         // CoinTracking API via backend
-        console.debug('📡 Using CoinTracking API source');
+        console.debug("Using CoinTracking API source");
         const params = { source: 'cointracking_api' };
         if (forceRefresh) params._t = timestamp;
         const apiData = await globalConfig.apiRequest('/balances/current', { params });
@@ -816,7 +816,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
       case 'stub_conservative':
       case 'stub_shitcoins': {
         const chosen = dataSource;
-        console.debug(`🧪 Using stub data source: ${chosen}`);
+        console.debug(`Using stub data source: ${chosen}`);
         const params = { source: chosen };
         if (forceRefresh) params._t = timestamp;
         const stubData = await globalConfig.apiRequest('/balances/current', { params });
@@ -829,7 +829,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
       case 'csv_1':
       case 'csv_2': {
         // User-specific CSV files via API backend
-        console.debug(`📄 Using user CSV files via API (${dataSource})`);
+        console.debug(`Using user CSV files via API (${dataSource})`);
         const params = { source: dataSource };
         if (forceRefresh) params._t = timestamp;
         const csvData = await globalConfig.apiRequest('/balances/current', { params });
@@ -840,7 +840,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
 
       case 'cointracking': {
         // Local CoinTracking CSV via API backend
-        console.debug('📄 Using local CoinTracking CSV files via API');
+        console.debug("Using local CoinTracking CSV files via API");
         const params = { source: 'cointracking' };
         if (forceRefresh) params._t = timestamp;
         const csvData = await globalConfig.apiRequest('/balances/current', { params });
@@ -852,7 +852,7 @@ window.loadBalanceData = async function (forceRefresh = false) {
         throw new Error(`Unknown portfolio data source '${dataSource}'`);
     }
   } catch (error) {
-    debugLogger.error(`❌ Error loading balance data via API (source: ${dataSource}):`, error);
+    debugLogger.error(`Error loading balance data via API (source: ${dataSource}):`, error);
     return {
       success: false,
       error: `Failed to load the selected portfolio source '${dataSource}': ${error.message}`,
@@ -926,7 +926,7 @@ window.parseCSVLine = function (line) {
 window.addEventListener('storage', (e) => {
   const currentStorageKey = globalConfig.getStorageKey();
   if (e.key === currentStorageKey || e.key?.startsWith('smartfolio_settings_')) {
-    console.debug(`🔄 Storage changed for key: ${e.key}, reloading settings`);
+    console.debug(`Storage changed for key: ${e.key}, reloading settings`);
     globalConfig.load();
     // Déclencher événement personnalisé pour les pages qui écoutent
     window.dispatchEvent(new CustomEvent('configChanged', {
@@ -965,10 +965,10 @@ globalConfig.applyTheme();
   if (globalConfig.get('api_base_url') !== browserApiUrl) {
     globalConfig.set('api_base_url', browserApiUrl);
   }
-  console.debug('✅ Browser API base uses the current origin:', browserApiUrl);
+  console.debug("[OK] Browser API base uses the current origin:", browserApiUrl);
 })();
 
-console.debug('🚀 Configuration globale chargée:', globalConfig.getAll());
+console.debug("Configuration globale chargée:", globalConfig.getAll());
 
 // ====== Currency conversion helper (USD -> display currency) ======
 window.currencyManager = (function () {
@@ -1010,7 +1010,7 @@ window.currencyManager = (function () {
 
       if (response?.ok && response?.data?.rates) {
         const fetchedRates = response.data.rates;
-        console.debug('✅ FX rates fetched from backend:', Object.keys(fetchedRates).length, 'currencies');
+        console.debug("[OK] FX rates fetched from backend:", Object.keys(fetchedRates).length, 'currencies');
 
         // Update rates cache
         for (const [currency, rate] of Object.entries(fetchedRates)) {
@@ -1025,7 +1025,7 @@ window.currencyManager = (function () {
         throw new Error('Invalid response format');
       }
     } catch (error) {
-      console.debug('⚠️ FX rates fetch failed, using fallback rates:', error.message);
+      console.debug("[Warning] FX rates fetch failed, using fallback rates:", error.message);
       // Fallback rates already loaded
       return false;
     }
@@ -1074,9 +1074,9 @@ window.currencyManager = (function () {
   try {
     // Pre-fetch all rates from backend on page load
     fetchAllRates().then(() => {
-      console.debug('💱 Currency rates initialized from backend');
+      console.debug("Currency rates initialized from backend");
     }).catch(() => {
-      console.debug('💱 Currency rates initialized with fallbacks');
+      console.debug("Currency rates initialized with fallbacks");
     });
 
     // Preload display currency if not USD
@@ -1121,5 +1121,5 @@ window.currencyManager = (function () {
     init: () => {}
   };
 
-  console.debug('🔧 Safe debugLogger fallback initialized');
+  console.debug("Safe debugLogger fallback initialized");
 })();

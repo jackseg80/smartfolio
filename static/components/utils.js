@@ -57,10 +57,10 @@ export async function fetchWithTimeout(url, { timeoutMs = 5000, signal, headers,
  * @returns {Promise<Object|null>} Mapped data ou null si échec
  */
 export async function fetchRisk() {
-  // 🆕 FIX Nov 2025: Récupérer l'user actif depuis localStorage pour multi-tenant
+  //  FIX Nov 2025: Récupérer l'user actif depuis localStorage pour multi-tenant
   const activeUser = localStorage.getItem('activeUser');
 
-  // 🔧 FIX Jan 2026: Récupérer la source active depuis globalConfig pour multi-tenant isolation
+  //  FIX Jan 2026: Récupérer la source active depuis globalConfig pour multi-tenant isolation
   const currentSource = window.globalConfig?.get('data_source') || 'cointracking';
 
   // Safe debugLogger avec fallback
@@ -74,7 +74,7 @@ export async function fetchRisk() {
       {
         timeoutMs: 5000,
         headers: {
-          'X-User': activeUser  // 🆕 FIX: Passer l'user actif pour multi-tenant
+          'X-User': activeUser  //  FIX: Passer l'user actif pour multi-tenant
         }
       }
     );

@@ -17,13 +17,13 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script>
-    // ✅ Enregistrement datalabels (idempotent)
+    //  Enregistrement datalabels (idempotent)
     if (window.Chart && window.ChartDataLabels && !window.__di_dl_registered__) {
       window.Chart.register(window.ChartDataLabels);
-      // ✅ Disable globally, then reactivate only on stacked bar
+      //  Disable globally, then reactivate only on stacked bar
       window.Chart.defaults.set('plugins.datalabels', { display: false });
       window.__di_dl_registered__ = true;
-      console.debug('✅ chartjs-plugin-datalabels registered (global display: false)');
+      console.debug("[OK] chartjs-plugin-datalabels registered (global display: false)");
     }
   </script>
   <script src="debug-logger.js"></script>
@@ -63,7 +63,7 @@
     <!-- En-tête principal -->
     <div class="sim-header">
       <div>
-        <h1>🎭 Rebalancing Simulator</h1>
+        <h1><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Scenario" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#square-3-stack-3d"></use></svg> Rebalancing Simulator</h1>
         <p style="color: var(--theme-text-muted); margin: 0;">
           Test the full pipeline in real-time without backend writes
         </p>
@@ -72,7 +72,7 @@
       <div class="source-controls">
         <view-toggle></view-toggle>
         <a href="analytics-unified.html" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem; text-decoration: none;">
-          📊 View Live Data
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> View Live Data
         </a>
 
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -80,7 +80,7 @@
           <select id="sim-source-select" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text); font-size: 0.9rem;">
             <option value="">Loading...</option>
           </select>
-          <button id="test-source-btn" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem;">🧪 Test</button>
+          <button id="test-source-btn" class="btn secondary" style="padding: 6px 12px; font-size: 0.85rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Test</button>
         </div>
 
       </div>
@@ -91,12 +91,12 @@
 
     <!-- Controls flottants -->
     <div id="controls" class="controls-flyout" role="complementary" aria-label="Simulation controls" tabindex="-1">
-      <div class="flyout-handle">🎛️ Controls</div>
+      <div class="flyout-handle"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg> Controls</div>
       <div class="flyout-header">
-        <h2>🎛️ Controls</h2>
+        <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg> Controls</h2>
         <div class="flyout-actions">
           <button id="controls-pin-btn" class="btn secondary pin-btn" type="button" aria-pressed="false" title="Pin the panel">
-            📌 Pin
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pinned" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bookmark"></use></svg> Pin
           </button>
         </div>
       </div>
@@ -112,7 +112,7 @@
       <!-- Résultats -->
       <div id="results" class="sim-panel">
         <div class="sim-header">
-          <h3>📊 Simulation Results</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Simulation Results</h3>
           <div style="display: flex; align-items: center; gap: var(--space-md);">
             <div id="simulation-status">
               <span class="status-badge info">Ready</span>
@@ -128,14 +128,14 @@
           </div>
 
           <div id="error-state" class="error-state">
-            <div style="font-size: 2rem;">⚠️</div>
+            <div style="font-size: 2rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></div>
             <h4>Simulation Error</h4>
             <p id="error-message">An error occurred</p>
-            <button id="retry-btn" class="btn secondary">🔄 Retry</button>
+            <button id="retry-btn" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry</button>
           </div>
 
           <div id="empty-state" class="empty-state">
-            <div class="empty-icon">🎭</div>
+            <div class="empty-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Scenario" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#square-3-stack-3d"></use></svg></div>
             <h4>Simulator Ready</h4>
             <p>Adjust the controls to run the simulation</p>
           </div>
@@ -144,7 +144,7 @@
           <div id="results-grid" class="results-grid" style="display: none;">
             <!-- Decision Index -->
             <div class="result-card">
-              <h4>🎯 Decision Index</h4>
+              <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Decision Index</h4>
               <div id="di-panel-sim"></div>
               <div id="sim-selected-preset" class="di-preset" style="margin-top: var(--space-sm);">Preset: Custom</div>
             </div>
@@ -156,7 +156,7 @@
 
             <!-- Risk Budget -->
             <div class="result-card">
-              <h4>💰 Risk Budget</h4>
+              <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Risk Budget</h4>
               <div class="budget-bars">
                 <div class="budget-bar">
                   <div id="sim-stables-bar" class="budget-bar-fill stables-bar">
@@ -179,7 +179,7 @@
 
             <!-- Allocation Targets -->
             <div class="result-card">
-              <h4>🎯 Allocation by Groups</h4>
+              <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Allocation by Groups</h4>
               <div id="sim-allocation-chart" class="allocation-chart">
                 Loading allocation...
               </div>
@@ -187,7 +187,7 @@
 
             <!-- Execution Plan -->
             <div class="result-card">
-              <h4>⚡ Execution Plan</h4>
+              <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Execution Plan</h4>
               <div style="margin-bottom: var(--space-md);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-sm);">
                   <span>Total Delta:</span>
@@ -209,7 +209,7 @@
 
             <!-- Summary NL -->
             <div class="result-card">
-              <h4>📝 Summary</h4>
+              <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Summary</h4>
               <div id="sim-summary-nl" style="line-height: 1.6; color: var(--theme-text);">
                 Natural language summary...
               </div>
@@ -221,7 +221,7 @@
       <!-- Inspecteur -->
       <div id="inspector" class="sim-panel sim-panel-inspector">
         <div class="sim-header">
-          <h3>🔍 Inspector</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Inspector</h3>
         </div>
         <div id="sim-inspector" class="results-content">
           <!-- Inspecteur généré par SimInspector.js -->
@@ -234,6 +234,7 @@
   <!-- Scripts -->
   <script type="module">
     import { SimControls } from './components/SimControls.js';
+    import { setIcon } from './core/icons.js';
     import { SimInspector } from './components/SimInspector.js';
     import * as SimEngine from './modules/simulation-engine.js';
 
@@ -358,7 +359,7 @@
         const activeSource = getActiveSource();
         select.value = activeSource;
 
-        debugLogger.debug('🎭 SIM: Loaded sources:', data.sources?.length || 0, '| Active:', activeSource);
+        debugLogger.debug("SIM: Loaded sources:", data.sources?.length || 0, '| Active:', activeSource);
       } catch (error) {
         debugLogger.error('Failed to load sources:', error);
       }
@@ -370,10 +371,10 @@
       const source = select?.value || getActiveSource();
       const userId = localStorage.getItem('activeUser') || '';
 
-      debugLogger.debug(`🧪 Testing source: ${source} for user: ${userId}`);
+      debugLogger.debug(`Testing source: ${source} for user: ${userId}`);
 
       try {
-        // ✅ USE UNIFIED loadBalanceData() which handles user_id correctly via X-User header
+        //  USE UNIFIED loadBalanceData() which handles user_id correctly via X-User header
         // Temporarily set data_source to test the selected source
         const originalSource = window.globalConfig.get('data_source');
         window.globalConfig.set('data_source', source);
@@ -387,7 +388,7 @@
           throw new Error('Failed to load balance data');
         }
 
-        debugLogger.debug('🧪 Balance result:', balanceResult);
+        debugLogger.debug("Balance result:", balanceResult);
 
         // Parse balances (same logic as dashboard.html)
         let balances;
@@ -409,25 +410,25 @@
             return sum + (item.value_usd || item.valueUsd || item.total_usd || 0);
           }, 0);
 
-          alert(`✅ Source "${sourceUsed}" OK\n\n` +
+          alert(`[OK] Source "${sourceUsed}" OK\n\n` +
                 `${balances.length} assets found\n` +
                 `Total value: $${totalValue.toFixed(2)}\n` +
                 `User: ${userId}`);
         } else {
-          alert(`⚠️ Source "${sourceUsed}" accessible but empty\n\n` +
+          alert(`[Warning] Source "${sourceUsed}" accessible but empty\n\n` +
                 `No assets found.\n` +
                 `Verify that the source contains data for user ${userId}.`);
         }
       } catch (error) {
-        debugLogger.error('🧪 Test source failed:', error);
-        alert(`❌ Error testing source "${source}":\n${error.message}`);
+        debugLogger.error("Test source failed:", error);
+        alert(`Error testing source "${source}":\n${error.message}`);
       }
     }
 
 
     // Initialisation
     document.addEventListener('DOMContentLoaded', async () => {
-      debugLogger.debug('🎭 SIM: Simulator page initialized');
+      debugLogger.debug("SIM: Simulator page initialized");
 
       try {
         await loadAvailableSources();
@@ -435,7 +436,7 @@
         attachEventListeners();
         setInitialState();
       } catch (error) {
-        debugLogger.error('🎭 SIM: Initialization failed:', error);
+        debugLogger.error("SIM: Initialization failed:", error);
         showError('Simulator initialization failed: ' + error.message);
       }
     });
@@ -451,7 +452,7 @@
         throw new Error(initResult.error);
       }
 
-      debugLogger.debug('🎭 SIM: Simulator components initialized');
+      debugLogger.debug("SIM: Simulator components initialized");
     }
 
     function setControlsPinned(pinned) {
@@ -464,7 +465,8 @@
 
       controlsPanel.classList.toggle('is-pinned', pinned);
       pinButton.setAttribute('aria-pressed', String(pinned));
-      pinButton.textContent = pinned ? '📌 Pinned' : '📌 Pin';
+      setIcon(pinButton, 'bookmark');
+      pinButton.setAttribute('aria-label', pinned ? 'Unpin panel' : 'Pin panel');
     }
 
     function attachEventListeners() {
@@ -474,7 +476,7 @@
       // Source selector
       document.getElementById('sim-source-select')?.addEventListener('change', (e) => {
         const newSource = e.target.value;
-        debugLogger.debug('🎭 SIM: Source changed to:', newSource);
+        debugLogger.debug("SIM: Source changed to:", newSource);
         // Mettre à jour globalConfig pour cohérence
         if (window.globalConfig) {
           window.globalConfig.set('data_source', newSource);
@@ -540,7 +542,7 @@
         badge.className = 'status-badge info';
       }
 
-      debugLogger.debug('🎭 SIM: Mode initialized: simulation');
+      debugLogger.debug("SIM: Mode initialized: simulation");
 
       // Lancer simulation si des contrôles existent
       if (appState.controls) {
@@ -560,7 +562,7 @@
       }
 
       controlsUpdateTimeout = setTimeout(async () => {
-        debugLogger.debug('🎭 SIM: Controls updated, running simulation');
+        debugLogger.debug("SIM: Controls updated, running simulation");
         appState.lastSimulation = controlsState;
 
         // Mettre à jour URL hash
@@ -582,7 +584,7 @@
       try {
         // Lancer la simulation complète
         const result = await SimEngine.simulateFullPipeline(controlsState);
-        debugLogger.debug('🎭 SIM: Simulation completed:', result);
+        debugLogger.debug("SIM: Simulation completed:", result);
 
         // Afficher les résultats
         displayResults(result);
@@ -591,7 +593,7 @@
         showResultsState();
 
       } catch (error) {
-        debugLogger.error('🎭 SIM: Simulation failed:', error);
+        debugLogger.error("SIM: Simulation failed:", error);
         showError('Simulation error: ' + error.message);
       } finally {
         appState.isRunning = false;
@@ -637,11 +639,11 @@
 
       // Phases ordered by bullishness — score ranges map directly to bar position
       const phases = [
-        { name: 'Bear',         start: 0,  end: 20,  color: '#dc2626', emoji: '\u{1F534}' },
-        { name: 'Pre-Acc',      start: 20, end: 35,  color: '#6b7280', emoji: '\u26AB' },
-        { name: 'Accumulation', start: 35, end: 55,  color: '#f59e0b', emoji: '\u{1F7E1}' },
-        { name: 'Bull Build',   start: 55, end: 80,  color: '#10b981', emoji: '\u{1F7E2}' },
-        { name: 'Peak',         start: 80, end: 100, color: '#8b5cf6', emoji: '\u{1F7E3}' }
+        { name: 'Bear',         start: 0,  end: 20,  color: '#dc2626', emoji: '' },
+        { name: 'Pre-Acc',      start: 20, end: 35,  color: '#6b7280', emoji: '' },
+        { name: 'Accumulation', start: 35, end: 55,  color: '#f59e0b', emoji: '' },
+        { name: 'Bull Build',   start: 55, end: 80,  color: '#10b981', emoji: '' },
+        { name: 'Peak',         start: 80, end: 100, color: '#8b5cf6', emoji: '' }
       ];
 
       const positionPercent = Math.max(1, Math.min(99, cycleScore));
@@ -797,7 +799,7 @@
             risky: 100 - riskBudget.target_stables_pct,
             stables: riskBudget.target_stables_pct
           } : null,
-          regime_emoji: cycleScore >= 90 ? '🐂' : (cycleScore >= 70 ? '😐' : '🐻'),
+          regime_emoji: cycleScore >= 90 ? "Growth" : (cycleScore >= 70 ? "Neutral" : "Decline"),
           sentiment_fg: result.context?.sentimentScore ?? null,
           sentiment_interpretation: null
         },
@@ -828,7 +830,7 @@
       const presetDesc = result?.presetInfo?.desc || result?.context?.presetInfo?.desc || '';
       const presetEl = document.getElementById('sim-selected-preset');
       if (presetEl) {
-        presetEl.textContent = `${isLiveMode ? '📊 Live' : '🎭 Simulation'}: ${presetName}`;
+        presetEl.textContent = `${isLiveMode ? "Live" : "Simulation"}: ${presetName}`;
         if (presetDesc) {
           presetEl.setAttribute('title', presetDesc);
         } else {
@@ -885,7 +887,7 @@
         .sort(([,a], [,b]) => b - a)
         .filter(([, value]) => value >= 0.1); // Filtrer les très petites valeurs
 
-      const chartTitle = '🎯 Target Allocations (Simulation)';
+      const chartTitle = "Target Allocations (Simulation)";
 
       let html = `<div style="margin-bottom: 0.75rem; font-weight: 600; font-size: 0.95rem; color: var(--theme-text);">${chartTitle}</div>`;
       html += '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
@@ -938,7 +940,7 @@
       let html = '';
       orders.forEach(order => {
         const actionClass = order.action.toLowerCase();
-        const priorityIcon = order.priority === 'HIGH' ? '🔥' : '📋';
+        const priorityIcon = order.priority === 'HIGH' ? "High" : "Overview";
 
         html += `
           <div class="order-item">
@@ -958,7 +960,7 @@
     }
 
     async function reinitializeWithNewSource() {
-      debugLogger.debug('🎭 SIM: Reinitializing with new source:', appState.sourceId);
+      debugLogger.debug("SIM: Reinitializing with new source:", appState.sourceId);
 
       showLoadingState();
 
@@ -977,7 +979,7 @@
         }
 
       } catch (error) {
-        debugLogger.error('🎭 SIM: Reinitialization failed:', error);
+        debugLogger.error("SIM: Reinitialization failed:", error);
         showError('Source change failed: ' + error.message);
       }
     }
@@ -1030,5 +1032,4 @@
 </body>
 
 </html>
-
 

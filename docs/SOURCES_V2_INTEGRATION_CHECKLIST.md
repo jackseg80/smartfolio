@@ -6,7 +6,7 @@ Ce document vérifie que le système Sources V2 est correctement intégré avec 
 
 ---
 
-## ✅ Architecture Backend (Complété)
+## Architecture Backend (Complété)
 
 ### Services Core
 
@@ -81,7 +81,7 @@ Ce document vérifie que le système Sources V2 est correctement intégré avec 
 
 ---
 
-## ✅ Frontend (Complété)
+## Frontend (Complété)
 
 ### Composants
 
@@ -101,7 +101,7 @@ Ce document vérifie que le système Sources V2 est correctement intégré avec 
   - Intégration sources-manager-v2.js
 
 - [x] **WealthContextBar Integration** ([static/components/WealthContextBar.js](../static/components/WealthContextBar.js))
-  - Option "📝 Saisie Manuelle" ajoutée aux dropdowns Crypto et Bourse
+  - Option " Saisie Manuelle" ajoutée aux dropdowns Crypto et Bourse
   - `activateManualSource(category)` - API call to `/api/sources/v2/{category}/active`
   - Auto-reload après changement de source (avec délai 150ms)
   - Cache invalidation lors du changement de source
@@ -117,7 +117,7 @@ Ce document vérifie que le système Sources V2 est correctement intégré avec 
 
 ---
 
-## 🧪 Tests d'Intégration
+## Tests d'Intégration
 
 ### Tests Automatisés
 
@@ -189,7 +189,7 @@ Doit retourner:
 **Procédure:**
 1. Aller à [settings.html](http://localhost:8080/settings.html)
 2. Onglet "Sources"
-3. Section "🪙 CRYPTO"
+3. Section " CRYPTO"
 4. Sélectionner "○ Saisie manuelle"
 5. Cliquer "Ajouter un asset"
 6. Remplir:
@@ -215,7 +215,7 @@ Doit retourner le BTC ajouté.
 #### 3. Ajouter Position Bourse Manuelle
 
 **Procédure:**
-1. Settings → Sources → Section "📈 BOURSE"
+1. Settings → Sources → Section " BOURSE"
 2. Sélectionner "○ Saisie manuelle"
 3. Ajouter position:
    - Symbol: `AAPL`
@@ -391,9 +391,9 @@ Tous doivent retourner 200 et données.
 
 **Procédure:**
 1. Charger dashboard (première fois)
-2. Vérifier console: `"🔍 Loading balance data using source: ..."`
+2. Vérifier console: `" Loading balance data using source: ..."`
 3. Recharger page (F5)
-4. Vérifier console: `"🚀 Balance data loaded from cache"`
+4. Vérifier console: `" Balance data loaded from cache"`
 
 **Validation:**
 - Cache key doit inclure user + source + file
@@ -401,7 +401,7 @@ Tous doivent retourner 200 et données.
 
 ---
 
-## 🔧 Points d'Attention
+## Points d'Attention
 
 ### 1. Pricing pour Sources Manuelles
 
@@ -446,20 +446,20 @@ Tous doivent retourner 200 et données.
 
 ---
 
-## 📊 Métriques de Succès
+## Métriques de Succès
 
 ### Critères d'Acceptation
 
-- ✅ Nouveaux users utilisent V2 par défaut
-- ✅ Migration auto fonctionne sans perte de données
-- ✅ Dashboard affiche données V2 correctement
-- ✅ CRUD manuel fonctionne (crypto + bourse)
-- ✅ Switch sources fonctionne
-- ✅ Backward compatibility maintenue
-- ✅ Multi-tenant isolation respectée
-- ✅ Aucune régression sur pages existantes
-- ⚠️ Tests automatisés passent (à implémenter)
-- ⚠️ Performance acceptable (<100ms pour get_balances)
+- [OK] Nouveaux users utilisent V2 par défaut
+- [OK] Migration auto fonctionne sans perte de données
+- [OK] Dashboard affiche données V2 correctement
+- [OK] CRUD manuel fonctionne (crypto + bourse)
+- [OK] Switch sources fonctionne
+- [OK] Backward compatibility maintenue
+- [OK] Multi-tenant isolation respectée
+- [OK] Aucune régression sur pages existantes
+- [Warning] Tests automatisés passent (à implémenter)
+- [Warning] Performance acceptable (<100ms pour get_balances)
 
 ### Tests de Régression
 
@@ -474,7 +474,7 @@ Tous doivent retourner 200 et données.
 
 ---
 
-## 🚀 Rollout Plan
+## Rollout Plan
 
 ### Phase 1: Beta Testing (Actuel)
 
@@ -505,7 +505,7 @@ Tous doivent retourner 200 et données.
 
 ---
 
-## 📝 Commandes Utiles
+## Commandes Utiles
 
 ### Test Backend
 
@@ -559,7 +559,7 @@ rm "data/users/test_user/config.json"
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problème: "Source not found"
 
@@ -602,7 +602,7 @@ curl -v -H "X-User: jack" "localhost:8080/balances/current?source=auto"
 
 ---
 
-## ✅ Sign-off Checklist
+## Sign-off Checklist
 
 Avant de déclarer l'intégration complète :
 
@@ -620,7 +620,7 @@ Avant de déclarer l'intégration complète :
 
 ---
 
-## 📚 Références
+## Références
 
 - [Architecture V2](./SOURCES_V2.md)
 - [Plan de refactoring](../refactor_sources.md)

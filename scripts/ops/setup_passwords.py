@@ -83,7 +83,7 @@ def load_users_config() -> dict:
         dict: Configuration users.json
     """
     if not USERS_CONFIG_PATH.exists():
-        print(f"❌ Error: Users config not found at {USERS_CONFIG_PATH}")
+        print(f" Error: Users config not found at {USERS_CONFIG_PATH}")
         sys.exit(1)
 
     with open(USERS_CONFIG_PATH, 'r', encoding='utf-8') as f:
@@ -99,7 +99,7 @@ def save_users_config(config: dict):
     """
     with open(USERS_CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
-    print(f"✅ Users config saved to {USERS_CONFIG_PATH}")
+    print(f"[OK] Users config saved to {USERS_CONFIG_PATH}")
 
 
 def setup_user_password(user_id: str, password: str = None, force: bool = False) -> tuple[str, str]:
@@ -124,20 +124,20 @@ def setup_user_password(user_id: str, password: str = None, force: bool = False)
             break
 
     if not user:
-        print(f"❌ Error: User '{user_id}' not found in config")
+        print(f" Error: User '{user_id}' not found in config")
         sys.exit(1)
 
     # Vérifier si password existe déjà
     if user.get("password_hash") and not force:
-        print(f"⚠️  User '{user_id}' already has a password. Use --force to override.")
+        print(f"[Warning]  User '{user_id}' already has a password. Use --force to override.")
         return None, user.get("password_hash")
 
     # Générer ou utiliser le password fourni
     if password is None:
         password = generate_secure_password()
-        print(f"🔑 Generated secure password for '{user_id}': {password}")
+        print(f" Generated secure password for '{user_id}': {password}")
     else:
-        print(f"🔑 Using provided password for '{user_id}'")
+        print(f" Using provided password for '{user_id}'")
 
     # Hasher le password
     password_hash = hash_password(password)
@@ -162,7 +162,7 @@ def setup_all_passwords(force: bool = False):
     users = config.get("users", [])
 
     if not users:
-        print("❌ No users found in config")
+        print("[Error] No users found in config")
         return
 
     print(f"\n{'='*60}")
@@ -176,7 +176,7 @@ def setup_all_passwords(force: bool = False):
         has_password = bool(user.get("password_hash"))
 
         if has_password and not force:
-            print(f"⏭️  Skipping '{user_id}' (already has password)")
+            print(f"  Skipping '{user_id}' (already has password)")
             continue
 
         # Générer password
@@ -194,7 +194,7 @@ def setup_all_passwords(force: bool = False):
         })
 
         action = "regenerated" if has_password else "generated"
-        print(f"✅ Password {action} for '{user_id}' ({user.get('label', user_id)})")
+        print(f"[OK] Password {action} for '{user_id}' ({user.get('label', user_id)})")
 
     # Sauvegarder
     if results:
@@ -211,10 +211,10 @@ def setup_all_passwords(force: bool = False):
             print(f"Roles: {', '.join(result['roles'])}")
             print("-" * 60)
 
-        print(f"\n⚠️  WARNING: Save these passwords now! They cannot be retrieved later.")
-        print(f"✅ Setup complete. {len(results)} password(s) configured.\n")
+        print(f"\n  WARNING: Save these passwords now! They cannot be retrieved later.")
+        print(f"[OK] Setup complete. {len(results)} password(s) configured.\n")
     else:
-        print(f"\n✅ No passwords needed to be updated.\n")
+        print(f"\n[OK] No passwords needed to be updated.\n")
 
 
 def main():
@@ -247,7 +247,7 @@ def main():
     else:
         # Setup passwords for all users
         if args.password:
-            print("❌ Error: --password can only be used with --user")
+            print(" Error: --password can only be used with --user")
             sys.exit(1)
         setup_all_passwords(args.force)
 

@@ -27,7 +27,7 @@ def test_targets_communication():
     driver = setup_driver()
     
     try:
-        print("🧪 Testing CCS → Rebalance Targets Communication")
+        print(" Testing CCS → Rebalance Targets Communication")
         print("=" * 60)
         
         # 1. Open risk dashboard
@@ -60,14 +60,14 @@ def test_targets_communication():
             print(f"   Testing {name} button...")
             try:
                 button = driver.find_element(By.CSS_SELECTOR, f"button[onclick*='applyStrategy(\\'#{mode}\\')']")
-                print(f"   ✅ {name} button found and clickable")
+                print(f"   [OK] {name} button found and clickable")
             except Exception as e:
                 # Try alternative selector
                 try:
                     button = driver.find_element(By.XPATH, f"//button[contains(text(), '{name.split()[0]}')]")
-                    print(f"   ✅ {name} button found (alternative selector)")
+                    print(f"   [OK] {name} button found (alternative selector)")
                 except Exception as e2:
-                    print(f"   ❌ {name} button not found: {e2}")
+                    print(f"   [Error] {name} button not found: {e2}")
         
         # 4. Open rebalance.html in new tab
         print("4. Opening rebalance.html in new tab...")
@@ -79,7 +79,7 @@ def test_targets_communication():
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, "btnRun"))
         )
-        print("   ✅ Rebalance page loaded")
+        print("   [OK] Rebalance page loaded")
         
         # 5. Go back to risk dashboard and apply targets
         print("5. Switching back to risk dashboard to apply targets...")
@@ -90,16 +90,16 @@ def test_targets_communication():
             apply_button = WebDriverWait(driver, 5).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "button[onclick*='applyTargetsAction']"))
             )
-            print("   ✅ Apply Targets button found")
+            print("   [OK] Apply Targets button found")
             
             # Execute the click via JavaScript to avoid click interception
             driver.execute_script("arguments[0].click();", apply_button)
-            print("   ✅ Apply Targets clicked")
+            print("   [OK] Apply Targets clicked")
             
             time.sleep(2)  # Wait for localStorage and event propagation
             
         except Exception as e:
-            print(f"   ❌ Could not click Apply Targets: {e}")
+            print(f"   [Error] Could not click Apply Targets: {e}")
             return False
         
         # 6. Check rebalance.html for dynamic targets
@@ -116,30 +116,30 @@ def test_targets_communication():
             print(f"   Indicator text: '{indicator_text}'")
             
             if is_visible and ("CCS" in indicator_text or "Target" in indicator_text):
-                print("   ✅ Dynamic targets successfully received!")
+                print("   [OK] Dynamic targets successfully received!")
                 return True
             else:
-                print("   ⚠️  Dynamic indicator found but not showing CCS targets")
+                print("   [Warning]  Dynamic indicator found but not showing CCS targets")
                 
         except Exception as e:
-            print(f"   ❌ Dynamic targets indicator not found: {e}")
+            print(f"   [Error] Dynamic targets indicator not found: {e}")
         
         # 7. Alternative: Check localStorage for last_targets
         print("7. Checking localStorage for targets communication...")
         try:
             last_targets = driver.execute_script("return localStorage.getItem('last_targets');")
             if last_targets:
-                print(f"   ✅ Found last_targets in localStorage: {last_targets[:100]}...")
+                print(f"   [OK] Found last_targets in localStorage: {last_targets[:100]}...")
                 return True
             else:
-                print("   ❌ No last_targets found in localStorage")
+                print("   [Error] No last_targets found in localStorage")
         except Exception as e:
-            print(f"   ❌ Could not check localStorage: {e}")
+            print(f"   [Error] Could not check localStorage: {e}")
         
         return False
         
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[Error] Test failed with error: {e}")
         return False
         
     finally:
@@ -150,7 +150,7 @@ def test_console_communication():
     driver = setup_driver()
     
     try:
-        print("\n🧪 Testing JavaScript Communication (Console)")
+        print("\n Testing JavaScript Communication (Console)")
         print("=" * 60)
         
         # Open risk dashboard  
@@ -194,14 +194,14 @@ def test_console_communication():
         print(f"   JavaScript execution result: {result}")
         
         if result.get('success'):
-            print("   ✅ Targets successfully applied via JavaScript")
+            print("   [OK] Targets successfully applied via JavaScript")
             return True
         else:
-            print(f"   ❌ JavaScript execution failed: {result.get('error', 'Unknown error')}")
+            print(f"   [Error] JavaScript execution failed: {result.get('error', 'Unknown error')}")
             return False
             
     except Exception as e:
-        print(f"❌ Console test failed: {e}")
+        print(f"[Error] Console test failed: {e}")
         return False
         
     finally:
@@ -222,20 +222,20 @@ def main():
     print("\n" + "=" * 70)
     print("TEST SUMMARY")
     print("=" * 70)
-    print(f"UI Communication Test:      {'✅ PASS' if ui_success else '❌ FAIL'}")
-    print(f"Console Communication Test: {'✅ PASS' if console_success else '❌ FAIL'}")
+    print(f"UI Communication Test:      {'[OK] PASS' if ui_success else '[Error] FAIL'}")
+    print(f"Console Communication Test: {'[OK] PASS' if console_success else '[Error] FAIL'}")
     
     overall_success = ui_success or console_success
-    print(f"\nOverall Result: {'✅ COMMUNICATION WORKING' if overall_success else '❌ COMMUNICATION BROKEN'}")
+    print(f"\nOverall Result: {'[OK] COMMUNICATION WORKING' if overall_success else '[Error] COMMUNICATION BROKEN'}")
     
     if overall_success:
-        print("\n📋 Next Steps:")
+        print("\n Next Steps:")
         print("   1. Open http://localhost:8080/static/risk-dashboard.html")
         print("   2. Go to 'Strategic Targets' tab")
         print("   3. Click any strategy button (Macro, CCS, Cycle, Blend)")
         print("   4. Click 'Apply Targets'") 
         print("   5. Open http://localhost:8080/static/rebalance.html")
-        print("   6. Check for '🎯 Targets dynamiques' indicator")
+        print("   6. Check for ' Targets dynamiques' indicator")
         print("   7. Generate plan to see CCS-based allocations")
     
     return overall_success

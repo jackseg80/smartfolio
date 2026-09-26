@@ -18,7 +18,7 @@ export function loadCalibrationParams() {
   try {
     const saved = localStorage.getItem('bitcoin_cycle_params');
     if (!saved) {
-      console.debug('ℹ️ Aucun paramètre calibré trouvé dans localStorage');
+      console.debug("Aucun paramètre calibré trouvé dans localStorage");
       return null;
     }
 
@@ -26,7 +26,7 @@ export function loadCalibrationParams() {
 
     // CRITICAL: Check version - reject old calibrations (pre-2.0)
     if (!data.version || !data.version.startsWith(CALIBRATION_VERSION_PREFIX)) {
-      console.debug('🔄 Anciens paramètres calibrés rejetés (version:', data.version, ')');
+      console.debug("Anciens paramètres calibrés rejetés (version:", data.version, ')');
       localStorage.removeItem('bitcoin_cycle_params');
       return null;
     }
@@ -36,11 +36,11 @@ export function loadCalibrationParams() {
     const age = Date.now() - data.timestamp;
 
     if (age > MAX_AGE_MS) {
-      console.debug('⚠️ Paramètres calibrés expirés (>24h), utilisation des paramètres par défaut');
+      console.debug("[Warning] Paramètres calibrés expirés (>24h), utilisation des paramètres par défaut");
       return null;
     }
 
-    console.debug('✅ Paramètres calibrés chargés depuis localStorage', {
+    console.debug("[OK] Paramètres calibrés chargés depuis localStorage", {
       params: data.params,
       age_hours: (age / (60 * 60 * 1000)).toFixed(1),
       version: data.version
@@ -49,7 +49,7 @@ export function loadCalibrationParams() {
     return data.params;
 
   } catch (error) {
-    console.error('❌ Erreur chargement paramètres calibrés:', error);
+    console.error("[Error] Erreur chargement paramètres calibrés:", error);
     return null;
   }
 }
@@ -65,25 +65,25 @@ export async function applyCalibratedParams(cycleNavigatorModule) {
     const savedParams = loadCalibrationParams();
 
     if (!savedParams) {
-      console.debug('📊 Utilisation des paramètres par défaut du modèle cycle');
+      console.debug("Utilisation des paramètres par défaut du modèle cycle");
       return false;
     }
 
     // Vérifier que le module a la fonction setCycleParams
     if (typeof cycleNavigatorModule.setCycleParams !== 'function') {
-      console.warn('⚠️ Module cycle-navigator ne supporte pas setCycleParams');
+      console.warn("[Warning] Module cycle-navigator ne supporte pas setCycleParams");
       return false;
     }
 
     // Appliquer les paramètres
     cycleNavigatorModule.setCycleParams(savedParams);
 
-    console.debug('✅ Paramètres calibrés appliqués au cycle-navigator', savedParams);
+    console.debug("[OK] Paramètres calibrés appliqués au cycle-navigator", savedParams);
 
     return true;
 
   } catch (error) {
-    console.error('❌ Erreur application paramètres calibrés:', error);
+    console.error("[Error] Erreur application paramètres calibrés:", error);
     return false;
   }
 }
@@ -123,7 +123,7 @@ function invalidateObsoleteCycleCaches(paramsTimestamp) {
         if (cacheTimestamp < paramsTimestamp) {
           localStorage.removeItem(key);
           invalidatedCount++;
-          console.debug(`🗑️ Cache cycle obsolète invalidé: ${key}`);
+          console.debug(`Cache cycle obsolète invalidé: ${key}`);
         }
       } catch (e) {
         // Ignorer les erreurs de parsing
@@ -131,10 +131,10 @@ function invalidateObsoleteCycleCaches(paramsTimestamp) {
     }
 
     if (invalidatedCount > 0) {
-      console.debug(`✅ ${invalidatedCount} cache(s) cycle obsolète(s) invalidé(s)`);
+      console.debug(`OK ${invalidatedCount} cache(s) cycle obsolète(s) invalidé(s)`);
     }
   } catch (error) {
-    console.warn('⚠️ Erreur lors de l\'invalidation des caches cycle:', error);
+    console.warn("[Warning] Erreur lors de l'invalidation des caches cycle:", error);
   }
 }
 
@@ -165,14 +165,14 @@ export async function autoLoadCalibratedParams() {
     const applied = await applyCalibratedParams(cycleModule);
 
     if (applied) {
-      console.debug('🎯 Cycle calibré activé automatiquement');
+      console.debug("Cycle calibré activé automatiquement");
 
       // Dispatch event pour notifier les autres composants
       window.dispatchEvent(new CustomEvent('cycle-params-loaded', {
         detail: { source: 'localStorage', calibrated: true, timestamp: paramsTimestamp }
       }));
     } else {
-      console.debug('📊 Cycle non calibré - paramètres par défaut utilisés');
+      console.debug("Cycle non calibré - paramètres par défaut utilisés");
 
       window.dispatchEvent(new CustomEvent('cycle-params-loaded', {
         detail: { source: 'default', calibrated: false }
@@ -182,7 +182,7 @@ export async function autoLoadCalibratedParams() {
     return applied;
 
   } catch (error) {
-    console.error('❌ Erreur auto-chargement paramètres calibrés:', error);
+    console.error("[Error] Erreur auto-chargement paramètres calibrés:", error);
     return false;
   }
 }
@@ -195,7 +195,7 @@ export function listenForCalibrationUpdates() {
   window.addEventListener('message', async (event) => {
     // Vérifier que c'est une mise à jour de paramètres cycle
     if (event.data?.type === 'CYCLE_PARAMS_UPDATED') {
-      console.debug('🔄 Mise à jour des paramètres cycle détectée', event.data);
+      console.debug("Mise à jour des paramètres cycle détectée", event.data);
 
       // Invalider les caches obsolètes avec le timestamp de la mise à jour
       const updateTimestamp = event.data.timestamp || Date.now();
@@ -214,7 +214,7 @@ export function listenForCalibrationUpdates() {
   // Écouter aussi les événements storage (quand une autre page modifie localStorage)
   window.addEventListener('storage', async (event) => {
     if (event.key === 'bitcoin_cycle_params' && event.newValue) {
-      console.debug('🔄 Paramètres cycle modifiés depuis une autre page');
+      console.debug("Paramètres cycle modifiés depuis une autre page");
       try {
         const data = JSON.parse(event.newValue);
         invalidateObsoleteCycleCaches(data.timestamp || Date.now());
@@ -225,5 +225,5 @@ export function listenForCalibrationUpdates() {
     }
   });
 
-  console.debug('👂 Écoute des mises à jour de calibration cycle activée');
+  console.debug("Écoute des mises à jour de calibration cycle activée");
 }

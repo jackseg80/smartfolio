@@ -1,6 +1,6 @@
 # On-Chain Indicators Fix - November 2025
 
-## 🐛 Problème Identifié
+## Problème Identifié
 
 Les indicateurs on-chain ne se mettaient plus à jour dans le Risk Dashboard.
 
@@ -15,14 +15,14 @@ Les indicateurs on-chain ne se mettaient plus à jour dans le Risk Dashboard.
 // Toutes les valeurs étaient à 0.00%
 {
   "name": "MVRV Z-Score",
-  "value_numeric": 0.0,  // ❌ Invalid!
+  "value_numeric": 0.0,  // [Error] Invalid!
   "value": "0.00%"
 }
 ```
 
 ---
 
-## ✅ Solutions Implémentées
+## Solutions Implémentées
 
 ### 1. Backend Validation (`api/crypto_toolbox_endpoints.py`)
 
@@ -30,12 +30,12 @@ Les indicateurs on-chain ne se mettaient plus à jour dans le Risk Dashboard.
 ```python
 # Reject if more than 80% of indicators are zero
 if zero_percentage > 80:
-    logger.error(f"❌ Invalid scraping result: {zero_percentage:.1f}% zeros")
+    logger.error(f" Invalid scraping result: {zero_percentage:.1f}% zeros")
     raise Exception("Scraping validation failed - rejecting invalid data")
 
 # Warning if 50-80% are zero
 if zero_percentage > 50:
-    logger.warning(f"⚠️ Suspicious scraping result: {zero_percentage:.1f}% zeros")
+    logger.warning(f" Suspicious scraping result: {zero_percentage:.1f}% zeros")
 ```
 
 **Avantages:**
@@ -47,7 +47,7 @@ if zero_percentage > 50:
 ```python
 # Don't cache invalid data - keep old good cache instead
 if zero_percentage > 80 and _cache["data"]:
-    logger.error("❌ Not caching invalid data - keeping previous cache")
+    logger.error(" Not caching invalid data - keeping previous cache")
     return {
         **_cache["data"],
         "scraping_failed": True,
@@ -65,7 +65,7 @@ if zero_percentage > 80 and _cache["data"]:
 except Exception as scrape_error:
     # Return old cache if available instead of failing completely
     if _cache["data"]:
-        logger.error(f"❌ Scraping failed - falling back to stale cache")
+        logger.error(f" Scraping failed - falling back to stale cache")
         return {
             **_cache["data"],
             "scraping_failed": True,
@@ -87,7 +87,7 @@ except Exception as scrape_error:
 // Detect stale/invalid data from backend
 if (apiData.scraping_failed) {
     const reason = apiData.failure_reason || 'Unknown error';
-    console.warn(`⚠️ Backend scraping failed: ${reason} - Using stale cache`);
+    console.warn(` Backend scraping failed: ${reason} - Using stale cache`);
 }
 ```
 
@@ -98,7 +98,7 @@ const zeroPercentage = 100 - (nonZeroCount / indicatorValues.length * 100);
 if (zeroPercentage > 80) {
     // Show user-visible warning
     window.showToast(
-        `⚠️ On-chain data quality issue detected - using fallback`,
+        `[Warning] On-chain data quality issue detected - using fallback`,
         'warning',
         { duration: 10000 }
     );
@@ -112,7 +112,7 @@ if (zeroPercentage > 80) {
 
 ---
 
-## 🔧 Comment Tester
+## Comment Tester
 
 ### Test 1 : Vérifier les données actuelles
 ```bash
@@ -127,7 +127,7 @@ curl http://localhost:8080/api/crypto-toolbox | python -m json.tool | head -50
 ```json
 {
     "name": "CBBI*",
-    "value_numeric": 69.37,  // ✅ Non-zero!
+    "value_numeric": 69.37,  // [OK] Non-zero!
     "value": "69.37%"
 }
 ```
@@ -152,7 +152,7 @@ location.reload();
 
 ---
 
-## 📊 Validation Metrics
+## Validation Metrics
 
 ### Backend (Python)
 - **Threshold critique:** 80% zeros → Reject & keep old cache
@@ -166,7 +166,7 @@ location.reload();
 
 ---
 
-## 🚀 Déploiement
+## Déploiement
 
 ### 1. Redémarrer le serveur backend
 ```bash
@@ -190,19 +190,19 @@ Get-Content logs\app.log -Wait -Tail 50
 
 **Logs attendus (success):**
 ```
-✅ Successfully scraped 30 indicators
-✅ Data validation passed: 30/30 indicators have non-zero values
+[OK] Successfully scraped 30 indicators
+[OK] Data validation passed: 30/30 indicators have non-zero values
 ```
 
 **Logs attendus (échec détecté):**
 ```
-❌ Invalid scraping result: 93.3% of indicators are zero
-❌ Not caching invalid data (93.3% zeros) - keeping previous cache
+[Error] Invalid scraping result: 93.3% of indicators are zero
+[Error] Not caching invalid data (93.3% zeros) - keeping previous cache
 ```
 
 ---
 
-## 📈 Améliorations Futures
+## Améliorations Futures
 
 ### Phase 1 : Monitoring (Recommandé)
 - [ ] Endpoint `/api/crypto-toolbox/quality` pour métriques qualité données
@@ -221,7 +221,7 @@ Get-Content logs\app.log -Wait -Tail 50
 
 ---
 
-## 🔗 Fichiers Modifiés
+## Fichiers Modifiés
 
 ### Backend
 - `api/crypto_toolbox_endpoints.py` - Validation + cache protection
@@ -234,7 +234,7 @@ Get-Content logs\app.log -Wait -Tail 50
 
 ---
 
-## ✅ Checklist Post-Déploiement
+## Checklist Post-Déploiement
 
 - [ ] Serveur redémarré avec nouveau code
 - [ ] Frontend hard-refresh (Ctrl+Shift+R)
@@ -249,5 +249,5 @@ Get-Content logs\app.log -Wait -Tail 50
 
 **Date:** 2025-11-01
 **Severity:** High (Impact: Risk Dashboard inutilisable)
-**Status:** Fixed ✅
-**Tested:** Backend validation ✅ | Frontend validation ✅ | Cache protection ✅
+**Status:** Fixed [OK]
+**Tested:** Backend validation [OK] | Frontend validation [OK] | Cache protection [OK]

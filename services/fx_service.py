@@ -91,7 +91,7 @@ def _fetch_live_rates() -> bool:
             _VERIFIED_CURRENCIES = verified
             _RATES_SOURCE_TIMESTAMP = float(data.get('time_last_update_unix') or 0)
 
-            logger.info(f"[wealth][fx] ✅ Fetched {len(updated_rates)} live rates from API")
+            logger.info(f"[wealth][fx]  Fetched {len(updated_rates)} live rates from API")
             return True
 
     except Exception as e:
@@ -222,9 +222,9 @@ def initialize_rates():
     logger.info("[wealth][fx] Initializing FX rates on startup...")
     success = _fetch_live_rates()
     if success:
-        logger.info("[wealth][fx] ✅ FX rates initialized with live data")
+        logger.info("[wealth][fx]  FX rates initialized with live data")
     else:
-        logger.warning("[wealth][fx] ⚠️ FX rates initialized with fallback data")
+        logger.warning("[wealth][fx]  FX rates initialized with fallback data")
 
 
 def get_cache_info() -> dict:

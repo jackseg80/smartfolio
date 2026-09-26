@@ -1,4 +1,4 @@
-# 🎭 Guide de Test des Phases - Phase Engine Risky-Only
+# Guide de Test des Phases - Phase Engine Risky-Only
 
 ## Vue d'ensemble
 
@@ -7,7 +7,7 @@ Le nouveau Phase Engine utilise une architecture **risky-only, zero-sum** où :
 - Tous les tilts opèrent uniquement sur les actifs risqués
 - Compensation zero-sum entre actifs risqués uniquement
 
-## 🎮 Comment Tester les Phases
+## Comment Tester les Phases
 
 ### 1. Page de Test Dédiée
 ```
@@ -15,10 +15,10 @@ http://localhost:8080/static/test-theoretical-targets.html
 ```
 
 Cette page permet de :
-- ✅ Forcer des phases spécifiques
-- ✅ Voir les objectifs théoriques en temps réel
-- ✅ Comparer toutes les phases côte à côte
-- ✅ Lancer des tests de validation automatiques
+- [OK] Forcer des phases spécifiques
+- [OK] Voir les objectifs théoriques en temps réel
+- [OK] Comparer toutes les phases côte à côte
+- [OK] Lancer des tests de validation automatiques
 
 ### 2. Forçage Manuel des Phases
 
@@ -53,7 +53,7 @@ localStorage.removeItem('PHASE_ENGINE_DEBUG_FORCE');
 - `'largecap_altseason'` - L1/L0 majors +6%, SOL +4%
 - `'full_altseason'` - L2 +8%, DeFi +6%, AI +4%, Gaming +6%, Memes +1% absolu
 
-## 📊 Objectifs Théoriques Attendus
+## Objectifs Théoriques Attendus
 
 ### Phase: **neutral** / **risk_off**
 ```
@@ -62,45 +62,45 @@ Aucun tilt appliqué - allocation de base selon stratégie
 
 ### Phase: **eth_expansion**
 ```
-✅ ETH: +5% (multiplicateur 1.05)
-✅ L2/Scaling: +3% (multiplicateur 1.03)
-❌ Compensation prise sur: BTC uniquement
-✅ Stablecoins: INCHANGÉES
+[OK] ETH: +5% (multiplicateur 1.05)
+[OK] L2/Scaling: +3% (multiplicateur 1.03)
+[Error] Compensation prise sur: BTC uniquement
+[OK] Stablecoins: INCHANGÉES
 ```
 
 ### Phase: **largecap_altseason**
 ```
-✅ L1/L0 majors: +6% (multiplicateur 1.06)
-✅ SOL: +4% (multiplicateur 1.04)
-❌ Compensation prise sur: BTC + ETH (pro-rata)
-✅ Stablecoins: INCHANGÉES
+[OK] L1/L0 majors: +6% (multiplicateur 1.06)
+[OK] SOL: +4% (multiplicateur 1.04)
+[Error] Compensation prise sur: BTC + ETH (pro-rata)
+[OK] Stablecoins: INCHANGÉES
 ```
 
 ### Phase: **full_altseason**
 ```
-✅ L2/Scaling: +8% (multiplicateur 1.08)
-✅ DeFi: +6% (multiplicateur 1.06)
-✅ AI/Data: +4% (multiplicateur 1.04)
-✅ Gaming/NFT: +6% (multiplicateur 1.06)
-✅ Memecoins: +1% absolu (si DI≥80 && breadth≥80%)
-❌ Compensation prise sur: BTC + L1/L0 majors
-✅ Stablecoins: INCHANGÉES
+[OK] L2/Scaling: +8% (multiplicateur 1.08)
+[OK] DeFi: +6% (multiplicateur 1.06)
+[OK] AI/Data: +4% (multiplicateur 1.04)
+[OK] Gaming/NFT: +6% (multiplicateur 1.06)
+[OK] Memecoins: +1% absolu (si DI≥80 && breadth≥80%)
+[Error] Compensation prise sur: BTC + L1/L0 majors
+[OK] Stablecoins: INCHANGÉES
 ```
 
-## 🧪 Tests de Validation Critiques
+## Tests de Validation Critiques
 
 ### 1. **Préservation des Stablecoins**
 ```javascript
 // Test: Stablecoins identiques sur toutes les phases
 const phases = ['neutral', 'risk_off', 'eth_expansion', 'largecap_altseason', 'full_altseason'];
-// ✅ Stablecoins% doit être identique pour toutes les phases
+// [OK] Stablecoins% doit être identique pour toutes les phases
 ```
 
 ### 2. **Somme = 100%**
 ```javascript
 // Test: Intégrité des allocations
 const total = Object.values(targets).reduce((sum, val) => sum + val, 0);
-// ✅ Math.abs(total - 100) < 0.1
+// [OK] Math.abs(total - 100) < 0.1
 ```
 
 ### 3. **Zero-sum dans le pool risky**
@@ -109,7 +109,7 @@ const total = Object.values(targets).reduce((sum, val) => sum + val, 0);
 const riskySum = Object.entries(targets)
   .filter(([asset]) => asset !== 'Stablecoins')
   .reduce((sum, [, val]) => sum + val, 0);
-// ✅ riskySum = 100 - stablecoins_percentage
+// [OK] riskySum = 100 - stablecoins_percentage
 ```
 
 ### 4. **Caps respectés**
@@ -127,20 +127,20 @@ const caps = {
 ### 5. **Tilts appliqués uniquement si pertinent**
 ```javascript
 // Test: Tilts conditionnels
-// ✅ neutral/risk_off → NO tilts
-// ✅ autres phases → tilts appliqués selon config
+// [OK] neutral/risk_off → NO tilts
+// [OK] autres phases → tilts appliqués selon config
 ```
 
-## 🔍 Débugging
+## Débugging
 
 ### Logs à surveiller (Console F12) :
 ```
-🎯 PhaseEngine: Applying risky-only phase tilts
-😐 PhaseEngine: neutral phase, no tilts applied
-✅ PhaseEngine: Risky-only tilts applied successfully
-🔒 Stables préservées: X.X% → X.X%
-✅ PhaseEngine Apply Mode - TARGETS MODIFIED
-🚀 PhaseEngine: Using cached phase-tilted targets (sync)
+ PhaseEngine: Applying risky-only phase tilts
+[Neutral] PhaseEngine: neutral phase, no tilts applied
+[OK] PhaseEngine: Risky-only tilts applied successfully
+ Stables préservées: X.X% → X.X%
+[OK] PhaseEngine Apply Mode - TARGETS MODIFIED
+ PhaseEngine: Using cached phase-tilted targets (sync)
 ```
 
 ### Erreurs communes :
@@ -148,21 +148,21 @@ const caps = {
 - **Stables modifiées** → Violation risky-only
 - **Caps dépassés** → applyCapsAndNormalize échoué
 - **Tilts non appliqués** → Vérifier phase détectée
-- **⚠️ PhaseEngine: No targets returned** → Min-effect filter trop restrictif
+- **[Warning] PhaseEngine: No targets returned** → Min-effect filter trop restrictif
 
 ### Fix récent (2025-09-18) :
 **Problème** : Min-effect filter avec seuil 0.03% annulait les tilts `full_altseason`
 **Solution** : Seuil réduit à 0.01% pour préserver les petits tilts multiplicatifs
 **Localisation** : `static/core/phase-engine.js:720`
 
-## 🚀 Pages de Test Recommandées
+## Pages de Test Recommandées
 
 1. **Test complet** : `test-theoretical-targets.html`
 2. **Test unitaire** : `test-phase-engine.html`
 3. **Analytics intégrés** : `analytics-unified.html`
 4. **Rebalance** : `rebalance.html`
 
-## 📈 Workflow de Test Complet
+## Workflow de Test Complet
 
 1. **Ouvrir la page de test** : `test-theoretical-targets.html`
 2. **Tester chaque phase** via les boutons de phase
@@ -171,7 +171,7 @@ const caps = {
 5. **Lancer validation** avec bouton "Tests de Validation"
 6. **Vérifier logs console** pour détails techniques
 
-## ⚡ Tests Rapides
+## Tests Rapides
 
 ### Test express en console :
 ```javascript
@@ -198,12 +198,12 @@ window.debugPhaseEngine.clearForcePhase();
 localStorage.setItem('PHASE_ENGINE_ENABLED', 'shadow');
 ```
 
-## 🎯 Critères de Succès
+## Critères de Succès
 
-- ✅ **Stables préservées** sur toutes les phases
-- ✅ **Somme = 100%** toujours respectée
-- ✅ **Tilts phase-spécifiques** appliqués correctement
-- ✅ **Caps respectés** sans exception
-- ✅ **Zero-sum** dans le pool risky uniquement
-- ✅ **Pas de régression** vs objectifs de base
-- ✅ **Logs clairs** et informatifs
+- [OK] **Stables préservées** sur toutes les phases
+- [OK] **Somme = 100%** toujours respectée
+- [OK] **Tilts phase-spécifiques** appliqués correctement
+- [OK] **Caps respectés** sans exception
+- [OK] **Zero-sum** dans le pool risky uniquement
+- [OK] **Pas de régression** vs objectifs de base
+- [OK] **Logs clairs** et informatifs

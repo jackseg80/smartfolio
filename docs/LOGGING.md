@@ -3,7 +3,7 @@
 > Configuration du système de logs pour le debugging et l'analyse par IA
 > Date: Oct 2025
 
-## 📁 Emplacement
+## Emplacement
 
 ```
 logs/
@@ -13,7 +13,7 @@ logs/
   app.log.3       # Backup 3
 ```
 
-## 🎯 Configuration
+## Configuration
 
 **Taille et Rotation:**
 - **5 MB par fichier** (optimisé pour lecture par IA)
@@ -30,13 +30,13 @@ logs/
 - Par défaut: `INFO`
 - Niveaux: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
-## 📝 Format des Logs
+## Format des Logs
 
 ```
-2025-10-17 17:09:29,339 INFO crypto-rebalancer: 📝 Logging initialized
+2025-10-17 17:09:29,339 INFO crypto-rebalancer:  Logging initialized
 2025-10-17 17:09:29,412 INFO services.execution.exchange_adapter: Registered exchange: simulator
 2025-10-17 17:09:29,416 WARNING services.execution.exchange_adapter: Binance API key not found
-2025-10-17 17:09:37,897 ERROR crypto-rebalancer: ❌ Test error
+2025-10-17 17:09:37,897 ERROR crypto-rebalancer: [Error] Test error
 ```
 
 **Structure:**
@@ -44,7 +44,7 @@ logs/
 YYYY-MM-DD HH:MM:SS,mmm LEVEL module_name: message
 ```
 
-## 🔍 Utilisation pour Debug
+## Utilisation pour Debug
 
 ### 1. Lecture en Temps Réel
 
@@ -96,7 +96,7 @@ Analyze @logs/app.log and find:
 4. Unusual patterns or anomalies
 ```
 
-## 🛠️ Configuration Avancée
+## Configuration Avancée
 
 ### Changer le Niveau de Log
 
@@ -137,7 +137,7 @@ module_logger.info("Risk calculation completed")
 Select-String -Path "logs\app.log" -Pattern "crypto-rebalancer.risk"
 ```
 
-## 📊 Exemples de Patterns à Chercher
+## Exemples de Patterns à Chercher
 
 ### Startup Issues
 ```bash
@@ -161,7 +161,7 @@ Select-String -Path "logs\app.log" -Pattern "duration_ms.*[1-9][0-9]{3,}"
 Select-String -Path "logs\app.log" -Pattern "user_id.*jack"
 ```
 
-## 🤖 Utilisation par les Agents IA
+## Utilisation par les Agents IA
 
 Les agents IA (Claude Code, etc.) peuvent:
 
@@ -187,23 +187,23 @@ Les agents IA (Claude Code, etc.) peuvent:
    - Suggestions d'optimisation
    - Détection d'anomalies
 
-## 🔒 Sécurité
+## Sécurité
 
-**⚠️ Les logs peuvent contenir des infos sensibles:**
+**[Warning] Les logs peuvent contenir des infos sensibles:**
 - Ne jamais committer `logs/` dans git (déjà dans .gitignore)
 - Vérifier qu'aucune clé API n'est loguée
 - Pas de mots de passe ou tokens dans les logs
 
 **Bonnes pratiques:**
 ```python
-# ✅ Bon
+# Bon
 logger.info(f"API call to {exchange} successful")
 
-# ❌ Mauvais
+# Mauvais
 logger.info(f"API key: {api_key}")  # Ne JAMAIS logger des secrets
 ```
 
-## 📚 Ressources
+## Ressources
 
 - Python logging: https://docs.python.org/3/library/logging.html
 - RotatingFileHandler: https://docs.python.org/3/library/logging.handlers.html#rotatingfilehandler

@@ -25,7 +25,7 @@ Le domaine `/api/risk/*` est géré par **2 fichiers distincts** avec le **même
 
 ## Pourquoi 2 fichiers ?
 
-### ✅ **Raisons valides**
+### **Raisons valides**
 
 1. **Complexité isolée** : `/dashboard` contient 331 lignes de logique métier complexe
    - Helpers internes : `build_low_quality_dashboard()`, `_get_top_correlations()`
@@ -40,7 +40,7 @@ Le domaine `/api/risk/*` est géré par **2 fichiers distincts** avec le **même
    - Tous les paths sont différents (`/status`, `/metrics`, `/dashboard`, `/stress-test/*`)
    - FastAPI monte les 2 routers sans collision
 
-### ⚠️ **Inconvénients connus**
+### **Inconvénients connus**
 
 1. **OpenAPI confusion** : 2 tags identiques `["risk-management"]`
 2. **Maintenance** : Devoir choisir où ajouter un nouveau endpoint `/api/risk/*`
@@ -76,9 +76,9 @@ async def dashboard(): ...
 ```
 
 **Bénéfices:**
-- ✅ Un seul tag OpenAPI
-- ✅ Point d'entrée clair (`risk_endpoints.py`)
-- ✅ Séparation logique préservée
+- [OK] Un seul tag OpenAPI
+- [OK] Point d'entrée clair (`risk_endpoints.py`)
+- [OK] Séparation logique préservée
 
 ### Option B: Prefix différent
 
@@ -88,9 +88,9 @@ router = APIRouter(prefix="/api/risk/advanced", tags=["risk-dashboard"])
 ```
 
 **Bénéfices:**
-- ✅ Séparation visuelle claire
-- ✅ Tags OpenAPI distincts
-- ❌ URL change (breaking change)
+- [OK] Séparation visuelle claire
+- [OK] Tags OpenAPI distincts
+- [Error] URL change (breaking change)
 
 ## Statut actuel
 

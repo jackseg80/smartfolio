@@ -47,7 +47,7 @@ Communs à tous les algorithmes :
 
 ## Les 6 Algorithmes d'Optimisation
 
-### 1. 📈 Max Sharpe (Recommandé pour la plupart)
+### 1.  Max Sharpe (Recommandé pour la plupart)
 
 **Théorie :** Maximise le ratio de Sharpe `(Rendement - Taux sans risque) / Volatilité`
 
@@ -58,13 +58,13 @@ Communs à tous les algorithmes :
 - **Poids max par secteur (%)** : `60%` (diversification sectorielle)
 
 **Quand utiliser :**
-- ✅ Profil **équilibré** (rendement ET risque)
-- ✅ Horizon moyen-long terme (6-24 mois)
-- ✅ Marchés **normaux** (pas extrêmes)
+- [OK] Profil **équilibré** (rendement ET risque)
+- [OK] Horizon moyen-long terme (6-24 mois)
+- [OK] Marchés **normaux** (pas extrêmes)
 
 **Limites :**
-- ❌ Peut sous-performer en marchés **très volatils** (bull run extrême)
-- ❌ Sensible à l'historique (garbage in, garbage out)
+- [Error] Peut sous-performer en marchés **très volatils** (bull run extrême)
+- [Error] Sensible à l'historique (garbage in, garbage out)
 
 **Exemple de résultat :**
 ```
@@ -74,7 +74,7 @@ Sharpe attendu: 1.8, Volatilité: 42%, Rendement annualisé: 78%
 
 ---
 
-### 2. 🔮 Black-Litterman
+### 2.  Black-Litterman
 
 **Théorie :** Combine équilibre du marché (historique) avec **vues personnelles** sur rendements futurs
 
@@ -93,13 +93,13 @@ Sharpe attendu: 1.8, Volatilité: 42%, Rendement annualisé: 78%
   ```
 
 **Quand utiliser :**
-- ✅ Vous avez des **convictions fortes** sur certains assets (analyse fondamentale, catalyseurs)
-- ✅ Vous voulez **override historique** avec vision prospective
-- ✅ Marchés en **transition** (régime changeant)
+- [OK] Vous avez des **convictions fortes** sur certains assets (analyse fondamentale, catalyseurs)
+- [OK] Vous voulez **override historique** avec vision prospective
+- [OK] Marchés en **transition** (régime changeant)
 
 **Limites :**
-- ❌ Requiert **expertise** pour définir vues réalistes
-- ❌ Confiance excessive → biais confirmation
+- [Error] Requiert **expertise** pour définir vues réalistes
+- [Error] Confiance excessive → biais confirmation
 
 **Exemple de résultat :**
 ```
@@ -109,7 +109,7 @@ SOL surpondéré vs Max Sharpe: 8% → 15%
 
 ---
 
-### 3. ⚖️ Risk Parity
+### 3.  Risk Parity
 
 **Théorie :** Égalise la **contribution au risque** de chaque asset (pas le poids !)
 
@@ -119,13 +119,13 @@ SOL surpondéré vs Max Sharpe: 8% → 15%
 - **Volatilité cible (%)** : `15%` (optionnel, sinon optimisation libre)
 
 **Quand utiliser :**
-- ✅ Profil **défensif** (priorité = gestion risque)
-- ✅ Marchés **incertains** ou **baissiers**
-- ✅ Portefeuille avec assets très **hétérogènes** (mix stables + altcoins)
+- [OK] Profil **défensif** (priorité = gestion risque)
+- [OK] Marchés **incertains** ou **baissiers**
+- [OK] Portefeuille avec assets très **hétérogènes** (mix stables + altcoins)
 
 **Limites :**
-- ❌ Peut **sous-performer** en bull run (alloue moins aux high-performers volatils)
-- ❌ Favorise **stablecoins** (faible volatilité)
+- [Error] Peut **sous-performer** en bull run (alloue moins aux high-performers volatils)
+- [Error] Favorise **stablecoins** (faible volatilité)
 
 **Exemple de résultat :**
 ```
@@ -137,7 +137,7 @@ Volatilité portfolio: 15% (vs 42% Max Sharpe)
 
 ---
 
-### 4. 🌐 Max Diversification
+### 4.  Max Diversification
 
 **Théorie :** Maximise `Ratio Diversification = Σ(poids × volatilité individuelle) / Volatilité portfolio`
 
@@ -148,13 +148,13 @@ Volatilité portfolio: 15% (vs 42% Max Sharpe)
 - **Exposition corrélation max** : `0.7` (limite assets fortement corrélés)
 
 **Quand utiliser :**
-- ✅ Portefeuille **concentré** actuellement (peu d'assets)
-- ✅ Assets avec **faibles corrélations** disponibles
-- ✅ Objectif = **résilience** multi-scénarios
+- [OK] Portefeuille **concentré** actuellement (peu d'assets)
+- [OK] Assets avec **faibles corrélations** disponibles
+- [OK] Objectif = **résilience** multi-scénarios
 
 **Limites :**
-- ❌ Peut diluer **alpha** (surpondère assets décorrélés mais sous-performants)
-- ❌ Difficile en crypto (corrélations élevées BTC-alts)
+- [Error] Peut diluer **alpha** (surpondère assets décorrélés mais sous-performants)
+- [Error] Difficile en crypto (corrélations élevées BTC-alts)
 
 **Exemple de résultat :**
 ```
@@ -164,7 +164,7 @@ Ratio diversification: 2.1
 
 ---
 
-### 5. 📉 CVaR Optimization (Conditional Value at Risk)
+### 5.  CVaR Optimization (Conditional Value at Risk)
 
 **Théorie :** Minimise les **pertes extrêmes** (queue de distribution gauche)
 
@@ -175,13 +175,13 @@ Ratio diversification: 2.1
 - **Poids CVaR vs Sharpe** : `0.7` (1.0 = 100% focus CVaR, 0.0 = 100% Sharpe)
 
 **Quand utiliser :**
-- ✅ Profil **très défensif** (capital preservation > rendement)
-- ✅ Anticipation **krach** ou haute volatilité
-- ✅ Patrimoine critique (retraite, etc.)
+- [OK] Profil **très défensif** (capital preservation > rendement)
+- [OK] Anticipation **krach** ou haute volatilité
+- [OK] Patrimoine critique (retraite, etc.)
 
 **Limites :**
-- ❌ **Sous-performe** en bull run (sacrifie upside pour protection downside)
-- ❌ Très **conservateur** (favorise stablecoins massivement)
+- [Error] **Sous-performe** en bull run (sacrifie upside pour protection downside)
+- [Error] Très **conservateur** (favorise stablecoins massivement)
 
 **Exemple de résultat :**
 ```
@@ -192,7 +192,7 @@ CVaR à 95%: -12% (vs -28% portfolio actuel)
 
 ---
 
-### 6. 📊 Frontière Efficiente
+### 6.  Frontière Efficiente
 
 **Théorie :** Calcule **tous les portfolios optimaux** pour différents niveaux de risque (volatilité)
 
@@ -203,13 +203,13 @@ CVaR à 95%: -12% (vs -28% portfolio actuel)
 - **Afficher portfolio actuel** : `Oui` (comparaison visuelle)
 
 **Quand utiliser :**
-- ✅ **Découverte** : explorer espace des possibles
-- ✅ **Comparaison** : évaluer si portfolio actuel est efficient
-- ✅ **Éducation** : comprendre trade-offs risque/rendement
+- [OK] **Découverte** : explorer espace des possibles
+- [OK] **Comparaison** : évaluer si portfolio actuel est efficient
+- [OK] **Éducation** : comprendre trade-offs risque/rendement
 
 **Limites :**
-- ❌ Ne donne **pas une allocation unique** (courbe complète)
-- ❌ Requiert **choix manuel** du point sur la frontière
+- [Error] Ne donne **pas une allocation unique** (courbe complète)
+- [Error] Requiert **choix manuel** du point sur la frontière
 
 **Exemple de résultat :**
 ```
@@ -253,7 +253,7 @@ Point actuel : hors frontière → sous-optimal !
 - **CVaR** (CVaR Optimization)
 - **Sortino Ratio** : Sharpe ne pénalisant que downside volatility
 
-**⚠️ ATTENTION :** Rendements historiques ≠ performances futures !
+**[Warning] ATTENTION :** Rendements historiques ≠ performances futures !
 
 ---
 
@@ -278,7 +278,7 @@ Table des **trades nécessaires** pour atteindre allocation optimale :
 
 ### Section 4 : Comparaison d'Algorithmes
 
-Bouton **"📊 Comparer Algorithmes"** → Table comparative :
+Bouton **" Comparer Algorithmes"** → Table comparative :
 
 | Algorithme | Sharpe | Volatilité | Rendement | Max Drawdown |
 |------------|--------|------------|-----------|--------------|
@@ -360,7 +360,7 @@ Bouton **"📊 Comparer Algorithmes"** → Table comparative :
 
 ## Best Practices
 
-### ✅ Do's
+### Do's
 
 1. **Historique adapté au contexte :**
    - Bull run actif → 90-180j (réactif)
@@ -385,7 +385,7 @@ Bouton **"📊 Comparer Algorithmes"** → Table comparative :
 
 ---
 
-### ❌ Don'ts
+### Don'ts
 
 1. **Ne pas over-optimize :**
    - Optimisation ≠ prédiction magique
@@ -577,10 +577,10 @@ Bouton **"📊 Comparer Algorithmes"** → Table comparative :
 ## Changelog
 
 ### v2.0 (Oct 2025)
-- ✅ 6 algorithmes (Max Sharpe, Black-Litterman, Risk Parity, Max Div, CVaR, Frontière)
-- ✅ Comparaison multi-algorithmes
-- ✅ Support contraintes custom
-- ✅ Intégration iframe dans rebalance.html
+- [OK] 6 algorithmes (Max Sharpe, Black-Litterman, Risk Parity, Max Div, CVaR, Frontière)
+- [OK] Comparaison multi-algorithmes
+- [OK] Support contraintes custom
+- [OK] Intégration iframe dans rebalance.html
 
 ### v1.0 (Archivé)
 - Basic Markowitz optimization uniquement

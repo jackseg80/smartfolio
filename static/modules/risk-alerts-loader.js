@@ -3,6 +3,8 @@
  * Loads real-time risk alerts from API and displays them in the Risk Dashboard
  */
 
+import { renderIcon } from '../core/icons.js';
+
 export async function loadRiskAlerts() {
   const container = document.getElementById('risk-alerts-container');
   if (!container) return;
@@ -53,13 +55,13 @@ export async function loadRiskAlerts() {
 
 function getSeverityIcon(severity) {
   const icons = {
-    critical: '🔴',
-    high: '🟠',
-    medium: '🟡',
-    low: '🟢',
-    info: 'ℹ️'
+    critical: 'exclamation-circle',
+    high: 'exclamation-triangle',
+    medium: 'exclamation-triangle',
+    low: 'check-circle',
+    info: 'information-circle'
   };
-  return icons[severity] || '•';
+  return renderIcon(icons[severity] || 'information-circle', severity || 'Info');
 }
 
 function getSeverityClass(severity) {

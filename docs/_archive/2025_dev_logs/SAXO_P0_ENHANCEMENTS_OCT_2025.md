@@ -3,7 +3,7 @@
 > **Priority 0 improvements for Saxo portfolio management**
 > Last updated: Oct 28, 2025
 
-## 🎯 Overview
+## Overview
 
 Améliorations critiques (P0) du Saxo Dashboard pour gérer :
 1. **CFD/Leveraged Detection** - Détection automatique des produits à levier (CFD, leveraged ETFs)
@@ -13,7 +13,7 @@ Améliorations critiques (P0) du Saxo Dashboard pour gérer :
 
 ---
 
-## ✅ Features Implémentées
+## Features Implémentées
 
 ### 1. CFD & Leveraged Products Detection
 
@@ -91,7 +91,7 @@ price_targets = targets.calculate_targets(
 const isCFD = rec.is_cfd || false;
 const leverage = rec.leverage || 1;
 const cfdBadge = isCFD ?
-    `<span style="...">⚠️ ${leverage.toFixed(0)}x</span>` : '';
+    `<span style="...">[Warning] ${leverage.toFixed(0)}x</span>` : '';
 ```
 
 **Warning Modal** : Modal rouge avec warning si CFD détecté
@@ -101,7 +101,7 @@ const cfdBadge = isCFD ?
 
 **Résultat visuel** :
 ```
-Tesla Inc. (CFD) ⚠️ 5x | HOLD | R/R 1.8 | $13,650
+Tesla Inc. (CFD) [Warning] 5x | HOLD | R/R 1.8 | $13,650
 ```
 
 ---
@@ -197,14 +197,14 @@ if (Math.abs(largest - sumOthers) / Math.max(largest, 1) < 0.05) {
 3. **Badge Fragmentation** :
 ```javascript
 const fragmentationBadge = lotsCount > 1 ?
-    `<span style="...">⚠️ ${lotsCount} lots</span>` : '';
+    `<span style="...">[Warning] ${lotsCount} lots</span>` : '';
 ```
 
 **Résultat attendu** :
 
 | Avant (brut) | Après (consolidé) |
 |--------------|-------------------|
-| Baxter 65 actions (résumé)<br>Baxter 20 actions<br>Baxter 15 actions<br>Baxter 15 actions<br>Baxter 15 actions | Baxter ⚠️ 4 lots \| 65 actions \| $1,290 |
+| Baxter 65 actions (résumé)<br>Baxter 20 actions<br>Baxter 15 actions<br>Baxter 15 actions<br>Baxter 15 actions | Baxter [Warning] 4 lots \| 65 actions \| $1,290 |
 | Tesla CFD 50<br>Tesla Actions 31 | Tesla CFD \| 50 actions \| $19,422<br>Tesla Actions \| 31 actions \| $12,011 |
 
 **Tooltip** : "4 lots détectés - Considérer consolidation pour réduire frais"
@@ -213,7 +213,7 @@ const fragmentationBadge = lotsCount > 1 ?
 
 ### 3. Export Enrichment
 
-**État** : ✅ **DÉJÀ COMPLET** (aucune modification nécessaire)
+**État** : [OK] **DÉJÀ COMPLET** (aucune modification nécessaire)
 
 L'export texte (All Timeframes) inclut déjà :
 - Entry price, Stop Loss, TP1, TP2
@@ -235,9 +235,9 @@ L'export texte (All Timeframes) inclut déjà :
 
 **Modal enrichi** (affiché lors du clic sur une recommandation) :
 ```
-🏆 Legacy position: +186%
-📊 Tier: 100-500% (Legacy) → Trailing -25%
-🛡️ Protected minimum gain: +161%
+ Legacy position: +186%
+ Tier: 100-500% (Legacy) → Trailing -25%
+ Protected minimum gain: +161%
 ```
 
 **Tiers de trailing stop** :
@@ -249,7 +249,7 @@ L'export texte (All Timeframes) inclut déjà :
 
 ---
 
-## 📊 Validation des Résultats
+## Validation des Résultats
 
 ### Test Case: Baxter International (BAX)
 
@@ -263,14 +263,14 @@ Ligne 44: Baxter 15 actions | $297.68    ← Détail (Position ID: 7053773325)
 ```
 
 **Validation** :
-- Sum détails : 20+15+15+15 = **65 actions** ✅
-- Sum valeurs : $396.91 + $297.68×3 = **$1,289.95** ≈ $1,289.96 (différence de $0.01 = arrondi) ✅
-- Détection résumé : `|1289.96 - 1289.95| / 1289.96 = 0.000008 < 0.05` → **Détecté comme résumé** ✅
+- Sum détails : 20+15+15+15 = **65 actions** [OK]
+- Sum valeurs : $396.91 + $297.68×3 = **$1,289.95** ≈ $1,289.96 (différence de $0.01 = arrondi) [OK]
+- Détection résumé : `|1289.96 - 1289.95| / 1289.96 = 0.000008 < 0.05` → **Détecté comme résumé** [OK]
 
 **Résultat Frontend** :
 ```
-Onglet Recommendations: Baxter ⚠️ 4 lots | 65 actions | $1,290
-Onglet Positions:       Baxter ⚠️ 4 lots | 65 actions | $1,290
+Onglet Recommendations: Baxter [Warning] 4 lots | 65 actions | $1,290
+Onglet Positions:       Baxter [Warning] 4 lots | 65 actions | $1,290
 ```
 
 ### Test Case: Tesla (TSLA)
@@ -282,18 +282,18 @@ Ligne 6: Tesla Inc. (Actions) | 31 actions | $12,011 | Type: Actions
 ```
 
 **Validation** :
-- Groupement par clé : `"TSLA:xnas|CFD"` ≠ `"TSLA:xnas|Actions"` → **Séparés** ✅
-- Badge CFD : `⚠️ 5x` affiché sur ligne CFD ✅
+- Groupement par clé : `"TSLA:xnas|CFD"` ≠ `"TSLA:xnas|Actions"` → **Séparés** [OK]
+- Badge CFD : `[Warning] 5x` affiché sur ligne CFD [OK]
 
 **Résultat Frontend** :
 ```
-Tesla Inc. (CFD)     ⚠️ 5x | 50 actions | $19,422
+Tesla Inc. (CFD)     [Warning] 5x | 50 actions | $19,422
 Tesla Inc. (Actions)       | 31 actions | $12,011
 ```
 
 ---
 
-## 🗂️ Fichiers Modifiés
+## Fichiers Modifiés
 
 ### Backend (3 fichiers)
 
@@ -314,8 +314,8 @@ Tesla Inc. (Actions)       | 31 actions | $12,011
 ### Frontend (1 fichier)
 
 **`static/saxo-dashboard.html`** (+85 lignes)
-- Badge CFD `⚠️ 5x` (orange)
-- Badge fragmentation `⚠️ N lots` (rouge)
+- Badge CFD `[Warning] 5x` (orange)
+- Badge fragmentation `[Warning] N lots` (rouge)
 - Warning modal CFD (rouge, "Risk amplified")
 - Trailing stop tiers display enrichi (modal)
 - Consolidation positions dans `loadAllPositions()` (lignes 3695-3742)
@@ -325,16 +325,16 @@ Tesla Inc. (Actions)       | 31 actions | $12,011
 
 ---
 
-## 🔧 Logique Technique Détaillée
+## Logique Technique Détaillée
 
 ### Heuristique de Détection Ligne Résumé
 
 **Principe** : Dans les exports Saxo avec sections dépliées, la première ligne d'une position multi-lot est un résumé agrégé des achats détaillés qui suivent.
 
 **Caractéristiques ligne résumé** :
-- ✅ Valeur = somme exacte des lignes détails (±5% tolérance)
-- ✅ Quantité = somme exacte des lignes détails
-- ❌ **Pas de Position ID** (colonne vide)
+- [OK] Valeur = somme exacte des lignes détails (±5% tolérance)
+- [OK] Quantité = somme exacte des lignes détails
+- [Error] **Pas de Position ID** (colonne vide)
 
 **Algorithme** :
 ```python
@@ -370,7 +370,7 @@ const key = `${symbol}|${assetClass}`;
 
 ---
 
-## 📚 Références
+## Références
 
 ### Code Backend
 - [services/ml/bourse/recommendations_orchestrator.py:183-313](../services/ml/bourse/recommendations_orchestrator.py#L183-L313) - CFD detection
@@ -388,9 +388,9 @@ const key = `${symbol}|${assetClass}`;
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-### Badge "⚠️ N lots" incorrect
+### Badge " N lots" incorrect
 
 **Symptôme** : Affiche "5 lots" au lieu de "4 lots" pour Baxter
 
@@ -417,14 +417,14 @@ const key = `${symbol}|${assetClass}`;
 const key = `${symbol}|${assetClass}`;
 
 // Code incorrect (ancien)
-const key = symbol; // ❌ Groupe tout ensemble
+const key = symbol; // [Error] Groupe tout ensemble
 ```
 
 **Solution** : Vérifier que le code utilise bien `${symbol}|${assetClass}`
 
 ### Badge CFD n'apparaît pas
 
-**Symptôme** : Pas de badge "⚠️ 5x" sur positions CFD
+**Symptôme** : Pas de badge "[Warning] 5x" sur positions CFD
 
 **Cause** : Backend ne retourne pas `is_cfd` ou `leverage` dans la réponse API
 
@@ -437,7 +437,7 @@ const key = symbol; // ❌ Groupe tout ensemble
 
 ---
 
-## 🔮 Améliorations Futures
+## Améliorations Futures
 
 ### P1 - Court terme
 - [ ] Détecter plus de leveraged ETFs (SOXL, TECL, etc.)

@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 async def test_basic_classification():
     """Test de classification de base avec différents types de tokens"""
     print("\n" + "="*60)
-    print("🧪 TEST 1: Classification de base")
+    print(" TEST 1: Classification de base")
     print("="*60)
     
     from services.smart_classification import smart_classification_service
@@ -43,7 +43,7 @@ async def test_basic_classification():
         "UNKNOWN_TEST_TOKEN"
     ]
     
-    print(f"📝 Classification de {len(test_symbols)} tokens...")
+    print(f" Classification de {len(test_symbols)} tokens...")
     results = {}
     
     for symbol in test_symbols:
@@ -57,15 +57,15 @@ async def test_basic_classification():
                 print(f"    └─ Dérivé de {result.base_symbol}")
                 
         except Exception as e:
-            print(f"  ❌ Erreur {symbol}: {e}")
+            print(f"  [Error] Erreur {symbol}: {e}")
     
-    print(f"\n✅ Classification terminée: {len(results)}/{len(test_symbols)} réussies")
+    print(f"\n[OK] Classification terminée: {len(results)}/{len(test_symbols)} réussies")
     return results
 
 async def test_duplicate_detection():
     """Test de détection des duplicatas dans un portfolio"""
     print("\n" + "="*60)
-    print("🔍 TEST 2: Détection de duplicatas")
+    print(" TEST 2: Détection de duplicatas")
     print("="*60)
     
     from services.smart_classification import smart_classification_service
@@ -79,19 +79,19 @@ async def test_duplicate_detection():
         "UNI", "DOGE"                     # Autres tokens uniques
     ]
     
-    print(f"📊 Analyse d'un portfolio de {len(test_portfolio)} tokens...")
+    print(f" Analyse d'un portfolio de {len(test_portfolio)} tokens...")
     
     duplicates = smart_classification_service.detect_duplicates_in_portfolio(test_portfolio)
     
-    print(f"\n🎯 Duplicatas détectés:")
+    print(f"\n Duplicatas détectés:")
     for base_symbol, derivatives in duplicates.items():
-        print(f"  📈 {base_symbol}:")
+        print(f"   {base_symbol}:")
         for deriv in derivatives:
             print(f"    ├─ {deriv['symbol']} ({deriv['type']}, confiance: {deriv['confidence']}%)")
             print(f"    │  └─ {deriv['description']}")
     
     if not duplicates:
-        print("  ℹ️  Aucun duplicata détecté")
+        print("    Aucun duplicata détecté")
     
     # Calcul de statistiques
     total_base_assets = len(set(test_portfolio) - set().union(*[
@@ -100,7 +100,7 @@ async def test_duplicate_detection():
     ]))
     complexity = (len(test_portfolio) - total_base_assets) / len(test_portfolio) * 100
     
-    print(f"\n📊 Analyse du portfolio:")
+    print(f"\n Analyse du portfolio:")
     print(f"  • Total tokens: {len(test_portfolio)}")
     print(f"  • Assets uniques: {total_base_assets}")
     print(f"  • Score de complexité: {complexity:.1f}%")
@@ -110,7 +110,7 @@ async def test_duplicate_detection():
 async def test_advanced_patterns():
     """Test des patterns avancés pour auto-classification"""
     print("\n" + "="*60)
-    print("🎯 TEST 3: Patterns avancés")
+    print(" TEST 3: Patterns avancés")
     print("="*60)
     
     from services.smart_classification import smart_classification_service
@@ -128,7 +128,7 @@ async def test_advanced_patterns():
     pattern_results = {}
     
     for expected_group, symbols in pattern_tests.items():
-        print(f"\n🧪 Test patterns pour {expected_group}:")
+        print(f"\n Test patterns pour {expected_group}:")
         group_results = {}
         
         for symbol in symbols:
@@ -138,7 +138,7 @@ async def test_advanced_patterns():
                 
                 # Vérifier si la classification correspond
                 correct = result.suggested_group == expected_group
-                status = "✅" if correct else "❌"
+                status = "OK" if correct else "Error"
                 
                 print(f"  {status} {symbol:<12} → {result.suggested_group:<15} "
                       f"({result.confidence_score:>5.1f}%)")
@@ -147,7 +147,7 @@ async def test_advanced_patterns():
                     print(f"    └─ Attendu: {expected_group}")
                     
             except Exception as e:
-                print(f"  ❌ {symbol}: Erreur {e}")
+                print(f"  [Error] {symbol}: Erreur {e}")
         
         pattern_results[expected_group] = group_results
         
@@ -155,14 +155,14 @@ async def test_advanced_patterns():
         correct_count = sum(1 for r in group_results.values() 
                           if r.suggested_group == expected_group)
         success_rate = correct_count / len(group_results) * 100 if group_results else 0
-        print(f"  📊 Taux de réussite: {correct_count}/{len(group_results)} ({success_rate:.1f}%)")
+        print(f"   Taux de réussite: {correct_count}/{len(group_results)} ({success_rate:.1f}%)")
     
     return pattern_results
 
 async def test_batch_classification():
     """Test de classification en lot avec performance"""
     print("\n" + "="*60)
-    print("⚡ TEST 4: Classification batch et performance")
+    print(" TEST 4: Classification batch et performance")
     print("="*60)
     
     from services.smart_classification import smart_classification_service
@@ -177,7 +177,7 @@ async def test_batch_classification():
         "ARB", "OP", "STRK", "IMX", "LRC"
     ]
     
-    print(f"🚀 Classification batch de {len(batch_symbols)} tokens...")
+    print(f" Classification batch de {len(batch_symbols)} tokens...")
     
     # Test avec différents seuils de confiance
     confidence_thresholds = [30.0, 50.0, 70.0, 90.0]
@@ -195,7 +195,7 @@ async def test_batch_classification():
         classified_count = len(results)
         success_rate = classified_count / len(batch_symbols) * 100
         
-        print(f"\n📊 Seuil {threshold}%:")
+        print(f"\n Seuil {threshold}%:")
         print(f"  • Classifiés: {classified_count}/{len(batch_symbols)} ({success_rate:.1f}%)")
         print(f"  • Temps: {duration:.2f}s ({duration/len(batch_symbols)*1000:.1f}ms/token)")
         
@@ -215,7 +215,7 @@ async def test_batch_classification():
 async def test_learning_api():
     """Test de l'API d'apprentissage avec feedback humain"""
     print("\n" + "="*60)
-    print("🧠 TEST 5: API d'apprentissage")
+    print(" TEST 5: API d'apprentissage")
     print("="*60)
     
     from services.smart_classification import smart_classification_service, ClassificationResult
@@ -226,15 +226,15 @@ async def test_learning_api():
     test_symbol = "CUSTOM_TEST_TOKEN"
     human_classification = "DeFi"
     
-    print(f"📚 Test d'apprentissage pour {test_symbol}...")
+    print(f" Test d'apprentissage pour {test_symbol}...")
     
     # 1. Classification initiale (devrait être "Others")
     initial_result = await smart_classification_service.classify_symbol(test_symbol)
-    print(f"  📝 Classification initiale: {initial_result.suggested_group} "
+    print(f"   Classification initiale: {initial_result.suggested_group} "
           f"({initial_result.confidence_score}% via {initial_result.method})")
     
     # 2. Simulation de feedback humain
-    print(f"  🧑‍💻 Feedback humain: {test_symbol} → {human_classification}")
+    print(f"   Feedback humain: {test_symbol} → {human_classification}")
     
     # Mise à jour directe de la taxonomie (simulation de l'API learning)
     taxonomy = Taxonomy.load()
@@ -247,12 +247,12 @@ async def test_learning_api():
     
     # 3. Nouvelle classification après apprentissage
     learned_result = await smart_classification_service.classify_symbol(test_symbol)
-    print(f"  🎓 Après apprentissage: {learned_result.suggested_group} "
+    print(f"   Après apprentissage: {learned_result.suggested_group} "
           f"({learned_result.confidence_score}% via {learned_result.method})")
     
     # Vérifier que l'apprentissage a fonctionné
     learning_success = learned_result.suggested_group == human_classification
-    print(f"  {'✅' if learning_success else '❌'} Apprentissage: "
+    print(f"  {'OK' if learning_success else 'Error'} Apprentissage: "
           f"{'Réussi' if learning_success else 'Échec'}")
     
     # Nettoyage - retirer le token de test
@@ -265,25 +265,25 @@ async def test_learning_api():
 async def test_system_stats():
     """Test des statistiques du système"""
     print("\n" + "="*60)  
-    print("📊 TEST 6: Statistiques système")
+    print(" TEST 6: Statistiques système")
     print("="*60)
     
     from services.smart_classification import smart_classification_service
     
     stats = smart_classification_service.get_classification_stats()
     
-    print("🔧 Cache et Performance:")
+    print(" Cache et Performance:")
     cache_stats = stats["cache_stats"]
     print(f"  • Symboles en cache: {cache_stats['cached_symbols']}")
     print(f"  • TTL cache: {cache_stats['cache_ttl_hours']:.1f}h")
     
-    print("\n🧬 Mappings de dérivés:")
+    print("\n Mappings de dérivés:")
     deriv_stats = stats["derivative_mappings"]
     print(f"  • Total mappings: {deriv_stats['total_mappings']}")
     for base, count in deriv_stats["by_base"].items():
         print(f"  • {base}: {count} dérivés")
     
-    print("\n🎯 Performance de classification:")
+    print("\n Performance de classification:")
     perf_stats = stats["classification_performance"]
     print(f"  • Total classifiés: {perf_stats['total_classified']}")
     
@@ -297,7 +297,7 @@ async def test_system_stats():
     print(f"  • Confiance moyenne (50-80%): {conf_dist['medium']}")
     print(f"  • Confiance faible (<50%): {conf_dist['low']}")
     
-    print("\n🔍 Patterns avancés:")
+    print("\n Patterns avancés:")
     pattern_stats = stats["advanced_patterns"]
     for group, count in pattern_stats.items():
         print(f"  • {group}: {count} patterns")
@@ -306,7 +306,7 @@ async def test_system_stats():
 
 async def run_comprehensive_test():
     """Lance tous les tests du système de classification intelligente"""
-    print("🚀 TESTS SYSTÈME DE CLASSIFICATION INTELLIGENTE")
+    print(" TESTS SYSTÈME DE CLASSIFICATION INTELLIGENTE")
     print("=" * 60)
     
     start_time = time.time()
@@ -325,13 +325,13 @@ async def run_comprehensive_test():
         
         for test_name, test_func in tests:
             try:
-                print(f"\n🔄 Lancement: {test_name}...")
+                print(f"\n Lancement: {test_name}...")
                 result = await test_func()
                 test_results[test_name] = {"success": True, "result": result}
-                print(f"✅ {test_name} terminé avec succès")
+                print(f"[OK] {test_name} terminé avec succès")
                 
             except Exception as e:
-                print(f"❌ Erreur dans {test_name}: {e}")
+                print(f"[Error] Erreur dans {test_name}: {e}")
                 test_results[test_name] = {"success": False, "error": str(e)}
                 logger.error(f"Erreur test {test_name}: {e}", exc_info=True)
         
@@ -341,22 +341,22 @@ async def run_comprehensive_test():
         total_tests = len(test_results)
         
         print("\n" + "="*60)
-        print("📋 RÉSUMÉ DES TESTS")
+        print(" RÉSUMÉ DES TESTS")
         print("="*60)
         
         for test_name, result in test_results.items():
-            status = "✅ PASS" if result["success"] else "❌ FAIL"
+            status = "[OK] PASS" if result["success"] else "[Error] FAIL"
             print(f"{status} - {test_name}")
             if not result["success"]:
                 print(f"    └─ Erreur: {result['error']}")
         
-        print(f"\n🎯 Résultat global: {successful_tests}/{total_tests} tests réussis")
-        print(f"⏱️  Temps d'exécution: {total_time:.2f}s")
+        print(f"\n Résultat global: {successful_tests}/{total_tests} tests réussis")
+        print(f"[Pending]  Temps d'exécution: {total_time:.2f}s")
         
         if successful_tests == total_tests:
-            print("🎉 Tous les tests ont réussi ! Système de classification opérationnel.")
+            print(" Tous les tests ont réussi ! Système de classification opérationnel.")
         else:
-            print(f"⚠️  {total_tests - successful_tests} test(s) ont échoué.")
+            print(f"[Warning]  {total_tests - successful_tests} test(s) ont échoué.")
         
         return successful_tests == total_tests
         
@@ -368,11 +368,11 @@ if __name__ == "__main__":
     try:
         success = asyncio.run(run_comprehensive_test())
         exit_code = 0 if success else 1
-        print(f"\n🚪 Sortie avec code: {exit_code}")
+        print(f"\n Sortie avec code: {exit_code}")
         exit(exit_code)
         
     except KeyboardInterrupt:
-        print("\n⛔ Tests interrompus par l'utilisateur")
+        print("\n[Blocked] Tests interrompus par l'utilisateur")
         exit(130)
     except Exception as e:
         logger.error(f"Erreur fatale: {e}", exc_info=True)

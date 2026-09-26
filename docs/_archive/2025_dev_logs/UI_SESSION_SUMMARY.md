@@ -2,53 +2,53 @@
 
 > Session du 16 Décembre 2025
 > Durée: ~2 heures
-> Status: ✅ Phase P0 + P1 complétées, Phase P2 démarrée
+> Status: [OK] Phase P0 + P1 complétées, Phase P2 démarrée
 
 ---
 
-## 🎯 Objectifs Atteints
+## Objectifs Atteints
 
-### Phase P0 - Fondations Critiques ✅
+### Phase P0 - Fondations Critiques
 
-1. **Design Tokens CSS** ✅
+1. **Design Tokens CSS** [OK]
    - Fichier: `static/css/tokens.css` (365 lignes)
    - Contenu: Couleurs complètes, opacités, z-index, typographie, spacing, shadows, transitions
    - Impact: Source unique de vérité pour tout le design
 
-2. **Variables CSS Manquantes** ✅
+2. **Variables CSS Manquantes** [OK]
    - Fichier: `static/shared-theme.css`
    - Ajouté: `--theme-surface-hover`, `--success-light`, `--warning-light`, `--danger-light`, `--info-light`
    - Impact: Résout références non définies dans plusieurs fichiers
 
-3. **Correction Tooltips** ✅
+3. **Correction Tooltips** [OK]
    - Fichier: `static/css/risk-dashboard.css`
    - Avant: Couleurs hardcodées (#0e1528, #e9f0ff, #243355)
    - Après: Variables CSS theme-aware
    - Impact: Tooltips suivent dark/light mode
 
-### Phase P1 - Composants Unifiés ✅
+### Phase P1 - Composants Unifiés
 
-4. **UIModal Component** ✅
+4. **UIModal Component** [OK]
    - Fichier: `static/components/ui-modal.js` (400 lignes)
    - Features: WCAG 2.1 compliant, focus trap, 4 tailles, Promise API
    - Remplace: 3 implémentations incohérentes
    - Impact: +67% accessibilité modals
 
-5. **Toast System** ✅
+5. **Toast System** [OK]
    - Fichier: `static/components/toast.js` (350 lignes)
    - Features: 5 types, auto-dismiss, ARIA live regions, empilable
    - Remplace: 3 systèmes de notifications
    - Impact: +100% accessibilité notifications
 
-6. **Page de Démonstration** ✅
+6. **Page de Démonstration** [OK]
    - Fichier: `static/ui-components-demo.html` (400 lignes)
    - Contenu: 12 démos modals + 6 démos toasts + theme toggle
    - URL: http://localhost:8080/static/ui-components-demo.html
    - Impact: Tests interactifs + documentation par l'exemple
 
-### Phase P2 - Refactoring Structurel (EN COURS) 🔄
+### Phase P2 - Refactoring Structurel (EN COURS)
 
-7. **Extraction CSS saxo-dashboard** ✅
+7. **Extraction CSS saxo-dashboard** [OK]
    - Fichier source: `static/saxo-dashboard.html` (6656 → 6161 lignes)
    - Fichier cible: `static/css/saxo-dashboard.css` (495 lignes)
    - Réduction: **-495 lignes inline** (-7.4%)
@@ -56,23 +56,23 @@
 
 ---
 
-## 📊 Métriques d'Impact
+## Métriques d'Impact
 
 | Métrique | Avant | Après | Amélioration |
 |----------|-------|-------|--------------|
-| **Fichiers CSS créés** | 0 | 3 | ✅ tokens.css, saxo-dashboard.css, (ui-demo inline) |
-| **Composants JS créés** | 0 | 2 | ✅ ui-modal.js, toast.js |
-| **Variables CSS manquantes** | 5 | 0 | ✅ 100% |
-| **Couleurs hardcodées** | 50+ | ~40 | 🟡 20% (en cours) |
-| **Modals accessibles** | 33% | 100% | ✅ +67% |
-| **Focus trap** | 33% | 100% | ✅ +67% |
-| **ARIA live regions** | 0% | 100% | ✅ +100% |
-| **saxo-dashboard.html** | 6656 lignes | 6161 lignes | ✅ -495 lignes |
-| **CSS inline saxo** | 495 lignes | 0 | ✅ 100% externalisé |
+| **Fichiers CSS créés** | 0 | 3 | [OK] tokens.css, saxo-dashboard.css, (ui-demo inline) |
+| **Composants JS créés** | 0 | 2 | [OK] ui-modal.js, toast.js |
+| **Variables CSS manquantes** | 5 | 0 | [OK] 100% |
+| **Couleurs hardcodées** | 50+ | ~40 | [Pending] 20% (en cours) |
+| **Modals accessibles** | 33% | 100% | [OK] +67% |
+| **Focus trap** | 33% | 100% | [OK] +67% |
+| **ARIA live regions** | 0% | 100% | [OK] +100% |
+| **saxo-dashboard.html** | 6656 lignes | 6161 lignes | [OK] -495 lignes |
+| **CSS inline saxo** | 495 lignes | 0 | [OK] 100% externalisé |
 
 ---
 
-## 📁 Fichiers Créés/Modifiés
+## Fichiers Créés/Modifiés
 
 ### Créés (7 fichiers)
 
@@ -99,25 +99,25 @@
 
 ---
 
-## 🧪 Tests Recommandés
+## Tests Recommandés
 
 ### Tests Manuels Obligatoires
 
-1. **Page de démo** ✅
+1. **Page de démo** [OK]
    - URL: http://localhost:8080/static/ui-components-demo.html
    - Vérifier: Tous les boutons fonctionnent
    - Vérifier: Theme toggle (dark/light)
    - Vérifier: Modals s'ouvrent/ferment
    - Vérifier: Toasts apparaissent
 
-2. **saxo-dashboard** ⚠️
+2. **saxo-dashboard** [Warning]
    - URL: http://localhost:8080/static/saxo-dashboard.html
    - Vérifier: Page charge sans erreur
    - Vérifier: Styles appliqués correctement
    - Vérifier: Dark/light mode fonctionne
    - Vérifier: Aucune régression visuelle
 
-3. **risk-dashboard** ⚠️
+3. **risk-dashboard** [Warning]
    - URL: http://localhost:8080/static/risk-dashboard.html
    - Vérifier: Tooltips suivent le thème
    - Vérifier: Hover sur tooltip fonctionne
@@ -138,7 +138,7 @@
 
 ---
 
-## 🚧 Travail Restant (Phase P2)
+## Travail Restant (Phase P2)
 
 ### À faire (Priorité Haute)
 
@@ -176,7 +176,7 @@
 
 ---
 
-## 💡 Recommandations Suivantes
+## Recommandations Suivantes
 
 ### Court Terme (Cette semaine)
 
@@ -198,16 +198,16 @@
 
 ---
 
-## 🎓 Leçons Apprises
+## Leçons Apprises
 
-### Ce qui a bien fonctionné ✅
+### Ce qui a bien fonctionné
 
 1. **Approche incrémentale** - Fondations d'abord, puis composants
 2. **Documentation en parallèle** - Audit + Plan + Status
 3. **Page de démo** - Tests immédiats, documentation vivante
 4. **Design tokens** - Source unique de vérité efficace
 
-### Défis Rencontrés ⚠️
+### Défis Rencontrés
 
 1. **saxo-dashboard.html** - 6656 lignes avec CSS massif inline
    - Solution: Extraction Python script
@@ -216,7 +216,7 @@
 3. **Windows paths** - Problèmes avec bash cd
    - Solution: Python scripts inline
 
-### Points d'Attention 🔍
+### Points d'Attention
 
 1. **Tokens.css** doit être importé AVANT shared-theme.css
 2. **Variables CSS** ne fonctionnent que si tokens.css chargé
@@ -225,7 +225,7 @@
 
 ---
 
-## 📈 ROI Estimé
+## ROI Estimé
 
 ### Gains Immédiats
 
@@ -241,7 +241,7 @@
 
 ---
 
-## 🔗 Ressources
+## Ressources
 
 ### Documentation Créée
 
@@ -262,7 +262,7 @@
 
 ---
 
-## 🎉 Conclusion
+## Conclusion
 
 Session très productive ! **Phase P0 et P1 complètes** (6 tâches), **Phase P2 démarrée** (1 tâche).
 

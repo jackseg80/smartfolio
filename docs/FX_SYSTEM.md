@@ -3,31 +3,31 @@
 > **Unified currency conversion system with live rates and fallback**
 > Last updated: Oct 2025
 
-## 🎯 Overview
+## Overview
 
 Système unifié de conversion de devises utilisé par l'ensemble de l'application (backend + frontend) garantissant la cohérence des conversions entre toutes les sources de données.
 
 **Caractéristiques principales :**
-- ✅ Taux de change en temps réel (API externe)
-- ✅ Cache intelligent (4h TTL)
-- ✅ Fallback robuste si API externe indisponible
-- ✅ Source unique de vérité (backend)
-- ✅ Support de 165+ devises mondiales
-- ✅ Initialisation automatique au démarrage
+- [OK] Taux de change en temps réel (API externe)
+- [OK] Cache intelligent (4h TTL)
+- [OK] Fallback robuste si API externe indisponible
+- [OK] Source unique de vérité (backend)
+- [OK] Support de 165+ devises mondiales
+- [OK] Initialisation automatique au démarrage
 
-### ✅ Note : Système ML/Bourse Unifié
+### Note : Système ML/Bourse Unifié
 
 Le module `ForexConverter` ([MULTI_CURRENCY_IMPLEMENTATION.md](MULTI_CURRENCY_IMPLEMENTATION.md)) utilisé par les recommandations ML/Bourse **utilise maintenant fx_service en backend**.
 
 **Status actuel :**
-- ✅ `fx_service` (ce document) : Système central utilisé partout
-- ✅ `ForexConverter` : Wrapper async vers fx_service (compatibilité)
+- [OK] `fx_service` (ce document) : Système central utilisé partout
+- [OK] `ForexConverter` : Wrapper async vers fx_service (compatibilité)
 
 **Résultat :** **Source unique de taux** pour toute l'application = cohérence garantie.
 
 ---
 
-## 📁 Architecture
+## Architecture
 
 ### Backend
 
@@ -54,7 +54,7 @@ adapters/saxo_adapter.py        # Positions Saxo
 
 ---
 
-## 🔧 Service Backend
+## Service Backend
 
 ### services/fx_service.py
 
@@ -96,7 +96,7 @@ _FALLBACK_RATES_TO_USD = {
 
 ---
 
-## 🌐 API Endpoints
+## API Endpoints
 
 ### GET /api/fx/rates?base=USD
 
@@ -167,7 +167,7 @@ Informations sur le cache (monitoring).
 
 ---
 
-## 💻 Frontend (currencyManager)
+## Frontend (currencyManager)
 
 ### static/global-config.js
 
@@ -203,7 +203,7 @@ const FALLBACK_RATES = {
 
 ---
 
-## 🏦 Cas d'usage : CSV Saxo
+## Cas d'usage : CSV Saxo
 
 ### Problème résolu
 
@@ -227,12 +227,12 @@ instrument_currency = "USD"        # Devise de cotation
 
 # Conversion correcte
 market_value_usd = convert(11720.15, "EUR", "USD")
-# 11720.15 EUR × 1.163 = 13,630 USD ✅
+# 11720.15 EUR × 1.163 = 13,630 USD
 ```
 
 **Avant la correction :**
 ```python
-# ❌ Confusion entre devise compte et devise instrument
+# Confusion entre devise compte et devise instrument
 currency = "USD"
 market_value_usd = convert(11720.15, "USD", "USD")
 # Pas de conversion ! → $11,720.15 (FAUX)
@@ -244,7 +244,7 @@ market_value_usd = convert(11720.15, "USD", "USD")
 
 ---
 
-## 🎨 Interface Utilisateur
+## Interface Utilisateur
 
 ### Modal Edit Cash (saxo-dashboard.html)
 
@@ -258,7 +258,7 @@ market_value_usd = convert(11720.15, "USD", "USD")
 ```
 Devise : EUR
 Montant : 5000
-💱 Équivalent USD : $5,815.00 USD (taux: 0.8599)
+ Équivalent USD : $5,815.00 USD (taux: 0.8599)
 ```
 
 **Code (lignes 3473-3664) :**
@@ -268,7 +268,7 @@ Montant : 5000
 
 ---
 
-## 🔄 Cycle de mise à jour
+## Cycle de mise à jour
 
 ```
 Démarrage serveur
@@ -290,31 +290,31 @@ Si API externe échoue → Fallback rates (Oct 2025)
 
 ---
 
-## 📊 Cohérence garantie
+## Cohérence garantie
 
 Toutes les conversions utilisent maintenant la même source :
 
 | Composant | Taux utilisés | Source |
 |-----------|---------------|--------|
-| Modal Edit Cash | Taux du jour | `fx_service` ✅ |
-| Positions CSV Saxo | Taux du jour | `fx_service` ✅ |
-| Portfolio Summary | Taux du jour | `fx_service` ✅ |
-| Banks adapter | Taux du jour | `fx_service` ✅ |
-| Wealth endpoints | Taux du jour | `fx_service` ✅ |
+| Modal Edit Cash | Taux du jour | `fx_service` OK |
+| Positions CSV Saxo | Taux du jour | `fx_service` OK |
+| Portfolio Summary | Taux du jour | `fx_service` OK |
+| Banks adapter | Taux du jour | `fx_service` OK |
+| Wealth endpoints | Taux du jour | `fx_service` OK |
 
 **Avant (système fragmenté) :**
 - Backend : Taux fixes (EUR: 1.07, CHF: 1.10)
 - Frontend : API externe (EUR: 0.92, CHF: 0.88)
-- ❌ Incohérence jusqu'à 5-10%
+- [Error] Incohérence jusqu'à 5-10%
 
 **Après (système unifié) :**
 - Backend : Source unique avec live rates
 - Frontend : Consomme backend
-- ✅ Cohérence parfaite
+- [OK] Cohérence parfaite
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Test backend
 ```bash
@@ -326,8 +326,8 @@ curl http://localhost:8080/api/fx/cache-info
 
 # Logs serveur
 # Devrait afficher :
-# [wealth][fx] ✅ Fetched 165 live rates from API
-# [wealth][fx] ✅ FX rates initialized with live data
+# [wealth][fx]  Fetched 165 live rates from API
+# [wealth][fx]  FX rates initialized with live data
 ```
 
 ### Test frontend
@@ -348,7 +348,7 @@ console.log(window.currencyManager.getRateSync('EUR'));
 
 ---
 
-## 🛠️ Maintenance
+## Maintenance
 
 ### Mise à jour des taux de fallback
 
@@ -370,17 +370,17 @@ const FALLBACK_RATES = {
 }
 ```
 
-**⚠️ Important :** Garder la cohérence entre backend et frontend !
+**[Warning] Important :** Garder la cohérence entre backend et frontend !
 
 ### Monitoring
 
 Surveiller les logs :
 ```bash
 # Succès
-[wealth][fx] ✅ Fetched 165 live rates from API
+[wealth][fx] [OK] Fetched 165 live rates from API
 
 # Fallback utilisé
-[wealth][fx] ⚠️ FX rates initialized with fallback data
+[wealth][fx] [Warning] FX rates initialized with fallback data
 [wealth][fx] Failed to fetch live rates: ...
 ```
 
@@ -401,13 +401,13 @@ url = "https://api.exchangerate.host/latest?base=USD"
 
 ---
 
-## 📝 Logs utiles
+## Logs utiles
 
 **Démarrage serveur :**
 ```
 [wealth][fx] Initializing FX rates on startup...
-[wealth][fx] ✅ Fetched 165 live rates from API
-[wealth][fx] ✅ FX rates initialized with live data
+[wealth][fx] [OK] Fetched 165 live rates from API
+[wealth][fx] [OK] FX rates initialized with live data
 ```
 
 **Conversion automatique :**
@@ -418,7 +418,7 @@ url = "https://api.exchangerate.host/latest?base=USD"
 **Refresh cache (après 4h) :**
 ```
 [wealth][fx] Cache expired (age: 14401s), fetching live rates...
-[wealth][fx] ✅ Fetched 165 live rates from API
+[wealth][fx] [OK] Fetched 165 live rates from API
 ```
 
 **Erreur API (fallback) :**
@@ -428,7 +428,7 @@ url = "https://api.exchangerate.host/latest?base=USD"
 
 ---
 
-## 🎯 Best Practices
+## Best Practices
 
 1. **Toujours utiliser `fx_service.convert()`** au lieu de taux hardcodés
 2. **Ne jamais stocker de taux** dans la config/base de données
@@ -438,7 +438,7 @@ url = "https://api.exchangerate.host/latest?base=USD"
 
 ---
 
-## 🔀 ForexConverter: Wrapper de Compatibilité
+## ForexConverter: Wrapper de Compatibilité
 
 `ForexConverter` ([MULTI_CURRENCY_IMPLEMENTATION.md](MULTI_CURRENCY_IMPLEMENTATION.md)) est maintenant un **wrapper léger** vers `fx_service`.
 
@@ -470,7 +470,7 @@ usd_amount = await converter.convert(100, 'CHF', 'USD')  # Async, pour compatibi
 
 ---
 
-## 🔗 Références
+## Références
 
 - API externe : https://www.exchangerate-api.com/
 - Backend service : [services/fx_service.py](../services/fx_service.py)

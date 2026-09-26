@@ -1,3 +1,5 @@
+import { setIcon } from '../core/icons.js';
+
 // static/components/flyout-panel.js
 // Web Component UI pour flyout panel overlay avec handle, pin/unpin, theme hérité
 
@@ -211,7 +213,7 @@ class FlyoutPanel extends HTMLElement {
         <header>
           <div class="title"><slot name="title">Panel</slot></div>
           <div class="actions">
-            <button id="pin" title="Pin" aria-label="Pin the panel" aria-pressed="false"><span aria-hidden="true">📍</span></button>
+            <button id="pin" title="Pin" aria-label="Pin the panel" aria-pressed="false"><span aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Location" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#map-pin"></use></svg></span></button>
           </div>
         </header>
         <main>
@@ -281,7 +283,8 @@ class FlyoutPanel extends HTMLElement {
 
     // ARIA attributes
     this.$.root.setAttribute('aria-expanded', String(isOpen));
-    this.$.pin.textContent = this.state.pinned ? '📌' : '📍';
+    setIcon(this.$.pin, 'bookmark');
+    this.$.pin.setAttribute('aria-label', this.state.pinned ? 'Unpin panel' : 'Pin panel');
     this.$.pin.setAttribute('aria-pressed', String(!!this.state.pinned));
 
     // Dynamic width

@@ -13,15 +13,15 @@ import json
 
 def print_step(step: str):
     """Print step with formatting"""
-    print(f"\n🔧 {step}")
+    print(f"\n {step}")
 
 def print_success(message: str):
     """Print success message"""
-    print(f"✅ {message}")
+    print(f"[OK] {message}")
 
 def print_warning(message: str):
     """Print warning message"""
-    print(f"⚠️  {message}")
+    print(f"[Warning]  {message}")
 
 def clean_temp_files():
     """Clean up temporary files"""
@@ -221,7 +221,7 @@ def show_statistics():
 def main():
     """Main maintenance function"""
     if len(sys.argv) < 2:
-        print("🧹 Crypto Rebalancer Maintenance")
+        print(" Crypto Rebalancer Maintenance")
         print("================================")
         print("\nUsage: python maintenance.py <command>")
         print("\nCommands:")
@@ -257,10 +257,10 @@ def main():
         check_disk_usage()
         show_statistics()
     else:
-        print(f"❌ Unknown command: {command}")
+        print(f"[Error] Unknown command: {command}")
         sys.exit(1)
     
-    print("\n🎉 Maintenance complete!")
+    print("\n Maintenance complete!")
 
 if __name__ == "__main__":
     main()

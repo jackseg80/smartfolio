@@ -33,21 +33,21 @@ export function inferPhase(phaseInputs, histWindow = 14) {
   // Debug override for testing specific phases (persisted in localStorage)
   const forcedPhase = getDebugForcePhase();
   if (forcedPhase) {
-    (window.debugLogger?.warn || console.warn)('🔧 PhaseEngine: DEBUG - Using forced phase (persisted):', forcedPhase);
+    (window.debugLogger?.warn || console.warn)("PhaseEngine: DEBUG - Using forced phase (persisted):", forcedPhase);
     return forcedPhase;
   }
 
   // Fallback intelligent si données partielles (Oct 2025)
   // Au lieu de toujours retourner 'neutral', utiliser DI + breadth pour décision partielle
   if (!phaseInputs) {
-    console.debug('🧘 PhaseEngine: No inputs, defaulting to neutral');
+    console.debug("PhaseEngine: No inputs, defaulting to neutral");
     return 'neutral';
   }
 
   if (phaseInputs.partial) {
     const { DI, breadth_alts } = phaseInputs;
 
-    console.debug('🔍 PhaseEngine: Partial data detected, using intelligent fallback:', {
+    console.debug("PhaseEngine: Partial data detected, using intelligent fallback:", {
       DI,
       breadth_alts: breadth_alts ? (breadth_alts * 100).toFixed(1) + '%' : 'N/A',
       missing: phaseInputs.missing
@@ -55,21 +55,21 @@ export function inferPhase(phaseInputs, histWindow = 14) {
 
     // Règles simples basées sur DI et breadth uniquement
     if (DI < 35) {
-      console.debug('🛡️ PhaseEngine: Risk-off detected (DI < 35) via fallback');
+      console.debug("PhaseEngine: Risk-off detected (DI < 35) via fallback");
       return 'risk_off';
     }
 
     if (DI >= 70 && breadth_alts >= 0.7) {
-      console.debug('📈 PhaseEngine: Large-cap altseason detected via fallback (DI >= 70, breadth >= 70%)');
+      console.debug("PhaseEngine: Large-cap altseason detected via fallback (DI >= 70, breadth >= 70%)");
       return 'largecap_altseason';
     }
 
     if (DI >= 60 && breadth_alts >= 0.55) {
-      console.debug('⚡ PhaseEngine: Bull context detected via fallback, assuming ETH expansion');
+      console.debug("PhaseEngine: Bull context detected via fallback, assuming ETH expansion");
       return 'eth_expansion';
     }
 
-    console.debug('😐 PhaseEngine: Neutral (insufficient confidence with partial data)');
+    console.debug("[Neutral] PhaseEngine: Neutral (insufficient confidence with partial data)");
     return 'neutral';
   }
 
@@ -88,7 +88,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
   const delta_eth_btc = calculateSlope(eth_btc);
   const delta_alts_btc = calculateSlope(alts_btc);
 
-  console.debug('📊 PhaseEngine: Slopes calculated:', {
+  console.debug("PhaseEngine: Slopes calculated:", {
     delta_btc_dom: (delta_btc_dom * 100).toFixed(2) + '%',
     delta_eth_btc: (delta_eth_btc * 100).toFixed(2) + '%',
     delta_alts_btc: (delta_alts_btc * 100).toFixed(2) + '%'
@@ -97,7 +97,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
   // Bull context determination
   const bull_ctx = (DI >= 60) || (DI >= 55 && breadth_alts >= 0.55);
 
-  console.debug('🐂 PhaseEngine: Bull context:', {
+  console.debug("PhaseEngine: Bull context:", {
     bull_ctx,
     DI,
     breadth_alts: (breadth_alts * 100).toFixed(1) + '%',
@@ -111,7 +111,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
   // 1) Risk-off (overrides everything)
   if (DI < 35) {
     detectedPhase = 'risk_off';
-    console.debug('🛡️ PhaseEngine: Risk-off detected (DI < 35)');
+    console.debug("PhaseEngine: Risk-off detected (DI < 35)");
   }
   // 2) Full altseason (most restrictive)
   else if (bull_ctx &&
@@ -121,7 +121,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
            delta_btc_dom < -0.02 &&
            delta_alts_btc > 0.03) {
     detectedPhase = 'full_altseason';
-    console.debug('🚀 PhaseEngine: Full altseason detected:', {
+    console.debug("PhaseEngine: Full altseason detected:", {
       breadth: (breadth_alts * 100).toFixed(1) + '%',
       dispersion: (dispersion * 100).toFixed(1) + '%',
       correlation: (corr_alts_btc * 100).toFixed(1) + '%',
@@ -136,7 +136,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
            dispersion >= 0.60 &&
            delta_alts_btc > 0.015) {
     detectedPhase = 'largecap_altseason';
-    console.debug('📈 PhaseEngine: Large-cap altseason detected:', {
+    console.debug("PhaseEngine: Large-cap altseason detected:", {
       btc_dom_flat: delta_btc_dom <= 0,
       breadth: (breadth_alts * 100).toFixed(1) + '%',
       dispersion: (dispersion * 100).toFixed(1) + '%',
@@ -149,7 +149,7 @@ export function inferPhase(phaseInputs, histWindow = 14) {
            delta_eth_btc > 0.02 &&
            delta_eth_btc > (delta_alts_btc + 0.01)) {
     detectedPhase = 'eth_expansion';
-    console.debug('⚡ PhaseEngine: ETH expansion detected:', {
+    console.debug("PhaseEngine: ETH expansion detected:", {
       btc_dom_declining: (delta_btc_dom * 100).toFixed(2) + '%',
       eth_outperforming: (delta_eth_btc * 100).toFixed(2) + '%',
       eth_vs_alts_edge: ((delta_eth_btc - delta_alts_btc) * 100).toFixed(2) + '%'
@@ -158,13 +158,13 @@ export function inferPhase(phaseInputs, histWindow = 14) {
   // 5) Default to neutral
   else {
     detectedPhase = 'neutral';
-    console.debug('😐 PhaseEngine: Neutral phase (no specific conditions met)');
+    console.debug("[Neutral] PhaseEngine: Neutral phase (no specific conditions met)");
   }
 
   // Apply hysteresis
   const finalPhase = applyHysteresis(detectedPhase, DI);
 
-  console.debug('🧠 PhaseEngine: Phase detection complete:', {
+  console.debug("PhaseEngine: Phase detection complete:", {
     detected: detectedPhase,
     final: finalPhase,
     hysteresisApplied: detectedPhase !== finalPhase,
@@ -186,14 +186,14 @@ function applyHysteresis(detectedPhase, DI) {
 
   // Emergency exit conditions (immediate phase change)
   if (DI < 35) {
-    console.debug('🚨 PhaseEngine: Emergency exit to risk_off (DI < 35)');
+    console.debug("[Alert] PhaseEngine: Emergency exit to risk_off (DI < 35)");
     phaseMemory.history = ['risk_off'];
     phaseMemory.lastPhase = 'risk_off';
     return 'risk_off';
   }
 
   if (DI < 45) {
-    console.debug('🚨 PhaseEngine: Emergency exit to neutral (DI < 45)');
+    console.debug("[Alert] PhaseEngine: Emergency exit to neutral (DI < 45)");
     phaseMemory.history = ['neutral'];
     phaseMemory.lastPhase = 'neutral';
     return 'neutral';
@@ -220,7 +220,7 @@ function applyHysteresis(detectedPhase, DI) {
 
   const consensusStrength = phaseCounts[currentConsensus] || 0;
 
-  console.debug('🧠 PhaseEngine: Hysteresis analysis:', {
+  console.debug("PhaseEngine: Hysteresis analysis:", {
     history: phaseMemory.history,
     phaseCounts,
     currentConsensus,
@@ -236,13 +236,13 @@ function applyHysteresis(detectedPhase, DI) {
 
   // For testing/debugging: be more aggressive with phase changes (2+ votes)
   if (consensusStrength >= 2 && typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
-    console.debug('🔧 PhaseEngine: DEBUG mode - using 2+ consensus:', currentConsensus);
+    console.debug("PhaseEngine: DEBUG mode - using 2+ consensus:", currentConsensus);
     phaseMemory.lastPhase = currentConsensus;
     return currentConsensus;
   }
 
   // Otherwise, stick with last stable phase
-  console.debug('🔒 PhaseEngine: Insufficient consensus, maintaining last phase:', phaseMemory.lastPhase);
+  console.debug("PhaseEngine: Insufficient consensus, maintaining last phase:", phaseMemory.lastPhase);
   return phaseMemory.lastPhase;
 }
 
@@ -267,7 +267,7 @@ async function getTiltHelpers() {
 function finalizeCapsAndNormalize(targets, options = {}) {
   const { caps = PHASE_CAPS, stablesFloor = STABLES_FLOOR, phase = 'neutral' } = options;
 
-  console.debug('🔧 PhaseEngine: Finalizing caps and normalization:', { caps, stablesFloor });
+  console.debug("PhaseEngine: Finalizing caps and normalization:", { caps, stablesFloor });
 
   const T = { ...targets };
 
@@ -278,7 +278,7 @@ function finalizeCapsAndNormalize(targets, options = {}) {
       const before = T[asset];
       T[asset] = cap;
       capsTriggered.push(`${asset}: ${before.toFixed(1)}% → ${cap}%`);
-      console.debug(`🧢 PhaseEngine: Cap applied to ${asset}:`, {
+      console.debug(`PhaseEngine: Cap applied to ${asset}:`, {
         before: before.toFixed(2) + '%',
         cap: cap + '%'
       });
@@ -303,7 +303,7 @@ function finalizeCapsAndNormalize(targets, options = {}) {
     T['Stablecoins'] = stablesFloor;
     stablesFloorHit = true;
 
-    console.debug('🏛️ PhaseEngine: Stables floor applied:', {
+    console.debug("PhaseEngine: Stables floor applied:", {
       required: stablesFloor + '%',
       fundeBy: 'reducing risky assets pro-rata'
     });
@@ -328,7 +328,7 @@ function finalizeCapsAndNormalize(targets, options = {}) {
           T[asset] = (T[asset] || 0) * riskyScaleFactor;
         });
 
-        console.debug('📊 PhaseEngine: Normalized risky assets while preserving stables floor:', {
+        console.debug("PhaseEngine: Normalized risky assets while preserving stables floor:", {
           originalSum: sum.toFixed(2) + '%',
           stablesFloor: stablesValue.toFixed(2) + '%',
           riskySum: riskySum.toFixed(2) + '%',
@@ -342,7 +342,7 @@ function finalizeCapsAndNormalize(targets, options = {}) {
         T[asset] = (T[asset] || 0) * scaleFactor;
       });
 
-      console.debug('📊 PhaseEngine: Normalized to 100%:', {
+      console.debug("PhaseEngine: Normalized to 100%:", {
         originalSum: sum.toFixed(2) + '%',
         scaleFactor: scaleFactor.toFixed(4),
         finalSum: Object.values(T).reduce((a, b) => a + b, 0).toFixed(2) + '%'
@@ -373,16 +373,16 @@ function finalizeCapsAndNormalize(targets, options = {}) {
  * @returns {Object} Adjusted targets with metadata
  */
 function applyPhaseTiltsLegacy(targets, phase, ctx = {}) {
-  debugLogger.error('❌ LEGACY FUNCTION CALLED - SHOULD NOT HAPPEN!:', { phase, targets: Object.keys(targets) });
+  debugLogger.error("[Error] LEGACY FUNCTION CALLED - SHOULD NOT HAPPEN!:", { phase, targets: Object.keys(targets) });
 
   if (!targets || Object.keys(targets).length === 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseEngine: No targets provided');
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseEngine: No targets provided");
     return { targets: {}, metadata: { error: 'No targets provided' } };
   }
 
   // If neutral, return targets unchanged
   if (phase === 'neutral') {
-    console.debug('😐 PhaseEngine: Neutral phase, no tilts applied');
+    console.debug("[Neutral] PhaseEngine: Neutral phase, no tilts applied");
     return {
       targets: { ...targets },
       metadata: { phase, tiltsApplied: false, reason: 'neutral phase' }
@@ -433,7 +433,7 @@ function applyPhaseTiltsLegacy(targets, phase, ctx = {}) {
   const tilts = tiltsByPhase[phase] || {};
 
   if (Object.keys(tilts).length === 0) {
-    console.debug('🤷 PhaseEngine: No tilts defined for phase:', phase);
+    console.debug("PhaseEngine: No tilts defined for phase:", phase);
     return {
       targets: { ...targets },
       metadata: { phase, tiltsApplied: false, reason: 'no tilts defined for phase' }
@@ -449,7 +449,7 @@ function applyPhaseTiltsLegacy(targets, phase, ctx = {}) {
       const increase = Math.min(1.0, maxMemes - currentMemes); // +1% max
       memecoinsAdjustment = increase;
 
-      console.debug('🐸 PhaseEngine: Memecoins boost activated:', {
+      console.debug("PhaseEngine: Memecoins boost activated:", {
         condition: `DI=${ctx.DI} >= 80 && breadth=${(ctx.breadth_alts * 100).toFixed(1)}% >= 80%`,
         current: currentMemes.toFixed(2) + '%',
         increase: `+${increase.toFixed(2)}%`,
@@ -468,13 +468,13 @@ function applyPhaseTiltsLegacy(targets, phase, ctx = {}) {
       adjustedTargets['Stablecoins'] = currentStables - memecoinsAdjustment;
       adjustedTargets['Memecoins'] = (adjustedTargets['Memecoins'] || 0) + memecoinsAdjustment;
 
-      console.debug('🐸 PhaseEngine: Memecoins funded from stables:', {
+      console.debug("PhaseEngine: Memecoins funded from stables:", {
         stablesReduction: `-${memecoinsAdjustment.toFixed(2)}%`,
         memecoinsIncrease: `+${memecoinsAdjustment.toFixed(2)}%`,
         stablesRemaining: adjustedTargets['Stablecoins'].toFixed(2) + '%'
       });
     } else {
-      console.debug('🛡️ PhaseEngine: Memecoins adjustment blocked by stables floor');
+      console.debug("PhaseEngine: Memecoins adjustment blocked by stables floor");
       memecoinsAdjustment = null;
     }
   }
@@ -496,7 +496,7 @@ function applyPhaseTiltsLegacy(targets, phase, ctx = {}) {
     context: { DI: ctx.DI, breadth_alts: ctx.breadth_alts }
   };
 
-  console.debug('✅ PhaseEngine: Phase tilts complete:', {
+  console.debug("[OK] PhaseEngine: Phase tilts complete:", {
     phase,
     tiltsCount: Object.keys(tilts).length,
     capsTriggered: metadata.capsTriggered.length,
@@ -528,7 +528,7 @@ export function resetPhaseMemory() {
   phaseMemory.history = [];
   phaseMemory.lastPhase = 'neutral';
   phaseMemory.lastEvaluationTime = 0;
-  console.debug('🔄 PhaseEngine: Memory reset');
+  console.debug("PhaseEngine: Memory reset");
 }
 
 // Debug override for testing specific phases - persist in localStorage
@@ -552,9 +552,9 @@ function getDebugForcePhase() {
 export function forcePhase(phase) {
   if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
     localStorage.setItem(DEBUG_FORCE_KEY, phase);
-    (window.debugLogger?.warn || console.warn)('🔧 PhaseEngine: DEBUG - Forcing phase (persisted):', phase);
+    (window.debugLogger?.warn || console.warn)("PhaseEngine: DEBUG - Forcing phase (persisted):", phase);
   } else {
-    (window.debugLogger?.warn || console.warn)('🔧 PhaseEngine: Force phase only available in localhost');
+    (window.debugLogger?.warn || console.warn)("PhaseEngine: Force phase only available in localhost");
   }
 }
 
@@ -564,7 +564,7 @@ export function forcePhase(phase) {
 export function clearForcePhase() {
   if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
     localStorage.removeItem(DEBUG_FORCE_KEY);
-    console.debug('🔧 PhaseEngine: DEBUG - Cleared forced phase, returning to normal detection');
+    console.debug("PhaseEngine: DEBUG - Cleared forced phase, returning to normal detection");
   }
 }
 
@@ -585,7 +585,7 @@ export function getCurrentForce() {
  * @returns {Promise<Object>} Adjusted targets with metadata
  */
 export async function applyPhaseTilts(targets, phase, ctx = {}) {
-  debugLogger.debug('🚀 Phase tilts - risky-only architecture:', {
+  debugLogger.debug("Phase tilts - risky-only architecture:", {
     phase,
     targetsCount: Object.keys(targets).length,
     stablesPreserved: (targets['Stablecoins'] || 0).toFixed(2) + '%',
@@ -593,13 +593,13 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
   });
 
   if (!targets || Object.keys(targets).length === 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseEngine: No targets provided');
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseEngine: No targets provided");
     return { targets: {}, metadata: { error: 'No targets provided' } };
   }
 
   // If neutral or risk_off, return targets unchanged (no tilts)
   if (phase === 'neutral' || phase === 'risk_off') {
-    console.debug(`😐 PhaseEngine: ${phase} phase, no tilts applied (risky-only policy)`);
+    console.debug(`[Neutral] PhaseEngine: ${phase} phase, no tilts applied (risky-only policy)`);
     return {
       targets: { ...targets },
       metadata: {
@@ -615,7 +615,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
   const STABLES_FLOOR_LOCAL = 5;
   const currentStables = targets['Stablecoins'] || 0;
   if (currentStables < STABLES_FLOOR_LOCAL) {
-    (window.debugLogger?.warn || console.warn)(`🚨 PhaseEngine: Early stables floor breach detected: ${currentStables.toFixed(2)}% < ${STABLES_FLOOR_LOCAL}% - aborting tilts`);
+    (window.debugLogger?.warn || console.warn)(`[Alert] PhaseEngine: Early stables floor breach detected: ${currentStables.toFixed(2)}% < ${STABLES_FLOOR_LOCAL}% - aborting tilts`);
     return {
       targets: { ...targets },
       metadata: {
@@ -642,24 +642,24 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
     'Others': 2
   };
 
-  console.debug('🎯 PhaseEngine: Applying phase-specific tilts for:', phase);
+  console.debug("PhaseEngine: Applying phase-specific tilts for:", phase);
 
   try {
     // Apply phase-specific tilts with zero-sum compensation
-    debugLogger.debug('🔧 BEFORE TILTS - Stables check:', {
+    debugLogger.debug("BEFORE TILTS - Stables check:", {
       originalStables: (targets['Stablecoins'] || 0).toFixed(4) + '%',
       workingStables: (T['Stablecoins'] || 0).toFixed(4) + '%'
     });
 
     switch (phase) {
       case 'eth_expansion':
-        debugLogger.debug('🎯 Applying ETH expansion tilts...');
+        debugLogger.debug("Applying ETH expansion tilts...");
         T = tiltRiskyZeroSum(T, {
           'ETH': 1.05,        // +5%
           'L2/Scaling': 1.03  // +3%
         }, ['BTC']); // Compensate from BTC only
 
-        debugLogger.debug('🔧 AFTER ETH_EXPANSION TILTS - Stables check:', {
+        debugLogger.debug("AFTER ETH_EXPANSION TILTS - Stables check:", {
           stablesAfterTilts: (T['Stablecoins'] || 0).toFixed(4) + '%'
         });
         break;
@@ -689,7 +689,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
           const delta = targetMemes - currentMemes;
 
           if (delta > 0) {
-            console.debug('🐸 PhaseEngine: Memecoins absolute boost:', {
+            console.debug("PhaseEngine: Memecoins absolute boost:", {
               condition: `DI=${ctx.DI} >= 80 && breadth=${(ctx.breadth_alts * 100).toFixed(1)}% >= 80%`,
               current: currentMemes.toFixed(2) + '%',
               target: targetMemes.toFixed(2) + '%',
@@ -725,7 +725,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
         break;
 
       default:
-        console.debug(`🤷 PhaseEngine: No tilts defined for phase: ${phase}`);
+        console.debug(`PhaseEngine: No tilts defined for phase: ${phase}`);
         return {
           targets: { ...targets },
           metadata: { phase, tiltsApplied: false, reason: 'no tilts defined for phase' }
@@ -735,7 +735,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
     // Apply caps and normalize
     const { T: cappedTargets, capsTriggered, stablesFloorHit } = applyCapsAndNormalize(T, riskyCaps, STABLES_FLOOR_LOCAL);
     if (!cappedTargets) {
-      (window.debugLogger?.warn || console.warn)('🚨 PhaseEngine: Stables floor breached - aborting tilts');
+      (window.debugLogger?.warn || console.warn)("[Alert] PhaseEngine: Stables floor breached - aborting tilts");
       return {
         targets: { ...targets },
         metadata: {
@@ -755,7 +755,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
     // Validate integrity
     const validation = validateTargetsIntegrity(filteredTargets, originalTargets);
     if (!validation.valid) {
-      debugLogger.error('🚨 PhaseEngine: Validation failed:', validation.warnings, 'Metrics:', validation.metrics);
+      debugLogger.error("[Alert] PhaseEngine: Validation failed:", validation.warnings, 'Metrics:', validation.metrics);
     }
 
     // Calculate deltas
@@ -782,7 +782,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
         .map(([asset, delta]) => `${asset}: ${delta > 0 ? '+' : ''}${delta.toFixed(2)}%`)
     };
 
-    console.debug('✅ PhaseEngine: Risky-only tilts applied successfully:', {
+    console.debug("[OK] PhaseEngine: Risky-only tilts applied successfully:", {
       phase,
       stablesPreserved: metadata.stablesPreserved,
       significantChanges: metadata.significantChanges,
@@ -796,7 +796,7 @@ export async function applyPhaseTilts(targets, phase, ctx = {}) {
     };
 
   } catch (error) {
-    debugLogger.error('🚨 PhaseEngine: Error applying tilts:', error);
+    debugLogger.error("[Alert] PhaseEngine: Error applying tilts:", error);
     return {
       targets: { ...targets },
       metadata: {
@@ -822,7 +822,7 @@ if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') 
     getCurrentForce
   };
 
-  console.debug('🔧 Debug: window.debugPhaseEngine available for testing (RISKY-ONLY)');
+  console.debug("Debug: window.debugPhaseEngine available for testing (RISKY-ONLY)");
 }
 
 // Remove duplicate export - applyPhaseTilts is exported via the window.debugPhaseEngine override

@@ -184,7 +184,7 @@ def validate_price_data_integrity(
     if result["flagged_assets"]:
         result["valid"] = False
         logger.warning(
-            f"⚠️ PRICE DATA INTEGRITY CHECK FAILED: {len(result['flagged_assets'])} assets flagged. "
+            f"[Warning] PRICE DATA INTEGRITY CHECK FAILED: {len(result['flagged_assets'])} assets flagged. "
             f"Anomalies: {result['anomalies']}"
         )
 

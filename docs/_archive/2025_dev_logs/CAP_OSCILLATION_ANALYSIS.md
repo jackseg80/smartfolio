@@ -250,7 +250,7 @@ logger.info(
 
 ### Phase 1 : Diagnostic (1-2 jours)
 
-1. ✅ Ajouter logging renforcé (Solution 5)
+1. [OK] Ajouter logging renforcé (Solution 5)
 2. Monitorer pendant 24h pour identifier pattern exact
 3. Analyser logs : quelle variable change réellement ?
 

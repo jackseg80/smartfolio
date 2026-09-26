@@ -18,7 +18,7 @@ foreach ($source in $sources) {
         $response = Invoke-RestMethod -Uri "$BASE_URL/balances/current?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
         $itemCount = $response.items.Count
         $sourceUsed = $response.source_used
-        Write-Host "    ✅ OK - $itemCount assets (source: $sourceUsed)" -ForegroundColor Green
+        Write-Host "     OK - $itemCount assets (source: $sourceUsed)" -ForegroundColor Green
         
         # Test portfolio metrics avec cette source
         $metricsResponse = Invoke-RestMethod -Uri "$BASE_URL/portfolio/metrics?source=$source" -Method Get -Headers $HEADERS -ErrorAction Stop
@@ -26,11 +26,11 @@ foreach ($source in $sources) {
             $totalValue = '{0:F0}' -f $metricsResponse.metrics.total_value_usd
             $assetCount = $metricsResponse.metrics.asset_count
             $groupCount = $metricsResponse.metrics.group_count
-            Write-Host "    📊 Analytics: $totalValue USD, $assetCount assets, $groupCount groupes" -ForegroundColor White
+            Write-Host "     Analytics: $totalValue USD, $assetCount assets, $groupCount groupes" -ForegroundColor White
         }
     }
     catch {
-        Write-Host "    ❌ Erreur: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    [Error] Erreur: $($_.Exception.Message)" -ForegroundColor Red
     }
     
     Write-Host ""
@@ -58,13 +58,13 @@ foreach ($pricing in $pricingModes) {
         
         if ($response.ok) {
             $totalValue = '{0:F0}' -f $response.portfolio_summary.total_value_usd
-            Write-Host "    ✅ OK - Portfolio: $totalValue USD (pricing: $pricing)" -ForegroundColor Green
+            Write-Host "     OK - Portfolio: $totalValue USD (pricing: $pricing)" -ForegroundColor Green
         } else {
-            Write-Host "    ⚠️ Warning: $($response.message)" -ForegroundColor Yellow
+            Write-Host "     Warning: $($response.message)" -ForegroundColor Yellow
         }
     }
     catch {
-        Write-Host "    ❌ Erreur: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    [Error] Erreur: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -85,13 +85,13 @@ foreach ($test in $tests) {
         $response = Invoke-RestMethod -Uri $url -Method Get -Headers $HEADERS -ErrorAction Stop
         
         if ($response.ok) {
-            Write-Host "    ✅ OK" -ForegroundColor Green
+            Write-Host "     OK" -ForegroundColor Green
         } else {
-            Write-Host "    ⚠️ Response: $($response.message)" -ForegroundColor Yellow
+            Write-Host "    [Warning] Response: $($response.message)" -ForegroundColor Yellow
         }
     }
     catch {
-        Write-Host "    ❌ Erreur: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    [Error] Erreur: $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -121,7 +121,7 @@ Write-Host "  Comparaison des sources:" -ForegroundColor Cyan
 foreach ($source in $results.Keys) {
     $data = $results[$source]
     if ($data.error) {
-        Write-Host "    $source : ❌ $($data.error)" -ForegroundColor Red
+        Write-Host "    $source : [Error] $($data.error)" -ForegroundColor Red
     } else {
         $value = if ($data.total_value -gt 0) { '{0:F0} USD' -f $data.total_value } else { 'N/A' }
         Write-Host "    $source : $($data.asset_count) assets, $value (via $($data.source_used))" -ForegroundColor White
@@ -137,8 +137,8 @@ Write-Host "3. Aller sur le Dashboard et vérifier que les données changent" -F
 Write-Host "4. Vérifier les indicateurs de source dans l'en-tête" -ForegroundColor White
 Write-Host ""
 Write-Host "Pages à tester:" -ForegroundColor Cyan
-Write-Host "  📊 Dashboard: file:///$(Get-Location)\static\dashboard.html" -ForegroundColor Gray
-Write-Host "  ⚖️ Rebalancing: file:///$(Get-Location)\static\rebalance.html" -ForegroundColor Gray  
-Write-Host "  ⚙️ Settings: file:///$(Get-Location)\static\settings.html" -ForegroundColor Gray
+Write-Host "   Dashboard: file:///$(Get-Location)\static\dashboard.html" -ForegroundColor Gray
+Write-Host "   Rebalancing: file:///$(Get-Location)\static\rebalance.html" -ForegroundColor Gray
+Write-Host "   Settings: file:///$(Get-Location)\static\settings.html" -ForegroundColor Gray
 
 Write-Host "`n=== Test terminé ===" -ForegroundColor Green

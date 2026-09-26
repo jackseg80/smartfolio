@@ -1,19 +1,19 @@
 # Stop Loss Frontend Implementation Guide
 
-> **Backend :** ✅ Complété (Fixed Variable implemented)
-> **Frontend :** ⏳ À Implémenter
+> **Backend :** [OK] Complété (Fixed Variable implemented)
+> **Frontend :** [Pending] À Implémenter
 > **Target File:** `static/saxo-dashboard.html`
 > **Temps Estimé:** 1-2h
 
 ---
 
-## 🎯 Objectif
+## Objectif
 
 Remplacer l'actuel stop loss "Fixed 5% partout" par "Fixed Variable (4-6-8%) selon volatilité".
 
 ---
 
-## 📊 Changements Requis
+## Changements Requis
 
 ### 1. Ajouter Calcul Volatilité
 
@@ -133,7 +133,7 @@ async function generateRecommendations(positions) {
 
 ---
 
-## 🎨 Affichage UI (Suggestions)
+## Affichage UI (Suggestions)
 
 ### Badge Volatilité
 
@@ -189,7 +189,7 @@ function renderVolatilityBadge(bucket) {
 ```html
 <!-- Dans le modal de recommendation -->
 <div class="stop-loss-section">
-    <h3>🛡️ Stop Loss (Adaptive)</h3>
+    <h3> Stop Loss (Adaptive)</h3>
 
     <div class="stop-loss-card">
         <!-- Price -->
@@ -224,7 +224,7 @@ function renderVolatilityBadge(bucket) {
 
         <!-- Reasoning -->
         <div class="sl-reasoning">
-            ℹ️ ${recommendation.stopLoss.reasoning}
+             ${recommendation.stopLoss.reasoning}
         </div>
     </div>
 </div>
@@ -272,7 +272,7 @@ function renderVolatilityBadge(bucket) {
 
 ---
 
-## 🔧 Intégration Backend
+## Intégration Backend
 
 Le backend retourne déjà Fixed Variable via l'API :
 
@@ -309,7 +309,7 @@ const stopLossInfo = recommendation.price_targets.stop_loss_analysis.stop_loss_l
 
 ---
 
-## ✅ Checklist Implémentation
+## Checklist Implémentation
 
 ### Étape 1 : Ajouter Helpers (15 min)
 - [ ] Copier `calculateVolatility()` dans saxo-dashboard.html
@@ -334,7 +334,7 @@ const stopLossInfo = recommendation.price_targets.stop_loss_analysis.stop_loss_l
 
 ---
 
-## 🧪 Test Cases
+## Test Cases
 
 ### Test 1 : NVDA (High Vol)
 
@@ -384,7 +384,7 @@ const spy = {
 
 ---
 
-## 📝 Notes Importantes
+## Notes Importantes
 
 ### Fallback Comportement
 
@@ -429,7 +429,7 @@ Pour montrer l'amélioration vs Fixed 5% :
 
 ---
 
-## 🎯 Résultat Attendu
+## Résultat Attendu
 
 **Avant :**
 ```
@@ -440,16 +440,16 @@ SPY:  Stop $546.25 (5%)  ← Trop large
 
 **Après :**
 ```
-NVDA: Stop $167.59 (8%) [High Vol] ← Adapté ✅
-AAPL: Stop $163.94 (6%) [Moderate Vol] ← Adapté ✅
-SPY:  Stop $552.00 (4%) [Low Vol] ← Adapté ✅
+NVDA: Stop $167.59 (8%) [High Vol] ← Adapté [OK]
+AAPL: Stop $163.94 (6%) [Moderate Vol] ← Adapté [OK]
+SPY:  Stop $552.00 (4%) [Low Vol] ← Adapté [OK]
 ```
 
 **Impact:** +8% performance globale validé par backtest
 
 ---
 
-## 📚 Références
+## Références
 
 - **Backend Implementation:** `services/ml/bourse/stop_loss_calculator.py`
 - **Backtest Results:** `docs/STOP_LOSS_BACKTEST_RESULTS.md`
@@ -457,4 +457,4 @@ SPY:  Stop $552.00 (4%) [Low Vol] ← Adapté ✅
 
 ---
 
-**Status:** ✅ Backend Done | ⏳ Frontend Pending | 📅 ETA: 1-2h
+**Status:** [OK] Backend Done | [Pending] Frontend Pending |  ETA: 1-2h

@@ -285,7 +285,7 @@ export function showS3AlertToast(alert, getAlertTypeFn = null) {
   ];
 
   const toastId = showToast(message, 's3', {
-    title: `🚨 ${title}`,
+    title: `Alert ${title}`,
     actions,
     duration: 0, // Don't auto-hide critical alerts
     alertData: alert

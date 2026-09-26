@@ -67,7 +67,7 @@ export function computeStructureModulation(structureScore) {
 // 0) Stables = SOURCE DE VÉRITÉ avec Structure Modulation V2
 let stablesBase = rb?.target_stables_pct || 25;
 
-// 🆕 Structure Modulation V2
+// [New] Structure Modulation V2
 const structureScore = data?.risk?.risk_metrics?.risk_version_info?.portfolio_structure_score;
 const { deltaStables, deltaCap } = computeStructureModulation(structureScore);
 
@@ -210,7 +210,7 @@ stablesModulated = clamp(40 + 0, 10, 60) = 40%
 
 ## Cohérence avec Autres Systèmes
 
-### ✅ Compatibilité meme_cap
+### Compatibilité meme_cap
 
 **meme_cap** s'applique **APRÈS** structure modulation, **AVANT** normalisation :
 
@@ -232,7 +232,7 @@ stablesModulated = clamp(40 + 0, 10, 60) = 40%
 }
 ```
 
-### ✅ Clamp Bornes
+### Clamp Bornes
 
 **min_stables / max_stables** sont **TOUJOURS** respectés :
 
@@ -245,7 +245,7 @@ Exemples :
 - Base 8% + delta +10 = 18% → **OK (entre 10-60%)**
 - Base 5% + delta +10 = 15% → **Clampé à min_stables (10%)**
 
-### ✅ Cap Gouvernance
+### Cap Gouvernance
 
 **deltaCap** est **ajouté** au cap de gouvernance (staleness, alerts, policy), avec garde-fou :
 
@@ -313,7 +313,7 @@ Le badge apparaît dans `risk-dashboard.html` si :
 ### Contenu
 
 ```
-🏗️ Structure Modulation V2                     active
+[In progress] Structure Modulation V2                     active
 
 Structure Score:            81.7/100
 Δ Stables:                  +5 pts
@@ -321,7 +321,7 @@ Structure Score:            81.7/100
 
 Cap effectif:               5.5% (+0.5)
 
-ℹ️ Modulation basée sur la qualité structurelle (HHI, memes, GRI, diversification)
+ Modulation basée sur la qualité structurelle (HHI, memes, GRI, diversification)
 ```
 
 ### Couleurs
@@ -335,7 +335,7 @@ Cap effectif:               5.5% (+0.5)
 ### Unified Insights V2
 
 ```javascript
-console.debug('🏗️ Structure Modulation V2:', {
+console.debug(' Structure Modulation V2:', {
   structure_score: 85,
   delta_stables: -5,
   delta_cap: +0.5,
@@ -348,7 +348,7 @@ console.debug('🏗️ Structure Modulation V2:', {
 ### Allocation Engine
 
 ```javascript
-console.debug('🎯 Execution Plan:', {
+console.debug(' Execution Plan:', {
   cap_pct_per_iter: 5.5,  // APRÈS deltaCap
   structure_modulation: {
     delta_cap: +0.5,
@@ -379,12 +379,12 @@ Decision Index (DI) → Régime → Risk Budget (stables base)
 ## Roadmap
 
 ### Phase Actuelle (Oct 2025)
-- ✅ Helper `computeStructureModulation()`
-- ✅ Modulation stables dans `computeMacroTargetsDynamic()`
-- ✅ Cap effectif avec `deltaCap`
-- ✅ Badge UI avec métadonnées
-- ✅ Exposition dans unified state
-- ✅ Cohérence avec meme_cap et clamp bornes
+- [OK] Helper `computeStructureModulation()`
+- [OK] Modulation stables dans `computeMacroTargetsDynamic()`
+- [OK] Cap effectif avec `deltaCap`
+- [OK] Badge UI avec métadonnées
+- [OK] Exposition dans unified state
+- [OK] Cohérence avec meme_cap et clamp bornes
 
 ### Phase Suivante
 - [ ] Tests unitaires (structure faible, forte, clamp bornes)
@@ -396,4 +396,4 @@ Decision Index (DI) → Régime → Risk Budget (stables base)
 
 **Date d'implémentation** : 2025-10-03
 **Version** : Structure Modulation V2
-**Statut** : ✅ Implémenté et testé
+**Statut** : [OK] Implémenté et testé

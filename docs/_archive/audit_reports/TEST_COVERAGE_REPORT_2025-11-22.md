@@ -1,4 +1,4 @@
-# 📊 Test Coverage Report - SmartFolio
+# Test Coverage Report - SmartFolio
 ## Date: 22 Novembre 2025
 
 > **Coverage Measurement:** First Baseline Audit
@@ -7,7 +7,7 @@
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 
 **Coverage Global: 37% (13,145 / 35,981 lignes testées)**
 
@@ -24,24 +24,24 @@ Tests Skipped:      36 skipped
 Erreurs:            28 errors
 ```
 
-**Verdict:** 🟡 **COVERAGE MOYEN** - Baseline établie, amélioration nécessaire
+**Verdict:** [Pending] **COVERAGE MOYEN** - Baseline établie, amélioration nécessaire
 
 ### Objectifs Coverage
 
 | Phase | Target | Actuel | Écart |
 |-------|--------|--------|-------|
 | **Baseline** | - | 37% | - |
-| **Q1 2026** | 50% | 37% | -13% ⬆️ +35% requis |
-| **Q2 2026** | 80% | 37% | -43% ⬆️ +116% requis |
+| **Q1 2026** | 50% | 37% | -13%  +35% requis |
+| **Q2 2026** | 80% | 37% | -43%  +116% requis |
 | **Production** | 80%+ | 37% | -43% |
 
 ---
 
-## 1. 🔴 Fichiers Critiques - Faible Coverage (<20%)
+## 1.  Fichiers Critiques - Faible Coverage (<20%)
 
 ### Priority 1: CRITIQUE (0-10% coverage)
 
-#### 1.1 services/risk/var_calculator.py - 8% ⚠️⚠️⚠️
+#### 1.1 services/risk/var_calculator.py - 8%
 ```
 Statements: 254
 Coverage:   8% (21 lignes testées, 233 non testées)
@@ -51,14 +51,14 @@ Missing:    30-31, 48-158, 168-252, 261-287, 296-319, 324-337, 347-375, 385-422,
 **Fonction Critique:** VaR/CVaR calculations (gestion risque financier)
 
 **Impact Non Testé:**
-- ❌ Calcul VaR parametric (méthode principale)
-- ❌ Calcul VaR historical
-- ❌ Calcul VaR Monte Carlo
-- ❌ CVaR (Conditional Value at Risk)
+- [Error] Calcul VaR parametric (méthode principale)
+- [Error] Calcul VaR historical
+- [Error] Calcul VaR Monte Carlo
+- [Error] CVaR (Conditional Value at Risk)
 
-**Risque:** 🔴 **TRÈS ÉLEVÉ** - Calculs financiers critiques non validés
+**Risque:** [Negative] **TRÈS ÉLEVÉ** - Calculs financiers critiques non validés
 
-#### 1.2 services/execution/liquidation_manager.py - 0% ⚠️⚠️⚠️
+#### 1.2 services/execution/liquidation_manager.py - 0%
 ```
 Statements: 63
 Coverage:   0% (AUCUNE ligne testée)
@@ -68,13 +68,13 @@ Missing:    Toutes les lignes
 **Fonction Critique:** Gestion liquidation assets (exécution trades)
 
 **Impact Non Testé:**
-- ❌ Logique liquidation complète
-- ❌ Priorités liquidation
-- ❌ Gestion erreurs liquidation
+- [Error] Logique liquidation complète
+- [Error] Priorités liquidation
+- [Error] Gestion erreurs liquidation
 
-**Risque:** 🔴 **TRÈS ÉLEVÉ** - Exécution financière non testée
+**Risque:** [Negative] **TRÈS ÉLEVÉ** - Exécution financière non testée
 
-#### 1.3 api/execution/validation_endpoints.py - 0% ⚠️⚠️
+#### 1.3 api/execution/validation_endpoints.py - 0%
 ```
 Statements: 123
 Coverage:   0%
@@ -83,7 +83,7 @@ Missing:    Toutes les lignes
 
 **Fonction Critique:** Validation plans avant exécution
 
-**Risque:** 🔴 **ÉLEVÉ** - Validation exécution non testée
+**Risque:** [Negative] **ÉLEVÉ** - Validation exécution non testée
 
 #### 1.4 services/execution/exchange_adapter.py - 8%
 ```
@@ -94,7 +94,7 @@ Missing:    38-186, 191-203, 208-213, 218-228, 233-240
 
 **Fonction Critique:** Adaptation exchanges (Binance, Kraken, etc.)
 
-**Risque:** 🔴 **ÉLEVÉ** - Communication exchanges non testée
+**Risque:** [Negative] **ÉLEVÉ** - Communication exchanges non testée
 
 ---
 
@@ -108,11 +108,11 @@ Missing:    Functions critiques non testées
 ```
 
 **Fonctions Critiques Non Testées:**
-- ❌ `calculate_performance_metrics()` - Calcul P&L
-- ❌ `save_portfolio_snapshot()` - Sauvegarde historique
-- ❌ `get_portfolio_history()` - Récupération historique
+- [Error] `calculate_performance_metrics()` - Calcul P&L
+- [Error] `save_portfolio_snapshot()` - Sauvegarde historique
+- [Error] `get_portfolio_history()` - Récupération historique
 
-**Risque:** 🔴 **TRÈS ÉLEVÉ** - P&L tracking non validé
+**Risque:** [Negative] **TRÈS ÉLEVÉ** - P&L tracking non validé
 
 #### 2.2 api/risk_endpoints.py - 15%
 ```
@@ -132,7 +132,7 @@ Coverage:   11% (113 lignes testées)
 
 ---
 
-## 2. 🟡 Fichiers Critiques - Coverage Moyen (20-50%)
+## 2.  Fichiers Critiques - Coverage Moyen (20-50%)
 
 ### 2.1 api/main.py - 27%
 ```
@@ -141,15 +141,15 @@ Coverage:   27% (144 lignes testées)
 ```
 
 **Fonctions Testées:**
-- ✅ Health checks basiques
-- ✅ Quelques endpoints simples
+- [OK] Health checks basiques
+- [OK] Quelques endpoints simples
 
 **Fonctions Non Testées:**
-- ❌ Middlewares security
-- ❌ Error handlers
-- ❌ Startup logic complexe
+- [Error] Middlewares security
+- Error handlers
+- [Error] Startup logic complexe
 
-**Recommandation:** ⚠️ Augmenter à 50%+ (coeur de l'API)
+**Recommandation:** [Warning] Augmenter à 50%+ (coeur de l'API)
 
 ### 2.2 services/risk_management.py - 46%
 ```
@@ -158,12 +158,12 @@ Coverage:   46% (408 lignes testées, 475 non testées)
 ```
 
 **Analyse:**
-- ✅ Certaines méthodes VaR testées
-- ❌ Stress testing non testé (729-755, 1055-1058)
-- ❌ Performance attribution non testé (1235-1292)
-- ❌ Backtesting non testé (1610-1754)
+- [OK] Certaines méthodes VaR testées
+- [Error] Stress testing non testé (729-755, 1055-1058)
+- [Error] Performance attribution non testé (1235-1292)
+- [Error] Backtesting non testé (1610-1754)
 
-**Recommandation:** ⚠️ Tester stress scenarios + backtesting
+**Recommandation:** [Warning] Tester stress scenarios + backtesting
 
 ### 2.3 services/pricing.py - 31%
 ```
@@ -173,15 +173,15 @@ Coverage:   31%
 
 **Impact:** Pricing (httpx migration) partiellement testé
 
-**Recommandation:** ⚠️ Tester nouvelles fonctions httpx
+**Recommandation:** [Warning] Tester nouvelles fonctions httpx
 
 ---
 
-## 3. ✅ Fichiers Bien Testés (>80% coverage)
+## 3.  Fichiers Bien Testés (>80% coverage)
 
 ### Excellents Exemples
 
-#### 3.1 services/risk_scoring.py - 99% ✅✅
+#### 3.1 services/risk_scoring.py - 99%
 ```
 Statements: 119
 Coverage:   99% (1 seule ligne non testée)
@@ -189,7 +189,7 @@ Coverage:   99% (1 seule ligne non testée)
 
 **Best Practice:** Exemple de coverage exemplaire
 
-#### 3.2 services/stop_loss/trailing_stop_calculator.py - 89% ✅
+#### 3.2 services/stop_loss/trailing_stop_calculator.py - 89%
 ```
 Statements: 82
 Coverage:   89%
@@ -197,7 +197,7 @@ Coverage:   89%
 
 **Bonne couverture** des calculs stop loss
 
-#### 3.3 services/smart_classification.py - 87% ✅
+#### 3.3 services/smart_classification.py - 87%
 ```
 Statements: 166
 Coverage:   87%
@@ -205,7 +205,7 @@ Coverage:   87%
 
 **Bonne couverture** de la classification
 
-#### 3.4 services/balance_service.py - 84% ✅
+#### 3.4 services/balance_service.py - 84%
 ```
 Statements: 111
 Coverage:   84%
@@ -215,54 +215,54 @@ Coverage:   84%
 
 ---
 
-## 4. 📊 Coverage par Module
+## 4.  Coverage par Module
 
 ### API Endpoints
 
 | Fichier | Statements | Coverage | Status |
 |---------|-----------|----------|--------|
-| `api/main.py` | 531 | 27% | 🟡 MEDIUM |
-| `api/risk_endpoints.py` | 577 | 15% | 🔴 LOW |
-| `api/unified_ml_endpoints.py` | 863 | 24% | 🟡 MEDIUM |
-| `api/rebalancing_strategy_router.py` | 92 | 58% | 🟡 MEDIUM |
-| `api/execution/validation_endpoints.py` | 123 | 0% | 🔴 CRITIQUE |
+| `api/main.py` | 531 | 27% | [Pending] MEDIUM |
+| `api/risk_endpoints.py` | 577 | 15% | [Negative] LOW |
+| `api/unified_ml_endpoints.py` | 863 | 24% | [Pending] MEDIUM |
+| `api/rebalancing_strategy_router.py` | 92 | 58% | [Pending] MEDIUM |
+| `api/execution/validation_endpoints.py` | 123 | 0% | [Negative] CRITIQUE |
 
 ### Services Core
 
 | Fichier | Statements | Coverage | Status |
 |---------|-----------|----------|--------|
-| `services/portfolio.py` | 407 | 13% | 🔴 CRITIQUE |
-| `services/pricing.py` | 181 | 31% | 🟡 MEDIUM |
-| `services/balance_service.py` | 111 | 84% | ✅ GOOD |
-| `services/risk_scoring.py` | 119 | 99% | ✅✅ EXCELLENT |
+| `services/portfolio.py` | 407 | 13% | [Negative] CRITIQUE |
+| `services/pricing.py` | 181 | 31% | [Pending] MEDIUM |
+| `services/balance_service.py` | 111 | 84% | [OK] GOOD |
+| `services/risk_scoring.py` | 119 | 99% | [OK][OK] EXCELLENT |
 
 ### Services Risk
 
 | Fichier | Statements | Coverage | Status |
 |---------|-----------|----------|--------|
-| `services/risk_management.py` | 883 | 46% | 🟡 MEDIUM |
-| `services/risk/var_calculator.py` | 254 | 8% | 🔴 CRITIQUE |
-| `services/risk/structural_score_v2.py` | 48 | 44% | 🟡 MEDIUM |
+| `services/risk_management.py` | 883 | 46% | [Pending] MEDIUM |
+| `services/risk/var_calculator.py` | 254 | 8% | [Negative] CRITIQUE |
+| `services/risk/structural_score_v2.py` | 48 | 44% | [Pending] MEDIUM |
 
 ### Services Execution
 
 | Fichier | Statements | Coverage | Status |
 |---------|-----------|----------|--------|
-| `services/execution/governance.py` | 1,008 | 11% | 🔴 CRITIQUE |
-| `services/execution/exchange_adapter.py` | 197 | 8% | 🔴 CRITIQUE |
-| `services/execution/liquidation_manager.py` | 63 | 0% | 🔴 CRITIQUE |
+| `services/execution/governance.py` | 1,008 | 11% | [Negative] CRITIQUE |
+| `services/execution/exchange_adapter.py` | 197 | 8% | [Negative] CRITIQUE |
+| `services/execution/liquidation_manager.py` | 63 | 0% | [Negative] CRITIQUE |
 
 ### Services ML
 
 | Fichier | Statements | Coverage | Status |
 |---------|-----------|----------|--------|
-| `services/ml/orchestrator.py` | 318 | 56% | 🟡 MEDIUM |
-| `services/ml/data_pipeline.py` | 255 | 36% | 🟡 MEDIUM |
-| `services/ml_pipeline_manager_optimized.py` | 366 | 23% | 🟡 MEDIUM |
+| `services/ml/orchestrator.py` | 318 | 56% | [Pending] MEDIUM |
+| `services/ml/data_pipeline.py` | 255 | 36% | [Pending] MEDIUM |
+| `services/ml_pipeline_manager_optimized.py` | 366 | 23% | [Pending] MEDIUM |
 
 ---
 
-## 5. 🎯 Roadmap d'Amélioration
+## 5.  Roadmap d'Amélioration
 
 ### Phase 1: Critical Paths (2 semaines) - 37% → 50%
 
@@ -337,7 +337,7 @@ services/execution/exchange_adapter.py: 8% → 50% (+42%)
 services/execution/governance.py:      11% → 30% (+19%)
 ```
 
-**Impact Attendu:** +3% coverage global (47% → 50%) ✅ **Objectif Q1 atteint**
+**Impact Attendu:** +3% coverage global (47% → 50%) [OK] **Objectif Q1 atteint**
 
 ---
 
@@ -355,12 +355,12 @@ api/risk_endpoints.py: 15% → 70% (+55%)
 ```
 
 **Tests Coverage:**
-- ✅ GET /api/risk/dashboard (user isolation)
-- ✅ GET /api/risk/advanced (VaR, stress tests)
-- ✅ GET /api/risk/onchain-score
-- ✅ GET /api/risk/structural-score
-- ✅ Multi-user isolation
-- ✅ Error handling
+- [OK] GET /api/risk/dashboard (user isolation)
+- [OK] GET /api/risk/advanced (VaR, stress tests)
+- [OK] GET /api/risk/onchain-score
+- [OK] GET /api/risk/structural-score
+- [OK] Multi-user isolation
+- Error handling
 
 **Impact Attendu:** +5% coverage global (50% → 55%)
 
@@ -405,11 +405,11 @@ services/pricing.py: 31% → 80% (+49%)
 services/taxonomy.py: 56% → 75% (+19%)
 ```
 
-**Impact Attendu:** +7% coverage global (73% → 80%) ✅ **Objectif Q2 atteint**
+**Impact Attendu:** +7% coverage global (73% → 80%) [OK] **Objectif Q2 atteint**
 
 ---
 
-## 6. 🔥 Top 20 Fichiers à Tester en Priorité
+## 6.  Top 20 Fichiers à Tester en Priorité
 
 ### Critères de Priorisation
 ```
@@ -427,30 +427,30 @@ Criticality:
 
 | Rank | Fichier | Coverage | Statements | Criticality | Score | Action |
 |------|---------|----------|------------|-------------|-------|--------|
-| 1 | `services/risk/var_calculator.py` | 8% | 254 | 10 | 2,336 | 🔴 URGENT |
-| 2 | `services/portfolio.py` | 13% | 407 | 10 | 3,541 | 🔴 URGENT |
-| 3 | `services/execution/liquidation_manager.py` | 0% | 63 | 9 | 567 | 🔴 URGENT |
-| 4 | `services/execution/governance.py` | 11% | 1,008 | 9 | 8,078 | 🔴 URGENT |
-| 5 | `api/execution/validation_endpoints.py` | 0% | 123 | 9 | 1,107 | 🔴 URGENT |
-| 6 | `services/execution/exchange_adapter.py` | 8% | 197 | 9 | 1,632 | 🔴 URGENT |
-| 7 | `api/risk_endpoints.py` | 15% | 577 | 8 | 3,924 | ⚠️ HIGH |
-| 8 | `services/pricing.py` | 31% | 181 | 10 | 1,249 | ⚠️ HIGH |
-| 9 | `api/main.py` | 27% | 531 | 8 | 3,100 | ⚠️ HIGH |
-| 10 | `services/risk_management.py` | 46% | 883 | 9 | 4,289 | ⚠️ HIGH |
-| 11 | `api/unified_ml_endpoints.py` | 24% | 863 | 7 | 4,588 | ⚠️ MEDIUM |
-| 12 | `services/ml_pipeline_manager_optimized.py` | 23% | 366 | 7 | 1,974 | ⚠️ MEDIUM |
-| 13 | `services/ml/data_pipeline.py` | 36% | 255 | 7 | 1,142 | ⚠️ MEDIUM |
-| 14 | `services/rebalance.py` | 65% | 291 | 8 | 815 | 🟡 MEDIUM |
-| 15 | `services/taxonomy.py` | 56% | 124 | 7 | 381 | 🟡 MEDIUM |
-| 16 | `services/user_secrets.py` | 32% | 60 | 8 | 326 | 🟡 MEDIUM |
-| 17 | `api/rebalancing_strategy_router.py` | 58% | 92 | 7 | 271 | 🟡 MEDIUM |
-| 18 | `services/ml/orchestrator.py` | 56% | 318 | 7 | 979 | 🟡 MEDIUM |
-| 19 | `services/execution/governance_legacy.py` | 49% | 156 | 6 | 478 | 🟡 MEDIUM |
-| 20 | `services/alerts/alert_engine.py` | 43% | 749 | 6 | 2,561 | 🟡 MEDIUM |
+| 1 | `services/risk/var_calculator.py` | 8% | 254 | 10 | 2,336 | [Negative] URGENT |
+| 2 | `services/portfolio.py` | 13% | 407 | 10 | 3,541 | [Negative] URGENT |
+| 3 | `services/execution/liquidation_manager.py` | 0% | 63 | 9 | 567 | [Negative] URGENT |
+| 4 | `services/execution/governance.py` | 11% | 1,008 | 9 | 8,078 | [Negative] URGENT |
+| 5 | `api/execution/validation_endpoints.py` | 0% | 123 | 9 | 1,107 | [Negative] URGENT |
+| 6 | `services/execution/exchange_adapter.py` | 8% | 197 | 9 | 1,632 | [Negative] URGENT |
+| 7 | `api/risk_endpoints.py` | 15% | 577 | 8 | 3,924 | [Warning] HIGH |
+| 8 | `services/pricing.py` | 31% | 181 | 10 | 1,249 | [Warning] HIGH |
+| 9 | `api/main.py` | 27% | 531 | 8 | 3,100 | [Warning] HIGH |
+| 10 | `services/risk_management.py` | 46% | 883 | 9 | 4,289 | [Warning] HIGH |
+| 11 | `api/unified_ml_endpoints.py` | 24% | 863 | 7 | 4,588 | [Warning] MEDIUM |
+| 12 | `services/ml_pipeline_manager_optimized.py` | 23% | 366 | 7 | 1,974 | [Warning] MEDIUM |
+| 13 | `services/ml/data_pipeline.py` | 36% | 255 | 7 | 1,142 | [Warning] MEDIUM |
+| 14 | `services/rebalance.py` | 65% | 291 | 8 | 815 | [Pending] MEDIUM |
+| 15 | `services/taxonomy.py` | 56% | 124 | 7 | 381 | [Pending] MEDIUM |
+| 16 | `services/user_secrets.py` | 32% | 60 | 8 | 326 | [Pending] MEDIUM |
+| 17 | `api/rebalancing_strategy_router.py` | 58% | 92 | 7 | 271 | [Pending] MEDIUM |
+| 18 | `services/ml/orchestrator.py` | 56% | 318 | 7 | 979 | [Pending] MEDIUM |
+| 19 | `services/execution/governance_legacy.py` | 49% | 156 | 6 | 478 | [Pending] MEDIUM |
+| 20 | `services/alerts/alert_engine.py` | 43% | 749 | 6 | 2,561 | [Pending] MEDIUM |
 
 ---
 
-## 7. 📈 Stratégie d'Amélioration
+## 7.  Stratégie d'Amélioration
 
 ### Quick Wins (1 semaine, +5-10% coverage)
 
@@ -499,18 +499,18 @@ Q2 2026:  65-80%
 
 ---
 
-## 8. ✅ Tests Actuels - Analyse
+## 8.  Tests Actuels - Analyse
 
-### Tests Passés (775 tests) ✅
+### Tests Passés (775 tests)
 
 **Bien testés:**
-- ✅ Balance service (core)
-- ✅ Risk scoring algorithms
-- ✅ Stop loss calculations
-- ✅ Smart classification
-- ✅ Quelques endpoints API basiques
+- [OK] Balance service (core)
+- [OK] Risk scoring algorithms
+- [OK] Stop loss calculations
+- [OK] Smart classification
+- [OK] Quelques endpoints API basiques
 
-### Tests Échoués (99 tests) ❌
+### Tests Échoués (99 tests)
 
 **Catégories d'échecs:**
 1. **Integration tests** (45 failed) - Dépendances externes
@@ -518,9 +518,9 @@ Q2 2026:  65-80%
 3. **E2E tests** (12 failed) - Serveur non running
 4. **Unit tests** (24 failed) - Mocks incomplets
 
-**Recommandation:** ⚠️ Fixer tests échoués avant ajouter nouveaux tests
+**Recommandation:** [Warning] Fixer tests échoués avant ajouter nouveaux tests
 
-### Tests Skipped (36 tests) ⏸️
+### Tests Skipped (36 tests)
 
 **Raison:** Conditions non remplies (Redis, models ML, etc.)
 
@@ -528,7 +528,7 @@ Q2 2026:  65-80%
 
 ---
 
-## 9. 🛠️ Setup Amélioration Coverage
+## 9.  Setup Amélioration Coverage
 
 ### 9.1 Configuration CI/CD
 
@@ -602,21 +602,21 @@ Target: 80% by Q2 2026
 
 ---
 
-## 10. 📊 Conclusion
+## 10.  Conclusion
 
 ### État Actuel
 
-**✅ Points Positifs:**
+**[OK] Points Positifs:**
 1. Baseline mesurée: 37% (vs estimation 25-30%)
 2. Quelques fichiers excellents (99% risk_scoring.py)
 3. 775 tests passés (bonne base)
 4. Infrastructure test en place
 
-**⚠️ Points d'Attention:**
-1. 🔴 Fichiers critiques < 20% (VaR, portfolio, execution)
-2. 🔴 99 tests échoués à corriger
-3. 🔴 Fonctions financières critiques non testées
-4. 🔴 Gap objectif production: 37% vs 80% (-43%)
+**[Warning] Points d'Attention:**
+1. [Negative] Fichiers critiques < 20% (VaR, portfolio, execution)
+2. [Negative] 99 tests échoués à corriger
+3. [Negative] Fonctions financières critiques non testées
+4. [Negative] Gap objectif production: 37% vs 80% (-43%)
 
 ### Plan d'Action Immédiat
 
@@ -641,7 +641,7 @@ pytest tests/unit/ -v  # Identifier root causes
 
 **Q2 2026:**
 - Coverage: 50% → 80% (+60%)
-- Production ready: ✅
+- Production ready: OK
 
 ### Success Metrics
 
@@ -654,16 +654,16 @@ pytest tests/unit/ -v  # Identifier root causes
 
 ---
 
-## 11. 📁 Fichiers Générés
+## 11.  Fichiers Générés
 
 ### Rapports Coverage
 
-1. ✅ **coverage.json** (1.3 MB) - Données brutes complètes
-2. ✅ **htmlcov/index.html** - Rapport HTML interactif
+1. [OK] **coverage.json** (1.3 MB) - Données brutes complètes
+2. [OK] **htmlcov/index.html** - Rapport HTML interactif
    - Ouvrir avec: `start htmlcov/index.html`
    - Vue par fichier avec lignes non testées surlignées
-3. ✅ **coverage.xml** - Format XML pour CI/CD
-4. ✅ **TEST_COVERAGE_REPORT_2025-11-22.md** - Ce rapport
+3. [OK] **coverage.xml** - Format XML pour CI/CD
+4. [OK] **TEST_COVERAGE_REPORT_2025-11-22.md** - Ce rapport
 
 ### Commandes Utiles
 
@@ -708,17 +708,17 @@ diff coverage_before.txt coverage_after.txt
 - api/execution/validation_endpoints.py: 0%
 
 ### Services Core (Total: 42% avg)
-- services/balance_service.py: 84% ✅
-- services/portfolio.py: 13% 🔴
-- services/pricing.py: 31% 🟡
-- services/risk_scoring.py: 99% ✅✅
+- services/balance_service.py: 84% [OK]
+- services/portfolio.py: 13% [Negative]
+- services/pricing.py: 31% [Pending]
+- services/risk_scoring.py: 99% [OK][OK]
 
 ### Services Risk (Total: 33% avg)
 - services/risk_management.py: 46%
-- services/risk/var_calculator.py: 8% 🔴
+- services/risk/var_calculator.py: 8% [Negative]
 - services/risk/structural_score_v2.py: 44%
 
-### Services Execution (Total: 6% avg) 🔴
+### Services Execution (Total: 6% avg)
 - services/execution/governance.py: 11%
 - services/execution/exchange_adapter.py: 8%
 - services/execution/liquidation_manager.py: 0%
@@ -730,5 +730,5 @@ diff coverage_before.txt coverage_after.txt
 
 ---
 
-**Status:** 🟡 BASELINE ÉTABLIE - Amélioration Required
+**Status:** [Pending] BASELINE ÉTABLIE - Amélioration Required
 **Next Action:** Implémenter Phase 1 Roadmap (Critical Paths)

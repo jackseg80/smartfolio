@@ -13,14 +13,14 @@
  */
 export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   if (!T || typeof T !== 'object') {
-    (window.debugLogger?.warn || console.warn)('⚠️ TiltHelpers: Invalid targets object');
+    (window.debugLogger?.warn || console.warn)("[Warning] TiltHelpers: Invalid targets object");
     return T;
   }
 
   const stables = T['Stablecoins'] || 0;
   const riskyKeys = Object.keys(T).filter(k => k !== 'Stablecoins');
 
-  console.debug('🔧 TiltHelpers: Applying risky zero-sum tilts:', {
+  console.debug("TiltHelpers: Applying risky zero-sum tilts:", {
     ups,
     downsKeys,
     stablesPreserved: stables.toFixed(2) + '%',
@@ -31,7 +31,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   let totalIncrease = 0;
   for (const [asset, multiplier] of Object.entries(ups)) {
     if (!T[asset]) {
-      console.debug(`⚠️ TiltHelpers: Asset '${asset}' not found in targets, skipping`);
+      console.debug(`[Warning] TiltHelpers: Asset '${asset}' not found in targets, skipping`);
       continue;
     }
 
@@ -42,7 +42,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
     totalIncrease += delta;
     T[asset] = after;
 
-    console.debug(`📈 TiltHelpers: Tilted ${asset}:`, {
+    console.debug(`TiltHelpers: Tilted ${asset}:`, {
       before: before.toFixed(2) + '%',
       multiplier: `×${multiplier}`,
       after: after.toFixed(2) + '%',
@@ -51,7 +51,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   }
 
   if (totalIncrease <= 0) {
-    console.debug('✅ TiltHelpers: No net increase, no compensation needed');
+    console.debug("[OK] TiltHelpers: No net increase, no compensation needed");
     return T;
   }
 
@@ -60,17 +60,17 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
     .filter(k => (T[k] || 0) > 0);
 
   if (compensationPool.length === 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ TiltHelpers: No valid compensation pool, cannot apply tilts');
+    (window.debugLogger?.warn || console.warn)("[Warning] TiltHelpers: No valid compensation pool, cannot apply tilts");
     return T;
   }
 
   const poolSum = compensationPool.reduce((sum, k) => sum + (T[k] || 0), 0);
   if (poolSum <= 0) {
-    (window.debugLogger?.warn || console.warn)('⚠️ TiltHelpers: Compensation pool sum is zero');
+    (window.debugLogger?.warn || console.warn)("[Warning] TiltHelpers: Compensation pool sum is zero");
     return T;
   }
 
-  console.debug('💰 TiltHelpers: Compensating from pool:', {
+  console.debug("TiltHelpers: Compensating from pool:", {
     pool: compensationPool,
     poolSum: poolSum.toFixed(2) + '%',
     totalDecrease: totalIncrease.toFixed(2) + '%'
@@ -82,7 +82,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
     const before = T[asset];
     T[asset] = Math.max(0, before - decrease);
 
-    console.debug(`📉 TiltHelpers: Compensated ${asset}:`, {
+    console.debug(`TiltHelpers: Compensated ${asset}:`, {
       before: before.toFixed(2) + '%',
       decrease: decrease.toFixed(2) + '%',
       after: T[asset].toFixed(2) + '%',
@@ -97,7 +97,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   if (currentRiskySum > 0) {
     const normalizationFactor = riskyTarget / currentRiskySum;
 
-    console.debug('🎯 TiltHelpers: Renormalizing risky pool:', {
+    console.debug("TiltHelpers: Renormalizing risky pool:", {
       riskyTarget: riskyTarget.toFixed(2) + '%',
       currentSum: currentRiskySum.toFixed(2) + '%',
       factor: normalizationFactor.toFixed(4)
@@ -117,7 +117,7 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
   const finalRiskySum = riskyKeys.reduce((sum, k) => sum + (T[k] || 0), 0);
   const finalTotalSum = Object.values(T).reduce((sum, val) => sum + val, 0);
 
-  debugLogger.debug('✅ TiltHelpers: Zero-sum tilts applied - DETAILED DEBUG:', {
+  debugLogger.debug("[OK] TiltHelpers: Zero-sum tilts applied - DETAILED DEBUG:", {
     originalStables: stables.toFixed(4) + '%',
     finalStables: finalStables.toFixed(4) + '%',
     stablesPreserved: Math.abs(finalStables - stables) < 0.01,
@@ -138,11 +138,11 @@ export function tiltRiskyZeroSum(T, ups = {}, downsKeys = []) {
  */
 export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
   if (!T || typeof T !== 'object') {
-    (window.debugLogger?.warn || console.warn)('⚠️ TiltHelpers: Invalid targets for caps');
+    (window.debugLogger?.warn || console.warn)("[Warning] TiltHelpers: Invalid targets for caps");
     return { T: null, capsTriggered: [], stablesFloorHit: false };
   }
 
-  console.debug('🧢 TiltHelpers: Applying caps and normalization:', {
+  console.debug("TiltHelpers: Applying caps and normalization:", {
     caps,
     stablesFloor: stablesFloor + '%'
   });
@@ -194,7 +194,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
         }
       }
     }
-    console.debug('💡 TiltHelpers: No uncapped assets, redistributing to capped assets with room:', uncappedRiskyAssets);
+    console.debug("TiltHelpers: No uncapped assets, redistributing to capped assets with room:", uncappedRiskyAssets);
   }
 
   // Redistribute excess to uncapped risky assets
@@ -202,7 +202,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
     const redistributionSum = uncappedRiskyAssets.reduce((sum, asset) => sum + (result[asset] || 0), 0);
 
     if (redistributionSum > 0) {
-      console.debug('💰 TiltHelpers: Redistributing capped excess:', {
+      console.debug("TiltHelpers: Redistributing capped excess:", {
         totalExcess: totalExcess.toFixed(2) + '%',
         toAssets: uncappedRiskyAssets,
         redistributionSum: redistributionSum.toFixed(2) + '%'
@@ -222,7 +222,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
 
           result[asset] += finalAllocation;
 
-          console.debug(`📈 TiltHelpers: Redistributed to ${asset}:`, {
+          console.debug(`TiltHelpers: Redistributed to ${asset}:`, {
             weight: (weight * 100).toFixed(1) + '%',
             requestedAllocation: allocation.toFixed(4) + '%',
             finalAllocation: finalAllocation.toFixed(4) + '%',
@@ -238,7 +238,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
         result[asset] = (result[asset] || 0) + perAsset;
       });
 
-      console.debug('📊 TiltHelpers: Equal redistribution fallback:', {
+      console.debug("TiltHelpers: Equal redistribution fallback:", {
         perAsset: perAsset.toFixed(2) + '%',
         toAssets: uncappedRiskyAssets
       });
@@ -246,13 +246,13 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
   }
 
   if (capsTriggered.length > 0) {
-    console.debug('🚫 TiltHelpers: Caps triggered:', capsTriggered);
+    console.debug("[Blocked] TiltHelpers: Caps triggered:", capsTriggered);
   }
 
   // 2) Stables floor check (abort if breached)
   const currentStables = result['Stablecoins'] || 0;
   if (currentStables < stablesFloor) {
-    (window.debugLogger?.warn || console.warn)('🚨 TiltHelpers: Stables floor breached - aborting tilts this tick:', {
+    (window.debugLogger?.warn || console.warn)("[Alert] TiltHelpers: Stables floor breached - aborting tilts this tick:", {
       current: currentStables.toFixed(2) + '%',
       floor: stablesFloor + '%'
     });
@@ -264,7 +264,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
   const totalSum = Object.values(result).reduce((sum, val) => sum + (val || 0), 0);
 
   if (totalSum <= 0) {
-    debugLogger.error('🚨 TiltHelpers: Total sum is zero after caps');
+    debugLogger.error("[Alert] TiltHelpers: Total sum is zero after caps");
     return { T: null, capsTriggered, stablesFloorHit };
   }
 
@@ -272,7 +272,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
     const stables = result['Stablecoins'] || 0;
     const riskyKeys = Object.keys(result).filter(k => k !== 'Stablecoins');
 
-    console.debug('🎯 TiltHelpers: Normalizing to 100% (RISKY-ONLY):', {
+    console.debug("TiltHelpers: Normalizing to 100% (RISKY-ONLY):", {
       beforeSum: totalSum.toFixed(4) + '%',
       stablesPreserved: stables.toFixed(2) + '%'
     });
@@ -290,7 +290,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
         }
       }
 
-      console.debug('🎯 TiltHelpers: Risky normalization applied:', {
+      console.debug("TiltHelpers: Risky normalization applied:", {
         riskyTarget: riskyTarget.toFixed(2) + '%',
         normFactor: riskyNormFactor.toFixed(6)
       });
@@ -301,7 +301,7 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
   }
 
   const finalSum = Object.values(result).reduce((sum, val) => sum + (val || 0), 0);
-  console.debug('✅ TiltHelpers: Caps and normalization complete:', {
+  console.debug("[OK] TiltHelpers: Caps and normalization complete:", {
     finalSum: finalSum.toFixed(4) + '%',
     capsTriggered: capsTriggered.length,
     stablesPreserved: (result['Stablecoins'] || 0).toFixed(2) + '%'
@@ -319,14 +319,14 @@ export function applyCapsAndNormalize(T, caps = {}, stablesFloor = 5) {
  */
 export function applyMinEffectFilter(tiltedTargets, originalTargets, threshold = 0.5) {
   if (!tiltedTargets || !originalTargets) {
-    (window.debugLogger?.warn || console.warn)('⚠️ TiltHelpers: Invalid targets for min-effect filter');
+    (window.debugLogger?.warn || console.warn)("[Warning] TiltHelpers: Invalid targets for min-effect filter");
     return tiltedTargets;
   }
 
   const result = { ...tiltedTargets };
   let filtered = [];
 
-  console.debug('🔍 TiltHelpers: Applying min-effect filter:', {
+  console.debug("TiltHelpers: Applying min-effect filter:", {
     threshold: threshold + '%'
   });
 
@@ -346,7 +346,7 @@ export function applyMinEffectFilter(tiltedTargets, originalTargets, threshold =
   }
 
   if (filtered.length > 0) {
-    console.debug('🎛️ TiltHelpers: Min-effect filter applied:', filtered);
+    console.debug("TiltHelpers: Min-effect filter applied:", filtered);
   }
 
   // Re-normalize after filtering (RISKY-ONLY)
@@ -355,7 +355,7 @@ export function applyMinEffectFilter(tiltedTargets, originalTargets, threshold =
     const stables = result['Stablecoins'] || 0;
     const riskyKeys = Object.keys(result).filter(k => k !== 'Stablecoins');
 
-    console.debug('🎯 TiltHelpers: Re-normalizing after filter (RISKY-ONLY):', {
+    console.debug("TiltHelpers: Re-normalizing after filter (RISKY-ONLY):", {
       sum: sum.toFixed(4) + '%',
       stablesPreserved: stables.toFixed(2) + '%'
     });
@@ -455,5 +455,5 @@ if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') 
     validateTargetsIntegrity
   };
 
-  console.debug('🔧 Debug: window.debugTiltHelpers available for testing');
+  console.debug("Debug: window.debugTiltHelpers available for testing");
 }

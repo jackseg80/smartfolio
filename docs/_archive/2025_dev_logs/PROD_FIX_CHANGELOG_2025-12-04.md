@@ -1,12 +1,12 @@
 # Corrections Production Docker - Changelog
 
 **Date:** 2025-12-04
-**Statut:** ✅ RÉSOLU
+**Statut:** [OK] RÉSOLU
 **Problème principal:** Erreurs 429 (Too Many Requests) en cascade bloquant toute l'application
 
 ---
 
-## 🎯 Problèmes Résolus
+## Problèmes Résolus
 
 ### 1. Rate Limiting Trop Strict (CRITIQUE)
 
@@ -21,17 +21,17 @@
 - Dashboard épuisait les 12 tokens immédiatement → erreurs 429
 
 **Solution:**
-- ✅ [docker-compose.yml:72-73](../docker-compose.yml#L72-L73) - Ajout mapping `SECURITY_RATE_LIMIT_REFILL_RATE` et `SECURITY_RATE_LIMIT_BURST_SIZE`
-- ✅ [.env.production.example:35-36](../.env.production.example#L35-L36) - Nouvelles valeurs recommandées :
+- [OK] [docker-compose.yml:72-73](../docker-compose.yml#L72-L73) - Ajout mapping `SECURITY_RATE_LIMIT_REFILL_RATE` et `SECURITY_RATE_LIMIT_BURST_SIZE`
+- [OK] [.env.production.example:35-36](../.env.production.example#L35-L36) - Nouvelles valeurs recommandées :
   ```env
   SECURITY_RATE_LIMIT_REFILL_RATE=20.0  # 20 req/sec (1200/min)
   SECURITY_RATE_LIMIT_BURST_SIZE=50     # Burst 50 requêtes simultanées
   ```
 
 **Résultat:**
-- ✅ Aucune erreur 429
-- ✅ Dashboard charge instantanément
-- ✅ Clés API visibles dans Settings (endpoint `/api/users/settings` maintenant accessible)
+- [OK] Aucune erreur 429
+- [OK] Dashboard charge instantanément
+- [OK] Clés API visibles dans Settings (endpoint `/api/users/settings` maintenant accessible)
 
 ---
 
@@ -43,15 +43,15 @@
 - Funding rate fallback activé en permanence
 
 **Solution:**
-- ✅ [config/settings.py:76-77](../config/settings.py#L76-L77) - Ajout dans `csp_connect_src` :
+- [OK] [config/settings.py:76-77](../config/settings.py#L76-L77) - Ajout dans `csp_connect_src` :
   ```python
   "https://cdn.jsdelivr.net",  # Chart.js sourcemaps
   "https://fapi.binance.com"   # Funding rate API
   ```
 
 **Résultat:**
-- ✅ Plus de warnings CSP
-- ✅ Funding rate direct (plus besoin du fallback)
+- [OK] Plus de warnings CSP
+- [OK] Funding rate direct (plus besoin du fallback)
 
 ---
 
@@ -64,55 +64,55 @@
 - Endpoint `/api/users/settings` bloqué par erreurs 429
 
 **Solution:**
-- ✅ Résolu automatiquement après fix rate limiting
+- [OK] Résolu automatiquement après fix rate limiting
 
 ---
 
-## 📊 Métriques Avant/Après
+## Métriques Avant/Après
 
 | Métrique | Avant | Après |
 |----------|-------|-------|
-| Erreurs 429 | 100% endpoints | 0% ✅ |
-| Dashboard charge | Échoue | Instantané ✅ |
-| Clés API visibles | Non | Oui ✅ |
-| CSP warnings | 2 types | 0 ✅ |
-| Funding rate API | Fallback | Direct ✅ |
+| Erreurs 429 | 100% endpoints | 0% [OK] |
+| Dashboard charge | Échoue | Instantané [OK] |
+| Clés API visibles | Non | Oui [OK] |
+| CSP warnings | 2 types | 0 [OK] |
+| Funding rate API | Fallback | Direct [OK] |
 
 ---
 
-## 🚨 Problèmes Restants (Non Bloquants)
+## Problèmes Restants (Non Bloquants)
 
 ### WebSocket Connection Failed
 
-**Statut:** ⚠️ Non bloquant
+**Statut:** [Warning] Non bloquant
 **Message:** `WebSocket connection to 'ws://192.168.1.200:8080/api/realtime/ws?client_id=nav_badge' failed`
 **Impact:** Aucun - Fallback polling automatique activé
 **Action:** Aucune requise
 
 ### Saxo 401 Unauthorized
 
-**Statut:** ⚠️ Normal (token expiré)
+**Statut:** [Warning] Normal (token expiré)
 **Message:** `GET /api/saxo/api-positions 401 (Unauthorized)`
 **Cause:** Token OAuth Saxo expiré (limitation comptes Self-Developer : 24h)
 **Action utilisateur:**
 1. Aller dans [Settings > Clés API](http://192.168.1.200:8080/settings.html)
 2. Section "SaxoBank OpenAPI"
-3. Cliquer "🔐 Se connecter à Saxo"
+3. Cliquer " Se connecter à Saxo"
 4. Popup OAuth → Accepter → Ferme automatiquement
-5. Status passe à "✅ Connecté"
+5. Status passe à "[OK] Connecté"
 
 ---
 
-## 📦 Fichiers Modifiés
+## Fichiers Modifiés
 
-1. ✅ [docker-compose.yml](../docker-compose.yml#L72-L73) - Mapping variables `SECURITY_*`
-2. ✅ [config/settings.py](../config/settings.py#L76-L77) - CSP `connect-src` (Chart.js + Binance)
-3. ✅ [.env.production.example](../.env.production.example#L35-L36) - Valeurs recommandées
-4. ✅ [docs/PROD_DEPLOYMENT_FIX_429.md](PROD_DEPLOYMENT_FIX_429.md) - Documentation complète
+1. [OK] [docker-compose.yml](../docker-compose.yml#L72-L73) - Mapping variables `SECURITY_*`
+2. [OK] [config/settings.py](../config/settings.py#L76-L77) - CSP `connect-src` (Chart.js + Binance)
+3. [OK] [.env.production.example](../.env.production.example#L35-L36) - Valeurs recommandées
+4. [OK] [docs/PROD_DEPLOYMENT_FIX_429.md](PROD_DEPLOYMENT_FIX_429.md) - Documentation complète
 
 ---
 
-## 🚀 Déploiement Serveur Linux
+## Déploiement Serveur Linux
 
 ### 1. Commit + Push (Windows)
 
@@ -131,7 +131,7 @@ Previous config exhausted tokens immediately causing 429 cascade.
 
 New defaults optimized for LAN deployment (no internet exposure).
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 
 Co-Authored-By: Claude <noreply@anthropic.com>"
 
@@ -164,7 +164,7 @@ SECURITY_RATE_LIMIT_BURST_SIZE=50
 ```bash
 # Check logs rate limiter
 docker-compose logs smartfolio | grep "Token bucket"
-# → Devrait afficher: "🪣 Token bucket rate limiter initialized: 20.0 req/s burst 50"
+# → Devrait afficher: " Token bucket rate limiter initialized: 20.0 req/s burst 50"
 
 # Test dashboard
 # Ouvrir http://192.168.1.200:8080/dashboard.html
@@ -173,7 +173,7 @@ docker-compose logs smartfolio | grep "Token bucket"
 
 ---
 
-## 🔗 Références
+## Références
 
 - [PROD_DEPLOYMENT_FIX_429.md](PROD_DEPLOYMENT_FIX_429.md) - Guide complet
 - [services/rate_limiter.py](../services/rate_limiter.py) - Implémentation Token Bucket

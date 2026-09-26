@@ -34,8 +34,8 @@ def compare_counts(flask_data: Dict, fastapi_data: Dict) -> bool:
     print(f"\n{'='*60}")
     print("COUNTS COMPARISON")
     print(f"{'='*60}")
-    print(f"Total count   - Flask: {flask_total:2d} | FastAPI: {fastapi_total:2d} | Match: {'✅' if flask_total == fastapi_total else '❌'}")
-    print(f"Critical count - Flask: {flask_critical:2d} | FastAPI: {fastapi_critical:2d} | Match: {'✅' if flask_critical == fastapi_critical else '❌'}")
+    print(f"Total count   - Flask: {flask_total:2d} | FastAPI: {fastapi_total:2d} | Match: {'OK' if flask_total == fastapi_total else 'Error'}")
+    print(f"Critical count - Flask: {flask_critical:2d} | FastAPI: {fastapi_critical:2d} | Match: {'OK' if flask_critical == fastapi_critical else 'Error'}")
 
     return flask_total == fastapi_total and flask_critical == fastapi_critical
 
@@ -54,17 +54,17 @@ def compare_indicator_names(flask_data: Dict, fastapi_data: Dict) -> bool:
     print(f"Flask unique: {len(flask_names)} | FastAPI unique: {len(fastapi_names)}")
 
     if only_flask:
-        print(f"\n❌ Only in Flask ({len(only_flask)}):")
+        print(f"\n[Error] Only in Flask ({len(only_flask)}):")
         for name in sorted(only_flask):
             print(f"   - {name}")
 
     if only_fastapi:
-        print(f"\n❌ Only in FastAPI ({len(only_fastapi)}):")
+        print(f"\n[Error] Only in FastAPI ({len(only_fastapi)}):")
         for name in sorted(only_fastapi):
             print(f"   - {name}")
 
     if not only_flask and not only_fastapi:
-        print("✅ All indicator names match")
+        print("[OK] All indicator names match")
         return True
 
     return False
@@ -110,7 +110,7 @@ def compare_values(flask_data: Dict, fastapi_data: Dict, tolerance: float = 0.01
     print(f"Common indicators: {len(common_names)}")
 
     if mismatches:
-        print(f"\n❌ Mismatches found ({len(mismatches)}):")
+        print(f"\n[Error] Mismatches found ({len(mismatches)}):")
         for m in mismatches:
             print(f"\n   {m['name']}:")
             if not m['value_match']:
@@ -119,8 +119,8 @@ def compare_values(flask_data: Dict, fastapi_data: Dict, tolerance: float = 0.01
                 print(f"      Critical: Flask {m['flask_critical']} | FastAPI {m['fastapi_critical']}")
         return False
     else:
-        print(f"✅ All values match (tolerance: ±{tolerance})")
-        print("✅ All critical zones match")
+        print(f"[OK] All values match (tolerance: ±{tolerance})")
+        print("[OK] All critical zones match")
         return True
 
 
@@ -150,18 +150,18 @@ def main():
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
-    print(f"Counts match:     {'✅ PASS' if counts_ok else '❌ FAIL'}")
-    print(f"Names match:      {'✅ PASS' if names_ok else '❌ FAIL'}")
-    print(f"Values match:     {'✅ PASS' if values_ok else '❌ FAIL'}")
+    print(f"Counts match:     {'[OK] PASS' if counts_ok else '[Error] FAIL'}")
+    print(f"Names match:      {'[OK] PASS' if names_ok else '[Error] FAIL'}")
+    print(f"Values match:     {'[OK] PASS' if values_ok else '[Error] FAIL'}")
 
     all_ok = counts_ok and names_ok and values_ok
 
     print(f"\n{'='*60}")
     if all_ok:
-        print("✅ VALIDATION PASSED - FastAPI implementation matches Flask")
+        print("[OK] VALIDATION PASSED - FastAPI implementation matches Flask")
         print("   You can proceed with Commit 7 (switch default flag)")
     else:
-        print("❌ VALIDATION FAILED - Fix issues before proceeding")
+        print("[Error] VALIDATION FAILED - Fix issues before proceeding")
         print("   Rollback to Flask mode: export CRYPTO_TOOLBOX_NEW=0")
     print(f"{'='*60}\n")
 

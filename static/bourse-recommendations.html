@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>💡 Stock Recommendations - SmartFolio</title>
+    <title>Stock Recommendations - SmartFolio</title>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="shared-theme.css">
     <link rel="stylesheet" href="theme-compat.css">
@@ -63,7 +63,7 @@
         <div class="dashboard-header">
             <div style="display: flex; align-items: center; gap: 1rem;">
                 <div>
-                    <h1>💡 Stock Recommendations</h1>
+                    <h1><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Stock Recommendations</h1>
                     <p style="color: var(--theme-text-muted); margin: 0;">Portfolio Recommendations & Market Opportunities</p>
                 </div>
             </div>
@@ -89,7 +89,7 @@
                 <div class="dashboard-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #1e40af) 100%); color: white;">
                     <div style="padding: 1.5rem;">
                         <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white;">
-                            📊 Portfolio Recommendations
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Portfolio Recommendations
                         </h2>
                         <div id="marketContext" style="display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap;">
                             <div>
@@ -130,7 +130,7 @@
                             </button>
                             <div style="border-left: 1px solid var(--theme-border); height: 2rem; margin: 0 0.5rem;"></div>
                             <button id="btnScanRecommendations" class="btn primary small" style="padding: 0.5rem 1rem;">
-                                🔍 Scan
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Scan
                             </button>
                         </div>
                     </div>
@@ -138,7 +138,7 @@
                     <!-- Summary Stats -->
                     <div id="recSummary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; padding: 1rem; border-top: 1px solid var(--theme-border);">
                         <div style="text-align: center; color: var(--theme-text-muted); padding: 1rem;">
-                            📊 Click "Scan" to analyze your portfolio
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Click "Scan" to analyze your portfolio
                         </div>
                     </div>
                 </div>
@@ -146,7 +146,7 @@
                 <!-- Filters & Search -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; padding: 1rem;">
-                        <input type="text" id="recSearch" placeholder="🔍 Search by symbol or name..."
+                        <input type="text" id="recSearch" placeholder=" Search by symbol or name..."
                             style="flex: 1; min-width: 200px; padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
                         <select id="recFilter" style="padding: 0.5rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
                             <option value="all">All Actions</option>
@@ -165,14 +165,14 @@
                         <h3 class="card-title">Position Recommendations</h3>
                         <div style="display: flex; gap: 0.5rem; align-items: center;">
                             <button id="btnExportTextRecs" class="btn secondary small" style="padding: 0.35rem 0.75rem; font-size: 0.75rem;">
-                                📄 Export Text
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Export Text
                             </button>
                             <div class="card-badge" id="recCount">0 positions</div>
                         </div>
                     </div>
                     <div id="recommendationsTable">
                         <div style="padding: 3rem; text-align: center; color: var(--theme-text-muted);">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">🔍</div>
+                            <div style="font-size: 3rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg></div>
                             <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">Ready to Analyze</div>
                             <div style="font-size: 0.875rem;">Click the "Scan" button above to get personalized recommendations</div>
                         </div>
@@ -186,7 +186,7 @@
                 <div class="dashboard-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
                     <div style="padding: 1rem;">
                         <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; color: white;">
-                            🌍 Market Opportunities
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Global" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#globe-alt"></use></svg> Market Opportunities
                         </h2>
                         <p style="margin: 0; opacity: 0.9; font-size: 0.875rem;">
                             Discover underweight sectors and new investment opportunities.
@@ -212,10 +212,10 @@
                             </button>
                             <div style="border-left: 1px solid var(--theme-border); height: 2rem; margin: 0 0.5rem;"></div>
                             <button id="btnScanOpportunities" class="btn primary small" style="padding: 0.5rem 1rem;">
-                                🔍 Scan
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Scan
                             </button>
                             <button id="btnExportTextOpps" class="btn secondary small" style="padding: 0.5rem 1rem;">
-                                📄 Export
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Export
                             </button>
                         </div>
                     </div>
@@ -224,7 +224,7 @@
                 <!-- Portfolio Gaps (Sectors) -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title">📊 Portfolio Gaps (Underweight Sectors)</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Portfolio Gaps (Underweight Sectors)</h3>
                         <div class="card-badge" id="gapsCount">0 gaps</div>
                     </div>
                     <div id="portfolioGaps">
@@ -237,7 +237,7 @@
                 <!-- Top Opportunities -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title">🎯 Top Opportunities</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Top Opportunities</h3>
                         <div class="card-badge" id="opportunitiesCount">0 opportunities</div>
                     </div>
                     <div id="opportunitiesTable">
@@ -250,7 +250,7 @@
                 <!-- Suggested Sales -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title">💰 Suggested Sales (To Fund Opportunities)</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Suggested Sales (To Fund Opportunities)</h3>
                         <div class="card-badge" id="salesCount">0 suggestions</div>
                     </div>
                     <div id="suggestedSales">
@@ -263,7 +263,7 @@
                 <!-- Impact Simulator -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title">📈 Reallocation Impact Simulator</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Reallocation Impact Simulator</h3>
                         <div class="card-badge">Before / After</div>
                     </div>
                     <div id="impactSimulator">
@@ -289,7 +289,7 @@
 
         // ==================== INITIALIZATION ====================
         document.addEventListener('DOMContentLoaded', async () => {
-            debugLogger.debug('🚀 Bourse Recommendations page loaded');
+            debugLogger.debug("Bourse Recommendations page loaded");
 
             await window.wealthContextBar?.whenReady();
             await resolveSourceType();
@@ -309,11 +309,11 @@
 
         // Resolve source type dynamically (same logic as saxo-dashboard.html)
         async function resolveSourceType() {
-            // ✅ FIX: Read bourseSource dynamically from wealthContextBar first
+            //  FIX: Read bourseSource dynamically from wealthContextBar first
             let bourseSource = window.wealthContextBar?.getContext()?.bourse;
             if (!bourseSource) {
                 bourseSource = localStorage.getItem('bourseSource');
-                debugLogger.debug(`⚠️ wealthContextBar not ready, using localStorage: ${bourseSource}`);
+                debugLogger.debug(`[Warning] wealthContextBar not ready, using localStorage: ${bourseSource}`);
             }
 
             // Reset state
@@ -329,7 +329,7 @@
             window.saxoSourceType = selection.type;
             currentFileKey = selection.fileKey;
 
-            debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${window.saxoSourceType}`);
+            debugLogger.debug(`Source detection: ${bourseSource} → ${window.saxoSourceType}`);
         }
 
         // ==================== TAB SWITCHING ====================
@@ -397,7 +397,7 @@
             if (!window.saxoSourceType) {
                 tableContainer.innerHTML = `
                     <div style="padding: 3rem; text-align: center;">
-                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">📊</div>
+                        <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
                         <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source not configured</h2>
                         <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                             Please select a Stock data source in the Dashboard.
@@ -415,7 +415,7 @@
 
                 if (scanBtn) {
                     scanBtn.disabled = true;
-                    scanBtn.textContent = '🔍 Scanning...';
+                    scanBtn.textContent = "Scanning...";
                 }
 
                 tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
@@ -440,7 +440,7 @@
                     if (response.status === 401) {
                         tableContainer.innerHTML = `
                             <div style="padding: 3rem; text-align: center;">
-                                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                                <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
                                 <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
                                 <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                                     Please connect to your Saxo Bank account to get recommendations.
@@ -476,7 +476,7 @@
                 if (isAuthError) {
                     tableContainer.innerHTML = `
                         <div style="padding: 3rem; text-align: center;">
-                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
                             <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
                             <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                                 Please connect to your Saxo Bank account to get recommendations.
@@ -492,7 +492,7 @@
             } finally {
                 if (scanBtn) {
                     scanBtn.disabled = false;
-                    scanBtn.textContent = originalText || '🔍 Scan';
+                    scanBtn.textContent = originalText || "Scan";
                 }
             }
         }
@@ -653,11 +653,11 @@
 
         function getActionBadge(action) {
             const badges = {
-                'STRONG BUY': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #22c55e; color: white; font-size: 0.75rem; font-weight: 600;">🟢 STRONG BUY</span>',
-                'BUY': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #86efac; color: #166534; font-size: 0.75rem; font-weight: 600;">🟢 BUY</span>',
-                'HOLD': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: var(--theme-bg-subtle); color: var(--theme-text-muted); font-size: 0.75rem; font-weight: 600;">🔵 HOLD</span>',
-                'SELL': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #fbbf24; color: #78350f; font-size: 0.75rem; font-weight: 600;">🟠 SELL</span>',
-                'STRONG SELL': '<span style="padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #ef4444; color: white; font-size: 0.75rem; font-weight: 600;">🔴 STRONG SELL</span>'
+                'STRONG BUY': "<span style=\"padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #22c55e; color: white; font-size: 0.75rem; font-weight: 600;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> STRONG BUY</span>",
+                'BUY': "<span style=\"padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #86efac; color: #166534; font-size: 0.75rem; font-weight: 600;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> BUY</span>",
+                'HOLD': "<span style=\"padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: var(--theme-bg-subtle); color: var(--theme-text-muted); font-size: 0.75rem; font-weight: 600;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> HOLD</span>",
+                'SELL': "<span style=\"padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #fbbf24; color: #78350f; font-size: 0.75rem; font-weight: 600;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Pending\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> SELL</span>",
+                'STRONG SELL': "<span style=\"padding: 0.25rem 0.75rem; border-radius: var(--radius-full); background: #ef4444; color: white; font-size: 0.75rem; font-weight: 600;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Negative\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> STRONG SELL</span>"
             };
             return badges[action] || action;
         }
@@ -719,7 +719,7 @@
                             </div>
                             ${rec.price_targets ? `
                                 <div style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
-                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">📊 Price Targets</h3>
+                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Price Targets</h3>
                                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                                         <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current</div><div style="font-weight: 600;">${rec.price_currency || 'USD'} ${rec.price_targets.current_price}</div></div>
                                         <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Stop Loss</div><div style="font-weight: 600; color: var(--danger);">${rec.price_currency || 'USD'} ${rec.price_targets.stop_loss ?? 'N/A'} (${rec.price_targets.stop_loss_pct ?? 'N/A'}%)</div></div>
@@ -729,14 +729,14 @@
                                 </div>
                             ` : ''}
                             <div style="margin-bottom: 1.5rem;">
-                                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">💡 Rationale</h3>
+                                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Rationale</h3>
                                 <ul style="list-style: none; padding: 0; margin: 0;">
                                     ${(rec.rationale || []).map(r => `<li style="padding: 0.5rem 0; border-bottom: 1px solid var(--theme-border); font-size: 0.875rem;">${r}</li>`).join('')}
                                 </ul>
                             </div>
                             ${rec.tactical_advice ? `
                                 <div style="background: var(--theme-bg-subtle); padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid var(--primary);">
-                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">🎯 Tactical Advice</h3>
+                                    <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Tactical Advice</h3>
                                     <p style="margin: 0; font-size: 0.875rem;">${rec.tactical_advice}</p>
                                 </div>
                             ` : ''}
@@ -759,7 +759,7 @@
 
             try {
                 btn.disabled = true;
-                btn.textContent = '⏳ Generating...';
+                btn.textContent = "[Pending] Generating...";
 
                 let markdownText = `# Portfolio Recommendations Export\n\n`;
                 markdownText += `**Generated:** ${new Date().toLocaleString()}\n\n`;
@@ -783,7 +783,7 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                btn.textContent = '✅ Downloaded!';
+                btn.textContent = "[OK] Downloaded!";
                 setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
 
             } catch (error) {
@@ -828,7 +828,7 @@
             if (!window.saxoSourceType) {
                 const authMessage = `
                     <div style="padding: 3rem; text-align: center;">
-                        <div style="font-size: 4rem; margin-bottom: 1.5rem;">📊</div>
+                        <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
                         <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source not configured</h2>
                         <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                             Please select a Stock data source in the Dashboard.
@@ -847,7 +847,7 @@
 
             try {
                 scanBtn.disabled = true;
-                scanBtn.textContent = '🔍 Scanning...';
+                scanBtn.textContent = "Scanning...";
 
                 document.getElementById('portfolioGaps').innerHTML = '<div class="loading">Analyzing sector gaps...</div>';
                 document.getElementById('opportunitiesTable').innerHTML = '<div class="loading">Identifying opportunities...</div>';
@@ -873,7 +873,7 @@
                     if (response.status === 401) {
                         const authMessage = `
                             <div style="padding: 3rem; text-align: center;">
-                                <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                                <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
                                 <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
                                 <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                                     Please connect to your Saxo Bank account to view opportunities.
@@ -906,7 +906,7 @@
                 document.getElementById('opportunitiesCount').textContent = `${data.opportunities?.length || 0} opportunities`;
                 document.getElementById('salesCount').textContent = `${data.suggested_sales?.length || 0} suggestions`;
 
-                scanBtn.textContent = '✅ Done';
+                scanBtn.textContent = "[OK] Done";
                 setTimeout(() => { scanBtn.textContent = originalText; scanBtn.disabled = false; }, 2000);
 
             } catch (error) {
@@ -916,7 +916,7 @@
                 if (isAuthError) {
                     const authMessage = `
                         <div style="padding: 3rem; text-align: center;">
-                            <div style="font-size: 4rem; margin-bottom: 1.5rem;">🔐</div>
+                            <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
                             <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
                             <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
                                 Please connect to your Saxo Bank account to view opportunities.
@@ -930,7 +930,7 @@
                 } else {
                     document.getElementById('portfolioGaps').innerHTML = `<div class="error-message">${error.message}</div>`;
                 }
-                scanBtn.textContent = '❌ Error';
+                scanBtn.textContent = "Error";
                 setTimeout(() => { scanBtn.textContent = originalText; scanBtn.disabled = false; }, 2000);
             }
         }
@@ -1110,7 +1110,7 @@
 
             try {
                 btn.disabled = true;
-                btn.textContent = '⏳ Generating...';
+                btn.textContent = "[Pending] Generating...";
 
                 if (!lastOpportunitiesData) {
                     Toast.warning('No data to export. Run a scan first.');
@@ -1148,7 +1148,7 @@
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                btn.textContent = '✅ Downloaded!';
+                btn.textContent = "[OK] Downloaded!";
                 setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
 
             } catch (error) {

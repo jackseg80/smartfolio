@@ -30,7 +30,7 @@ def resolve_effective_path(user_fs: UserScopedFS, module: str) -> Tuple[str, Opt
         - path: Chemin absolu du fichier à lire ou None
     """
 
-    # 0) 🎯 PRIORITÉ UTILISATEUR: Fichier explicitement sélectionné
+    # 0)  PRIORITÉ UTILISATEUR: Fichier explicitement sélectionné
     try:
         user_settings = user_fs.read_json("config.json")
         data_source = user_settings.get("data_source", "")
@@ -43,14 +43,14 @@ def resolve_effective_path(user_fs: UserScopedFS, module: str) -> Tuple[str, Opt
             # Chercher le fichier dans data/ (nouveau système simplifié)
             potential_path = user_fs.get_path(f"{module}/data/{csv_selected_file}")
             if os.path.exists(potential_path):
-                logger.info(f"👤 Sources resolver: Using user-selected file for {module} - {potential_path}")
+                logger.info(f" Sources resolver: Using user-selected file for {module} - {potential_path}")
                 return "user_choice", potential_path
 
-            logger.warning(f"⚠️ User-selected file not found: {csv_selected_file}, falling back to auto-detection")
+            logger.warning(f" User-selected file not found: {csv_selected_file}, falling back to auto-detection")
     except Exception as e:
         logger.debug(f"Could not read user settings: {e}")
 
-    # 1) 🎯 Fichiers dans data/ (le plus récent)
+    # 1)  Fichiers dans data/ (le plus récent)
     data_pattern = f"{module}/data/*.csv"
     data_files = user_fs.glob_files(data_pattern)
     if data_files:
@@ -59,11 +59,11 @@ def resolve_effective_path(user_fs: UserScopedFS, module: str) -> Tuple[str, Opt
             data_files.sort(key=lambda f: os.path.getmtime(f), reverse=True)
         except OSError:
             pass
-        logger.info(f"📊 Sources resolver: Using data/ for {module} - {data_files[0]}")
+        logger.info(f" Sources resolver: Using data/ for {module} - {data_files[0]}")
         return "data", data_files[0]
 
-    # 2) ❌ VIDE: Aucune source trouvée
-    logger.warning(f"💔 Sources resolver: No data found for {module}")
+    # 2) [Error] VIDE: Aucune source trouvée
+    logger.warning(f" Sources resolver: No data found for {module}")
     return "empty", None
 
 

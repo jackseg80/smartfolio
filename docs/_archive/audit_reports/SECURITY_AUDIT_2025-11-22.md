@@ -1,4 +1,4 @@
-# 🔒 Security Audit Report - SmartFolio
+# Security Audit Report - SmartFolio
 ## Date: 22 Novembre 2025
 
 > **Audit Type:** Comprehensive Security Scan
@@ -8,16 +8,16 @@
 
 ---
 
-## 📊 Executive Summary
+## Executive Summary
 
-**Verdict Global: 🟢 Sécurité Acceptable - Améliorations Recommandées**
+**Verdict Global: [Positive] Sécurité Acceptable - Améliorations Recommandées**
 
 ### Résultats Globaux
 
 | Scan | Status | Détails |
 |------|--------|---------|
-| **Dependencies (Safety)** | ✅ **PASS** | 0 vulnérabilités sur 163 packages |
-| **Code Security (Bandit)** | 🟡 **ATTENTION** | 67 issues détectées (6 HIGH, 29 MEDIUM, 32 LOW) |
+| **Dependencies (Safety)** | [OK] **PASS** | 0 vulnérabilités sur 163 packages |
+| **Code Security (Bandit)** | [Pending] **ATTENTION** | 67 issues détectées (6 HIGH, 29 MEDIUM, 32 LOW) |
 
 ### Métriques Clés
 
@@ -35,57 +35,57 @@ Files Scanned: api/ + services/
 ### Classification des Issues
 
 **Analyse détaillée révèle:**
-- ✅ **65% sont LÉGITIMES** (44/67) - Usage approprié dans contexte ML/cache
-- ⚠️ **25% à AMÉLIORER** (17/67) - Bonnes pratiques de sécurité
-- 🔴 **10% à CORRIGER** (6/67) - Fixes recommandés
+- [OK] **65% sont LÉGITIMES** (44/67) - Usage approprié dans contexte ML/cache
+- [Warning] **25% à AMÉLIORER** (17/67) - Bonnes pratiques de sécurité
+- [Negative] **10% à CORRIGER** (6/67) - Fixes recommandés
 
 ---
 
-## 1. 🎯 Scan Dependencies (Safety) - ✅ PASS
+## 1.  Scan Dependencies (Safety) -  PASS
 
 ### Résultats
 
 ```bash
-✅ 0 vulnérabilités connues détectées
-✅ 163 packages scannés
-✅ Base de données: open-source vulnerability database
-✅ Timestamp: 2025-11-22 11:14:46
+[OK] 0 vulnérabilités connues détectées
+[OK] 163 packages scannés
+[OK] Base de données: open-source vulnerability database
+[OK] Timestamp: 2025-11-22 11:14:46
 ```
 
 ### Packages Critiques Analysés
 
 **Framework & Web:**
-- `fastapi==0.115.0` ✅
-- `uvicorn==0.30.6` ✅
-- `pydantic==2.9.2` ✅
-- `httpx>=0.24.0` ✅
+- `fastapi==0.115.0` OK
+- `uvicorn==0.30.6` OK
+- `pydantic==2.9.2` OK
+- `httpx>=0.24.0` OK
 
 **ML & Data Science:**
-- `torch>=2.0.0` ✅
-- `pandas>=1.5.0` ✅
-- `numpy>=1.21.0` ✅
-- `scikit-learn>=1.3.0` ✅
+- `torch>=2.0.0` OK
+- `pandas>=1.5.0` OK
+- `numpy>=1.21.0` OK
+- `scikit-learn>=1.3.0` OK
 
 **Trading & Finance:**
-- `yfinance>=0.2.28` ✅
-- `ccxt>=4.0.0` ✅
-- `python-binance>=1.0.19` ✅
+- `yfinance>=0.2.28` OK
+- `ccxt>=4.0.0` OK
+- `python-binance>=1.0.19` OK
 
 **Infrastructure:**
-- `redis>=5.0.0` ✅
-- `selenium>=4.35.0` ✅
+- `redis>=5.0.0` OK
+- `selenium>=4.35.0` OK
 
-**Conclusion:** ✅ Toutes les dépendances sont à jour et sans CVE connues.
+**Conclusion:** [OK] Toutes les dépendances sont à jour et sans CVE connues.
 
 ---
 
-## 2. 🔍 Scan Code (Bandit) - Analyse Détaillée
+## 2.  Scan Code (Bandit) - Analyse Détaillée
 
 ### 2.1 Issues HIGH Severity (6 issues) - MD5 Hash Usage
 
 **Problème:** Utilisation de MD5 pour hashing (algorithme faible cryptographiquement)
 
-#### Issue #1-4: MD5 pour Cache Keys ✅ LÉGITIME
+#### Issue #1-4: MD5 pour Cache Keys  LÉGITIME
 
 **Fichiers:**
 - `api/rebalancing_strategy_router.py:139`
@@ -97,34 +97,34 @@ Files Scanned: api/ + services/
 ```python
 # api/rebalancing_strategy_router.py:139
 blob = json.dumps(REBALANCING_STRATEGIES, sort_keys=True).encode("utf-8")
-return hashlib.md5(blob).hexdigest()  # ⚠️ Bandit HIGH
+return hashlib.md5(blob).hexdigest()  # [Warning] Bandit HIGH
 
 # services/performance_optimizer.py:37
 cache_key = f"{prefix}_{hashlib.md5(key_data.encode()).hexdigest()[:16]}"
 ```
 
 **Analyse:**
-- ✅ **Usage NON cryptographique** (cache keys, checksums)
-- ✅ **Aucune donnée sensible** hashée
-- ✅ **Performance critique** (MD5 plus rapide que SHA256)
-- ⚠️ Bandit flag par défaut (false positive)
+- [OK] **Usage NON cryptographique** (cache keys, checksums)
+- [OK] **Aucune donnée sensible** hashée
+- [OK] **Performance critique** (MD5 plus rapide que SHA256)
+- [Warning] Bandit flag par défaut (false positive)
 
-**Recommandation:** ✅ **ACCEPTABLE - Ajouter commentaire `usedforsecurity=False`**
+**Recommandation:** [OK] **ACCEPTABLE - Ajouter commentaire `usedforsecurity=False`**
 
 **Fix Suggéré (Python 3.9+):**
 ```python
-# ✅ APRÈS - Explicite pour Bandit
+# APRÈS - Explicite pour Bandit
 cache_key = f"{prefix}_{hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()[:16]}"
 ```
 
-#### Issue #5-6: MD5 pour File Checksum ✅ LÉGITIME
+#### Issue #5-6: MD5 pour File Checksum  LÉGITIME
 
 **Fichier:** `services/ml/model_registry.py:133`
 
 ```python
 def _calculate_file_hash(self, file_path: str) -> str:
     """Calculer le hash d'un fichier"""
-    hash_md5 = hashlib.md5()  # ⚠️ Bandit HIGH
+    hash_md5 = hashlib.md5()  # [Warning] Bandit HIGH
     with open(file_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
@@ -132,17 +132,17 @@ def _calculate_file_hash(self, file_path: str) -> str:
 ```
 
 **Analyse:**
-- ✅ **Usage: Checksum fichiers ML models** (intégrité, pas sécurité)
-- ✅ **Contexte local** (pas de transmission réseau)
-- ✅ **Alternative SHA256** ralentirait I/O disque
+- [OK] **Usage: Checksum fichiers ML models** (intégrité, pas sécurité)
+- [OK] **Contexte local** (pas de transmission réseau)
+- [OK] **Alternative SHA256** ralentirait I/O disque
 
-**Recommandation:** ✅ **ACCEPTABLE - Contexte approprié**
+**Recommandation:** [OK] **ACCEPTABLE - Contexte approprié**
 
 ---
 
 ### 2.2 Issues MEDIUM Severity (29 issues)
 
-#### 2.2.1 Pickle Deserialization (18 issues) - ✅ CONTRÔLÉ
+#### 2.2.1 Pickle Deserialization (18 issues) -  CONTRÔLÉ
 
 **Problème:** Pickle peut exécuter du code arbitraire si données non fiables
 
@@ -155,16 +155,16 @@ def _calculate_file_hash(self, file_path: str) -> str:
 ```python
 # services/ml/model_registry.py:243
 with open(manifest.file_path, 'rb') as f:
-    model = pickle.load(f)  # ⚠️ Bandit MEDIUM
+    model = pickle.load(f)  # [Warning] Bandit MEDIUM
 ```
 
 **Analyse:**
-- ✅ **Source contrôlée:** Fichiers locaux uniquement (`cache/ml_pipeline/`)
-- ✅ **Pas de désérialisation user input**
-- ✅ **Standard ML:** scikit-learn, PyTorch utilisent pickle
-- ⚠️ **Attention:** Ne jamais pickle.load() de sources externes
+- [OK] **Source contrôlée:** Fichiers locaux uniquement (`cache/ml_pipeline/`)
+- [OK] **Pas de désérialisation user input**
+- [OK] **Standard ML:** scikit-learn, PyTorch utilisent pickle
+- [Warning] **Attention:** Ne jamais pickle.load() de sources externes
 
-**Recommandation:** ✅ **ACCEPTABLE** - Usage standard ML, sources contrôlées
+**Recommandation:** [OK] **ACCEPTABLE** - Usage standard ML, sources contrôlées
 
 **Amélioration Optionnelle (Defense in Depth):**
 ```python
@@ -184,7 +184,7 @@ def safe_load_model(file_path: str):
         return pickle.load(f)
 ```
 
-#### 2.2.2 PyTorch Load Unsafe (11 issues) - ✅ CONTRÔLÉ
+#### 2.2.2 PyTorch Load Unsafe (11 issues) -  CONTRÔLÉ
 
 **Problème:** `torch.load()` avec `weights_only=False` peut exécuter code
 
@@ -200,17 +200,17 @@ def safe_load_model(file_path: str):
 checkpoint = torch.load(
     model_file,
     map_location=self.device,
-    weights_only=False  # ⚠️ Bandit MEDIUM
+    weights_only=False  # [Warning] Bandit MEDIUM
 )
 ```
 
 **Analyse:**
-- ✅ **Nécessaire:** Models PyTorch avec custom layers nécessitent `weights_only=False`
-- ✅ **Source locale:** Fichiers dans `cache/ml_pipeline/models/`
-- ✅ **Pas d'upload user:** Aucun endpoint permet upload .pth
-- ⚠️ **PyTorch 2.0+** recommande `weights_only=True` (si compatible)
+- [OK] **Nécessaire:** Models PyTorch avec custom layers nécessitent `weights_only=False`
+- [OK] **Source locale:** Fichiers dans `cache/ml_pipeline/models/`
+- [OK] **Pas d'upload user:** Aucun endpoint permet upload .pth
+- [Warning] **PyTorch 2.0+** recommande `weights_only=True` (si compatible)
 
-**Recommandation:** ⚠️ **AMÉLIORER** - Tester `weights_only=True` si models simples
+**Recommandation:** [Warning] **AMÉLIORER** - Tester `weights_only=True` si models simples
 
 **Fix Suggéré:**
 ```python
@@ -222,7 +222,7 @@ except Exception:
     checkpoint = torch.load(model_file, map_location=self.device, weights_only=False)
 ```
 
-#### 2.2.3 urllib.urlopen (2 issues) - ⚠️ AMÉLIORER
+#### 2.2.3 urllib.urlopen (2 issues) -  AMÉLIORER
 
 **Problème:** `urllib.urlopen` peut accepter schémas dangereux (`file://`)
 
@@ -234,20 +234,20 @@ except Exception:
 ```python
 # services/pricing.py:161
 url = f"https://api.binance.com/api/v3/ticker/price?symbol={pair}"
-with urlopen(url, timeout=5) as r:  # ⚠️ Bandit MEDIUM
+with urlopen(url, timeout=5) as r:  # [Warning] Bandit MEDIUM
     obj = json.loads(r.read().decode("utf-8"))
 ```
 
 **Analyse:**
-- ⚠️ **Risque:** Si `url` est contrôlable par user, schéma `file://` possible
-- ✅ **Actuel:** URL hardcodée (pas de user input)
-- ⚠️ **Meilleure pratique:** Utiliser `requests` ou `httpx` (déjà dépendances)
+- [Warning] **Risque:** Si `url` est contrôlable par user, schéma `file://` possible
+- [OK] **Actuel:** URL hardcodée (pas de user input)
+- [Warning] **Meilleure pratique:** Utiliser `requests` ou `httpx` (déjà dépendances)
 
-**Recommandation:** ⚠️ **AMÉLIORER** - Migrer vers `httpx` (async)
+**Recommandation:** [Warning] **AMÉLIORER** - Migrer vers `httpx` (async)
 
 **Fix Recommandé:**
 ```python
-# ✅ APRÈS - Plus sécurisé + async
+# APRÈS - Plus sécurisé + async
 import httpx
 
 async def get_binance_price(pair: str) -> float:
@@ -263,20 +263,20 @@ async def get_binance_price(pair: str) -> float:
 
 ---
 
-### 2.3 Issues LOW Severity (32 issues) - ℹ️ INFORMATIF
+### 2.3 Issues LOW Severity (32 issues) -  INFORMATIF
 
 **Catégories:**
 - Assert statements utilisés (tests/debug)
 - Try/except sans type spécifique (déjà identifié dans audit général)
 - Hardcoded passwords/tokens (faux positifs - config templates)
 
-**Recommandation:** ℹ️ **INFORMATIF** - Pas de correction urgente
+**Recommandation:**  **INFORMATIF** - Pas de correction urgente
 
 ---
 
-## 3. 🎯 Plan d'Action Recommandé
+## 3.  Plan d'Action Recommandé
 
-### 3.1 Priorité HAUTE (1-2 jours) ⚠️
+### 3.1 Priorité HAUTE (1-2 jours)
 
 #### Action 1: Migrer urllib → httpx (2h)
 **Fichier:** `services/pricing.py`
@@ -303,9 +303,9 @@ async def _fetch_binance_price(pair: str) -> dict:
 ```
 
 **Impact:**
-- ✅ Élimine 2 issues MEDIUM
-- ✅ Meilleure gestion erreurs
-- ✅ Async cohérent avec FastAPI
+- [OK] Élimine 2 issues MEDIUM
+- [OK] Meilleure gestion erreurs
+- [OK] Async cohérent avec FastAPI
 
 #### Action 2: Ajouter `usedforsecurity=False` aux MD5 (1h)
 
@@ -321,8 +321,8 @@ cache_key = hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()
 ```
 
 **Impact:**
-- ✅ Élimine 6 issues HIGH
-- ✅ Documente intention (non-crypto usage)
+- [OK] Élimine 6 issues HIGH
+- [OK] Documente intention (non-crypto usage)
 
 #### Action 3: Safe Model Loading Helper (2h)
 
@@ -396,14 +396,14 @@ model = safe_pickle_load(model_path)
 ```
 
 **Impact:**
-- ✅ Centralise sécurité ML models
-- ✅ Path traversal protection
-- ✅ PyTorch weights_only=True par défaut
-- ✅ Logging pour audit trail
+- [OK] Centralise sécurité ML models
+- [OK] Path traversal protection
+- [OK] PyTorch weights_only=True par défaut
+- [OK] Logging pour audit trail
 
 ---
 
-### 3.2 Priorité MOYENNE (1 semaine) 🟡
+### 3.2 Priorité MOYENNE (1 semaine)
 
 #### Action 4: Configuration Scan Automatique (3h)
 
@@ -479,9 +479,9 @@ repos:
 ```
 
 **Impact:**
-- ✅ Détection automatique nouvelles vulnérabilités
-- ✅ Scan chaque commit/PR
-- ✅ Weekly scan scheduled
+- [OK] Détection automatique nouvelles vulnérabilités
+- [OK] Scan chaque commit/PR
+- [OK] Weekly scan scheduled
 
 #### Action 5: Documentation Sécurité (2h)
 
@@ -547,58 +547,58 @@ Please report security vulnerabilities to: [security@example.com]
 
 ---
 
-## 4. 📊 Résumé des Corrections
+## 4.  Résumé des Corrections
 
 ### Avant Corrections
 
 | Severity | Count | Status |
 |----------|-------|--------|
-| HIGH | 6 | ⚠️ MD5 usage (cache keys) |
-| MEDIUM | 29 | ⚠️ Pickle/PyTorch/urllib |
-| LOW | 32 | ℹ️ Informatif |
-| **Total** | **67** | **🟡 Attention** |
+| HIGH | 6 | [Warning] MD5 usage (cache keys) |
+| MEDIUM | 29 | [Warning] Pickle/PyTorch/urllib |
+| LOW | 32 |  Informatif |
+| **Total** | **67** | **[Pending] Attention** |
 
 ### Après Corrections (Estimé)
 
 | Severity | Count | Status | Delta |
 |----------|-------|--------|-------|
-| HIGH | 0 | ✅ Fixed | -6 ✅ |
-| MEDIUM | 10 | ⚠️ Acceptable (ML context) | -19 ✅ |
-| LOW | 32 | ℹ️ Informatif | 0 |
-| **Total** | **42** | **🟢 Acceptable** | **-25 (-37%)** |
+| HIGH | 0 | [OK] Fixed | -6 [OK] |
+| MEDIUM | 10 | [Warning] Acceptable (ML context) | -19 [OK] |
+| LOW | 32 |  Informatif | 0 |
+| **Total** | **42** | **[Positive] Acceptable** | **-25 (-37%)** |
 
 **Issues Résolues:**
-- ✅ 6 HIGH (MD5 → `usedforsecurity=False`)
-- ✅ 2 MEDIUM (urllib → httpx)
-- ✅ 17 MEDIUM (safe_loader.py centralise sécurité ML)
+- [OK] 6 HIGH (MD5 → `usedforsecurity=False`)
+- [OK] 2 MEDIUM (urllib → httpx)
+- [OK] 17 MEDIUM (safe_loader.py centralise sécurité ML)
 
 **Issues Restantes (Acceptable):**
-- ✅ 10 MEDIUM (Pickle/PyTorch dans contexte ML contrôlé)
-- ℹ️ 32 LOW (Informatif, pas de risque réel)
+- [OK] 10 MEDIUM (Pickle/PyTorch dans contexte ML contrôlé)
+- 32 LOW (Informatif, pas de risque réel)
 
 ---
 
-## 5. ✅ Conclusion
+## 5.  Conclusion
 
 ### Verdict Final
 
-**🟢 Sécurité Globale: ACCEPTABLE**
+**[Positive] Sécurité Globale: ACCEPTABLE**
 
 Le projet SmartFolio présente une **sécurité de base solide**:
 
 **Forces:**
-1. ✅ **0 CVE dans dépendances** (163 packages à jour)
-2. ✅ **Multi-tenant isolation** robuste (UserScopedFS)
-3. ✅ **Pas de désérialisation user input** (pickle limité ML local)
-4. ✅ **Secrets management** correct (.env, pas de commits)
-5. ✅ **Issues Bandit majoritairement légitimes** (65% faux positifs)
+1. [OK] **0 CVE dans dépendances** (163 packages à jour)
+2. [OK] **Multi-tenant isolation** robuste (UserScopedFS)
+3. [OK] **Pas de désérialisation user input** (pickle limité ML local)
+4. [OK] **Secrets management** correct (.env, pas de commits)
+5. [OK] **Issues Bandit majoritairement légitimes** (65% faux positifs)
 
 **Améliorations Recommandées:**
-1. ⚠️ Migrer `urllib` → `httpx` (2h, -2 MEDIUM)
-2. ⚠️ Ajouter `usedforsecurity=False` MD5 (1h, -6 HIGH)
-3. ⚠️ Créer `safe_loader.py` ML security (2h, -17 MEDIUM)
-4. 🟡 Automatiser scans sécurité (3h, CI/CD)
-5. 🟡 Documentation sécurité (2h, `docs/SECURITY.md`)
+1. [Warning] Migrer `urllib` → `httpx` (2h, -2 MEDIUM)
+2. [Warning] Ajouter `usedforsecurity=False` MD5 (1h, -6 HIGH)
+3. [Warning] Créer `safe_loader.py` ML security (2h, -17 MEDIUM)
+4. [Pending] Automatiser scans sécurité (3h, CI/CD)
+5. [Pending] Documentation sécurité (2h, `docs/SECURITY.md`)
 
 **Effort Total:** 10 heures → **-25 issues (-37%)**
 
@@ -606,26 +606,26 @@ Le projet SmartFolio présente une **sécurité de base solide**:
 
 | Critère | Status | Note |
 |---------|--------|------|
-| Dependencies scan | ✅ PASS | 0 CVE |
-| Code security | 🟡 ATTENTION | 67 issues (65% légitimes) |
-| Secrets management | ✅ PASS | .env, pas de leaks |
-| Multi-tenant isolation | ✅ PASS | UserScopedFS |
-| **OVERALL** | **🟢 ACCEPTABLE** | **Ready avec améliorations** |
+| Dependencies scan | [OK] PASS | 0 CVE |
+| Code security | [Pending] ATTENTION | 67 issues (65% légitimes) |
+| Secrets management | [OK] PASS | .env, pas de leaks |
+| Multi-tenant isolation | [OK] PASS | UserScopedFS |
+| **OVERALL** | **[Positive] ACCEPTABLE** | **Ready avec améliorations** |
 
-**Recommandation:** ✅ **Approuvé pour production** avec corrections Priorité HAUTE (5h) implémentées.
+**Recommandation:** [OK] **Approuvé pour production** avec corrections Priorité HAUTE (5h) implémentées.
 
 ---
 
-## 6. 📋 Checklist Implémentation
+## 6.  Checklist Implémentation
 
-### Phase 1: Fixes Critiques (1 jour) ✅ COMPLETED
+### Phase 1: Fixes Critiques (1 jour)  COMPLETED
 - [x] Migrer `services/pricing.py` urllib → httpx
 - [x] Ajouter `usedforsecurity=False` aux 6 MD5 usages
 - [x] Créer `services/ml/safe_loader.py`
 - [x] Refactor ML model loading (6 fichiers)
 - [x] Re-scan Bandit pour validation
 
-### Phase 2: Automatisation (1 jour) ⚙️ IN PROGRESS
+### Phase 2: Automatisation (1 jour)  IN PROGRESS
 - [ ] Setup GitHub Actions ou pre-commit hooks
 - [ ] Configurer scans hebdomadaires automatiques
 - [x] Créer `docs/SECURITY.md`
@@ -639,7 +639,7 @@ Le projet SmartFolio présente une **sécurité de base solide**:
 
 ---
 
-## 7. 🎉 Implémentation Finale (24 Novembre 2025)
+## 7.  Implémentation Finale (24 Novembre 2025)
 
 ### Résultats Post-Refactoring
 
@@ -666,14 +666,14 @@ Run metrics:
 
 | Métrique | Avant | Après | Delta | Status |
 |----------|-------|-------|-------|--------|
-| **HIGH Severity** | 6 | **0** | **-6 (-100%)** | ✅ **FIXED** |
-| **MEDIUM Severity** | 29 | 24 | -5 (-17%) | 🟢 **IMPROVED** |
-| **LOW Severity** | 32 | 33 | +1 (+3%) | ℹ️ Acceptable |
-| **Total Issues** | **67** | **57** | **-10 (-15%)** | ✅ **SUCCESS** |
+| **HIGH Severity** | 6 | **0** | **-6 (-100%)** | [OK] **FIXED** |
+| **MEDIUM Severity** | 29 | 24 | -5 (-17%) | [Positive] **IMPROVED** |
+| **LOW Severity** | 32 | 33 | +1 (+3%) |  Acceptable |
+| **Total Issues** | **67** | **57** | **-10 (-15%)** |  **SUCCESS** |
 
 ### Corrections Implémentées
 
-#### 1. ✅ MD5 + usedforsecurity=False (6 HIGH → 0)
+#### 1.  MD5 + usedforsecurity=False (6 HIGH → 0)
 **Fichiers modifiés:**
 - `api/rebalancing_strategy_router.py:140`
 - `api/risk_endpoints.py:1182`
@@ -683,7 +683,7 @@ Run metrics:
 
 **Impact:** Toutes les utilisations de MD5 documentées comme non-cryptographiques.
 
-#### 2. ✅ urllib → httpx (2 MEDIUM → 0)
+#### 2.  urllib → httpx (2 MEDIUM → 0)
 **Fichier modifié:** `services/pricing.py:160,178`
 
 **Avant:**
@@ -704,7 +704,7 @@ with httpx.Client(timeout=5.0) as client:
 
 **Impact:** Élimine risque de schéma `file://` malveillant.
 
-#### 3. ✅ Safe ML Loader System (NEW)
+#### 3.  Safe ML Loader System (NEW)
 **Nouveau fichier:** `services/ml/safe_loader.py` (199 lignes)
 
 **Fonctionnalités:**
@@ -715,14 +715,14 @@ with httpx.Client(timeout=5.0) as client:
 
 **Sécurité:**
 ```python
-# ✅ Path traversal protection
+# Path traversal protection
 abs_path = Path(file_path).resolve()
 safe_dir = SAFE_MODEL_DIR.resolve()
 
 if not abs_path.is_relative_to(safe_dir):
     raise UnsafeModelPathError("Path outside safe directory")
 
-# ✅ PyTorch secure mode first
+# PyTorch secure mode first
 try:
     model = torch.load(path, weights_only=True)  # Secure
 except:
@@ -730,7 +730,7 @@ except:
     model = torch.load(path, weights_only=False)  # Fallback
 ```
 
-#### 4. ✅ ML Models Refactored (6 occurrences)
+#### 4.  ML Models Refactored (6 occurrences)
 **Fichiers modifiés:**
 1. `services/ml/model_registry.py:245` - `safe_pickle_load()`
 2. `services/ml/models/regime_detector.py:832` - `safe_torch_load()`
@@ -749,7 +749,7 @@ from services.ml.safe_loader import safe_torch_load
 checkpoint = safe_torch_load(model_file, map_location=self.device)
 ```
 
-#### 5. ✅ Documentation Sécurité
+#### 5.  Documentation Sécurité
 **Nouveau fichier:** `docs/SECURITY.md` (500+ lignes)
 
 **Contenu:**
@@ -778,12 +778,12 @@ checkpoint = safe_torch_load(model_file, map_location=self.device)
 
 | Critère | Status | Note |
 |---------|--------|------|
-| Dependencies CVE | ✅ **0/163** | Perfect |
-| Code HIGH Issues | ✅ **0/67** | Fixed 100% |
-| Code MEDIUM Issues | 🟢 **24/67** | -17% (acceptable) |
-| ML Security System | ✅ **Implemented** | Path validation + logging |
-| Documentation | ✅ **Complete** | docs/SECURITY.md |
-| **PRODUCTION READY** | ✅ **YES** | **APPROVED** |
+| Dependencies CVE | [OK] **0/163** | Perfect |
+| Code HIGH Issues | [OK] **0/67** | Fixed 100% |
+| Code MEDIUM Issues | [Positive] **24/67** | -17% (acceptable) |
+| ML Security System |  **Implemented** | Path validation + logging |
+| Documentation |  **Complete** | docs/SECURITY.md |
+| **PRODUCTION READY** | [OK] **YES** | **APPROVED** |
 
 ### Temps d'Implémentation
 
@@ -806,7 +806,7 @@ checkpoint = safe_torch_load(model_file, map_location=self.device)
 **Prochaine review:** 22 Décembre 2025
 **Responsable:** Lead Developer / Security Team
 **Outils:** Safety 3.7.0, Bandit 1.9.1
-**Status:** 🟢 **PRODUCTION READY** - All critical fixes implemented
+**Status:** [Positive] **PRODUCTION READY** - All critical fixes implemented
 
 ---
 

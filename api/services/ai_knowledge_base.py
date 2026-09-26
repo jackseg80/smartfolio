@@ -82,7 +82,7 @@ def _extract_section(content: str, section_name: str) -> Optional[str]:
 
     Args:
         content: Full markdown content
-        section_name: Section header to extract (e.g., "🎯 Règles Critiques")
+        section_name: Section header to extract (e.g., " Règles Critiques")
 
     Returns:
         Section content or None if not found
@@ -151,10 +151,10 @@ def _build_core_knowledge() -> str:
 
     # Extract key sections
     sections_to_extract = [
-        "🎯 Règles Critiques",
-        "💾 Système de Données",
-        "🔧 Patterns de Code",
-        "🚨 Pièges Fréquents"
+        " Règles Critiques",
+        " Système de Données",
+        " Patterns de Code",
+        "[Alert] Pièges Fréquents"
     ]
 
     knowledge_parts = ["=== SMARTFOLIO SYSTEM KNOWLEDGE ===\n"]
@@ -168,7 +168,7 @@ def _build_core_knowledge() -> str:
     knowledge_parts.append(_extract_essential_patterns(content))
 
     # Add common pitfalls
-    pitfalls = _extract_section(content, "🚨 Pièges Fréquents")
+    pitfalls = _extract_section(content, "[Alert] Pièges Fréquents")
     if pitfalls:
         knowledge_parts.append(f"\n## COMMON PITFALLS\n{pitfalls[:500]}")  # Limit size
 
@@ -268,10 +268,10 @@ def _get_fallback_knowledge() -> str:
 
 ## COMMON PITFALLS
 
-❌ Forgetting user_id → Use dependency injection
-❌ Direct fetch() → Use window.loadBalanceData()
-❌ Inverting Risk Score
-❌ Mixing DI and Regime scores
+[Error] Forgetting user_id → Use dependency injection
+[Error] Direct fetch() → Use window.loadBalanceData()
+[Error] Inverting Risk Score
+[Error] Mixing DI and Regime scores
 
 === END KNOWLEDGE BASE ===
 """
@@ -285,7 +285,7 @@ PAGE_KNOWLEDGE: Dict[str, str] = {
 ### Risk Score - Calcul et Interprétation
 - **Échelle**: 0-100 où **PLUS HAUT = PLUS ROBUSTE/SÛR** (vert = bon)
 - **Composants**: Volatilité, Concentration (HHI), Drawdown, Sharpe ratio
-- ❌ **JAMAIS inverser**: Ne PAS utiliser `100 - riskScore`
+- [Error] **JAMAIS inverser**: Ne PAS utiliser `100 - riskScore`
 - **Interprétation**: 80+ = excellent, 60-80 = bon, 40-60 = attention, <40 = risque élevé
 
 ### Métriques de Risque Clés
@@ -323,14 +323,14 @@ PAGE_KNOWLEDGE: Dict[str, str] = {
 - **Phase adjustment**: Score × phase_factor (ajustement selon phase marché)
 - **Source**: Backend strategy_registry.py + Frontend unified-insights-v2.js
 
-⚠️ **CONFUSION "65/45"**: C'est un score de QUALITÉ d'allocation (total_check.isValid), PAS le DI!
+[Warning] **CONFUSION "65/45"**: C'est un score de QUALITÉ d'allocation (total_check.isValid), PAS le DI!
 Le DI est toujours une moyenne pondérée continue 0-100.
 
 ### Score de Régime (concept documentaire)
 - **Nature**: Métrique composite pour communication (pas calculée en backend)
 - **Interprétation**: Combinaison qualitative des signaux Cycle/OnChain/Risk
 - **Régimes**: Bear Market (0-25), Correction (26-50), Bull Market (51-75), Expansion (76-100)
-- ⚠️ Le DI utilise des poids adaptatifs DIFFÉRENTS de toute formule fixe
+- [Warning] Le DI utilise des poids adaptatifs DIFFÉRENTS de toute formule fixe
 
 ### ML Sentiment - Interprétation
 - **Échelle**: 0-100 (converti de sentiment ML [-1, +1] via `50 + score × 50`)
@@ -344,7 +344,7 @@ Le DI est toujours une moyenne pondérée continue 0-100.
 ### Phase vs Régime - Distinction IMPORTANTE
 - **Phase**: Basée UNIQUEMENT sur Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
 - **Régime**: Basé sur Score de Régime (Bear Market, Correction, Bull Market, Expansion)
-- ⚠️ Phase "bearish" + Régime "Expansion" est NORMAL et ne doit pas être forcé à converger!
+- [Warning] Phase "bearish" + Régime "Expansion" est NORMAL et ne doit pas être forcé à converger!
 
 ### Overrides Contextuels (appliqués à l'allocation)
 1. **ML Sentiment < 25**: Force allocation défensive (réduit risky assets)
@@ -383,16 +383,16 @@ Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécial
 
 ### Stop Loss - 6 Méthodes de Calcul
 1. **Trailing Stop** (NEW): Pour positions avec >20% gain latent, protège profits avec trailing -15% à -30% from ATH
-2. **Fixed Variable** ✅ (RECOMMANDÉ): Adaptatif selon volatilité - 4% (low vol), 6% (moderate), 8% (high vol)
+2. **Fixed Variable** [OK] (RECOMMANDÉ): Adaptatif selon volatilité - 4% (low vol), 6% (moderate), 8% (high vol)
 3. **ATR 2x**: Multiplicateur ATR selon régime marché (1.5x-2.5x)
 4. **Technical Support**: Basé sur MA20/MA50
 5. **Volatility 2σ**: 2 écarts-types statistiques
 6. **Fixed %**: Pourcentage fixe (fallback legacy)
 
 ### R/R Ratio (Risk/Reward)
-- ✅ **≥2.0**: Bon trade (risque acceptable vs potentiel)
-- ⚠️ **1.5-2.0**: Trade acceptable avec prudence
-- ❌ **<1.5**: Trade NON recommandé (risque trop élevé vs reward)
+- [OK] **≥2.0**: Bon trade (risque acceptable vs potentiel)
+- [Warning] **1.5-2.0**: Trade acceptable avec prudence
+- [Error] **<1.5**: Trade NON recommandé (risque trop élevé vs reward)
 
 ### Market Opportunities System
 - **Gaps sectoriels**: Écart entre allocation actuelle et cibles optimales

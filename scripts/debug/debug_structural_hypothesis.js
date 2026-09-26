@@ -36,8 +36,8 @@ scenarios.forEach(s => {
   console.log('  With Risk v1 (' + s.risk_v1 + '):        ' + withV1 + '% (delta: ' + (withV1 - s.observed) + ')');
   console.log('  With Structural (' + s.structural + '):    ' + withStructural + '% (delta: ' + (withStructural - s.observed) + ')');
 
-  const matchV1 = Math.abs(withV1 - s.observed) < 1 ? '✅ MATCH' : '❌';
-  const matchStructural = Math.abs(withStructural - s.observed) < 1 ? '✅ MATCH' : '❌';
+  const matchV1 = Math.abs(withV1 - s.observed) < 1 ? 'OK MATCH' : 'Error';
+  const matchStructural = Math.abs(withStructural - s.observed) < 1 ? 'OK MATCH' : 'Error';
 
   console.log('  Observed:                ' + s.observed + '%');
   console.log('  V1 match: ' + matchV1);

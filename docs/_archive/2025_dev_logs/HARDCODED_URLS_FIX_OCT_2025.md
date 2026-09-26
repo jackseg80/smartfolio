@@ -1,8 +1,8 @@
 # Fix: Hardcoded URLs Removal — Oct 2025
 
 **Date:** 2025-10-11
-**Status:** ✅ Completed
-**Priority:** 🔴 Critical
+**Status:** [OK] Completed
+**Priority:** [Negative] Critical
 
 ---
 
@@ -11,9 +11,9 @@
 9 fichiers HTML contenaient des URLs hardcodées (`localhost`, `127.0.0.1`) qui causaient des problèmes en production.
 
 **Impact:**
-- ❌ Incompatibilité production (appels vers localhost)
-- ❌ Configuration non centralisée
-- ❌ Maintenance difficile (changements multiples requis)
+- [Error] Incompatibilité production (appels vers localhost)
+- [Error] Configuration non centralisée
+- [Error] Maintenance difficile (changements multiples requis)
 
 ---
 
@@ -47,14 +47,14 @@ const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
 
 ---
 
-## Fichiers Vérifiés (Clean ✅)
+## Fichiers Vérifiés (Clean )
 
 Les fichiers suivants utilisent déjà correctement `window.globalConfig.get()`:
 
-- ✅ `static/test_pnl_frontend.html:38` — Fallback correct avec globalConfig
-- ✅ `static/ai-dashboard.html:1024, 1027, 1030, 1702` — Fallbacks corrects
-- ✅ `static/analytics-unified.html` — Aucune URL hardcodée
-- ✅ `static/settings.html:412, 615, 1375` — Valeurs placeholder acceptables (champs input)
+- [OK] `static/test_pnl_frontend.html:38` — Fallback correct avec globalConfig
+- [OK] `static/ai-dashboard.html:1024, 1027, 1030, 1702` — Fallbacks corrects
+- [OK] `static/analytics-unified.html` — Aucune URL hardcodée
+- [OK] `static/settings.html:412, 615, 1375` — Valeurs placeholder acceptables (champs input)
 
 ---
 
@@ -78,11 +78,11 @@ Les fichiers suivants dans `static/archive/` contiennent des hardcodes mais ne s
 Toutes les URLs API doivent utiliser la configuration centralisée:
 
 ```javascript
-// ✅ CORRECT
+// [OK] CORRECT
 const apiUrl = window.globalConfig.get('api_base_url');
 const apiUrl = window.globalConfig.getApiUrl('/endpoint');
 
-// ❌ INCORRECT
+// [Error] INCORRECT
 const apiUrl = 'http://localhost:8080';
 const apiUrl = 'http://127.0.0.1:8080';
 ```
@@ -120,10 +120,10 @@ cat static/global-config.js | grep "detectDefaultApiBase"
 
 ### Résultat Attendu
 
-- ✅ Aucune URL hardcodée dans fichiers actifs
-- ✅ Configuration centralisée via `global-config.js`
-- ✅ Fallback automatique sur `window.location.origin`
-- ✅ Compatible dev (localhost) ET production
+- [OK] Aucune URL hardcodée dans fichiers actifs
+- [OK] Configuration centralisée via `global-config.js`
+- [OK] Fallback automatique sur `window.location.origin`
+- [OK] Compatible dev (localhost) ET production
 
 ---
 
@@ -158,7 +158,7 @@ git commit -m "fix: remove hardcoded URLs and clean Git tracking
 - Add temp files to .gitignore
 - Untrack .claude/settings.local.json
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+ Generated with [Claude Code](https://claude.com/claude-code)
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
@@ -169,8 +169,8 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 | Fichier | Changements | Impact |
 |---------|-------------|--------|
 | `.gitignore` | +3 lignes (temp files) | Cleanup Git |
-| `static/alias-manager.html` | 7 remplacements | 🔴 Production critical |
-| `static/risk-dashboard.html` | 1 remplacement | 🟡 Help link |
+| `static/alias-manager.html` | 7 remplacements | [Negative] Production critical |
+| `static/risk-dashboard.html` | 1 remplacement | [Pending] Help link |
 | `.claude/settings.local.json` | Désindexé | Cleanup Git |
 
 ---
@@ -192,10 +192,10 @@ jobs:
       - name: Check for hardcoded URLs
         run: |
           if grep -r "localhost\|127\.0\.0\.1" static/*.html | grep -v "archive/"; then
-            echo "❌ Hardcoded URLs detected!"
+            echo "[Error] Hardcoded URLs detected!"
             exit 1
           fi
-          echo "✅ No hardcoded URLs found"
+          echo "[OK] No hardcoded URLs found"
 ```
 
 ### Pre-commit Hook (Local)
@@ -205,7 +205,7 @@ jobs:
 #!/bin/bash
 if git diff --cached --name-only | grep -q "\.html$"; then
   if git diff --cached | grep -E "\+.*localhost|127\.0\.0\.1"; then
-    echo "❌ Hardcoded URL detected in staged files!"
+    echo "[Error] Hardcoded URL detected in staged files!"
     exit 1
   fi
 fi
@@ -221,7 +221,7 @@ fi
 
 ---
 
-## Checklist de Validation ✅
+## Checklist de Validation
 
 - [x] Toutes les URLs hardcodées remplacées
 - [x] Fallbacks dynamiques (`window.location.origin`)
@@ -234,5 +234,5 @@ fi
 
 ---
 
-**Status Final:** 🟢 RÉSOLU — Prêt pour production
+**Status Final:** [Positive] RÉSOLU — Prêt pour production
 

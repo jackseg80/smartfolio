@@ -128,13 +128,13 @@ const symbols = Math.min(Math.max(0, rawValue), 10); // 0-10 symboles
 
 ## Résultats
 
-### ✅ Problèmes Résolus
-- ❌ **8/4 modèles (200% confidence)** → ✅ **4/4 modèles (100% confidence)**
-- ❌ **Calculs différents par page** → ✅ **Source unique cohérente**
-- ❌ **Erreurs de syntaxe cachées** → ✅ **Code centralisé validé**
-- ❌ **Badge manquant** → ✅ **Badge global unifié**
+### Problèmes Résolus
+- [Error] **8/4 modèles (200% confidence)** → [OK] **4/4 modèles (100% confidence)**
+- [Error] **Calculs différents par page** → [OK] **Source unique cohérente**
+- [Error] **Erreurs de syntaxe cachées** → [OK] **Code centralisé validé**
+- [Error] **Badge manquant** → [OK] **Badge global unifié**
 
-### 🎯 Avantages
+### Avantages
 - **Single Source of Truth** : Plus de divergences
 - **Performance** : Cache intelligent 2min TTL
 - **Maintenance** : Un seul endroit à modifier

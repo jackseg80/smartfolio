@@ -50,15 +50,15 @@ export function getAlertTypeDisplayName(alertType) {
  */
 export function formatAlertType(alertType) {
   const typeMap = {
-    'VOL_Q90_CROSS': { icon: '📊', label: 'High Volatility' },
-    'REGIME_FLIP': { icon: '🔄', label: 'Regime Change' },
-    'CORR_HIGH': { icon: '🔗', label: 'High Correlation' },
-    'CONTRADICTION_SPIKE': { icon: '⚠️', label: 'ML Contradiction' },
-    'DECISION_DROP': { icon: '📉', label: 'Low Confidence' },
-    'EXEC_COST_SPIKE': { icon: '💸', label: 'High Exec Cost' }
+    'VOL_Q90_CROSS': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Analytics\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#chart-bar\"></use></svg>", label: 'High Volatility' },
+    'REGIME_FLIP': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>", label: 'Regime Change' },
+    'CORR_HIGH': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Link\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#link\"></use></svg>", label: 'High Correlation' },
+    'CONTRADICTION_SPIKE': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>", label: 'ML Contradiction' },
+    'DECISION_DROP': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Decline\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-down\"></use></svg>", label: 'Low Confidence' },
+    'EXEC_COST_SPIKE': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Balance\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#wallet\"></use></svg>", label: 'High Exec Cost' }
   };
 
-  const mapped = typeMap[alertType] || { icon: '🔔', label: alertType };
+  const mapped = typeMap[alertType] || { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Notifications\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bell\"></use></svg>", label: alertType };
   return `<span style="display: inline-flex; align-items: center; gap: 0.5rem;"><span style="font-size: 1.1rem;">${mapped.icon}</span><span>${mapped.label}</span></span>`;
 }
 
@@ -210,7 +210,7 @@ function renderAlertsHistoryPage() {
 
   // Guard: Check if elements exist
   if (!container || !paginationContainer) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Alerts DOM elements not found, skipping render');
+    (window.debugLogger?.warn || console.warn)("[Warning] Alerts DOM elements not found, skipping render");
     return;
   }
 
@@ -267,12 +267,12 @@ function createAlertsHistoryRow(alert) {
 
   const getStatusText = (alert) => {
     if (alert.acknowledged_at) {
-      return `<span style="color: var(--success)">✅ Acknowledged</span>`;
+      return `<span style="color: var(--success)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Acknowledged</span>`;
     }
     if (alert.snooze_until && new Date(alert.snooze_until) > new Date()) {
-      return `<span style="color: var(--warning)">⏸️ Snoozed</span>`;
+      return `<span style="color: var(--warning)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Paused" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#pause"></use></svg> Snoozed</span>`;
     }
-    return `<span style="color: var(--error)">🚨 Active</span>`;
+    return `<span style="color: var(--error)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg> Active</span>`;
   };
 
   // Format unifié : Action → Impact € → 2 raisons → Détails
@@ -283,19 +283,19 @@ function createAlertsHistoryRow(alert) {
     return `
           <div class="alert-unified-format">
             <div class="alert-action">
-              <strong>🎯 ${formatted.action}</strong>
+              <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> ${formatted.action}</strong>
             </div>
             <div class="alert-impact">
-              💰 Impact: <span class="alert-impact-value">${formatted.impact}</span>
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Impact: <span class="alert-impact-value">${formatted.impact}</span>
             </div>
             <div class="alert-reasons">
-              📋 Raisons:
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Raisons:
               <ul class="alert-reasons-list">
                 ${formatted.reasons.map(reason => `<li>${reason}</li>`).join('')}
               </ul>
             </div>
             <div class="alert-details">
-              ℹ️ ${formatted.details}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> ${formatted.details}
             </div>
           </div>
         `;
@@ -342,9 +342,9 @@ function createAlertsHistoryRow(alert) {
 
   const getSeverityBadge = (severity) => {
     const severityConfig = {
-      'S1': { icon: 'ℹ️', label: 'Info', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
-      'S2': { icon: '⚠️', label: 'Warning', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
-      'S3': { icon: '🚨', label: 'Critical', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
+      'S1': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>", label: 'Info', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },
+      'S2': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>", label: 'Warning', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+      'S3': { icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Alert\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-circle\"></use></svg>", label: 'Critical', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)' }
     };
     const config = severityConfig[severity] || severityConfig['S1'];
     return `<span style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 6px; background: ${config.bg}; color: ${config.color}; font-weight: 600; font-size: 0.9rem;"><span style="font-size: 1.1rem;">${config.icon}</span><span>${severity}</span></span>`;
@@ -373,7 +373,7 @@ function createAlertsHistoryRow(alert) {
               class="alert-action-btn"
               onclick="openAlertModal('${alert.id}')"
               title="View alert details">
-              📋 Details
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Details
             </button>
           </td>
         </tr>
@@ -450,7 +450,7 @@ function updateAlertsPagination() {
 
   // Guard: Check if pagination elements exist
   if (!paginationContainer || !prevBtn || !nextBtn || !pageInfo) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Pagination DOM elements not found, skipping update');
+    (window.debugLogger?.warn || console.warn)("[Warning] Pagination DOM elements not found, skipping update");
     return;
   }
 

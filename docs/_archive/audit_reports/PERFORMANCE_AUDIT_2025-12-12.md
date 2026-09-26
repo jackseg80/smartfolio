@@ -395,11 +395,11 @@ Risk Metrics:
 
 | Action | Impact | Effort | Status |
 |--------|--------|--------|--------|
-| Partitionner portfolio_history.json | Scalabilité | 4h | ⏳ Pending |
-| Pagination endpoints liste | Memory | 3h | ⏳ Pending |
-| Redis pipeline sector analyzer | -40% roundtrips | 2h | ✅ **DONE Dec 23** |
-| Code splitting frontend | -52% load time | 4h | ⏳ Pending |
-| Phase Engine distribué | Multi-worker | 8h | ⏳ Pending |
+| Partitionner portfolio_history.json | Scalabilité | 4h |  Pending |
+| Pagination endpoints liste | Memory | 3h |  Pending |
+| Redis pipeline sector analyzer | -40% roundtrips | 2h |  **DONE Dec 23** |
+| Code splitting frontend | -52% load time | 4h |  Pending |
+| Phase Engine distribué | Multi-worker | 8h |  Pending |
 
 ---
 

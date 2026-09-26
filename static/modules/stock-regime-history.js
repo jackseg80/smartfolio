@@ -43,7 +43,7 @@ export function initializeStockRegimeHistory() {
             <div class="regime-modal-overlay" onclick="window.closeStockRegimeHistory()"></div>
             <div class="regime-modal-content" style="max-width: 1200px; width: 90%; max-height: 90vh; overflow-y: auto;">
                 <div class="regime-modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid var(--theme-border);">
-                    <h2 style="margin: 0; font-size: 1.5rem; color: var(--theme-text);">📈 Stock Market Regime Probabilities</h2>
+                    <h2 style="margin: 0; font-size: 1.5rem; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Stock Market Regime Probabilities</h2>
                     <button onclick="window.closeStockRegimeHistory()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--theme-text-muted); padding: 0; line-height: 1;">&times;</button>
                 </div>
                 <div class="regime-modal-body" style="padding: 1.5rem;">
@@ -177,7 +177,7 @@ async function loadStockRegimeHistory() {
         errorEl.innerHTML = `
             <p><strong>Error loading stock regime history</strong></p>
             <p style="font-size: 0.9rem; color: var(--theme-text-muted);">${error.message}</p>
-            <button onclick="window.loadStockRegimeHistory()" class="btn primary" style="margin-top: 1rem;">🔄 Retry</button>
+            <button onclick="window.loadStockRegimeHistory()" class="btn primary" style="margin-top: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry</button>
         `;
     }
 }

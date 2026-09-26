@@ -76,7 +76,7 @@ class UserDataRouter:
     def get_csv_files(self, file_type: str = "balance") -> List[str]:
         """
         Retourne les fichiers CSV pour un type donné.
-        🎯 SOURCES FIRST: Utilise effective_path si disponible
+         SOURCES FIRST: Utilise effective_path si disponible
 
         Args:
             file_type: Type de fichier ('balance', 'coins', 'exchange')
@@ -87,7 +87,7 @@ class UserDataRouter:
         # Si get_effective_source() a déjà déterminé un path effectif, l'utiliser
         if hasattr(self, '_effective_read') and hasattr(self, '_effective_path'):
             if self._effective_read in ("snapshot", "imports", "legacy") and self._effective_path:
-                logger.debug(f"📂 Using pre-resolved effective path: {self._effective_path}")
+                logger.debug(f" Using pre-resolved effective path: {self._effective_path}")
                 return [self._effective_path]
 
         # Sinon, résoudre dynamiquement (fallback pour compatibilité)
@@ -105,7 +105,7 @@ class UserDataRouter:
         if mode != "empty" and effective_path:
             return [effective_path]
 
-        logger.warning(f"🚫 Sources resolver: No data for user {self.user_id}, type {file_type}")
+        logger.warning(f" Sources resolver: No data for user {self.user_id}, type {file_type}")
         return []
 
     def get_most_recent_csv(self, file_type: str = "balance") -> Optional[str]:
@@ -122,22 +122,22 @@ class UserDataRouter:
         # Priorité au fichier explicitement sélectionné (comparaison par nom)
         if self.selected_csv:
             file_names = [Path(f).name for f in files]
-            logger.info(f"🔍 Looking for selected CSV: '{self.selected_csv}' in {len(files)} files")
-            logger.info(f"📋 Available files: {file_names}")
+            logger.info(f" Looking for selected CSV: '{self.selected_csv}' in {len(files)} files")
+            logger.info(f" Available files: {file_names}")
 
             for f in files:
                 file_name = Path(f).name
                 match = file_name == self.selected_csv
                 logger.debug(f"  Comparing: '{file_name}' == '{self.selected_csv}' ? {match}")
                 if match:
-                    logger.info(f"✅ Using selected CSV: {f}")
+                    logger.info(f" Using selected CSV: {f}")
                     return f
-            logger.warning(f"⚠️ Selected CSV '{self.selected_csv}' not found in available files, using most recent")
+            logger.warning(f" Selected CSV '{self.selected_csv}' not found in available files, using most recent")
         else:
-            logger.debug(f"📋 No CSV selected, using most recent from {len(files)} files")
+            logger.debug(f" No CSV selected, using most recent from {len(files)} files")
 
         # Sinon, retourner le plus récent
-        logger.info(f"📌 Using most recent CSV: {files[0]}")
+        logger.info(f" Using most recent CSV: {files[0]}")
         return files[0]
 
     def get_api_profile(self) -> Dict[str, Any]:
@@ -202,7 +202,7 @@ class UserDataRouter:
 
     def get_effective_source(self) -> str:
         """
-        🎯 SOURCES FIRST avec respect de la préférence utilisateur
+         SOURCES FIRST avec respect de la préférence utilisateur
         Retourne la source effective qui sera utilisée.
 
         Returns:
@@ -210,49 +210,49 @@ class UserDataRouter:
         """
         from api.services.sources_resolver import resolve_effective_path
 
-        # 🔥 PRIORITÉ UTILISATEUR: Si API explicitement configuré, respecter ce choix
+        # PRIORITÉ UTILISATEUR: Si API explicitement configuré, respecter ce choix
         if self.data_source == "cointracking_api" and self._cointracking_api_ready():
             self._effective_read = "api"
             self._effective_path = None
-            logger.info(f"👤 User preference: API explicitly configured for user {self.user_id}")
+            logger.info(f" User preference: API explicitly configured for user {self.user_id}")
             return "cointracking_api"
 
         # Saxo API check (similar to CoinTracking)
         if self.data_source == "saxobank_api" and self._saxo_api_ready():
             self._effective_read = "api"
             self._effective_path = None
-            logger.info(f"👤 User preference: Saxo API explicitly configured for user {self.user_id}")
+            logger.info(f" User preference: Saxo API explicitly configured for user {self.user_id}")
             return "saxobank_api"
 
         # --- Sources snapshots et imports (priorité haute) ---
         mode, path = resolve_effective_path(self.user_fs, "cointracking")
-        logger.info(f"🔍 Sources resolver returned: mode={mode}, path={path} for user {self.user_id}")
+        logger.info(f" Sources resolver returned: mode={mode}, path={path} for user {self.user_id}")
 
         if mode in ("snapshot", "imports", "user_choice"):
             # Snapshots, imports et choix utilisateur ont priorité absolue sur tout
             self._effective_read = mode
             self._effective_path = path
-            logger.info(f"🎯 Sources First: Using {mode} for user {self.user_id} - {path}")
+            logger.info(f" Sources First: Using {mode} for user {self.user_id} - {path}")
             return "cointracking"
 
         # --- Legacy seulement si pas de préférence API ---
         if mode == "legacy" and self.data_source != "cointracking_api":
             self._effective_read = mode
             self._effective_path = path
-            logger.info(f"🔙 Sources First: Using legacy for user {self.user_id} - {path}")
+            logger.info(f" Sources First: Using legacy for user {self.user_id} - {path}")
             return "cointracking"
 
         # --- Fallback API si credentials valides ---
         if self._cointracking_api_ready():
             self._effective_read = "api"
             self._effective_path = None
-            logger.info(f"📡 Sources First: Fallback to API for user {self.user_id}")
+            logger.info(f" Sources First: Fallback to API for user {self.user_id}")
             return "cointracking_api"
 
         # --- Vide propre ---
         self._effective_read = "empty"
         self._effective_path = None
-        logger.warning(f"💔 Sources First: No data available for user {self.user_id}")
+        logger.warning(f" Sources First: No data available for user {self.user_id}")
         return "stub"
 
     def _cointracking_api_ready(self) -> bool:

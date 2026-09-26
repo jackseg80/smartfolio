@@ -11,12 +11,15 @@ SmartFolio uses a **unified 4-regime system** to classify market conditions. Eve
 
 ### Canonical Regimes
 
-| ID | Name | Score Range (0-100) | Color | CSS Key | Emoji |
-| -- | ---- | ------------------- | ----- | ------- | ----- |
-| 0 | Bear Market | 0-25 | `#dc2626` (red) | `bear-market` | Red circle |
-| 1 | Correction | 26-50 | `#ea580c` (orange) | `correction` | Orange circle |
-| 2 | Bull Market | 51-75 | `#22c55e` (green) | `bull-market` | Green circle |
-| 3 | Expansion | 76-100 | `#3b82f6` (blue) | `expansion` | Blue circle |
+| ID | Name | Score Range (0-100) | Color | CSS Key |
+| -- | ---- | ------------------- | ----- | ------- |
+| 0 | Bear Market | 0-25 | `#dc2626` (red) | `bear-market` |
+| 1 | Correction | 26-50 | `#ea580c` (orange) | `correction` |
+| 2 | Bull Market | 51-75 | `#22c55e` (green) | `bull-market` |
+| 3 | Expansion | 76-100 | `#3b82f6` (blue) | `expansion` |
+
+Regimes are displayed using their names and colors. `REGIME_EMOJIS` remains a
+compatibility export with empty text prefixes; it no longer inserts decorative symbols.
 
 Score = 0-100, where **100 = best market conditions**.
 

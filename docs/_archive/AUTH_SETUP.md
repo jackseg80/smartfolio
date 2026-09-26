@@ -1,10 +1,10 @@
-# 🔐 Authentication Setup - Quick Start Guide
+# Authentication Setup - Quick Start Guide
 
 Ce guide vous aide à configurer le système d'authentification JWT de SmartFolio.
 
 ---
 
-## 📋 Prérequis
+## Prérequis
 
 - Python 3.9+
 - SmartFolio backend installé
@@ -12,9 +12,9 @@ Ce guide vous aide à configurer le système d'authentification JWT de SmartFoli
 
 ---
 
-## 🚀 Installation en 5 Étapes
+## Installation en 5 Étapes
 
-### 1️⃣ Installer les dépendances JWT
+### Installer les dépendances JWT
 
 ```bash
 pip install passlib[bcrypt] python-jose[cryptography]
@@ -25,7 +25,7 @@ pip install passlib[bcrypt] python-jose[cryptography]
 pip install -r requirements.txt
 ```
 
-### 2️⃣ Configurer le JWT Secret
+### Configurer le JWT Secret
 
 **Créer ou modifier `.env` :**
 ```bash
@@ -43,7 +43,7 @@ JWT_SECRET_KEY=votre-secret-genere-ici
 DEV_SKIP_AUTH=0  # 0 = auth activée, 1 = bypass (dev only)
 ```
 
-### 3️⃣ Générer les passwords utilisateurs
+### Générer les passwords utilisateurs
 
 ```bash
 # Générer passwords pour tous les users
@@ -56,8 +56,8 @@ python scripts/setup_passwords.py
 SmartFolio - Password Setup
 ============================================================
 
-✅ Password generated for 'demo' (Démo)
-✅ Password generated for 'jack' (Jack)
+[OK] Password generated for 'demo' (Démo)
+[OK] Password generated for 'jack' (Jack)
 
 ============================================================
 Password Summary - SAVE THESE CREDENTIALS SECURELY
@@ -72,12 +72,12 @@ Password: Pz8$Lm4!Nq1@Rj7T
 Roles: admin, ml_admin, governance_admin
 ------------------------------------------------------------
 
-⚠️  WARNING: Save these passwords now! They cannot be retrieved later.
+  WARNING: Save these passwords now! They cannot be retrieved later.
 ```
 
-**💡 Astuce:** Sauvegardez ces passwords dans un gestionnaire de mots de passe (1Password, Bitwarden, etc.)
+** Astuce:** Sauvegardez ces passwords dans un gestionnaire de mots de passe (1Password, Bitwarden, etc.)
 
-### 4️⃣ (Optionnel) Protéger les pages HTML
+### (Optionnel) Protéger les pages HTML
 
 ```bash
 # Preview (dry-run)
@@ -95,7 +95,7 @@ python scripts/add_auth_guards.py --apply
 - admin-dashboard.html
 - ... toutes les pages principales
 
-### 5️⃣ Démarrer le serveur
+### Démarrer le serveur
 
 ```bash
 # Activer l'environnement virtuel
@@ -109,7 +109,7 @@ python -m uvicorn api.main:app --port 8080
 
 ---
 
-## 🔑 Premier Login
+## Premier Login
 
 1. **Ouvrir le navigateur :** `http://localhost:8080/static/login.html`
 
@@ -124,7 +124,7 @@ python -m uvicorn api.main:app --port 8080
 
 ---
 
-## 🛠️ Commandes Utiles
+## Commandes Utiles
 
 ### Générer un password pour un user spécifique
 
@@ -170,11 +170,11 @@ curl -X POST "http://localhost:8080/auth/login" \
 DEV_SKIP_AUTH=1  # Bypass auth (toutes les pages accessibles sans login)
 ```
 
-**⚠️ Attention:** Ne JAMAIS activer en production !
+**[Warning] Attention:** Ne JAMAIS activer en production !
 
 ---
 
-## 🎯 Workflow Complet
+## Workflow Complet
 
 ### Premier Démarrage
 
@@ -227,7 +227,7 @@ python scripts/setup_passwords.py --user jack --password "NouveauPassword123!" -
 
 ---
 
-## 📚 Documentation Complète
+## Documentation Complète
 
 - **Guide Complet:** [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md)
 - **Architecture Système:** Endpoints, JWT flow, sécurité
@@ -237,7 +237,7 @@ python scripts/setup_passwords.py --user jack --password "NouveauPassword123!" -
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Où sont stockés les passwords ?
 
@@ -265,15 +265,15 @@ python scripts/setup_passwords.py --user jack --password "NouveauPassword123!" -
 
 ---
 
-## 🚨 Sécurité - Important !
+## Sécurité - Important !
 
-✅ **À FAIRE :**
+[OK] **À FAIRE :**
 - Changer `JWT_SECRET_KEY` en production
 - Utiliser des passwords forts (min 12 caractères)
 - Activer HTTPS en production
 - Sauvegarder les passwords de manière sécurisée
 
-❌ **NE JAMAIS :**
+[Error] **NE JAMAIS :**
 - Committer `.env` dans Git
 - Partager passwords par email/chat
 - Activer `DEV_SKIP_AUTH=1` en production
@@ -281,7 +281,7 @@ python scripts/setup_passwords.py --user jack --password "NouveauPassword123!" -
 
 ---
 
-## 🆘 Aide & Support
+## Aide & Support
 
 **Problème de login ?**
 - Vérifier que `password_hash` existe dans `config/users.json`
@@ -300,4 +300,4 @@ python scripts/setup_passwords.py --user jack --password "NouveauPassword123!" -
 
 **Documentation générée:** Dec 2025
 **Version:** SmartFolio v2.0
-**Status:** ✅ Production Ready
+**Status:** [OK] Production Ready

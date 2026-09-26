@@ -7,11 +7,11 @@
 
 ---
 
-## 🔍 Problème Identifié
+## Problème Identifié
 
 ### Symptômes
-- **F5 (soft refresh)**: Scores corrects → OnChain=42, Risk=50 ✅
-- **Ctrl+Shift+R (hard refresh)**: Scores stales → OnChain=35, Risk=37 ❌
+- **F5 (soft refresh)**: Scores corrects → OnChain=42, Risk=50 [OK]
+- **Ctrl+Shift+R (hard refresh)**: Scores stales → OnChain=35, Risk=37 [Error]
 - **Après 2-3 hard refresh**: Scores se stabilisent à 42/50
 
 ### Variabilité Observée
@@ -19,16 +19,16 @@
 **1ère tentative (hard refresh)**:
 ```
 CCS Mixte: 53
-On-Chain: 35  ❌ (stale cache)
-Risk: 37      ❌ (stale cache)
+On-Chain: 35  [Error] (stale cache)
+Risk: 37      [Error] (stale cache)
 Blended: 73
 ```
 
 **2ème tentative (F5)**:
 ```
 CCS Mixte: 53
-On-Chain: 42  ✅ (cache rafraîchi)
-Risk: 50      ✅ (recalculé avec bonnes données)
+On-Chain: 42  [OK] (cache rafraîchi)
+Risk: 50      [OK] (recalculé avec bonnes données)
 Blended: 67
 ```
 
@@ -46,9 +46,9 @@ export async function fetchAllIndicators({ force = false } = {}) {
 
 **Orchestrator n'utilisait PAS force=true**
 ```javascript
-// risk-data-orchestrator.js:137 (AVANT ❌)
+// risk-data-orchestrator.js:137 (AVANT [Error])
 fetchAllIndicators().catch(err => {  // force=false par défaut!
-  console.warn('⚠️ On-chain indicators fetch failed:', err);
+  console.warn(' On-chain indicators fetch failed:', err);
   return null;
 }),
 ```
@@ -61,18 +61,18 @@ fetchAllIndicators().catch(err => {  // force=false par défaut!
 
 ---
 
-## ✅ Solution Implémentée
+## Solution Implémentée
 
 ### 1. Détection Hard Refresh
 
 ```javascript
 // risk-data-orchestrator.js:34-40
-// ✅ Détecter hard refresh (Ctrl+Shift+R) pour forcer cache bust
+// [OK] Détecter hard refresh (Ctrl+Shift+R) pour forcer cache bust
 const isHardRefresh = performance.navigation?.type === 1 ||
                       performance.getEntriesByType?.('navigation')?.[0]?.type === 'reload';
 const forceRefresh = isHardRefresh || false;
 if (forceRefresh) {
-  console.log('🔄 Hard refresh detected, forcing cache refresh');
+  console.log(' Hard refresh detected, forcing cache refresh');
 }
 ```
 
@@ -84,9 +84,9 @@ if (forceRefresh) {
 ### 2. Force Refresh Indicators
 
 ```javascript
-// risk-data-orchestrator.js:145 (APRÈS ✅)
+// risk-data-orchestrator.js:145 (APRÈS [OK])
 fetchAllIndicators({ force: forceRefresh }).catch(err => {
-  console.warn('⚠️ On-chain indicators fetch failed:', err);
+  console.warn(' On-chain indicators fetch failed:', err);
   return null;
 }),
 ```
@@ -97,24 +97,24 @@ fetchAllIndicators({ force: forceRefresh }).catch(err => {
 
 ---
 
-## 🧪 Validation
+## Validation
 
 ### Test 1: Soft Refresh (F5)
 ```javascript
 // Console logs attendus:
-🔄 Starting risk store hydration...
+ Starting risk store hydration...
 // PAS de "Hard refresh detected"
-✅ Risk store hydrated successfully in 250ms
+[OK] Risk store hydrated successfully in 250ms
 {onchain: '42.0', risk: '50.0', blended: '67.0'}
 ```
 
 ### Test 2: Hard Refresh (Ctrl+Shift+R)
 ```javascript
 // Console logs attendus:
-🔄 Starting risk store hydration...
-🔄 Hard refresh detected, forcing cache refresh  // ← NOUVEAU
-🌐 Calling fetchCryptoToolboxIndicators with SWR... {force: true}
-✅ Risk store hydrated successfully in 450ms  // Plus lent (pas de cache)
+ Starting risk store hydration...
+ Hard refresh detected, forcing cache refresh  // ← NOUVEAU
+ Calling fetchCryptoToolboxIndicators with SWR... {force: true}
+[OK] Risk store hydrated successfully in 450ms  // Plus lent (pas de cache)
 {onchain: '42.0', risk: '50.0', blended: '67.0'}
 ```
 
@@ -131,7 +131,7 @@ OnChain: 42, Risk: 50, Blended: 67
 
 ---
 
-## 🔧 Autres Fixes Connexes
+## Autres Fixes Connexes
 
 ### Fix #1: risk-dashboard.html - Risk Score Display
 **Problème**: Panel affichait 50, page principale affichait 37
@@ -156,7 +156,7 @@ if (riskDisplayEl && riskScore != null) {
 // analytics-unified.html:1302-1307
 window.addEventListener('riskStoreReady', (e) => {
   if (e.detail?.hydrated) {
-    console.log('✅ Orchestrator hydrated, refreshing risk metrics');
+    console.log(' Orchestrator hydrated, refreshing risk metrics');
     updateRiskMetrics();
   }
 }, { once: true });
@@ -164,7 +164,7 @@ window.addEventListener('riskStoreReady', (e) => {
 
 ---
 
-## 📊 Impact
+## Impact
 
 **Fichiers modifiés**: 3
 - `static/core/risk-data-orchestrator.js` (+9 lignes)
@@ -182,29 +182,29 @@ window.addEventListener('riskStoreReady', (e) => {
 
 ---
 
-## 🚀 Critères d'Acceptation
+## Critères d'Acceptation
 
-✅ **Soft Refresh (F5)**
+[OK] **Soft Refresh (F5)**
 - Utilise cache SWR (rapide)
 - Scores identiques avant/après
 
-✅ **Hard Refresh (Ctrl+Shift+R)**
+[OK] **Hard Refresh (Ctrl+Shift+R)**
 - Force fetch API backend
 - Scores TOUJOURS corrects (42/50)
 - Log "Hard refresh detected"
 
-✅ **Stabilité Multi-Refresh**
+[OK] **Stabilité Multi-Refresh**
 - 10 hard refresh consécutifs → scores identiques
 - Pas de variation OnChain 35↔42 ou Risk 37↔50
 
-✅ **Cross-Page Consistency**
+[OK] **Cross-Page Consistency**
 - risk-dashboard: OnChain=42, Risk=50
 - analytics-unified: OnChain=42, Risk=50
 - Store: `{onchain: 42, risk: 50}`
 
 ---
 
-## 📝 Notes Techniques
+## Notes Techniques
 
 ### Performance API Support
 - **Modern browsers**: `performance.getEntriesByType('navigation')[0].type`
@@ -224,5 +224,5 @@ window.addEventListener('riskStoreReady', (e) => {
 ---
 
 **Auteur**: Claude
-**Validation**: ✅ Implémenté et testé
+**Validation**: [OK] Implémenté et testé
 **Status**: Prêt pour validation utilisateur

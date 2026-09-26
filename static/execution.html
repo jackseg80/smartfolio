@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🚀 Execution - SmartFolio</title>
+  <title>Execution - SmartFolio</title>
   <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/responsive.css">
     <link rel="stylesheet" href="shared-theme.css">
@@ -247,7 +247,7 @@
 
   <!-- Unified Risk Flyout Panel -->
   <flyout-panel position="left" width="340" persist-key="execution_flyout">
-    <span slot="title">🎯 Risk Dashboard</span>
+    <span slot="title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Dashboard</span>
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
 
@@ -259,23 +259,23 @@
     <div class="section">
       <div class="tab-nav">
         <button class="tab-button active" onclick="switchTab('create', this)">
-          📝 Create Plan
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Create Plan
         </button>
         <button class="tab-button" onclick="switchTab('monitor', this)">
-          📊 Monitoring
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Monitoring
         </button>
         <button class="tab-button" onclick="switchTab('history', this)">
-          📜 History
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> History
         </button>
         <button class="tab-button" onclick="switchTab('exchanges', this)">
-          🏢 Exchanges
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Company" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-office-2"></use></svg> Exchanges
         </button>
       </div>
 
       <!-- Onglet Création de Plan -->
       <div id="orders" class="tab-content active">
         <div class="alert alert-info">
-          <strong>ℹ️ Note:</strong> Import an existing rebalancing plan or enter actions manually.
+          <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Note:</strong> Import an existing rebalancing plan or enter actions manually.
         </div>
 
         <div class="form-group">
@@ -305,7 +305,7 @@
         </div>
 
         <div id="real-trading-warning" class="real-trading-warning" style="display: none;">
-          <h3>⚠️ WARNING - Real Trading Mode</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> WARNING - Real Trading Mode</h3>
           <p><strong>You are about to execute real orders with real money!</strong></p>
           <ul>
             <li>Carefully verify all actions before validation</li>
@@ -317,10 +317,10 @@
 
         <div class="grid grid-2">
           <button class="btn btn-primary" onclick="validatePlan()">
-            🔍 Validate Plan
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Validate Plan
           </button>
           <button class="btn btn-success" onclick="createAndExecutePlan()" disabled id="execute-btn">
-            🚀 Create and Execute
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Create and Execute
           </button>
         </div>
 
@@ -349,7 +349,7 @@
         </div>
 
         <button class="btn btn-primary" onclick="refreshMonitoring()">
-          🔄 Refresh
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh
         </button>
       </div>
 
@@ -357,7 +357,7 @@
       <div id="history" class="tab-content">
         <div class="section">
           <div class="section-content">
-            <h3 style="margin-top:0">📋 Execution History</h3>
+            <h3 style="margin-top:0"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Execution History</h3>
             <p style="color: var(--theme-text-muted); margin-bottom:1rem;">Detailed history of execution sessions and orders</p>
             <div id="history-inline" class="panel-card"
               style="padding:var(--space-lg); border:1px solid var(--theme-border); border-radius:var(--radius-md); background: var(--theme-surface);">
@@ -366,7 +366,7 @@
             </div>
             <div style="text-align:right; margin-top:.5rem;">
               <a href="execution_history.html" target="_blank"
-                style="color: var(--theme-text-muted); text-decoration: none;">Open full history ↗</a>
+                style="color: var(--theme-text-muted); text-decoration: none;">Open full history <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Up" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up"></use></svg></a>
             </div>
             <script>
               (function () {
@@ -408,7 +408,7 @@
                         </table>
                       </div>`;
                   } catch (e) {
-                    status.textContent = "Unable to load history. Open the full page ↗";
+                    status.textContent = "Unable to load history. Open the full page ";
                     debugLogger.warn('History inline load failed:', e);
                   }
                 }
@@ -422,7 +422,7 @@
       <!-- Onglet Exchanges -->
       <div id="venues" class="tab-content">
         <div class="alert alert-info">
-          <strong>🏢 Configured Exchanges:</strong> Status of available exchange adapters
+          <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Company" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-office-2"></use></svg> Configured Exchanges:</strong> Status of available exchange adapters
         </div>
 
         <div id="exchanges-container">
@@ -431,10 +431,10 @@
 
         <div class="grid grid-2">
           <button class="btn btn-primary" onclick="loadExchanges()">
-            🔄 Refresh Exchanges
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh Exchanges
           </button>
           <button class="btn btn-success" onclick="connectExchanges()">
-            🔗 Connect All
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> Connect All
           </button>
         </div>
       </div>
@@ -660,17 +660,17 @@
 
           resultContainer.innerHTML = `
             <div class="alert alert-success">
-              <strong>✅ Plan Validated Successfully</strong><br>
-              📊 <strong>${response.total_orders}</strong> ordres • 
-              💰 <strong>${formatUSD(response.total_volume)}</strong> volume total<br>
-              ${response.large_orders_count > 0 ? `⚠️ ${response.large_orders_count} large orders detected` : ''}
+              <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Plan Validated Successfully</strong><br>
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>${response.total_orders}</strong> ordres •
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> <strong>${formatUSD(response.total_volume)}</strong> volume total<br>
+              ${response.large_orders_count > 0 ? `Warning ${response.large_orders_count} large orders detected` : ''}
             </div>
           `;
 
           if (response.warnings.length > 0) {
             resultContainer.innerHTML += `
               <div class="alert alert-warning">
-                <strong>⚠️ Warnings:</strong><br>
+                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Warnings:</strong><br>
                 ${response.warnings.map(w => `• ${w}`).join('<br>')}
               </div>
             `;
@@ -678,7 +678,7 @@
         } else {
           resultContainer.innerHTML = `
             <div class="alert alert-danger">
-              <strong>❌ Validation Errors:</strong><br>
+              <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Validation Errors:</strong><br>
               ${response.errors.map(e => `• ${e}`).join('<br>')}
             </div>
           `;
@@ -704,7 +704,7 @@
       // Confirmation pour le mode réel
       if (!dryRun) {
         const confirmed = confirm(
-          '⚠️ WARNING ⚠️\n\n' +
+          "WARNING [Warning]\n\n" +
           'You are about to execute real orders with real money!\n\n' +
           `${validatedPlan.total_orders} orders • ${formatUSD(validatedPlan.total_volume)} volume\n\n` +
           'Are you sure you want to continue?'
@@ -726,7 +726,7 @@
           // Démarrer le monitoring en temps réel
           startRealTimeMonitoring(response.plan_id);
 
-          alert(`🚀 Execution started!\n\nPlan: ${response.plan_id}\nMode: ${dryRun ? 'Simulation' : 'Real Trading'}`);
+          alert(`Execution started!\n\nPlan: ${response.plan_id}\nMode: ${dryRun ? 'Simulation' : 'Real Trading'}`);
         }
 
       } catch (error) {
@@ -767,7 +767,7 @@
           <div class="section-header">
             <h3>Plan ${planId}</h3>
             <span class="status-badge ${statusClass}">
-              ${isActive ? '🟢' : '⚪'} ${progress.status.toUpperCase()}
+              ${isActive ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Neutral\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>"} ${progress.status.toUpperCase()}
             </span>
           </div>
           <div class="section-content">
@@ -792,19 +792,19 @@
             
             ${progress.failed_orders > 0 ? `
               <div class="alert alert-warning">
-                ⚠️ ${progress.failed_orders} failed order(s)
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${progress.failed_orders} failed order(s)
               </div>
             ` : ''}
             
             <div style="margin-top: 16px;">
               <button class="btn btn-primary" onclick="showPlanDetails('${planId}')">
-                📋 Order Details
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Order Details
               </button>
               ${isActive ? `
                 <button class="btn btn-danger" onclick="cancelExecution('${planId}')">
-                  ⛔ Cancel Execution
-                </button>
-              ` : ''}
+ [Blocked] Cancel Execution
+ </button>
+ ` : ''}
             </div>
           </div>
         </div>
@@ -830,7 +830,7 @@
         if (stats.active_plan_ids.length === 0) {
           document.getElementById('active-plans-container').innerHTML = `
             <div class="alert alert-info">
-              ℹ️ No active execution currently
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> No active execution currently
             </div>
           `;
         }
@@ -848,7 +848,7 @@
         if (response.plans.length === 0) {
           container.innerHTML = `
             <div class="alert alert-info">
-              📜 No execution plan in history
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> No execution plan in history
             </div>
           `;
           return;
@@ -898,7 +898,7 @@
                 </div>
                 <div style="text-align: right;">
                   <span class="status-badge ${exchange.connected ? 'status-completed' : 'status-pending'}">
-                    ${exchange.connected ? '🟢 Connected' : '🔴 Disconnected'}
+                    ${exchange.connected ? "Connected" : "Disconnected"}
                   </span><br>
                   <small style="color: var(--muted);">
                     Fees: ${(exchange.config.fee_rate * 100).toFixed(2)}% •
@@ -965,7 +965,7 @@
     };
 
     function initWealthContextIntegration() {
-      console.debug('🏦 Initializing WealthContextBar integration for execution...');
+      console.debug("Initializing WealthContextBar integration for execution...");
 
       if (!window.wealthContextBar) {
         debugLogger.warn('WealthContextBar not available');
@@ -991,7 +991,7 @@
     }
 
     function reloadDataWithExecutionContext() {
-      console.debug('🔄 Reloading execution data with context:', currentWealthContext);
+      console.debug("Reloading execution data with context:", currentWealthContext);
 
       // Recharger les exchanges selon le module
       if (window.loadExchanges) {
@@ -1016,7 +1016,7 @@
     }
 
     function updateUIForExecutionCapabilities(module) {
-      console.debug('🔧 Updating execution UI for module:', module);
+      console.debug("Updating execution UI for module:", module);
 
       // Mise à jour des capabilities selon le module
       const exchangesSection = document.querySelector('#venues .section-content');
@@ -1108,9 +1108,9 @@
 
       const moduleLabels = {
         'crypto': '₿ Crypto',
-        'bourse': '📈 Stocks',
-        'banque': '🏦 Bank',
-        'divers': '📊 Other'
+        'bourse': "Stocks",
+        'banque': "Bank",
+        'divers': "Other"
       };
 
       badge.textContent = `Execution: ${moduleLabels[module] || module}`;
@@ -1119,7 +1119,7 @@
     // ========== INITIALISATION ==========
 
     document.addEventListener('DOMContentLoaded', () => {
-      console.debug('🚀 Execution interface DOM loaded');
+      console.debug("Execution interface DOM loaded");
 
       // Initialiser le header partagé
       // Navigation thématique initialisée automatiquement
@@ -1179,7 +1179,7 @@
     document.addEventListener('DOMContentLoaded', async function () {
       const governanceContainer = document.getElementById('governance-container');
       if (governanceContainer) {
-        debugLogger.debug('🏛️ Initializing Governance Panel for execution...');
+        debugLogger.debug("Initializing Governance Panel for execution...");
         const governancePanel = new GovernancePanel(governanceContainer);
 
         // Auto-refresh initial state (silent to avoid toast on page load)
@@ -1189,7 +1189,7 @@
 
         // Store reference globally for debugging
         window.governancePanel = governancePanel;
-        debugLogger.debug('✅ Governance Panel initialized');
+        debugLogger.debug("[OK] Governance Panel initialized");
       }
     });
   </script>

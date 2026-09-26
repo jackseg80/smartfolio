@@ -6,16 +6,16 @@
 
 ---
 
-## ✅ Travail Accompli (Session 2026-01-29)
+## Travail Accompli (Session 2026-01-29)
 
-### **Itération 1 (P0 - Multi-Tenant Security)** - ✅ COMPLÉTÉE
+### **Itération 1 (P0 - Multi-Tenant Security)** -  COMPLÉTÉE
 
 - Migration `get_active_user()` → `get_required_user()` (98 occurrences, 17 fichiers)
 - Suppression hardcoded `user_id="demo"` (19 occurrences, 11 fichiers)
 - Sécurisation logs API keys (2 lignes)
 - **Impact**: Élimination totale des risques P0 de fuite de données multi-tenant
 
-### **Itération 2 (P1 - Sécurité et Robustesse)** - ✅ COMPLÉTÉE
+### **Itération 2 (P1 - Sécurité et Robustesse)** -  COMPLÉTÉE
 
 - **P1-1**: Path traversal validation explicite + tests (19 tests passed)
 - **P1-2**: Guide exception handling documenté (729 occurrences analysées)
@@ -23,15 +23,15 @@
 - **P1-5**: Bug Risk Score legacy éliminé + migration auto + tests (17 tests)
 - **Impact**: Sécurité renforcée, infrastructure de tests améliorée
 
-### **Itération 3 (P1-P2 - Qualité de Code)** - ✅ COMPLÉTÉE (100%)
+### **Itération 3 (P1-P2 - Qualité de Code)** -  COMPLÉTÉE (100%)
 
-#### Action 1: Configuration Linting ✅
+#### Action 1: Configuration Linting
 - Config black/isort dans `pyproject.toml` (line-length=100)
 - Config flake8 dans `.flake8` (max-complexity=15)
 - Script helper `scripts/lint.py`
 - Documentation `docs/LINTING.md`
 
-#### Action 2: Découpage api/main.py ✅
+#### Action 2: Découpage api/main.py
 - **Réduction**: 846 lignes → 524 lignes (**-38%**, -322 lignes)
 - **4 nouveaux modules créés**:
   - `api/middleware_setup.py` (~130 lignes)
@@ -39,7 +39,7 @@
   - `api/exception_handlers.py` (~75 lignes)
   - `api/static_files_setup.py` (~100 lignes)
 
-#### Action 3: Application Linting ✅
+#### Action 3: Application Linting
 - **Black + Isort appliqués** (5 fichiers)
 - **20 imports inutilisés supprimés** (api/main.py)
 - **Résultats flake8**:
@@ -54,35 +54,35 @@
 
 ---
 
-## 📊 État Actuel du Projet
+## État Actuel du Projet
 
 ### Métriques de Succès
 
 | Métrique | Avant | Cible | **Actuel** | Statut |
 |----------|-------|-------|------------|--------|
-| Occurrences `get_active_user()` | ~50 | 0 | **0** | ✅ |
-| Defaults `user_id="demo"` | 62 | 0 | **0** | ✅ |
-| `except Exception` broad | 729 | < 100 | 729 | 📝 Documenté |
-| Coverage Python | 50% | 55%+ | 50% | ⬜ |
-| Coverage JS core | ~0% | 30%+ | ~0% | ⬜ |
-| Lignes main.py | 846 | < 200 | **524** | ⚠️ -38% |
-| Lignes governance.py | 2000+ | < 500 per file | 2000+ | ⬜ |
-| **Flake8 nouveaux modules** | N/A | 0 | **0** | ✅ |
+| Occurrences `get_active_user()` | ~50 | 0 | **0** | OK |
+| Defaults `user_id="demo"` | 62 | 0 | **0** | OK |
+| `except Exception` broad | 729 | < 100 | 729 |  Documenté |
+| Coverage Python | 50% | 55%+ | 50% | Pending |
+| Coverage JS core | ~0% | 30%+ | ~0% | Pending |
+| Lignes main.py | 846 | < 200 | **524** | [Warning] -38% |
+| Lignes governance.py | 2000+ | < 500 per file | 2000+ | Pending |
+| **Flake8 nouveaux modules** | N/A | 0 | **0** | OK |
 
 ### Progression Globale
 
 | Itération | Statut | Actions Complétées |
 |-----------|--------|-------------------|
-| **1 (P0 - Multi-Tenant)** | ✅ | 3/3 |
-| **2 (P1 - Security)** | ✅ | 4/4 |
-| **3 (P1-P2 - Quality)** | ✅ | 3/3 |
-| **4 (P1 - Frontend Tests)** | ⬜ | 0/3 |
-| **5 (P2 - Observability)** | ⬜ | 0/3 |
-| **6 (P2 - Refactoring)** | ⬜ | 0/3 |
+| **1 (P0 - Multi-Tenant)** | OK | 3/3 |
+| **2 (P1 - Security)** | OK | 4/4 |
+| **3 (P1-P2 - Quality)** | OK | 3/3 |
+| **4 (P1 - Frontend Tests)** | Pending | 0/3 |
+| **5 (P2 - Observability)** | Pending | 0/3 |
+| **6 (P2 - Refactoring)** | Pending | 0/3 |
 
 ---
 
-## 🎯 Prochaines Itérations Recommandées
+## Prochaines Itérations Recommandées
 
 ### **Option A: Itération 4 - Tests Frontend (Priorité: P1)**
 
@@ -90,20 +90,20 @@
 **Impact**: Critique - 95%+ du code JS non testé
 
 #### Actions
-1. ⬜ **Réparer infrastructure Vitest**
+1. [Pending] **Réparer infrastructure Vitest**
    - Créer `vitest.config.js`
    - Configurer happy-dom
    - Ajouter scripts npm (`test:unit`, `test:unit:coverage`)
    - **Problème connu**: Tests créés mais infrastructure non fonctionnelle
 
-2. ⬜ **Écrire tests unitaires prioritaires**
+2. [Pending] **Écrire tests unitaires prioritaires**
    - `allocation-engine.test.js` - calculs d'allocation
    - `phase-engine.test.js` - détection de phase Bitcoin
    - `auth-guard.test.js` - validation JWT
    - `risk-data-orchestrator.test.js` - orchestration données risk
    - **Objectif**: 10-15 fichiers de tests, 30%+ coverage JS
 
-3. ⬜ **Intégrer coverage JS dans CI**
+3. [Pending] **Intégrer coverage JS dans CI**
    - Configurer coverage reporter
    - Threshold minimum 30%
 
@@ -120,16 +120,16 @@
 **Impact**: Améliore debugging production
 
 #### Actions
-1. ⬜ **Ajouter correlation IDs**
+1. [Pending] **Ajouter correlation IDs**
    - Middleware pour injecter `X-Request-ID`
    - Propager dans tous les logs
    - Format: UUID v4
 
-2. ⬜ **Structured logging (JSON)**
+2. [Pending] **Structured logging (JSON)**
    - Installer `python-json-logger`
    - Format: `{"timestamp", "level", "message", "request_id", "user_id"}`
 
-3. ⬜ **Validation startup pour dev mode**
+3. [Pending] **Validation startup pour dev mode**
    - Check au démarrage: fail hard si `DEV_SKIP_AUTH=1` en production
 
 **Bénéfices**:
@@ -166,7 +166,7 @@ python scripts/lint.py --fix connectors/ shared/ tests/
 
 ---
 
-## 📝 Fichiers Clés à Connaître
+## Fichiers Clés à Connaître
 
 ### Documentation
 - `docs/audit/PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md` - Plan complet
@@ -188,7 +188,7 @@ python scripts/lint.py --fix connectors/ shared/ tests/
 
 ---
 
-## 🚀 Pour Démarrer la Prochaine Session
+## Pour Démarrer la Prochaine Session
 
 ### Commande de Contexte Rapide
 ```bash
@@ -200,7 +200,7 @@ git status
 cat docs/audit/PLAN_AMELIORATION_MULTI_TENANT_2026-01-29.md
 
 # Vérifier que l'API fonctionne
-python -c "from api.main import app; print('✅ API OK')"
+python -c "from api.main import app; print('[OK] API OK')"
 ```
 
 ### Questions à Poser à l'Utilisateur
@@ -210,7 +210,7 @@ python -c "from api.main import app; print('✅ API OK')"
 
 ---
 
-## 💡 Recommandation Personnelle
+## Recommandation Personnelle
 
 **Je recommande l'Option A (Itération 4 - Frontend Tests)** parce que :
 

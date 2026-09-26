@@ -121,12 +121,12 @@ function createAlertsHistoryRow(alert) {
 
   const getStatusText = (alert) => {
     if (alert.acknowledged_at) {
-      return `<span style="color: var(--success)">✅ Acknowledged</span>`;
+      return `<span style="color: var(--success)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Acknowledged</span>`;
     }
     if (alert.snooze_until && new Date(alert.snooze_until) > new Date()) {
-      return `<span style="color: var(--warning)">⏸️ Snoozed</span>`;
+      return `<span style="color: var(--warning)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Paused" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#pause"></use></svg> Snoozed</span>`;
     }
-    return `<span style="color: var(--error)">🚨 Active</span>`;
+    return `<span style="color: var(--error)"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg> Active</span>`;
   };
 
   // Format unified alert
@@ -135,19 +135,19 @@ function createAlertsHistoryRow(alert) {
   const formattedMessage = `
     <div class="alert-unified-format">
       <div class="alert-action">
-        <strong>🎯 ${formatted.action}</strong>
+        <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> ${formatted.action}</strong>
       </div>
       <div class="alert-impact">
-        💰 Impact: <span class="alert-impact-value">${formatted.impact}</span>
+        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Impact: <span class="alert-impact-value">${formatted.impact}</span>
       </div>
       <div class="alert-reasons">
-        📋 Raisons:
+        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Raisons:
         <ul class="alert-reasons-list">
           ${formatted.reasons.map(reason => `<li>${reason}</li>`).join('')}
         </ul>
       </div>
       <div class="alert-details">
-        ℹ️ ${formatted.details}
+        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> ${formatted.details}
       </div>
     </div>
   `;
@@ -175,7 +175,7 @@ function createAlertsHistoryRow(alert) {
           class="alert-action-btn"
           onclick="alert('Alert details modal not implemented yet')"
           title="View alert details">
-          📋 Details
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Details
         </button>
       </td>
     </tr>
@@ -382,7 +382,7 @@ function loadNextAlertsPage() {
  * @param {HTMLElement} container - Container element
  */
 export async function renderAlertsTab(container) {
-  debugLogger.debug('🚀 Rendering Alerts History tab');
+  debugLogger.debug("Rendering Alerts History tab");
 
   // Build tab HTML structure
   container.innerHTML = `
@@ -408,7 +408,7 @@ export async function renderAlertsTab(container) {
           <option value="DECISION_DROP">Decision Drop</option>
         </select>
         <button class="refresh-btn" onclick="window.filterAlertsHistory()">
-          🔄 Refresh
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh
         </button>
       </div>
     </div>

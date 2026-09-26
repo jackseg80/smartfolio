@@ -10,14 +10,14 @@ Le système P&L Today fournit un calcul fiable du profit/perte journalier basé 
 
 ### Nouvelles Fonctionnalités v2
 
-✅ **Ancres Temporelles** : Calcul P&L vs midnight, prev_snapshot, prev_close
-✅ **Fenêtres Flexibles** : 24h, 7d, 30d, YTD
-✅ **Écriture Atomique** : Protection anti-corruption (Windows-safe)
-✅ **Timezone Europe/Zurich** : Timestamps cohérents
-✅ **Déduplication Journalière** : Un snapshot max par jour/user/source
-✅ **Métadonnées Valorisation** : Traçabilité source prix et devise
-✅ **Détection Flux** : Alerte si +/-30% (dépôt/retrait probable)
-✅ **Suite Tests PyTest** : 19 tests unitaires
+[OK] **Ancres Temporelles** : Calcul P&L vs midnight, prev_snapshot, prev_close
+[OK] **Fenêtres Flexibles** : 24h, 7d, 30d, YTD
+[OK] **Écriture Atomique** : Protection anti-corruption (Windows-safe)
+[OK] **Timezone Europe/Zurich** : Timestamps cohérents
+[OK] **Déduplication Journalière** : Un snapshot max par jour/user/source
+[OK] **Métadonnées Valorisation** : Traçabilité source prix et devise
+[OK] **Détection Flux** : Alerte si +/-30% (dépôt/retrait probable)
+[OK] **Suite Tests PyTest** : 19 tests unitaires
 
 ## Architecture
 
@@ -137,11 +137,11 @@ pytest tests/test_portfolio_pnl.py::TestPnLCalculation::test_pnl_outlier_detecti
 ```
 
 **Couverture des tests:**
-- ✅ Écriture atomique JSON (3 tests)
-- ✅ Calcul ancres temporelles (5 tests)
-- ✅ Déduplication journalière (4 tests)
-- ✅ Calcul P&L avec ancres (4 tests)
-- ✅ Sauvegarde snapshots (3 tests)
+- [OK] Écriture atomique JSON (3 tests)
+- [OK] Calcul ancres temporelles (5 tests)
+- [OK] Déduplication journalière (4 tests)
+- [OK] Calcul P&L avec ancres (4 tests)
+- [OK] Sauvegarde snapshots (3 tests)
 
 ### Scripts PowerShell
 

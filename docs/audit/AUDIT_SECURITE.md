@@ -1,4 +1,4 @@
-# 🔒 Audit Sécurité - SmartFolio
+# Audit Sécurité - SmartFolio
 
 **Date:** 9 novembre 2025
 **Scope:** OWASP Top 10 + Vulnérabilités générales
@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 RÉSUMÉ
+## RÉSUMÉ
 
 - **Vulnérabilités Critiques:** 3
 - **Vulnérabilités Hautes:** 5
@@ -16,7 +16,7 @@
 
 ---
 
-## 🔴 VULNÉRABILITÉS CRITIQUES
+## VULNÉRABILITÉS CRITIQUES
 
 ### 1. Clé API Exposée dans .env
 
@@ -65,10 +65,10 @@ DEBUG_TOKEN=dev-secret-2024
 
 **Remédiation:**
 ```python
-# ❌ AVANT
+# AVANT
 expected_key = os.getenv("ADMIN_KEY", "crypto-rebal-admin-2024")
 
-# ✅ APRÈS
+# APRÈS
 expected_key = os.getenv("ADMIN_KEY")
 if not expected_key:
     raise ValueError("ADMIN_KEY environment variable required")
@@ -104,7 +104,7 @@ if (onclickAttr) {
 
 **Remédiation:**
 ```javascript
-// ✅ Solution sécurisée: Event delegation
+// [OK] Solution sécurisée: Event delegation
 const TOAST_ACTIONS = {
   'reload': () => location.reload(),
   'dismiss': () => dismissToast(),
@@ -119,7 +119,7 @@ if (TOAST_ACTIONS[actionName]) {
 
 ---
 
-## 🟠 VULNÉRABILITÉS HAUTES
+## VULNÉRABILITÉS HAUTES
 
 ### 4. CORS Wildcard en Dev
 
@@ -144,7 +144,7 @@ app.add_middleware(
 
 **Remédiation:**
 ```python
-# ✅ Même en dev, restreindre
+# Même en dev, restreindre
 allow_origins=[
     "http://localhost:8080",
     "http://127.0.0.1:8080"
@@ -173,13 +173,13 @@ if dev_mode:
 
 **Remédiation:**
 ```python
-# ✅ Validation au démarrage
+# Validation au démarrage
 if os.getenv("DEV_OPEN_API") == "1" and os.getenv("ENVIRONMENT") == "production":
     raise RuntimeError("DEV_OPEN_API cannot be enabled in production!")
 
-# ✅ Log warning visible
+# Log warning visible
 if dev_mode:
-    logger.warning("⚠️ DEV MODE ACTIVE - AUTHENTICATION BYPASSED")
+    logger.warning(" DEV MODE ACTIVE - AUTHENTICATION BYPASSED")
 ```
 
 ---
@@ -207,7 +207,7 @@ with open(scaler_file, 'rb') as f:
 
 **Remédiation:**
 ```python
-# ✅ Option 1: Validation hash
+# Option 1: Validation hash
 import hashlib
 
 def load_model_safe(path, expected_hash):
@@ -217,7 +217,7 @@ def load_model_safe(path, expected_hash):
             raise ValueError("Model tampering detected")
         return pickle.loads(content)
 
-# ✅ Option 2: Format plus sûr (ONNX, TorchScript)
+# Option 2: Format plus sûr (ONNX, TorchScript)
 ```
 
 ---
@@ -239,10 +239,10 @@ result = subprocess.run(command, shell=True, capture_output=True)
 
 **Remédiation:**
 ```python
-# ❌ AVANT
+# AVANT
 subprocess.run(f"python {script}", shell=True)
 
-# ✅ APRÈS
+# APRÈS
 subprocess.run(["python", script], shell=False)
 
 # Si shell requis, sanitiser:
@@ -272,25 +272,25 @@ with open(file_path, 'wb') as f:
 
 **Remédiation:**
 ```python
-# ✅ Valider MIME type
+# Valider MIME type
 import magic
 mime = magic.from_buffer(content, mime=True)
 if mime != 'text/csv':
     raise ValueError("Invalid file type")
 
-# ✅ Valider contenu CSV
+# Valider contenu CSV
 import csv
 try:
     csv.reader(io.StringIO(content.decode('utf-8')))
 except:
     raise ValueError("Invalid CSV format")
 
-# ✅ Ajouter ClamAV scan en production
+# Ajouter ClamAV scan en production
 ```
 
 ---
 
-## 🟡 VULNÉRABILITÉS MOYENNES
+## VULNÉRABILITÉS MOYENNES
 
 ### 9. Pas de Protection CSRF
 
@@ -311,7 +311,7 @@ FastAPI n'a pas de protection CSRF native pour POST/PUT/DELETE.
 
 **Remédiation:**
 ```python
-# ✅ Implémenter CSRF tokens
+# Implémenter CSRF tokens
 from fastapi_csrf_protect import CsrfProtect
 
 @app.post("/upload")
@@ -333,10 +333,10 @@ card.innerHTML = `<div>${userData}</div>`; // Si userData = user input → XSS
 
 **Remédiation:**
 ```javascript
-// ✅ Option 1: textContent
+// [OK] Option 1: textContent
 card.textContent = userData;  // Auto-escape
 
-// ✅ Option 2: DOMPurify
+// [OK] Option 2: DOMPurify
 import DOMPurify from 'dompurify';
 card.innerHTML = DOMPurify.sanitize(userData);
 ```
@@ -354,7 +354,7 @@ card.innerHTML = DOMPurify.sanitize(userData);
 
 ---
 
-## 🟢 VULNÉRABILITÉS BASSES
+## VULNÉRABILITÉS BASSES
 
 17. **Debug mode en .env** - Devrait être .env.example
 18. **Redis sans auth** - Password recommandé
@@ -363,19 +363,19 @@ card.innerHTML = DOMPurify.sanitize(userData);
 
 ---
 
-## ✅ POINTS POSITIFS
+## POINTS POSITIFS
 
-1. ✅ Protection path traversal excellente (`user_fs.py`)
-2. ✅ `.gitignore` bien configuré
-3. ✅ Multi-tenant isolation solide
-4. ✅ Input sanitization filenames
-5. ✅ Dependency injection auth
-6. ✅ Rate limiting implémenté
-7. ✅ CORS restreint dans main app
+1. [OK] Protection path traversal excellente (`user_fs.py`)
+2. [OK] `.gitignore` bien configuré
+3. [OK] Multi-tenant isolation solide
+4. [OK] Input sanitization filenames
+5. [OK] Dependency injection auth
+6. [OK] Rate limiting implémenté
+7. [OK] CORS restreint dans main app
 
 ---
 
-## 📋 PLAN D'ACTION
+## PLAN D'ACTION
 
 ### Semaine 1 (CRITIQUE)
 - [ ] Révoquer clé CoinGecko
@@ -400,29 +400,29 @@ card.innerHTML = DOMPurify.sanitize(userData);
 
 ---
 
-## 🎯 MÉTRIQUES
+## MÉTRIQUES
 
 **Avant corrections:**
-- 🔴 3 Critiques
-- 🟠 5 Hautes
-- 🟡 8 Moyennes
-- 🟢 4 Basses
+- [Negative] 3 Critiques
+- [Pending] 5 Hautes
+- [Pending] 8 Moyennes
+- [Positive] 4 Basses
 - **Score:** 6/10
 
 **Après Semaine 1:**
-- 🔴 0 Critiques ✅
-- 🟠 5 Hautes
+- [Negative] 0 Critiques [OK]
+- [Pending] 5 Hautes
 - **Score:** 7.5/10
 
 **Après 1 Mois:**
-- 🔴 0 Critiques ✅
-- 🟠 0 Hautes ✅
-- 🟡 3-4 Moyennes
+- [Negative] 0 Critiques [OK]
+- [Pending] 0 Hautes [OK]
+- [Pending] 3-4 Moyennes
 - **Score:** 9/10 (Production Ready)
 
 ---
 
-## 📚 RÉFÉRENCES
+## RÉFÉRENCES
 
 - [OWASP Top 10 2021](https://owasp.org/Top10/)
 - [CWE Top 25](https://cwe.mitre.org/top25/)

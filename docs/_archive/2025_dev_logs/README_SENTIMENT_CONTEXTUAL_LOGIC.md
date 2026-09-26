@@ -1,36 +1,36 @@
-# 🚀 Quick Start: Implémentation Logique Contextuelle ML Sentiment
+# Quick Start: Implémentation Logique Contextuelle ML Sentiment
 
-**📄 Document de travail complet:** [`WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md`](./WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md)
+** Document de travail complet:** [`WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md`](./WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md)
 
 ---
 
-## ⚡ TL;DR
+## TL;DR
 
 **Problème:** Le système traite "Extreme Fear" toujours comme un danger, même en Bull Market (où c'est une opportunité).
 
 **Solution:** Logique contextuelle intelligente basée sur régime marché:
-- **Bull + Fear** → Opportunité (acheter le dip) 💎
-- **Bear + Fear** → Danger (protection) 🛡️
-- **Greed** → Toujours prise de profits ⚠️
+- **Bull + Fear** → Opportunité (acheter le dip)
+- **Bear + Fear** → Danger (protection)
+- **Greed** → Toujours prise de profits [Warning]
 
 **Fichier à modifier:** `static/core/unified-insights-v2.js` (lignes 194-216)
 
 ---
 
-## 📊 État Actuel (22 Oct 2025)
+## État Actuel (22 Oct 2025)
 
 | Métrique | Valeur | Interprétation |
 |----------|--------|----------------|
-| **ML Sentiment** | 52/100 | Neutral ✅ (Alternative.me: 25 + Social: 60+ → Agrégé: 52) |
-| **Régime** | Bull 68% | Bullish 🐂 |
+| **ML Sentiment** | 52/100 | Neutral [OK] (Alternative.me: 25 + Social: 60+ → Agrégé: 52) |
+| **Régime** | Bull 68% | Bullish  |
 | **Cycle Score** | 59 | Bearish phase (<70) |
-| **Contradiction** | 0.175 | Faible ✅ |
+| **Contradiction** | 0.175 | Faible [OK] |
 
 **Note:** ML Sentiment utilise maintenant **vraies données** (fix déjà appliqué dans `orchestrator.py`).
 
 ---
 
-## 🔧 Commande Rapide d'Implémentation
+## Commande Rapide d'Implémentation
 
 ### Option 1: Implémentation Manuelle
 
@@ -64,7 +64,7 @@ http://localhost:8080/static/simulations.html
 
 ---
 
-## 📝 Code Minimal à Ajouter
+## Code Minimal à Ajouter
 
 **Ajouter au contexte (ligne 565):**
 ```javascript
@@ -101,42 +101,42 @@ else if (extremeGreed) {
 
 ---
 
-## 🧪 Tests de Validation
+## Tests de Validation
 
 ### Scénarios Critiques:
 
 ```javascript
 // Test 1: Bull + Neutral (pas de changement)
-{regime: 'bull', sentiment: 55} → Boost ETH/SOL ✅
+{regime: 'bull', sentiment: 55} → Boost ETH/SOL [OK]
 
 // Test 2: Bull + Fear (NOUVEAU - opportuniste)
-{regime: 'bull', sentiment: 20} → Boost x1.5 Memecoins ✅
+{regime: 'bull', sentiment: 20} → Boost x1.5 Memecoins [OK]
 
 // Test 3: Bear + Fear (défensif maintenu)
-{regime: 'bear', sentiment: 20} → Réduit -70% Memecoins ✅
+{regime: 'bear', sentiment: 20} → Réduit -70% Memecoins [OK]
 
 // Test 4: Greed (NOUVEAU - profits)
-{regime: 'bull', sentiment: 85} → Réduit -70% Memecoins ✅
+{regime: 'bull', sentiment: 85} → Réduit -70% Memecoins [OK]
 ```
 
 ---
 
-## 📊 Impact Global
+## Impact Global
 
 **Fichiers Affectés:**
-- ✅ `analytics-unified.html` - Nouveaux targets
-- ✅ `simulations.html` - Nouveaux targets
-- ✅ `dashboard.html` - Nouveaux targets
-- ✅ `risk-dashboard.html` - Nouveaux targets
+- [OK] `analytics-unified.html` - Nouveaux targets
+- [OK] `simulations.html` - Nouveaux targets
+- [OK] `dashboard.html` - Nouveaux targets
+- [OK] `risk-dashboard.html` - Nouveaux targets
 
 **Fichiers NON Affectés:**
-- ❌ Decision Index (DI) - Calcul inchangé
-- ❌ Risk Budget - Stables base inchangé
-- ❌ Governance Backend - Inchangé
+- [Error] Decision Index (DI) - Calcul inchangé
+- [Error] Risk Budget - Stables base inchangé
+- [Error] Governance Backend - Inchangé
 
 ---
 
-## 📚 Documents de Référence
+## Documents de Référence
 
 | Document | Description |
 |----------|-------------|
@@ -146,7 +146,7 @@ else if (extremeGreed) {
 
 ---
 
-## ⚠️ Checklist Avant Implémentation
+## Checklist Avant Implémentation
 
 - [ ] Lire document complet [`WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md`](./WORK_SESSION_SENTIMENT_CONTEXTUAL_LOGIC.md)
 - [ ] Comprendre flux de données (unified-insights → targets → UI)
@@ -160,7 +160,7 @@ else if (extremeGreed) {
 
 ---
 
-## 🆘 En Cas de Problème
+## En Cas de Problème
 
 **Rollback rapide:**
 ```bash
@@ -171,8 +171,8 @@ cp static/core/unified-insights-v2.js.backup static/core/unified-insights-v2.js
 **Logs à vérifier:**
 ```bash
 # Console navigateur (F12)
-🔍 Market conditions: {...}
-💎 Opportunistic allocation: Bull + Fear detected
+ Market conditions: {...}
+ Opportunistic allocation: Bull + Fear detected
 
 # Backend logs (si nécessaire)
 tail -50 logs/app.log | grep -i "sentiment\|fear\|greed"
@@ -182,5 +182,5 @@ tail -50 logs/app.log | grep -i "sentiment\|fear\|greed"
 
 **Créé:** 22 Oct 2025 18:45 UTC
 **Auteur:** Session Claude Code
-**Statut:** ✅ Prêt pour implémentation
+**Statut:** [OK] Prêt pour implémentation
 

@@ -1,7 +1,7 @@
 // Unified Insights V2 - Migration vers Strategy API (PR-C)
 // Nouvelle version qui utilise l'API Strategy tout en gardant la compatibilité
 // Remplace progressivement unified-insights.js
-(window.debugLogger?.debug || console.debug)('🔄 UNIFIED-INSIGHTS-V2.JS LOADED - FORCE CACHE RELOAD TIMESTAMP:', new Date().toISOString());
+(window.debugLogger?.debug || console.debug)("UNIFIED-INSIGHTS-V2.JS LOADED - FORCE CACHE RELOAD TIMESTAMP:", new Date().toISOString());
 
 import { store } from './risk-dashboard-store.js';
 import { getRegimeDisplayData, getMarketRegime } from '../modules/market-regimes.js';
@@ -18,7 +18,7 @@ const pct = (x) => Math.round(clamp01(x) * 100);
 const colorForScore = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' : 'var(--danger)';
 
 /**
- * 🆕 STRUCTURE MODULATION V2 (Oct 2025)
+ *  STRUCTURE MODULATION V2 (Oct 2025)
  * Moduler la cible de stables et le cap selon la qualité structurelle du portfolio
  *
  * @param {number} structureScore - Portfolio Structure Score V2 (0-100)
@@ -35,7 +35,7 @@ export function computeStructureModulation(structureScore) {
     return { deltaStables: 0, deltaCap: 0 };
   }
 
-  // ✅ DÉSACTIVÉ (Jan 2026): Risk Budget est la source canonique INTOUCHABLE pour stables
+  //  DÉSACTIVÉ (Jan 2026): Risk Budget est la source canonique INTOUCHABLE pour stables
   // La Structure Modulation ne doit PAS modifier le % stables calculé par Risk Budget
   // On conserve seulement deltaCap pour ajuster le plafond d'exposition risque
 
@@ -60,7 +60,7 @@ export function computeStructureModulation(structureScore) {
 function simpleFallbackCalculation(_context) {
   // SUPPRIMÉ: Ne plus calculer de score avec des poids différents du backend
   // Retourner un état d'erreur explicite pour que l'UI affiche un message clair
-  console.error('❌ SPLIT-BRAIN PREVENTION: Strategy API failed, no fallback calculation');
+  console.error("[Error] SPLIT-BRAIN PREVENTION: Strategy API failed, no fallback calculation");
   return {
     score: null,  // null = pas de score disponible
     confidence: null,
@@ -74,7 +74,7 @@ function simpleFallbackCalculation(_context) {
  * Calcule les pondérations adaptatives selon le contexte de marché
  * Cycle ≥ 90 → augmente wCycle, plafonne pénalité On-Chain
  *
- * ⚠️ IMPORTANT — Sémantique Risk:
+ *  IMPORTANT — Sémantique Risk:
  * Risk est un score POSITIF (0..100, plus haut = mieux).
  * Ne jamais inverser (pas de 100 - risk).
  * Contributions UI: (w * score) / Σ(w * score).
@@ -105,7 +105,7 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
     wCycle = 0.45; // Boost modéré (était 0.65)
     wOnchain = 0.35; // Préserve on-chain (était 0.25)
     wRisk = 0.20; // Maintient risque significatif (était 0.1)
-    console.debug('🚀 Adaptive weights: Cycle ≥ 90 → moderate cycle boost (calibrated)');
+    console.debug("Adaptive weights: Cycle ≥ 90 → moderate cycle boost (calibrated)");
   } else if (cycleScore >= 70) {
     wCycle = 0.40;
     wOnchain = 0.37;
@@ -138,7 +138,7 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
     }
   };
 
-  console.debug('⚖️ Adaptive weights calculated:', result);
+  console.debug("Adaptive weights calculated:", result);
   return result;
 }
 
@@ -152,7 +152,7 @@ function calculateAdaptiveWeights(cycleData, onchainScore, contradictions, gover
  * @returns {object} Targets par groupe, somme = 100%
  */
 function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
-  console.debug('🎯 computeMacroTargetsDynamic called:', { ctx, rb, walletStats, hasData: !!data });
+  console.debug("computeMacroTargetsDynamic called:", { ctx, rb, walletStats, hasData: !!data });
 
   // 0) Stables = SOURCE DE VÉRITÉ (risk budget) avec Structure Modulation V2
   let stablesBase = rb?.target_stables_pct;
@@ -160,7 +160,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
     throw new Error('Verified stablecoin risk budget is unavailable');
   }
 
-  // 🆕 Structure Modulation V2 (Oct 2025)
+  //  Structure Modulation V2 (Oct 2025)
   const structureScore = data?.risk?.risk_metrics?.risk_version_info?.portfolio_structure_score;
   const { deltaStables, deltaCap } = computeStructureModulation(structureScore);
 
@@ -181,7 +181,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
     enabled: structureScore != null
   };
 
-  console.debug('🏗️ Structure Modulation V2:', ctx.structure_modulation);
+  console.debug("Structure Modulation V2:", ctx.structure_modulation);
 
   const stables = stablesModulated;
   const riskyPool = Math.max(0, 100 - stables); // Espace pour assets risqués
@@ -224,7 +224,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
   const isBear = !phaseEngineActive && ((ctx?.regime === 'bear') || (ctx?.cycle_score <= 30));
   const isHedge = !phaseEngineActive && (ctx?.governance_mode === 'Hedge');
 
-  console.debug('🔍 Market conditions (Hierarchical):', {
+  console.debug("Market conditions (Hierarchical):", {
     level1_extremes: { extremeFear, extremeGreed, mlSentiment },
     level2_phase_engine: { active: phaseEngineActive, mode: ctx?.flags?.phase_engine },
     level3_base_modulators: { isBull, isBear, isHedge, disabled: phaseEngineActive },
@@ -241,42 +241,42 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
     const bearContext = (ctx?.regime === 'bear') || (ctx?.cycle_score <= 30);
 
     if (extremeFear && bullContext) {
-      // 🐂 Bull + Fear = OPPORTUNITÉ (contrarian buy)
+      //  Bull + Fear = OPPORTUNITÉ (contrarian buy)
       base.ETH *= 1.15;
       base.SOL *= 1.20;
       base['L2/Scaling'] *= 1.20;
       base.DeFi *= 1.10;
       base.Memecoins = Math.max(base.Memecoins * 1.5, 0.02);
-      overrideReason = `🐂 Bull Market + Extreme Fear (${mlSentiment}) → Buying opportunity`;
-      console.debug('💎 LEVEL 1 OVERRIDE: Opportunistic allocation (Bull + Fear)');
+      overrideReason = `Bull Market + Extreme Fear (${mlSentiment}) → Buying opportunity`;
+      console.debug("LEVEL 1 OVERRIDE: Opportunistic allocation (Bull + Fear)");
     }
     else if (extremeFear && bearContext) {
-      // 🐻 Bear + Fear = DANGER (capitulation)
+      //  Bear + Fear = DANGER (capitulation)
       base.Memecoins *= 0.3;
       base['Gaming/NFT'] *= 0.5;
       base.DeFi *= 0.7;
       base['AI/Data'] *= 0.8;
-      overrideReason = `🐻 Bear Market + Extreme Fear (${mlSentiment}) → Protection`;
-      console.debug('🛡️ LEVEL 1 OVERRIDE: Defensive allocation (Bear + Fear)');
+      overrideReason = `Bear Market + Extreme Fear (${mlSentiment}) → Protection`;
+      console.debug("LEVEL 1 OVERRIDE: Defensive allocation (Bear + Fear)");
     }
     else if (extremeFear) {
-      // 😐 Neutral + Fear = Prudence légère
+      //  Neutral + Fear = Prudence légère
       base.Memecoins *= 0.7;
       base['Gaming/NFT'] *= 0.8;
-      overrideReason = `😐 Neutral + Fear (${mlSentiment}) → Prudence`;
-      console.debug('⚖️ LEVEL 1 OVERRIDE: Cautious allocation (Neutral + Fear)');
+      overrideReason = `Neutral + Fear (${mlSentiment}) → Prudence`;
+      console.debug("LEVEL 1 OVERRIDE: Cautious allocation (Neutral + Fear)");
     }
 
     if (extremeGreed) {
-      // ⚠️ Extreme Greed = TOUJOURS prise de profits
+      //  Extreme Greed = TOUJOURS prise de profits
       base.Memecoins *= 0.3;
       base['Gaming/NFT'] *= 0.5;
       base['AI/Data'] *= 0.7;
       base.DeFi *= 0.8;
       overrideReason = overrideReason
         ? `${overrideReason} + Extreme Greed (${mlSentiment}) → Prise de profits`
-        : `⚠️ Extreme Greed (${mlSentiment}) → Prise de profits`;
-      console.debug('⚠️ LEVEL 1 OVERRIDE: Profit-taking (Extreme Greed)');
+        : `[Warning] Extreme Greed (${mlSentiment}) → Prise de profits`;
+      console.debug("[Warning] LEVEL 1 OVERRIDE: Profit-taking (Extreme Greed)");
     }
   }
   // NIVEAU 3: Modulateurs de base (seulement si Phase Engine inactif ET pas d'extrême)
@@ -287,7 +287,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
       base.ETH *= 1.08;
       base['L2/Scaling'] *= 1.15;
       base.SOL *= 1.10;
-      console.debug('🚀 LEVEL 3: Bull mode (standard boost ETH/L2/SOL)');
+      console.debug("LEVEL 3: Bull mode (standard boost ETH/L2/SOL)");
     }
 
     if (isBear || isHedge) {
@@ -295,10 +295,10 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
       base.Memecoins *= 0.5;
       base['Gaming/NFT'] *= 0.7;
       base.DeFi *= 0.85;
-      console.debug('🛡️ LEVEL 3: Standard defensive mode');
+      console.debug("LEVEL 3: Standard defensive mode");
     }
   } else {
-    console.debug('🎯 LEVEL 2: Phase Engine active, delegating tilts to Phase Engine');
+    console.debug("LEVEL 2: Phase Engine active, delegating tilts to Phase Engine");
   }
 
   // Stocker reason dans ctx pour UI
@@ -311,7 +311,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
     base.BTC *= 0.92;
     base.ETH *= 1.06;
     base['L2/Scaling'] *= 1.06;
-    console.debug('⚖️ BTC over-concentration: rebalance to ETH/L2');
+    console.debug("BTC over-concentration: rebalance to ETH/L2");
   }
 
   // 4) Normaliser la somme (hors stables)
@@ -332,12 +332,12 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
   if (Math.abs(diff) >= 0.1) {
     const heavy = 'BTC'; // Ajuster sur BTC
     targets[heavy] = +(targets[heavy] + diff).toFixed(1);
-    console.debug('🔧 Sum adjustment applied:', { diff, heavy });
+    console.debug("Sum adjustment applied:", { diff, heavy });
   }
 
   // Debug logs removed (obsolete, redundant with comprehensive log below)
-  (window.debugLogger?.debug || console.log)('🎯 Dynamic targets computed:', targets);
-  console.debug('📊 Target breakdown: stables=' + stables + '%, risky=' + riskyPool + '%');
+  (window.debugLogger?.debug || console.log)("Dynamic targets computed:", targets);
+  console.debug("Target breakdown: stables=" + stables + '%, risky=' + riskyPool + '%');
 
   return targets;
 }
@@ -347,7 +347,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats, data = null) {
  * Garde la même interface pour la compatibilité ascendante
  */
 export async function getUnifiedState() {
-  console.debug('🔄 getUnifiedState called - starting unified state construction');
+  console.debug("getUnifiedState called - starting unified state construction");
   const state = store.snapshot();
 
   // Extract base scores (identique à la version legacy)
@@ -368,21 +368,21 @@ export async function getUnifiedState() {
   let contradictions = [];
   try {
     contradictions = analyzeContradictorySignals(ocCategories).slice(0, 2);
-    console.debug('✅ Contradictions Intelligence loaded:', contradictions.length);
+    console.debug("[OK] Contradictions Intelligence loaded:", contradictions.length);
   } catch (error) {
     contradictions = (state.scores?.contradictory_signals || []).slice(0, 2);
-    (window.debugLogger?.warn || console.warn)('⚠️ Contradictions fallback:', error);
+    (window.debugLogger?.warn || console.warn)("[Warning] Contradictions fallback:", error);
   }
 
-  console.debug('🧠 UNIFIED STATE V2 - Using Strategy API + sophisticated modules');
+  console.debug("UNIFIED STATE V2 - Using Strategy API + sophisticated modules");
 
   // 1. CYCLE INTELLIGENCE (conservé identique)
   let cycleData;
   try {
     cycleData = estimateCyclePosition();
-    console.debug('✅ Cycle Intelligence loaded:', cycleData.phase?.phase, cycleData.score);
+    console.debug("[OK] Cycle Intelligence loaded:", cycleData.phase?.phase, cycleData.score);
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Cycle Intelligence unavailable:', error);
+    (window.debugLogger?.warn || console.warn)("[Warning] Cycle Intelligence unavailable:", error);
     cycleData = {
       available: false,
       months: null,
@@ -408,7 +408,7 @@ export async function getUnifiedState() {
         cycleData.direction ?? null,
         cycleData.confidence ?? null
       );
-      console.debug('✅ Regime Intelligence loaded:', {
+      console.debug("[OK] Regime Intelligence loaded:", {
         regimeName: regimeData.regime?.name,
         recommendationsCount: regimeData.recommendations?.length,
         hasRiskBudget: !!regimeData.risk_budget,
@@ -418,11 +418,11 @@ export async function getUnifiedState() {
         scoresUsed: { blended: blendedRounded, onchain: onchainRounded, risk: riskRounded }
       });
     } else {
-      regimeData = { regime: { name: 'Unknown', emoji: '❓' }, recommendations: [], risk_budget: null };
+      regimeData = { regime: { name: 'Unknown', emoji: '' }, recommendations: [], risk_budget: null };
     }
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Regime Intelligence fallback:', error);
-    regimeData = { regime: { name: 'Unknown', emoji: '❓' }, recommendations: [], risk_budget: null };
+    (window.debugLogger?.warn || console.warn)("[Warning] Regime Intelligence fallback:", error);
+    regimeData = { regime: { name: 'Unknown', emoji: '' }, recommendations: [], risk_budget: null };
   }
 
   // 3. SIGNALS INTELLIGENCE (conservé identique pour compatibilité)
@@ -444,12 +444,12 @@ export async function getUnifiedState() {
               sources: sentimentResult.sources_used || [],
               interpretation: fearGreedValue < 25 ? 'extreme_fear' : fearGreedValue < 45 ? 'fear' : fearGreedValue < 55 ? 'neutral' : fearGreedValue < 75 ? 'greed' : 'extreme_greed'
             };
-            console.debug('✅ Multi-source sentiment loaded:', sentimentData.sources, fearGreedValue);
+            console.debug("[OK] Multi-source sentiment loaded:", sentimentData.sources, fearGreedValue);
           }
         }
     }
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Multi-source sentiment fallback to store data');
+    (window.debugLogger?.warn || console.warn)("[Warning] Multi-source sentiment fallback to store data");
   }
   
   try {
@@ -479,9 +479,9 @@ export async function getUnifiedState() {
       signalsData.signals_strength = 'strong';
     }
     
-    console.debug('✅ Signals Intelligence loaded:', signalsData.interpretation, signalsData.confidence);
+    console.debug("[OK] Signals Intelligence loaded:", signalsData.interpretation, signalsData.confidence);
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Signals Intelligence fallback:', error);
+    (window.debugLogger?.warn || console.warn)("[Warning] Signals Intelligence fallback:", error);
     signalsData = { available: false, interpretation: 'unknown', confidence: null, signals_strength: 'unavailable', reason: error.message };
   }
 
@@ -528,7 +528,7 @@ export async function getUnifiedState() {
     // Utiliser l'adaptateur Strategy API
     decision = await calculateIntelligentDecisionIndexAPI(context);
 
-    console.debug('🚀 Strategy API decision:', {
+    console.debug("Strategy API decision:", {
       score: decision.score,
       confidence: decision.confidence,
       source: decision.source,
@@ -538,7 +538,7 @@ export async function getUnifiedState() {
     // Comparaison désactivée (legacy archivé)
 
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('⚠️ Strategy API unavailable:', error.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] Strategy API unavailable:", error.message);
 
     // Preserve the unavailable contract through the compatibility wrapper.
     const context = {
@@ -585,12 +585,12 @@ export async function getUnifiedState() {
         { risky: riskyPct, stables: stablesPct, sum, regimeData: regimeData?.risk_budget }
       );
     } else {
-      console.debug('⚠️ Skipping risky+stables assertion: missing valid percentages',
+      console.debug("[Warning] Skipping risky+stables assertion: missing valid percentages",
         { risky: riskyPct, stables: stablesPct });
     }
 
     // DEBUG - Analyser regimeData avant assertion
-    console.debug('🔍 REGIME DATA DEBUG DETAILLE:', {
+    console.debug("REGIME DATA DEBUG DETAILLE:", {
       hasRegimeData: !!regimeData,
       hasRiskBudget: !!regimeData?.risk_budget,
       riskBudgetKeys: regimeData?.risk_budget ? Object.keys(regimeData.risk_budget) : null,
@@ -603,10 +603,10 @@ export async function getUnifiedState() {
       generatedAt: regimeData?.risk_budget?.generated_at
     });
 
-    console.debug('✅ V2 invariants validated:', {
+    console.debug("[OK] V2 invariants validated:", {
       sum: `${sum}%`,
       target_stables: regimeData?.risk_budget?.target_stables_pct,
-      timestamp: regimeData?.risk_budget?.generated_at ? '✅' : '⚠️'
+      timestamp: regimeData?.risk_budget?.generated_at ? "OK" : "Warning"
     });
   }
 
@@ -698,13 +698,13 @@ export async function getUnifiedState() {
       };
 
       // CALCUL DYNAMIQUE: remplace les presets hardcodés
-      // 🆕 Passer risk_metrics pour Structure Modulation V2
+      //  Passer risk_metrics pour Structure Modulation V2
       const dataForModulation = { risk: { risk_metrics: risk } };
       let dynamicTargets = computeMacroTargetsDynamic(ctx, rb, walletStats, dataForModulation);
 
       // PHASE ENGINE INTEGRATION (shadow/apply modes)
       if (ctx.flags.phase_engine === 'shadow' || ctx.flags.phase_engine === 'apply') {
-        console.debug('🧪 PhaseEngine: Flag detected:', ctx.flags.phase_engine);
+        console.debug("PhaseEngine: Flag detected:", ctx.flags.phase_engine);
 
         // Store config in global scope for debugging
         if (typeof window !== 'undefined') {
@@ -719,7 +719,7 @@ export async function getUnifiedState() {
         // CRITICAL FIX: Make Phase Engine awaitable instead of fire-and-forget
         const phaseEnginePromise = (async () => {
           try {
-            console.debug('🔄 PhaseEngine: Starting dynamic import...');
+            console.debug("PhaseEngine: Starting dynamic import...");
 
             const [
               { extractPhaseInputs },
@@ -729,7 +729,7 @@ export async function getUnifiedState() {
               import('./phase-engine.js')
             ]);
 
-            console.debug('✅ PhaseEngine: Modules loaded successfully');
+            console.debug("[OK] PhaseEngine: Modules loaded successfully");
 
             // Expose debug controls globally after import
             if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') {
@@ -745,7 +745,7 @@ export async function getUnifiedState() {
             }
 
             const phaseInputs = extractPhaseInputs(store);
-            console.debug('📊 PhaseEngine: Inputs extracted:', {
+            console.debug("PhaseEngine: Inputs extracted:", {
               DI: phaseInputs.DI,
               btc_dom: phaseInputs.btc_dom,
               partial: phaseInputs.partial,
@@ -753,14 +753,14 @@ export async function getUnifiedState() {
             });
 
             const phase = inferPhase(phaseInputs);
-            console.debug('🔍 PhaseEngine: Phase detected:', phase);
+            console.debug("PhaseEngine: Phase detected:", phase);
 
             const phaseResult = await applyPhaseTilts(dynamicTargets, phase, {
               DI: phaseInputs.DI,
               breadth_alts: phaseInputs.breadth_alts
             });
 
-            console.debug('🔍 PhaseEngine RESULT DEBUG:', {
+            console.debug("PhaseEngine RESULT DEBUG:", {
               phaseResult,
               hasTargets: !!phaseResult?.targets,
               targetsKeys: phaseResult?.targets ? Object.keys(phaseResult.targets) : [],
@@ -768,7 +768,7 @@ export async function getUnifiedState() {
               type: typeof phaseResult
             });
 
-            console.debug('⚡ PhaseEngine: Tilts calculated:', {
+            console.debug("PhaseEngine: Tilts calculated:", {
               phase,
               tiltsApplied: phaseResult.metadata?.tiltsApplied ?? 'unknown',
               capsTriggered: phaseResult.metadata?.capsTriggered ?? 'unknown',
@@ -777,7 +777,7 @@ export async function getUnifiedState() {
 
             if (ctx.flags.phase_engine === 'shadow') {
               // Shadow mode: log detailed results
-              (window.debugLogger?.debug || console.log)('🧪 PhaseEngine Shadow Mode:', {
+              (window.debugLogger?.debug || console.log)("PhaseEngine Shadow Mode:", {
                 phase,
                 inputsQuality: phaseInputs.partial ? 'partial' : 'complete',
                 originalTargets: Object.keys(dynamicTargets).reduce((acc, k) => {
@@ -817,14 +817,14 @@ export async function getUnifiedState() {
               if (phaseResult.targets) {
                 dynamicTargets = phaseResult.targets;
               } else {
-                (window.debugLogger?.warn || console.warn)('⚠️ PhaseEngine: No targets returned, keeping original');
+                (window.debugLogger?.warn || console.warn)("[Warning] PhaseEngine: No targets returned, keeping original");
               }
 
               // Calculate sums properly for logging
               const originalSum = Object.values(phaseResult.original || {}).reduce((a, b) => a + (Number(b) || 0), 0);
               const newSum = Object.values(dynamicTargets || {}).reduce((a, b) => a + (Number(b) || 0), 0);
 
-              (window.debugLogger?.info || console.log)('✅ PhaseEngine Apply Mode - TARGETS MODIFIED:', {
+              (window.debugLogger?.info || console.log)("[OK] PhaseEngine Apply Mode - TARGETS MODIFIED:", {
                 phase,
                 tiltsApplied: phaseResult.metadata?.tiltsApplied ?? 'unknown',
                 capsTriggered: phaseResult.metadata?.capsTriggered ?? 'unknown',
@@ -850,7 +850,7 @@ export async function getUnifiedState() {
             }
 
           } catch (error) {
-            debugLogger.error('❌ PhaseEngine: Import/execution failed:', error);
+            debugLogger.error("[Error] PhaseEngine: Import/execution failed:", error);
 
             // Fallback notification
             if (typeof window !== 'undefined') {
@@ -868,13 +868,13 @@ export async function getUnifiedState() {
 
         // CRITICAL: Wait for Phase Engine to complete before continuing
         dynamicTargets = await phaseEnginePromise;
-        console.debug('🔥 Phase Engine completed, final targets applied:', dynamicTargets);
+        console.debug("Phase Engine completed, final targets applied:", dynamicTargets);
 
       }
 
       // Sync cache no longer needed since Phase Engine is now awaitable
 
-      (window.debugLogger?.debug || console.log)('🎯 DYNAMIC TARGETS' + (ctx.flags.phase_engine !== 'off' ? ' + PHASE ENGINE' : '') + ':', {
+      (window.debugLogger?.debug || console.log)("DYNAMIC TARGETS" + (ctx.flags.phase_engine !== 'off' ? ' + PHASE ENGINE' : '') + ':', {
         old_method: 'preset_from_api',
         new_method: 'dynamic_computation' + (ctx.flags.phase_engine !== 'off' ? ' + phase_tilts' : ''),
         phase_engine_mode: ctx.flags.phase_engine,
@@ -953,7 +953,7 @@ export async function getUnifiedState() {
       'Invariant cassé: risky+stables doit faire 100', rb?.percentages
     );
   } else {
-    console.debug('⚠️ Skipping second risky+stables assertion: missing budget data',
+    console.debug("[Warning] Skipping second risky+stables assertion: missing budget data",
       { risky: riskyPct, stables: stablesPct, rb: rb?.percentages });
   }
 
@@ -965,14 +965,14 @@ export async function getUnifiedState() {
 
     // Log as warning if divergence > 15% (frontend vs backend can differ legitimately)
     if (diff >= 15) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Large stablecoins divergence between targets_by_group and risk_budget',
+      (window.debugLogger?.warn || console.warn)("[Warning] Large stablecoins divergence between targets_by_group and risk_budget",
         { stablesFinal, stablesBudget, diff: `${diff.toFixed(1)}%` });
     } else if (diff >= 5) {
-      console.debug('ℹ️ Moderate stablecoins divergence (expected):', { stablesFinal, stablesBudget, diff: `${diff.toFixed(1)}%` });
+      console.debug("Moderate stablecoins divergence (expected):", { stablesFinal, stablesBudget, diff: `${diff.toFixed(1)}%` });
     }
   }
 
-  // 🆕 Exposer Structure Modulation V2 (Oct 2025)
+  //  Exposer Structure Modulation V2 (Oct 2025)
   // ctx.structure_modulation est défini dans computeMacroTargetsDynamic()
   // On le récupère depuis le contexte utilisé pour les targets
   const canComputeStructureModulation = decision.available === true
@@ -1055,12 +1055,12 @@ export function deriveRecommendations(u) {
   const now = Date.now();
 
   if (_recoCache.snapshotId === currentSnapshotId && now - _recoCache.timestamp < 30000) {
-    console.debug('🎯 Recommendations from snapshot cache:', _recoCache.recos.length);
+    console.debug("Recommendations from snapshot cache:", _recoCache.recos.length);
     return _recoCache.recos;
   }
 
-  console.debug('🧠 DERIVING INTELLIGENT RECOMMENDATIONS V2 - Snapshot:', currentSnapshotId.substring(0, 120) + '...');
-  console.debug('📊 Snapshot Key Factors:', {
+  console.debug("DERIVING INTELLIGENT RECOMMENDATIONS V2 - Snapshot:", currentSnapshotId.substring(0, 120) + '...');
+  console.debug("Snapshot Key Factors:", {
     blended: Number.isFinite(u.decision?.score) ? Math.round(u.decision.score) : null,
     onchain: Number.isFinite(u.scores?.onchain) ? Math.round(u.scores.onchain) : null,
     risk: Number.isFinite(u.scores?.risk) ? Math.round(u.scores.risk) : null,
@@ -1077,7 +1077,7 @@ export function deriveRecommendations(u) {
   let recos = [];
 
   // 1. USE STRATEGY API TARGETS avec primary stable (tie-breaker)
-  // ⚠️ FILTRE: Ne pas afficher si contredit fortement le Risk Budget (source de vérité)
+  //  FILTRE: Ne pas afficher si contredit fortement le Risk Budget (source de vérité)
   if (u.strategy?.targets?.length > 0) {
     // Tri stable: poids DESC puis symbol ASC
     const targets = [...u.strategy.targets].sort((a,b) =>
@@ -1101,7 +1101,7 @@ export function deriveRecommendations(u) {
     const isStablesTarget = stablesPattern.test(primaryTarget.symbol);
     const allocPct = Math.round(primaryTarget.weight * 100);
 
-    // ✅ VALIDATION: Comparer avec Risk Budget si disponible (source canonique)
+    //  VALIDATION: Comparer avec Risk Budget si disponible (source canonique)
     const riskBudgetStables = u.risk?.budget?.percentages?.stables;
     const shouldSkipStrategyReco = isStablesTarget && riskBudgetStables != null && Math.abs(allocPct - riskBudgetStables) > 15;
 
@@ -1119,7 +1119,7 @@ export function deriveRecommendations(u) {
         priority: 'high',
         title: `Allocation ${primaryTarget.symbol}: ${allocPct}%`,
         reason: primaryTarget.rationale || `Suggestion ${u.strategy.template_used}`,
-        icon: '🎯',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Target\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cursor-arrow-rays\"></use></svg>",
         source: 'strategy-api'
       });
     }
@@ -1156,14 +1156,14 @@ export function deriveRecommendations(u) {
         priority: rec.priority || 'medium',
         title: rec.message || rec.title || rec.action,
         reason: rec.action || rec.message || 'Market regime recommendation',
-        icon: rec.type === 'warning' ? '⚠️' : rec.type === 'alert' ? '🚨' : '💡',
+        icon: rec.type === 'warning' ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>" : rec.type === 'alert' ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Alert\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Insight\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#light-bulb\"></use></svg>",
         source: 'regime-intelligence'
       });
     });
   }
 
   // 3. CYCLE-BASED RECOMMENDATIONS avec clés canoniques
-  // ✅ VALIDATION: Tenir compte du RÉGIME RÉEL (blended) pas seulement du cycle position
+  //  VALIDATION: Tenir compte du RÉGIME RÉEL (blended) pas seulement du cycle position
   if (u.cycle?.phase?.phase) {
     const cyclePhase = u.cycle.phase.phase;
     const blendedScore = u.scores?.blended;
@@ -1183,7 +1183,7 @@ export function deriveRecommendations(u) {
         priority: 'high',
         title: 'Take progressive profits',
         reason: `Cycle peak + Regime ${regimeKey} + High DI (${u.decision.score})`,
-        icon: '📈',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>",
         source: 'cycle-intelligence'
       });
     }
@@ -1194,7 +1194,7 @@ export function deriveRecommendations(u) {
         priority: 'medium',
         title: 'Increased vigilance recommended',
         reason: `Cycle at peak but market in ${regimeKey.replace('_', ' ')} (blended: ${blendedScore}) - possible divergence`,
-        icon: '⚠️',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>",
         source: 'cycle-intelligence'
       });
     }
@@ -1205,7 +1205,7 @@ export function deriveRecommendations(u) {
         priority: 'medium',
         title: 'Accumulate quality positions',
         reason: `Cycle accumulation + DI bas (${u.decision.score})`,
-        icon: '🔵',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>",
         source: 'cycle-intelligence'
       });
     }
@@ -1220,7 +1220,7 @@ export function deriveRecommendations(u) {
         priority: 'medium',
         title: 'Cautious approach recommended',
         reason: 'Contradictory signals or low confidence detected',
-        icon: '🐌',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Slow\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#clock\"></use></svg>",
         source: 'strategy-api-policy'
       });
     } else if (policyHint === 'Aggressive') {
@@ -1229,7 +1229,7 @@ export function deriveRecommendations(u) {
         priority: 'high',
         title: 'Aggressive allocation opportunity',
         reason: 'High score and coherent signals',
-        icon: '⚡',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Activity\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bolt\"></use></svg>",
         source: 'strategy-api-policy'
       });
     }
@@ -1258,7 +1258,7 @@ export function deriveRecommendations(u) {
       reason: isVeryHigh ?
         'Strong contradiction detected - cautious approach recommended' :
         'Moderate contradiction detected between sources',
-      icon: isVeryHigh ? '🚨' : '⚡',
+      icon: isVeryHigh ? "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Alert\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-circle\"></use></svg>" : "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Activity\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bolt\"></use></svg>",
       source: 'governance-contradiction'
     });
   } else if (onchainContradictions > 0 && governanceContradiction < 0.25) {
@@ -1268,7 +1268,7 @@ export function deriveRecommendations(u) {
       priority: 'medium',
       title: 'Contradictory on-chain signals detected',
       reason: `${onchainContradictions} divergence(s) entre indicateurs`,
-      icon: '⚡',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Activity\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bolt\"></use></svg>",
       source: 'onchain-contradiction'
     });
   }
@@ -1295,7 +1295,7 @@ export function deriveRecommendations(u) {
       title: `High risk budget detected`,
       reason: `Recommended stables allocation: ${targetStables}%`,
       tacticalAction: tacticalAction,
-      icon: '💡',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Insight\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#light-bulb\"></use></svg>",
       source: 'risk-budget'
     });
   }
@@ -1319,7 +1319,7 @@ export function deriveRecommendations(u) {
 
     if (stablesRecs.length <= 1) return recos; // Pas de duplication
 
-    // ✅ VALIDATION: Vérifier si les valeurs sont cohérentes (±5%)
+    //  VALIDATION: Vérifier si les valeurs sont cohérentes (±5%)
     const values = stablesRecs.map(r => r.value).filter(v => v != null);
     const avgValue = values.reduce((a, b) => a + b, 0) / values.length;
     const maxDelta = Math.max(...values.map(v => Math.abs(v - avgValue)));
@@ -1387,7 +1387,7 @@ export function deriveRecommendations(u) {
         const sourceLabel = sourceLabels[r.source] || r.source;
         return `• ${sourceLabel}: ${r.reason || r.title}`;
       }).join('\n'),
-      icon: '🎯',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Target\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cursor-arrow-rays\"></use></svg>",
       source: sources.join(' + '),
       consolidated: true,
       sourceCount: sources.length
@@ -1418,8 +1418,8 @@ export function deriveRecommendations(u) {
     timestamp: now
   };
 
-  console.debug('🎯 Recommendations derived:', uniqueRecos.length, 'unique from', [...new Set(uniqueRecos.map(r => r.source))].join(', '));
-  console.debug('🔑 Snapshot ID:', currentSnapshotId.substring(0, 80) + '...');
+  console.debug("Recommendations derived:", uniqueRecos.length, 'unique from', [...new Set(uniqueRecos.map(r => r.source))].join(', '));
+  console.debug("Snapshot ID:", currentSnapshotId.substring(0, 80) + '...');
 
   return uniqueRecos;
 }

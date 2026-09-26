@@ -120,36 +120,36 @@ def main():
     
     # Routes supprimées
     if breaking_changes["removed"]:
-        print(f"\n❌ REMOVED ENDPOINTS ({len(breaking_changes['removed'])}):")
+        print(f"\n[Error] REMOVED ENDPOINTS ({len(breaking_changes['removed'])}):")
         for route in breaking_changes["removed"]:
             print(f"  - {route}")
     else:
-        print("\n✅ No removed endpoints found in current spec")
+        print("\n[OK] No removed endpoints found in current spec")
     
     # Routes modifiées
     if breaking_changes["modified"]:
-        print(f"\n🔄 MODIFIED ENDPOINTS ({len(breaking_changes['modified'])}):")
+        print(f"\n MODIFIED ENDPOINTS ({len(breaking_changes['modified'])}):")
         for item in breaking_changes["modified"]:
             print(f"  - {item['path']}")
             print(f"    Change: {item['change']}")
     else:
-        print("\n✅ No modified endpoints detected")
+        print("\n[OK] No modified endpoints detected")
     
     # Nouveaux endpoints unifiés
     if breaking_changes["new_unified"]:
-        print(f"\n🆕 NEW UNIFIED ENDPOINTS ({len(breaking_changes['new_unified'])}):")
+        print(f"\n NEW UNIFIED ENDPOINTS ({len(breaking_changes['new_unified'])}):")
         for route in breaking_changes["new_unified"]:
             print(f"  + {route}")
     
     # Changements de namespace
     if breaking_changes["namespace_changes"]:
-        print(f"\n🔀 NAMESPACE CHANGES:")
+        print(f"\n NAMESPACE CHANGES:")
         for change in breaking_changes["namespace_changes"]:
             print(f"  {change['old']} → {change['new']}")
     
     # Validation des endpoints critiques
     print(f"\n{'='*60}")
-    print("🔐 CRITICAL ENDPOINTS VALIDATION")
+    print(" CRITICAL ENDPOINTS VALIDATION")
     print(f"{'='*60}")
     
     critical_endpoints = {
@@ -169,28 +169,28 @@ def main():
                 found = True
                 break
         
-        status = "✅ FOUND" if found else "❌ MISSING"
+        status = "[OK] FOUND" if found else "[Error] MISSING"
         print(f"  {status}: {endpoint}")
         print(f"          {description}")
     
     # Recommandations
     print(f"\n{'='*60}")
-    print("💡 MIGRATION RECOMMENDATIONS")
+    print(" MIGRATION RECOMMENDATIONS")
     print(f"{'='*60}")
     
-    print("\n📋 For API Consumers:")
+    print("\n For API Consumers:")
     print("  1. Update all /api/ml-predictions/* calls to /api/ml/*")
     print("  2. Remove all /api/test/* and /api/alerts/test/* calls")
     print("  3. Replace /api/advanced-risk/* with /api/risk/advanced/*")
     print("  4. Update /governance/approve calls to include resource_type in body")
     print("  5. Centralize alert resolution calls to /api/alerts/resolve/{id}")
     
-    print("\n🔒 For Security:")
+    print("\n For Security:")
     print("  1. /api/realtime/publish and /broadcast are removed (security)")
     print("  2. /api/ml/debug/* now requires X-Admin-Key header")
     print("  3. Test endpoints removed from production")
     
-    print("\n📝 For Documentation:")
+    print("\n For Documentation:")
     print("  1. Update API documentation with new endpoints")
     print("  2. Create migration guide for consumers") 
     print("  3. Update SDK clients and examples")
@@ -205,10 +205,10 @@ def main():
     
     print(f"\n{'='*60}")
     if total_breaking == 0:
-        print("🎉 NO BREAKING CHANGES DETECTED")
+        print(" NO BREAKING CHANGES DETECTED")
         return 0
     else:
-        print(f"⚠️  {total_breaking} BREAKING CHANGES DETECTED")
+        print(f"[Warning]  {total_breaking} BREAKING CHANGES DETECTED")
         print("   Consumers will need to be updated before deploying")
         return 1
 

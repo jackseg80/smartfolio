@@ -108,7 +108,7 @@ export async function openExportModal(module, endpoint, filename, source = null,
 
         <div class="format-options" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
             <button class="format-btn btn btn-secondary" data-format="json" style="justify-content: flex-start; text-align: left;">
-                <div style="font-size: 24px; margin-right: 12px;">📄</div>
+                <div style="font-size: 24px; margin-right: 12px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg></div>
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 4px;">JSON</div>
                     <div style="font-size: 12px; color: var(--theme-text-muted);">Structured data for developers & APIs</div>
@@ -116,7 +116,7 @@ export async function openExportModal(module, endpoint, filename, source = null,
             </button>
 
             <button class="format-btn btn btn-secondary" data-format="csv" style="justify-content: flex-start; text-align: left;">
-                <div style="font-size: 24px; margin-right: 12px;">📊</div>
+                <div style="font-size: 24px; margin-right: 12px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 4px;">CSV</div>
                     <div style="font-size: 12px; color: var(--theme-text-muted);">Spreadsheet-compatible (Excel, Google Sheets)</div>
@@ -124,7 +124,7 @@ export async function openExportModal(module, endpoint, filename, source = null,
             </button>
 
             <button class="format-btn btn btn-secondary" data-format="markdown" style="justify-content: flex-start; text-align: left;">
-                <div style="font-size: 24px; margin-right: 12px;">📝</div>
+                <div style="font-size: 24px; margin-right: 12px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg></div>
                 <div style="flex: 1;">
                     <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 4px;">Markdown</div>
                     <div style="font-size: 12px; color: var(--theme-text-muted);">Human-readable formatted text</div>
@@ -133,13 +133,13 @@ export async function openExportModal(module, endpoint, filename, source = null,
         </div>
 
         <div class="export-status" style="padding: 12px; background: var(--theme-surface-elevated); border-radius: var(--radius-md); font-size: 13px; color: var(--theme-text-muted); display: none; margin-top: 16px;">
-            <span class="status-text">⏳ Exporting...</span>
+            <span class="status-text"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Exporting...</span>
         </div>
     `;
 
     // Open modal
     const modal = Modal.show({
-        title: `📥 Export ${moduleNames[module] || 'Data'}`,
+        title: `Export ${moduleNames[module] || 'Data'}`,
         content: content,
         size: 'medium',
         showFooter: false,
@@ -166,7 +166,7 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
     try {
         // Show loading
         statusDiv.style.display = 'block';
-        statusText.textContent = '⏳ Exporting...';
+        statusText.textContent = "[Pending] Exporting...";
         statusText.style.color = 'var(--theme-text-muted)';
 
         // Build URL with format only
@@ -178,19 +178,19 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
             const cryptoSource = source || window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
             if (!cryptoSource && module === 'crypto') throw new Error('No portfolio source is selected');
             url += `&source=${encodeURIComponent(cryptoSource || 'auto')}`;
-            console.debug(`📄 Export with crypto source: ${cryptoSource}`);
+            console.debug(`Export with crypto source: ${cryptoSource}`);
         }
 
         // Add file_key for Saxo if available (passed as parameter or from context)
         if (module === 'saxo' && (fileKey || window.currentFileKey)) {
             const saxoFileKey = fileKey || window.currentFileKey;
             url += `&file_key=${encodeURIComponent(saxoFileKey)}`;
-            console.debug(`📄 Export with file_key: ${saxoFileKey}`);
+            console.debug(`Export with file_key: ${saxoFileKey}`);
         }
         if (module === 'global' && (fileKey || window.currentFileKey)) {
             const saxoFileKey = fileKey || window.currentFileKey;
             url += `&bourse_file_key=${encodeURIComponent(saxoFileKey)}`;
-            console.debug(`📄 Global export with bourse_file_key: ${saxoFileKey}`);
+            console.debug(`Global export with bourse_file_key: ${saxoFileKey}`);
         }
 
         // Fetch export with X-User header (multi-tenant)
@@ -228,7 +228,7 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
         URL.revokeObjectURL(downloadUrl);
 
         // Show success
-        statusText.textContent = `✅ Downloaded: ${downloadFilename}`;
+        statusText.textContent = `[OK] Downloaded: ${downloadFilename}`;
         statusText.style.color = 'var(--success)';
 
         // Auto-close after 2s
@@ -240,7 +240,7 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
 
     } catch (error) {
         console.error('Export error:', error);
-        statusText.textContent = `❌ Export failed: ${error.message}`;
+        statusText.textContent = `[Error] Export failed: ${error.message}`;
         statusText.style.color = 'var(--danger)';
         statusDiv.style.display = 'block';
     }

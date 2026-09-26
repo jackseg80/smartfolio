@@ -185,7 +185,7 @@
 <h1>Rapport crypto — Tableau de bord (v70.2)</h1>
 <div class="row">
 <span class="muted">Thème :</span>
-<button class="btn ghost" id="btnTheme">🌙 Sombre</button>
+<button class="btn ghost" id="btnTheme">Dark Sombre</button>
 </div>
 </header>
 <section data-print="section" id="sec1">
@@ -213,7 +213,7 @@
 <button aria-expanded="true" class="btn icon toggle-sec" data-target="sec2Body">Section</button>
 </div>
 <div class="sec-body" id="sec2Body">
-<div class="muted" id="hintUpload">➡️ Charge d’abord ton <b>Current Balance.csv</b> pour afficher les graphiques.</div>
+<div class="muted" id="hintUpload">Next Charge d’abord ton <b>Current Balance.csv</b> pour afficher les graphiques.</div>
 <div class="grid grid-2" id="pies" style="display:none">
 <div>
 <div class="pie" id="pieBefore"></div>
@@ -619,7 +619,7 @@ const elCustomTableWrap = document.getElementById("customTableWrap");
 function applyTheme(theme){
   THEME = theme;
   document.body.classList.toggle("theme-dark", theme === "dark");
-  btnTheme.textContent = theme === "dark" ? "☀️ Clair" : "🌙 Sombre";
+  btnTheme.textContent = theme === "dark" ? "Light Clair" : "Dark Sombre";
   localStorage.setItem("theme", theme);
   if (__READY) { renderAllExceptTargets(); renderExchangePies(); renderCycleChart(); if (window.__lastCCS!=null) drawGauge(window.__lastCCS); }
 }
@@ -1108,12 +1108,12 @@ async function loadFree(){
                               {indicator_name:'Pi Cycle (EMA111 / 2×SMA350)', current_value:piDist, target_value:1.0, comparison_type:'>=', hit_status:(piDist||0)>=1.0},
                               {indicator_name:'Drawdown depuis ATH', current_value:dd, target_value:0.50, comparison_type:'>=', hit_status:(dd||0)>=0.5},
                               {indicator_name:'Volatilité 30j annualisée', current_value:vol30a, target_value:1.0, comparison_type:'>=', hit_status:(vol30a||0)>=1.0} , cbbi, mvrvz, bmo]);
-    elFreeStatus.innerHTML = `✅ Signaux chargés. Modifie les poids/checkbox puis regarde le score.`;
+    elFreeStatus.innerHTML = `OK Signaux chargés. Modifie les poids/checkbox puis regarde le score.`;
     renderWeightsTable();
     computeAndShowCCS();
     previewFree(); // draw initial target preview
   }catch(e){
-    elFreeStatus.textContent = "❌ Erreur de chargement : " + (e?.message || e);
+    elFreeStatus.textContent = "Error Erreur de chargement : " + (e?.message || e);
   }
 }
 
@@ -1135,7 +1135,7 @@ function renderSignalTable(container, rows){
       <td class="right">${r.value ?? '—'}</td>
       <td class="right">${r.target ?? '—'}</td>
       <td>${r.ctype ?? '—'}</td>
-      <td>${r.hit ? '✅' : '—'}</td>`;
+      <td>${r.hit ? 'OK' : '—'}</td>`;
     tbody.appendChild(tr);
   }
   table.appendChild(tbody);
@@ -1222,11 +1222,11 @@ function drawGauge(ccs){
 }
 function explainCCS(ccs){
   let phase = '', advice='';
-  if (ccs < 30){ phase='🔥 Euphorie / fin de cycle'; advice='Mode défensif: augmenter stablecoins, réduire memecoins/long tail, alléger alt L1.'; }
-  else if (ccs < 40){ phase='⚠️ Zone chaude'; advice='Réduire le risque progressivement, resserrer stops et cibles.'; }
-  else if (ccs < 70){ phase='🙂 Neutre / milieu de cycle'; advice='Allocation équilibrée.'; }
-  else if (ccs < 85){ phase='🌱 Impulsion haussière'; advice='Tilt pro-croissance mesuré (majors + Solana/ETH).'; }
-  else { phase='🧊 Accumulation / Capitulation passée'; advice='Tilt pro-croissance plus marqué, réduire les stables.'; }
+  if (ccs < 30){ phase='High Euphorie / fin de cycle'; advice='Mode défensif: augmenter stablecoins, réduire memecoins/long tail, alléger alt L1.'; }
+  else if (ccs < 40){ phase='Warning Zone chaude'; advice='Réduire le risque progressivement, resserrer stops et cibles.'; }
+  else if (ccs < 70){ phase=' Neutre / milieu de cycle'; advice='Allocation équilibrée.'; }
+  else if (ccs < 85){ phase='Long term Impulsion haussière'; advice='Tilt pro-croissance mesuré (majors + Solana/ETH).'; }
+  else { phase='Frozen Accumulation / Capitulation passée'; advice='Tilt pro-croissance plus marqué, réduire les stables.'; }
   elCcsExplain.innerHTML = `<b>Phase probable :</b> ${phase}<br/><b>Lecture :</b> ${ccs.toFixed(1)} / 100<br/><span class="muted">${advice}</span>`;
 }
 
@@ -1269,18 +1269,18 @@ elBtnFreeApply.addEventListener('click', ()=>{ if (CCS_CONFIG.some(c=>c.value!=n
     elCgStatus.textContent = "Chargement…";
     try{
       const key = (elCgKey.value||'').trim();
-      if (!key){ elCgStatus.textContent = "⛔ Clé API manquante."; return; }
+      if (!key){ elCgStatus.textContent = "Blocked Clé API manquante."; return; }
       const res = await fetch('https://open-api-v4.coinglass.com/api/bull-market-peak-indicator', { headers: { 'accept':'application/json', 'CG-API-KEY': key }});
       if (!res.ok){ const txt = await res.text(); throw new Error('HTTP '+res.status+' — '+txt.slice(0,160)); }
       const json = await res.json();
       const arr = json?.data || json?.Data || [];
       if (!Array.isArray(arr) || !arr.length){ elCgStatus.textContent = "Aucun indicateur retourné."; elCgTableWrap.innerHTML=''; return; }
       renderCgTable(arr);
-      elCgStatus.innerHTML = `✅ ${arr.filter(x=>x.hit_status===true || x.hit===true).length}/${arr.length} signaux <b>activés</b>.`;
+      elCgStatus.innerHTML = `OK ${arr.filter(x=>x.hit_status===true || x.hit===true).length}/${arr.length} signaux <b>activés</b>.`;
       if (elCgRemember.checked) localStorage.setItem('CG_API_KEY', key); else localStorage.removeItem('CG_API_KEY');
       return arr;
     }catch(err){
-      elCgStatus.innerHTML = "❌ Erreur API/CORS : "+ (err?.message || err);
+      elCgStatus.innerHTML = "Error Erreur API/CORS : "+ (err?.message || err);
       return null;
     }
   }
@@ -1293,7 +1293,7 @@ elBtnFreeApply.addEventListener('click', ()=>{ if (CCS_CONFIG.some(c=>c.value!=n
       const val = r.current_value ?? r.currentValue ?? '—';
       const tgt = r.target_value ?? r.targetValue ?? '—';
       const typ = r.comparison_type ?? r.type ?? '—';
-      const hit = (r.hit_status ?? r.hit) ? '✅' : '—';
+      const hit = (r.hit_status ?? r.hit) ? 'OK' : '—';
       const tr = document.createElement('tr');
       tr.innerHTML = `<td>${name}</td><td class="right">${val}</td><td class="right">${tgt}</td><td>${typ}</td><td>${hit}</td>`;
       tbody.appendChild(tr);
@@ -1358,7 +1358,7 @@ function renderCustomTable(arr){
   table.innerHTML = `<thead><tr><th>Indicateur</th><th class="right">Valeur</th><th class="right">Seuil</th><th>Type</th><th>Actif</th></tr></thead>`;
   const tbody = document.createElement('tbody');
   for (const r of arr){ const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${r.indicator_name||r.indicName||r.name||'—'}</td><td class="right">${r.current_value ?? r.currentValue ?? '—'}</td><td class="right">${r.target_value ?? r.targetValue ?? '—'}</td><td>${r.comparison_type ?? r.type ?? '—'}</td><td>${(r.hit_status ?? r.hit) ? '✅':'—'}</td>`;
+    tr.innerHTML = `<td>${r.indicator_name||r.indicName||r.name||'—'}</td><td class="right">${r.current_value ?? r.currentValue ?? '—'}</td><td class="right">${r.target_value ?? r.targetValue ?? '—'}</td><td>${r.comparison_type ?? r.type ?? '—'}</td><td>${(r.hit_status ?? r.hit) ? 'OK':'—'}</td>`;
     tbody.appendChild(tr);
   }
   table.appendChild(tbody); wrap.innerHTML=''; wrap.appendChild(table);
@@ -1912,7 +1912,7 @@ async function fetchDominance(){
     // Gauge & explanation (if present)
     try{ if (typeof drawGauge==='function') drawGauge(ccs); }catch(e){}
     try{ if (typeof explainCCS==='function') explainCCS(ccs); }catch(e){}
-    const st = document.getElementById('freeStatus'); if(st) st.textContent = '✅ Signaux chargés.';
+    const st = document.getElementById('freeStatus'); if(st) st.textContent = 'OK Signaux chargés.';
     // sync legacy panel if it exists
     try{ if (typeof renderWeightsTable==='function') renderWeightsTable(); }catch(e){}
   }
@@ -1992,7 +1992,7 @@ async function fetchDominance(){
 
       renderTable(conf); bind(conf); recompute(conf);
     }catch(e){
-      const st=document.getElementById('freeStatus'); if(st) st.textContent='❌ Erreur de chargement : '+(e&&e.message?e.message:String(e));
+      const st=document.getElementById('freeStatus'); if(st) st.textContent='Error Erreur de chargement : '+(e&&e.message?e.message:String(e));
       try{ if (typeof drawGauge==='function') drawGauge(0); }catch(_){}
     }
   }
@@ -2267,7 +2267,7 @@ async function loadPortfolio() {
       <td>${a.symbol}</td>
       <td style="text-align:right">${a.usd_value.toFixed(2)}</td>
       <td style="text-align:right">${a.weight_pct.toFixed(2)}%</td>
-      <td>${a.is_stable ? '✅' : ''}</td>`;
+      <td>${a.is_stable ? 'OK' : ''}</td>`;
     t.appendChild(tr);
   }
 }

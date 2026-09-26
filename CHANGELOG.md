@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2026-02-10
 
-### 🏗️ Plan d'Amelioration v5 — 11 Items Complete (Feb 2026)
+### Plan d'Amelioration v5 — 11 Items Complete (Feb 2026)
 
 **Period:** February 7-10, 2026
 **Objective:** Address critical infrastructure gaps (notifications, backups, freshness, mobile, observability)
@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Double-encoded UTF-8** — Fixed BOM + CP1252 mojibake on 22 HTML files. Script `scripts/fix_encoding.py` handles 5 undefined CP1252 bytes + mixed-content lines. 19/22 fully fixed, 3 with residual in JS comments only.
 
-### 📈 Coverage Push 42.9% → ~47% (Feb 2026)
+### Coverage Push 42.9% → ~47% (Feb 2026)
 
 **Period:** February 10, 2026
 **Result:** 3198 tests passing, 0 failures
@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Portfolio Metrics Service** — 42 tests (~40% coverage)
 - **Structural Score V2** — 28 tests (~80% coverage)
 
-### 🔑 JWT Auth Migration (Feb 2026)
+### JWT Auth Migration (Feb 2026)
 
 - Modified `get_required_user` + `require_admin_role` in `api/deps.py`
 - Added `_extract_jwt_user()` helper: validates JWT if present
@@ -80,11 +80,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-### 🌐 Full FR → EN Translation (Feb 2026)
+### Full FR → EN Translation (Feb 2026)
 
 **Period:** February 6, 2026
 **Objective:** Translate all user-visible text from French to English
-**Result:** ✅ **COMPLETE** - ~300+ strings translated across ~50 files
+**Result:**  **COMPLETE** - ~300+ strings translated across ~50 files
 
 #### Changed - Backend
 
@@ -126,11 +126,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2025-11-09
 
-### 🔒 Security Audit & Production Readiness (Nov 2025)
+### Security Audit & Production Readiness (Nov 2025)
 
 **Period:** November 9, 2025 (Days 1-4)
 **Objective:** Eliminate critical production blockers and strengthen security
-**Result:** ✅ **COMPLETE SUCCESS** - Project production-ready
+**Result:**  **COMPLETE SUCCESS** - Project production-ready
 
 **Final Metrics:**
 - Security score: 6/10 → **8.5/10** (+42%)
@@ -268,7 +268,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Previous Releases] - 2025-10-15
 
-### 🐛 Code Quality & Compliance Fixes (Oct 2025)
+### Code Quality & Compliance Fixes (Oct 2025)
 
 #### Fixed
 - **Risk Score inversion in simulation engine** ([simulation-engine.js:489-493, :507](static/modules/simulation-engine.js#L489-L507))
@@ -277,7 +277,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Root cause**: Copy-paste error from legacy code using inverted risk semantics
   - **Fix**: Removed inversion, now correctly uses `scores.risk * wRisk` in DI formula
   - **Reasoning updated**: Display now shows actual risk values without inversion
-  - **Result**: DI calculation now respects canonical risk semantics (high score = high robustness) ✅
+  - **Result**: DI calculation now respects canonical risk semantics (high score = high robustness) [OK]
 
 - **Direct fetch bypassing loadBalanceData** ([WealthContextBar.js:1083-1092](static/components/WealthContextBar.js#L1083-L1092))
   - **Problem**: Badge data fetching used direct `fetch('/balances/current')` call
@@ -285,7 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Root cause**: Legacy code pattern before `window.loadBalanceData()` standardization
   - **Fix**: Replaced with `window.loadBalanceData()` with fallback for compatibility
   - **Format adaptation**: Added `.data` unwrapping to handle loadBalanceData response format
-  - **Result**: Unified data loading pattern across entire frontend ✅
+  - **Result**: Unified data loading pattern across entire frontend [OK]
 
 #### Documentation
 - **CHANGELOG.md** - Added comprehensive entry documenting both fixes
@@ -295,7 +295,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-### 🔧 Cap Stability Fix (Oct 2025)
+### Cap Stability Fix (Oct 2025)
 
 #### Fixed
 - **Cap oscillations fixed** ([docs/CAP_STABILITY_FIX.md](docs/CAP_STABILITY_FIX.md))
@@ -310,17 +310,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     2. Risk semantics fixed to v2_conservative by default ([market-regimes.js:226](static/modules/market-regimes.js#L226))
     3. Hysteresis widened (gap 10pts vs 4pts before) ([market-regimes.js:171](static/modules/market-regimes.js#L171))
     4. Frontend now reads backend cap as MAX limit ([targets-coordinator.js:485](static/modules/targets-coordinator.js#L485))
-  - **Result**: Max variation 0.21% (< 2% target) ✅
+  - **Result**: Max variation 0.21% (< 2% target) [OK]
 
 #### Added
 - **Audit tools**:
   - `tools/audit_governance_state.py` - Backend state inspector (mode, cap, signals, hysteresis)
   - `tools/audit_frontend_state.html` - Frontend state inspector (localStorage, store, risk mode)
 - **Tests**: `tests/unit/test_cap_stability.py` - 4 scenarios, all PASSING
-  - Cap stability (5 ticks): max variation 0.21% ✅
-  - Cap floor check: within bounds 1%-95% ✅
-  - NaN protection: variation 0.12% < 15% ✅
-  - Manual override: cap = 15.0% exact ✅
+  - Cap stability (5 ticks): max variation 0.21% [OK]
+  - Cap floor check: within bounds 1%-95% [OK]
+  - NaN protection: variation 0.12% < 15% [OK]
+  - Manual override: cap = 15.0% exact [OK]
 
 #### Documentation
 - **Complete analysis**: [docs/CAP_STABILITY_FIX.md](docs/CAP_STABILITY_FIX.md)
@@ -331,7 +331,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Deployment instructions
   - Future work (complete v2 migration)
 
-### 🎯 Exposure Cap Overhaul & Risk Semantics V2
+### Exposure Cap Overhaul & Risk Semantics V2
 
 ### Added
 - **Pure function `computeExposureCap()`** ([targets-coordinator.js:337-412](static/modules/targets-coordinator.js#L337-L412))
@@ -354,8 +354,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Backend fallback logic** - Graceful degradation for `stale`/`error` status:
   - **Stale**: -15pts penalty but respects regime floors (no hard-cap)
   - **Error**: -25pts penalty but respects regime floors (no hard-cap)
-  - **Before**: Hard-cap 5-8% overriding all market context ❌
-  - **After**: Regime-aware fallback preserving market logic ✅
+  - **Before**: Hard-cap 5-8% overriding all market context [Error]
+  - **After**: Regime-aware fallback preserving market logic [OK]
 
 ### Fixed
 - **`renderTargetsTable()` crash** ([risk-dashboard.html:6053-6095](static/risk-dashboard.html#L6053-L6095))
@@ -372,11 +372,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Exposure cap calculation** - Complete architectural overhaul:
   - **Before (Legacy + 40% cap)**:
-    - Euphorie (73) + Risk (90) → 40% cap → 60% stables, 18% BTC ❌
-    - Expansion (61) + Risk (90) → 40% cap → 60% stables, 18% BTC ❌
+    - Euphorie (73) + Risk (90) → 40% cap → 60% stables, 18% BTC [Error]
+    - Expansion (61) + Risk (90) → 40% cap → 60% stables, 18% BTC [Error]
   - **After (V2 + Pure Function)**:
-    - Euphorie (73) + Risk (90) → 80%+ cap → 20-25% stables, 35%+ BTC ✅
-    - Expansion (61) + Risk (90) → 65% cap (boost) → 47% stables, 30% BTC ✅
+    - Euphorie (73) + Risk (90) → 80%+ cap → 20-25% stables, 35%+ BTC [OK]
+    - Expansion (61) + Risk (90) → 65% cap (boost) → 47% stables, 30% BTC [OK]
   - **Impact**: +20-25 percentage points exposure to risky assets in bull markets
 
 ### Performance
@@ -423,14 +423,14 @@ npm run test:coverage
 ```
 
 #### Test Coverage
-- ✅ 20+ unit tests for `computeExposureCap()`
-- ✅ All market regimes: Euphorie, Expansion, Neutral, Accumulation, Bear, Capitulation
-- ✅ Backend status handling: ok, stale, error, unknown
-- ✅ Volatility normalization: decimal (0.32) vs percent (32)
-- ✅ Edge cases: null values, unknown regimes, extreme volatility, mixed case regime names
-- ✅ Regime floors: All regimes respect their minimum thresholds
-- ✅ Dynamic boost: Expansion + Risk ≥80 verified
-- ✅ Signal quality penalties: Continuous gradient validation
+- [OK] 20+ unit tests for `computeExposureCap()`
+- [OK] All market regimes: Euphorie, Expansion, Neutral, Accumulation, Bear, Capitulation
+- [OK] Backend status handling: ok, stale, error, unknown
+- [OK] Volatility normalization: decimal (0.32) vs percent (32)
+- [OK] Edge cases: null values, unknown regimes, extreme volatility, mixed case regime names
+- [OK] Regime floors: All regimes respect their minimum thresholds
+- [OK] Dynamic boost: Expansion + Risk ≥80 verified
+- [OK] Signal quality penalties: Continuous gradient validation
 
 ### Roadmap
 
@@ -451,7 +451,7 @@ npm run test:coverage
 
 ## [3.0.0] - 2025-09-17
 
-### 🚀 Major Features - Système d'Allocation Dynamique
+### Major Features - Système d'Allocation Dynamique
 
 #### Élimination des Presets Hardcodés
 - **BREAKING**: Suppression complète des presets figés (BTC 40%, ETH 30%, Stables 20/30/50%)
@@ -465,7 +465,7 @@ npm run test:coverage
 - **CRITICAL**: Correction `targetsSource = data.targets` vs `data.execution_plan`
 - **NEW**: Support rétrocompatible ancien + nouveau format localStorage
 
-### 🔧 Technical Changes
+### Technical Changes
 
 #### Core Engine (`static/core/unified-insights-v2.js`)
 - **ADD**: `computeMacroTargetsDynamic(ctx, rb, walletStats)` - remplace presets
@@ -488,7 +488,7 @@ npm run test:coverage
   - **ADD**: Protection taxonomie `forceReloadTaxonomy()`
   - **ADD**: Logs debug détaillés structure données
 
-### 🐛 Critical Bug Fixes
+### Critical Bug Fixes
 
 #### Allocation Display Issues
 - **FIXED**: "Others 31%" incohérent → allocations cohérentes via source unique
@@ -501,12 +501,12 @@ npm run test:coverage
 - **FIXED**: Presets ignoraient risk_budget.target_stables_pct → intégration native
 - **FIXED**: Taxonomie non chargée causant "Others" gonflé → forceReloadTaxonomy()
 
-### 📚 Documentation
+### Documentation
 - **NEW**: `docs/dynamic-allocation-system.md` - guide complet nouveau système
 - **UPDATE**: `README.md` - section "Nouvelles Fonctionnalités v3.0"
 - **NEW**: Commentaires détaillés code + logs explicites
 
-### 💔 Breaking Changes
+### Breaking Changes
 - **REMOVE**: Presets hardcodés dans tous les fichiers
 - **REMOVE**: `buildTheoreticalTargets()` calls (replaced by dynamic computation)
 - **CHANGE**: Allocations maintenant contextuelles vs statiques (amélioration UX)
@@ -517,7 +517,7 @@ npm run test:coverage
 
 ## [2.2.0] - 2025-01-14
 
-### 🎯 Centralisation ML - Source Unique de Vérité
+### Centralisation ML - Source Unique de Vérité
 
 ### Added
 - **Source ML Centralisée** : `shared-ml-functions.js::getUnifiedMLStatus()` - single source of truth
@@ -527,11 +527,11 @@ npm run test:coverage
 - **Documentation Complète** : `docs/ml-centralization.md` avec architecture détaillée
 
 ### Fixed
-- **❌ Calculs ML Erronés** : Fini les "8/4 modèles = 200% confidence" - désormais capé à 4/4 = 100%
-- **❌ Badge Global Manquant** : Erreur syntaxe WealthContextBar.js (else if après else) corrigée
-- **❌ Intelligence ML Vide** : Analytics-unified affichait "--" au lieu des données réelles
-- **❌ Logique Dupliquée** : 3 implémentations différentes (badge, analytics, ai-dashboard) unifiées
-- **❌ Timezone Incorrect** : Badge utilise désormais Europe/Zurich via `formatZurich()`
+- **[Error] Calculs ML Erronés** : Fini les "8/4 modèles = 200% confidence" - désormais capé à 4/4 = 100%
+- **[Error] Badge Global Manquant** : Erreur syntaxe WealthContextBar.js (else if après else) corrigée
+- **[Error] Intelligence ML Vide** : Analytics-unified affichait "--" au lieu des données réelles
+- **[Error] Logique Dupliquée** : 3 implémentations différentes (badge, analytics, ai-dashboard) unifiées
+- **[Error] Timezone Incorrect** : Badge utilise désormais Europe/Zurich via `formatZurich()`
 
 ### Changed
 - **WealthContextBar** : Utilise source ML centralisée au lieu de logique dupliquée
@@ -547,7 +547,7 @@ npm run test:coverage
 
 ## [2.1.0] - 2024-01-15
 
-### 🧭 Consolidation Navigation & WealthContextBar Cross-Asset
+### Consolidation Navigation & WealthContextBar Cross-Asset
 
 ### Added
 - **Navigation Canonique** : 6 pages principales - Portfolio, Analytics, Risk, Rebalance, Execution, Settings
@@ -580,7 +580,7 @@ npm run test:coverage
 
 ## [2.0.1] - 2024-01-15
 
-### 🎯 Dashboard Global Insight Enhancement
+### Dashboard Global Insight Enhancement
 
 ### Added
 - **Global Insight Badge**: Dashboard principal affiche maintenant "Updated: HH:MM:SS • Contrad: X% • Cap: Y%" en bas de la tuile
@@ -607,7 +607,7 @@ npm run test:coverage
 
 ## [2.0.0] - 2024-12-12
 
-### 🔄 Major API Refactoring & Security Improvements
+### Major API Refactoring & Security Improvements
 
 This release contains **BREAKING CHANGES** requiring consumer updates.
 
@@ -718,29 +718,29 @@ This release contains **BREAKING CHANGES** requiring consumer updates.
 
 ## 2025-09-26 - Tri stable stratégies & équilibrage visuel
 
-### 🎯 Tri stable des stratégies Rebalance
+### Tri stable des stratégies Rebalance
 - **Nouveau**: Système de priorité garantissant l'ordre Unified Analytics → CCS Dynamic → statiques
 - **Fonction `rank()`**: Attribution de scores (0=Unified live, 1=Unified placeholder, 2=CCS live, 3=CCS placeholder/error, 10=statiques)
 - **Tri stable**: Maintien de l'ordre même après rafraîchissement dynamique via `refreshDynamicStrategy()`
 - **Localisation**: Support français pour le tri alphabétique secondaire via `localeCompare('fr')`
 
-### 🎨 Équilibrage visuel (Solution C)
+### Équilibrage visuel (Solution C)
 - **Filler invisible**: Ajout automatique d'éléments invisibles quand 1 carte reste sur la dernière ligne
 - **Détection responsive**: Activation uniquement si grille ≥3 colonnes et `(cartes % colonnes) === 1`
 - **Accessibilité**: Filler marqué `aria-hidden="true"` pour lecteurs d'écran
 - **Performance**: Gestion d'erreur avec `try/catch` pour éviter les crashes
 
-### 📱 Adaptation responsive améliorée
+### Adaptation responsive améliorée
 - **Breakpoint ajusté**: Passage à 4 colonnes dès 1280px (au lieu de 1440px)
 - **Évite lignes orphelines**: Réduction du risque de ligne avec 1 seule carte sur écrans larges
 - **Rétrocompatibilité**: Maintien du comportement 3 colonnes ≥1200px inchangé
 
-### 🔧 Technical Changes
+### Technical Changes
 - **Fichier modifié**: `static/rebalance.html`
 - **Fonction `renderStrategiesUI()`**: Ajout tri stable avant `.map()` et équilibrage après `innerHTML`
 - **CSS responsive**: Modification breakpoint `@media (min-width: 1280px)`
 
-### ✅ Résultat
+### Résultat
 - Interface cohérente avec Unified Analytics toujours en premier
 - CCS Dynamic systématiquement en deuxième position
 - Équilibrage visuel optimal sur toutes les tailles d'écran

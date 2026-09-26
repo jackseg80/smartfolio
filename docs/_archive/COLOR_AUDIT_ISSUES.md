@@ -4,15 +4,15 @@
 
 ## Problèmes Trouvés
 
-### 1. ❌ `risk-dashboard.html` - Fonction `pickScoreColor` inversée (ligne 5276)
+### 1.  `risk-dashboard.html` - Fonction `pickScoreColor` inversée (ligne 5276)
 
-**Status:** ✅ CORRIGÉ
+**Status:** [OK] CORRIGÉ
 
 **Avant:**
 ```javascript
 const pickScoreColor = (score) => {
-  if (score > 70) return 'var(--danger)';     // ❌ Rouge pour score élevé
-  if (score < 40) return 'var(--success)';    // ❌ Vert pour score faible
+  if (score > 70) return 'var(--danger)';     // [Error] Rouge pour score élevé
+  if (score < 40) return 'var(--success)';    // [Error] Vert pour score faible
   return 'var(--warning)';
 };
 ```
@@ -20,37 +20,37 @@ const pickScoreColor = (score) => {
 **Après:**
 ```javascript
 const pickScoreColor = (score) => {
-  if (score > 70) return 'var(--success)';    // ✅ Vert pour score élevé
-  if (score >= 40) return 'var(--warning)';   // ✅ Orange pour score moyen
-  return 'var(--danger)';                     // ✅ Rouge pour score faible
+  if (score > 70) return 'var(--success)';    // [OK] Vert pour score élevé
+  if (score >= 40) return 'var(--warning)';   // [OK] Orange pour score moyen
+  return 'var(--danger)';                     // [OK] Rouge pour score faible
 };
 ```
 
-### 2. ❌ `risk-dashboard.html` - Textes "Niveau de risque" inversés (ligne 4054-4058)
+### 2.  `risk-dashboard.html` - Textes "Niveau de risque" inversés (ligne 4054-4058)
 
-**Status:** ⏳ À CORRIGER
+**Status:** [Pending] À CORRIGER
 
 **Problème:** Le texte dit "Élevé - Attention" quand score > 70, mais un score élevé = bon (robuste)
 
 **Avant:**
 ```javascript
 const riskScore = m.risk_score || 0;
-if (riskScore > 70) return 'Élevé - Attention aux corrections brutales';  // ❌ Inversé
+if (riskScore > 70) return 'Élevé - Attention aux corrections brutales';  // [Error] Inversé
 if (riskScore > 50) return 'Modéré - Typique pour crypto';
-return 'Contrôlé - Bon équilibre risque/rendement';  // ❌ Inversé
+return 'Contrôlé - Bon équilibre risque/rendement';  // [Error] Inversé
 ```
 
 **Après (proposé):**
 ```javascript
 const riskScore = m.risk_score || 0;
-if (riskScore > 70) return 'Excellent - Portfolio très robuste';  // ✅ Correct
+if (riskScore > 70) return 'Excellent - Portfolio très robuste';  // [OK] Correct
 if (riskScore > 50) return 'Bon - Équilibre robustesse/rendement';
-return 'Faible - Attention aux fortes volatilités';  // ✅ Correct
+return 'Faible - Attention aux fortes volatilités';  // [OK] Correct
 ```
 
-### 3. ❌ `risk-dashboard.html` - Risk Score sans couleur (ligne 4236)
+### 3.  `risk-dashboard.html` - Risk Score sans couleur (ligne 4236)
 
-**Status:** ⏳ À CORRIGER
+**Status:** [Pending] À CORRIGER
 
 **Avant:**
 ```html
@@ -64,9 +64,9 @@ return 'Faible - Attention aux fortes volatilités';  // ✅ Correct
 </span>
 ```
 
-### 4. ❌ `risk-dashboard.html` - Data Confidence sans couleur (ligne 4138)
+### 4.  `risk-dashboard.html` - Data Confidence sans couleur (ligne 4138)
 
-**Status:** ⏳ À CORRIGER
+**Status:** [Pending] À CORRIGER
 
 **Avant:**
 ```html
@@ -80,9 +80,9 @@ return 'Faible - Attention aux fortes volatilités';  // ✅ Correct
 </span>
 ```
 
-### 5. ❌ `risk-dashboard.html` - Calmar Ratio sans couleur (ligne 4211)
+### 5.  `risk-dashboard.html` - Calmar Ratio sans couleur (ligne 4211)
 
-**Status:** ⏳ À CORRIGER
+**Status:** [Pending] À CORRIGER
 
 **Avant:**
 ```html
@@ -106,21 +106,21 @@ const getCalmarColor = (value) => {
 };
 ```
 
-### 6. ✅ `risk-dashboard.html` - Diversification Ratio (ligne 4450)
+### 6.  `risk-dashboard.html` - Diversification Ratio (ligne 4450)
 
-**Status:** ✅ CORRECT (utilise déjà `getMetricHealth`)
+**Status:** [OK] CORRECT (utilise déjà `getMetricHealth`)
 
 ```javascript
 style="color: ${getMetricHealth('diversification_ratio', c.diversification_ratio).color}"
 ```
 
-### 7. ❓ `analytics-unified.html` - Decision Index coloré ?
+### 7.  `analytics-unified.html` - Decision Index coloré ?
 
 **Question:** Le Decision Index doit-il avoir une couleur selon son score ou rester toujours bleu?
 
 **Réponse proposée:** OUI, il devrait être coloré selon la même sémantique positive (0-100)
 
-### 8. ⏳ Panel de gauche (Sidebar) - Styling minimal
+### 8.  Panel de gauche (Sidebar) - Styling minimal
 
 **Problème:** Panel de gauche manque de couleurs et de style
 
@@ -200,15 +200,15 @@ function getScoreLabel(score) {
 
 ## Plan d'Action
 
-1. ✅ Corriger `pickScoreColor` dans `risk-dashboard.html` (ligne 5276) - FAIT
-2. ⏳ Corriger textes "Niveau de risque" (ligne 4054-4058)
-3. ⏳ Ajouter couleurs Risk Score (ligne 4236)
-4. ⏳ Ajouter couleurs Data Confidence (ligne 4138)
-5. ⏳ Ajouter couleurs Calmar Ratio (ligne 4211)
-6. ⏳ Vérifier/corriger Decision Index dans `analytics-unified.html`
-7. ⏳ Styliser panel de gauche (sidebar)
-8. ⏳ Tests visuels complets
-9. ⏳ Commit avec toutes les corrections
+1. [OK] Corriger `pickScoreColor` dans `risk-dashboard.html` (ligne 5276) - FAIT
+2. [Pending] Corriger textes "Niveau de risque" (ligne 4054-4058)
+3. [Pending] Ajouter couleurs Risk Score (ligne 4236)
+4. [Pending] Ajouter couleurs Data Confidence (ligne 4138)
+5. [Pending] Ajouter couleurs Calmar Ratio (ligne 4211)
+6. [Pending] Vérifier/corriger Decision Index dans `analytics-unified.html`
+7. [Pending] Styliser panel de gauche (sidebar)
+8. [Pending] Tests visuels complets
+9. [Pending] Commit avec toutes les corrections
 
 ## Principe Canonique
 

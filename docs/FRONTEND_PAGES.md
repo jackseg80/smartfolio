@@ -63,9 +63,9 @@
 
 **Menu Bourse (dropdown):**
 
-- 📊 Dashboard → saxo-dashboard.html (Overview + Positions)
-- 📈 Analytics → bourse-analytics.html (Risk Analysis + Advanced Analytics)
-- 💡 Recommendations → bourse-recommendations.html (Recommendations + Market Opportunities)
+- Dashboard → saxo-dashboard.html (Overview + Positions)
+- Analytics → bourse-analytics.html (Risk Analysis + Advanced Analytics)
+- Recommendations → bourse-recommendations.html (Recommendations + Market Opportunities)
 
 ---
 

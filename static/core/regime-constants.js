@@ -46,15 +46,11 @@ export const REGIME_COLORS = Object.freeze({
     'expansion': '#3b82f6',
 });
 
+// Compatibility export: regime names and colors carry the meaning.
+// Kept as plain text because this data is also used in selectors and exports.
 export const REGIME_EMOJIS = Object.freeze({
-    'Bear Market': '\u{1F534}',   // red circle
-    'Correction': '\u{1F7E0}',    // orange circle
-    'Bull Market': '\u{1F7E2}',   // green circle
-    'Expansion': '\u{1F535}',     // blue circle
-    'bear_market': '\u{1F534}',
-    'correction': '\u{1F7E0}',
-    'bull_market': '\u{1F7E2}',
-    'expansion': '\u{1F535}',
+    'Bear Market': '', 'Correction': '', 'Bull Market': '', 'Expansion': '',
+    'bear_market': '', 'correction': '', 'bull_market': '', 'expansion': '',
 });
 
 /** Legacy name -> canonical name mapping */
@@ -146,11 +142,11 @@ export function regimeColor(regime) {
 }
 
 /**
- * Get regime emoji from name.
+ * Get the legacy plain-text regime prefix.
  * @param {string} regime
  * @returns {string}
  */
 export function regimeEmoji(regime) {
     const canonical = normalizeRegimeName(regime);
-    return REGIME_EMOJIS[canonical] || '\u{26AA}';
+    return REGIME_EMOJIS[canonical] || '';
 }

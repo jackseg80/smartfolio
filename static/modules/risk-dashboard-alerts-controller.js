@@ -22,7 +22,7 @@
           advancedPanel.innerHTML = `
               <div class="card">
                 <div class="card-header">
-                  <h3>🎯 Phase 3A: Advanced Risk Analysis</h3>
+                  <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Phase 3A: Advanced Risk Analysis</h3>
                   <span class="status-badge active">VaR Models Active</span>
                 </div>
                 <div class="card-content">
@@ -140,7 +140,7 @@
 
         banner.innerHTML = `
           <div>
-            🏷️ <strong>Debug Metadata:</strong>
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Label" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#tag"></use></svg> <strong>Debug Metadata:</strong>
             User: <code>${meta.user_id}</code> |
             Source: <code>${meta.source_id}</code> |
             Taxonomy: <code>${meta.taxonomy_version}:${meta.taxonomy_hash}</code> |
@@ -162,11 +162,11 @@
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {
-              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+              source: currentSource,  //  FIX: Pass source parameter for multi-tenant isolation
               price_history_days: priceDays,
               lookback_days: corrDays,
               min_usd: minUsd,
-              risk_version: 'v2_active',  // 🆕 V2 Active: V2 autoritaire
+              risk_version: 'v2_active',  //  V2 Active: V2 autoritaire
               use_dual_window: true
             }
           });
@@ -208,11 +208,11 @@
           };
 
           // Debug: log group names to verify API naming
-          console.debug('📊 GRI groups from API:', Object.keys(exposureByGroup));
+          console.debug("GRI groups from API:", Object.keys(exposureByGroup));
 
           const griContainer = document.getElementById('gri-analysis-content');
           if (!griContainer) {
-            debugLogger.warn('⚠️ GRI container not found in DOM, skipping render');
+            debugLogger.warn("[Warning] GRI container not found in DOM, skipping render");
             return;
           }
 
@@ -250,7 +250,7 @@
 
                   // Debug si fallback 5/10 utilisé
                   if (!(group.name in GROUP_RISK_LEVELS)) {
-                    debugLogger.warn('⚠️ Group name not in risk levels:', group.name, '(using fallback 5/10)');
+                    debugLogger.warn("[Warning] Group name not in risk levels:", group.name, '(using fallback 5/10)');
                   }
 
                   return `
@@ -274,9 +274,9 @@
               </div>
               <div class="gri-interpretation">
                 <div class="metric-interpretation hinted" data-key="gri_interpretation">
-                  ${gri < 3 ? '✅ Low portfolio risk' :
-              gri < 6 ? '⚠️ Moderate portfolio risk' :
-                '🚨 High portfolio risk - Consider diversifying'}
+                  ${gri < 3 ? "[OK] Low portfolio risk" :
+              gri < 6 ? "[Warning] Moderate portfolio risk" :
+                "[Alert] High portfolio risk - Consider diversifying"}
                 </div>
               </div>
             `;
@@ -304,7 +304,7 @@
           const scenarios = [
             {
               id: "crisis_2008",
-              name: "📉 2008 Financial Crisis",
+              name: "2008 Financial Crisis",
               description: "Replicates the September-November 2008 market crash",
               impact: { min: -45, max: -60 },
               probability: 0.02, // 2% sur 10 ans
@@ -313,7 +313,7 @@
             },
             {
               id: "covid_2020",
-              name: "🦠 Crash COVID-19 Mars 2020",
+              name: "Crash COVID-19 Mars 2020",
               description: "Sudden crash due to the global pandemic",
               impact: { min: -35, max: -50 },
               probability: 0.05, // 5% sur 10 ans (pandémie)
@@ -322,7 +322,7 @@
             },
             {
               id: "china_ban",
-              name: "🇨🇳 China Crypto Ban",
+              name: "China Crypto Ban",
               description: "Complete crypto ban by Chinese authorities",
               impact: { min: -25, max: -40 },
               probability: 0.10, // 10% sur 10 ans (régulation)
@@ -331,7 +331,7 @@
             },
             {
               id: "tether_collapse",
-              name: "💰 Tether Collapse",
+              name: "Tether Collapse",
               description: "Total loss of confidence in USDT",
               impact: { min: -30, max: -55 },
               probability: 0.08, // 8% sur 10 ans (risque stablecoin)
@@ -340,7 +340,7 @@
             },
             {
               id: "fed_emergency",
-              name: "🏦 Emergency Fed Rate Hike",
+              name: "Emergency Fed Rate Hike",
               description: "Sudden rate hike to combat inflation",
               impact: { min: -20, max: -35 },
               probability: 0.15, // 15% sur 10 ans (politique monétaire)
@@ -349,7 +349,7 @@
             },
             {
               id: "exchange_hack",
-              name: "🔓 Major Exchange Hack",
+              name: "Major Exchange Hack",
               description: "Hack of a leading exchange (Binance/Coinbase)",
               impact: { min: -15, max: -30 },
               probability: 0.20, // 20% sur 10 ans (sécurité)
@@ -378,7 +378,7 @@
 
           const stressContainer = document.getElementById('stress-test-content');
           if (!stressContainer) {
-            debugLogger.warn('⚠️ Stress test container not found in DOM, skipping render');
+            debugLogger.warn("[Warning] Stress test container not found in DOM, skipping render");
             return;
           }
 
@@ -392,10 +392,10 @@
                 ${scenariosHtml}
                 <div class="scenarios-footer">
                   <button class="btn-secondary" onclick="runAllStressTests()">
-                    🧪 Run all tests
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Run all tests
                   </button>
                   <button class="btn-secondary" onclick="createCustomScenario()">
-                    ⚙️ Custom scenario
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Custom scenario
                   </button>
                 </div>
               </div>
@@ -439,7 +439,7 @@
       async function loadMonteCarloResults() {
         const monteCarloContainer = document.getElementById('monte-carlo-content');
         if (!monteCarloContainer) {
-          debugLogger.warn('⚠️ Monte Carlo container not found in DOM, skipping render');
+          debugLogger.warn("[Warning] Monte Carlo container not found in DOM, skipping render");
           return;
         }
 
@@ -483,11 +483,11 @@
 
           const data = await window.globalConfig.apiRequest('/api/risk/dashboard', {
             params: {
-              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+              source: currentSource,  //  FIX: Pass source parameter for multi-tenant isolation
               price_history_days: priceDays,
               lookback_days: corrDays,
               min_usd: minUsd,
-              risk_version: 'v2_active',  // 🆕 V2 Active: V2 autoritaire
+              risk_version: 'v2_active',  //  V2 Active: V2 autoritaire
               use_dual_window: true
             }
           });

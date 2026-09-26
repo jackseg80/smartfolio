@@ -528,21 +528,21 @@ class PortfolioAnalytics:
         top_pct = top_holding.get("usd_value", 0) / total_value
         
         if top_pct > 0.5:
-            recommendations.append(f"⚠️ Forte concentration sur {top_holding['symbol']} ({top_pct:.1%})")
+            recommendations.append(f"[Warning] Forte concentration sur {top_holding['symbol']} ({top_pct:.1%})")
         
         # Analyser les groupes
         largest_group = max(groups.items(), key=lambda x: x[1]) if groups else ("", 0)
         largest_group_pct = largest_group[1] / total_value if total_value > 0 else 0
         
         if largest_group_pct > 0.7:
-            recommendations.append(f"📊 Diversifier hors du groupe {largest_group[0]} ({largest_group_pct:.1%})")
+            recommendations.append(f" Diversifier hors du groupe {largest_group[0]} ({largest_group_pct:.1%})")
         
         # Recommandations générales
         if len(items) < 3:
-            recommendations.append("🎯 Envisager plus d'assets pour diversification")
+            recommendations.append(" Envisager plus d'assets pour diversification")
         
         if len(groups) < 3:
-            recommendations.append("🏷️ Diversifier dans plus de groupes de cryptos")
+            recommendations.append(" Diversifier dans plus de groupes de cryptos")
         
         return recommendations[:3]  # Limiter à 3 recommandations
     

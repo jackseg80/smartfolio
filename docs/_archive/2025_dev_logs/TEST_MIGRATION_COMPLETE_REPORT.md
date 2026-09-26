@@ -2,28 +2,28 @@
 
 **Date**: 29 Octobre 2025
 **Objectif**: Éliminer tous les `user_id` hardcodés dans les tests pour garantir l'isolation multi-tenant
-**Status**: ✅ **88% Complété** (35/40 occurrences migrées)
+**Status**: [OK] **88% Complété** (35/40 occurrences migrées)
 
 ---
 
-## 📊 Résumé Exécutif
+## Résumé Exécutif
 
 ### Fichiers Migrés: **6 fichiers prioritaires**
 
 | Fichier | Occurrences | Status | Tests |
 |---------|-------------|--------|-------|
-| **tests/test_portfolio_pnl.py** | 8 | ✅ Migré | 19/19 passent |
-| **tests/integration/test_balance_resolution.py** | 8 | ✅ Migré | Migration complète |
-| **tests/integration/test_saxo_import_avg_price.py** | 13 | ✅ Migré | Migration complète |
-| **tests/unit/test_risk_dashboard_metadata.py** | 5 | ✅ Migré | Migration complète |
-| **test_risk_score_v2_divergence.py** | 1 | ✅ Migré | Script CLI |
-| **tests/conftest.py** | +2 fixtures | ✅ Créé | 7/7 passent |
+| **tests/test_portfolio_pnl.py** | 8 | [OK] Migré | 19/19 passent |
+| **tests/integration/test_balance_resolution.py** | 8 | [OK] Migré | Migration complète |
+| **tests/integration/test_saxo_import_avg_price.py** | 13 | [OK] Migré | Migration complète |
+| **tests/unit/test_risk_dashboard_metadata.py** | 5 | [OK] Migré | Migration complète |
+| **test_risk_score_v2_divergence.py** | 1 | [OK] Migré | Script CLI |
+| **tests/conftest.py** | +2 fixtures | [OK] Créé | 7/7 passent |
 
 **Total**: **35 occurrences éliminées** sur 40 identifiées (**88% complété**)
 
 ---
 
-## 🎯 Changements Principaux
+## Changements Principaux
 
 ### 1. **Fixtures Pytest Créées** ([tests/conftest.py](../tests/conftest.py#L244-L304))
 
@@ -45,13 +45,13 @@ def test_user_config(test_user_id) -> Dict[str, str]:
 
 ### 2. **Pattern de Migration**
 
-**❌ Avant:**
+**[Error] Avant:**
 ```python
 async def test_snapshot_creation():
     result = await create_snapshot(user_id="demo", source="cointracking")
 ```
 
-**✅ Après:**
+**[OK] Après:**
 ```python
 async def test_snapshot_creation(test_user_id):
     result = await create_snapshot(user_id=test_user_id, source="cointracking")
@@ -60,14 +60,14 @@ async def test_snapshot_creation(test_user_id):
 
 ### 3. **Tests d'Isolation Multi-User**
 
-**❌ Avant:**
+**[Error] Avant:**
 ```python
 def test_user_isolation():
     result1 = get_data(user_id="demo")
     result2 = get_data(user_id="jack")
 ```
 
-**✅ Après:**
+**[OK] Après:**
 ```python
 def test_user_isolation(test_user_id):
     import uuid
@@ -80,7 +80,7 @@ def test_user_isolation(test_user_id):
 
 ---
 
-## 📁 Détails par Fichier
+## Détails par Fichier
 
 ### **tests/test_portfolio_pnl.py** (8 occurrences)
 
@@ -91,7 +91,7 @@ def test_user_isolation(test_user_id):
 - `test_pnl_window_7d(test_user_id)` - Ligne 332 (4 snapshots)
 - `test_save_snapshot_*` - Ligne 404, 415, 433
 
-**Résultat**: ✅ **19/19 tests passent** (0.26s)
+**Résultat**: [OK] **19/19 tests passent** (0.26s)
 
 ---
 
@@ -166,7 +166,7 @@ python test_risk_score_v2_divergence.py [user_id]  # Défaut: "demo"
 
 ---
 
-## 📝 Fichiers Bonus (Non Migrés - 6 occurrences restantes)
+## Fichiers Bonus (Non Migrés - 6 occurrences restantes)
 
 Ces fichiers représentent **12%** des occurrences initiales et sont moins critiques:
 
@@ -181,12 +181,12 @@ Ces fichiers représentent **12%** des occurrences initiales et sont moins criti
 
 ---
 
-## 🚀 Impact & Bénéfices
+## Impact & Bénéfices
 
 ### **Avant Migration**
 
 ```bash
-# ❌ Problèmes
+# Problèmes
 - 40+ hardcoded user_ids (demo, jack)
 - Conflits tests parallèles
 - Race conditions aléatoires
@@ -197,7 +197,7 @@ Ces fichiers représentent **12%** des occurrences initiales et sont moins criti
 ### **Après Migration**
 
 ```bash
-# ✅ Bénéfices
+# Bénéfices
 - 35 hardcoded user_ids éliminés (88%)
 - Tests parallèles stables (pytest -n 4)
 - User IDs uniques par test
@@ -215,7 +215,7 @@ pytest -n 4 tests/test_portfolio_pnl.py
 
 # Après
 pytest -n 4 tests/test_portfolio_pnl.py
-# → 19/19 passed ✅ (stable)
+# → 19/19 passed  (stable)
 ```
 
 **Logs Debug:**
@@ -227,7 +227,7 @@ pytest -n 4 tests/test_portfolio_pnl.py
 
 ---
 
-## 📚 Documentation Créée
+## Documentation Créée
 
 1. **[tests/conftest.py](../tests/conftest.py#L244-L304)** - 2 fixtures (test_user_id, test_user_config)
 2. **[tests/test_fixtures_validation.py](../tests/test_fixtures_validation.py)** - 7 tests de validation
@@ -236,18 +236,18 @@ pytest -n 4 tests/test_portfolio_pnl.py
 
 ---
 
-## ✅ Validation
+## Validation
 
 ### **Tests Exécutés**
 
 ```bash
 # Fixtures validation
 pytest tests/test_fixtures_validation.py -v
-# → 7/7 passed ✅
+# → 7/7 passed
 
 # Portfolio P&L
 pytest tests/test_portfolio_pnl.py -v
-# → 19/19 passed ✅ (0.26s)
+# → 19/19 passed  (0.26s)
 
 # Vérification complète
 grep -r "user_id.*=.*['\"]demo['\"]" tests/ | wc -l
@@ -259,13 +259,13 @@ grep -r "user_id.*=.*['\"]demo['\"]" tests/ | wc -l
 | Aspect | Avant | Après |
 |--------|-------|-------|
 | Hardcoded user_ids | 40 | 5 (bonus) |
-| Tests isolés | ⚠️ 60% | ✅ 95% |
-| Parallel test safe | ❌ Non | ✅ Oui |
-| Production ready | ⚠️ Risqué | ✅ Prêt |
+| Tests isolés | [Warning] 60% | [OK] 95% |
+| Parallel test safe | [Error] Non | [OK] Oui |
+| Production ready | [Warning] Risqué | [OK] Prêt |
 
 ---
 
-## 🔧 Migration Bonus (Optionnelle)
+## Migration Bonus (Optionnelle)
 
 Pour atteindre **100% conformité**, migrer les 4 fichiers restants:
 
@@ -284,7 +284,7 @@ done
 
 ---
 
-## 📊 Statistiques Finales
+## Statistiques Finales
 
 | Métrique | Valeur |
 |----------|--------|
@@ -299,7 +299,7 @@ done
 
 ---
 
-## 🎓 Leçons Apprises
+## Leçons Apprises
 
 1. **Fixtures pytest** sont essentielles pour tests isolés
 2. **test_user_id unique** élimine race conditions
@@ -309,7 +309,7 @@ done
 
 ---
 
-## 🔗 Références
+## Références
 
 - **Guide Migration**: [TEST_USER_ISOLATION_GUIDE.md](TEST_USER_ISOLATION_GUIDE.md)
 - **Fixtures**: [tests/conftest.py](../tests/conftest.py#L244-L304)
@@ -319,6 +319,6 @@ done
 
 ---
 
-**Résultat Final**: ✅ **Mission accomplie à 88%**. Système de tests multi-tenant désormais **production-ready** avec isolation parfaite et stabilité garantie en tests parallèles.
+**Résultat Final**: [OK] **Mission accomplie à 88%**. Système de tests multi-tenant désormais **production-ready** avec isolation parfaite et stabilité garantie en tests parallèles.
 
 **Prochaine étape recommandée**: Phase 2 Qualité (tests unitaires manquants, formatters, max-width).

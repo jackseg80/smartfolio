@@ -102,11 +102,11 @@ async function fetchRiskData() {
     const apiBaseUrl = globalConfig.get('api_base_url');
     const minUsd = globalConfig.get('min_usd_threshold');
 
-    // 🔧 FIX: Read csv_selected_file from window.userSettings (updated by WealthContextBar)
+    //  FIX: Read csv_selected_file from window.userSettings (updated by WealthContextBar)
     const csvFile = window.userSettings?.csv_selected_file || 'latest';
     const saxoFile = window.userSettings?.saxo_selected_file || 'latest';
 
-    console.debug(`🔍 Risk Overview using data source: ${dataSource}, csvFile: '${csvFile}', saxoFile: '${saxoFile}'`);
+    console.debug(`Risk Overview using data source: ${dataSource}, csvFile: '${csvFile}', saxoFile: '${saxoFile}'`);
 
     // Utiliser directement les données de balance et calculer le risque côté client
     const balanceResult = await window.globalConfig.apiRequest('/balances/current', {
@@ -114,12 +114,12 @@ async function fetchRiskData() {
     });
 
     // Use the real backend endpoint for risk dashboard
-    // ✅ Inclure source et user_id pour isolation multi-tenant
-    // ✅ NOUVEAU (Phase 5.5): Shadow Mode V2 + Dual Window
-    // 🔧 FIX: Add _csv_hint to force backend recalculation when CSV changes
+    //  Inclure source et user_id pour isolation multi-tenant
+    //  NOUVEAU (Phase 5.5): Shadow Mode V2 + Dual Window
+    //  FIX: Add _csv_hint to force backend recalculation when CSV changes
     const cacheBuster = csvFile !== 'latest' ? csvFile : Date.now().toString().substring(0, 10);
 
-    console.debug(`🔍 fetchRiskData - calling /api/risk/dashboard with _csv_hint: '${cacheBuster}'`);
+    console.debug(`fetchRiskData - calling /api/risk/dashboard with _csv_hint: '${cacheBuster}'`);
 
     const apiResult = await window.globalConfig.apiRequest('/api/risk/dashboard', {
       params: {
@@ -127,21 +127,21 @@ async function fetchRiskData() {
         min_usd: minUsd,
         price_history_days: analysisDays,
         lookback_days: corrDays,
-        risk_version: 'v2_active',  // 🆕 V2 Active: V2 est autoritaire (Oct 2025)
+        risk_version: 'v2_active',  //  V2 Active: V2 est autoritaire (Oct 2025)
         use_dual_window: true,       // Dual-window metrics actives
-        _csv_hint: cacheBuster        // 🔧 Hint for backend cache: changes when CSV changes
+        _csv_hint: cacheBuster        //  Hint for backend cache: changes when CSV changes
       }
     });
 
-    // 🔍 DEBUG: Log la réponse brute avec nouveaux champs V2
-    console.debug('🔍 Raw API response (Shadow Mode V2):', JSON.stringify({
+    //  DEBUG: Log la réponse brute avec nouveaux champs V2
+    console.debug("Raw API response (Shadow Mode V2):", JSON.stringify({
       // Legacy scores
       sharpe_legacy: apiResult?.risk_metrics?.sharpe_ratio,
       var95: apiResult?.risk_metrics?.var_95_1d,
       risk_score_legacy: apiResult?.risk_metrics?.risk_score,
       structural_legacy: apiResult?.risk_metrics?.risk_score_structural,
       window_used: apiResult?.risk_metrics?.window_used,
-      // V2 Shadow Mode info (🔧 FIX: Chemin correct!)
+      // V2 Shadow Mode info ( FIX: Chemin correct!)
       risk_version_info: apiResult?.risk_metrics?.risk_version_info ? {
         active_version: apiResult.risk_metrics.risk_version_info.active_version,
         risk_score_v2: apiResult.risk_metrics.risk_version_info.risk_score_v2,
@@ -162,7 +162,7 @@ async function fetchRiskData() {
     } catch (_) { /* ignore */ }
 
     const m = apiResult.risk_metrics;
-    debugLogger.debug(`🧪 SHADOW V2 - Risk metrics from API: VaR 95%: ${(m.var_95_1d * 100).toFixed(2)}%, Sharpe: ${m.sharpe_ratio.toFixed(2)}, Risk Score: ${m.risk_score} (authoritative), Structural: ${m.risk_score_structural || 'N/A'}, Window: ${m.window_used?.actual_data_points || '?'} pts, risk_version_info: ${m.risk_version_info ? 'PRESENT ✅' : 'MISSING ❌'}`);
+    debugLogger.debug(`SHADOW V2 - Risk metrics from API: VaR 95%: ${(m.var_95_1d * 100).toFixed(2)}%, Sharpe: ${m.sharpe_ratio.toFixed(2)}, Risk Score: ${m.risk_score} (authoritative), Structural: ${m.risk_score_structural || 'N/A'}, Window: ${m.window_used?.actual_data_points || '?'} pts, risk_version_info: ${m.risk_version_info ? "PRESENT [OK]" : "MISSING [Error]"}`);
 
     // The backend already provides the correct structure, just return it
     return apiResult;
@@ -181,7 +181,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   const recommendations = [];
 
   // VaR recommendations (VaR renvoyé en valeur positive)
-  // ⚠️ MODIFIÉ (Phase 1.1): Suppression % stables hardcodé, branché sur risk_budget API
+  //  MODIFIÉ (Phase 1.1): Suppression % stables hardcodé, branché sur risk_budget API
   if (metrics.var_95_1d > 0.08) {
     const riskBudget = fullData?.risk_budget || fullData?.regime?.risk_budget;
     const targetStables = riskBudget?.target_stables_pct;
@@ -193,7 +193,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
 
     recommendations.push({
       priority: 'high',
-      icon: '🛡️',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg>",
       title: 'Reduce daily loss risk',
       description: 'Your VaR of ' + formatPercent(metrics.var_95_1d) + ' is high.',
       action: action
@@ -204,7 +204,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (metrics.sharpe_ratio < 1.0) {
     recommendations.push({
       priority: 'medium',
-      icon: '📈',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>",
       title: 'Improve risk-adjusted return',
       description: 'Sharpe ratio of ' + safeFixed(metrics.sharpe_ratio) + ' - look for assets with a better risk/return ratio.',
       action: 'Consider reducing memecoins, increasing BTC/ETH'
@@ -215,7 +215,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (correlations.diversification_ratio < 0.4) {
     recommendations.push({
       priority: 'high',
-      icon: '🔄',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>",
       title: 'Improve diversification',
       description: 'Very low diversification ratio (' + safeFixed(correlations.diversification_ratio) + '). Portfolio too correlated.',
       action: 'Add uncorrelated assets: privacy coins, stablecoins, different sectors'
@@ -223,7 +223,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   } else if (correlations.diversification_ratio < 0.7) {
     recommendations.push({
       priority: 'medium',
-      icon: '🔄',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>",
       title: 'Improve diversification',
       description: 'Limited diversification (' + safeFixed(correlations.diversification_ratio) + ').',
       action: 'Broaden sectors and reduce highly correlated pairs'
@@ -234,7 +234,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (correlations.effective_assets < 3) {
     recommendations.push({
       priority: 'medium',
-      icon: '⚖️',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Balanced\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#scale\"></use></svg>",
       title: 'Reduce concentration',
       description: 'Portfolio se comporte comme ' + safeFixed(correlations.effective_assets, 1) + ' actifs seulement.',
       action: 'Rebalance: limit any asset to <20% of portfolio'
@@ -245,7 +245,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (metrics.max_drawdown > 0.6) {
     recommendations.push({
       priority: 'high',
-      icon: '📉',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Decline\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-down\"></use></svg>",
       title: 'Protect against extreme drops',
       description: 'Max drawdown of ' + formatPercent(metrics.max_drawdown) + ' very high.',
       action: 'Defensive strategy: DCA, stop-loss, or hedging with stablecoins'
@@ -258,7 +258,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     if (highCorrels.length > 0) {
       recommendations.push({
         priority: 'medium',
-        icon: '🔗',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Link\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#link\"></use></svg>",
         title: 'Reduce high correlations',
         description: 'Correlations >75% detected between ' + highCorrels.map(c => c.asset1 + '-' + c.asset2).join(', '),
         action: 'Diversify towards less correlated sectors (BTC vs ETH vs niche sectors)'
@@ -270,7 +270,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (recommendations.length === 0) {
     recommendations.push({
       priority: 'low',
-      icon: '✅',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>",
       title: 'Well-balanced portfolio',
       description: 'Your risk metrics are within acceptable crypto standards.',
       action: 'Continue monitoring and adjust according to market conditions'
@@ -284,7 +284,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
 
 // ====== Main Render Function ======
 export async function renderRiskOverview(container) {
-  debugLogger.debug('🚀 Rendering Risk Overview tab (complete module)');
+  debugLogger.debug("Rendering Risk Overview tab (complete module)");
 
   try {
     // Show loading state
@@ -301,9 +301,9 @@ export async function renderRiskOverview(container) {
     // Render the dashboard
     renderRiskDashboard(container, data);
 
-    debugLogger.debug('✅ Risk Overview tab rendered successfully');
+    debugLogger.debug("[OK] Risk Overview tab rendered successfully");
   } catch (error) {
-    debugLogger.error('❌ Failed to render Risk Overview:', error);
+    debugLogger.error("Failed to render Risk Overview:", error);
     showError(container, 'Failed to load risk dashboard: ' + error.message);
   }
 }
@@ -314,7 +314,7 @@ function renderRiskDashboard(container, data) {
   if (data.test_mode) {
     testModeBanner = `
       <div style="background: var(--info-bg); border: 1px solid var(--info); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
-        <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;">🧪 TEST MODE - Real Data</div>
+        <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> TEST MODE - Real Data</div>
         <div style="color: var(--theme-text-muted); font-size: 0.9rem;">
           Demo portfolio using the real price history cache (${data.test_holdings?.length || 0} assets, ${formatMoney(data.portfolio_summary.total_value)})
         </div>
@@ -359,7 +359,7 @@ function renderRiskDashboard(container, data) {
           <span class="recommendation-priority">${rec.priority === 'high' ? 'PRIORITÉ' : rec.priority === 'medium' ? 'Important' : 'Info'}</span>
         </div>
         <div class="recommendation-description">${rec.description}</div>
-        <div class="recommendation-action">▶️ ${rec.action}</div>
+        <div class="recommendation-action"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Run" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#play"></use></svg> ${rec.action}</div>
       </div>
     `).join('');
   })();
@@ -388,7 +388,7 @@ function renderRiskDashboard(container, data) {
     `).join('')
   ) : `
     <div class="alert alert-low">
-      <strong>✅ All Clear</strong><br>
+      <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> All Clear</strong><br>
       <em>No significant risk alerts at this time.</em>
     </div>
   `;
@@ -400,18 +400,18 @@ function renderRiskDashboard(container, data) {
       <summary>
         <div>Risk overview & recommendations</div>
         <div class="summary-right">
-          <span class="badge badge-alerts">⚠️ ${alertCount} alerts${breakdown}</span>
-          <span class="badge badge-recos">💡 ${recos.length} recos</span>
+          <span class="badge badge-alerts"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${alertCount} alerts${breakdown}</span>
+          <span class="badge badge-recos"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${recos.length} recos</span>
           <span class="chevron">›</span>
         </div>
       </summary>
       <div class="top-summary">
       <!-- Points clés -->
       <div class="risk-card">
-        <h3>📋 Key points of your portfolio</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Key points of your portfolio</h3>
         <div class="insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem;">
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">🎯 Risk Level</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Level</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const riskScore = m.risk_score || 0;
@@ -425,7 +425,7 @@ function renderRiskDashboard(container, data) {
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">📊 Diversification</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Diversification</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const div = c.diversification_ratio || 0;
@@ -436,7 +436,7 @@ function renderRiskDashboard(container, data) {
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">⚡ Performance/Risk</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Performance/Risk</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const sharpe = m.sharpe_ratio || 0;
@@ -447,7 +447,7 @@ function renderRiskDashboard(container, data) {
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">🔝 Concentration</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Up" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up"></use></svg> Concentration</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const t5 = insights.top5Share;
@@ -458,7 +458,7 @@ function renderRiskDashboard(container, data) {
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">💵 Stablecoins</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Stablecoins</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${(() => {
                 const s = insights.stableShare;
@@ -467,7 +467,7 @@ function renderRiskDashboard(container, data) {
             </div>
           </div>
           <div class="insight-item">
-            <div style="font-weight: 600; color: var(--theme-text);">🧪 Calculation Data</div>
+            <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Calculation Data</div>
             <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
               ${p.num_assets || (balances?.length || 'N/A')} assets used
             </div>
@@ -477,13 +477,13 @@ function renderRiskDashboard(container, data) {
 
       <!-- Risk Alerts -->
       <div class="risk-card">
-        <h3>⚠️ Risk Alerts</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Risk Alerts</h3>
         ${alertsHtml}
       </div>
 
       <!-- Recommandations d'amélioration -->
       <div class="risk-card">
-        <h3>💡 Improvement Recommendations</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Improvement Recommendations</h3>
         ${recommendationsHtml}
       </div>
       </div>
@@ -491,7 +491,7 @@ function renderRiskDashboard(container, data) {
 
     <!-- Portfolio Summary -->
     <div class="risk-card">
-      <h3>📊 Portfolio Summary</h3>
+      <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Portfolio Summary</h3>
       <div class="metric-row">
         <span class="metric-label">Total Value:</span>
         <span class="metric-value">${formatMoney(p.total_value)}</span>
@@ -509,7 +509,7 @@ function renderRiskDashboard(container, data) {
     <div class="risk-grid">
       <!-- Risk Score Card -->
       <div class="risk-card">
-        <h3>🎯 Risk Score <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Robustness Indicator [0-100]</span></h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Score <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Robustness Indicator [0-100]</span></h3>
 
         <!-- Risk Score Principal -->
         <div class="metric-row">
@@ -518,14 +518,14 @@ function renderRiskDashboard(container, data) {
             ${safeFixed(m.risk_score, 1)}/100
           </span>
           <button class="btn-breakdown-toggle" onclick="window.toggleBreakdown?.('risk-score-breakdown')" title="View penalty details" aria-label="Show Risk Score calculation details" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75em; background: rgba(125, 207, 255, 0.15); border: 1px solid var(--brand-primary); border-radius: 4px; color: var(--brand-primary); cursor: pointer;">
-            🔍 Details
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Details
           </button>
         </div>
 
         <!-- Breakdown Panel -->
         <div id="risk-score-breakdown" class="breakdown-panel" style="display: none; margin: 8px 0; padding: 12px; background: rgba(30, 30, 46, 0.6); border-radius: 8px; border: 1px solid rgba(125, 207, 255, 0.2); font-size: 0.85em;">
           <div class="breakdown-header" style="font-weight: 600; color: var(--brand-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-            <span>📊 Calculation Detail (Base = 50) ${m.risk_version_info ? `— ${m.risk_version_info.active_version === 'v2' ? 'V2' : 'Legacy'}` : ''}</span>
+            <span><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Calculation Detail (Base = 50) ${m.risk_version_info ? `— ${m.risk_version_info.active_version === 'v2' ? 'V2' : 'Legacy'}` : ''}</span>
             <button onclick="window.toggleBreakdown?.('risk-score-breakdown')" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.2em;" aria-label="Close">×</button>
           </div>
           <div class="breakdown-table" style="display: flex; flex-direction: column; gap: 4px;">
@@ -575,7 +575,7 @@ function renderRiskDashboard(container, data) {
 
         <!-- Metric Interpretation -->
         <div class="metric-interpretation">
-          💡 ${getScoreInterpretation(m.risk_score)}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getScoreInterpretation(m.risk_score)}
         </div>
 
         <!-- Dual Window Badges -->
@@ -584,7 +584,7 @@ function renderRiskDashboard(container, data) {
           ${m.dual_window.long_term?.available ? `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
               <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Long-Term window : Computes the Risk Score over ${m.dual_window.long_term.window_days} days of history excluding recent assets. Covers ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}% of portfolio value with ${m.dual_window.long_term.asset_count} assets with sufficient history. More stable and reliable metrics than full intersection.">
-                📈 Long-Term (${m.dual_window.long_term.window_days}d, ${m.dual_window.long_term.asset_count} assets, ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}%) <span style="color: var(--brand-primary); opacity: 0.6;">ℹ️</span>
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Long-Term (${m.dual_window.long_term.window_days}d, ${m.dual_window.long_term.asset_count} assets, ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}%) <span style="color: var(--brand-primary); opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </span>
               <span style="font-size: 0.85em; font-weight: 600; color: var(--brand-primary);">
                 Sharpe: ${safeFixed(m.dual_window.long_term.metrics?.sharpe_ratio, 2)}
@@ -592,7 +592,7 @@ function renderRiskDashboard(container, data) {
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Full Intersection window: Minimum common period including ALL assets (${m.dual_window.full_intersection.asset_count} assets). Over ${m.dual_window.full_intersection.window_days} days only because recent assets limit the history. Metrics may be unstable if window is short. Used for comparison and divergence detection.">
-                🔍 Full Intersection (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets) <span style="color: var(--text-secondary); opacity: 0.6;">ℹ️</span>
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Full Intersection (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets) <span style="color: var(--text-secondary); opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </span>
               <span style="font-size: 0.85em; color: ${Math.abs(m.dual_window.full_intersection.metrics?.sharpe_ratio - m.dual_window.long_term.metrics?.sharpe_ratio) > 0.5 ? 'var(--theme-error)' : 'var(--text-secondary)'};">
                 Sharpe: ${safeFixed(m.dual_window.full_intersection.metrics?.sharpe_ratio, 2)}
@@ -601,17 +601,17 @@ function renderRiskDashboard(container, data) {
             ${m.dual_window.exclusions?.excluded_pct > 0.2 ? `
             <div style="margin-top: 6px; padding: 4px 8px; background: rgba(247, 118, 142, 0.15); border-radius: 4px; cursor: help;" title="Assets excluded from Long-Term window due to history < ${m.dual_window.long_term.window_days}j : ${m.dual_window.exclusions.excluded_assets.map(a => a.symbol).join(', ')}. Represent ${(m.dual_window.exclusions.excluded_pct * 100).toFixed(1)}% of total value. The Risk Score is calculated only on the ${m.dual_window.long_term.asset_count} assets with sufficient history for more stability.">
               <span style="font-size: 0.8em; color: var(--theme-error);">
-                ⚠️ ${m.dual_window.exclusions.excluded_assets.length} assets excluded (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% value) - short history <span style="opacity: 0.6;">ℹ️</span>
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${m.dual_window.exclusions.excluded_assets.length} assets excluded (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% value) - short history <span style="opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
               </span>
             </div>
             ` : ''}
             <div style="margin-top: 6px; font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-              ✓ Authoritative score based on Long-Term (stable)
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Authoritative score based on Long-Term (stable)
             </div>
           ` : `
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <span style="font-size: 0.85em; color: var(--theme-warning);">
-                ⚠️ Full Intersection only (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets)
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Full Intersection only (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets)
               </span>
               <span style="font-size: 0.85em; color: var(--text-secondary);">
                 Sharpe: ${safeFixed(m.dual_window.full_intersection.metrics?.sharpe_ratio, 2)}
@@ -619,7 +619,7 @@ function renderRiskDashboard(container, data) {
             </div>
             <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255, 158, 100, 0.15); border-radius: 4px;">
               <span style="font-size: 0.8em; color: var(--theme-warning);">
-                ⚠️ Long-term cohort unavailable - metrics on short window (${m.dual_window.exclusions?.reason || 'unknown'})
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Long-term cohort unavailable - metrics on short window (${m.dual_window.exclusions?.reason || 'unknown'})
               </span>
             </div>
           `}
@@ -633,13 +633,13 @@ function renderRiskDashboard(container, data) {
         </div>
 
         <div class="metric-benchmark">
-          📊 <strong>Benchmarks:</strong> Very robust (≥80), Robust (≥65), Moderate (≥50), Fragile (≥35)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Benchmarks:</strong> Very robust (≥80), Robust (≥65), Moderate (≥50), Fragile (≥35)
         </div>
       </div>
 
       <!-- VaR/CVaR -->
       <div class="risk-card">
-        <h3>📉 Value at Risk (VaR) <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 30d (VaR), 60d (CVaR)</span></h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Decline" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-down"></use></svg> Value at Risk (VaR) <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 30d (VaR), 60d (CVaR)</span></h3>
         <div class="metric-row">
           <span class="metric-label">VaR 95% (1 day)</span>
           <span class="metric-value hinted" data-key="var95_1d" data-value="${m.var_95_1d}" style="color: ${getMetricHealth('var_95_1d', m.var_95_1d).color}">
@@ -647,7 +647,7 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('var_95_1d', m.var_95_1d).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('var_95_1d', m.var_95_1d).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">VaR 99% (1 day)</span>
@@ -656,7 +656,7 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('var_99_1d', m.var_99_1d).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('var_99_1d', m.var_99_1d).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">CVaR 95% (1 day)</span>
@@ -667,13 +667,13 @@ function renderRiskDashboard(container, data) {
           <span class="metric-value hinted" data-key="cvar99_1d" data-value="${m.cvar_99_1d}">${formatPercent(m.cvar_99_1d)}</span>
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Benchmarks crypto:</strong> Conservateur: -4%, Typique: -7%, Agressif: -12%
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Benchmarks crypto:</strong> Conservateur: -4%, Typique: -7%, Agressif: -12%
         </div>
       </div>
 
       <!-- Performance -->
       <div class="risk-card">
-        <h3>📈 Risk-Adjusted Performance <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Vol 45d • Sharpe 90d • Sortino 120d • Calmar 365d</span></h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Risk-Adjusted Performance <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Vol 45d • Sharpe 90d • Sortino 120d • Calmar 365d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Volatility (Annual)</span>
           <span class="metric-value hinted" data-key="volatility_ann" data-value="${m.volatility_annualized}" style="color: ${getMetricHealth('volatility_annualized', m.volatility_annualized).color}">
@@ -681,7 +681,7 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('volatility_annualized', m.volatility_annualized).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('volatility_annualized', m.volatility_annualized).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">Sharpe Ratio</span>
@@ -690,7 +690,7 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('sharpe_ratio', m.sharpe_ratio).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('sharpe_ratio', m.sharpe_ratio).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">Sortino Ratio</span>
@@ -699,20 +699,20 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('sortino_ratio', m.sortino_ratio).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('sortino_ratio', m.sortino_ratio).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">Calmar Ratio</span>
           <span class="metric-value">${safeFixed(m.calmar_ratio)}</span>
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Benchmarks crypto:</strong> Excellent: >1.5, Good: >1.0, Acceptable: >0.5 (Sharpe)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Benchmarks crypto:</strong> Excellent: >1.5, Good: >1.0, Acceptable: >0.5 (Sharpe)
         </div>
       </div>
 
       <!-- Drawdowns -->
       <div class="risk-card">
-        <h3>📊 Drawdown Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 180d</span></h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Drawdown Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>lookback 180d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Max Drawdown</span>
           <span class="metric-value hinted" data-key="max_drawdown" data-value="${m.max_drawdown}" style="color: ${getMetricHealth('max_drawdown', m.max_drawdown).color}">
@@ -720,20 +720,20 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('max_drawdown', m.max_drawdown).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('max_drawdown', m.max_drawdown).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">Current Drawdown</span>
           <span class="metric-value hinted" data-key="current_drawdown" data-value="${m.current_drawdown}">${formatPercent(m.current_drawdown)}</span>
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Crypto historical:</strong> Good: -30%, Typical: -50%, Extreme: -70%+
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Crypto historical:</strong> Good: -30%, Typical: -50%, Extreme: -70%+
         </div>
       </div>
 
       <!-- Diversification -->
       <div class="risk-card">
-        <h3>🔗 Diversification Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;">corr 90d</span></h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> Diversification Analysis <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;">corr 90d</span></h3>
         <div class="metric-row">
           <span class="metric-label">Diversification Ratio</span>
           <span class="metric-value hinted" data-key="diversification_ratio" data-value="${c.diversification_ratio}" style="color: ${getMetricHealth('diversification_ratio', c.diversification_ratio).color}">
@@ -741,7 +741,7 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('diversification_ratio', c.diversification_ratio).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('diversification_ratio', c.diversification_ratio).interpretation}
         </div>
         <div class="metric-row">
           <span class="metric-label">Effective Assets</span>
@@ -750,10 +750,10 @@ function renderRiskDashboard(container, data) {
           </span>
         </div>
         <div class="metric-interpretation">
-          💡 ${getMetricHealth('effective_assets', c.effective_assets).interpretation}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('effective_assets', c.effective_assets).interpretation}
         </div>
         <div class="metric-benchmark">
-          📊 <strong>Diversification:</strong> Excellent: >0.7, Limited: 0.4-0.7, Low: <0.4
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Diversification:</strong> Excellent: >0.7, Limited: 0.4-0.7, Low: <0.4
         </div>
 
         ${c.top_correlations && c.top_correlations.length ? `

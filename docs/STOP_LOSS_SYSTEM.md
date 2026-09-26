@@ -28,13 +28,13 @@ Le système de stop loss intelligent calcule des niveaux de stop loss optimaux e
 ### Frontend
 
 **Fichiers modifiés :**
-- `static/saxo-dashboard.html` - Tableau comparatif + badge 🏆 legacy + modal highlight
+- `static/saxo-dashboard.html` - Tableau comparatif + badge  legacy + modal highlight
 
 ---
 
 ## Méthodes de calcul
 
-### 0. Trailing Stop (NEW - Oct 2025) 🏆
+### 0. Trailing Stop (NEW - Oct 2025)
 
 **Applicable uniquement aux positions legacy avec gains significatifs (>20%).**
 
@@ -74,7 +74,7 @@ Position AAPL:
 
 ---
 
-### 1. Fixed Variable (Recommandé ✅)
+### 1. Fixed Variable (Recommandé )
 
 **Formule :**
 ```python
@@ -95,15 +95,15 @@ stop_loss = current_price × (1 - stop_pct)
 - **High vol (>40%)** : Stop 8% - Assets erratiques (TSLA, PLTR, crypto)
 
 **Avantages :**
-- ✅ **Simplicité** : 3 règles simples (4-6-8%)
-- ✅ **S'adapte à la volatilité** de l'asset
-- ✅ **Validé empiriquement** : Backtest sur 372 trades, 6 assets, 1-5 ans
-- ✅ **Performance supérieure** : +8% vs Fixed 5%, +156% vs ATR 2x
-- ✅ **Évite over-optimization** : Pas de paramètres complexes
+- [OK] **Simplicité** : 3 règles simples (4-6-8%)
+- [OK] **S'adapte à la volatilité** de l'asset
+- [OK] **Validé empiriquement** : Backtest sur 372 trades, 6 assets, 1-5 ans
+- [OK] **Performance supérieure** : +8% vs Fixed 5%, +156% vs ATR 2x
+- [OK] **Évite over-optimization** : Pas de paramètres complexes
 
 **Résultats backtest (Oct 2025) :**
 ```
-Fixed Variable:  $105,232  ✅ WINNER (+8.0% vs Fixed 5%)
+Fixed Variable:  $105,232  [OK] WINNER (+8.0% vs Fixed 5%)
 Fixed 5%:        $ 97,642  (-7.2% vs Fixed Var)
 ATR 2x:          $ 41,176  (-60.9% vs Fixed Var)
 ```
@@ -134,10 +134,10 @@ stop_loss = current_price - (ATR_14d × multiplier)
 - Bear Market: 1.5× (plus serré)
 
 **Avantages :**
-- ✅ S'adapte à la volatilité de l'asset
-- ✅ Asset volatile (TSLA) = stop plus large
-- ✅ Asset stable (KO) = stop plus serré
-- ✅ Méthode professionnelle standard
+- [OK] S'adapte à la volatilité de l'asset
+- [OK] Asset volatile (TSLA) = stop plus large
+- [OK] Asset stable (KO) = stop plus serré
+- [OK] Méthode professionnelle standard
 
 **Exemple :**
 ```
@@ -158,9 +158,9 @@ stop_loss = closest_support_below_current_price
 ```
 
 **Avantages :**
-- ✅ Basé sur niveaux techniques réels
-- ✅ Respecte les supports clés
-- ⚠️ Peut être trop proche ou trop loin
+- [OK] Basé sur niveaux techniques réels
+- [OK] Respecte les supports clés
+- [Warning] Peut être trop proche ou trop loin
 
 **Exemple :**
 ```
@@ -182,9 +182,9 @@ stop_loss = current_price × (1 - 2 × daily_volatility)
 ```
 
 **Avantages :**
-- ✅ Approche statistique pure
-- ✅ 95% de couverture (2 écarts-types)
-- ⚠️ Peut être trop large pour assets très volatils
+- [OK] Approche statistique pure
+- [OK] 95% de couverture (2 écarts-types)
+- [Warning] Peut être trop large pour assets très volatils
 
 **Exemple :**
 ```
@@ -204,9 +204,9 @@ stop_loss = current_price × (1 - fixed_pct)
 ```
 
 **Avantages :**
-- ✅ Simple et prévisible
-- ❌ Ne s'adapte PAS à la volatilité
-- ❌ Peut être trop serré ou trop large
+- [OK] Simple et prévisible
+- [Error] Ne s'adapte PAS à la volatilité
+- [Error] Peut être trop serré ou trop large
 
 **Utilisation :**
 - Fallback si pas assez de données historiques
@@ -249,7 +249,7 @@ Chaque méthode a un badge de qualité :
 
 | Méthode | Qualité | Raison |
 |---------|---------|--------|
-| **Fixed Variable** | **HIGH** | ✅ Gagnant backtest, simple, adaptatif (4-6-8%) |
+| **Fixed Variable** | **HIGH** | [OK] Gagnant backtest, simple, adaptatif (4-6-8%) |
 | ATR 2x | **MEDIUM** | S'adapte mais complexe, perdu backtest -60% |
 | Technical Support | **MEDIUM** | Basé sur TA réel mais peut être imprécis |
 | Volatility 2σ | **MEDIUM** | Statistiquement valide mais générique |
@@ -257,7 +257,7 @@ Chaque méthode a un badge de qualité :
 
 ---
 
-## Take Profits Adaptatifs (Option C) 🎯
+## Take Profits Adaptatifs (Option C)
 
 **Implémenté :** Octobre 2025
 **Validation :** Aligné avec système Fixed Variable
@@ -302,8 +302,8 @@ Risk : $23.00
 TP1 = $575 + ($23 × 2.0) = $621.00 (+8%)
 TP2 = $575 + ($23 × 3.0) = $644.00 (+12%)
 
-R/R TP1 = 2.00 ✅
-R/R TP2 = 3.00 ✅
+R/R TP1 = 2.00 [OK]
+R/R TP2 = 3.00 [OK]
 ```
 
 **NVDA (Moderate vol 30%) :**
@@ -315,8 +315,8 @@ Risk : $10.93
 TP1 = $182.16 + ($10.93 × 1.5) = $198.56 (+9%)
 TP2 = $182.16 + ($10.93 × 2.5) = $209.49 (+15%)
 
-R/R TP1 = 1.50 ✅
-R/R TP2 = 2.50 ✅
+R/R TP1 = 1.50 [OK]
+R/R TP2 = 2.50 [OK]
 ```
 
 **TSLA (High vol 44%) :**
@@ -328,8 +328,8 @@ Risk : $35.92
 TP1 = $448.98 + ($35.92 × 1.2) = $492.08 (+9.6%)
 TP2 = $448.98 + ($35.92 × 2.0) = $520.82 (+16%)
 
-R/R TP1 = 1.20 ⚠️ (limite acceptable)
-R/R TP2 = 2.00 ✅
+R/R TP1 = 1.20 [Warning] (limite acceptable)
+R/R TP2 = 2.00 [OK]
 ```
 
 ### Avantages vs TP fixes
@@ -341,9 +341,9 @@ tp1 = current_price × 1.08  # +8% pour TOUS
 tp2 = current_price × 1.15  # +15% pour TOUS
 
 # Résultat : R/R uniformes
-# - Low vol + stop 4% → R/R = 8/4 = 2.00 ✅
-# - Moderate vol + stop 6% → R/R = 8/6 = 1.33 ⚠️
-# - High vol + stop 8% → R/R = 8/8 = 1.00 ❌
+# - Low vol + stop 4% → R/R = 8/4 = 2.00
+# - Moderate vol + stop 6% → R/R = 8/6 = 1.33
+# - High vol + stop 8% → R/R = 8/8 = 1.00
 ```
 
 **Après (Option C) :**
@@ -354,9 +354,9 @@ tp1 = current_price + (risk × multipliers[vol_bucket]["tp1"])
 tp2 = current_price + (risk × multipliers[vol_bucket]["tp2"])
 
 # Résultat : R/R garantis minimums
-# - Low vol → R/R ≥ 2.00 ✅
-# - Moderate vol → R/R ≥ 1.50 ✅
-# - High vol → R/R ≥ 1.20 ✅
+# - Low vol → R/R ≥ 2.00
+# - Moderate vol → R/R ≥ 1.50
+# - High vol → R/R ≥ 1.20
 ```
 
 ### Impact sur le portfolio
@@ -368,7 +368,7 @@ R/R 1.50 : 11 positions (39%) - Moderate vol assets
 R/R 1.20 : 4 positions  (14%) - High vol assets
 N/A      : 4 positions  (14%)
 
-→ 70% du portfolio avec R/R ≥ 1.50 ✅
+→ 70% du portfolio avec R/R ≥ 1.50 [OK]
 ```
 
 ### Fichiers modifiés
@@ -404,11 +404,11 @@ if sr_levels and "resistance1" in sr_levels:
 
 ### Bénéfices
 
-1. ✅ **R/R minimums garantis** pour toutes les positions
-2. ✅ **Plus de R/R uniformes** (1.33 partout)
-3. ✅ **Cohérence avec stop loss** : Système complet basé volatilité
-4. ✅ **Logique de trading réaliste** : Prendre profits plus vite sur high vol
-5. ✅ **Simplicité** : Mêmes 3 buckets (low/moderate/high)
+1. [OK] **R/R minimums garantis** pour toutes les positions
+2. [OK] **Plus de R/R uniformes** (1.33 partout)
+3. [OK] **Cohérence avec stop loss** : Système complet basé volatilité
+4. [OK] **Logique de trading réaliste** : Prendre profits plus vite sur high vol
+5. [OK] **Simplicité** : Mêmes 3 buckets (low/moderate/high)
 
 ---
 
@@ -417,28 +417,28 @@ if sr_levels and "resistance1" in sr_levels:
 ### Tableau comparatif dans le modal
 
 ```
-🛡️ Stop Loss Analysis (4 Methods Compared)
+ Stop Loss Analysis (4 Methods Compared)
 
 ┌─────────────────────────────────────────────────────┐
 │ Method            │ Price   │ Distance │ Max Loss │ Quality │
 ├─────────────────────────────────────────────────────┤
-│ ✅ ATR 2x         │ $175.30 │  -3.8%   │  -€318  │ HIGH   │
+│ [OK] ATR 2x         │ $175.30 │  -3.8%   │  -€318  │ HIGH   │
 │ (Recommended)     │         │          │         │        │
 │ Technical Support │ $178.50 │  -2.0%   │  -€168  │ MEDIUM │
 │ Volatility 2σ     │ $172.80 │  -5.1%   │  -€427  │ MEDIUM │
 │ Fixed %           │ $171.64 │  -5.8%   │  -€493  │ LOW    │
 └─────────────────────────────────────────────────────┘
 
-💡 Why ATR 2x?
+ Why ATR 2x?
 2.5× ATR below current. Adapts to asset volatility.
 ```
 
 ### Badge R/R dans le tableau principal
 
 **Colonne R/R avec icônes :**
-- ✅ Vert : R/R ≥ 2.0 (excellent)
-- ⚠️ Orange : R/R ≥ 1.5 (acceptable)
-- ❌ Rouge : R/R < 1.5 (mauvais)
+- [OK] Vert : R/R ≥ 2.0 (excellent)
+- [Warning] Orange : R/R ≥ 1.5 (acceptable)
+- [Error] Rouge : R/R < 1.5 (mauvais)
 
 **Tri par défaut :** Descendant sur R/R (meilleurs trades en premier)
 
@@ -449,10 +449,10 @@ if sr_levels and "resistance1" in sr_levels:
 Si R/R < 1.5, un badge d'alerte apparaît dans le modal :
 
 ```
-⚠️ Poor Risk/Reward Ratio
+[Warning] Poor Risk/Reward Ratio
 Current R/R: 1:0.87 (minimum recommended: 1:1.5)
-⚠️ Risk: 5.8% downside for only 5% upside
-💡 Suggestion: Wait for better entry point or consider tighter stop loss
+[Warning] Risk: 5.8% downside for only 5% upside
+ Suggestion: Wait for better entry point or consider tighter stop loss
 ```
 
 ---
@@ -662,7 +662,7 @@ stop_loss = analysis["stop_loss_levels"][analysis["recommended_method"]]["price"
 
 ## Roadmap
 
-### Phase 1 (✅ Complété)
+### Phase 1 ( Complété)
 - [x] Backend: StopLossCalculator avec 4 méthodes
 - [x] Integration dans PriceTargets
 - [x] Frontend: Tableau comparatif dans modal

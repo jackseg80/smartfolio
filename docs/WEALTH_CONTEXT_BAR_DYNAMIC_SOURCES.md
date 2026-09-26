@@ -1,10 +1,10 @@
 # WealthContextBar - Sources Dynamiques (Oct 2025)
 
-## 🎯 Objectif
+## Objectif
 
 Remplacer les comptes hardcodés ("Trading", "Hold", "Staking") du menu secondaire par les **vraies sources de données** disponibles pour chaque utilisateur (CSV + API), avec isolation multi-tenant stricte.
 
-## 🔧 Modifications Implémentées
+## Modifications Implémentées
 
 ### 1. **Persistance localStorage namespacée par utilisateur**
 
@@ -33,8 +33,8 @@ Nouvelle méthode `loadAccountSources()` :
 ### 3. **Format de valeur normalisé**
 
 **Structure** : `type:key`
-- Exemple API : `api:cointracking_api` → 🌐 CoinTracking API
-- Exemple CSV : `csv:csv_latest` → 📄 latest.csv
+- Exemple API : `api:cointracking_api` →  CoinTracking API
+- Exemple CSV : `csv:csv_latest` →  latest.csv
 - Option spéciale : `all` → Tous (vue consolidée)
 
 **Parsing** :
@@ -96,7 +96,7 @@ window.addEventListener('wealth:change', (e) => {
 });
 ```
 
-### 7. **Intégration complète avec le système de sources** 🆕
+### 7. **Intégration complète avec le système de sources**
 
 Nouvelle méthode `handleAccountChange()` qui réplique la logique de `settings.html` :
 
@@ -110,22 +110,22 @@ Nouvelle méthode `handleAccountChange()` qui réplique la logique de `settings.
 7. **Met à jour `window.userSettings.data_source` et `csv_selected_file`**
 8. **Émet événement `dataSourceChanged`** pour les pages avec listeners
 9. **Sauvegarde dans le backend** (`PUT /api/users/settings`)
-10. **Notification visuelle** + **Reload automatique après 1s** ⚡
+10. **Notification visuelle** + **Reload automatique après 1s**
 
 **Exemple** :
 ```javascript
-// User sélectionne "📄 latest.csv" dans le dropdown
+// User sélectionne " latest.csv" dans le dropdown
 // → handleAccountChange('csv:csv_latest')
 //   → window.globalConfig.set('data_source', 'cointracking')
 //   → window.userSettings.csv_selected_file = 'latest.csv'
 //   → clearBalanceCache()
 //   → dispatchEvent('dataSourceChanged') // Pages avec listeners rechargent
 //   → PUT /api/users/settings (persist)
-//   → Notification: "✅ Source changée: 📄 latest.csv"
+//   → Notification: "[OK] Source changée:  latest.csv"
 //   → setTimeout(() => location.reload(), 1000) // Reload auto
 ```
 
-### 8. **Rechargement automatique immédiat** ⚡ 🆕
+### 8. **Rechargement automatique immédiat**
 
 **Problème résolu** : Avant, il fallait refresh manuellement (F5) pour voir les données de la nouvelle source.
 
@@ -145,14 +145,14 @@ User clique dropdown → Sélectionne source
 ↓
 Debounce 250ms (évite PUT multiples si navigation clavier)
 ↓
-Notification verte: "✅ Source changée: ..."
+Notification verte: "[OK] Source changée: ..."
 ↓
 Reload intelligent (soft si listeners, hard sinon, 300ms)
 ↓
-Données affichées = nouvelle source ✅
+Données affichées = nouvelle source [OK]
 ```
 
-### 9. **Protection prod-ready** 🛡️ 🆕
+### 9. **Protection prod-ready**
 
 **Anti-rafale & idempotence** :
 - `AbortController` annule PUT en cours si nouveau changement
@@ -175,7 +175,7 @@ Données affichées = nouvelle source ✅
 - Évite spam si barre instanciée sur plusieurs pages
 - Invalidation automatique au switch user
 
-## 📋 Checklist de tests
+## Checklist de tests
 
 - [x] Endpoint `/api/users/sources` retourne bien les sources pour chaque user
 - [x] Chargement initial → dropdown rempli avec sources réelles
@@ -187,23 +187,23 @@ Données affichées = nouvelle source ✅
 - [x] Fallback "Tous" uniquement si erreur réseau
 - [x] Event `wealth:change` émis avec structure canonique
 - [x] `aria-busy` présent pendant chargement
-- [x] **Changement de source met à jour `window.userSettings`** 🆕
-- [x] **Changement de source met à jour `window.globalConfig`** 🆕
-- [x] **Changement de source vide les caches (balance, risk, localStorage)** 🆕
-- [x] **Changement de source sauvegardé dans le backend via `/api/users/settings`** 🆕
-- [x] **Synchronisation avec tout le projet (analytics, rebalance, execution, etc.)** 🆕
-- [x] **Émission événement `dataSourceChanged` pour pages avec listeners** ⚡ 🆕
-- [x] **Reload automatique après 1s pour changement immédiat** ⚡ 🆕
-- [x] **Restauration au chargement appelle handleAccountChange() avec skipSave** 🆕
-- [x] **Anti-rafale : AbortController annule PUT en cours** 🛡️ 🆕
-- [x] **Idempotence : Skip PUT si settings inchangés** 🛡️ 🆕
-- [x] **Rollback UI si PUT échoue (dropdown + globalConfig + userSettings)** 🛡️ 🆕
-- [x] **Reload intelligent : soft si listeners présents, hard sinon** 🛡️ 🆕
-- [x] **Cache 60s sur /api/users/sources** 🛡️ 🆕
-- [x] **Debounce 250ms sur changement source** 🛡️ 🆕
-- [x] **Feature flag ?noReload=1 pour dev** 🛡️ 🆕
+- [x] **Changement de source met à jour `window.userSettings`** [New]
+- [x] **Changement de source met à jour `window.globalConfig`** [New]
+- [x] **Changement de source vide les caches (balance, risk, localStorage)** [New]
+- [x] **Changement de source sauvegardé dans le backend via `/api/users/settings`** [New]
+- [x] **Synchronisation avec tout le projet (analytics, rebalance, execution, etc.)** [New]
+- [x] **Émission événement `dataSourceChanged` pour pages avec listeners**  [New]
+- [x] **Reload automatique après 1s pour changement immédiat**  [New]
+- [x] **Restauration au chargement appelle handleAccountChange() avec skipSave** [New]
+- [x] **Anti-rafale : AbortController annule PUT en cours**  [New]
+- [x] **Idempotence : Skip PUT si settings inchangés**  [New]
+- [x] **Rollback UI si PUT échoue (dropdown + globalConfig + userSettings)**  [New]
+- [x] **Reload intelligent : soft si listeners présents, hard sinon**  [New]
+- [x] **Cache 60s sur /api/users/sources**  [New]
+- [x] **Debounce 250ms sur changement source**  [New]
+- [x] **Feature flag ?noReload=1 pour dev**  [New]
 
-## 🧪 Pages de test
+## Pages de test
 
 ### Test 1: Événements et localStorage
 **URL** : `http://localhost:8080/static/test-wealth-context-bar-dynamic.html`
@@ -215,7 +215,7 @@ Données affichées = nouvelle source ✅
 - Bouton "Tester Switch User" (démo ↔ jack)
 - Refresh manuel de l'état
 
-### Test 2: Intégration complète 🆕
+### Test 2: Intégration complète
 **URL** : `http://localhost:8080/static/test-wealth-source-integration.html`
 
 **Fonctionnalités** :
@@ -225,7 +225,7 @@ Données affichées = nouvelle source ✅
 - Logs détaillés des changements
 - Détection de désynchronisation
 
-## 📁 Fichiers modifiés
+## Fichiers modifiés
 
 ### `static/components/WealthContextBar.js`
 
@@ -236,13 +236,13 @@ Données affichées = nouvelle source ✅
 - `parseAccountValue(rawValue)` : Parse `type:key` → objet
 - `setupUserSwitchListener()` : Écoute `activeUserChanged`
 - `loadAndPopulateAccountSources()` : Wrapper async pour render()
-- **`handleAccountChange(selectedValue)`** 🆕 : Gestion complète changement de source
+- **`handleAccountChange(selectedValue)`** [New] : Gestion complète changement de source
 
 **Méthodes modifiées** :
 - `loadContext()` : Lecture localStorage namespacé par user
 - `saveContext()` : Sauvegarde namespacée + événement canonique
 - `render()` : Appel async `loadAndPopulateAccountSources()`
-- **`bindEvents()`** 🆕 : Listener spécial pour 'account' → `handleAccountChange()`
+- **`bindEvents()`** [New] : Listener spécial pour 'account' → `handleAccountChange()`
 
 **Lignes ajoutées/modifiées** : ~400 lignes
 
@@ -252,7 +252,7 @@ Données affichées = nouvelle source ✅
 - Reload automatique après 1s pour compatibilité universelle
 - Appel `handleAccountChange()` lors restauration (avec `skipSave: true`)
 
-**Améliorations prod-ready** 🛡️ :
+**Améliorations prod-ready**  :
 - `persistSettingsSafely()` : Guard anti-rafale + idempotence + rollback
 - `scheduleSmartReload()` : Reload intelligent (soft/hard selon listeners)
 - Cache 60s sur `/api/users/sources` avec invalidation user
@@ -267,7 +267,7 @@ Page de test complète avec :
 - localStorage debug
 - Boutons de test interactifs
 
-## 🔮 Évolutions futures (hors scope)
+## Évolutions futures (hors scope)
 
 - [ ] Rendre Module dynamique (crypto/bourse détectés automatiquement)
 - [ ] Ajouter compteurs dans séparateurs (`──── API (3) ────`)
@@ -275,15 +275,15 @@ Page de test complète avec :
 - [ ] Pin sources favorites (persistance par user)
 - [ ] Household dynamique (si config multi-foyer ajoutée)
 
-## 📖 Documentation liée
+## Documentation liée
 
 - [CLAUDE.md](../CLAUDE.md) - Section 3 : Système Multi-Utilisateurs
 - [config/users.json](../config/users.json) - Liste des utilisateurs
 - [api/user_settings_endpoints.py](../api/user_settings_endpoints.py) - Endpoint `/api/users/sources`
 
-## ✅ Statut
+## Statut
 
-**Implémentation** : ✅ Complétée (Oct 2025)
-**Tests manuels** : ✅ Validés
-**Production ready** : ✅ Oui
+**Implémentation** : [OK] Complétée (Oct 2025)
+**Tests manuels** :  Validés
+**Production ready** : [OK] Oui
 

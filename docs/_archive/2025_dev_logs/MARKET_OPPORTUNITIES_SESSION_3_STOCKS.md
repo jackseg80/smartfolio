@@ -1,12 +1,12 @@
 # Market Opportunities System - Session 3: Individual Stocks
 
 > **Date:** 28 Oct 2025 14:00-14:15 UTC
-> **Status:** ✅ **COMPLETED - 100% Functional**
+> **Status:** [OK] **COMPLETED - 100% Functional**
 > **Objective:** Add individual stock recommendations (not just ETFs)
 
 ---
 
-## 🎯 Problem Statement
+## Problem Statement
 
 **User question:** "Pourquoi il ne donne que des ETF en opportunités et pas d'actions ?"
 
@@ -19,23 +19,23 @@
 
 ---
 
-## ✅ Solution Implemented
+## Solution Implemented
 
 ### Option A: Static Blue-Chip Mapping (SELECTED)
 
 **Rationale:**
-- ✅ Fast implementation (30min-1h)
-- ✅ Reliable S&P 500 companies
-- ✅ No external API dependencies
-- ✅ Consistent results
+- [OK] Fast implementation (30min-1h)
+- [OK] Reliable S&P 500 companies
+- [OK] No external API dependencies
+- [OK] Consistent results
 
 **Alternatives considered:**
-- ❌ Option B: Parse ETF holdings dynamically (3-5h, unreliable data)
-- ❌ Option C: Hybrid approach (unnecessary complexity)
+- [Error] Option B: Parse ETF holdings dynamically (3-5h, unreliable data)
+- [Error] Option C: Hybrid approach (unnecessary complexity)
 
 ---
 
-## 🔧 Implementation Details
+## Implementation Details
 
 ### 1. Created `SECTOR_TOP_STOCKS` Mapping
 
@@ -130,7 +130,7 @@ opportunities = opportunities[:20]  # Was: [:10]
 
 ---
 
-## 📊 Results Validation
+## Results Validation
 
 ### Test Command:
 ```bash
@@ -191,27 +191,27 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## 📈 Metrics Improvement
+## Metrics Improvement
 
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
-| **Total opportunities** | 5 | 20 | **+300%** 🎉 |
+| **Total opportunities** | 5 | 20 | **+300%**  |
 | **ETFs** | 5 | 5 | Unchanged |
-| **Individual stocks** | 0 | 15 | **+15 blue-chip** ✨ |
+| **Individual stocks** | 0 | 15 | **+15 blue-chip**  |
 | **Choices per sector** | 1 | 4 | **+300%** |
 | **Total capital needed** | €46,489 | €185,956 | +300% (distributed) |
 | **Flexibility** | Low | High | More granular allocation |
 
 ---
 
-## 🧪 Quality Assurance
+## Quality Assurance
 
 ### Stock Selection Criteria:
 
-✅ **S&P 500 companies only** (no small-caps or penny stocks)
-✅ **Blue-chip leaders** (market leaders in each sector)
-✅ **Diversification** (4 different companies per sector)
-✅ **Stability** (established companies with long track records)
+[OK] **S&P 500 companies only** (no small-caps or penny stocks)
+[OK] **Blue-chip leaders** (market leaders in each sector)
+[OK] **Diversification** (4 different companies per sector)
+[OK] **Stability** (established companies with long track records)
 
 ### Examples:
 
@@ -224,26 +224,26 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## 🔄 Integration with Existing System
+## Integration with Existing System
 
 ### Preserved Functionality:
 
-✅ **Sector scoring** (Momentum 40%, Value 30%, Diversification 30%)
-✅ **Gap detection** (underweight sectors identified)
-✅ **Suggested sales** (26 positions to trim)
-✅ **Impact simulation** (before/after allocation)
-✅ **Risk improvement** (7.2 → 6.4, -11%)
+[OK] **Sector scoring** (Momentum 40%, Value 30%, Diversification 30%)
+[OK] **Gap detection** (underweight sectors identified)
+[OK] **Suggested sales** (26 positions to trim)
+[OK] **Impact simulation** (before/after allocation)
+[OK] **Risk improvement** (7.2 → 6.4, -11%)
 
 ### Enhanced Functionality:
 
-✨ **Granular selection:** User can choose ETF OR specific stocks
-✨ **Diversification options:** Mix ETFs + individual stocks
-✨ **Targeted exposure:** Pick best stock in sector (e.g., JPM instead of XLF)
-✨ **Capital allocation:** Distribute capital across multiple opportunities
+ **Granular selection:** User can choose ETF OR specific stocks
+ **Diversification options:** Mix ETFs + individual stocks
+ **Targeted exposure:** Pick best stock in sector (e.g., JPM instead of XLF)
+ **Capital allocation:** Distribute capital across multiple opportunities
 
 ---
 
-## 📝 Frontend Display (Example)
+## Frontend Display (Example)
 
 **Table columns:**
 
@@ -255,13 +255,13 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 | WFC | Wells Fargo | Stock | Financials | 56.3 | €9,932 | BUY |
 
 **User can:**
-- ✅ Select all 4 (ETF + 3 stocks) for max diversification
-- ✅ Select ETF only (simple diversified exposure)
-- ✅ Select 1-2 best stocks (targeted exposure)
+- [OK] Select all 4 (ETF + 3 stocks) for max diversification
+- [OK] Select ETF only (simple diversified exposure)
+- [OK] Select 1-2 best stocks (targeted exposure)
 
 ---
 
-## 🚀 Next Steps (Future Enhancements)
+## Next Steps (Future Enhancements)
 
 ### P1 - Individual Stock Scoring (2-3h)
 - Calculate **individual momentum/value/diversification** for each stock
@@ -285,19 +285,19 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## 📋 Files Modified Summary
+## Files Modified Summary
 
 | File | Lines | Changes |
 |------|-------|---------|
-| `services/ml/bourse/sector_analyzer.py` | 25-105 | ✅ Added `SECTOR_TOP_STOCKS` (44 stocks) |
-| `services/ml/bourse/sector_analyzer.py` | 399-455 | ✅ Modified `get_top_stocks_in_sector()` |
-| `api/ml_bourse_endpoints.py` | 796 | ✅ Changed `top_n=1` → `top_n=3` |
-| `api/ml_bourse_endpoints.py` | 825 | ✅ Changed limit 10 → 20 |
-| `docs/MARKET_OPPORTUNITIES_SESSION_3_STOCKS.md` | NEW | ✅ Session 3 documentation |
+| `services/ml/bourse/sector_analyzer.py` | 25-105 | [OK] Added `SECTOR_TOP_STOCKS` (44 stocks) |
+| `services/ml/bourse/sector_analyzer.py` | 399-455 | [OK] Modified `get_top_stocks_in_sector()` |
+| `api/ml_bourse_endpoints.py` | 796 | [OK] Changed `top_n=1` → `top_n=3` |
+| `api/ml_bourse_endpoints.py` | 825 | [OK] Changed limit 10 → 20 |
+| `docs/MARKET_OPPORTUNITIES_SESSION_3_STOCKS.md` | NEW | [OK] Session 3 documentation |
 
 ---
 
-## ✅ Session 3 Completion Checklist
+## Session 3 Completion Checklist
 
 - [x] Diagnosed issue (ETFs only, no individual stocks)
 - [x] Evaluated 3 solution options (A/B/C)
@@ -312,7 +312,7 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 
 ---
 
-## 🎓 Key Learnings
+## Key Learnings
 
 1. **Static mappings are fast and reliable** for MVP (vs dynamic parsing)
 2. **Blue-chip S&P 500 stocks** provide quality assurance
@@ -323,9 +323,9 @@ curl -s "http://localhost:8080/api/bourse/opportunities?user_id=jack&horizon=med
 ---
 
 **Session Duration:** 15 minutes
-**Implementation Difficulty:** ⭐⭐ (Easy - static data)
-**Impact:** 🚀🚀🚀 (High - 300% more choices)
-**Status:** ✅ **Production Ready**
+**Implementation Difficulty:**  (Easy - static data)
+**Impact:**  (High - 300% more choices)
+**Status:** [OK] **Production Ready**
 
 ---
 

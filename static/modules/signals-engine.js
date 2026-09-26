@@ -30,7 +30,7 @@ function unavailableSignal(error) {
  * Fetch market signals from multiple sources
  */
 export async function fetchSignals() {
-  console.debug('🔍 Fetching REAL market signals...');
+  console.debug("Fetching REAL market signals...");
 
   const signals = {};
 
@@ -51,12 +51,12 @@ export async function fetchSignals() {
           timestamp: Date.now(),
           source: 'alternative.me'
         };
-        console.debug('✅ Fear & Greed loaded:', fearGreedValue);
+        console.debug("[OK] Fear & Greed loaded:", fearGreedValue);
       } else {
         throw new Error('Fear & Greed API failed');
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Fear & Greed fallback:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] Fear & Greed fallback:", error);
       signals.fear_greed = unavailableSignal(error);
     }
 
@@ -86,12 +86,12 @@ export async function fetchSignals() {
           source: 'coingecko_proxy'
         };
 
-        console.debug(`✅ BTC Dominance loaded: ${btcDominance.toFixed(1)}%`);
+        console.debug(`[OK] BTC Dominance loaded: ${btcDominance.toFixed(1)}%`);
       } else {
         throw new Error(`CoinGecko proxy failed: ${dominanceResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ BTC Dominance unavailable:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] BTC Dominance unavailable:", error);
       signals.btc_dominance = unavailableSignal(error);
     }
 
@@ -111,12 +111,12 @@ export async function fetchSignals() {
           timestamp: Date.now(),
           source: 'binance'
         };
-        console.debug('✅ Funding Rate loaded:', (fundingRate * 100).toFixed(4) + '%');
+        console.debug("[OK] Funding Rate loaded:", (fundingRate * 100).toFixed(4) + '%');
       } else {
         throw new Error('Binance API failed');
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Funding Rate fallback:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] Funding Rate fallback:", error);
       signals.funding_rate = unavailableSignal(error);
     }
 
@@ -137,7 +137,7 @@ export async function fetchSignals() {
       if (pricesResponse.ok) {
         const cgData = await pricesResponse.json();
         // Proxy returns CoinGecko data directly (no wrapper)
-        console.debug('🔍 ETH/BTC API response:', cgData);
+        console.debug("ETH/BTC API response:", cgData);
 
         const btcPrice = cgData.bitcoin?.usd;
         const ethPrice = cgData.ethereum?.usd;
@@ -152,7 +152,7 @@ export async function fetchSignals() {
             source: 'coingecko_proxy'
           };
 
-          console.debug(`✅ ETH/BTC Ratio loaded: ${ethBtcRatio.toFixed(6)}`);
+          console.debug(`[OK] ETH/BTC Ratio loaded: ${ethBtcRatio.toFixed(6)}`);
         } else {
           throw new Error(`Invalid price data: BTC=${btcPrice}, ETH=${ethPrice}`);
         }
@@ -160,7 +160,7 @@ export async function fetchSignals() {
         throw new Error(`CoinGecko proxy failed: ${pricesResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ ETH/BTC Ratio unavailable:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] ETH/BTC Ratio unavailable:", error);
       signals.eth_btc_ratio = unavailableSignal(error);
     }
 
@@ -198,12 +198,12 @@ export async function fetchSignals() {
           source: 'coingecko_calculated_proxy'
         };
 
-        console.debug(`✅ Volatility loaded: ${(volatility * 100).toFixed(1)}%`);
+        console.debug(`[OK] Volatility loaded: ${(volatility * 100).toFixed(1)}%`);
       } else {
         throw new Error(`CoinGecko proxy failed: ${volatilityResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Volatility unavailable:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] Volatility unavailable:", error);
       signals.volatility = unavailableSignal(error);
     }
 
@@ -234,17 +234,17 @@ export async function fetchSignals() {
           source: 'coingecko_proxy'
         };
 
-        console.debug(`✅ Trend loaded: ${(priceChange7d * 100).toFixed(2)}%`);
+        console.debug(`[OK] Trend loaded: ${(priceChange7d * 100).toFixed(2)}%`);
       } else {
         throw new Error(`CoinGecko proxy failed: ${trendResponse.status}`);
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Trend unavailable:', error);
+      (window.debugLogger?.warn || console.warn)("[Warning] Trend unavailable:", error);
       signals.trend = unavailableSignal(error);
     }
 
   } catch (globalError) {
-    debugLogger.error('❌ Global error fetching signals:', globalError);
+    debugLogger.error("[Error] Global error fetching signals:", globalError);
     return Object.fromEntries(
       Object.keys(DEFAULT_CCS_WEIGHTS)
         .filter(key => key !== 'model_version')
@@ -252,7 +252,7 @@ export async function fetchSignals() {
     );
   }
 
-  console.debug('🔍 Fetched REAL signals:', signals);
+  console.debug("Fetched REAL signals:", signals);
   return signals;
 }
 

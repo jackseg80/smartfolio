@@ -5,17 +5,17 @@
 
 ---
 
-## 🎯 Objectifs des Tests
+## Objectifs des Tests
 
-1. ✅ Vérifier que le bouton ✨ apparaît sur toutes les pages
-2. ✅ Vérifier que le modal s'ouvre correctement (clic + Ctrl+K)
-3. ✅ Vérifier que les context builders fonctionnent (données page visibles par l'IA)
-4. ✅ Vérifier que la knowledge base dynamique fonctionne
-5. ✅ Vérifier que les providers (Groq/Claude) répondent correctement
+1. [OK] Vérifier que le bouton  apparaît sur toutes les pages
+2. [OK] Vérifier que le modal s'ouvre correctement (clic + Ctrl+K)
+3. [OK] Vérifier que les context builders fonctionnent (données page visibles par l'IA)
+4. [OK] Vérifier que la knowledge base dynamique fonctionne
+5. [OK] Vérifier que les providers (Groq/Claude) répondent correctement
 
 ---
 
-## 📋 Checklist Préalable
+## Checklist Préalable
 
 ### Configuration Initiale
 
@@ -38,16 +38,16 @@
 
 ---
 
-## 🧪 Tests de Base
+## Tests de Base
 
-### Test 1: Bouton Flottant ✨
+### Test 1: Bouton Flottant
 
 **Pages à tester:** dashboard.html, risk-dashboard.html, analytics-unified.html, wealth-dashboard.html
 
 **Étapes:**
 1. Ouvrir chaque page
 2. Vérifier visuellement:
-   - [ ] Bouton ✨ visible en bas à droite
+   - [ ] Bouton  visible en bas à droite
    - [ ] Bouton a un gradient violet/bleu
    - [ ] Hover → Bouton grossit légèrement
    - [ ] Tooltip affiche "Assistant IA (Ctrl+K)"
@@ -61,7 +61,7 @@
 **Page:** dashboard.html
 
 **Méthode 1 - Clic:**
-1. Cliquer sur le bouton ✨
+1. Cliquer sur le bouton
 2. Vérifier:
    - [ ] Modal s'affiche au centre de l'écran
    - [ ] Header "Assistant IA SmartFolio" visible
@@ -107,7 +107,7 @@
 
 ---
 
-## 💬 Tests Questions Rapides
+## Tests Questions Rapides
 
 ### Test 4: Questions Rapides - Dashboard
 
@@ -196,7 +196,7 @@
 
 ---
 
-## 🧠 Tests Context Awareness
+## Tests Context Awareness
 
 ### Test 8: Context Dashboard (Crypto Portfolio)
 
@@ -253,7 +253,7 @@ Mon Decision Index actuel indique quoi sur la qualité de mon allocation ?
 
 ---
 
-## 📚 Tests Knowledge Base Dynamique
+## Tests Knowledge Base Dynamique
 
 ### Test 11: Vérifier Lecture CLAUDE.md
 
@@ -357,7 +357,7 @@ Get-Content logs\app.log -Wait -Tail 20
 
 ---
 
-## 🔍 Tests Prompts Avancés
+## Tests Prompts Avancés
 
 ### Test 14: Multi-Tenant Context
 
@@ -388,12 +388,12 @@ Quelles sont les erreurs courantes à éviter dans SmartFolio ?
 
 **Vérifications:**
 - [ ] L'IA cite les pièges de CLAUDE.md:
-  - ❌ Oublier user_id
-  - ❌ Hardcoder user_id='demo'
-  - ❌ fetch() direct au lieu de window.loadBalanceData()
-  - ❌ Inverser Risk Score
-  - ❌ Mélanger DI et Regime
-- [ ] Les explications correspondent à la section "🚨 Pièges Fréquents"
+  - [Error] Oublier user_id
+  - [Error] Hardcoder user_id='demo'
+  - [Error] fetch() direct au lieu de window.loadBalanceData()
+  - [Error] Inverser Risk Score
+  - [Error] Mélanger DI et Regime
+- [ ] Les explications correspondent à la section "[Alert] Pièges Fréquents"
 
 **Résultat attendu:** L'IA connaît les pièges de CLAUDE.md
 
@@ -439,7 +439,7 @@ Explique-moi comment fonctionne l'Allocation Engine V2 topdown hierarchical.
 
 ---
 
-## 🐛 Tests Cas d'Erreur
+## Tests Cas d'Erreur
 
 ### Test 18: Provider Non Configuré
 
@@ -524,7 +524,7 @@ curl -X POST "http://localhost:8080/api/ai/refresh-knowledge" -H "X-User: demo"
 
 ---
 
-## 📊 Tests Performance
+## Tests Performance
 
 ### Test 21: Temps de Réponse
 
@@ -569,11 +569,11 @@ Résumé rapide de mon portfolio.
 
 ---
 
-## ✅ Checklist Finale
+## Checklist Finale
 
 ### Fonctionnalités de Base
 
-- [ ] Bouton ✨ visible sur les 4 pages
+- [ ] Bouton  visible sur les 4 pages
 - [ ] Modal s'ouvre (clic + Ctrl+K)
 - [ ] Modal se ferme (×, clic extérieur)
 - [ ] Provider Groq configuré et actif
@@ -605,20 +605,20 @@ Résumé rapide de mon portfolio.
 
 ---
 
-## 🎯 Résultat Global Attendu
+## Résultat Global Attendu
 
 Si tous les tests passent:
 
-✅ **AI Chat Global:** Système 100% fonctionnel
-✅ **Context Builders:** Données page correctement injectées
-✅ **Knowledge Base:** Documentation CLAUDE.md lue dynamiquement
-✅ **Cache:** TTL 5 min + refresh manuel fonctionnent
-✅ **Multi-Provider:** Groq gratuit opérationnel
-✅ **Qualité:** Réponses précises basées sur vraie documentation
+[OK] **AI Chat Global:** Système 100% fonctionnel
+[OK] **Context Builders:** Données page correctement injectées
+[OK] **Knowledge Base:** Documentation CLAUDE.md lue dynamiquement
+[OK] **Cache:** TTL 5 min + refresh manuel fonctionnent
+[OK] **Multi-Provider:** Groq gratuit opérationnel
+[OK] **Qualité:** Réponses précises basées sur vraie documentation
 
 ---
 
-## 📝 Rapporter les Bugs
+## Rapporter les Bugs
 
 Si un test échoue, noter:
 
@@ -632,4 +632,4 @@ Si un test échoue, noter:
 
 ---
 
-**Bon tests !** 🚀
+**Bon tests !**

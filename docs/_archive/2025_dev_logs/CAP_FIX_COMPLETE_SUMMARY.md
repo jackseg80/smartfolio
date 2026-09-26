@@ -302,10 +302,10 @@ findstr "cap_final=0.0100\|cap_alert=.*-0\." logs
 
 **4 commits, 4 layers de protection** :
 
-1. ✅ Frontend fallbacks → 8% (pas 1%)
-2. ✅ Dead zone 0.5% + Smoothing 80/20 → convergence stable
-3. ✅ Floor 3% + Preserve `_last_cap` → pas de spiral down
-4. ✅ Auto-clear progressif → recovery automatique
+1. [OK] Frontend fallbacks → 8% (pas 1%)
+2. [OK] Dead zone 0.5% + Smoothing 80/20 → convergence stable
+3. [OK] Floor 3% + Preserve `_last_cap` → pas de spiral down
+4. [OK] Auto-clear progressif → recovery automatique
 
 **Résultat final** :
 - Cap stable entre **3-8%** (plus jamais 1%)

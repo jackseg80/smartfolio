@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>🔧 Debug CCS Sync - Strategic Dynamic Strategy</title>
+    <title>Tools Debug CCS Sync - Strategic Dynamic Strategy</title>
     <style>
         body { font-family: monospace; margin: 20px; background: #f5f5f5; }
         .section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; }
@@ -17,34 +17,34 @@
     </style>
 </head>
 <body>
-    <h1>🔧 Debug Strategic (Dynamic) Strategy & CCS Sync</h1>
+    <h1>Tools Debug Strategic (Dynamic) Strategy & CCS Sync</h1>
     
     <div class="section">
-        <h2>📋 Actions de Test</h2>
-        <button class="btn-test" onclick="checkLocalStorage()">🔍 Vérifier localStorage</button>
-        <button class="btn-mock" onclick="createMockCCSData()">🎯 Créer données CCS de test</button>
-        <button class="btn-clear" onclick="clearCCSData()">🧹 Effacer données CCS</button>
-        <button class="btn-test" onclick="testSyncFunction()">⚙️ Tester fonction syncCCSTargets</button>
-        <button class="btn-test" onclick="compareAllocations()">📊 Comparer allocations observées</button>
+        <h2>Overview Actions de Test</h2>
+        <button class="btn-test" onclick="checkLocalStorage()">Search Vérifier localStorage</button>
+        <button class="btn-mock" onclick="createMockCCSData()">Target Créer données CCS de test</button>
+        <button class="btn-clear" onclick="clearCCSData()">Clear Effacer données CCS</button>
+        <button class="btn-test" onclick="testSyncFunction()">Settings Tester fonction syncCCSTargets</button>
+        <button class="btn-test" onclick="compareAllocations()">Analytics Comparer allocations observées</button>
     </div>
 
     <div class="section">
-        <h2>📊 État du localStorage</h2>
+        <h2>Analytics État du localStorage</h2>
         <div id="localStorage-status">Cliquez sur "Vérifier localStorage" pour voir l'état</div>
     </div>
 
     <div class="section">
-        <h2>🎯 Test de la fonction syncCCSTargets</h2>
+        <h2>Target Test de la fonction syncCCSTargets</h2>
         <div id="sync-test-result">Cliquez sur "Tester fonction" pour voir le résultat</div>
     </div>
 
     <div class="section">
-        <h2>📊 Comparaison des allocations</h2>
+        <h2>Analytics Comparaison des allocations</h2>
         <div id="allocation-comparison">Cliquez sur "Comparer allocations" pour analyser les différences</div>
     </div>
 
     <div class="section">
-        <h2>⚙️ Recommandations</h2>
+        <h2>Settings Recommandations</h2>
         <div id="recommendations"></div>
     </div>
 
@@ -95,7 +95,7 @@
             
             if (!lastTargets) {
                 status.innerHTML = `
-                    <div class="error">❌ Aucune donnée 'last_targets' trouvée dans localStorage</div>
+                    <div class="error">Error Aucune donnée 'last_targets' trouvée dans localStorage</div>
                     <p>Ceci explique pourquoi Strategic (Dynamic) n'apparaît pas.</p>
                 `;
                 return;
@@ -108,15 +108,15 @@
                 const ageMinutes = Math.floor((now - timestamp) / (1000 * 60));
                 
                 status.innerHTML = `
-                    <div class="success">✅ Données trouvées dans localStorage</div>
+                    <div class="success">OK Données trouvées dans localStorage</div>
                     <pre>${JSON.stringify(data, null, 2)}</pre>
                     <p><strong>Âge des données:</strong> ${ageMinutes} minutes</p>
                     <p><strong>Source:</strong> ${data.source || 'Non spécifiée'}</p>
-                    <p><strong>Validité:</strong> ${ageMinutes < 30 ? '✅ Valide' : '❌ Trop ancien (>30min)'}</p>
+                    <p><strong>Validité:</strong> ${ageMinutes < 30 ? 'OK Valide' : 'Error Trop ancien (>30min)'}</p>
                 `;
             } catch (error) {
                 status.innerHTML = `
-                    <div class="error">❌ Erreur parsing des données localStorage</div>
+                    <div class="error">Error Erreur parsing des données localStorage</div>
                     <p>Erreur: ${error.message}</p>
                     <pre>${lastTargets}</pre>
                 `;
@@ -145,7 +145,7 @@
             
             const status = document.getElementById('localStorage-status');
             status.innerHTML = `
-                <div class="success">✅ Données CCS réelles créées (Risk Dashboard: 32.1% BTC)</div>
+                <div class="success">OK Données CCS réelles créées (Risk Dashboard: 32.1% BTC)</div>
                 <p>Testez maintenant dans rebalance.html pour voir si vous obtenez les mêmes allocations</p>
                 <pre>${JSON.stringify(mockData, null, 2)}</pre>
             `;
@@ -156,7 +156,7 @@
             
             const status = document.getElementById('localStorage-status');
             status.innerHTML = `
-                <div class="warning">🧹 Données CCS effacées du localStorage</div>
+                <div class="warning">Clear Données CCS effacées du localStorage</div>
                 <p>Strategic (Dynamic) ne devrait plus apparaître</p>
             `;
         }
@@ -167,13 +167,13 @@
             
             if (result) {
                 resultDiv.innerHTML = `
-                    <div class="success">✅ syncCCSTargets() fonctionne</div>
+                    <div class="success">OK syncCCSTargets() fonctionne</div>
                     <pre>${JSON.stringify(result, null, 2)}</pre>
                     <p>Strategic (Dynamic) devrait apparaître dans rebalance.html</p>
                 `;
             } else {
                 resultDiv.innerHTML = `
-                    <div class="error">❌ syncCCSTargets() retourne null</div>
+                    <div class="error">Error syncCCSTargets() retourne null</div>
                     <p>Raisons possibles:</p>
                     <ul>
                         <li>Pas de données 'last_targets' dans localStorage</li>
@@ -225,7 +225,7 @@
                 }
             }
             
-            let html = `<div class="info">📊 Analyse des différences d'allocations:</div>`;
+            let html = `<div class="info">Analytics Analyse des différences d'allocations:</div>`;
             html += `<table style="width:100%; border-collapse: collapse; margin: 10px 0;">`;
             html += `<tr style="background: #f0f0f0;">
                 <th style="border: 1px solid #ddd; padding: 8px;">Asset</th>
@@ -267,23 +267,23 @@
             </div>`;
             
             // Diagnostic
-            html += `<div class="info">🔍 Diagnostic:</div>`;
+            html += `<div class="info">Search Diagnostic:</div>`;
             if (Math.abs(riskTotal - 100) < 0.1 && Math.abs(rebalanceTotal - 100) < 0.1) {
-                html += `<div class="warning">⚠️ Les deux totalisent ~100% mais avec des répartitions différentes</div>`;
+                html += `<div class="warning">Warning Les deux totalisent ~100% mais avec des répartitions différentes</div>`;
                 html += `<div>→ Possible problème de transformation/normalisation des données</div>`;
             }
             
             // Vérifier si localStorage contient les bonnes données
             if (storedAllocations) {
                 if (storedAllocations.BTC === riskObserved.BTC) {
-                    html += `<div class="success">✅ localStorage contient les données Risk Dashboard</div>`;
+                    html += `<div class="success">OK localStorage contient les données Risk Dashboard</div>`;
                 } else if (storedAllocations.BTC === rebalanceObserved.BTC) {
-                    html += `<div class="warning">⚠️ localStorage contient les données Rebalance transformées</div>`;
+                    html += `<div class="warning">Warning localStorage contient les données Rebalance transformées</div>`;
                 } else {
-                    html += `<div class="error">❌ localStorage contient des données différentes (BTC: ${storedAllocations.BTC}%)</div>`;
+                    html += `<div class="error">Error localStorage contient des données différentes (BTC: ${storedAllocations.BTC}%)</div>`;
                 }
             } else {
-                html += `<div class="error">❌ Pas de données dans localStorage</div>`;
+                html += `<div class="error">Error Pas de données dans localStorage</div>`;
             }
             
             compDiv.innerHTML = html;
@@ -297,8 +297,8 @@
             let recommendations = [];
             
             if (!hasData) {
-                recommendations.push('📝 Créer des données CCS de test avec le bouton vert');
-                recommendations.push('🔄 Ou aller dans Risk Dashboard pour générer de vraies données');
+                recommendations.push('File Créer des données CCS de test avec le bouton vert');
+                recommendations.push('Refresh Ou aller dans Risk Dashboard pour générer de vraies données');
             }
             
             if (hasData && !syncResult) {
@@ -310,13 +310,13 @@
                 }
                 
                 if (data.source !== 'risk-dashboard-ccs') {
-                    recommendations.push('🎯 Source incorrecte - Doit être "risk-dashboard-ccs"');
+                    recommendations.push('Target Source incorrecte - Doit être "risk-dashboard-ccs"');
                 }
             }
             
             if (syncResult) {
-                recommendations.push('✅ Tout fonctionne - Strategic (Dynamic) devrait apparaître');
-                recommendations.push('🔄 Testez le bouton "Sync CCS" dans rebalance.html');
+                recommendations.push('OK Tout fonctionne - Strategic (Dynamic) devrait apparaître');
+                recommendations.push('Refresh Testez le bouton "Sync CCS" dans rebalance.html');
             }
             
             recDiv.innerHTML = recommendations.map(r => `<div>${r}</div>`).join('');

@@ -1,12 +1,12 @@
 # AI Chat Context Fixes - Session 4
 
 **Date:** 27 Dec 2025
-**Status:** ✅ Complete
+**Status:**  Complete
 **Scope:** Fix context builders for risk-dashboard.html and analytics-unified.html
 
 ---
 
-## 🐛 Issues Identified
+## Issues Identified
 
 ### Problem #1: Analytics - Wrong Market Phase
 **Symptom:** AI Chat on analytics-unified.html showed `phase: "btc"` instead of market phase
@@ -64,15 +64,15 @@ context.var_95 = (metrics.var_95_1d || 0) * portfolioValue;  // -$115.16
 
 ---
 
-## ✅ Corrections Applied
+## Corrections Applied
 
 ### Frontend: [ai-chat-context-builders.js](../static/components/ai-chat-context-builders.js)
 
 #### 1. buildAnalyticsContext() - Lines 232-303
 **Changes:**
-- ✅ **market_phase** calculated from cycle_score (bearish <70, moderate 70-90, bullish ≥90)
-- ✅ **cycle_score** extracted from `govData.scores.components.trend_regime`
-- ✅ **dominance_phase** renamed from "phase" (btc/eth/large/alt)
+- [OK] **market_phase** calculated from cycle_score (bearish <70, moderate 70-90, bullish ≥90)
+- [OK] **cycle_score** extracted from `govData.scores.components.trend_regime`
+- [OK] **dominance_phase** renamed from "phase" (btc/eth/large/alt)
 
 **Code:**
 ```javascript
@@ -91,9 +91,9 @@ context.dominance_phase = govData.phase?.phase_now || 'unknown';
 
 #### 2. buildRiskDashboardContext() - Lines 145-257
 **Changes:**
-- ✅ **Alerts parsing** fixed: Handle `Array` response directly instead of `{ok, alerts}`
-- ✅ **Cycles data** added: Direct API call to `/execution/governance/state`
-- ✅ **VaR conversion** fixed: Convert decimal to USD absolute value
+- [OK] **Alerts parsing** fixed: Handle `Array` response directly instead of `{ok, alerts}`
+- [OK] **Cycles data** added: Direct API call to `/execution/governance/state`
+- [OK] **VaR conversion** fixed: Convert decimal to USD absolute value
 
 **Code (Alerts):**
 ```javascript
@@ -150,23 +150,23 @@ context.var_95 = varDecimal * portfolioValue;  // Convert to absolute USD value
 
 #### 1. _format_risk_context() - Lines 432-449
 **Changes:**
-- ✅ Replaced legacy `cycles` dict with new fields: `cycle_score`, `market_phase`, `dominance_phase`
-- ✅ Added emojis for phases (🐻 bearish, ⚖️ moderate, 🐂 bullish, ₿ BTC, Ξ ETH, 📊 large, 🌈 alt)
+- [OK] Replaced legacy `cycles` dict with new fields: `cycle_score`, `market_phase`, `dominance_phase`
+- [OK] Added emojis for phases ( bearish,  moderate,  bullish, ₿ BTC, Ξ ETH,  large,  alt)
 
 **Code:**
 ```python
 # Market cycles
 if "cycle_score" in context:
     lines.append("")
-    lines.append("🔄 Analyse des cycles:")
+    lines.append(" Analyse des cycles:")
     lines.append(f"  - Cycle Score: {context['cycle_score']:.1f}/100")
 
     if "market_phase" in context:
-        phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(context["market_phase"], "❓")
+        phase_emoji = {"bearish": "Decline", "moderate": "Balanced", "bullish": "Growth"}.get(context["market_phase"], "Unknown")
         lines.append(f"  - Phase de marché: {phase_emoji} {context['market_phase'].capitalize()}")
 
     if "dominance_phase" in context:
-        dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(context["dominance_phase"], "❓")
+        dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "Analytics", "alt": "Theme"}.get(context["dominance_phase"], "Unknown")
         lines.append(f"  - Dominance: {dom_emoji} {context['dominance_phase'].upper()}")
 
     if "phase_confidence" in context:
@@ -175,32 +175,32 @@ if "cycle_score" in context:
 
 #### 2. _format_analytics_context() - Lines 488-503
 **Changes:**
-- ✅ Replaced `phase` (dominance) with separate `market_phase`, `cycle_score`, `dominance_phase` fields
-- ✅ Added emojis for clarity
+- [OK] Replaced `phase` (dominance) with separate `market_phase`, `cycle_score`, `dominance_phase` fields
+- [OK] Added emojis for clarity
 
 **Code:**
 ```python
 # Market phase (bearish/moderate/bullish)
 if "market_phase" in context:
     phase = context["market_phase"]
-    phase_emoji = {"bearish": "🐻", "moderate": "⚖️", "bullish": "🐂"}.get(phase, "❓")
-    lines.append(f"📈 Phase de marché: {phase_emoji} {phase.capitalize()}")
+    phase_emoji = {"bearish": "Decline", "moderate": "Balanced", "bullish": "Growth"}.get(phase, "Unknown")
+    lines.append(f" Phase de marché: {phase_emoji} {phase.capitalize()}")
 
 # Cycle score
 if "cycle_score" in context:
-    lines.append(f"🔄 Cycle Score: {context['cycle_score']:.1f}/100")
+    lines.append(f" Cycle Score: {context['cycle_score']:.1f}/100")
 
 # Dominance phase (btc/eth/large/alt)
 if "dominance_phase" in context:
     dom = context["dominance_phase"]
-    dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "📊", "alt": "🌈"}.get(dom, "❓")
-    lines.append(f"🏆 Dominance: {dom_emoji} {dom.upper()}")
+    dom_emoji = {"btc": "₿", "eth": "Ξ", "large": "Analytics", "alt": "Theme"}.get(dom, "Unknown")
+    lines.append(f" Dominance: {dom_emoji} {dom.upper()}")
     lines.append("")
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test Case 1: Analytics - Market Phase
 **Page:** analytics-unified.html
@@ -213,9 +213,9 @@ Phase actuelle: btc
 
 **After (CORRECT):**
 ```
-📈 Phase de marché: 🐂 Bullish
-🔄 Cycle Score: 93.3/100
-🏆 Dominance: ₿ BTC
+ Phase de marché:  Bullish
+ Cycle Score: 93.3/100
+ Dominance: ₿ BTC
 ```
 
 ### Test Case 2: Risk Dashboard - Alerts
@@ -229,7 +229,7 @@ Malheureusement, je n'ai pas accès aux alertes actives...
 
 **After (CORRECT):**
 ```
-🚨 Alertes actives (14):
+[Alert] Alertes actives (14):
   - [S1] EXEC_COST_SPIKE: 45
   - [S2] VOL_Q90_CROSS: 0.368...
   ...
@@ -246,9 +246,9 @@ Malheureusement, je n'ai pas accès aux données en temps réel...
 
 **After (CORRECT):**
 ```
-🔄 Analyse des cycles:
+ Analyse des cycles:
   - Cycle Score: 93.3/100
-  - Phase de marché: 🐂 Bullish
+  - Phase de marché:  Bullish
   - Dominance: ₿ BTC
   - Confiance: 61.7%
 ```
@@ -259,34 +259,34 @@ Malheureusement, je n'ai pas accès aux données en temps réel...
 
 **Before (WRONG):**
 ```
-⚠️ Score de risque: 69.6/100
-📊 VaR 95%: $-0.00 (max expected loss)  ← WRONG!
-📉 Max Drawdown: -11.05%
+[Warning] Score de risque: 69.6/100
+ VaR 95%: $-0.00 (max expected loss)  ← WRONG!
+ Max Drawdown: -11.05%
 ```
 
 **After (CORRECT):**
 ```
-⚠️ Score de risque: 69.6/100
-📊 VaR 95%: $-115.16 (max expected loss)  ← CORRECT!
-📉 Max Drawdown: -11.05%
+[Warning] Score de risque: 69.6/100
+ VaR 95%: $-115.16 (max expected loss)  ← CORRECT!
+ Max Drawdown: -11.05%
 ```
 
 ---
 
-## 📊 Impact Summary
+## Impact Summary
 
 | Component | Issue | Fix | Status |
 |-----------|-------|-----|--------|
-| **Analytics Context** | Wrong phase (dominance vs market) | Calculate market_phase from cycle_score | ✅ Fixed |
-| **Analytics Context** | Missing cycle_score | Extract from govData.scores.components | ✅ Fixed |
-| **Risk Context** | Alerts not visible | Parse Array response directly | ✅ Fixed |
-| **Risk Context** | Cycles missing | Direct API call to governance/state | ✅ Fixed |
-| **Risk Context** | VaR at $0.00 | Convert decimal to USD (× portfolio_value) | ✅ Fixed |
-| **Backend Formatter** | Legacy cycles format | Use new fields (cycle_score, market_phase, dominance_phase) | ✅ Fixed |
+| **Analytics Context** | Wrong phase (dominance vs market) | Calculate market_phase from cycle_score | [OK] Fixed |
+| **Analytics Context** | Missing cycle_score | Extract from govData.scores.components | [OK] Fixed |
+| **Risk Context** | Alerts not visible | Parse Array response directly | [OK] Fixed |
+| **Risk Context** | Cycles missing | Direct API call to governance/state | [OK] Fixed |
+| **Risk Context** | VaR at $0.00 | Convert decimal to USD (× portfolio_value) | [OK] Fixed |
+| **Backend Formatter** | Legacy cycles format | Use new fields (cycle_score, market_phase, dominance_phase) | [OK] Fixed |
 
 ---
 
-## 🔧 Files Modified
+## Files Modified
 
 ### Frontend
 - `static/components/ai-chat-context-builders.js` (buildAnalyticsContext, buildRiskDashboardContext)
@@ -296,7 +296,7 @@ Malheureusement, je n'ai pas accès aux données en temps réel...
 
 ---
 
-## 📝 Notes
+## Notes
 
 1. **Market Phase Logic:** Aligned with allocation-engine.js (lines 180-190)
    - `cycle_score < 70` → bearish
@@ -316,7 +316,7 @@ Malheureusement, je n'ai pas accès aux données en temps réel...
 
 ---
 
-## ✅ Completion Checklist
+## Completion Checklist
 
 - [x] Fix analytics market phase calculation
 - [x] Fix risk alerts parsing (Array response)

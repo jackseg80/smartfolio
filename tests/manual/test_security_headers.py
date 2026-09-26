@@ -108,7 +108,7 @@ class TestSecurityHeaders:
         for header in sensitive_headers:
             if header in headers:
                 # Log warning mais ne fait pas échouer le test en dev
-                print(f"⚠️ Header sensible détecté: {header}={headers[header]}")
+                print(f"[Warning] Header sensible détecté: {header}={headers[header]}")
 
     def test_cors_configuration(self):
         """Vérifie la configuration CORS"""
@@ -145,7 +145,7 @@ class TestSecurityHeaders:
                     f"Headers sécurité manquants sur {endpoint}"
             except Exception as e:
                 # Log l'erreur mais continue les tests
-                print(f"⚠️ Erreur test endpoint {endpoint}: {e}")
+                print(f"[Warning] Erreur test endpoint {endpoint}: {e}")
 
     def test_rate_limiting_headers(self):
         """Vérifie la présence des headers de rate limiting"""
@@ -160,7 +160,7 @@ class TestSecurityHeaders:
 
         for header in rate_limit_headers:
             if header in response.headers:
-                print(f"✅ Rate limiting header présent: {header}")
+                print(f"[OK] Rate limiting header présent: {header}")
 
     @pytest.mark.parametrize("path", [
         "/static/dashboard.html",
@@ -178,7 +178,7 @@ class TestSecurityHeaders:
             # Cache-Control approprié pour les fichiers statiques
             cache_control = response.headers.get("cache-control", "")
             if cache_control:
-                print(f"📄 Cache-Control pour {path}: {cache_control}")
+                print(f" Cache-Control pour {path}: {cache_control}")
 
 
 class TestSecurityVulnerabilities:

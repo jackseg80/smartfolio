@@ -17,7 +17,7 @@
 
 ---
 
-## Phase 1: Suppression Code Mort (Basse Risque) ✅ TERMINÉ
+## Phase 1: Suppression Code Mort (Basse Risque)  TERMINÉ
 
 **Note:** `coingecko_safe.py` conservé car utilisé dans `smart_classification.py` (workaround bug aiohttp/CTRL+C)
 
@@ -94,7 +94,7 @@ from services.ml.models.volatility_predictor import VolatilityLSTM as Volatility
 
 ---
 
-## Phase 3: Refactoring Patterns JS ✅ TERMINÉ
+## Phase 3: Refactoring Patterns JS  TERMINÉ
 
 ### Créé: `static/core/formatters.js`
 
@@ -119,7 +119,7 @@ Fonctions unifiées:
 
 ---
 
-## Phase 4: Nettoyage Documentation ✅ TERMINÉ
+## Phase 4: Nettoyage Documentation  TERMINÉ
 
 ### 4.1 legacy-redirects.js → SUPPRIMÉ
 - Fichier non importé nulle part
@@ -158,10 +158,10 @@ Fonctions unifiées:
 
 | Phase | Statut | Impact |
 |-------|--------|--------|
-| Phase 1 | ✅ Terminé | 13 fichiers, 3282 LOC supprimés |
-| Phase 2 | ✅ Terminé | ML Pipeline conservé (compatibilité torch), get_active_user déjà migré |
-| Phase 3 | ✅ Terminé | formatters.js créé, 5 fichiers migrés |
-| Phase 4 | ✅ Terminé | 2 fichiers, 869 LOC supprimés |
+| Phase 1 | [OK] Terminé | 13 fichiers, 3282 LOC supprimés |
+| Phase 2 | [OK] Terminé | ML Pipeline conservé (compatibilité torch), get_active_user déjà migré |
+| Phase 3 | [OK] Terminé | formatters.js créé, 5 fichiers migrés |
+| Phase 4 | [OK] Terminé | 2 fichiers, 869 LOC supprimés |
 | **Total** | **15 fichiers supprimés** | **~4200 LOC nettoyés** |
 
 ### Commits générés
