@@ -96,6 +96,10 @@ Cette synthèse prévaut pour l'état du chantier crypto sur les anciens points 
 
 ## 📚 Index des Audits par Catégorie
 
+### Stock Market (26 septembre 2026)
+
+- [STOCK_MARKET_2026-09-26.md](./STOCK_MARKET_2026-09-26.md) — audit du risque, des analytics, des modèles ML, des recommandations et des opportunités, avec corrections locales et plan de validation restant.
+
 ### 🔒 Sécurité (8.5/10 - BON)
 
 **Audits complets:**

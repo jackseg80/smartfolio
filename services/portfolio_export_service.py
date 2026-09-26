@@ -114,8 +114,10 @@ def resolve_saxo_file_key(user_id: str, file_key: Optional[str]) -> Optional[str
         # fallback even when a user configuration is unavailable or invalid.
         pass
 
-    if selected_file and (data_dir / selected_file).is_file():
-        return selected_file
+    if selected_file:
+        if (data_dir / selected_file).is_file():
+            return selected_file
+        raise FileNotFoundError(f"Selected Saxo CSV '{selected_file}' was not found for this user")
 
     csv_files = list(data_dir.glob("*.csv")) if data_dir.is_dir() else []
     if csv_files:

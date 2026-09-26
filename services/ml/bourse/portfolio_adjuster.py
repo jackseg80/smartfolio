@@ -86,8 +86,8 @@ class PortfolioAdjuster:
 
         P0 Enhancement - Oct 2025
 
-        Handles Saxo double-counting: CSV contains both aggregate + detail lines for multi-lot positions.
-        Detects and removes aggregate line if detail lines exist.
+        Preserve all supplied lots. Aggregate rows must be identified by the importer,
+        never guessed from similar market values.
 
         Args:
             recommendations: List of position recommendations
@@ -110,36 +110,7 @@ class PortfolioAdjuster:
                 # Single position, no consolidation needed
                 consolidated.append(recs[0])
             else:
-                # Multiple positions for same symbol → check for Saxo double-counting
-                logger.info(f"Analyzing {len(recs)} positions for {symbol}")
-
-                # Separate lines with and without position_id (from original CSV metadata)
-                # In Saxo CSV: aggregate lines have no Position ID, detail lines have numeric Position ID
-                lines_with_id = []
-                lines_without_id = []
-
-                for rec in recs:
-                    # Check if this rec came from a CSV line with Position ID
-                    # We need to add this metadata in saxo_import connector
-                    # For now, use heuristic: if multiple lines and one has significantly more value, it's aggregate
-                    lines_without_id.append(rec)  # Fallback: treat all as without ID
-
-                # Heuristic detection: if sum of smaller values ≈ largest value, it's double-counting
-                values = sorted([r.get('current_value', 0) for r in recs], reverse=True)
-                largest = values[0]
-                sum_others = sum(values[1:])
-
-                # If largest ≈ sum of others (within 5%), it's a Saxo aggregate + details situation
-                if len(values) > 1 and abs(largest - sum_others) / max(largest, 1) < 0.05:
-                    logger.info(f"{symbol}: Detected Saxo aggregate (${largest:.0f}) + details (${sum_others:.0f}) - keeping only detail lines")
-                    # Remove the largest value (aggregate line) and keep detail lines
-                    recs_sorted = sorted(recs, key=lambda x: x.get('current_value', 0), reverse=True)
-                    detail_recs = recs_sorted[1:]  # All except largest
-                    recs = detail_recs
-
-                # Multiple positions remaining → consolidate normally
-                logger.info(f"Consolidating {len(recs)} detail positions for {symbol}")
-
+                # Equal values do not prove that a row is an aggregate. Preserve every lot.
                 # Aggregate metrics
                 total_value = sum(r.get('current_value', 0) for r in recs)
                 avg_score = sum(r.get('score', 0) for r in recs) / len(recs)
@@ -150,21 +121,18 @@ class PortfolioAdjuster:
 
                 # Override with aggregated values
                 consolidated_rec['current_value'] = total_value
+                consolidated_rec['weight_pct'] = sum(r.get('weight_pct', 0) for r in recs)
                 consolidated_rec['score'] = avg_score
                 consolidated_rec['confidence'] = avg_confidence
                 consolidated_rec['positions_count'] = len(recs)
                 consolidated_rec['fragmentation_warning'] = True
 
-                # Update tactical advice
-                original_advice = consolidated_rec.get('tactical_advice', '')
-                consolidated_rec['tactical_advice'] = (
-                    f"⚠️ {len(recs)} lots d'achat séparés détectés (total consolidé: ${total_value:,.0f}). "
-                    f"CSV Saxo contient {len(recs)} lignes distinctes pour ce symbole (achats à différentes dates/prix). "
-                    f"Recommandation: Garder tels quels dans broker, mais tracker comme position unique dans votre suivi. "
-                    f"{original_advice}"
-                )
-
-                # Collect all position IDs for reference
+                # Amounts must be recalculated after consolidation and final constraints.
+                consolidated_rec['position_sizing'] = {
+                    'action': 'REVIEW', 'increment_dollars': None,
+                    'guidance': 'Recalculate sizing for the consolidated position',
+                }
+                consolidated_rec['tactical_advice'] = f"{len(recs)} lots consolidated; sizing requires review."
                 consolidated_rec['fragmented_position_ids'] = [
                     r.get('symbol', '') + '_' + str(i) for i, r in enumerate(recs)
                 ]

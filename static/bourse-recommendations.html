@@ -46,6 +46,7 @@
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>
     <script src="global-config.js"></script>
+    <script src="core/bourse-source-context.js"></script>
     <script src="appearance.js"></script>
 
     <!-- AI Chat Component (Global System) -->
@@ -290,12 +291,20 @@
         document.addEventListener('DOMContentLoaded', async () => {
             debugLogger.debug('🚀 Bourse Recommendations page loaded');
 
-            // Resolve source type from localStorage
+            await window.wealthContextBar?.whenReady();
             await resolveSourceType();
 
             // Setup event listeners
             setupRecommendationsListeners();
             setupOpportunitiesListeners();
+        });
+
+        window.addEventListener('bourseSourceChanged', async () => {
+            if (!window.wealthContextBar?.isReady) return;
+            await resolveSourceType();
+            currentRecommendations = [];
+            lastOpportunitiesData = null;
+            document.getElementById('recommendationsTable').textContent = 'Source changed. Click Scan to analyze the selected portfolio.';
         });
 
         // Resolve source type dynamically (same logic as saxo-dashboard.html)
@@ -316,15 +325,9 @@
                 return;
             }
 
-            // Determine source type
-            if (bourseSource === 'manual_bourse') {
-                window.saxoSourceType = 'manual';
-            } else if (bourseSource.startsWith('api:')) {
-                window.saxoSourceType = 'api';
-            } else if (bourseSource.startsWith('saxo:')) {
-                window.saxoSourceType = 'csv';
-                currentFileKey = bourseSource.substring(5); // Remove 'saxo:' prefix
-            }
+            const selection = await window.resolveBourseSourceSelection(bourseSource);
+            window.saxoSourceType = selection.type;
+            currentFileKey = selection.fileKey;
 
             debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${window.saxoSourceType}`);
         }
@@ -417,7 +420,8 @@
 
                 tableContainer.innerHTML = '<div class="loading">Analyzing portfolio...</div>';
 
-                let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=90`;
+                const historyDays = { short: 90, medium: 120, long: 220 }[timeframe] || 120;
+                let recsUrl = `/api/ml/bourse/portfolio-recommendations?timeframe=${timeframe}&lookback_days=${historyDays}`;
                 if (window.saxoSourceType === 'manual') {
                     recsUrl += `&source=manual_bourse`;
                 } else if (window.saxoSourceType === 'api') {
@@ -448,7 +452,7 @@
                         `;
                         return;
                     }
-                    throw new Error(`HTTP ${response.status || 'unknown'}`);
+                    throw new Error(response.error || `HTTP ${response.status || 'unknown'}`);
                 }
 
                 const data = response.data || response;
@@ -457,6 +461,13 @@
                 updateMarketContext(data);
                 updateRecommendationsSummary(data.summary || {});
                 renderRecommendationsTable(currentRecommendations);
+                if (data.unavailable_symbols?.length) {
+                    const notice = document.createElement('p');
+                    notice.setAttribute('role', 'status');
+                    notice.textContent = `Incomplete analysis: ${data.unavailable_symbols.join(', ')} could not be assessed. Missing signals are not neutral recommendations.`;
+                    tableContainer.prepend(notice);
+                }
+
 
             } catch (error) {
                 debugLogger.error('Failed to load recommendations:', error);
@@ -608,7 +619,7 @@
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('name')">Name ${getSortIcon('name')}</th>
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('action')">Action ${getSortIcon('action')}</th>
                                 <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('rr')">R/R ${getSortIcon('rr')}</th>
-                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('confidence')">Confidence ${getSortIcon('confidence')}</th>
+                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('confidence')">Signal agreement ${getSortIcon('confidence')}</th>
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('sector')">Sector ${getSortIcon('sector')}</th>
                                 <th scope="col" style="${thStyle} text-align: right;" onclick="sortRecommendations('weight')">Weight ${getSortIcon('weight')}</th>
                             </tr>
@@ -698,7 +709,7 @@
                                     <div style="font-size: 1.25rem; font-weight: 700;">${getActionBadge(rec.action)}</div>
                                 </div>
                                 <div>
-                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Confidence</div>
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Signal agreement (not probability)</div>
                                     <div style="font-size: 1.25rem; font-weight: 700;">${Math.round(rec.confidence * 100)}%</div>
                                 </div>
                                 <div>
@@ -710,10 +721,10 @@
                                 <div style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem;">
                                     <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">📊 Price Targets</h3>
                                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
-                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current</div><div style="font-weight: 600;">$${rec.price_targets.current_price}</div></div>
-                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Stop Loss</div><div style="font-weight: 600; color: var(--danger);">$${rec.price_targets.stop_loss} (${rec.price_targets.stop_loss_pct}%)</div></div>
-                                        ${rec.price_targets.take_profit_1 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 1</div><div style="font-weight: 600; color: var(--success);">$${rec.price_targets.take_profit_1} (+${rec.price_targets.take_profit_1_pct}%)</div></div>` : ''}
-                                        ${rec.price_targets.take_profit_2 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 2</div><div style="font-weight: 600; color: var(--success);">$${rec.price_targets.take_profit_2} (+${rec.price_targets.take_profit_2_pct}%)</div></div>` : ''}
+                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current</div><div style="font-weight: 600;">${rec.price_currency || 'USD'} ${rec.price_targets.current_price}</div></div>
+                                        <div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Stop Loss</div><div style="font-weight: 600; color: var(--danger);">${rec.price_currency || 'USD'} ${rec.price_targets.stop_loss ?? 'N/A'} (${rec.price_targets.stop_loss_pct ?? 'N/A'}%)</div></div>
+                                        ${rec.price_targets.take_profit_1 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 1</div><div style="font-weight: 600; color: var(--success);">${rec.price_currency || 'USD'} ${rec.price_targets.take_profit_1} (+${rec.price_targets.take_profit_1_pct}%)</div></div>` : ''}
+                                        ${rec.price_targets.take_profit_2 ? `<div><div style="font-size: 0.75rem; color: var(--theme-text-muted);">Take Profit 2</div><div style="font-weight: 600; color: var(--success);">${rec.price_currency || 'USD'} ${rec.price_targets.take_profit_2} (+${rec.price_targets.take_profit_2_pct}%)</div></div>` : ''}
                                     </div>
                                 </div>
                             ` : ''}
@@ -756,7 +767,7 @@
                 currentRecommendations.forEach((rec, idx) => {
                     markdownText += `## ${idx + 1}. ${rec.symbol} - ${rec.name || ''}\n`;
                     markdownText += `- **Action:** ${rec.action}\n`;
-                    markdownText += `- **Confidence:** ${Math.round(rec.confidence * 100)}%\n`;
+                    markdownText += `- **Signal agreement (not a probability):** ${Math.round(rec.confidence * 100)}%\n`;
                     markdownText += `- **Sector:** ${rec.sector}\n`;
                     if (rec.tactical_advice) markdownText += `- **Advice:** ${rec.tactical_advice}\n`;
                     markdownText += `\n`;
@@ -928,7 +939,7 @@
             const container = document.getElementById('portfolioGaps');
 
             if (!gaps || gaps.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No significant sector gaps detected. Portfolio is well-diversified!</div>`;
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No sector gap with enough verified market data to rank.</div>`;
                 return;
             }
 
@@ -962,7 +973,7 @@
             const container = document.getElementById('opportunitiesTable');
 
             if (!opportunities || opportunities.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No significant opportunities identified.</div>`;
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No verified opportunities identified for this horizon.</div>`;
                 return;
             }
 
@@ -974,7 +985,7 @@
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Name</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Score</th>
+                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Historical screen</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Type</th>
                                 <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Rationale</th>
                             </tr>
@@ -1004,7 +1015,7 @@
             const container = document.getElementById('suggestedSales');
 
             if (!sales || sales.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No sales needed.</div>`;
+                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No verified sale candidates. A holding date of at least 30 days and a strong reason to trim are required.</div>`;
                 return;
             }
 
@@ -1024,9 +1035,9 @@
                             ${sales.map(sale => `
                                 <tr style="border-bottom: 1px solid var(--theme-border);">
                                     <td style="padding: 0.75rem; font-weight: 600;">${sale.symbol}</td>
-                                    <td style="padding: 0.75rem; text-align: right;">€${sale.current_value?.toLocaleString() || 'N/A'}</td>
+                                    <td style="padding: 0.75rem; text-align: right;">$${sale.current_value?.toLocaleString() || 'N/A'}</td>
                                     <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--warning-bg); color: var(--warning); border-radius: var(--radius-sm); font-weight: 600;">${sale.sale_pct?.toFixed(0) || 0}%</span></td>
-                                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: var(--success);">+€${sale.sale_value?.toLocaleString() || 'N/A'}</td>
+                                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: var(--success);">+$${sale.sale_value?.toLocaleString() || 'N/A'}</td>
                                     <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${sale.rationale}</td>
                                 </tr>
                             `).join('')}
@@ -1058,7 +1069,7 @@
                         </div>
                         <div style="text-align: center; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
                             <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Capital Freed</div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">€${Math.round(impact.total_freed || 0).toLocaleString()}</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">$${Math.round(impact.total_freed || 0).toLocaleString()}</div>
                         </div>
                     </div>
 

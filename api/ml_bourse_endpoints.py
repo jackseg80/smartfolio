@@ -18,7 +18,7 @@ import json
 import math
 import os
 
-from api.deps import get_required_user
+from api.deps import get_required_user, require_admin_role
 from api.auth_security import ACCESS_COOKIE
 from services.regime_constants import smooth_regime_sequence, REGIME_NAMES
 
@@ -28,7 +28,7 @@ from services.ml.bourse.stocks_adapter import StocksMLAdapter
 from services.ml.bourse.recommendations_orchestrator import RecommendationsOrchestrator
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_required_user)])
 
 
 def _forward_authenticated_headers(request: Request, user_id: str) -> dict[str, str]:
@@ -68,7 +68,7 @@ def sanitize_inf_nan(obj):
         return obj
 
 
-def _finite_number(value: Any, default: float) -> float:
+def _finite_number(value: Any, default: Optional[float]) -> Optional[float]:
     """Convert an optional market metric to a JSON-safe finite number."""
     try:
         number = float(value)
@@ -89,7 +89,10 @@ class VolatilityForecastResponse(BaseModel):
     predictions: Dict[str, Any]
     model_type: str
     lookback_days: int
-    confidence_level: float
+    confidence_level: Optional[float] = None
+    volatility_units: Optional[str] = None
+    one_day_target: Optional[str] = None
+    model_validation: Optional[Dict[str, Any]] = None
     note: Optional[str] = None
 
 
@@ -97,12 +100,13 @@ class RegimeDetectionResponse(BaseModel):
     """Response model for regime detection"""
     current_regime: str
     regime_id: Optional[int] = None
-    confidence: float
+    confidence: Optional[float] = None
     regime_probabilities: Dict[str, float]
     benchmark: str
     timestamp: str
     characteristics: Dict[str, str]
     model_type: Optional[str] = None
+    model_validation: Optional[Dict[str, Any]] = None
     note: Optional[str] = None
 
 
@@ -137,9 +141,8 @@ async def forecast_volatility(
     confidence_level: float = Query(0.95, ge=0.8, le=0.99, description="Confidence interval level")
 ):
     """
-    Forecast future volatility for a stock using LSTM model.
-
-    Returns predictions for 1-day, 7-day, and 30-day horizons with confidence intervals.
+    Return validated LSTM estimates for 1-, 7-, and 30-session horizons when
+    available; otherwise return observed 30-session volatility without intervals.
 
     Example:
         GET /api/ml/bourse/forecast?symbol=AAPL&lookback_days=365&confidence_level=0.95
@@ -167,13 +170,12 @@ async def forecast_volatility(
 async def detect_regime(
     benchmark: str = Query("SPY", description="Market benchmark ticker"),
     lookback_days: int = Query(7300, ge=60, le=10950, description="Days of history (20 years default to capture 4-5 full market cycles, max 30 years)"),
-    force_retrain: bool = Query(False, description="Force model retraining (bypass 7-day cache)")
 ):
     """
     Detect current market regime (Bull/Bear/Consolidation/Distribution).
 
-    Uses HMM + Neural Network hybrid model trained on market data.
-    Default 5 years (1825 days) to capture full bull/bear cycles.
+    Uses a chronologically validated neural model when it beats the baseline;
+    otherwise returns a clearly labeled moving-average classification.
 
     Example:
         GET /api/ml/bourse/regime?benchmark=SPY&lookback_days=1825
@@ -184,7 +186,7 @@ async def detect_regime(
         result = await stocks_ml_adapter.detect_market_regime(
             benchmark=benchmark,
             lookback_days=lookback_days,
-            force_retrain=force_retrain
+            force_retrain=False
         )
 
         return RegimeDetectionResponse(**result)
@@ -204,9 +206,8 @@ async def forecast_correlation(
     horizons: str = Query("1,7,30", description="Comma-separated forecast horizons (days)")
 ):
     """
-    Forecast future correlations between multiple stocks using Transformer model.
-
-    Returns correlation matrices for specified horizons.
+    Stock correlation forecasting is disabled until temporal out-of-sample
+    validation demonstrates useful performance. Returns HTTP 503.
 
     Example:
         GET /api/ml/bourse/correlation?symbols=AAPL,MSFT,GOOGL&horizons=1,7,30
@@ -221,14 +222,13 @@ async def forecast_correlation(
 
         logger.info(f"Correlation forecast requested for {len(symbols_list)} symbols")
 
-        result = await stocks_ml_adapter.forecast_correlations(
-            symbols=symbols_list,
-            lookback_days=lookback_days,
-            horizons=horizons_list
+        raise HTTPException(
+            status_code=503,
+            detail="Stock correlation forecasts are unavailable pending temporal out-of-sample validation; use observed correlation in Risk Analysis"
         )
 
-        return CorrelationForecastResponse(**result)
-
+    except HTTPException:
+        raise
     except ValueError as e:
         logger.error(f"Validation error in correlation forecast: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -335,7 +335,8 @@ async def get_ml_dashboard(
 @router.post("/api/ml/bourse/train")
 async def train_models(
     symbols: str = Query("AAPL,MSFT,GOOGL", description="Comma-separated stock tickers"),
-    lookback_days: int = Query(730, ge=365, le=3650, description="Training data period")
+    lookback_days: int = Query(730, ge=365, le=3650, description="Training data period"),
+    user: str = Depends(require_admin_role),
 ) -> dict:
     """
     Train ML models on historical stock data.
@@ -362,8 +363,11 @@ async def train_models(
                 # Train volatility model
                 vol_result = await stocks_ml_adapter.predict_volatility(
                     symbol=symbol,
-                    lookback_days=lookback_days
+                    lookback_days=lookback_days,
+                    train_if_missing=True,
                 )
+                if vol_result.get('model_type') != 'LSTM':
+                    raise RuntimeError('Volatility training did not produce a verified model')
                 results.append({
                     'symbol': symbol,
                     'model': 'volatility',
@@ -383,8 +387,11 @@ async def train_models(
         try:
             regime_result = await stocks_ml_adapter.detect_market_regime(
                 benchmark="SPY",
-                lookback_days=lookback_days
+                lookback_days=lookback_days,
+                force_retrain=True,
             )
+            if regime_result.get('model_type') != 'causal_neural':
+                raise RuntimeError('Regime training did not produce a verified model')
             results.append({
                 'model': 'regime_detector',
                 'status': 'success',
@@ -398,28 +405,16 @@ async def train_models(
                 'error': str(e)
             })
 
-        # Train correlation forecaster
-        if len(symbols_list) >= 2:
-            try:
-                corr_result = await stocks_ml_adapter.forecast_correlations(
-                    symbols=symbols_list,
-                    lookback_days=lookback_days
-                )
-                results.append({
-                    'model': 'correlation_forecaster',
-                    'status': 'success',
-                    'symbols': symbols_list
-                })
-            except Exception as e:
-                logger.error(f"Failed to train correlation forecaster: {e}")
-                results.append({
-                    'model': 'correlation_forecaster',
-                    'status': 'failed',
-                    'error': str(e)
-                })
+        results.append({
+            'model': 'correlation_forecaster',
+            'status': 'unavailable',
+            'reason': 'Temporal out-of-sample validation is not implemented for this model',
+        })
 
         return {
-            'status': 'completed',
+            'status': 'completed_with_unavailable_models' if any(
+                item['status'] != 'success' for item in results
+            ) else 'completed',
             'timestamp': datetime.now().isoformat(),
             'training_results': results,
             'lookback_days': lookback_days
@@ -431,7 +426,10 @@ async def train_models(
 
 
 @router.get("/api/ml/bourse/model-info")
-async def get_model_info(model_type: str = Query("regime", description="Model type (regime, volatility, correlation)")) -> dict:
+async def get_model_info(
+    model_type: str = Query("regime", description="Model type (regime, volatility, correlation)"),
+    symbol: str = Query("AAPL", pattern=r"^[A-Za-z0-9.^_-]{1,20}$", description="Stock symbol for volatility model"),
+) -> dict:
     """
     Retourne infos sur l'état d'un modèle ML.
 
@@ -450,8 +448,8 @@ async def get_model_info(model_type: str = Query("regime", description="Model ty
 
         # Model paths configuration
         model_paths = {
-            "regime": "models/stocks/regime/regime_neural_best.pth",
-            "volatility": "models/stocks/volatility/volatility_model.pkl",
+            "regime": "models/stocks/regime_causal_v2/regime_neural_best.pth",
+            "volatility": f"models/stocks/volatility_causal_v2/{symbol}_volatility_best.pth",
             "correlation": "models/stocks/correlation/correlation_model.pkl"
         }
 
@@ -690,6 +688,15 @@ async def get_portfolio_recommendations(
                 status_code=400,
                 detail=f"Invalid timeframe '{timeframe}'. Must be: short, medium, or long"
             )
+        if source not in ("saxobank", "saxobank_api", "manual_bourse"):
+            raise HTTPException(status_code=400, detail="Unsupported stock data source")
+        if source == "saxobank":
+            from services.portfolio_export_service import resolve_saxo_file_key, read_saxo_cash
+            file_key = resolve_saxo_file_key(user, file_key)
+            if file_key is None:
+                raise HTTPException(status_code=404, detail="No Saxo CSV selected")
+            if cash_amount is None:
+                cash_amount = read_saxo_cash(user, file_key)["value_usd"]
 
         # Import httpx at the beginning (used later for regime detection)
         import httpx
@@ -743,12 +750,12 @@ async def get_portfolio_recommendations(
                 else:
                     # CSV mode: use positions endpoint
                     positions_url = f"{API_BASE_URL}/api/saxo/positions"
-                    if file_key:
-                        positions_url += f"?file_key={file_key}"
+
 
                 pos_response = await client.get(
                     positions_url,
-                    headers=_forward_authenticated_headers(request, user)
+                    headers=_forward_authenticated_headers(request, user),
+                    params={"file_key": file_key} if source == "saxobank" and file_key else None,
                 )
 
                 # Handle 401 Unauthorized specifically (Saxo not connected)
@@ -763,7 +770,10 @@ async def get_portfolio_recommendations(
 
                 # Handle nested response structure from API
                 if source == "saxobank_api":
-                    positions = positions_data.get("data", {}).get("positions", [])
+                    api_portfolio = positions_data.get("data", {})
+                    positions = api_portfolio.get("positions", [])
+                    if cash_amount is None:
+                        cash_amount = api_portfolio.get("cash_balance")
                 else:
                     positions = positions_data.get("positions", [])
 
@@ -787,7 +797,7 @@ async def get_portfolio_recommendations(
             )
             regime_response.raise_for_status()
             regime_data = regime_response.json()
-            market_regime = regime_data.get("current_regime", "Bull Market")
+            market_regime = regime_data.get("current_regime", "Unknown")
             regime_probabilities = regime_data.get("regime_probabilities", {})
 
         # Sector analysis will be computed directly by orchestrator
@@ -802,7 +812,8 @@ async def get_portfolio_recommendations(
             sector_analysis=sector_analysis,
             benchmark=benchmark,
             timeframe=timeframe,
-            lookback_days=lookback_days
+            lookback_days=lookback_days,
+            cash_amount=cash_amount,
         )
 
         # Sanitize inf/nan values
@@ -829,6 +840,8 @@ async def get_portfolio_recommendations(
 
     except HTTPException:
         raise
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error generating recommendations: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
@@ -928,8 +941,7 @@ async def get_market_opportunities(
                 else:
                     # CSV mode: use positions endpoint
                     positions_url = f"{API_BASE_URL}/api/saxo/positions"
-                    if file_key:
-                        positions_url += f"?file_key={file_key}"
+
                     pos_response = await client.get(
                         positions_url,
                         headers=_forward_authenticated_headers(request, user)
@@ -967,9 +979,15 @@ async def get_market_opportunities(
 
         # 3. Build opportunities list (for now, use sector ETFs)
         from services.ml.bourse.sector_analyzer import SectorAnalyzer
+        from services.ml.bourse.opportunity_scanner import SECTOR_MAPPING
         sector_analyzer = SectorAnalyzer()
 
         opportunities = []
+        held_symbols = {
+            str(p.get("symbol") or p.get("instrument_id") or p.get("ticker") or "")
+            .split(":", 1)[0].upper()
+            for p in positions
+        }
         for gap in gaps:
             sector = gap.get("sector")
             etf = gap.get("etf")
@@ -991,17 +1009,25 @@ async def get_market_opportunities(
 
             if top_stocks:
                 for stock in top_stocks:
+                    stock_symbol = str(stock.get("symbol") or "").split(":", 1)[0].upper()
+                    if not stock_symbol or stock_symbol in held_symbols:
+                        continue
+                    if stock.get("type") != "ETF" and stock.get("composite_score") is None:
+                        # A sector score is not evidence for an unpriced stock.
+                        continue
+                    if stock.get("type") != "ETF":
+                        reported_sector = stock.get("reported_sector")
+                        if SECTOR_MAPPING.get(reported_sector) != sector:
+                            # Static candidate lists can drift or contain errors.
+                            continue
                     # Use individual stock scores if available, otherwise fall back to sector scores
-                    stock_score = _finite_number(stock.get("composite_score"), _finite_number(gap.get("score"), 50.0))
-                    stock_momentum = _finite_number(stock.get("momentum_score"), _finite_number(gap.get("momentum_score"), 50.0))
-                    stock_value = _finite_number(stock.get("value_score"), _finite_number(gap.get("value_score"), 50.0))
-                    stock_diversification = _finite_number(
-                        stock.get("diversification_score"),
-                        _finite_number(gap.get("diversification_score"), 50.0),
-                    )
+                    stock_score = _finite_number(stock.get("composite_score"), gap.get("score"))
+                    stock_momentum = _finite_number(stock.get("momentum_score"), gap.get("momentum_score") if stock.get("type") == "ETF" else None)
+                    stock_value = _finite_number(stock.get("value_score"), gap.get("value_score") if stock.get("type") == "ETF" else None)
+                    stock_diversification = _finite_number(stock.get("diversification_score"), None)
                     stock_confidence = min(
                         1.0,
-                        max(0.0, _finite_number(stock.get("confidence"), _finite_number(gap.get("confidence"), 0.7))),
+                        max(0.0, _finite_number(stock.get("confidence"), _finite_number(gap.get("confidence"), 0.0))),
                     )
 
                     opportunities.append({
@@ -1011,9 +1037,12 @@ async def get_market_opportunities(
                         "type": stock.get("type", "ETF"),
                         "score": stock_score,
                         "confidence": stock_confidence,
-                        "action": "BUY",
+                        "action": "REVIEW",
                         "horizon": horizon,
                         "capital_needed": round(capital_needed, 2),
+                        "capital_needed_is_sector_budget": True,
+                        "confidence_kind": "data_coverage",
+                        "score_kind": "historical_risk_adjusted_screen",
                         "rationale": stock.get("rationale", f"{sector} sector gap: {gap_pct:.1f}% underweight"),
                         "momentum_score": stock_momentum,
                         "value_score": stock_value,
@@ -1070,6 +1099,7 @@ async def get_market_opportunities(
                 "sufficient_capital": sales_result.get("sufficient", False)
             },
             "horizon": horizon,
+            "candidate_universe": "curated_stocks_and_sector_etfs",
             "generated_at": datetime.now().isoformat()
         }
 

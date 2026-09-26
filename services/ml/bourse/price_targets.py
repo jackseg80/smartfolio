@@ -303,7 +303,8 @@ class PriceTargets:
         current_allocation: float,
         sector_weight: float,
         max_position_pct: float = 0.05,  # 5% default max
-        max_sector_pct: float = 0.40     # 40% default max sector
+        max_sector_pct: float = 0.40,    # 40% default max sector
+        available_cash_usd: Optional[float] = None
     ) -> Dict[str, Any]:
         """
         Calculate suggested position size
@@ -336,12 +337,29 @@ class PriceTargets:
 
             # Limit by sector concentration
             sector_remaining = max_sector_pct - sector_weight
-            if sector_remaining < target_pct:
-                target_pct = max(0, sector_remaining)
+            target_pct = min(target_pct, current_allocation + max(0.0, sector_remaining))
 
             # Calculate dollar amount
             increment_pct = target_pct - current_allocation
-            increment_dollars = portfolio_value * increment_pct
+            if increment_pct <= 0:
+                return {
+                    "action": "HOLD",
+                    "current_allocation_pct": round(current_allocation * 100, 1),
+                    "target_allocation_pct": round(target_pct * 100, 1),
+                    "increment_dollars": 0,
+                    "guidance": "Current allocation is at or above the position or sector limit",
+                }
+            if available_cash_usd is None:
+                return {
+                    "action": "REVIEW",
+                    "current_allocation_pct": round(current_allocation * 100, 1),
+                    "target_allocation_pct": round(target_pct * 100, 1),
+                    "increment_dollars": None,
+                    "guidance": "Verify available cash before sizing any purchase",
+                }
+            increment_dollars = min(portfolio_value * increment_pct, max(0.0, available_cash_usd))
+            increment_pct = increment_dollars / portfolio_value if portfolio_value > 0 else 0.0
+            target_pct = current_allocation + increment_pct
 
             return {
                 "action": "ADD",
@@ -351,7 +369,7 @@ class PriceTargets:
                 "increment_dollars": round(increment_dollars, 0),
                 "sector_weight": round(sector_weight * 100, 1),
                 "sector_limit": round(max_sector_pct * 100, 1),
-                "guidance": f"Add ${increment_dollars:.0f} ({increment_pct*100:.1f}% of portfolio)" if increment_dollars > 0 else "Sector limit reached, no room to add"
+                "guidance": f"Up to ${increment_dollars:.0f} from available cash (per-position alternative)" if increment_dollars > 0 else "No available cash to add"
             }
 
         elif action in ["STRONG SELL", "SELL"]:

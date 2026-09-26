@@ -84,10 +84,11 @@ class StocksMLAdapter:
 
         # ML models (reused from crypto infrastructure)
         self.volatility_predictor = VolatilityPredictor(
-            model_dir=os.path.join(models_dir, "volatility")
+            model_dir=os.path.join(models_dir, "volatility_causal_v2"),
+            trading_days=252, predict_uncertainty=False
         )
         self.regime_detector = RegimeDetector(
-            model_dir=os.path.join(models_dir, "regime")
+            model_dir=os.path.join(models_dir, "regime_causal_v2"), trading_days=252
         )
         self.correlation_forecaster = CorrelationForecaster(
             model_dir=os.path.join(models_dir, "correlation")
@@ -99,7 +100,8 @@ class StocksMLAdapter:
         self,
         symbol: str,
         lookback_days: int = 365,
-        confidence_level: float = 0.95
+        confidence_level: float = 0.95,
+        train_if_missing: bool = False
     ) -> Dict[str, Any]:
         """
         Predict future volatility for a stock.
@@ -112,6 +114,7 @@ class StocksMLAdapter:
         Returns:
             Dict with predictions for 1d, 7d, 30d horizons
         """
+        ohlcv_data = None
         try:
             # Fetch OHLCV data
             ohlcv_data = await self.data_source.get_ohlcv_data(
@@ -122,21 +125,25 @@ class StocksMLAdapter:
             if len(ohlcv_data) < 30:
                 raise ValueError(f"Insufficient data for {symbol}: only {len(ohlcv_data)} days")
 
-            # Check if model exists for this symbol, train if needed
-            model_file = os.path.join(self.models_dir, "volatility", f"{symbol}_model.keras")
-            if not os.path.exists(model_file):
+            model_symbol = ohlcv_data.attrs.get('history_symbol') or symbol.replace(':', '_')
+            # A GET may load a trained model but must never start training.
+            if model_symbol not in self.volatility_predictor.models:
+                self.volatility_predictor.load_model(model_symbol)
+            if train_if_missing:
                 logger.info(f"Training volatility model for {symbol}...")
                 # Train model on historical data
                 training_metadata = self.volatility_predictor.train_model(
-                    symbol=symbol,
+                    symbol=model_symbol,
                     price_data=ohlcv_data,
                     validation_split=0.2
                 )
                 logger.info(f"Model trained. Metrics: {training_metadata.get('metrics', {})}")
+            if model_symbol not in self.volatility_predictor.models or not self.volatility_predictor.metadata[model_symbol].get('validated_against_baseline'):
+                return await self._fallback_historical_volatility(symbol, ohlcv_data, lookback_days, confidence_level)
 
             # Predict volatility
             prediction = self.volatility_predictor.predict_volatility(
-                symbol=symbol,
+                symbol=model_symbol,
                 recent_data=ohlcv_data,
                 confidence_level=confidence_level
             )
@@ -146,8 +153,11 @@ class StocksMLAdapter:
                 'timestamp': datetime.now().isoformat(),
                 'predictions': prediction.get('predictions', {}),
                 'model_type': 'LSTM',
+                'model_validation': prediction.get('model_metadata', {}),
                 'lookback_days': lookback_days,
-                'confidence_level': confidence_level
+                'confidence_level': None,
+                'volatility_units': 'annualized_fraction',
+                'one_day_target': 'absolute_next_session_return_proxy'
             }
 
             # Convert all numpy types to Python native types
@@ -155,6 +165,8 @@ class StocksMLAdapter:
 
         except Exception as e:
             logger.error(f"Error predicting volatility for {symbol}: {e}")
+            if ohlcv_data is None or len(ohlcv_data) < 30:
+                raise
             # Fallback to historical volatility
             return await self._fallback_historical_volatility(
                 symbol, ohlcv_data, lookback_days, confidence_level
@@ -171,29 +183,29 @@ class StocksMLAdapter:
         returns = self.data_source.calculate_returns(ohlcv_data)
 
         vol_30d = returns.tail(30).std() * np.sqrt(252)  # Annualized
-        vol_90d = returns.tail(90).std() * np.sqrt(252)
 
         result = {
             'symbol': symbol,
             'timestamp': datetime.now().isoformat(),
             'predictions': {
                 '1d': {
-                    'predicted_volatility': vol_30d,
-                    'confidence_interval': {'lower': vol_30d * 0.8, 'upper': vol_30d * 1.2}
+                    'predicted_volatility': None,
+                    'confidence_interval': None
                 },
                 '7d': {
-                    'predicted_volatility': vol_30d,
-                    'confidence_interval': {'lower': vol_30d * 0.8, 'upper': vol_30d * 1.2}
+                    'predicted_volatility': None,
+                    'confidence_interval': None
                 },
                 '30d': {
-                    'predicted_volatility': vol_90d,
-                    'confidence_interval': {'lower': vol_90d * 0.8, 'upper': vol_90d * 1.2}
+                    'predicted_volatility': vol_30d,
+                    'confidence_interval': None
                 }
             },
             'model_type': 'historical_fallback',
             'lookback_days': lookback_days,
-            'confidence_level': confidence_level,
-            'note': 'Using historical volatility (ML model unavailable)'
+            'confidence_level': None,
+            'volatility_units': 'annualized_fraction',
+            'note': '30-session historical realized volatility; no validated future forecast or confidence interval'
         }
 
         return convert_numpy_types(result)
@@ -240,43 +252,29 @@ class StocksMLAdapter:
             if len(multi_asset_data) < 2:
                 logger.warning(f"Only {len(multi_asset_data)} benchmarks available, using single-asset mode")
 
-            # Check if model exists and needs training (based on scheduler or force_retrain flag)
-            model_file = os.path.join(self.models_dir, "regime", "regime_neural_best.pth")
-            model_needs_training = (
-                force_retrain or  # Forced retrain (e.g., scheduled training)
-                MLTrainingScheduler.should_retrain("regime", Path(model_file))
-            )
-
-            if model_needs_training:
-                if force_retrain:
-                    logger.info(f"Training regime model with 20 years data (forced retrain)...")
-                else:
-                    logger.info(f"Training regime model with 20 years data (model >7 days old)...")
+            if force_retrain:
+                logger.info("Training regime model on explicit administrator request")
                 training_metadata = self.regime_detector.train_model(multi_asset_data)
                 logger.info(f"Regime model trained. Val accuracy: {training_metadata.get('final_val_accuracy', 'N/A')}")
-            else:
-                logger.info(f"Using cached regime model (< 7 days old)")
+            elif self.regime_detector.neural_model is None:
+                if not self.regime_detector.load_model():
+                    raise RuntimeError("No saved stock regime model is available")
 
-            # Predict regime (with auto-retry if model fails to load)
+            # Validate after loading persisted metadata; reads never train a model.
             try:
+                validation = self.regime_detector.training_metadata
+                test_accuracy = validation.get('temporal_test_accuracy')
+                baseline_accuracy = validation.get('baseline_test_accuracy')
+                if (test_accuracy is None or baseline_accuracy is None
+                        or not np.isfinite(test_accuracy) or not np.isfinite(baseline_accuracy)
+                        or test_accuracy <= baseline_accuracy):
+                    raise RuntimeError('Regime model has not beaten its temporal majority-class baseline')
                 prediction = self.regime_detector.predict_regime(
                     multi_asset_data,
                     return_probabilities=True
                 )
             except Exception as predict_error:
-                # Model exists but failed to load/predict - retrain
-                if not model_needs_training:
-                    logger.warning(f"Model prediction failed ({predict_error}), retraining...")
-                    training_metadata = self.regime_detector.train_model(multi_asset_data)
-                    logger.info(f"Regime model retrained. Val accuracy: {training_metadata.get('final_val_accuracy', 'N/A')}")
-                    # Retry prediction
-                    prediction = self.regime_detector.predict_regime(
-                        multi_asset_data,
-                        return_probabilities=True
-                    )
-                else:
-                    # Already tried training, still failed
-                    raise
+                raise RuntimeError(f"Regime model unavailable: {predict_error}") from predict_error
 
             # Adapt regime names for stocks
             regime_id = prediction.get('predicted_regime', 1)
@@ -298,12 +296,21 @@ class StocksMLAdapter:
                     self.STOCK_REGIMES.get(i, f"State{i}"): float(prob)
                     for i, prob in enumerate(regime_probs_raw)
                 }
+            rule_override = prediction.get('detection_method') == 'rule_based'
+            validation = self.regime_detector.training_metadata
 
             result = {
                 'current_regime': regime_name,
                 'regime_id': regime_id,
-                'confidence': prediction.get('confidence', 0.5),
-                'regime_probabilities': regime_probs,
+                'confidence': None if rule_override else prediction.get('confidence'),
+                'regime_probabilities': {} if rule_override else regime_probs,
+                'model_type': 'rule_based_override' if rule_override else 'causal_neural',
+                'model_validation': {
+                    'trained_at': validation.get('trained_at'),
+                    'split_method': validation.get('split_method'),
+                    'temporal_test_accuracy': validation.get('temporal_test_accuracy'),
+                    'baseline_test_accuracy': validation.get('baseline_test_accuracy'),
+                },
                 'benchmark': benchmark,
                 'timestamp': datetime.now().isoformat(),
                 'characteristics': self._get_regime_characteristics(regime_name)
@@ -374,7 +381,12 @@ class StocksMLAdapter:
         if len(ohlcv_data) < 60:
             return {
                 'current_regime': 'Unknown',
-                'confidence': 0.0,
+                'confidence': None,
+                'regime_probabilities': {},
+                'benchmark': symbol,
+                'timestamp': datetime.now().isoformat(),
+                'characteristics': self._get_regime_characteristics('Unknown'),
+                'model_type': 'moving_average_fallback',
                 'note': 'Insufficient data for regime detection'
             }
 
@@ -390,21 +402,17 @@ class StocksMLAdapter:
         # Simple regime classification (matching RegimeDetector names)
         if current_price > current_ma50 > current_ma200:
             regime = "Bull Market"
-            confidence = 0.7
         elif current_price < current_ma50 < current_ma200:
             regime = "Bear Market"
-            confidence = 0.7
         elif abs(current_price - current_ma50) / current_ma50 < 0.02:
             regime = "Correction"  # Sideways/consolidation
-            confidence = 0.6
         else:
             regime = "Correction"  # Default to Correction for uncertain cases
-            confidence = 0.5
 
         result = {
             'current_regime': regime,
-            'confidence': confidence,
-            'regime_probabilities': {regime: confidence},
+            'confidence': None,
+            'regime_probabilities': {},
             'benchmark': symbol,
             'timestamp': datetime.now().isoformat(),
             'characteristics': self._get_regime_characteristics(regime),
@@ -418,7 +426,8 @@ class StocksMLAdapter:
         self,
         symbols: List[str],
         lookback_days: int = 365,
-        horizons: List[int] = [1, 7, 30]
+        horizons: List[int] = [1, 7, 30],
+        train_if_missing: bool = False
     ) -> Dict[str, Any]:
         """
         Forecast correlations between multiple stocks.
@@ -431,6 +440,7 @@ class StocksMLAdapter:
         Returns:
             Dict with correlation matrices for each horizon
         """
+        multi_asset_data = {}
         try:
             # Fetch multi-asset data
             multi_asset_data = await self.data_source.get_multi_asset_data(
@@ -441,18 +451,20 @@ class StocksMLAdapter:
             if len(multi_asset_data) < 2:
                 raise ValueError("Need at least 2 stocks for correlation analysis")
 
-            # Check if model exists, train if needed
-            model_file = os.path.join(self.models_dir, "correlation", "transformer_model.keras")
-            if not os.path.exists(model_file):
+            if not self.correlation_forecaster.models:
+                self.correlation_forecaster.load_models()
+            if train_if_missing:
                 logger.info("Training correlation forecaster...")
                 training_metadata = self.correlation_forecaster.train_model(
                     multi_asset_data,
                     validation_split=0.2
                 )
                 logger.info(f"Correlation model trained. Metrics: {training_metadata.get('metrics', {})}")
+            if not self.correlation_forecaster.models:
+                return await self._fallback_historical_correlations(symbols, multi_asset_data, horizons)
 
             # Predict correlations
-            predictions = await self.correlation_forecaster.predict_correlations(
+            predictions = self.correlation_forecaster.predict_correlations(
                 multi_asset_data,
                 horizons=horizons
             )
@@ -469,6 +481,8 @@ class StocksMLAdapter:
 
         except Exception as e:
             logger.error(f"Error forecasting correlations: {e}")
+            if len(multi_asset_data) < 2:
+                raise
             # Fallback to historical correlations
             return await self._fallback_historical_correlations(symbols, multi_asset_data, horizons)
 

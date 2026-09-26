@@ -171,7 +171,7 @@ class DecisionEngine:
             rationale.append(f"❌ Underperforming market benchmark")
 
         # Sector momentum (if available)
-        if sector_data:
+        if sector_data and breakdown.get("sector") is not None:
             sector_score = breakdown.get("sector", 0.5)
             sector_name = sector_data.get("sector", "Unknown")
             sector_momentum = sector_data.get("momentum", 1.0)
@@ -222,6 +222,8 @@ class DecisionEngine:
 
         # Check if sector/position limits are reached
         sizing_guidance = position_sizing.get("guidance", "") if position_sizing else ""
+        if action in ('BUY', 'STRONG BUY', 'SELL', 'STRONG SELL') and position_sizing:
+            return f"{action.title()} signal. {sizing_guidance}"
         sector_limit_reached = "sector limit reached" in sizing_guidance.lower() or "no room to add" in sizing_guidance.lower()
 
         if action == "STRONG BUY":

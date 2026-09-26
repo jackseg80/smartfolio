@@ -59,8 +59,8 @@ class ScoringEngine:
         self.weights = self.WEIGHTS[timeframe]
 
     @staticmethod
-    def _finite_score(value: Any, default: float = 0.5) -> float:
-        """Return a bounded score and keep incomplete market data neutral."""
+    def _finite_score(value: Any, default: Optional[float] = None) -> Optional[float]:
+        """Missing observations are unavailable, not neutral signals."""
         try:
             score = float(value)
         except (TypeError, ValueError):
@@ -96,40 +96,24 @@ class ScoringEngine:
         risk_score = self._finite_score(risk_score)
         sector_score = self._finite_score(sector_score)
 
-        # Weighted average
-        final_score = (
-            technical_score * self.weights["technical"] +
-            regime_score * self.weights["regime"] +
-            relative_strength_score * self.weights["relative_strength"] +
-            risk_score * self.weights["risk"] +
-            sector_score * self.weights["sector"]
-        )
-
-        # Confidence calculation
-        # Higher when scores are consistent (low variance)
-        scores = [
-            technical_score,
-            regime_score,
-            relative_strength_score,
-            risk_score,
-            sector_score
-        ]
-        variance = sum((s - final_score) ** 2 for s in scores) / len(scores)
-
-        # More realistic confidence: min 40%, more sensitive to variance
-        # variance * 4 gives more spread in confidence values
-        confidence = 1.0 - min(variance * 4, 0.6)  # Cap confidence reduction at 60%
+        components = dict(technical=technical_score, regime=regime_score,
+                          relative_strength=relative_strength_score, risk=risk_score, sector=sector_score)
+        available = {key: value for key, value in components.items() if value is not None}
+        coverage = sum(self.weights[key] for key in available)
+        missing = [key for key, value in components.items() if value is None]
+        required_missing = any(key != 'sector' for key in missing)
+        final_score = (sum(value * self.weights[key] for key, value in available.items()) / coverage
+                       if coverage and not required_missing else None)
+        variance = (sum(self.weights[key] * (value - final_score) ** 2 for key, value in available.items()) / coverage
+                    if final_score is not None else 0.0)
+        confidence = coverage * (1 - min(variance * 4, 1.0)) if final_score is not None else 0.0
 
         return {
-            "final_score": round(final_score, 3),
+            "final_score": round(final_score, 3) if final_score is not None else None,
             "confidence": round(confidence, 3),
-            "breakdown": {
-                "technical": round(technical_score, 3),
-                "regime": round(regime_score, 3),
-                "relative_strength": round(relative_strength_score, 3),
-                "risk": round(risk_score, 3),
-                "sector": round(sector_score, 3)
-            },
+            "data_coverage": round(coverage, 3),
+            "missing_signals": missing,
+            "breakdown": {key: round(value, 3) if value is not None else None for key, value in components.items()},
             "weights": self.weights,
             "timeframe": self.timeframe
         }
@@ -187,7 +171,9 @@ class ScoringEngine:
             }
         }
 
-        base_score = favorability.get(market_regime, {}).get(asset_type, 0.5)
+        if market_regime not in favorability:
+            return None
+        base_score = favorability[market_regime].get(asset_type, 0.5)
 
         # Adjust with regime probabilities if available
         if regime_probabilities and market_regime in regime_probabilities:
@@ -212,6 +198,8 @@ class ScoringEngine:
         Returns:
             Score 0-1 (higher = outperforming)
         """
+        if not all(math.isfinite(x) for x in (asset_return, benchmark_return)):
+            return None
         # Relative performance
         relative_perf = asset_return - benchmark_return
 
@@ -245,6 +233,8 @@ class ScoringEngine:
         Returns:
             Score 0-1 (higher = better risk profile)
         """
+        if not all(math.isfinite(x) for x in (volatility, drawdown_current)):
+            return None
         score = 0.0
 
         # Volatility component (40%)
@@ -307,6 +297,8 @@ class ScoringEngine:
         Returns:
             Score 0-1 (higher = buy in sector, lower = sell)
         """
+        if not all(math.isfinite(x) for x in (sector_momentum, sector_weight_current, sector_weight_target)):
+            return None
         # Momentum component (60%)
         if sector_momentum > 1.05:  # Outperforming by >5%
             momentum_score = 0.9
@@ -350,6 +342,8 @@ class ScoringEngine:
         breakdown = score_data["breakdown"]
         weights = score_data["weights"]
 
+        if score_data['final_score'] is None:
+            return "Recommendation unavailable: missing required signals"
         explanation = f"Score: {score_data['final_score']:.2f} (Confidence: {score_data['confidence']:.0%})\n"
 
         if include_weights:
@@ -359,6 +353,9 @@ class ScoringEngine:
             for component in ["technical", "regime", "relative_strength", "risk", "sector"]:
                 score_val = breakdown[component]
                 weight_val = weights[component]
+                if score_val is None:
+                    explanation += f"  {component.title()}: unavailable\n"
+                    continue
                 contribution = score_val * weight_val
 
                 explanation += f"  • {component.replace('_', ' ').title()}: "

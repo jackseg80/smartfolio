@@ -350,53 +350,44 @@ class SpecializedBourseAnalytics:
                     if idx < len(returns):
                         post_earnings_moves.append(abs(returns.iloc[idx]))
 
-                avg_pre_vol = np.mean(pre_earnings_vols) if pre_earnings_vols else 0
-                avg_post_vol = np.mean(post_earnings_vols) if post_earnings_vols else 0
-                vol_increase = ((avg_post_vol - avg_pre_vol) / avg_pre_vol * 100) if avg_pre_vol > 0 else 0
-                avg_move = np.mean(post_earnings_moves) if post_earnings_moves else 0
+                avg_pre_vol = np.mean(pre_earnings_vols) if pre_earnings_vols else None
+                avg_post_vol = np.mean(post_earnings_vols) if post_earnings_vols else None
+                vol_increase = ((avg_post_vol - avg_pre_vol) / avg_pre_vol * 100) if avg_pre_vol and avg_post_vol is not None else None
+                avg_move = np.mean(post_earnings_moves) if post_earnings_moves else None
 
-                # Next earnings date (assume quarterly)
-                next_earnings = earnings_dates[-1] + timedelta(days=90) if earnings_dates else None
-                days_until = (next_earnings - datetime.now()).days if next_earnings else None
-
-                # Alert level
-                if days_until and days_until <= 7:
-                    alert_level = 'high'
-                    recommendation = f"Reduce position size - earnings in {days_until} days"
-                elif days_until and days_until <= 14:
-                    alert_level = 'medium'
-                    recommendation = f"Monitor closely - earnings in {days_until} days"
-                else:
-                    alert_level = 'low'
-                    recommendation = "Normal monitoring"
-
-            else:
-                # No earnings dates provided - use generic volatility analysis
-                current_vol = returns.std() * np.sqrt(252)
-                avg_pre_vol = current_vol
-                avg_post_vol = current_vol * 1.5  # Assume 50% increase
-                vol_increase = 50.0
-                avg_move = returns.abs().mean()
+                # Historical dates do not establish the next scheduled announcement.
                 next_earnings = None
                 days_until = None
-                alert_level = 'low'
-                recommendation = "No earnings dates available - using generic estimates"
+
+                alert_level = 'unavailable'
+                recommendation = "Historical earnings response only; next announcement date unavailable"
+
+            else:
+                # There is no event sample to estimate an earnings effect.
+                avg_pre_vol = None
+                avg_post_vol = None
+                vol_increase = None
+                avg_move = None
+                next_earnings = None
+                days_until = None
+                alert_level = 'unavailable'
+                recommendation = "Earnings impact unavailable: no verified earnings dates"
 
             result = {
                 'ticker': ticker,
                 'next_earnings_date': next_earnings.isoformat() if next_earnings else None,
                 'days_until_earnings': days_until,
-                'pre_earnings_vol': float(avg_pre_vol),
-                'post_earnings_vol': float(avg_post_vol),
-                'vol_increase_pct': float(vol_increase),
-                'avg_post_earnings_move': float(avg_move * 100),  # Convert to percentage
+                'pre_earnings_vol': float(avg_pre_vol) if avg_pre_vol is not None else None,
+                'post_earnings_vol': float(avg_post_vol) if avg_post_vol is not None else None,
+                'vol_increase_pct': float(vol_increase) if vol_increase is not None else None,
+                'avg_post_earnings_move': float(avg_move * 100) if avg_move is not None else None,
                 'alert_level': alert_level,
                 'recommendation': recommendation,
                 'num_earnings_analyzed': len(earnings_dates) if earnings_dates else 0,
                 'timestamp': datetime.now().isoformat()
             }
 
-            logger.info(f"Earnings prediction for {ticker}: alert={alert_level}, vol_increase={vol_increase:.1f}%")
+            logger.info(f"Earnings prediction for {ticker}: alert={alert_level}, vol_increase={vol_increase}")
             return result
 
         except Exception as e:

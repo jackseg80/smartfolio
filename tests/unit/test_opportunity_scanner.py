@@ -203,13 +203,13 @@ class TestGapDetection:
         gap_sectors = [g["sector"] for g in gaps]
         assert "Financials" in gap_sectors
         assert "Consumer Discretionary" in gap_sectors
-        assert "Europe" in gap_sectors  # Geographic sector
+        assert "Europe" not in gap_sectors  # Geography is a separate exposure dimension
 
     def test_detect_underweight_sectors(self, scanner):
         """Test detection of underweight sectors"""
         current_allocation = {
-            "Technology": 10.0,  # Target: (15+30)/2 = 22.5% → Gap: 12.5%
-            "Healthcare": 5.0,   # Target: (10+18)/2 = 14% → Gap: 9%
+            "Technology": 10.0,
+            "Healthcare": 5.0,
         }
 
         gaps = scanner._detect_gaps(current_allocation, min_gap_pct=5.0)
@@ -219,12 +219,12 @@ class TestGapDetection:
         health_gap = next((g for g in gaps if g["sector"] == "Healthcare"), None)
 
         assert tech_gap is not None
-        assert tech_gap["gap_pct"] == pytest.approx(12.5, abs=0.1)
+        assert tech_gap["gap_pct"] == pytest.approx(22.5 / 115 * 100 - 10, abs=0.1)
         assert tech_gap["current_pct"] == 10.0
-        assert tech_gap["target_pct"] == 22.5
+        assert tech_gap["target_pct"] == pytest.approx(22.5 / 115 * 100, abs=0.1)
 
         assert health_gap is not None
-        assert health_gap["gap_pct"] == pytest.approx(9.0, abs=0.1)
+        assert health_gap["gap_pct"] == pytest.approx(14 / 115 * 100 - 5, abs=0.1)
 
     def test_min_gap_threshold_filtering(self, scanner):
         """Test that min_gap_pct filters out small gaps"""
@@ -248,12 +248,9 @@ class TestGapDetection:
         assert tech_gap["etf"] == "XLK"
         assert tech_gap["description"] == "Information Technology"
 
-        europe_gap = next((g for g in gaps if g["sector"] == "Europe"), None)
-        assert europe_gap["etf"] == "VGK"
-        assert europe_gap["description"] == "European developed markets"
+        assert all(g["sector"] != "Europe" for g in gaps)
 
-    def test_geographic_sectors_detected(self, scanner):
-        """Test that geographic sectors are detected correctly"""
+    def test_geographic_exposure_is_not_double_counted_as_industry_gap(self, scanner):
         current_allocation = {
             "Technology": 30.0,
             "Healthcare": 20.0
@@ -262,7 +259,7 @@ class TestGapDetection:
         gaps = scanner._detect_gaps(current_allocation, min_gap_pct=5.0)
 
         geographic_gaps = [g for g in gaps if g["sector"] in ["Europe", "Asia Pacific", "Emerging Markets", "Japan"]]
-        assert len(geographic_gaps) == 4  # All 4 geographic sectors should be detected
+        assert geographic_gaps == []
 
 
 class TestGapScoring:
@@ -305,12 +302,11 @@ class TestGapScoring:
 
         result = await scanner._score_gap(gap, horizon="medium")
 
-        # Should return neutral scores (50)
-        assert result["score"] == 50.0
-        assert result["momentum_score"] == 50.0
-        assert result["value_score"] == 50.0
-        assert result["diversification_score"] == 50.0
-        assert result["confidence"] == 0.3  # Low confidence
+        assert result["score"] is None
+        assert result["momentum_score"] is None
+        assert result["value_score"] is None
+        assert result["diversification_score"] is None
+        assert result["confidence"] == 0.0
 
     @pytest.mark.asyncio
     async def test_score_gap_handles_analyzer_exception(self, scanner):
@@ -322,9 +318,8 @@ class TestGapScoring:
 
         result = await scanner._score_gap(gap, horizon="medium")
 
-        # Should return neutral scores without crashing
-        assert result["score"] == 50.0
-        assert result["confidence"] == 0.3
+        assert result["score"] is None
+        assert result["confidence"] == 0.0
 
     @pytest.mark.asyncio
     async def test_score_gap_weights_correct(self, scanner):

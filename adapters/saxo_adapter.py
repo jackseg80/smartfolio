@@ -74,7 +74,7 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
                 logger.info(f"[saxo_adapter] Searching for file_key: {effective_file_key}")
                 target_file = None
                 for f in data_files:
-                    if Path(f).name == effective_file_key or effective_file_key in Path(f).name:
+                    if Path(f).name == effective_file_key:
                         target_file = f
                         logger.info(f"[saxo_adapter] MATCH FOUND: {Path(f).name}")
                         break
@@ -91,12 +91,17 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
                     logger.info(f"[saxo_adapter] 📊 Portfolio summary total: ${portfolio.get('summary', {}).get('total_value_usd', 0):.2f}")
                     return parsed
                 else:
-                    logger.warning(f"Requested file_key '{effective_file_key}' not found, falling back to latest")
+                    raise FileNotFoundError(
+                        f"Selected Saxo CSV '{effective_file_key}' was not found for this user"
+                    )
 
             # Prendre le plus récent (comportement par défaut)
             latest_data = max(data_files, key=lambda f: os.path.getmtime(f))
             logger.debug(f"Using Saxo data/ (latest) for user {user_id}: {latest_data}")
             return _parse_saxo_csv(latest_data, "saxo_data", user_id=user_id)
+
+        if file_key:
+            raise FileNotFoundError(f"Selected Saxo CSV '{file_key}' was not found for this user")
 
         # 2. Fallback vers anciens dossiers (uploads/snapshots/imports) si data/ vide
         legacy_patterns = ["saxobank/imports/*.csv", "saxobank/uploads/*.csv", "saxobank/snapshots/*.csv"]
@@ -113,6 +118,8 @@ def _load_from_sources_fallback(user_id: Optional[str] = None, file_key: Optiona
         logger.debug(f"No Saxo data found for user {user_id}")
         return None
 
+    except FileNotFoundError:
+        raise
     except Exception as e:
         logger.error(f"Error loading from sources for user {user_id}: {e}")
         return None

@@ -77,6 +77,12 @@ export async function fetchCached(key, fetchFn, cacheType = 'signals') {
     
   } catch (error) {
     debugLogger.error(`Failed to fetch ${key}:`, error);
+
+    // A stale stock result can outlive its source data and imply a valid
+    // current risk score or recommendation after the provider has failed.
+    if (cacheType === 'bourse') {
+      throw error;
+    }
     
     // Try to return stale data as fallback
     const staleEntry = RAM_CACHE.get(key) || 
