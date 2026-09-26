@@ -102,6 +102,14 @@ STANDARD_SECTORS = {
     }
 }
 
+# Geographic ETF exposure is an independent dimension and must not be added
+# to GICS industry allocations. Normalize the industry midpoints to 100%.
+INDUSTRY_SECTORS = tuple(list(STANDARD_SECTORS)[:11])
+INDUSTRY_TARGET_TOTAL = sum(
+    sum(STANDARD_SECTORS[sector]["target_range"]) / 2
+    for sector in INDUSTRY_SECTORS
+)
+
 
 # Sector mapping (Yahoo Finance → GICS)
 SECTOR_MAPPING = {
@@ -241,7 +249,7 @@ class OpportunityScanner:
         self.sector_analyzer = SectorAnalyzer()
 
     @staticmethod
-    def _finite_number(value: Any, fallback: float) -> float:
+    def _finite_number(value: Any, fallback: Optional[float]) -> Optional[float]:
         """Keep partial market-data responses from leaking NaN into the API."""
         try:
             number = float(value)
@@ -281,7 +289,8 @@ class OpportunityScanner:
             scored_gaps = []
             for gap in gaps:
                 score = await self._score_gap(gap, horizon)
-                scored_gaps.append({**gap, **score})
+                if score.get("score") is not None:
+                    scored_gaps.append({**gap, **score})
 
             # Sort by score (descending)
             scored_gaps.sort(key=lambda x: x.get("score", 0), reverse=True)
@@ -413,8 +422,9 @@ class OpportunityScanner:
                     symbol = pos.get("symbol") or pos.get("instrument_id")
                     if symbol:
                         sector_raw = self._enrich_position_with_sector(symbol)
-                        # Cache it in the position for future use
-                        pos["sector"] = sector_raw
+                        # Do not mutate the selected portfolio snapshot.
+
+                sector_raw = sector_raw or "Unknown"
 
                 # Map to GICS sector
                 sector = SECTOR_MAPPING.get(sector_raw, sector_raw)
@@ -464,10 +474,11 @@ class OpportunityScanner:
         """
         gaps = []
 
-        for sector, info in STANDARD_SECTORS.items():
+        for sector in INDUSTRY_SECTORS:
+            info = STANDARD_SECTORS[sector]
             current = current_allocation.get(sector, 0.0)
             target_min, target_max = info["target_range"]
-            target = (target_min + target_max) / 2  # Midpoint
+            target = ((target_min + target_max) / 2) / INDUSTRY_TARGET_TOTAL * 100
 
             gap_pct = target - current
 
@@ -514,46 +525,46 @@ class OpportunityScanner:
             if not analysis:
                 logger.warning(f"No analysis available for {sector} ({etf})")
                 return {
-                    "momentum_score": 50,
-                    "value_score": 50,
-                    "diversification_score": 50,
-                    "score": 50,
-                    "confidence": 0.3
+                    "momentum_score": None,
+                    "value_score": None,
+                    "diversification_score": None,
+                    "score": None,
+                    "confidence": 0.0
                 }
 
             # Extract scores
-            momentum_score = self._finite_number(analysis.get("momentum_score"), 50.0)
-            value_score = self._finite_number(analysis.get("value_score"), 50.0)
-            diversification_score = self._finite_number(
-                analysis.get("diversification_score"), 50.0
-            )
+            momentum_score = self._finite_number(analysis.get("momentum_score"), None)
+            value_score = self._finite_number(analysis.get("value_score"), None)
+            diversification_score = self._finite_number(analysis.get("diversification_score"), None)
+            if momentum_score is None:
+                return {"momentum_score": None, "value_score": value_score,
+                        "diversification_score": diversification_score, "score": None, "confidence": 0.0}
 
             # Weighted average (Momentum 40%, Value 30%, Diversification 30%)
-            score = (
-                momentum_score * 0.40 +
-                value_score * 0.30 +
-                diversification_score * 0.30
-            )
+            components = [(momentum_score, 0.40), (value_score, 0.30), (diversification_score, 0.30)]
+            available = [(value, weight) for value, weight in components if value is not None]
+            score = sum(value * weight for value, weight in available) / sum(weight for _, weight in available)
 
             # Confidence based on data quality
             confidence = min(1.0, max(0.0, self._finite_number(analysis.get("confidence"), 0.7)))
 
             return {
                 "momentum_score": round(momentum_score, 1),
-                "value_score": round(value_score, 1),
-                "diversification_score": round(diversification_score, 1),
+                "value_score": round(value_score, 1) if value_score is not None else None,
+                "diversification_score": round(diversification_score, 1) if diversification_score is not None else None,
                 "score": round(score, 1),
                 "confidence": round(confidence, 2),
+                "score_components_available": [name for name, value in (("momentum", momentum_score), ("value", value_score), ("diversification", diversification_score)) if value is not None],
                 "analysis": analysis
             }
 
         except Exception as e:
             logger.error(f"Error scoring gap {gap}: {e}", exc_info=True)
-            # Return neutral scores on error
+            # Unverified prices must not create a ranked opportunity.
             return {
-                "momentum_score": 50,
-                "value_score": 50,
-                "diversification_score": 50,
-                "score": 50,
-                "confidence": 0.3
+                "momentum_score": None,
+                "value_score": None,
+                "diversification_score": None,
+                "score": None,
+                "confidence": 0.0
             }

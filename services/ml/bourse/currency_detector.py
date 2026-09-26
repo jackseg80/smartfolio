@@ -175,6 +175,17 @@ class CurrencyExchangeDetector:
             logger.debug(f"🔄 Symbol transformation: {symbol} → {transformed_symbol}")
             symbol = transformed_symbol
 
+        # An explicit trading venue identifies the listing. A domicile (ISIN)
+        # or a generic symbol map must not override it (e.g. SAP on NYSE).
+        if exchange_hint:
+            suffix, currency, exchange = self._parse_exchange_hint(symbol, exchange_hint)
+            known_suffixes = ('.SW', '.DE', '.PA', '.L', '.MI', '.AS', '.WA', '.BR', '.LS', '.MC', '.ST', '.CO', '.HE', '.OL', '.TO', '.V')
+            if symbol.endswith(known_suffixes):
+                if not suffix or not symbol.endswith(suffix):
+                    raise ValueError(f"Conflicting exchange information for {symbol}")
+                return symbol, currency, exchange
+            return f"{symbol}{suffix}", currency, exchange
+
         # 1. Check direct mapping first
         if symbol in self.full_map:
             suffix, currency, exchange = self.full_map[symbol]
@@ -271,6 +282,15 @@ class CurrencyExchangeDetector:
         - AMS → Euronext Amsterdam (EUR)
         """
         hint = exchange_hint.upper()
+        extra_exchanges = {
+            'BATS': ('', 'USD', 'BATS'), 'BRU': ('.BR', 'EUR', 'Euronext Brussels'),
+            'LIS': ('.LS', 'EUR', 'Euronext Lisbon'), 'BME': ('.MC', 'EUR', 'Madrid'),
+            'STO': ('.ST', 'SEK', 'Stockholm'), 'CSE': ('.CO', 'DKK', 'Copenhagen'),
+            'HEL': ('.HE', 'EUR', 'Helsinki'), 'OSE': ('.OL', 'NOK', 'Oslo'),
+            'TSE': ('.TO', 'CAD', 'Toronto'), 'TSX': ('.V', 'CAD', 'TSX Venture'),
+        }
+        if hint in extra_exchanges:
+            return extra_exchanges[hint]
 
         # Swiss exchanges
         if hint in ['VX', 'SWX', 'SWX_ETF']:
@@ -305,8 +325,7 @@ class CurrencyExchangeDetector:
             return ('.AS', 'EUR', 'Euronext Amsterdam')
 
         # Default fallback
-        logger.warning(f"Unknown exchange hint '{exchange_hint}', assuming US")
-        return ('', 'USD', 'US Exchange')
+        raise ValueError(f"Unsupported exchange hint: {exchange_hint}")
 
     def get_all_supported_currencies(self) -> set:
         """Retourne toutes les devises supportées"""

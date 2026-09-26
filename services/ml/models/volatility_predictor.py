@@ -44,13 +44,15 @@ class VolatilityLSTM(nn.Module):
     """
     
     def __init__(self, input_size: int, hidden_size: int = 128, num_layers: int = 3, 
-                 dropout: float = 0.2, output_horizons: int = 3):
+                 dropout: float = 0.2, output_horizons: int = 3,
+                 predict_uncertainty: bool = True):
         super(VolatilityLSTM, self).__init__()
         
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.output_horizons = output_horizons
+        self.predict_uncertainty = predict_uncertainty
         
         # LSTM layers with dropout
         self.lstm = nn.LSTM(
@@ -78,7 +80,7 @@ class VolatilityLSTM(nn.Module):
             nn.Linear(hidden_size // 2, hidden_size // 4),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_size // 4, output_horizons * 2)  # mean + std for each horizon
+            nn.Linear(hidden_size // 4, output_horizons * (2 if predict_uncertainty else 1))
         )
         
         # Initialize weights
@@ -130,9 +132,12 @@ class VolatilityPredictor:
     Provides predictions for multiple time horizons with confidence intervals
     """
     
-    def __init__(self, model_dir: str = "models/volatility"):
+    def __init__(self, model_dir: str = "models/volatility", trading_days: int = 365,
+                 predict_uncertainty: bool = True):
         self.model_dir = Path(model_dir)
         self.model_dir.mkdir(parents=True, exist_ok=True)
+        self.trading_days = trading_days
+        self.predict_uncertainty = predict_uncertainty
         
         # Model hyperparameters
         self.sequence_length = 60  # 60 days lookback
@@ -183,7 +188,7 @@ class VolatilityPredictor:
         # Basic price features
         features_df['returns'] = features_df['close'].pct_change()
         features_df['log_returns'] = np.log(features_df['close'] / features_df['close'].shift(1))
-        features_df['realized_vol'] = features_df['returns'].rolling(window=20).std() * np.sqrt(365)
+        features_df['realized_vol'] = features_df['returns'].rolling(window=20).std() * np.sqrt(self.trading_days)
         
         # Price-based features
         features_df['price_momentum_5'] = features_df['close'] / features_df['close'].shift(5) - 1
@@ -197,9 +202,9 @@ class VolatilityPredictor:
         features_df['volume_momentum'] = features_df['volume'] / features_df['volume'].shift(5) - 1
         
         # Volatility features  
-        features_df['vol_5'] = features_df['returns'].rolling(window=5).std() * np.sqrt(365)
-        features_df['vol_20'] = features_df['returns'].rolling(window=20).std() * np.sqrt(365)
-        features_df['vol_60'] = features_df['returns'].rolling(window=60).std() * np.sqrt(365)
+        features_df['vol_5'] = features_df['returns'].rolling(window=5).std() * np.sqrt(self.trading_days)
+        features_df['vol_20'] = features_df['returns'].rolling(window=20).std() * np.sqrt(self.trading_days)
+        features_df['vol_60'] = features_df['returns'].rolling(window=60).std() * np.sqrt(self.trading_days)
         features_df['vol_ratio'] = features_df['vol_5'] / features_df['vol_20']
         
         # High-low spread features
@@ -220,9 +225,17 @@ class VolatilityPredictor:
         
         # Target variables (future volatility) - use forward-looking approach
         for horizon in self.horizons:
-            # Calculate rolling volatility, then shift backward to get future values
-            rolling_vol = features_df['returns'].rolling(window=max(horizon, 5)).std() * np.sqrt(365)
-            features_df[f'target_vol_{horizon}d'] = rolling_vol.shift(-horizon)
+            if horizon == 1:
+                # A single session has no sample standard deviation.
+                future_vol = features_df['returns'].shift(-1).abs() * np.sqrt(self.trading_days)
+            else:
+                future_returns = features_df['returns'].shift(-1)
+                future_vol = (
+                    future_returns.iloc[::-1]
+                    .rolling(window=horizon, min_periods=horizon).std()
+                    .iloc[::-1] * np.sqrt(self.trading_days)
+                )
+            features_df[f'target_vol_{horizon}d'] = future_vol
         
         # Select available feature columns (only use columns that exist)
         available_columns = features_df.columns.tolist()
@@ -253,9 +266,10 @@ class VolatilityPredictor:
         # Create result dataframe
         result_df = features_df[existing_columns].copy()
         
-        # More lenient data cleaning - only drop rows where all features are NaN
-        result_df = result_df.dropna(subset=feature_columns, how='all')
-        result_df = result_df.ffill().bfill()
+        # Past values may fill missing features; future values and labels may not.
+        result_df = result_df.replace([np.inf, -np.inf], np.nan)
+        result_df[feature_columns] = result_df[feature_columns].ffill()
+        result_df = result_df.dropna(subset=feature_columns)
         
         logger.info(f"Features prepared for {symbol}: {len(result_df)} samples, {len(feature_columns)} features")
         return result_df
@@ -278,7 +292,9 @@ class VolatilityPredictor:
         position = (prices - lower_band) / (upper_band - lower_band)
         return position
     
-    def create_sequences(self, features: pd.DataFrame, symbol: str) -> Tuple[np.ndarray, np.ndarray]:
+    def create_sequences(self, features: pd.DataFrame, symbol: str,
+                         training_cutoff: Optional[int] = None,
+                         return_indices: bool = False):
         """
         Create sequence data for LSTM training
         
@@ -297,32 +313,41 @@ class VolatilityPredictor:
         # Normalize features
         from sklearn.preprocessing import RobustScaler
         scaler = RobustScaler()
-        features_scaled = scaler.fit_transform(features[feature_cols])
+        scaler.fit(features[feature_cols].iloc[:training_cutoff] if training_cutoff else features[feature_cols])
+        features_scaled = scaler.transform(features[feature_cols])
         
         # Store scaler
         self.scalers[symbol] = scaler
         
         # Create sequences
-        X, y = [], []
+        X, y, sample_indices = [], [], []
         
-        for i in range(self.sequence_length, len(features_scaled)):
+        for i in range(self.sequence_length - 1, len(features_scaled)):
+            target_values = features.iloc[i][target_cols]
+            if not np.isfinite(target_values.to_numpy(dtype=float)).all():
+                continue
             # Input sequence
-            X.append(features_scaled[i-self.sequence_length:i])
+            # Include the latest observable session; targets start on the next one.
+            X.append(features_scaled[i-self.sequence_length+1:i+1])
             
             # Target (volatility for each horizon)
             targets = []
             for target_col in target_cols:
-                vol_value = features.iloc[i][target_col]
-                if pd.isna(vol_value):
-                    vol_value = features[target_col].median()  # Fallback
-                targets.extend([vol_value, vol_value * 0.1])  # mean, std approximation
+                vol_value = float(features.iloc[i][target_col])
+                if self.predict_uncertainty:
+                    targets.extend([vol_value, vol_value * 0.1])
+                else:
+                    targets.append(vol_value)
             
             y.append(targets)
+            sample_indices.append(i)
         
         X = np.array(X)
         y = np.array(y)
         
         logger.info(f"Created sequences for {symbol}: X shape {X.shape}, y shape {y.shape}")
+        if return_indices:
+            return X, y, np.asarray(sample_indices)
         return X, y
     
     def train_model(self, symbol: str, price_data: pd.DataFrame,
@@ -350,13 +375,28 @@ class VolatilityPredictor:
             if len(features_df) < min_required:
                 raise ValueError(f"Insufficient data for {symbol}: {len(features_df)} samples, need at least {min_required}")
             
-            # Create sequences
-            X, y = self.create_sequences(features_df, symbol)
-            
-            # Train-validation split
-            split_idx = int(len(X) * (1 - validation_split))
-            X_train, X_val = X[:split_idx], X[split_idx:]
-            y_train, y_val = y[:split_idx], y[split_idx:]
+            if self.predict_uncertainty:
+                X, y = self.create_sequences(features_df, symbol)
+                split_idx = int(len(X) * (1 - validation_split))
+                X_train, X_val = X[:split_idx], X[split_idx:]
+                y_train, y_val = y[:split_idx], y[split_idx:]
+                X_test = y_test = None
+            else:
+                # Chronological train/validation/test with a horizon embargo.
+                train_end = int(len(features_df) * 0.60)
+                val_end = int(len(features_df) * 0.80)
+                X, y, sample_indices = self.create_sequences(
+                    features_df, symbol, training_cutoff=train_end, return_indices=True
+                )
+                embargo = max(self.horizons)
+                train_mask = sample_indices + embargo < train_end
+                val_mask = (sample_indices >= train_end) & (sample_indices + embargo < val_end)
+                test_mask = sample_indices >= val_end
+                X_train, y_train = X[train_mask], y[train_mask]
+                X_val, y_val = X[val_mask], y[val_mask]
+                X_test, y_test = X[test_mask], y[test_mask]
+                if min(len(X_train), len(X_val), len(X_test)) < 10:
+                    raise ValueError("Insufficient chronological samples for embargoed validation")
             
             # Convert to tensors
             X_train = torch.FloatTensor(X_train).to(self.device)
@@ -371,7 +411,8 @@ class VolatilityPredictor:
                 hidden_size=self.hidden_size,
                 num_layers=self.num_layers,
                 dropout=self.dropout,
-                output_horizons=len(self.horizons)
+                output_horizons=len(self.horizons),
+                predict_uncertainty=self.predict_uncertainty
             ).to(self.device)
             
             # Loss and optimizer
@@ -431,6 +472,18 @@ class VolatilityPredictor:
             # Load best model with security validation
             model.load_state_dict(safe_torch_load(self.model_dir / f'{symbol}_volatility_best.pth', map_location=self.device))
             self.models[symbol] = model
+
+            temporal_test_mae = None
+            baseline_test_mae = None
+            validated = None
+            if X_test is not None:
+                model.eval()
+                with torch.no_grad():
+                    y_hat = model(torch.FloatTensor(X_test).to(self.device)).cpu().numpy()
+                temporal_test_mae = float(np.mean(np.abs(y_hat - y_test)))
+                baseline = features_df['realized_vol'].iloc[sample_indices[test_mask]].to_numpy()
+                baseline_test_mae = float(np.mean(np.abs(baseline[:, None] - y_test)))
+                validated = bool(np.isfinite(temporal_test_mae) and temporal_test_mae < baseline_test_mae)
             
             # Training metadata
             metadata = {
@@ -442,6 +495,12 @@ class VolatilityPredictor:
                 'train_samples': len(X_train),
                 'val_samples': len(X_val),
                 'best_val_loss': best_val_loss,
+                'split_method': 'chronological_embargoed' if X_test is not None else 'chronological_validation',
+                'temporal_test_mae': temporal_test_mae,
+                'baseline_test_mae': baseline_test_mae,
+                'validated_against_baseline': validated,
+                'predict_uncertainty': self.predict_uncertainty,
+                'trading_days': self.trading_days,
                 'final_epoch': epoch,
                 'training_history': training_history
             }
@@ -497,15 +556,15 @@ class VolatilityPredictor:
             z_score = 1.96 if confidence_level == 0.95 else 2.576 if confidence_level == 0.99 else 1.645
             
             for i, horizon in enumerate(self.horizons):
-                mean_vol = predictions[i * 2]
-                std_vol = max(predictions[i * 2 + 1], mean_vol * 0.05)  # Minimum std
+                mean_vol = predictions[i * 2] if self.predict_uncertainty else predictions[i]
+                std_vol = max(predictions[i * 2 + 1], mean_vol * 0.05) if self.predict_uncertainty else None
                 
                 # Ensure positive volatility
                 mean_vol = max(mean_vol, 0.01)
                 
                 # Confidence intervals
-                lower_bound = max(mean_vol - z_score * std_vol, 0.01)
-                upper_bound = mean_vol + z_score * std_vol
+                lower_bound = max(mean_vol - z_score * std_vol, 0.01) if std_vol is not None else None
+                upper_bound = mean_vol + z_score * std_vol if std_vol is not None else None
                 
                 results[f'{horizon}d'] = {
                     'predicted_volatility': round(mean_vol, 4),
@@ -513,13 +572,13 @@ class VolatilityPredictor:
                         'lower': round(lower_bound, 4),
                         'upper': round(upper_bound, 4),
                         'confidence_level': confidence_level
-                    },
-                    'uncertainty': round(std_vol, 4),
+                    } if std_vol is not None else None,
+                    'uncertainty': round(std_vol, 4) if std_vol is not None else None,
                     'horizon_days': horizon
                 }
             
             # Add current realized volatility for comparison
-            current_vol = recent_data['close'].pct_change().rolling(window=20).std().iloc[-1] * np.sqrt(365)
+            current_vol = recent_data['close'].pct_change().rolling(window=20).std().iloc[-1] * np.sqrt(self.trading_days)
             
             prediction_result = {
                 'symbol': symbol,
@@ -529,7 +588,10 @@ class VolatilityPredictor:
                 'model_metadata': {
                     'trained_at': self.metadata[symbol]['trained_at'],
                     'sequence_length': self.sequence_length,
-                    'confidence_level': confidence_level
+                    'confidence_level': confidence_level if self.predict_uncertainty else None,
+                    'temporal_test_mae': self.metadata[symbol].get('temporal_test_mae'),
+                    'baseline_test_mae': self.metadata[symbol].get('baseline_test_mae'),
+                    'validated_against_baseline': self.metadata[symbol].get('validated_against_baseline'),
                 }
             }
             
@@ -560,8 +622,13 @@ class VolatilityPredictor:
                 hidden_size=self.hidden_size,
                 num_layers=self.num_layers,
                 dropout=self.dropout,
-                output_horizons=len(self.horizons)
+                output_horizons=len(self.horizons),
+                predict_uncertainty=self.predict_uncertainty
             ).to(self.device)
+            if metadata.get('predict_uncertainty', True) != self.predict_uncertainty:
+                return False
+            if metadata.get('trading_days', 365) != self.trading_days:
+                return False
 
             # Load model with security validation
             model.load_state_dict(safe_torch_load(model_path, map_location=self.device))

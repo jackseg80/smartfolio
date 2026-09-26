@@ -15,7 +15,7 @@ from services.risk.bourse.data_fetcher import BourseDataFetcher
 logger = logging.getLogger(__name__)
 
 # Parquet cache configuration
-PARQUET_CACHE_DIR = Path("data/cache/bourse/ml")
+PARQUET_CACHE_DIR = Path("data/cache/bourse/ml_verified_v3")
 PARQUET_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -140,6 +140,7 @@ class StocksDataSource:
         Returns:
             DataFrame OHLCV du benchmark
         """
+        self.fetcher.validate_symbol(benchmark)
         cache_file = PARQUET_CACHE_DIR / f"{benchmark}_{lookback_days}d.parquet"
 
         # Cache hit - vérifier âge
@@ -148,7 +149,9 @@ class StocksDataSource:
             if cache_age < timedelta(hours=24):
                 age_hours = cache_age.seconds // 3600
                 logger.info(f"📦 Cache hit for {benchmark} ({lookback_days}d, age={age_hours}h)")
-                return pd.read_parquet(cache_file)
+                cached = pd.read_parquet(cache_file)
+                self.fetcher._require_fresh_prices(cached, benchmark, datetime.now())
+                return cached
             else:
                 logger.info(f"⏰ Cache expired for {benchmark} ({cache_age.days}d old), refreshing...")
 
@@ -180,7 +183,7 @@ class StocksDataSource:
         Returns:
             Series of returns (indexed by date)
         """
-        return ohlcv_data[column].pct_change().dropna()
+        return ohlcv_data[column].pct_change(fill_method=None).dropna()
 
     def get_multi_asset_returns(
         self,

@@ -14,7 +14,7 @@ from datetime import datetime
 from fastapi import APIRouter, Query, HTTPException, Depends
 from pydantic import BaseModel, Field
 
-from services.risk.bourse.calculator import BourseRiskCalculator
+from services.risk.bourse.calculator import BourseRiskCalculator, IncompleteBourseMarketData
 from services.risk.bourse.alerts import BourseAlertsDetector
 from services.risk.bourse.alerts_persistence import AlertsPersistenceService
 from api.deps import get_required_user
@@ -84,12 +84,12 @@ async def bourse_risk_dashboard(
             if not manual_source:
                 logger.warning(f"[risk-bourse] Manual bourse source not found for user {user_id}")
                 return RiskDashboardResponse(
-                    ok=True,
+                    ok=False,
                     coverage=0.0,
                     positions_count=0,
                     total_value_usd=0.0,
                     risk={
-                        "score": 0,
+                        "score": None,
                         "level": "N/A",
                         "metrics": {},
                         "message": "Manual bourse source not available"
@@ -105,12 +105,12 @@ async def bourse_risk_dashboard(
             if not items:
                 logger.warning(f"[risk-bourse] No manual positions for user {user_id}")
                 return RiskDashboardResponse(
-                    ok=True,
+                    ok=False,
                     coverage=0.0,
                     positions_count=0,
                     total_value_usd=0.0,
                     risk={
-                        "score": 0,
+                        "score": None,
                         "level": "N/A",
                         "metrics": {},
                         "message": "No manual positions available"
@@ -140,17 +140,20 @@ async def bourse_risk_dashboard(
             auth_service = SaxoAuthService(user_id)
 
             # Charger positions cachées si disponibles
-            positions = await auth_service.get_cached_positions(max_age_hours=1)
+            cached_portfolio = await auth_service.get_cached_positions(max_age_hours=1)
+            positions = (cached_portfolio or {}).get('positions', [])
+            if cash_amount is None and cached_portfolio:
+                cash_amount = cached_portfolio.get('cash_balance')
 
             if not positions:
                 logger.warning(f"[risk-bourse] No cached API positions for user {user_id}")
                 return RiskDashboardResponse(
-                    ok=True,
+                    ok=False,
                     coverage=0.0,
                     positions_count=0,
                     total_value_usd=0.0,
                     risk={
-                        "score": 0,
+                        "score": None,
                         "level": "N/A",
                         "metrics": {},
                         "message": "No API positions available (try refreshing saxo-dashboard first)"
@@ -162,17 +165,22 @@ async def bourse_risk_dashboard(
         else:
             # CSV mode: utiliser l'adaptateur
             from adapters.saxo_adapter import list_portfolios_overview, get_portfolio_detail
+            from services.portfolio_export_service import resolve_saxo_file_key, read_saxo_cash
 
-            portfolios = list_portfolios_overview(user_id=user_id, file_key=file_key)
+            effective_file_key = resolve_saxo_file_key(user_id, file_key)
+            if effective_file_key is None:
+                raise HTTPException(status_code=404, detail="No Saxo CSV selected")
+
+            portfolios = list_portfolios_overview(user_id=user_id, file_key=effective_file_key)
 
             if not portfolios:
                 return RiskDashboardResponse(
-                    ok=True,
+                    ok=False,
                     coverage=0.0,
                     positions_count=0,
                     total_value_usd=0.0,
                     risk={
-                        "score": 0,
+                        "score": None,
                         "level": "N/A",
                         "metrics": {},
                         "message": "No Saxo portfolios found for this user"
@@ -182,17 +190,19 @@ async def bourse_risk_dashboard(
                 )
 
             portfolio_id = portfolios[0].get("portfolio_id")
-            portfolio_data = get_portfolio_detail(portfolio_id=portfolio_id, user_id=user_id, file_key=file_key)
+            portfolio_data = get_portfolio_detail(portfolio_id=portfolio_id, user_id=user_id, file_key=effective_file_key)
             positions = portfolio_data.get("positions", [])
+            if cash_amount is None:
+                cash_amount = read_saxo_cash(user_id, effective_file_key)["value_usd"]
 
         if not positions:
             return RiskDashboardResponse(
-                ok=True,
+                ok=False,
                 coverage=0.0,
                 positions_count=0,
                 total_value_usd=0.0,
                 risk={
-                    "score": 0,
+                    "score": None,
                     "level": "N/A",
                     "metrics": {},
                     "message": "No positions found in portfolio"
@@ -201,18 +211,32 @@ async def bourse_risk_dashboard(
                 user_id=user_id
             )
 
+        # The CSV and Saxo API use different keys for the same USD value.
+        positions = [
+            {**p, "market_value_usd": float(p.get("market_value_usd") or p.get("market_value") or 0.0)}
+            for p in positions
+        ]
+
+        # Long-only price weights do not model short exposure or borrowed cash.
+        if (cash_amount is not None and cash_amount < 0) or any(
+            p['market_value_usd'] < 0 or float(p.get('quantity') or 0) < 0
+            or 'cfd' in str(p.get('asset_class', '')).lower()
+            or 'cfd' in str(p.get('tags', [])).lower() for p in positions
+        ):
+            raise HTTPException(status_code=422, detail="Risk analysis requires unleveraged long positions and non-negative cash")
+
         # Filtrer par seuil minimum
-        positions_filtered = [p for p in positions if p.get("market_value_usd", 0.0) >= min_usd]
+        positions_filtered = [p for p in positions if p["market_value_usd"] >= min_usd]
 
         if not positions_filtered:
             total_value = sum(p.get("market_value_usd", 0.0) for p in positions)
             return RiskDashboardResponse(
-                ok=True,
+                ok=False,
                 coverage=0.0,
                 positions_count=len(positions),
                 total_value_usd=total_value,
                 risk={
-                    "score": 0,
+                    "score": None,
                     "level": "N/A",
                     "metrics": {},
                     "message": f"All positions below ${min_usd} threshold"
@@ -224,22 +248,34 @@ async def bourse_risk_dashboard(
         # 2) Calculer risque avec BourseRiskCalculator
         calculator = BourseRiskCalculator(data_source="yahoo")
 
-        risk_result = await calculator.calculate_portfolio_risk(
-            positions=positions_filtered,
-            benchmark="SPY",  # S&P500 par défaut
-            lookback_days=lookback_days,
-            risk_free_rate=risk_free_rate,
-            var_method=var_method
-        )
+        try:
+            risk_result = await calculator.calculate_portfolio_risk(
+                positions=positions_filtered,
+                benchmark="SPY",  # S&P500 par défaut
+                lookback_days=lookback_days,
+                risk_free_rate=risk_free_rate,
+                var_method=var_method,
+                cash_amount=cash_amount or 0.0,
+            )
+        except IncompleteBourseMarketData as exc:
+            return RiskDashboardResponse(
+                ok=False,
+                coverage=exc.coverage,
+                positions_count=len(positions_filtered),
+                total_value_usd=sum(p["market_value_usd"] for p in positions_filtered) + (cash_amount or 0.0),
+                risk={
+                    "score": None,
+                    "level": "N/A",
+                    "metrics": {},
+                    "message": str(exc),
+                    "missing_symbols": exc.symbols,
+                },
+                asof=datetime.utcnow().isoformat(),
+                user_id=user_id,
+            )
 
         # 3) Formater réponse
         total_value = risk_result["metadata"]["portfolio_value"]
-
-        # Add cash/liquidities to total value if provided
-        total_value_with_cash = total_value
-        if cash_amount and cash_amount > 0:
-            total_value_with_cash = total_value + cash_amount
-            logger.info(f"[risk-bourse] Including cash: ${cash_amount:,.2f}, Total: ${total_value_with_cash:,.2f}")
 
         risk_score = risk_result["risk_score"]["risk_score"]
         risk_level = risk_result["risk_score"]["risk_level"]
@@ -250,25 +286,33 @@ async def bourse_risk_dashboard(
         # Add cash info to metrics if provided
         if cash_amount and cash_amount > 0:
             metrics["cash_amount"] = cash_amount
-            metrics["cash_percentage"] = (cash_amount / total_value_with_cash * 100) if total_value_with_cash > 0 else 0
+            metrics["cash_percentage"] = (cash_amount / total_value * 100) if total_value > 0 else 0
 
-        # Coverage (proxy basé sur disponibilité données)
-        coverage = min(1.0, len(positions_filtered) / max(1, len(positions)))
+        # Value-weighted coverage of the selected holdings (excluding min_usd dust).
+        selected_value = sum(p["market_value_usd"] for p in positions)
+        covered_value = sum(p["market_value_usd"] for p in positions_filtered)
+        coverage = min(1.0, covered_value / selected_value) if selected_value > 0 else 0.0
 
         return RiskDashboardResponse(
             ok=True,
             coverage=coverage,
             positions_count=len(positions_filtered),
-            total_value_usd=total_value_with_cash,
+            total_value_usd=total_value,
             risk={
                 "score": risk_score,
                 "level": risk_level,
-                "metrics": metrics
+                "metrics": metrics,
+                "concentration": risk_result["concentration"],
+                "metadata": risk_result["metadata"],
             },
             asof=datetime.utcnow().isoformat(),
             user_id=user_id
         )
 
+    except HTTPException:
+        raise
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.exception(f"[risk-bourse] Error computing risk dashboard for user {user_id}: {e}")
         raise HTTPException(

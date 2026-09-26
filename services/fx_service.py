@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import time
+import math
 from datetime import datetime
 from typing import Optional
 
@@ -28,6 +29,8 @@ _FALLBACK_RATES_TO_USD = {
 _RATES_TO_USD = {**_FALLBACK_RATES_TO_USD}  # Start with fallback
 _RATES_CACHE_TIMESTAMP = 0
 _RATES_CACHE_TTL = 14400  # 4 hours in seconds
+_VERIFIED_CURRENCIES = set()
+_RATES_SOURCE_TIMESTAMP = 0.0
 
 
 def _fetch_live_rates() -> bool:
@@ -37,7 +40,7 @@ def _fetch_live_rates() -> bool:
     Returns:
         True if fetch succeeded, False otherwise
     """
-    global _RATES_TO_USD, _RATES_CACHE_TIMESTAMP
+    global _RATES_TO_USD, _RATES_CACHE_TIMESTAMP, _VERIFIED_CURRENCIES, _RATES_SOURCE_TIMESTAMP
 
     try:
         import httpx
@@ -68,13 +71,16 @@ def _fetch_live_rates() -> bool:
             # Convert rates: API gives USD -> XXX, we need XXX -> USD
             # Example: API says USD->EUR = 0.92, we need EUR->USD = 1/0.92 = 1.087
             updated_rates = {}
+            verified = set()
             for currency, rate_from_usd in fetched_rates.items():
                 currency = currency.upper()
                 if currency == "USD":
                     updated_rates[currency] = 1.0
-                elif rate_from_usd > 0:
+                    verified.add(currency)
+                elif isinstance(rate_from_usd, (int, float)) and math.isfinite(rate_from_usd) and rate_from_usd > 0:
                     # Invert: if 1 USD = 0.92 EUR, then 1 EUR = 1/0.92 USD
                     updated_rates[currency] = 1.0 / rate_from_usd
+                    verified.add(currency)
                 else:
                     # Keep fallback if invalid rate
                     updated_rates[currency] = _FALLBACK_RATES_TO_USD.get(currency, 1.0)
@@ -82,6 +88,8 @@ def _fetch_live_rates() -> bool:
             # Update cache
             _RATES_TO_USD.update(updated_rates)
             _RATES_CACHE_TIMESTAMP = time.time()
+            _VERIFIED_CURRENCIES = verified
+            _RATES_SOURCE_TIMESTAMP = float(data.get('time_last_update_unix') or 0)
 
             logger.info(f"[wealth][fx] ✅ Fetched {len(updated_rates)} live rates from API")
             return True
@@ -101,6 +109,23 @@ def _ensure_rates_fresh():
     if age > _RATES_CACHE_TTL:
         logger.debug(f"[wealth][fx] Cache expired (age: {age:.0f}s), fetching live rates...")
         _fetch_live_rates()
+
+
+def get_verified_rate(currency: str) -> float:
+    """USD per unit, requiring a recent provider quote instead of a reference fallback."""
+    currency = currency.upper()
+    if currency == 'USD':
+        return 1.0
+    _ensure_rates_fresh()
+    now = time.time()
+    if (now - _RATES_CACHE_TIMESTAMP > _RATES_CACHE_TTL
+            or not 0 <= now - _RATES_SOURCE_TIMESTAMP <= 4 * 86400
+            or currency not in _VERIFIED_CURRENCIES):
+        raise ValueError(f"Verified FX rate unavailable for {currency}/USD")
+    rate = _RATES_TO_USD.get(currency)
+    if rate is None or not math.isfinite(rate) or rate <= 0:
+        raise ValueError(f"Invalid FX rate for {currency}/USD")
+    return rate
 
 
 def _resolve_rate(currency: str) -> float:

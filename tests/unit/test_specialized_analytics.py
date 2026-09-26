@@ -284,15 +284,15 @@ class TestPredictEarningsImpact:
         assert 'vol_increase_pct' in result
         assert 'avg_post_earnings_move' in result
 
-    def test_without_earnings_dates_uses_generic(self, analytics, price_history):
-        """Without earnings dates, should use generic 50% vol increase estimate."""
+    def test_without_earnings_dates_is_unavailable(self, analytics, price_history):
+        """Without a verified calendar, earnings impact is not estimated."""
         result = analytics.predict_earnings_impact('MSFT', price_history, earnings_dates=None)
 
         assert result['ticker'] == 'MSFT'
         assert result['num_earnings_analyzed'] == 0
-        assert result['vol_increase_pct'] == 50.0
-        assert result['alert_level'] == 'low'
-        assert 'generic estimates' in result['recommendation']
+        assert result['vol_increase_pct'] is None
+        assert result['alert_level'] == 'unavailable'
+        assert 'no verified earnings dates' in result['recommendation']
 
     def test_alert_level_high_within_7_days(self, analytics, price_history):
         """If next earnings <= 7 days away, alert_level should be 'high'."""
@@ -308,7 +308,8 @@ class TestPredictEarningsImpact:
         ]
 
         result = analytics.predict_earnings_impact('AAPL', price_history, earnings_dates)
-        assert result['alert_level'] == 'high'
+        assert result['alert_level'] == 'unavailable'
+        assert result['next_earnings_date'] is None
 
     def test_alert_level_medium_within_14_days(self, analytics, price_history):
         """If next earnings 8-14 days away, alert_level should be 'medium'."""
@@ -322,7 +323,8 @@ class TestPredictEarningsImpact:
         ]
 
         result = analytics.predict_earnings_impact('AAPL', price_history, earnings_dates)
-        assert result['alert_level'] == 'medium'
+        assert result['alert_level'] == 'unavailable'
+        assert result['next_earnings_date'] is None
 
     def test_alert_level_low_beyond_14_days(self, analytics, price_history):
         """If next earnings > 14 days away, alert_level should be 'low'."""
@@ -336,7 +338,8 @@ class TestPredictEarningsImpact:
         ]
 
         result = analytics.predict_earnings_impact('AAPL', price_history, earnings_dates)
-        assert result['alert_level'] == 'low'
+        assert result['alert_level'] == 'unavailable'
+        assert result['next_earnings_date'] is None
 
 
 # ===========================================================================

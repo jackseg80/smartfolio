@@ -115,7 +115,9 @@ export async function safeFetch(url, options = {}) {
                 ok,
                 status: res.status,
                 data,
-                error: ok ? null : (data?.error ?? 'http_error'),
+                error: ok ? null : (typeof data?.detail === 'string' ? data.detail :
+                    typeof data?.error === 'string' ? data.error :
+                    data?.error?.message || data?.message || `HTTP ${res.status}`),
                 retries: attempt
             };
 

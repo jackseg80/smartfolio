@@ -80,14 +80,14 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
             if drawdown_ma20[i] <= -0.15:
                 # Check if sustained for at least 30 days
                 if np.all(drawdown_ma20[max(0, i-29):i+1] <= -0.12):
-                    bear_market_mask[max(0, i-29):i+1] = True
+                    bear_market_mask[i] = True
 
         # Method 2: Deep drawdown (≥20%) with majority of window at ≥10%
         if current_dd <= -0.20:
             window = drawdown[i-42:i+1]
             days_in_correction = np.sum(window <= -0.10)
             if days_in_correction >= 30:  # 70% of 42 days
-                bear_market_mask[i-42:i+1] = True
+                bear_market_mask[i] = True
 
     labels[bear_market_mask] = 0  # Bear Market
 
@@ -97,6 +97,7 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
     for i in range(63, n):
         if labels[i] == 0:
             continue  # Already labeled as Bear
+        current_dd = drawdown[i]
 
         # Check if there was a significant drawdown in the past 4 months (84 trading days)
         lookback_start = max(0, i - 84)
@@ -116,7 +117,7 @@ def create_rule_based_labels(price_data: pd.DataFrame) -> np.ndarray:
                 if gain_from_bottom >= 0.25 or (monthly_rate >= 0.08 and days_since_bottom >= 42):
                     # Only label as expansion if coming out of bear/correction
                     if current_dd > -0.10:  # Drawdown recovered to <10%
-                        labels[max(bottom_idx, i-42):i+1] = 3  # Expansion
+                        labels[i] = 3  # Only label information known on day i
 
     # PHASE 3: Identify Corrections (priority 3)
     # Drawdown 10-20% OR high volatility OR below MA200
@@ -244,8 +245,9 @@ class RegimeDetector:
     Detects 4 market regimes with confidence scoring and feature interpretation
     """
     
-    def __init__(self, model_dir: str = "models/regime"):
+    def __init__(self, model_dir: str = "models/regime", trading_days: int = 365):
         self.model_dir = Path(model_dir)
+        self.trading_days = trading_days
         self.model_dir.mkdir(parents=True, exist_ok=True)
 
         # Model parameters
@@ -415,7 +417,7 @@ class RegimeDetector:
                 # Basic features for regime detection
                 simple_features = pd.DataFrame(index=asset_df.index)
                 simple_features['returns'] = asset_df.get('returns', asset_df['close'].pct_change())
-                simple_features['realized_vol'] = simple_features['returns'].rolling(20).std() * np.sqrt(365)
+                simple_features['realized_vol'] = simple_features['returns'].rolling(20).std() * np.sqrt(self.trading_days)
                 simple_features['volume_ratio'] = asset_df.get('volume', pd.Series(1, index=asset_df.index)) / asset_df.get('volume', pd.Series(1, index=asset_df.index)).rolling(20).mean()
                 simple_features['rsi'] = self._calculate_rsi(asset_df['close']) if 'close' in asset_df.columns else pd.Series(50, index=asset_df.index)
                 simple_features['price_momentum_20'] = asset_df['close'].pct_change(20) if 'close' in asset_df.columns else pd.Series(0, index=asset_df.index)
@@ -796,46 +798,30 @@ class RegimeDetector:
                 logger.warning(f"⚠️  Class imbalance detected: Some regimes have <2 samples!")
                 logger.warning(f"   Distribution: {class_distribution.tolist()}")
                 logger.warning(f"   Rare regimes (<2 samples): {[self.regime_names[i] for i in range(self.num_regimes) if class_distribution[i] < 2]}")
-                logger.warning(f"   Will disable stratified split and proceed with random split (fallback)")
+                logger.warning("   Chronological validation may omit a rare regime")
 
             # Prepare data for neural network
             X = features_df.values
             y = regime_labels
             
-            # Scale features
+            # Validation controls early stopping and calibration. The final
+            # 20% remains untouched until the model and temperature are fixed.
+            test_split = 0.20
+            train_end = int(len(X) * (1 - validation_split - test_split))
+            val_end = int(len(X) * (1 - test_split))
+            if train_end < 100 or val_end <= train_end or val_end >= len(X):
+                raise ValueError("Insufficient chronological training, validation, or test samples")
+            X_train_raw, X_val_raw, X_test_raw = X[:train_end], X[train_end:val_end], X[val_end:]
+            y_train, y_val, y_test = y[:train_end], y[train_end:val_end], y[val_end:]
+            if len(np.unique(y_train)) < 2:
+                raise ValueError("Training history does not contain enough market regimes")
+            majority_regime = int(np.argmax(np.bincount(y_train, minlength=self.num_regimes)))
+            baseline_test_accuracy = float(np.mean(y_test == majority_regime))
+
             self.scaler = StandardScaler()
-            X_scaled = self.scaler.fit_transform(X)
-
-            # Train-validation split (stratified to preserve class distribution)
-            # Temporal split can lead to validation set with only one class!
-            from sklearn.model_selection import train_test_split
-
-            # Check if all classes have at least 2 samples for stratification
-            class_counts = np.bincount(y, minlength=self.num_regimes)
-            min_samples_per_class = class_counts.min()
-
-            if min_samples_per_class < 2:
-                # Can't use stratify when some classes have <2 samples
-                # ✅ FIX: More informative log message
-                rare_regimes = [self.regime_names[i] for i in range(self.num_regimes) if class_counts[i] < 2]
-                logger.info(f"📊 Using random split (stratify disabled) due to class imbalance")
-                logger.info(f"   Class counts: {class_counts.tolist()}")
-                logger.info(f"   Regimes with <2 samples: {rare_regimes}")
-                logger.info(f"   This is expected for datasets without Bear Markets or Expansion phases")
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X_scaled, y,
-                    test_size=validation_split,
-                    stratify=None,  # Disable stratify for severely imbalanced data
-                    random_state=42  # Reproducibility
-                )
-            else:
-                # Normal case: all classes have ≥2 samples
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X_scaled, y,
-                    test_size=validation_split,
-                    stratify=y,  # Preserve class distribution in both sets
-                    random_state=42  # Reproducibility
-                )
+            X_train = self.scaler.fit_transform(X_train_raw)
+            X_val = self.scaler.transform(X_val_raw)
+            X_test = self.scaler.transform(X_test_raw)
 
             logger.info(f"Training samples: {len(X_train)}, Validation samples: {len(X_val)}")
             logger.info(f"Validation class distribution: {np.bincount(y_val, minlength=self.num_regimes).tolist()}")
@@ -856,6 +842,8 @@ class RegimeDetector:
             y_train = torch.LongTensor(y_train).to(self.device)
             X_val = torch.FloatTensor(X_val).to(self.device)
             y_val = torch.LongTensor(y_val).to(self.device)
+            X_test = torch.FloatTensor(X_test).to(self.device)
+            y_test = torch.LongTensor(y_test).to(self.device)
 
             # Initialize neural network
             self.neural_model = RegimeClassificationNetwork(
@@ -941,6 +929,13 @@ class RegimeDetector:
             logger.info("Calibrating temperature on validation set...")
             optimal_temp = self._calibrate_temperature(X_val, y_val)
             self.temperature = optimal_temp
+
+            self.neural_model.eval()
+            with torch.no_grad():
+                test_logits = self.neural_model(X_test) / optimal_temp
+                temporal_test_accuracy = float(
+                    (test_logits.argmax(dim=1) == y_test).float().mean().item()
+                )
             logger.info(f"Optimal temperature found: {optimal_temp:.3f}")
 
             # Ensure model directory exists before saving
@@ -957,6 +952,10 @@ class RegimeDetector:
                 'feature_count': len(self.feature_columns),
                 'training_samples': len(X_train),
                 'validation_samples': len(X_val),
+                'test_samples': len(X_test),
+                'split_method': 'chronological_train_validation_test',
+                'temporal_test_accuracy': temporal_test_accuracy,
+                'baseline_test_accuracy': baseline_test_accuracy,
                 'best_val_loss': best_val_loss,
                 'final_val_accuracy': training_history['val_acc'][-1],
                 'regime_distribution': np.bincount(regime_labels).tolist(),
@@ -1279,8 +1278,13 @@ class RegimeDetector:
             # Fall back to default if not available (old models)
             # Enforce minimum temperature of 2.0 to prevent overly extreme predictions
             calibrated_temp = self.training_metadata.get('optimal_temperature', 2.5)
-            self.temperature = max(calibrated_temp, 2.0)  # Minimum 2.0 for realistic probabilities
-            if calibrated_temp < 2.0:
+            if self.trading_days == 252:
+                if not np.isfinite(calibrated_temp) or calibrated_temp <= 0:
+                    raise ValueError("Invalid calibrated stock regime temperature")
+                self.temperature = float(calibrated_temp)
+            else:
+                self.temperature = max(calibrated_temp, 2.0)
+            if self.trading_days != 252 and calibrated_temp < 2.0:
                 logger.warning(f"Calibrated temperature {calibrated_temp:.3f} too low, using minimum 2.0")
             logger.info(f"Loaded model with temperature: {self.temperature:.3f}")
             

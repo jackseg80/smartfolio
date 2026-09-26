@@ -48,6 +48,7 @@
     <script src="debug-logger.js"></script>
     <script src="components/toast.js" type="module"></script>
     <script src="global-config.js"></script>
+    <script src="core/bourse-source-context.js"></script>
     <script src="appearance.js"></script>
 
     <!-- Chart.js for interactive charts -->
@@ -270,7 +271,9 @@
 
         function bourseCacheKey(section) {
             const user = localStorage.getItem('activeUser') || '';
-            return `bourse:${user}:${section}`;
+            const source = window.saxoSourceType || 'unselected';
+            const selectedFile = source === 'csv' ? (currentFileKey || 'configured') : '';
+            return `bourse:v5:${user}:${source}:${selectedFile}:${section}`;
         }
 
         function showCacheIndicator() {
@@ -286,11 +289,18 @@
         document.addEventListener('DOMContentLoaded', async () => {
             debugLogger.debug('🚀 Bourse Analytics page loaded');
 
-            // Resolve source type from localStorage
+            await window.wealthContextBar?.whenReady();
             await resolveSourceType();
 
             // Load data
             await loadBourseData();
+        });
+
+        window.addEventListener('bourseSourceChanged', async () => {
+            if (!window.wealthContextBar?.isReady) return;
+            await resolveSourceType();
+            analyticsTabLoaded = false;
+            await loadBourseData(true);
         });
 
         // Resolve source type dynamically (same logic as saxo-dashboard.html)
@@ -311,15 +321,9 @@
                 return;
             }
 
-            // Determine source type
-            if (bourseSource === 'manual_bourse') {
-                window.saxoSourceType = 'manual';
-            } else if (bourseSource.startsWith('api:')) {
-                window.saxoSourceType = 'api';
-            } else if (bourseSource.startsWith('saxo:')) {
-                window.saxoSourceType = 'csv';
-                currentFileKey = bourseSource.substring(5); // Remove 'saxo:' prefix
-            }
+            const selection = await window.resolveBourseSourceSelection(bourseSource);
+            window.saxoSourceType = selection.type;
+            currentFileKey = selection.fileKey;
 
             debugLogger.debug(`🔍 Source detection: ${bourseSource} → ${window.saxoSourceType}`);
         }
@@ -503,8 +507,23 @@
                 const fullRiskUrl = `${window.getApiBase()}${riskUrl}`;
                 const riskData = await window.cachedApiCall(key, fullRiskUrl, cacheOpts({ headers: { 'X-User': activeUser } }), 'bourse');
 
+                if (riskData?.ok === false) {
+                    const message = riskData.risk?.message || 'Verified market prices are unavailable.';
+                    document.getElementById('riskSummary').textContent = 'Risk analysis unavailable';
+                    document.getElementById('riskMetrics').textContent = message;
+                    document.getElementById('riskStructure').textContent =
+                        `Verified price coverage: ${Math.round((riskData.coverage || 0) * 100)}%`;
+                    return;
+                }
+
                 const { risk, coverage, positions_count, total_value_usd } = riskData;
-                const score = risk?.score ?? 0;
+                const score = risk?.score;
+                if (!Number.isFinite(score)) {
+                    document.getElementById('riskSummary').textContent = 'Risk analysis unavailable';
+                    document.getElementById('riskMetrics').textContent = risk?.message || 'No verified risk score.';
+                    document.getElementById('riskStructure').textContent = '';
+                    return;
+                }
                 const level = risk?.level ?? 'N/A';
 
                 const getRiskColor = (lvl) => {
@@ -566,6 +585,9 @@
                       <tr><td>${metricWithTooltip('Volatility (90d)', '3-month volatility')}</td><td>${formatPct(m.volatility_90d)}%</td></tr>
                       <tr><td>${metricWithTooltip('VaR Method', 'Calculation method')}</td><td style="text-transform:capitalize;">${m.var_method || 'historical'}</td></tr>
                       <tr><td>${metricWithTooltip('Drawdown Days', 'Days since peak')}</td><td>${m.drawdown_days ?? 'N/A'}</td></tr>
+                      <tr><td>${metricWithTooltip('Top 5 allocations', 'Share of total portfolio, including cash')}</td><td>${Number.isFinite(risk?.concentration?.top5_pct) ? risk.concentration.top5_pct.toFixed(1) + '%' : 'N/A'}</td></tr>
+                      <tr><td>${metricWithTooltip('Largest allocation', 'Share of total portfolio, including cash')}</td><td>${Number.isFinite(risk?.concentration?.largest_position_pct) ? risk.concentration.largest_position_pct.toFixed(1) + '%' : 'N/A'}</td></tr>
+                      <tr><td>${metricWithTooltip('Price date', 'Latest date shared by holdings and benchmark')}</td><td>${risk?.metadata?.price_asof || 'N/A'}</td></tr>
                     </tbody>
                   </table>`;
 
@@ -673,8 +695,8 @@
                 // Get top stocks from portfolio for predictions
                 const topStocks = currentPortfolioData?.summary?.top_holdings?.slice(0, 3) || [];
                 const benchmark = 'SPY';
-                const firstStockRaw = topStocks[0]?.symbol || currentPortfolioData?.positions?.[0]?.symbol || 'AAPL';
-                const firstStock = firstStockRaw.split(':')[0];
+                const firstStockRaw = topStocks[0]?.symbol || currentPortfolioData?.positions?.[0]?.symbol || null;
+                const firstStock = firstStockRaw || null;
 
                 const regimeKey = bourseCacheKey('ml-regime');
                 const forecastKey = bourseCacheKey('ml-forecast');
@@ -685,7 +707,7 @@
                 const opts = cacheOpts();
                 const [regime, volatility] = await Promise.all([
                     window.cachedApiCall(regimeKey, `${baseUrl}/api/ml/bourse/regime?benchmark=${benchmark}&lookback_days=7300`, opts, 'bourse').catch(() => ({})),
-                    window.cachedApiCall(forecastKey, `${baseUrl}/api/ml/bourse/forecast?symbol=${firstStock}&lookback_days=365`, opts, 'bourse').catch(() => ({}))
+                    firstStock ? window.cachedApiCall(forecastKey, `${baseUrl}/api/ml/bourse/forecast?symbol=${encodeURIComponent(firstStock)}&lookback_days=365`, opts, 'bourse').catch(() => ({})) : Promise.resolve({})
                 ]);
 
                 if (!regime.current_regime && !volatility.predictions) {
@@ -693,7 +715,7 @@
                 }
 
                 const regimeColor = getRegimeColor(regime.current_regime);
-                const regimeConfidence = ((regime.confidence || 0) * 100).toFixed(0);
+                const regimeConfidence = Number.isFinite(regime.confidence) ? `${(regime.confidence * 100).toFixed(0)}%` : 'N/A';
 
                 // Extract volatility predictions
                 const vol1d = volatility.predictions?.['1d']?.predicted_volatility;
@@ -709,29 +731,34 @@
                                 ${regime.current_regime || 'Unknown'}
                             </div>
                             <div style="font-size:0.75rem;color:var(--theme-text-muted);">
-                                Confidence: ${regimeConfidence}% • ${regime.benchmark || benchmark}
+                                ${regime.model_type === 'causal_neural' ? 'Model probability: ' + regimeConfidence : 'Rule-based assessment'} • ${regime.benchmark || benchmark}
                             </div>
                         </div>
 
                         <!-- Volatility Forecast -->
                         <div style="padding:1rem;background:var(--theme-bg);border-radius:var(--radius-md);border:1px solid var(--theme-border);">
-                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">Volatility Forecast (${firstStock})</div>
+                            <div style="font-size:0.875rem;color:var(--theme-text-muted);margin-bottom:0.5rem;">${volatility.model_type === 'LSTM' ? 'Experimental Volatility Forecast' : 'Historical Realized Volatility'} (${firstStock || 'N/A'})</div>
+                            ${volatility.model_type === 'LSTM' ? `
                             <div style="display:flex;gap:1rem;align-items:baseline;">
                                 <div>
                                     <div style="font-size:0.7rem;color:var(--theme-text-muted);">1d</div>
-                                    <div style="font-weight:600;">${vol1d ? (vol1d * 100).toFixed(2) : 'N/A'}%</div>
+                                    <div style="font-weight:600;">${Number.isFinite(vol1d) ? (vol1d * 100).toFixed(2) + '%' : 'N/A'}</div>
                                 </div>
                                 <div>
                                     <div style="font-size:0.7rem;color:var(--theme-text-muted);">7d</div>
-                                    <div style="font-weight:600;">${vol7d ? (vol7d * 100).toFixed(2) : 'N/A'}%</div>
+                                    <div style="font-weight:600;">${Number.isFinite(vol7d) ? (vol7d * 100).toFixed(2) + '%' : 'N/A'}</div>
                                 </div>
                                 <div>
                                     <div style="font-size:0.7rem;color:var(--theme-text-muted);">30d</div>
-                                    <div style="font-weight:600;">${vol30d ? (vol30d * 100).toFixed(2) : 'N/A'}%</div>
+                                    <div style="font-weight:600;">${Number.isFinite(vol30d) ? (vol30d * 100).toFixed(2) + '%' : 'N/A'}</div>
                                 </div>
                             </div>
+                            ` : `
+                            <div style="font-weight:600;">${Number.isFinite(vol30d) ? (vol30d * 100).toFixed(2) + '%' : 'Unavailable'}</div>
+                            <div style="font-size:0.75rem;color:var(--theme-text-muted);">Observed over the last 30 trading sessions</div>
+                            `}
                             <div style="font-size:0.75rem;color:var(--theme-text-muted);margin-top:0.5rem;">
-                                Model: ${volatility.model_type || 'Historical'}
+                                Method: ${volatility.model_type || 'Unavailable'} • Annualized • ${volatility.model_type === 'LSTM' ? 'Test MAE ' + Number(volatility.model_validation?.temporal_test_mae).toFixed(3) : 'No future forecast'}
                             </div>
                         </div>
 
@@ -780,7 +807,7 @@
                     </div>
                 `;
 
-                document.getElementById('mlBadge').textContent = `${regime.model_type || 'ML'} Active`;
+                document.getElementById('mlBadge').textContent = regime.model_type === 'causal_neural' ? 'Validated ML' : 'Rule-based';
                 document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--success) 10%, transparent)';
                 document.getElementById('mlBadge').style.color = 'var(--success)';
 
@@ -938,7 +965,7 @@
 
             } catch (error) {
                 debugLogger.error('Correlation analysis failed', error);
-                document.getElementById('correlationAnalysis').innerHTML = `<div class="error-message">Failed: ${error.message}</div>`;
+                document.getElementById('correlationAnalysis').innerHTML = `<div class="error-message">Failed: ${error?.message || error?.error || 'Analytics request failed'}</div>`;
             }
         }
 
@@ -2119,15 +2146,15 @@
                         </div>
                         <div>
                             <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Pre-Earnings Vol</div>
-                            <div style="font-size: 1.25rem; font-weight: 700;">${((data.pre_earnings_vol || 0) * 100).toFixed(1)}%</div>
+                            <div style="font-size: 1.25rem; font-weight: 700;">${data.pre_earnings_vol == null ? 'N/A' : (data.pre_earnings_vol * 100).toFixed(1) + '%'}</div>
                         </div>
                         <div>
                             <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Post-Earnings Vol</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--warning);">${((data.post_earnings_vol || 0) * 100).toFixed(1)}%</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--warning);">${data.post_earnings_vol == null ? 'N/A' : (data.post_earnings_vol * 100).toFixed(1) + '%'}</div>
                         </div>
                         <div>
                             <div style="font-size: 0.75rem; color: var(--theme-text-muted); margin-bottom: 0.25rem;">Vol Increase</div>
-                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--danger);">+${(data.vol_increase_pct || 0).toFixed(1)}%</div>
+                            <div style="font-size: 1.25rem; font-weight: 700; color: var(--danger);">${data.vol_increase_pct == null ? 'N/A' : (data.vol_increase_pct >= 0 ? '+' : '') + data.vol_increase_pct.toFixed(1) + '%'}</div>
                         </div>
                     </div>
 
@@ -2138,7 +2165,7 @@
                     ` : ''}
 
                     <div style="margin-top: 0.75rem; font-size: 0.75rem; color: var(--theme-text-muted);">
-                        Avg post-earnings move: ${(data.avg_post_earnings_move || 0).toFixed(2)}%
+                        Avg post-earnings move: ${data.avg_post_earnings_move == null ? 'N/A' : data.avg_post_earnings_move.toFixed(2) + '%'}
                         ${data.next_earnings_date ? ` • Next earnings: ${data.next_earnings_date}` : ''}
                     </div>
                 `;

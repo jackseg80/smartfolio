@@ -1,6 +1,6 @@
 """
 Data fetcher for bourse (stock market) historical prices
-Supports multiple data sources: Saxo API, Yahoo Finance fallback
+Supports verified Yahoo Finance prices; Saxo price history is unavailable
 Multi-currency support with automatic exchange detection
 """
 
@@ -12,10 +12,15 @@ import logging
 import aiohttp
 import asyncio
 import os
+import re
 
 from services.ml.bourse.currency_detector import CurrencyExchangeDetector
 
 logger = logging.getLogger(__name__)
+
+
+class MarketDataUnavailableError(RuntimeError):
+    """A requested real market price series could not be obtained."""
 
 
 class BourseDataFetcher:
@@ -23,6 +28,22 @@ class BourseDataFetcher:
     Fetches historical price data for stocks, ETFs, and other traditional assets
     with multi-currency and multi-exchange support
     """
+
+    @staticmethod
+    def validate_symbol(symbol: str) -> None:
+        if not isinstance(symbol, str) or not re.fullmatch(r'[A-Za-z0-9.^=_:\-]{1,64}', symbol):
+            raise ValueError("Invalid market symbol")
+
+    @staticmethod
+    def _require_fresh_prices(df: pd.DataFrame, ticker: str, end_date: datetime) -> None:
+        """Reject provider responses too old for a current portfolio decision."""
+        today = datetime.now().date()
+        if end_date.date() >= today - timedelta(days=1):
+            last_price_date = pd.Timestamp(df.index.max()).date()
+            if last_price_date < today - timedelta(days=7):
+                raise MarketDataUnavailableError(
+                    f"Market prices unavailable for {ticker}: latest observation is {last_price_date}"
+                )
 
     # MIC (Market Identifier Code) to exchange hint mapping
     # Used to convert Saxo CSV format (e.g., "GOOGL:xnas") to exchange hints
@@ -80,8 +101,7 @@ class BourseDataFetcher:
             logger.debug(f"MIC '{mic_code}' → exchange hint '{hint}'")
             return hint
         else:
-            logger.warning(f"Unknown MIC code '{mic_code}', assuming US exchange")
-            return "NASDAQ"  # Safe fallback for unknown MIC codes
+            raise MarketDataUnavailableError(f"Unsupported exchange MIC: {mic_code}")
 
     async def fetch_historical_prices(
         self,
@@ -99,7 +119,7 @@ class BourseDataFetcher:
             ticker: Stock ticker symbol (can include MIC code like "GOOGL:xnas")
             start_date: Start date for historical data
             end_date: End date for historical data
-            source: Data source ("saxo", "yahoo", "manual")
+            source: Data source ("yahoo"; Saxo prices are not implemented)
             isin: ISIN code for currency detection (optional)
             exchange_hint: Exchange hint from Saxo CSV (optional)
 
@@ -110,6 +130,7 @@ class BourseDataFetcher:
             The ticker will be automatically converted to the correct yfinance symbol
             using CurrencyExchangeDetector (e.g., "ROG:xvtx" → "ROG.SW" for Swiss stocks)
         """
+        self.validate_symbol(ticker)
         if end_date is None:
             end_date = datetime.now()
         if start_date is None:
@@ -136,11 +157,23 @@ class BourseDataFetcher:
             exchange_hint=exchange_hint
         )
 
+        # Verified 1:1 corporate action: ROG was replaced by ROP on SIX.
+        # Source: https://www.roche.com/investors/updates/inv-update-2026-03-16
+        corporate_action = None
+        if yf_symbol == 'ROG.SW' and end_date.date() >= datetime(2026, 3, 17).date():
+            yf_symbol = 'ROP.SW'
+            corporate_action = {'previous_symbol': 'ROG.SW', 'current_symbol': 'ROP.SW',
+                                'effective_date': '2026-03-17', 'exchange_ratio': 1.0,
+                                'source': 'https://www.roche.com/investors/updates/inv-update-2026-03-16'}
+
         # Use yf_symbol for caching and fetching
-        cache_key = f"{yf_symbol}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}_{source}"
+        # The old namespace may contain synthetic prices saved by the legacy
+        # Yahoo fallback. Never hydrate those files into a financial result.
+        cache_key = f"verified_v3_{yf_symbol}_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}_{source}"
 
         # Check in-memory cache first
         if cache_key in self.cache:
+            self._require_fresh_prices(self.cache[cache_key], ticker, end_date)
             logger.debug(f"Using in-memory cached data for {ticker}")
             return self.cache[cache_key]
 
@@ -149,9 +182,12 @@ class BourseDataFetcher:
         if os.path.exists(cache_file):
             try:
                 df = pd.read_parquet(cache_file)
-                self.cache[cache_key] = df  # Load into memory cache
-                logger.debug(f"Using file-cached data for {ticker}")
-                return df
+                if not df.empty and df.attrs.get('price_origin') == source:
+                    self._require_fresh_prices(df, ticker, end_date)
+                    self.cache[cache_key] = df  # Load into memory cache
+                    logger.debug(f"Using file-cached data for {ticker}")
+                    return df
+                logger.warning("Ignoring price cache without verified provenance for %s", ticker)
             except Exception as e:
                 logger.warning(f"Failed to load cache file for {ticker}: {e}")
 
@@ -159,15 +195,22 @@ class BourseDataFetcher:
         if source == "yahoo":
             df = await self._fetch_yahoo_finance(yf_symbol, start_date, end_date)
             # Add metadata about currency and exchange
-            df.attrs['native_currency'] = native_currency
+            if not df.attrs.get('native_currency'):
+                raise MarketDataUnavailableError(f"Quote currency unavailable for {ticker}")
             df.attrs['exchange'] = exchange_name
             df.attrs['original_ticker'] = ticker
+            df.attrs['price_origin'] = 'yahoo'
+            df.attrs['retrieved_at'] = datetime.now().isoformat()
+            df.attrs['price_asof'] = df.index.max().isoformat()
+            df.attrs['history_symbol'] = yf_symbol
+            if corporate_action:
+                df.attrs['corporate_action'] = corporate_action
         elif source == "saxo":
             df = await self._fetch_saxo_api(ticker, start_date, end_date)
-        elif source == "manual":
-            df = self._generate_manual_data(ticker, start_date, end_date)
         else:
             raise ValueError(f"Unknown data source: {source}")
+
+        self._require_fresh_prices(df, ticker, end_date)
 
         # Cache result (in-memory + file)
         self.cache[cache_key] = df
@@ -204,16 +247,24 @@ class BourseDataFetcher:
             # Example: "NVDA:xnas" → "NVDA", "SLHN.SW:xvtx" → "SLHN.SW"
             normalized_ticker = ticker.split(':')[0] if ':' in ticker else ticker
 
-            # Download data
-            data = yf.download(
-                normalized_ticker,
-                start=start_date.strftime('%Y-%m-%d'),
-                end=end_date.strftime('%Y-%m-%d'),
-                progress=False
+            def download_with_currency():
+                instrument = yf.Ticker(normalized_ticker)
+                history = instrument.history(
+                    start=start_date.strftime('%Y-%m-%d'),
+                    end=end_date.strftime('%Y-%m-%d'),
+                    auto_adjust=True, actions=False, repair=False, timeout=15,
+                )
+                return history, instrument.history_metadata.get('currency')
+
+            # Read quote currency from the same instrument, not its domicile.
+            data, quote_currency = await asyncio.wait_for(
+                asyncio.to_thread(download_with_currency), timeout=25,
             )
 
             if data.empty:
                 raise ValueError(f"No data found for {ticker}")
+            if not quote_currency:
+                raise ValueError(f"Missing quote currency for {ticker}")
 
             # Handle MultiIndex columns (yfinance sometimes returns MultiIndex)
             if isinstance(data.columns, pd.MultiIndex):
@@ -236,15 +287,50 @@ class BourseDataFetcher:
             # Normalize to remove time component (keep only date)
             df.index = pd.DatetimeIndex([d.normalize() for d in df.index])
 
+            # Some London quotes are in pence. Keep prices and currency consistent.
+            native_currency, unit_scale = {
+                'GBp': ('GBP', 0.01), 'GBX': ('GBP', 0.01),
+                'ZAc': ('ZAR', 0.01), 'ILA': ('ILS', 0.01),
+            }.get(quote_currency, (str(quote_currency).upper(), 1.0))
+            price_columns = ['open', 'high', 'low', 'close', 'adjusted_close']
+            df[price_columns] = df[price_columns] * unit_scale
+            usable = np.isfinite(df[price_columns]).all(axis=1) & (df[price_columns] > 0).all(axis=1)
+            dropped_observations = int((~usable).sum())
+            df = df.loc[usable].copy()
+            if df.empty:
+                raise ValueError(f"No usable closing prices for {ticker}")
+            df.attrs.update(native_currency=native_currency, quote_currency=quote_currency,
+                            price_adjustment='split_and_dividend_adjusted',
+                            dropped_observations=dropped_observations)
+
             return df
 
         except ImportError:
-            logger.warning("yfinance not installed, using manual data")
-            return self._generate_manual_data(ticker, start_date, end_date)
+            logger.error("yfinance not installed for %s", ticker)
+            raise MarketDataUnavailableError(f"Market prices unavailable for {ticker}: yfinance is not installed")
         except Exception as e:
             logger.error(f"Error fetching Yahoo Finance data: {e}")
-            # Fallback to manual data
-            return self._generate_manual_data(ticker, start_date, end_date)
+            raise MarketDataUnavailableError(f"Market prices unavailable for {ticker}") from e
+
+    async def fetch_historical_fx(
+        self, currency: str, start_date: datetime, end_date: datetime
+    ) -> pd.Series:
+        """Return dated USD per unit of the source currency; never use spot FX."""
+        currency = currency.upper()
+        if currency not in {'CHF', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'NZD',
+                            'HKD', 'SGD', 'SEK', 'NOK', 'DKK', 'PLN', 'ZAR', 'ILS'}:
+            raise MarketDataUnavailableError(f"Historical FX unsupported for {currency}/USD")
+        pair = f"{currency}USD=X"
+        key = f"fx_v1_{pair}_{start_date:%Y%m%d}_{end_date:%Y%m%d}"
+        if key not in self.cache:
+            df = await self._fetch_yahoo_finance(pair, start_date, end_date)
+            if df.attrs.get('native_currency') != 'USD':
+                raise MarketDataUnavailableError(f"Unexpected FX quote currency for {pair}")
+            self._require_fresh_prices(df, pair, end_date)
+            self.cache[key] = df
+        rates = self.cache[key]
+        self._require_fresh_prices(rates, pair, end_date)
+        return rates['close'].copy()
 
     async def _fetch_saxo_api(
         self,
@@ -257,63 +343,9 @@ class BourseDataFetcher:
 
         Note: This requires Saxo API credentials and is currently a placeholder.
         """
-        logger.warning("Saxo API not implemented, using manual data fallback")
-        return self._generate_manual_data(ticker, start_date, end_date)
-
-    def _generate_manual_data(
-        self,
-        ticker: str,
-        start_date: datetime,
-        end_date: datetime
-    ) -> pd.DataFrame:
-        """
-        Generate synthetic historical data for testing
-
-        Uses random walk with drift to simulate realistic price movements
-        """
-        logger.info(f"Generating manual data for {ticker}")
-
-        # Generate date range (business days only, like yfinance)
-        dates = pd.date_range(start=start_date, end=end_date, freq='B')  # B = business days
-
-        # Normalize to match yfinance format (no time component, tz-naive)
-        dates = pd.DatetimeIndex([d.normalize() for d in dates])
-
-        # Simulate prices with random walk
-        np.random.seed(hash(ticker) % (2**32))  # Consistent seed per ticker
-
-        # Parameters
-        initial_price = 100.0
-        daily_drift = 0.0005  # ~0.05% daily drift (~13% annual)
-        daily_vol = 0.015  # ~1.5% daily vol (~23% annual)
-
-        # Generate returns
-        returns = np.random.normal(daily_drift, daily_vol, len(dates))
-
-        # Calculate cumulative prices
-        price_levels = initial_price * np.exp(np.cumsum(returns))
-
-        # Generate OHLC from close prices
-        opens = price_levels * (1 + np.random.normal(0, 0.002, len(dates)))
-        highs = np.maximum(opens, price_levels) * (1 + np.abs(np.random.normal(0, 0.005, len(dates))))
-        lows = np.minimum(opens, price_levels) * (1 - np.abs(np.random.normal(0, 0.005, len(dates))))
-        closes = price_levels
-
-        # Generate volume
-        base_volume = 1000000
-        volumes = base_volume * (1 + np.abs(np.random.normal(0, 0.5, len(dates))))
-
-        # Create DataFrame
-        df = pd.DataFrame({
-            'open': opens,
-            'high': highs,
-            'low': lows,
-            'close': closes,
-            'volume': volumes,
-            'adjusted_close': closes  # Simplified: no adjustments
-        }, index=dates)
-
-        return df
+        raise MarketDataUnavailableError(
+            f"Saxo historical prices are not implemented for {ticker}"
+        )
 
     async def fetch_benchmark_prices(
         self,

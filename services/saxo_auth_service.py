@@ -251,6 +251,7 @@ class SaxoAuthService:
 
             # Save (including cash_balance and total_value for Global Overview)
             cache_data = {
+                "valuation_schema": 2,
                 "timestamp": datetime.now().isoformat(),
                 "positions": positions,
                 "count": len(positions),
@@ -300,6 +301,9 @@ class SaxoAuthService:
             # Load cache
             with open(latest_cache, 'r', encoding='utf-8') as f:
                 cache_data = json.load(f)
+            if cache_data.get('valuation_schema') != 2:
+                logger.warning("Saxo cache predates verified currency normalization; refresh required")
+                return None
 
             # Check age
             cache_timestamp = datetime.fromisoformat(cache_data["timestamp"])

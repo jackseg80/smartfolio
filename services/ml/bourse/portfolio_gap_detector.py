@@ -112,6 +112,20 @@ class PortfolioGapDetector:
                 if symbol in protected_symbols:
                     logger.info(f"  ⛔ {symbol}: Protected (top {self.TOP_N_PROTECTED} holding)")
                     continue
+                # A snapshot has no holding period by itself. Do not suggest
+                # a sale when the 30-day safeguard cannot be verified.
+                purchase_date = pos.get("purchase_date") or pos.get("opened_at")
+                if not purchase_date:
+                    logger.info(f"  ⛔ {symbol}: holding period unavailable")
+                    continue
+                try:
+                    acquired_at = datetime.fromisoformat(str(purchase_date).replace('Z', '+00:00'))
+                    if acquired_at.tzinfo is not None:
+                        acquired_at = acquired_at.replace(tzinfo=None)
+                    if (datetime.utcnow() - acquired_at).days < self.MIN_HOLDING_DAYS:
+                        continue
+                except (TypeError, ValueError):
+                    continue
 
                 score_data = await self._score_position_for_sale(pos, total_value)
                 logger.info(f"  🎯 {symbol}: weight={weight:.1f}%, score={score_data['sale_score']:.1f}, sellable={score_data['sellable']}, rationale={score_data['sale_rationale']}")
@@ -283,9 +297,7 @@ class PortfolioGapDetector:
                 sale_score = 10.0
 
             # Determine if sellable
-            # Accept positions with score >= 10, even without strong reasons
-            # This allows trimming for reallocation purposes
-            sellable = sale_score >= 10
+            sellable = sale_score >= 25 and bool(rationale_parts)
 
             # Build rationale
             if rationale_parts:
@@ -330,15 +342,6 @@ class PortfolioGapDetector:
             # Calculate total values
             total_value = sum(p.get("market_value", 0) or p.get("market_value_usd", 0) for p in current_positions)
             total_freed = sum(s.get("sale_value", 0) for s in suggested_sales)
-            # Calculate capital invested per sector (deduplicate stocks in same sector)
-            seen_sectors = set()
-            total_invested = 0
-            for o in opportunities:
-                s = o.get("sector")
-                if s not in seen_sectors:
-                    seen_sectors.add(s)
-                    total_invested += o.get("capital_needed", 0)
-
             # Extract sector allocations (map raw Yahoo sectors to GICS standard names)
             from services.ml.bourse.opportunity_scanner import SECTOR_MAPPING
 
@@ -359,7 +362,7 @@ class PortfolioGapDetector:
             before_allocation = get_sector_allocation(current_positions)
 
             # Simulate after allocation
-            after_positions = current_positions.copy()
+            after_positions = [dict(position) for position in current_positions]
 
             # Apply sales
             for sale in suggested_sales:
@@ -369,38 +372,32 @@ class PortfolioGapDetector:
                 for pos in after_positions:
                     if pos.get("symbol") == symbol:
                         current_val = pos.get("market_value", 0) or pos.get("market_value_usd", 0)
-                        pos["market_value"] = current_val - sale_value
+                        pos["market_value"] = max(0.0, current_val - sale_value)
+                        pos["market_value_usd"] = pos["market_value"]
                         break
 
-            # Add opportunities (divide capital among stocks in same sector)
-            sector_stock_counts = {}
-            for opp in opportunities:
-                s = opp.get("sector", "Other")
-                sector_stock_counts[s] = sector_stock_counts.get(s, 0) + 1
-
-            for opp in opportunities:
-                s = opp.get("sector", "Other")
-                n_stocks = sector_stock_counts.get(s, 1)
+            # Candidates within a sector are alternatives, not simultaneous buys.
+            # Only model the proposed sales until the user chooses a purchase.
+            if total_freed > 0:
                 after_positions.append({
-                    "symbol": opp.get("symbol", "NEW"),
-                    "sector": s,
-                    "market_value": opp.get("capital_needed", 0) / n_stocks
+                    "symbol": "CASH",
+                    "sector": "Cash",
+                    "market_value": total_freed,
+                    "market_value_usd": total_freed,
                 })
 
             after_allocation = get_sector_allocation(after_positions)
 
-            # Placeholder risk metrics (would calculate properly in production)
-            risk_before = 7.2  # Placeholder
-            risk_after = 6.4   # Placeholder (diversification improves risk)
-
             return {
                 "before": before_allocation,
                 "after": after_allocation,
-                "risk_before": risk_before,
-                "risk_after": risk_after,
+                "risk_before": None,
+                "risk_after": None,
                 "total_freed": total_freed,
-                "total_invested": total_invested,
-                "net_change": total_invested - total_freed
+                "total_invested": 0.0,
+                "net_change": 0.0,
+                "scenario": "sales_to_cash_only",
+                "note": "Candidate purchases are alternatives; portfolio risk is unavailable until a purchase is selected."
             }
 
         except Exception as e:

@@ -407,7 +407,7 @@
 
                 // Include source type in cache key to avoid mixing API and CSV data
                 const sourcePrefix = isManualSource ? 'manual' : isApiSource ? 'api' : (currentFileKey || 'default');
-                const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
+                const cacheKey = `saxo_portfolio_v2_${activeUser}_${sourcePrefix}`;
                 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
                 // Check cache first (skip if force refresh)
@@ -538,14 +538,11 @@
                 } else if (isApiSource) {
                     debugLogger.debug('🌐 Loading Saxo data from API...');
 
-                    // OPTIMIZATION: Parallel fetch of API positions + cash (independent calls)
-                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
-                    const [apiResponse, cashResult] = await Promise.all([
-                        fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
-                            headers: { 'X-User': activeUser }
-                        }),
-                        loadPortfolioCash() // Run in parallel
-                    ]);
+                    // API positions carry their own cash balance; a saved CSV cash
+                    // snapshot must never be mixed into this source.
+                    const apiResponse = await fetch(`${window.getApiBase()}/api/saxo/api-positions`, {
+                        headers: { 'X-User': activeUser }
+                    });
 
                     if (!apiResponse.ok) {
                         debugLogger.warn('Erreur lors du chargement depuis l\'API Saxo.');
@@ -565,6 +562,10 @@
 
                     // Extract nested data from API response (safeFetch wraps success_response twice)
                     const innerData = apiData.data || apiData;
+                    if (innerData.cash_balance == null || !Number.isFinite(Number(innerData.cash_balance))) {
+                        showNoDataState('Cash balance unavailable from Saxo API');
+                        return;
+                    }
 
                     // 🔍 DEBUG: Log API response structure
                     console.log('🔍 DEBUG API Response:', {
@@ -648,11 +649,11 @@
                     const fullUrl = `${window.getApiBase()}${portfoliosUrl}`;
                     debugLogger.debug(`🌐 Calling API: ${fullUrl} with X-User: ${activeUser}`);
 
-                    const [listResponse, cashResult] = await Promise.all([
+                    const [listResponse] = await Promise.all([
                         fetch(fullUrl, {
                             headers: { 'X-User': activeUser }
                         }),
-                        loadPortfolioCash(fileKey) // Run in parallel (pass fileKey)
+                        loadPortfolioCash(fileKey) // Fail if selected CSV cash cannot be read.
                     ]);
 
                     if (!listResponse.ok) {
@@ -959,12 +960,11 @@
                     window.portfolioCash = Number(data.cash_amount || 0);
                     debugLogger.debug(`💵 Loaded cash amount from backend: $${window.portfolioCash}`);
                 } else {
-                    debugLogger.warn(`💵 Failed to load cash (HTTP ${response.status}), defaulting to 0`);
-                    window.portfolioCash = 0;
+                    throw new Error(`Cash data unavailable (HTTP ${response.status})`);
                 }
             } catch (error) {
-                debugLogger.warn('Failed to load cash amount, defaulting to 0', error);
-                window.portfolioCash = 0;
+                debugLogger.warn('Failed to load cash amount', error);
+                throw error;
             }
         }
 
@@ -1178,7 +1178,7 @@
                     const isManualSource = bourseSource === 'manual_bourse';
                     const isApiSource = bourseSource && bourseSource.startsWith('api:');
                     const sourcePrefix = isManualSource ? 'manual' : isApiSource ? 'api' : (currentFileKey || 'default');
-                    const cacheKey = `saxo_portfolio_${activeUser}_${sourcePrefix}`;
+                    const cacheKey = `saxo_portfolio_v2_${activeUser}_${sourcePrefix}`;
 
                     const cached = localStorage.getItem(cacheKey);
                     if (cached) {
@@ -1587,7 +1587,7 @@
                 // Invalidate all Saxo caches (critical for source switching)
                 const activeUser = localStorage.getItem('activeUser') || '';
                 Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith(`saxo_portfolio_${activeUser}_`)) {
+                    if (key.startsWith(`saxo_portfolio_v2_${activeUser}_`)) {
                         localStorage.removeItem(key);
                         debugLogger.debug(`🧹 Cleared cache: ${key}`);
                     }

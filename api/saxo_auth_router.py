@@ -25,7 +25,6 @@ from api.utils import success_response, error_response
 from api.services.user_fs import UserScopedFS
 from connectors.saxo_api import SaxoOAuthClient, generate_state
 from services.saxo_auth_service import SaxoAuthService
-from services import fx_service
 
 logger = logging.getLogger(__name__)
 
@@ -555,39 +554,18 @@ async def get_saxo_api_positions(
             uic_metadata = await _resolve_uics_for_positions(positions_raw, access_token, user)
 
             # Normalize format (compatible with CSV structure) with enriched metadata
-            positions_normalized = _normalize_positions(positions_raw, uic_metadata)
+            positions_normalized = _normalize_positions(
+                positions_raw, uic_metadata, account_currency=balances_data.get('Currency')
+            )
 
             # Extract cash balance
             # DEBUG: Log all balance fields to identify correct cash field
             logger.info(f"🔍 Saxo API balances_data keys: {list(balances_data.keys())}")
-            logger.info(f"🔍 Saxo API full balances: {balances_data}")
 
-            cash_balance = balances_data.get("CashBalance", 0.0)
-            total_value_api = balances_data.get("TotalValue", 0.0)
-            currency = balances_data.get("Currency", "EUR")
-
-            # ✅ CRITICAL: Convert EUR → USD for frontend consistency
-            # Frontend expects USD everywhere, Saxo returns EUR
-            # Use dynamic FX rate from service (4h cache + live API fallback)
-            EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")
-
-            # Convert positions market_value to USD
-            for pos in positions_normalized:
-                if pos.get("market_value"):
-                    pos["market_value"] = pos["market_value"] * EUR_TO_USD_RATE
-                if pos.get("current_price"):
-                    pos["current_price"] = pos["current_price"] * EUR_TO_USD_RATE
-                if pos.get("avg_price"):
-                    pos["avg_price"] = pos["avg_price"] * EUR_TO_USD_RATE
-                if pos.get("pnl"):
-                    pos["pnl"] = pos["pnl"] * EUR_TO_USD_RATE
-
-            # ✅ CRITICAL: ALWAYS use Saxo API TotalValue (already includes positions + cash)
-            # The API knows best - don't recalculate!
-            total_value_eur = total_value_api
-            cash_balance_eur = cash_balance
-            total_value_usd = total_value_eur * EUR_TO_USD_RATE
-            cash_balance_usd = cash_balance_eur * EUR_TO_USD_RATE
+            from services.saxo_valuation import value_saxo_portfolio_usd
+            positions_normalized, cash_balance_usd, total_value_usd = value_saxo_portfolio_usd(
+                positions_normalized, balances_data
+            )
 
             # Log manual calculation for debug only (now in USD)
             positions_total_usd = sum(p.get("market_value", 0.0) for p in positions_normalized)
@@ -596,7 +574,7 @@ async def get_saxo_api_positions(
             if abs(total_value_usd - total_value_calculated_usd) > 1.0:
                 logger.warning(f"⚠️ Manual calculation mismatch: API=${total_value_usd:.2f} vs Calculated=${total_value_calculated_usd:.2f} USD")
 
-            logger.info(f"✅ Saxo API: {len(positions_normalized)} positions, cash={cash_balance_eur:.2f} EUR (${cash_balance_usd:.2f} USD), total={total_value_eur:.2f} EUR (${total_value_usd:.2f} USD)")
+            logger.info(f"Saxo API: {len(positions_normalized)} positions normalized to USD")
 
             # Cache for offline fallback (including cash_balance and total_value)
             await auth_service.cache_positions(positions_normalized, cash_balance_usd, total_value_usd)
@@ -611,8 +589,7 @@ async def get_saxo_api_positions(
             }, meta={
                 "count": len(positions_normalized),
                 "environment": oauth_client.environment,
-                "original_currency": currency,  # Keep EUR for reference
-                "eur_to_usd_rate": EUR_TO_USD_RATE
+                "original_currency": balances_data.get("Currency")
             })
 
         except Exception as api_error:
@@ -803,7 +780,8 @@ async def _get_account_key(
 
 def _normalize_positions(
     positions_raw: List[Dict[str, Any]],
-    uic_metadata: Optional[Dict[int, Dict[str, str]]] = None
+    uic_metadata: Optional[Dict[int, Dict[str, str]]] = None,
+    account_currency: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """
     Normalize Saxo API positions to match CSV structure.
@@ -838,10 +816,12 @@ def _normalize_positions(
                 asset_type = position_base.get("AssetType", "Unknown")
                 avg_price = position_base.get("OpenPrice", 0.0)
 
-                market_value = position_view.get("MarketValue", 0.0)
+                market_value = position_view.get("MarketValue")
                 current_price = position_view.get("CurrentPrice", 0.0)
-                pnl = position_view.get("ProfitLossOnTradeInBaseCurrency", 0.0)
-                currency = position_view.get("ExposureCurrency", "EUR")
+                pnl = position_view.get("ProfitLossOnTradeInBaseCurrency")
+                currency = position_view.get("ExposureCurrency")
+                market_value_currency = currency
+                pnl_currency = account_currency
 
                 # Try to resolve UIC to Symbol/Name using cache
                 if uic_metadata and uic in uic_metadata:
@@ -850,7 +830,7 @@ def _normalize_positions(
                     name = metadata.get("name", f"Instrument {uic}")
                     isin = metadata.get("isin", "")
                     # Use API currency if metadata currency is empty
-                    if not currency and metadata.get("currency"):
+                    if metadata.get("currency"):
                         currency = metadata.get("currency")
                 else:
                     # Fallback if not resolved
@@ -858,14 +838,20 @@ def _normalize_positions(
                     name = f"Instrument {uic}"
                     isin = ""
 
+                if account_currency and position_view.get('MarketValueInBaseCurrency') is not None:
+                    market_value = position_view['MarketValueInBaseCurrency']
+                    market_value_currency = account_currency
+                else:
+                    market_value_currency = currency
+
             else:
                 # Sim format (original)
                 display = pos.get("DisplayAndFormat", {})
                 symbol_raw = display.get("Symbol", "")
-                symbol = symbol_raw.split(":")[0] if ":" in symbol_raw else symbol_raw
+                symbol = symbol_raw
                 name = display.get("Description", symbol)
 
-                market_value = pos.get("MarketValue", 0.0)
+                market_value = pos.get("MarketValue")
                 amount = pos.get("Amount", 1)
                 current_price = market_value / amount if amount != 0 else 0.0
 
@@ -875,7 +861,9 @@ def _normalize_positions(
 
                 asset_type = pos.get("AssetType", "Unknown")
                 isin = pos.get("Isin", "")
-                currency = pos.get("Currency", "EUR")
+                currency = pos.get("Currency") or display.get('Currency')
+                market_value_currency = currency
+                pnl_currency = currency
 
             # ✅ Build tags for frontend compatibility (dashboard chart grouping)
             tags = []
@@ -895,6 +883,8 @@ def _normalize_positions(
                 "name": name,
                 "quantity": amount,
                 "market_value": market_value,
+                "market_value_currency": market_value_currency,
+                "pnl_currency": pnl_currency,
                 "avg_price": avg_price,
                 "current_price": current_price,
                 "pnl": pnl,
@@ -909,6 +899,6 @@ def _normalize_positions(
 
         except Exception as e:
             logger.warning(f"⚠️ Failed to normalize position: {e}")
-            continue
+            raise ValueError("Saxo position could not be normalized") from e
 
     return normalized

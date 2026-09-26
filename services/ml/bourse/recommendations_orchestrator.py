@@ -45,7 +45,8 @@ class RecommendationsOrchestrator:
         sector_analysis: Optional[Dict[str, Any]] = None,
         benchmark: str = "SPY",
         timeframe: str = "medium",
-        lookback_days: int = 90
+        lookback_days: int = 90,
+        cash_amount: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Generate comprehensive portfolio recommendations
@@ -73,23 +74,31 @@ class RecommendationsOrchestrator:
             adjuster = PortfolioAdjuster()
 
             # Get benchmark data
-            benchmark_data = await self._get_benchmark_data(benchmark, lookback_days)
-            benchmark_return = self._calculate_return(benchmark_data['close'], 30) if benchmark_data is not None else 0
+            signal_days = {"short": 10, "medium": 21, "long": 63}[timeframe]
+            history_days = max(lookback_days, int(signal_days * 1.6) + 30)
+            benchmark_data = await self._get_benchmark_data(benchmark, history_days)
+            if benchmark_data is None or len(benchmark_data) <= signal_days:
+                raise ValueError("Benchmark history is unavailable for the selected timeframe")
+            benchmark_data = await self._prices_in_usd(benchmark_data)
 
             # Calculate total portfolio value
-            total_value = sum(pos.get('market_value', 0) or 0 for pos in positions)
+            total_value = sum(pos.get('market_value', 0) or pos.get('market_value_usd', 0) or 0 for pos in positions)
+            if cash_amount is not None:
+                total_value += cash_amount
 
             # Generate sector analysis directly if not provided
             if sector_analysis is None:
                 logger.info("Computing sector analysis directly from positions...")
-                sector_analysis = await self._compute_sector_analysis(positions, lookback_days)
+                sector_analysis = await self._compute_sector_analysis(positions, history_days)
 
             # Calculate sector weights
             sector_weights = self._calculate_sector_weights(positions, sector_analysis)
 
             # Generate recommendations for each position
             recommendations = []
+            unavailable_symbols = []
             for pos in positions:
+                symbol = pos.get("instrument_id") or pos.get("symbol") or pos.get("ticker") or "UNKNOWN"
                 try:
                     rec = await self._analyze_position(
                         position=pos,
@@ -100,16 +109,21 @@ class RecommendationsOrchestrator:
                         market_regime=market_regime,
                         regime_probabilities=regime_probabilities,
                         sector_analysis=sector_analysis,
-                        benchmark_return=benchmark_return,
-                        lookback_days=lookback_days,
-                        total_portfolio_value=total_value
+                        benchmark_data=benchmark_data,
+                        lookback_days=history_days,
+                        signal_days=signal_days,
+                        total_portfolio_value=total_value,
+                        available_cash_usd=cash_amount,
                     )
 
                     if rec:
                         recommendations.append(rec)
+                    else:
+                        unavailable_symbols.append(symbol)
 
                 except Exception as e:
                     logger.error(f"Error analyzing position {pos.get('symbol', 'unknown')}: {e}")
+                    unavailable_symbols.append(symbol)
                     continue
 
             # Apply portfolio-level adjustments
@@ -118,6 +132,28 @@ class RecommendationsOrchestrator:
                 sector_weights=sector_weights
             )
 
+            # Final action and consolidated value are the authority for sizing and advice.
+            for rec in recommendations:
+                sizing = targets.calculate_position_size(
+                    action=rec['action'], confidence=rec['confidence'],
+                    portfolio_value=total_value,
+                    current_allocation=rec['current_value'] / total_value if total_value > 0 else 0,
+                    sector_weight=sector_weights.get(rec.get('sector'), 0),
+                    available_cash_usd=cash_amount,
+                )
+                rec['position_sizing'] = sizing
+                rec['tactical_advice'] = decision.update_tactical_advice(
+                    action=rec['action'], score=rec['score'], technical_data=rec['technical'],
+                    sector_data=None, position_sizing=sizing,
+                )
+                if rec.get('adjusted'):
+                    rec['price_targets'] = None
+                    rec['tactical_advice'] += " " + rec.get('adjustment_note', '')
+                if rec.get('is_cfd'):
+                    rec['position_sizing'] = {'action': 'REVIEW', 'increment_dollars': None,
+                        'guidance': 'Leveraged instrument: contract exposure and margin must be verified'}
+                    rec['tactical_advice'] = rec['position_sizing']['guidance']
+
             # Generate summary
             summary = decision.generate_summary(recommendations, market_regime)
 
@@ -125,10 +161,16 @@ class RecommendationsOrchestrator:
                 "recommendations": recommendations,
                 "summary": summary,
                 "timeframe": timeframe,
+                "signal_window_trading_days": signal_days,
+                "history_window_calendar_days": history_days,
                 "market_regime": market_regime,
                 "benchmark": benchmark,
                 "generated_at": datetime.now().isoformat(),
-                "total_positions": len(recommendations)
+                "total_positions": len(recommendations),
+                "selected_position_count": len(positions),
+                "unavailable_symbols": sorted(set(unavailable_symbols)),
+                "data_complete": not unavailable_symbols,
+                "cash_included_usd": cash_amount,
             }
 
         except Exception as e:
@@ -145,9 +187,11 @@ class RecommendationsOrchestrator:
         market_regime: str,
         regime_probabilities: Optional[Dict[str, float]],
         sector_analysis: Optional[Dict[str, Any]],
-        benchmark_return: float,
+        benchmark_data: pd.DataFrame,
         lookback_days: int,
-        total_portfolio_value: float
+        signal_days: int,
+        total_portfolio_value: float,
+        available_cash_usd: Optional[float]
     ) -> Optional[Dict[str, Any]]:
         """
         Analyze single position and generate recommendation
@@ -190,22 +234,28 @@ class RecommendationsOrchestrator:
         )
 
         # Relative strength
-        asset_return = self._calculate_return(hist_data['close'], 30)
+        if len(hist_data) <= signal_days:
+            return None
+        usd_data = await self._prices_in_usd(hist_data)
+        comparable = pd.concat([usd_data['close'].rename('asset'),
+                                benchmark_data['close'].rename('benchmark')], axis=1, join='inner').dropna()
+        asset_return = self._calculate_return(comparable['asset'], signal_days)
+        benchmark_return = self._calculate_return(comparable['benchmark'], signal_days)
         rel_strength_score = scoring.calculate_relative_strength_score(
             asset_return=asset_return,
             benchmark_return=benchmark_return
         )
 
         # Risk score
-        volatility = hist_data['close'].pct_change().std() * np.sqrt(252)
-        drawdown = self._calculate_current_drawdown(hist_data['close'])
+        volatility = usd_data['close'].pct_change(fill_method=None).std() * np.sqrt(252)
+        drawdown = self._calculate_current_drawdown(usd_data['close'])
         risk_score = scoring.calculate_risk_score(
             volatility=volatility,
             drawdown_current=drawdown
         )
 
         # Sector score
-        sector_score = 0.5  # Default
+        sector_score = None
         sector_data = None
         if sector_analysis:
             sector_info = self._get_sector_info(symbol, sector_analysis)
@@ -219,12 +269,16 @@ class RecommendationsOrchestrator:
 
         # Calculate final score
         score_result = scoring.calculate_score(
-            technical_score=tech_analysis.get('technical_score', 0.5),
+            technical_score=tech_analysis.get('technical_score'),
             regime_score=regime_score,
             relative_strength_score=rel_strength_score,
             risk_score=risk_score,
             sector_score=sector_score
         )
+
+        if score_result['final_score'] is None:
+            logger.warning("Recommendation unavailable for %s: missing signals %s", symbol, score_result['missing_signals'])
+            return None
 
         # Make decision
         decision_result = decision.make_decision(
@@ -248,11 +302,14 @@ class RecommendationsOrchestrator:
             current_price=hist_data['close'].iloc[-1],
             action=decision_result['action'],
             support_resistance=sr_levels,
-            volatility=volatility,
+            volatility=hist_data['close'].pct_change(fill_method=None).std() * np.sqrt(252),
             price_data=hist_data,  # Pass historical data for advanced stop loss calculation
             avg_price=avg_price,  # Pass avg_price for trailing stop calculation
             leverage=leverage if is_cfd else None  # Pass leverage for CFD stop adjustment (P0 Enhancement)
         )
+        price_currency = hist_data.attrs.get('native_currency') or position.get('currency') or 'USD'
+        if price_targets.get('guidance'):
+            price_targets['guidance'] = price_targets['guidance'].replace('$', f'{price_currency} ')
 
         # Calculate position sizing
         current_value = position.get('market_value', 0) or 0
@@ -264,7 +321,8 @@ class RecommendationsOrchestrator:
             confidence=score_result['confidence'],
             portfolio_value=total_portfolio_value,
             current_allocation=current_weight,
-            sector_weight=sector_weight
+            sector_weight=sector_weight,
+            available_cash_usd=available_cash_usd
         )
 
         # Update tactical advice with position sizing info
@@ -288,12 +346,16 @@ class RecommendationsOrchestrator:
         # Compile recommendation
         return {
             "symbol": symbol,
+            "price_currency": price_currency,
             "name": position.get('name', symbol),  # Saxo doesn't have name, will use symbol
             "current_value": current_value,
             "weight_pct": round(current_weight * 100, 1),
             "sector": sector_data.get('sector', 'Unknown') if sector_data else 'Unknown',
             "action": decision_result['action'],
             "confidence": decision_result['confidence'],
+            "confidence_kind": "signal_agreement_not_probability",
+            "data_coverage": score_result['data_coverage'],
+            "missing_signals": score_result['missing_signals'],
             "score": score_result['final_score'],
             "rationale": decision_result['rationale'],
             "tactical_advice": decision_result['tactical_advice'],
@@ -301,7 +363,8 @@ class RecommendationsOrchestrator:
                 "rsi_14d": tech_analysis.get('rsi_14d'),
                 "macd_signal": tech_analysis.get('macd_signal'),
                 "vs_ma50_pct": tech_analysis.get('vs_ma50_pct'),
-                "vs_spy_30d": round(asset_return - benchmark_return, 1) if asset_return else None
+                "vs_benchmark_pct": round(asset_return - benchmark_return, 1),
+                "signal_window_trading_days": signal_days
             },
             "price_targets": price_targets,
             "position_sizing": position_sizing,
@@ -327,12 +390,25 @@ class RecommendationsOrchestrator:
             logger.error(f"Error fetching benchmark {benchmark}: {e}")
             return None
 
+    async def _prices_in_usd(self, prices: pd.DataFrame) -> pd.DataFrame:
+        currency = prices.attrs.get('native_currency')
+        if not currency:
+            raise ValueError("Price currency is unavailable")
+        if currency == 'USD':
+            return prices
+        from services.risk.bourse.calculator import BourseRiskCalculator
+        rates = await self.data_source.fetcher.fetch_historical_fx(
+            currency, prices.index.min().to_pydatetime() - timedelta(days=7),
+            prices.index.max().to_pydatetime() + timedelta(days=1),
+        )
+        return BourseRiskCalculator._convert_prices_to_usd(prices, rates)
+
     def _calculate_return(self, prices: pd.Series, days: int) -> float:
         """Calculate percentage return over N days"""
-        if len(prices) < days:
-            return 0.0
+        if len(prices) <= days:
+            raise ValueError("Insufficient observations for the requested return window")
 
-        return ((prices.iloc[-1] / prices.iloc[-days]) - 1) * 100
+        return ((prices.iloc[-1] / prices.iloc[-days - 1]) - 1) * 100
 
     def _calculate_current_drawdown(self, prices: pd.Series) -> float:
         """Calculate current drawdown from ATH"""
@@ -456,7 +532,7 @@ class RecommendationsOrchestrator:
                 # Store position value
                 value = pos.get('market_value', 0) or 0
                 if value > 0:
-                    positions_values[symbol] = float(value)
+                    positions_values[symbol] = positions_values.get(symbol, 0.0) + float(value)
 
                 # Fetch historical data
                 try:

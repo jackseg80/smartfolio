@@ -132,7 +132,10 @@ async def list_portfolios(
 ) -> dict:
     """Return lightweight overview of stored Saxo portfolios."""
     _legacy_log("/portfolios")
-    portfolios = list_portfolios_overview(user_id=user, file_key=file_key)
+    try:
+        portfolios = list_portfolios_overview(user_id=user, file_key=file_key)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"portfolios": portfolios}
 
 
@@ -144,7 +147,10 @@ async def get_portfolio(
 ) -> dict:
     """Return full detail for a given Saxo portfolio."""
     _legacy_log(f"/portfolios/{portfolio_id}")
-    portfolio = get_portfolio_detail(portfolio_id, user_id=user, file_key=file_key)
+    try:
+        portfolio = get_portfolio_detail(portfolio_id, user_id=user, file_key=file_key)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     if not portfolio:
         raise HTTPException(status_code=404, detail="portfolio_not_found")
     return portfolio

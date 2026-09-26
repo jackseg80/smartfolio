@@ -17,6 +17,7 @@ from datetime import datetime, timedelta
 import logging
 import json
 import os
+import asyncio
 
 from services.ml.bourse.data_sources import StocksDataSource
 from services.ml.bourse.technical_indicators import TechnicalIndicators
@@ -33,6 +34,7 @@ except ImportError:
 
 # Cache TTL: 4 hours (aligned with on-chain metrics cache)
 STOCK_SCORE_CACHE_TTL = 4 * 3600  # 14400 seconds
+STOCK_SCORE_CACHE_VERSION = "verified_v3"
 
 
 # ETF Full Names (for better UI display)
@@ -279,7 +281,7 @@ class SectorAnalyzer:
 
     def _get_cache_key(self, symbol: str, horizon: str) -> str:
         """Generate Redis cache key for stock score"""
-        return f"stock_score:{symbol.upper()}:{horizon}"
+        return f"stock_score:{STOCK_SCORE_CACHE_VERSION}:{symbol.upper()}:{horizon}"
 
     def _get_cached_score(self, symbol: str, horizon: str) -> Optional[Dict[str, Any]]:
         """
@@ -526,28 +528,31 @@ class SectorAnalyzer:
             momentum_score = self._calculate_momentum_score(
                 stock_data, benchmark_data, horizon
             )
-            value_score = await self._calculate_value_score(symbol)
-            diversification_score = self._calculate_diversification_score(stock_data)
+            if momentum_score is None:
+                return None
+            value_score, reported_sector, provider_name = await self._calculate_value_score(symbol, include_profile=True)
+            diversification_score = None  # Requires correlation with this user's actual portfolio.
 
             # Data quality confidence
-            confidence = min(len(stock_data) / lookback_days, 1.0)
+            expected_sessions = lookback_days * 252 / 365
+            confidence = min(len(stock_data) / expected_sessions, 1.0)
 
             # Calculate composite score (40% momentum, 30% value, 30% diversification)
-            composite_score = (
-                momentum_score * 0.40 +
-                value_score * 0.30 +
-                diversification_score * 0.30
-            )
+            components = [(momentum_score, 0.40), (value_score, 0.30)]
+            available = [(score, weight) for score, weight in components if score is not None]
+            composite_score = sum(score * weight for score, weight in available) / sum(weight for _, weight in available)
 
             score_data = {
                 "symbol": symbol,
                 "momentum_score": round(momentum_score, 1),
-                "value_score": round(value_score, 1),
-                "diversification_score": round(diversification_score, 1),
+                "value_score": round(value_score, 1) if value_score is not None else None,
+                "diversification_score": None,
                 "composite_score": round(composite_score, 1),
                 "confidence": round(confidence, 2),
                 "data_points": len(stock_data),
-                "analysis_date": datetime.now().isoformat()
+                "analysis_date": datetime.now().isoformat(),
+                "reported_sector": reported_sector,
+                "provider_name": provider_name,
             }
 
             # Cache the result
@@ -602,11 +607,13 @@ class SectorAnalyzer:
             momentum_score = self._calculate_momentum_score(
                 etf_data, benchmark_data, horizon
             )
+            if momentum_score is None:
+                return None
             value_score = await self._calculate_value_score(sector_etf)
-            diversification_score = self._calculate_diversification_score(etf_data)
+            diversification_score = None
 
             # Data quality confidence
-            confidence = min(len(etf_data) / lookback_days, 1.0)
+            confidence = min(len(etf_data) / (lookback_days * 252 / 365), 1.0)
 
             return {
                 "etf": sector_etf,
@@ -625,9 +632,9 @@ class SectorAnalyzer:
     def _get_lookback_days(self, horizon: str) -> int:
         """Get lookback days based on horizon"""
         lookback_map = {
-            "short": 90,    # 1-3 months
-            "medium": 180,  # 6 months
-            "long": 365     # 1 year
+            "short": 120,    # 1-3 months with indicator warm-up
+            "medium": 240,   # 6-12 months
+            "long": 450      # 2-3 years: recent trend plus warm-up
         }
         return lookback_map.get(horizon, 180)
 
@@ -655,26 +662,21 @@ class SectorAnalyzer:
         """
         try:
             if etf_data.empty:
-                return 50.0
+                return None
 
             scores = []
-
-            # 1. Price momentum (simple return)
-            if len(etf_data) >= 20:
-                periods = {"short": 20, "medium": 60, "long": 90}
-                period = periods.get(horizon, 60)
-                period = min(period, len(etf_data))
-
-                price_return = (
-                    (etf_data['close'].iloc[-1] / etf_data['close'].iloc[-period] - 1) * 100
-                )
-
-                # Normalize to 0-100 (assume ±30% is max/min)
-                momentum_pct = np.clip(50 + price_return * (50/30), 0, 100)
-                scores.append(momentum_pct)
+            period = {"short": 42, "medium": 126, "long": 252}.get(horizon, 126)
+            returns = etf_data['close'].pct_change().dropna().tail(period)
+            if len(returns) < max(20, int(period * 0.8)):
+                return None
+            realized_vol = returns.std()
+            if pd.isna(realized_vol) or realized_vol <= 0:
+                return None
+            risk_adjusted_return = returns.mean() / realized_vol * np.sqrt(len(returns))
+            scores.append(np.clip(50 + risk_adjusted_return * 15, 0, 100))
 
             # 2. RSI (14-day)
-            if len(etf_data) >= 14:
+            if horizon == "short" and len(etf_data) >= 14:
                 rsi_series = self.tech_indicators.calculate_rsi(etf_data['close'], period=14)
                 # Extract last value from Series
                 if isinstance(rsi_series, pd.Series) and len(rsi_series) > 0:
@@ -694,14 +696,10 @@ class SectorAnalyzer:
 
             # 3. Relative strength vs benchmark
             if benchmark_data is not None and not benchmark_data.empty:
-                min_len = min(len(etf_data), len(benchmark_data))
-                if min_len >= 20:
-                    etf_return = (
-                        etf_data['close'].iloc[-1] / etf_data['close'].iloc[-min_len] - 1
-                    ) * 100
-                    bench_return = (
-                        benchmark_data['close'].iloc[-1] / benchmark_data['close'].iloc[-min_len] - 1
-                    ) * 100
+                aligned = pd.concat([etf_data['close'], benchmark_data['close']], axis=1, join='inner').dropna().tail(period + 1)
+                if len(aligned) >= max(21, int(period * 0.8) + 1):
+                    etf_return = (aligned.iloc[-1, 0] / aligned.iloc[0, 0] - 1) * 100
+                    bench_return = (aligned.iloc[-1, 1] / aligned.iloc[0, 1] - 1) * 100
 
                     relative_strength = etf_return - bench_return
 
@@ -713,13 +711,13 @@ class SectorAnalyzer:
             if scores:
                 return round(np.mean(scores), 1)
             else:
-                return 50.0
+                return None
 
         except Exception as e:
             logger.error(f"Error calculating momentum score: {e}", exc_info=True)
-            return 50.0
+            return None
 
-    async def _calculate_value_score(self, sector_etf: str) -> float:
+    async def _calculate_value_score(self, sector_etf: str, include_profile: bool = False):
         """
         Calculate value score (0-100).
 
@@ -740,8 +738,12 @@ class SectorAnalyzer:
             # Try to fetch fundamental data from yfinance
             import yfinance as yf
 
-            ticker = yf.Ticker(sector_etf)
-            info = ticker.info
+            info = await asyncio.wait_for(
+                asyncio.to_thread(lambda: yf.Ticker(sector_etf).info),
+                timeout=12,
+            )
+            reported_sector = info.get('sector') if isinstance(info, dict) else None
+            provider_name = info.get('longName') if isinstance(info, dict) else None
 
             scores = []
 
@@ -781,59 +783,14 @@ class SectorAnalyzer:
 
             # Average scores or default to 50
             if scores:
-                return round(np.mean(scores), 1)
+                value_score = round(np.mean(scores), 1)
             else:
-                # No fundamental data available, return neutral
-                return 50.0
+                value_score = None
+            return (value_score, reported_sector, provider_name) if include_profile else value_score
 
         except Exception as e:
             logger.error(f"Error calculating value score for {sector_etf}: {e}", exc_info=True)
-            return 50.0
-
-    def _calculate_diversification_score(self, etf_data: pd.DataFrame) -> float:
-        """
-        Calculate diversification score (0-100).
-
-        Higher score = better diversification (lower correlation with existing assets).
-
-        Note: This is a placeholder. In production, would calculate correlation
-        with existing portfolio assets. For now, use volatility as proxy:
-        - Higher volatility = lower diversification score
-        - Lower volatility = higher diversification score
-
-        Args:
-            etf_data: ETF OHLCV data
-
-        Returns:
-            Diversification score (0-100)
-        """
-        try:
-            if etf_data.empty or len(etf_data) < 20:
-                return 50.0
-
-            # Calculate daily returns
-            returns = etf_data['close'].pct_change().dropna()
-
-            if len(returns) < 10:
-                return 50.0
-
-            # Calculate annualized volatility
-            volatility = returns.std() * np.sqrt(252)
-
-            # Normalize: assume 15% vol = neutral (50), 10% = high score (80), 25% = low score (20)
-            # Lower vol → better diversification benefit (assuming portfolio is tech-heavy)
-            if volatility <= 0.15:
-                score = 50 + (0.15 - volatility) * (30 / 0.05)  # 10% → 80
-            else:
-                score = 50 - (volatility - 0.15) * (30 / 0.10)  # 25% → 20
-
-            score = np.clip(score, 0, 100)
-
-            return round(score, 1)
-
-        except Exception as e:
-            logger.error(f"Error calculating diversification score: {e}", exc_info=True)
-            return 50.0
+            return (None, None, None) if include_profile else None
 
     async def get_top_stocks_in_sector(
         self,
@@ -930,14 +887,15 @@ class SectorAnalyzer:
                             recommendations.append({
                                 "symbol": symbol,
                                 "type": "Stock",
-                                "name": name,
+                                "name": score_result.get("provider_name") or name,
                                 "weight": score_result.get("composite_score", 80.0),
                                 "rationale": rationale,
                                 "momentum_score": score_result.get("momentum_score"),
                                 "value_score": score_result.get("value_score"),
                                 "diversification_score": score_result.get("diversification_score"),
                                 "composite_score": score_result.get("composite_score"),
-                                "confidence": score_result.get("confidence")
+                                "confidence": score_result.get("confidence"),
+                                "reported_sector": score_result.get("reported_sector"),
                             })
                 else:
                     # No individual scoring - just return static data
