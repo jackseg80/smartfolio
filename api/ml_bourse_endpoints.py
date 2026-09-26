@@ -854,7 +854,8 @@ async def get_market_opportunities(
     horizon: str = Query("medium", description="Time horizon: short (1-3M), medium (6-12M), long (2-3Y)"),
     source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
     file_key: Optional[str] = Query(None, description="Saxo CSV file key"),
-    min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum gap percentage to consider")
+    min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum gap percentage to consider"),
+    sector_targets: Optional[str] = Query(None, description="Optional JSON object of industry target percentages totaling 100%")
 ) -> dict:
     """
     Get market opportunities outside current portfolio.
@@ -877,6 +878,12 @@ async def get_market_opportunities(
                 status_code=400,
                 detail=f"Invalid horizon '{horizon}'. Must be: short, medium, or long"
             )
+
+        from services.ml.bourse.opportunity_scanner import parse_sector_targets
+        try:
+            target_allocations = parse_sector_targets(sector_targets)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
 
         # Import httpx at the beginning (may be used later)
         import httpx
@@ -944,7 +951,8 @@ async def get_market_opportunities(
 
                     pos_response = await client.get(
                         positions_url,
-                        headers=_forward_authenticated_headers(request, user)
+                        headers=_forward_authenticated_headers(request, user),
+                        params={"file_key": file_key} if file_key else None,
                     )
                     pos_response.raise_for_status()
                     positions_data = pos_response.json()
@@ -972,7 +980,8 @@ async def get_market_opportunities(
         scan_result = await scanner.scan_opportunities(
             positions=positions,
             horizon=horizon,
-            min_gap_pct=min_gap_pct
+            min_gap_pct=min_gap_pct,
+            target_allocations=target_allocations,
         )
 
         gaps = scan_result.get("top_gaps", [])
@@ -1043,6 +1052,9 @@ async def get_market_opportunities(
                         "capital_needed_is_sector_budget": True,
                         "confidence_kind": "data_coverage",
                         "score_kind": "historical_risk_adjusted_screen",
+                        "score_components_available": [name for name, value in
+                            (("momentum", stock_momentum), ("value", stock_value), ("diversification", stock_diversification))
+                            if value is not None],
                         "rationale": stock.get("rationale", f"{sector} sector gap: {gap_pct:.1f}% underweight"),
                         "momentum_score": stock_momentum,
                         "value_score": stock_value,
@@ -1100,6 +1112,11 @@ async def get_market_opportunities(
             },
             "horizon": horizon,
             "candidate_universe": "curated_stocks_and_sector_etfs",
+            "horizon_details": scan_result.get("horizon_details"),
+            "target_source": scan_result.get("target_source"),
+            "target_allocations": scan_result.get("target_allocations"),
+            "classification_coverage": scan_result.get("classification_coverage"),
+            "unclassified_pct": scan_result.get("unclassified_pct"),
             "generated_at": datetime.now().isoformat()
         }
 

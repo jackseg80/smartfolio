@@ -49,6 +49,7 @@
     <script src="components/toast.js" type="module"></script>
     <script src="global-config.js"></script>
     <script src="core/bourse-source-context.js"></script>
+    <script src="core/retryable-sections.js"></script>
     <script src="appearance.js"></script>
 
     <!-- Chart.js for interactive charts -->
@@ -256,7 +257,7 @@
         // ==================== STATE MANAGEMENT ====================
         let currentPortfolioData = null;
         let currentFileKey = null;
-        let analyticsTabLoaded = false;
+        const analyticsSections = createRetryableSections();
         let forceRefreshFlag = false;
 
         // Chart instances (prevent memory leaks)
@@ -298,8 +299,8 @@
 
         window.addEventListener('bourseSourceChanged', async () => {
             if (!window.wealthContextBar?.isReady) return;
+            analyticsSections.reset();
             await resolveSourceType();
-            analyticsTabLoaded = false;
             await loadBourseData(true);
         });
 
@@ -360,7 +361,7 @@
             debugLogger.debug("Loading Bourse data for Analytics...");
             forceRefreshFlag = forceRefresh;
             if (forceRefresh) {
-                analyticsTabLoaded = false;
+                analyticsSections.reset();
                 document.getElementById('cacheIndicator').style.display = 'none';
             }
 
@@ -672,23 +673,16 @@
 
         // ==================== ANALYTICS TAB ====================
         async function loadAnalyticsTab() {
-            if (analyticsTabLoaded) {
-                debugLogger.debug('Analytics tab already loaded');
-                return;
-            }
-
-            debugLogger.debug('Loading Analytics tab...');
-            analyticsTabLoaded = true;
-
-            Promise.all([
-                loadMLInsights().catch(err => debugLogger.warn('ML insights failed', err)),
-                loadAdvancedAnalytics().catch(err => debugLogger.warn('Advanced analytics failed', err)),
-                loadSpecializedAnalytics().catch(err => debugLogger.warn('Specialized analytics failed', err))
-            ]);
+            populateTickerSelector();
+            await Promise.all([
+                ['ml', loadMLInsights], ['correlation', loadCorrelationAnalysis],
+                ['stress', loadStressTestingUI], ['regime', loadRegimeHistory],
+                ['sectors', loadSectorRotation], ['margin', loadMarginMonitoring]
+            ].map(([key, loader]) => analyticsSections.run(key, loader)));
         }
 
         // ==================== ML INSIGHTS ====================
-        async function loadMLInsights() {
+        async function loadMLInsights(isCurrent = () => true) {
             const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
@@ -710,6 +704,7 @@
                     firstStock ? window.cachedApiCall(forecastKey, `${baseUrl}/api/ml/bourse/forecast?symbol=${encodeURIComponent(firstStock)}&lookback_days=365`, opts, 'bourse').catch(() => ({})) : Promise.resolve({})
                 ]);
 
+                if (!isCurrent()) return false;
                 if (!regime.current_regime && !volatility.predictions) {
                     throw new Error('ML services unavailable. Please check backend logs.');
                 }
@@ -810,8 +805,10 @@
                 document.getElementById('mlBadge').textContent = regime.model_type === 'causal_neural' ? 'Validated ML' : 'Rule-based';
                 document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--success) 10%, transparent)';
                 document.getElementById('mlBadge').style.color = 'var(--success)';
+                return Boolean(regime.current_regime && (!firstStock || volatility.predictions));
 
             } catch (error) {
+                if (!isCurrent()) return false;
                 debugLogger.error('ML insights load failed', error);
                 document.getElementById('mlInsights').innerHTML = `
                     <div style="padding:1rem;background:var(--warning-bg);border:1px solid var(--warning);border-radius:var(--radius-md);">
@@ -825,17 +822,11 @@
                 document.getElementById('mlBadge').textContent = 'Fallback';
                 document.getElementById('mlBadge').style.background = 'color-mix(in oklab, var(--warning) 10%, transparent)';
                 document.getElementById('mlBadge').style.color = 'var(--warning)';
+                return false;
             }
         }
 
         // ==================== ADVANCED ANALYTICS ====================
-        async function loadAdvancedAnalytics() {
-            await Promise.all([
-                loadCorrelationAnalysis().catch(err => debugLogger.warn('Correlation failed', err)),
-                loadStressTestingUI().catch(err => debugLogger.warn('Stress testing failed', err)),
-                loadRegimeHistory().catch(err => debugLogger.warn('Regime history failed', err))
-            ]);
-        }
 
         async function loadPlotlyLib() {
             if (plotlyLoaded) return;
@@ -849,7 +840,7 @@
             plotlyLoaded = true;
         }
 
-        async function loadCorrelationAnalysis() {
+        async function loadCorrelationAnalysis(isCurrent = () => true) {
             const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('correlation');
@@ -857,6 +848,7 @@
                 else document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Loading visualization library…</div>';
 
                 await loadPlotlyLib();
+                if (!isCurrent()) return false;
 
                 if (!window.hasCacheHit(key, 'bourse') || forceRefreshFlag) {
                     document.getElementById('correlationAnalysis').innerHTML = '<div class="loading">Calculating correlations…</div>';
@@ -872,6 +864,7 @@
                 }
 
                 const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
+                if (!isCurrent()) return false;
                 const corrMatrix = data.correlation_matrix || {};
                 const labels = data.clustering?.labels || Object.keys(corrMatrix);
                 const corrArray = labels.map(row => labels.map(col => corrMatrix[row]?.[col] || 0));
@@ -964,8 +957,10 @@
                 document.getElementById('correlationBadge').textContent = `${labels.length} positions`;
 
             } catch (error) {
+                if (!isCurrent()) return false;
                 debugLogger.error('Correlation analysis failed', error);
                 document.getElementById('correlationAnalysis').innerHTML = `<div class="error-message">Failed: ${error?.message || error?.error || 'Analytics request failed'}</div>`;
+                return false;
             }
         }
 
@@ -1341,7 +1336,7 @@
             return '';
         }
 
-        async function loadRegimeHistory() {
+        async function loadRegimeHistory(isCurrent = () => true) {
             const activeUser = localStorage.getItem('activeUser') || '';
 
             try {
@@ -1349,7 +1344,9 @@
                 if (!forceRefreshFlag && window.hasCacheHit(key, 'bourse')) showCacheIndicator();
 
                 const regimeUrl = `/api/ml/bourse/regime?user_id=${activeUser}&benchmark=SPY&lookback_days=7300`;
+                if (!isCurrent()) return false;
                 const regimeData = await window.cachedApiCall(key, globalConfig.getApiUrl(regimeUrl), cacheOpts(), 'bourse');
+                if (!isCurrent()) return false;
 
                 // Detect absurd probabilities
                 const probabilities = regimeData.regime_probabilities || {};
@@ -1419,14 +1416,17 @@
                 // Create Regime Timeline
                 window.currentRegimeData = regimeData;
                 await createRegimeTimelineChart(regimeData, 365);
+                if (!isCurrent()) return false;
 
                 document.getElementById('regimeBadge').textContent = `${regimeData.benchmark} • ${regimeData.current_regime}`;
 
             } catch (error) {
+                if (!isCurrent()) return false;
                 debugLogger.error('Failed to load regime history', error);
                 document.getElementById('regimeHistory').innerHTML = `
                     <div class="error-message">Failed to load ML regime history: ${error.message}</div>
                 `;
+                return false;
             }
         }
 
@@ -1649,15 +1649,8 @@
         }
 
         // ==================== SPECIALIZED ANALYTICS ====================
-        async function loadSpecializedAnalytics() {
-            await Promise.all([
-                loadSectorRotation().catch(err => debugLogger.warn('Sector rotation failed', err)),
-                loadMarginMonitoring().catch(err => debugLogger.warn('Margin monitoring failed', err))
-            ]);
-            populateTickerSelector();
-        }
 
-        async function loadSectorRotation() {
+        async function loadSectorRotation(isCurrent = () => true) {
             const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('sector-rotation');
@@ -1665,6 +1658,7 @@
                 else document.getElementById('sectorRotation').innerHTML = '<div class="loading">Loading visualization library…</div>';
 
                 await loadPlotlyLib();
+                if (!isCurrent()) return false;
 
                 if (!window.hasCacheHit(key, 'bourse') || forceRefreshFlag) {
                     document.getElementById('sectorRotation').innerHTML = '<div class="loading">Analyzing sectors…</div>';
@@ -1676,6 +1670,7 @@
                 }
 
                 const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
+                if (!isCurrent()) return false;
                 const sectors = data.sectors || {};
                 const sortedSectors = Object.entries(sectors).sort((a, b) => (b[1].momentum || 0) - (a[1].momentum || 0));
 
@@ -1804,12 +1799,14 @@
                 document.getElementById('sectorBadge').style.color = data.rotation_detected ? 'var(--warning)' : '';
 
             } catch (error) {
+                if (!isCurrent()) return false;
                 debugLogger.error('Sector rotation failed', error);
                 document.getElementById('sectorRotation').innerHTML = `
                     <div class="error-message" style="font-size: 0.875rem;">
                         Failed to load sector rotation data: ${error.message}
                     </div>
                 `;
+                return false;
             }
         }
 
@@ -1851,7 +1848,7 @@
             });
         }
 
-        async function loadMarginMonitoring() {
+        async function loadMarginMonitoring(isCurrent = () => true) {
             const activeUser = localStorage.getItem('activeUser') || '';
             try {
                 const key = bourseCacheKey('margin');
@@ -1864,6 +1861,7 @@
                 }
 
                 const data = await window.cachedApiCall(key, globalConfig.getApiUrl(url), cacheOpts(), 'bourse');
+                if (!isCurrent()) return false;
 
                 const warningLevel = data.warnings && data.warnings.length > 0 ?
                     (data.warnings.some(w => w.includes('CRITICAL')) ? 'danger' : 'warning') : 'success';
@@ -1928,12 +1926,14 @@
                 document.getElementById('marginBadge').style.color = `var(--${warningLevel})`;
 
             } catch (error) {
+                if (!isCurrent()) return false;
                 debugLogger.error('Margin monitoring failed', error);
                 document.getElementById('marginMonitoring').innerHTML = `
                     <div class="error-message" style="font-size: 0.875rem;">
                         Failed to load margin data: ${error.message}
                     </div>
                 `;
+                return false;
             }
         }
 

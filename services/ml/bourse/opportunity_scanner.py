@@ -13,6 +13,8 @@ import numpy as np
 import math
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from services.ml.bourse.horizons import OPPORTUNITY_HORIZONS
+import json
 import logging
 
 from services.ml.bourse.sector_analyzer import SectorAnalyzer
@@ -109,6 +111,31 @@ INDUSTRY_TARGET_TOTAL = sum(
     sum(STANDARD_SECTORS[sector]["target_range"]) / 2
     for sector in INDUSTRY_SECTORS
 )
+
+
+def parse_sector_targets(raw):
+    """Validate a complete user policy; unspecified sectors get a zero target."""
+    if raw is None:
+        return None
+    try:
+        values = json.loads(raw) if isinstance(raw, str) else raw
+        if not isinstance(values, dict) or not values or set(values) - set(INDUSTRY_SECTORS):
+            raise ValueError()
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in values.values()):
+            raise ValueError()
+        targets = {sector: float(values.get(sector, 0)) for sector in INDUSTRY_SECTORS}
+        if any(not math.isfinite(v) or v < 0 or v > 100 for v in targets.values()):
+            raise ValueError()
+        if not math.isclose(sum(targets.values()), 100.0, abs_tol=0.01):
+            raise ValueError()
+        return targets
+    except (ValueError, TypeError, OverflowError):
+        raise ValueError("Sector targets must be industry percentages between 0 and 100 totaling 100%") from None
+
+
+def default_sector_targets():
+    return {sector: sum(STANDARD_SECTORS[sector]['target_range']) / 2 / INDUSTRY_TARGET_TOTAL * 100
+            for sector in INDUSTRY_SECTORS}
 
 
 # Sector mapping (Yahoo Finance → GICS)
@@ -261,7 +288,8 @@ class OpportunityScanner:
         self,
         positions: List[Dict[str, Any]],
         horizon: str = "medium",
-        min_gap_pct: float = 5.0
+        min_gap_pct: float = 5.0,
+        target_allocations: Optional[Dict[str, float]] = None,
     ) -> Dict[str, Any]:
         """
         Scan portfolio for sector gaps and opportunities.
@@ -282,7 +310,9 @@ class OpportunityScanner:
             logger.debug(f"Current allocation: {current_allocation}")
 
             # 2. Detect gaps vs standard sectors
-            gaps = self._detect_gaps(current_allocation, min_gap_pct)
+            targets = parse_sector_targets(target_allocations)
+            unclassified_pct = max(0.0, 100.0 - sum(current_allocation.get(s, 0.0) for s in INDUSTRY_SECTORS))
+            gaps = self._detect_gaps(current_allocation, min_gap_pct, targets, unclassified_pct)
             logger.info(f"Detected {len(gaps)} sector gaps")
 
             # 3. Score each gap
@@ -304,6 +334,11 @@ class OpportunityScanner:
                 "all_gaps": scored_gaps,
                 "top_gaps": top_gaps,
                 "current_allocation": current_allocation,
+                "target_allocations": targets if targets is not None else default_sector_targets(),
+                "target_source": "user" if targets is not None else "generic_reference",
+                "classification_coverage": (100.0 - unclassified_pct) / 100.0,
+                "unclassified_pct": unclassified_pct,
+                "horizon_details": OPPORTUNITY_HORIZONS[horizon].metadata(),
                 "scan_time": datetime.now().isoformat(),
                 "horizon": horizon
             }
@@ -323,55 +358,18 @@ class OpportunityScanner:
         Returns:
             Sector name or "Unknown"
         """
-        # Mapping Saxo exchange codes → Yahoo Finance suffixes
-        SAXO_TO_YAHOO_EXCHANGE = {
-            'xvtx': '.SW',   # Swiss (Zurich)
-            'xswx': '.SW',   # Swiss (SIX)
-            'xetr': '.DE',   # German (Xetra)
-            'xwar': '.WA',   # Poland (Warsaw)
-            'xpar': '.PA',   # France (Paris)
-            'xams': '.AS',   # Netherlands (Amsterdam)
-            'xmil': '.MI',   # Italy (Milan)
-            'xmli': '.MI',   # Italy (Milan ETF)
-            'xlon': '.L',    # UK (London)
-            'xnas': '',      # US (NASDAQ - no suffix)
-            'xnys': '',      # US (NYSE - no suffix)
-        }
-
         try:
             import yfinance as yf
-
-            # Parse Saxo format: "SYMBOL:xexchange" → (SYMBOL, xexchange)
-            yahoo_symbol = symbol
-            base_symbol = symbol.split(':')[0].upper() if ':' in symbol else symbol.upper()
-
-            # Check ETF mapping FIRST (Yahoo Finance doesn't return sectors for ETFs)
-            if base_symbol in ETF_SECTOR_MAPPING:
-                sector = ETF_SECTOR_MAPPING[base_symbol]
-                logger.info(f" {symbol} → {sector} (ETF mapping)")
-                return sector
-
-            if ':' in symbol:
-                base_symbol, exchange = symbol.split(':', 1)
-                exchange = exchange.lower()
-
-                # Clean symbol (SLHn → SLHN, etc.)
-                base_symbol = base_symbol.upper()
-
-                # Special symbol mappings (Yahoo Finance exceptions)
-                SYMBOL_EXCEPTIONS = {
-                    'BRKB': 'BRK-B',  # Berkshire Hathaway Class B
-                    'BRKA': 'BRK-A',  # Berkshire Hathaway Class A
-                }
-                base_symbol = SYMBOL_EXCEPTIONS.get(base_symbol, base_symbol)
-
-                # Get Yahoo Finance suffix
-                if exchange in SAXO_TO_YAHOO_EXCHANGE:
-                    suffix = SAXO_TO_YAHOO_EXCHANGE[exchange]
-                    yahoo_symbol = f"{base_symbol}{suffix}"
-                    logger.info(f" Saxo '{symbol}' → Yahoo '{yahoo_symbol}'")
-                else:
-                    logger.info(f" Unknown exchange '{exchange}' for {symbol}, trying as-is")
+            from services.risk.bourse.data_fetcher import BourseDataFetcher
+            from services.ml.bourse.currency_detector import CurrencyExchangeDetector
+            base_symbol, _, mic = symbol.partition(':')
+            if base_symbol.upper() in ETF_SECTOR_MAPPING:
+                return ETF_SECTOR_MAPPING[base_symbol.upper()]
+            hint = BourseDataFetcher.MIC_TO_EXCHANGE_HINT.get(mic.lower()) if mic else None
+            if mic and hint is None:
+                return "Unknown"
+            yahoo_symbol, _, _ = CurrencyExchangeDetector().detect_currency_and_exchange(
+                base_symbol, exchange_hint=hint)
 
             # Try fetching with converted symbol
             ticker = yf.Ticker(yahoo_symbol)
@@ -460,7 +458,9 @@ class OpportunityScanner:
     def _detect_gaps(
         self,
         current_allocation: Dict[str, float],
-        min_gap_pct: float
+        min_gap_pct: float,
+        target_allocations: Optional[Dict[str, float]] = None,
+        unclassified_pct: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         Detect sector gaps (missing or underweight sectors).
@@ -473,22 +473,24 @@ class OpportunityScanner:
             List of gaps with sector info
         """
         gaps = []
+        targets = target_allocations if target_allocations is not None else default_sector_targets()
 
         for sector in INDUSTRY_SECTORS:
             info = STANDARD_SECTORS[sector]
             current = current_allocation.get(sector, 0.0)
-            target_min, target_max = info["target_range"]
-            target = ((target_min + target_max) / 2) / INDUSTRY_TARGET_TOTAL * 100
+            target = targets[sector]
 
-            gap_pct = target - current
+            # Unknown ETF/sector exposure may already fill the apparent gap.
+            gap_pct = target - current - unclassified_pct
 
             # Only consider gaps above threshold
-            if gap_pct >= min_gap_pct:
+            if gap_pct > 0 and gap_pct >= min_gap_pct:
                 gaps.append({
                     "sector": sector,
                     "current_pct": round(current, 2),
                     "target_pct": round(target, 2),
                     "gap_pct": round(gap_pct, 2),
+                    "gap_kind": "minimum_verified_gap",
                     "etf": info["etf"],
                     "description": info["description"]
                 })
