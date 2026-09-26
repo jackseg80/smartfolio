@@ -139,4 +139,4 @@ La preuve de pertinence financière reste ouverte : conserver des signaux et fon
 
 Les listes de candidats restent un univers limité ; disponibilité chez Saxo, liquidité, frais, contraintes fiscales, transparisation des fonds et validation financière hors échantillon ne sont pas attestés par ce complément. Le portefeuille de production actuel n'a pas été rapproché d'un export récent.
 
-État de ce complément : modifications locales testées et documentées, pas encore committées/poussées/fusionnées ni déployées sur Robot2. Un simple `deploy.sh` ne peut pas récupérer ce travail tant qu'il n'est pas publié dans `main`.
+Mise à jour du 2026-09-26 : le complément a été fusionné dans `main` via la PR #65 (commit `631a2bdf`) et son déploiement sur Robot2 a été confirmé par l’utilisateur. La pertinence financière hors échantillon, la comparaison au portefeuille réel et la validation Saxo restent à établir avec des données datées et des résultats observés ; le déploiement ne constitue pas cette preuve.

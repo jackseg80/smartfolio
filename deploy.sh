@@ -45,6 +45,8 @@ fi
 echo -e "${YELLOW} Step 1/5: Checking for local changes...${NC}"
 if git diff --quiet && git diff --cached --quiet; then
     echo -e "${GREEN}[OK] No local changes${NC}"
+elif git diff --ignore-space-at-eol --quiet && git diff --cached --ignore-space-at-eol --quiet; then
+    echo -e "${GREEN}[OK] Only line-ending differences detected; no reset needed${NC}"
 else
     echo -e "${YELLOW}[Warning]  Local changes detected:${NC}"
     git status --short

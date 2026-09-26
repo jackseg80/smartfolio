@@ -167,7 +167,7 @@ Le script `deploy.sh` est la méthode **recommandée** pour tous les déploiemen
 
 ### Processus du script
 Le script exécute les étapes suivantes :
-1.  **Vérification des changements locaux** : Si des modifications existent sur le serveur, il propose de les sauvegarder dans un patch avant de les écraser.
+1.  **Vérification des changements locaux** : Les différences limitées aux fins de ligne sont ignorées. Pour les autres modifications suivies par Git, le script propose une sauvegarde dans un patch puis leur remplacement après confirmation. Les fichiers non suivis ne déclenchent pas cette vérification et ne sont pas supprimés par le reset.
 2.  **Pull depuis GitHub** : Récupère la dernière version du code.
 3.  **Vérification du cache de prix** : Vous alerte si le cache semble incomplet.
 4.  **Reconstruction & Redémarrage Docker** : Reconstruit l'image de l'API et relance la stack.
