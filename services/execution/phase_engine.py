@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass
 from enum import Enum
 import httpx
+from services.market_data import get_market_breadth_metrics
+from services.price_history import get_cached_history
 from pathlib import Path
 import json
 
@@ -52,6 +54,9 @@ class PhaseSignals:
     # Timestamp et qualité
     as_of: datetime = None
     quality_score: float = 1.0             # Score qualité données [0-1]
+    btc_dominance_available: bool = False
+    relative_strength_available: bool = False
+    market_breadth_available: bool = False
 
 @dataclass  
 class PhaseState:
@@ -160,44 +165,43 @@ class PhaseEngine:
                         data = resp.json()
                         btc_dominance = data.get("data", {}).get("market_cap_percentage", {}).get("btc", 0)
                         signals.btc_dominance = float(btc_dominance)
+                        signals.btc_dominance_available = signals.btc_dominance > 0
                         logger.debug(f"BTC dominance fetched: {btc_dominance:.1f}%")
                 except Exception as e:
                     logger.warning(f"Failed to fetch BTC dominance: {e}, using fallback")
                     signals.btc_dominance = 45.0  # Fallback historique
 
-                # 2. Force relative depuis notre API de prix
+                # 2. Relative strength from the shared global price-history cache.
+                # Avoid calling authenticated API routes over HTTP from this global engine.
                 try:
-                    price_url = f"{self.api_base_url}/api/market/prices"
-                    resp = await client.get(price_url, params={"days": 30}, timeout=8.0)
-
-                    if resp.status_code == 200:
-                        price_data = resp.json()
-                        rs_signals = self._calculate_relative_strength(price_data)
-
-                        signals.rs_eth_btc_7d = rs_signals.get('eth_btc_7d', 1.0)
-                        signals.rs_eth_btc_30d = rs_signals.get('eth_btc_30d', 1.0)
-                        signals.rs_large_btc_7d = rs_signals.get('large_btc_7d', 1.0)
-                        signals.rs_large_btc_30d = rs_signals.get('large_btc_30d', 1.0)
-                        signals.rs_alt_btc_7d = rs_signals.get('alt_btc_7d', 1.0)
-                        signals.rs_alt_btc_30d = rs_signals.get('alt_btc_30d', 1.0)
-
-                        logger.debug(f"Relative strength calculated: ETH/BTC 7d={signals.rs_eth_btc_7d:.3f}")
+                    btc_history, eth_history = await asyncio.gather(
+                        asyncio.to_thread(get_cached_history, "BTC", days=35),
+                        asyncio.to_thread(get_cached_history, "ETH", days=35),
+                    )
+                    rs_7d = self._calculate_pair_relative_strength(eth_history, btc_history, 7)
+                    rs_30d = self._calculate_pair_relative_strength(eth_history, btc_history, 30)
+                    if rs_7d is not None:
+                        signals.rs_eth_btc_7d = rs_7d
+                    if rs_30d is not None:
+                        signals.rs_eth_btc_30d = rs_30d
+                    signals.relative_strength_available = rs_7d is not None or rs_30d is not None
                 except Exception as e:
-                    logger.warning(f"Failed to fetch price data for RS calculation: {e}")
+                    logger.warning(f"Cached price history unavailable for relative strength: {e}")
 
-                # 3. Breadth et momentum depuis analytics endpoint
+                # 3. Global breadth is user-independent; call its shared service directly.
                 try:
-                    analytics_url = f"{self.api_base_url}/api/analytics/market-breadth"
-                    resp = await client.get(analytics_url, timeout=5.0)
-
-                    if resp.status_code == 200:
-                        breadth_data = resp.json()
-                        signals.breadth_advance_decline = breadth_data.get("advance_decline_ratio", 0.5)
-                        signals.breadth_new_highs = breadth_data.get("new_highs_count", 0)
-                        signals.volume_concentration = breadth_data.get("volume_concentration", 0.5)
-                        signals.momentum_dispersion = breadth_data.get("momentum_dispersion", 0.5)
+                    breadth_data = await get_market_breadth_metrics(limit=100)
+                    signals.breadth_advance_decline = breadth_data.get("advance_decline_ratio", 0.5)
+                    signals.breadth_new_highs = breadth_data.get("new_highs_count", 0)
+                    signals.volume_concentration = breadth_data.get("volume_concentration", 0.5)
+                    signals.momentum_dispersion = breadth_data.get("momentum_dispersion", 0.5)
+                    meta = breadth_data.get("meta", {})
+                    signals.market_breadth_available = (
+                        meta.get("source") == "coingecko_global_top100"
+                        and meta.get("assets_analyzed", 0) > 0
+                    )
                 except Exception as e:
-                    logger.debug(f"Market breadth endpoint not available: {e}, using defaults")
+                    logger.warning(f"Market breadth service unavailable: {e}")
             
             # Calculer dominance delta et quality score
             signals.btc_dominance_delta_7d = self._calculate_dominance_delta(signals.btc_dominance)
@@ -214,6 +218,33 @@ class PhaseEngine:
                 btc_dominance=45.0  # Fallback
             )
     
+    @staticmethod
+    def _calculate_pair_relative_strength(
+        asset_history: Optional[List[Tuple[int, float]]],
+        benchmark_history: Optional[List[Tuple[int, float]]],
+        days: int,
+    ) -> Optional[float]:
+        """Calculate asset performance relative to BTC from cached daily prices."""
+        import time
+
+        def period_return(history: Optional[List[Tuple[int, float]]]) -> Optional[float]:
+            if not history:
+                return None
+            points = sorted((int(ts), float(price)) for ts, price in history if float(price) > 0)
+            if len(points) < 2 or time.time() - points[-1][0] > 2 * 86400:
+                return None
+            target_ts = points[-1][0] - days * 86400
+            base = next((point for point in reversed(points) if point[0] <= target_ts), None)
+            if base is None or points[-1][0] - base[0] < days * 0.8 * 86400:
+                return None
+            return points[-1][1] / base[1] - 1.0
+
+        asset_return = period_return(asset_history)
+        benchmark_return = period_return(benchmark_history)
+        if asset_return is None or benchmark_return is None or 1.0 + benchmark_return <= 0:
+            return None
+        return (1.0 + asset_return) / (1.0 + benchmark_return)
+
     def _calculate_relative_strength(self, price_data: Dict[str, Any]) -> Dict[str, float]:
         """Calcule la force relative entre actifs sur différentes périodes"""
         try:
@@ -275,11 +306,11 @@ class PhaseEngine:
             
             # Facteur 2 : Complétude des signaux
             completeness = 0.0
-            if signals.btc_dominance > 0:
+            if signals.btc_dominance_available:
                 completeness += 0.4
-            if signals.rs_eth_btc_7d > 0:
-                completeness += 0.3 
-            if signals.breadth_advance_decline > 0:
+            if signals.relative_strength_available:
+                completeness += 0.3
+            if signals.market_breadth_available:
                 completeness += 0.3
             quality_factors.append(completeness)
             
