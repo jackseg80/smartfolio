@@ -29,7 +29,7 @@ export const CACHE_CONFIG = {
     ttl: 6 * 60 * 60 * 1000  // 6 heures
   },
   RISK_DASHBOARD_BALANCE: {
-    key: 'risk-dashboard-balance',  // ✅ FIX: Prefix for balance cache (user/source appended at runtime)
+    key: 'risk-dashboard-balance',  //  FIX: Prefix for balance cache (user/source appended at runtime)
     ttl: 6 * 60 * 60 * 1000  // 6 heures
   },
   CYCLE_CONTENT: {

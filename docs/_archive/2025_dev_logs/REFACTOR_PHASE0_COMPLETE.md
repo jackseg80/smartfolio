@@ -1,20 +1,20 @@
-# Refactoring Phase 0 - Quick Wins ✅ TERMINÉ
+# Refactoring Phase 0 - Quick Wins  TERMINÉ
 
 **Date**: 2025-10-01
 **Durée**: 30 minutes
-**Statut**: ✅ Succès
+**Statut**: [OK] Succès
 
 ---
 
-## 🎯 Objectifs Phase 0
+## Objectifs Phase 0
 
-1. ✅ Unifier `calculateAdaptiveWeights` (éliminer duplication)
-2. ✅ Archiver pages debug legacy avec fetch direct
-3. ⚠️ Analyse des 26 erreurs de tests (Phase 1 requise)
+1. [OK] Unifier `calculateAdaptiveWeights` (éliminer duplication)
+2. [OK] Archiver pages debug legacy avec fetch direct
+3. [Warning] Analyse des 26 erreurs de tests (Phase 1 requise)
 
 ---
 
-## ✅ 1. Unification calculateAdaptiveWeights
+## 1. Unification calculateAdaptiveWeights
 
 ### Problème Initial
 - **Diagnostic agent**: 4 implémentations dupliquées
@@ -44,7 +44,7 @@ Duplication réelle:
 - // RÉPLIQUE unified-insights-v2.js lignes 42-94 (40 lignes dupliquées)
 - calculateAdaptiveWeights: (base, state) => { ... }
 
-+ // ✅ UNIFIED: Use centralized calculateAdaptiveWeights
++ // [OK] UNIFIED: Use centralized calculateAdaptiveWeights
 + calculateAdaptiveWeights: (base, state) => {
 +   const result = calculateAdaptiveWeights(base, state);
 +   return { cycle: result.cycle, onchain: result.onchain, risk: result.risk,
@@ -53,14 +53,14 @@ Duplication réelle:
 ```
 
 **Impact**:
-- ✅ Élimination de 40 lignes de code dupliqué
-- ✅ Simulation et production utilisent la même logique de pondération
-- ✅ Maintenance simplifiée (1 seul endroit à modifier)
-- ✅ Compatibilité ascendante préservée (format retour identique)
+- [OK] Élimination de 40 lignes de code dupliqué
+- [OK] Simulation et production utilisent la même logique de pondération
+- [OK] Maintenance simplifiée (1 seul endroit à modifier)
+- [OK] Compatibilité ascendante préservée (format retour identique)
 
 ---
 
-## ✅ 2. Nettoyage Pages Debug Legacy
+## 2. Nettoyage Pages Debug Legacy
 
 ### Fichiers Identifiés
 **5 fichiers HTML avec fetch() direct** (contourne isolation multi-user):
@@ -88,7 +88,7 @@ mv static/fix_user_demo.html static/archive/debug/
 **Changements**:
 ```diff
 - <h1>Test /balances/current (stub)</h1>
-+ <h1>⚠️ DEPRECATED - Use loadBalanceData() instead</h1>
++ <h1>[Warning] DEPRECATED - Use loadBalanceData() instead</h1>
 + <p>Ce fichier utilise fetch() direct qui contourne l'isolation multi-user.</p>
 
 + <script src="/static/global-config.js"></script>
@@ -97,7 +97,7 @@ mv static/fix_user_demo.html static/archive/debug/
 -     document.getElementById('out').textContent = JSON.stringify(j,null,2);
 -   }).catch(e=>document.getElementById('out').textContent = e);
 
-+   // ✅ BON - Utiliser loadBalanceData()
++   // [OK] BON - Utiliser loadBalanceData()
 +   (async () => {
 +     const result = await window.loadBalanceData(true);
 +     document.getElementById('out').textContent = JSON.stringify(result, null, 2);
@@ -106,13 +106,13 @@ mv static/fix_user_demo.html static/archive/debug/
 ```
 
 **Impact**:
-- ✅ Isolation multi-user respectée (headers X-User, cache TTL)
-- ✅ Démonstration du bon pattern pour futurs développements
-- ✅ Page fonctionnelle mais marquée deprecated
+- [OK] Isolation multi-user respectée (headers X-User, cache TTL)
+- [OK] Démonstration du bon pattern pour futurs développements
+- [OK] Page fonctionnelle mais marquée deprecated
 
 ### Vérification WealthContextBar.js & strategy-api-adapter.js
 
-**Résultat audit**: ✅ **FAUX POSITIFS** de l'agent
+**Résultat audit**: [OK] **FAUX POSITIFS** de l'agent
 
 ```bash
 # WealthContextBar.js lignes 1-100 : AUCUN fetch('/balances/current')
@@ -123,7 +123,7 @@ mv static/fix_user_demo.html static/archive/debug/
 
 ---
 
-## ⚠️ 3. Analyse 26 Erreurs de Tests (Phase 1)
+## 3. Analyse 26 Erreurs de Tests (Phase 1)
 
 ### Statistiques
 - **Tests collectés**: 181
@@ -185,7 +185,7 @@ tests/ml/__init__.py (dossier collecté mais tests non exécutables)
 
 ---
 
-## 📋 Phase 1 - Plan de Correction (1-2 jours)
+## Phase 1 - Plan de Correction (1-2 jours)
 
 ### Option A: Installation Dépendances ML (Recommandé)
 
@@ -205,13 +205,13 @@ pytest tests/ -v
 ```
 
 **Avantages**:
-- ✅ Débloquer tous les tests ML
-- ✅ Fonctionnalités ML complètes (predictions, orchestrator)
-- ✅ Pas de refactor code nécessaire
+- [OK] Débloquer tous les tests ML
+- [OK] Fonctionnalités ML complètes (predictions, orchestrator)
+- [OK] Pas de refactor code nécessaire
 
 **Inconvénients**:
-- ⚠️ PyTorch = ~2GB téléchargement + ~4GB installé
-- ⚠️ Temps installation ~10-15 minutes
+- [Warning] PyTorch = ~2GB téléchargement + ~4GB installé
+- [Warning] Temps installation ~10-15 minutes
 
 ---
 
@@ -231,7 +231,7 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    print("⚠️ PyTorch not available - ML features disabled")
+    print("[Warning] PyTorch not available - ML features disabled")
 
 def get_model():
     if not TORCH_AVAILABLE:
@@ -247,20 +247,20 @@ try:
     await ml_service.initialize()
 except RuntimeError as e:
     if "PyTorch not installed" in str(e):
-        logger.warning("⚠️ ML service disabled - PyTorch not available")
+        logger.warning(" ML service disabled - PyTorch not available")
     else:
         raise
 ```
 
 **Avantages**:
-- ✅ Tests non-ML fonctionnels immédiatement
-- ✅ Déploiement léger possible (sans ML)
-- ✅ Dégradation gracieuse
+- [OK] Tests non-ML fonctionnels immédiatement
+- [OK] Déploiement léger possible (sans ML)
+- [OK] Dégradation gracieuse
 
 **Inconvénients**:
-- ⚠️ 17 tests ML resteront skippés
-- ⚠️ Refactor modéré (2-3 fichiers)
-- ⚠️ Complexité ajoutée (feature flags)
+- [Warning] 17 tests ML resteront skippés
+- [Warning] Refactor modéré (2-3 fichiers)
+- [Warning] Complexité ajoutée (feature flags)
 
 ---
 
@@ -283,7 +283,7 @@ rm -rf tests/ml/
 
 ---
 
-## 🎯 Recommandation Finale
+## Recommandation Finale
 
 **Pour débloquer rapidement** (30 minutes):
 ```bash
@@ -309,26 +309,26 @@ pytest tests/ -v --tb=short
 
 ---
 
-## 📊 Métriques de Succès Phase 0
+## Métriques de Succès Phase 0
 
 ### Avant Refactoring
-- ❌ Duplication `calculateAdaptiveWeights`: 2 versions (prod vs simulation)
-- ❌ Fetch direct bypass cache: 5 fichiers HTML
-- ❌ Tests cassés: 26 erreurs (14% échec)
+- [Error] Duplication `calculateAdaptiveWeights`: 2 versions (prod vs simulation)
+- [Error] Fetch direct bypass cache: 5 fichiers HTML
+- [Error] Tests cassés: 26 erreurs (14% échec)
 
 ### Après Phase 0
-- ✅ Duplication `calculateAdaptiveWeights`: **1 version unique** (SOT)
-- ✅ Fetch direct bypass cache: **0 fichiers JS critiques** (5 HTML archivés)
-- ⚠️ Tests cassés: **26 erreurs** (cause identifiée: dépendances ML)
+- [OK] Duplication `calculateAdaptiveWeights`: **1 version unique** (SOT)
+- [OK] Fetch direct bypass cache: **0 fichiers JS critiques** (5 HTML archivés)
+- [Warning] Tests cassés: **26 erreurs** (cause identifiée: dépendances ML)
 
 ### Après Phase 1 (projection)
-- ✅ Tests cassés: **0 erreur** (100% verts après install torch+filelock)
-- ✅ Coverage stable: 155+ tests fonctionnels
-- ✅ CI/CD débloquée
+- [OK] Tests cassés: **0 erreur** (100% verts après install torch+filelock)
+- [OK] Coverage stable: 155+ tests fonctionnels
+- [OK] CI/CD débloquée
 
 ---
 
-## 🔗 Fichiers Modifiés
+## Fichiers Modifiés
 
 ### Commits suggérés
 
@@ -377,7 +377,7 @@ Files:
 
 ---
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
 1. **Phase 1 - Débloquer CI** (1-2 jours):
    - Installer `torch + filelock` (Option A recommandée)
@@ -400,4 +400,4 @@ Files:
 **Rapport généré**: 2025-10-01
 **Auteur**: Claude Code Agent (Sonnet 4.5)
 **Durée Phase 0**: 30 minutes
-**Statut**: ✅ Quick Wins Terminés, Phase 1 Identifiée
+**Statut**: [OK] Quick Wins Terminés, Phase 1 Identifiée

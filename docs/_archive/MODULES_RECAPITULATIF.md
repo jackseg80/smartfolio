@@ -1,11 +1,11 @@
-# 📋 Récapitulatif des Nouveaux Modules
+# Récapitulatif des Nouveaux Modules
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 J'ai créé **4 systèmes majeurs** avec **12 nouveaux modules** qui transforment ton outil crypto en plateforme complète de gestion de portfolio multi-actifs.
 
 ---
 
-## 🚀 1. SYSTÈME D'OPTIMISATION DE PERFORMANCE
+## 1. SYSTÈME D'OPTIMISATION DE PERFORMANCE
 
 ### `services/performance_optimizer.py`
 **But :** Accélérer l'optimisation des gros portfolios (500+ actifs)  
@@ -21,9 +21,9 @@ preprocessed = performance_optimizer.batch_optimization_preprocessing(price_df, 
 ```
 
 **Gains :** 
-- ⚡ 4.8x plus rapide sur 500 actifs
-- 💾 26x plus rapide sur calculs répétés (cache)
-- 🔧 Gestion automatique mémoire
+- 4.8x plus rapide sur 500 actifs
+- 26x plus rapide sur calculs répétés (cache)
+- Gestion automatique mémoire
 
 ### `api/performance_endpoints.py`
 **But :** API pour surveiller et contrôler les performances  
@@ -37,7 +37,7 @@ preprocessed = performance_optimizer.batch_optimization_preprocessing(price_df, 
 
 ---
 
-## 💰 2. SYSTÈME MULTI-ASSETS
+## 2. SYSTÈME MULTI-ASSETS
 
 ### `services/multi_asset_manager.py`
 **But :** Gérer 7 types d'actifs (crypto, actions, obligations, commodités, REITs, ETFs, forex)  
@@ -85,7 +85,7 @@ allocation = multi_asset_manager.suggest_multi_asset_allocation(
 
 ---
 
-## 📊 3. SYSTÈME DE CHARTS INTERACTIFS
+## 3. SYSTÈME DE CHARTS INTERACTIFS
 
 ### `static/components/AdvancedCharts.js`
 **But :** Bibliothèque de graphiques sophistiqués  
@@ -129,15 +129,15 @@ const dashboard = new InteractiveDashboard('container-id', {
 6. Clique sur les graphiques pour interagir
 
 **Fonctionnalités :**
-- 📈 KPI temps réel (valeur, performance, risque, Sharpe)
-- 🥧 Graphique composition portfolio interactif
-- 📊 Performance multi-actifs avec zoom
-- 🔥 Heatmap corrélation
-- 💡 Analyse risque/rendement
+- KPI temps réel (valeur, performance, risque, Sharpe)
+- Graphique composition portfolio interactif
+- Performance multi-actifs avec zoom
+- Heatmap corrélation
+- Analyse risque/rendement
 
 ---
 
-## 🎯 4. OPTIMISATION DE PORTFOLIO AVANCÉE (Améliorée)
+## 4. OPTIMISATION DE PORTFOLIO AVANCÉE (Améliorée)
 
 ### `services/portfolio_optimization.py` (Mis à jour)
 **But :** Algorithmes Markowitz avec 6 objectifs + optimisations  
@@ -171,7 +171,7 @@ result = optimizer.optimize_large_portfolio(
 
 ---
 
-## 🧠 5. MODULES BONUS (Backtesting & ML)
+## 5. MODULES BONUS (Backtesting & ML)
 
 ### `services/backtesting_engine.py`
 **But :** Tester les stratégies sur données historiques  
@@ -186,7 +186,7 @@ result = optimizer.optimize_large_portfolio(
 
 ---
 
-## 🔧 6. MENU DEBUG & TESTS
+## 6. MENU DEBUG & TESTS
 
 ### `static/debug-menu.html` (Nouveau)
 **But :** Centre de contrôle pour tester tous les modules  
@@ -199,7 +199,7 @@ result = optimizer.optimize_large_portfolio(
 
 ---
 
-## 📱 Comment utiliser tout ça ?
+## Comment utiliser tout ça ?
 
 ### Pour un utilisateur normal :
 1. **Dashboard principal :** `dashboard.html` (existant, amélioré)
@@ -221,14 +221,14 @@ result = optimizer.optimize_large_portfolio(
 
 ---
 
-## 🎯 Résumé Exécutif
+## Résumé Exécutif
 
 **Ce qui a changé :**
-- ⚡ **Performance :** 4.8x plus rapide sur gros portfolios
-- 💰 **Multi-actifs :** 7 classes d'actifs, 31+ actifs supportés  
-- 📊 **Interface :** Dashboard moderne avec charts temps réel
-- 🎯 **Optimisation :** 6 algorithmes avancés + détection auto
-- 🔧 **Debugging :** Menu centralisé pour tout tester
+- **Performance :** 4.8x plus rapide sur gros portfolios
+- **Multi-actifs :** 7 classes d'actifs, 31+ actifs supportés
+- **Interface :** Dashboard moderne avec charts temps réel
+- **Optimisation :** 6 algorithmes avancés + détection auto
+- **Debugging :** Menu centralisé pour tout tester
 
 **Impact :**
 - Passe de "outil crypto" à "plateforme portfolio institutionnelle"
@@ -242,4 +242,4 @@ result = optimizer.optimize_large_portfolio(
 3. Lance des optimisations sur ton portfolio réel
 4. Déploie en cloud si besoin (scripts fournis)
 
-Tout est prêt et testé ! 🚀
+Tout est prêt et testé !

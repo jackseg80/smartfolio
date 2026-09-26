@@ -69,7 +69,7 @@
 
   <!-- Unified Risk Flyout Panel -->
   <flyout-panel position="left" width="340" persist-key="rebalance_flyout">
-    <span slot="title">🎯 Risk Dashboard</span>
+    <span slot="title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Dashboard</span>
     <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
   </flyout-panel>
 
@@ -82,7 +82,7 @@
     <!-- Rebalancing Strategies -->
     <div id="proposed-targets" class="card" style="margin-bottom: 16px;">
       <h2 style="display:flex; align-items:center; justify-content:space-between; font-size: 1.1rem;">
-        <button type="button" class="btn-reset" style="cursor:pointer" onclick="toggleStrategiesSection()" aria-expanded="true" aria-controls="strategies-content">🎯 Predefined Strategies</button>
+        <button type="button" class="btn-reset" style="cursor:pointer" onclick="toggleStrategiesSection()" aria-expanded="true" aria-controls="strategies-content"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Predefined Strategies</button>
         <span style="display:flex; align-items:center; gap:8px">
           <span class="small muted">View:</span>
           <button class="btn btn-sm btn-secondary" id="btnViewDetailed">Detailed</button>
@@ -127,14 +127,14 @@
 
             <!-- Boutons d'action stratégies -->
             <button id="apply-strategy-btn" class="btn btn-sm" style="background: var(--success);" disabled>
-              ✅ Appliquer
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Appliquer
             </button>
             <button id="reset-strategy-btn" class="btn btn-sm btn-secondary">
-              🔄 Reset
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Reset
             </button>
             <button id="refresh-dynamic-btn" class="btn btn-sm" style="background: var(--warning);"
               onclick="window.refreshDynamicStrategy()">
-              🎯 Sync CCS
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Sync CCS
             </button>
 
             <!-- Séparateur vertical -->
@@ -143,7 +143,7 @@
             <!-- Boutons d'export -->
             <button id="btnCsv" class="btn btn-sm btn-secondary" disabled>CSV</button>
             <button id="btnJson" class="btn btn-sm btn-secondary" disabled>JSON</button>
-            <button id="btnCopyJson" class="btn btn-sm btn-secondary" disabled>📋 Copier</button>
+            <button id="btnCopyJson" class="btn btn-sm btn-secondary" disabled><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Copier</button>
           </div>
 
           <!-- Ligne 2: Pills de status (centré) -->
@@ -152,7 +152,7 @@
               No strategy selected
             </span>
             <span id="dynamicTargetsIndicator" class="pill" style="background:var(--warning);color:white;display:none;">
-              🎯 Dynamic Targets
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Dynamic Targets
             </span>
             <span id="total" class="pill">Total: —</span>
             <span id="status" class="pill">Ready.</span>
@@ -236,7 +236,7 @@
           <div id="alias-manager-button" style="display: none;">
             <button class="btn btn-sm btn-secondary" onclick="openAliasManager()"
               title="Open alias management interface">
-              🏷️ Alias Manager
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Label" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#tag"></use></svg> Alias Manager
             </button>
           </div>
         </div>
@@ -255,7 +255,7 @@
     document.addEventListener('DOMContentLoaded', async function () {
       const governanceContainer = document.getElementById('governance-container');
       if (governanceContainer) {
-        debugLogger.debug('🏛️ Initializing Governance Panel for rebalance...');
+        debugLogger.debug("Initializing Governance Panel for rebalance...");
         const governancePanel = new GovernancePanel(governanceContainer);
 
         // Auto-refresh initial state (silent to avoid toast on page load)
@@ -265,7 +265,7 @@
 
         // Store reference globally for debugging
         window.governancePanel = governancePanel;
-        debugLogger.debug('✅ Governance Panel initialized');
+        debugLogger.debug("[OK] Governance Panel initialized");
       }
     });
   </script>

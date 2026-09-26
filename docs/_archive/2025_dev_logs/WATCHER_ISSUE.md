@@ -129,9 +129,9 @@ git apply fix.patch
 
 ## Fichiers Affectés
 
-- ✅ `static/global-config.js` : FIXME documenté dans `static/FIXME_getApiUrl.md`
-- ✅ `CLAUDE.md` : Architecture documentée dans `docs/architecture-risk-routers.md`
-- ⚠️ Autres fichiers à risque : `package.json`, `.eslintrc`, `tsconfig.json`
+- [OK] `static/global-config.js` : FIXME documenté dans `static/FIXME_getApiUrl.md`
+- [OK] `CLAUDE.md` : Architecture documentée dans `docs/architecture-risk-routers.md`
+- [Warning] Autres fichiers à risque : `package.json`, `.eslintrc`, `tsconfig.json`
 
 ## Validation
 

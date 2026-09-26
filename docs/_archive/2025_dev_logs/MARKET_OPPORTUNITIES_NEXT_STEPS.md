@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 Questions Critiques pour l'Utilisateur
+## Questions Critiques pour l'Utilisateur
 
 ### 1. Actions Européennes (Fix Unknown 42%)
 
@@ -65,7 +65,7 @@
 
 ---
 
-## 🐛 Bugs à Corriger (Par Ordre de Priorité)
+## Bugs à Corriger (Par Ordre de Priorité)
 
 ### Bug #1: Unknown 42% - Actions Européennes Non Détectées
 
@@ -98,7 +98,7 @@ Unknown: 42.1% du portfolio
 
 **Fichier:** `services/ml/bourse/opportunity_scanner.py` (ligne 219-246)
 
-**Priorité:** 🔴 **CRITIQUE** - 42% du portfolio non classé
+**Priorité:** [Negative] **CRITIQUE** - 42% du portfolio non classé
 
 ---
 
@@ -127,7 +127,7 @@ for pos in scored_positions[:10]:
 
 **Fichier:** `services/ml/bourse/portfolio_gap_detector.py` (lignes 40-45, 100-150)
 
-**Priorité:** 🟠 **IMPORTANT** - Feature incomplète
+**Priorité:** [Pending] **IMPORTANT** - Feature incomplète
 
 ---
 
@@ -161,18 +161,18 @@ SECTOR_MAPPING = {
 
 **Fichier:** `services/ml/bourse/opportunity_scanner.py` (lignes 67-124)
 
-**Priorité:** 🟡 **MINEUR** - Cosmétique, n'empêche pas le fonctionnement
+**Priorité:** [Pending] **MINEUR** - Cosmétique, n'empêche pas le fonctionnement
 
 ---
 
-## 🎯 Plan d'Action Suggéré
+## Plan d'Action Suggéré
 
 ### Session 1: Diagnostic (15 min)
 
 1. **Identifier actions européennes**
    ```powershell
    # Lire logs pour trouver symboles qui échouent
-   Get-Content logs\app.log | Select-String "❌|HTTP Error 404" -Context 1
+   Get-Content logs\app.log | Select-String "Error|HTTP Error 404" -Context 1
    ```
 
 2. **Analyser poids positions**
@@ -213,21 +213,21 @@ SECTOR_MAPPING = {
 
 ---
 
-## 📊 Métriques de Succès
+## Métriques de Succès
 
 | Métrique | Actuel | Cible | Status |
 |----------|--------|-------|--------|
-| **Unknown %** | 42.1% | < 5% | 🔴 |
-| **Suggested Sales** | 0 | ≥ 1 | 🔴 |
-| **Secteurs dupliqués** | Oui | Non | 🟡 |
-| **Capital Needed** | €51,934 | ✅ OK | ✅ |
-| **Gaps détectés** | 5 | ✅ OK | ✅ |
-| **Scores calculés** | 54-62 | ✅ OK | ✅ |
-| **Performance scan** | 19s | < 10s | 🟡 |
+| **Unknown %** | 42.1% | < 5% | Negative |
+| **Suggested Sales** | 0 | ≥ 1 | Negative |
+| **Secteurs dupliqués** | Oui | Non | Pending |
+| **Capital Needed** | €51,934 |  OK | OK |
+| **Gaps détectés** | 5 |  OK | OK |
+| **Scores calculés** | 54-62 |  OK | OK |
+| **Performance scan** | 19s | < 10s | Pending |
 
 ---
 
-## 📁 Fichiers à Avoir Sous la Main
+## Fichiers à Avoir Sous la Main
 
 ### Lecture Obligatoire
 - [MARKET_OPPORTUNITIES_SESSION_SUMMARY.md](MARKET_OPPORTUNITIES_SESSION_SUMMARY.md) ← **Lire en premier**
@@ -243,7 +243,7 @@ SECTOR_MAPPING = {
 
 ---
 
-## 🔧 Commandes Utiles
+## Commandes Utiles
 
 ### Redémarrer serveur (TOUJOURS après modif Python)
 ```powershell
@@ -259,7 +259,7 @@ Get-Content logs\app.log -Wait -Tail 30
 
 ### Chercher symboles avec erreur
 ```powershell
-Get-Content logs\app.log | Select-String "❌|HTTP Error 404" -Context 2 | Select-Object -Last 10
+Get-Content logs\app.log | Select-String "Error|HTTP Error 404" -Context 2 | Select-Object -Last 10
 ```
 
 ### Voir allocation actuelle
@@ -269,7 +269,7 @@ Get-Content logs\app.log | Select-String "Current allocation|sector_values" | Se
 
 ---
 
-## 💡 Contexte Additionnel
+## Contexte Additionnel
 
 ### Pourquoi CSV Saxo n'a pas de secteurs ?
 
@@ -308,5 +308,5 @@ Notre code actuel essaie seulement `SYMBOL` sans suffix → 404 pour actions eur
 ---
 
 *Document généré pour reprise de session*
-*Utilisateur: jack | Portfolio: $127,822 | Status: 🟡 Fonctionnel à 80%*
+*Utilisateur: jack | Portfolio: $127,822 | Status: [Pending] Fonctionnel à 80%*
 

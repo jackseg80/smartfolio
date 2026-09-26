@@ -62,7 +62,7 @@ class Phase3E2ETest:
         assert "phase_3c_hybrid_intelligence" in data
         assert data["system_health"] == "healthy"
         
-        print("✅ Phase 3 Status API working")
+        print("[OK] Phase 3 Status API working")
     
     def test_var_api_comprehensive(self):
         """Test 2: API VaR complète avec données réelles"""
@@ -91,7 +91,7 @@ class Phase3E2ETest:
         assert var_95_1d["parametric_var"] > 0
         assert var_95_1d["historical_var"] > 0
         
-        print(f"✅ VaR API working - Response time: {response_time:.0f}ms")
+        print(f"[OK] VaR API working - Response time: {response_time:.0f}ms")
     
     def test_realtime_websocket_connection(self):
         """Test 3: Connexion WebSocket temps réel"""
@@ -106,7 +106,7 @@ class Phase3E2ETest:
         connections_data = connections_response.json()
         assert "total_connections" in connections_data
         
-        print(f"✅ WebSocket system active - {connections_data['total_connections']} connections")
+        print(f"[OK] WebSocket system active - {connections_data['total_connections']} connections")
     
     def test_risk_dashboard_loading(self):
         """Test 4: Chargement du dashboard de risque"""
@@ -123,7 +123,7 @@ class Phase3E2ETest:
         )
         assert advanced_toggle is not None
         
-        print("✅ Risk Dashboard loaded successfully")
+        print("[OK] Risk Dashboard loaded successfully")
     
     def test_advanced_mode_toggle(self):
         """Test 5: Basculement mode Basic/Advanced"""
@@ -148,7 +148,7 @@ class Phase3E2ETest:
         var_analysis = self.driver.find_element(By.ID, "var-analysis")
         assert var_analysis.is_displayed()
         
-        print("✅ Advanced mode toggle working")
+        print("[OK] Advanced mode toggle working")
     
     def test_var_analysis_integration(self):
         """Test 6: Intégration VaR analysis avec vraies données"""
@@ -181,7 +181,7 @@ class Phase3E2ETest:
             assert "$" in value_text  # Format monétaire
             assert "95%" in value_text  # Niveau de confiance
         
-        print("✅ VaR Analysis integration working with real data")
+        print("[OK] VaR Analysis integration working with real data")
     
     def test_navigation_badge_websocket(self):
         """Test 7: Badge de navigation avec WebSocket"""
@@ -200,7 +200,7 @@ class Phase3E2ETest:
         navigation = self.driver.find_element(By.CLASS_NAME, "app-header")
         assert navigation is not None
         
-        print("✅ Navigation badge system initialized")
+        print("[OK] Navigation badge system initialized")
     
     def test_error_handling_resilience(self):
         """Test 8: Résilience aux erreurs"""
@@ -218,7 +218,7 @@ class Phase3E2ETest:
         # L'API devrait gérer gracieusement les erreurs
         assert response.status_code in [400, 422, 500]  # Erreur attendue
         
-        print("✅ Error handling working correctly")
+        print(" Error handling working correctly")
     
     def test_performance_benchmarks(self):
         """Test 9: Benchmarks de performance"""
@@ -253,13 +253,13 @@ class Phase3E2ETest:
         assert status_time < 500  # Status en moins de 500ms
         assert websocket_time < 100  # WebSocket info en moins de 100ms
         
-        print(f"✅ Performance benchmarks:")
+        print(f"[OK] Performance benchmarks:")
         for metric, value in performance_results.items():
             print(f"   {metric}: {value:.0f}ms")
     
     def test_full_user_journey(self):
         """Test 10: Parcours utilisateur complet"""
-        print("🚀 Testing full user journey...")
+        print(" Testing full user journey...")
         
         # 1. Arriver sur le dashboard principal
         self.driver.get(f"{self.base_url}/static/dashboard.html")
@@ -292,7 +292,7 @@ class Phase3E2ETest:
         var_content = self.driver.find_element(By.ID, "var-analysis-content")
         assert var_content.is_displayed()
         
-        print("✅ Full user journey completed successfully")
+        print("[OK] Full user journey completed successfully")
 
 # Tests individuels pour execution
 def test_phase3_api_status():
@@ -319,7 +319,7 @@ if __name__ == "__main__":
     tester.setup_class()
     
     try:
-        print("🧪 Running Phase 3 E2E Integration Tests")
+        print(" Running Phase 3 E2E Integration Tests")
         print("=" * 50)
         
         tester.test_phase3_status_api()
@@ -336,13 +336,13 @@ if __name__ == "__main__":
             tester.test_navigation_badge_websocket()
             tester.test_full_user_journey()
         except Exception as e:
-            print(f"⚠️ UI Tests skipped (WebDriver issue): {e}")
+            print(f"[Warning] UI Tests skipped (WebDriver issue): {e}")
         
         print("=" * 50)
-        print("🎉 All E2E tests completed successfully!")
+        print(" All E2E tests completed successfully!")
         
     except Exception as e:
-        print(f"❌ Test failed: {e}")
+        print(f"[Error] Test failed: {e}")
         raise
     finally:
         tester.teardown_class()

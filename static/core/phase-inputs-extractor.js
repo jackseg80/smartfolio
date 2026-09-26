@@ -43,7 +43,7 @@ function calculateEthBtcRatio(state) {
     return 0.06; // ~6% ratio as neutral
 
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseInputs: ETH/BTC ratio calculation failed:', e.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseInputs: ETH/BTC ratio calculation failed:", e.message);
     return 0.06;
   }
 }
@@ -76,7 +76,7 @@ function calculateAltsBtcProxy(state) {
     return clamp01(ratio * 0.2); // Scale to reasonable range
 
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseInputs: Alts/BTC proxy calculation failed:', e.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseInputs: Alts/BTC proxy calculation failed:", e.message);
     return 0.15;
   }
 }
@@ -101,7 +101,7 @@ function calculateBreadth(state) {
     const aboveThreshold = nonBtcEntries.filter(([_, cat]) => (cat.score || 50) < 55).length;
     const breadth = aboveThreshold / nonBtcEntries.length;
 
-    console.debug('📊 PhaseInputs: Breadth calculated:', {
+    console.debug("PhaseInputs: Breadth calculated:", {
       totalCategories: nonBtcEntries.length,
       aboveThreshold,
       breadth: (breadth * 100).toFixed(1) + '%'
@@ -110,7 +110,7 @@ function calculateBreadth(state) {
     return clamp01(breadth);
 
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseInputs: Breadth calculation failed:', e.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseInputs: Breadth calculation failed:", e.message);
     return 0.5;
   }
 }
@@ -140,7 +140,7 @@ function calculateDispersion(state) {
     // Typical range: 5-25, map to 0..1
     const dispersion = clamp01((stdDev - 5) / 20);
 
-    console.debug('📊 PhaseInputs: Dispersion calculated:', {
+    console.debug("PhaseInputs: Dispersion calculated:", {
       scoresCount: scores.length,
       mean: mean.toFixed(1),
       stdDev: stdDev.toFixed(2),
@@ -150,7 +150,7 @@ function calculateDispersion(state) {
     return dispersion;
 
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseInputs: Dispersion calculation failed:', e.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseInputs: Dispersion calculation failed:", e.message);
     return 0.5;
   }
 }
@@ -173,7 +173,7 @@ function calculateCorrelationProxy(state) {
     return clamp01(correlation);
 
   } catch (e) {
-    (window.debugLogger?.warn || console.warn)('⚠️ PhaseInputs: Correlation proxy calculation failed:', e.message);
+    (window.debugLogger?.warn || console.warn)("[Warning] PhaseInputs: Correlation proxy calculation failed:", e.message);
     return 0.5; // Neutral correlation
   }
 }
@@ -187,7 +187,7 @@ export function extractPhaseInputs(storeInstance = null) {
   const storeToUse = storeInstance || store;
   const state = storeToUse.snapshot();
 
-  console.debug('🔍 PhaseInputs: Extracting from state:', {
+  console.debug("PhaseInputs: Extracting from state:", {
     hasDecision: !!state.decision,
     hasSignals: !!state.signals,
     hasOnchainMeta: !!state.scores?.onchain_metadata,
@@ -215,7 +215,7 @@ export function extractPhaseInputs(storeInstance = null) {
   } else {
     btc_dom = 0.6; // Default 60% dominance
     missing.push('btc_dominance');
-    console.debug('🔧 PhaseInputs: BTC dominance fallback to 60%');
+    console.debug("PhaseInputs: BTC dominance fallback to 60%");
   }
 
   // 3) ETH/BTC ratio (raw values) - calculate and store series
@@ -262,7 +262,7 @@ export function extractPhaseInputs(storeInstance = null) {
     }
   };
 
-  console.debug('📊 PhaseInputs: Extracted inputs:', {
+  console.debug("PhaseInputs: Extracted inputs:", {
     DI: DI.toFixed(1),
     btc_dom: (btc_dom * 100).toFixed(1) + '%',
     eth_btc_current: eth_btc_current.toFixed(4),
@@ -330,5 +330,5 @@ if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') 
     calculateEthBtcRatio: () => calculateEthBtcRatio(store.snapshot())
   };
 
-  console.debug('🔧 Debug: window.debugPhaseInputs available for testing');
+  console.debug("Debug: window.debugPhaseInputs available for testing");
 }

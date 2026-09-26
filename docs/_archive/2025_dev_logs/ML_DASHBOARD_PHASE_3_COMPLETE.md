@@ -1,42 +1,42 @@
-# ML Dashboard Enhancement - Phase 3 Complète ✅
+# ML Dashboard Enhancement - Phase 3 Complète
 
 **Date:** 2025-12-25
-**Status:** ✅ Phase 3 implémentée (1h de travail)
+**Status:** [OK] Phase 3 implémentée (1h de travail)
 **Fichier modifié:** 1 (frontend: ai-dashboard.html)
 
 ---
 
-## 🎯 Ce Qui a Été Fait
+## Ce Qui a Été Fait
 
 ### **Phase 3 - Nettoyage UI & Clarification Rôles**
 
 **Objectif:** Simplifier ai-dashboard.html et clarifier les rôles des 2 dashboards ML
 
-**Résultat:** UI épurée avec redirection claire vers Admin Dashboard pour configuration avancée ✅
+**Résultat:** UI épurée avec redirection claire vers Admin Dashboard pour configuration avancée [OK]
 
 ---
 
-## 📝 Changements Effectués
+## Changements Effectués
 
-### **1. Renommer Onglet "Administration" → "État des Modèles"** ✅
+### **1. Renommer Onglet "Administration" → "État des Modèles"**
 
 **Fichier:** `static/ai-dashboard.html` (ligne 548)
 
 **Avant:**
 ```html
-<button class="tab-btn" data-tab="administration">🔧 Administration</button>
+<button class="tab-btn" data-tab="administration"> Administration</button>
 ```
 
 **Après:**
 ```html
-<button class="tab-btn" data-tab="administration">⚙️ État des Modèles</button>
+<button class="tab-btn" data-tab="administration"> État des Modèles</button>
 ```
 
 **Raison:** Nom plus clair et moins technique pour l'utilisateur final
 
 ---
 
-### **2. Ajouter Notice avec Lien vers Admin Dashboard** ✅
+### **2. Ajouter Notice avec Lien vers Admin Dashboard**
 
 **Fichier:** `static/ai-dashboard.html` (lignes 628-641)
 
@@ -47,13 +47,13 @@
 <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
     <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <strong style="display: block; margin-bottom: 0.25rem;">⚙️ Configuration Avancée</strong>
+            <strong style="display: block; margin-bottom: 0.25rem;"> Configuration Avancée</strong>
             <span style="color: var(--theme-text-muted); font-size: 0.9em;">
                 Pour training de modèles, gestion cache, et configuration avancée, utilisez le Admin Dashboard.
             </span>
         </div>
         <a href="admin-dashboard.html#ml" class="btn btn-primary" style="white-space: nowrap;">
-            🚀 Ouvrir Admin Dashboard
+             Ouvrir Admin Dashboard
         </a>
     </div>
 </div>
@@ -68,7 +68,7 @@
 
 ---
 
-### **3. Supprimer Carte "Performance & Cache"** ✅
+### **3. Supprimer Carte "Performance & Cache"**
 
 **Fichier:** `static/ai-dashboard.html` (lignes 714-738 supprimées)
 
@@ -78,7 +78,7 @@
 <div class="ml-card">
     <div class="card-header">
         <div class="card-title">
-            <span class="card-icon" aria-hidden="true">📊</span>
+            <span class="card-icon" aria-hidden="true"></span>
             Performance & Cache
         </div>
     </div>
@@ -95,8 +95,8 @@
         </div>
     </div>
     <div class="card-actions">
-        <button id="admin-performance" class="btn primary">📈 Performance</button>
-        <button id="admin-clear-cache" class="btn secondary">🧹 Vider Cache</button>
+        <button id="admin-performance" class="btn primary"> Performance</button>
+        <button id="admin-clear-cache" class="btn secondary"> Vider Cache</button>
     </div>
 </div>
 ```
@@ -105,7 +105,7 @@
 
 ---
 
-### **4. Nettoyer Références JavaScript** ✅
+### **4. Nettoyer Références JavaScript**
 
 **Fichier:** `static/ai-dashboard.html`
 
@@ -160,23 +160,23 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 
 ---
 
-## 🎨 UI Avant / Après
+## UI Avant / Après
 
 ### **Avant Phase 3:**
 
 **ai-dashboard.html - Onglet "Administration":**
 ```
 ┌─ Administration ─────────────────────────────────────┐
-│ [🔐] Admin: OFF                                       │
+│ [Locked] Admin: OFF                                       │
 │                                                       │
 │ ┌─ Statut Global Pipeline ──┐  ┌─ Modèles Volatilité ──┐
 │ │ Modèles: 8/12             │  │ Disponibles: 8         │
-│ │ [🔄 Actualiser] [🗑️ Vider]│  │ [⚡ Charger] [🎯 Sélect]│
+│ │ [ Actualiser] [ Vider]│  │ [ Charger] [ Sélect]│
 │ └───────────────────────────┘  └────────────────────────┘
 │                                                       │
 │ ┌─ Détection Régime ────────┐  ┌─ Performance & Cache ──┐
 │ │ Disponible: Oui           │  │ Entrées: 12            │ ← SUPPRIMÉE
-│ │ [⚡ Charger] [📊 Détails]  │  │ [📈 Perf] [🧹 Cache]   │
+│ │ [ Charger] [ Détails]  │  │ [ Perf] [ Cache]   │
 │ └───────────────────────────┘  └────────────────────────┘
 │                                                       │
 │ ┌─ Journal d'Activité ─────────────────────────────────┐
@@ -192,21 +192,21 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 **ai-dashboard.html - Onglet "État des Modèles":**
 ```
 ┌─ État des Modèles ───────────────────────────────────┐
-│ ┌─ ⚙️ Configuration Avancée ────────────────────────┐
+│ ┌─  Configuration Avancée ────────────────────────┐
 │ │ Pour training, cache, config → Admin Dashboard   │ ← NOUVEAU
-│ │                       [🚀 Ouvrir Admin Dashboard] │
+│ │                       [ Ouvrir Admin Dashboard] │
 │ └──────────────────────────────────────────────────┘
 │                                                       │
-│ [🔐] Admin: OFF                                       │
+│ [Locked] Admin: OFF                                       │
 │                                                       │
 │ ┌─ Statut Global Pipeline ──┐  ┌─ Modèles Volatilité ──┐
 │ │ Modèles: 8/12             │  │ Disponibles: 8         │
-│ │ [🔄 Actualiser] [🗑️ Vider]│  │ [⚡ Charger] [🎯 Sélect]│
+│ │ [ Actualiser] [ Vider]│  │ [ Charger] [ Sélect]│
 │ └───────────────────────────┘  └────────────────────────┘
 │                                                       │
 │ ┌─ Détection Régime ────────┐
 │ │ Disponible: Oui           │  ← Performance & Cache supprimée
-│ │ [⚡ Charger] [📊 Détails]  │
+│ │ [ Charger] [ Détails]  │
 │ └───────────────────────────┘
 │                                                       │
 │ ┌─ Journal d'Activité ─────────────────────────────────┐
@@ -217,7 +217,7 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 
 ---
 
-## 🔄 Clarification Rôles des 2 Dashboards
+## Clarification Rôles des 2 Dashboards
 
 ### **ai-dashboard.html - "ML Intelligence Center"** (USER)
 
@@ -229,13 +229,13 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 3. **Prédictions** - Prédictions temps réel
 4. **Régimes de Marché** - Charts régimes BTC/Stock
 5. **État des Modèles** - Charger/décharger modèles (simplifié)
-   - ✅ Charger modèles volatilité
-   - ✅ Charger modèle régime
-   - ✅ Actualiser status
-   - ✅ Vider mémoire
-   - ✅ Journal d'activité
-   - ❌ PAS de training
-   - ❌ PAS de cache management (→ admin-dashboard)
+   - [OK] Charger modèles volatilité
+   - [OK] Charger modèle régime
+   - [OK] Actualiser status
+   - [OK] Vider mémoire
+   - [OK] Journal d'activité
+   - [Error] PAS de training
+   - [Error] PAS de cache management (→ admin-dashboard)
 
 **Audience:** Tous les users (demo, jack, etc.)
 
@@ -248,9 +248,9 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 **Sections:**
 1. **Tableau modèles enrichi** - Version, status, last updated, training jobs
 2. **Actions par modèle:**
-   - ✅ **ℹ️ Info** - Modal détails complet (Phase 1)
-   - ✅ **⚙️ Train** - Modal configure & train (Phase 2)
-   - ✅ **📊 Historique** - Tableau versions
+   - [OK] ** Info** - Modal détails complet (Phase 1)
+   - [OK] ** Train** - Modal configure & train (Phase 2)
+   - [OK] ** Historique** - Tableau versions
 3. **Training Jobs** - Liste jobs actifs/complétés
 4. **Lien vers Cache Management** - admin-dashboard.html#cache
 
@@ -258,19 +258,19 @@ document.getElementById('admin-clear-cache')?.addEventListener('click', clearMLC
 
 ---
 
-## 🧪 Test & Validation
+## Test & Validation
 
 ### **Tests Manuels**
 
 **1. Vérifier Onglet "État des Modèles":**
 - [ ] Ouvrir ai-dashboard.html
-- [ ] Cliquer onglet "⚙️ État des Modèles"
+- [ ] Cliquer onglet " État des Modèles"
 - [ ] Vérifier notice en haut visible
 - [ ] Vérifier 3 cartes présentes (Statut Global, Volatilité, Régime)
 - [ ] Vérifier carte "Performance & Cache" absente
 
 **2. Tester Lien vers Admin Dashboard:**
-- [ ] Cliquer bouton "🚀 Ouvrir Admin Dashboard"
+- [ ] Cliquer bouton " Ouvrir Admin Dashboard"
 - [ ] Vérifier redirection vers admin-dashboard.html#ml
 - [ ] Vérifier onglet ML actif dans Admin Dashboard
 
@@ -312,7 +312,7 @@ describe('ai-dashboard.html - État des Modèles', () => {
 
 ---
 
-## ✅ Checklist Validation Phase 3
+## Checklist Validation Phase 3
 
 **UI:**
 - [ ] Onglet renommé "État des Modèles"
@@ -340,38 +340,38 @@ describe('ai-dashboard.html - État des Modèles', () => {
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 **Documents créés:**
-1. ✅ [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
-2. ✅ [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
-3. ✅ [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Phase 1 recap
-4. ✅ [ML_DASHBOARD_PHASE_2_COMPLETE.md](ML_DASHBOARD_PHASE_2_COMPLETE.md) - Phase 2 recap
-5. ✅ [ML_DASHBOARD_PHASE_3_COMPLETE.md](ML_DASHBOARD_PHASE_3_COMPLETE.md) - Ce document
+1. [OK] [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
+2. [OK] [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
+3. [OK] [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Phase 1 recap
+4. [OK] [ML_DASHBOARD_PHASE_2_COMPLETE.md](ML_DASHBOARD_PHASE_2_COMPLETE.md) - Phase 2 recap
+5. [OK] [ML_DASHBOARD_PHASE_3_COMPLETE.md](ML_DASHBOARD_PHASE_3_COMPLETE.md) - Ce document
 
 **Code modifié:**
 - `static/ai-dashboard.html` (~80 lignes modifiées)
 
 ---
 
-## 🎯 Impact & Bénéfices
+## Impact & Bénéfices
 
 ### **Avant Phase 3:**
-- ❌ Confusion entre les 2 dashboards ML
-- ❌ Doublon cache management (ai-dashboard + admin-dashboard)
-- ❌ Nom "Administration" trop technique
-- ❌ Pas de lien clair vers Admin Dashboard
+- [Error] Confusion entre les 2 dashboards ML
+- [Error] Doublon cache management (ai-dashboard + admin-dashboard)
+- [Error] Nom "Administration" trop technique
+- [Error] Pas de lien clair vers Admin Dashboard
 
 ### **Après Phase 3:**
-- ✅ Rôles clairs: ai-dashboard (user) vs admin-dashboard (admin)
-- ✅ Pas de doublon cache management
-- ✅ Nom "État des Modèles" plus user-friendly
-- ✅ Navigation facilitée avec bouton direct vers Admin Dashboard
-- ✅ UI épurée (3 cartes au lieu de 4)
+- [OK] Rôles clairs: ai-dashboard (user) vs admin-dashboard (admin)
+- [OK] Pas de doublon cache management
+- [OK] Nom "État des Modèles" plus user-friendly
+- [OK] Navigation facilitée avec bouton direct vers Admin Dashboard
+- [OK] UI épurée (3 cartes au lieu de 4)
 
 ---
 
-## 🚀 Prochaines Étapes (Optionnel)
+## Prochaines Étapes (Optionnel)
 
 ### **Améliorations Futures:**
 
@@ -398,46 +398,46 @@ describe('ai-dashboard.html - État des Modèles', () => {
 
 ---
 
-## ✅ Résumé Phase 3
+## Résumé Phase 3
 
 **Temps passé:** ~1h (estimation)
 **Lignes code:** ~80 lignes (HTML modifié + JS commenté)
-**Backend work:** **ZÉRO** ✅
+**Backend work:** **ZÉRO** [OK]
 **Frontend work:** Suppression carte, ajout notice, nettoyage JS
 
 **Fonctionnalités ajoutées:**
-- ✅ Renommé "Administration" → "État des Modèles"
-- ✅ Notice avec lien Admin Dashboard
-- ✅ Supprimé carte "Performance & Cache" (doublon)
-- ✅ Nettoyé références JavaScript
-- ✅ Documentation claire via commentaires
-- ✅ Clarification rôles 2 dashboards
+- [OK] Renommé "Administration" → "État des Modèles"
+- [OK] Notice avec lien Admin Dashboard
+- [OK] Supprimé carte "Performance & Cache" (doublon)
+- [OK] Nettoyé références JavaScript
+- [OK] Documentation claire via commentaires
+- [OK] Clarification rôles 2 dashboards
 
-**Prêt pour production !** 🚀
+**Prêt pour production !**
 
 ---
 
-## 🎉 **ML Dashboard Enhancement - PROJET COMPLET !**
+## **ML Dashboard Enhancement - PROJET COMPLET !**
 
 ### **Récapitulatif 3 Phases:**
 
 **Phase 1 (2h):** Modal Info + Historique
-- ✅ Modal détails modèle complet
-- ✅ Modal historique versions
-- ✅ Bouton ℹ️ dans tableau
+- [OK] Modal détails modèle complet
+- [OK] Modal historique versions
+- [OK] Bouton  dans tableau
 
 **Phase 2 (4h):** Training Configuration
-- ✅ TrainingConfig Pydantic model
-- ✅ Endpoint default params
-- ✅ Modified train endpoint (accepte config)
-- ✅ Modal Configure & Train (5 presets)
-- ✅ Time estimation dynamique
+- [OK] TrainingConfig Pydantic model
+- [OK] Endpoint default params
+- [OK] Modified train endpoint (accepte config)
+- [OK] Modal Configure & Train (5 presets)
+- [OK] Time estimation dynamique
 
 **Phase 3 (1h):** Nettoyage UI
-- ✅ Renommé onglet "État des Modèles"
-- ✅ Supprimé doublon cache
-- ✅ Notice Admin Dashboard
-- ✅ Nettoyage JavaScript
+- [OK] Renommé onglet "État des Modèles"
+- [OK] Supprimé doublon cache
+- [OK] Notice Admin Dashboard
+- [OK] Nettoyage JavaScript
 
 **Total:** ~7h de travail
 **Lignes code:** ~1100 lignes (backend: 224, frontend: 876)
@@ -446,5 +446,5 @@ describe('ai-dashboard.html - État des Modèles', () => {
 
 ---
 
-**Status:** ✅ **TOUTES LES PHASES COMPLÈTES** ✨
+**Status:** [OK] **TOUTES LES PHASES COMPLÈTES**
 **Next:** Production deployment ou nouvelles features

@@ -39,26 +39,26 @@ if 'cfd' in asset_class:
 ```
 
 **Améliorations**:
-- ✅ Support des formats longs: "Exchange Traded Fund (ETF)" → "ETF"
-- ✅ Support français: "Actions" → "Stock", "Obligations" → "Bond"
-- ✅ Nouveau type: CFD (Contracts for Difference)
-- ✅ Robuste aux variations CSV
+- [OK] Support des formats longs: "Exchange Traded Fund (ETF)" → "ETF"
+- [OK] Support français: "Actions" → "Stock", "Obligations" → "Bond"
+- [OK] Nouveau type: CFD (Contracts for Difference)
+- [OK] Robuste aux variations CSV
 
 ### 2. Dashboard Simplifié
 
 **Fichier**: `static/saxo-dashboard.html`
 
 **Suppressions** (-172 lignes):
-- ❌ Bandeau "Nouveau système Sources"
-- ❌ Indicateurs "Source active" et "Fraîcheur"
-- ❌ Fonction `updateCurrentSourceName()`
-- ❌ Fonction `refreshSaxoStaleness()`
-- ❌ Styles CSS obsolètes (`.sources-banner`, `.sources-link`, etc.)
-- ❌ Logique de résolution `file_key` et `bourseSource`
+- [Error] Bandeau "Nouveau système Sources"
+- [Error] Indicateurs "Source active" et "Fraîcheur"
+- [Error] Fonction `updateCurrentSourceName()`
+- [Error] Fonction `refreshSaxoStaleness()`
+- [Error] Styles CSS obsolètes (`.sources-banner`, `.sources-link`, etc.)
+- [Error] Logique de résolution `file_key` et `bourseSource`
 
 **Ajouts**:
-- ✅ Style CSS pour `.asset-class-cfd` (rouge #FF6B6B)
-- ✅ Header simplifié: titre + sous-titre seulement
+- [OK] Style CSS pour `.asset-class-cfd` (rouge #FF6B6B)
+- [OK] Header simplifié: titre + sous-titre seulement
 
 ## Tests
 
@@ -67,14 +67,14 @@ Portfolio utilisateur `jack` (28 positions, $106,749.45):
 **Avant**:
 ```
 Asset Classes:
-  - Other: 28  ❌
+  - Other: 28  [Error]
 ```
 
 **Après**:
 ```
 Asset Classes:
-  - Stock: 21  ✅
-  - ETF: 7     ✅
+  - Stock: 21  [OK]
+  - ETF: 7     [OK]
 ```
 
 ### Exemples de détection

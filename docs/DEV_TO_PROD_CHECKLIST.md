@@ -57,8 +57,8 @@ CORS_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
 - `POST /api/performance/optimization/precompute` - Pré-calculs
 
 **Action requise** :
-- ✅ Vérifier que `@dev_only()` decorator est appliqué
-- ✅ Tester accès en mode production → doit retourner 403
+- [OK] Vérifier que `@dev_only()` decorator est appliqué
+- [OK] Tester accès en mode production → doit retourner 403
 
 ### 2. Realtime Endpoints (api/realtime_endpoints.py)
 
@@ -70,9 +70,9 @@ CORS_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
 - `GET /api/realtime/demo` - Page démo HTML
 
 **Action requise** :
-- ✅ Vérifier que `/dev/simulate` retourne 403 si `DEBUG_SIMULATION=false`
-- ⚠️ WebSocket `/ws` : Ajouter auth token optionnelle via query param
-- ✅ `/demo` : Désactiver en prod ou protéger par auth
+- [OK] Vérifier que `/dev/simulate` retourne 403 si `DEBUG_SIMULATION=false`
+- [Warning] WebSocket `/ws` : Ajouter auth token optionnelle via query param
+- [OK] `/demo` : Désactiver en prod ou protéger par auth
 
 ### 3. Alerts Test Endpoints (api/alerts_endpoints.py)
 
@@ -82,8 +82,8 @@ CORS_ORIGINS=https://yourdomain.com,https://api.yourdomain.com
 - `/api/alerts/test/*` - Endpoints de test alerts
 
 **Action requise** :
-- ✅ Vérifier que `ENABLE_ALERTS_TEST_ENDPOINTS=false` dans `.env`
-- ✅ Tester accès en mode production → doit retourner 404
+- [OK] Vérifier que `ENABLE_ALERTS_TEST_ENDPOINTS=false` dans `.env`
+- [OK] Tester accès en mode production → doit retourner 404
 
 ---
 
@@ -143,11 +143,11 @@ curl -I http://localhost:8080/static/dashboard.html
 
 ### Vérifications (api/main.py)
 
-- ✅ `HTTPSRedirectMiddleware` activé (`if not DEBUG`)
-- ✅ `TrustedHostMiddleware` strict (pas `allowed_hosts=["*"]`)
-- ✅ `RateLimitMiddleware` activé (`if ENVIRONMENT == "production"`)
-- ✅ `CORS allow_headers` pas `["*"]` (limiter aux headers nécessaires)
-- ✅ CSP headers complets (via `add_security_headers` middleware)
+- [OK] `HTTPSRedirectMiddleware` activé (`if not DEBUG`)
+- [OK] `TrustedHostMiddleware` strict (pas `allowed_hosts=["*"]`)
+- [OK] `RateLimitMiddleware` activé (`if ENVIRONMENT == "production"`)
+- [OK] `CORS allow_headers` pas `["*"]` (limiter aux headers nécessaires)
+- [OK] CSP headers complets (via `add_security_headers` middleware)
 
 ### Headers de Sécurité Attendus
 
@@ -166,8 +166,8 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 ### Validation automatique
 
 Le code dans `settings.py` bloque automatiquement :
-- ❌ `DEBUG=true` en production → ValueError
-- ✅ `environment` doit être dans `['development', 'staging', 'production']`
+- [Error] `DEBUG=true` en production → ValueError
+- [OK] `environment` doit être dans `['development', 'staging', 'production']`
 
 ### CSP Configuration
 
@@ -193,17 +193,17 @@ LOG_LEVEL=INFO  # ou WARNING pour réduire verbosité
 ### 2. Logs sensibles
 
 Vérifier qu'aucun log ne contient :
-- ❌ Clés API en clair
-- ❌ Tokens/secrets
-- ❌ Données utilisateur sensibles (emails, wallets)
+- [Error] Clés API en clair
+- [Error] Tokens/secrets
+- [Error] Données utilisateur sensibles (emails, wallets)
 
 ### 3. Monitoring Production
 
 Mettre en place :
-- ✅ Alertes sur erreurs 500 (serveur)
-- ✅ Alertes sur 429 (rate limit atteint trop souvent)
-- ✅ Monitoring uptime endpoint `/health`
-- ✅ Dashboard métriques Redis (si utilisé)
+- [OK] Alertes sur erreurs 500 (serveur)
+- [OK] Alertes sur 429 (rate limit atteint trop souvent)
+- [OK] Monitoring uptime endpoint `/health`
+- [OK] Dashboard métriques Redis (si utilisé)
 
 ---
 

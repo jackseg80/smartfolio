@@ -66,7 +66,13 @@
 }
 
 .ai-chat-header h3::before {
-    content: '✨';
+    content: '';
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    flex-shrink: 0;
+    background-color: currentColor;
+    mask: url('/static/assets/icons/chat-bubble-left-right.svg') center / contain no-repeat;
     font-size: 1.5rem;
 }
 
@@ -375,7 +381,12 @@
 }
 
 .ai-chat-fab::before {
-    content: '✨';
+    content: '';
+    display: block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor;
+    mask: url('/static/assets/icons/chat-bubble-left-right.svg') center / contain no-repeat;
 }
 
 @media (max-width: 768px) {

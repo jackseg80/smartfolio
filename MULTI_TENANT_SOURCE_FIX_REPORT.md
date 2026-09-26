@@ -11,8 +11,8 @@
 ### Observed Behavior
 | Source Selection | dashboard.html | risk-dashboard.html |
 |-----------------|----------------|---------------------|
-| **Cointracking API** | ✅ 297938$, 193 assets | ✅ 297938$, 193 assets |
-| **Saisie manuelle** | ✅ 110000$, 2 assets | ❌ 230498$, 32 assets (WRONG) |
+| **Cointracking API** | [OK] 297938$, 193 assets | [OK] 297938$, 193 assets |
+| **Saisie manuelle** | [OK] 110000$, 2 assets | [Error] 230498$, 32 assets (WRONG) |
 
 ### Root Cause
 The `risk-data-orchestrator.js` singleton hydrates the risk store but **never passed the `source` parameter** to `/api/risk/dashboard` calls. This violated CLAUDE.md's multi-tenant isolation requirement.
@@ -21,13 +21,13 @@ The `risk-data-orchestrator.js` singleton hydrates the risk store but **never pa
 
 ## Files Fixed
 
-### ✅ CRITICAL FIXES (Core Data Fetching)
+### CRITICAL FIXES (Core Data Fetching)
 
-#### 1. `static/components/utils.js` (Line 69-72) **🔴 ROOT CAUSE**
+#### 1. `static/components/utils.js` (Line 69-72) ** ROOT CAUSE**
 **Impact:** CRITICAL - Used by risk-sidebar-full Web Component (displays Total Value & Assets count in flyout panel)
 
 ```javascript
-// ❌ BEFORE (Missing source - THIS WAS THE ROOT CAUSE!)
+// [Error] BEFORE (Missing source - THIS WAS THE ROOT CAUSE!)
 const r = await fetchWithTimeout(
   '/api/risk/dashboard?min_usd=0&price_history_days=30&lookback_days=30',
   {
@@ -36,7 +36,7 @@ const r = await fetchWithTimeout(
   }
 );
 
-// ✅ AFTER (Source added)
+// [OK] AFTER (Source added)
 const currentSource = window.globalConfig?.get('data_source') || 'cointracking';
 const r = await fetchWithTimeout(
   `/api/risk/dashboard?source=${encodeURIComponent(currentSource)}&min_usd=0&price_history_days=30&lookback_days=30`,
@@ -54,7 +54,7 @@ The `fetchRisk()` function in utils.js is imported by `risk-sidebar-full.js` (li
 **Impact:** HIGH - Used by multiple pages (risk-dashboard, analytics-unified, rebalance, execution)
 
 ```javascript
-// ❌ BEFORE (Missing source)
+// [Error] BEFORE (Missing source)
 const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
   params: {
     min_usd: 1.0,
@@ -66,11 +66,11 @@ const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
   }
 });
 
-// ✅ AFTER (Source added)
+// [OK] AFTER (Source added)
 const currentSource = window.globalConfig.get('data_source') || 'cointracking';
 const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
   params: {
-    source: currentSource,  // 🔧 FIX: Pass source for multi-tenant isolation
+    source: currentSource,  //  FIX: Pass source for multi-tenant isolation
     min_usd: 1.0,
     price_history_days: 365,
     lookback_days: 90,
@@ -95,10 +95,10 @@ Fixed `loadGRIAnalysis()` and `loadRiskAttribution()` functions (duplicate imple
 **Impact:** HIGH - Used by Allocation Engine V2
 
 ```javascript
-// ❌ BEFORE
+// [Error] BEFORE
 const apiResponse = await window.globalConfig.apiRequest('/balances/current');
 
-// ✅ AFTER
+// [OK] AFTER
 const currentSource = window.globalConfig.get('data_source') || 'cointracking';
 const apiResponse = await window.globalConfig.apiRequest('/balances/current', {
   params: { source: currentSource }
@@ -109,10 +109,10 @@ const apiResponse = await window.globalConfig.apiRequest('/balances/current', {
 **Impact:** MEDIUM - Unified insights calculations
 
 ```javascript
-// ❌ BEFORE
+// [Error] BEFORE
 window.globalConfig.apiRequest('/balances/current', { params: { min_usd: cfgMin } })
 
-// ✅ AFTER
+// [OK] AFTER
 const currentSource = window.globalConfig.get('data_source') || 'cointracking';
 window.globalConfig.apiRequest('/balances/current', {
   params: {
@@ -131,11 +131,11 @@ Fixed for consistency - health checks should also respect source selection.
 
 ## Files Already Correct (No Changes Needed)
 
-✅ **static/modules/risk-dashboard-main-controller.js** (Line 447)
-✅ **static/modules/risk-overview-tab.js** (Line 126)
-✅ **static/modules/dashboard-main-controller.js** (Uses `window.loadBalanceData()` correctly)
-✅ **static/modules/settings-main-controller.js** (Line 1441)
-✅ **static/global-config.js** - All `loadBalanceData()` implementations (Lines 720-766)
+[OK] **static/modules/risk-dashboard-main-controller.js** (Line 447)
+[OK] **static/modules/risk-overview-tab.js** (Line 126)
+[OK] **static/modules/dashboard-main-controller.js** (Uses `window.loadBalanceData()` correctly)
+[OK] **static/modules/settings-main-controller.js** (Line 1441)
+[OK] **static/global-config.js** - All `loadBalanceData()` implementations (Lines 720-766)
 
 ---
 
@@ -150,13 +150,13 @@ emit 'dataSourceChanged' event
     ↓
 globalConfig.data_source updated
     ↓
-risk-data-orchestrator re-hydrates with source parameter ✅
+risk-data-orchestrator re-hydrates with source parameter [OK]
     ↓
 apiRequest('/api/risk/dashboard', { params: { source: currentSource } })
     ↓
 Backend services/risk_management.py receives correct source
     ↓
-data/users/{user_id}/{source}/ ← Correct isolation ✅
+data/users/{user_id}/{source}/ ← Correct isolation [OK]
 ```
 
 ### CLAUDE.md Compliance
@@ -181,25 +181,25 @@ const currentSource = window.globalConfig.get('data_source');
 await apiRequest('/api/risk/dashboard', { params: { source: currentSource } });
 ```
 
-**Isolation:** `data/users/{user_id}/{source}/` ✅
+**Isolation:** `data/users/{user_id}/{source}/` OK
 
 ---
 
 ## Verification Steps
 
 ### Manual Testing
-1. ✅ Select **Cointracking API** in wealthbar
+1. [OK] Select **Cointracking API** in wealthbar
    - Check dashboard.html → Should show ~297938$, 193 assets
    - Check risk-dashboard.html → Should show ~297938$, 193 assets
 
-2. ✅ Select **Saisie manuelle** in wealthbar
+2. [OK] Select **Saisie manuelle** in wealthbar
    - Check dashboard.html → Should show ~110000$, 2 assets
    - Check risk-dashboard.html → Should show ~110000$, 2 assets (FIXED!)
 
-3. ✅ Check allocation engine (`rebalance.html`)
+3. [OK] Check allocation engine (`rebalance.html`)
    - Verify correct positions loaded per source
 
-4. ✅ Check unified insights (`analytics-unified.html`)
+4. [OK] Check unified insights (`analytics-unified.html`)
    - Verify allocation calculator uses correct source
 
 ### Automated Testing
@@ -215,7 +215,7 @@ grep -r "apiRequest('/balances/current'" static/ | grep -v "source:" | grep -v "
 
 ## Potential Remaining Issues
 
-### ⚠️ Other Endpoints to Audit (Future)
+### Other Endpoints to Audit (Future)
 The following endpoints MAY also need source parameter verification:
 
 - `/api/portfolio/metrics` (appears OK - settings-main-controller passes source)
@@ -233,7 +233,7 @@ async def risk_dashboard(
     user: str = Depends(get_active_user)
 ):
     if source is None:
-        logger.warning(f"⚠️ /api/risk/dashboard called without source param by {user}")
+        logger.warning(f" /api/risk/dashboard called without source param by {user}")
         source = "cointracking"  # Fallback
     # ... rest of endpoint
 ```
@@ -247,9 +247,9 @@ async def risk_dashboard(
 
 ### Critical Fixes
 
-🔴 **static/components/utils.js** - `fetchRisk()` function used by risk-sidebar-full Web Component (ROOT CAUSE #1 of "230 498 $, 32 assets" display issue)
+[Negative] **static/components/utils.js** - `fetchRisk()` function used by risk-sidebar-full Web Component (ROOT CAUSE #1 of "230 498 $, 32 assets" display issue)
 
-🔴 **services/balance_service.py:203-204** - Missing `manual_crypto` and `manual_bourse` in category mapping (ROOT CAUSE #2 of aggregating crypto + bourse)
+[Negative] **services/balance_service.py:203-204** - Missing `manual_crypto` and `manual_bourse` in category mapping (ROOT CAUSE #2 of aggregating crypto + bourse)
 
 **Issue:** When selecting "Saisie manuelle" (manual_crypto), the backend didn't recognize it as "crypto" category, so it loaded BOTH crypto + bourse balances (111k instead of 110k, 3 assets instead of 2).
 
@@ -272,7 +272,7 @@ elif source in ("cointracking", "cointracking_api", "cointracking_csv", "manual_
 - static/components/unified-insights/allocation-calculator.js
 - static/global-config.js
 
-**Compliance:** CLAUDE.md Multi-Tenant ✅
-**Status:** **RESOLVED** ✅
+**Compliance:** CLAUDE.md Multi-Tenant [OK]
+**Status:** **RESOLVED** [OK]
 
 The risk-dashboard.html sidebar (flyout panel) now correctly respects the source selection from the wealthbar, ensuring data isolation between "Cointracking API", "Saisie manuelle", and other sources.

@@ -4,7 +4,7 @@
 
 ---
 
-## 🎯 Problèmes Résolus
+## Problèmes Résolus
 
 ### Problème 1: Dashboard Context Incomplet
 **Symptôme:** L'IA ne voyait QUE les cryptos, pas bourse/patrimoine/analytics
@@ -83,7 +83,7 @@ if has_hierarchical_context:
 
 ---
 
-## 📊 Architecture Technique
+## Architecture Technique
 
 ### Frontend: Structure de Context Hiérarchique
 
@@ -123,7 +123,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
     # Crypto portfolio
     if "crypto" in context:
         crypto = context["crypto"]
-        lines.append("💰 Portefeuille Crypto:")
+        lines.append(" Portefeuille Crypto:")
         lines.append(f"  - Valeur totale: ${crypto.get('total_value', 0):,.2f}")
         # ...
 
@@ -144,7 +144,7 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
 
 ---
 
-## 🔍 Endpoints API Utilisés
+## Endpoints API Utilisés
 
 | Endpoint | Usage | Données Retournées |
 |----------|-------|-------------------|
@@ -158,32 +158,32 @@ def _format_dashboard_context(context: Dict[str, Any]) -> list:
 
 ---
 
-## 🧪 Tests & Validation
+## Tests & Validation
 
 ### Test 1: Dashboard Context
 ```
 Question: "Fais-moi un résumé complet de mon portefeuille crypto et bourse."
-Avant: "Crypto 93.5%, Bourse 0% (aucune position)" ❌
-Après: "Crypto $320k (188 pos), Bourse $112k (30 pos), Patrimoine $50k" ✅
+Avant: "Crypto 93.5%, Bourse 0% (aucune position)" Error
+Après: "Crypto $320k (188 pos), Bourse $112k (30 pos), Patrimoine $50k" OK
 ```
 
 ### Test 2: Risk Score
 ```
 Question: "Quel est mon risk score ?"
-Avant: "78.90/100" ❌
-Après: "69.60/100" ✅ (correspond au dashboard)
+Avant: "78.90/100" Error
+Après: "69.60/100" [OK] (correspond au dashboard)
 ```
 
 ### Test 3: Logs Console
 ```
 Console F12:
-- "[AI Chat] Using risk score from store: 69.5950249756948" ✅
-- "Sending AI chat message with context: (11) ['page', 'crypto', 'bourse', ...]" ✅
+- "[AI Chat] Using risk score from store: 69.5950249756948" OK
+- "Sending AI chat message with context: (11) ['page', 'crypto', 'bourse', ...]" OK
 ```
 
 ---
 
-## 📁 Fichiers Modifiés
+## Fichiers Modifiés
 
 ### Frontend
 **[static/components/ai-chat-context-builders.js](../static/components/ai-chat-context-builders.js)**
@@ -204,7 +204,7 @@ Console F12:
 
 ---
 
-## 🚀 Déploiement
+## Déploiement
 
 ### Étapes de Test
 1. **Restart serveur backend** (obligatoire pour routing)
@@ -215,11 +215,11 @@ Console F12:
 2. **Hard refresh navigateur** (Ctrl+F5)
 
 3. **Tests sur pages:**
-   - ✅ dashboard.html → Crypto + Bourse + Patrimoine
-   - ✅ risk-dashboard.html → Risk score 69.6
-   - ⏳ analytics-unified.html → Decision Index
-   - ⏳ wealth-dashboard.html → Patrimoine
-   - ✅ saxo-dashboard.html → Risk score 69.6
+   - [OK] dashboard.html → Crypto + Bourse + Patrimoine
+   - [OK] risk-dashboard.html → Risk score 69.6
+   - [Pending] analytics-unified.html → Decision Index
+   - [Pending] wealth-dashboard.html → Patrimoine
+   - [OK] saxo-dashboard.html → Risk score 69.6
 
 ### Vérifications Console F12
 ```javascript
@@ -232,7 +232,7 @@ window.riskStore.getState().scores.risk  // Doit être ~69-71
 
 ---
 
-## 🐛 Bugs Rencontrés & Fixes
+## Bugs Rencontrés & Fixes
 
 ### Bug 1: Cache Navigateur Persistant
 **Symptôme:** Modifications pas prises en compte après refresh
@@ -251,7 +251,7 @@ window.riskStore.getState().scores.risk  // Doit être ~69-71
 
 ---
 
-## 📊 Métriques Impact
+## Métriques Impact
 
 **Avant:**
 - Context dashboard: 2 clés (`page`, `total_value`)
@@ -267,7 +267,7 @@ window.riskStore.getState().scores.risk  // Doit être ~69-71
 
 ---
 
-## 🔗 Références
+## Références
 
 - **AI Chat Global:** [AI_CHAT_GLOBAL.md](AI_CHAT_GLOBAL.md)
 - **Handoff Original:** [AI_CHAT_HANDOFF_DEC_27.md](AI_CHAT_HANDOFF_DEC_27.md)
@@ -276,7 +276,7 @@ window.riskStore.getState().scores.risk  // Doit être ~69-71
 
 ---
 
-## 🔄 Session 2: Analytics & Wealth Fixes (Dec 27, 19:00)
+## Session 2: Analytics & Wealth Fixes (Dec 27, 19:00)
 
 ### Problème 4: analytics-unified Context Vide
 **Symptôme:** L'IA répondait avec des généralités ("Le sentiment ML actuel n'est pas explicitement indiqué")
@@ -330,7 +330,7 @@ if (data.counts) {
 
 ---
 
-## 📊 Contextes Finaux
+## Contextes Finaux
 
 ### analytics-unified
 ```json
@@ -362,7 +362,7 @@ if (data.counts) {
 
 ---
 
-## ✅ Checklist Validation Finale
+## Checklist Validation Finale
 
 - [x] **buildDashboardContext()** enrichi (7 API calls: crypto, bourse, patrimoine, risk, DI, sentiment, régime)
 - [x] **buildRiskDashboardContext()** utilise window.riskStore pour risk_score (69.6 au lieu de 78.9)
@@ -375,7 +375,7 @@ if (data.counts) {
 
 ---
 
-## 🔄 Session 3: Backend Formatters + ML Sentiment Scale (Dec 27, 19:30)
+## Session 3: Backend Formatters + ML Sentiment Scale (Dec 27, 19:30)
 
 ### Problème 6: Backend Formatter Analytics - Format Incorrect
 **Symptôme:** Backend attendait `context["regime"]` comme dict mais frontend envoyait string
@@ -394,11 +394,11 @@ if "regime" in context:
 if "regime" in context:
     regime_name = context["regime"]  # String
     confidence = context.get("regime_confidence", 0)
-    lines.append(f"🎯 Régime marché: {regime_name} (confiance: {confidence:.0%})")
+    lines.append(f" Régime marché: {regime_name} (confiance: {confidence:.0%})")
 
 if "regime_components" in context:
     components = context["regime_components"]  # Dict séparé
-    lines.append("🎯 Scores Régime (composantes):")
+    lines.append(" Scores Régime (composantes):")
     if "cycle" in components:
         lines.append(f"  - CCS (Cycle): {components['cycle']:.1f}/100")
 ```
@@ -420,10 +420,10 @@ total_liabilities = sum(context["liabilities"].values())  # Crash si int
 # Après (lignes 522-556)
 # Total assets and liabilities
 if "total_assets" in context:
-    lines.append(f"📊 Total Actifs: ${context['total_assets']:,.2f}")
+    lines.append(f" Total Actifs: ${context['total_assets']:,.2f}")
 
 if "total_liabilities" in context and context["total_liabilities"] > 0:
-    lines.append(f"📊 Total Passifs: ${context['total_liabilities']:,.2f}")
+    lines.append(f" Total Passifs: ${context['total_liabilities']:,.2f}")
 
 # Asset breakdown (use breakdown.liquidity, breakdown.tangible, etc.)
 if "liquidity" in context:
@@ -469,7 +469,7 @@ context.ml_sentiment = 50 + (rawScore * 50);  // 57.5
 
 ---
 
-## 📊 Contexte Final Corrigé
+## Contexte Final Corrigé
 
 ### analytics-unified (après Session 3)
 ```json
@@ -488,7 +488,7 @@ context.ml_sentiment = 50 + (rawScore * 50);  // 57.5
 
 ---
 
-## 📁 Fichiers Modifiés (Session 3)
+## Fichiers Modifiés (Session 3)
 
 | Fichier | Lignes | Changements |
 |---------|--------|-------------|
@@ -498,7 +498,7 @@ context.ml_sentiment = 50 + (rawScore * 50);  // 57.5
 
 ---
 
-## ✅ Checklist Validation Finale (100%)
+## Checklist Validation Finale (100%)
 
 - [x] **buildDashboardContext()** enrichi (7 API calls: crypto, bourse, patrimoine, risk, DI, sentiment, régime)
 - [x] **buildRiskDashboardContext()** utilise window.riskStore pour risk_score (69.6 au lieu de 78.9)
@@ -513,7 +513,7 @@ context.ml_sentiment = 50 + (rawScore * 50);  // 57.5
 
 ---
 
-## ⚠️ Actions Requises Avant Tests
+## Actions Requises Avant Tests
 
 1. **Redémarrer serveur backend** (obligatoire pour appliquer fixes backend)
    ```powershell
@@ -531,5 +531,5 @@ context.ml_sentiment = 50 + (rawScore * 50);  // 57.5
 
 **Date:** Dec 27, 2025
 **Durée:** ~4h (Session 1: 2h, Session 2: 1h, Session 3: 1h)
-**Status:** ✅ Tous context builders + backend formatters fixés, prêt pour tests
+**Status:** [OK] Tous context builders + backend formatters fixés, prêt pour tests
 **Next:** Restart serveur → Tests manuels → Commit final

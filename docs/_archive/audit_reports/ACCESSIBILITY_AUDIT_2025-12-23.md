@@ -11,10 +11,10 @@
 
 | Critère WCAG | Score | Status |
 |--------------|-------|--------|
-| Perceivable (Perceptible) | 65/100 | ⚠️ Moyen |
-| Operable (Utilisable) | 70/100 | ⚠️ Moyen |
-| Understandable (Compréhensible) | 75/100 | ✅ Bon |
-| Robust (Robuste) | 62/100 | ⚠️ Moyen |
+| Perceivable (Perceptible) | 65/100 | [Warning] Moyen |
+| Operable (Utilisable) | 70/100 | [Warning] Moyen |
+| Understandable (Compréhensible) | 75/100 | [OK] Bon |
+| Robust (Robuste) | 62/100 | [Warning] Moyen |
 
 **Résultats par page:**
 - **dashboard.html**: 70/100 (Meilleure - bonnes pratiques aria-label sur canvas)
@@ -27,7 +27,7 @@
 
 ## Issues par Niveau de Priorité
 
-### 🔴 CRITICAL (Bloquant WCAG AA)
+### CRITICAL (Bloquant WCAG AA)
 
 #### 1. **Contraste de couleurs insuffisant** (WCAG 1.4.3)
 **Fichiers:** Tous (via CSS variables)
@@ -75,7 +75,7 @@ color: var(--theme-text-muted);  /* Ratio potentiellement < 4.5:1 */
 <canvas id="portfolioChartCanvas" width="400" height="200"
     aria-label="Crypto portfolio distribution chart"></canvas>
 ```
-❌ **aria-label seul est insuffisant** - ne donne pas les données
+[Error] **aria-label seul est insuffisant** - ne donne pas les données
 
 **Fix recommandé:**
 ```html
@@ -149,7 +149,7 @@ function updatePortfolioChart(balances) {
     <tbody></tbody>
 </table>
 ```
-❌ **Manque scope et id/headers pour tableaux complexes**
+[Error] **Manque scope et id/headers pour tableaux complexes**
 
 **Fix recommandé:**
 ```html
@@ -205,7 +205,7 @@ function renderActionsTable(actions) {
 }
 ```
 
-### 🟠 HIGH (Impact fort sur utilisabilité)
+### HIGH (Impact fort sur utilisabilité)
 
 #### 4. **Navigation clavier incomplète** (WCAG 2.1.1, 2.4.3)
 **Fichiers:** Tous (tabs, dropdowns, modales)
@@ -217,7 +217,7 @@ function renderActionsTable(actions) {
 <button class="tab-btn active" data-target="#tab-risk" role="tab"
     aria-selected="true" aria-controls="tab-risk" id="tab-btn-risk">Risk</button>
 ```
-❌ **Manque gestion des flèches keyboard** pour navigation tabs
+[Error] **Manque gestion des flèches keyboard** pour navigation tabs
 
 **Fix recommandé:**
 ```javascript
@@ -363,7 +363,7 @@ textarea:focus-visible {
 <!-- rebalance.html ligne 156-158 -->
 <input type="number" id="min-trade-input" value="25" min="1" max="1000" step="1">
 ```
-❌ **Pas de <label> associé**, uniquement texte adjacent
+[Error] **Pas de <label> associé**, uniquement texte adjacent
 
 **Fix recommandé:**
 ```html
@@ -385,7 +385,7 @@ textarea:focus-visible {
     aria-describedby="min-trade-help">
 ```
 
-### 🟡 MEDIUM (Impact modéré)
+### MEDIUM (Impact modéré)
 
 #### 7. **Animations non respectant prefers-reduced-motion** (WCAG 2.3.3)
 **Fichiers:** Tous (transitions, animations CSS)
@@ -402,7 +402,7 @@ textarea:focus-visible {
     box-shadow: var(--shadow-lg);
 }
 ```
-❌ **Animations toujours actives**, pas de détection prefers-reduced-motion
+[Error] **Animations toujours actives**, pas de détection prefers-reduced-motion
 
 **Fix recommandé:**
 ```css
@@ -453,13 +453,13 @@ textarea:focus-visible {
 **Problème:**
 ```html
 <!-- analytics-unified.html ligne 158 -->
-<h3>🛡️ Risk Dashboard</h3>
+<h3> Risk Dashboard</h3>
 <!-- Puis ligne 161 -->
 <h4>VaR Portfolio</h4>
 <!-- Puis ligne 223 -->
-<h3>📊 Performance Monitor</h3>
+<h3> Performance Monitor</h3>
 ```
-✅ **Hiérarchie correcte** (h3 > h4 > h5)
+[OK] **Hiérarchie correcte** (h3 > h4 > h5)
 
 Mais dans **admin-dashboard.html**:
 ```html
@@ -470,7 +470,7 @@ Mais dans **admin-dashboard.html**:
 <!-- MAIS ligne 612 -->
 <div class="stat-value">...</div>  <!-- Devrait être h3 -->
 ```
-❌ **Stats cards manquent de headings**
+[Error] **Stats cards manquent de headings**
 
 **Fix recommandé:**
 ```html
@@ -503,7 +503,7 @@ if (!userId || !label) {
     return;
 }
 ```
-❌ **Message toast non lié aux champs en erreur**
+[Error] **Message toast non lié aux champs en erreur**
 
 **Fix recommandé:**
 ```html
@@ -565,7 +565,7 @@ async function submitCreateUser() {
 }
 ```
 
-### 🟢 LOW (Impact faible mais améliorable)
+### LOW (Impact faible mais améliorable)
 
 #### 10. **Icônes emoji sans texte alternatif** (WCAG 1.1.1)
 **Fichiers:** Tous (emojis dans headings)
@@ -574,21 +574,21 @@ async function submitCreateUser() {
 **Problème:**
 ```html
 <!-- dashboard.html ligne 522 -->
-<div class="card-title"><span class="card-icon">🌐</span>Global Overview</div>
+<div class="card-title"><span class="card-icon"></span>Global Overview</div>
 ```
-❌ **Emoji lu verbatim par screen readers**
+[Error] **Emoji lu verbatim par screen readers**
 
 **Fix recommandé:**
 ```html
 <!-- Option 1: aria-hidden + texte explicite -->
 <div class="card-title">
-    <span class="card-icon" aria-hidden="true">🌐</span>
+    <span class="card-icon" aria-hidden="true"></span>
     <span>Global Overview</span>
 </div>
 
 <!-- Option 2: aria-label sur container -->
 <div class="card-title" aria-label="Global Overview">
-    <span class="card-icon" aria-hidden="true">🌐</span>
+    <span class="card-icon" aria-hidden="true"></span>
     Global Overview
 </div>
 
@@ -646,17 +646,17 @@ function formatDateAccessible(dateStr) {
 ```html
 <!-- analytics-unified.html ligne 212 -->
 <a href="risk-dashboard.html?nav=off" target="_blank" class="action-link">
-    📊 Version complète du Risk Dashboard
+     Version complète du Risk Dashboard
 </a>
 ```
-✅ **Texte descriptif correct** - pas de "cliquez ici"
+[OK] **Texte descriptif correct** - pas de "cliquez ici"
 
 Mais:
 ```html
 <!-- dashboard.html ligne 592 -->
 <a href="settings.html#sources">Configure a source in Settings</a>
 ```
-⚠️ **Manque indication d'ouverture nouvelle page**
+[Warning] **Manque indication d'ouverture nouvelle page**
 
 **Fix recommandé:**
 ```html
@@ -665,7 +665,7 @@ Mais:
     target="_blank"
     class="action-link"
     aria-label="Version complète du Risk Dashboard (s'ouvre dans un nouvel onglet)">
-    📊 Version complète du Risk Dashboard
+     Version complète du Risk Dashboard
     <span class="external-link-icon" aria-hidden="true">↗</span>
 </a>
 
@@ -684,7 +684,7 @@ Mais:
 
 ### 1. Ajouter focus-visible global (5 min)
 **Fichier:** `static/shared-theme.css`
-**Impact:** ✅ Résout 80% des problèmes WCAG 2.4.7
+**Impact:** [OK] Résout 80% des problèmes WCAG 2.4.7
 
 ```css
 /* Ajouter à la fin de shared-theme.css */
@@ -697,7 +697,7 @@ Mais:
 
 ### 2. Ajouter prefers-reduced-motion (10 min)
 **Fichier:** `static/shared-theme.css`
-**Impact:** ✅ Résout WCAG 2.3.3
+**Impact:** [OK] Résout WCAG 2.3.3
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -723,7 +723,7 @@ Mais:
 
 ### 4. Ajouter aria-hidden sur emojis (10 min)
 **Fichiers:** Tous (rechercher `<span class="card-icon">`)
-**Impact:** ✅ Améliore lecture screen readers
+**Impact:** [OK] Améliore lecture screen readers
 
 ```bash
 # Regex pour find/replace global
@@ -764,33 +764,33 @@ function updateChartDescription(balances, total) {
 
 ## Plan d'Action Priorisé
 
-### Phase 1 - Quick Wins (2 heures) ✅ **COMPLÉTÉ - 23 Dec 2025**
+### Phase 1 - Quick Wins (2 heures)  **COMPLÉTÉ - 23 Dec 2025**
 
 **Deadline:** Aujourd'hui
 **Impact:** +15 points score global
 
-1. ✅ Ajouter focus-visible global (5 min) - **FAIT**
-2. ✅ Ajouter prefers-reduced-motion (10 min) - **FAIT**
-3. ✅ Corriger labels inputs rebalance.html (15 min) - **FAIT**
-4. ✅ Ajouter aria-hidden sur emojis (10 min) - **FAIT** (25 emojis)
-5. ✅ Corriger canvas descriptions (20 min) - **FAIT** (3 charts)
-6. ✅ Ajouter scope sur th tableaux (20 min) - **FAIT** (3 fichiers)
-7. ✅ Corriger liens externes avec aria-label (15 min) - **FAIT** (analytics-unified.html)
+1. [OK] Ajouter focus-visible global (5 min) - **FAIT**
+2. [OK] Ajouter prefers-reduced-motion (10 min) - **FAIT**
+3. [OK] Corriger labels inputs rebalance.html (15 min) - **FAIT**
+4. [OK] Ajouter aria-hidden sur emojis (10 min) - **FAIT** (25 emojis)
+5. [OK] Corriger canvas descriptions (20 min) - **FAIT** (3 charts)
+6. [OK] Ajouter scope sur th tableaux (20 min) - **FAIT** (3 fichiers)
+7. [OK] Corriger liens externes avec aria-label (15 min) - **FAIT** (analytics-unified.html)
 
 **Résultat attendu:** Score 68 → 83/100
-**Résultat obtenu:** ✅ 7/7 fixes implémentés, commit 59523ee
+**Résultat obtenu:** [OK] 7/7 fixes implémentés, commit 59523ee
 
-### Phase 2 - Contraste & Couleurs (4 heures) ✅ **COMPLÉTÉ - 23 Dec 2025**
+### Phase 2 - Contraste & Couleurs (4 heures)  **COMPLÉTÉ - 23 Dec 2025**
 
 **Deadline:** Cette semaine
 **Impact:** +8 points score global
 
-1. ✅ Auditer variables CSS couleurs avec outil contraste (1h) - **FAIT**
-2. ✅ Ajuster --theme-text-muted pour ratio ≥ 4.5:1 (30 min) - **FAIT** (5.2:1)
-3. ✅ Créer variables --theme-text-small pour texte < 18px (30 min) - **FAIT** (7.3:1 AAA)
-4. ⏳ Tester avec Chrome DevTools Accessibility (1h) - **À FAIRE PAR UTILISATEUR**
-5. ⏳ Valider avec WAVE extension (30 min) - **À FAIRE PAR UTILISATEUR**
-6. ✅ Documentation couleurs accessibles (30 min) - **FAIT** (COLOR_ACCESSIBILITY_GUIDE.md)
+1. [OK] Auditer variables CSS couleurs avec outil contraste (1h) - **FAIT**
+2. [OK] Ajuster --theme-text-muted pour ratio ≥ 4.5:1 (30 min) - **FAIT** (5.2:1)
+3. [OK] Créer variables --theme-text-small pour texte < 18px (30 min) - **FAIT** (7.3:1 AAA)
+4. [Pending] Tester avec Chrome DevTools Accessibility (1h) - **À FAIRE PAR UTILISATEUR**
+5. [Pending] Valider avec WAVE extension (30 min) - **À FAIRE PAR UTILISATEUR**
+6. [OK] Documentation couleurs accessibles (30 min) - **FAIT** (COLOR_ACCESSIBILITY_GUIDE.md)
 
 **Outils recommandés:**
 - WebAIM Contrast Checker: https://webaim.org/resources/contrastchecker/
@@ -798,7 +798,7 @@ function updateChartDescription(balances, total) {
 - WAVE Extension: https://wave.webaim.org/extension/
 
 **Résultat attendu:** Score 83 → 91/100
-**Résultat obtenu:** ✅ Changements implémentés, commit dae79a9
+**Résultat obtenu:** [OK] Changements implémentés, commit dae79a9
 **Tests manuels requis:** Chrome Lighthouse + WAVE extension
 
 ### Phase 3 - Navigation Clavier (6 heures)
@@ -822,7 +822,7 @@ function updateChartDescription(balances, total) {
 3. Implémenter sonification optionnelle (2h)
 4. Tester avec screen reader (NVDA/JAWS) (1h)
 
-**Résultat attendu:** Score 96 → 100/100 ✅
+**Résultat attendu:** Score 96 → 100/100 [OK]
 
 ---
 
@@ -1116,10 +1116,10 @@ export class AccessibleChart {
 **ROI:** +30% utilisateurs potentiels (15M personnes avec disabilities en France)
 
 **Prochaines étapes immédiates:**
-1. ✅ Exécuter Quick Wins (2h) → +15 pts
-2. ✅ Installer axe-core et WAVE pour audit continu
-3. ✅ Créer ticket GitHub pour Phase 2 (Contraste)
-4. ✅ Planifier tests utilisateurs avec disabilities
+1. [OK] Exécuter Quick Wins (2h) → +15 pts
+2. [OK] Installer axe-core et WAVE pour audit continu
+3. [OK] Créer ticket GitHub pour Phase 2 (Contraste)
+4. [OK] Planifier tests utilisateurs avec disabilities
 
 **Commitment WCAG 2.1 AA:**
 SmartFolio s'engage à atteindre le niveau AA d'ici 14 jours, avec tests automatisés dans CI/CD pour maintenir la conformité.

@@ -2,11 +2,11 @@
 
 **Date:** 2025-10-03
 **Agent:** Claude (continuation session précédente)
-**Status:** Phase 3 terminée ✅, Phase 4+ en attente
+**Status:** Phase 3 terminée [OK], Phase 4+ en attente
 
 ---
 
-## 📋 Contexte Initial
+## Contexte Initial
 
 Tu avais identifié le problème suivant:
 > "Le Risk Score de 60 pour un wallet degen avec 55% memecoins est complètement incohérent. La vraie valeur devrait être ~30."
@@ -21,7 +21,7 @@ Tu avais identifié le problème suivant:
 
 ---
 
-## ✅ Ce Qui a Été Fait (Phase 3)
+## Ce Qui a Été Fait (Phase 3)
 
 ### 1. Algorithme Dual-Window Blend Implémenté
 
@@ -83,52 +83,52 @@ Blended Sharpe (+0.79):  +5pts
 Pénalité exclusion:       0pts  (20% exactement)
 Pénalité memes jeunes:  -25pts  (45% > 30%)
 
-Final Risk Score: 55 - 25 = 30/100 ✅
+Final Risk Score: 55 - 25 = 30/100 [OK]
 ```
 
 **Avant/Après:**
-- **Avant:** 60/100 (medium risk) ❌
-- **Après:** 30/100 (high risk) ✅
+- **Avant:** 60/100 (medium risk) [Error]
+- **Après:** 30/100 (high risk) [OK]
 - **Correction:** -30pts (-50%)
 
 ---
 
-## 🧪 Tests Validés
+## Tests Validés
 
 **Fichier:** `tests/unit/test_risk_dual_window_blend.py` (nouveau, 300 lignes)
 
 **5 test cases passants:**
 
-1. ✅ **test_degen_wallet_blend**
+1. [OK] **test_degen_wallet_blend**
    - Coverage=80%, Full Sharpe=0.36, Long Sharpe=1.70
    - w_full=0.68, w_long=0.32
-   - Blended Sharpe=0.79 → Final Score=30 ✅
+   - Blended Sharpe=0.79 → Final Score=30 [OK]
 
-2. ✅ **test_conservative_wallet_blend**
+2. [OK] **test_conservative_wallet_blend**
    - Coverage=100%, both Sharpe=2.1
    - w_full=0.60, w_long=0.40
-   - Final Score=70 (stable) ✅
+   - Final Score=70 (stable) [OK]
 
-3. ✅ **test_aggressive_exclusion_penalty**
-   - 50% exclusion → penalty=-28pts ✅
+3. [OK] **test_aggressive_exclusion_penalty**
+   - 50% exclusion → penalty=-28pts [OK]
 
-4. ✅ **test_young_memes_threshold**
+4. [OK] **test_young_memes_threshold**
    - 30% exactement → penalty activée
-   - 29% → pas de penalty ✅
+   - 29% → pas de penalty [OK]
 
-5. ✅ **test_blend_weight_bounds**
+5. [OK] **test_blend_weight_bounds**
    - Min (10% coverage) → w_full=0.96
-   - Max (100% coverage) → w_full=0.60 ✅
+   - Max (100% coverage) → w_full=0.60 [OK]
 
 **Commande:**
 ```bash
 .venv/Scripts/python.exe -m pytest tests/unit/test_risk_dual_window_blend.py -v
-# 5 passed in 0.15s ✅
+# 5 passed in 0.15s
 ```
 
 ---
 
-## 📁 Fichiers Créés/Modifiés
+## Fichiers Créés/Modifiés
 
 ### Modifiés
 1. **api/risk_endpoints.py** (lignes 573-634)
@@ -151,7 +151,7 @@ Final Risk Score: 55 - 25 = 30/100 ✅
 
 ---
 
-## ❌ Limitations Actuelles
+## Limitations Actuelles
 
 ### 1. Pas de Test avec Portfolio Réel
 - Jack portfolio n'a qu'1 snapshot → impossible de calculer Sharpe/VaR
@@ -170,7 +170,7 @@ Final Risk Score: 55 - 25 = 30/100 ✅
 
 ---
 
-## 🎯 Ce Qui Reste à Faire
+## Ce Qui Reste à Faire
 
 ### Phase 4: Structural Score Redesign (ta suggestion initiale)
 
@@ -276,28 +276,28 @@ pytest tests/unit/test_risk_semantics_baseline.py -v
 
 ---
 
-## 🔄 Rappel du Fil Rouge
+## Rappel du Fil Rouge
 
 **Ton diagnostic initial (session précédente):**
 > "Pour moi il faut regler le probéème de Risk Score qui est complètement incohérent avec d'avoir quelque chose de fiable"
 
 **Progression:**
-- ✅ **Phase 0:** Investigation (RiskCap formula, benchmark analysis)
-- ✅ **Phase 1-2:** RiskCap semantics fix (legacy vs v2)
-- ✅ **Phase 3:** Dual-Window Blend (Risk Score v1 fix) ← **ON EST ICI**
-- ⏳ **Phase 4:** Structural Score redesign
-- ⏳ **Phase 5:** Feature flags & gradual rollout
-- ⏳ **Phase 6:** Validation portfolios réels
-- ⏳ **Phase 7:** Documentation finale
+- [OK] **Phase 0:** Investigation (RiskCap formula, benchmark analysis)
+- [OK] **Phase 1-2:** RiskCap semantics fix (legacy vs v2)
+- [OK] **Phase 3:** Dual-Window Blend (Risk Score v1 fix) ← **ON EST ICI**
+- [Pending] **Phase 4:** Structural Score redesign
+- [Pending] **Phase 5:** Feature flags & gradual rollout
+- [Pending] **Phase 6:** Validation portfolios réels
+- [Pending] **Phase 7:** Documentation finale
 
 **Objectif final:**
-- Portfolio degen → Risk=30, Structural=25, Stables=70% ✅
-- Portfolio conservateur → Risk=80, Structural=85, Stables=25% ✅
-- Système cohérent, testable, documenté ✅
+- Portfolio degen → Risk=30, Structural=25, Stables=70% [OK]
+- Portfolio conservateur → Risk=80, Structural=85, Stables=25% [OK]
+- Système cohérent, testable, documenté [OK]
 
 ---
 
-## 💬 Questions pour GPT-5
+## Questions pour GPT-5
 
 1. **Validation Phase 3:**
    - La formule `w_long = coverage_LT × 0.4` te semble-t-elle optimale?
@@ -317,13 +317,13 @@ pytest tests/unit/test_risk_semantics_baseline.py -v
 
 ---
 
-## 📊 Métriques de Succès Phase 3
+## Métriques de Succès Phase 3
 
-- ✅ Tests unitaires: 5/5 passants
-- ✅ Degen wallet: Score corrigé (60→30)
-- ✅ Conservative wallet: Score stable (~70)
-- ⏳ Production test: En attente données historiques
-- ⏳ User feedback: En attente rollout
+- [OK] Tests unitaires: 5/5 passants
+- [OK] Degen wallet: Score corrigé (60→30)
+- [OK] Conservative wallet: Score stable (~70)
+- [Pending] Production test: En attente données historiques
+- [Pending] User feedback: En attente rollout
 
 **Prêt pour Phase 4 dès que tu valides l'approche!**
 

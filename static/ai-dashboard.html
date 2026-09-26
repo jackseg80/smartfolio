@@ -29,12 +29,12 @@
             window.Chart.register(window.ChartDataLabels);
             window.Chart.defaults.set('plugins.datalabels', { display: false });
             window.__di_dl_registered__ = true;
-            console.debug('✅ chartjs-plugin-datalabels registered');
+            console.debug("[OK] chartjs-plugin-datalabels registered");
         }
         if (window.Chart && window.ChartAnnotation && !window.__di_annotation_registered__) {
             window.Chart.register(window.ChartAnnotation);
             window.__di_annotation_registered__ = true;
-            console.debug('✅ chartjs-plugin-annotation registered');
+            console.debug("[OK] chartjs-plugin-annotation registered");
         }
     </script>
 
@@ -598,8 +598,8 @@
 
                 <!-- Actions globales -->
                 <div class="global-actions">
-                    <button id="refresh-all" class="btn primary">🔄 Refresh All</button>
-                    <button id="export-data" class="btn secondary">💾 Export</button>
+                    <button id="refresh-all" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh All</button>
+                    <button id="export-data" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Save" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export</button>
                 </div>
             </div>
 
@@ -632,10 +632,10 @@
 
             <!-- Onglets -->
             <div class="tabs" role="tablist">
-                <button class="tab-button active" data-tab="overview" role="tab">📊 Vue d'Ensemble</button>
-                <button class="tab-button" data-tab="models" role="tab">🤖 Models</button>
-                <button class="tab-button" data-tab="predictions" role="tab">🔮 Predictions</button>
-                <button class="tab-button" data-tab="administration" role="tab">⚙️ Model Status</button>
+                <button class="tab-button active" data-tab="overview" role="tab"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Vue d'Ensemble</button>
+                <button class="tab-button" data-tab="models" role="tab"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Models</button>
+                <button class="tab-button" data-tab="predictions" role="tab"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Forecast" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sparkles"></use></svg> Predictions</button>
+                <button class="tab-button" data-tab="administration" role="tab"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Model Status</button>
             </div>
 
                 <!-- Vue d'ensemble -->
@@ -645,7 +645,7 @@
                         style="margin-bottom: 1.5rem; border: 1px solid var(--brand-primary); background: linear-gradient(135deg, var(--theme-surface) 0%, color-mix(in oklab, var(--brand-primary) 5%, var(--theme-surface)) 100%);">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="card-icon" aria-hidden="true">🚨</span>
+                                <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg></span>
                                 Alerts System Phase 3
                             </div>
                         </div>
@@ -670,7 +670,7 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button id="check-alerts-status" class="btn primary">📊 Check Alerts</button>
+                            <button id="check-alerts-status" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Check Alerts</button>
                         </div>
                     </div>
 
@@ -696,7 +696,7 @@
                             data-source="PyTorch models + CoinGecko/FRED data">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <span class="card-icon" aria-hidden="true">🔮</span>
+                                    <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Forecast" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#sparkles"></use></svg></span>
                                     Real-Time Predictions
                                 </div>
                             </div>
@@ -706,8 +706,8 @@
                                 </div>
                             </div>
                             <div class="card-actions">
-                                <button id="refresh-predictions" class="btn primary">🔄 Refresh</button>
-                                <button id="export-predictions" class="btn secondary">💾 Export</button>
+                                <button id="refresh-predictions" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh</button>
+                                <button id="export-predictions" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Save" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export</button>
                             </div>
                         </div>
                     </div>
@@ -719,13 +719,13 @@
                     <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
                             <div>
-                                <strong style="display: block; margin-bottom: 0.25rem;">⚙️ Advanced Configuration</strong>
+                                <strong style="display: block; margin-bottom: 0.25rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Advanced Configuration</strong>
                                 <span style="color: var(--theme-text-muted); font-size: 0.9em;">
                                     For model training, cache management, and advanced configuration, use the Admin Dashboard.
                                 </span>
                             </div>
                             <a href="admin-dashboard.html#ml" class="btn btn-primary" style="white-space: nowrap;">
-                                🚀 Open Admin Dashboard
+                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Open Admin Dashboard
                             </a>
                         </div>
                     </div>
@@ -736,7 +736,7 @@
                         <div class="ml-card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <span class="card-icon" aria-hidden="true">📊</span>
+                                    <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></span>
                                     Global Pipeline Status
                                 </div>
                             </div>
@@ -753,8 +753,8 @@
                                 </div>
                             </div>
                             <div class="card-actions">
-                                <button id="admin-refresh-status" class="btn primary">🔄 Refresh Status</button>
-                                <button id="admin-clear-all" class="btn secondary">🗑️ Clear Memory</button>
+                                <button id="admin-refresh-status" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh Status</button>
+                                <button id="admin-clear-all" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Clear Memory</button>
                             </div>
                         </div>
 
@@ -762,7 +762,7 @@
                         <div class="ml-card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <span class="card-icon" aria-hidden="true">📈</span>
+                                    <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></span>
                                     Volatility Models
                                 </div>
                             </div>
@@ -779,8 +779,8 @@
                                 </div>
                             </div>
                             <div class="card-actions">
-                                <button id="admin-load-volatility" class="btn primary">⚡ Load All</button>
-                                <button id="admin-load-specific" class="btn secondary">🎯 Selection</button>
+                                <button id="admin-load-volatility" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Load All</button>
+                                <button id="admin-load-specific" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Selection</button>
                             </div>
                         </div>
 
@@ -788,7 +788,7 @@
                         <div class="ml-card">
                             <div class="card-header">
                                 <div class="card-title">
-                                    <span class="card-icon" aria-hidden="true">🎯</span>
+                                    <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg></span>
                                     Regime Detection
                                 </div>
                             </div>
@@ -805,8 +805,8 @@
                                 </div>
                             </div>
                             <div class="card-actions">
-                                <button id="admin-load-regime" class="btn primary">⚡ Load Model</button>
-                                <button id="admin-regime-status" class="btn secondary">📊 Details</button>
+                                <button id="admin-load-regime" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Load Model</button>
+                                <button id="admin-regime-status" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Details</button>
                             </div>
                         </div>
                     </div>
@@ -815,7 +815,7 @@
                     <div class="ml-card" style="grid-column: 1 / -1; margin-top: 2rem;">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="card-icon" aria-hidden="true">📝</span>
+                                <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg></span>
                                 Pipeline Activity Log
                             </div>
                         </div>
@@ -829,7 +829,7 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button id="admin-clear-logs" class="btn secondary">🗑️ Clear Logs</button>
+                            <button id="admin-clear-logs" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Clear Logs</button>
                         </div>
                     </div>
                 </div>
@@ -840,7 +840,7 @@
                     <div class="ml-card" style="margin-bottom: 2rem;">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="card-icon" aria-hidden="true">📈</span>
+                                <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></span>
                                 Stock Market Regime Detection (HMM)
                             </div>
                         </div>
@@ -867,7 +867,7 @@
 
                             <div
                                 style="margin-top: 1rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--info);">
-                                <strong>ℹ️ Stock Market Detection:</strong>
+                                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Stock Market Detection:</strong>
                                 <ul
                                     style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                     <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes
@@ -879,8 +879,8 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button id="refresh-stock-regime" class="btn primary">🔄 Refresh</button>
-                            <button id="view-stock-history" class="btn secondary">📊 View Probabilities</button>
+                            <button id="refresh-stock-regime" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh</button>
+                            <button id="view-stock-history" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> View Probabilities</button>
                         </div>
                     </div>
 
@@ -946,7 +946,7 @@
                         <!-- Loading/Error Messages -->
                         <div id="btc-regime-loading-message"
                             style="display: none; text-align: center; padding: 2rem; color: var(--theme-text-muted);">
-                            ⏳ Loading Bitcoin regime data...
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Loading Bitcoin regime data...
                         </div>
                         <div id="btc-regime-error-message"
                             style="display: none; text-align: center; padding: 2rem; color: var(--danger);">
@@ -1000,7 +1000,7 @@
                         <!-- Info Footer -->
                         <div
                             style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm);">
-                            <strong>ℹ️ About Hybrid Detection:</strong>
+                            <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Hybrid Detection:</strong>
                             <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                 <li><strong>Rule-Based (≥85% confidence):</strong> Clear cases using drawdown, duration,
                                     and trend thresholds</li>
@@ -1066,7 +1066,7 @@
                         <!-- Info Note -->
                         <div
                             style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
-                            <strong>ℹ️ About Ethereum Detection:</strong>
+                            <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Ethereum Detection:</strong>
                             <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                 <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as
                                     Bitcoin</li>
@@ -1082,7 +1082,7 @@
                     <div class="ml-card">
                         <div class="card-header">
                             <div class="card-title">
-                                <span class="card-icon" aria-hidden="true">📊</span>
+                                <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></span>
                                 Cross-Asset Regime Comparison
                             </div>
                         </div>
@@ -1107,7 +1107,7 @@
                                         <tr>
                                             <td
                                                 style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">
-                                                📈 Stock Market</td>
+                                                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Stock Market</td>
                                             <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">
                                                 <span id="comparison-stock-regime" class="regime-chip">--</span>
                                             </td>
@@ -1152,7 +1152,7 @@
 
                             <div
                                 style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
-                                <strong>📌 Key Differences:</strong>
+                                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pinned" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bookmark"></use></svg> Key Differences:</strong>
                                 <ul
                                     style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                                     <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional
@@ -1165,8 +1165,8 @@
                             </div>
                         </div>
                         <div class="card-actions">
-                            <button id="refresh-comparison" class="btn primary">🔄 Refresh Comparison</button>
-                            <button id="export-comparison" class="btn secondary">💾 Export Data</button>
+                            <button id="refresh-comparison" class="btn primary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh Comparison</button>
+                            <button id="export-comparison" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Save" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export Data</button>
                         </div>
                     </div>
                 </div>
@@ -1190,7 +1190,7 @@
         // Initialisation
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                debugLogger.debug('🚀 Initialisation du Dashboard AI...');
+                debugLogger.debug("Initialisation du Dashboard AI...");
 
                 // Option de configuration rapide de la clé admin via paramètre d'URL (dev-only)
                 try {
@@ -1198,7 +1198,7 @@
                     const ak = params.get('admin_key');
                     if (ak && window.globalConfig && typeof window.globalConfig.set === 'function') {
                         window.globalConfig.set('admin_key', ak);
-                        debugLogger.debug('🔑 Clé admin chargée depuis l\'URL');
+                        debugLogger.debug("Clé admin chargée depuis l'URL");
                         const mini = document.getElementById('admin-mini-status');
                         if (mini) mini.textContent = 'Admin: OK';
                     }
@@ -1237,13 +1237,13 @@
                 setupRegimesTabButtons();
 
                 // Auto-initialiser le système ML
-                debugLogger.debug('⚡ Auto-initialisation du système ML...');
+                debugLogger.debug("Auto-initialisation du système ML...");
                 await initializeMLSystem();
 
                 // Charger les prédictions
                 refreshPredictions();
 
-                debugLogger.debug('✅ Dashboard AI Unifié initialisé avec succès');
+                debugLogger.debug("[OK] Dashboard AI Unifié initialisé avec succès");
                 showSuccess('AI Dashboard ready');
 
             } catch (error) {
@@ -1268,7 +1268,7 @@
             if (!cardManager) return;
 
             try {
-                debugLogger.debug('🔄 Chargement des vraies données ML pour les cartes...');
+                debugLogger.debug("Chargement des vraies données ML pour les cartes...");
                 const config = await fetchUserConfig();
 
                 let volatilityStatus = 'Ready', volatilityMetric = '82.3%', volatilitySource = 'Not loaded';
@@ -1287,7 +1287,7 @@
                             volatilityStatus = 'Loaded';
                             volatilityMetric = `${volModels.models_loaded} models`;
                             volatilitySource = `${volModels.models_count} available, ${volModels.models_loaded} loaded`;
-                            debugLogger.debug('✅ Modèles volatilité chargés:', volModels.models_loaded);
+                            debugLogger.debug("[OK] Modèles volatilité chargés:", volModels.models_loaded);
                         } else {
                             // Fallback vers les vrais modèles entraînés même s'ils ne sont pas chargés
                             volatilityStatus = 'Trained';
@@ -1318,7 +1318,7 @@
                             regimeSource = 'No trained model';
                         }
 
-                        debugLogger.debug('✅ Statut régime:', regimeStatus, '- Exists:', regimeModels?.model_exists, 'Loaded:', regimeModels?.model_loaded);
+                        debugLogger.debug("[OK] Statut régime:", regimeStatus, '- Exists:', regimeModels?.model_exists, 'Loaded:', regimeModels?.model_loaded);
                     }
 
                     // Obtenir le régime actuel via endpoint crypto regime (même que Market Regimes page)
@@ -1331,7 +1331,7 @@
                         if (currentRegime.confidence) {
                             regimeSource = `${(currentRegime.confidence * 100).toFixed(0)}% confidence`;
                         }
-                        debugLogger.debug('✅ Régime actuel chargé:', regimeMetric);
+                        debugLogger.debug("[OK] Régime actuel chargé:", regimeMetric);
                     }
                 } catch (e) {
                     debugLogger.warn('âš ï¸ API régime non disponible');
@@ -1350,7 +1350,7 @@
                             const assets = Object.keys(correlationData.correlation_matrix.correlations);
                             correlationMetric = `${assets.length} Assets`;
                             correlationSource = `Matrice ${assets.length}x${assets.length}`;
-                            debugLogger.debug('✅ Matrice corrélation chargée:', assets.length, 'assets');
+                            debugLogger.debug("[OK] Matrice corrélation chargée:", assets.length, 'assets');
                         } else {
                             correlationStatus = 'No data';
                             correlationMetric = 'Empty portfolio';
@@ -1383,12 +1383,12 @@
                                 sentimentMetric = `${value}/100`;
                                 const level = value < 25 ? 'Extreme Fear' : value < 45 ? 'Fear' : value < 55 ? 'Neutral' : value < 75 ? 'Greed' : 'Extreme Greed';
                                 sentimentSource = sentimentSources.length > 1 ? sentimentSources.map(s => s.replace('_', ' ')).join(', ') : level;
-                                debugLogger.debug('✅ ML Sentiment chargé:', sentimentSources, value);
+                                debugLogger.debug("[OK] ML Sentiment chargé:", sentimentSources, value);
                             }
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ API ML Sentiment non disponible');
+                    debugLogger.warn("[Warning] API ML Sentiment non disponible");
                     // Fallback: essayer l'ancien endpoint Fear & Greed
                     try {
                         const sentimentResponse = await fetch(`${config.api_base_url}/api/ml/sentiment/fear-greed?days=1`, {
@@ -1404,20 +1404,20 @@
                                 const level = value < 25 ? 'Extreme Fear' : value < 45 ? 'Fear' : value < 55 ? 'Neutral' : value < 75 ? 'Greed' : 'Extreme Greed';
                                 sentimentSource = level;
                                 sentimentSources = ['fear_greed'];
-                                debugLogger.debug('✅ Fear & Greed (fallback) chargé:', value, level);
+                                debugLogger.debug("[OK] Fear & Greed (fallback) chargé:", value, level);
                             }
                         }
                     } catch (e2) {
-                        debugLogger.warn('⚠️ API sentiment fallback non disponible');
+                        debugLogger.warn("[Warning] API sentiment fallback non disponible");
                     }
                 }
 
                 // 5. Créer les cartes avec vraies données
                 const cards = [
-                    createMLCard('📊', 'Volatility Model', volatilityStatus, volatilityMetric, volatilitySource),
-                    createMLCard('🎯', 'Regime Detection', regimeStatus, regimeMetric, regimeSource),
-                    createMLCard('🔗', 'Correlations', correlationStatus, correlationMetric, correlationSource),
-                    createMLCard('😊', 'Sentiment', sentimentStatus, sentimentMetric, sentimentSource)
+                    createMLCard("Analytics", 'Volatility Model', volatilityStatus, volatilityMetric, volatilitySource),
+                    createMLCard("Target", 'Regime Detection', regimeStatus, regimeMetric, regimeSource),
+                    createMLCard("Link", 'Correlations', correlationStatus, correlationMetric, correlationSource),
+                    createMLCard("Positive", 'Sentiment', sentimentStatus, sentimentMetric, sentimentSource)
                 ];
 
                 cards.forEach(card => {
@@ -1425,16 +1425,16 @@
                     cardManager.cards.push(card);
                 });
 
-                debugLogger.debug('✅ Cartes ML créées avec vraies données');
+                debugLogger.debug("[OK] Cartes ML créées avec vraies données");
 
             } catch (error) {
-                debugLogger.error('❌ Erreur création cartes ML avec vraies données:', error);
+                debugLogger.error("[Error] Erreur création cartes ML avec vraies données:", error);
                 // Fallback intelligent
                 const fallbackCards = [
-                    createMLCard('📊', 'Volatility Model', 'Available', '78.2%', 'Ready to load'),
-                    createMLCard('🎯', 'Regime Detection', 'Available', 'Correction', '82% confidence'),
-                    createMLCard('🔗', 'Correlations', 'Computing', '10 Assets', 'Rolling 30d'),
-                    createMLCard('😊', 'Sentiment', 'Externe', '52/100', 'Neutral')
+                    createMLCard("Analytics", 'Volatility Model', 'Available', '78.2%', 'Ready to load'),
+                    createMLCard("Target", 'Regime Detection', 'Available', 'Correction', '82% confidence'),
+                    createMLCard("Link", 'Correlations', 'Computing', '10 Assets', 'Rolling 30d'),
+                    createMLCard("Positive", 'Sentiment', 'Externe', '52/100', 'Neutral')
                 ];
 
                 fallbackCards.forEach(card => {
@@ -1505,7 +1505,7 @@
         // Actualiser tous les statuts
         async function refreshAllStatus() {
             try {
-                debugLogger.debug('🔄 Actualisation des statuts...');
+                debugLogger.debug("Actualisation des statuts...");
 
                 // Simuler le chargement des statuts
                 globalStatus = {
@@ -1521,7 +1521,7 @@
                 // Mettre à jour l'heure
                 document.getElementById('last-update').textContent = new Date().toLocaleTimeString('en-US');
 
-                debugLogger.debug('✅ Statuts actualisés');
+                debugLogger.debug("[OK] Statuts actualisés");
             } catch (error) {
                 debugLogger.error('Erreur de chargement des statuts:', error);
                 showError('Error loading statuses: ' + error.message);
@@ -1531,7 +1531,7 @@
         // Mettre à jour les statistiques globales avec vraies données ML depuis Governance Engine
         async function updateGlobalStats() {
             try {
-                debugLogger.debug('🔄 Chargement des vraies données ML depuis Governance Engine...');
+                debugLogger.debug("Chargement des vraies données ML depuis Governance Engine...");
                 const config = await fetchUserConfig();
 
                 // 1. Utiliser la source ML centralisée (même logique que badge et analytics)
@@ -1549,7 +1549,7 @@
                     // (AI Dashboard utilisait governance.signals.decision_score qui n'est plus disponible)
                     governanceDecisionScore = governanceConfidence * 0.85; // Approximation basée sur confiance
 
-                    debugLogger.debug(`✅ Stats ML depuis source centralisée (${mlStatus.source}):`, {
+                    debugLogger.debug(`[OK] Stats ML depuis source centralisée (${mlStatus.source}):`, {
                         confidence: governanceConfidence.toFixed(1),
                         decision: governanceDecisionScore.toFixed(1),
                         models: activeModelCount
@@ -1572,10 +1572,10 @@
                 document.getElementById('ml-confidence').textContent = governanceConfidence.toFixed(1) + '%';
                 document.getElementById('decision-score').textContent = governanceDecisionScore.toFixed(1) + '%';
 
-                debugLogger.debug(`✅ Stats ML mises à jour depuis Governance Engine: ${activeModelCount} modèles, ${governanceConfidence.toFixed(1)}% confidence, ${governanceDecisionScore.toFixed(1)}% decision`);
+                debugLogger.debug(`[OK] Stats ML mises à jour depuis Governance Engine: ${activeModelCount} modèles, ${governanceConfidence.toFixed(1)}% confidence, ${governanceDecisionScore.toFixed(1)}% decision`);
 
             } catch (error) {
-                debugLogger.error('❌ Erreur lors du chargement des vraies données ML:', error);
+                debugLogger.error("[Error] Erreur lors du chargement des vraies données ML:", error);
                 // Utiliser le cache en cas d'erreur
                 document.getElementById('active-models').textContent = cachedStats.activeModels;
                 document.getElementById('ml-confidence').textContent = '78.3%';
@@ -1670,9 +1670,9 @@
         function setupActionButtons() {
             // Bouton Actualiser Tout
             document.getElementById('refresh-all').addEventListener('click', async () => {
-                showSuccess('🔄 Refresh in progress...');
+                showSuccess("Refresh in progress...");
                 await refreshAllStatus();
-                showSuccess('✅ Refresh complete');
+                showSuccess("[OK] Refresh complete");
             });
 
 
@@ -1684,19 +1684,19 @@
             // Bouton Actualiser Prédictions
             document.getElementById('refresh-predictions').addEventListener('click', () => {
                 refreshPredictions();
-                showSuccess('🔮 Predictions updated');
+                showSuccess("Predictions updated");
             });
 
             // Bouton Exporter Prédictions
             document.getElementById('export-predictions').addEventListener('click', () => {
-                showSuccess('💾 Exporting predictions...');
+                showSuccess("Exporting predictions...");
             });
 
             // === BOUTON ALERTES PHASE 3 ===
 
             // Bouton Vérifier Alertes
             document.getElementById('check-alerts-status')?.addEventListener('click', async () => {
-                showSuccess('🔄 Checking alert status...');
+                showSuccess("Checking alert status...");
                 await checkAlertsSystemStatus();
             });
 
@@ -1715,7 +1715,7 @@
                     if (!val) { showError('Empty admin key'); return; }
                     if (window.globalConfig && typeof window.globalConfig.set === 'function') {
                         window.globalConfig.set('admin_key', val);
-                        addAdminLog('🔑 Clé admin enregistrée');
+                        addAdminLog("Clé admin enregistrée");
                         const mini = document.getElementById('admin-mini-status');
                         if (mini) mini.textContent = 'Admin: OK';
                         refreshPipelineStatus();
@@ -1748,8 +1748,8 @@
         // Initialiser le système ML
         async function initializeMLSystem() {
             try {
-                debugLogger.debug('🔄 Démarrage initialisation ML...');
-                showSuccess('⚡ Initializing ML system...');
+                debugLogger.debug("Démarrage initialisation ML...");
+                showSuccess("Initializing ML system...");
 
                 // Charger les vraies données ML
                 const config = await fetchUserConfig();
@@ -1833,49 +1833,49 @@
                         }
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ ML Sentiment non disponible');
+                    debugLogger.warn("[Warning] ML Sentiment non disponible");
                 }
 
-                debugLogger.debug('⏰ Données ML chargées');
+                debugLogger.debug("Données ML chargées");
 
                 // Remplir l'onglet Modèles
                 const modelsContainer = document.getElementById('models-detailed');
-                debugLogger.debug('📦 Container trouvé:', modelsContainer);
+                debugLogger.debug("Container trouvé:", modelsContainer);
 
                 if (modelsContainer) {
                     modelsContainer.innerHTML = '';
-                    debugLogger.debug('🧹 Container vidé');
+                    debugLogger.debug("Container vidé");
 
                     try {
                         const detailedCards = [
-                            createDetailedCard('📊', 'Volatility Model - Details', volatilityStatus, volatilityMetric, volatilitySource, 'LSTM'),
-                            createDetailedCard('🎯', 'Regime Detection - Details', regimeStatus, regimeMetric, regimeSource, 'HMM'),
-                            createDetailedCard('🔗', 'Correlation Analysis - Details', correlationStatus, correlationMetric, correlationSource, 'Pearson'),
-                            createDetailedCard('😊', 'ML Sentiment - Details', sentimentStatus, sentimentMetric, sentimentSource, 'F&G Index')
+                            createDetailedCard("Analytics", 'Volatility Model - Details', volatilityStatus, volatilityMetric, volatilitySource, 'LSTM'),
+                            createDetailedCard("Target", 'Regime Detection - Details', regimeStatus, regimeMetric, regimeSource, 'HMM'),
+                            createDetailedCard("Link", 'Correlation Analysis - Details', correlationStatus, correlationMetric, correlationSource, 'Pearson'),
+                            createDetailedCard("Positive", 'ML Sentiment - Details', sentimentStatus, sentimentMetric, sentimentSource, 'F&G Index')
                         ];
                         debugLogger.debug('ðŸƒ Cartes créées:', detailedCards.length);
 
                         detailedCards.forEach((card, index) => {
-                            debugLogger.debug(`➕ Ajout carte ${index + 1}:`, card);
+                            debugLogger.debug(`Ajout carte ${index + 1}:`, card);
                             modelsContainer.appendChild(card);
                         });
 
-                        debugLogger.debug('✅ Toutes les cartes ajoutées');
-                        showSuccess('✅ ML system initialized - See the "Models" tab');
+                        debugLogger.debug("[OK] Toutes les cartes ajoutées");
+                        showSuccess("[OK] ML system initialized - See the \"Models\" tab");
 
                     } catch (cardError) {
-                        debugLogger.error('❌ Erreur lors de la création des cartes:', cardError);
-                        showError('❌ Error creating model cards: ' + cardError.message);
+                        debugLogger.error("[Error] Erreur lors de la création des cartes:", cardError);
+                        showError("Error creating model cards: " + cardError.message);
                     }
 
                 } else {
-                    debugLogger.error('❌ Container modèles-detailed introuvable dans le DOM');
-                    showError('❌ Models container not found (ID: models-detailed)');
+                    debugLogger.error("[Error] Container modèles-detailed introuvable dans le DOM");
+                    showError("[Error] Models container not found (ID: models-detailed)");
                 }
 
             } catch (error) {
-                debugLogger.error('❌ Erreur générale d\'initialisation:', error);
-                showError('❌ Error initializing ML system: ' + error.message);
+                debugLogger.error("[Error] Erreur générale d'initialisation:", error);
+                showError("Error initializing ML system: " + error.message);
             }
         }
 
@@ -1911,7 +1911,7 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn primary" onclick="showModelDetails('${modelType}', '${title}')">📋 Details</button>
+                    <button class="btn primary" onclick="showModelDetails('${modelType}', '${title}')"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Details</button>
                 </div>
             `;
             return card;
@@ -1920,7 +1920,7 @@
         // Actualiser les prédictions avec vraies données du Governance Engine
         async function refreshPredictions() {
             try {
-                debugLogger.debug('🔄 Chargement des vraies prédictions ML depuis Governance Engine...');
+                debugLogger.debug("Chargement des vraies prédictions ML depuis Governance Engine...");
                 const config = await fetchUserConfig();
 
                 // 1. D'abord obtenir les signaux ML depuis le Governance Engine
@@ -1929,10 +1929,10 @@
                     const governanceResponse = await fetch(`${config.api_base_url}/execution/governance/signals`);
                     if (governanceResponse.ok) {
                         governanceData = await governanceResponse.json();
-                        debugLogger.debug('✅ Données Governance chargées:', governanceData.signals);
+                        debugLogger.debug("[OK] Données Governance chargées:", governanceData.signals);
                     }
                 } catch (e) {
-                    debugLogger.warn('⚠️ Endpoint governance non disponible');
+                    debugLogger.warn("[Warning] Endpoint governance non disponible");
                 }
 
                 let btcVol, ethVol, solVol, marketRegime, fearGreed, regimeConfidence, avgCorrelation, systematicRisk;
@@ -1946,7 +1946,7 @@
                         btcVol = signals.volatility.BTC || null;
                         ethVol = signals.volatility.ETH || null;
                         solVol = signals.volatility.SOL || null;
-                        debugLogger.debug('✅ Volatilités depuis Governance:', { BTC: btcVol, ETH: ethVol, SOL: solVol });
+                        debugLogger.debug("[OK] Volatilités depuis Governance:", { BTC: btcVol, ETH: ethVol, SOL: solVol });
                     }
 
                     // Régime - Extraire bull/bear/neutral
@@ -1962,7 +1962,7 @@
                             marketRegime = 'Correction';
                             regimeConfidence = regimeData.neutral * 100;
                         }
-                        debugLogger.debug('✅ Régime depuis Governance:', marketRegime, regimeConfidence + '%');
+                        debugLogger.debug("[OK] Régime depuis Governance:", marketRegime, regimeConfidence + '%');
                     }
 
                     // Corrélation
@@ -1970,13 +1970,13 @@
                         // Fix: Use ?? instead of || to handle 0.0 correctly (0.0 is falsy in JS)
                         avgCorrelation = signals.correlation.avg_correlation ?? null;
                         systematicRisk = signals.correlation.systemic_risk ?? null;
-                        debugLogger.debug('✅ Corrélation depuis Governance:', { avg: avgCorrelation, risk: systematicRisk });
+                        debugLogger.debug("[OK] Corrélation depuis Governance:", { avg: avgCorrelation, risk: systematicRisk });
                     }
 
                     // ML Sentiment (anciennement Fear & Greed)
                     if (signals.sentiment) {
                         fearGreed = signals.sentiment.fear_greed || null;
-                        debugLogger.debug('✅ ML Sentiment depuis Governance:', fearGreed);
+                        debugLogger.debug("[OK] ML Sentiment depuis Governance:", fearGreed);
                     }
                 }
 
@@ -1984,12 +1984,12 @@
                 if (!governanceData) {
                     document.getElementById('live-predictions').innerHTML = `
                         <div style="text-align: center; padding: 2rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 2px dashed var(--theme-border);">
-                            <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                            <div style="font-size: 2rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></div>
                             <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">ML Data Not Available</div>
                             <div style="opacity: 0.7;">The Governance Engine is not accessible. Please verify that the backend is running.</div>
                         </div>
                     `;
-                    showError('❌ Unable to load ML predictions - Backend not available');
+                    showError("[Error] Unable to load ML predictions - Backend not available");
                     return;
                 }
 
@@ -2046,19 +2046,19 @@
                     </div>
                 `;
 
-                debugLogger.debug('✅ Prédictions ML mises à jour avec succès');
+                debugLogger.debug("[OK] Prédictions ML mises à jour avec succès");
 
             } catch (error) {
-                debugLogger.error('❌ Erreur lors du chargement des prédictions ML:', error);
+                debugLogger.error("[Error] Erreur lors du chargement des prédictions ML:", error);
                 document.getElementById('live-predictions').innerHTML = `
                     <div style="text-align: center; padding: 2rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 2px solid #ef4444;">
-                        <div style="font-size: 2rem; margin-bottom: 1rem;">❌</div>
+                        <div style="font-size: 2rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg></div>
                         <div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; color: #ef4444;">Loading Error</div>
                         <div style="opacity: 0.7;">${error.message}</div>
-                        <button onclick="refreshPredictions()" class="btn primary" style="margin-top: 1rem;">🔄 Retry</button>
+                        <button onclick="refreshPredictions()" class="btn primary" style="margin-top: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry</button>
                     </div>
                 `;
-                showError('❌ Error: ' + error.message);
+                showError("Error: " + error.message);
             }
         }
 
@@ -2200,17 +2200,17 @@
             a.download = `ml-dashboard-export-${Date.now()}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            showSuccess('💾 Data exported');
+            showSuccess("Data exported");
         }
 
         // Fonctions d'affichage de messages
         function showSuccess(message) {
-            debugLogger.debug('✅', message);
+            debugLogger.debug("OK", message);
             showNotification(message, 'success');
         }
 
         function showError(message) {
-            debugLogger.error('❌', message);
+            debugLogger.error("Error", message);
             showNotification(message, 'error');
         }
 
@@ -2232,15 +2232,15 @@
             try {
                 const config = await fetchUserConfig();
                 const endpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
-                debugLogger.debug('📡 Fetching stock regime from:', endpoint);
+                debugLogger.debug("Fetching stock regime from:", endpoint);
 
                 const response = await fetch(endpoint);
 
-                debugLogger.debug('📡 Stock regime response status:', response.status);
+                debugLogger.debug("Stock regime response status:", response.status);
 
                 if (response.ok) {
                     const data = await response.json();
-                    debugLogger.debug('📡 Stock regime data received:', data);
+                    debugLogger.debug("Stock regime data received:", data);
 
                     // Response format: {current_regime, confidence, regime_probabilities}
                     if (data.current_regime && data.confidence !== undefined) {
@@ -2251,20 +2251,20 @@
                         document.getElementById('stock-regime-name').textContent = regimeName;
                         document.getElementById('stock-regime-confidence').textContent = confidencePercent + '%';
 
-                        debugLogger.debug('✅ Stock regime loaded:', regimeName, confidencePercent + '%');
+                        debugLogger.debug("[OK] Stock regime loaded:", regimeName, confidencePercent + '%');
                     } else {
-                        debugLogger.warn('⚠️ No current_regime in response');
+                        debugLogger.warn("[Warning] No current_regime in response");
                         document.getElementById('stock-regime-name').textContent = 'N/A';
                         document.getElementById('stock-regime-confidence').textContent = 'N/A';
                     }
                 } else {
                     const errorText = await response.text();
-                    debugLogger.error('❌ Stock regime API error:', response.status, errorText);
+                    debugLogger.error("[Error] Stock regime API error:", response.status, errorText);
                     document.getElementById('stock-regime-name').textContent = 'API Error';
                     document.getElementById('stock-regime-confidence').textContent = '--';
                 }
             } catch (error) {
-                debugLogger.error('❌ Failed to load stock regime:', error);
+                debugLogger.error("Failed to load stock regime:", error);
                 document.getElementById('stock-regime-name').textContent = 'Error';
                 document.getElementById('stock-regime-confidence').textContent = '--';
             }
@@ -2275,14 +2275,14 @@
             try {
                 const config = await fetchUserConfig();
                 const endpoint = `${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`;
-                debugLogger.debug('📡 Fetching ETH regime from:', endpoint);
+                debugLogger.debug("Fetching ETH regime from:", endpoint);
 
                 const response = await fetch(endpoint);
-                debugLogger.debug('📡 ETH regime response status:', response.status);
+                debugLogger.debug("ETH regime response status:", response.status);
 
                 if (response.ok) {
                     const rawData = await response.json();
-                    debugLogger.debug('📡 ETH regime data received:', rawData);
+                    debugLogger.debug("ETH regime data received:", rawData);
 
                     // Handle both response formats: direct or nested in data
                     const data = rawData.data || rawData;
@@ -2313,20 +2313,20 @@
                             reasonCard.style.display = 'none';
                         }
 
-                        debugLogger.debug('✅ ETH regime loaded:', regimeName, confidencePercent + '%', detectionMethod);
+                        debugLogger.debug("[OK] ETH regime loaded:", regimeName, confidencePercent + '%', detectionMethod);
                     } else {
-                        debugLogger.warn('⚠️ No current_regime in ETH response');
+                        debugLogger.warn("[Warning] No current_regime in ETH response");
                         document.getElementById('eth-current-regime-name').textContent = 'N/A';
                         document.getElementById('eth-current-regime-confidence').textContent = 'N/A';
                     }
                 } else {
                     const errorText = await response.text();
-                    debugLogger.error('❌ ETH regime API error:', response.status, errorText);
+                    debugLogger.error("[Error] ETH regime API error:", response.status, errorText);
                     document.getElementById('eth-current-regime-name').textContent = 'API Error';
                     document.getElementById('eth-current-regime-confidence').textContent = '--';
                 }
             } catch (error) {
-                debugLogger.error('❌ Failed to load ETH regime:', error);
+                debugLogger.error("Failed to load ETH regime:", error);
                 document.getElementById('eth-current-regime-name').textContent = 'Error';
                 document.getElementById('eth-current-regime-confidence').textContent = '--';
             }
@@ -2338,42 +2338,42 @@
                 const config = await fetchUserConfig();
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const headers = { 'X-User': activeUser };
-                debugLogger.debug('📡 Fetching cross-asset comparison data...');
+                debugLogger.debug("Fetching cross-asset comparison data...");
 
                 // Load Bitcoin regime
-                debugLogger.debug('📡 Fetching BTC regime from:', `${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
+                debugLogger.debug("Fetching BTC regime from:", `${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`);
                 const btcResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=BTC&lookback_days=365`, { headers });
                 let btcData = null;
                 if (btcResponse.ok) {
                     btcData = await btcResponse.json();
-                    debugLogger.debug('📡 BTC regime data received:', btcData);
+                    debugLogger.debug("BTC regime data received:", btcData);
                 } else {
-                    debugLogger.error('❌ BTC regime API error:', btcResponse.status);
+                    debugLogger.error("[Error] BTC regime API error:", btcResponse.status);
                 }
 
                 // Load Stock regime
                 // Note: Using 365 days for quick comparison view. For full market cycle analysis,
                 // use saxo-dashboard.html which uses 7300 days (20 years) to capture dot-com, 2008, COVID, 2022 cycles.
-                debugLogger.debug('📡 Fetching stock regime for comparison...');
+                debugLogger.debug("Fetching stock regime for comparison...");
                 const stockEndpoint = `${config.api_base_url}/api/ml/bourse/regime?benchmark=SPY&lookback_days=365`;
                 const stockResponse = await fetch(stockEndpoint, { headers });
                 let stockData = null;
                 if (stockResponse.ok) {
                     stockData = await stockResponse.json();
-                    debugLogger.debug('📡 Stock regime data received for comparison:', stockData);
+                    debugLogger.debug("Stock regime data received for comparison:", stockData);
                 } else {
-                    debugLogger.error('❌ Stock regime API error:', stockResponse.status);
+                    debugLogger.error("[Error] Stock regime API error:", stockResponse.status);
                 }
 
                 // Load Ethereum regime
-                debugLogger.debug('📡 Fetching ETH regime from:', `${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
+                debugLogger.debug("Fetching ETH regime from:", `${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`);
                 const ethResponse = await fetch(`${config.api_base_url}/api/ml/crypto/regime?symbol=ETH&lookback_days=365`, { headers });
                 let ethData = null;
                 if (ethResponse.ok) {
                     ethData = await ethResponse.json();
-                    debugLogger.debug('📡 ETH regime data received:', ethData);
+                    debugLogger.debug("ETH regime data received:", ethData);
                 } else {
-                    debugLogger.error('❌ ETH regime API error:', ethResponse.status);
+                    debugLogger.error("[Error] ETH regime API error:", ethResponse.status);
                 }
 
                 // Update comparison table - Stock
@@ -2385,9 +2385,9 @@
 
                     document.getElementById('comparison-stock-regime').textContent = regimeName;
                     document.getElementById('comparison-stock-confidence').textContent = confidencePercent + '%';
-                    debugLogger.debug('✅ Stock comparison updated:', regimeName, confidencePercent + '%');
+                    debugLogger.debug("[OK] Stock comparison updated:", regimeName, confidencePercent + '%');
                 } else {
-                    debugLogger.warn('⚠️ No stock regime data for comparison');
+                    debugLogger.warn("[Warning] No stock regime data for comparison");
                     document.getElementById('comparison-stock-regime').textContent = 'N/A';
                     document.getElementById('comparison-stock-confidence').textContent = '--';
                 }
@@ -2425,9 +2425,9 @@
                         ? (btcConfidence * 100).toFixed(1) + '%'
                         : 'N/A';
                     document.getElementById('comparison-btc-method').textContent = btcMethod === 'rule_based' ? 'Rule-Based' : 'HMM';
-                    debugLogger.debug('✅ BTC comparison updated:', btcRegime, btcConfidence);
+                    debugLogger.debug("[OK] BTC comparison updated:", btcRegime, btcConfidence);
                 } else {
-                    debugLogger.warn('⚠️ No BTC regime data for comparison, full response:', btcData);
+                    debugLogger.warn("[Warning] No BTC regime data for comparison, full response:", btcData);
                     document.getElementById('comparison-btc-regime').textContent = 'N/A';
                     document.getElementById('comparison-btc-confidence').textContent = '--';
                     document.getElementById('comparison-btc-method').textContent = '--';
@@ -2465,17 +2465,17 @@
                         ? (ethConfidence * 100).toFixed(1) + '%'
                         : 'N/A';
                     document.getElementById('comparison-eth-method').textContent = ethMethod === 'rule_based' ? 'Rule-Based' : 'HMM';
-                    debugLogger.debug('✅ ETH comparison updated:', ethRegime, ethConfidence);
+                    debugLogger.debug("[OK] ETH comparison updated:", ethRegime, ethConfidence);
                 } else {
-                    debugLogger.warn('⚠️ No ETH regime data for comparison, full response:', ethData);
+                    debugLogger.warn("[Warning] No ETH regime data for comparison, full response:", ethData);
                     document.getElementById('comparison-eth-regime').textContent = 'N/A';
                     document.getElementById('comparison-eth-confidence').textContent = '--';
                     document.getElementById('comparison-eth-method').textContent = '--';
                 }
 
-                debugLogger.debug('✅ Cross-asset comparison loaded');
+                debugLogger.debug("[OK] Cross-asset comparison loaded");
             } catch (error) {
-                debugLogger.error('❌ Failed to load cross-asset comparison:', error);
+                debugLogger.error("Failed to load cross-asset comparison:", error);
             }
         }
 
@@ -2531,13 +2531,13 @@
                     // Initialize Régimes tab on first visit
                     if (targetTab === 'regimes' && !regimesTabInitialized) {
                         regimesTabInitialized = true;
-                        debugLogger.debug('🎯 Initializing Régimes de Marché tab...');
+                        debugLogger.debug("Initializing Régimes de Marché tab...");
 
                         try {
                             // Initialize Bitcoin charts
                             if (window.initializeBTCRegimeChart) {
                                 await window.initializeBTCRegimeChart('btc-regime-section');
-                                debugLogger.debug('✅ Bitcoin regime chart initialized');
+                                debugLogger.debug("[OK] Bitcoin regime chart initialized");
                             }
 
                             // Load Stock Market regime data
@@ -2549,9 +2549,9 @@
                             // Load cross-asset comparison
                             await loadCrossAssetComparison();
 
-                            debugLogger.debug('✅ Régimes tab fully initialized');
+                            debugLogger.debug("[OK] Régimes tab fully initialized");
                         } catch (error) {
-                            debugLogger.error('❌ Error initializing Régimes tab:', error);
+                            debugLogger.error("Error initializing Régimes tab:", error);
                         }
                     }
                 });
@@ -2610,14 +2610,14 @@
 
                 return await response.json();
             } catch (error) {
-                addAdminLog(`❌ Erreur API ${endpoint}: ${error.message}`, 'error');
+                addAdminLog(`[Error] Erreur API ${endpoint}: ${error.message}`, 'error');
                 throw error;
             }
         }
 
         // Actualiser le statut du pipeline
         async function refreshPipelineStatus() {
-            addAdminLog('🔄 Actualisation du statut pipeline...');
+            addAdminLog("Actualisation du statut pipeline...");
 
             try {
                 // Utiliser uniquement l'endpoint /cache/stats qui fonctionne sans auth
@@ -2647,11 +2647,11 @@
 
                 // NOTE: Cache entries display removed (moved to Admin Dashboard)
 
-                addAdminLog(`✅ Statut actualisé: ${loadedModels}/${totalModels} modèles en mémoire`);
-                addAdminLog(`📊 Cache: ${volLoadedCount}/${volTotalCount} volatilité + ${regimeLoaded ? '1' : '0'} régime`);
+                addAdminLog(`[OK] Statut actualisé: ${loadedModels}/${totalModels} modèles en mémoire`);
+                addAdminLog(`Cache: ${volLoadedCount}/${volTotalCount} volatilité + ${regimeLoaded ? '1' : '0'} régime`);
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors de l\'actualisation du statut pipeline');
+                addAdminLog("[Error] Erreur lors de l'actualisation du statut pipeline");
                 debugLogger.error('Pipeline status error:', error);
 
                 // Fallback intelligent - utiliser des valeurs par défaut plutôt que des tirets
@@ -2670,9 +2670,9 @@
             const btn = event.target;
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '⏳ Loading...';
+            btn.innerHTML = "Loading...";
 
-            addAdminLog('⚡ Début du chargement des modèles de volatilité...');
+            addAdminLog("Début du chargement des modèles de volatilité...");
 
             try {
                 const result = await pipelineApiCall('/models/preload?symbols=BTC&symbols=ETH&symbols=SOL&symbols=AVAX&symbols=DOGE&symbols=LINK&symbols=ADA&symbols=LTC', {
@@ -2680,12 +2680,12 @@
                 });
 
                 if (result.success) {
-                    addAdminLog(`✅ ${result.loaded_models}/${result.total_requested} modèles chargés avec succès`);
+                    addAdminLog(`OK ${result.loaded_models}/${result.total_requested} modèles chargés avec succès`);
                     if (result.preload_results) {
                         const loaded = Object.entries(result.preload_results)
                             .filter(([key, success]) => key.startsWith('volatility_') && success)
                             .map(([key]) => key.replace('volatility_', ''));
-                        addAdminLog(`📊 Modèles chargés: ${loaded.join(', ')}`);
+                        addAdminLog(`Modèles chargés: ${loaded.join(', ')}`);
                     }
                 } else {
                     addAdminLog('âš ï¸ Chargement partiel ou échec');
@@ -2697,7 +2697,7 @@
                 await updateGlobalStats();
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors du chargement des modèles de volatilité');
+                addAdminLog("[Error] Erreur lors du chargement des modèles de volatilité");
                 showError('Error loading volatility models');
             } finally {
                 btn.disabled = false;
@@ -2710,9 +2710,9 @@
             const btn = event.target;
             const originalText = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = '⏳ Loading...';
+            btn.innerHTML = "Loading...";
 
-            addAdminLog('🎯 Chargement du modèle de détection de régime...');
+            addAdminLog("Chargement du modèle de détection de régime...");
 
             try {
                 const result = await pipelineApiCall('/models/preload', {
@@ -2721,12 +2721,12 @@
 
                 if (result.preload_results && result.preload_results.regime !== undefined) {
                     if (result.preload_results.regime) {
-                        addAdminLog('✅ Modèle de régime chargé avec succès');
+                        addAdminLog("[OK] Modèle de régime chargé avec succès");
                     } else {
                         addAdminLog('âš ï¸ Modèle de régime non disponible (fichiers manquants)');
                     }
                 } else {
-                    addAdminLog('✅ Preload exécuté (régime inclus par défaut)');
+                    addAdminLog("[OK] Preload exécuté (régime inclus par défaut)");
                 }
                 await refreshPipelineStatus();
 
@@ -2734,7 +2734,7 @@
                 await updateGlobalStats();
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors du chargement du modèle de régime');
+                addAdminLog("[Error] Erreur lors du chargement du modèle de régime");
                 showError('Error loading regime model');
             } finally {
                 btn.disabled = false;
@@ -2758,8 +2758,8 @@
                 });
 
                 if (result.success) {
-                    addAdminLog(`✅ ${result.models_cleared || 0} modèles supprimés de la mémoire`);
-                    addAdminLog(`💾 ${(result.memory_freed_mb || 0).toFixed(1)}MB de mémoire libérée`);
+                    addAdminLog(`OK ${result.models_cleared || 0} modèles supprimés de la mémoire`);
+                    addAdminLog(`Save ${(result.memory_freed_mb || 0).toFixed(1)}MB de mémoire libérée`);
                 } else {
                     addAdminLog('âš ï¸ Vidage des modèles effectué');
                 }
@@ -2767,7 +2767,7 @@
                 showSuccess('Models removed from memory');
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors du vidage des modèles');
+                addAdminLog("[Error] Erreur lors du vidage des modèles");
                 showError('Error purging models');
             }
         }
@@ -2778,7 +2778,7 @@
             if (!symbols) return;
 
             const symbolList = symbols.split(',').map(s => s.trim().toUpperCase());
-            addAdminLog(`🎯 Chargement des modèles pour: ${symbolList.join(', ')}`);
+            addAdminLog(`Chargement des modèles pour: ${symbolList.join(', ')}`);
 
             // TODO: Implémenter le chargement de symboles spécifiques
             addAdminLog('âš ï¸ Fonction en cours d\'implémentation');
@@ -2787,47 +2787,47 @@
 
         // Obtenir détails du statut régime
         async function getRegimeStatus() {
-            addAdminLog('📊 Récupération du statut détaillé du régime...');
+            addAdminLog("Récupération du statut détaillé du régime...");
 
             try {
                 // TODO: Endpoint spécifique pour détails régime
-                addAdminLog('📊 Details du modèle de régime disponibles dans l\'onglet vue d\'ensemble');
+                addAdminLog("Details du modèle de régime disponibles dans l'onglet vue d'ensemble");
                 showSuccess('See the Overview tab for regime details');
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors de la récupération du statut régime');
+                addAdminLog("[Error] Erreur lors de la récupération du statut régime");
                 showError('Error fetching regime status');
             }
         }
 
         // Obtenir résumé de performance
         async function getPerformanceSummary() {
-            addAdminLog('📈 Récupération du résumé de performance...');
+            addAdminLog("Récupération du résumé de performance...");
 
             try {
                 const result = await pipelineApiCall('/cache/stats');
 
                 if (result.success && result.cache_stats) {
                     const stats = result.cache_stats;
-                    addAdminLog(`📊 Cache: ${stats.cached_models}/${stats.max_size} modèles (${stats.total_size_mb.toFixed(1)}MB)`);
-                    addAdminLog(`📈 Performance: ${stats.cache_hits} hits, ${stats.cache_misses} misses`);
-                    addAdminLog(`⚡ Temps moyen de chargement: ${(stats.average_load_time * 1000).toFixed(0)}ms`);
-                    addAdminLog(`💾 Utilisation mémoire: ${stats.memory_usage_percent.toFixed(1)}%`);
+                    addAdminLog(`Cache: ${stats.cached_models}/${stats.max_size} modèles (${stats.total_size_mb.toFixed(1)}MB)`);
+                    addAdminLog(`Performance: ${stats.cache_hits} hits, ${stats.cache_misses} misses`);
+                    addAdminLog(`Temps moyen de chargement: ${(stats.average_load_time * 1000).toFixed(0)}ms`);
+                    addAdminLog(`Utilisation mémoire: ${stats.memory_usage_percent.toFixed(1)}%`);
 
                     // NOTE: Cache display removed (moved to Admin Dashboard)
                 } else {
-                    addAdminLog('⚠️ Statistiques de performance non disponibles');
+                    addAdminLog("[Warning] Statistiques de performance non disponibles");
                 }
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors de la récupération des performances');
+                addAdminLog("[Error] Erreur lors de la récupération des performances");
                 showError('Error fetching performance data');
             }
         }
 
         // Vider le cache ML
         async function clearMLCache() {
-            addAdminLog('🧹 Vidage du cache ML...');
+            addAdminLog("Vidage du cache ML...");
 
             try {
                 const result = await pipelineApiCall('/memory/optimize', {
@@ -2835,8 +2835,8 @@
                 });
 
                 if (result.success) {
-                    addAdminLog(`✅ Cache optimisé: ${result.cache_cleared ? 'vidé' : 'optimisé'}`);
-                    addAdminLog(`💾 Mémoire libérée: ${(result.memory_freed_mb || 0).toFixed(1)}MB`);
+                    addAdminLog(`[OK] Cache optimisé: ${result.cache_cleared ? 'vidé' : 'optimisé'}`);
+                    addAdminLog(`Mémoire libérée: ${(result.memory_freed_mb || 0).toFixed(1)}MB`);
                 } else {
                     addAdminLog('âš ï¸ Optimisation du cache effectuée');
                 }
@@ -2844,14 +2844,14 @@
                 showSuccess('ML cache optimized');
 
             } catch (error) {
-                addAdminLog('❌ Erreur lors du vidage du cache');
+                addAdminLog("[Error] Erreur lors du vidage du cache");
                 showError('Error clearing cache');
             }
         }
 
         // Initialiser l'onglet Administration au changement d'onglet
         function initializeAdministrationTab() {
-            addAdminLog('🚀 Onglet Administration initialisé');
+            addAdminLog("Onglet Administration initialisé");
             setTimeout(refreshPipelineStatus, 500);
         }
 
@@ -2871,7 +2871,7 @@
 
         async function checkAlertsSystemStatus() {
             try {
-                debugLogger.debug('🔄 Vérification du système d\'alertes Phase 3...');
+                debugLogger.debug("Vérification du système d'alertes Phase 3...");
                 const config = await fetchUserConfig();
 
                 // 1. Vérifier les alertes actives
@@ -2882,7 +2882,7 @@
                         const alerts = await alertsResponse.json();
                         activeAlertsCount = alerts.length;
                         document.getElementById('active-alerts-count').textContent = activeAlertsCount;
-                        debugLogger.debug('✅ Alertes actives:', activeAlertsCount);
+                        debugLogger.debug("[OK] Alertes actives:", activeAlertsCount);
                     }
                 } catch (e) {
                     document.getElementById('active-alerts-count').textContent = 'Error';
@@ -2895,7 +2895,7 @@
                     if (healthResponse.ok) {
                         const health = await healthResponse.json();
                         document.getElementById('alert-engine-status').textContent = health.status === 'healthy' ? 'Active' : 'Issue';
-                        debugLogger.debug('✅ AlertEngine statut:', health.status);
+                        debugLogger.debug("[OK] AlertEngine statut:", health.status);
                     } else {
                         document.getElementById('alert-engine-status').textContent = 'Non disponible';
                     }
@@ -2910,12 +2910,12 @@
                 // 4. ML Alert Predictor reste désactivé volontairement
                 document.getElementById('ml-predictor-status').textContent = 'Disabled (config)';
 
-                debugLogger.debug('✅ Vérification système d\'alertes terminée');
-                showSuccess('✅ Alert status updated');
+                debugLogger.debug("[OK] Vérification système d'alertes terminée");
+                showSuccess("[OK] Alert status updated");
 
             } catch (error) {
-                debugLogger.error('❌ Erreur lors de la vérification du système d\'alertes:', error);
-                showError('❌ Error checking alerts system');
+                debugLogger.error("[Error] Erreur lors de la vérification du système d'alertes:", error);
+                showError("Error checking alerts system");
             }
         }
 

@@ -570,7 +570,7 @@ export async function buildSettingsContext() {
         context.theme = localStorage.getItem('theme') || 'auto';
         context.min_usd_threshold = parseFloat(localStorage.getItem('minUsdThreshold') || '1.0');
 
-        // ✅ USER ISOLATION: Check which API keys are configured (without exposing values)
+        //  USER ISOLATION: Check which API keys are configured (without exposing values)
         // Use globalConfig which is already isolated per user
         const apiKeys = {
             cointracking_api: !!window.globalConfig?.get('cointracking_api_key'),
@@ -611,7 +611,7 @@ export async function buildSettingsContext() {
             performance_tracking: localStorage.getItem('enable_performance_tracking') !== 'false'
         };
 
-        // ✅ USER ISOLATION: Get AI provider preference (from globalConfig)
+        //  USER ISOLATION: Get AI provider preference (from globalConfig)
         context.ai_provider = window.globalConfig?.get('aiProvider') || 'groq';
         context.ai_include_docs = window.globalConfig?.get('aiIncludeDocs') !== false;
 

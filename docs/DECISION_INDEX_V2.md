@@ -3,7 +3,7 @@
 > **Date**: Février 2026
 > **Version**: 2.1 (Macro Stress DXY/VIX intégré)
 
-## 📊 Vue d'Ensemble
+## Vue d'Ensemble
 
 Le système de scoring décisionnel utilise **DEUX méthodes parallèles** qui servent des objectifs différents:
 
@@ -14,7 +14,7 @@ Le système de scoring décisionnel utilise **DEUX méthodes parallèles** qui s
 
 ---
 
-## 🎯 1. Score de Régime (Canonique)
+## 1. Score de Régime (Canonique)
 
 ### Formule
 ```
@@ -22,10 +22,10 @@ Score de Régime = 0.5 × CCS Mixte + 0.3 × On-Chain + 0.2 × Risk
 ```
 
 ### Caractéristiques
-- ✅ **Simple**: Moyenne pondérée directe
-- ✅ **Prévisible**: Toujours même formule
-- ✅ **Transparent**: Facile à expliquer
-- ⚠️ **Limité**: Ne prend pas en compte contexte complexe
+- [OK] **Simple**: Moyenne pondérée directe
+- [OK] **Prévisible**: Toujours même formule
+- [OK] **Transparent**: Facile à expliquer
+- [Warning] **Limité**: Ne prend pas en compte contexte complexe
 
 ### Calcul (Exemple)
 ```javascript
@@ -52,12 +52,12 @@ const blendedScore = Math.round(
 
 ---
 
-## 🏗️ 2. Decision Index (Score Décisionnel)
+## 2. Decision Index (Score Décisionnel)
 
 ### Objectif
 **Score stratégique composite (0-100)** calculé par pondération des piliers avec ajustements contextuels.
 
-⚠️ **IMPORTANT:** Le Decision Index EST une somme pondérée des 4 composantes (pas 3!), modulée par un facteur de phase.
+[Warning] **IMPORTANT:** Le Decision Index EST une somme pondérée des 4 composantes (pas 3!), modulée par un facteur de phase.
 
 ### Formule Réelle (Backend - Source de Vérité)
 **Fichier**: `services/execution/strategy_registry.py` lignes 252-262
@@ -104,13 +104,13 @@ decision_score: float = Field(..., ge=0, le=100, description="Score décisionnel
 
 ### Ce que le DI Mesure
 
-✅ **Position stratégique du marché:**
+[OK] **Position stratégique du marché:**
 - Pondération des 4 piliers (Cycle, OnChain, Risk, Sentiment)
 - Ajustement par phase de marché (bullish/bearish)
 - Niveau de confiance pour allocation agressive vs défensive
 - Guide pour ratio stables/risky et exposition maximale
 
-❌ **Ce que le DI NE mesure PAS:**
+[Error] **Ce que le DI NE mesure PAS:**
 - Qualité technique de l'allocation (voir "Allocation Validity Check" ci-dessous)
 - Somme = 100% (ça c'est le check de validité)
 - Respect des contraintes hiérarchiques
@@ -138,7 +138,7 @@ Le DI panel affiche trois concepts distincts :
 regimeScore = Math.floor((blendedScore - riskScore * 0.20) / 0.80)
 ```
 
-### ✅ Allocation Validity Check (interne uniquement)
+### Allocation Validity Check (interne uniquement)
 
 **Note (Jan 2026)**: Le bug qui affichait 65/45 au lieu du vrai DI a été corrigé.
 
@@ -203,17 +203,17 @@ const contribOnchain = (wOnchain * scoreOnchain) / total; // Ex: 19%
 const contribRisk = (wRisk * scoreRisk) / total;         // Ex: 28%
 ```
 
-⚠️ **Ces valeurs NE SONT PAS les poids d'entrée** (50/30/20)!
+[Warning] **Ces valeurs NE SONT PAS les poids d'entrée** (50/30/20)!
 
 ---
 
-## ⚡ 3. Overrides Contextuels
+## 3. Overrides Contextuels
 
 Le Decision Index peut être **modifié par des facteurs externes**:
 
 ### Override #1: ML Sentiment Extrême
 
-⚠️ **TERMINOLOGIE**: Le système utilise "ML Sentiment" (0-100), PAS le Fear & Greed Index officiel d'alternative.me!
+[Warning] **TERMINOLOGIE**: Le système utilise "ML Sentiment" (0-100), PAS le Fear & Greed Index officiel d'alternative.me!
 
 **Source de données**:
 - **Nom UI**: ML Sentiment
@@ -233,7 +233,7 @@ if (mlSentiment < 25) {
   stablesTarget += 10; // +10 points de stables
   riskyTarget -= 10;
 
-  // Badge affiché: "🚨 ML Sentiment Extrême (15)"
+  // Badge affiché: "[Alert] ML Sentiment Extrême (15)"
 }
 ```
 
@@ -250,7 +250,7 @@ if (contradiction > 0.5) {
   wRisk *= 0.9;
   wCycle += redistribution;
 
-  // Badge affiché: "⚠️ Contradiction (48%)"
+  // Badge affiché: "[Warning] Contradiction (48%)"
 }
 ```
 
@@ -304,7 +304,7 @@ TOTAL_PENALTY_CAP = -15.0      # Cap total
 
 ---
 
-## 🔍 4. Pourquoi Deux Systèmes?
+## 4. Pourquoi Deux Systèmes?
 
 ### Scénario Réel (Octobre 2025)
 
@@ -314,14 +314,14 @@ TOTAL_PENALTY_CAP = -15.0      # Cap total
 - Risk: 76
 - ML Sentiment: **15** (extrême panic selon sentiment agrégé)
 
-**Score de Régime** = 54 ✅
+**Score de Régime** = 54 [OK]
 ```
 0.5×58 + 0.3×35 + 0.2×76 = 54
 ```
 → Régime détecté: **"Expansion"** (range 40-69)
 → Allocation théorique: ~30% stables
 
-**Decision Index** = 52 ✅
+**Decision Index** = 52 [OK]
 ```
 Calcul pondéré (formule backend):
 DI = (58 × 0.5) + (35 × 0.3) + (76 × 0.2) × phase_factor
@@ -335,13 +335,13 @@ Allocation ajustée séparément:
 ```
 
 **Résultat**:
-- ✅ **Score de Régime** = 54 (formule canonique 0.5C + 0.3O + 0.2R)
-- ✅ **Decision Index** = 52 (même formule × phase_factor)
-- ✅ **Recommandation finale**: 58-61% stables (défensif via overrides)
+- [OK] **Score de Régime** = 54 (formule canonique 0.5C + 0.3O + 0.2R)
+- [OK] **Decision Index** = 52 (même formule × phase_factor)
+- [OK] **Recommandation finale**: 58-61% stables (défensif via overrides)
 
 ---
 
-## 📖 5. Interprétation pour IA
+## 5. Interprétation pour IA
 
 ### Question Fréquente
 > "Pourquoi le DI (52) est proche mais différent du Score de Régime (54)?"
@@ -381,7 +381,7 @@ graph TD
 
 ---
 
-## 🛠️ 6. Debug & Vérification
+## 6. Debug & Vérification
 
 ### Commandes Console (Browser)
 
@@ -419,7 +419,7 @@ grep "Risk Budget from cache" logs/app.log | tail -1
 
 ---
 
-## 📚 7. Références
+## 7. Références
 
 ### Documentation
 - Architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
@@ -446,16 +446,16 @@ pytest tests/unit/test_allocation_engine_v2.py
 
 ---
 
-## ✅ Checklist IA
+## Checklist IA
 
 **Avant de modifier quoi que ce soit**, vérifier:
 
-1. ☐ Je comprends la différence entre Score de Régime et Decision Index
-2. ☐ Je sais quelle méthode modifier selon l'objectif (communication vs allocation)
-3. ☐ J'ai vérifié les overrides actifs (Fear, Contradiction, Structure)
-4. ☐ J'ai lu la section "Overrides" dans le texte d'aide du panel
-5. ☐ Je comprends que les contributions affichées ≠ poids d'entrée
-6. ☐ J'ai testé ma modification avec les deux scores
+- [ ] Je comprends la différence entre Score de Régime et Decision Index
+- [ ] Je sais quelle méthode modifier selon l'objectif (communication vs allocation)
+- [ ] J'ai vérifié les overrides actifs (Fear, Contradiction, Structure)
+- [ ] J'ai lu la section "Overrides" dans le texte d'aide du panel
+- [ ] Je comprends que les contributions affichées ≠ poids d'entrée
+- [ ] J'ai testé ma modification avec les deux scores
 
 **En cas de doute**: Demander à l'utilisateur quel système il souhaite modifier!
 

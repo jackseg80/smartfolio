@@ -2,11 +2,11 @@
 
 **Date:** 23 Décembre 2025
 **Standard:** WCAG 2.1 AA
-**Status:** ✅ Conforme (Phase 2 complétée)
+**Status:** [OK] Conforme (Phase 2 complétée)
 
 ---
 
-## 📊 Ratios de Contraste Requis (WCAG 2.1 AA)
+## Ratios de Contraste Requis (WCAG 2.1 AA)
 
 | Type de Texte | Taille | Ratio Minimum | Recommandé |
 |---------------|--------|---------------|------------|
@@ -16,21 +16,21 @@
 
 ---
 
-## 🎨 Variables CSS Accessibles (Dec 2025)
+## Variables CSS Accessibles (Dec 2025)
 
 ### Mode Clair (Light)
 
 | Variable | Couleur | Usage | Ratio | Status |
 |----------|---------|-------|-------|--------|
 | `--theme-bg` | `#f8fafc` | Background principal | - | Référence |
-| `--theme-text` | `#1e293b` | Texte principal | **15.8:1** | ✅ Excellent |
-| `--theme-text-muted` | `#526373` | Texte secondaire | **5.2:1** | ✅ AA |
-| `--theme-text-subtle` | `#5c6f82` | Texte tertiaire | **5.1:1** | ✅ AA |
-| `--theme-text-small` | `#3d4f5e` | Texte <14px | **7.3:1** | ✅ AAA |
+| `--theme-text` | `#1e293b` | Texte principal | **15.8:1** | [OK] Excellent |
+| `--theme-text-muted` | `#526373` | Texte secondaire | **5.2:1** | [OK] AA |
+| `--theme-text-subtle` | `#5c6f82` | Texte tertiaire | **5.1:1** | [OK] AA |
+| `--theme-text-small` | `#3d4f5e` | Texte <14px | **7.3:1** | [OK] AAA |
 
 **Changements Phase 2:**
 - `--theme-text-muted`: `#64748b` (4.8:1) → `#526373` (**5.2:1**) = +8% contraste
-- `--theme-text-subtle`: `#94a3b8` (3.2:1 ❌) → `#5c6f82` (**5.1:1** ✅) = +59% contraste
+- `--theme-text-subtle`: `#94a3b8` (3.2:1 [Error]) → `#5c6f82` (**5.1:1** [OK]) = +59% contraste
 - `--theme-text-small`: **NOUVEAU** - `#3d4f5e` (7.3:1 AAA)
 
 ### Mode Sombre (Dark)
@@ -38,19 +38,19 @@
 | Variable | Couleur | Usage | Ratio | Status |
 |----------|---------|-------|-------|--------|
 | `--theme-bg` | `#0a0f14` | Background principal | - | Référence |
-| `--theme-text` | `#e7eef7` | Texte principal | **17.2:1** | ✅ Excellent |
-| `--theme-text-muted` | `#8fa0b3` | Texte secondaire | **7.8:1** | ✅ AAA |
-| `--theme-text-subtle` | `#7d8fa3` | Texte tertiaire | **4.9:1** | ✅ AA |
-| `--theme-text-small` | `#b4c5d8` | Texte <14px | **8.2:1** | ✅ AAA |
+| `--theme-text` | `#e7eef7` | Texte principal | **17.2:1** | [OK] Excellent |
+| `--theme-text-muted` | `#8fa0b3` | Texte secondaire | **7.8:1** | [OK] AAA |
+| `--theme-text-subtle` | `#7d8fa3` | Texte tertiaire | **4.9:1** | [OK] AA |
+| `--theme-text-small` | `#b4c5d8` | Texte <14px | **8.2:1** | [OK] AAA |
 
 **Changements Phase 2:**
 - `--theme-text-muted`: `#8fa0b3` (7.8:1) → **Inchangé** (déjà excellent)
-- `--theme-text-subtle`: `#6b7280` (4.1:1 ❌) → `#7d8fa3` (**4.9:1** ✅) = +19% contraste
+- `--theme-text-subtle`: `#6b7280` (4.1:1 [Error]) → `#7d8fa3` (**4.9:1** [OK]) = +19% contraste
 - `--theme-text-small`: **NOUVEAU** - `#b4c5d8` (8.2:1 AAA)
 
 ---
 
-## 📐 Calcul des Ratios de Contraste
+## Calcul des Ratios de Contraste
 
 ### Formule WCAG 2.1
 
@@ -69,26 +69,26 @@ où L1 = luminance plus élevée (généralement background clair)
 ```
 RGB text: (30, 41, 59) → L ≈ 0.015
 RGB bg: (248, 250, 252) → L ≈ 0.965
-Ratio = (0.965 + 0.05) / (0.015 + 0.05) = 15.8:1 ✅
+Ratio = (0.965 + 0.05) / (0.015 + 0.05) = 15.8:1 [OK]
 ```
 
 **2. --theme-text-subtle (#5c6f82) sur --theme-bg (#f8fafc):**
 ```
 RGB text: (92, 111, 130) → L ≈ 0.129
 RGB bg: (248, 250, 252) → L ≈ 0.965
-Ratio = (0.965 + 0.05) / (0.129 + 0.05) = 5.1:1 ✅
+Ratio = (0.965 + 0.05) / (0.129 + 0.05) = 5.1:1 [OK]
 ```
 
 **3. --theme-text-small (#3d4f5e) sur --theme-bg (#f8fafc):**
 ```
 RGB text: (61, 79, 94) → L ≈ 0.068
 RGB bg: (248, 250, 252) → L ≈ 0.965
-Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
+Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 [OK] AAA
 ```
 
 ---
 
-## 🛠️ Outils de Vérification
+## Outils de Vérification
 
 ### Outils Recommandés
 
@@ -127,7 +127,7 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 
 ---
 
-## 📝 Guide d'Utilisation des Variables
+## Guide d'Utilisation des Variables
 
 ### Texte Normal (≥14px)
 
@@ -157,7 +157,7 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
   color: var(--theme-text-small);  /* 7.3:1 ratio AAA */
 }
 
-/* ❌ NE PAS FAIRE - Contraste insuffisant */
+/* [Error] NE PAS FAIRE - Contraste insuffisant */
 .small-text {
   font-size: 12px;
   color: var(--theme-text-subtle);  /* 5.1:1 OK pour texte normal, FAIL pour <14px */
@@ -176,7 +176,7 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 
 ---
 
-## 🎯 Checklist Phase 2 (Complétée ✅)
+## Checklist Phase 2 (Complétée )
 
 ### Implémentation
 - [x] Audit variables CSS couleurs
@@ -196,7 +196,7 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 
 ---
 
-## 📊 Impact Phase 2
+## Impact Phase 2
 
 ### Avant (Phase 1)
 - Score accessibilité: **83/100**
@@ -207,10 +207,10 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 
 ### Après (Phase 2)
 - Score accessibilité: **91/100** (+8 pts)
-- Issues contraste: **0** ✅
+- Issues contraste: **0** [OK]
 - Variables texte: **4** (+text-small)
-- Mode clair: **0 fail** (subtle 5.1:1 ✅)
-- Mode sombre: **0 fail** (subtle 4.9:1 ✅)
+- Mode clair: **0 fail** (subtle 5.1:1 [OK])
+- Mode sombre: **0 fail** (subtle 4.9:1 [OK])
 
 ### Gains Mesurés
 - **Contraste text-subtle:** +59% (light), +19% (dark)
@@ -220,7 +220,7 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 
 ---
 
-## 🔄 Maintenance Future
+## Maintenance Future
 
 ### Quand Ajouter de Nouvelles Couleurs
 
@@ -234,18 +234,18 @@ Ratio = (0.965 + 0.05) / (0.068 + 0.05) = 7.3:1 ✅ AAA
 ```css
 /* NEW COLOR - Toujours documenter */
 :root {
-  --new-accent: #ff6b6b;  /* Ratio 3.8:1 sur --theme-bg (FAIL pour texte normal) ✗ */
+  --new-accent: #ff6b6b;  /* Ratio 3.8:1 sur --theme-bg (FAIL pour texte normal) [Error] */
 }
 
 /* CORRECTION */
 :root {
-  --new-accent: #d93636;  /* Ratio 5.1:1 sur --theme-bg ✅ */
+  --new-accent: #d93636;  /* Ratio 5.1:1 sur --theme-bg [OK] */
 }
 ```
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 - [WCAG 2.1 Understanding SC 1.4.3](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html)
 - [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)

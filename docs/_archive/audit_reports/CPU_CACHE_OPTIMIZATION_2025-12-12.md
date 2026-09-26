@@ -1,7 +1,7 @@
 # CPU Cache Optimization - 12 Décembre 2025
 
 **Suite de**: [PORTFOLIO_HISTORY_PARTITIONING_2025-12-12.md](PORTFOLIO_HISTORY_PARTITIONING_2025-12-12.md)
-**Status**: ✅ Complété
+**Status**: [OK] Complété
 **Impact**: -95% CPU sur endpoints répétés, cache hit: 800ms → 5ms
 
 ---
@@ -275,14 +275,14 @@ def _calculate_sortino_ratio(self, returns: pd.Series, annualized_return: float)
 ### Cas d'Invalidation
 
 **Cache hit garanti** quand :
-- ✅ Même portfolio (mêmes balances)
-- ✅ Même période (ex: 30 derniers jours)
-- ✅ Mêmes assets
+- [OK] Même portfolio (mêmes balances)
+- [OK] Même période (ex: 30 derniers jours)
+- [OK] Mêmes assets
 
 **Cache miss attendu** quand :
-- ❌ Portfolio modifié (nouvel asset, vente)
-- ❌ Données prix mises à jour (nouveaux jours)
-- ❌ Changement de période (30d → 90d)
+- [Error] Portfolio modifié (nouvel asset, vente)
+- [Error] Données prix mises à jour (nouveaux jours)
+- [Error] Changement de période (30d → 90d)
 
 **Fréquence cache miss typique** : 1-2 fois/jour (données prix mises à jour, portfolio modifié)
 
@@ -419,12 +419,12 @@ time curl "http://localhost:8080/api/risk/dashboard?user_id=demo"
 
 ### Bonnes Pratiques
 
-✅ **DO** :
+[OK] **DO** :
 - Utiliser pour calculs CPU-intensifs purs (sans side-effects)
 - Vérifier cache stats périodiquement
 - Monitorer consommation mémoire
 
-❌ **DON'T** :
+[Error] **DON'T** :
 - Pas pour calculs avec I/O (database, files)
 - Pas pour calculs avec side-effects (logging excessif, etc.)
 - Pas pour données user-specific avec haute cardinalité

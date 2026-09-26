@@ -53,7 +53,7 @@ async def get_portfolio_symbols() -> set[str]:
             if symbol and value_usd >= 1.0:  # Seuil minimum $1
                 symbols.add(symbol)
                 
-        logger.info(f"✅ Trouvé {len(symbols)} symboles dans le portfolio")
+        logger.info(f" Trouvé {len(symbols)} symboles dans le portfolio")
         logger.debug(f"Symboles: {sorted(symbols)}")
         
         return symbols
@@ -96,14 +96,14 @@ async def download_all_history(symbols: set[str], days: int = 365, force_refresh
                 success = await task
                 if success:
                     success_count += 1
-                    logger.info(f"✅ {symbol}: OK")
+                    logger.info(f" {symbol}: OK")
                 else:
                     failed_count += 1
-                    logger.warning(f"❌ {symbol}: ÉCHEC")
+                    logger.warning(f" {symbol}: ÉCHEC")
                     
             except Exception as e:
                 failed_count += 1
-                logger.error(f"❌ {symbol}: ERREUR - {e}")
+                logger.error(f" {symbol}: ERREUR - {e}")
                 
         # Pause entre lots
         if i + batch_size < len(symbols_list):
@@ -114,15 +114,15 @@ async def download_all_history(symbols: set[str], days: int = 365, force_refresh
     logger.info("=" * 60)
     logger.info("RÉSUMÉ INITIALISATION")
     logger.info("=" * 60)
-    logger.info(f"📊 Total symboles: {total}")
-    logger.info(f"✅ Succès: {success_count}")
-    logger.info(f"❌ Échecs: {failed_count}")
-    logger.info(f"⏸️  Ignorés: {skipped_count}")
-    logger.info(f"📈 Taux de succès: {success_count/total*100:.1f}%")
+    logger.info(f" Total symboles: {total}")
+    logger.info(f" Succès: {success_count}")
+    logger.info(f" Échecs: {failed_count}")
+    logger.info(f"  Ignorés: {skipped_count}")
+    logger.info(f" Taux de succès: {success_count/total*100:.1f}%")
     
     # Vérifier les symboles avec cache
     cached_symbols = price_history.get_symbols_with_cache()
-    logger.info(f"💾 Symboles en cache: {len(cached_symbols)}")
+    logger.info(f" Symboles en cache: {len(cached_symbols)}")
     
     if failed_count > 0:
         failed_symbols = []
@@ -131,7 +131,7 @@ async def download_all_history(symbols: set[str], days: int = 365, force_refresh
                 failed_symbols.append(symbol)
                 
         if failed_symbols:
-            logger.warning(f"⚠️  Symboles sans cache: {failed_symbols}")
+            logger.warning(f"  Symboles sans cache: {failed_symbols}")
             logger.info("Astuce: Relancer le script avec --force pour réessayer")
 
 def main():
@@ -180,34 +180,34 @@ Exemples:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
         
-    logger.info("🚀 Initialisation du cache d'historique de prix")
-    logger.info(f"📅 Période: {args.days} jours")
-    logger.info(f"🔄 Force refresh: {args.force}")
+    logger.info(" Initialisation du cache d'historique de prix")
+    logger.info(f" Période: {args.days} jours")
+    logger.info(f" Force refresh: {args.force}")
     
     async def run():
         try:
             # Déterminer les symboles à traiter
             if args.symbols:
                 symbols = set(s.upper() for s in args.symbols)
-                logger.info(f"🎯 Symboles spécifiés: {sorted(symbols)}")
+                logger.info(f" Symboles spécifiés: {sorted(symbols)}")
             else:
                 symbols = await get_portfolio_symbols()
                 
             if not symbols:
-                logger.error("❌ Aucun symbole à traiter")
+                logger.error(" Aucun symbole à traiter")
                 return 1
                 
             # Lancer le téléchargement
             await download_all_history(symbols, args.days, args.force)
             
-            logger.info("🎉 Initialisation terminée!")
+            logger.info(" Initialisation terminée!")
             return 0
             
         except KeyboardInterrupt:
-            logger.info("❌ Interrupted par l'utilisateur")
+            logger.info(" Interrupted par l'utilisateur")
             return 130
         except Exception as e:
-            logger.error(f"❌ Erreur fatale: {e}")
+            logger.error(f" Erreur fatale: {e}")
             return 1
             
     # Lancer le script async

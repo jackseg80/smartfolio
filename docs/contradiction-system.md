@@ -21,9 +21,9 @@ Le système de contradiction unifié centralise la détection et le traitement d
 
 | Niveau | Seuil | Couleur | Priorité | Message Type |
 |--------|-------|---------|----------|--------------|
-| **Low** | < 40% | 🟢 Success | Low | "Signaux alignés" |
-| **Medium** | 40-70% | 🟡 Warning | Medium | "Vigilance recommandée" |
-| **High** | ≥ 70% | 🔴 Critical | High | "Approche prudente" |
+| **Low** | < 40% |  Success | Low | "Signaux alignés" |
+| **Medium** | 40-70% |  Warning | Medium | "Vigilance recommandée" |
+| **High** | ≥ 70% | [Negative] Critical | High | "Approche prudente" |
 
 ### Recommandations Contextuelles
 
@@ -156,10 +156,10 @@ static/components/Badges.js              # UI unifiée (refactorisé)
 
 ### Checks Automatiques
 
-✅ **Somme poids = 1.000** (tolerance 0.001)
-✅ **Poids dans bornes [12%-65%]**
-✅ **Risk augmente avec contradiction**
-✅ **Caps diminuent avec contradiction**
+[OK] **Somme poids = 1.000** (tolerance 0.001)
+[OK] **Poids dans bornes [12%-65%]**
+[OK] **Risk augmente avec contradiction**
+[OK] **Caps diminuent avec contradiction**
 
 ### API de Debug
 
@@ -175,9 +175,9 @@ window.testContradictionLogic.runAutoTest()
 
 ### Suppression Sources Legacy
 
-- ❌ `scores.contradictory_signals` (array count)
-- ❌ `contradictions.length` (direct count)
-- ✅ `governance.contradiction_index` (source unique)
+- [Error] `scores.contradictory_signals` (array count)
+- [Error] `contradictions.length` (direct count)
+- [OK] `governance.contradiction_index` (source unique)
 
 ### Wrapper Compatibilité
 
@@ -187,7 +187,7 @@ export function getContradictionPctCompat(state) {
   const primary = selectContradictionPct(state);
   if (primary > 0) return primary;
 
-  console.warn("⚠️ Fallback to legacy contradiction source");
+  console.warn(" Fallback to legacy contradiction source");
   // fallback logic...
 }
 ```
@@ -217,9 +217,9 @@ export {
 ### Logging Standard
 
 ```javascript
-console.debug('🚀 Adaptive weights: contradiction 47% → defensive mode');
-console.warn('⚠️ Fallback to legacy contradiction source');
-console.info('✅ Contradiction system unified: all checks passed');
+console.debug(' Adaptive weights: contradiction 47% → defensive mode');
+console.warn(' Fallback to legacy contradiction source');
+console.info(' Contradiction system unified: all checks passed');
 ```
 
 ### Rapports Automatiques
@@ -233,7 +233,7 @@ const report = generateCapsReport(state);
 
 ## Roadmap
 
-### Phase 1 ✅ (Actuel)
+### Phase 1  (Actuel)
 - Sélecteurs centralisés
 - Poids adaptatifs avec renormalisation
 - Caps de risque memecoins/small_caps
@@ -245,7 +245,7 @@ const report = generateCapsReport(state);
 - Calibrage coefficients basé sur Sharpe/Sortino
 - Intégration Phase Engine
 
-### Phase 3 ✅ (Production Stabilization)
+### Phase 3  (Production Stabilization)
 - Hystérésis & EMA anti-flickering (deadband ±2%, persistence 3 ticks)
 - Staleness gating pour robustesse (freeze weights, preserve caps)
 - Rate limiting token bucket (6 req/s, burst 12, TTL adaptatif)
@@ -295,8 +295,8 @@ window.stabilityEngine.forceStale(true) // Force staleness
 
 **Logs de monitoring**:
 ```
-🔒 Staleness gating: freezing adaptive weights at last stable value
-🔓 Staleness gating: resuming adaptive weights
+ Staleness gating: freezing adaptive weights at last stable value
+ Staleness gating: resuming adaptive weights
 ```
 
 ### Rate Limiting Token Bucket
@@ -324,10 +324,10 @@ ttl = limiter.get_adaptive_cache_ttl(client_id, endpoint)
 **Suite complète**: `/static/test-stability-comprehensive.html`
 
 **Couverture**:
-- ✅ 4 tests hystérésis (deadband, persistence, EMA, anti-oscillation)
-- ✅ 4 tests staleness (freeze, resume, caps, degradation)
-- ✅ 4 tests rate limiting (bucket, burst, TTL, graceful)
-- ✅ 4 tests intégration (pipeline, cohérence, edge cases, performance)
+- [OK] 4 tests hystérésis (deadband, persistence, EMA, anti-oscillation)
+- [OK] 4 tests staleness (freeze, resume, caps, degradation)
+- [OK] 4 tests rate limiting (bucket, burst, TTL, graceful)
+- [OK] 4 tests intégration (pipeline, cohérence, edge cases, performance)
 
 **Tests unitaires**: `tests/unit/test_stability_engine.py`
 - Token bucket mechanics avec pytest

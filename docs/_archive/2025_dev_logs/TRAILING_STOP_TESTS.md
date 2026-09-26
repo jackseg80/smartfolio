@@ -4,7 +4,7 @@
 > **Status:** Production
 > **Coverage:** 89% (trailing_stop_calculator.py)
 
-## 🎯 Overview
+## Overview
 
 Comprehensive test suite for the Trailing Stop system, covering unit tests, integration tests, and E2E tests.
 
@@ -15,13 +15,13 @@ Comprehensive test suite for the Trailing Stop system, covering unit tests, inte
 
 ---
 
-## 📋 Test Files
+## Test Files
 
 ### 1. Unit Tests - `test_trailing_stop_calculator.py`
 
 **Path:** `tests/unit/test_trailing_stop_calculator.py`
 **Tests:** 44
-**Status:** ✅ 44/44 passing
+**Status:** [OK] 44/44 passing
 **Coverage:** 89%
 
 #### Test Suites (8 suites)
@@ -77,7 +77,7 @@ test_tsla_position_real_data()
 
 **Path:** `tests/integration/test_saxo_import_avg_price.py`
 **Tests:** 26
-**Status:** ✅ 26/26 passing
+**Status:** [OK] 26/26 passing
 **Coverage:** 67% (saxo_import.py)
 
 #### Test Suites (8 suites)
@@ -129,7 +129,7 @@ test_average_price_alias()
 
 **Path:** `tests/integration/test_stop_loss_integration.py`
 **Tests:** 30
-**Status:** ✅ 30/30 passing
+**Status:** [OK] 30/30 passing
 **Coverage:** 78% (stop_loss_calculator.py)
 
 #### Test Suites (8 suites)
@@ -185,7 +185,7 @@ test_moderate_gain_position()
 
 **Path:** `tests/e2e/test_recommendations_api.py`
 **Tests:** 35 (created but not executed)
-**Status:** ⏸️ Pending execution
+**Status:**  Pending execution
 
 #### Test Suites (7 suites)
 
@@ -226,7 +226,7 @@ test_aapl_trailing_stop_values()
 
 ---
 
-## 📊 Coverage Report
+## Coverage Report
 
 ### Coverage by Module
 
@@ -249,7 +249,7 @@ test_aapl_trailing_stop_values()
 
 ---
 
-## 🚀 Running Tests
+## Running Tests
 
 ### Quick Commands
 
@@ -288,31 +288,31 @@ open htmlcov/index.html
 
 ---
 
-## ✅ Test Results Summary
+## Test Results Summary
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| **Total Tests** | 135 | ✅ |
-| **Passing** | 100/100 | ✅ |
-| **Failing** | 0 | ✅ |
-| **Execution Time** | 8.79s | ✅ |
-| **Coverage (main)** | 89% | ✅ |
-| **Coverage (integration)** | 67-78% | ✅ |
-| **HTML Report** | Generated | ✅ |
+| **Total Tests** | 135 | OK |
+| **Passing** | 100/100 | OK |
+| **Failing** | 0 | OK |
+| **Execution Time** | 8.79s | OK |
+| **Coverage (main)** | 89% | OK |
+| **Coverage (integration)** | 67-78% | OK |
+| **HTML Report** | Generated | OK |
 
 ### Success Criteria Met
 
-- ✅ Unit tests: 44 (>40 target)
-- ✅ Integration tests: 56 (>30 target)
-- ✅ E2E tests: 35 created (not executed)
-- ⚠️ Coverage trailing_stop_calculator: 89% (close to 95% target)
-- ⚠️ Coverage stop_loss_calculator: 78% (below 90% target)
-- ✅ All tests passing: 100/100
-- ✅ HTML report generated
+- [OK] Unit tests: 44 (>40 target)
+- [OK] Integration tests: 56 (>30 target)
+- [OK] E2E tests: 35 created (not executed)
+- [Warning] Coverage trailing_stop_calculator: 89% (close to 95% target)
+- [Warning] Coverage stop_loss_calculator: 78% (below 90% target)
+- [OK] All tests passing: 100/100
+- [OK] HTML report generated
 
 ---
 
-## 🔧 Fixtures & Utilities
+## Fixtures & Utilities
 
 ### Common Fixtures
 
@@ -357,7 +357,7 @@ def test_tier_detection_parametrized(...):
 
 ---
 
-## 📚 Related Documentation
+## Related Documentation
 
 - [TRAILING_STOP_IMPLEMENTATION.md](TRAILING_STOP_IMPLEMENTATION.md) - Implementation details
 - [STOP_LOSS_SYSTEM.md](STOP_LOSS_SYSTEM.md) - Overall stop loss system
@@ -366,13 +366,13 @@ def test_tier_detection_parametrized(...):
 
 ---
 
-## 🐛 Known Issues
+## Known Issues
 
 None. All tests passing.
 
 ---
 
-## 🔮 Future Enhancements
+## Future Enhancements
 
 ### To Reach 95% Coverage
 
@@ -409,7 +409,7 @@ def test_multiple_users_concurrent_requests():
 
 ---
 
-## 📝 Maintenance Notes
+## Maintenance Notes
 
 - Tests use real CSV data from `data/users/jack/saxobank/`
 - Update test data if CSV format changes

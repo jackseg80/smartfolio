@@ -4,7 +4,7 @@
 > **Date:** Octobre 2025
 > **Contexte:** Validation Stop Loss ATR vs Fixed %
 
-## 🎯 Question Clé
+## Question Clé
 
 **"Ce n'est pas mieux de tester sur 5 ans minimum ?"**
 
@@ -12,26 +12,26 @@
 
 ---
 
-## 📊 Comparaison 1 an vs 5 ans
+## Comparaison 1 an vs 5 ans
 
 ### Nombre de Trades (Robustesse Statistique)
 
 | Période | Trades/Asset | Total (10 assets) | Confiance | Verdict |
 |---------|--------------|-------------------|-----------|---------|
-| **3 mois** | 10-15 | 100-150 | ❌ 30% | Non concluant |
-| **1 an** | 50-60 | 500-600 | ⚠️ 60% | Indicatif |
-| **5 ans** | 250-300 | 2500-3000 | ✅ 90%+ | Statistiquement solide |
-| **10 ans** | 500-600 | 5000-6000 | ✅ 95%+ | Excellent (diminishing returns) |
+| **3 mois** | 10-15 | 100-150 | [Error] 30% | Non concluant |
+| **1 an** | 50-60 | 500-600 | [Warning] 60% | Indicatif |
+| **5 ans** | 250-300 | 2500-3000 | [OK] 90%+ | Statistiquement solide |
+| **10 ans** | 500-600 | 5000-6000 | [OK] 95%+ | Excellent (diminishing returns) |
 
 **Règle quantitative (source: Lopez de Prado, 2018):**
 - **< 100 trades** : Trop peu, résultats non fiables
 - **100-500 trades** : Acceptable, mais biais possible
-- **500-2000 trades** : ✅ Solide
-- **> 2000 trades** : ✅ Excellent (notre cible avec 10 assets × 5 ans)
+- **500-2000 trades** : [OK] Solide
+- **> 2000 trades** : [OK] Excellent (notre cible avec 10 assets × 5 ans)
 
 ---
 
-## 🔄 Cycles de Marché Capturés
+## Cycles de Marché Capturés
 
 ### 1 an (ex: Oct 2024 - Oct 2025)
 ```
@@ -39,7 +39,7 @@ Période: 2024-2025
 Régime: Bull Market (tech recovery, AI hype)
 Volatilité: Modérée (VIX 15-20)
 
-❌ Problèmes:
+[Error] Problèmes:
 - Uniquement bull market
 - Pas de crash test
 - Pas de bear market test
@@ -59,7 +59,7 @@ Période          Régime              VIX     S&P 500  Test
 2025 Jan-Oct     Bull/AI Hype        16-20   +15%     Secteur rotation
 ```
 
-✅ **Avantages:**
+[OK] **Avantages:**
 - Tous les régimes testés (bear, bull, sideways, crash)
 - Volatilité extrême (VIX 80) + calme (VIX 15)
 - Corrections rapides + baisses prolongées
@@ -67,7 +67,7 @@ Période          Régime              VIX     S&P 500  Test
 
 ---
 
-## 🎲 Événements Majeurs Capturés (5 ans)
+## Événements Majeurs Capturés (5 ans)
 
 ### 2020-2021 : COVID Era
 
@@ -96,7 +96,7 @@ Période          Régime              VIX     S&P 500  Test
 
 ---
 
-## 📈 Ce qu'on va Mesurer sur 5 ans
+## Ce qu'on va Mesurer sur 5 ans
 
 ### 1. Robustesse Multi-Régimes
 
@@ -108,9 +108,9 @@ Période          Régime              VIX     S&P 500  Test
 - **Sideways (2023)** : ATR devrait éviter whipsaw
 
 **Résultat attendu:**
-- Si ATR gagne en bull ET bear → ✅ Robuste
-- Si ATR gagne en bull MAIS perd en bear → ⚠️ Ajuster multipliers
-- Si ATR perd partout → ❌ Retour au Fixed (ou bug dans code)
+- Si ATR gagne en bull ET bear → [OK] Robuste
+- Si ATR gagne en bull MAIS perd en bear → [Warning] Ajuster multipliers
+- Si ATR perd partout → [Error] Retour au Fixed (ou bug dans code)
 
 ---
 
@@ -127,8 +127,8 @@ Période          Régime              VIX     S&P 500  Test
 | **2023** (calme) | 30% | $2.10 | -$4.20 (-3.2%) | -$6.50 (-5%) ← Fixed trop large |
 | **2024** (AI hype) | 45% | $6.30 | -$12.60 (-7.8%) | -$6.50 (-5%) ← Fixed trop serré |
 
-✅ **ATR s'adapte automatiquement**
-❌ **Fixed 5% = même stop pour volatilité 30% et 90%**
+[OK] **ATR s'adapte automatiquement**
+[Error] **Fixed 5% = même stop pour volatilité 30% et 90%**
 
 ---
 
@@ -138,19 +138,19 @@ Période          Régime              VIX     S&P 500  Test
 
 | Asset Type | Volatilité | ATR Expected Win Rate | Fixed Expected Win Rate |
 |------------|------------|----------------------|-------------------------|
-| **Tech (NVDA, TSLA)** | 40-60% | 🏆 65%+ | 55% (stops trop serrés) |
-| **Blue Chips (AAPL)** | 25-35% | 🏆 60%+ | 58% (comparable) |
-| **Defensive (KO)** | 15-25% | 58% | 🏆 60% (Fixed peut gagner) |
-| **ETFs (SPY)** | 15-20% | 58% | 🏆 59% (Fixed peut gagner) |
+| **Tech (NVDA, TSLA)** | 40-60% |  65%+ | 55% (stops trop serrés) |
+| **Blue Chips (AAPL)** | 25-35% |  60%+ | 58% (comparable) |
+| **Defensive (KO)** | 15-25% | 58% |  60% (Fixed peut gagner) |
+| **ETFs (SPY)** | 15-20% | 58% |  59% (Fixed peut gagner) |
 
 **Conclusion attendue:**
-- ATR gagne sur tech/volatil ✅
-- Fixed gagne sur defensive/stable ⚠️
+- ATR gagne sur tech/volatil [OK]
+- Fixed gagne sur defensive/stable [Warning]
 - **Solution:** Utiliser ATR pour stocks, Fixed pour ETFs
 
 ---
 
-## 🔬 Métriques Avancées (5 ans permet de calculer)
+## Métriques Avancées (5 ans permet de calculer)
 
 ### 1. Sharpe Ratio
 
@@ -185,12 +185,12 @@ trades_bear = [t for t in trades if market_regime[t.date] == 'bear']
 win_rate_bull_atr = len([t for t in trades_bull if t.pnl > 0]) / len(trades_bull)
 win_rate_bear_atr = len([t for t in trades_bear if t.pnl > 0]) / len(trades_bear)
 
-# Nécessite assez de trades en bull ET bear (5 ans ✅, 1 an ❌)
+# Nécessite assez de trades en bull ET bear (5 ans , 1 an )
 ```
 
 ---
 
-## ⚙️ Configuration Optimale
+## Configuration Optimale
 
 ### Assets à Tester (10 total)
 
@@ -213,7 +213,7 @@ test_assets = [
 
 **Résultat:**
 - 10 assets × 260 semaines = **2,600 trades total**
-- Statistiquement très solide ✅
+- Statistiquement très solide [OK]
 
 ### Paramètres de Test
 
@@ -235,37 +235,37 @@ runtime = ~3-5 minutes
 
 ---
 
-## 📊 Résultats Attendus (5 ans vs 1 an)
+## Résultats Attendus (5 ans vs 1 an)
 
-### Scénario 1 : ATR Robuste (✅ Objectif)
+### Scénario 1 : ATR Robuste ( Objectif)
 
 | Métrique | 1 an | 5 ans | Différence |
 |----------|------|-------|------------|
 | ATR Total P&L | +$5,000 | +$85,000 | Plus stable sur cycles complets |
 | Fixed Total P&L | +$8,000 | +$65,000 | Biais bull market 2024 |
-| **Winner** | ❌ Fixed | ✅ ATR | 5 ans révèle vraie supériorité |
+| **Winner** | [Error] Fixed | [OK] ATR | 5 ans révèle vraie supériorité |
 | ATR Win Rate | 58% | 62% | Plus robuste multi-régimes |
 | ATR Stops Hit | 25% | 18% | Moins de sorties prématurées |
 
-**Verdict 1 an:** ❌ Fixed meilleur (biais temporel)
-**Verdict 5 ans:** ✅ ATR meilleur (+31% sur 5 ans) → **GO Phase 2**
+**Verdict 1 an:** [Error] Fixed meilleur (biais temporel)
+**Verdict 5 ans:** [OK] ATR meilleur (+31% sur 5 ans) → **GO Phase 2**
 
 ---
 
-### Scénario 2 : Asset-Specific (⚠️ Investigation)
+### Scénario 2 : Asset-Specific ( Investigation)
 
 | Asset Type | 1 an Winner | 5 ans Winner | Conclusion |
 |------------|-------------|--------------|------------|
-| Tech (NVDA) | Fixed (+12%) | ✅ ATR (+45%) | ATR meilleur long terme |
-| Blue Chips | ATR (+8%) | ✅ ATR (+22%) | ATR robuste |
-| Defensive | Fixed (+5%) | ✅ Fixed (+15%) | Fixed meilleur stables |
-| ETFs | Fixed (+3%) | ✅ Fixed (+10%) | Fixed meilleur indices |
+| Tech (NVDA) | Fixed (+12%) | [OK] ATR (+45%) | ATR meilleur long terme |
+| Blue Chips | ATR (+8%) | [OK] ATR (+22%) | ATR robuste |
+| Defensive | Fixed (+5%) | [OK] Fixed (+15%) | Fixed meilleur stables |
+| ETFs | Fixed (+3%) | [OK] Fixed (+10%) | Fixed meilleur indices |
 
-**Verdict 5 ans:** ⚠️ Utiliser ATR pour stocks, Fixed pour ETFs/defensive
+**Verdict 5 ans:** [Warning] Utiliser ATR pour stocks, Fixed pour ETFs/defensive
 
 ---
 
-## 🚀 Instructions d'Exécution
+## Instructions d'Exécution
 
 ### Étape 1 : Télécharger Données (5 ans)
 
@@ -308,9 +308,9 @@ python services/ml/bourse/generate_backtest_report.py
 
 ---
 
-## 🎯 Critères de Décision (Post 5 ans)
+## Critères de Décision (Post 5 ans)
 
-### ✅ Si ATR > Fixed (+15% ou plus)
+### Si ATR > Fixed (+15% ou plus)
 
 **Action:** GO Phase 2 - Support Detection
 - Implémenter ATR-Anchored (MA50 + psych levels)
@@ -319,7 +319,7 @@ python services/ml/bourse/generate_backtest_report.py
 
 ---
 
-### ⚠️ Si ATR > Fixed (+5% à +15%)
+### Si ATR > Fixed (+5% à +15%)
 
 **Action:** Analyse Granulaire par Asset Type
 ```python
@@ -333,20 +333,20 @@ defensive_assets = ["KO", "PG"]
 
 ---
 
-### ❌ Si Fixed > ATR
+### Si Fixed > ATR
 
 **Action:** Debug & Réajustement
 
 **Checklist:**
-1. ✅ Vérifier market_regime correct (Bull = 2.5x, Bear = 1.5x)
-2. ✅ Tester multipliers alternatifs (1.5x, 2.0x, 3.0x)
-3. ✅ Vérifier calcul ATR (période 14 jours correct ?)
-4. ✅ Analyser trades perdants (patterns ?)
-5. ✅ Comparer avec Fixed 3% et 8% (pas seulement 5%)
+1. [OK] Vérifier market_regime correct (Bull = 2.5x, Bear = 1.5x)
+2. [OK] Tester multipliers alternatifs (1.5x, 2.0x, 3.0x)
+3. [OK] Vérifier calcul ATR (période 14 jours correct ?)
+4. [OK] Analyser trades perdants (patterns ?)
+5. [OK] Comparer avec Fixed 3% et 8% (pas seulement 5%)
 
 ---
 
-## 📚 Références Académiques
+## Références Académiques
 
 ### Livres
 - **Lopez de Prado, M. (2018).** *Advances in Financial Machine Learning*
@@ -367,27 +367,27 @@ defensive_assets = ["KO", "PG"]
 
 ---
 
-## 💡 Conclusion
+## Conclusion
 
 **Question:** "Ce n'est pas mieux de tester sur 5 ans minimum ?"
 
 **Réponse:** OUI, absolument. Voici pourquoi:
 
-✅ **Robustesse statistique** : 2500+ trades vs 500
-✅ **Cycles complets** : Bear + Bull + Sideways + Crash
-✅ **Événements extrêmes** : COVID, Bear 2022, AI Hype
-✅ **Moins de biais** : Pas de recency bias
-✅ **Standard professionnel** : Ce que font les hedge funds
+[OK] **Robustesse statistique** : 2500+ trades vs 500
+[OK] **Cycles complets** : Bear + Bull + Sideways + Crash
+[OK] **Événements extrêmes** : COVID, Bear 2022, AI Hype
+[OK] **Moins de biais** : Pas de recency bias
+[OK] **Standard professionnel** : Ce que font les hedge funds
 
 **Temps investi:**
 - Download: 3 min
 - Backtest: 5 min
 - Analyse: 15 min
-- **Total: 23 minutes** pour des résultats fiables à vie 🎯
+- **Total: 23 minutes** pour des résultats fiables à vie
 
 ---
 
-**Prêt à lancer ?** 🚀
+**Prêt à lancer ?**
 
 ```bash
 python download_historical_data.py && python run_backtest_extended.py

@@ -288,9 +288,9 @@
   <div class="wrap" style="margin-top: 20px;">
     <div class="card">
       <div class="row">
-        <button class="btn small" onclick="loadData()">🔄 Refresh</button>
-        <button class="btn small" onclick="getSuggestions()">🔍 Suggestions</button>
-        <button class="btn small" onclick="autoClassify()">🚀 Auto-classifier</button>
+        <button class="btn small" onclick="loadData()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh</button>
+        <button class="btn small" onclick="getSuggestions()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Suggestions</button>
+        <button class="btn small" onclick="autoClassify()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Auto-classifier</button>
       </div>
     </div>
   </div>
@@ -314,7 +314,7 @@
 
     <div class="grid g2">
       <div class="card">
-        <h3>🔍 Search & Filters</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Search & Filters</h3>
         <div class="filters">
           <div>
             <label>Search</label><br />
@@ -333,13 +333,13 @@
         <div class="row">
           <button class="btn secondary small" onclick="clearFilters()">Clear Filters</button>
           <button class="btn warning small" onclick="showOnlyUnassigned()">Show Unassigned</button>
-          <button class="btn small" onclick="showOnlyNewAliases()" style="background: #f59e0b; color: white;">🆕 Show
+          <button class="btn small" onclick="showOnlyNewAliases()" style="background: #f59e0b; color: white;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="New" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#plus-circle"></use></svg> Show
             New</button>
         </div>
       </div>
 
       <div class="card">
-        <h3>⚡ Quick Actions</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Quick Actions</h3>
         <div class="row">
           <div>
             <label>New Group</label><br />
@@ -353,14 +353,14 @@
         </div>
         <div class="row" style="margin-top:8px">
           <button class="btn secondary small" onclick="assignAllToOthers()">Tout → Others</button>
-          <button class="btn secondary small" onclick="exportAliases()">📥 Export JSON</button>
+          <button class="btn secondary small" onclick="exportAliases()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Download" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-down-tray"></use></svg> Export JSON</button>
         </div>
       </div>
     </div>
 
     <div class="card" style="margin-top:16px">
       <div class="row">
-        <h3>🏷️ Liste des Alias</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Label" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#tag"></use></svg> Liste des Alias</h3>
         <div class="pill"><span id="filtered-count">0</span> / <span id="total-count">0</span> shown</div>
       </div>
 
@@ -388,14 +388,14 @@
 
     // SUPPRIMÉ: Données mockées désactivées - utiliser API réelle uniquement
     async function getMockTaxonomyData() {
-      debugLogger.error('⚠️ Mock taxonomy data disabled. Configure real data source in settings.');
+      debugLogger.error("[Warning] Mock taxonomy data disabled. Configure real data source in settings.");
       return { aliases: {}, groups: [] };
       // Données vides - utiliser API taxonomy réelle
       let mockAliases = {};
       
       // Try to enhance with configured data source
       try {
-        console.debug('🔍 Loading alias data using configured source...');
+        console.debug("Loading alias data using configured source...");
         const balanceResult = await window.loadBalanceData();
         
         if (balanceResult.success) {
@@ -415,7 +415,7 @@
             throw new Error('Invalid data format received');
           }
           
-          console.debug('🔍 DEBUG Alias Manager: Found', balances.length, 'assets using source:', balanceResult.source);
+          console.debug("DEBUG Alias Manager: Found", balances.length, 'assets using source:', balanceResult.source);
           
           // Add any missing assets from CSV to mockAliases
           balances.forEach(item => {
@@ -433,7 +433,7 @@
               } else {
                 mockAliases[symbol] = 'Others';
               }
-              console.debug('🔍 DEBUG: Auto-classified', symbol, 'as', mockAliases[symbol]);
+              console.debug("DEBUG: Auto-classified", symbol, 'as', mockAliases[symbol]);
             }
           });
         }
@@ -467,7 +467,7 @@
       const lines = csvText.split('\n');
       const balances = [];
       
-      console.debug('🔍 DEBUG Alias Manager: Parsing CSV with', lines.length, 'total lines');
+      console.debug("DEBUG Alias Manager: Parsing CSV with", lines.length, 'total lines');
       
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -495,7 +495,7 @@
       }
       
       const totalParsed = balances.reduce((sum, item) => sum + item.value_usd, 0);
-      console.debug('🔍 DEBUG Alias Manager: CSV parsing complete -', balances.length, 'assets, total:', totalParsed.toFixed(2), '$');
+      console.debug("DEBUG Alias Manager: CSV parsing complete -", balances.length, 'assets, total:', totalParsed.toFixed(2), '$');
       
       return balances;
     }
@@ -581,7 +581,7 @@
 
       } catch (e) {
         debugLogger.error('Critical error in loadData:', e);
-        document.getElementById('loading').innerHTML = `❌ Error: ${e.message}`;
+        document.getElementById('loading').innerHTML = `Error: ${e.message}`;
         
         // Fallback to ensure basic functionality
         try {
@@ -598,7 +598,7 @@
           document.getElementById('stats').style.display = 'flex';
         } catch (fallbackError) {
           debugLogger.error('Even fallback failed:', fallbackError);
-          document.getElementById('loading').innerHTML = `❌ Critical error: ${fallbackError.message}`;
+          document.getElementById('loading').innerHTML = `[Error] Critical error: ${fallbackError.message}`;
         }
       }
     }
@@ -641,13 +641,13 @@
         const tr = document.createElement('tr');
         const isNew = unknown.has(alias);
         tr.innerHTML = `
-      <td><strong>${alias}</strong>${isNew ? '<span style="color:#f59e0b;font-size:10px;margin-left:4px;">🆕 NOUVEAU</span>' : ''}</td>
+      <td><strong>${alias}</strong>${isNew ? "<span style=\"color:#f59e0b;font-size:10px;margin-left:4px;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"New\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#plus-circle\"></use></svg> NOUVEAU</span>" : ''}</td>
       <td><span class="group-badge ${group.toLowerCase().replace(/[^a-z]/g, '')}">${group}</span></td>
       <td class="alias-actions">
         <select onchange="changeGroup('${alias}', this.value)" style="width:140px">
           ${allGroups.map(g => `<option value="${g}" ${g === group ? 'selected' : ''}>${g}</option>`).join('')}
         </select>
-        <button class="btn danger small" onclick="deleteAlias('${alias}')">🗑️</button>
+        <button class="btn danger small" onclick="deleteAlias('${alias}')"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg></button>
       </td>`;
         if (isNew) { tr.style.backgroundColor = 'rgba(245,158,11,.10)'; tr.style.borderLeft = '3px solid #f59e0b'; }
         tbody.appendChild(tr);
@@ -667,12 +667,12 @@
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         allAliases[alias] = newGroup; filterAliases();
-        showNotification(`✅ ${alias} → ${newGroup}`, 'success');
+        showNotification(`OK ${alias} → ${newGroup}`, 'success');
       } catch (e) { 
         debugLogger.warn('Taxonomy API unavailable, simulating change:', e);
         allAliases[alias] = newGroup; 
         filterAliases();
-        showNotification(`📝 ${alias} → ${newGroup} (offline mode)`, 'info');
+        showNotification(`File ${alias} → ${newGroup} (offline mode)`, 'info');
       }
     }
 
@@ -683,12 +683,12 @@
         const resp = await fetch(`${apiBase}/taxonomy/aliases/${alias}`, { method: 'DELETE' });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         delete allAliases[alias]; filterAliases();
-        showNotification(`🗑️ ${alias} deleted`, 'success');
+        showNotification(`Delete ${alias} deleted`, 'success');
       } catch (e) { 
         debugLogger.warn('Delete API unavailable, simulating deletion:', e);
         delete allAliases[alias]; 
         filterAliases();
-        showNotification(`🗑️ ${alias} deleted (offline mode)`, 'info');
+        showNotification(`Delete ${alias} deleted (offline mode)`, 'info');
       }
     }
 
@@ -704,12 +704,12 @@
         const resp = await fetch(`${apiBase}/taxonomy/aliases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aliases: payload }) });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         aliases.forEach(a => allAliases[a] = group); filterAliases();
-        showNotification(`✅ ${aliases.length} aliases → ${group}`, 'success');
+        showNotification(`OK ${aliases.length} aliases → ${group}`, 'success');
       } catch (e) { 
         debugLogger.warn('Batch assign API unavailable:', e);
         aliases.forEach(a => allAliases[a] = group); 
         filterAliases();
-        showNotification(`📝 ${aliases.length} aliases → ${group} (offline mode)`, 'info');
+        showNotification(`File ${aliases.length} aliases → ${group} (offline mode)`, 'info');
       }
     }
 
@@ -722,12 +722,12 @@
         const resp = await fetch(`${apiBase}/taxonomy/aliases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ aliases: payload }) });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         Object.keys(allAliases).forEach(a => allAliases[a] = 'Others'); filterAliases();
-        showNotification(`✅ All aliases → Others`, 'success');
+        showNotification(`[OK] All aliases → Others`, 'success');
       } catch (e) { 
         debugLogger.warn('Assign all API unavailable:', e);
         Object.keys(allAliases).forEach(a => allAliases[a] = 'Others'); 
         filterAliases();
-        showNotification(`📝 All aliases → Others (offline mode)`, 'info');
+        showNotification(`All aliases → Others (offline mode)`, 'info');
       }
     }
 
@@ -758,11 +758,11 @@
         if ((auto_classified_count || 0) === 0) { showNotification('No automatic suggestions found', 'info'); return; }
         const cov = Math.round((coverage || 0) * 100);
         const list = Object.entries(suggestions).map(([s, g]) => `${s} → ${g}`).slice(0, 5).join(', ');
-        const icon = useCG ? '🚀' : '🔍'; const label = useCG ? 'Mode intelligent (regex + CoinGecko)' : 'Mode regex seul';
-        showNotification(`${icon} ${auto_classified_count}/${unknown_count} suggestions (${cov}%)\n📊 ${label}\n💡 ${list}`, 'info', 10000);
+        const icon = useCG ? "Growth" : "Search"; const label = useCG ? 'Mode intelligent (regex + CoinGecko)' : 'Mode regex seul';
+        showNotification(`${icon} ${auto_classified_count}/${unknown_count} suggestions (${cov}%)\n ${label}\n ${list}`, 'info', 10000);
       } catch (e) { 
         debugLogger.warn('Suggestions API unavailable:', e);
-        showNotification(`🔍 Suggestions not available in offline mode`, 'info');
+        showNotification(`Suggestions not available in offline mode`, 'info');
       }
     }
 
@@ -777,12 +777,12 @@
         if ((data.classified || 0) === 0) { showNotification(data.message || 'No automatic classification applied', 'info'); }
         else {
           const label = useCG ? '(avec CoinGecko)' : '(regex seul)';
-          showNotification(`✅ ${data.classified} aliases auto-classified ${label}`, 'success');
+          showNotification(`OK ${data.classified} aliases auto-classified ${label}`, 'success');
           await loadData();
         }
       } catch (e) { 
         debugLogger.warn('Auto-classify API unavailable:', e);
-        showNotification(`🚀 Automatic classification not available in offline mode`, 'info');
+        showNotification(`Automatic classification not available in offline mode`, 'info');
       }
     }
 

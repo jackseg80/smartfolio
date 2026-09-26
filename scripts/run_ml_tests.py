@@ -51,8 +51,8 @@ def run_tests(test_type="all", verbose=False, coverage=False, markers=None):
     if not verbose:
         cmd.extend(["--tb=short"])
     
-    print(f"🧪 Lancement des tests ML ({test_type})...")
-    print(f"📝 Commande: {' '.join(cmd)}")
+    print(f" Lancement des tests ML ({test_type})...")
+    print(f" Commande: {' '.join(cmd)}")
     print("-" * 50)
     
     try:
@@ -69,18 +69,18 @@ def run_tests(test_type="all", verbose=False, coverage=False, markers=None):
         
         if result.returncode == 0:
             print("-" * 50)
-            print("✅ Tous les tests ML ont réussi!")
+            print("[OK] Tous les tests ML ont réussi!")
         else:
             print("-" * 50)
-            print("❌ Certains tests ML ont échoué.")
+            print("[Error] Certains tests ML ont échoué.")
             
         return result.returncode
         
     except KeyboardInterrupt:
-        print("\n⏹️ Tests interrompus par l'utilisateur")
+        print("\n Tests interrompus par l'utilisateur")
         return 1
     except Exception as e:
-        print(f"❌ Erreur lors du lancement des tests: {e}")
+        print(f"[Error] Erreur lors du lancement des tests: {e}")
         return 1
 
 
@@ -92,15 +92,15 @@ def run_performance_tests():
         "--durations=10"
     ]
     
-    print("🚀 Lancement des tests de performance ML...")
-    print(f"📝 Commande: {' '.join(cmd)}")
+    print(" Lancement des tests de performance ML...")
+    print(f" Commande: {' '.join(cmd)}")
     print("-" * 50)
     
     try:
         result = subprocess.run(cmd, cwd=Path(__file__).parent)
         return result.returncode
     except Exception as e:
-        print(f"❌ Erreur lors des tests de performance: {e}")
+        print(f"[Error] Erreur lors des tests de performance: {e}")
         return 1
 
 

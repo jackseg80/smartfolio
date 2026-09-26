@@ -17,37 +17,37 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "=========================================="
-echo "🏥 SmartFolio Production Health Check"
+echo " SmartFolio Production Health Check"
 echo "=========================================="
 echo "API URL: $API_URL"
 echo ""
 
 # 1. API Health Check
-echo "1️⃣  Checking API Health..."
+echo "1.  Checking API Health..."
 if curl -sf "$API_URL/health" > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ API is healthy${NC}"
+    echo -e "${GREEN}[OK] API is healthy${NC}"
     curl -s "$API_URL/health" | jq '.'
 else
-    echo -e "${RED}❌ API is DOWN${NC}"
+    echo -e "${RED}[Error] API is DOWN${NC}"
     exit 1
 fi
 echo ""
 
 # 2. Scheduler Status
-echo "2️⃣  Checking Scheduler (Price Updates)..."
+echo "2.  Checking Scheduler (Price Updates)..."
 SCHEDULER_STATUS=$(curl -sf "$API_URL/api/scheduler/health" | jq -r '.data.enabled')
 if [ "$SCHEDULER_STATUS" = "true" ]; then
-    echo -e "${GREEN}✅ Scheduler is running${NC}"
+    echo -e "${GREEN}[OK] Scheduler is running${NC}"
     curl -s "$API_URL/api/scheduler/health" | jq '.data.jobs | to_entries[] | {job: .key, last_run: .value.last_run, duration: .value.duration_seconds}'
 else
-    echo -e "${YELLOW}⚠️  Scheduler is disabled (RUN_SCHEDULER != 1)${NC}"
+    echo -e "${YELLOW}[Warning]  Scheduler is disabled (RUN_SCHEDULER != 1)${NC}"
 fi
 echo ""
 
 # 3. Redis Status
-echo "3️⃣  Checking Redis Cache..."
+echo "3.  Checking Redis Cache..."
 if redis-cli ping > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Redis is responding${NC}"
+    echo -e "${GREEN}[OK] Redis is responding${NC}"
 
     # Count cache keys
     PRICE_KEYS=$(redis-cli KEYS 'price:*' | wc -l)
@@ -65,18 +65,18 @@ if redis-cli ping > /dev/null 2>&1; then
         echo "   - Sample price TTL: ${TTL}s (should be ~180s for 3min cache)"
     fi
 else
-    echo -e "${RED}❌ Redis is not responding${NC}"
+    echo -e "${RED}[Error] Redis is not responding${NC}"
 fi
 echo ""
 
 # 4. Price Freshness (using wealth API endpoint)
-echo "4️⃣  Checking Price Data Freshness..."
+echo "4.  Checking Price Data Freshness..."
 PRICE_RESPONSE=$(curl -sf "$API_URL/api/wealth/global/summary?source=cointracking_api" -H "X-User: jack")
 if [ -n "$PRICE_RESPONSE" ]; then
     TOTAL_VALUE=$(echo "$PRICE_RESPONSE" | jq -r '.total_value_usd // 0')
 
     if [ "$TOTAL_VALUE" != "0" ] && [ "$TOTAL_VALUE" != "null" ]; then
-        echo -e "${GREEN}✅ Price data is available${NC}"
+        echo -e "${GREEN}[OK] Price data is available${NC}"
 
         # Show wealth breakdown
         CRYPTO_TOTAL=$(echo "$PRICE_RESPONSE" | jq -r '.breakdown.crypto // 0')
@@ -91,52 +91,52 @@ if [ -n "$PRICE_RESPONSE" ]; then
         echo "   - Grand Total: \$$(printf '%.2f' $TOTAL_VALUE) USD"
         echo "   - P&L Today: \$$(printf '%.2f' $PNL_TODAY) ($(printf '%.2f' $PNL_PCT)%)"
     else
-        echo -e "${YELLOW}⚠️  API returned zero or null value${NC}"
+        echo -e "${YELLOW}[Warning]  API returned zero or null value${NC}"
         echo "$PRICE_RESPONSE" | jq '.'
     fi
 else
-    echo -e "${RED}❌ Failed to fetch price data${NC}"
+    echo -e "${RED} Failed to fetch price data${NC}"
 fi
 echo ""
 
 # 5. Log File Check
-echo "5️⃣  Checking Recent Errors in Logs..."
+echo "5.  Checking Recent Errors in Logs..."
 if [ -f "logs/app.log" ]; then
     ERROR_COUNT=$(grep "ERROR" logs/app.log 2>/dev/null | wc -l)
     CRITICAL_COUNT=$(grep "CRITICAL" logs/app.log 2>/dev/null | wc -l)
 
     if [ "$CRITICAL_COUNT" -gt 0 ]; then
-        echo -e "${RED}❌ Found $CRITICAL_COUNT CRITICAL errors${NC}"
+        echo -e "${RED}[Error] Found $CRITICAL_COUNT CRITICAL errors${NC}"
         echo "   Recent critical errors:"
         grep "CRITICAL" logs/app.log | tail -3
     elif [ "$ERROR_COUNT" -gt 10 ]; then
-        echo -e "${YELLOW}⚠️  Found $ERROR_COUNT ERROR entries (last 5 shown)${NC}"
+        echo -e "${YELLOW}[Warning]  Found $ERROR_COUNT ERROR entries (last 5 shown)${NC}"
         grep "ERROR" logs/app.log | tail -5
     else
-        echo -e "${GREEN}✅ Log file healthy ($ERROR_COUNT errors)${NC}"
+        echo -e "${GREEN}[OK] Log file healthy ($ERROR_COUNT errors)${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠️  Log file not found at logs/app.log${NC}"
+    echo -e "${YELLOW}[Warning]  Log file not found at logs/app.log${NC}"
 fi
 echo ""
 
 # 6. Process Check
-echo "6️⃣  Checking Python Process..."
+echo "6.  Checking Python Process..."
 if pgrep -f "uvicorn api.main:app" > /dev/null; then
-    echo -e "${GREEN}✅ Uvicorn process is running${NC}"
+    echo -e "${GREEN}[OK] Uvicorn process is running${NC}"
     ps aux | grep "uvicorn api.main" | grep -v grep | awk '{print "   - PID: "$2" | CPU: "$3"% | MEM: "$4"%"}'
 else
-    echo -e "${RED}❌ Uvicorn process not found${NC}"
+    echo -e "${RED}[Error] Uvicorn process not found${NC}"
 fi
 echo ""
 
 # Summary
 echo "=========================================="
-echo "📊 Summary"
+echo " Summary"
 echo "=========================================="
 echo "Check completed at: $(date)"
 echo ""
-echo "💡 Tips:"
+echo " Tips:"
 echo "   - Watch logs: tail -f logs/app.log"
 echo "   - Scheduler jobs: curl $API_URL/api/scheduler/health | jq '.data.jobs'"
 echo "   - Redis monitor: redis-cli MONITOR"

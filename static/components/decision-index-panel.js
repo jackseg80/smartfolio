@@ -7,12 +7,12 @@
  * - Design gaming compact et moderne
  *
  * Changements v8.0:
- * - ✅ Mini Cycle Chart (Chart.js sigmoïde avec phases colorées + marqueur position)
- * - ✅ Allocation en texte compact (une ligne, plus de graphique)
- * - ✅ 3 piliers fusionnés en une seule rangée horizontale
- * - ✅ Context Bar remonté en haut de la colonne droite
- * - ❌ Supprimé: Allocation bar graphique (trop d'espace)
- * - ❌ Supprimé: 3 pillar bars séparés (fusionnés)
+ * -  Mini Cycle Chart (Chart.js sigmoïde avec phases colorées + marqueur position)
+ * -  Allocation en texte compact (une ligne, plus de graphique)
+ * -  3 piliers fusionnés en une seule rangée horizontale
+ * -  Context Bar remonté en haut de la colonne droite
+ * -  Supprimé: Allocation bar graphique (trop d'espace)
+ * -  Supprimé: 3 pillar bars séparés (fusionnés)
  *
  * @version 8.0.0
  * @date 2026-02-09
@@ -158,7 +158,7 @@ function computeTrendInfo(history) {
 
   return {
     delta: _round(delta, 1),
-    trend: delta > 0 ? '↗' : delta < 0 ? '↘' : '→',
+    trend: delta > 0 ? "Up" : delta < 0 ? "Down" : '→',
     color: delta > 1 ? 'positive' : delta < -1 ? 'negative' : 'neutral',
     sigma: _round(sigma, 1),
     state
@@ -252,7 +252,7 @@ function renderScoresAndContributions(scores, contributions) {
  * Génère la recommandation actionnable basée sur le DI et les piliers
  */
 function renderRecommendation(score, meta, scores = {}) {
-  let icon = '💡';
+  let icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Insight\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#light-bulb\"></use></svg>";
   let title = 'Position neutre';
   let action = 'Monitoring recommended';
   let details = '';
@@ -270,7 +270,7 @@ function renderRecommendation(score, meta, scores = {}) {
 
   // Logique de recommandation basée sur le DI global
   if (score >= 75) {
-    icon = '🚀';
+    icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>";
     title = 'Excellent timing';
     colorClass = 'bullish';
 
@@ -286,7 +286,7 @@ function renderRecommendation(score, meta, scores = {}) {
     }
 
   } else if (score >= 60) {
-    icon = '✅';
+    icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>";
     title = 'Favorable position';
     colorClass = 'positive';
 
@@ -302,7 +302,7 @@ function renderRecommendation(score, meta, scores = {}) {
     }
 
   } else if (score >= 45) {
-    icon = '⚠️';
+    icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>";
     title = 'Mixed position';
     colorClass = 'warning';
 
@@ -318,7 +318,7 @@ function renderRecommendation(score, meta, scores = {}) {
     }
 
   } else if (score >= 30) {
-    icon = '🛡️';
+    icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg>";
     title = 'Unfavorable position';
     colorClass = 'defensive';
 
@@ -331,7 +331,7 @@ function renderRecommendation(score, meta, scores = {}) {
     }
 
   } else {
-    icon = '🚨';
+    icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Alert\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-circle\"></use></svg>";
     title = 'ALERT - Critical position';
     colorClass = 'critical';
 
@@ -386,22 +386,22 @@ function renderMetadata(meta) {
   const contradiction = meta.contradiction != null ? meta.contradiction : null;
 
   if (fearGreed != null && fearGreed < 25) {
-    overrides.push(`🚨 ML Sentiment Extrême (${fearGreed})`);
+    overrides.push(`[Alert] ML Sentiment Extrême (${fearGreed})`);
   }
   if (contradiction != null && contradiction > 0.5) {
-    overrides.push(`⚠️ Contradiction (${Math.round(contradiction * 100)}%)`);
+    overrides.push(`[Warning] Contradiction (${Math.round(contradiction * 100)}%)`);
   }
   // Override #4: Macro Stress (VIX/DXY) - Feb 2026
   if (meta.macro_stress) {
     const macroDetails = [];
     if (meta.vix_stress) macroDetails.push(`VIX ${meta.vix_value?.toFixed(1)}`);
     if (meta.dxy_stress) macroDetails.push(`DXY +${meta.dxy_change_30d?.toFixed(1)}%`);
-    overrides.push(`🌍 Macro Stress (${macroDetails.join(', ') || 'VIX/DXY'})`);
+    overrides.push(`Macro Stress (${macroDetails.join(', ') || 'VIX/DXY'})`);
   }
 
   const overrideBadge = overrides.length > 0
     ? `<div class="meta-row meta-override">
-        <span class="meta-label">⚡ Override</span>
+        <span class="meta-label"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Override</span>
         <span class="meta-value meta-override-value">${overrides.join(', ')}</span>
       </div>`
     : '';
@@ -480,7 +480,7 @@ function getLeftParts(data) {
     metadata: renderMetadata(m),
     recommendation: scoreAvailable && pillarsAvailable
       ? renderRecommendation(score, m, s)
-      : '<div class="di-recommendation neutral"><div class="reco-content"><div class="reco-header"><span class="reco-icon">⚠️</span><span class="reco-title">Decision unavailable</span></div><div class="reco-action">Wait for complete verified inputs</div></div></div>'
+      : "<div class=\"di-recommendation neutral\"><div class=\"reco-content\"><div class=\"reco-header\"><span class=\"reco-icon\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg></span><span class=\"reco-title\">Decision unavailable</span></div><div class=\"reco-action\">Wait for complete verified inputs</div></div></div>"
   };
 }
 
@@ -530,11 +530,11 @@ function renderCyclePillarWithPhases(value, subtext, confidence, meta) {
 
   // Phases du cycle (48 mois)
   const phases = [
-    { name: 'Acc', start: 0, end: 6, color: '#f59e0b', emoji: '🟡' },
-    { name: 'Bull', start: 6, end: 18, color: '#10b981', emoji: '🟢' },
-    { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '🟣' },
-    { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '🔴' },
-    { name: 'Pre', start: 36, end: 48, color: '#6b7280', emoji: '⚫' }
+    { name: 'Acc', start: 0, end: 6, color: '#f59e0b', emoji: '' },
+    { name: 'Bull', start: 6, end: 18, color: '#10b981', emoji: '' },
+    { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '' },
+    { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '' },
+    { name: 'Pre', start: 36, end: 48, color: '#6b7280', emoji: '' }
   ];
 
   // Déterminer la phase actuelle
@@ -555,7 +555,7 @@ function renderCyclePillarWithPhases(value, subtext, confidence, meta) {
     <div class="pillar-bar-compact pillar-cycle-visual">
       <div class="pillar-header">
         <div class="pillar-label">
-          <span class="pillar-icon">🔄</span>
+          <span class="pillar-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg></span>
           <span class="pillar-name">Cycle</span>
           ${confidence ? `<span class="conf-chip">${confidence}%</span>` : ''}
         </div>
@@ -1036,7 +1036,7 @@ function renderMetricsBar(meta, scores = {}) {
  */
 function renderQuickContextBar(meta) {
   const regime = meta.phase || meta.regime || 'Neutral';
-  const regimeEmoji = meta.regime_emoji || '📊';
+  const regimeEmoji = meta.regime_emoji || '';
 
   // Phase d'allocation (depuis cycle score)
   const cyclePhase = meta.cycle_phase || 'Unknown';
@@ -1115,7 +1115,7 @@ function renderHelpContent() {
     <div class="di-help-popup" style="display: none;" role="dialog" aria-labelledby="di-help-title" aria-modal="true">
       <div class="di-help-content">
         <div class="di-help-header">
-          <h3 id="di-help-title">📊 Decision Index</h3>
+          <h3 id="di-help-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Decision Index</h3>
           <button class="di-help-close" aria-label="Close" type="button">×</button>
         </div>
         <div class="di-help-body">
@@ -1123,7 +1123,7 @@ function renderHelpContent() {
           Continuous score <strong>0-100</strong> computed by weighted pillars:<br>
           <code>DI = (Cycle × w₁ + OnChain × w₂ + Risk × w₃) × phase_factor</code><br>
           <br>
-          ⚠️ <strong>Important:</strong> DI IS a weighted sum!<br>
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> <strong>Important:</strong> DI IS a weighted sum!<br>
           • Adaptive weights based on context (strong cycle → boost wCycle)<br>
           • Adjustment by market phase (bullish/bearish)</p>
 
@@ -1135,9 +1135,9 @@ function renderHelpContent() {
           &lt;30 = Secure (max stables)</p>
 
           <p><strong>Pillars (right column)</strong><br>
-          🔄 Cycle: Blended CCS (CCS blended with cycle position)<br>
-          🔗 On-Chain: Fundamental blockchain metrics<br>
-          🛡️ Risk: Portfolio robustness (higher = better)</p>
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Cycle: Blended CCS (CCS blended with cycle position)<br>
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain: Fundamental blockchain metrics<br>
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk: Portfolio robustness (higher = better)</p>
 
           <p><strong>Conditions vs Phase vs Regime</strong><br>
           • <strong>Conditions</strong> = Composite market outlook (CCS + On-Chain, without Risk)<br>
@@ -1171,7 +1171,7 @@ function renderHelpContent() {
           External factors can modify the allocation:<br>
           • ML Sentiment <25 → Forces defensive allocation<br>
           • Contradiction >50% → Penalizes On-Chain/Risk<br>
-          • 🌍 Macro Stress (VIX>30 or DXY+5%) → -15 pts penalty on DI<br>
+          • <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Global" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#globe-alt"></use></svg> Macro Stress (VIX>30 or DXY+5%) → -15 pts penalty on DI<br>
           • Structure Score <50 → +10pts stables</p>
 
           <p><strong>Metadata</strong><br>
@@ -2403,7 +2403,7 @@ function injectStyles() {
  */
 function _renderDIPanelInternal(container, data, opts = {}) {
   if (!container) {
-    console.error('❌ DI Panel: container element not found');
+    console.error("[Error] DI Panel: container element not found");
     return;
   }
 

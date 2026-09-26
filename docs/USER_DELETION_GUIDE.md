@@ -16,19 +16,19 @@ SmartFolio propose maintenant **deux types de suppression** d'utilisateurs :
 3. L'utilisateur **reste dans users.json**
 
 ### Avantages
-✅ Réversible manuellement si besoin
-✅ Garde les données pour audit
-✅ Empêche l'accès mais préserve l'historique
+[OK] Réversible manuellement si besoin
+[OK] Garde les données pour audit
+[OK] Empêche l'accès mais préserve l'historique
 
 ### Inconvénients
-❌ Impossible de recréer un utilisateur avec le même ID
-❌ L'utilisateur reste visible (status inactive)
+[Error] Impossible de recréer un utilisateur avec le même ID
+[Error] L'utilisateur reste visible (status inactive)
 
 ### Utilisation
 
 **Via Admin Dashboard:**
 1. Aller dans Admin Dashboard → User Management
-2. Cliquer sur "🗑️ Delete" sur l'utilisateur
+2. Cliquer sur " Delete" sur l'utilisateur
 3. **Choisir "Soft Delete (Recommended)"**
 4. Confirmer
 
@@ -53,16 +53,16 @@ curl.exe -X DELETE "http://localhost:8080/admin/users/toto" -H "X-User: jack"
 3. L'utilisateur **disparaît complètement** du système
 
 ### Avantages
-✅ Permet de recréer un utilisateur avec le même ID
-✅ Nettoyage complet du système
-✅ Libère l'espace disque
+[OK] Permet de recréer un utilisateur avec le même ID
+[OK] Nettoyage complet du système
+[OK] Libère l'espace disque
 
 ### Inconvénients
-❌ **IRRÉVERSIBLE** - aucune restauration possible
-❌ Perte de toutes les données utilisateur
-❌ Risque d'erreur si mauvais utilisateur sélectionné
+[Error] **IRRÉVERSIBLE** - aucune restauration possible
+[Error] Perte de toutes les données utilisateur
+[Error] Risque d'erreur si mauvais utilisateur sélectionné
 
-### ⚠️ À utiliser uniquement si :
+### À utiliser uniquement si :
 - Vous devez recréer un utilisateur avec le même ID
 - Vous êtes sûr à 100% de vouloir supprimer définitivement
 - Les données ne sont plus nécessaires
@@ -71,8 +71,8 @@ curl.exe -X DELETE "http://localhost:8080/admin/users/toto" -H "X-User: jack"
 
 **Via Admin Dashboard:**
 1. Aller dans Admin Dashboard → User Management
-2. Cliquer sur "🗑️ Delete" sur l'utilisateur
-3. **⚠️ Choisir "Hard Delete (Permanent)"**
+2. Cliquer sur " Delete" sur l'utilisateur
+3. **[Warning] Choisir "Hard Delete (Permanent)"**
 4. Confirmer (bouton rouge)
 
 **Via API:**
@@ -92,11 +92,11 @@ curl.exe -X DELETE "http://localhost:8080/admin/users/toto?hard_delete=true" -H 
 
 | Critère | Soft Delete | Hard Delete |
 |---------|-------------|-------------|
-| **Réversible** | ✅ Manuellement | ❌ Non |
-| **Données préservées** | ✅ Oui (dossier renommé) | ❌ Supprimées |
-| **Présence dans users.json** | ✅ Oui (inactive) | ❌ Non |
-| **Recréation possible** | ❌ Non | ✅ Oui |
-| **Recommandé** | ✅ Défaut | ⚠️ Cas spécifiques |
+| **Réversible** | [OK] Manuellement | [Error] Non |
+| **Données préservées** | [OK] Oui (dossier renommé) | [Error] Supprimées |
+| **Présence dans users.json** | [OK] Oui (inactive) | [Error] Non |
+| **Recréation possible** | [Error] Non | [OK] Oui |
+| **Recommandé** | [OK] Défaut | [Warning] Cas spécifiques |
 
 ---
 
@@ -125,10 +125,10 @@ Lors de la suppression, vous verrez deux options radio :
 ```
 Delete Type:
 
-⚪ Soft Delete (Recommended)
+[Neutral] Soft Delete (Recommended)
    Mark as inactive and rename data folder. Can be recovered manually if needed.
 
-⚪ ⚠️ Hard Delete (Permanent)
+[Neutral] [Warning] Hard Delete (Permanent)
    Remove completely from config and delete data folder. Cannot be undone! User ID can be recreated later.
 ```
 
@@ -261,11 +261,11 @@ Ce script :
 ## Changelog
 
 **2026-01-15** (Version 2.0)
-- ✅ Ajout du Hard Delete
-- ✅ Interface améliorée dans Admin Dashboard avec choix visuel
-- ✅ Messages de confirmation distincts
-- ✅ Style rouge pour hard delete (avertissement)
-- ✅ Réinitialisation automatique sur Soft Delete par sécurité
+- [OK] Ajout du Hard Delete
+- [OK] Interface améliorée dans Admin Dashboard avec choix visuel
+- [OK] Messages de confirmation distincts
+- [OK] Style rouge pour hard delete (avertissement)
+- [OK] Réinitialisation automatique sur Soft Delete par sécurité
 
 **Avant** (Version 1.0)
 - Uniquement Soft Delete disponible

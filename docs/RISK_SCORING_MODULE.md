@@ -1,20 +1,20 @@
 # Risk Scoring Module — Documentation Technique
 
-> 📁 **Module** : `services/risk_scoring.py`
-> 🎯 **Rôle** : Single Source of Truth pour le calcul Risk Score et mapping score→level
-> 📅 **Créé** : Octobre 2025 (centralisation anti-duplication)
+>  **Module** : `services/risk_scoring.py`
+>  **Rôle** : Single Source of Truth pour le calcul Risk Score et mapping score→level
+>  **Créé** : Octobre 2025 (centralisation anti-duplication)
 >
-> 📖 **Document de référence** : [RISK_SEMANTICS.md](RISK_SEMANTICS.md) — Sémantique, formules, V2 et Dual-Window
+>  **Document de référence** : [RISK_SEMANTICS.md](RISK_SEMANTICS.md) — Sémantique, formules, V2 et Dual-Window
 
 ---
 
-## 🏛️ Architecture
+## Architecture
 
 ### Responsabilité Unique
 
 Ce module centralise **toute** la logique de scoring de risque pour éviter la duplication et garantir la cohérence.
 
-**❌ Anti-pattern** : Dupliquer cette logique dans d'autres services (`portfolio_metrics.py`, `risk_management.py`, endpoints).
+**[Error] Anti-pattern** : Dupliquer cette logique dans d'autres services (`portfolio_metrics.py`, `risk_management.py`, endpoints).
 
 ### Dépendances
 
@@ -29,7 +29,7 @@ from services.risk_scoring import assess_risk_level, score_to_level, RISK_LEVEL_
 
 ---
 
-## 📊 API Publique
+## API Publique
 
 ### `score_to_level(score: float) -> str`
 
@@ -143,25 +143,25 @@ RISK_LEVEL_THRESHOLDS = {
 
 ---
 
-## 🧪 Tests
+## Tests
 
 **Fichier** : `tests/unit/test_risk_scoring.py`
 
 ### Coverage
 
-- ✅ **Mapping score→level** (15 cas de test)
+- [OK] **Mapping score→level** (15 cas de test)
   - Thresholds exacts (80, 65, 50, 35, 20)
   - Clamping hors bornes (-50 → 0, 150 → 100)
 
-- ✅ **Sémantique Option A**
+- [OK] **Sémantique Option A**
   - VaR ↑ → score ↓ (robustesse inverse)
   - Sharpe ↑ → score ↑ (robustesse directe)
 
-- ✅ **Breakdown validation**
+- [OK] **Breakdown validation**
   - Sum contributions = (score - 50)
   - Tous composants présents (var_95, sharpe, drawdown, volatility)
 
-- ✅ **Edge cases**
+- [OK] **Edge cases**
   - Métriques nulles
   - Valeurs extrêmes (VaR 50%, Sharpe -10)
 
@@ -179,16 +179,16 @@ pytest tests/unit/test_risk_scoring.py -v
 
 ---
 
-## 🔧 Migration & Maintenance
+## Migration & Maintenance
 
 ### Checklist Migration
 
 Si vous trouvez du code dupliqué ailleurs :
 
-1. ❌ **Supprimer** la duplication (ex: `_assess_overall_risk_level()` dans `portfolio_metrics.py`)
-2. ✅ **Importer** depuis `risk_scoring.py`
-3. ✅ **Tester** que le comportement reste identique
-4. ✅ **Documenter** le changement dans commit message
+1. [Error] **Supprimer** la duplication (ex: `_assess_overall_risk_level()` dans `portfolio_metrics.py`)
+2. [OK] **Importer** depuis `risk_scoring.py`
+3. [OK] **Tester** que le comportement reste identique
+4. [OK] **Documenter** le changement dans commit message
 
 ### Évolution Future
 
@@ -207,7 +207,7 @@ Si vous trouvez du code dupliqué ailleurs :
 
 ---
 
-## 📚 Références
+## Références
 
 - **Sémantique** : [docs/RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 - **Tests** : [tests/unit/test_risk_scoring.py](../tests/unit/test_risk_scoring.py)
@@ -216,7 +216,7 @@ Si vous trouvez du code dupliqué ailleurs :
 
 ---
 
-## ⚠️ Avertissements
+## Avertissements
 
 1. **Ne JAMAIS dupliquer** la logique de ce module ailleurs
 2. **Ne JAMAIS inverser** le score avec `100 - score` (violé la sémantique Option A)

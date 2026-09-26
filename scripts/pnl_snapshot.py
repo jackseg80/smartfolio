@@ -59,7 +59,7 @@ async def create_snapshot(
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     snapshot_type = "EOD" if is_eod else "intraday"
 
-    logger.info(f"📸 Creating {snapshot_type} portfolio snapshot - {timestamp}")
+    logger.info(f" Creating {snapshot_type} portfolio snapshot - {timestamp}")
     logger.info(f"   User: {user_id}")
     logger.info(f"   Source: {source}")
     logger.info(f"   Min USD: {min_usd}")
@@ -98,7 +98,7 @@ async def create_snapshot(
                 data = response.json()
 
                 if data.get("ok"):
-                    logger.info("✅ Snapshot created successfully")
+                    logger.info(" Snapshot created successfully")
 
                     # Log to file
                     await _log_snapshot_success(timestamp, user_id, source, snapshot_type)
@@ -106,14 +106,14 @@ async def create_snapshot(
                     return {"ok": True, "data": data}
                 else:
                     error_msg = data.get("error", "Unknown error")
-                    logger.error(f"❌ Snapshot creation failed: {error_msg}")
+                    logger.error(f" Snapshot creation failed: {error_msg}")
 
                     await _log_snapshot_error(timestamp, user_id, source, snapshot_type, error_msg)
 
                     return {"ok": False, "error": error_msg}
             else:
                 error_msg = f"HTTP {response.status_code}: {response.text[:200]}"
-                logger.error(f"❌ API call failed: {error_msg}")
+                logger.error(f" API call failed: {error_msg}")
 
                 await _log_snapshot_error(timestamp, user_id, source, snapshot_type, error_msg)
 
@@ -121,7 +121,7 @@ async def create_snapshot(
 
     except httpx.TimeoutException:
         error_msg = "Request timeout (>30s)"
-        logger.error(f"❌ {error_msg}")
+        logger.error(f" {error_msg}")
 
         await _log_snapshot_error(timestamp, user_id, source, snapshot_type, error_msg)
 
@@ -129,7 +129,7 @@ async def create_snapshot(
 
     except Exception as e:
         error_msg = str(e)
-        logger.exception(f"❌ Error calling API: {error_msg}")
+        logger.exception(f" Error calling API: {error_msg}")
 
         await _log_snapshot_error(timestamp, user_id, source, snapshot_type, error_msg)
 

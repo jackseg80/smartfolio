@@ -60,7 +60,7 @@ function renderHeaderCard(u) {
             }
             if (isTightCap) {
               const tightLabel = policyCapPercent != null ? ` (±${policyCapPercent}%)` : '';
-              badges.push(`🧊 Freeze/Cap serré${tightLabel}`);
+              badges.push(`Freeze/Cap serré${tightLabel}`);
             }
 
             // Phase Engine status
@@ -167,7 +167,7 @@ function renderQuadrant(u) {
   return `
     <div style="display: flex; flex-direction: column; gap: .5rem;">
       ${compactCard(`
-        <div style="font-weight:700; display: flex; align-items: center; gap: .4rem; font-size: .85rem;">🔄 Cycle
+        <div style="font-weight:700; display: flex; align-items: center; gap: .4rem; font-size: .85rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Cycle
           ${u.cycle.confidence ? `<span style="background: var(--info); color: white; padding: 1px 4px; border-radius: 3px; font-size: .65rem;">${Math.round(u.cycle.confidence * 100)}%</span>` : ''}
         </div>
         <div style="font-size:1.5rem; font-weight:800; color:${colorRisk(u.cycle.score)}; line-height: 1.1;">${u.cycle.score || '—'}</div>
@@ -175,7 +175,7 @@ function renderQuadrant(u) {
         <div style="font-size:.7rem; color: var(--theme-text-muted); margin-top: .15rem;">${u.cycle.months ? Math.round(u.cycle.months)+'m post-halving' : '—'}</div>
       `)}
       ${compactCard(`
-        <div style="font-weight:700; display:flex; align-items:center; gap:.4rem; font-size: .85rem;">🔗 On-Chain
+        <div style="font-weight:700; display:flex; align-items:center; gap:.4rem; font-size: .85rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain
           ${Number.isFinite(u.onchain.confidence) ? `<span style="background: var(--info); color: white; padding: 1px 4px; border-radius: 3px; font-size: .65rem;">${Math.round((u.onchain.confidence || 0) * 100)}%</span>` : ''}
         </div>
         <div style="font-size:1.5rem; font-weight:800; color:${colorRisk(u.onchain.score ?? 50)}; line-height: 1.1;">${u.onchain.score ?? '—'}</div>
@@ -183,15 +183,15 @@ function renderQuadrant(u) {
         ${u.onchain.drivers && u.onchain.drivers.length ? `<div style="margin-top:.2rem; font-size:.7rem; color: var(--theme-text-muted);">Top: ${u.onchain.drivers.slice(0,1).map(d => `${d.key} (${d.score})`).join(', ')}</div>` : ''}
       `)}
       ${compactCard(`
-        <div style="font-weight:700; font-size: .85rem;">🛡️ Risk & Budget</div>
+        <div style="font-weight:700; font-size: .85rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk & Budget</div>
         <div style="font-size:1.5rem; font-weight:800; color:${colorRisk(u.risk.score ?? 50)}; line-height: 1.1;">${u.risk.score ?? '—'}</div>
         <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">VaR95: ${u.risk.var95_1d != null ? (Math.round(Math.abs(u.risk.var95_1d)*1000)/10)+'%' : '—'}</div>
         ${u.risk.budget ? `<div style="font-size:.7rem; color: var(--theme-text); margin-top: .25rem; padding: .2rem; background: var(--theme-bg); border-radius: var(--radius-sm);">Risky: ${u.risk.budget.percentages?.risky}% • Stables: ${u.risk.budget.percentages?.stables}%</div>` : ''}
       `)}
       ${compactCard(`
-        <div style="font-weight:700; font-size: .85rem;">🤖 Regime & Sentiment</div>
+        <div style="font-weight:700; font-size: .85rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> Regime & Sentiment</div>
         <div style="font-size:1.1rem; font-weight:800; display: flex; align-items: center; gap: .4rem; line-height: 1.1;">
-          ${u.regime?.emoji || '🤖'} ${u.regime?.name || u.sentiment?.regime || '—'}
+          ${u.regime?.emoji || "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Model\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#cpu-chip\"></use></svg>"} ${u.regime?.name || u.sentiment?.regime || '—'}
           ${u.regime?.confidence ? `<span style="background: var(--info); color: white; padding: 1px 4px; border-radius: 3px; font-size: .65rem;">${Math.round(u.regime.confidence * 100)}%</span>` : ''}
         </div>
         <div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .25rem;">F&G: ${u.sentiment?.fearGreed ?? '—'}</div>
@@ -208,7 +208,7 @@ export async function renderUnifiedInsights(containerId = 'unified-root', option
   const el = document.getElementById(containerId);
   if (!el) return;
 
-  console.debug('🚀 REFACTORED V3 - renderUnifiedInsights appelée', {
+  console.debug("REFACTORED V3 - renderUnifiedInsights appelée", {
     containerId,
     timestamp: new Date().toISOString(),
     call_count: (window._renderCallCount = (window._renderCallCount || 0) + 1)
@@ -217,7 +217,7 @@ export async function renderUnifiedInsights(containerId = 'unified-root', option
   const u = await getUnifiedState();
   const recos = deriveRecommendations(u);
 
-  console.debug('🔍 Unified state loaded:', {
+  console.debug("Unified state loaded:", {
     has_risk_scores: !!u?.risk_scores,
     blended_score: u?.risk_scores?.blended || u?.blended_score,
     recos_count: recos?.length || 0
@@ -237,7 +237,7 @@ export async function renderUnifiedInsights(containerId = 'unified-root', option
     ${allocationBlock}
   `;
 
-  console.debug('🧠 INTELLIGENT UNIFIED INSIGHTS rendered:', {
+  console.debug("INTELLIGENT UNIFIED INSIGHTS rendered:", {
     recommendations: recos.length,
     contradictions: u.contradictions?.length || 0,
     intelligence_active: u.health.intelligence_modules,
@@ -248,12 +248,12 @@ export async function renderUnifiedInsights(containerId = 'unified-root', option
 // Event listeners for cache invalidation
 if (typeof window !== 'undefined') {
   window.addEventListener('dataSourceChanged', (event) => {
-    console.debug(`🔄 Data source change: ${event.detail?.oldSource || 'unknown'} → ${event.detail?.newSource || 'unknown'}`);
+    console.debug(`Data source change: ${event.detail?.oldSource || 'unknown'} → ${event.detail?.newSource || 'unknown'}`);
     invalidateAllocationCache();
   });
 
   window.addEventListener('activeUserChanged', (event) => {
-    console.debug(`👤 User change: ${event.detail?.oldUser || 'unknown'} → ${event.detail?.newUser || 'unknown'}`);
+    console.debug(`User change: ${event.detail?.oldUser || 'unknown'} → ${event.detail?.newUser || 'unknown'}`);
     invalidateAllocationCache();
 
     if (typeof window.debugInvalidateRiskBudget === 'function') {
@@ -268,7 +268,7 @@ if (typeof window !== 'undefined') {
   });
 
   window.addEventListener('riskBudgetInvalidated', (event) => {
-    console.debug(`💰 Risk budget invalidated: ${event.detail?.reason || 'unknown'}, re-rendering`);
+    console.debug(`Risk budget invalidated: ${event.detail?.reason || 'unknown'}, re-rendering`);
 
     setTimeout(async () => {
       try {
@@ -304,5 +304,5 @@ if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
   window.debugUnifiedState = getUnifiedState;
   window.debugGetCurrentAllocation = getCurrentAllocationByGroup;
   window.debugInvalidateCache = invalidateAllocationCache;
-  console.debug('🔧 Debug helpers available: debugUnifiedState(), debugGetCurrentAllocation(), debugInvalidateCache()');
+  console.debug("Debug helpers available: debugUnifiedState(), debugGetCurrentAllocation(), debugInvalidateCache()");
 }

@@ -278,7 +278,7 @@ export async function logout(showMessage = false) {
         console.debug('Logout endpoint error:', err);
     }
 
-    // 🔒 FIX: Capture currentUser avant de vider localStorage
+    //  FIX: Capture currentUser avant de vider localStorage
     const currentUser = getCurrentUser();
 
     // Clear auth data via StorageService
@@ -294,7 +294,7 @@ export async function logout(showMessage = false) {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        // 🔒 FIX: Ne PAS supprimer smartfolio_settings_* (isolées par user)
+        //  FIX: Ne PAS supprimer smartfolio_settings_* (isolées par user)
         // Chaque user garde ses propres settings
         if (key && (key.startsWith('risk_score') || key.startsWith('cache:') || key.startsWith('portfolio_'))) {
             keysToRemove.push(key);
@@ -302,7 +302,7 @@ export async function logout(showMessage = false) {
     }
     keysToRemove.forEach(key => StorageService.remove(key));
 
-    console.debug(`✅ Logged out user: ${currentUser} (settings preserved for future login)`);
+    console.debug(`[OK] Logged out user: ${currentUser} (settings preserved for future login)`);
 
     console.debug('User logged out');
 

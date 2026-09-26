@@ -24,11 +24,11 @@ let chartCreationInProgress = false;
  * @returns {Promise<{data: Array<{time: number, price: number}>, source: string}>}
  */
 export async function fetchBitcoinHistoricalData() {
-  debugLogger.debug('🏛️ Tentative de récupération historique Bitcoin...');
+  debugLogger.debug("Tentative de récupération historique Bitcoin...");
 
   // 1) FRED via Proxy Backend (résout les problèmes CORS)
   try {
-    debugLogger.debug('🏛️ Récupération historique Bitcoin depuis FRED via proxy...');
+    debugLogger.debug("Récupération historique Bitcoin depuis FRED via proxy...");
     const proxyUrl = '/proxy/fred/bitcoin?start_date=2014-01-01';
     const activeUser = localStorage.getItem('activeUser');
     const r = await fetch(proxyUrl, {
@@ -38,13 +38,13 @@ export async function fetchBitcoinHistoricalData() {
     const result = await r.json();
 
     if (result.success && result.data && result.data.length > 0) {
-      debugLogger.debug(`✅ FRED Proxy: ${result.data.length} points récupérés (première: $${result.data[0].price}, dernière: $${result.data[result.data.length - 1].price})`);
-      debugLogger.debug(`📊 Total disponible: ${result.raw_count} observations`);
+      debugLogger.debug(`[OK] FRED Proxy: ${result.data.length} points récupérés (première: $${result.data[0].price}, dernière: $${result.data[result.data.length - 1].price})`);
+      debugLogger.debug(`Total disponible: ${result.raw_count} observations`);
 
       // Vérifier que les données commencent bien en 2014
       const firstDate = new Date(result.data[0].time);
       if (firstDate.getFullYear() <= 2014) {
-        debugLogger.debug(`🎯 HISTORIQUE COMPLET: Données depuis ${firstDate.getFullYear()}!`);
+        debugLogger.debug(`HISTORIQUE COMPLET: Données depuis ${firstDate.getFullYear()}!`);
       }
 
       return {
@@ -52,15 +52,15 @@ export async function fetchBitcoinHistoricalData() {
         source: result.source
       };
     } else {
-      debugLogger.warn('⚠️ FRED Proxy: Aucune donnée ou erreur -', result.error);
+      debugLogger.warn("[Warning] FRED Proxy: Aucune donnée ou erreur -", result.error);
     }
   } catch (e) {
-    debugLogger.warn('❌ FRED Proxy échoué, passage à Binance:', e.message);
+    debugLogger.warn("[Error] FRED Proxy échoué, passage à Binance:", e.message);
   }
 
   // 2) Binance Klines (BTCUSDT) — 2017+, sans clé, paginé
   try {
-    debugLogger.debug('🟡 Récupération historique Bitcoin depuis Binance API...');
+    debugLogger.debug("[Pending] Récupération historique Bitcoin depuis Binance API...");
     const ONE_DAY = 24 * 60 * 60 * 1000;
     const LIMIT = 1000;
     const out = [];
@@ -90,18 +90,18 @@ export async function fetchBitcoinHistoricalData() {
       await new Promise(res => setTimeout(res, 120)); // éviter rate limit
     }
     if (out.length > 0) {
-      debugLogger.debug(`✅ Binance: ${out.length} points récupérés en ${requestCount} requêtes (${out[0].price}$ à ${out[out.length - 1].price}$)`);
+      debugLogger.debug(`[OK] Binance: ${out.length} points récupérés en ${requestCount} requêtes (${out[0].price}$ à ${out[out.length - 1].price}$)`);
       return { data: out, source: 'Binance BTCUSDT (1d close)' };
     } else {
-      debugLogger.warn('⚠️ Binance: Aucune donnée récupérée');
+      debugLogger.warn("[Warning] Binance: Aucune donnée récupérée");
     }
   } catch (e) {
-    debugLogger.error('❌ Binance fetch échoué:', e.message);
+    debugLogger.error("[Error] Binance fetch échoué:", e.message);
   }
 
   // 3) CoinGecko 365 jours via backend proxy (clé API gérée côté serveur)
   try {
-    debugLogger.debug('🦎 Récupération historique Bitcoin depuis CoinGecko proxy (365j)...');
+    debugLogger.debug("Récupération historique Bitcoin depuis CoinGecko proxy (365j)...");
     const activeUser = localStorage.getItem('activeUser');
     const r = await fetch('/api/coingecko-proxy/market_chart?coin_id=bitcoin&vs_currency=usd&days=365&interval=daily', {
       headers: { 'X-User': activeUser }
@@ -111,20 +111,20 @@ export async function fetchBitcoinHistoricalData() {
     if (Array.isArray(j.prices)) {
       const data = j.prices.map(([t, p]) => ({ time: t, price: p }));
       if (data.length > 0) {
-        debugLogger.debug(`✅ CoinGecko: ${data.length} points récupérés (${data[0].price.toFixed(0)}$ à ${data[data.length - 1].price.toFixed(0)}$)`);
+        debugLogger.debug(`[OK] CoinGecko: ${data.length} points récupérés (${data[0].price.toFixed(0)}$ à ${data[data.length - 1].price.toFixed(0)}$)`);
         return { data, source: 'CoinGecko (365j)' };
       } else {
-        debugLogger.warn('⚠️ CoinGecko: Aucune donnée dans la réponse');
+        debugLogger.warn("[Warning] CoinGecko: Aucune donnée dans la réponse");
       }
     } else {
-      debugLogger.warn('⚠️ CoinGecko: Format de réponse inattendu');
+      debugLogger.warn("[Warning] CoinGecko: Format de réponse inattendu");
     }
   } catch (e) {
-    debugLogger.error('❌ CoinGecko fetch échoué:', e.message);
+    debugLogger.error("[Error] CoinGecko fetch échoué:", e.message);
   }
 
   // 4) Rien trouvé → renvoyer vide (pas de courbe prix)
-  debugLogger.warn('❌ Aucune source d\'historique Bitcoin disponible');
+  debugLogger.warn("[Error] Aucune source d'historique Bitcoin disponible");
   return { data: [], source: 'None (all APIs failed)' };
 }
 
@@ -138,7 +138,7 @@ export async function fetchBitcoinHistoricalData() {
 export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
   // Guard: prevent concurrent creation attempts
   if (chartCreationInProgress) {
-    debugLogger.debug('⏸️ Chart creation already in progress, skipping duplicate call');
+    debugLogger.debug("Chart creation already in progress, skipping duplicate call");
     return window.bitcoinCycleChart || null;
   }
 
@@ -158,7 +158,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     const cachedChart = window.getCachedData('CYCLE_CHART');
 
     if (cachedChart?.chartConfig && cachedChart.dataHash === currentHash) {
-      console.debug('⚡ Using cached chart config');
+      console.debug("Using cached chart config");
 
       // Destroy existing chart if it exists
       if (window.bitcoinCycleChart) {
@@ -171,7 +171,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
 
       try {
         window.bitcoinCycleChart = new Chart(canvas, cachedChart.chartConfig);
-        console.debug('✅ Chart recreated from cache');
+        console.debug("[OK] Chart recreated from cache");
         chartCreationInProgress = false;
         return window.bitcoinCycleChart;
       } catch (error) {
@@ -180,11 +180,11 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     }
   }
 
-  console.debug('🔄 Creating fresh Bitcoin cycle chart');
+  console.debug("Creating fresh Bitcoin cycle chart");
 
   // Destroy existing chart if it exists
   if (window.bitcoinCycleChart) {
-    debugLogger.debug('🔄 Destroying existing Bitcoin chart...');
+    debugLogger.debug("Destroying existing Bitcoin chart...");
     window.bitcoinCycleChart.destroy();
     window.bitcoinCycleChart = null;
   }
@@ -192,7 +192,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
   // Also check if Chart.js has any existing chart on this canvas
   const existingChart = Chart.getChart(canvas);
   if (existingChart) {
-    debugLogger.debug('🔄 Destroying Chart.js existing chart on canvas...');
+    debugLogger.debug("Destroying Chart.js existing chart on canvas...");
     existingChart.destroy();
   }
 
@@ -219,7 +219,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     const cacheBuster = `?v=${Date.now()}`;
     const { fetchAllIndicators, enhanceCycleScore, analyzeDivergence } = await import(`./onchain-indicators.js${cacheBuster}`);
 
-    // 🎯 CALIBRATION HISTORIQUE AUTOMATIQUE (avec garde anti-boucle)
+    //  CALIBRATION HISTORIQUE AUTOMATIQUE (avec garde anti-boucle)
     try {
       // Si une calibration récente existe (< 24h), ne pas recalibrer à chaque rendu
       const saved = localStorage.getItem('bitcoin_cycle_params');
@@ -236,12 +236,12 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
       if (!hasRecentCalibration) {
         const { calibrateCycleParams } = await import('./cycle-navigator.js');
         const calibRes = calibrateCycleParams();
-        debugLogger.debug('🎯 Calibration historique automatique (fresh):', calibRes);
+        debugLogger.debug("Calibration historique automatique (fresh):", calibRes);
       } else {
-        console.debug('🎯 Calibration récente détectée - skip recalibration');
+        console.debug("Calibration récente détectée - skip recalibration");
       }
     } catch (e) {
-      debugLogger.warn('⚠️ Calibration automatique échouée:', e.message);
+      debugLogger.warn("[Warning] Calibration automatique échouée:", e.message);
     }
 
     // Calculate cycle score for each data point
@@ -284,7 +284,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     const currentTimestamp = Date.now();
     const currentPrice = priceData[priceData.length - 1]?.y || 108000; // Prix actuel ~$108k
 
-    debugLogger.debug('📊 Bitcoin price data loaded:', {
+    debugLogger.debug("Bitcoin price data loaded:", {
       dataPoints: priceData.length,
       latestPrice: currentPrice,
       dataSource: priceData.length > 100 ? 'CoinGecko API' : 'Insufficient data'
@@ -712,9 +712,9 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
 
     // Create chart
     window.bitcoinCycleChart = new Chart(canvas, config);
-    debugLogger.debug('✅ Bitcoin cycle chart created successfully');
+    debugLogger.debug("[OK] Bitcoin cycle chart created successfully");
 
-    // 🔗 Charger et afficher les indicateurs on-chain après un délai (si container existe)
+    //  Charger et afficher les indicateurs on-chain après un délai (si container existe)
     const onchainContainer = document.getElementById('onchain-indicators-content');
     if (onchainContainer) {
       setTimeout(() => {
@@ -736,7 +736,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
         timestamp: Date.now()
       });
 
-      console.debug('💾 Chart configuration cached');
+      console.debug("Chart configuration cached");
     } catch (cacheError) {
       debugLogger.warn('Failed to cache chart config:', cacheError);
     }
@@ -745,20 +745,20 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
     return window.bitcoinCycleChart;
 
   } catch (error) {
-    debugLogger.error('❌ Failed to create Bitcoin cycle chart:', error);
+    debugLogger.error("Failed to create Bitcoin cycle chart:", error);
 
     // Show error message in canvas container (if it still exists)
     const container = canvas?.parentElement;
     if (container) {
       container.innerHTML = `
         <div style="text-align: center; padding: 2rem; color: var(--theme-text-muted);">
-          <div style="font-size: 1.2rem; margin-bottom: 1rem;">⚠️ Unable to load cycles chart</div>
+          <div style="font-size: 1.2rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Unable to load cycles chart</div>
           <div style="font-size: 0.9rem;">Error: ${error.message}</div>
           <div style="font-size: 0.8rem; margin-top: 0.5rem;">Try refreshing the page or check your connection.</div>
         </div>
       `;
     } else {
-      debugLogger.warn('⚠️ Cannot show error message: container not found');
+      debugLogger.warn("[Warning] Cannot show error message: container not found");
     }
 
     chartCreationInProgress = false;
@@ -772,7 +772,7 @@ export async function createBitcoinCycleChart(canvasId, forceRefresh = false) {
  */
 export async function loadOnChainIndicators() {
   try {
-    debugLogger.debug('🔄 Loading on-chain indicators modules...');
+    debugLogger.debug("Loading on-chain indicators modules...");
     // CRITICAL: NO cache buster for cycle-navigator.js (stateful calibrated params)
     const cycleModule = await import(`./cycle-navigator.js`);
 
@@ -784,12 +784,12 @@ export async function loadOnChainIndicators() {
     const { cycleScoreFromMonths, getCurrentCycleMonths } = cycleModule;
 
     const container = document.getElementById('onchain-indicators-content');
-    if (!container) { debugLogger.warn('⚠️ onchain-indicators container not found'); return; }
+    if (!container) { debugLogger.warn("[Warning] onchain-indicators container not found"); return; }
 
     // État de chargement (thémé)
     container.innerHTML = `
       <div class="loading" style="background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-md); padding: var(--space-lg);">
-        🔄 Fetching indicators...
+        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Fetching indicators...
       </div>
     `;
 
@@ -800,7 +800,7 @@ export async function loadOnChainIndicators() {
     const composite = window.calculateCompositeScoreV2(indicators, true);
 
     if (composite.dynamicWeighting) {
-      debugLogger.debug(`🤖 Dynamic weighting applied: ${composite.dynamicWeighting.phase.name} phase`);
+      debugLogger.debug(`Dynamic weighting applied: ${composite.dynamicWeighting.phase.name} phase`);
     }
 
     // Score de cycle actuel
@@ -816,7 +816,7 @@ export async function loadOnChainIndicators() {
         if (prevOn !== composite.score) {
           window.store.set('scores.onchain', composite.score);
         } else {
-          console.debug('↔︎ On-chain score unchanged; not updating store');
+          console.debug("On-chain score unchanged; not updating store");
         }
       }
     } catch (e) { debugLogger.warn('Failed to propagate onchain score to store:', e); }
@@ -855,23 +855,23 @@ export async function loadOnChainIndicators() {
     if (composite.categoryBreakdown) {
       categoryDisplay = Object.entries(composite.categoryBreakdown).map(([key, data]) => {
         const emoji =
-          key === 'onchain_pure' ? '🔗' :
-          key === 'cycle_technical' ? '📊' :
-          key === 'sentiment_social' ? '😨' :
-          key === 'market_context' ? '🌐' :
-          '📈'; // fallback
+          key === 'onchain_pure' ? "Link" :
+          key === 'cycle_technical' ? "Analytics" :
+          key === 'sentiment_social' ? "High risk" :
+          key === 'market_context' ? "Global" :
+          "Growth"; // fallback
 
         const scoreColor = pickScoreColor(data.score);
 
         // Consensus signal display
         const consensus = data.consensus;
         const consensusEmoji =
-          consensus?.consensus === 'bullish' ? '🟢' :
-          consensus?.consensus === 'bearish' ? '🔴' :
-          '⚪';
+          consensus?.consensus === 'bullish' ? "Positive" :
+          consensus?.consensus === 'bearish' ? "Negative" :
+          "Neutral";
         const consensusText = consensus ?
           `${consensusEmoji} ${consensus.consensus} (${consensus.confidence}%)` :
-          '⚪ neutral';
+          "neutral";
 
         // Dynamic weighting display
         const isDynamic = localStorage.getItem('enable_dynamic_weighting') === 'true';
@@ -908,7 +908,7 @@ export async function loadOnChainIndicators() {
     if ((composite.criticalZoneCount || 0) > 0) {
       const criticalIndicators = (composite.contributors || []).filter(c => c.inCriticalZone);
       criticalAlertsHtml = card(`
-        <h5 style="margin:0 0 .5rem 0; color: var(--danger);">🚨 ${composite.criticalZoneCount} Zone(s) critique(s)</h5>
+        <h5 style="margin:0 0 .5rem 0; color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg> ${composite.criticalZoneCount} Zone(s) critique(s)</h5>
         ${criticalIndicators.slice(0, 3).map(ind => `
           <div style="font-size:.85rem; color: var(--danger); margin:.25rem 0;">
             • ${ind.name}: ${ind.originalValue}% ${ind.raw_threshold ? `(seuil: ${ind.raw_threshold})` : ''}
@@ -929,7 +929,7 @@ export async function loadOnChainIndicators() {
         (typeof data.value === 'number' ? data.value : null);
       const isCritical = !!data.in_critical_zone;
       const trend = data.trend || 'neutral';
-      const trendEmoji = trend === 'bullish' ? '📈' : trend === 'bearish' ? '📉' : '→';
+      const trendEmoji = trend === 'bullish' ? "Growth" : trend === 'bearish' ? "Decline" : '→';
       const categoryLabel = data.category || 'unknown';
 
       const scoreColor = value != null ? pickScoreColor(value) : 'var(--theme-text-muted)';
@@ -950,7 +950,7 @@ export async function loadOnChainIndicators() {
 
     // Recommendations HTML
     const recosHtml = recos.length > 0 ? card(`
-      <h5 style="margin: 0 0 1rem 0; color: var(--info);">💡 Tactical Recommendations</h5>
+      <h5 style="margin: 0 0 1rem 0; color: var(--info);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Tactical Recommendations</h5>
       ${recos.map(r => `
         <div style="margin: 0.5rem 0; padding: 0.5rem; background: var(--theme-surface-alt); border-radius: 4px; border-left: 3px solid var(--info);">
           <div style="font-weight: 600; color: var(--theme-text); margin-bottom: 0.25rem;">${r.title}</div>
@@ -976,7 +976,7 @@ export async function loadOnChainIndicators() {
           minute: '2-digit'
         });
         timestampHtml = `<div style="font-size:.75rem; color: var(--theme-text-muted); margin-top: .5rem;">
-          ⏱️ Dernière MAJ: ${formattedDate} à ${formattedTime}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Dernière MAJ: ${formattedDate} à ${formattedTime}
         </div>`;
       } catch (e) {
         debugLogger.warn('Failed to parse timestamp:', e);
@@ -988,7 +988,7 @@ export async function loadOnChainIndicators() {
       <!-- Composite Score Summary -->
       ${card(`
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <h4 style="margin:0; color: var(--theme-text);">🔗 On-Chain Composite Score</h4>
+          <h4 style="margin:0; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain Composite Score</h4>
           <span style="font-size: 2rem; font-weight: 700; color: ${pickScoreColor(composite.score)};">${composite.score}/100</span>
         </div>
         <div style="font-size:.85rem; color: var(--theme-text-muted); margin-top: .5rem;">
@@ -1008,7 +1008,7 @@ export async function loadOnChainIndicators() {
       <!-- Indicators Grid -->
       <details style="margin-top: 1rem;">
         <summary style="cursor: pointer; font-weight: 600; padding: 0.5rem; background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: 6px;">
-          📊 View all indicators (${Object.keys(indicators).filter(k => !k.startsWith('_')).length})
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> View all indicators (${Object.keys(indicators).filter(k => !k.startsWith('_')).length})
         </summary>
         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; margin-top: 0.75rem;">
           ${indicatorsGrid}
@@ -1019,7 +1019,7 @@ export async function loadOnChainIndicators() {
       ${recosHtml}
     `;
 
-    debugLogger.debug('✅ On-chain indicators loaded successfully');
+    debugLogger.debug("[OK] On-chain indicators loaded successfully");
 
   } catch (error) {
     debugLogger.error('Failed to load on-chain indicators:', error);
@@ -1027,7 +1027,7 @@ export async function loadOnChainIndicators() {
     if (container) {
       container.innerHTML = `
         <div style="padding: 1rem; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 6px; color: var(--danger);">
-          ⚠️ Error loading indicators: ${error.message}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Error loading indicators: ${error.message}
         </div>
       `;
     }
@@ -1037,7 +1037,7 @@ export async function loadOnChainIndicators() {
 // ====== Cycles Content Renderers ======
 /**
  * Cached version of renderCyclesContent - checks cache before rendering
- * ✅ FIX: Waits for store hydration before rendering
+ *  FIX: Waits for store hydration before rendering
  */
 export async function renderCyclesContent(forceRefresh = false) {
   const container = document.getElementById('cycles-content');
@@ -1047,17 +1047,17 @@ export async function renderCyclesContent(forceRefresh = false) {
     return;
   }
 
-  // ✅ FIX: Wait for store hydration if not yet ready
+  //  FIX: Wait for store hydration if not yet ready
   const state = window.store?.snapshot();
   const isHydrated = state?._hydrated === true || state?.ccs?.score != null;
 
   if (!isHydrated && !forceRefresh) {
-    debugLogger.debug('⏳ Store not yet hydrated, waiting for riskStoreReady event...');
-    container.innerHTML = '<div class="loading">🔄 Loading cycles data...</div>';
+    debugLogger.debug("[Pending] Store not yet hydrated, waiting for riskStoreReady event...");
+    container.innerHTML = "<div class=\"loading\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg> Loading cycles data...</div>";
 
     // Set up one-time listener for hydration completion
     const handleStoreReady = async () => {
-      debugLogger.debug('✅ Store hydrated, rendering cycles content');
+      debugLogger.debug("[OK] Store hydrated, rendering cycles content");
       await renderCyclesContent(false); // Retry rendering
       window.removeEventListener('riskStoreReady', handleStoreReady);
     };
@@ -1073,7 +1073,7 @@ export async function renderCyclesContent(forceRefresh = false) {
     const canvas = document.getElementById('bitcoin-cycle-chart');
     const existing = canvas ? (window.bitcoinCycleChart || (window.Chart && Chart.getChart(canvas))) : null;
     if (existing) {
-      console.debug('⚡ Cycles unchanged, skipping render');
+      console.debug("Cycles unchanged, skipping render");
       return;
     }
   }
@@ -1088,13 +1088,13 @@ export async function renderCyclesContent(forceRefresh = false) {
       if (cachedContent?.htmlContent) {
         const hasCanvas = !!document.getElementById('bitcoin-cycle-chart');
         if (!hasCanvas) {
-          console.debug('⚡ Using cached cycle content (first paint)');
+          console.debug("Using cached cycle content (first paint)");
           container.innerHTML = cachedContent.htmlContent;
           // Recreate chart from cache
           // Chart moved to cycle-analysis.html - no recreation needed
           // setTimeout(() => recreateCachedChart(), 100);
         } else {
-          console.debug('⚡ Cached content available but DOM already rendered, skipping DOM replace');
+          console.debug("Cached content available but DOM already rendered, skipping DOM replace");
         }
         window.lastCycleContentHash = currentHash;
         return;
@@ -1102,7 +1102,7 @@ export async function renderCyclesContent(forceRefresh = false) {
     }
   }
 
-  console.debug('🔄 Rendering fresh cycle content');
+  console.debug("Rendering fresh cycle content");
   await renderCyclesContentUncached();
 
   // Cache the generated content
@@ -1119,7 +1119,7 @@ export async function renderCyclesContent(forceRefresh = false) {
   // Remember last rendered hash to avoid redundant reflows
   window.lastCycleContentHash = currentHash;
 
-  console.debug('💾 Cycle content cached');
+  console.debug("Cycle content cached");
 }
 
 /**
@@ -1149,7 +1149,7 @@ export async function renderCyclesContentUncached() {
     <!-- Indicateurs On-Chain -->
       <div class="risk-card" style="margin-bottom: 2rem;">
       <div style="display: flex; justify-content: space-between; align-items: center; gap: .75rem; margin-bottom: 1rem;">
-        <h3 style="margin: 0;">🔗 On-Chain Indicators</h3>
+        <h3 style="margin: 0;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain Indicators</h3>
         <div style="display:flex; align-items:center; gap:.75rem;">
           <button onclick="toggleSection('onchain-indicators')" style="background: none; border: 1px solid var(--theme-border); border-radius: 4px; padding: 4px 8px; cursor: pointer; color: var(--theme-text); font-size: 0.8rem;" title="Collapse/Expand">
             <span id="onchain-indicators-arrow">▼</span>
@@ -1163,13 +1163,13 @@ export async function renderCyclesContentUncached() {
 
     <!-- Note: Le graphique Bitcoin historique a été déplacé vers cycle-analysis.html -->
     <div class="info-banner" style="margin-bottom: 2rem; padding: 12px 16px; background: var(--theme-surface-elevated); border: 1px solid var(--theme-border); border-radius: var(--radius-md); color: var(--theme-text); font-size: 14px;">
-      📈 <strong>Historical Bitcoin Chart</strong> available in <a href="cycle-analysis.html" style="color: var(--brand-primary); text-decoration: underline;">Cycle Analysis</a>
+      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> <strong>Historical Bitcoin Chart</strong> available in <a href="cycle-analysis.html" style="color: var(--brand-primary); text-decoration: underline;">Cycle Analysis</a>
     </div>
 
     <div class="risk-grid">
       <!-- CCS Overview -->
       <div class="risk-card">
-        <h3>📊 CCS Market Score</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> CCS Market Score</h3>
         <div style="text-align: center; margin: var(--space-lg) 0;">
           <div style="font-size: 4rem; font-weight: 800; color: ${interpretation.color}; text-shadow: 0 2px 8px ${interpretation.color}40; line-height: 1;">
             ${Math.round(ccsData.score)}
@@ -1191,10 +1191,10 @@ export async function renderCyclesContentUncached() {
 
       <!-- Cycle Position -->
       <div class="risk-card">
-        <h3>🔄 Position dans le Cycle</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Position dans le Cycle</h3>
         <div style="text-align: center; margin: var(--space-lg) 0;">
           <div style="font-size: 3rem; margin-bottom: 0.5rem;">
-            ${cycleData.phase?.emoji || '⚫'}
+            ${cycleData.phase?.emoji || "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Neutral\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>"}
           </div>
           <div style="font-size: 1.2rem; font-weight: 700; color: ${cycleData.phase?.color || '#6b7280'}; text-transform: uppercase; letter-spacing: 0.05em;">
             ${cycleData.phase?.phase?.replace('_', ' ') || 'UNKNOWN'}
@@ -1219,7 +1219,7 @@ export async function renderCyclesContentUncached() {
 
       <!-- Blended Analysis -->
       <div class="risk-card">
-        <h3>⚖️ Hybrid Strategy</h3>
+        <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg> Hybrid Strategy</h3>
         <div class="metric-row">
           <span class="metric-label">CCS Original:</span>
           <span class="metric-value">${Math.round(ccsData.score)}</span>
@@ -1243,7 +1243,7 @@ export async function renderCyclesContentUncached() {
 
     <!-- Cycle Multipliers -->
     <div class="risk-card">
-      <h3>🎯 Asset Class Multipliers</h3>
+      <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Asset Class Multipliers</h3>
       <div style="font-size: 0.875rem; color: var(--theme-text-muted); margin-bottom: var(--space-sm);">
         Based on current cycle phase: <strong>${cycleData.phase?.phase?.replace('_', ' ')}</strong>
       </div>
@@ -1264,7 +1264,7 @@ export async function renderCyclesContentUncached() {
         }).join('')}
       </div>
       <div style="font-size: 0.8rem; color: var(--theme-text-muted); margin-top: 1rem; padding: 0.75rem; background: var(--theme-bg); border-radius: 6px;">
-        💡 Les multiplicateurs indiquent l'allocation recommandée par rapport aux targets de base selon la phase de cycle.
+        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Les multiplicateurs indiquent l'allocation recommandée par rapport aux targets de base selon la phase de cycle.
       </div>
     </div>
   `;
@@ -1283,7 +1283,7 @@ export async function renderCyclesContentUncached() {
  */
 export async function recreateCachedChart() {
   // Chart moved to cycle-analysis.html - function deprecated
-  debugLogger.debug('📈 Bitcoin chart now in cycle-analysis.html');
+  debugLogger.debug("Bitcoin chart now in cycle-analysis.html");
 }
 
 // ====== Cycle Cache Utilities ======
@@ -1322,19 +1322,19 @@ export function shouldRefreshCycleContent(state) {
   const cachedContent = window.getCachedData('CYCLE_CONTENT');
 
   if (!cachedContent || !cachedContent.dataHash) {
-    console.debug('🔄 Cycle cache miss - no cached content');
+    console.debug("Cycle cache miss - no cached content");
     return { shouldRefresh: true, reason: 'cache_miss' };
   }
 
   if (cachedContent.dataHash !== currentHash) {
-    console.debug('🔄 Cycle data changed', {
+    console.debug("Cycle data changed", {
       cached: cachedContent.dataHash,
       current: currentHash
     });
     return { shouldRefresh: true, reason: 'data_changed' };
   }
 
-  console.debug('⚡ Cycle data unchanged - using cache');
+  console.debug("Cycle data unchanged - using cache");
   return { shouldRefresh: false, reason: 'cache_hit' };
 }
 
@@ -1346,7 +1346,7 @@ if (!window.createBitcoinCycleChart) {
 
 // Global function for backwards compatibility
 window.forceCycleRefresh = async function () {
-  debugLogger.debug('🔄 Force refreshing cycle content and charts...');
+  debugLogger.debug("Force refreshing cycle content and charts...");
 
   try {
     // Clear all cycle caches
@@ -1356,14 +1356,14 @@ window.forceCycleRefresh = async function () {
       const config = CACHE_CONFIG[configType];
       if (config) {
         localStorage.removeItem(config.key);
-        console.debug(`🗑️ Cleared ${configType} cache`);
+        console.debug(`Cleared ${configType} cache`);
       }
     });
 
     // Force refresh cycle content
     if (document.getElementById('cycles-tab')?.classList.contains('active')) {
       await renderCyclesContent(true);
-      debugLogger.debug('✅ Cycle content force refreshed');
+      debugLogger.debug("[OK] Cycle content force refreshed");
     } else {
       console.debug('Cycles tab not active, cache cleared for next access');
     }

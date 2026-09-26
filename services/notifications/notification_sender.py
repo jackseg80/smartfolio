@@ -128,13 +128,13 @@ class ConsoleNotifier:
         """Afficher dans la console"""
 
         level_emoji = {
-            AlertLevel.INFO: "ℹ️",
-            AlertLevel.WARNING: "⚠️",
-            AlertLevel.ERROR: "❌",
-            AlertLevel.CRITICAL: "🚨"
+            AlertLevel.INFO: "Info",
+            AlertLevel.WARNING: "Warning",
+            AlertLevel.ERROR: "Error",
+            AlertLevel.CRITICAL: "Alert"
         }
 
-        emoji = level_emoji.get(alert.level, "📢")
+        emoji = level_emoji.get(alert.level, "Notice")
 
         message = f"{emoji} [{alert.level.value.upper()}] {alert.title}"
         if alert.message:
@@ -312,12 +312,12 @@ class TelegramNotifier:
     def _format_telegram_text(self, alert: Alert) -> str:
         """Format alerte pour Telegram (HTML parse mode)."""
         level_emoji = {
-            AlertLevel.INFO: "ℹ️",
-            AlertLevel.WARNING: "⚠️",
-            AlertLevel.ERROR: "❌",
-            AlertLevel.CRITICAL: "🚨",
+            AlertLevel.INFO: "Info",
+            AlertLevel.WARNING: "Warning",
+            AlertLevel.ERROR: "Error",
+            AlertLevel.CRITICAL: "Alert",
         }
-        emoji = level_emoji.get(alert.level, "📢")
+        emoji = level_emoji.get(alert.level, "Notice")
 
         # Extraire details et reasons si presents (bridge depuis engine alert)
         details = alert.data.get("details", "")

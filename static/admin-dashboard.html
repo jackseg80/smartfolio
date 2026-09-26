@@ -25,7 +25,7 @@
         <!-- Header -->
         <div class="admin-header">
             <h1>
-                <span>🔧</span>
+                <span><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Tools" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg></span>
                 Admin Dashboard
             </h1>
             <p class="subtitle">System management - User management, Logs, Cache, ML models, API keys</p>
@@ -57,12 +57,12 @@
 
         <!-- Tabs Navigation -->
         <div class="tabs-nav">
-            <button class="tab-btn active" data-tab="overview">📊 Overview</button>
-            <button class="tab-btn" data-tab="users">👥 User Management</button>
-            <button class="tab-btn" data-tab="logs">📝 Logs Viewer</button>
-            <button class="tab-btn" data-tab="cache">⚡ Cache Management</button>
-            <button class="tab-btn" data-tab="ml">🤖 ML Models</button>
-            <button class="tab-btn" data-tab="apikeys">🔑 API Keys</button>
+            <button class="tab-btn active" data-tab="overview"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Overview</button>
+            <button class="tab-btn" data-tab="users"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Users" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#user-group"></use></svg> User Management</button>
+            <button class="tab-btn" data-tab="logs"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Logs Viewer</button>
+            <button class="tab-btn" data-tab="cache"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Cache Management</button>
+            <button class="tab-btn" data-tab="ml"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Models</button>
+            <button class="tab-btn" data-tab="apikeys"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Key" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#key"></use></svg> API Keys</button>
         </div>
 
         <!-- Tab: Overview -->
@@ -73,7 +73,7 @@
             <div style="margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1rem;">Quick Actions</h3>
                 <button class="btn btn-primary" onclick="showChangeMyPasswordModal()" style="margin-right: 0.5rem;">
-                    🔐 Change My Password
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg> Change My Password
                 </button>
             </div>
 
@@ -121,9 +121,9 @@
 
             <!-- Actions -->
             <div class="actions-bar">
-                <button class="btn btn-primary" onclick="refreshCacheStats()">🔄 Refresh Stats</button>
-                <button class="btn btn-secondary" onclick="clearExpiredEntries()">🧹 Clear Expired</button>
-                <button class="btn btn-danger" onclick="clearAllCaches()">🗑️ Clear All Caches</button>
+                <button class="btn btn-primary" onclick="refreshCacheStats()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh Stats</button>
+                <button class="btn btn-secondary" onclick="clearExpiredEntries()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Clear" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#archive-box-x-mark"></use></svg> Clear Expired</button>
+                <button class="btn btn-danger" onclick="clearAllCaches()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Clear All Caches</button>
             </div>
 
             <!-- Caches Table -->
@@ -178,8 +178,8 @@
 
             <!-- Actions -->
             <div class="actions-bar">
-                <button class="btn btn-primary" onclick="refreshMLModels()">🔄 Refresh Models</button>
-                <button class="btn btn-secondary" onclick="loadTrainingJobs()">📋 View Training Jobs</button>
+                <button class="btn btn-primary" onclick="refreshMLModels()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh Models</button>
+                <button class="btn btn-secondary" onclick="loadTrainingJobs()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> View Training Jobs</button>
             </div>
 
             <!-- Models Table -->
@@ -237,7 +237,7 @@
         <div class="tab-content" id="tab-apikeys">
             <h2>API Keys Management</h2>
             <div class="placeholder">
-                <h3>🔑 API Keys</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Key" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#key"></use></svg> API Keys</h3>
                 <p>Phase 4 - To implement</p>
             </div>
         </div>
@@ -248,7 +248,7 @@
     <div id="createUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>➕ Create New User</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Add" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#plus"></use></svg> Create New User</h3>
                 <button class="modal-close" onclick="closeModal('createUserModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -293,7 +293,7 @@
     <div id="editUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>✏️ Edit User</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Edit" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#pencil"></use></svg> Edit User</h3>
                 <button class="modal-close" onclick="closeModal('editUserModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -332,7 +332,7 @@
     <div id="deleteUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🗑️ Delete User</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg> Delete User</h3>
                 <button class="modal-close" onclick="closeModal('deleteUserModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -355,7 +355,7 @@
                     <label style="display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem; background: var(--theme-bg); border-radius: var(--radius-sm); border: 2px solid var(--brand-danger); cursor: pointer;">
                         <input type="radio" name="deleteType" value="hard" style="margin-top: 0.25rem;">
                         <div>
-                            <div style="font-weight: 500; color: var(--brand-danger);">⚠️ Hard Delete (Permanent)</div>
+                            <div style="font-weight: 500; color: var(--brand-danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Hard Delete (Permanent)</div>
                             <div style="font-size: 0.85em; color: var(--theme-text-muted); margin-top: 0.25rem;">
                                 Remove completely from config and delete data folder. <strong>Cannot be undone!</strong> User ID can be recreated later.
                             </div>
@@ -376,7 +376,7 @@
     <div id="changeMyPasswordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🔐 Change My Password</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg> Change My Password</h3>
                 <button class="modal-close" onclick="closeModal('changeMyPasswordModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -407,7 +407,7 @@
     <div id="resetPasswordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🔑 Reset User Password</h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Key" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#key"></use></svg> Reset User Password</h3>
                 <button class="modal-close" onclick="closeModal('resetPasswordModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -436,7 +436,7 @@
     <div id="modelInfoModal" class="modal">
         <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h3>ℹ️ Model Information - <span id="model-info-name"></span></h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Model Information - <span id="model-info-name"></span></h3>
                 <button class="modal-close" onclick="closeModal('modelInfoModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -453,7 +453,7 @@
                     <!-- Section 1: Basic Info -->
                     <div style="margin-bottom: 2rem;">
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                            📋 Basic Information
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Basic Information
                         </h4>
                         <div class="info-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                             <div class="info-item">
@@ -486,7 +486,7 @@
                     <!-- Section 2: Training Configuration -->
                     <div style="margin-bottom: 2rem;" id="model-info-training-section">
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                            ⚙️ Training Configuration
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Training Configuration
                         </h4>
                         <div id="model-info-hyperparams" style="background: var(--theme-bg); padding: 1rem; border-radius: var(--radius-sm); font-family: monospace; font-size: 0.9em;">
                             <!-- Hyperparameters will be injected here -->
@@ -496,7 +496,7 @@
                     <!-- Section 3: Performance Metrics -->
                     <div style="margin-bottom: 2rem;" id="model-info-metrics-section">
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                            📊 Performance Metrics
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Performance Metrics
                         </h4>
                         <div id="model-info-metrics-cards" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
                             <!-- Metrics cards will be injected here -->
@@ -506,7 +506,7 @@
                     <!-- Section 4: Features Used -->
                     <div style="margin-bottom: 2rem;" id="model-info-features-section">
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                            🔧 Features Used
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Tools" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Features Used
                         </h4>
                         <div id="model-info-features" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                             <!-- Feature badges will be injected here -->
@@ -516,7 +516,7 @@
                     <!-- Section 5: Training Data -->
                     <div style="margin-bottom: 1rem;" id="model-info-data-section">
                         <h4 style="margin-bottom: 1rem; border-bottom: 2px solid var(--theme-border); padding-bottom: 0.5rem;">
-                            📅 Training Data Period
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Date" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#calendar"></use></svg> Training Data Period
                         </h4>
                         <div id="model-info-data-period">-</div>
                     </div>
@@ -524,7 +524,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modelInfoModal')">Close</button>
-                <button class="btn btn-primary" onclick="showVersionHistory()">📊 View History</button>
+                <button class="btn btn-primary" onclick="showVersionHistory()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> View History</button>
             </div>
         </div>
     </div>
@@ -533,7 +533,7 @@
     <div id="versionHistoryModal" class="modal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h3>📊 Version History - <span id="version-history-name"></span></h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Version History - <span id="version-history-name"></span></h3>
                 <button class="modal-close" onclick="closeModal('versionHistoryModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -579,7 +579,7 @@
     <div id="configureTrainModal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <div class="modal-header">
-                <h3>⚙️ Configure & Train - <span id="config-train-name"></span></h3>
+                <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Configure & Train - <span id="config-train-name"></span></h3>
                 <button class="modal-close" onclick="closeModal('configureTrainModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -596,7 +596,7 @@
                     <!-- Preset Selection -->
                     <div style="margin-bottom: 2rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-primary);">
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
-                            📋 Preset Configuration:
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Preset Configuration:
                         </label>
                         <select id="preset-select" style="width: 100%; padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--theme-border); background: var(--theme-surface); color: var(--theme-text);">
                             <option value="standard">Standard (model-specific)</option>
@@ -611,7 +611,7 @@
 
                     <!-- Data Configuration -->
                     <fieldset style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
-                        <legend style="font-weight: 600; padding: 0 0.5rem;">📅 Data Configuration</legend>
+                        <legend style="font-weight: 600; padding: 0 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Date" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#calendar"></use></svg> Data Configuration</legend>
 
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Historical Data (days):</label>
@@ -632,7 +632,7 @@
 
                     <!-- Hyperparameters -->
                     <fieldset style="margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
-                        <legend style="font-weight: 600; padding: 0 0.5rem;">🔧 Hyperparameters</legend>
+                        <legend style="font-weight: 600; padding: 0 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Tools" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Hyperparameters</legend>
 
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
                             <div>
@@ -675,7 +675,7 @@
 
                     <!-- Volatility-specific (shown only for volatility models) -->
                     <fieldset id="volatility-params" style="display: none; margin-bottom: 1.5rem; padding: 1rem; border: 1px solid var(--theme-border); border-radius: var(--radius-sm);">
-                        <legend style="font-weight: 600; padding: 0 0.5rem;">📊 Volatility-Specific</legend>
+                        <legend style="font-weight: 600; padding: 0 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Volatility-Specific</legend>
 
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.25rem; font-weight: 500;">Hidden Size:</label>
@@ -697,7 +697,7 @@
 
                     <!-- Time Estimate -->
                     <div id="time-estimate" style="padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm); border-left: 3px solid var(--brand-success);">
-                        <strong>⏱️ Estimated Training Time:</strong>
+                        <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Estimated Training Time:</strong>
                         <p id="time-estimate-text" style="margin: 0.5rem 0 0 0; color: var(--theme-text-muted);"></p>
                     </div>
                 </div>
@@ -705,7 +705,7 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('configureTrainModal')">Cancel</button>
                 <button id="start-training-btn" class="btn btn-primary" onclick="submitTraining()" style="display: none;">
-                    🚀 Start Training
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Start Training
                 </button>
             </div>
         </div>
@@ -869,7 +869,7 @@
                 // Build users table
                 let html = '<h2>User Management</h2>';
                 html += '<div style="margin-bottom: 1rem;">';
-                html += '<button class="btn btn-primary" onclick="showCreateUserModal()">➕ Create User</button>';
+                html += "<button class=\"btn btn-primary\" onclick=\"showCreateUserModal()\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Add\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#plus\"></use></svg> Create User</button>";
                 html += '</div>';
                 html += '<table class="data-table">';
                 html += '<thead><tr>';
@@ -894,9 +894,9 @@
                     html += `<td><span class="status-${user.status}">${user.status || 'active'}</span></td>`;
                     html += `<td>${formatDate(user.created_at)}</td>`;
                     html += '<td>';
-                    html += `<button class="btn btn-secondary btn-small" onclick='editUser(${JSON.stringify(user)})'>✏️ Edit</button> `;
-                    html += `<button class="btn btn-primary btn-small" onclick="showResetPasswordModal('${user.id}')" title="Reset user password">🔑 Reset Password</button> `;
-                    html += `<button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}')">🗑️ Delete</button>`;
+                    html += `<button class="btn btn-secondary btn-small" onclick='editUser(${JSON.stringify(user)})'> Edit</button> `;
+                    html += `<button class="btn btn-primary btn-small" onclick="showResetPasswordModal('${user.id}')" title="Reset user password"> Reset Password</button> `;
+                    html += `<button class="btn btn-danger btn-small" onclick="deleteUser('${user.id}')"> Delete</button>`;
                     html += '</td>';
                     html += '</tr>';
                 });
@@ -962,7 +962,7 @@
                 html += '<option value="DEBUG">DEBUG</option>';
                 html += '</select>';
                 html += '<input type="text" id="logsSearchInput" placeholder="Search..." onchange="changeLogsSearch(this.value)">';
-                html += '<button class="btn btn-primary" onclick="loadLogsContent()">🔍 Search</button>';
+                html += "<button class=\"btn btn-primary\" onclick=\"loadLogsContent()\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Search\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#magnifying-glass\"></use></svg> Search</button>";
                 html += '</div>';
                 html += '<div id="logsContent"><div class="loading">Loading logs</div></div>';
 
@@ -1579,7 +1579,7 @@
                     </tr>
                 `).join('');
 
-                console.log('✅ Cache stats refreshed');
+                console.log("[OK] Cache stats refreshed");
 
             } catch (error) {
                 console.error('Error loading cache stats:', error);
@@ -1608,12 +1608,12 @@
                     throw new Error(result.error || 'Failed to clear cache');
                 }
 
-                showCacheMessage(`✅ Cache "${cacheName}" cleared successfully (${result.data.cleared_entries} entries)`, false);
+                showCacheMessage(`[OK] Cache "${cacheName}" cleared successfully (${result.data.cleared_entries} entries)`, false);
                 await refreshCacheStats();
 
             } catch (error) {
                 console.error('Error clearing cache:', error);
-                showCacheMessage(`❌ Error clearing cache: ${error.message}`, true);
+                showCacheMessage(`Error clearing cache: ${error.message}`, true);
             }
         }
 
@@ -1636,12 +1636,12 @@
                     throw new Error(result.error || 'Failed to clear caches');
                 }
 
-                showCacheMessage(`✅ All caches cleared successfully (${result.data.total_cleared} total entries from ${result.data.caches_cleared} caches)`, false);
+                showCacheMessage(`[OK] All caches cleared successfully (${result.data.total_cleared} total entries from ${result.data.caches_cleared} caches)`, false);
                 await refreshCacheStats();
 
             } catch (error) {
                 console.error('Error clearing all caches:', error);
-                showCacheMessage(`❌ Error clearing caches: ${error.message}`, true);
+                showCacheMessage(`Error clearing caches: ${error.message}`, true);
             }
         }
 
@@ -1660,12 +1660,12 @@
                     throw new Error(result.error || 'Failed to clear expired entries');
                 }
 
-                showCacheMessage(`✅ Expired entries cleared (${result.data.total_cleared} entries from ${result.data.caches_processed} caches)`, false);
+                showCacheMessage(`[OK] Expired entries cleared (${result.data.total_cleared} entries from ${result.data.caches_processed} caches)`, false);
                 await refreshCacheStats();
 
             } catch (error) {
                 console.error('Error clearing expired entries:', error);
-                showCacheMessage(`❌ Error clearing expired entries: ${error.message}`, true);
+                showCacheMessage(`Error clearing expired entries: ${error.message}`, true);
             }
         }
 
@@ -1737,12 +1737,12 @@
                             <td>${trainingStatus}</td>
                             <td style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
                                 <button class="btn btn-small btn-secondary" onclick="showModelInfo('${model.name}')" title="View detailed information">
-                                    ℹ️
+                                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg>
                                 </button>
                                 ${!model.has_active_job ?
                                     `<button class="btn btn-small btn-primary" onclick="showConfigureTrainModal('${model.name}', '${model.model_type || "unknown"}')" title="Configure & Retrain model">
-                                        ⚙️ Train
-                                    </button>` :
+ Train
+ </button>` :
                                     '<span style="color: var(--text-muted); font-size: 0.85em;">Training...</span>'
                                 }
                             </td>
@@ -1750,7 +1750,7 @@
                     `;
                 }).join('');
 
-                console.log('✅ ML models refreshed');
+                console.log("[OK] ML models refreshed");
 
             } catch (error) {
                 console.error('Error loading ML models:', error);
@@ -1796,13 +1796,13 @@
                     throw new Error(result.error || 'Failed to trigger training');
                 }
 
-                showMLMessage(`✅ Training started for "${modelName}" (Job ID: ${result.data.job_id})`, false);
+                showMLMessage(`[OK] Training started for "${modelName}" (Job ID: ${result.data.job_id})`, false);
                 await refreshMLModels();
                 await updateMLJobStats();
 
             } catch (error) {
                 console.error('Error triggering training:', error);
-                showMLMessage(`❌ Error triggering training: ${error.message}`, true);
+                showMLMessage(`Error triggering training: ${error.message}`, true);
             }
         }
 
@@ -1851,11 +1851,11 @@
                     `;
                 }).join('');
 
-                console.log('✅ Training jobs loaded');
+                console.log("[OK] Training jobs loaded");
 
             } catch (error) {
                 console.error('Error loading training jobs:', error);
-                showMLMessage(`❌ Error loading jobs: ${error.message}`, true);
+                showMLMessage(`Error loading jobs: ${error.message}`, true);
             }
         }
 
@@ -1897,13 +1897,13 @@
                     throw new Error(result.error || 'Failed to cancel job');
                 }
 
-                showMLMessage(`✅ Job "${jobId}" cancelled`, false);
+                showMLMessage(`[OK] Job "${jobId}" cancelled`, false);
                 await loadTrainingJobs();
                 await updateMLJobStats();
 
             } catch (error) {
                 console.error('Error cancelling job:', error);
-                showMLMessage(`❌ Error cancelling job: ${error.message}`, true);
+                showMLMessage(`Error cancelling job: ${error.message}`, true);
             }
         }
 
@@ -2367,7 +2367,7 @@
             } else if (estimatedMinutes < 20) {
                 timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.2)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 2)}-${Math.round(estimatedMinutes * 2.5)} minutes`;
             } else {
-                timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.5)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 3)}-${Math.round(estimatedMinutes * 4)} minutes<br><em style="color: var(--theme-warning);">⚠️ Long training - consider using a preset with fewer epochs</em>`;
+                timeText = `GPU (RTX 4080): ~${Math.round(estimatedMinutes)}-${Math.round(estimatedMinutes * 1.5)} minutes<br>CPU: ~${Math.round(estimatedMinutes * 3)}-${Math.round(estimatedMinutes * 4)} minutes<br><em style="color: var(--theme-warning);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Long training - consider using a preset with fewer epochs</em>`;
             }
 
             document.getElementById('time-estimate-text').innerHTML = timeText;
@@ -2402,7 +2402,7 @@
             // Disable button and show loading
             const btn = document.getElementById('start-training-btn');
             btn.disabled = true;
-            btn.textContent = '⏳ Starting...';
+            btn.textContent = "[Pending] Starting...";
 
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
@@ -2425,7 +2425,7 @@
                 const result = await response.json();
 
                 // Show success message
-                alert(`✅ Training started successfully!\n\nJob ID: ${result.data?.job_id || result.job_id}\nModel: ${modelName}\nConfig: Custom (${config.days}d, ${config.epochs} epochs)`);
+                alert(`[OK] Training started successfully!\n\nJob ID: ${result.data?.job_id || result.job_id}\nModel: ${modelName}\nConfig: Custom (${config.days}d, ${config.epochs} epochs)`);
 
                 // Close modal
                 closeModal('configureTrainModal');
@@ -2437,11 +2437,11 @@
 
             } catch (error) {
                 console.error('Error starting training:', error);
-                alert(`❌ Training failed: ${error.message}`);
+                alert(`[Error] Training failed: ${error.message}`);
 
                 // Re-enable button
                 btn.disabled = false;
-                btn.textContent = '🚀 Start Training';
+                btn.textContent = "Start Training";
             }
         }
 

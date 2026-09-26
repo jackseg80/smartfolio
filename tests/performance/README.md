@@ -54,11 +54,11 @@ Start time: 2025-09-10 14:30:00
   Throughput: 156.7 ops/sec
 
 [PERFORMANCE TARGETS]
-  Store P95 Target:  < 100ms   ✓ PASS (45.32ms)
-  Get P95 Target:    < 50ms    ✓ PASS (23.67ms)
-  Throughput Target: > 100 ops/s  ✓ PASS (156.7 ops/s)
+  Store P95 Target:  < 100ms   [OK] PASS (45.32ms)
+  Get P95 Target:    < 50ms    [OK] PASS (23.67ms)
+  Throughput Target: > 100 ops/s  [OK] PASS (156.7 ops/s)
 
-[OVERALL] Phase 2A Performance: ✓ MEETS TARGETS
+[OVERALL] Phase 2A Performance: [OK] MEETS TARGETS
 ```
 
 ## Benchmark Components

@@ -8,25 +8,25 @@
 
 ---
 
-## 🎯 Objectifs
+## Objectifs
 
 Améliorer les performances, l'UX et la conformité multi-tenant de `analytics-unified.html` suite à audit complet.
 
 ---
 
-## ✅ Optimisations Implémentées
+## Optimisations Implémentées
 
-### 1. **Scripts Non-Bloquants + Critical CSS Inline** 🔴 CRITIQUE
+### 1. **Scripts Non-Bloquants + Critical CSS Inline**  CRITIQUE
 
 **Problème:** Scripts Chart.js + utils bloquaient le rendering (First Paint retardé ~500-800ms)
 
 **Solution:**
 ```html
-<!-- ✅ AVANT: Scripts bloquants -->
+<!-- [OK] AVANT: Scripts bloquants -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="debug-logger.js"></script>
 
-<!-- ✅ APRÈS: Scripts defer + CSS inline critique -->
+<!-- [OK] APRÈS: Scripts defer + CSS inline critique -->
 <style>
   /* Critical layout inline pour First Paint rapide */
   body { margin: 0; background: #0e1620; color: #c0caf5; }
@@ -38,22 +38,22 @@ Améliorer les performances, l'UX et la conformité multi-tenant de `analytics-u
 ```
 
 **Impact:**
-- ✅ First Paint: **+40%** (0.8s → 0.5s estimé)
-- ✅ Pas de FOUC (Flash of Unstyled Content)
-- ✅ Thème chargé inline (évite flash blanc)
+- [OK] First Paint: **+40%** (0.8s → 0.5s estimé)
+- [OK] Pas de FOUC (Flash of Unstyled Content)
+- [OK] Thème chargé inline (évite flash blanc)
 
 ---
 
-### 2. **Multi-Tenant Strict (Header X-User)** 🔴 CRITIQUE
+### 2. **Multi-Tenant Strict (Header X-User)**  CRITIQUE
 
 **Problème:** Fetch sans header `X-User` → Viola règle CLAUDE.md #1
 
 **Solution:**
 ```javascript
-// ✅ AVANT: Pas de header X-User
+// [OK] AVANT: Pas de header X-User
 const response = await fetch(`${API_BASE}/api/risk/dashboard?...`);
 
-// ✅ APRÈS: Multi-tenant correct
+// [OK] APRÈS: Multi-tenant correct
 const activeUser = localStorage.getItem('activeUser') || 'demo';
 const response = await fetch(`${API_BASE}/api/risk/dashboard?...`, {
   headers: { 'X-User': activeUser }
@@ -67,22 +67,22 @@ const response = await fetch(`${API_BASE}/api/risk/dashboard?...`, {
 - `/analytics/advanced/metrics`
 
 **Impact:**
-- ✅ Conformité CLAUDE.md
-- ✅ Isolation données users stricte
-- ✅ Cohérence avec ML tab (déjà OK)
+- [OK] Conformité CLAUDE.md
+- [OK] Isolation données users stricte
+- [OK] Cohérence avec ML tab (déjà OK)
 
 ---
 
-### 3. **Cache TTL Adaptatif** 🔴 CRITIQUE
+### 3. **Cache TTL Adaptatif**  CRITIQUE
 
 **Problème:** Cache 1 min uniforme → Trop de requêtes backend
 
 **Solution:**
 ```javascript
-// ✅ AVANT: Cache naïf 1 min
+// [OK] AVANT: Cache naïf 1 min
 const CACHE_DURATION = 60000;
 
-// ✅ APRÈS: TTL adaptatifs selon CLAUDE.md
+// [OK] APRÈS: TTL adaptatifs selon CLAUDE.md
 const CACHE_TTL = {
   'risk-dashboard': 30 * 60 * 1000,     // 30 min (Risk VaR)
   'cache-stats': 15 * 60 * 1000,        // 15 min (Performance)
@@ -92,33 +92,33 @@ const CACHE_TTL = {
 
 // Bonus: Stale-while-revalidate (fallback sur cache expiré si erreur réseau)
 if (cached) {
-  console.debug(`⚠️ Using stale cache for ${key} due to fetch error`);
+  console.debug(` Using stale cache for ${key} due to fetch error`);
   return cached.data;
 }
 ```
 
 **Impact:**
-- ✅ **-70%** requêtes backend (exemple: Risk 30 min vs 1 min = 30x moins)
-- ✅ **-50%** charge Redis
-- ✅ Meilleure résilience (stale cache sur erreur réseau)
+- [OK] **-70%** requêtes backend (exemple: Risk 30 min vs 1 min = 30x moins)
+- [OK] **-50%** charge Redis
+- [OK] Meilleure résilience (stale cache sur erreur réseau)
 
 ---
 
-### 4. **Smart Polling avec Page Visibility API** 🟠 MODÉRÉ
+### 4. **Smart Polling avec Page Visibility API**  MODÉRÉ
 
 **Problème:** Polling actif même si tab en background → Batterie mobile gaspillée
 
 **Solution:**
 ```javascript
-// ✅ Smart polling avec pause/resume automatique
+// [OK] Smart polling avec pause/resume automatique
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     clearInterval(pollInterval); // Pause polling
-    console.debug('👁️ Page hidden - pausing polling');
+    console.debug(' Page hidden - pausing polling');
   } else {
     loadTabData(`#${activeTab.id}`); // Refresh immédiat au retour
     startSmartPolling(); // Resume polling
-    console.debug('👁️ Page visible - resuming');
+    console.debug(' Page visible - resuming');
   }
 });
 ```
@@ -129,22 +129,22 @@ document.addEventListener('visibilitychange', () => {
 - ML pipeline status (2 min)
 
 **Impact:**
-- ✅ **0 requêtes** quand tab inactive
-- ✅ **Refresh immédiat** au retour sur tab (données fraîches)
-- ✅ Économie batterie mobile significative
+- [OK] **0 requêtes** quand tab inactive
+- [OK] **Refresh immédiat** au retour sur tab (données fraîches)
+- [OK] Économie batterie mobile significative
 
 ---
 
-### 5. **Skeleton Loaders** 🟠 MODÉRÉ
+### 5. **Skeleton Loaders**  MODÉRÉ
 
 **Problème:** Placeholder statique `--` → Utilisateur ne voit pas que ça charge
 
 **Solution:**
 ```html
-<!-- ✅ AVANT: Placeholder "--" -->
+<!-- [OK] AVANT: Placeholder "--" -->
 <div class="metric-value" id="risk-var-value">--</div>
 
-<!-- ✅ APRÈS: Skeleton loader animé -->
+<!-- [OK] APRÈS: Skeleton loader animé -->
 <div class="metric-value skeleton" id="risk-var-value" aria-busy="true">Loading</div>
 
 <style>
@@ -169,28 +169,28 @@ function updateMetric(id, value, subtitle) {
 ```
 
 **Impact:**
-- ✅ Meilleure perception performance (utilisateur voit que ça charge)
-- ✅ Accessibilité (`aria-busy` pour screen readers)
-- ✅ Pas de layout shift (min-height préservé)
+- [OK] Meilleure perception performance (utilisateur voit que ça charge)
+- [OK] Accessibilité (`aria-busy` pour screen readers)
+- [OK] Pas de layout shift (min-height préservé)
 
 ---
 
-## 📊 Métriques d'Impact Globales
+## Métriques d'Impact Globales
 
 ### Performance (estimations Lighthouse)
 | Métrique | Avant | Après | Gain |
 |----------|-------|-------|------|
-| **First Paint** | 0.8s | **0.5s** | **+37%** ⬆️ |
-| **Time to Interactive** | 1.2s | **0.9s** | **+25%** ⬆️ |
-| **Blocking Time** | 450ms | **150ms** | **+66%** ⬆️ |
-| **Lighthouse Score** | ~75 | **~90** | **+15 pts** ⬆️ |
+| **First Paint** | 0.8s | **0.5s** | **+37%**  |
+| **Time to Interactive** | 1.2s | **0.9s** | **+25%**  |
+| **Blocking Time** | 450ms | **150ms** | **+66%**  |
+| **Lighthouse Score** | ~75 | **~90** | **+15 pts**  |
 
 ### Backend/Réseau
 | Métrique | Avant | Après | Gain |
 |----------|-------|-------|------|
-| **Requêtes API/heure** (tab actif) | 72 | **18** | **-75%** ⬇️ |
-| **Requêtes API/heure** (tab inactif) | 72 | **0** | **-100%** ⬇️ |
-| **Charge Redis** | High | **Low** | **-70%** ⬇️ |
+| **Requêtes API/heure** (tab actif) | 72 | **18** | **-75%**  |
+| **Requêtes API/heure** (tab inactif) | 72 | **0** | **-100%**  |
+| **Charge Redis** | High | **Low** | **-70%**  |
 
 ### Mobile/Batterie
 | Métrique | Impact |
@@ -200,13 +200,13 @@ function updateMetric(id, value, subtitle) {
 
 ---
 
-## 🔍 Tests de Validation
+## Tests de Validation
 
 ### Test 1: First Paint (Devtools Network throttling)
 ```bash
 # Avant: ~800ms First Paint
 # Après: ~500ms First Paint
-# ✅ +37% amélioration confirmée
+# +37% amélioration confirmée
 ```
 
 ### Test 2: Multi-Tenant
@@ -215,39 +215,39 @@ function updateMetric(id, value, subtitle) {
 localStorage.setItem('activeUser', 'jack');
 location.reload();
 
-# ✅ Vérifier Network tab: Header X-User: jack présent sur tous fetch
+# Vérifier Network tab: Header X-User: jack présent sur tous fetch
 ```
 
 ### Test 3: Smart Polling
 ```bash
 # Ouvrir DevTools Console
 # Mettre tab en background (switch vers autre onglet)
-# ✅ Console: "👁️ Page hidden - pausing polling"
+# Console: " Page hidden - pausing polling"
 # Revenir sur tab
-# ✅ Console: "👁️ Page visible - resuming + immediate refresh"
-# ✅ Network tab: 1 requête immédiate, puis polling reprend
+# Console: " Page visible - resuming + immediate refresh"
+# Network tab: 1 requête immédiate, puis polling reprend
 ```
 
 ### Test 4: Cache TTL
 ```bash
 # Ouvrir Console
-# Observer: "✅ Cache hit: risk-dashboard (age: 120s / TTL: 1800s)"
+# Observer: " Cache hit: risk-dashboard (age: 120s / TTL: 1800s)"
 # Attendre 30 min
-# Observer: "🔄 Cache miss: risk-dashboard - fetching fresh data..."
-# ✅ Cache TTL respecté
+# Observer: " Cache miss: risk-dashboard - fetching fresh data..."
+# Cache TTL respecté
 ```
 
 ### Test 5: Skeleton Loaders
 ```bash
 # Devtools Network: Throttle to "Slow 3G"
 # Refresh page
-# ✅ Observer: Métriques montrent animation skeleton pendant ~2-3s
-# ✅ Skeleton disparaît quand données arrivent
+# Observer: Métriques montrent animation skeleton pendant ~2-3s
+# Skeleton disparaît quand données arrivent
 ```
 
 ---
 
-## 🚀 Optimisations Future (Sprint 3)
+## Optimisations Future (Sprint 3)
 
 ### Non implémentées (nice-to-have)
 1. **Service Worker** - Cache API responses offline-first
@@ -259,19 +259,19 @@ location.reload();
 
 ---
 
-## 📝 Breaking Changes
+## Breaking Changes
 
 **Aucun !** Tous les changements sont rétrocompatibles.
 
 ### Compatibilité
-- ✅ Fallback `|| 'demo'` si `activeUser` absent
-- ✅ Fallback cache 1 min si clé TTL inconnue
-- ✅ Noscript pour CSS preload
-- ✅ API identiques (pas de changement backend requis)
+- [OK] Fallback `|| 'demo'` si `activeUser` absent
+- [OK] Fallback cache 1 min si clé TTL inconnue
+- [OK] Noscript pour CSS preload
+- [OK] API identiques (pas de changement backend requis)
 
 ---
 
-## 🎓 Leçons Apprises
+## Leçons Apprises
 
 1. **Critical CSS inline > External CSS** pour First Paint
 2. **defer > async** pour scripts non-critiques (ordre préservé)
@@ -281,7 +281,7 @@ location.reload();
 
 ---
 
-## 📚 Références
+## Références
 
 - [CLAUDE.md](../CLAUDE.md) - Multi-tenant rules, Cache TTL recommendations
 - [CACHE_TTL_OPTIMIZATION.md](CACHE_TTL_OPTIMIZATION.md) - Cache strategy details
@@ -292,4 +292,4 @@ location.reload();
 
 **Auteur:** Claude Code
 **Reviewer:** N/A
-**Status:** ✅ Production Ready
+**Status:** [OK] Production Ready

@@ -1,9 +1,9 @@
 # Bourse Risk & Analytics - Vue d'ensemble
 
-> **Status:** ✅ Production Ready (Phase 2.9 Complete)
+> **Status:** [OK] Production Ready (Phase 2.9 Complete)
 > **Module:** Analyse de risque pour portefeuille actions Saxo Bank
 
-> 📖 **Documentation complète** : [BOURSE_RISK_ANALYTICS_SPEC.md](BOURSE_RISK_ANALYTICS_SPEC.md) — Spécification technique détaillée avec historique d'implémentation
+>  **Documentation complète** : [BOURSE_RISK_ANALYTICS_SPEC.md](BOURSE_RISK_ANALYTICS_SPEC.md) — Spécification technique détaillée avec historique d'implémentation
 
 ---
 

@@ -35,11 +35,11 @@ async def initialize_ml_models():
                 orchestrator.model_status[model_type] = 'ready'
                 models_initialized += 1
 
-        logger.info(f"✅ {models_initialized} ML models forced to ready status")
+        logger.info(f" {models_initialized} ML models forced to ready status")
         return models_initialized
 
     except Exception as ml_error:
-        logger.error(f"❌ ML initialization failed: {ml_error}")
+        logger.error(f" ML initialization failed: {ml_error}")
         return 0
 
 
@@ -58,17 +58,17 @@ async def initialize_governance_engine():
         signals = governance_engine.current_state.signals
         if signals and signals.confidence > 0:
             logger.info(
-                f"✅ Governance Engine initialized: "
+                f"[OK] Governance Engine initialized: "
                 f"{signals.confidence:.1%} confidence, "
                 f"{len(signals.sources_used)} sources"
             )
             return True
         else:
-            logger.warning("⚠️ Governance Engine initialized but signals may be empty")
+            logger.warning(" Governance Engine initialized but signals may be empty")
             return False
 
     except Exception as e:
-        logger.error(f"❌ Governance Engine initialization failed: {e}")
+        logger.error(f" Governance Engine initialization failed: {e}")
         return False
 
 
@@ -101,20 +101,20 @@ async def initialize_alert_engine():
         # Initialize unified facade for legacy systems
         from services.alerts.unified_alert_facade import get_unified_alert_facade
         unified_facade = get_unified_alert_facade(alert_engine)
-        logger.info("✅ Unified alert facade initialized for legacy system migration")
+        logger.info(" Unified alert facade initialized for legacy system migration")
 
         # Start alert scheduler in background
         scheduler_started = await alert_engine.start()
 
         if scheduler_started:
-            logger.info("✅ AlertEngine scheduler started successfully")
+            logger.info(" AlertEngine scheduler started successfully")
         else:
-            logger.info("📊 AlertEngine initialized in standby mode (scheduler locked by another instance)")
+            logger.info(" AlertEngine initialized in standby mode (scheduler locked by another instance)")
 
         return scheduler_started
 
     except Exception as alert_error:
-        logger.error(f"❌ AlertEngine initialization failed: {alert_error}")
+        logger.error(f" AlertEngine initialization failed: {alert_error}")
         # Don't crash the app, system can work without alerts
         return False
 
@@ -137,18 +137,18 @@ async def initialize_playwright_browser():
         try:
             from api.crypto_toolbox_endpoints import startup_playwright
         except ImportError:
-            logger.debug("⏭️ crypto_toolbox_endpoints not available, skipping Playwright init")
+            logger.debug(" crypto_toolbox_endpoints not available, skipping Playwright init")
             return False
 
-        logger.info("🎭 Initializing Playwright browser for crypto-toolbox scraping...")
+        logger.info(" Initializing Playwright browser for crypto-toolbox scraping...")
         await startup_playwright()
-        logger.info("✅ Playwright browser initialized successfully (~200 MB memory)")
+        logger.info(" Playwright browser initialized successfully (~200 MB memory)")
 
         return True
 
     except Exception as e:
-        logger.warning(f"⚠️ Playwright initialization failed (non-blocking): {e}")
-        logger.info("📊 crypto-toolbox endpoints will use lazy browser launch on first request")
+        logger.warning(f" Playwright initialization failed (non-blocking): {e}")
+        logger.info(" crypto-toolbox endpoints will use lazy browser launch on first request")
         # Don't crash the app, browser will be launched on first request
         return False
 
@@ -174,15 +174,15 @@ async def initialize_task_scheduler():
         scheduler_ok = await initialize_scheduler()
 
         if scheduler_ok:
-            logger.info("✅ Task scheduler initialized successfully")
+            logger.info(" Task scheduler initialized successfully")
         else:
-            logger.info("⏸️ Task scheduler disabled (RUN_SCHEDULER != 1)")
+            logger.info(" Task scheduler disabled (RUN_SCHEDULER != 1)")
 
         return scheduler_ok
 
     except Exception as e:
-        logger.warning(f"⚠️ Task scheduler initialization failed (non-blocking): {e}")
-        logger.info("📊 Periodic tasks will not run automatically")
+        logger.warning(f" Task scheduler initialization failed (non-blocking): {e}")
+        logger.info(" Periodic tasks will not run automatically")
         return False
 
 
@@ -207,18 +207,18 @@ async def initialize_ml_auto_trainer():
         auto_train_enabled = os.getenv("ML_AUTO_TRAIN", "1").strip() == "1"
 
         if not auto_train_enabled:
-            logger.info("⏸️ ML Auto-Trainer disabled (ML_AUTO_TRAIN != 1)")
+            logger.info(" ML Auto-Trainer disabled (ML_AUTO_TRAIN != 1)")
             return False
 
         # Start the scheduler
         ml_auto_trainer.start()
 
-        logger.info("✅ ML Auto-Trainer initialized successfully")
+        logger.info(" ML Auto-Trainer initialized successfully")
         return True
 
     except Exception as e:
-        logger.warning(f"⚠️ ML Auto-Trainer initialization failed (non-blocking): {e}")
-        logger.info("📊 Models will only train manually via Admin Dashboard")
+        logger.warning(f" ML Auto-Trainer initialization failed (non-blocking): {e}")
+        logger.info(" Models will only train manually via Admin Dashboard")
         return False
 
 
@@ -231,7 +231,7 @@ async def background_startup_tasks():
         # Wait for app to fully start
         await asyncio.sleep(3)
 
-        logger.info("📦 Starting background ML models initialization...")
+        logger.info(" Starting background ML models initialization...")
 
         # Initialize ML models
         models_count = await initialize_ml_models()
@@ -256,17 +256,17 @@ async def background_startup_tasks():
             ml_auto_trainer_ok = await initialize_ml_auto_trainer()
 
             logger.info(
-                f"🎯 Startup complete: "
+                f" Startup complete: "
                 f"ML={models_count} models, "
-                f"Governance={'✅' if governance_ok else '⚠️'}, "
-                f"Alerts={'✅' if alerts_ok else '⚠️'}, "
-                f"Playwright={'✅' if playwright_ok else '⏭️'}, "
-                f"Scheduler={'✅' if scheduler_ok else '⏸️'}, "
-                f"ML-AutoTrain={'✅' if ml_auto_trainer_ok else '⏸️'}"
+                f"Governance={'OK' if governance_ok else 'Warning'}, "
+                f"Alerts={'OK' if alerts_ok else 'Warning'}, "
+                f"Playwright={'OK' if playwright_ok else 'Next'}, "
+                f"Scheduler={'OK' if scheduler_ok else 'Paused'}, "
+                f"ML-AutoTrain={'OK' if ml_auto_trainer_ok else 'Paused'}"
             )
 
     except Exception as e:
-        logger.info(f"⚠️ Background loading failed, models will load on demand: {e}")
+        logger.info(f" Background loading failed, models will load on demand: {e}")
 
 
 def get_startup_handler():
@@ -281,21 +281,21 @@ def get_startup_handler():
     async def startup_load_ml_models():
         """Lazy loading of ML models to avoid blocking startup"""
         try:
-            logger.info("🚀 FastAPI started successfully")
-            logger.info("⚡ ML models will load on first request (lazy loading)")
+            logger.info(" FastAPI started successfully")
+            logger.info(" ML models will load on first request (lazy loading)")
 
             # Initialize FX rates (fast, synchronous)
             try:
                 from services.fx_service import initialize_rates
                 initialize_rates()
             except Exception as fx_error:
-                logger.warning(f"⚠️ FX rates initialization failed (non-blocking): {fx_error}")
+                logger.warning(f" FX rates initialization failed (non-blocking): {fx_error}")
 
             # Start background task without waiting
             asyncio.create_task(background_startup_tasks())
 
         except Exception as e:
-            logger.warning(f"⚠️ Startup event warning (non-blocking): {e}")
+            logger.warning(f" Startup event warning (non-blocking): {e}")
             # Don't crash the app
 
     return startup_load_ml_models
@@ -313,7 +313,7 @@ def get_shutdown_handler():
     async def shutdown_cleanup():
         """Cleanup tasks on shutdown"""
         try:
-            logger.info("🛑 Shutting down FastAPI application...")
+            logger.info(" Shutting down FastAPI application...")
 
             # Stop alert scheduler if running
             try:
@@ -321,28 +321,28 @@ def get_shutdown_handler():
                 alert_engine = get_alert_engine()
                 if alert_engine:
                     await alert_engine.stop()
-                    logger.info("✅ AlertEngine scheduler stopped")
+                    logger.info(" AlertEngine scheduler stopped")
             except HTTPException as e:
                 # 503 = Alert engine not initialized, normal during early shutdown
                 if e.status_code != 503:
-                    logger.warning(f"⚠️ Alert engine cleanup failed: {e}")
+                    logger.warning(f" Alert engine cleanup failed: {e}")
             except Exception as e:
-                logger.warning(f"⚠️ Alert engine cleanup failed: {e}")
+                logger.warning(f" Alert engine cleanup failed: {e}")
 
             # Stop task scheduler if running
             try:
                 from api.scheduler import shutdown_scheduler
                 await shutdown_scheduler()
             except Exception as e:
-                logger.warning(f"⚠️ Task scheduler cleanup failed: {e}")
+                logger.warning(f" Task scheduler cleanup failed: {e}")
 
             # Stop ML Auto-Trainer if running
             try:
                 from services.ml.auto_trainer import ml_auto_trainer
                 ml_auto_trainer.stop()
-                logger.info("✅ ML Auto-Trainer stopped")
+                logger.info(" ML Auto-Trainer stopped")
             except Exception as e:
-                logger.warning(f"⚠️ ML Auto-Trainer cleanup failed: {e}")
+                logger.warning(f" ML Auto-Trainer cleanup failed: {e}")
 
             # Close Playwright browser if initialized
             try:
@@ -352,11 +352,11 @@ def get_shutdown_handler():
             except ImportError:
                 pass  # Module not loaded, nothing to clean up
             except Exception as e:
-                logger.warning(f"⚠️ Playwright cleanup failed: {e}")
+                logger.warning(f" Playwright cleanup failed: {e}")
 
-            logger.info("✅ Shutdown complete")
+            logger.info(" Shutdown complete")
 
         except Exception as e:
-            logger.error(f"❌ Shutdown error: {e}")
+            logger.error(f" Shutdown error: {e}")
 
     return shutdown_cleanup

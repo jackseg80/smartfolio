@@ -1,6 +1,6 @@
 # Guide Développeur SmartFolio
 
-> 📖 **Guide principal** : [CLAUDE.md](../CLAUDE.md) — Règles critiques pour agents IA
+>  **Guide principal** : [CLAUDE.md](../CLAUDE.md) — Règles critiques pour agents IA
 
 ---
 

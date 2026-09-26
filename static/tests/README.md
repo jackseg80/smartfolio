@@ -2,7 +2,7 @@
 
 Tests unitaires et d'intégration pour les modules JavaScript critiques.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 # Lancer tous les tests
@@ -18,7 +18,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-## 📁 Structure
+## Structure
 
 ```
 static/tests/
@@ -31,7 +31,7 @@ static/tests/
 └── auth-guard.test.js               # Tests JWT + RBAC
 ```
 
-## ✅ Tests Actuels
+## Tests Actuels
 
 | Suite | Tests | Passing | Coverage |
 |-------|-------|---------|----------|
@@ -42,7 +42,7 @@ static/tests/
 | **riskScoreSemantics** | 13 | 13/13 | 24% |
 | **Total** | **58** | **40/58** | **2.86%** global |
 
-## 🎯 Modules Critiques Couverts
+## Modules Critiques Couverts
 
 ### 1. Allocation Engine V2
 Tests de l'allocation hiérarchique (macro → secteurs → coins).
@@ -78,7 +78,7 @@ Tests du système d'authentification JWT et RBAC.
 
 **Fichier:** [auth-guard.test.js](auth-guard.test.js)
 
-## 🔧 Configuration
+## Configuration
 
 **Framework:** Jest 30.x avec support ESM natif
 
@@ -88,7 +88,7 @@ Tests du système d'authentification JWT et RBAC.
 
 **Config:** [../../jest.config.js](../../jest.config.js)
 
-## 📝 Écrire des Tests
+## Écrire des Tests
 
 ### Template de Base
 
@@ -130,7 +130,7 @@ window.debugLogger.debug('message');
 expect(window.debugLogger.debug).toHaveBeenCalled();
 ```
 
-## 🐛 Tests Échouant Actuels
+## Tests Échouant Actuels
 
 ### 1. Vraies Régressions (3 tests)
 **Fichier:** `computeExposureCap.test.js`
@@ -147,25 +147,25 @@ Neutral + Risk moyen → Expected cap ≤ 55, Received: higher
 
 **Solution:** Ajouter mocks dans `jest.setup.js` ou tests individuels
 
-## 🎓 Bonnes Pratiques
+## Bonnes Pratiques
 
 1. **Tester le comportement, pas l'implémentation**
    ```javascript
-   // ❌ Mauvais
+   // [Error] Mauvais
    expect(obj.internalVar).toBe(5);
 
-   // ✅ Bon
+   // [OK] Bon
    expect(obj.publicMethod()).toBe(expectedResult);
    ```
 
 2. **Tests isolés et indépendants**
    ```javascript
-   // ❌ Mauvais (état partagé)
+   // [Error] Mauvais (état partagé)
    let sharedState;
    test('test 1', () => { sharedState = 1; });
    test('test 2', () => { expect(sharedState).toBe(1); });
 
-   // ✅ Bon (beforeEach)
+   // [OK] Bon (beforeEach)
    beforeEach(() => {
      localState = initState();
    });
@@ -173,10 +173,10 @@ Neutral + Risk moyen → Expected cap ≤ 55, Received: higher
 
 3. **Noms descriptifs**
    ```javascript
-   // ❌ Mauvais
+   // [Error] Mauvais
    test('test 1', () => { ... });
 
-   // ✅ Bon
+   // [OK] Bon
    test('should return 65% cap when expansion + risk 90', () => { ... });
    ```
 
@@ -194,14 +194,14 @@ Neutral + Risk moyen → Expected cap ≤ 55, Received: higher
    });
    ```
 
-## 📚 Ressources
+## Ressources
 
 - [Jest Documentation](https://jestjs.io/docs/getting-started)
 - [Jest ESM Support](https://jestjs.io/docs/ecmascript-modules)
 - [Itération 4 Report](../../docs/audit/ITERATION_4_FRONTEND_TESTS_2026-01-29.md)
 - [CLAUDE.md](../../CLAUDE.md) - Règles du projet
 
-## 🔄 Prochaines Étapes
+## Prochaines Étapes
 
 1. Fixer les mocks manquants (auth-guard, allocation-engine)
 2. Corriger régressions computeExposureCap

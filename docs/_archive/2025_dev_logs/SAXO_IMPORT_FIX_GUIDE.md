@@ -1,4 +1,4 @@
-# 🔧 Guide de Fix : Import CSV Saxo Bank
+# Guide de Fix : Import CSV Saxo Bank
 
 **Problèmes résolus** :
 1. Affichage de "OUVERT" au lieu des vrais noms d'instruments (Tesla Inc., NVIDIA Corp., etc.)
@@ -14,18 +14,18 @@
 
 ---
 
-## ✅ Étape 1 : Nettoyage des Fichiers (FAIT ✅)
+## Étape 1 : Nettoyage des Fichiers (FAIT )
 
 Le script `tools/reset_saxo.ps1` a supprimé :
-- ✅ `data/wealth/saxo_snapshot.json` (cache JSON legacy)
-- ✅ `data/users/jack/config.json` (config utilisateur)
-- ✅ `data/users/jack/saxobank/uploads/*` (anciens fichiers)
+- [OK] `data/wealth/saxo_snapshot.json` (cache JSON legacy)
+- [OK] `data/users/jack/config.json` (config utilisateur)
+- [OK] `data/users/jack/saxobank/uploads/*` (anciens fichiers)
 
 ---
 
-## 🧹 Étape 2 : Nettoyage du localStorage (À FAIRE)
+## Étape 2 : Nettoyage du localStorage (À FAIRE)
 
-**Option A : Page automatique (RECOMMANDÉ)** ⭐
+**Option A : Page automatique (RECOMMANDÉ)**
 
 1. Ouvrez cette page dans votre navigateur :
    ```
@@ -37,7 +37,7 @@ Le script `tools/reset_saxo.ps1` a supprimé :
    - Supprimer toutes les clés liées à Saxo/Wealth
    - Afficher un résumé des suppressions
 
-3. Cliquez sur "📊 Aller sur Sources" pour continuer
+3. Cliquez sur " Aller sur Sources" pour continuer
 
 **Option B : Console manuelle (Alternative)**
 
@@ -45,13 +45,13 @@ Le script `tools/reset_saxo.ps1` a supprimé :
 2. Collez ce code :
    ```javascript
    localStorage.clear();
-   console.log('✅ localStorage vidé');
+   console.log(' localStorage vidé');
    ```
 3. Appuyez sur `Entrée`
 
 ---
 
-## 📤 Étape 3 : Réimporter le CSV Saxo
+## Étape 3 : Réimporter le CSV Saxo
 
 1. Allez sur la page **Sources Manager** :
    ```
@@ -70,7 +70,7 @@ Le script `tools/reset_saxo.ps1` a supprimé :
 
 ---
 
-## 🔍 Étape 4 : Vérifier le Résultat
+## Étape 4 : Vérifier le Résultat
 
 1. Allez sur le **Dashboard Saxo** :
    ```
@@ -96,7 +96,7 @@ Microsoft Corp.     MSFT      $3,245
 
 ---
 
-## 🐛 Diagnostic (Si Problème)
+## Diagnostic (Si Problème)
 
 ### Test 1 : Vérifier les Logs Serveur
 
@@ -156,7 +156,7 @@ curl http://localhost:8080/api/saxo/portfolios -H "X-User: jack"
 
 ---
 
-## 📋 Modifications Techniques
+## Modifications Techniques
 
 ### 1. Parser CSV (connectors/saxo_import.py)
 
@@ -217,12 +217,12 @@ df = pd.DataFrame(rows)
 
 **Avant** (ligne 848) :
 ```javascript
-updateData.data_source = 'cointracking';  // ❌ Hardcodé !
+updateData.data_source = 'cointracking';  // [Error] Hardcodé !
 ```
 
 **Après** (ligne 849) :
 ```javascript
-updateData.data_source = moduleName;  // ✅ saxobank, cointracking, etc.
+updateData.data_source = moduleName;  // [OK] saxobank, cointracking, etc.
 ```
 
 **Impact** :
@@ -243,16 +243,16 @@ const displayName = name !== symbol ? name : (position.isin || name);
 
 ---
 
-## 🔄 Procédure Complète Résumée
+## Procédure Complète Résumée
 
-1. ✅ Script de nettoyage : `tools/reset_saxo.ps1` (FAIT)
-2. 🧹 Page de nettoyage localStorage : `http://localhost:8080/static/clear-saxo-cache.html`
-3. 📤 Réimporter CSV : `http://localhost:8080/static/settings.html#tab-sources`
-4. 🔍 Vérifier : `http://localhost:8080/static/saxo-dashboard.html`
+1. [OK] Script de nettoyage : `tools/reset_saxo.ps1` (FAIT)
+2. Page de nettoyage localStorage : `http://localhost:8080/static/clear-saxo-cache.html`
+3. Réimporter CSV : `http://localhost:8080/static/settings.html#tab-sources`
+4. Vérifier : `http://localhost:8080/static/saxo-dashboard.html`
 
 ---
 
-## 📞 Support
+## Support
 
 Si le problème persiste après ces étapes :
 
@@ -271,7 +271,7 @@ Si le problème persiste après ces étapes :
 
 ---
 
-## 📚 Fichiers Modifiés
+## Fichiers Modifiés
 
 **Parser & Connecteurs** :
 - `connectors/saxo_import.py:129-155` - Parser CSV robuste avec module `csv` standard
@@ -292,7 +292,7 @@ Si le problème persiste après ces étapes :
 
 ---
 
-## 🧪 Tests de Validation
+## Tests de Validation
 
 **Test 1** : Parser CSV avec newlines
 ```bash
@@ -337,5 +337,5 @@ http://localhost:8080/static/saxo-dashboard.html
 ---
 
 **Date** : 12 octobre 2025
-**Statut** : Parser corrigé ✅ | Sources Manager fixé ✅ | Import réussi ✅ | API opérationnelle ✅
+**Statut** : Parser corrigé [OK] | Sources Manager fixé [OK] | Import réussi [OK] | API opérationnelle [OK]
 

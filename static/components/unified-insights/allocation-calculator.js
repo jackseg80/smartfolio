@@ -66,7 +66,7 @@ export function calculateZeroSumCappedMoves(entries, cap) {
     if (Math.abs(entry.suggested) < 1e-12) entry.suggested = 0;
   });
 
-  console.debug('🔄 Feasible capped moves:', {
+  console.debug("Feasible capped moves:", {
     cap: safeCap,
     common_factor: commonFactor,
     total: result.reduce((sum, entry) => sum + entry.suggested, 0),
@@ -80,7 +80,7 @@ export function calculateZeroSumCappedMoves(entries, cap) {
 // Current allocation by group using taxonomy aliases
 export async function getCurrentAllocationByGroup(minUsd = 1.0) {
   try {
-    (window.debugLogger?.debug || console.log)('🏦 ENTRY: getCurrentAllocationByGroup called - CACHE_BUST_2025-09-29T21:32:30Z', {
+    (window.debugLogger?.debug || console.log)("ENTRY: getCurrentAllocationByGroup called - CACHE_BUST_2025-09-29T21:32:30Z", {
       minUsd,
       timestamp: new Date().toISOString(),
       caller: 'allocation-calculator.js',
@@ -106,14 +106,14 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     const cacheKey = `${user}:${source}:${taxonomyHash}:v2`;
     // IMPORTANT: Ne pas utiliser le cache si grand = 0 (données invalides)
     if (_allocCache.data && _allocCache.key === cacheKey && (now - _allocCache.ts) < 60000 && _allocCache.data.grand > 0) { // 60s TTL + validation
-      (window.debugLogger?.info || console.log)('✅ CACHE HIT: Using valid cached allocation data', {
+      (window.debugLogger?.info || console.log)("[OK] CACHE HIT: Using valid cached allocation data", {
         grand: _allocCache.data.grand,
         groups: Object.keys(_allocCache.data.totals).length,
         age: Math.round((now - _allocCache.ts) / 1000) + 's'
       });
       return _allocCache.data;
     } else if (_allocCache.data && _allocCache.key === cacheKey && (now - _allocCache.ts) < 60000) {
-      (window.debugLogger?.warn || console.warn)('🚨 CACHE INVALID: Cached data has grand=0, forcing refresh', {
+      (window.debugLogger?.warn || console.warn)("[Alert] CACHE INVALID: Cached data has grand=0, forcing refresh", {
         grand: _allocCache.data.grand,
         age: Math.round((now - _allocCache.ts) / 1000) + 's'
       });
@@ -124,7 +124,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     let useStoreData = false;
 
     // DEBUG: Vérifier l'état du store
-    (window.debugLogger?.debug || console.log)('🔍 STORE DEBUG getCurrentAllocationByGroup:', {
+    (window.debugLogger?.debug || console.log)("STORE DEBUG getCurrentAllocationByGroup:", {
       storeExists: !!window.store,
       storeGetFunction: !!(window.store && typeof window.store.get === 'function'),
       storeBalances: window.store ? window.store.get('wallet.balances') : 'no store',
@@ -140,7 +140,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
           const storeTotal = window.store.get('wallet.total');
 
           if (storeBalances && storeBalances.length > 0 && storeTotal > 0) {
-            (window.debugLogger?.debug || console.log)(`✅ STORE RETRY SUCCESS (attempt ${i + 1}/${maxRetries}):`, {
+            (window.debugLogger?.debug || console.log)(`[OK] STORE RETRY SUCCESS (attempt ${i + 1}/${maxRetries}):`, {
               items: storeBalances.length,
               total: storeTotal,
               delay: i * delayMs + 'ms'
@@ -150,7 +150,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
         }
 
         if (i < maxRetries - 1) {
-          (window.debugLogger?.debug || console.log)(`⏳ STORE RETRY ${i + 1}/${maxRetries}: Waiting ${delayMs}ms for data injection...`);
+          (window.debugLogger?.debug || console.log)(`[Pending] STORE RETRY ${i + 1}/${maxRetries}: Waiting ${delayMs}ms for data injection...`);
           await new Promise(resolve => setTimeout(resolve, delayMs));
         }
       }
@@ -163,7 +163,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
         const storeBalances = window.store.get('wallet.balances');
         const storeTotal = window.store.get('wallet.total');
 
-        (window.debugLogger?.debug || console.log)('🔍 STORE DATA CHECK (immediate):', {
+        (window.debugLogger?.debug || console.log)("STORE DATA CHECK (immediate):", {
           balances: storeBalances ? `${storeBalances.length} items` : 'null/undefined',
           total: storeTotal,
           firstBalance: storeBalances ? storeBalances[0] : 'no data'
@@ -173,13 +173,13 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
           items = storeBalances;
           grand = storeTotal;
           useStoreData = true;
-          (window.debugLogger?.info || console.log)('✅ STORE IMMEDIATE: Using data from store', {
+          (window.debugLogger?.info || console.log)("[OK] STORE IMMEDIATE: Using data from store", {
             items: items.length,
             total: grand,
             source: 'store_immediate'
           });
         } else {
-          (window.debugLogger?.debug || console.log)('⏳ STORE INCOMPLETE: Trying retry logic...');
+          (window.debugLogger?.debug || console.log)("[Pending] STORE INCOMPLETE: Trying retry logic...");
           // Si pas de données, essayer le retry pattern
           const retryResult = await waitForStoreData();
           if (retryResult) {
@@ -187,11 +187,11 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
             grand = retryResult.total;
             useStoreData = true;
           } else {
-            (window.debugLogger?.warn || console.warn)('🚨 STORE RETRY FAILED: No data after retries');
+            (window.debugLogger?.warn || console.warn)("[Alert] STORE RETRY FAILED: No data after retries");
           }
         }
       } else {
-        (window.debugLogger?.warn || console.warn)('🚨 STORE NOT AVAILABLE:', {
+        (window.debugLogger?.warn || console.warn)("[Alert] STORE NOT AVAILABLE:", {
           storeExists: !!window.store,
           hasGetMethod: window.store ? typeof window.store.get === 'function' : false
         });
@@ -205,25 +205,25 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
       try {
         // Utiliser le seuil global configuré pour rester cohérent avec dashboard
         const cfgMin = (window.globalConfig && window.globalConfig.get?.('min_usd_threshold')) || minUsd || 1.0;
-        const currentSource = window.globalConfig.get('data_source') || 'cointracking';  // 🔧 FIX: Multi-tenant isolation
+        const currentSource = window.globalConfig.get('data_source') || 'cointracking';  //  FIX: Multi-tenant isolation
         // Fetch with X-User via globalConfig
         const [taxo, balances] = await Promise.all([
           window.globalConfig.apiRequest('/taxonomy').catch(() => null),
           window.globalConfig.apiRequest('/balances/current', {
             params: {
-              source: currentSource,  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+              source: currentSource,  //  FIX: Pass source parameter for multi-tenant isolation
               min_usd: cfgMin
             }
           })
         ]);
         items = (balances && balances.items) || [];
         sourceUsed = balances?.source_used || currentSource;
-        (window.debugLogger?.info || console.log)('✅ API SUCCESS: Using fresh API data', {
+        (window.debugLogger?.info || console.log)("[OK] API SUCCESS: Using fresh API data", {
           items: items.length,
           source: 'api_direct'
         });
       } catch (apiError) {
-        (window.debugLogger?.warn || console.warn)('🚨 API FAILED (probably 429):', apiError.message);
+        (window.debugLogger?.warn || console.warn)("[Alert] API FAILED (probably 429):", apiError.message);
 
         // Dernier recours: essayer d'utiliser loadBalanceData si disponible
         if (typeof window.loadBalanceData === 'function') {
@@ -234,7 +234,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
               sourceUsed = balanceResult.data?.source_used || balanceResult.source || currentSource;
               grand = items.reduce((sum, item) => sum + (parseFloat(item.value_usd) || 0), 0);
               useStoreData = true;
-              (window.debugLogger?.info || console.log)('✅ LOADBALANCEDATA FALLBACK: Using cached balance data', {
+              (window.debugLogger?.info || console.log)("[OK] LOADBALANCEDATA FALLBACK: Using cached balance data", {
                 items: items.length,
                 total: grand,
                 source: 'loadBalanceData_cache'
@@ -257,7 +257,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     try {
       groups = await getAllGroups();
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ Failed to get groups from shared-asset-groups, using fallback');
+      (window.debugLogger?.warn || console.warn)("Failed to get groups from shared-asset-groups, using fallback");
       groups = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
     }
 
@@ -288,7 +288,7 @@ export async function getCurrentAllocationByGroup(minUsd = 1.0) {
     _allocCache.key = cacheKey;
 
     // DEBUG: Log current allocation result
-    console.debug('🏦 CURRENT ALLOCATION RESULT (with store fallback):', {
+    console.debug("CURRENT ALLOCATION RESULT (with store fallback):", {
       pct_keys: Object.keys(pct),
       pct_values: pct,
       pct_total: Object.values(pct).reduce((a, b) => a + b, 0),
@@ -345,7 +345,7 @@ export function applyCycleMultipliersToTargets(targets, multipliers) {
       out[key] = (out[key] || 0) + diff;
     }
 
-    console.debug(`✅ Cycle multipliers applied: stables preserved at ${stables.toFixed(1)}%, non-stables in ${space.toFixed(1)}% space`);
+    console.debug(`[OK] Cycle multipliers applied: stables preserved at ${stables.toFixed(1)}%, non-stables in ${space.toFixed(1)}% space`);
     return out;
   } catch {
     return targets || {};

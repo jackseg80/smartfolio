@@ -223,7 +223,7 @@ export async function getUnifiedMLStatus() {
         return mlUnifiedCache.data;
     }
 
-    (window.debugLogger?.debug || console.log)('🔄 Fetching unified ML status (same logic as AI Dashboard)...');
+    (window.debugLogger?.debug || console.log)("Fetching unified ML status (same logic as AI Dashboard)...");
 
     let result = {
         totalLoaded: 0,
@@ -267,7 +267,7 @@ export async function getUnifiedMLStatus() {
                         signalsTimestamp: govData.signals?.timestamp || null,
                         derivedPolicy: govData.derived_policy || null
                     };
-                    (window.debugLogger?.debug || console.log)(`✅ Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence * 100).toFixed(1)}% confidence`);
+                    (window.debugLogger?.debug || console.log)(`[OK] Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence * 100).toFixed(1)}% confidence`);
                     mlUnifiedCache = { data: result, timestamp: Date.now() };
                     return result;
                 }
@@ -311,7 +311,7 @@ export async function getUnifiedMLStatus() {
                             sentiment: { loaded: 1, available: true }
                         }
                     };
-                    (window.debugLogger?.debug || console.log)(`✅ ML API: ${result.totalLoaded}/4 models loaded`);
+                    (window.debugLogger?.debug || console.log)(`[OK] ML API: ${result.totalLoaded}/4 models loaded`);
                     mlUnifiedCache = { data: result, timestamp: Date.now() };
                     return result;
                 }
@@ -335,10 +335,10 @@ export async function getUnifiedMLStatus() {
                 sentiment: { loaded: 1, available: true }
             }
         };
-        (window.debugLogger?.debug || console.log)(`✅ Stable fallback: ${result.totalLoaded}/4 models, ${(result.confidence * 100).toFixed(1)}% confidence`);
+        (window.debugLogger?.debug || console.log)(`[OK] Stable fallback: ${result.totalLoaded}/4 models, ${(result.confidence * 100).toFixed(1)}% confidence`);
 
     } catch (error) {
-        debugLogger.error('❌ All ML status sources failed:', error);
+        debugLogger.error("[Error] All ML status sources failed:", error);
         result.source = 'error';
         result.confidence = 0;
     }
@@ -352,16 +352,16 @@ export async function getUnifiedMLStatus() {
  */
 export function clearMLUnifiedCache() {
     mlUnifiedCache = { data: null, timestamp: 0 };
-    (window.debugLogger?.debug || console.log)('🧹 ML unified cache cleared');
+    (window.debugLogger?.debug || console.log)("ML unified cache cleared");
 }
 
 // Initialisation globale UNIFIED
 export function initializeMLDashboard() {
-    (window.debugLogger?.debug || console.log)('🧠 ML Dashboard initialized with unified status');
+    (window.debugLogger?.debug || console.log)("ML Dashboard initialized with unified status");
 
     // Utiliser le status unifié au lieu de loadAllMLStatus
     getUnifiedMLStatus().then(status => {
-        (window.debugLogger?.info || console.log)('📊 Unified ML Status loaded:', status);
+        (window.debugLogger?.info || console.log)("Unified ML Status loaded:", status);
 
         // Mettre à jour les cards avec les données unifiées
         if (status.individual.volatility) updateStatusCard('volatility-card', status.individual.volatility);

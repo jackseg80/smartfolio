@@ -1,6 +1,6 @@
 # Score Stability - Complete Fix (Oct 2, 2025)
 
-**Status:** ✅ **RESOLVED** - All scores and recommendations now stable across refreshes
+**Status:** [OK] **RESOLVED** - All scores and recommendations now stable across refreshes
 
 ## Executive Summary
 
@@ -44,24 +44,24 @@ Fixed critical instability issues affecting OnChain scores, Risk scores, and rec
 - Normal refresh (F5): Risk = 50
 
 **Root Cause:**
-- Orchestrator hydrated store with Risk = 50 ✅
+- Orchestrator hydrated store with Risk = 50 [OK]
 - `loadUnifiedData()` in analytics-unified.html then fetched from cache/API
-- Cache had stale value (37) which overwrote correct value (50) ❌
+- Cache had stale value (37) which overwrote correct value (50) [Error]
 
 **Fix (Commit `74ef1ce`):**
 ```javascript
 // BEFORE: analytics-unified.html fetched Risk from API/cache
 const riskData = await apiRequest('/api/risk/dashboard');
-store.set('scores.risk', riskData.risk_score); // ❌ Overwrites orchestrator
+store.set('scores.risk', riskData.risk_score); // [Error] Overwrites orchestrator
 
 // AFTER: Read from orchestrator-hydrated store
-const existingRiskScore = store.get('scores.risk'); // ✅ Already correct
+const existingRiskScore = store.get('scores.risk'); // [OK] Already correct
 if (typeof existingRiskScore === 'number') {
-  console.log(`✅ Risk score already hydrated by orchestrator: ${existingRiskScore}`);
+  console.log(` Risk score already hydrated by orchestrator: ${existingRiskScore}`);
 }
 ```
 
-**Result:** Risk = 50 everywhere, even on hard refresh ✅
+**Result:** Risk = 50 everywhere, even on hard refresh [OK]
 
 ### 3. Recommendations Instability (40% vs 67% stables)
 
@@ -78,7 +78,7 @@ if (typeof existingRiskScore === 'number') {
 // Orchestrator calculated blendedCCS but didn't store it
 const blendResult = blendCCS(ccs.score, cycle.months);
 const blendedScore = blendResult?.blendedCCS ?? null; // Calculated
-// But: cycle.ccsStar = null ❌
+// But: cycle.ccsStar = null [Error]
 
 // analytics-unified.html fallback behavior
 const ccsMixteScore = s.cycle?.ccsStar ?? s.cycle?.score ?? 50;
@@ -91,7 +91,7 @@ const ccsMixteScore = s.cycle?.ccsStar ?? s.cycle?.score ?? 50;
 ```javascript
 cycle: cycle ? {
   ...cycle,
-  ccsStar: blendedScore // ✅ Store blendedCCS
+  ccsStar: blendedScore // [OK] Store blendedCCS
 } : { ... }
 ```
 
@@ -102,7 +102,7 @@ cycle: cycle ? {
 ```javascript
 // WRONG: blendedCCS is NOT the final blended score
 blendedScore = blendCCS(ccs, cycle) // This is just CCS×Cycle
-store.set('scores.blended', blendedScore) // ❌ Incomplete formula
+store.set('scores.blended', blendedScore) // [Error] Incomplete formula
 ```
 
 **Correct Formula (docs/RISK_SEMANTICS.md):**
@@ -156,7 +156,7 @@ Before: `blendedScore` varied → regime flipped between Expansion (≤69) and E
 - Expansion [40-69]: 67% stables
 - Euphoria [70-84]: 40% stables (+10% divergence)
 
-After: `blendedScore` stable → regime stable → recommendations stable ✅
+After: `blendedScore` stable → regime stable → recommendations stable [OK]
 
 ## Final Architecture
 
@@ -198,8 +198,8 @@ After: `blendedScore` stable → regime stable → recommendations stable ✅
         │  • rebalance.html                    │
         │                                      │
         │  const score = store.get('scores.*') │
-        │  ✅ No recalculation                 │
-        │  ✅ No cache race conditions         │
+        │  [OK] No recalculation                 │
+        │  [OK] No cache race conditions         │
         └──────────────────────────────────────┘
 ```
 
@@ -209,38 +209,38 @@ After: `blendedScore` stable → regime stable → recommendations stable ✅
 ```bash
 # Before: 42 (orchestrator V1) vs 36 (Market Cycles V2)
 # After:  36 everywhere (V2 with dynamic weighting)
-✅ PASS
+[OK] PASS
 ```
 
 ### Test 2: Risk Score Hard Refresh
 ```bash
 # Before: Ctrl+Shift+R → Risk = 37 (stale cache)
 # After:  Ctrl+Shift+R → Risk = 50 (orchestrator)
-✅ PASS
+[OK] PASS
 ```
 
 ### Test 3: Recommendations Stability (3 consecutive refreshes)
 ```
 Refresh 1:
-- 🎯 Allocation Stablecoins: 67%
-- 💡 Budget risque élevé détecté: 67%
-- 💡 Expansion en cours
-- 🛡️ Allocation stables: 67%
+- Allocation Stablecoins: 67%
+- Budget risque élevé détecté: 67%
+- Expansion en cours
+- Allocation stables: 67%
 
-Refresh 2: IDENTICAL ✅
+Refresh 2: IDENTICAL [OK]
 
-Refresh 3: IDENTICAL ✅
+Refresh 3: IDENTICAL [OK]
 ```
 
 ### Final Score Table
 
 | Score | Value | Source | Stability |
 |-------|-------|--------|-----------|
-| **OnChain** | 36 | V2 (dynamic weights) | ✅ Stable |
-| **Risk** | 50 | Orchestrator → API | ✅ Stable (even hard refresh) |
-| **CCS Mixte (ccsStar)** | Variable | blendCCS(ccs, cycle) | ✅ Stable |
-| **Blended** | Variable | 0.5*ccsStar + 0.3*onchain + 0.2*risk | ✅ Stable |
-| **Regime** | Expansion | Based on blendedScore | ✅ Stable |
+| **OnChain** | 36 | V2 (dynamic weights) | [OK] Stable |
+| **Risk** | 50 | Orchestrator → API | [OK] Stable (even hard refresh) |
+| **CCS Mixte (ccsStar)** | Variable | blendCCS(ccs, cycle) | [OK] Stable |
+| **Blended** | Variable | 0.5*ccsStar + 0.3*onchain + 0.2*risk | [OK] Stable |
+| **Regime** | Expansion | Based on blendedScore | [OK] Stable |
 
 ## Commits Timeline
 
@@ -269,14 +269,14 @@ Refresh 3: IDENTICAL ✅
 ## Known Remaining Issue (Low Priority)
 
 **Duplicate Recommendations:** 67% stables appears 3 times
-- 🎯 Strategy source (V2 engine)
-- 💡 Regime source (Market regime)
-- 🛡️ Risk source (Risk budget)
+- Strategy source (V2 engine)
+- Regime source (Market regime)
+- Risk source (Risk budget)
 
 **Status:** Cosmetic only - values are consistent
 **Fix Required:** Enhance deduplication in unified-insights-v2.js to detect semantic duplicates
 
-## Success Criteria ✅
+## Success Criteria
 
 - [x] OnChain score consistent across all pages (36)
 - [x] Risk score stable on hard refresh (50)
@@ -287,4 +287,4 @@ Refresh 3: IDENTICAL ✅
 - [x] All tests passing
 - [x] Documentation updated
 
-**Status: COMPLETE** 🎉
+**Status: COMPLETE**

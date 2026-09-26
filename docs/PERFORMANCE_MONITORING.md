@@ -8,7 +8,7 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 
 ---
 
-## 📊 Sections Surveillées
+## Sections Surveillées
 
 ### 1. Frontend Caches
 
@@ -22,9 +22,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
   - Total Requests
 
 **Statuts** :
-- ✅ **Good** : Hit rate > 70%, cache actif
-- ⚠️ **Warning** : Hit rate 30-70%
-- 🔴 **Critical** : Hit rate < 30%
+- [OK] **Good** : Hit rate > 70%, cache actif
+- **Warning** : Hit rate 30-70%
+- [Negative] **Critical** : Hit rate < 30%
 
 ---
 
@@ -42,9 +42,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - Persistent Cache Age (heures)
 
 **Statuts** :
-- ✅ **Good** : Age < 15min (scores), < 12h (cache)
-- ⚠️ **Warning** : Age 15-60min (scores)
-- 🔴 **Critical** : Age > 60min (scores stale)
+- [OK] **Good** : Age < 15min (scores), < 12h (cache)
+- **Warning** : Age 15-60min (scores)
+- [Negative] **Critical** : Age > 60min (scores stale)
 
 ---
 
@@ -61,9 +61,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - Cache Source (network/cache/stale_cache_fallback)
 
 **Statuts** :
-- ✅ **Good** : Age < 10min (fresh)
-- ⚠️ **Warning** : Age 10-30min (stale mais acceptable)
-- 🔴 **Critical** : Age > 30min (très stale)
+- [OK] **Good** : Age < 10min (fresh)
+- **Warning** : Age 10-30min (stale mais acceptable)
+- [Negative] **Critical** : Age > 30min (très stale)
 
 ---
 
@@ -79,9 +79,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - Quota Usage (%)
 
 **Statuts** :
-- ✅ **Good** : Usage < 50%
-- ⚠️ **Warning** : Usage 50-80%
-- 🔴 **Critical** : Usage > 80% (risque dépassement)
+- [OK] **Good** : Usage < 50%
+- **Warning** : Usage 50-80%
+- [Negative] **Critical** : Usage > 80% (risque dépassement)
 
 ---
 
@@ -98,9 +98,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - Cache Hit Rate (%)
 
 **Statuts** :
-- ✅ **Good** : Memory < 1500MB, Hit rate > 70%
-- ⚠️ **Warning** : Memory 1500-2000MB, Hit rate 30-70%
-- 🔴 **Critical** : Memory > 2000MB
+- [OK] **Good** : Memory < 1500MB, Hit rate > 70%
+- **Warning** : Memory 1500-2000MB, Hit rate 30-70%
+- [Negative] **Critical** : Memory > 2000MB
 
 ---
 
@@ -116,9 +116,9 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - HTTP Status Code
 
 **Statuts** :
-- ✅ **Good** : Latence < 100ms
-- ⚠️ **Warning** : Latence 100-500ms
-- 🔴 **Critical** : Latence > 500ms ou erreur
+- [OK] **Good** : Latence < 100ms
+- **Warning** : Latence 100-500ms
+- [Negative] **Critical** : Latence > 500ms ou erreur
 
 ---
 
@@ -135,13 +135,13 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 - OnChain Indicators (minutes)
 
 **Statuts** :
-- ✅ **Good** : Portfolio < 24h, Risk < 15min, OnChain < 30min
-- ⚠️ **Warning** : Portfolio 24-72h, Risk 15-60min, OnChain 30-120min
-- 🔴 **Critical** : Portfolio > 72h, Risk > 60min, OnChain > 120min
+- [OK] **Good** : Portfolio < 24h, Risk < 15min, OnChain < 30min
+- **Warning** : Portfolio 24-72h, Risk 15-60min, OnChain 30-120min
+- [Negative] **Critical** : Portfolio > 72h, Risk > 60min, OnChain > 120min
 
 ---
 
-## 🎮 Contrôles Disponibles
+## Contrôles Disponibles
 
 ### Refresh All
 - Rafraîchit toutes les sections
@@ -173,7 +173,7 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 
 ---
 
-## 📜 Activity Log
+## Activity Log
 
 ### Format
 ```
@@ -192,7 +192,7 @@ Le système de monitoring unifié permet de surveiller en temps réel les perfor
 
 ---
 
-## 🔧 Intégration & Développement
+## Intégration & Développement
 
 ### Ajouter une Nouvelle Métrique Frontend
 
@@ -258,7 +258,7 @@ Puis ajouter la vérification dans `checkAPIPerformance()`.
 
 ---
 
-## 🎯 Objectifs de Performance
+## Objectifs de Performance
 
 ### Frontend
 - **OnChain Cache Hit Rate** : > 70%
@@ -277,7 +277,7 @@ Puis ajouter la vérification dans `checkAPIPerformance()`.
 
 ---
 
-## 🚨 Alertes & Actions
+## Alertes & Actions
 
 ### LocalStorage > 80%
 **Action** : Nettoyer vieux caches, augmenter TTL, externaliser données volumineuses
@@ -293,7 +293,7 @@ Puis ajouter la vérification dans `checkAPIPerformance()`.
 
 ---
 
-## 📝 Logs & Debugging
+## Logs & Debugging
 
 ### Console Browser
 Le monitor utilise `console.log` pour debugging détaillé :
@@ -315,7 +315,7 @@ Surveiller en temps réel pour :
 
 ---
 
-## 🔗 Liens Utiles
+## Liens Utiles
 
 - **Risk Dashboard** : `/static/risk-dashboard.html`
 - **Analytics Unified** : `/static/analytics-unified.html`
@@ -324,7 +324,7 @@ Surveiller en temps réel pour :
 
 ---
 
-## 📌 Notes Importantes
+## Notes Importantes
 
 1. **Auto-refresh** consomme des ressources - désactiver si monitoring passif
 2. **Stress test** peut impacter backend sous charge - utiliser modérément
@@ -334,7 +334,7 @@ Surveiller en temps réel pour :
 
 ---
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### "OnChain Cache: Not loaded"
 **Normal** si `analytics-unified.html` pas encore visité. Première visite popule le cache.

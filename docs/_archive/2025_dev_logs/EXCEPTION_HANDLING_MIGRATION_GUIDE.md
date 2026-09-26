@@ -6,7 +6,7 @@
 
 ---
 
-## 📊 État Actuel
+## État Actuel
 
 **Problème:** 109 occurrences de `except Exception` dans le projet masquent des bugs et rendent le debugging difficile.
 
@@ -19,7 +19,7 @@
 
 ---
 
-## 🎯 Exceptions Disponibles
+## Exceptions Disponibles
 
 Fichier: `api/exceptions.py`
 
@@ -49,11 +49,11 @@ from api.exceptions import (
 
 ---
 
-## 📋 Patterns de Migration
+## Patterns de Migration
 
 ### Pattern 1: Initialisation de Composants
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     from ..ml.orchestrator import get_orchestrator
@@ -63,7 +63,7 @@ except Exception as e:
     ML_ORCHESTRATOR_AVAILABLE = False
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 from api.exceptions import ConfigurationException
 
@@ -83,7 +83,7 @@ except (AttributeError, ModuleNotFoundError) as e:
 
 ### Pattern 2: Appels API Externes
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     response = await httpx.get(url)
@@ -93,7 +93,7 @@ except Exception as e:
     return {}
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 from api.exceptions import APIException
 
@@ -119,7 +119,7 @@ except ValueError as e:  # JSON decode error
 
 ### Pattern 3: Validation de Données
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     value = float(user_input)
@@ -130,7 +130,7 @@ except Exception as e:
     return default_value
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 from api.exceptions import ValidationException
 
@@ -157,7 +157,7 @@ if value < 0:
 
 ### Pattern 4: Opérations de Stockage
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     redis_client.set(key, value)
@@ -166,7 +166,7 @@ except Exception as e:
     return False
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 from api.exceptions import StorageException
 import redis.exceptions
@@ -202,7 +202,7 @@ except redis.exceptions.RedisError as e:
 
 ### Pattern 5: Calculs/Algorithmes
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     result = complex_calculation(data)
@@ -211,7 +211,7 @@ except Exception as e:
     return 0.0  # Valeur par défaut dangereuse!
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 try:
     result = complex_calculation(data)
@@ -233,7 +233,7 @@ except Exception as e:
 
 ### Pattern 6: Gouvernance/Business Logic
 
-**❌ AVANT:**
+**[Error] AVANT:**
 ```python
 try:
     if not self.validate_policy(policy):
@@ -243,7 +243,7 @@ except Exception as e:
     return default_policy
 ```
 
-**✅ APRÈS:**
+**[OK] APRÈS:**
 ```python
 from api.exceptions import GovernanceException
 
@@ -266,15 +266,15 @@ except KeyError as e:
 
 ---
 
-## 🚫 Anti-Patterns à Éviter
+## Anti-Patterns à Éviter
 
-### ❌ Anti-Pattern 1: Silent Failures
+### Anti-Pattern 1: Silent Failures
 
 ```python
 try:
     critical_operation()
 except Exception:
-    pass  # ❌ JAMAIS! Masque tous les bugs
+    pass  # [Error] JAMAIS! Masque tous les bugs
 ```
 
 **Pourquoi c'est dangereux:**
@@ -282,26 +282,26 @@ except Exception:
 - État inconsistent non détecté
 - Violations de sécurité masquées
 
-### ❌ Anti-Pattern 2: Log-and-Swallow
+### Anti-Pattern 2: Log-and-Swallow
 
 ```python
 try:
     important_calculation()
 except Exception as e:
-    logger.error(f"Error: {e}")  # ❌ Log sans re-raise
+    logger.error(f"Error: {e}")  #  Log sans re-raise
     return default_value  # Masque le problème
 ```
 
 **Problème:** L'erreur est loggée mais le bug continue de se propager.
 
-**✅ Solution:** `logger.exception()` + `raise` ou exception spécifique
+** Solution:** `logger.exception()` + `raise` ou exception spécifique
 
-### ❌ Anti-Pattern 3: Bare Except
+### Anti-Pattern 3: Bare Except
 
 ```python
 try:
     operation()
-except:  # ❌ Catch même KeyboardInterrupt, SystemExit!
+except:  # [Error] Catch même KeyboardInterrupt, SystemExit!
     logger.error("Something failed")
 ```
 
@@ -309,7 +309,7 @@ except:  # ❌ Catch même KeyboardInterrupt, SystemExit!
 
 ---
 
-## 📝 Checklist de Migration
+## Checklist de Migration
 
 Pour chaque fichier:
 
@@ -326,7 +326,7 @@ Pour chaque fichier:
 
 ---
 
-## 🎯 Plan de Migration par Fichier
+## Plan de Migration par Fichier
 
 ### Priority 1: services/execution/governance.py (42 occurrences)
 
@@ -354,7 +354,7 @@ Pour chaque fichier:
 
 ---
 
-## 🧪 Testing
+## Testing
 
 Après chaque migration:
 
@@ -374,7 +374,7 @@ pytest tests/integration/ -k governance -v
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 - **Custom Exceptions:** `api/exceptions.py`
 - **Logging Best Practices:** `docs/LOGGING.md`
@@ -382,7 +382,7 @@ pytest tests/integration/ -k governance -v
 
 ---
 
-## 🎉 Bénéfices Attendus
+## Bénéfices Attendus
 
 Après migration complète:
 

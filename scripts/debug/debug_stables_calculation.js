@@ -56,8 +56,8 @@ scenarios.forEach(scenario => {
   console.log(`  BaseRisky: ${result.baseRisky.toFixed(3)}`);
   console.log(`  RiskyAllocation: ${result.riskyAllocation.toFixed(3)} (${result.riskyPct}%)`);
   console.log(`  StablesAllocation: ${result.stablesAllocation.toFixed(3)} (${result.stablesPct}%)`);
-  console.log(`  ❌ Calculated: ${result.stablesPct}% vs Observed: ${scenario.observed}%`);
-  console.log(`  📊 Delta: ${Math.abs(result.stablesPct - scenario.observed)}% difference`);
+  console.log(`  Error Calculated: ${result.stablesPct}% vs Observed: ${scenario.observed}%`);
+  console.log(`  Analytics Delta: ${Math.abs(result.stablesPct - scenario.observed)}% difference`);
 });
 
 console.log('\n' + '='.repeat(80));

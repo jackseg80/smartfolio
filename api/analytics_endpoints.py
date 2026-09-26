@@ -4,7 +4,7 @@ API Endpoints pour l'analytics et l'historique
 Ces endpoints gèrent l'historique des rebalancement et les analyses
 de performance pour optimiser les stratégies.
 
-✅ User Isolation: HistoryManager isolé par user_id (Dec 2025)
+[OK] User Isolation: HistoryManager isolé par user_id (Dec 2025)
    - Chaque user a son propre fichier: data/users/{user_id}/rebalance_history.json
    - Factory function get_history_manager(user_id) utilisée dans tous les endpoints
    - Cache keys incluent user pour éviter cross-contamination
@@ -345,9 +345,9 @@ async def get_performance_summary(
 
     Calcule les métriques de performance globales pour la période donnée.
 
-    🔒 User Isolation: Cache key inclut user_id pour éviter cross-contamination
+     User Isolation: Cache key inclut user_id pour éviter cross-contamination
     """
-    # 🔒 FIX: Inclure user dans cache key pour isolation multi-tenant
+    # FIX: Inclure user dans cache key pour isolation multi-tenant
     cache_key = f"perf_summary:{user}:{days_back}"
     cached_result = cache_get(_analytics_cache, cache_key, 300)
     if cached_result:
@@ -379,9 +379,9 @@ async def get_detailed_performance_analysis(
     Analyse avancée des performances avec comparaison des stratégies
     et recommandations d'optimisation.
 
-    🔒 User Isolation: Cache key inclut user_id pour éviter cross-contamination
+     User Isolation: Cache key inclut user_id pour éviter cross-contamination
     """
-    # 🔒 FIX: Inclure user dans cache key pour isolation multi-tenant
+    # FIX: Inclure user dans cache key pour isolation multi-tenant
     cache_key = f"perf_detailed:{user}:{days_back}"
     cached_result = cache_get(_analytics_cache, cache_key, 600)
     if cached_result:

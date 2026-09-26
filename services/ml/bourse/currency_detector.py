@@ -172,7 +172,7 @@ class CurrencyExchangeDetector:
         # 0. Apply special transformations for Yahoo Finance compatibility (e.g., BRKb → BRK-B)
         transformed_symbol = self.SYMBOL_TRANSFORMATIONS.get(symbol, symbol)
         if transformed_symbol != symbol:
-            logger.debug(f"🔄 Symbol transformation: {symbol} → {transformed_symbol}")
+            logger.debug(f" Symbol transformation: {symbol} → {transformed_symbol}")
             symbol = transformed_symbol
 
         # An explicit trading venue identifies the listing. A domicile (ISIN)
@@ -190,7 +190,7 @@ class CurrencyExchangeDetector:
         if symbol in self.full_map:
             suffix, currency, exchange = self.full_map[symbol]
             yf_symbol = f"{symbol}{suffix}"
-            logger.debug(f"✓ {symbol} → {yf_symbol} ({currency} on {exchange})")
+            logger.debug(f" {symbol} → {yf_symbol} ({currency} on {exchange})")
             return (yf_symbol, currency, exchange)
 
         # 1b. Handle symbols already containing suffix (e.g., ROG.SW, HSBA.L, BNP.PA)
@@ -204,7 +204,7 @@ class CurrencyExchangeDetector:
             }
             if suffix in suffix_to_currency:
                 currency, exchange = suffix_to_currency[suffix]
-                logger.debug(f"✓ {symbol} detected via suffix .{suffix}: ({currency} on {exchange})")
+                logger.debug(f" {symbol} detected via suffix .{suffix}: ({currency} on {exchange})")
                 return (symbol, currency, exchange)
 
         # 2. Use ISIN to detect currency if available
@@ -217,18 +217,18 @@ class CurrencyExchangeDetector:
             yf_symbol = f"{symbol}{exchange_suffix}"
             exchange_name = self._get_exchange_name(country_code)
 
-            logger.info(f"📍 {symbol} detected via ISIN {isin[:2]}: {yf_symbol} ({currency} on {exchange_name})")
+            logger.info(f" {symbol} detected via ISIN {isin[:2]}: {yf_symbol} ({currency} on {exchange_name})")
             return (yf_symbol, currency, exchange_name)
 
         # 3. Use exchange hint from Saxo CSV
         if exchange_hint:
             suffix, currency, exchange = self._parse_exchange_hint(symbol, exchange_hint)
             yf_symbol = f"{symbol}{suffix}"
-            logger.info(f"🔍 {symbol} detected via exchange hint '{exchange_hint}': {yf_symbol} ({currency})")
+            logger.info(f" {symbol} detected via exchange hint '{exchange_hint}': {yf_symbol} ({currency})")
             return (yf_symbol, currency, exchange)
 
         # 4. Fallback: assume US stock
-        logger.warning(f"⚠️ {symbol} not found in mapping, assuming US stock (USD)")
+        logger.warning(f" {symbol} not found in mapping, assuming US stock (USD)")
         return (symbol, 'USD', 'US Exchange')
 
     def _get_suffix_for_country(self, country_code: str) -> str:
@@ -350,4 +350,4 @@ class CurrencyExchangeDetector:
             exchange_name: Nom de la bourse (ex: "SIX Swiss")
         """
         self.full_map[symbol] = (exchange_suffix, currency, exchange_name)
-        logger.info(f"✓ Added custom mapping: {symbol} → {symbol}{exchange_suffix} ({currency})")
+        logger.info(f" Added custom mapping: {symbol} → {symbol}{exchange_suffix} ({currency})")

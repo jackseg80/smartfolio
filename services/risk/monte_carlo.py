@@ -82,7 +82,7 @@ async def run_monte_carlo_simulation(
         MonteCarloResult avec statistiques complètes
     """
     try:
-        logger.info(f"🎲 Starting Monte Carlo: {num_simulations:,} simulations, {horizon_days}d horizon")
+        logger.info(f" Starting Monte Carlo: {num_simulations:,} simulations, {horizon_days}d horizon")
 
         # Charger historique de prix pour chaque asset
         from services.price_history import get_cached_history
@@ -140,12 +140,12 @@ async def run_monte_carlo_simulation(
         total_weight = sum(weights.values())
         weights = {s: w / total_weight for s, w in weights.items()}
 
-        logger.info(f"📊 Running simulation on {len(returns_data)} assets (total weight: {total_weight:.1%})")
+        logger.info(f" Running simulation on {len(returns_data)} assets (total weight: {total_weight:.1%})")
 
         # Créer DataFrame de rendements
         returns_df = pd.DataFrame(returns_data)
 
-        # ✅ FIX: Clean data - remove NaN/Inf to avoid SVD convergence issues
+        # [OK] FIX: Clean data - remove NaN/Inf to avoid SVD convergence issues
         returns_df = returns_df.replace([np.inf, -np.inf], np.nan)
         returns_df = returns_df.ffill().bfill().fillna(0)
 
@@ -156,7 +156,7 @@ async def run_monte_carlo_simulation(
         mean_returns = returns_df.mean()
         cov_matrix = returns_df.cov()
 
-        # ✅ FIX: Add regularization to ensure covariance matrix is positive definite
+        # [OK] FIX: Add regularization to ensure covariance matrix is positive definite
         # This prevents "SVD did not converge" errors
         epsilon = 1e-6
         cov_matrix_reg = cov_matrix + np.eye(len(cov_matrix)) * epsilon
@@ -173,7 +173,7 @@ async def run_monte_carlo_simulation(
                     mean_returns.values * horizon_days,  # Scaled to horizon
                     cov_matrix_reg.values * horizon_days,  # Scaled to horizon (regularized)
                     size=1,
-                    check_valid='ignore'  # ✅ FIX: Ignore validation errors
+                    check_valid='ignore'  # [OK] FIX: Ignore validation errors
                 )[0]
 
                 # Calculer rendement portfolio pondéré
@@ -259,10 +259,10 @@ async def run_monte_carlo_simulation(
             timestamp=datetime.now()
         )
 
-        logger.info(f"✅ Monte Carlo completed: worst={worst_case:.1f}%, best={best_case:.1f}%, prob_loss>20%={prob_loss_20:.1%}")
+        logger.info(f" Monte Carlo completed: worst={worst_case:.1f}%, best={best_case:.1f}%, prob_loss>20%={prob_loss_20:.1%}")
 
         return result
 
     except Exception as e:
-        logger.error(f"❌ Monte Carlo simulation failed: {e}")
+        logger.error(f" Monte Carlo simulation failed: {e}")
         raise

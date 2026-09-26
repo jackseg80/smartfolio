@@ -45,7 +45,7 @@ async def update_all_symbols(symbols: list[str] = None) -> dict[str, bool]:
         logger.warning("Aucun symbole à mettre à jour")
         return {}
         
-    logger.info(f"🔄 Mise à jour de {len(symbols)} symboles ({source})")
+    logger.info(f" Mise à jour de {len(symbols)} symboles ({source})")
     logger.debug(f"Symboles: {symbols}")
     
     # Lancer la mise à jour
@@ -61,16 +61,16 @@ async def update_all_symbols(symbols: list[str] = None) -> dict[str, bool]:
     logger.info("=" * 50)
     logger.info("RÉSUMÉ MISE À JOUR")
     logger.info("=" * 50)
-    logger.info(f"⏱️  Durée: {duration.total_seconds():.1f}s")
-    logger.info(f"📊 Total: {total}")
-    logger.info(f"✅ Succès: {success}")
-    logger.info(f"❌ Échecs: {failed}")
+    logger.info(f"  Durée: {duration.total_seconds():.1f}s")
+    logger.info(f" Total: {total}")
+    logger.info(f" Succès: {success}")
+    logger.info(f" Échecs: {failed}")
     
     if failed > 0:
         failed_symbols = [sym for sym, res in results.items() if not res]
-        logger.warning(f"⚠️  Échecs: {failed_symbols}")
+        logger.warning(f"  Échecs: {failed_symbols}")
     else:
-        logger.info("🎉 Tous les symboles mis à jour avec succès!")
+        logger.info(" Tous les symboles mis à jour avec succès!")
         
     return results
 
@@ -133,20 +133,20 @@ Exemples:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
-    logger.info("🔄 Mise à jour cache d'historique de prix")
+    logger.info(" Mise à jour cache d'historique de prix")
     
     async def run():
         try:
             # Mode vérification de fraîcheur seulement
             if args.check_freshness:
-                logger.info("🔍 Vérification de la fraîcheur du cache...")
+                logger.info(" Vérification de la fraîcheur du cache...")
                 freshness = check_cache_freshness()
                 
                 if not freshness:
-                    logger.info("📭 Aucun cache trouvé")
+                    logger.info(" Aucun cache trouvé")
                     return 0
                     
-                logger.info(f"📊 État du cache ({len(freshness)} symboles):")
+                logger.info(f" État du cache ({len(freshness)} symboles):")
                 
                 fresh = []  # < 24h
                 stale = []  # 24h-48h
@@ -161,11 +161,11 @@ Exemples:
                         old.append(f"{symbol}({age_hours}h)")
                         
                 if fresh:
-                    logger.info(f"✅ Frais (<24h): {fresh}")
+                    logger.info(f" Frais (<24h): {fresh}")
                 if stale:
-                    logger.info(f"⚠️  Anciens (24-48h): {stale}")
+                    logger.info(f"  Anciens (24-48h): {stale}")
                 if old:
-                    logger.info(f"❌ Très anciens (>48h): {old}")
+                    logger.info(f" Très anciens (>48h): {old}")
                     
                 return 0
                 
@@ -181,21 +181,21 @@ Exemples:
                 return 2  # Succès partiel
                 
         except KeyboardInterrupt:
-            logger.info("❌ Interrompu par l'utilisateur")
+            logger.info(" Interrompu par l'utilisateur")
             return 130
         except Exception as e:
-            logger.error(f"❌ Erreur fatale: {e}")
+            logger.error(f" Erreur fatale: {e}")
             return 1
             
     # Lancer le script async
     exit_code = asyncio.run(run())
     
     if exit_code == 0:
-        logger.info("✅ Mise à jour terminée avec succès")
+        logger.info(" Mise à jour terminée avec succès")
     elif exit_code == 2:
-        logger.warning("⚠️  Mise à jour terminée avec quelques échecs")
+        logger.warning("  Mise à jour terminée avec quelques échecs")
     else:
-        logger.error("❌ Mise à jour échouée")
+        logger.error(" Mise à jour échouée")
         
     sys.exit(exit_code)
 

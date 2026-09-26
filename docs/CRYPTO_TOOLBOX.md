@@ -6,7 +6,7 @@ This module scrapes cryptocurrency market indicators from [crypto-toolbox.vercel
 
 **Purpose**: Provide real-time risk indicators (BMO, MVRV, Puell Multiple, etc.) for decision-making in the portfolio management system.
 
-**Status**: ✅ **Production** - FastAPI native implementation. Flask proxy removed in Commit 8 (Oct 2025).
+**Status**: [OK] **Production** - FastAPI native implementation. Flask proxy removed in Commit 8 (Oct 2025).
 
 ---
 
@@ -262,7 +262,7 @@ Supported comparison operators:
 
 - **Vertical**: Single worker, handles ~50 req/s (mostly cached)
 - **Horizontal**: Multiple containers (1 worker each) behind load balancer
-- ⚠️ **Do NOT use `--workers > 1`** with Playwright (shared browser state issue)
+- [Warning] **Do NOT use `--workers > 1`** with Playwright (shared browser state issue)
 
 ---
 
@@ -335,32 +335,32 @@ WantedBy=multi-user.target
 
 ### Current State
 
-- ✅ Router skeleton created (`api/crypto_toolbox_endpoints.py`)
-- ✅ Contract documented (JSON schema, invariants)
-- ✅ Lifecycle hooks integrated (`api/startup.py`)
-- ✅ **Parsing logic ported from Flask** (100% parity)
+- [OK] Router skeleton created (`api/crypto_toolbox_endpoints.py`)
+- [OK] Contract documented (JSON schema, invariants)
+- [OK] Lifecycle hooks integrated (`api/startup.py`)
+- [OK] **Parsing logic ported from Flask** (100% parity)
   - `_parse_comparison()` function (regex-based)
   - BMO special handling (multiple sub-indicators)
   - Operator evaluation (>=, <=, >, <)
   - Async Playwright calls (sync → async migration)
-- ✅ **Router integrated in `api/main.py`** (behind feature flag)
+- [OK] **Router integrated in `api/main.py`** (behind feature flag)
   - Feature flag: `CRYPTO_TOOLBOX_NEW` (0=Flask proxy, 1=FastAPI native)
   - Default: 0 (legacy Flask proxy, safe)
   - Router loaded conditionally with try/except
   - Legacy proxy disabled when flag=1
   - Logs clearly indicate active mode
-- ⏳ A/B testing & validation (Commit 6)
-- ⏳ Legacy Flask removal (Commit 8, after A/B validation)
+- [Pending] A/B testing & validation (Commit 6)
+- [Pending] Legacy Flask removal (Commit 8, after A/B validation)
 
 ### Parsing Parity
 
 **Validated** against `crypto_toolbox_api.py`:
 
-- ✅ Regex patterns identical
-- ✅ BMO multi-indicator logic identical
-- ✅ Numeric extraction identical
-- ✅ Threshold parsing identical
-- ✅ JSON structure identical
+- [OK] Regex patterns identical
+- [OK] BMO multi-indicator logic identical
+- [OK] Numeric extraction identical
+- [OK] Threshold parsing identical
+- [OK] JSON structure identical
 
 **See**: `docs/CRYPTO_TOOLBOX_PARITY.md` for detailed checklist
 
@@ -413,15 +413,15 @@ curl http://localhost:8080/api/crypto-toolbox | jq '.total_count'
 **Default (FastAPI native)**:
 
 ```
-🎭 Crypto-Toolbox: Using FastAPI native scraper (CRYPTO_TOOLBOX_NEW=1)
-🎭 Initializing Playwright browser...
-✅ Playwright browser launched successfully
+ Crypto-Toolbox: Using FastAPI native scraper (CRYPTO_TOOLBOX_NEW=1)
+ Initializing Playwright browser...
+[OK] Playwright browser launched successfully
 ```
 
 **Fallback (Flask proxy)**:
 
 ```
-📡 Crypto-Toolbox: Using Flask proxy (CRYPTO_TOOLBOX_NEW=0, legacy mode)
+ Crypto-Toolbox: Using Flask proxy (CRYPTO_TOOLBOX_NEW=0, legacy mode)
 ```
 
 ---
@@ -561,18 +561,18 @@ python scripts/compare_crypto_toolbox.py test_flask_baseline.json test_fastapi_n
 
 ```
 COUNTS COMPARISON
-Total count   - Flask: 15 | FastAPI: 15 | Match: ✅
-Critical count - Flask:  3 | FastAPI:  3 | Match: ✅
+Total count   - Flask: 15 | FastAPI: 15 | Match: OK
+Critical count - Flask:  3 | FastAPI:  3 | Match: OK
 
 INDICATOR NAMES COMPARISON
-✅ All indicator names match
+[OK] All indicator names match
 
 VALUES & CRITICAL ZONES COMPARISON
-✅ All values match (tolerance: ±0.01)
-✅ All critical zones match
+[OK] All values match (tolerance: ±0.01)
+[OK] All critical zones match
 
 SUMMARY
-✅ VALIDATION PASSED - FastAPI implementation matches Flask
+[OK] VALIDATION PASSED - FastAPI implementation matches Flask
    You can proceed with Commit 7 (switch default flag)
 ```
 
@@ -614,9 +614,9 @@ Before proceeding to Commit 7, verify:
 - [ ] Cache hit <50ms
 - [ ] 10 consecutive requests succeed
 
-**If all ✅**: Proceed to Commit 7 (switch default flag)
+**If all [OK]**: Proceed to Commit 7 (switch default flag)
 
-**If any ❌**: See [CRYPTO_TOOLBOX_PARITY.md](CRYPTO_TOOLBOX_PARITY.md) for rollback procedure
+**If any [Error]**: See [CRYPTO_TOOLBOX_PARITY.md](CRYPTO_TOOLBOX_PARITY.md) for rollback procedure
 
 ---
 
@@ -626,16 +626,16 @@ Before proceeding to Commit 7, verify:
 
 | Phase | Commit | Status | Description |
 |-------|--------|--------|-------------|
-| 1 | ✅ Router skeleton | Complete | API contract, endpoints structure |
-| 2 | ✅ Lifecycle hooks | Complete | Playwright startup/shutdown in `api/startup.py` |
-| 3 | ✅ Parsing parity | Complete | 100% identical logic ported from Flask |
-| 4 | ✅ Feature flag | Complete | `CRYPTO_TOOLBOX_NEW` A/B testing |
-| 5 | ✅ Dev/Docker | Complete | Scripts, Dockerfile, deployment docs |
-| 6 | ✅ A/B testing | Complete | Validation procedures, comparison tools |
-| 7 | ✅ **Default ON** | Complete | FastAPI native by default, Flask fallback |
-| 8 | ✅ **Flask removed** | **Complete** | Final cleanup - migration finished |
+| 1 | [OK] Router skeleton | Complete | API contract, endpoints structure |
+| 2 | [OK] Lifecycle hooks | Complete | Playwright startup/shutdown in `api/startup.py` |
+| 3 | [OK] Parsing parity | Complete | 100% identical logic ported from Flask |
+| 4 | [OK] Feature flag | Complete | `CRYPTO_TOOLBOX_NEW` A/B testing |
+| 5 | [OK] Dev/Docker | Complete | Scripts, Dockerfile, deployment docs |
+| 6 | [OK] A/B testing | Complete | Validation procedures, comparison tools |
+| 7 | [OK] **Default ON** | Complete | FastAPI native by default, Flask fallback |
+| 8 | [OK] **Flask removed** | **Complete** | Final cleanup - migration finished |
 
-**Current Status**: ✅ **Migration complete** - FastAPI native is the only implementation. Flask proxy and feature flag removed.
+**Current Status**: [OK] **Migration complete** - FastAPI native is the only implementation. Flask proxy and feature flag removed.
 
 ---
 

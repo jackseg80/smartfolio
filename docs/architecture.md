@@ -46,10 +46,10 @@ app.include_router(rebalancing_strategy_router)
 ```
 
 **Avantages** :
-- 📉 Réduction taille `main.py` : 2,118 → 1,561 lignes (-26.3%)
-- 🔍 Meilleure lisibilité et découvrabilité des endpoints
-- 🧪 Tests isolés par domaine fonctionnel
-- 🔄 Maintenabilité accrue pour évolutions futures
+- Réduction taille `main.py` : 2,118 → 1,561 lignes (-26.3%)
+- Meilleure lisibilité et découvrabilité des endpoints
+- Tests isolés par domaine fonctionnel
+- Maintenabilité accrue pour évolutions futures
 
 ## Hiérarchie Décisionnelle
 
@@ -119,7 +119,7 @@ Voir [CLAUDE.md Section 3](../CLAUDE.md) pour détails complets.
 - **Taxonomie assets** : Classification cross-asset standardisée
 - **Pricing consolidé** : Sources multiples avec fallbacks
 
-### 3. Signaux & Intelligence - **Source ML Unifiée** ⭐
+### 3. Signaux & Intelligence - **Source ML Unifiée**
 - **Source Centralisée** : `shared-ml-functions.js::getUnifiedMLStatus()` - Single source of truth
 - **Logique Prioritaire** :
   1. **Governance Engine** (`/execution/governance/signals`) - Priority 1
@@ -131,9 +131,9 @@ Voir [CLAUDE.md Section 3](../CLAUDE.md) pour détails complets.
 
 #### Pilier Risk (Sémantique et Propagation)
 
-**⚠️ IMPORTANT — Sémantique Risk** :
+**[Warning] IMPORTANT — Sémantique Risk** :
 
-> **⚠️ Règle Canonique — Sémantique Risk**
+> **[Warning] Règle Canonique — Sémantique Risk**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
@@ -144,11 +144,11 @@ Voir [CLAUDE.md Section 3](../CLAUDE.md) pour détails complets.
 > DI = wCycle·scoreCycle + wOnchain·scoreOnchain + wRisk·scoreRisk
 > ```
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
 >
 > **Visualisation** : Contribution = `(poids × score) / Σ(poids × score)`
 >
-> 📖 Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
+>  Source : [RISK_SEMANTICS.md](RISK_SEMANTICS.md)
 - **Badges (Confiance/Contradiction)** : Influencent les poids, pas les scores bruts
 
 **Modules concernés** :
@@ -164,9 +164,9 @@ Voir aussi [docs/index.md](index.md#sémantique-de-risk-pilier-du-decision-index
 - **Hystérésis** : Anti-flapping VaR in/out (4%/3.5%)
 
 ### 5. UI Consolidée
-- **WealthContextBar** : Filtrage household/module/ccy + **Badge Global ML** ⭐
+- **WealthContextBar** : Filtrage household/module/ccy + **Badge Global ML**
 - **6 Pages Canoniques** : Navigation simplifiée
-- **Source ML Unifiée** : Toutes les pages utilisent `getUnifiedMLStatus()` ⭐
+- **Source ML Unifiée** : Toutes les pages utilisent `getUnifiedMLStatus()` Featured
 - **Badges Standards** : Format "Source • Updated HH:MM:SS • Contrad XX% • Cap YY% • Overrides N"
 - **Timezone Uniforme** : Europe/Zurich pour tous les timestamps
 

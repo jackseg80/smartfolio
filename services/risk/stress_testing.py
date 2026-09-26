@@ -42,7 +42,7 @@ class StressScenario:
 PREDEFINED_SCENARIOS = {
     "crisis_2008": StressScenario(
         id="crisis_2008",
-        name="📉 2008 Financial Crisis",
+        name=" 2008 Financial Crisis",
         description="Replicates the market crash of September-November 2008",
         impact_min_pct=-45,
         impact_max_pct=-60,
@@ -68,7 +68,7 @@ PREDEFINED_SCENARIOS = {
 
     "covid_2020": StressScenario(
         id="covid_2020",
-        name="🦠 COVID-19 Crash March 2020",
+        name=" COVID-19 Crash March 2020",
         description="Sharp decline linked to the global pandemic",
         impact_min_pct=-35,
         impact_max_pct=-50,
@@ -93,7 +93,7 @@ PREDEFINED_SCENARIOS = {
 
     "china_ban": StressScenario(
         id="china_ban",
-        name="🇨🇳 China Crypto Ban",
+        name=" China Crypto Ban",
         description="Complete crypto ban by Chinese authorities",
         impact_min_pct=-25,
         impact_max_pct=-40,
@@ -118,7 +118,7 @@ PREDEFINED_SCENARIOS = {
 
     "tether_collapse": StressScenario(
         id="tether_collapse",
-        name="💰 Tether Collapse",
+        name=" Tether Collapse",
         description="Total loss of confidence in USDT",
         impact_min_pct=-30,
         impact_max_pct=-55,
@@ -143,7 +143,7 @@ PREDEFINED_SCENARIOS = {
 
     "fed_emergency": StressScenario(
         id="fed_emergency",
-        name="🏦 Fed Emergency Rate Hike",
+        name=" Fed Emergency Rate Hike",
         description="Sharp rate increase to combat inflation",
         impact_min_pct=-20,
         impact_max_pct=-35,
@@ -168,7 +168,7 @@ PREDEFINED_SCENARIOS = {
 
     "exchange_hack": StressScenario(
         id="exchange_hack",
-        name="🔓 Major Exchange Hack",
+        name=" Major Exchange Hack",
         description="Hack of a major exchange (Binance/Coinbase)",
         impact_min_pct=-15,
         impact_max_pct=-30,
@@ -336,12 +336,12 @@ async def calculate_stress_test(
             timestamp=datetime.now()
         )
 
-        logger.info(f"✅ Stress test '{scenario_id}' calculated: {portfolio_loss_pct:.1f}% loss (${total_loss_usd:,.0f})")
+        logger.info(f" Stress test '{scenario_id}' calculated: {portfolio_loss_pct:.1f}% loss (${total_loss_usd:,.0f})")
 
         return result
 
     except Exception as e:
-        logger.error(f"❌ Failed to calculate stress test '{scenario_id}': {e}")
+        logger.error(f" Failed to calculate stress test '{scenario_id}': {e}")
         raise
 
 

@@ -266,4 +266,4 @@ window.validateTargets = (targets) => inputValidator.validateTargets(targets);
 window.validateConfig = (config) => inputValidator.validateConfig(config);
 window.sanitizeString = (str) => inputValidator.sanitizeString(str);
 
-console.debug('🛡️ Input Validator loaded - Form validation active');
+console.debug("Input Validator loaded - Form validation active");

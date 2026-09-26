@@ -252,7 +252,7 @@ class StrategyRegistry:
             # 2. Convertir vers les métriques frontend (simulation)
             cycle_score = self._simulate_cycle_score(phase_state)
             onchain_score = scores.decision  # Utilise le score canonique
-            risk_score = scores.components.risk  # ✅ Direct (0-100, plus haut = plus robuste)
+            risk_score = scores.components.risk  # [OK] Direct (0-100, plus haut = plus robuste)
             sentiment_score = scores.components.sentiment
             
             # 3. Calcul pondéré comme dans calculateIntelligentDecisionIndex

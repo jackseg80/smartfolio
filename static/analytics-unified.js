@@ -3,7 +3,7 @@
  * Récupère les vraies données depuis les APIs backend
  */
 
-console.debug('🔄 Analytics Unified - Initialisation');
+console.debug("Analytics Unified - Initialisation");
 
 // Import risk alerts loader
 import { startRiskAlertsPolling } from './modules/risk-alerts-loader.js';
@@ -45,7 +45,7 @@ function clearDomCache() {
 // Configuration
 const API_BASE = window.getApiBase();
 
-// 🆕 Cache TTL adaptatif selon CLAUDE.md (Oct 2025 optimization)
+//  Cache TTL adaptatif selon CLAUDE.md (Oct 2025 optimization)
 const CACHE_TTL = {
     'risk-dashboard': 30 * 60 * 1000,     // 30 min (Risk Metrics VaR - historique daily)
     'cache-stats': 15 * 60 * 1000,        // 15 min (Performance cache stats)
@@ -64,12 +64,12 @@ async function fetchWithCache(key, fetchFn) {
     const ttl = CACHE_TTL[key] || 60000; // Fallback 1 min si clé inconnue
 
     if (cached && (now - cached.timestamp) < ttl) {
-        console.debug(`✅ Cache hit: ${key} (age: ${Math.round((now - cached.timestamp) / 1000)}s / TTL: ${ttl / 1000}s)`);
+        console.debug(`[OK] Cache hit: ${key} (age: ${Math.round((now - cached.timestamp) / 1000)}s / TTL: ${ttl / 1000}s)`);
         return cached.data;
     }
 
     try {
-        console.debug(`🔄 Cache miss: ${key} - fetching fresh data...`);
+        console.debug(`Cache miss: ${key} - fetching fresh data...`);
         const data = await fetchFn();
         cache.set(key, { data, timestamp: now });
         return data;
@@ -77,7 +77,7 @@ async function fetchWithCache(key, fetchFn) {
         (window.debugLogger?.warn || console.warn)(`Failed to fetch ${key}:`, error);
         // Retourner données cachées même expirées si erreur réseau (stale-while-revalidate)
         if (cached) {
-            console.debug(`⚠️ Using stale cache for ${key} due to fetch error`);
+            console.debug(`[Warning] Using stale cache for ${key} due to fetch error`);
             return cached.data;
         }
         return null;
@@ -230,7 +230,7 @@ async function loadTabData(tabId) {
                 break;
             case 'intelligence-ml':
                 // ML Tab handled by its own initialization system
-                (window.debugLogger?.debug || console.log)('🤖 Intelligence ML tab activated - components should auto-initialize');
+                (window.debugLogger?.debug || console.log)("Intelligence ML tab activated - components should auto-initialize");
                 break;
             default:
                 (window.debugLogger?.warn || console.warn)(`Unknown tab: ${tab}`);
@@ -247,7 +247,7 @@ async function loadRiskData() {
     // Start real-time risk alerts polling (unified alert system)
     startRiskAlertsPolling();
 
-    // 🆕 FIX Nov 2025: Multi-tenant support avec X-User header
+    //  FIX Nov 2025: Multi-tenant support avec X-User header
     const activeUser = localStorage.getItem('activeUser');
     const source = globalConfig?.get('data_source') || localStorage.getItem('data_source');
     if (!source) {
@@ -322,9 +322,9 @@ async function loadRiskData() {
         }
     } catch { }
 } async function loadPerformanceData() {
-    console.debug('💾 Loading Performance Monitor data...');
+    console.debug("Loading Performance Monitor data...");
 
-    // 🆕 FIX Nov 2025: Multi-tenant support
+    //  FIX Nov 2025: Multi-tenant support
     const activeUser = localStorage.getItem('activeUser');
 
     // Performance Monitor is about SYSTEM performance, not financial performance
@@ -375,7 +375,7 @@ async function loadRiskData() {
 }
 
 async function loadCycleData() {
-    console.debug('🔄 Loading Cycle Analysis data...');
+    console.debug("Loading Cycle Analysis data...");
 
     // Import cycle analysis functions (they should be available globally or imported)
     try {
@@ -406,9 +406,9 @@ async function loadCycleData() {
 }
 
 async function loadMonitoringData() {
-    console.debug('📈 Loading Advanced Analytics data...');
+    console.debug("Loading Advanced Analytics data...");
 
-    // 🆕 FIX Nov 2025: Multi-tenant support
+    //  FIX Nov 2025: Multi-tenant support
     const activeUser = localStorage.getItem('activeUser');
 
     try {
@@ -475,7 +475,7 @@ function initMetricContainersCache() {
             }
         });
     });
-    console.debug(`✅ Cached ${metricContainersCache.size} metric containers`);
+    console.debug(`[OK] Cached ${metricContainersCache.size} metric containers`);
 }
 
 // Utility functions
@@ -498,7 +498,7 @@ function updateMetric(id, value, subtitle) {
     const { valueEl, subtitleEl } = cached;
 
     if (valueEl) {
-        // 🆕 Retirer skeleton loader et aria-busy quand données arrivent
+        //  Retirer skeleton loader et aria-busy quand données arrivent
         valueEl.classList.remove('skeleton');
         valueEl.removeAttribute('aria-busy');
         valueEl.textContent = value;
@@ -565,7 +565,7 @@ function updatePerformanceBreakdown(cache, memory) {
 
     // Redis status
     const redisStatus = redis.available
-        ? `<span style="color: var(--success);">✓ ${redis.total_keys || 0} keys (${redis.used_memory_mb || 0} MB)</span>`
+        ? `<span style="color: var(--success);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> ${redis.total_keys || 0} keys (${redis.used_memory_mb || 0} MB)</span>`
         : `<span style="color: var(--warning);">○ Disconnected</span>`;
 
     // ML Models stats
@@ -609,11 +609,11 @@ function renderCycleTimeline(cycleData, phase) {
 
     // Cycle phases definition (48 months total)
     const phases = [
-        { name: 'Accumulation', start: 0, end: 6, color: '#f59e0b', emoji: '🟡' },
-        { name: 'Bull Build', start: 6, end: 18, color: '#10b981', emoji: '🟢' },
-        { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '🟣' },
-        { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '🔴' },
-        { name: 'Pre-Acc', start: 36, end: 48, color: '#6b7280', emoji: '⚫' }
+        { name: 'Accumulation', start: 0, end: 6, color: '#f59e0b', emoji: '' },
+        { name: 'Bull Build', start: 6, end: 18, color: '#10b981', emoji: '' },
+        { name: 'Peak', start: 18, end: 24, color: '#8b5cf6', emoji: '' },
+        { name: 'Bear', start: 24, end: 36, color: '#dc2626', emoji: '' },
+        { name: 'Pre-Acc', start: 36, end: 48, color: '#6b7280', emoji: '' }
     ];
 
     const totalMonths = 48;
@@ -649,7 +649,7 @@ function renderCycleTimeline(cycleData, phase) {
     const scoreColor = score >= 75 ? 'positive' : score < 45 ? 'warning' : '';
 
     container.innerHTML = `
-        <div class="cycle-timeline-title">🔄 Position dans le Cycle Bitcoin (Post-Halving)</div>
+        <div class="cycle-timeline-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Position dans le Cycle Bitcoin (Post-Halving)</div>
 
         <div class="cycle-timeline-wrapper">
             <div class="cycle-timeline-track">
@@ -752,7 +752,7 @@ function showErrorState(tabId) {
     const panel = document.querySelector(`${tabId} .panel-card`);
     if (panel) {
         panel.innerHTML = `
-            <h3>⚠️ Data Loading Error</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Data Loading Error</h3>
             <p style="color: var(--theme-text-muted);">Unable to load data. Please check if the backend server is running.</p>
             <button onclick="loadTabData('${tabId}')" class="btn btn-primary" style="background: var(--brand-primary); color: white; padding: 0.5rem 1rem; border: none; border-radius: 0.25rem; cursor: pointer;">Retry</button>
         `;
@@ -775,13 +775,13 @@ function showMonitoringError() {
     showErrorState('#tab-monitoring');
 }
 
-// 🆕 Smart polling avec Page Visibility API - Nov 2025 optimization
+//  Smart polling avec Page Visibility API - Nov 2025 optimization
 let pollInterval = null;
 
 function startSmartPolling() {
     // Ne pas démarrer si page cachée
     if (document.hidden) {
-        console.debug('⏸️ Page hidden - polling paused');
+        console.debug("Page hidden - polling paused");
         return;
     }
 
@@ -794,31 +794,31 @@ function startSmartPolling() {
     pollInterval = setInterval(() => {
         // Double-check que la page est toujours visible
         if (document.hidden) {
-            console.debug('⏸️ Skip refresh - page hidden');
+            console.debug("Skip refresh - page hidden");
             return;
         }
 
         const activeTab = document.querySelector('.tab-panel.active');
         if (activeTab) {
-            console.debug(`🔄 Auto-refresh: ${activeTab.id}`);
+            console.debug(`Auto-refresh: ${activeTab.id}`);
             // Note: on ne clear PAS le cache - on laisse fetchWithCache gérer le TTL
             loadTabData(`#${activeTab.id}`);
         }
     }, 5 * 60 * 1000);
 
-    console.debug('▶️ Smart polling started (5 min interval)');
+    console.debug("Smart polling started (5 min interval)");
 }
 
 // Pause/Resume polling selon visibilité de la page
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
-        console.debug('👁️ Page hidden - pausing polling');
+        console.debug("Page hidden - pausing polling");
         if (pollInterval) {
             clearInterval(pollInterval);
             pollInterval = null;
         }
     } else {
-        console.debug('👁️ Page visible - resuming polling + immediate refresh');
+        console.debug("Page visible - resuming polling + immediate refresh");
         // Refresh immédiat au retour sur la page
         const activeTab = document.querySelector('.tab-panel.active');
         if (activeTab) {
@@ -832,7 +832,7 @@ document.addEventListener('visibilitychange', () => {
 // Démarrer le polling au chargement
 startSmartPolling();
 
-console.debug('✅ Analytics Unified - Initialization complete');
+console.debug("[OK] Analytics Unified - Initialization complete");
 
 
 

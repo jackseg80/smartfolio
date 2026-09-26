@@ -14,7 +14,7 @@ import { calculateAdaptiveWeights } from '../governance/contradiction-policy.js'
  * MODE CUSTOM: garde les sliders configurables (linear/sigmoid, min/max stables)
  */
 
-console.debug('🎭 SIM: Simulation Engine loaded');
+console.debug("SIM: Simulation Engine loaded");
 
 // Imports pour système de contradiction unifié
 let contradictionModules = null;
@@ -27,7 +27,7 @@ let macroStressData = null;
 async function loadContradictionModules() {
   if (!contradictionModules) {
     // Use unified calculateAdaptiveWeights from contradiction-policy.js
-    console.debug('✅ SIM: Using unified contradiction modules from contradiction-policy.js');
+    console.debug("[OK] SIM: Using unified contradiction modules from contradiction-policy.js");
     contradictionModules = {
       smoothContradiction: (value, prevValue, config, state) => {
         // Simple fallback - just apply basic smoothing
@@ -43,7 +43,7 @@ async function loadContradictionModules() {
         stale: false,
         useBaseWeights: false
       }),
-      // ✅ UNIFIED: Use centralized calculateAdaptiveWeights from contradiction-policy.js
+      //  UNIFIED: Use centralized calculateAdaptiveWeights from contradiction-policy.js
       // No more duplication - single source of truth for weight calculations
       calculateAdaptiveWeights: (base, state) => {
         // Delegate to centralized implementation
@@ -99,9 +99,9 @@ async function loadRealComputeFunction() {
     try {
       const module = await import('../core/unified-insights-v2.js');
       realComputeMacroTargetsDynamic = module.computeMacroTargetsDynamic;
-      console.debug('✅ SIM: Real computeMacroTargetsDynamic loaded from unified-insights-v2.js');
+      console.debug("[OK] SIM: Real computeMacroTargetsDynamic loaded from unified-insights-v2.js");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load real computeMacroTargetsDynamic, using fallback:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Failed to load real computeMacroTargetsDynamic, using fallback:", error.message);
     }
   }
 
@@ -112,9 +112,9 @@ async function loadRealComputeFunction() {
   if (!assetGroupsModule) {
     try {
       assetGroupsModule = await import('../shared-asset-groups.js');
-      console.debug('✅ SIM: Asset groups module loaded');
+      console.debug("[OK] SIM: Asset groups module loaded");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load shared-asset-groups.js:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Failed to load shared-asset-groups.js:", error.message);
     }
   }
 
@@ -122,9 +122,9 @@ async function loadRealComputeFunction() {
   if (!phaseEngineModule) {
     try {
       phaseEngineModule = await import('../core/phase-engine.js');
-      console.debug('✅ SIM: Real Phase Engine loaded');
+      console.debug("[OK] SIM: Real Phase Engine loaded");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load phase-engine.js, using fallback tilts:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Failed to load phase-engine.js, using fallback tilts:", error.message);
     }
   }
 
@@ -133,9 +133,9 @@ async function loadRealComputeFunction() {
     try {
       const mrModule = await import('../modules/market-regimes.js');
       productionRiskBudgetFn = mrModule.calculateRiskBudget;
-      console.debug('✅ SIM: Production calculateRiskBudget loaded from market-regimes.js');
+      console.debug("[OK] SIM: Production calculateRiskBudget loaded from market-regimes.js");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load market-regimes.js calculateRiskBudget:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Failed to load market-regimes.js calculateRiskBudget:", error.message);
     }
   }
 
@@ -143,9 +143,9 @@ async function loadRealComputeFunction() {
   if (!strategyApiModule) {
     try {
       strategyApiModule = await import('../core/strategy-api-adapter.js');
-      console.debug('✅ SIM: Strategy API adapter loaded');
+      console.debug("[OK] SIM: Strategy API adapter loaded");
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Failed to load strategy-api-adapter.js:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Failed to load strategy-api-adapter.js:", error.message);
     }
   }
 
@@ -158,15 +158,15 @@ async function loadRealComputeFunction() {
         const data = await resp.json();
         // Handle both {data: {vix, dxy}} and flat {vix, dxy} formats
         macroStressData = data?.data ?? data;
-        console.debug('✅ SIM: Macro stress data loaded:', macroStressData);
+        console.debug("[OK] SIM: Macro stress data loaded:", macroStressData);
       } else {
         // Non-OK response (422, 404, etc.) — mark as unavailable, don't retry
         macroStressData = { vix: null, dxy: null, penalty: 0 };
-        console.debug('⚠️ SIM: Macro stress endpoint returned', resp.status, '- penalty=0');
+        console.debug("[Warning] SIM: Macro stress endpoint returned", resp.status, '- penalty=0');
       }
     } catch (error) {
       macroStressData = { vix: null, dxy: null, penalty: 0 };
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Macro stress unavailable, penalty=0:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Macro stress unavailable, penalty=0:", error.message);
     }
   }
 }
@@ -174,12 +174,12 @@ async function loadRealComputeFunction() {
 // Wrapper function qui utilise la vraie fonction ou fallback
 function computeMacroTargetsDynamic(ctx, rb, walletStats) {
   if (realComputeMacroTargetsDynamic) {
-    console.debug('✅ SIM: Using real computeMacroTargetsDynamic');
+    console.debug("[OK] SIM: Using real computeMacroTargetsDynamic");
     return realComputeMacroTargetsDynamic(ctx, rb, walletStats);
   }
 
   // Fallback si la vraie fonction n'est pas disponible
-  console.debug('🎭 SIM: Using fallback computeMacroTargetsDynamic');
+  console.debug("SIM: Using fallback computeMacroTargetsDynamic");
 
   const stables = rb?.target_stables_pct || 25;
   const riskyPool = 100 - stables;
@@ -237,7 +237,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats) {
     targets[heavy] = +(targets[heavy] + diff).toFixed(1);
   }
 
-  (window.debugLogger?.debug || console.log)('🎯 Fallback targets computed:', targets);
+  (window.debugLogger?.debug || console.log)("Fallback targets computed:", targets);
   return targets;
 }
 
@@ -247,7 +247,7 @@ function computeMacroTargetsDynamic(ctx, rb, walletStats) {
 async function computeCurrentAllocation(wallet) {
   if (!assetGroupsModule || !wallet?.balances?.length) {
     // Fallback sur position simulée
-    (window.debugLogger?.warn || console.warn)('⚠️ SIM: Using fallback allocation (no real wallet data)');
+    (window.debugLogger?.warn || console.warn)("[Warning] SIM: Using fallback allocation (no real wallet data)");
     return {
       Stablecoins: 25,
       BTC: 40,
@@ -274,7 +274,7 @@ async function computeCurrentAllocation(wallet) {
 
     allocation.totalValue = totalValue;
 
-    console.debug('✅ SIM: Real allocation computed from wallet:', {
+    console.debug("[OK] SIM: Real allocation computed from wallet:", {
       totalValue,
       groups: Object.keys(allocation).length - 1,
       top3: Object.entries(allocation)
@@ -285,7 +285,7 @@ async function computeCurrentAllocation(wallet) {
 
     return allocation;
   } catch (error) {
-    debugLogger.error('❌ SIM: Failed to compute real allocation:', error);
+    debugLogger.error("[Error] SIM: Failed to compute real allocation:", error);
     // Fallback
     return {
       Stablecoins: 25,
@@ -338,7 +338,7 @@ function ensureDeterministicState() {
  * 1. INITIALISATION - Charge le snapshot une fois
  */
 export async function initSimulation({ sourceId }) {
-  console.debug('🎭 SIM: initSimulation called:', { sourceId });
+  console.debug("SIM: initSimulation called:", { sourceId });
 
   try {
     // Charger la vraie fonction computeMacroTargetsDynamic
@@ -354,7 +354,7 @@ export async function initSimulation({ sourceId }) {
       sourceId
     };
 
-    (window.debugLogger?.debug || console.log)('🎭 SIM: sourceLoaded -', {
+    (window.debugLogger?.debug || console.log)("SIM: sourceLoaded -", {
       timestamp: new Date().toISOString(),
       walletItems: snapshot.wallet?.balances?.length || 0,
       totalValue: snapshot.wallet?.total || 0,
@@ -363,7 +363,7 @@ export async function initSimulation({ sourceId }) {
 
     return { success: true, data: snapshot };
   } catch (error) {
-    debugLogger.error('🎭 SIM: initSimulation failed:', error);
+    debugLogger.error("SIM: initSimulation failed:", error);
     return { success: false, error: error.message };
   }
 }
@@ -397,7 +397,7 @@ async function loadSourceSnapshot(sourceId) {
         };
       }
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('🎭 SIM: loadBalanceData failed, using store fallback:', error);
+      (window.debugLogger?.warn || console.warn)("SIM: loadBalanceData failed, using store fallback:", error);
     }
   }
 
@@ -429,7 +429,7 @@ async function loadSourceSnapshot(sourceId) {
  * 2. CONSTRUCTION DU CONTEXTE DE SIMULATION
  */
 export function buildSimulationContext(liveContext, uiOverrides = {}) {
-  console.debug('🎭 SIM: buildSimulationContext called');
+  console.debug("SIM: buildSimulationContext called");
 
   if (!simulationState.isLoaded) {
     throw new Error('Simulation not initialized - call initSimulation first');
@@ -484,7 +484,7 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
     source: 'simulation'
   };
 
-  console.debug('🎭 SIM: Context built:', context);
+  console.debug("SIM: Context built:", context);
   return context;
 }
 
@@ -504,7 +504,7 @@ export function buildSimulationContext(liveContext, uiOverrides = {}) {
 export function computeBlendedScore(cycleScore, onchainScore, riskScore) {
   const blended = 0.50 * (cycleScore ?? 50) + 0.30 * (onchainScore ?? 50) + 0.20 * (riskScore ?? 50);
   const result = Math.round(Math.max(0, Math.min(100, blended)));
-  console.debug('🎭 SIM: Blended Score (production formula):', {
+  console.debug("SIM: Blended Score (production formula):", {
     cycle: cycleScore, onchain: onchainScore, risk: riskScore,
     formula: `0.50×${cycleScore} + 0.30×${onchainScore} + 0.20×${riskScore}`,
     result
@@ -525,7 +525,7 @@ export function computeBlendedScore(cycleScore, onchainScore, riskScore) {
  */
 function computeProductionRiskBudget(blendedScore, riskScore, cycleScore = null, cycleDirection = null, cycleConfidence = null) {
   if (!productionRiskBudgetFn) {
-    console.warn('⚠️ SIM: Production risk budget function not loaded, falling back to inline calculation');
+    console.warn("[Warning] SIM: Production risk budget function not loaded, falling back to inline calculation");
     // Inline fallback matching production formula
     const riskRounded = Math.round(riskScore || 0);
     const blendedRounded = Math.round(blendedScore);
@@ -553,7 +553,7 @@ function computeProductionRiskBudget(blendedScore, riskScore, cycleScore = null,
   }
 
   const result = productionRiskBudgetFn(blendedScore, riskScore, cycleScore, cycleDirection, cycleConfidence);
-  console.debug('✅ SIM: Production risk budget calculated:', result);
+  console.debug("[OK] SIM: Production risk budget calculated:", result);
   return result;
 }
 
@@ -620,12 +620,12 @@ function computeMacroPenalty() {
  *   70 <= cycle < 90 → moderate (1.0)
  *   cycle >= 90      → bullish  (1.05)
  *
- * ⚠️ IMPORTANT — Sémantique Risk:
+ *  IMPORTANT — Sémantique Risk:
  * Risk est un score POSITIF (0..100, plus haut = mieux/robuste).
  * Ne jamais inverser (pas de 100 - risk).
  */
 export function computeDecisionIndex(context) {
-  console.debug('🎭 SIM: computeDecisionIndex called');
+  console.debug("SIM: computeDecisionIndex called");
 
   const { scores, confidences, backendDecision, contradictionPenalty } = context;
 
@@ -639,7 +639,7 @@ export function computeDecisionIndex(context) {
       reasoning: 'Backend decision forced via UI override'
     };
 
-    (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
+    (window.debugLogger?.debug || console.log)("SIM: diComputed -", result);
     return result;
   }
 
@@ -671,7 +671,7 @@ export function computeDecisionIndex(context) {
     wOnchain = 0.35;
     wRisk = 0.20;
     if (hasSentiment) wSentiment = 0.10;
-    console.debug('🚀 SIM: Adaptive weights: Cycle ≥ 90 → cycle boost');
+    console.debug("SIM: Adaptive weights: Cycle ≥ 90 → cycle boost");
   } else if (scores.cycle >= 70) {
     wCycle = 0.40;
     wOnchain = 0.37;
@@ -708,7 +708,7 @@ export function computeDecisionIndex(context) {
   wSentiment /= sum;
 
   // Calcul DI brut
-  // ✅ Risk est positif (0-100, plus haut = mieux) - pas d'inversion
+  //  Risk est positif (0-100, plus haut = mieux) - pas d'inversion
   let rawDI =
     (scores.cycle * wCycle) +
     (scores.onchain * wOnchain) +
@@ -755,7 +755,7 @@ export function computeDecisionIndex(context) {
     reasoning: `DI V2: Cycle(${scores.cycle}×${wCycle.toFixed(2)}) + OnChain(${scores.onchain}×${wOnchain.toFixed(2)}) + Risk(${scores.risk}×${wRisk.toFixed(2)})${hasSentiment ? ` + Sentiment(${sentimentScore}×${wSentiment.toFixed(2)})` : ''} × phase(${phaseFactor.toFixed(2)}) + macro(${macroPenalty})`
   };
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: diComputed -', result);
+  (window.debugLogger?.debug || console.log)("SIM: diComputed -", result);
   return result;
 }
 
@@ -795,41 +795,41 @@ export function applySentimentOverride(targets, sentimentScore, regime = 'neutra
 
   if (extremeFear) {
     if (bullContext) {
-      // 🐂 Bull + Fear = OPPORTUNITÉ (contrarian buy)
+      //  Bull + Fear = OPPORTUNITÉ (contrarian buy)
       if (modified.ETH) modified.ETH *= 1.15;
       if (modified.SOL) modified.SOL *= 1.20;
       if (modified['L2/Scaling']) modified['L2/Scaling'] *= 1.20;
       if (modified.DeFi) modified.DeFi *= 1.10;
       if (modified.Memecoins) modified.Memecoins = Math.max(modified.Memecoins * 1.5, 2);
-      overrideReason = `🐂 Bull + Extreme Fear (${sentimentScore}) → Buying opportunity`;
-      console.debug('💎 SIM OVERRIDE: Opportunistic allocation (Bull + Fear)');
+      overrideReason = `Bull + Extreme Fear (${sentimentScore}) → Buying opportunity`;
+      console.debug("SIM OVERRIDE: Opportunistic allocation (Bull + Fear)");
     } else if (bearContext) {
-      // 🐻 Bear + Fear = DANGER (capitulation)
+      //  Bear + Fear = DANGER (capitulation)
       if (modified.Memecoins) modified.Memecoins *= 0.3;
       if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.5;
       if (modified.DeFi) modified.DeFi *= 0.7;
       if (modified['AI/Data']) modified['AI/Data'] *= 0.8;
-      overrideReason = `🐻 Bear + Extreme Fear (${sentimentScore}) → Protection`;
-      console.debug('🛡️ SIM OVERRIDE: Defensive allocation (Bear + Fear)');
+      overrideReason = `Bear + Extreme Fear (${sentimentScore}) → Protection`;
+      console.debug("SIM OVERRIDE: Defensive allocation (Bear + Fear)");
     } else {
-      // 😐 Neutral + Fear = Prudence légère
+      //  Neutral + Fear = Prudence légère
       if (modified.Memecoins) modified.Memecoins *= 0.7;
       if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.8;
-      overrideReason = `😐 Neutral + Extreme Fear (${sentimentScore}) → Prudence`;
-      console.debug('⚖️ SIM OVERRIDE: Cautious allocation (Neutral + Fear)');
+      overrideReason = `Neutral + Extreme Fear (${sentimentScore}) → Prudence`;
+      console.debug("SIM OVERRIDE: Cautious allocation (Neutral + Fear)");
     }
   }
 
   if (extremeGreed) {
-    // ⚠️ Extreme Greed = TOUJOURS prise de profits
+    //  Extreme Greed = TOUJOURS prise de profits
     if (modified.Memecoins) modified.Memecoins *= 0.3;
     if (modified['Gaming/NFT']) modified['Gaming/NFT'] *= 0.5;
     if (modified['AI/Data']) modified['AI/Data'] *= 0.7;
     if (modified.DeFi) modified.DeFi *= 0.8;
     overrideReason = overrideReason
       ? `${overrideReason} + Extreme Greed (${sentimentScore}) → Prise de profits`
-      : `⚠️ Extreme Greed (${sentimentScore}) → Prise de profits`;
-    console.debug('⚠️ SIM OVERRIDE: Profit-taking (Extreme Greed)');
+      : `[Warning] Extreme Greed (${sentimentScore}) → Prise de profits`;
+    console.debug("[Warning] SIM OVERRIDE: Profit-taking (Extreme Greed)");
   }
 
   // Renormaliser pour que la somme = 100%
@@ -867,7 +867,7 @@ export function applySentimentOverride(targets, sentimentScore, regime = 'neutra
  * différents scénarios (courbes, hysteresis, circuit breakers).
  */
 export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
-  console.debug('🎭 SIM: computeRiskBudget called:', { di, options, marketOverlays });
+  console.debug("SIM: computeRiskBudget called:", { di, options, marketOverlays });
 
   const {
     curve = 'linear',
@@ -934,7 +934,7 @@ export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
   if (volZ >= circuit_breakers.vol_z_gt) {
     cbVolTriggered = true;
     target_stables_pct = Math.max(target_stables_pct, circuit_breakers.floor_stables_if_trigger);
-    console.debug('🚨 SIM: CB Volatilité déclenché:', { vol_z: volZ, threshold: circuit_breakers.vol_z_gt });
+    console.debug("[Alert] SIM: CB Volatilité déclenché:", { vol_z: volZ, threshold: circuit_breakers.vol_z_gt });
   }
 
   // CB Drawdown: utiliser market overlay ou fallback sur DI
@@ -942,7 +942,7 @@ export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
   if (ddPct <= circuit_breakers.dd_90d_pct_lt) {
     cbDdTriggered = true;
     target_stables_pct = Math.max(target_stables_pct, circuit_breakers.floor_stables_if_trigger);
-    console.debug('🚨 SIM: CB Drawdown déclenché:', { dd_90d_pct: ddPct, threshold: circuit_breakers.dd_90d_pct_lt });
+    console.debug("[Alert] SIM: CB Drawdown déclenché:", { dd_90d_pct: ddPct, threshold: circuit_breakers.dd_90d_pct_lt });
   }
 
   // Clamps finaux
@@ -963,7 +963,7 @@ export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
   // Sauvegarder pour hystérésis suivante
   simulationState.lastRiskBudget = result;
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: riskBudgetUpdated -', result);
+  (window.debugLogger?.debug || console.log)("SIM: riskBudgetUpdated -", result);
   return result;
 }
 
@@ -976,7 +976,7 @@ export function computeRiskBudget(di, options = {}, marketOverlays = {}) {
  * - regime derivé du blendedScore (pas juste onchain)
  */
 export function computeTargets(riskBudget, context) {
-  console.debug('🎭 SIM: computeTargets called');
+  console.debug("SIM: computeTargets called");
 
   // Déterminer le regime à partir du blendedScore (comme production)
   const blended = context.blendedScore ?? context.scores?.cycle ?? 50;
@@ -1015,7 +1015,7 @@ export function computeTargets(riskBudget, context) {
   // RÉUTILISER la fonction existante
   const targets = computeMacroTargetsDynamic(ctx, riskBudget, walletStats);
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: targetsComputed -', targets);
+  (window.debugLogger?.debug || console.log)("SIM: targetsComputed -", targets);
   return targets;
 }
 
@@ -1023,10 +1023,10 @@ export function computeTargets(riskBudget, context) {
  * 6. APPLICATION PHASE ENGINE TILTS
  */
 export async function applyPhaseEngineTilts(targets, phaseConfig) {
-  console.debug('🎭 SIM: applyPhaseEngineTilts called:', phaseConfig);
+  console.debug("SIM: applyPhaseEngineTilts called:", phaseConfig);
 
   if (!phaseConfig?.enabled) {
-    console.debug('🎭 SIM: Phase Engine disabled, skipping tilts');
+    console.debug("SIM: Phase Engine disabled, skipping tilts");
     return { ...targets };
   }
 
@@ -1038,7 +1038,7 @@ export async function applyPhaseEngineTilts(targets, phaseConfig) {
       // Appeler avec une phase string et déballer le retour {targets, metadata}
       const result = await applyPhaseTilts(targets, (phaseConfig.forcedPhase || 'neutral'));
       const unwrapped = (result && result.targets) ? result.targets : result;
-      console.debug('✅ SIM: Real Phase Engine tilts applied:', {
+      console.debug("[OK] SIM: Real Phase Engine tilts applied:", {
         phase: phaseConfig.forcedPhase || 'auto',
         originalStables: targets?.Stablecoins,
         tiltedStables: unwrapped?.Stablecoins
@@ -1046,7 +1046,7 @@ export async function applyPhaseEngineTilts(targets, phaseConfig) {
 
       return unwrapped;
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('⚠️ SIM: Real Phase Engine failed, using fallback:', error.message);
+      (window.debugLogger?.warn || console.warn)("[Warning] SIM: Real Phase Engine failed, using fallback:", error.message);
     }
   }
 
@@ -1082,7 +1082,7 @@ export async function applyPhaseEngineTilts(targets, phaseConfig) {
     }
   }
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: phaseTiltsApplied -', { phase, original: targets, tilted: tiltedTargets });
+  (window.debugLogger?.debug || console.log)("SIM: phaseTiltsApplied -", { phase, original: targets, tilted: tiltedTargets });
   return tiltedTargets;
 }
 
@@ -1090,7 +1090,7 @@ export async function applyPhaseEngineTilts(targets, phaseConfig) {
  * 7. APPLICATION GOVERNANCE CAPS/FLOORS
  */
 export function applyGovernanceCaps(targets, govSettings = {}) {
-  console.debug('🎭 SIM: applyGovernanceCaps called:', govSettings);
+  console.debug("SIM: applyGovernanceCaps called:", govSettings);
 
   const cappedTargets = { ...targets };
   let capsTriggered = [];
@@ -1120,7 +1120,7 @@ export function applyGovernanceCaps(targets, govSettings = {}) {
   }
 
   if (capsTriggered.length > 0) {
-    (window.debugLogger?.debug || console.log)('🎭 SIM: capsTriggered -', capsTriggered);
+    (window.debugLogger?.debug || console.log)("SIM: capsTriggered -", capsTriggered);
   }
 
   return { targets: cappedTargets, capsTriggered };
@@ -1130,7 +1130,7 @@ export function applyGovernanceCaps(targets, govSettings = {}) {
  * 8. PLAN D'EXÉCUTION SIMULÉ
  */
 export function planOrdersSimulated(current, targets, execPolicy = {}) {
-  console.debug('🎭 SIM: planOrdersSimulated called');
+  console.debug("SIM: planOrdersSimulated called");
 
   const {
     global_delta_threshold_pct = 2,
@@ -1195,7 +1195,7 @@ export function planOrdersSimulated(current, targets, execPolicy = {}) {
     policy: execPolicy
   };
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: ordersPlanned -', result);
+  (window.debugLogger?.debug || console.log)("SIM: ordersPlanned -", result);
   return result;
 }
 
@@ -1203,7 +1203,7 @@ export function planOrdersSimulated(current, targets, execPolicy = {}) {
  * 9. EXPLICATION PIPELINE
  */
 export function explainPipeline(context, steps) {
-  console.debug('🎭 SIM: explainPipeline called');
+  console.debug("SIM: explainPipeline called");
 
   const { di, riskBudget, targets, finalTargets, cappedResult, orders, blendedScore, pipelineMode } = steps;
 
@@ -1341,7 +1341,7 @@ function generateNaturalLanguageSummary(context, steps) {
  * 10. GESTION PRESETS
  */
 export function loadPreset(presetObj) {
-  console.debug('🎭 SIM: loadPreset called:', presetObj.name);
+  console.debug("SIM: loadPreset called:", presetObj.name);
 
   // Convertir preset vers format UI
   const uiState = {
@@ -1371,12 +1371,12 @@ export function loadPreset(presetObj) {
     execution: presetObj.execution || { global_delta_threshold_pct: 2, bucket_delta_threshold_pct: 1 }
   };
 
-  (window.debugLogger?.debug || console.log)('🎭 SIM: presetLoaded -', { name: presetObj.name, version: presetObj.version });
+  (window.debugLogger?.debug || console.log)("SIM: presetLoaded -", { name: presetObj.name, version: presetObj.version });
   return uiState;
 }
 
 export function exportPreset(uiState, name, description) {
-  console.debug('🎭 SIM: exportPreset called:', name);
+  console.debug("SIM: exportPreset called:", name);
 
   const preset = {
     version: '1.0',
@@ -1415,7 +1415,7 @@ export function stateToUrlHash(uiState) {
     const compressed = btoa(unescape(encodeURIComponent(jsonString)));
     return `#sim=${compressed}`;
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('🎭 SIM: Failed to encode state to URL:', error);
+    (window.debugLogger?.warn || console.warn)("SIM: Failed to encode state to URL:", error);
     return '#sim=error';
   }
 }
@@ -1429,10 +1429,10 @@ export function stateFromUrlHash() {
     // UTF-8 safe decoding (reverse of stateToUrlHash)
     const state = JSON.parse(decodeURIComponent(escape(atob(compressed))));
 
-    (window.debugLogger?.debug || console.log)('🎭 SIM: State restored from URL hash');
+    (window.debugLogger?.debug || console.log)("SIM: State restored from URL hash");
     return state;
   } catch (error) {
-    (window.debugLogger?.warn || console.warn)('🎭 SIM: Failed to decode state from URL:', error);
+    (window.debugLogger?.warn || console.warn)("SIM: Failed to decode state from URL:", error);
     return null;
   }
 }
@@ -1441,7 +1441,7 @@ export function stateFromUrlHash() {
  * 12. PIPELINE COMPLET
  */
 export async function simulateFullPipeline(uiOverrides = {}) {
-  console.debug('🎭 SIM: simulateFullPipeline called with overrides:', uiOverrides);
+  console.debug("SIM: simulateFullPipeline called with overrides:", uiOverrides);
 
   try {
     // 1. Contexte de base
@@ -1450,7 +1450,7 @@ export async function simulateFullPipeline(uiOverrides = {}) {
     const executionOverrides = uiOverrides?.execution ?? {};
 
     // 2. Système de Contradiction Unifié
-    // ⚠️ ALIGNÉ avec unified-insights-v2.js (lignes 50-52)
+    //  ALIGNÉ avec unified-insights-v2.js (lignes 50-52)
     const BASE_WEIGHTS = { cycle: 0.5, onchain: 0.3, risk: 0.2 };
     const SMOOTHING_CFG = { ema_alpha: 0.25, deadband: 2, persistence: 3 };
 
@@ -1570,24 +1570,24 @@ export async function simulateFullPipeline(uiOverrides = {}) {
       );
       riskBudget.source = riskBudget.source || 'market-regimes (production)';
       riskBudget.pipeline_mode = 'production';
-      console.debug('✅ SIM: Production risk budget used:', {
+      console.debug("[OK] SIM: Production risk budget used:", {
         blended: blendedScore,
         risk: baseContext.scores.risk,
         stables: riskBudget.target_stables_pct
       });
     } else {
       // MODE CUSTOM: formule configurable via sliders (linear/sigmoid)
-      // ⚠️ PRIORITÉ: regimeData.risk_budget si disponible (source unique comme Analytics)
+      //  PRIORITÉ: regimeData.risk_budget si disponible (source unique comme Analytics)
       if (stateForEngine.regimeData?.risk_budget?.target_stables_pct != null) {
         riskBudget = {
           target_stables_pct: stateForEngine.regimeData.risk_budget.target_stables_pct,
           source: 'market-regimes (v2)',
           regime_based: true
         };
-        console.debug('✅ SIM: Using regimeData.risk_budget as source of truth:', riskBudget);
+        console.debug("[OK] SIM: Using regimeData.risk_budget as source of truth:", riskBudget);
       } else {
         riskBudget = computeRiskBudget(di.di, uiOverrides.riskBudget, uiOverrides.marketOverlays);
-        console.debug('⚠️ SIM: Custom risk budget (linear/sigmoid):', riskBudget);
+        console.debug("[Warning] SIM: Custom risk budget (linear/sigmoid):", riskBudget);
       }
       riskBudget.pipeline_mode = 'custom';
     }
@@ -1626,7 +1626,7 @@ export async function simulateFullPipeline(uiOverrides = {}) {
         sentiment: sentimentScore,
         regime
       };
-      console.debug('🎭 SIM: Sentiment override applied:', sentimentResult.overrideReason);
+      console.debug("SIM: Sentiment override applied:", sentimentResult.overrideReason);
     }
 
     const effectiveCap01 = (typeof policyCap01 === 'number' && Number.isFinite(policyCap01) && policyCap01 > 0)
@@ -1685,11 +1685,11 @@ export async function simulateFullPipeline(uiOverrides = {}) {
       }
     };
 
-    (window.debugLogger?.debug || console.log)('🎭 SIM: Full pipeline completed successfully');
+    (window.debugLogger?.debug || console.log)("SIM: Full pipeline completed successfully");
     return fullResult;
 
   } catch (error) {
-    debugLogger.error('🎭 SIM: Pipeline simulation failed:', error);
+    debugLogger.error("SIM: Pipeline simulation failed:", error);
     throw error;
   }
 }

@@ -81,10 +81,10 @@ window.debouncedSaveSettings = function() {
   window.settingsSaveTimeout = setTimeout(async () => {
     try {
       await saveSettings();
-      showNotification('✓ Saved', 'success', 1500);
+      showNotification("[OK] Saved", 'success', 1500);
     } catch (err) {
       debugLogger.error('Auto-save failed:', err);
-      showNotification('✗ Save error', 'error', 2500);
+      showNotification("[Error] Save error", 'error', 2500);
     }
   }, 800);
 };
@@ -137,7 +137,7 @@ async function initQuickSettings() {
           }
           await saveSettings(); // Auto-save immédiat pour changement de source
           updateStatusSummary();
-          showNotification('✓ Source changed and saved', 'success');
+          showNotification("[OK] Source changed and saved", 'success');
           return;
         } else if (src && src.type === 'api') {
           // Mode API sélectionné
@@ -150,7 +150,7 @@ async function initQuickSettings() {
           }
           await saveSettings(); // Auto-save immédiat pour changement de source
           updateStatusSummary();
-          showNotification('✓ Source changed and saved', 'success');
+          showNotification("[OK] Source changed and saved", 'success');
           return;
         }
       } catch (err) {
@@ -216,7 +216,7 @@ function getDefaultSettings() {
     claude_api_key: "",
     grok_api_key: "",
     openai_api_key: "",
-    pricing: "auto", // 🔧 FIX: Changed default from 'local' to 'auto' for consistency
+    pricing: "auto", //  FIX: Changed default from 'local' to 'auto' for consistency
     refresh_interval: 5,
     enable_coingecko_classification: true,
     enable_portfolio_snapshots: true,
@@ -232,7 +232,7 @@ async function loadApiBaseUrl() {
   // Toujours utiliser l'origine actuelle du navigateur pour les appels frontend
   // Cela fonctionne automatiquement en dev (localhost) ET en prod (192.168.x.x)
   const apiBaseUrl = window.location.origin;
-  debugLogger.info(`✓ API Base URL using browser origin: ${apiBaseUrl}`);
+  debugLogger.info(`[OK] API Base URL using browser origin: ${apiBaseUrl}`);
   return apiBaseUrl;
 }
 
@@ -251,16 +251,16 @@ async function loadSettings() {
     if (response.ok) {
       const backendSettings = await response.json();
 
-      // 🔍 DEBUG: Vérifier groq_api_key
-      console.debug('🔍 [loadSettings] localSettings.groq_api_key:', localSettings.groq_api_key || '(undefined)');
-      console.debug('🔍 [loadSettings] backendSettings.groq_api_key:', backendSettings.groq_api_key || '(undefined)');
+      //  DEBUG: Vérifier groq_api_key
+      console.debug("[loadSettings] localSettings.groq_api_key:", localSettings.groq_api_key || '(undefined)');
+      console.debug("[loadSettings] backendSettings.groq_api_key:", backendSettings.groq_api_key || '(undefined)');
 
       // Fusionner: API Base URL (backend global) a priorité sur tout
       window.userSettings = { ...getDefaultSettings(), ...localSettings, ...backendSettings, api_base_url: apiBaseUrl };
 
-      console.debug('🔍 [loadSettings] APRÈS fusion, groq_api_key:', window.userSettings.groq_api_key || '(undefined)');
+      console.debug("[loadSettings] APRÈS fusion, groq_api_key:", window.userSettings.groq_api_key || '(undefined)');
 
-      debugLogger.info('✓ Settings loaded from backend + localStorage');
+      debugLogger.info("[OK] Settings loaded from backend + localStorage");
     } else {
       debugLogger.warn('Failed to load user settings from backend, using localStorage');
       window.userSettings = { ...getDefaultSettings(), ...localSettings, api_base_url: apiBaseUrl };
@@ -291,14 +291,14 @@ async function loadSettings() {
 
 // Sauvegarder les settings via l'API utilisateur ET localStorage
 async function saveSettings() {
-  // 🔒 FIX: Capturer l'utilisateur actuel au début pour éviter race condition
+  //  FIX: Capturer l'utilisateur actuel au début pour éviter race condition
   const currentUser = getActiveUser();
 
-  // 🔍 DEBUG: Vérifier groq_api_key avant sauvegarde
+  //  DEBUG: Vérifier groq_api_key avant sauvegarde
   if (window.userSettings && window.userSettings.groq_api_key) {
-    console.debug('🔍 [saveSettings] groq_api_key présent:', window.userSettings.groq_api_key.substring(0, 10) + '...');
+    console.debug("[saveSettings] groq_api_key présent:", window.userSettings.groq_api_key.substring(0, 10) + '...');
   } else {
-    console.warn('⚠️ [saveSettings] groq_api_key MANQUANT ou VIDE!');
+    console.warn("[Warning] [saveSettings] groq_api_key MANQUANT ou VIDE!");
   }
 
   // 1. Sauvegarder dans localStorage immédiatement (pour ne jamais perdre de données)
@@ -309,7 +309,7 @@ async function saveSettings() {
       }
     });
     window.globalConfig.save(); // Force immediate save to localStorage (user-isolated)
-    debugLogger.debug(`✓ Settings saved to localStorage for user: ${currentUser}`);
+    debugLogger.debug(`[OK] Settings saved to localStorage for user: ${currentUser}`);
   }
 
   // 2. Sauvegarder vers le backend (pour sync multi-device)
@@ -318,21 +318,21 @@ async function saveSettings() {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-User': currentUser  // 🔒 FIX: Utiliser la valeur capturée au début
+        'X-User': currentUser  //  FIX: Utiliser la valeur capturée au début
       },
       body: JSON.stringify(window.userSettings)
     });
 
     if (response.ok) {
-      debugLogger.info(`✓ Settings saved to backend for user: ${currentUser}`);
+      debugLogger.info(`[OK] Settings saved to backend for user: ${currentUser}`);
     } else {
       const error = await response.json();
       debugLogger.error('Failed to save user settings to backend:', error);
-      showNotification('⚠️ Saved locally only', 'warning', 2000);
+      showNotification("[Warning] Saved locally only", 'warning', 2000);
     }
   } catch (error) {
     debugLogger.error('Error saving user settings to backend:', error);
-    showNotification('⚠️ Saved locally only', 'warning', 2000);
+    showNotification("[Warning] Saved locally only", 'warning', 2000);
   }
 }
 
@@ -353,11 +353,11 @@ function updateUI() {
       if (parent) {
         parent.classList.add('selected');
       } else {
-        debugLogger.warn(`⚠️ updateUI: Could not find .radio-option parent for ${globalSettings.csv_selected_file}`);
+        debugLogger.warn(`[Warning] updateUI: Could not find .radio-option parent for ${globalSettings.csv_selected_file}`);
       }
       srcSelected = true;
     } else {
-      debugLogger.warn(`❌ updateUI: No radio found for file ${globalSettings.csv_selected_file}`);
+      debugLogger.warn(`[Error] updateUI: No radio found for file ${globalSettings.csv_selected_file}`);
     }
   }
   if (!srcSelected) {
@@ -382,7 +382,7 @@ function updateUI() {
       themeRadio.parentElement.classList.add('selected');
     }
   } else {
-    debugLogger.warn(`⚠️ updateUI: Theme radio not found for value: ${globalSettings.theme}`);
+    debugLogger.warn(`[Warning] updateUI: Theme radio not found for value: ${globalSettings.theme}`);
   }
 
   // Autres champs
@@ -398,10 +398,10 @@ function updateUI() {
   document.getElementById('cointracking_api_secret').value = globalSettings.cointracking_api_secret ? maskApiKey(globalSettings.cointracking_api_secret) : '';
   document.getElementById('fred_api_key').value = globalSettings.fred_api_key ? maskApiKey(globalSettings.fred_api_key) : '';
 
-  // 🔍 DEBUG groq_api_key - Log what we're displaying
+  //  DEBUG groq_api_key - Log what we're displaying
   const groqMasked = globalSettings.groq_api_key ? maskApiKey(globalSettings.groq_api_key) : '';
   const groqField = document.getElementById('groq_api_key');
-  console.debug('🔍 [updateUI] groq_api_key:');
+  console.debug("[updateUI] groq_api_key:");
   console.debug('  - Raw value:', globalSettings.groq_api_key ? globalSettings.groq_api_key.substring(0, 10) + '...' : '(undefined)');
   console.debug('  - Masked value:', groqMasked || '(vide)');
   console.debug('  - Field type:', groqField ? groqField.type : '(field not found)');
@@ -561,14 +561,14 @@ async function updateStatusSummary() {
   }
 
   const pricingLabels = {
-    'local': '🏠 Prix locaux',
-    'auto': '🚀 Prix automatiques'
+    'local': "Prix locaux",
+    'auto': "Prix automatiques"
   };
 
   const themeLabels = {
-    'auto': '🌓 Auto',
-    'light': '☀️ Light',
-    'dark': '🌙 Dark'
+    'auto': "Auto",
+    'light': "Light",
+    'dark': "Dark"
   };
 
   summary.innerHTML = `
@@ -597,14 +597,14 @@ function updateStatusSummarySync() {
   const globalSettings = window.userSettings || getDefaultSettings();
 
   const pricingLabels = {
-    'local': '🏠 Prix locaux',
-    'auto': '🚀 Prix automatiques'
+    'local': "Prix locaux",
+    'auto': "Prix automatiques"
   };
 
   const themeLabels = {
-    'auto': '🌓 Auto',
-    'light': '☀️ Light',
-    'dark': '🌙 Dark'
+    'auto': "Auto",
+    'light': "Light",
+    'dark': "Dark"
   };
 
   // Use current data source label without API call
@@ -636,7 +636,7 @@ async function selectDataSource(source) {
   });
   if (!window.userSettings) window.userSettings = getDefaultSettings();
 
-  // ⚠️ CRITIQUE: Préserver les clés API avant modification
+  //  CRITIQUE: Préserver les clés API avant modification
   // Recharger depuis le serveur pour éviter la perte des clés API
   try {
     const response = await fetch('/api/users/settings', {
@@ -669,7 +669,7 @@ async function selectDataSource(source) {
     if (src && src.file_path) {
       newFile = src.file_path.split(/[/\\]/).pop();
     } else {
-      debugLogger.warn(`❌ No source found for key: ${source} OR no file_path`);
+      debugLogger.warn(`[Error] No source found for key: ${source} OR no file_path`);
     }
   }
 
@@ -747,7 +747,7 @@ async function selectDataSource(source) {
     try { await saveSettings(); } catch (_) { }
   }
 
-  // 🔧 FIX: Force radio selection update AFTER all async operations
+  //  FIX: Force radio selection update AFTER all async operations
   // Use requestAnimationFrame to ensure DOM has fully rendered
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -778,13 +778,13 @@ async function selectPricing(pricing) {
   if (window.globalConfig) window.globalConfig.set('pricing', pricing);
   document.getElementById(`pricing_${pricing}`).checked = true;
   document.querySelector(`.radio-option input[value="${pricing}"]`).parentElement.classList.add('selected');
-  // 🔧 FIX: Save immediately (not debounced) to ensure pricing mode persists
+  //  FIX: Save immediately (not debounced) to ensure pricing mode persists
   try {
     await saveSettings();
-    showNotification('✓ Pricing mode saved', 'success', 1500);
+    showNotification("[OK] Pricing mode saved", 'success', 1500);
   } catch (err) {
     debugLogger.error('Failed to save pricing mode:', err);
-    showNotification('✗ Save error', 'error', 2500);
+    showNotification("[Error] Save error", 'error', 2500);
   }
 }
 
@@ -835,9 +835,9 @@ async function saveAllSettings() {
     const masked = current ? maskApiKey(current) : '';
     const incoming = (field.value || '').trim();
 
-    // 🔍 DEBUG pour groq_api_key
+    //  DEBUG pour groq_api_key
     if (settingKey === 'groq_api_key') {
-      console.debug('🔍 [saveSecretIfProvided] groq_api_key:');
+      console.debug("[saveSecretIfProvided] groq_api_key:");
       console.debug('  - current:', current ? current.substring(0, 10) + '...' : '(vide)');
       console.debug('  - masked:', masked ? masked.substring(0, 10) + '...' : '(vide)');
       console.debug('  - incoming:', incoming ? incoming.substring(0, 10) + '...' : '(vide)');
@@ -851,7 +851,7 @@ async function saveAllSettings() {
       if (window.globalConfig) {
         window.globalConfig.set(settingKey, '');
       }
-      if (settingKey === 'groq_api_key') console.warn('⚠️ [saveSecretIfProvided] groq_api_key EFFACÉE (champ vide)');
+      if (settingKey === 'groq_api_key') console.warn("[Warning] [saveSecretIfProvided] groq_api_key EFFACÉE (champ vide)");
       return;
     }
 
@@ -861,9 +861,9 @@ async function saveAllSettings() {
       if (window.globalConfig) {
         window.globalConfig.set(settingKey, incoming);
       }
-      if (settingKey === 'groq_api_key') console.debug('✅ [saveSecretIfProvided] groq_api_key SAUVEGARDÉE');
+      if (settingKey === 'groq_api_key') console.debug("[OK] [saveSecretIfProvided] groq_api_key SAUVEGARDÉE");
     } else {
-      if (settingKey === 'groq_api_key') console.debug('ℹ️ [saveSecretIfProvided] groq_api_key IGNORÉE (masque détecté, garde la valeur existante)');
+      if (settingKey === 'groq_api_key') console.debug("[saveSecretIfProvided] groq_api_key IGNORÉE (masque détecté, garde la valeur existante)");
     }
   }
 
@@ -905,13 +905,13 @@ async function saveAllSettings() {
   updateUI();
 
   // Notification
-  showNotification('⚙️ Configuration saved!', 'success');
+  showNotification("Configuration saved!", 'success');
 }
 
 // Test de la source de données
 async function testDataSource() {
   const testDiv = document.getElementById('data-source-test');
-  testDiv.innerHTML = '<div class="test-result">🧪 Testing...</div>';
+  testDiv.innerHTML = "<div class=\"test-result\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Simulation\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#beaker\"></use></svg> Testing...</div>";
 
   try {
     const balanceResult = await window.loadBalanceData(true);
@@ -922,7 +922,7 @@ async function testDataSource() {
     if (data.items && data.items.length > 0) {
       testDiv.innerHTML = `
     <div class="test-result" style="color: var(--pos);">
-      ✅ <strong>Success</strong><br>
+      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> <strong>Success</strong><br>
       Source: ${data.source_used}<br>
       Assets found: ${data.items.length}<br>
       Premier asset: ${data.items[0].symbol} (${data.items[0].value_usd || 0} USD)
@@ -931,7 +931,7 @@ async function testDataSource() {
     } else {
       testDiv.innerHTML = `
     <div class="test-result" style="color: var(--warning);">
-      ⚠️ <strong>No data</strong><br>
+      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> <strong>No data</strong><br>
       Source responds but returns no assets
     </div>
   `;
@@ -939,7 +939,7 @@ async function testDataSource() {
   } catch (error) {
     testDiv.innerHTML = `
   <div class="test-result" style="color: var(--danger);">
-    ❌ <strong>Error</strong><br>
+    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> <strong>Error</strong><br>
     ${error.message}
   </div>
 `;
@@ -952,7 +952,7 @@ async function autoDetectDebugToken() {
   const lastAttempt = localStorage.getItem('debug_token_detection_last');
   const now = Date.now();
   if (lastAttempt && (now - parseInt(lastAttempt)) < 60000) { // 1 minute
-    console.debug('🔍 DEBUG_TOKEN auto-détection rate-limitée, skip');
+    console.debug("DEBUG_TOKEN auto-détection rate-limitée, skip");
     return;
   }
   localStorage.setItem('debug_token_detection_last', now.toString());
@@ -977,12 +977,12 @@ async function autoDetectDebugToken() {
         window.userSettings.debug_token = token;
         document.getElementById('debug_token').value = maskApiKey(token);
         console.debug('DEBUG_TOKEN auto-detected et configuré');
-        showNotification('🔑 DEBUG_TOKEN auto-detected', 'success');
+        showNotification("DEBUG_TOKEN auto-detected", 'success');
         return;
       }
       // Rate limit les tentatives
       if (response.status === 429) {
-        console.debug(`🚦 Rate limite atteinte, attendre avant prochaine tentative`);
+        console.debug(`Rate limite atteinte, attendre avant prochaine tentative`);
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2 secondes
       }
       // 403 attendu : ne pas logger (tentative normale)
@@ -1075,7 +1075,7 @@ async function autoDetectApiKeys() {
 
       if (foundKeys) {
         saveSettings(); // Sauvegarder les nouvelles clés
-        showNotification('🔑 API Keys detected from .env', 'success');
+        showNotification("API Keys detected from .env", 'success');
       }
     }
   } catch (e) {
@@ -1127,7 +1127,7 @@ async function syncApiKeysFromEnv() {
   try {
     const debugToken = (window.userSettings || getDefaultSettings()).debug_token;
     if (!debugToken) {
-      showNotification('❌ DEBUG_TOKEN requis pour synchroniser depuis .env', 'error');
+      showNotification("[Error] DEBUG_TOKEN requis pour synchroniser depuis .env", 'error');
       return;
     }
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/debug/api-keys?debug_token=${debugToken}`);
@@ -1186,15 +1186,15 @@ async function syncApiKeysFromEnv() {
 
       if (foundKeys) {
         saveSettings();
-        showNotification('📥 Keys reloaded from .env', 'success');
+        showNotification("Keys reloaded from .env", 'success');
       } else {
-        showNotification('⚠️ No keys found in .env', 'warning');
+        showNotification("[Warning] No keys found in .env", 'warning');
       }
     } else {
-      showNotification('❌ Error reading .env', 'error');
+      showNotification("Error reading .env", 'error');
     }
   } catch (e) {
-    showNotification(`❌ Error: ${e.message}`, 'error');
+    showNotification(`Error: ${e.message}`, 'error');
   }
 }
 
@@ -1210,7 +1210,7 @@ async function syncApiKeysToEnv() {
   try {
     const debugToken = (window.userSettings || getDefaultSettings()).debug_token;
     if (!debugToken) {
-      showNotification('❌ DEBUG_TOKEN required to save to .env', 'error');
+      showNotification("[Error] DEBUG_TOKEN required to save to .env", 'error');
       return;
     }
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/debug/api-keys?debug_token=${debugToken}`, {
@@ -1222,22 +1222,22 @@ async function syncApiKeysToEnv() {
     if (response.ok) {
       const result = await response.json();
       if (result.updated) {
-        showNotification('💾 Keys saved to .env', 'success');
+        showNotification("Keys saved to .env", 'success');
       } else {
-        showNotification('⚪ No keys to save', 'info');
+        showNotification("[Neutral] No keys to save", 'info');
       }
     } else {
       throw new Error(`HTTP ${response.status}`);
     }
   } catch (e) {
-    showNotification(`❌ Save error: ${e.message}`, 'error');
+    showNotification(`[Error] Save error: ${e.message}`, 'error');
   }
 }
 
 // Test des clés API
 async function testApiKeys() {
   const testDiv = document.getElementById('api-keys-test');
-  testDiv.innerHTML = '<div class="test-result">🧪 Testing APIs...</div>';
+  testDiv.innerHTML = "<div class=\"test-result\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Simulation\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#beaker\"></use></svg> Testing APIs...</div>";
 
   let results = [];
   const globalSettings = window.userSettings || getDefaultSettings();
@@ -1249,15 +1249,15 @@ async function testApiKeys() {
         headers: { 'X-User': getActiveUser() }
       });
       const data = await response.json();
-      results.push(`🥷 CoinGecko: ${data.ok ? '✅ OK' : '❌ Error'}`);
+      results.push(`CoinGecko: ${data.ok ? "OK" : "Error"}`);
       if (!data.ok && data.message) {
         results.push(`   └─ ${data.message}`);
       }
     } catch (e) {
-      results.push(`🥷 CoinGecko: ❌ ${e.message}`);
+      results.push(`CoinGecko: [Error] ${e.message}`);
     }
   } else {
-    results.push(`🥷 CoinGecko: ⚪ No key configured`);
+    results.push(`CoinGecko: [Neutral] No key configured`);
   }
 
   // Test FRED via backend proxy
@@ -1267,17 +1267,17 @@ async function testApiKeys() {
         headers: { 'X-User': getActiveUser() }
       });
       const data = await response.json();
-      results.push(`🏛️ FRED: ${response.ok && data.success ? '✅ OK' : '❌ Error'}`);
+      results.push(`FRED: ${response.ok && data.success ? "OK" : "Error"}`);
       if (!response.ok && data.detail) {
         results.push(`   └─ ${data.detail}`);
       } else if (!data.success && data.error) {
         results.push(`   └─ ${data.error}`);
       }
     } catch (e) {
-      results.push(`🏛️ FRED: ❌ ${e.message}`);
+      results.push(`FRED: [Error] ${e.message}`);
     }
   } else {
-    results.push(`🏛️ FRED: ⚪ No key configured`);
+    results.push(`FRED: [Neutral] No key configured`);
   }
 
   // Test CoinTracking API
@@ -1287,12 +1287,12 @@ async function testApiKeys() {
       globalConfig.set('data_source', 'cointracking_api');
       const result = await window.loadBalanceData(true);
       globalConfig.set('data_source', originalSource);
-      results.push(`📊 CoinTracking API: ${result.success && result.data?.items ? '✅ OK' : '❌ Error'}`);
+      results.push(`CoinTracking API: ${result.success && result.data?.items ? "OK" : "Error"}`);
     } catch (e) {
-      results.push(`📊 CoinTracking API: ❌ ${e.message}`);
+      results.push(`CoinTracking API: [Error] ${e.message}`);
     }
   } else {
-    results.push(`📊 CoinTracking API: ⚪ Missing keys`);
+    results.push(`CoinTracking API: [Neutral] Missing keys`);
   }
 
   // Test AI Chat Providers (Groq + Claude + Grok + OpenAI)
@@ -1308,9 +1308,9 @@ async function testApiKeys() {
       const groq = providers.find(p => p.id === 'groq');
       if (groq) {
         if (groq.configured) {
-          results.push(`🤖 Groq AI: ✅ OK (${groq.model})`);
+          results.push(`Groq AI: OK (${groq.model})`);
         } else {
-          results.push(`🤖 Groq AI: ⚪ No key configured`);
+          results.push(`Groq AI: [Neutral] No key configured`);
         }
       }
 
@@ -1318,9 +1318,9 @@ async function testApiKeys() {
       const claude = providers.find(p => p.id === 'claude');
       if (claude) {
         if (claude.configured) {
-          results.push(`🧠 Claude AI: ✅ OK (${claude.model})`);
+          results.push(`Claude AI: OK (${claude.model})`);
         } else {
-          results.push(`🧠 Claude AI: ⚪ No key configured`);
+          results.push(`Claude AI: [Neutral] No key configured`);
         }
       }
 
@@ -1328,9 +1328,9 @@ async function testApiKeys() {
       const grok = providers.find(p => p.id === 'grok');
       if (grok) {
         if (grok.configured) {
-          results.push(`🚀 Grok AI: ✅ OK (${grok.model})`);
+          results.push(`Grok AI: OK (${grok.model})`);
         } else {
-          results.push(`🚀 Grok AI: ⚪ No key configured`);
+          results.push(`Grok AI: [Neutral] No key configured`);
         }
       }
 
@@ -1338,16 +1338,16 @@ async function testApiKeys() {
       const openai = providers.find(p => p.id === 'openai');
       if (openai) {
         if (openai.configured) {
-          results.push(`🤖 OpenAI: ✅ OK (${openai.model})`);
+          results.push(`OpenAI: OK (${openai.model})`);
         } else {
-          results.push(`🤖 OpenAI: ⚪ No key configured`);
+          results.push(`OpenAI: [Neutral] No key configured`);
         }
       }
     } else {
-      results.push(`🤖 AI Chat: ❌ Service unavailable`);
+      results.push(`AI Chat: [Error] Service unavailable`);
     }
   } catch (e) {
-    results.push(`🤖 AI Chat: ❌ ${e.message}`);
+    results.push(`AI Chat: [Error] ${e.message}`);
   }
 
   // Test Backend disponibilité
@@ -1355,9 +1355,9 @@ async function testApiKeys() {
     const response = await fetch(`${globalSettings.api_base_url}/health`, {
       headers: { 'X-User': getActiveUser() }
     });
-    results.push(`🏥 Backend: ${response.ok ? '✅ OK' : '❌ Unavailable'}`);
+    results.push(`Backend: ${response.ok ? "OK" : "[Error] Unavailable"}`);
   } catch (e) {
-    results.push(`🏥 Backend: ❌ ${e.message}`);
+    results.push(`Backend: [Error] ${e.message}`);
   }
 
   testDiv.innerHTML = `
@@ -1371,26 +1371,26 @@ async function testApiKeys() {
 // Test complet du système (Enhanced Dec 2025)
 async function runFullSystemTest() {
   const testDiv = document.getElementById('full-system-test');
-  testDiv.innerHTML = '<div class="test-result">🚀 Full system test in progress... (may take 10-15 seconds)</div>';
+  testDiv.innerHTML = "<div class=\"test-result\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg> Full system test in progress... (may take 10-15 seconds)</div>";
 
   const startTime = performance.now();
   let results = [];
   const globalSettings = window.userSettings || getDefaultSettings();
 
   // === CORE SYSTEM ===
-  results.push('<strong>🔧 Core System</strong>');
+  results.push("<strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Tools\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#wrench-screwdriver\"></use></svg> Core System</strong>");
 
   // Backend Health
   try {
     const healthResponse = await fetch(`${globalSettings.api_base_url}/health`, { headers: { 'X-User': getActiveUser() } });
     if (healthResponse.ok) {
       const data = await healthResponse.json();
-      results.push(`&nbsp;&nbsp;🏥 Backend: ✅ OK (${data.version || 'v1.0'})`);
+      results.push(`&nbsp;&nbsp; Backend: OK (${data.version || 'v1.0'})`);
     } else {
-      results.push(`&nbsp;&nbsp;🏥 Backend: ❌ HTTP Error ${healthResponse.status}`);
+      results.push(`&nbsp;&nbsp; Backend: [Error] HTTP Error ${healthResponse.status}`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🏥 Backend: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Backend: [Error] ${e.message}`);
   }
 
   // Redis
@@ -1398,13 +1398,13 @@ async function runFullSystemTest() {
     const healthResponse = await fetch(`${globalSettings.api_base_url}/health`, { headers: { 'X-User': getActiveUser() } });
     const data = await healthResponse.json();
     const redisOk = data.redis === 'connected' || data.redis?.status === 'ok';
-    results.push(`&nbsp;&nbsp;🔴 Redis: ${redisOk ? '✅ Connected' : '⚠️ Not accessible (non-critical)'}`);
+    results.push(`&nbsp;&nbsp;[Negative] Redis: ${redisOk ? "Connected" : "[Warning] Not accessible (non-critical)"}`);
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🔴 Redis: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp;[Negative] Redis: [Error] ${e.message}`);
   }
 
   // === DATA SOURCES ===
-  results.push('<br><strong>📊 Data Sources</strong>');
+  results.push("<br><strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Analytics\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#chart-bar\"></use></svg> Data Sources</strong>");
 
   // Balance Data
   try {
@@ -1412,9 +1412,9 @@ async function runFullSystemTest() {
     const balanceData = balanceResult.csvText
       ? { items: parseCSVBalancesAuto(balanceResult.csvText) }
       : (balanceResult.data || { items: [] });
-    results.push(`&nbsp;&nbsp;💰 Balances: ${balanceData.items?.length > 0 ? '✅ ' + balanceData.items.length + ' assets' : '⚠️ No assets'}`);
+    results.push(`&nbsp;&nbsp; Balances: ${balanceData.items?.length > 0 ? "OK " + balanceData.items.length + ' assets' : "[Warning] No assets"}`);
   } catch (e) {
-    results.push(`&nbsp;&nbsp;💰 Balances: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Balances: [Error] ${e.message}`);
   }
 
   // Sources System v2
@@ -1424,16 +1424,16 @@ async function runFullSystemTest() {
       const data = await response.json();
       const modules = data.modules || [];
       const activeCount = modules.filter(m => m.enabled).length;
-      results.push(`&nbsp;&nbsp;📁 Sources System: ✅ ${activeCount}/${modules.length} active modules`);
+      results.push(`&nbsp;&nbsp; Sources System: [OK] ${activeCount}/${modules.length} active modules`);
     } else {
-      results.push(`&nbsp;&nbsp;📁 Sources System: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Sources System: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;📁 Sources System: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Sources System: [Error] ${e.message}`);
   }
 
   // === ANALYTICS & PORTFOLIO ===
-  results.push('<br><strong>📈 Analytics & Portfolio</strong>');
+  results.push("<br><strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg> Analytics & Portfolio</strong>");
 
   // Portfolio Metrics
   try {
@@ -1443,24 +1443,24 @@ async function runFullSystemTest() {
     const hasData = metricsData.ok || metricsData.total_value !== undefined;
     if (hasData) {
       const totalValue = metricsData.data?.total_value || metricsData.total_value || 0;
-      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ✅ OK ($${totalValue.toLocaleString()})`);
+      results.push(`&nbsp;&nbsp; Portfolio Metrics: OK ($${totalValue.toLocaleString()})`);
     } else {
-      results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ No data`);
+      results.push(`&nbsp;&nbsp; Portfolio Metrics: [Error] No data`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;💼 Portfolio Metrics: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Portfolio Metrics: [Error] ${e.message}`);
   }
 
   // Taxonomy
   try {
     const taxData = await globalConfig.apiRequest('/taxonomy/suggestions');
-    results.push(`&nbsp;&nbsp;🏷️ Taxonomy: ${taxData ? '✅ OK' : '❌ Error'}`);
+    results.push(`&nbsp;&nbsp; Taxonomy: ${taxData ? "OK" : "Error"}`);
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🏷️ Taxonomy: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Taxonomy: [Error] ${e.message}`);
   }
 
   // === RISK & ML ===
-  results.push('<br><strong>🛡️ Risk & Machine Learning</strong>');
+  results.push("<br><strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg> Risk & Machine Learning</strong>");
 
   // Risk API
   try {
@@ -1469,12 +1469,12 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const riskScore = data.data?.risk_score || data.risk_score || 0;
-      results.push(`&nbsp;&nbsp;🛡️ Risk API: ✅ OK (Score: ${riskScore})`);
+      results.push(`&nbsp;&nbsp; Risk API: OK (Score: ${riskScore})`);
     } else {
-      results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Risk API: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🛡️ Risk API: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Risk API: [Error] ${e.message}`);
   }
 
   // ML Models (admin only)
@@ -1484,16 +1484,16 @@ async function runFullSystemTest() {
       const data = await response.json();
       const models = data.data?.models || [];
       const trainedCount = models.filter(m => m.status === 'TRAINED').length;
-      results.push(`&nbsp;&nbsp;🤖 ML Models: ✅ ${trainedCount}/${models.length} models trained`);
+      results.push(`&nbsp;&nbsp; ML Models: [OK] ${trainedCount}/${models.length} models trained`);
     } else {
-      results.push(`&nbsp;&nbsp;🤖 ML Models: ⚠️ Unauthorized access (admin required)`);
+      results.push(`&nbsp;&nbsp; ML Models: [Warning] Unauthorized access (admin required)`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🤖 ML Models: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; ML Models: [Error] ${e.message}`);
   }
 
   // === ALERTS & GOVERNANCE ===
-  results.push('<br><strong>🔔 Alerts & Governance</strong>');
+  results.push("<br><strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Notifications\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#bell\"></use></svg> Alerts & Governance</strong>");
 
   // Alerts
   try {
@@ -1501,12 +1501,12 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const alerts = data.data?.alerts || data.alerts || [];
-      results.push(`&nbsp;&nbsp;🔔 Alerts System: ✅ ${alerts.length} active alert(s)`);
+      results.push(`&nbsp;&nbsp; Alerts System: [OK] ${alerts.length} active alert(s)`);
     } else {
-      results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Alerts System: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;🔔 Alerts System: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Alerts System: [Error] ${e.message}`);
   }
 
   // Governance
@@ -1517,17 +1517,17 @@ async function runFullSystemTest() {
       const mode = data.mode || 'unknown';
       const currentState = data.current_state || 'IDLE';
       const isActive = currentState !== 'IDLE';
-      const icon = isActive ? '⚙️' : '✅';
-      results.push(`&nbsp;&nbsp;⚙️ Governance: ${icon} Mode=${mode}, State=${currentState}`);
+      const icon = isActive ? "Settings" : "OK";
+      results.push(`&nbsp;&nbsp; Governance: ${icon} Mode=${mode}, State=${currentState}`);
     } else {
-      results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Governance: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;⚙️ Governance: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Governance: [Error] ${e.message}`);
   }
 
   // === INTEGRATIONS ===
-  results.push('<br><strong>🔗 Integrations</strong>');
+  results.push("<br><strong><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Link\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#link\"></use></svg> Integrations</strong>");
 
   // Saxo
   try {
@@ -1535,12 +1535,12 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const portfolios = data.data?.portfolios || data.portfolios || [];
-      results.push(`&nbsp;&nbsp;📊 Saxo: ${portfolios.length > 0 ? '✅ ' + portfolios.length + ' portfolio(s)' : '⚠️ No portfolios'}`);
+      results.push(`&nbsp;&nbsp; Saxo: ${portfolios.length > 0 ? "OK " + portfolios.length + ' portfolio(s)' : "[Warning] No portfolios"}`);
     } else {
-      results.push(`&nbsp;&nbsp;📊 Saxo: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Saxo: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;📊 Saxo: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Saxo: [Error] ${e.message}`);
   }
 
   // Wealth/Patrimoine
@@ -1549,12 +1549,12 @@ async function runFullSystemTest() {
     if (response.ok) {
       const data = await response.json();
       const netWorth = data.data?.net_worth || data.net_worth || 0;
-      results.push(`&nbsp;&nbsp;💰 Wealth: ✅ Net Worth $${netWorth.toLocaleString()}`);
+      results.push(`&nbsp;&nbsp; Wealth: [OK] Net Worth $${netWorth.toLocaleString()}`);
     } else {
-      results.push(`&nbsp;&nbsp;💰 Wealth: ❌ Error`);
+      results.push(`&nbsp;&nbsp; Wealth: Error`);
     }
   } catch (e) {
-    results.push(`&nbsp;&nbsp;💰 Wealth: ❌ ${e.message}`);
+    results.push(`&nbsp;&nbsp; Wealth: [Error] ${e.message}`);
   }
 
   const endTime = performance.now();
@@ -1562,18 +1562,18 @@ async function runFullSystemTest() {
 
   testDiv.innerHTML = `
   <div class="test-result">
-    <strong>🧪 Full System Test Results</strong><br>
+    <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Full System Test Results</strong><br>
     <div style="margin-top: 12px;">
       ${results.join('<br>')}
     </div>
     <br>
     <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--theme-border);">
-      <strong>📋 Tested Configuration</strong><br>
+      <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Tested Configuration</strong><br>
       &nbsp;&nbsp;User: ${getActiveUser()}<br>
       &nbsp;&nbsp;Source: ${globalSettings.data_source}<br>
       &nbsp;&nbsp;Pricing: ${globalSettings.pricing}<br>
       &nbsp;&nbsp;API: ${globalSettings.api_base_url}<br>
-      &nbsp;&nbsp;⏱️ Duration: ${duration}s
+      &nbsp;&nbsp;<svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Duration: ${duration}s
     </div>
   </div>
   `;
@@ -1612,9 +1612,9 @@ async function importSettings() {
 // Legacy clearCache() function removed - replaced by clearLocalCache() (Dec 2025)
 
 function resetAllData() {
-  if (confirm('⚠️ WARNING: Delete ALL data and configurations?')) {
+  if (confirm("WARNING: Delete ALL data and configurations?")) {
     localStorage.clear();
-    showNotification('⚠️ All data deleted!', 'warning');
+    showNotification("[Warning] All data deleted!", 'warning');
     setTimeout(() => location.reload(), 1000);
   }
 }
@@ -1674,16 +1674,16 @@ async function checkAdminRole() {
     if (response.ok) {
       // Si l'endpoint répond OK, l'utilisateur a le rôle admin
       adminSection.style.display = 'block';
-      console.debug('✅ Admin role detected, showing Admin Quick Access');
+      console.debug("[OK] Admin role detected, showing Admin Quick Access");
     } else {
       // Pas de rôle admin
       adminSection.style.display = 'none';
-      console.debug('ℹ️ No admin role, hiding Admin Quick Access');
+      console.debug("No admin role, hiding Admin Quick Access");
     }
   } catch (e) {
     // En cas d'erreur, cacher la section par sécurité
     adminSection.style.display = 'none';
-    console.debug('ℹ️ Error checking admin role, hiding Admin Quick Access:', e.message);
+    console.debug("Error checking admin role, hiding Admin Quick Access:", e.message);
   }
 }
 
@@ -1706,11 +1706,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Écouter les changements de thème système pour mettre à jour l'interface
   window.addEventListener('themeChanged', (event) => {
-    console.debug('🎨 Thème changé:', event.detail);
+    console.debug("Thème changé:", event.detail);
     // L'interface n'a pas besoin d'être mise à jour car elle suit déjà globalConfig
   });
 
-  // 🔧 FIX GLOBAL: Event delegation pour capturer TOUS les clics sur les radios data_source
+  //  FIX GLOBAL: Event delegation pour capturer TOUS les clics sur les radios data_source
   // Ceci fonctionne même si les radios sont créés dynamiquement
   document.addEventListener('click', async (e) => {
     const target = e.target;
@@ -1749,12 +1749,12 @@ async function downloadCSVFiles() {
   const apiSecret = userSettings.cointracking_api_secret;
 
   if (!apiKey || !apiSecret) {
-    statusDiv.innerHTML = '<div class="error">❌ CoinTracking API keys required for automatic download.</div>';
+    statusDiv.innerHTML = "<div class=\"error\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> CoinTracking API keys required for automatic download.</div>";
     return;
   }
 
-  downloadBtn.textContent = '⏳ Downloading...';
-  statusDiv.innerHTML = '<div class="info">🔄 Download in progress...</div>';
+  downloadBtn.textContent = "[Pending] Downloading...";
+  statusDiv.innerHTML = "<div class=\"info\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg> Download in progress...</div>";
 
   try {
     const selectedFiles = getSelectedFiles();
@@ -1778,9 +1778,9 @@ async function downloadCSVFiles() {
     displayDownloadResults(results);
 
   } catch (error) {
-    statusDiv.innerHTML = `<div class="error">❌ Download error: ${error.message}</div>`;
+    statusDiv.innerHTML = `<div class="error"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Download error: ${error.message}</div>`;
   } finally {
-    downloadBtn.textContent = '📥 Download Now';
+    downloadBtn.textContent = "Download Now";
   }
 }
 
@@ -1827,7 +1827,7 @@ function displayDownloadResults(results) {
   let html = '<div style="margin-top: 16px;"><h4>Download results:</h4><ul>';
 
   results.forEach(result => {
-    const icon = result.success ? '✅' : '❌';
+    const icon = result.success ? "OK" : "Error";
     const fileLabel = getFileLabel(result.type);
 
     if (result.success) {
@@ -1874,10 +1874,10 @@ async function checkCSVStatus() {
     if (response.success) {
       displayCSVStatus(response.files);
     } else {
-      statusDiv.innerHTML = '<div class="error">❌ Unable to check CSV files status.</div>';
+      statusDiv.innerHTML = "<div class=\"error\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Unable to check CSV files status.</div>";
     }
   } catch (error) {
-    statusDiv.innerHTML = `<div class="error">❌ Verification error: ${error.message}</div>`;
+    statusDiv.innerHTML = `<div class="error"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Verification error: ${error.message}</div>`;
   }
 }
 
@@ -1885,7 +1885,7 @@ function displayCSVStatus(files) {
   const statusDiv = document.getElementById('csv-download-status');
 
   if (!files || files.length === 0) {
-    statusDiv.innerHTML = '<div class="warning">⚠️ No CSV files found for this profile</div>';
+    statusDiv.innerHTML = "<div class=\"warning\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> No CSV files found for this profile</div>";
     return;
   }
 
@@ -1896,7 +1896,7 @@ function displayCSVStatus(files) {
     const ageClass = age.days > 1 ? 'warning' : age.hours > 12 ? 'info' : 'success';
 
     html += `<li>
-      <span class="status-indicator status-${ageClass}">📄</span>
+      <span class="status-indicator status-${ageClass}"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg></span>
       <strong>${file.name}</strong>
       (${formatFileSize(file.size)}, ${age.text})
     </li>`;
@@ -2039,7 +2039,7 @@ async function handleSaxoUpload(event) {
       // Success
       resultDiv.innerHTML = `
         <div style="padding: 1rem; background: var(--success-bg); border: 1px solid var(--success); border-radius: var(--radius-md); color: var(--success);">
-          <strong>✅ Upload successful!</strong><br>
+          <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Upload successful!</strong><br>
           ${result.portfolios_count || 1} portfolio(s) importé(s) • ${result.positions_count || 0} positions
         </div>
       `;
@@ -2058,11 +2058,11 @@ async function handleSaxoUpload(event) {
     }
 
   } catch (error) {
-    debugLogger.error('❌ Saxo upload error:', error);
+    debugLogger.error("[Error] Saxo upload error:", error);
 
     resultDiv.innerHTML = `
       <div style="padding: 1rem; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius-md); color: var(--danger);">
-        <strong>❌ Upload error</strong><br>
+        <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Upload error</strong><br>
         ${error.message}
       </div>
     `;
@@ -2085,7 +2085,7 @@ async function refreshSaxoStatus() {
   const statusSpan = document.getElementById('saxo-status-display');
   const dashboardBtn = document.getElementById('saxo-dashboard-btn');
 
-  if (statusSpan) statusSpan.textContent = '🔄 Checking...';
+  if (statusSpan) statusSpan.textContent = "Checking...";
 
   try {
     // Use the wealth store utility
@@ -2094,7 +2094,7 @@ async function refreshSaxoStatus() {
 
     if (summary.isEmpty || summary.error) {
       if (statusSpan) {
-        statusSpan.textContent = '📂 No portfolio imported';
+        statusSpan.textContent = "No portfolio imported";
         statusSpan.style.color = 'var(--theme-text-muted)';
       }
       if (dashboardBtn) {
@@ -2103,7 +2103,7 @@ async function refreshSaxoStatus() {
       }
     } else {
       if (statusSpan) {
-        statusSpan.innerHTML = `✅ Dernier import : ${summary.asof} • ${summary.positions_count} positions • ${formatCurrency(summary.total_value)}`;
+        statusSpan.innerHTML = `[OK] Dernier import : ${summary.asof} • ${summary.positions_count} positions • ${formatCurrency(summary.total_value)}`;
         statusSpan.style.color = 'var(--success)';
       }
       if (dashboardBtn) {
@@ -2116,10 +2116,10 @@ async function refreshSaxoStatus() {
     console.debug('[Settings Saxo] Error refreshing status:', error.message);
     if (statusSpan) {
       if (error.message?.includes('Failed to import')) {
-        statusSpan.textContent = '⚠️ Module not available';
+        statusSpan.textContent = "[Warning] Module not available";
         statusSpan.style.color = 'var(--theme-text-muted)';
       } else {
-        statusSpan.textContent = '❌ Service temporarily unavailable';
+        statusSpan.textContent = "[Error] Service temporarily unavailable";
         statusSpan.style.color = 'var(--danger)';
       }
     }
@@ -2147,7 +2147,7 @@ function clearLocalCache() {
       }
     });
     keysToRemove.forEach(key => localStorage.removeItem(key));
-    showNotification(`🗑️ ${keysToRemove.length} cache keys deleted!`, 'success');
+    showNotification(`Delete ${keysToRemove.length} cache keys deleted!`, 'success');
     updateCacheStatsDisplay();
   }
 }
@@ -2161,20 +2161,20 @@ async function clearBackendCache() {
       });
       if (response.ok) {
         const data = await response.json();
-        showNotification(`✅ Backend cache cleared: ${data.cleared_count || 'multiple'} entries`, 'success');
+        showNotification(`[OK] Backend cache cleared: ${data.cleared_count || 'multiple'} entries`, 'success');
       } else {
         const error = await response.json();
-        showNotification(`❌ Error: ${error.error || 'Access denied'}`, 'error');
+        showNotification(`Error: ${error.error || 'Access denied'}`, 'error');
       }
     } catch (e) {
-      showNotification(`❌ Error: ${e.message}`, 'error');
+      showNotification(`Error: ${e.message}`, 'error');
     }
   }
 }
 
 async function showCacheStats() {
   const displayDiv = document.getElementById('cache-stats-display');
-  displayDiv.innerHTML = '🔄 Loading...';
+  displayDiv.innerHTML = "Loading...";
 
   try {
     // Local storage stats
@@ -2197,7 +2197,7 @@ async function showCacheStats() {
     }
 
     let html = `
-      <strong>📊 Cache Statistics</strong><br>
+      <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Cache Statistics</strong><br>
       <div style="margin-top: 8px;">
         <strong>Local (localStorage):</strong><br>
         - ${localKeys.length} keys<br>
@@ -2219,7 +2219,7 @@ async function showCacheStats() {
     displayDiv.innerHTML = html;
 
   } catch (e) {
-    displayDiv.innerHTML = `❌ Error: ${e.message}`;
+    displayDiv.innerHTML = `Error: ${e.message}`;
   }
 }
 
@@ -2234,7 +2234,7 @@ function updateCacheStatsDisplay() {
 async function viewRecentLogs() {
   const logsDiv = document.getElementById('logs-display');
   logsDiv.style.display = 'block';
-  logsDiv.innerHTML = '🔄 Loading logs...';
+  logsDiv.innerHTML = "Loading logs...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/logs/read?limit=100&sort_order=desc`, {
@@ -2273,10 +2273,10 @@ async function viewRecentLogs() {
       }
     } else {
       const error = await response.json();
-      logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${error.error || 'Access denied (admin required)'}</span>`;
+      logsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error: ${error.error || 'Access denied (admin required)'}</span>`;
     }
   } catch (e) {
-    logsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${e.message}</span>`;
+    logsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error: ${e.message}</span>`;
   }
 }
 
@@ -2306,18 +2306,18 @@ async function downloadLogs() {
       a.download = `smartfolio-logs-${new Date().toISOString().split('T')[0]}.log`;
       a.click();
       URL.revokeObjectURL(url);
-      showNotification('📥 Logs downloaded', 'success');
+      showNotification("Logs downloaded", 'success');
     } else {
-      showNotification('❌ Error: Access denied (admin required)', 'error');
+      showNotification("Error: Access denied (admin required)", 'error');
     }
   } catch (e) {
-    showNotification(`❌ Error: ${e.message}`, 'error');
+    showNotification(`Error: ${e.message}`, 'error');
   }
 }
 
 async function pingBackend() {
   const resultsDiv = document.getElementById('ping-results');
-  resultsDiv.innerHTML = '🏓 Test in progress...';
+  resultsDiv.innerHTML = "Test in progress...";
 
   const pings = [];
   const apiBaseUrl = (window.userSettings || getDefaultSettings()).api_base_url;
@@ -2342,13 +2342,13 @@ async function pingBackend() {
       const max = Math.max(...pings).toFixed(1);
 
       let statusColor = 'var(--success)';
-      let statusIcon = '✅';
+      let statusIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>";
       if (avg > 500) {
         statusColor = 'var(--danger)';
-        statusIcon = '❌';
+        statusIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg>";
       } else if (avg > 200) {
         statusColor = 'var(--warning)';
-        statusIcon = '⚠️';
+        statusIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>";
       }
 
       resultsDiv.innerHTML = `
@@ -2357,17 +2357,17 @@ async function pingBackend() {
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Ping failed</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Ping failed</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Error: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error: ${e.message}</span>`;
   }
 }
 
 // === Individual Component Tests ===
 async function testRedis() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '🔴 Test Redis...';
+  resultsDiv.innerHTML = "[Negative] Test Redis...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/health/redis`, {
@@ -2380,18 +2380,18 @@ async function testRedis() {
     const redisKeys = data.data?.keys;
 
     if (redisStatus === 'connected') {
-      resultsDiv.innerHTML = `<span style="color: var(--success);">✅ Redis: Connected (${redisKeys} keys)</span>`;
+      resultsDiv.innerHTML = `<span style="color: var(--success);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Redis: Connected (${redisKeys} keys)</span>`;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ Redis: Non accessible (non critique)</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> Redis: Non accessible (non critique)</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Redis: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Redis: ${e.message}</span>`;
   }
 }
 
 async function testMLModels() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '🤖 Test ML Models...';
+  resultsDiv.innerHTML = "Test ML Models...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/admin/ml/models`, {
@@ -2406,20 +2406,20 @@ async function testMLModels() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ ML Models: ${trainedCount}/${models.length} models trained
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> ML Models: ${trainedCount}/${models.length} models trained
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--warning);">⚠️ ML Models: Access denied (admin required)</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> ML Models: Access denied (admin required)</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ ML Models: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> ML Models: ${e.message}</span>`;
   }
 }
 
 async function testRiskAPI() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '🛡️ Test Risk API...';
+  resultsDiv.innerHTML = "Test Risk API...";
 
   try {
     const settings = window.userSettings || getDefaultSettings();
@@ -2434,19 +2434,19 @@ async function testRiskAPI() {
       const hasData = data.success === true || data.risk_metrics !== undefined;
 
       resultsDiv.innerHTML = hasData
-        ? '<span style="color: var(--success);">✅ Risk API: Data available</span>'
-        : '<span style="color: var(--warning);">⚠️ Risk API: No data</span>';
+        ? "<span style=\"color: var(--success);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg> Risk API: Data available</span>"
+        : "<span style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> Risk API: No data</span>";
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Risk API: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Risk API: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Risk API: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Risk API: ${e.message}</span>`;
   }
 }
 
 async function testAlerts() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '🔔 Test Alerts...';
+  resultsDiv.innerHTML = "Test Alerts...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/alerts/list`, {
@@ -2459,20 +2459,20 @@ async function testAlerts() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ Alerts: ${alerts.length} active alert(s)
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Alerts: ${alerts.length} active alert(s)
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Alerts: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Alerts: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Alerts: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Alerts: ${e.message}</span>`;
   }
 }
 
 async function testSaxo() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '📊 Test Saxo...';
+  resultsDiv.innerHTML = "Test Saxo...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/saxo/portfolios`, {
@@ -2484,19 +2484,19 @@ async function testSaxo() {
       const portfolios = data.data?.portfolios || data.portfolios || [];
 
       resultsDiv.innerHTML = portfolios.length > 0
-        ? `<span style="color: var(--success);">✅ Saxo: ${portfolios.length} portfolio(s)</span>`
-        : '<span style="color: var(--warning);">⚠️ Saxo: No portfolio imported</span>';
+        ? `<span style="color: var(--success);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Saxo: ${portfolios.length} portfolio(s)</span>`
+        : "<span style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> Saxo: No portfolio imported</span>";
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Saxo: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Saxo: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Saxo: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Saxo: ${e.message}</span>`;
   }
 }
 
 async function testWealth() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '💰 Test Wealth...';
+  resultsDiv.innerHTML = "Test Wealth...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/wealth/summary`, {
@@ -2509,20 +2509,20 @@ async function testWealth() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ Wealth: Net Worth $${netWorth.toLocaleString()}
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Wealth: Net Worth $${netWorth.toLocaleString()}
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Wealth: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Wealth: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Wealth: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Wealth: ${e.message}</span>`;
   }
 }
 
 async function testSources() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '📁 Test Sources...';
+  resultsDiv.innerHTML = "Test Sources...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/api/sources/list`, {
@@ -2536,20 +2536,20 @@ async function testSources() {
 
       resultsDiv.innerHTML = `
         <span style="color: var(--success);">
-          ✅ Sources: ${activeCount}/${modules.length} active modules
+          <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Sources: ${activeCount}/${modules.length} active modules
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Sources: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Sources: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Sources: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Sources: ${e.message}</span>`;
   }
 }
 
 async function testGovernance() {
   const resultsDiv = document.getElementById('detailed-test-results');
-  resultsDiv.innerHTML = '⚙️ Test Governance...';
+  resultsDiv.innerHTML = "Test Governance...";
 
   try {
     const response = await fetch(`${(window.userSettings || getDefaultSettings()).api_base_url}/execution/governance/state`, {
@@ -2562,7 +2562,7 @@ async function testGovernance() {
       const currentState = data.current_state || 'IDLE';
 
       const isActive = currentState !== 'IDLE';
-      const statusIcon = isActive ? '⚙️' : '✅';
+      const statusIcon = isActive ? "Settings" : "OK";
       const statusColor = isActive ? 'var(--warning)' : 'var(--success)';
 
       resultsDiv.innerHTML = `
@@ -2571,10 +2571,10 @@ async function testGovernance() {
         </span>
       `;
     } else {
-      resultsDiv.innerHTML = '<span style="color: var(--danger);">❌ Governance: Error</span>';
+      resultsDiv.innerHTML = "<span style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Governance: Error</span>";
     }
   } catch (e) {
-    resultsDiv.innerHTML = `<span style="color: var(--danger);">❌ Governance: ${e.message}</span>`;
+    resultsDiv.innerHTML = `<span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Governance: ${e.message}</span>`;
   }
 }
 

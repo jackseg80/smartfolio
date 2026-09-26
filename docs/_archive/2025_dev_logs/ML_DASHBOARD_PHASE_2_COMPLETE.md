@@ -1,26 +1,26 @@
-# ML Dashboard Enhancement - Phase 2 Complète ✅
+# ML Dashboard Enhancement - Phase 2 Complète
 
 **Date:** 2025-12-25
-**Status:** ✅ Phase 2 implémentée (4h de travail)
+**Status:** [OK] Phase 2 implémentée (4h de travail)
 **Fichiers modifiés:** 3 (backend: 2, frontend: 1)
 
 ---
 
-## 🎯 Ce Qui a Été Fait
+## Ce Qui a Été Fait
 
 ### **Phase 2 - Training Configuration**
 
 **Objectif:** Permettre de configurer les paramètres de training via UI
 
-**Résultat:** Backend + Frontend complet ✅
+**Résultat:** Backend + Frontend complet [OK]
 
 ---
 
-## 📝 Changements Effectués
+## Changements Effectués
 
 ### **BACKEND**
 
-#### **1. TrainingConfig Pydantic Model** ✅
+#### **1. TrainingConfig Pydantic Model**
 
 **Fichier:** `api/admin_router.py` (lignes 56-73)
 
@@ -54,7 +54,7 @@ class TrainingConfig(BaseModel):
 
 ---
 
-#### **2. Default Params Endpoint** ✅
+#### **2. Default Params Endpoint**
 
 **Endpoint:** `GET /admin/ml/models/{model_name}/default-params`
 
@@ -84,7 +84,7 @@ async def get_model_default_params(
 
 ---
 
-#### **3. Modified Train Endpoint** ✅
+#### **3. Modified Train Endpoint**
 
 **Endpoint:** `POST /admin/ml/train/{model_name}` (modifié)
 
@@ -127,7 +127,7 @@ Content-Type: application/json
 
 ---
 
-#### **4. Modified TrainingExecutor** ✅
+#### **4. Modified TrainingExecutor**
 
 **Fichier:** `services/ml/training_executor.py`
 
@@ -208,7 +208,7 @@ metrics = self._run_real_training(
 
 ### **FRONTEND**
 
-#### **5. Configure & Train Modal** ✅
+#### **5. Configure & Train Modal**
 
 **Fichier:** `static/admin-dashboard.html` (lignes 994-1129)
 
@@ -242,7 +242,7 @@ metrics = self._run_real_training(
 
 ---
 
-#### **6. JavaScript Functions** ✅
+#### **6. JavaScript Functions**
 
 **Fichier:** `static/admin-dashboard.html` (lignes 2420-2633)
 
@@ -284,19 +284,19 @@ async function submitTraining() {
 
 ---
 
-#### **7. Modified Train Button** ✅
+#### **7. Modified Train Button**
 
 **Avant (Phase 1):**
 ```html
 <button onclick="triggerTraining('${model.name}', '${model.model_type}')">
-    🔄
+    Refresh
 </button>
 ```
 
 **Après (Phase 2):**
 ```html
 <button onclick="showConfigureTrainModal('${model.name}', '${model.model_type}')">
-    ⚙️ Train
+     Train
 </button>
 ```
 
@@ -304,7 +304,7 @@ async function submitTraining() {
 
 ---
 
-## 🎨 Features Détaillées
+## Features Détaillées
 
 ### **Presets**
 
@@ -369,7 +369,7 @@ const estimatedMinutes = baseTime * 5;
 
 ---
 
-## 🧪 Test & Validation
+## Test & Validation
 
 ### **Backend Tests**
 
@@ -456,9 +456,9 @@ curl -X POST "http://localhost:8080/admin/ml/train/btc_regime_detector?model_typ
 Get-Content logs\app.log -Wait -Tail 20 | Select-String "custom_config"
 
 # Expected:
-INFO services.ml.training_executor: ✅ Training job created: btc_regime_detector_1735123456 for model btc_regime_detector by jack (custom_config=True)
-INFO services.ml.training_executor: 📚 Training regime model: btc_regime_detector (custom_config=True)
-INFO services.ml.training_executor: 📊 Regime training params: days=365, epochs=50, patience=12
+INFO services.ml.training_executor: [OK] Training job created: btc_regime_detector_1735123456 for model btc_regime_detector by jack (custom_config=True)
+INFO services.ml.training_executor:  Training regime model: btc_regime_detector (custom_config=True)
+INFO services.ml.training_executor:  Regime training params: days=365, epochs=50, patience=12
 ```
 
 ---
@@ -468,7 +468,7 @@ INFO services.ml.training_executor: 📊 Regime training params: days=365, epoch
 **Étapes:**
 1. Ouvrir `http://localhost:8080/admin-dashboard.html#ml`
 2. Login en tant que "jack" (admin role)
-3. Cliquer sur bouton **⚙️ Train** pour un modèle
+3. Cliquer sur bouton ** Train** pour un modèle
 
 **Vérifier Modal Configure & Train:**
 - [ ] Modal s'ouvre avec loading state
@@ -501,7 +501,7 @@ INFO services.ml.training_executor: 📊 Regime training params: days=365, epoch
 
 ---
 
-## 🐛 Problèmes Potentiels & Solutions
+## Problèmes Potentiels & Solutions
 
 ### **1. Default params endpoint retourne 404**
 
@@ -526,7 +526,7 @@ curl -X POST "http://localhost:8080/admin/ml/train/btc_regime_detector?model_typ
 **Debug:**
 ```javascript
 // Console navigateur
-// Clic sur ⚙️ Train → Network tab → Vérifier response
+// Clic sur  Train → Network tab → Vérifier response
 
 // Vérifier structure:
 {
@@ -590,7 +590,7 @@ curl -X POST "..." -d '{"days": 5000}' -v
 
 ---
 
-## ✅ Checklist Validation Phase 2
+## Checklist Validation Phase 2
 
 **Backend:**
 - [ ] TrainingConfig Pydantic model créé
@@ -620,13 +620,13 @@ curl -X POST "..." -d '{"days": 5000}' -v
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 **Documents créés:**
-1. ✅ [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
-2. ✅ [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
-3. ✅ [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Phase 1 recap
-4. ✅ [ML_DASHBOARD_PHASE_2_COMPLETE.md](ML_DASHBOARD_PHASE_2_COMPLETE.md) - Ce document
+1. [OK] [ML_DASHBOARD_AUDIT_DEC_2025.md](ML_DASHBOARD_AUDIT_DEC_2025.md) - Audit complet
+2. [OK] [ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md](ML_DASHBOARD_IMPLEMENTATION_ROADMAP.md) - Roadmap détaillée
+3. [OK] [ML_DASHBOARD_PHASE_1_COMPLETE.md](ML_DASHBOARD_PHASE_1_COMPLETE.md) - Phase 1 recap
+4. [OK] [ML_DASHBOARD_PHASE_2_COMPLETE.md](ML_DASHBOARD_PHASE_2_COMPLETE.md) - Ce document
 
 **Code modifié:**
 - `api/admin_router.py` (+144 lignes environ)
@@ -639,16 +639,16 @@ curl -X POST "..." -d '{"days": 5000}' -v
 
 ---
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
-### **Phase 3 - Nettoyage Doublons (1-2h)** ⏸️
+### **Phase 3 - Nettoyage Doublons (1-2h)**
 
 **Objectif:** Clarifier rôles des 2 dashboards
 
 **ai-dashboard.html:**
 - Renommer "Administration" → "État des Modèles"
 - Supprimer cache management (→ admin#cache)
-- Ajouter lien "⚙️ Configuration → Admin Dashboard"
+- Ajouter lien " Configuration → Admin Dashboard"
 
 **admin-dashboard.html#ml:**
 - Devenir page principale training
@@ -656,7 +656,7 @@ curl -X POST "..." -d '{"days": 5000}' -v
 
 ---
 
-## ✅ Résumé Phase 2
+## Résumé Phase 2
 
 **Temps passé:** ~4h (estimation)
 **Lignes code:** ~594 lignes (backend: 224, frontend: 370)
@@ -664,19 +664,19 @@ curl -X POST "..." -d '{"days": 5000}' -v
 **Frontend work:** Modal complet, presets, time estimation
 
 **Fonctionnalités ajoutées:**
-- ✅ TrainingConfig Pydantic model (validation complète)
-- ✅ Endpoint default params (regime vs volatility)
-- ✅ Modified train endpoint (accepte config body)
-- ✅ Modified training executor (utilise config params)
-- ✅ Modal Configure & Train (5 sections)
-- ✅ Presets dropdown (Quick/Standard/Full/Deep/Custom)
-- ✅ Time estimation dynamique (GPU vs CPU)
-- ✅ Model type awareness (regime vs volatility)
-- ✅ Submit training avec config custom
+- [OK] TrainingConfig Pydantic model (validation complète)
+- [OK] Endpoint default params (regime vs volatility)
+- [OK] Modified train endpoint (accepte config body)
+- [OK] Modified training executor (utilise config params)
+- [OK] Modal Configure & Train (5 sections)
+- [OK] Presets dropdown (Quick/Standard/Full/Deep/Custom)
+- [OK] Time estimation dynamique (GPU vs CPU)
+- [OK] Model type awareness (regime vs volatility)
+- [OK] Submit training avec config custom
 
-**Prêt pour testing !** 🚀
+**Prêt pour testing !**
 
 ---
 
-**Status:** ✅ Phase 2 complète - Ready for Phase 3 (nettoyage)
+**Status:** [OK] Phase 2 complète - Ready for Phase 3 (nettoyage)
 **Next:** Simplifier ai-dashboard.html + enrichir admin-dashboard.html#ml

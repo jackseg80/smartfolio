@@ -264,8 +264,7 @@ class MorningBriefService:
                 w = pnl.get(window, {})
                 if w.get("available"):
                     sign = "+" if w["absolute_change"] >= 0 else ""
-                    emoji = "\u2705" if w["absolute_change"] >= 0 else "\u274c"
-                    lines.append(f"  {emoji} {window}: {sign}${w['absolute_change']:,.0f} ({sign}{w['percentage_change']:.1f}%)")
+                    lines.append(f"  {window}: {sign}${w['absolute_change']:,.0f} ({sign}{w['percentage_change']:.1f}%)")
             lines.append("")
 
         # Decision Index
@@ -281,7 +280,7 @@ class MorningBriefService:
         if alerts and alerts.get("total", 0) > 0:
             lines.append(f"Alerts (24h): {alerts['total']}")
             for a in alerts.get("alerts", [])[:3]:
-                lines.append(f"  \u26a0\ufe0f [{a['severity']}] {a['title']}")
+                lines.append(f"  [Warning] [{a['severity']}] {a['title']}")
             lines.append("")
 
         # Top movers
@@ -291,8 +290,7 @@ class MorningBriefService:
             for m in movers["movers"][:3]:
                 if m.get("change_pct") is not None:
                     sign = "+" if m["change_pct"] >= 0 else ""
-                    emoji = "\U0001f4c8" if m["change_pct"] >= 0 else "\U0001f4c9"
-                    lines.append(f"  {emoji} {m['symbol']}: {sign}{m['change_pct']:.1f}%")
+                    lines.append(f"  {m['symbol']}: {sign}{m['change_pct']:.1f}%")
             lines.append("")
 
         if brief.get("warnings"):

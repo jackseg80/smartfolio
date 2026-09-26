@@ -756,15 +756,15 @@ class PerformanceOptimizer {
         const recommendations = [];
         
         if (itemCount > this.thresholds.large_portfolio) {
-            recommendations.push('💡 Large portfolio detected - automatic optimizations enabled');
+            recommendations.push("Large portfolio detected - automatic optimizations enabled");
         }
         
         if (itemCount > this.thresholds.worker_threshold) {
-            recommendations.push('⚡ Heavy computations moved to Web Workers');
+            recommendations.push("Heavy computations moved to Web Workers");
         }
         
         if (itemCount > this.thresholds.pagination_size * 2) {
-            recommendations.push('📄 Automatic pagination recommended');
+            recommendations.push("Automatic pagination recommended");
         }
         
         return recommendations;

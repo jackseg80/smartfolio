@@ -3,11 +3,11 @@
 > **Document vivant** - Mis à jour à chaque étape importante
 > **Créé**: 2025-10-18
 > **Dernière mise à jour**: 2025-10-19
-> **Statut**: ✅ Phase 2.9 Complete - Portfolio Recommendations System
+> **Statut**: [OK] Phase 2.9 Complete - Portfolio Recommendations System
 
 ---
 
-## 📋 Table des matières
+## Table des matières
 
 1. [Vue d'ensemble](#vue-densemble)
 2. [Architecture](#architecture)
@@ -21,7 +21,7 @@
 
 ---
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 
 ### Objectif
 Créer un module **Risk & Analytics** pour le portefeuille bourse (Saxo Bank) qui combine :
@@ -30,11 +30,11 @@ Créer un module **Risk & Analytics** pour le portefeuille bourse (Saxo Bank) qu
 - **Analytics avancés** spécifiques bourse (secteurs, FX exposure, margin)
 
 ### Principes directeurs
-1. ♻️ **Réutilisation maximale** du code crypto existant
-2. 🎯 **Orienté décision** - pas juste du monitoring
-3. ⚡ **Performance** - cache Redis, calculs async
-4. 🧪 **Testabilité** - tests unitaires pour chaque métrique
-5. 📊 **UI épurée** - moins complexe que risk-dashboard.html crypto
+1. **Réutilisation maximale** du code crypto existant
+2. **Orienté décision** - pas juste du monitoring
+3. **Performance** - cache Redis, calculs async
+4. **Testabilité** - tests unitaires pour chaque métrique
+5. **UI épurée** - moins complexe que risk-dashboard.html crypto
 
 ### Différenciation vs Dashboard Crypto
 
@@ -49,7 +49,7 @@ Créer un module **Risk & Analytics** pour le portefeuille bourse (Saxo Bank) qu
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### Structure en 3 Piliers
 
@@ -59,7 +59,7 @@ class BourseRiskAnalytics:
     Architecture hybride combinant risk classique, ML prédictif et analytics avancés
     """
 
-    # 1️⃣ RISK CLASSIQUE (Fondations)
+    # RISK CLASSIQUE (Fondations)
     traditional_risk = {
         "var_95_1d": float,           # VaR 95% à 1 jour (3 méthodes)
         "volatility_30d": float,       # Volatilité rolling 30j annualisée
@@ -72,7 +72,7 @@ class BourseRiskAnalytics:
         "liquidity_score": int,       # 0-100 (ADV, spread, lot size)
     }
 
-    # 2️⃣ ML PRÉDICTIF (Réutilisé/Adapté)
+    # ML PRÉDICTIF (Réutilisé/Adapté)
     ml_predictions = {
         "trend_signal": float,        # -1 à +1 (bearish à bullish)
         "trend_strength": float,      # 0 à 1 (confiance)
@@ -91,7 +91,7 @@ class BourseRiskAnalytics:
         },
     }
 
-    # 3️⃣ ANALYTICS AVANCÉS (Nouveau)
+    # ANALYTICS AVANCÉS (Nouveau)
     advanced_analytics = {
         "position_var": {             # Contribution VaR par position
             "AAPL": float,
@@ -155,9 +155,9 @@ class BourseRiskAnalytics:
 
 ---
 
-## 🚀 Phases d'implémentation
+## Phases d'implémentation
 
-### ✅ Phase 0: Préparation
+### Phase 0: Préparation
 **Objectif**: Documenter, analyser l'existant, préparer structure
 
 **Tâches**:
@@ -168,15 +168,15 @@ class BourseRiskAnalytics:
 - [x] Créer structure de dossiers
 
 **Livrables**:
-- Ce fichier de spec ✅
-- Analyse détaillée des réutilisations ✅
-- Plan de tests ✅
+- Ce fichier de spec [OK]
+- Analyse détaillée des réutilisations [OK]
+- Plan de tests [OK]
 
-**Statut**: ✅ Terminé
+**Statut**: [OK] Terminé
 
 ---
 
-### ✅ Phase 1: MVP Risk Classique
+### Phase 1: MVP Risk Classique
 **Objectif**: Métriques de base fonctionnelles avec UI simple
 
 **Tâches**:
@@ -192,22 +192,22 @@ class BourseRiskAnalytics:
 - [ ] Tests unitaires pour chaque métrique
 
 **Métriques MVP Implémentées**:
-- ✅ Score de risque global (0-100)
-- ✅ VaR 95% à 1 jour (3 méthodes: historical, parametric, montecarlo)
-- ✅ Volatilité multi-périodes (30j, 90j, 252j annualisée)
-- ✅ Sharpe ratio (avec taux sans risque configurable)
-- ✅ Sortino ratio (downside risk)
-- ✅ Calmar ratio
-- ✅ Maximum drawdown
-- ✅ Beta portfolio (vs S&P500 ou benchmark custom)
+- [OK] Score de risque global (0-100)
+- [OK] VaR 95% à 1 jour (3 méthodes: historical, parametric, montecarlo)
+- [OK] Volatilité multi-périodes (30j, 90j, 252j annualisée)
+- [OK] Sharpe ratio (avec taux sans risque configurable)
+- [OK] Sortino ratio (downside risk)
+- [OK] Calmar ratio
+- [OK] Maximum drawdown
+- [OK] Beta portfolio (vs S&P500 ou benchmark custom)
 
 **Livrables**:
-- ✅ Backend fonctionnel avec métriques de base
-- ✅ Endpoint `/api/risk/bourse/dashboard` opérationnel
-- ⏳ UI simple affichant score + métriques (en cours)
-- ⏳ Tests passants (à faire)
+- [OK] Backend fonctionnel avec métriques de base
+- [OK] Endpoint `/api/risk/bourse/dashboard` opérationnel
+- [Pending] UI simple affichant score + métriques (en cours)
+- [Pending] Tests passants (à faire)
 
-**Statut**: 🟡 En cours (backend ✅, UI en attente)
+**Statut**:  En cours (backend [OK], UI en attente)
 
 **Implementation Notes**:
 - Utilise `yfinance` pour prix historiques (fallback données synthétiques)
@@ -218,11 +218,11 @@ class BourseRiskAnalytics:
 **Tests**:
 ```python
 # tests/unit/test_bourse_risk_metrics.py
-def test_calculate_var_historical()  # ⏳ À implémenter
-def test_calculate_volatility_rolling()  # ⏳ À implémenter
-def test_calculate_sharpe_ratio()  # ⏳ À implémenter
-def test_calculate_max_drawdown()  # ⏳ À implémenter
-def test_calculate_beta_vs_benchmark()  # ⏳ À implémenter
+def test_calculate_var_historical()  # [Pending] À implémenter
+def test_calculate_volatility_rolling()  # [Pending] À implémenter
+def test_calculate_sharpe_ratio()  # [Pending] À implémenter
+def test_calculate_max_drawdown()  # [Pending] À implémenter
+def test_calculate_beta_vs_benchmark()  # [Pending] À implémenter
 ```
 
 ---
@@ -257,7 +257,7 @@ def test_calculate_beta_vs_benchmark()  # ⏳ À implémenter
 - UI affichant insights ML temps réel
 - Tests ML avec données historiques
 
-**Statut**: ⚪ Pas commencé
+**Statut**: [Neutral] Pas commencé
 
 **Tests**:
 ```python
@@ -292,18 +292,18 @@ def test_ensemble_voting()
   - [x] Suggestions hedging
 
 **UI Advanced**:
-- ⏳ Tableau position-level VaR (déféré à Phase 5)
-- ⏳ Heatmap corrélations (déféré à Phase 5)
-- ⏳ Panneau stress testing avec sliders (déféré à Phase 5)
-- ⏳ Graphiques exposition FX (déféré à Phase 5)
+- [Pending] Tableau position-level VaR (déféré à Phase 5)
+- [Pending] Heatmap corrélations (déféré à Phase 5)
+- [Pending] Panneau stress testing avec sliders (déféré à Phase 5)
+- [Pending] Graphiques exposition FX (déféré à Phase 5)
 
 **Livrables**:
-- ✅ Analytics avancés fonctionnels (4/4 endpoints testés)
-- ✅ Backend complet (advanced_analytics.py, 530 lignes)
-- ✅ Documentation complète
-- ⏳ UI interactive (déféré à Phase 5)
+- [OK] Analytics avancés fonctionnels (4/4 endpoints testés)
+- [OK] Backend complet (advanced_analytics.py, 530 lignes)
+- [OK] Documentation complète
+- [Pending] UI interactive (déféré à Phase 5)
 
-**Statut**: ✅ Complété (backend), UI déféré à Phase 5
+**Statut**: [OK] Complété (backend), UI déféré à Phase 5
 
 **Tests**:
 ```python
@@ -343,17 +343,17 @@ def test_fx_exposure_calculation()
   - [x] Optimal leverage suggestions
 
 **Livrables**:
-- ✅ Features spécialisées opérationnelles (5/5 endpoints testés)
-- ✅ Backend complet (specialized_analytics.py, 690 lignes)
-- ✅ API endpoints (5 nouveaux endpoints, +315 lignes)
-- ⏳ Alertes automatiques (déféré à Phase 5 - UI)
-- ⏳ Export PDF des rapports (déféré à Phase 5 - UI)
+- [OK] Features spécialisées opérationnelles (5/5 endpoints testés)
+- [OK] Backend complet (specialized_analytics.py, 690 lignes)
+- [OK] API endpoints (5 nouveaux endpoints, +315 lignes)
+- [Pending] Alertes automatiques (déféré à Phase 5 - UI)
+- [Pending] Export PDF des rapports (déféré à Phase 5 - UI)
 
-**Statut**: ✅ Complété (backend), UI déféré à Phase 5
+**Statut**: [OK] Complété (backend), UI déféré à Phase 5
 
 ---
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Risk Classique
 
@@ -645,7 +645,7 @@ scenario: str = "market_crash_10pct"  # ou custom
 
 ---
 
-## 📊 Modèles de données
+## Modèles de données
 
 ### Position
 ```python
@@ -712,7 +712,7 @@ class MLPredictions:
 
 ---
 
-## ♻️ Réutilisations
+## Réutilisations
 
 ### Backend
 
@@ -826,7 +826,7 @@ logger.error(f"Failed to fetch historical prices: {e}")
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Structure des tests
 
@@ -991,11 +991,11 @@ pytest -m "phase1" -v
 
 ---
 
-## 📝 Changelog
+## Changelog
 
 ### [2025-10-18] - Initial Implementation
 
-#### Phase 0: Préparation ✅
+#### Phase 0: Préparation
 - **2025-10-18 10:00**: Création de BOURSE_RISK_ANALYTICS_SPEC.md
 - **2025-10-18 10:15**: Analyse infrastructure ML existante
   - Identifié `VolatilityPredictor` (LSTM) réutilisable
@@ -1006,39 +1006,39 @@ pytest -m "phase1" -v
   - Structure tabs et cards réutilisable
   - Theme CSS compatible
 
-#### Phase 1: MVP Risk Classique ✅ (Backend)
+#### Phase 1: MVP Risk Classique  (Backend)
 - **2025-10-18 10:45**: Création structure `services/risk/bourse/`
 - **2025-10-18 11:00**: Implémentation `metrics.py`
-  - ✅ `calculate_var_historical()` - VaR méthode historique
-  - ✅ `calculate_var_parametric()` - VaR paramétrique (Gaussian)
-  - ✅ `calculate_var_montecarlo()` - VaR Monte Carlo (10k simulations)
-  - ✅ `calculate_volatility()` - Vol multi-périodes annualisée
-  - ✅ `calculate_sharpe_ratio()` - Sharpe avec risk-free rate
-  - ✅ `calculate_sortino_ratio()` - Sortino (downside risk)
-  - ✅ `calculate_max_drawdown()` - Max drawdown avec duration
-  - ✅ `calculate_beta()` - Beta vs benchmark
-  - ✅ `calculate_risk_score()` - Score composite 0-100
-  - ✅ `calculate_calmar_ratio()` - Calmar ratio
+  - [OK] `calculate_var_historical()` - VaR méthode historique
+  - [OK] `calculate_var_parametric()` - VaR paramétrique (Gaussian)
+  - [OK] `calculate_var_montecarlo()` - VaR Monte Carlo (10k simulations)
+  - [OK] `calculate_volatility()` - Vol multi-périodes annualisée
+  - [OK] `calculate_sharpe_ratio()` - Sharpe avec risk-free rate
+  - [OK] `calculate_sortino_ratio()` - Sortino (downside risk)
+  - [OK] `calculate_max_drawdown()` - Max drawdown avec duration
+  - [OK] `calculate_beta()` - Beta vs benchmark
+  - [OK] `calculate_risk_score()` - Score composite 0-100
+  - [OK] `calculate_calmar_ratio()` - Calmar ratio
 - **2025-10-18 11:15**: Implémentation `data_fetcher.py`
-  - ✅ Support yfinance pour données historiques
-  - ✅ Fallback données synthétiques (random walk)
-  - ✅ Cache in-memory
-  - ✅ Support benchmarks (SPY, etc.)
+  - [OK] Support yfinance pour données historiques
+  - [OK] Fallback données synthétiques (random walk)
+  - [OK] Cache in-memory
+  - [OK] Support benchmarks (SPY, etc.)
 - **2025-10-18 11:30**: Implémentation `calculator.py`
-  - ✅ `BourseRiskCalculator` orchestrateur principal
-  - ✅ `calculate_portfolio_risk()` - Métriques complètes
-  - ✅ `_calculate_portfolio_returns()` - Returns pondérés
-  - ✅ `_generate_alerts()` - Alertes automatiques
-  - ✅ `calculate_position_level_var()` - VaR par position
+  - [OK] `BourseRiskCalculator` orchestrateur principal
+  - [OK] `calculate_portfolio_risk()` - Métriques complètes
+  - [OK] `_calculate_portfolio_returns()` - Returns pondérés
+  - [OK] `_generate_alerts()` - Alertes automatiques
+  - [OK] `calculate_position_level_var()` - VaR par position
 - **2025-10-18 11:45**: Upgrade endpoint `/api/risk/bourse/dashboard`
-  - ✅ Intégration `BourseRiskCalculator`
-  - ✅ Support multi-tenant (user_id)
-  - ✅ Paramètres: lookback_days, risk_free_rate, var_method
-  - ✅ Response model `RiskDashboardResponse`
+  - [OK] Intégration `BourseRiskCalculator`
+  - [OK] Support multi-tenant (user_id)
+  - [OK] Paramètres: lookback_days, risk_free_rate, var_method
+  - [OK] Response model `RiskDashboardResponse`
 - **2025-10-18 12:00**: Documentation mise à jour
-  - ✅ Spécification Phase 1 complète
-  - ✅ Changelog détaillé
-  - ✅ Notes d'implémentation
+  - [OK] Spécification Phase 1 complète
+  - [OK] Changelog détaillé
+  - [OK] Notes d'implémentation
 
 **Fichiers créés/modifiés**:
 ```
@@ -1053,22 +1053,22 @@ Modifiés:
   docs/BOURSE_RISK_ANALYTICS_SPEC.md (maj statuts + changelog)
 ```
 
-#### Phase 1: UI Integration ✅
+#### Phase 1: UI Integration
 - **2025-10-18 12:15**: Intégration appels API dans saxo-dashboard.html
-  - ✅ Fonction `loadRiskAnalytics()` mise à jour
-  - ✅ Affichage score avec couleurs dynamiques
-  - ✅ Tableau métriques clés (VaR, Vol, Sharpe, Sortino)
-  - ✅ Tableau métriques additionnelles (Beta, Calmar, Drawdown)
-  - ✅ Gestion erreurs avec message yfinance
-  - ✅ Formatage pourcentages automatique
-  - ✅ Layout responsive mobile
+  - [OK] Fonction `loadRiskAnalytics()` mise à jour
+  - [OK] Affichage score avec couleurs dynamiques
+  - [OK] Tableau métriques clés (VaR, Vol, Sharpe, Sortino)
+  - [OK] Tableau métriques additionnelles (Beta, Calmar, Drawdown)
+  - [OK] Gestion erreurs avec message yfinance
+  - [OK] Formatage pourcentages automatique
+  - [OK] Layout responsive mobile
 
-#### Phase 1: Testing & Validation ✅
+#### Phase 1: Testing & Validation
 - **2025-10-18 12:30**: Tests manuels avec données réelles (user jack)
-  - ✅ yfinance déjà installé
-  - ✅ Fix intégration saxo_adapter (list_portfolios_overview vs list_portfolios)
-  - ✅ Tests endpoint avec 28 positions Saxo réelles
-  - ✅ Validation calculs:
+  - [OK] yfinance déjà installé
+  - [OK] Fix intégration saxo_adapter (list_portfolios_overview vs list_portfolios)
+  - [OK] Tests endpoint avec 28 positions Saxo réelles
+  - [OK] Validation calculs:
     - Risk Score: 80/100 (Low)
     - VaR 95% (1d): -0.44% (-$468)
     - Volatilité 30d: 6.09% annualisée
@@ -1077,10 +1077,10 @@ Modifiés:
     - Calmar Ratio: 4.87
     - Max Drawdown: -3.07% sur 23 jours
     - Beta: -0.019 (quasi neutre vs SPY)
-  - ✅ Tests méthodes VaR alternatives (parametric, montecarlo)
-  - ✅ Tests paramètres lookback (90j, 252j)
-  - ✅ Validation UI: safeFetch importé depuis modules/http.js
-  - ✅ Commit: fix(bourse-risk): use adapter functions
+  - [OK] Tests méthodes VaR alternatives (parametric, montecarlo)
+  - [OK] Tests paramètres lookback (90j, 252j)
+  - [OK] Validation UI: safeFetch importé depuis modules/http.js
+  - [OK] Commit: fix(bourse-risk): use adapter functions
 
 **Résultats tests** (Portfolio $106,749, 28 positions):
 | Métrique | Valeur | Interprétation |
@@ -1091,20 +1091,20 @@ Modifiés:
 | Max Drawdown | -3.07% | Faible drawdown historique |
 | Beta | -0.019 | Quasi décorrélé du S&P500 |
 
-**Phase 1 Complete** ✅✅✅:
+**Phase 1 Complete** [OK][OK][OK]:
 - Backend operational avec 10 métriques de risque
 - API endpoint `/api/risk/bourse/dashboard` fonctionnel
 - UI intégrée dans l'onglet Risk de saxo-dashboard.html
 - **Testé en production** avec données réelles
 - Prêt pour utilisation (yfinance requis)
 
-#### Phase 1: Multi-File Support ✅
+#### Phase 1: Multi-File Support
 - **2025-10-18 14:00**: Support sélection fichier source Saxo
-  - ✅ Ajout paramètre `file_key` à l'endpoint `/api/risk/bourse/dashboard`
-  - ✅ Propagation `file_key` aux fonctions de l'adaptateur Saxo
-  - ✅ Modification frontend `loadRiskAnalytics()` pour passer `file_key`
-  - ✅ Fix fonction `refreshActiveTab()` pour rafraîchir l'onglet Risk après changement source
-  - ✅ Integration complète avec WealthContextBar pour changement source dynamique
+  - [OK] Ajout paramètre `file_key` à l'endpoint `/api/risk/bourse/dashboard`
+  - [OK] Propagation `file_key` aux fonctions de l'adaptateur Saxo
+  - [OK] Modification frontend `loadRiskAnalytics()` pour passer `file_key`
+  - [OK] Fix fonction `refreshActiveTab()` pour rafraîchir l'onglet Risk après changement source
+  - [OK] Integration complète avec WealthContextBar pour changement source dynamique
 
 **Comportement**:
 - L'utilisateur peut changer de fichier CSV Saxo via le menu WealthContextBar
@@ -1118,21 +1118,21 @@ static/saxo-dashboard.html (loadRiskAnalytics + refreshActiveTab)
 docs/BOURSE_RISK_ANALYTICS_SPEC.md (changelog update)
 ```
 
-#### Phase 2: Bug Fixes - Consistency & ML ✅
+#### Phase 2: Bug Fixes - Consistency & ML
 - **2025-10-18 16:00**: Correction bugs critiques Risk & ML
-  - ✅ **Fix Monte Carlo VaR non-déterminisme**: Ajout seed fixe (42) pour résultats reproductibles
-  - ✅ **Fix méthode VaR par défaut**: Endpoint utilise déjà "historical" (déterministe) par défaut
-  - ✅ **Fix RegimeDetector pour stocks**:
+  - [OK] **Fix Monte Carlo VaR non-déterminisme**: Ajout seed fixe (42) pour résultats reproductibles
+  - [OK] **Fix méthode VaR par défaut**: Endpoint utilise déjà "historical" (déterministe) par défaut
+  - [OK] **Fix RegimeDetector pour stocks**:
     - Support multi-asset (SPY, QQQ, IWM, DIA) pour entraînement robuste
     - Détection automatique crypto vs stock (liste de tickers majeurs)
     - Mapping correct des probabilités (Accumulation→Bear, Expansion→Consolidation, etc.)
-  - ✅ Suppression anciens modèles régime pour forcer réentraînement propre
+  - [OK] Suppression anciens modèles régime pour forcer réentraînement propre
 
 **Problèmes corrigés**:
-1. ❌ **AVANT**: Métriques risk changeaient à chaque restart (Monte Carlo aléatoire)
-   ✅ **APRÈS**: Métriques cohérentes avec seed fixe
-2. ❌ **AVANT**: ML Regime détection à 100% confiance (modèle mal entraîné sur 1 asset)
-   ✅ **APRÈS**: Prédictions réalistes avec multi-asset training (4 benchmarks)
+1. [Error] **AVANT**: Métriques risk changeaient à chaque restart (Monte Carlo aléatoire)
+   [OK] **APRÈS**: Métriques cohérentes avec seed fixe
+2. [Error] **AVANT**: ML Regime détection à 100% confiance (modèle mal entraîné sur 1 asset)
+   [OK] **APRÈS**: Prédictions réalistes avec multi-asset training (4 benchmarks)
 
 **Fichiers modifiés**:
 ```
@@ -1143,32 +1143,32 @@ models/stocks/regime/* (supprimés pour réentraînement)
 docs/BOURSE_RISK_ANALYTICS_SPEC.md (changelog update)
 ```
 
-**Action requise**: ✅ Complété et validé
+**Action requise**: [OK] Complété et validé
 
-#### Phase 2.1: Bug Fixes - Data Alignment & Model Training ✅
+#### Phase 2.1: Bug Fixes - Data Alignment & Model Training
 - **2025-10-18 17:00**: Correction problèmes alignement dates et entraînement ML
-  - ✅ **Fix yfinance data alignment**:
+  - [OK] **Fix yfinance data alignment**:
     - Gestion MultiIndex columns (yfinance retourne parfois MultiIndex)
     - Normalisation timezone (tz-naive pour cohérence)
     - Suppression time component (DatetimeIndex normalized)
-  - ✅ **Fix manual data generator**:
+  - [OK] **Fix manual data generator**:
     - Business days uniquement (freq='B' au lieu de 'D')
     - Normalisation dates pour alignement avec yfinance
-  - ✅ **Fix training data requirements**:
+  - [OK] **Fix training data requirements**:
     - Réduction seuil minimum 200→100 samples (191 samples disponibles)
-  - ✅ **Fix model directory creation**:
+  - [OK] **Fix model directory creation**:
     - Ajout `mkdir(parents=True, exist_ok=True)` avant torch.save()
     - Évite erreur "Parent directory does not exist"
 
 **Résultats validés**:
-- ✅ **Risk metrics**: Cohérentes à 100% entre appels multiples
+- [OK] **Risk metrics**: Cohérentes à 100% entre appels multiples
   ```
   Risk Score: 64.5
   VaR 95%: -0.0198
   Sharpe: 1.57
   Beta: 0.895
   ```
-- ✅ **ML Regime Detection**: Prédictions réalistes avec distribution normale
+- [OK] **ML Regime Detection**: Prédictions réalistes avec distribution normale
   ```
   Regime: Bull Market
   Confidence: 86.5%
@@ -1178,7 +1178,7 @@ docs/BOURSE_RISK_ANALYTICS_SPEC.md (changelog update)
     - Bear Market: 1.1%
     - Consolidation: 0.5%
   ```
-- ✅ **Training successful**: Val accuracy 100%, 100 epochs, early stopping à epoch 90
+- [OK] **Training successful**: Val accuracy 100%, 100 epochs, early stopping à epoch 90
 
 **Fichiers modifiés**:
 ```
@@ -1188,34 +1188,34 @@ docs/BOURSE_RISK_ANALYTICS_SPEC.md (changelog update)
 ```
 
 **Tests effectués**:
-- ✅ 2 appels consécutifs Risk dashboard → métriques identiques
-- ✅ ML regime detection → entraînement complet 152/39 train/val split
-- ✅ Alignment multi-asset (SPY, QQQ, IWM, DIA) → 250 dates communes
+- [OK] 2 appels consécutifs Risk dashboard → métriques identiques
+- [OK] ML regime detection → entraînement complet 152/39 train/val split
+- [OK] Alignment multi-asset (SPY, QQQ, IWM, DIA) → 250 dates communes
 
-#### Phase 2.2: Cache Persistant & Stabilité ✅
+#### Phase 2.2: Cache Persistant & Stabilité
 - **2025-10-18 18:30**: Cache fichier + auto-recovery ML
-  - ✅ **Cache fichier persistant** (data/cache/bourse/*.parquet):
+  - [OK] **Cache fichier persistant** (data/cache/bourse/*.parquet):
     - Survit aux restarts du serveur
     - Évite re-téléchargement yfinance
     - Format Parquet performant
-  - ✅ **Fenêtre de temps arrondie** (calculator.py:72):
+  - [OK] **Fenêtre de temps arrondie** (calculator.py:72):
     - `datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)`
     - Même fenêtre toute la journée → cohérence cache
-  - ✅ **Auto-recovery ML model**:
+  - [OK] **Auto-recovery ML model**:
     - Si modèle échoue à charger → réentraînement automatique
     - Retry intelligent avec logging
     - Plus besoin de supprimer manuellement
-  - ✅ **start_dev.ps1 WSL2 automation**:
+  - [OK] **start_dev.ps1 WSL2 automation**:
     - Mot de passe WSL2 automatique pour Redis
     - Plus de prompt interactif
 
 **Résultats**:
-- ✅ **Métriques stables entre restarts** (même jour):
+- [OK] **Métriques stables entre restarts** (même jour):
   ```
   Risk Score: 64.5 → 64.5 (identique)
   VaR: -0.01889974 → -0.01889974 (identique)
   ```
-- ✅ **ML probabilities complètes** (4 régimes):
+- [OK] **ML probabilities complètes** (4 régimes):
   ```
   Bull Market: 86.6%
   Distribution: 11.9%
@@ -1232,25 +1232,25 @@ start_dev.ps1 (WSL2 password automation)
 docs/BOURSE_RISK_ANALYTICS_SPEC.md (changelog)
 ```
 
-#### Phase 3: Advanced Analytics ✅
+#### Phase 3: Advanced Analytics
 - **2025-10-18 20:00**: Advanced risk analytics implémentés
-  - ✅ **Position-level VaR** (advanced_analytics.py):
+  - [OK] **Position-level VaR** (advanced_analytics.py):
     - Marginal VaR (impact d'augmentation position)
     - Component VaR (contribution réelle au risque)
     - Diversification benefit (réduction risque)
     - Endpoint: `/api/risk/bourse/advanced/position-var`
-  - ✅ **Correlation Matrix**:
+  - [OK] **Correlation Matrix**:
     - Pearson/Spearman/Kendall correlation
     - Hierarchical clustering (Ward linkage)
     - Min/Max correlation pairs identification
     - Endpoint: `/api/risk/bourse/advanced/correlation`
-  - ✅ **Stress Testing** (6 scénarios):
+  - [OK] **Stress Testing** (6 scénarios):
     - market_crash (-10%), market_rally (+10%)
     - moderate_selloff (-5%), rate_hike (-3%)
     - flash_crash (-15%), covid_crash (-30%)
     - Custom scenarios support
     - Endpoint: `POST /api/risk/bourse/advanced/stress-test`
-  - ✅ **FX Exposure Analysis**:
+  - [OK] **FX Exposure Analysis**:
     - Breakdown par devise (USD, EUR, CHF, etc.)
     - Diversification score (Herfindahl index)
     - Hedging suggestions automatiques
@@ -1289,15 +1289,15 @@ api/risk_bourse_endpoints.py (+280 lignes - 4 endpoints)
 ```
 
 **Tests effectués**:
-- ✅ All 4 endpoints functional with real data
-- ✅ Position-level VaR: 28 positions analyzed
-- ✅ Correlation: 378 pairs (28×27/2)
-- ✅ Stress testing: All 6 scenarios tested
-- ✅ FX exposure: Multi-currency detection working
+- [OK] All 4 endpoints functional with real data
+- [OK] Position-level VaR: 28 positions analyzed
+- [OK] Correlation: 378 pairs (28×27/2)
+- [OK] Stress testing: All 6 scenarios tested
+- [OK] FX exposure: Multi-currency detection working
 
 #### Phase 4: Spécialisation Bourse
 **Date**: 2025-10-18
-**Statut**: ✅ Complété (backend)
+**Statut**: [OK] Complété (backend)
 
 **Objectif**: Implémenter features uniques aux marchés boursiers (earnings, secteurs, beta, dividendes, margin)
 
@@ -1333,39 +1333,39 @@ api/risk_bourse_endpoints.py                    # +315 lignes - 5 endpoints spé
 **Tests effectués** (Portfolio $106,749, 28 positions):
 
 1. **Earnings Predictor (AAPL)**:
-   - ✅ Vol increase: 50% post-earnings (estimation générique)
-   - ✅ Avg move: 1.28% le jour d'earnings
-   - ✅ Alert level: low (pas d'earnings dates API encore)
-   - ⚠️ Note: Nécessite intégration earnings calendar API pour dates réelles
+   - [OK] Vol increase: 50% post-earnings (estimation générique)
+   - [OK] Avg move: 1.28% le jour d'earnings
+   - [OK] Alert level: low (pas d'earnings dates API encore)
+   - [Warning] Note: Nécessite intégration earnings calendar API pour dates réelles
 
 2. **Sector Rotation**:
-   - ✅ 5 secteurs détectés (Technology, Consumer, Finance, Healthcare, ETF)
-   - ✅ Hot sectors: Consumer (momentum=699.43), Technology (1.22)
-   - ✅ Cold sectors: Healthcare (-14.30), ETF-International (-3.16)
-   - ✅ Technology: +25.07% return sur 60 jours
-   - ✅ Recommendations: 2 overweight, 3 underweight signals
+   - [OK] 5 secteurs détectés (Technology, Consumer, Finance, Healthcare, ETF)
+   - [OK] Hot sectors: Consumer (momentum=699.43), Technology (1.22)
+   - [OK] Cold sectors: Healthcare (-14.30), ETF-International (-3.16)
+   - [OK] Technology: +25.07% return sur 60 jours
+   - [OK] Recommendations: 2 overweight, 3 underweight signals
 
 3. **Beta Forecast (NVDA vs SPY)**:
-   - ✅ Current beta: 1.84 (NVDA très volatile)
-   - ✅ Forecasted beta (EWMA): 1.69 (baisse prévue)
-   - ✅ Beta trend: stable
-   - ✅ R-squared: 0.559 (55.9% variance expliquée)
-   - ✅ Alpha: +14.01% annuel (excellent outperformance)
-   - ✅ Volatility ratio: 2.47x (NVDA 2.5x plus volatile que SPY)
+   - [OK] Current beta: 1.84 (NVDA très volatile)
+   - [OK] Forecasted beta (EWMA): 1.69 (baisse prévue)
+   - [OK] Beta trend: stable
+   - [OK] R-squared: 0.559 (55.9% variance expliquée)
+   - [OK] Alpha: +14.01% annuel (excellent outperformance)
+   - [OK] Volatility ratio: 2.47x (NVDA 2.5x plus volatile que SPY)
 
 4. **Dividend Analysis (KO)**:
-   - ✅ Fallback opérationnel (yfinance limitations)
-   - ⚠️ Yield: 0% (yfinance n'a pas récupéré dividendes pour KO)
-   - ✅ Code fonctionne correctement avec données disponibles
-   - 📝 Note: yfinance peut avoir des limitations sur certains tickers
+   - [OK] Fallback opérationnel (yfinance limitations)
+   - [Warning] Yield: 0% (yfinance n'a pas récupéré dividendes pour KO)
+   - [OK] Code fonctionne correctement avec données disponibles
+   - Note: yfinance peut avoir des limitations sur certains tickers
 
 5. **Margin Monitoring**:
-   - ✅ Account equity: $106,749 (auto-calculé depuis positions)
-   - ✅ Current leverage: 1.00x (pas de leverage détecté)
-   - ✅ Margin utilization: 50%
-   - ✅ Margin call distance: 75% (très sécurisé)
-   - ✅ Optimal leverage: 1.00x (conservative)
-   - ✅ Warnings: 0 (portfolio sain)
+   - [OK] Account equity: $106,749 (auto-calculé depuis positions)
+   - [OK] Current leverage: 1.00x (pas de leverage détecté)
+   - [OK] Margin utilization: 50%
+   - [OK] Margin call distance: 75% (très sécurisé)
+   - [OK] Optimal leverage: 1.00x (conservative)
+   - [OK] Warnings: 0 (portfolio sain)
 
 **Détails techniques**:
 
@@ -1395,21 +1395,21 @@ api/risk_bourse_endpoints.py                    # +315 lignes - 5 endpoints spé
 
 #### Phase 5: UI Integration
 **Date**: 2025-10-18
-**Statut**: ✅ Complété
+**Statut**: [OK] Complété
 
 **Objectif**: Intégrer les analytics spécialisés dans saxo-dashboard.html avec UI interactive
 
 **Changements**:
 
 1. **HTML Structure** (`static/saxo-dashboard.html` +58 lignes)
-   - Section "🎯 Specialized Analytics" ajoutée dans Risk tab
+   - Section " Specialized Analytics" ajoutée dans Risk tab
    - 2 cartes portfolio-wide :
-     - 📊 Sector Rotation Analysis (table avec momentum/signaux)
-     - ⚠️ Margin Monitoring (métriques + warnings)
+     - Sector Rotation Analysis (table avec momentum/signaux)
+     - [Warning] Margin Monitoring (métriques + warnings)
    - 1 carte ticker-specific avec dropdown selector :
-     - 📈 Beta Forecast vs SPY
-     - 📅 Earnings Impact Prediction
-     - 💰 Dividend Analysis
+     - Beta Forecast vs SPY
+     - Earnings Impact Prediction
+     - Dividend Analysis
 
 2. **JavaScript Functions** (+~416 lignes)
    - `loadSpecializedAnalytics()` - Fonction principale (chargement parallèle)
@@ -1428,39 +1428,39 @@ static/saxo-dashboard.html                      # +474 lignes (58 HTML + 416 JS)
 **Tests validés** (Portfolio $106,749, 28 positions):
 
 1. **Sector Rotation UI**:
-   - ✅ 5 secteurs affichés avec momentum/signaux
-   - ✅ Hot sectors: Consumer (699.43x), Technology (1.22x)
-   - ✅ Cold sectors: Healthcare (-14.30x), ETF-International (-3.16x)
-   - ✅ Badge dynamique: "2 hot, 3 cold"
-   - ✅ Recommendations automatiques affichées
+   - [OK] 5 secteurs affichés avec momentum/signaux
+   - [OK] Hot sectors: Consumer (699.43x), Technology (1.22x)
+   - [OK] Cold sectors: Healthcare (-14.30x), ETF-International (-3.16x)
+   - [OK] Badge dynamique: "2 hot, 3 cold"
+   - [OK] Recommendations automatiques affichées
 
 2. **Margin Monitoring UI**:
-   - ✅ 3 métriques principales (Utilization 50%, Leverage 1.00x, Distance 75%)
-   - ✅ Color-coded badges (success/warning/danger)
-   - ✅ 0 warnings → "✅ Portfolio is healthy"
-   - ✅ Responsive grid layout
+   - [OK] 3 métriques principales (Utilization 50%, Leverage 1.00x, Distance 75%)
+   - [OK] Color-coded badges (success/warning/danger)
+   - [OK] 0 warnings → "[OK] Portfolio is healthy"
+   - [OK] Responsive grid layout
 
 3. **Ticker Selector**:
-   - ✅ Dropdown auto-populé depuis 28 positions
-   - ✅ Tri alphabétique des tickers
-   - ✅ Placeholder quand aucun ticker sélectionné
+   - [OK] Dropdown auto-populé depuis 28 positions
+   - [OK] Tri alphabétique des tickers
+   - [OK] Placeholder quand aucun ticker sélectionné
 
 4. **Beta Forecast UI** (NVDA):
-   - ✅ Current beta 1.84, forecast 1.69, trend stable
-   - ✅ R² 55.9% (fit quality)
-   - ✅ Alpha +14.01% annualized (color-coded green)
-   - ✅ Volatility ratio 2.47x vs SPY
+   - [OK] Current beta 1.84, forecast 1.69, trend stable
+   - [OK] R² 55.9% (fit quality)
+   - [OK] Alpha +14.01% annualized (color-coded green)
+   - [OK] Volatility ratio 2.47x vs SPY
 
 5. **Earnings Predictor UI** (AAPL):
-   - ✅ Alert level LOW (color-coded blue)
-   - ✅ Vol increase +50% (pre 31.9% → post 47.8%)
-   - ✅ Avg post-earnings move 1.28%
-   - ✅ Recommendation displayed
+   - [OK] Alert level LOW (color-coded blue)
+   - [OK] Vol increase +50% (pre 31.9% → post 47.8%)
+   - [OK] Avg post-earnings move 1.28%
+   - [OK] Recommendation displayed
 
 6. **Dividend Analysis UI**:
-   - ✅ Fallback gracieux pour tickers sans dividendes
-   - ✅ Message "ℹ️ No dividend data available"
-   - ✅ Prêt pour tickers avec dividendes (yield, frequency, growth)
+   - [OK] Fallback gracieux pour tickers sans dividendes
+   - [OK] Message " No dividend data available"
+   - [OK] Prêt pour tickers avec dividendes (yield, frequency, growth)
 
 **Détails techniques**:
 
@@ -1494,7 +1494,7 @@ static/saxo-dashboard.html                      # +474 lignes (58 HTML + 416 JS)
 
 #### Phase 5.1: UI Enhancements (Option 1)
 **Date**: 2025-10-18
-**Statut**: ✅ Complété
+**Statut**: [OK] Complété
 
 **Objectif**: Améliorer l'expérience utilisateur avec des visualisations interactives et des fonctionnalités avancées
 
@@ -1524,7 +1524,7 @@ static/saxo-dashboard.html                      # +474 lignes (58 HTML + 416 JS)
 
 3. **PDF Export Feature** (`static/saxo-dashboard.html`)
    - Ajout CDN jsPDF v2.5.1 + html2canvas v1.4.1
-   - Bouton "📄 Export PDF" dans header Risk tab
+   - Bouton " Export PDF" dans header Risk tab
    - Fonction `exportRiskPDF()` (+100 lignes) :
      - Capture complète contenu Risk tab via html2canvas
      - Conversion en PDF A4 portrait avec jsPDF
@@ -1538,11 +1538,11 @@ static/saxo-dashboard.html                      # +474 lignes (58 HTML + 416 JS)
 4. **Table Filtering & Sorting - Sector Rotation** (`static/saxo-dashboard.html`)
    - Section filtres/search au-dessus table (+15 lignes HTML)
    - Search bar temps réel :
-     - Input text avec placeholder "🔍 Search sectors..."
+     - Input text avec placeholder " Search sectors..."
      - Filtrage instantané par nom de secteur (case-insensitive)
      - Event listener `input` pour réactivité
    - Boutons filtre par signal :
-     - All / 🔥 Hot / ❄️ Cold
+     - All /  Hot / [Frozen] Cold
      - Style actif (background primary + white text)
      - Combinaison avec search bar
    - Tri cliquable sur colonnes :
@@ -1572,26 +1572,26 @@ static/saxo-dashboard.html                      # +285 lignes (total ~2260 ligne
 
 **Tests validés** (Manuel - Portfolio $106,749, 28 positions):
 
-1. ✅ **Beta Rolling Chart** (NVDA):
+1. [OK] **Beta Rolling Chart** (NVDA):
    - Graphique s'affiche correctement
    - 3 lignes visibles (rolling, current, forecast)
    - Tooltips fonctionnels au hover
    - Responsive (resize ok)
 
-2. ✅ **Sector Clustering Plot**:
+2. [OK] **Sector Clustering Plot**:
    - 5 secteurs affichés (Technology, Consumer, Finance, Healthcare, ETF)
    - Couleurs correctes (Consumer vert, Healthcare rouge)
    - Tooltips avec nom + momentum
 
-3. ✅ **Export PDF**:
+3. [OK] **Export PDF**:
    - Bouton "Export PDF" visible
-   - Loading state (⏳ Generating PDF...)
+   - Loading state ([Pending] Generating PDF...)
    - PDF téléchargé : `Risk_Analytics_2025-10-18.pdf`
    - Contenu complet capturé (score, métriques, ML, specialized)
    - Multi-pages si nécessaire
    - Footer avec numérotation
 
-4. ✅ **Table Filtering/Sorting**:
+4. [OK] **Table Filtering/Sorting**:
    - Search bar : filtrage temps réel OK
    - Filtres Hot/Cold/All : style actif + filtrage OK
    - Tri colonnes : indicateurs ▲/▼ fonctionnels
@@ -1623,21 +1623,21 @@ static/saxo-dashboard.html                      # +285 lignes (total ~2260 ligne
 ```
 
 **Compatibilité**:
-- ✅ Chrome 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
+- [OK] Chrome 90+
+- [OK] Firefox 88+
+- [OK] Safari 14+
+- [OK] Edge 90+
 
 ---
 
 ## Phase 5.2: Advanced Analytics UI (18 Oct 2025)
 
-### 🎯 Objectif
+### Objectif
 Implémenter des visualisations interactives avancées pour les analytics Phase 3 + ML Regime History.
 
-### ✅ Fonctionnalités implémentées
+### Fonctionnalités implémentées
 
-#### 1. Correlation Heatmap Interactive 🔗
+#### 1. Correlation Heatmap Interactive
 
 **Description**: Heatmap Plotly avec colorscale rouge/gris/vert pour visualiser les corrélations entre positions.
 
@@ -1668,7 +1668,7 @@ GET /api/risk/bourse/advanced/correlation?user_id=jack&method=pearson&lookback_d
 - Max pair: AMZN/META (0.762) - tech giants
 - Min pair: NVDA/KO (-0.224) - tech vs defensive
 
-#### 2. Hierarchical Clustering Dendrogram 🌳
+#### 2. Hierarchical Clustering Dendrogram
 
 **Description**: Arbre hiérarchique montrant le regroupement des positions par similarité de corrélation.
 
@@ -1696,7 +1696,7 @@ function createDendrogram(divId, linkageMatrix, labels) {
 - Clusters à distance ~0.2 = très corrélées
 - Clusters à distance >1.0 = peu corrélées
 
-#### 3. Stress Testing UI Enhancements 💥
+#### 3. Stress Testing UI Enhancements
 
 **Description**: Interface interactive pour tester l'impact de chocs de marché sur le portefeuille.
 
@@ -1745,7 +1745,7 @@ Value: $106,749 → $96,074
 Worst: IWDA | Best: CDR
 ```
 
-#### 4. Saved Scenarios Management 📁
+#### 4. Saved Scenarios Management
 
 **Description**: Sauvegarde et chargement de scénarios de stress testing personnalisés.
 
@@ -1772,21 +1772,21 @@ function deleteSavedScenario(index) // Delete with confirmation
 ```
 
 **UI Features**:
-- Bouton "💾 Save Scenario" apparaît après test custom
-- Section "📁 Saved Scenarios" affiche les scénarios sauvegardés
+- Bouton " Save Scenario" apparaît après test custom
+- Section " Saved Scenarios" affiche les scénarios sauvegardés
 - Cartes colorées (vert si gain, rouge si perte)
 - One-click load (clic sur carte)
 - Bouton × pour supprimer avec confirmation
 
 **Workflow**:
 1. User exécute un test custom (ex: -12.5%)
-2. Clic sur "💾 Save Scenario"
+2. Clic sur " Save Scenario"
 3. Prompt pour nom (default: "Custom -12.5%")
 4. Sauvegarde dans localStorage
 5. Affichage dans liste avec couleur appropriée
 6. Clic sur carte → charge et exécute le test
 
-#### 5. ML Regime History & Forecast 🤖
+#### 5. ML Regime History & Forecast
 
 **Description**: Visualisation complète de la détection de régime de marché avec timeline et probabilités.
 
@@ -1811,7 +1811,7 @@ GET /api/ml/bourse/regime?user_id=jack&benchmark=SPY&lookback_days=252
 ```
 ┌────────────────┬──────────────┬────────────┐
 │ Current Regime │ Confidence   │ Benchmark  │
-│ 🐂 Bull Market │ 86.5%        │ SPY        │
+│  Bull Market │ 86.5%        │ SPY        │
 └────────────────┴──────────────┴────────────┘
 ```
 
@@ -1828,25 +1828,25 @@ Consolidation   ▌ 0.5%
 - Prix SPY en ligne bleue (#3b82f6)
 - Aire remplie sous la courbe
 - Points colorés indiquant transitions de régime:
-  - 🟢 Vert: Bull Market
-  - 🔴 Rouge: Bear Market
-  - ⚪ Gris: Consolidation
-  - 🟠 Orange: Distribution
-- Annotation "📉 Market Event" (ligne verticale rouge pointillée)
+  - [Positive] Vert: Bull Market
+  - [Negative] Rouge: Bear Market
+  - [Neutral] Gris: Consolidation
+  - [Pending] Orange: Distribution
+- Annotation " Market Event" (ligne verticale rouge pointillée)
 
 **Régimes détectés**:
 ```javascript
 STOCK_REGIMES = {
-    0: "Bear Market",      // 🐻 Down trend, high fear
+    0: "Bear Market",      //  Down trend, high fear
     1: "Consolidation",    // ↔️ Sideways, low volume
-    2: "Bull Market",      // 🐂 Up trend, positive momentum
-    3: "Distribution"      // 📊 Topping, high volatility
+    2: "Bull Market",      //  Up trend, positive momentum
+    3: "Distribution"      //  Topping, high volatility
 }
 ```
 
 **Validation (SPY)**:
 ```
-Current Regime: Bull Market 🐂
+Current Regime: Bull Market
 Confidence: 86.5%
 Probabilities:
   Bull Market: 86.6%
@@ -1857,7 +1857,7 @@ Probabilities:
 
 **Note**: Timeline utilise données simulées pour démo (endpoint historique à créer)
 
-### 📊 Code Statistics
+### Code Statistics
 
 **Fichiers modifiés**:
 ```
@@ -1883,7 +1883,7 @@ static/saxo-dashboard.html: +828 lines
 
 **Total**: ~828 lignes de code JavaScript
 
-### 🎨 UI/UX Improvements
+### UI/UX Improvements
 
 **Design System**:
 - Color palette cohérente (CSS variables)
@@ -1893,20 +1893,20 @@ static/saxo-dashboard.html: +828 lines
 - Error messages avec contexte utile
 
 **Interactions utilisateur**:
-- ✅ Click dendrogram leafs pour explorer clusters
-- ✅ Click saved scenarios pour charger instantanément
-- ✅ Hover over charts pour tooltips détaillés
-- ✅ Slider avec affichage temps réel
-- ✅ Confirmation dialogs pour actions destructives
-- ✅ Info tooltips expliquant features
+- [OK] Click dendrogram leafs pour explorer clusters
+- [OK] Click saved scenarios pour charger instantanément
+- [OK] Hover over charts pour tooltips détaillés
+- [OK] Slider avec affichage temps réel
+- [OK] Confirmation dialogs pour actions destructives
+- [OK] Info tooltips expliquant features
 
 **Accessibilité**:
-- ✅ Labels clairs et descriptions
-- ✅ Contraste couleurs pour lisibilité
-- ✅ Messages d'erreur avec aide contextuelle
-- ✅ Boutons avec états visuels (hover, active)
+- [OK] Labels clairs et descriptions
+- [OK] Contraste couleurs pour lisibilité
+- [OK] Messages d'erreur avec aide contextuelle
+- [OK] Boutons avec états visuels (hover, active)
 
-### ⚡ Performance
+### Performance
 
 **Métriques mesurées**:
 - Initial load: ~500-800ms (3 API calls parallel)
@@ -1928,16 +1928,16 @@ static/saxo-dashboard.html: +828 lines
 - Plotly.js: 180KB (CDN)
 - Total impact: ~335KB
 
-### 🧪 Tests & Validation
+### Tests & Validation
 
 **Tests manuels effectués**:
-- ✅ Correlation heatmap affiche 28×28 matrix
-- ✅ Dendrogram affiche arbre hiérarchique
-- ✅ 4 scénarios prédéfinis exécutés avec succès
-- ✅ Scénario custom avec slider fonctionne
-- ✅ Sauvegarde/chargement/suppression de scénarios
-- ✅ ML regime chart affiche 3 graphiques
-- ✅ Responsive design sur mobile/tablet/desktop
+- [OK] Correlation heatmap affiche 28×28 matrix
+- [OK] Dendrogram affiche arbre hiérarchique
+- [OK] 4 scénarios prédéfinis exécutés avec succès
+- [OK] Scénario custom avec slider fonctionne
+- [OK] Sauvegarde/chargement/suppression de scénarios
+- [OK] ML regime chart affiche 3 graphiques
+- [OK] Responsive design sur mobile/tablet/desktop
 
 **Jeu de test**:
 ```
@@ -1959,7 +1959,7 @@ Custom (-12.5%):
   Value: $106,749 → $93,405
 ```
 
-### 🔧 Technical Details
+### Technical Details
 
 **Librairies utilisées**:
 ```html
@@ -1995,17 +1995,17 @@ Custom (-12.5%):
 }
 ```
 
-### 🌐 Browser Compatibility
+### Browser Compatibility
 
 **Testé et validé**:
-- ✅ Chrome 90+ (optimal)
-- ✅ Firefox 88+ (optimal)
-- ✅ Safari 14+ (optimal)
-- ✅ Edge 90+ (optimal)
+- [OK] Chrome 90+ (optimal)
+- [OK] Firefox 88+ (optimal)
+- [OK] Safari 14+ (optimal)
+- [OK] Edge 90+ (optimal)
 
 **Known Issues**: Aucun
 
-### 📈 Next Steps (Optional - Phase 6)
+### Next Steps (Optional - Phase 6)
 
 **Améliorations futures possibles**:
 1. [ ] Export CSV des résultats de stress test
@@ -2016,7 +2016,7 @@ Custom (-12.5%):
 6. [ ] Persistence scénarios backend (not just localStorage)
 7. [ ] Stress test templates (COVID crash, 2008 crisis, etc.)
 
-### 📝 Commit
+### Commit
 
 ```
 Hash: 56db7f6
@@ -2042,7 +2042,7 @@ feat(bourse-risk): Phase 5.2 Advanced Analytics - Complete Interactive Features
 **Date**: 2025-10-18
 **Objectif**: Séparer Risk & Analytics en 2 onglets distincts pour améliorer performance et expérience utilisateur
 
-### 🎯 Problème Identifié
+### Problème Identifié
 
 L'onglet "Risk & Analytics" était devenu trop chargé avec toutes les fonctionnalités des Phases 1-5.2 :
 - Temps de chargement initial trop long
@@ -2050,11 +2050,11 @@ L'onglet "Risk & Analytics" était devenu trop chargé avec toutes les fonctionn
 - Confusion entre métriques essentielles et analyses approfondies
 - Performance impactée par le chargement simultané de toutes les sections
 
-### ✅ Solution Implémentée
+### Solution Implémentée
 
 **Split en 2 onglets séparés** :
 
-#### 1️⃣ Onglet "Risk" (Vue Rapide - Essential Metrics)
+#### Onglet "Risk" (Vue Rapide - Essential Metrics)
 
 **Objectif**: Diagnostic rapide du portfolio en 5 secondes
 
@@ -2079,7 +2079,7 @@ L'onglet "Risk & Analytics" était devenu trop chargé avec toutes les fonctionn
 - Minimal scroll
 - Mobile-friendly
 
-#### 2️⃣ Onglet "Analytics" (Analyses Approfondies)
+#### Onglet "Analytics" (Analyses Approfondies)
 
 **Objectif**: Analyses détaillées pour décisions stratégiques
 
@@ -2114,7 +2114,7 @@ L'onglet "Risk & Analytics" était devenu trop chargé avec toutes les fonctionn
 - Cache avec flag `analyticsTabLoaded`
 - Reset automatique lors changement de source
 
-### 📊 Modifications Techniques
+### Modifications Techniques
 
 **HTML** (`static/saxo-dashboard.html`) :
 
@@ -2125,8 +2125,8 @@ Navigation (ligne 323-330):
 + <button onclick="switchTab('analytics', event)">Analytics</button>
 
 Onglet Risk (lignes 418-456):
-+ Bouton "🔬 Advanced Analytics →" (ligne 426-428)
-+ Section "⚠️ Critical Alerts" (lignes 445-455)
++ Bouton " Advanced Analytics →" (ligne 426-428)
++ Section "[Warning] Critical Alerts" (lignes 445-455)
 
 Nouvel Onglet Analytics (lignes 459-561):
 + <div id="analytics" class="tab-content">
@@ -2174,10 +2174,10 @@ case 'analytics':
     break;
 ```
 
-### 🎨 Améliorations UX
+### Améliorations UX
 
 **Navigation** :
-- Bouton "🔬 Advanced Analytics →" dans Risk tab pour accès rapide
+- Bouton " Advanced Analytics →" dans Risk tab pour accès rapide
 - Onglets clairement séparés : "Risk" vs "Analytics"
 - Transitions smooth entre onglets
 
@@ -2191,7 +2191,7 @@ case 'analytics':
 - Risk tab compact (< 500px hauteur)
 - Analytics tab scrollable avec sections collapsibles
 
-### 📊 Statistiques
+### Statistiques
 
 **Modifications** :
 - Lines added: ~60 HTML, ~30 JavaScript
@@ -2204,25 +2204,25 @@ case 'analytics':
 - Analytics tab load time: 800-1200ms (lazy, seulement si ouvert)
 - Total initial load time: Réduit de ~70% si user reste sur Risk tab
 
-### ✅ Tests Validés
+### Tests Validés
 
 **Test 1: Navigation** :
-- ✅ Onglet "Risk" s'affiche avec métriques essentielles
-- ✅ Onglet "Analytics" s'affiche avec toutes les sections
-- ✅ Bouton "Advanced Analytics →" fonctionne
-- ✅ Transitions smooth entre onglets
+- [OK] Onglet "Risk" s'affiche avec métriques essentielles
+- [OK] Onglet "Analytics" s'affiche avec toutes les sections
+- [OK] Bouton "Advanced Analytics →" fonctionne
+- [OK] Transitions smooth entre onglets
 
 **Test 2: Lazy Loading** :
-- ✅ Analytics tab ne charge pas tant qu'on ne clique pas dessus
-- ✅ Une fois chargé, pas de rechargement si on revient
-- ✅ Flag reset quand on change de source → reload correct
+- [OK] Analytics tab ne charge pas tant qu'on ne clique pas dessus
+- [OK] Une fois chargé, pas de rechargement si on revient
+- [OK] Flag reset quand on change de source → reload correct
 
 **Test 3: Mobile** :
-- ✅ Risk tab affichage compact sur mobile
-- ✅ Analytics tab scrollable sur mobile
-- ✅ Boutons responsive
+- [OK] Risk tab affichage compact sur mobile
+- [OK] Analytics tab scrollable sur mobile
+- [OK] Boutons responsive
 
-### 🎯 Résultat
+### Résultat
 
 **Avant (Phase 5.2)** :
 - 1 seul onglet "Risk & Analytics" surchargé
@@ -2236,7 +2236,7 @@ case 'analytics':
 - Analytics tab : ~900ms (3 API calls, lazy-loaded)
 - UX améliorée : vue rapide vs analyse détaillée
 
-### 📝 Commit
+### Commit
 
 ```
 feat(bourse-risk): Phase 5.3 - Split Risk & Analytics tabs for better UX
@@ -2258,7 +2258,7 @@ Benefits:
 
 ---
 
-## 📚 Références
+## Références
 
 ### Documentation interne
 - `docs/ARCHITECTURE.md` - Architecture globale du projet
@@ -2273,10 +2273,10 @@ Benefits:
 
 ---
 
-## 🎯 Prochaines actions
+## Prochaines actions
 
 ### Pour démarrer Phase 1:
-1. ✅ Valider cette spec avec l'équipe
+1. [OK] Valider cette spec avec l'équipe
 2. [ ] Créer structure de dossiers backend
 3. [ ] Implémenter `calculate_var_historical()`
 4. [ ] Implémenter `calculate_volatility()`
@@ -2296,11 +2296,11 @@ Benefits:
 
 ---
 
-## Phase 2.3: ML Regime Detection - Class Imbalance Fix ✅
+## Phase 2.3: ML Regime Detection - Class Imbalance Fix
 **Date**: 2025-10-19
-**Statut**: ✅ Résolu et validé en production
+**Statut**: [OK] Résolu et validé en production
 
-### 🎯 Problème Initial
+### Problème Initial
 
 ML regime detection affichait des probabilités absurdes:
 ```
@@ -2310,7 +2310,7 @@ Consolidation:    0%
 Bear Market:      0%
 ```
 
-### 🔍 Diagnostic
+### Diagnostic
 
 **Cause racine identifiée**: **Severe class imbalance** dans les données d'entraînement:
 
@@ -2327,7 +2327,7 @@ Training data (1 an / 365 jours):
 2. **Split temporel biaisé** - Les 38 derniers samples (validation) étaient tous Distribution
 3. **Validation accuracy 100%** - Red flag d'overfitting (modèle prédit toujours Distribution)
 
-### 🛠️ Solutions Implémentées
+### Solutions Implémentées
 
 #### 1. **Augmentation Lookback à 5 ans** (`services/ml/bourse/stocks_adapter.py:196`)
 
@@ -2402,11 +2402,11 @@ const hasAbsurdProbs = probValues.some(p => p === 1.0) &&
 
 // Display warning if detected
 if (hasAbsurdProbs) {
-    // Show "⚠️ Model Confidence Issue Detected" message
+    // Show "[Warning] Model Confidence Issue Detected" message
 }
 ```
 
-### ✅ Résultats Validés (Production)
+### Résultats Validés (Production)
 
 **AVANT** (1 an, problématique):
 ```
@@ -2430,18 +2430,18 @@ Probabilities:
   Bear Market:      2%
 ```
 
-### 📊 Métriques de Performance
+### Métriques de Performance
 
 | Métrique | Avant (1 an) | Après (5 ans) | Amélioration |
 |----------|--------------|---------------|--------------|
 | **Training samples** | 190 | ~450-600 | +237% |
-| **Distribution %** | 68% | ~25% | Équilibré ✅ |
-| **Val accuracy** | 100% (overfit) | 70-85% | Réaliste ✅ |
-| **Split method** | Temporal (biaisé) | Stratified | Balancé ✅ |
-| **Confidence** | 100% (absurde) | 57% (réaliste) | Calibré ✅ |
-| **Probabilities** | 100/0/0/0 | 57/35/6/2 | Nuancé ✅ |
+| **Distribution %** | 68% | ~25% | Équilibré [OK] |
+| **Val accuracy** | 100% (overfit) | 70-85% | Réaliste [OK] |
+| **Split method** | Temporal (biaisé) | Stratified | Balancé [OK] |
+| **Confidence** | 100% (absurde) | 57% (réaliste) | Calibré [OK] |
+| **Probabilities** | 100/0/0/0 | 57/35/6/2 | Nuancé [OK] |
 
-### 📁 Fichiers Modifiés
+### Fichiers Modifiés
 
 ```
 Backend:
@@ -2456,16 +2456,16 @@ Documentation:
   docs/BOURSE_RISK_ANALYTICS_SPEC.md       # Changelog Phase 2.3
 ```
 
-### 🧪 Tests Effectués
+### Tests Effectués
 
-1. **Suppression modèle overfit** → Forcing clean retrain ✅
-2. **Training avec 5 ans** → 450+ samples, distribution équilibrée ✅
-3. **Split stratifié** → Validation avec tous les régimes ✅
-4. **Class balancing** → Poids appliqués correctement ✅
-5. **Prédiction réaliste** → Bull Market 57% (cohérent avec SPY technique) ✅
-6. **Protection frontend** → Détection probabilités absurdes fonctionnelle ✅
+1. **Suppression modèle overfit** → Forcing clean retrain [OK]
+2. **Training avec 5 ans** → 450+ samples, distribution équilibrée [OK]
+3. **Split stratifié** → Validation avec tous les régimes [OK]
+4. **Class balancing** → Poids appliqués correctement [OK]
+5. **Prédiction réaliste** → Bull Market 57% (cohérent avec SPY technique) [OK]
+6. **Protection frontend** → Détection probabilités absurdes fonctionnelle [OK]
 
-### 🎓 Leçons Apprises
+### Leçons Apprises
 
 1. **Validation accuracy 100% = RED FLAG** - Toujours suspecter overfitting
 2. **Temporal split dangereux** - Peut créer validation set mono-classe
@@ -2473,20 +2473,20 @@ Documentation:
 4. **Lookback critique** - Doit capturer cycles complets (bull+bear) pour ML financier
 5. **5 ans = minimum** - Pour markets boursiers (cycles 2-4 ans typiques)
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `65cf4b2` - fix(bourse-ml): resolve regime detection probabilities issue (Distribution 100%)
 - `540cb0c` - fix(bourse-ml): use 5-year lookback + stratified split for balanced regime detection
 
 ---
 
-## Phase 2.4: ML Regime Detection - 20 Years Training & Weekly Scheduler ✅
+## Phase 2.4: ML Regime Detection - 20 Years Training & Weekly Scheduler
 
-### 🎯 Objectif
+### Objectif
 
 Passer de 5 ans à **20 ans** d'historique pour capturer **4-5 cycles complets** (dot-com bubble, 2008 crisis, COVID crash, 2022 bear market) et implémenter **entraînement hebdomadaire automatique** pour éviter réentraînement coûteux à chaque appel API.
 
-### 📊 Bénéfices Réalisés
+### Bénéfices Réalisés
 
 | Métrique | Avant (5 ans) | Après (20 ans) | Amélioration |
 |----------|---------------|----------------|--------------|
@@ -2497,7 +2497,7 @@ Passer de 5 ans à **20 ans** d'historique pour capturer **4-5 cycles complets**
 | **Training temps** | 60-90s à chaque appel | 60-90s (1x/semaine) | **99% réduction CPU** |
 | **Appels API** | 60-90s | <1s (cache) | **60-90x plus rapide** |
 
-### 🛠️ Changements Implémentés
+### Changements Implémentés
 
 #### 1. Augmentation Lookback à 20 ans
 
@@ -2596,7 +2596,7 @@ async def job_daily_ml_training():
 
     Total: ~2 minutes par jour au lieu de chaque appel API.
     """
-    logger.info("🤖 Starting daily ML training (20 years data)...")
+    logger.info(" Starting daily ML training (20 years data)...")
 
     try:
         adapter = StocksMLAdapter()
@@ -2608,11 +2608,11 @@ async def job_daily_ml_training():
             force_retrain=True   # Bypass cache
         )
 
-        logger.info(f"✅ Regime model trained: {regime_result['current_regime']} "
+        logger.info(f" Regime model trained: {regime_result['current_regime']} "
                    f"({regime_result['confidence']:.1%} confidence)")
 
     except Exception as e:
-        logger.error(f"❌ Weekly ML training failed: {e}")
+        logger.error(f" Weekly ML training failed: {e}")
 ```
 
 **Paramètre force_retrain ajouté:**
@@ -2731,7 +2731,7 @@ async def get_model_info(model_type: str = Query("regime")):
     }
 ```
 
-### 📁 Files Modified
+### Files Modified
 
 ```
 Backend (5 fichiers, ~170 lignes):
@@ -2748,7 +2748,7 @@ Documentation:
   docs/BOURSE_RISK_ANALYTICS_SPEC.md          # Phase 2.4 changelog (~300 lignes)
 ```
 
-### 🧪 Tests à Effectuer
+### Tests à Effectuer
 
 **Test 1: Premier Training (Cold Start)**
 
@@ -2771,7 +2771,7 @@ INFO: Training samples: 1847 (balanced distribution)
 INFO: Class distribution: [Bear: 456, Consol: 482, Bull: 521, Dist: 388]
 INFO: Validation class distribution: [114, 120, 130, 97] (stratified)
 INFO: Epoch 50/100, Val Loss: 0.58, Val Acc: 0.78
-INFO: ✅ Regime model trained: Bull Market (82% confidence)
+INFO: [OK] Regime model trained: Bull Market (82% confidence)
 ```
 
 **Test 2: Appels Suivants (Cache Hit)**
@@ -2819,7 +2819,7 @@ curl http://localhost:8080/api/ml/bourse/model-info?model_type=regime
 
 # Pour tester immédiatement (sans attendre dimanche):
 # Modifier temporairement le cron pour next minute
-# Vérifier logs: "🤖 Starting weekly ML training (20 years data)..."
+# Vérifier logs: " Starting weekly ML training (20 years data)..."
 ```
 
 **Test 5: Probabilités Équilibrées**
@@ -2841,7 +2841,7 @@ curl http://localhost:8080/api/ml/bourse/model-info?model_type=regime
 }
 ```
 
-### ✅ Critères de Succès
+### Critères de Succès
 
 - [x] Premier training ~60-90s avec 20 ans de données
 - [x] Appels suivants <1s (cache model + cache Parquet)
@@ -2852,7 +2852,7 @@ curl http://localhost:8080/api/ml/bourse/model-info?model_type=regime
 - [x] Training samples: 1,800-2,400 (vs 450-600 avant)
 - [x] Distribution Bear: 25-30% (vs 15-20% avant)
 
-### 🎓 Leçons Apprises
+### Leçons Apprises
 
 1. **Cache Multi-Level Crucial**
    - Niveau 1: Parquet cache (données brutes, 24h TTL)
@@ -2880,14 +2880,14 @@ curl http://localhost:8080/api/ml/bourse/model-info?model_type=regime
    - Utile pour alertes monitoring (model trop vieux)
    - Frontend peut afficher warning si needs_retrain=true
 
-6. **Regime Names Matter: Stocks ≠ Crypto** ⚠️
+6. **Regime Names Matter: Stocks ≠ Crypto** [Warning]
    - **Problème découvert**: Noms de régimes hérités du code crypto (Accumulation, Expansion, Euphoria, Distribution)
    - **Cause**: HMM trie régimes par score (return - volatility + momentum), ordre INVERSÉ entre stocks et crypto
    - **Impact**: "Distribution" (régime 3, meilleur score) contenait 49% des données 2005-2025 → semblait irréaliste
    - **Fix**: Renommage pour stocks → Bear Market (régime 0), Consolidation (1), Bull Market (2), Distribution (3)
    - **Résultat**: Distribution 49% = QE era 2009-2020 (11 ans de bull quasi-ininterrompu) → **réaliste!**
 
-### 🔍 Phase 2.4.1: Regime Names Fix for Stock Markets
+### Phase 2.4.1: Regime Names Fix for Stock Markets
 
 **Problème Identifié (2025-10-19):**
 
@@ -2943,24 +2943,24 @@ La distribution **49% Distribution** est maintenant **réaliste**:
 | Période | Régime | Durée | Justification |
 |---------|--------|-------|---------------|
 | 2005-2007 | Bull Market | 3 ans | Pre-crisis bull run |
-| **2008** | **Bear Market** | **1 an** | **Financial crisis** 💥 |
+| **2008** | **Bear Market** | **1 an** | **Financial crisis**  |
 | 2009-2011 | Distribution | 3 ans | QE1 recovery |
 | 2012-2014 | Distribution | 3 ans | QE2/QE3 continuation |
 | 2015-2016 | Consolidation | 2 ans | Range-bound, oil crash |
 | 2017 | Distribution | 1 an | Tax cut rally |
 | 2018 | Consolidation | 1 an | Fed tightening fears |
 | 2019 | Distribution | 1 an | Fed pivot rally |
-| **2020 Q1** | **Bear Market** | **3 mois** | **COVID crash** 💥 |
+| **2020 Q1** | **Bear Market** | **3 mois** | **COVID crash**  |
 | 2020 Q2-Q4 | Distribution | 9 mois | Stimulus-driven V-recovery |
 | 2021 | Distribution | 1 an | Everything rally |
-| **2022** | **Bear Market** | **1 an** | **Fed rate hikes** 📉 |
+| **2022** | **Bear Market** | **1 an** | **Fed rate hikes**  |
 | 2023-2025 | Bull Market | 2 ans | Recovery post-2022 |
 
 **Totaux:**
-- **Bear Market**: ~2.5 ans (362 jours ouvrables) = **7.3%** ✅
-- **Consolidation**: ~3.5 ans (1311 jours) = **26.4%** ✅
-- **Bull Market**: ~3.5 ans (855 jours) = **17.2%** ✅
-- **Distribution**: ~11 ans (2441 jours) = **49.1%** ✅ **(QE era 2009-2020!)**
+- **Bear Market**: ~2.5 ans (362 jours ouvrables) = **7.3%** [OK]
+- **Consolidation**: ~3.5 ans (1311 jours) = **26.4%** [OK]
+- **Bull Market**: ~3.5 ans (855 jours) = **17.2%** [OK]
+- **Distribution**: ~11 ans (2441 jours) = **49.1%** [OK] **(QE era 2009-2020!)**
 
 **Pourquoi Distribution = 49% est RÉALISTE:**
 
@@ -3008,7 +3008,7 @@ services/ml/models/regime_detector.py    # Regime names + descriptions updated
 - `2f79773` - feat(bourse-ml): 20-year training + weekly scheduler (Phase 2.4)
 - `TBD` - fix(bourse-ml): correct regime names for stock markets (Phase 2.4.1)
 
-### 📈 Impact Mesurable
+### Impact Mesurable
 
 **Performance:**
 - **Latence API (cold)**: 60-90s → 60-90s (1x/semaine seulement)
@@ -3028,19 +3028,19 @@ services/ml/models/regime_detector.py    # Regime names + descriptions updated
 - **Contrôle**: Force retrain flag pour override manuel
 - **Coût infrastructure**: Cache Parquet réduit appels yfinance API
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `TBD` - feat(bourse-ml): 20-year training + weekly scheduler (Phase 2.4)
 
 ---
 
-## Phase 2.5: ML Regime Detection - Scoring Fix (Intensity vs Volatility) ✅
+## Phase 2.5: ML Regime Detection - Scoring Fix (Intensity vs Volatility)
 
 **Date:** 19 Oct 2025
-**Status:** ✅ Completed
+**Status:** [OK] Completed
 **Commit:** `TBD`
 
-### 🎯 Problème Identifié
+### Problème Identifié
 
 Après déploiement de la Phase 2.4 avec 20 ans de données, la distribution des régimes était techniquement correcte mais **sémantiquement trompeuse**.
 
@@ -3057,7 +3057,7 @@ Strong Bull:       49.1% (2441 jours)  ← Sur-représenté
 score = avg_return * 0.4 - avg_volatility * 0.3 + avg_momentum * 0.3
 ```
 
-### 🔍 Analyse du Problème
+### Analyse du Problème
 
 **Pénalisation de la volatilité (`-avg_volatility * 0.3`):**
 
@@ -3077,7 +3077,7 @@ Cette pénalité favorisait les périodes de **faible volatilité** plutôt que 
 | 2013 QE tapering | +10% retours, low vol | Strong Bull Market | Bull Market |
 | 2009-2020 QE | +15%/an retours, très low vol | Strong Bull Market | Bull/Strong Bull (mix) |
 
-### ✅ Solution Implémentée
+### Solution Implémentée
 
 **Attentes utilisateur (via questionnaire):**
 1. **Consolidation** = Range neutre/sideways (pas début de bear)
@@ -3105,7 +3105,7 @@ score = avg_return * 0.6 + avg_momentum * 0.3 - avg_volatility * 0.1
 - Bear markets paniques (haute vol) → Score encore plus bas
 - Consolidation sideways (~0%) → Score neutre
 
-### 📝 Descriptions Régimes Mises à Jour
+### Descriptions Régimes Mises à Jour
 
 **Consolidation (Regime 1):**
 ```python
@@ -3132,7 +3132,7 @@ score = avg_return * 0.6 + avg_momentum * 0.3 - avg_volatility * 0.1
 'allocation_bias': 'Maximum allocation (80%+) but watch for reversal'
 ```
 
-### 🎨 Frontend Improvements
+### Frontend Improvements
 
 **Tooltips avec exemples historiques:**
 ```javascript
@@ -3146,7 +3146,7 @@ const regimeExamples = {
 
 Affiché dans les tooltips du graphique timeline pour aider la compréhension.
 
-### 📊 Distribution Attendue Après Fix
+### Distribution Attendue Après Fix
 
 **Estimation (20 ans):**
 ```
@@ -3158,22 +3158,22 @@ Strong Bull:     25-30%   (Euphories: 2009-2010, 2013, 2017, 2020-2021)
 
 **Plus équilibré et logique** que l'ancienne distribution (49% Strong Bull).
 
-### 🧪 Validation Requise
+### Validation Requise
 
 **Périodes clés à vérifier après réentraînement:**
 
-1. **2008 Financial Crisis** → Bear Market (baisse forte) ✓
-2. **2009-2010 Recovery** → Strong Bull (rebond explosif post-crise) ✓
-3. **2012-2014** → Bull Market (croissance modérée) ✓
-4. **2015-2016** → Consolidation (range-bound, QE tapering fears) ✓
-5. **2017** → Strong Bull (Tech euphoria, +20%) ✓
-6. **2018** → Consolidation/Bear (volatility spike) ✓
-7. **2020 COVID crash** → Bear Market ✓
-8. **2020 post-COVID rally** → **Strong Bull** (rebond +60%) ✓ ← Critique!
-9. **2022** → Bear Market (Fed rate hikes) ✓
-10. **2023-2024** → Bull Market (recovery normale) ✓
+1. **2008 Financial Crisis** → Bear Market (baisse forte) [OK]
+2. **2009-2010 Recovery** → Strong Bull (rebond explosif post-crise) [OK]
+3. **2012-2014** → Bull Market (croissance modérée) [OK]
+4. **2015-2016** → Consolidation (range-bound, QE tapering fears) [OK]
+5. **2017** → Strong Bull (Tech euphoria, +20%) [OK]
+6. **2018** → Consolidation/Bear (volatility spike) [OK]
+7. **2020 COVID crash** → Bear Market [OK]
+8. **2020 post-COVID rally** → **Strong Bull** (rebond +60%) [OK] ← Critique!
+9. **2022** → Bear Market (Fed rate hikes) [OK]
+10. **2023-2024** → Bull Market (recovery normale) [OK]
 
-### 📂 Files Modified
+### Files Modified
 
 ```
 Backend (~10 lines):
@@ -3190,20 +3190,20 @@ Documentation:
     - Phase 2.5 section (this section)
 ```
 
-### 🔄 Migration Path
+### Migration Path
 
 **Étapes:**
-1. ✅ Modifier formule de score (regime_detector.py:476)
-2. ✅ Mettre à jour descriptions régimes (regime_detector.py:160-183)
-3. ✅ Supprimer ancien modèle (`rm -rf models/stocks/regime/*`)
-4. ⏳ Réentraîner modèle (automatique au prochain appel `/api/ml/bourse/regime`)
-5. ⏳ Valider nouvelle distribution (vérifier périodes clés)
-6. ✅ Ajouter tooltips frontend (saxo-dashboard.html)
-7. ✅ Documenter changements (ce document)
+1. [OK] Modifier formule de score (regime_detector.py:476)
+2. [OK] Mettre à jour descriptions régimes (regime_detector.py:160-183)
+3. [OK] Supprimer ancien modèle (`rm -rf models/stocks/regime/*`)
+4. [Pending] Réentraîner modèle (automatique au prochain appel `/api/ml/bourse/regime`)
+5. [Pending] Valider nouvelle distribution (vérifier périodes clés)
+6. [OK] Ajouter tooltips frontend (saxo-dashboard.html)
+7. [OK] Documenter changements (ce document)
 
 **Note:** Le modèle se réentraîne automatiquement car l'ancien a été supprimé. Cela prendra ~60-90s au prochain chargement de l'Analytics tab.
 
-### 📈 Impact Attendu
+### Impact Attendu
 
 **Distribution:**
 - Strong Bull: 49% → ~25-30% (**-40% relatif**)
@@ -3212,29 +3212,29 @@ Documentation:
 - Bear Market: 7% → ~7-10% (stable)
 
 **Compréhension utilisateur:**
-- ✅ "Strong Bull 25%" = Logique (euphories ponctuelles)
-- ✅ "Bull 40%" = Cohérent (uptrends normaux dominants)
-- ✅ Périodes explosives correctement identifiées
-- ✅ QE era répartie entre Bull et Strong Bull (plus réaliste)
+- [OK] "Strong Bull 25%" = Logique (euphories ponctuelles)
+- [OK] "Bull 40%" = Cohérent (uptrends normaux dominants)
+- [OK] Périodes explosives correctement identifiées
+- [OK] QE era répartie entre Bull et Strong Bull (plus réaliste)
 
 **Timeline visuelle:**
-- 2020 post-COVID: Bleu (Strong Bull) au lieu de Vert (Bull) ✅
-- 2017: Bleu (Strong Bull) au lieu de Vert ✅
-- 2013-2015: Vert/Gris (Bull/Consol) au lieu de Bleu ✅
+- 2020 post-COVID: Bleu (Strong Bull) au lieu de Vert (Bull) [OK]
+- 2017: Bleu (Strong Bull) au lieu de Vert [OK]
+- 2013-2015: Vert/Gris (Bull/Consol) au lieu de Bleu [OK]
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `TBD` - fix(bourse-ml): scoring formula intensity over volatility (Phase 2.5)
 
 ---
 
-## Phase 2.6: ML Regime Detection - Feature Normalization ✅
+## Phase 2.6: ML Regime Detection - Feature Normalization
 
 **Date:** 19 Oct 2025
-**Status:** ✅ Completed
+**Status:** [OK] Completed
 **Commit:** `a9a7458` (included in Phase 2.7)
 
-### 🎯 Problème Identifié
+### Problème Identifié
 
 Après Phase 2.5, la nouvelle formule de scoring **n'a PAS changé la distribution** :
 
@@ -3245,7 +3245,7 @@ Bull Market:       17.2% (855 jours)   - Identique
 Strong Bull:       49.1% (2441 jours)  - Identique (attendu ~25-30%)
 ```
 
-### 🔍 Root Cause Analysis
+### Root Cause Analysis
 
 **Scores calculés par le HMM:**
 ```
@@ -3273,7 +3273,7 @@ score = 0.003*0.6 + 0.01*0.3 - 0.30*0.1
       = -0.0252  ← NÉGATIF! Volatilité domine encore!
 ```
 
-### ✅ Solution : Z-Score Normalization
+### Solution : Z-Score Normalization
 
 **Normaliser toutes les features sur la même échelle avant le scoring:**
 
@@ -3298,7 +3298,7 @@ for cluster in clusters:
     score = return_norm * 0.6 + momentum_norm * 0.3 - vol_norm * 0.1
 ```
 
-### 📊 Résultats Après Normalisation
+### Résultats Après Normalisation
 
 **Nouveau mapping (tri par score):**
 ```
@@ -3316,7 +3316,7 @@ Bull Market:       49.1% (2441 jours)  ← INVERSÉ!
 Strong Bull:       17.2% (855 jours)   ← INVERSÉ!
 ```
 
-### ⚠️ Problème Résiduel
+### Problème Résiduel
 
 Cluster 0 (Strong Bull, 17.2%) correspond aux **rebonds violents POST-CRASH** (2009, 2020), PAS aux fins de cycle !
 
@@ -3324,34 +3324,34 @@ Cluster 0 (Strong Bull, 17.2%) correspond aux **rebonds violents POST-CRASH** (2
 
 ---
 
-## Phase 2.7: ML Regime Detection - Smart Mapping & Semantic Renaming ✅
+## Phase 2.7: ML Regime Detection - Smart Mapping & Semantic Renaming
 
 **Date:** 19 Oct 2025
-**Status:** ✅ Completed
+**Status:** [OK] Completed
 **Commits:**
 - `a9a7458` - Smart mapping + renaming
 - `a071bfb` - Color palette fix
 
-### 🎯 Problème Identifié
+### Problème Identifié
 
 **Validation sur événements historiques:**
 
-❌ **Mars 2009 (QE1 Start - BOTTOM après Lehman):**
+[Error] **Mars 2009 (QE1 Start - BOTTOM après Lehman):**
 - **Attendu**: Expansion/Recovery (violent rebound POST-CRASH)
 - **Détecté**: Strong Bull Market (topping pattern) → **FAUX**
 
-❌ **Avril 2020 (COVID Recovery - BOTTOM après crash):**
+[Error] **Avril 2020 (COVID Recovery - BOTTOM après crash):**
 - **Attendu**: Expansion/Recovery (rebond post-crash)
 - **Détecté**: Strong Bull Market (euphoric top) → **FAUX**
 
-### 🔍 Root Cause
+### Root Cause
 
 Le scoring confond **rebonds post-crash** avec **euphories** car les deux ont :
 - Hauts retours + fort momentum
 
 Impossible de distinguer sans contexte temporel !
 
-### ✅ Solution : Smart Mapping
+### Solution : Smart Mapping
 
 **Mapper les clusters basé sur caractéristiques réelles :**
 
@@ -3366,7 +3366,7 @@ else:
     → Correction (pullbacks, sideways, slow bears)
 ```
 
-### 🏷️ Renommage Sémantique
+### Renommage Sémantique
 
 | Old Name | New Name | Description | % |
 |----------|----------|-------------|---|
@@ -3375,42 +3375,42 @@ else:
 | Bull Market | **Bull Market** | Stable uptrend (QE era) | 49.1% |
 | Strong Bull Market | **Expansion** | Violent rebounds post-crash | 17.2% |
 
-### 📊 Validation Résultats
+### Validation Résultats
 
-✅ **Lehman Crisis (Sep-Oct 2008)**: Bear Market 87%
-✅ **Post-crisis Recovery (Mar-Jun 2009)**: **Expansion 81%**
-✅ **QE Era (2015-2018)**: Bull Market 65%
-✅ **COVID Crash (March 2020)**: Bear Market 86%
-✅ **COVID Recovery (Apr-Jun 2020)**: **Expansion 83%**
-✅ **2023 Rally**: Bull Market 66%
+[OK] **Lehman Crisis (Sep-Oct 2008)**: Bear Market 87%
+[OK] **Post-crisis Recovery (Mar-Jun 2009)**: **Expansion 81%**
+[OK] **QE Era (2015-2018)**: Bull Market 65%
+[OK] **COVID Crash (March 2020)**: Bear Market 86%
+[OK] **COVID Recovery (Apr-Jun 2020)**: **Expansion 83%**
+[OK] **2023 Rally**: Bull Market 66%
 
-### 🎨 Color Palette (Phase 2.7.1)
+### Color Palette (Phase 2.7.1)
 
 **Option 1 - Intensity-Based:**
 
 | Regime | Color | Hex |
 |--------|-------|-----|
-| 🔴 Bear Market | Dark red | `#dc2626` |
-| 🟠 Correction | Orange | `#f97316` |
-| 🟢 Bull Market | Green | `#22c55e` |
-| 🔵 Expansion | Blue | `#3b82f6` |
+| [Negative] Bear Market | Dark red | `#dc2626` |
+| [Pending] Correction | Orange | `#f97316` |
+| [Positive] Bull Market | Green | `#22c55e` |
+|  Expansion | Blue | `#3b82f6` |
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `a9a7458` - feat(bourse-ml): Phase 2.7 - Smart regime mapping
 - `a071bfb` - fix(bourse-ml): Option 1 color palette
 
 ---
 
-## Phase 2.8: Sector Mapping Completion - Zero "Other" ✅
+## Phase 2.8: Sector Mapping Completion - Zero "Other" OK
 
 **Date:** 19 Oct 2025
-**Status:** ✅ Completed
+**Status:** [OK] Completed
 **Commits:**
 - `5bfd797` - First enrichment (11 tickers)
 - `8871101` - Complete mapping (5 ETFs)
 
-### 🎯 Problème Identifié
+### Problème Identifié
 
 **Après Phase 2.8.0 (commit 5bfd797):**
 
@@ -3423,10 +3423,10 @@ Healthcare:         3 positions
 Consumer:           2 positions
 ETF-Tech:           1 position
 ETF-International:  1 position
-Other:              5 positions (18%) ❌
+Other:              5 positions (18%) [Error]
 ```
 
-### 🔍 Analyse des 5 Tickers Manquants
+### Analyse des 5 Tickers Manquants
 
 Identification via CSV portfolio `jack` (Oct 13, 2025):
 
@@ -3442,7 +3442,7 @@ Identification via CSV portfolio `jack` (Oct 13, 2025):
 - Ces tickers n'existaient pas dans le `sector_map` initial (conçu pour actions US)
 - Tickers spécifiques Europe (XETR, XVTX, XWAR, XMIL)
 
-### ✅ Solution : Ajout des 5 ETFs au sector_map
+### Solution : Ajout des 5 ETFs au sector_map
 
 **Fichier:** `services/risk/bourse/specialized_analytics.py` (lignes 73-77)
 
@@ -3455,26 +3455,26 @@ Identification via CSV portfolio `jack` (Oct 13, 2025):
 'XGDU': 'ETF-Commodities',     # Xtrackers Physical Gold ETC
 ```
 
-### 📊 Résultats de Production
+### Résultats de Production
 
 **Distribution Finale (28 positions, 9 secteurs):**
 
 | Secteur | Positions | % | Performance | Momentum | Signal |
 |---------|-----------|---|-------------|----------|--------|
-| **Technology** | 13 | 46% | +14.43% | 0.95x | ➖ NEUTRAL |
-| **Finance** | 3 | 11% | -3.35% | 1.13x | ➖ NEUTRAL |
-| **Healthcare** | 3 | 11% | +1.85% | 1.06x | ➖ NEUTRAL |
-| **ETF-International** | 3 | 11% | -3.68% | 0.94x | ➖ NEUTRAL |
-| **Consumer** | 2 | 7% | +4.89% | 1.11x | ➖ NEUTRAL |
-| **ETF-Tech** | 1 | 4% | -6.12% | 0.74x | ❄️ UNDERWEIGHT |
-| **ETF-Bonds** | 1 | 4% | +4.18% | 0.99x | ➖ NEUTRAL |
-| **ETF-Healthcare** | 1 | 4% | -5.09% | 1.10x | ➖ NEUTRAL |
-| **ETF-Commodities** | 1 | 4% | +16.81% | 1.39x | 🔥 OVERWEIGHT |
+| **Technology** | 13 | 46% | +14.43% | 0.95x |  NEUTRAL |
+| **Finance** | 3 | 11% | -3.35% | 1.13x |  NEUTRAL |
+| **Healthcare** | 3 | 11% | +1.85% | 1.06x |  NEUTRAL |
+| **ETF-International** | 3 | 11% | -3.68% | 0.94x |  NEUTRAL |
+| **Consumer** | 2 | 7% | +4.89% | 1.11x |  NEUTRAL |
+| **ETF-Tech** | 1 | 4% | -6.12% | 0.74x | [Frozen] UNDERWEIGHT |
+| **ETF-Bonds** | 1 | 4% | +4.18% | 0.99x |  NEUTRAL |
+| **ETF-Healthcare** | 1 | 4% | -5.09% | 1.10x |  NEUTRAL |
+| **ETF-Commodities** | 1 | 4% | +16.81% | 1.39x |  OVERWEIGHT |
 | **Other** | **0** | **0%** | — | — | — |
 
-**Total : 28 positions classifiées à 100%** ✅
+**Total : 28 positions classifiées à 100%** [OK]
 
-### 🎁 Bénéfices
+### Bénéfices
 
 1. **Classification complète** - Zero "Other", tous les actifs contribuent aux signaux
 2. **Visibilité diversification ETF** - Bonds, International, Healthcare, Commodities apparaissent
@@ -3482,7 +3482,7 @@ Identification via CSV portfolio `jack` (Oct 13, 2025):
 4. **Insight commodités** - Or détecté en OVERWEIGHT (+16.81%, momentum 1.39x)
 5. **Risk insights** - Vraie exposition sectorielle (pas cachée dans "Other")
 
-### 🔢 Évolution du Mapping
+### Évolution du Mapping
 
 **Phase 2.8.0 (commit 5bfd797):**
 - Ajout 11 tickers actions (PLTR, COIN, META, UBSG, BAX, ROG, etc.)
@@ -3490,11 +3490,11 @@ Identification via CSV portfolio `jack` (Oct 13, 2025):
 
 **Phase 2.8.1 (commit 8871101):**
 - Ajout 5 tickers ETF (WORLD, ACWI, AGGS, BTEC, XGDU)
-- "Other" : 18% → **0%** ✅
+- "Other" : 18% → **0%** [OK]
 
 **Total enrichi : 16 tickers ajoutés**
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `5bfd797` - feat(bourse-risk): enrich sector mapping with portfolio tickers
 - `8871101` - feat(bourse-risk): complete sector mapping with 5 missing ETFs
@@ -3503,11 +3503,11 @@ Identification via CSV portfolio `jack` (Oct 13, 2025):
 
 ## Phase 2.9 : Portfolio Recommendations - BUY/HOLD/SELL Signals
 
-> **Statut**: ✅ Complete
+> **Statut**:  Complete
 > **Date**: 2025-10-19
 > **Commits**: c642eca, 29bac96, b48889a, c38bd33, eed0ec8
 
-### 🎯 Objectif
+### Objectif
 
 Créer un système complet de **recommendations de portfolio** qui génère des signaux BUY/HOLD/SELL pour toutes les positions Saxo, en combinant :
 - Indicateurs techniques (RSI, MACD, MA, Volume)
@@ -3516,7 +3516,7 @@ Créer un système complet de **recommendations de portfolio** qui génère des 
 - Métriques de risque (volatilité, drawdown, Sharpe)
 - Contraintes de portfolio (concentration sectorielle, correlation)
 
-### 📐 Architecture
+### Architecture
 
 #### 6 Modules Backend
 
@@ -3571,7 +3571,7 @@ Nouvel onglet **"Recommendations"** dans saxo-dashboard.html avec :
 - Modal détaillé pour chaque position
 - Affichage des adjustment notes (positions downgradées)
 
-### 🧮 Logique de Scoring
+### Logique de Scoring
 
 #### Poids Adaptatifs par Timeframe
 
@@ -3614,7 +3614,7 @@ THRESHOLDS = {
 }
 ```
 
-### ⚖️ Contraintes de Portfolio
+### Contraintes de Portfolio
 
 #### 1. Concentration Sectorielle (2-Pass Algorithm)
 
@@ -3647,9 +3647,9 @@ Résultat: 3-4 SELLs, 9 HOLDs avec warning
 - Max 3 positions corrélées (>0.80) avec signal BUY
 - Garde meilleur score, downgrade autres → HOLD
 
-### 🎯 Price Targets par Timeframe
+### Price Targets par Timeframe
 
-> **⚠️ IMPORTANT (Oct 2025) :** Le système a évolué vers un **Stop Loss Intelligent Multi-Method**.
+> **[Warning] IMPORTANT (Oct 2025) :** Le système a évolué vers un **Stop Loss Intelligent Multi-Method**.
 > Les pourcentages fixes ci-dessous sont désormais utilisés comme **fallback uniquement**.
 > Voir [`docs/STOP_LOSS_SYSTEM.md`](STOP_LOSS_SYSTEM.md) pour détails complets.
 
@@ -3684,7 +3684,7 @@ Résultat: 3-4 SELLs, 9 HOLDs avec warning
 
 **Frontend :** Tableau comparatif des 4 méthodes affiché dans modal de recommendation.
 
-### 🐛 Issues Résolues (3 Fixes Critiques)
+### Issues Résolues (3 Fixes Critiques)
 
 #### Fix 1: Position Sizing Contradiction (commit c642eca)
 
@@ -3715,7 +3715,7 @@ TSLA:
 TSLA:
   Action: BUY
   Score: 0.67 (>0.55, devrait être BUY)
-  R/R: 1:0.58 (risque > gain) ❌
+  R/R: 1:0.58 (risque > gain) [Error]
 ```
 
 **Solution :**
@@ -3771,14 +3771,14 @@ Après : 3 SELL (AMZN, CDR, META)
 Réduction : 52% → 45.8%
 ```
 
-### 🎨 UI Enhancements (commit eed0ec8)
+### UI Enhancements (commit eed0ec8)
 
 #### Adjustment Note Banner
 
 Affichage visuel dans le modal pour positions ajustées :
 
 ```html
-⚠️ Action Adjusted
+[Warning] Action Adjusted
 Original: HOLD
 Adjusted to: SELL
 Reason: Downgraded from HOLD due to high sector concentration (52% > 45%)
@@ -3810,11 +3810,11 @@ Consider trimming if sector weight increases further."
 
 **Concentration warning :**
 ```
-"⚠️ Sector concentration warning: Technology at 52% (target 40%).
+"[Warning] Sector concentration warning: Technology at 52% (target 40%).
 [original advice] Do not add to this position."
 ```
 
-### 📊 Résultats de Production
+### Résultats de Production
 
 #### Distribution des Actions (Timeframe: 1 mois)
 
@@ -3828,7 +3828,7 @@ Consider trimming if sector weight increases further."
 
 **Avant recommendations :**
 ```
-Technology: 52.3% (13 positions) 🚨
+Technology: 52.3% (13 positions) [Alert]
   - TSLA: 10%
   - NVDA: 7.6%
   - AMD: 5.3%
@@ -3846,7 +3846,7 @@ Technology: 52.3% (13 positions) 🚨
 
 **Après vente des 3 SELL :**
 ```
-Technology: ~45.8% (10 positions) ✅
+Technology: ~45.8% (10 positions) [OK]
 Réduction: -6.5%
 Diversification: Meilleure exposition Finance/Healthcare
 ```
@@ -3860,9 +3860,9 @@ Diversification: Meilleure exposition Finance/Healthcare
   "confidence": 94%,
   "score": 0.62,
   "rationale": [
-    "✅ Technical: RSI neutral, MACD neutral",
-    "✅ Bull Market regime supports this asset",
-    "✅ Bonds sector underweight, rebalancing opportunity"
+    "[OK] Technical: RSI neutral, MACD neutral",
+    "[OK] Bull Market regime supports this asset",
+    "[OK] Bonds sector underweight, rebalancing opportunity"
   ],
   "tactical_advice": "Add 1-2% to position. Bonds underweight at 4.6% vs target 10-15%.",
   "price_targets": {
@@ -3884,9 +3884,9 @@ Diversification: Meilleure exposition Finance/Healthcare
   "score": 0.50,
   "adjustment_note": "Downgraded from HOLD due to high sector concentration (52% > 45%)",
   "rationale": [
-    "⚠️ Technical: RSI 38 (neutral), MACD bearish",
-    "❌ Below MA50 by 5.5%, downtrend active",
-    "❌ Underperforming market benchmark by 12.3%"
+    "[Warning] Technical: RSI 38 (neutral), MACD bearish",
+    "[Error] Below MA50 by 5.5%, downtrend active",
+    "[Error] Underperforming market benchmark by 12.3%"
   ],
   "tactical_advice": "Reduce position by 30-50% to rebalance Technology sector
                       (currently 52% of portfolio, target 40%). Rotate capital
@@ -3905,9 +3905,9 @@ Diversification: Meilleure exposition Finance/Healthcare
   "score": 0.67,
   "adjustment_note": "Downgraded from BUY due to insufficient Risk/Reward ratio (0.58 < 1.5)",
   "rationale": [
-    "⚠️ Technical: RSI 49 (neutral), MACD bearish",
-    "✅ Above MA50 by 13.4%, uptrend intact",
-    "✅ Outperforming market benchmark by 24.1%"
+    "[Warning] Technical: RSI 49 (neutral), MACD bearish",
+    "[OK] Above MA50 by 13.4%, uptrend intact",
+    "[OK] Outperforming market benchmark by 24.1%"
   ],
   "tactical_advice": "Strong buy signal, BUT sector/position limit reached.
                       Hold current position. Consider rotating from weaker
@@ -3918,7 +3918,7 @@ Diversification: Meilleure exposition Finance/Healthcare
 }
 ```
 
-### 🎁 Bénéfices
+### Bénéfices
 
 1. **Signaux actionnables** - BUY/HOLD/SELL clairs avec rationale détaillée
 2. **Protection du capital** - Contraintes de concentration et R/R
@@ -3927,7 +3927,7 @@ Diversification: Meilleure exposition Finance/Healthcare
 5. **Rebalancing forcé** - Réduit automatiquement les surconcentrations
 6. **Professional-grade** - Aligne avec standards institutionnels
 
-### 🔗 Commits Associés
+### Commits Associés
 
 - `c642eca` - fix(bourse-ml): resolve position sizing contradiction
 - `29bac96` - fix(bourse-ml): add R/R minimum threshold for BUY signals

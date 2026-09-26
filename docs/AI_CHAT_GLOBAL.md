@@ -1,6 +1,6 @@
 # Global AI Chat System - Documentation Complète
 
-> **Status:** ✅ 100% implémenté + Unifié (Dec 2025)
+> **Status:** [OK] 100% implémenté + Unifié (Dec 2025)
 > **Dernière mise à jour:** Dec 28, 2025
 
 ## Vue d'ensemble
@@ -13,19 +13,19 @@ Système d'assistant IA **unifié et global** disponible sur toutes les pages Sm
 
 ## Nouveautés (Dec 28, 2025)
 
-### ✅ Unification saxo-dashboard
+### Unification saxo-dashboard
 
 - Suppression de ~415 lignes de code inline AI Chat
 - Migration vers le système global (FAB + composants réutilisables)
 - Fix context builder avec noms de propriétés corrects
 
-### ✅ Knowledge Base Dynamique
+### Knowledge Base Dynamique
 
 - `PAGE_DOC_FILES` mapping : docs/*.md chargées automatiquement par page
 - Cache 5 min TTL : mises à jour docs reflétées automatiquement
 - 5 pages avec docs dynamiques (risk, analytics, saxo, dashboard, wealth)
 
-### ✅ Settings Page Integration
+### Settings Page Integration
 
 - Nouveau context builder `buildSettingsContext()`
 - 4 quick questions : config, API keys, Saxo OAuth, recommendations
@@ -35,7 +35,7 @@ Système d'assistant IA **unifié et global** disponible sur toutes les pages Sm
 
 ## Architecture
 
-### Backend (100% terminé ✅)
+### Backend (100% terminé )
 
 ```
 api/
@@ -45,13 +45,13 @@ api/
 ```
 
 **Fonctionnalités:**
-- ✅ Support Groq API (gratuit, Llama 3.3 70B)
-- ✅ Support Claude API (payant, Sonnet 3.5)
-- ✅ Context formatters par type de page (Risk, Analytics, Wealth, Portfolio)
-- ✅ Documentation SmartFolio injectée automatiquement (~1500 tokens)
-- ✅ Questions rapides spécifiques par page
+- [OK] Support Groq API (gratuit, Llama 3.3 70B)
+- [OK] Support Claude API (payant, Sonnet 3.5)
+- [OK] Context formatters par type de page (Risk, Analytics, Wealth, Portfolio)
+- [OK] Documentation SmartFolio injectée automatiquement (~1500 tokens)
+- [OK] Questions rapides spécifiques par page
 
-### Frontend (100% terminé ✅)
+### Frontend (100% terminé )
 
 ```
 static/components/
@@ -63,11 +63,11 @@ static/components/
 ```
 
 **Composants:**
-- ✅ Modal réutilisable avec conversation
-- ✅ Sélecteur de provider (Groq/Claude)
-- ✅ Questions rapides par page
-- ✅ Bouton flottant (FAB)
-- ✅ Raccourci clavier Ctrl+K
+- [OK] Modal réutilisable avec conversation
+- [OK] Sélecteur de provider (Groq/Claude)
+- [OK] Questions rapides par page
+- [OK] Bouton flottant (FAB)
+- [OK] Raccourci clavier Ctrl+K
 
 ---
 
@@ -307,9 +307,9 @@ PAGE_DOC_FILES = {
 
 **Avantages:**
 
-- ✅ Docs toujours à jour (5 min max de latence)
-- ✅ Pas besoin de redéployer l'app pour mettre à jour la knowledge base
-- ✅ Token budget contrôlé (800 chars/doc)
+- [OK] Docs toujours à jour (5 min max de latence)
+- [OK] Pas besoin de redéployer l'app pour mettre à jour la knowledge base
+- [OK] Token budget contrôlé (800 chars/doc)
 
 ### Concepts Core (CLAUDE.md)
 
@@ -419,7 +419,7 @@ export const contextBuilders = {
 ### Étape 3: Utilisation
 
 L'utilisateur peut :
-1. Cliquer sur le bouton flottant ✨ (en bas à droite)
+1. Cliquer sur le bouton flottant  (en bas à droite)
 2. Utiliser le raccourci **Ctrl+K**
 3. Poser des questions contextuelles
 4. Changer de provider (Groq ↔ Claude)
@@ -489,65 +489,65 @@ Groq free tier: **14k tokens/min** → OK pour usage normal
 
 | Fichier | Status | Description |
 |---------|--------|-------------|
-| `api/ai_chat_router.py` | ✅ Modifié | Multi-provider + context enrichis |
-| `api/services/ai_knowledge_base.py` | ✅ Créé | Documentation condensée |
+| `api/ai_chat_router.py` | [OK] Modifié | Multi-provider + context enrichis |
+| `api/services/ai_knowledge_base.py` | [OK] Créé | Documentation condensée |
 
 ### Frontend
 
 | Fichier | Status | Description |
 |---------|--------|-------------|
-| `static/components/ai-chat.js` | ✅ Créé | Composant principal (253 lignes) |
-| `static/components/ai-chat-context-builders.js` | ✅ Créé | Context builders (396 lignes) |
-| `static/components/ai-chat.css` | ✅ Créé | Styles modernes (300+ lignes) |
-| `static/components/ai-chat-modal.html` | ✅ Créé | Template HTML du modal |
-| `static/components/ai-chat-init.js` | ✅ Créé | Helper d'initialisation |
+| `static/components/ai-chat.js` | [OK] Créé | Composant principal (253 lignes) |
+| `static/components/ai-chat-context-builders.js` | [OK] Créé | Context builders (396 lignes) |
+| `static/components/ai-chat.css` | [OK] Créé | Styles modernes (300+ lignes) |
+| `static/components/ai-chat-modal.html` | [OK] Créé | Template HTML du modal |
+| `static/components/ai-chat-init.js` | [OK] Créé | Helper d'initialisation |
 
 ### Configuration
 
 | Fichier | Status | Description |
 |---------|--------|-------------|
-| `static/settings.html` | ✅ Modifié | +Claude API Key field (lignes 532-542) |
+| `static/settings.html` | [OK] Modifié | +Claude API Key field (lignes 532-542) |
 
 ---
 
 ## État d'Avancement
 
-### ✅ Phase 1: Backend (100%)
+### Phase 1: Backend (100%)
 - [x] Multi-provider support (Groq + Claude API)
 - [x] Knowledge base avec documentation condensée
 - [x] Context formatters enrichis (Risk, Analytics, Wealth, Portfolio)
 - [x] Nouveaux endpoints `/providers`, `/quick-questions/{page}`
 
-### ✅ Phase 2: Frontend Components (100%)
+### Phase 2: Frontend Components (100%)
 - [x] Composant réutilisable ai-chat.js
 - [x] Context builders par page
 - [x] Styles modernes CSS
 - [x] Modal HTML template
 - [x] Helper d'initialisation
 
-### ✅ Phase 3: Configuration (100%)
+### Phase 3: Configuration (100%)
 
 - [x] Bouton flottant (FAB)
 - [x] Champ Claude API Key dans settings
-- [x] ✅ Intégré dans les 4 pages HTML principales
+- [x] [OK] Intégré dans les 4 pages HTML principales
 
-### ✅ Phase 4: Tests & Documentation (100%)
+### Phase 4: Tests & Documentation (100%)
 
 - [x] Intégrations complétées (dashboard, risk, analytics, wealth)
 - [x] Documentation complète (ce fichier)
-- [ ] ⏳ Tests utilisateur avec Groq API (à faire par l'utilisateur)
-- [ ] ⏳ Tests utilisateur avec Claude API (à faire par l'utilisateur)
+- [ ] [Pending] Tests utilisateur avec Groq API (à faire par l'utilisateur)
+- [ ] [Pending] Tests utilisateur avec Claude API (à faire par l'utilisateur)
 
 ---
 
-## ✅ Implémentation Terminée
+## Implémentation Terminée
 
 Le système AI Chat Global est maintenant **100% implémenté** et intégré dans les 4 pages principales :
 
-1. ✅ **dashboard.html** - Intégré avec context builder 'dashboard'
-2. ✅ **risk-dashboard.html** - Intégré avec context builder 'risk-dashboard'
-3. ✅ **analytics-unified.html** - Intégré avec context builder 'analytics-unified'
-4. ✅ **wealth-dashboard.html** - Intégré avec context builder 'wealth-dashboard'
+1. [OK] **dashboard.html** - Intégré avec context builder 'dashboard'
+2. [OK] **risk-dashboard.html** - Intégré avec context builder 'risk-dashboard'
+3. [OK] **analytics-unified.html** - Intégré avec context builder 'analytics-unified'
+4. [OK] **wealth-dashboard.html** - Intégré avec context builder 'wealth-dashboard'
 
 ### Pour Utiliser le Système
 
@@ -557,7 +557,7 @@ Le système AI Chat Global est maintenant **100% implémenté** et intégré dan
    - Obtenir clé gratuite Groq : <https://console.groq.com/keys>
 
 2. **Ouvrir l'assistant**
-   - Cliquer sur le bouton flottant ✨ (en bas à droite)
+   - Cliquer sur le bouton flottant  (en bas à droite)
    - OU utiliser le raccourci **Ctrl+K**
 
 3. **Poser des questions**

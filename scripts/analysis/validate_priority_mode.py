@@ -61,15 +61,15 @@ def test_configuration():
     cache_dir = "data/cache"
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
-        print(f"✅ Répertoire cache créé: {cache_dir}")
+        print(f"[OK] Répertoire cache créé: {cache_dir}")
     else:
-        print(f"✅ Répertoire cache existe: {cache_dir}")
+        print(f"[OK] Répertoire cache existe: {cache_dir}")
 
     return True
 
 def test_proportional_mode():
     """Test du mode proportionnel (non-régression)."""
-    print("\n🔍 Test mode proportionnel (non-régression)...")
+    print("\n Test mode proportionnel (non-régression)...")
 
     try:
         from services.rebalance import plan_rebalance
@@ -105,17 +105,17 @@ def test_proportional_mode():
         assert "priority_meta" not in plan_default
         assert "priority_meta" not in plan_proportional
 
-        print("✅ Mode proportionnel fonctionne (non-régression OK)")
+        print("[OK] Mode proportionnel fonctionne (non-régression OK)")
         return True
 
     except Exception as e:
-        print(f"❌ Erreur mode proportionnel: {e}")
+        print(f"[Error] Erreur mode proportionnel: {e}")
         traceback.print_exc()
         return False
 
 def test_priority_mode_fallback():
     """Test du mode priority avec fallback."""
-    print("\n🔍 Test mode priority avec fallback...")
+    print("\n Test mode priority avec fallback...")
 
     try:
         from services.rebalance import plan_rebalance
@@ -143,17 +143,17 @@ def test_priority_mode_fallback():
         assert isinstance(plan["actions"], list)
 
         # Pas de crash = succès du fallback
-        print("✅ Mode priority avec fallback fonctionne")
+        print("[OK] Mode priority avec fallback fonctionne")
         return True
 
     except Exception as e:
-        print(f"❌ Erreur mode priority: {e}")
+        print(f"[Error] Erreur mode priority: {e}")
         traceback.print_exc()
         return False
 
 def test_universe_manager():
     """Test du gestionnaire d'univers."""
-    print("\n🔍 Test gestionnaire d'univers...")
+    print("\n Test gestionnaire d'univers...")
 
     try:
         from services.universe import UniverseManager
@@ -166,17 +166,17 @@ def test_universe_manager():
         assert "scoring" in config
         assert config["features"]["priority_allocation"] is True
 
-        print("✅ Gestionnaire d'univers fonctionne")
+        print("[OK] Gestionnaire d'univers fonctionne")
         return True
 
     except Exception as e:
-        print(f"❌ Erreur gestionnaire d'univers: {e}")
+        print(f"[Error] Erreur gestionnaire d'univers: {e}")
         traceback.print_exc()
         return False
 
 def test_coingecko_connector():
     """Test du connecteur CoinGecko (sans API)."""
-    print("\n🔍 Test connecteur CoinGecko...")
+    print("\n Test connecteur CoinGecko...")
 
     try:
         from connectors.coingecko import CoinGeckoConnector, get_connector
@@ -190,18 +190,18 @@ def test_coingecko_connector():
         assert btc_id == "bitcoin"
         assert eth_id == "ethereum"
 
-        print("✅ Connecteur CoinGecko fonctionne (mapping)")
+        print("[OK] Connecteur CoinGecko fonctionne (mapping)")
         return True
 
     except Exception as e:
-        print(f"❌ Erreur connecteur CoinGecko: {e}")
+        print(f"[Error] Erreur connecteur CoinGecko: {e}")
         traceback.print_exc()
         return False
 
 def generate_summary_report():
     """Génère un rapport de validation."""
     print("\n" + "="*60)
-    print("📋 RAPPORT DE VALIDATION - MODE PRIORITY")
+    print(" RAPPORT DE VALIDATION - MODE PRIORITY")
     print("="*60)
 
     tests = [
@@ -219,15 +219,15 @@ def generate_summary_report():
             success = test_func()
             results.append((test_name, success))
         except Exception as e:
-            print(f"❌ {test_name}: Exception {e}")
+            print(f"[Error] {test_name}: Exception {e}")
             results.append((test_name, False))
 
-    print("\n📊 RÉSULTATS:")
+    print("\n RÉSULTATS:")
     print("-" * 40)
 
     passed = 0
     for test_name, success in results:
-        status = "✅ PASS" if success else "❌ FAIL"
+        status = "[OK] PASS" if success else "[Error] FAIL"
         print(f"{test_name:<25} {status}")
         if success:
             passed += 1
@@ -236,7 +236,7 @@ def generate_summary_report():
     print(f"Total: {passed}/{len(results)} tests réussis")
 
     if passed == len(results):
-        print("\n🎉 VALIDATION COMPLÈTE RÉUSSIE!")
+        print("\n VALIDATION COMPLÈTE RÉUSSIE!")
         print("\nLe mode priority est prêt à être utilisé :")
         print("1. Démarrer le serveur: uvicorn api.main:app --reload --port 8080")
         print("2. Ouvrir: http://localhost:8080/static/rebalance.html")
@@ -244,7 +244,7 @@ def generate_summary_report():
         print("4. Vérifier les métadonnées dans la réponse du plan")
         return True
     else:
-        print("\n⚠️  VALIDATION PARTIELLE - Certains tests ont échoué")
+        print("\n[Warning]  VALIDATION PARTIELLE - Certains tests ont échoué")
         print("Vérifier les erreurs ci-dessus avant utilisation en production.")
         return False
 

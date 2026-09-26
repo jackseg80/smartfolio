@@ -2,28 +2,28 @@
 
 > **Date:** 28 octobre 2025 (Session finale - Toutes corrections)
 > **User:** jack
-> **Status:** ✅ **FONCTIONNEL à 95%**
+> **Status:** [OK] **FONCTIONNEL à 95%**
 > **Portfolio:** 29 positions, $127,822
 
 ---
 
-## 🎉 Résumé des Succès (Métriques Finales)
+## Résumé des Succès (Métriques Finales)
 
 ### Métriques Avant/Après/Final
 
 | Métrique | Début Session | Session 1 | Session 2 (Final) | Amélioration Totale |
 |----------|---------------|-----------|-------------------|---------------------|
-| **Suggested Sales** | 0 positions | 25 positions | **26 positions** | +∞ 🎉 |
-| **Capital Freed** | $0 | €27,009 | **€29,872** | +∞ (+10.6%) 🎉 |
-| **Unknown Sectors** | 42.1% | 36.0% | **1.1%** | **-97.4%** 🎉🎉🎉 |
-| **European Stocks** | 0/6 | 6/6 | **6/6** | 100% ✅ |
-| **Protected Symbols** | `[None, None, None]` | `['IWDA', 'TSLA', 'NVDA']` | **`['IWDA', 'TSLA']`** | ✅ Top 2 |
-| **Scan Time** | 19 secondes | 16 secondes | **16 secondes** | -15% ⚡ |
+| **Suggested Sales** | 0 positions | 25 positions | **26 positions** | +∞  |
+| **Capital Freed** | $0 | €27,009 | **€29,872** | +∞ (+10.6%)  |
+| **Unknown Sectors** | 42.1% | 36.0% | **1.1%** | **-97.4%**  |
+| **European Stocks** | 0/6 | 6/6 | **6/6** | 100% [OK] |
+| **Protected Symbols** | `[None, None, None]` | `['IWDA', 'TSLA', 'NVDA']` | **`['IWDA', 'TSLA']`** | [OK] Top 2 |
+| **Scan Time** | 19 secondes | 16 secondes | **16 secondes** | -15%  |
 | **Coverage** | 0% | 56% | **62.3%** | +62.3% |
 
 ---
 
-## ✅ Bugs Corrigés (7 au total)
+## Bugs Corrigés (7 au total)
 
 ### Session 1 - Bugs Critiques (3)
 
@@ -39,7 +39,7 @@
 - `services/ml/bourse/portfolio_gap_detector.py` (lignes 97, 107, 151, 208)
 - `services/ml/bourse/opportunity_scanner.py` (ligne 310)
 
-**Résultat** : Protected symbols corrects → 25 ventes suggérées au lieu de 0 ✅
+**Résultat** : Protected symbols corrects → 25 ventes suggérées au lieu de 0 [OK]
 
 ---
 
@@ -67,13 +67,13 @@ SAXO_TO_YAHOO_EXCHANGE = {
 }
 ```
 
-**Résultat** : 6/6 actions européennes détectées avec secteurs corrects ✅
+**Résultat** : 6/6 actions européennes détectées avec secteurs corrects [OK]
 
 **Exemples de conversions réussies** :
 ```
-🔄 Saxo 'SLHn:xvtx' → Yahoo 'SLHN.SW' → Financial Services ✅
-🔄 Saxo 'IFX:xetr' → Yahoo 'IFX.DE' → Technology ✅
-🔄 Saxo 'CDR:xwar' → Yahoo 'CDR.WA' → Communication Services ✅
+ Saxo 'SLHn:xvtx' → Yahoo 'SLHN.SW' → Financial Services [OK]
+ Saxo 'IFX:xetr' → Yahoo 'IFX.DE' → Technology [OK]
+ Saxo 'CDR:xwar' → Yahoo 'CDR.WA' → Communication Services [OK]
 ```
 
 ---
@@ -96,7 +96,7 @@ SAXO_TO_YAHOO_EXCHANGE = {
 - Lignes 220-230 : Ajout seuils 5% et 3%
 - Ligne 288 : `sellable = sale_score >= 10` (supprimé `len(scores) > 0`)
 
-**Résultat** : 25 positions suggérées, €27,009 libérés (56% du besoin) ✅
+**Résultat** : 25 positions suggérées, €27,009 libérés (56% du besoin) [OK]
 
 ---
 
@@ -128,17 +128,17 @@ ETF_SECTOR_MAPPING = {
 }
 ```
 
-**Résultat** : Unknown 36% → **1.1%** (-97% amélioration) 🎉
+**Résultat** : Unknown 36% → **1.1%** (-97% amélioration)
 
 **Détail classement** :
 ```
-🏦 IWDA:xams → Diversified      €12,248 (9.6%)
-🏦 ACWI:xnas → Diversified      €5,677  (4.4%)
-🏦 WORLD:xswx → Diversified     €5,736  (4.5%)
-🏦 ITEK:xpar → Technology       €6,795  (5.3%)
-🏦 BTEC:xswx → Healthcare       €3,811  (3.0%)
-🏦 AGGS:xswx → Fixed Income     €5,240  (4.1%)
-🏦 XGDU:xmil → Commodities      €3,000  (2.3%)
+ IWDA:xams → Diversified      €12,248 (9.6%)
+ ACWI:xnas → Diversified      €5,677  (4.4%)
+ WORLD:xswx → Diversified     €5,736  (4.5%)
+ ITEK:xpar → Technology       €6,795  (5.3%)
+ BTEC:xswx → Healthcare       €3,811  (3.0%)
+ AGGS:xswx → Fixed Income     €5,240  (4.1%)
+ XGDU:xmil → Commodities      €3,000  (2.3%)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Total: €42,507 (33.2% portfolio)
 ```
@@ -186,7 +186,7 @@ SYMBOL_EXCEPTIONS = {
 base_symbol = SYMBOL_EXCEPTIONS.get(base_symbol, base_symbol)
 ```
 
-**Résultat** : BRKb détecté comme "Financials" ✅
+**Résultat** : BRKb détecté comme "Financials" OK
 
 ---
 
@@ -204,11 +204,11 @@ base_symbol = SYMBOL_EXCEPTIONS.get(base_symbol, base_symbol)
 normalized_ticker = ticker.split(':')[0] if ':' in ticker else ticker
 ```
 
-**Résultat** : Plus d'erreurs yfinance, fallback data non nécessaire ✅
+**Résultat** : Plus d'erreurs yfinance, fallback data non nécessaire [OK]
 
 ---
 
-## 📊 Résultats Finaux (User Jack)
+## Résultats Finaux (User Jack)
 
 ### Portfolio Gaps Détectés (5 secteurs)
 
@@ -228,11 +228,11 @@ normalized_ticker = ticker.split(':')[0] if ':' in ticker else ticker
 
 **Top 5 ventes recommandées** :
 ```
-🎯 NVDA:xnas    €9,544  30%  +€2,863  Moderate position (7.5% - trim) [NOUVEAU!]
-🎯 AMD:xnas     €7,252  30%  +€2,176  Moderate position (5.7% - trim)
-🎯 ITEK:xpar    €6,795  30%  +€2,038  Negative momentum (-8.2% 3M)
-🎯 GOOGL:xnas   €6,175  30%  +€1,853  Negative momentum (-7.6% 3M)
-🎯 ACWI:xnas    €5,677  30%  +€1,703  Negative momentum (-2.5% 3M)
+ NVDA:xnas    €9,544  30%  +€2,863  Moderate position (7.5% - trim) [NOUVEAU!]
+ AMD:xnas     €7,252  30%  +€2,176  Moderate position (5.7% - trim)
+ ITEK:xpar    €6,795  30%  +€2,038  Negative momentum (-8.2% 3M)
+ GOOGL:xnas   €6,175  30%  +€1,853  Negative momentum (-7.6% 3M)
+ ACWI:xnas    €5,677  30%  +€1,703  Negative momentum (-2.5% 3M)
 ```
 
 **Total capital freed** : €29,872 (62.3% du besoin)
@@ -261,45 +261,45 @@ Unknown:              1.1%  ← Quasi-éliminé!
 
 **After Allocation** (Si ventes + achats exécutés) :
 ```
-Technology:          25.6%  (-9.7%)  ✅ Réduit concentration
-Diversified:         14.6%  (-5.5%)  ✅ Toujours important
+Technology:          25.6%  (-9.7%)  [OK] Réduit concentration
+Diversified:         14.6%  (-5.5%)  [OK] Toujours important
 Consumer Cyclical:   11.0%  (-4.2%)
-Industrials:          8.4%  (+8.4%)  ✅ Gap comblé
-Financials:           6.5%  (+6.5%)  ✅ Gap comblé
+Industrials:          8.4%  (+8.4%)  [OK] Gap comblé
+Financials:           6.5%  (+6.5%)  [OK] Gap comblé
 Communication:        5.6%  (-2.1%)
 Healthcare:           4.5%  (-1.7%)
-Energy:               4.7%  (+4.7%)  ✅ Gap comblé
-Consumer Staples:     4.1%  (+4.1%)  ✅ Gap comblé
-Utilities:            3.6%  (+3.6%)  ✅ Gap comblé
+Energy:               4.7%  (+4.7%)  [OK] Gap comblé
+Consumer Staples:     4.1%  (+4.1%)  [OK] Gap comblé
+Utilities:            3.6%  (+3.6%)  [OK] Gap comblé
 Fixed Income:         3.0%  (-1.1%)
 Commodities:          1.7%  (-0.6%)
-Unknown:              0.8%  (-0.3%)  ✅ Quasi-zéro
+Unknown:              0.8%  (-0.3%)  [OK] Quasi-zéro
 ```
 
 **Risk Score** : 7.2 → **6.4** (-11% amélioration)
 
 ---
 
-## 🚀 État Final du Système
+## État Final du Système
 
-### Fonctionnalité: **95%** ✅
+### Fonctionnalité: **95%**
 
 | Fonctionnalité | Status | Note |
 |----------------|--------|------|
-| Scan secteurs S&P 500 | ✅ 100% | 8 gaps détectés |
-| Enrichissement Yahoo Finance | ✅ 100% | 21/29 actions (72%) |
-| **ETF mapping manuel** | ✅ 100% | **7/7 ETFs classifiés** |
-| **BRKb mapping** | ✅ 100% | **Berkshire détecté** |
-| Scoring 3-pillar | ✅ 100% | Momentum/Value/Div |
-| Suggested sales intelligent | ✅ 100% | 26 positions, €29.8k freed |
-| Protected holdings | ✅ 100% | **Top 2** (IWDA, TSLA) |
-| Impact simulator | ✅ 100% | Before/After allocation |
-| Performance | ✅ 100% | 16s scan time |
-| **YFinance errors** | ✅ 100% | **Plus d'erreurs format** |
+| Scan secteurs S&P 500 | [OK] 100% | 8 gaps détectés |
+| Enrichissement Yahoo Finance | [OK] 100% | 21/29 actions (72%) |
+| **ETF mapping manuel** | [OK] 100% | **7/7 ETFs classifiés** |
+| **BRKb mapping** | [OK] 100% | **Berkshire détecté** |
+| Scoring 3-pillar | [OK] 100% | Momentum/Value/Div |
+| Suggested sales intelligent | [OK] 100% | 26 positions, €29.8k freed |
+| Protected holdings | [OK] 100% | **Top 2** (IWDA, TSLA) |
+| Impact simulator | [OK] 100% | Before/After allocation |
+| Performance | [OK] 100% | 16s scan time |
+| **YFinance errors** | [OK] 100% | **Plus d'erreurs format** |
 
 ---
 
-## 📁 Fichiers Modifiés (Résumé)
+## Fichiers Modifiés (Résumé)
 
 ### Session 1 (Bugs Critiques)
 
@@ -336,97 +336,97 @@ CLAUDE.md                                         # Mise à jour métriques
 
 ---
 
-## 🧪 Tests de Validation Finaux
+## Tests de Validation Finaux
 
-### Test 1 : ETF Mapping ✅
+### Test 1 : ETF Mapping
 ```bash
-grep "🏦.*ETF mapping" logs/app.log | tail -10
+grep ".*ETF mapping" logs/app.log | tail -10
 
 # Résultat attendu (7 lignes):
-🏦 IWDA:xams → Diversified (ETF mapping)
-🏦 ITEK:xpar → Technology (ETF mapping)
-🏦 WORLD:xswx → Diversified (ETF mapping)
-🏦 ACWI:xnas → Diversified (ETF mapping)
-🏦 AGGS:xswx → Fixed Income (ETF mapping)
-🏦 BTEC:xswx → Healthcare (ETF mapping)
-🏦 XGDU:xmil → Commodities (ETF mapping)
+ IWDA:xams → Diversified (ETF mapping)
+ ITEK:xpar → Technology (ETF mapping)
+ WORLD:xswx → Diversified (ETF mapping)
+ ACWI:xnas → Diversified (ETF mapping)
+ AGGS:xswx → Fixed Income (ETF mapping)
+ BTEC:xswx → Healthcare (ETF mapping)
+ XGDU:xmil → Commodities (ETF mapping)
 ```
-**Status** : ✅ PASS
+**Status** : [OK] PASS
 
 ---
 
-### Test 2 : Protected Top 2 ✅
+### Test 2 : Protected Top 2
 ```bash
-grep "🔒 Protected symbols" logs/app.log | tail -1
+grep " Protected symbols" logs/app.log | tail -1
 
 # Résultat attendu :
-🔒 Protected symbols: ['IWDA:xams', 'TSLA:xnas']
+ Protected symbols: ['IWDA:xams', 'TSLA:xnas']
 ```
-**Status** : ✅ PASS (plus de NVDA)
+**Status** : [OK] PASS (plus de NVDA)
 
 ---
 
-### Test 3 : Suggested Sales ✅
+### Test 3 : Suggested Sales
 ```bash
-grep "📋.*positions eligible" logs/app.log | tail -1
+grep ".*positions eligible" logs/app.log | tail -1
 
 # Résultat attendu :
-📋 26 positions eligible for sale
+ 26 positions eligible for sale
 ```
-**Status** : ✅ PASS (26 positions)
+**Status** : [OK] PASS (26 positions)
 
 ---
 
-### Test 4 : Capital Freed ✅
+### Test 4 : Capital Freed
 ```bash
-grep "✅ Suggested.*sales.*frees" logs/app.log | tail -1
+grep "[OK] Suggested.*sales.*frees" logs/app.log | tail -1
 
 # Résultat attendu :
-✅ Suggested 26 sales, frees $29,872 (sufficient: False)
+[OK] Suggested 26 sales, frees $29,872 (sufficient: False)
 ```
-**Status** : ✅ PASS (€29,872 libérés, 62.3% coverage)
+**Status** : [OK] PASS (€29,872 libérés, 62.3% coverage)
 
 ---
 
-### Test 5 : YFinance Errors ✅
+### Test 5 : YFinance Errors
 ```bash
 grep "ERROR yfinance.*YFTzMissingError" logs/app.log | tail -5
 
 # Résultat attendu : Aucune erreur (après restart serveur)
 ```
-**Status** : ✅ PASS (plus d'erreurs format)
+**Status** : [OK] PASS (plus d'erreurs format)
 
 ---
 
-## 🎯 Conclusion
+## Conclusion
 
 Le système **Market Opportunities** est maintenant **fonctionnel à 95%** avec tous les bugs critiques et mineurs corrigés :
 
-### ✅ Achievements
+### Achievements
 
-1. ✅ **Unknown 42% → 1.1%** (-97% amélioration) 🎉
-2. ✅ **Capital freed +10.6%** (€27k → €29.8k)
-3. ✅ **26 ventes suggérées** (au lieu de 0 initialement)
-4. ✅ **Top 2 protection** (libère NVDA pour vente)
-5. ✅ **7 ETFs classifiés** (Diversified, Technology, Healthcare, etc.)
-6. ✅ **BRKb détecté** (Financials)
-7. ✅ **Plus d'erreurs YFinance** (symboles normalisés)
+1. [OK] **Unknown 42% → 1.1%** (-97% amélioration)
+2. [OK] **Capital freed +10.6%** (€27k → €29.8k)
+3. [OK] **26 ventes suggérées** (au lieu de 0 initialement)
+4. [OK] **Top 2 protection** (libère NVDA pour vente)
+5. [OK] **7 ETFs classifiés** (Diversified, Technology, Healthcare, etc.)
+6. [OK] **BRKb détecté** (Financials)
+7. [OK] **Plus d'erreurs YFinance** (symboles normalisés)
 
-### 📈 Résultats Impressionnants
+### Résultats Impressionnants
 
 - **Secteurs détectés** : 21 actions + 7 ETFs = 28/29 positions (96.6%)
 - **Ventes intelligentes** : Priorise momentum négatif + sur-concentration
 - **Diversification** : 5 secteurs gaps comblés (Industrials, Financials, Energy, Utilities, Consumer Staples)
 - **Risk reduction** : 7.2 → 6.4 (-11%)
 
-### ⚠️ Limitation Mineure
+### Limitation Mineure
 
 - **Capital freed 62%** au lieu de 100% → Lié aux protections top 2 holdings (25% du portfolio)
 - **Options** : Vente partielle protégés (5-10%), utiliser cash disponible, réduire targets secteurs
 
 ---
 
-**Le système est prêt pour production !** 🚀
+**Le système est prêt pour production !**
 
 ---
 

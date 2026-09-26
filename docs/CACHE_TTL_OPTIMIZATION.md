@@ -5,20 +5,20 @@
 
 ---
 
-## 🎯 Principe Directeur
+## Principe Directeur
 
 **"Cache aussi longtemps que possible, rafraîchit aussi souvent que nécessaire"**
 
 Chaque TTL doit refléter:
-1. ⏱️ **Fréquence de mise à jour réelle** de la source
-2. 📊 **Impact business** de la fraîcheur des données
-3. ⚖️ **Coût calcul** vs **bénéfice utilisateur**
+1. [Pending] **Fréquence de mise à jour réelle** de la source
+2. **Impact business** de la fraîcheur des données
+3. **Coût calcul** vs **bénéfice utilisateur**
 
 ---
 
-## 📊 Analyse par Type de Données
+## Analyse par Type de Données
 
-### 🔗 On-Chain Indicators (Blockchain Metrics)
+### On-Chain Indicators (Blockchain Metrics)
 
 **Métriques:** MVRV, NUPL, Puell Multiple, RHODL Ratio, Spent Output Profit Ratio
 
@@ -26,8 +26,8 @@ Chaque TTL doit refléter:
 - Glassnode/CryptoQuant: **1 fois par jour** (agrégation quotidienne)
 - Certaines métriques: **1 fois par semaine** (métrics lourdes)
 
-**TTL actuel:** 10 minutes ❌
-**TTL proposé:** **4-6 heures** ✅
+**TTL actuel:** 10 minutes [Error]
+**TTL proposé:** **4-6 heures** [OK]
 
 **Justification:**
 - Données blockchain agrégées quotidiennement
@@ -41,7 +41,7 @@ const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures (était 10 min)
 
 ---
 
-### 🔄 Cycle Score (Bitcoin 4-Year Cycle)
+### Cycle Score (Bitcoin 4-Year Cycle)
 
 **Base:** Position dans le cycle Bitcoin (halving-based), mois depuis dernier halving
 
@@ -49,8 +49,8 @@ const CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 heures (était 10 min)
 - Évolue de **~0.1-0.3% par jour** (cycle de 4 ans)
 - Changement perceptible: **plusieurs jours**
 
-**TTL actuel:** Aucun cache explicite ❌
-**TTL proposé:** **24 heures** ✅
+**TTL actuel:** Aucun cache explicite [Error]
+**TTL proposé:** **24 heures** [OK]
 
 **Justification:**
 - Évolution ultra-lente et prévisible
@@ -64,7 +64,7 @@ const CYCLE_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures
 
 ---
 
-### 🤖 ML Sentiment (Social/News Analysis)
+### ML Sentiment (Social/News Analysis)
 
 **Métriques:** Sentiment agrégé, Fear & Greed ML alternatif
 
@@ -72,8 +72,8 @@ const CYCLE_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 heures
 - Scraping/API external: **15-30 minutes**
 - Agrégation ML: **toutes les heures**
 
-**TTL actuel:** 2 minutes ❌
-**TTL proposé:** **15-30 minutes** ✅
+**TTL actuel:** 2 minutes [Error]
+**TTL proposé:** **15-30 minutes** [OK]
 
 **Justification:**
 - Sources externes rafraîchies toutes les 15-30 min
@@ -87,7 +87,7 @@ const ML_CACHE_TTL = 15 * 60 * 1000; // 15 minutes (était 2 min)
 
 ---
 
-### 💰 Price Data (Real-Time Pricing)
+### Price Data (Real-Time Pricing)
 
 **Métriques:** Prix spot actuels
 
@@ -95,8 +95,8 @@ const ML_CACHE_TTL = 15 * 60 * 1000; // 15 minutes (était 2 min)
 - CoinGecko Free API: **5 minutes** (rate limit)
 - Exchanges: **temps réel** (mais pas notre source)
 
-**TTL actuel:** 60 secondes (crypto), 30 min (autres) ⚠️
-**TTL proposé:** **3-5 minutes** ✅
+**TTL actuel:** 60 secondes (crypto), 30 min (autres) [Warning]
+**TTL proposé:** **3-5 minutes** [OK]
 
 **Justification:**
 - CoinGecko Free API rate-limited à 50 calls/min
@@ -111,7 +111,7 @@ _TTL_DEFAULT = 1800  # 30 minutes (OK pour stocks)
 
 ---
 
-### 📈 Risk Metrics (VaR, Sharpe, Volatility)
+### Risk Metrics (VaR, Sharpe, Volatility)
 
 **Métriques:** VaR 95/99, CVaR, Sharpe, Sortino, Max Drawdown, Ulcer Index
 
@@ -120,8 +120,8 @@ _TTL_DEFAULT = 1800  # 30 minutes (OK pour stocks)
 - Historique: mise à jour **quotidienne** (end-of-day)
 - Calculs: **très coûteux** (corrélations, rolling windows)
 
-**TTL actuel:** 5 minutes (VaR calculator) ❌
-**TTL proposé:** **30 minutes - 1 heure** ✅
+**TTL actuel:** 5 minutes (VaR calculator) [Error]
+**TTL proposé:** **30 minutes - 1 heure** [OK]
 
 **Justification:**
 - Basés sur historique (30-365 jours) → changent peu en intraday
@@ -135,12 +135,12 @@ this.cache_ttl = 30 * 60 * 1000; // 30 minutes (était 5 min)
 
 ```python
 # services/risk_management.py
-self.cache_ttl = timedelta(hours=1)  # 1 heure (était 1h, OK ✅)
+self.cache_ttl = timedelta(hours=1)  # 1 heure (était 1h, OK [OK])
 ```
 
 ---
 
-### 🎲 Governance Signals (ML Predictions)
+### Governance Signals (ML Predictions)
 
 **Métriques:** Régime marché, decision index, contradiction index
 
@@ -148,8 +148,8 @@ self.cache_ttl = timedelta(hours=1)  # 1 heure (était 1h, OK ✅)
 - ML orchestrator: **toutes les heures** (jobs planifiés)
 - Redis cache backend: **30 minutes**
 
-**TTL actuel:** 30 minutes ✅
-**TTL proposé:** **1 heure** ✅ (aligné sur ML orchestrator)
+**TTL actuel:** 30 minutes [OK]
+**TTL proposé:** **1 heure** [OK] (aligné sur ML orchestrator)
 
 **Justification:**
 - ML predictions recalculées toutes les heures
@@ -162,7 +162,7 @@ self._signals_ttl_seconds = 3600  # 1 heure (était 30 min)
 
 ---
 
-### 🏷️ CoinGecko Metadata (Market Cap, Categories)
+### CoinGecko Metadata (Market Cap, Categories)
 
 **Métriques:** Market cap, catégories, taxonomy mapping
 
@@ -170,10 +170,10 @@ self._signals_ttl_seconds = 3600  # 1 heure (était 30 min)
 - Market cap: **5-15 minutes** (CoinGecko)
 - Catégories: **plusieurs jours/semaines** (éditorial)
 
-**TTL actuel:** 5 minutes ❌
+**TTL actuel:** 5 minutes [Error]
 **TTL proposé:**
-- **Market cap:** 15 minutes ✅
-- **Catégories/taxonomy:** 12 heures ✅
+- **Market cap:** 15 minutes [OK]
+- **Catégories/taxonomy:** 12 heures [OK]
 
 **Justification:**
 - Market cap: change fréquemment, mais 15 min = suffisant pour portfolio management
@@ -187,7 +187,7 @@ self._cache_ttl_categories = timedelta(hours=12)  # Catégories (nouveau)
 
 ---
 
-### 📂 Asset Groups Taxonomy
+### Asset Groups Taxonomy
 
 **Métriques:** Mappings secteurs (DeFi, L1/L0, Memecoins, etc.)
 
@@ -195,8 +195,8 @@ self._cache_ttl_categories = timedelta(hours=12)  # Catégories (nouveau)
 - Fichier statique édité manuellement
 - Changements: **hebdomadaires/mensuels**
 
-**TTL actuel:** 30 secondes ❌
-**TTL proposé:** **1 heure** ✅
+**TTL actuel:** 30 secondes [Error]
+**TTL proposé:** **1 heure** [OK]
 
 **Justification:**
 - Données quasi-statiques
@@ -209,7 +209,7 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 heure (était 30s)
 
 ---
 
-### 💼 Portfolio Balances (Current Holdings)
+### Portfolio Balances (Current Holdings)
 
 **Métriques:** CSV uploads, CoinTracking API sync
 
@@ -217,8 +217,8 @@ const CACHE_TTL = 60 * 60 * 1000; // 1 heure (était 30s)
 - CSV: **manuel** (upload user)
 - CT API: **toutes les heures** (sync configuré)
 
-**TTL actuel:** Aucun cache explicite ❌
-**TTL proposé:** **5 minutes** ✅ (après fetch)
+**TTL actuel:** Aucun cache explicite [Error]
+**TTL proposé:** **5 minutes** [OK] (après fetch)
 
 **Justification:**
 - Données changeant peu en intraday
@@ -232,9 +232,9 @@ BALANCE_CACHE_TTL = 300  # 5 minutes
 
 ---
 
-## 🎯 Recommandations par Priorité
+## Recommandations par Priorité
 
-### ✅ **Priorité 1 - Impact Immédiat** (Quick Wins)
+### **Priorité 1 - Impact Immédiat** (Quick Wins)
 
 | Module | Changement | Gain |
 |--------|------------|------|
@@ -257,7 +257,7 @@ this.cache_ttl = 30 * 60 * 1000; // 30 min
 
 ---
 
-### ⚠️ **Priorité 2 - Optimisations Importantes**
+### **Priorité 2 - Optimisations Importantes**
 
 | Module | Changement | Gain |
 |--------|------------|------|
@@ -282,7 +282,7 @@ self._signals_ttl_seconds = 3600  # 1 heure
 
 ---
 
-### 📌 **Priorité 3 - Fine-Tuning**
+### **Priorité 3 - Fine-Tuning**
 
 | Module | Changement | Gain |
 |--------|------------|------|
@@ -291,7 +291,7 @@ self._signals_ttl_seconds = 3600  # 1 heure
 
 ---
 
-## 🔧 Implémentation Technique
+## Implémentation Technique
 
 ### Option A: Frontend (JavaScript)
 
@@ -312,14 +312,14 @@ self._signals_ttl_seconds = 3600  # 1 heure
 - Nécessite Redis running
 - Plus complexe à implémenter
 
-### ✅ Recommandation Hybride
+### Recommandation Hybride
 
 **Frontend (localStorage):** Taxonomy, cycle score, UI state
 **Backend (Redis):** On-chain, ML, prix, risk metrics
 
 ---
 
-## 📊 Impact Attendu
+## Impact Attendu
 
 ### Performance
 
@@ -334,39 +334,39 @@ self._signals_ttl_seconds = 3600  # 1 heure
 
 | Type Donnée | Latence Max | Impact Business |
 |-------------|-------------|-----------------|
-| On-Chain | 4h | ✅ Négligeable (données quotidiennes) |
-| Cycle | 24h | ✅ Négligeable (évolution lente) |
-| ML Sentiment | 15 min | ✅ Acceptable (tendances 30+ min) |
-| Macro Stress (DXY/VIX) | 4h | ✅ Négligeable (données FRED quotidiennes) |
-| Prix | 3 min | ✅ OK pour portfolio management |
-| Risk Metrics | 30 min | ✅ OK (décisions stratégiques) |
+| On-Chain | 4h | [OK] Négligeable (données quotidiennes) |
+| Cycle | 24h | [OK] Négligeable (évolution lente) |
+| ML Sentiment | 15 min | [OK] Acceptable (tendances 30+ min) |
+| Macro Stress (DXY/VIX) | 4h | [OK] Négligeable (données FRED quotidiennes) |
+| Prix | 3 min |  OK pour portfolio management |
+| Risk Metrics | 30 min |  OK (décisions stratégiques) |
 
 ---
 
-## 🚀 Plan d'Action
+## Plan d'Action
 
-### Phase 1: Quick Wins (30 min) ✅
+### Phase 1: Quick Wins (30 min)
 
-1. ✏️ Modifier `onchain-indicators.js` (10 min → 4h)
-2. ✏️ Modifier `shared-asset-groups.js` (30s → 1h)
-3. ✏️ Modifier `var-calculator.js` (5 min → 30 min)
-4. 🧪 Tester sur risk-dashboard.html
+1. Modifier `onchain-indicators.js` (10 min → 4h)
+2. Modifier `shared-asset-groups.js` (30s → 1h)
+3. Modifier `var-calculator.js` (5 min → 30 min)
+4. Tester sur risk-dashboard.html
 
 ### Phase 2: Backend Cache (2-3 heures)
 
-1. ✏️ Ajouter Redis cache pour `/api/risk/dashboard`
-2. ✏️ Implémenter cache decorator Python
-3. ✏️ Migrer on-chain, ML, prices vers Redis
+1. Ajouter Redis cache pour `/api/risk/dashboard`
+2. Implémenter cache decorator Python
+3. Migrer on-chain, ML, prices vers Redis
 
 ### Phase 3: Fine-Tuning (1-2 heures)
 
-1. ✏️ Split CoinGecko cache (prix vs catégories)
-2. ✏️ Ajouter cycle score cache
-3. ✏️ Monitoring cache hit rates (logs)
+1. Split CoinGecko cache (prix vs catégories)
+2. Ajouter cycle score cache
+3. Monitoring cache hit rates (logs)
 
 ---
 
-## 🔍 Monitoring & Validation
+## Monitoring & Validation
 
 ### Logs à Ajouter
 
@@ -384,7 +384,7 @@ logger.info(f"Cache miss for {score_type}, fetching fresh data")
 
 ---
 
-## ⚠️ Gotchas & Edge Cases
+## Gotchas & Edge Cases
 
 ### 1. CSV Upload
 **Problème:** User upload CSV → voit vieilles données (cache)
@@ -398,7 +398,7 @@ logger.info(f"Cache miss for {score_type}, fetching fresh data")
 **Problème:** Dev veut voir changements immédiats
 **Solution:** Force refresh avec `?nocache=1` ou Ctrl+Shift+R
 
-### 4. CoinGecko Proxy Multi-Tenant ✅ FIXED (Oct 2025)
+### 4. CoinGecko Proxy Multi-Tenant  FIXED (Oct 2025)
 **Problème:** Frontend n'envoyait pas header `X-User` + parsing incorrect (`proxyData.data` au lieu de données directes)
 - Utilisait clé API du user 'demo' (invalide) → erreur 401
 - Tentait de lire `.data` deux fois → erreurs `Cannot read properties of undefined`
@@ -433,7 +433,7 @@ const prices = cgData.prices.map(p => p[1]);  // Pas proxyData.data.prices
 
 ---
 
-## 📚 Références
+## Références
 
 - CLAUDE.md: Règles TTL vs Cooldown ([docs/GOVERNANCE_FIXES_OCT_2025.md](GOVERNANCE_FIXES_OCT_2025.md))
 - Redis setup: [docs/REDIS_SETUP.md](REDIS_SETUP.md)
@@ -442,34 +442,34 @@ const prices = cgData.prices.map(p => p[1]);  // Pas proxyData.data.prices
 
 ---
 
-## ✅ Changements Appliqués (2025-10-24)
+## Changements Appliqués (2025-10-24)
 
 ### Frontend (JavaScript)
 
 | Fichier | Ligne | Avant | Après | Statut |
 |---------|-------|-------|-------|--------|
-| `onchain-indicators.js` | 261 | 10 min | **4 heures** | ✅ Applied |
-| `shared-asset-groups.js` | 7 | 30s | **1 heure** | ✅ Applied |
-| `var-calculator.js` | 11 | 5 min | **30 minutes** | ✅ Applied |
-| `shared-ml-functions.js` | 246 | 2 min | **15 minutes** | ✅ Applied |
-| `cycle-navigator.js` | 26 | Aucun | **24 heures** (nouveau) | ✅ Applied |
-| `group-risk-index.js` | 11 | 3 min | **30 minutes** | ✅ Applied |
-| `signals-engine.js` | 62-194 | Parsing incorrect + pas de X-User | **Fix parsing 4 endpoints + header X-User** | ✅ Applied (bugfix) |
+| `onchain-indicators.js` | 261 | 10 min | **4 heures** | [OK] Applied |
+| `shared-asset-groups.js` | 7 | 30s | **1 heure** | [OK] Applied |
+| `var-calculator.js` | 11 | 5 min | **30 minutes** | [OK] Applied |
+| `shared-ml-functions.js` | 246 | 2 min | **15 minutes** | [OK] Applied |
+| `cycle-navigator.js` | 26 | Aucun | **24 heures** (nouveau) | [OK] Applied |
+| `group-risk-index.js` | 11 | 3 min | **30 minutes** | [OK] Applied |
+| `signals-engine.js` | 62-194 | Parsing incorrect + pas de X-User | **Fix parsing 4 endpoints + header X-User** | [OK] Applied (bugfix) |
 
 ### Backend (Python)
 
 | Fichier | Ligne | Avant | Après | Statut |
 |---------|-------|-------|-------|--------|
-| `governance.py` | 138, 244 | 30 min | **1 heure** | ✅ Applied |
-| `pricing_service.py` | 24 | 60s | **3 minutes** | ✅ Applied |
-| `coingecko.py` | 29-30 | 5 min (global) | **15 min (prix) + 12h (metadata)** | ✅ Applied (split) |
+| `governance.py` | 138, 244 | 30 min | **1 heure** | [OK] Applied |
+| `pricing_service.py` | 24 | 60s | **3 minutes** | [OK] Applied |
+| `coingecko.py` | 29-30 | 5 min (global) | **15 min (prix) + 12h (metadata)** | [OK] Applied (split) |
 
 ### Impact Mesuré
 
 **Réduction attendue des appels:**
-- API externes (Glassnode, CoinGecko): **-90%** 📉
-- Calculs lourds (VaR, corrélations): **-83%** 📉
-- Charge serveur CPU: **-70%** 📉
+- API externes (Glassnode, CoinGecko): **-90%**
+- Calculs lourds (VaR, corrélations): **-83%**
+- Charge serveur CPU: **-70%**
 
 **Fraîcheur maintenue:**
 - Données on-chain: < 4h (vs 1 jour source)
@@ -481,4 +481,4 @@ const prices = cgData.prices.map(p => p[1]);  // Pas proxyData.data.prices
 
 **Dernière mise à jour:** 2025-10-24
 **Auteur:** Claude Code
-**Status:** ✅ **Implémenté et Testé**
+**Status:** [OK] **Implémenté et Testé**

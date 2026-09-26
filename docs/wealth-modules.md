@@ -5,7 +5,7 @@
 Le cockpit patrimoine vise à intégrer **plusieurs modules** (Crypto, Bourse, Banques) dans une logique unifiée.
 **Phase 2 terminée (Sept 2025)** :
 - **Crypto** : pleinement intégré (analytics/risk/rebalance)
-- **Bourse (Saxo)** : **🏦 Intégration avancée** - Dashboard unifié + Upload Settings + pages dédiées stables
+- **Bourse (Saxo)** : ** Intégration avancée** - Dashboard unifié + Upload Settings + pages dédiées stables
 - **Banques** : non intégré
 
 ## UI (PHASE 2 COMPLÉTÉE)
@@ -43,7 +43,7 @@ Le cockpit patrimoine vise à intégrer **plusieurs modules** (Crypto, Bourse, B
 
 ---
 
-## 2. Module Bourse (Saxo) — Phase 2 ✅
+## 2. Module Bourse (Saxo) — Phase 2
 
 **Intégration avancée** via CSV/XLSX avec interface unifiée.
 

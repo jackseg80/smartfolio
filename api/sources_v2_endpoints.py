@@ -405,7 +405,7 @@ async def set_active_source(
 
     config["sources"][category]["active_source"] = request.source_id
 
-    # ✅ FIX: Only force category_based mode for manual sources
+    # [OK] FIX: Only force category_based mode for manual sources
     # For CSV/API sources, preserve the existing data_source setting to maintain V1 compatibility
     if request.source_id.startswith("manual_"):
         # Manual sources require category_based mode

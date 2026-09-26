@@ -23,7 +23,7 @@ export function normalizeAlias(symbol) {
   // Fallback: suppression suffixes numériques courants (SOL2→SOL, UNI2→UNI)
   const normalized = upperSymbol.replace(/[2-9]+$/, '');
 
-  console.debug(`🔄 Normalize alias: ${symbol} → ${normalized}`);
+  console.debug(`Normalize alias: ${symbol} → ${normalized}`);
   return normalized;
 }
 
@@ -139,7 +139,7 @@ export function invalidateAllocationCache() {
   _allocCache.data = null;
   _allocCache.key = null;
   _allocCache.ts = 0;
-  (window.debugLogger?.debug || console.log)('🗑️ Allocation cache invalidated due to source/user/taxonomy change');
+  (window.debugLogger?.debug || console.log)("Allocation cache invalidated due to source/user/taxonomy change");
 }
 
 export function getAllocCache() {

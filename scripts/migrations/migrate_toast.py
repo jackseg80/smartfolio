@@ -23,31 +23,31 @@ def migrate_html_files():
     """Ajoute toast.js dans toutes les pages HTML"""
 
     if not STATIC_DIR.exists():
-        print(f"❌ Dossier {STATIC_DIR} introuvable")
+        print(f"[Error] Dossier {STATIC_DIR} introuvable")
         return
 
     html_files = list(STATIC_DIR.glob("*.html"))
-    print(f"📁 Trouvé {len(html_files)} fichiers HTML\n")
+    print(f" Trouvé {len(html_files)} fichiers HTML\n")
 
     updated = 0
     skipped = 0
     no_debug_logger = 0
 
     for file in html_files:
-        print(f"🔍 {file.name}...", end=" ")
+        print(f" {file.name}...", end=" ")
 
         try:
             content = file.read_text(encoding='utf-8')
 
             # Skip si toast.js déjà présent
             if 'toast.js' in content:
-                print(f"⏭️  Already has toast.js")
+                print(f"  Already has toast.js")
                 skipped += 1
                 continue
 
             # Vérifier si debug-logger.js est présent
             if INSERTION_LINE not in content:
-                print(f"⚠️  No debug-logger.js found")
+                print(f"  No debug-logger.js found")
                 no_debug_logger += 1
                 continue
 
@@ -60,38 +60,38 @@ def migrate_html_files():
             # Sauvegarder
             file.write_text(new_content, encoding='utf-8')
             updated += 1
-            print(f"✅ Toast script added")
+            print(f"[OK] Toast script added")
 
         except Exception as e:
-            print(f"❌ Error: {e}")
+            print(f" Error: {e}")
 
     # Résumé
     print(f"\n{'='*60}")
-    print(f"📊 RÉSUMÉ")
+    print(f" RÉSUMÉ")
     print(f"{'='*60}")
-    print(f"✅ Fichiers mis à jour: {updated}")
-    print(f"⏭️  Fichiers ignorés (déjà à jour): {skipped}")
-    print(f"⚠️  Fichiers sans debug-logger: {no_debug_logger}")
-    print(f"📁 Total fichiers traités: {len(html_files)}")
+    print(f"[OK] Fichiers mis à jour: {updated}")
+    print(f"  Fichiers ignorés (déjà à jour): {skipped}")
+    print(f"[Warning]  Fichiers sans debug-logger: {no_debug_logger}")
+    print(f" Total fichiers traités: {len(html_files)}")
 
     if updated > 0:
-        print(f"\n🎉 Migration réussie! {updated} fichiers mis à jour.")
-        print(f"💡 Veuillez redémarrer le serveur et tester les pages.")
+        print(f"\n Migration réussie! {updated} fichiers mis à jour.")
+        print(f" Veuillez redémarrer le serveur et tester les pages.")
     elif skipped == len(html_files):
-        print(f"\n✅ Tous les fichiers sont déjà à jour!")
+        print(f"\n[OK] Tous les fichiers sont déjà à jour!")
     else:
-        print(f"\n⚠️  Aucun fichier n'a été mis à jour. Vérifiez la structure des fichiers.")
+        print(f"\n[Warning]  Aucun fichier n'a été mis à jour. Vérifiez la structure des fichiers.")
 
 if __name__ == '__main__':
     print("="*60)
-    print("🔧 MIGRATION TOAST.JS")
+    print(" MIGRATION TOAST.JS")
     print("="*60)
     print(f"Dossier cible: {STATIC_DIR.resolve()}")
     print(f"Action: Ajouter toast.js après debug-logger.js\n")
 
     response = input("Continuer? (y/n): ")
     if response.lower() != 'y':
-        print("❌ Migration annulée")
+        print("[Error] Migration annulée")
         exit(0)
 
     print()

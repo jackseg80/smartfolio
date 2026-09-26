@@ -63,7 +63,7 @@ def setup_static_files(app: FastAPI, debug: bool = False) -> None:
         StaticFiles(directory=str(STATIC_DIR), html=True),
         name="static",
     )
-    logger.info(f"✅ Static files mounted: /static -> {STATIC_DIR}")
+    logger.info(f" Static files mounted: /static -> {STATIC_DIR}")
 
     # Raw tenant data and configuration must never be served as static files in
     # production. Local debug pages can opt into these mounts through DEBUG.
@@ -73,20 +73,20 @@ def setup_static_files(app: FastAPI, debug: bool = False) -> None:
             StaticFiles(directory=str(DATA_DIR)),
             name="data",
         )
-        logger.info(f"✅ Debug data files mounted: /data -> {DATA_DIR}")
+        logger.info(f" Debug data files mounted: /data -> {DATA_DIR}")
 
         CONFIG_DIR = BASE_DIR / "config"
         if not CONFIG_DIR.exists():
-            logger.warning(f"⚠️  Config directory not found: {CONFIG_DIR}")
+            logger.warning(f"  Config directory not found: {CONFIG_DIR}")
         else:
             app.mount(
                 "/config",
                 StaticFiles(directory=str(CONFIG_DIR)),
                 name="config",
             )
-            logger.info(f"✅ Debug config files mounted: /config -> {CONFIG_DIR}")
+            logger.info(f" Debug config files mounted: /config -> {CONFIG_DIR}")
     else:
-        logger.info("🔒 Raw /data and /config static mounts disabled")
+        logger.info(" Raw /data and /config static mounts disabled")
 
     # ========== Mount Tests Directory (Debug Only) ==========
     # Optionnel: exposer les pages de test HTML en local (sécurisé par DEBUG)
@@ -100,8 +100,8 @@ def setup_static_files(app: FastAPI, debug: bool = False) -> None:
                     StaticFiles(directory=str(TESTS_DIR), html=True),
                     name="tests",
                 )
-                logger.info(f"✅ Test files mounted (debug mode): /tests -> {TESTS_DIR}")
+                logger.info(f" Test files mounted (debug mode): /tests -> {TESTS_DIR}")
         except (OSError, RuntimeError) as e:
             logger.warning(f"Could not mount /tests: {e}")
 
-    logger.info("🎯 All static files configured successfully")
+    logger.info(" All static files configured successfully")

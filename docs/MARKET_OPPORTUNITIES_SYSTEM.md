@@ -259,10 +259,10 @@ GET /api/bourse/opportunities
 
 | Paramètre | Type | Requis | Default | Description |
 |-----------|------|--------|---------|-------------|
-| `user_id` | string | ✅ | - | User ID (multi-tenant) |
-| `horizon` | string | ❌ | `"medium"` | Time horizon: `short`/`medium`/`long` |
-| `file_key` | string | ❌ | `null` | Saxo CSV file key (optional) |
-| `min_gap_pct` | float | ❌ | `5.0` | Minimum gap percentage (0-50) |
+| `user_id` | string | OK | - | User ID (multi-tenant) |
+| `horizon` | string | Error | `"medium"` | Time horizon: `short`/`medium`/`long` |
+| `file_key` | string | Error | `null` | Saxo CSV file key (optional) |
+| `min_gap_pct` | float | Error | `5.0` | Minimum gap percentage (0-50) |
 
 **Response Format:**
 
@@ -348,8 +348,8 @@ GET /api/bourse/opportunities
 ```
 ┌─────────────────────────────────────────────────┐
 │ Investment Horizon                              │
-│ [1-3 Months] [6-12 Months (✓)] [2-3 Years]     │
-│ [🔍 Scan for Opportunities]                     │
+│ [1-3 Months] [6-12 Months (OK)] [2-3 Years]     │
+│ [ Scan for Opportunities]                     │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -478,11 +478,11 @@ No significant sector gaps detected. Portfolio is well-diversified!
 
 ### P0 (Implémenté)
 
-✅ Scan secteurs S&P 500 vs portfolio
-✅ Scoring 3-pillar (Momentum/Value/Diversification)
-✅ Suggestions ventes intelligentes (max 30%, top 2 protected)
-✅ Impact simulator (avant/après allocation)
-✅ Frontend UI complet (onglet dédié)
+[OK] Scan secteurs S&P 500 vs portfolio
+[OK] Scoring 3-pillar (Momentum/Value/Diversification)
+[OK] Suggestions ventes intelligentes (max 30%, top 2 protected)
+[OK] Impact simulator (avant/après allocation)
+[OK] Frontend UI complet (onglet dédié)
 
 ### P1 (Q1 2026)
 
@@ -651,7 +651,7 @@ const url = `/api/bourse/opportunities?user_id=${activeUser}`;
 **UX:**
 - Loading states pendant scan
 - Feedback immédiat (bouton "Scanning...")
-- Success message ("✅ Scan Complete")
+- Success message ("[OK] Scan Complete")
 
 ---
 
@@ -664,9 +664,9 @@ const url = `/api/bourse/opportunities?user_id=${activeUser}`;
 Get-Content logs\app.log -Wait -Tail 50 | Select-String "Market opportunities"
 
 # Logs typiques
-# INFO: 🔍 Market opportunities requested (user=jack, horizon=medium)
+# INFO:  Market opportunities requested (user=jack, horizon=medium)
 # INFO: Detected 3 sector gaps
-# INFO: ✅ Scan complete: 3 gaps scored, top 3 selected
+# INFO:  Scan complete: 3 gaps scored, top 3 selected
 ```
 
 ### Frontend Debug
@@ -686,11 +686,11 @@ console.log(lastOpportunitiesData);
 
 ### v1.0 (October 2025)
 
-- ✅ Initial release
-- ✅ 3-pillar scoring system
-- ✅ Intelligent sales suggestions
-- ✅ Impact simulator
-- ✅ Full UI integration
+- [OK] Initial release
+- [OK] 3-pillar scoring system
+- [OK] Intelligent sales suggestions
+- [OK] Impact simulator
+- [OK] Full UI integration
 
 ---
 

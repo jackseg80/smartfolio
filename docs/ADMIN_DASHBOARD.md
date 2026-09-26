@@ -2,15 +2,15 @@
 
 > **Version:** Phase 1 - Infrastructure RBAC
 > **Date:** Décembre 2025
-> **Statut:** ✅ Opérationnel (Phase 1 terminée)
+> **Statut:** [OK] Opérationnel (Phase 1 terminée)
 
-## 📋 Vue d'ensemble
+## Vue d'ensemble
 
 Le **Admin Dashboard** est un système d'administration centralisé pour SmartFolio permettant la gestion des utilisateurs, logs, cache, modèles ML et clés API. Il utilise un système RBAC (Role-Based Access Control) pour sécuriser l'accès aux fonctionnalités critiques.
 
 ---
 
-## 🎯 Objectifs
+## Objectifs
 
 1. **Centraliser l'administration** : Un seul point d'accès pour toutes les tâches admin
 2. **Sécuriser l'accès** : RBAC avec 4 rôles distincts
@@ -19,7 +19,7 @@ Le **Admin Dashboard** est un système d'administration centralisé pour SmartFo
 
 ---
 
-## 🔐 Système RBAC
+## Système RBAC
 
 ### Rôles Disponibles
 
@@ -69,15 +69,15 @@ async def list_users(user: str = Depends(require_admin_role)):
 ```
 
 **Comportement :**
-- ✅ Vérifie header `X-User` obligatoire
-- ✅ Valide que l'user existe dans `config/users.json`
-- ✅ Vérifie que l'user a le rôle `"admin"`
-- ✅ Logs audit complets (accès granted/denied)
-- ✅ Mode dev bypass avec `DEV_OPEN_API=1`
+- [OK] Vérifie header `X-User` obligatoire
+- [OK] Valide que l'user existe dans `config/users.json`
+- [OK] Vérifie que l'user a le rôle `"admin"`
+- [OK] Logs audit complets (accès granted/denied)
+- [OK] Mode dev bypass avec `DEV_OPEN_API=1`
 
 ---
 
-## 📁 Architecture Fichiers
+## Architecture Fichiers
 
 ### Backend
 
@@ -117,22 +117,22 @@ static/
 
 ---
 
-## 🚀 Endpoints API
+## Endpoints API
 
-### Phase 1 (Infrastructure) - ✅ Opérationnel
+### Phase 1 (Infrastructure) -  Opérationnel
 
 | Endpoint | Méthode | Description | RBAC |
 |----------|---------|-------------|------|
-| `/admin/health` | GET | Health check admin | ✅ Admin |
-| `/admin/status` | GET | Stats système (users, logs, cache, ML) | ✅ Admin |
-| `/admin/users` | GET | Liste tous les utilisateurs | ✅ Admin |
-| `/admin/logs/list` | GET | Liste fichiers logs disponibles | ✅ Admin |
-| `/admin/cache/stats` | GET | Stats cache (placeholder) | ✅ Admin |
-| `/admin/cache/clear` | DELETE | Clear cache par type | ✅ Admin |
-| `/admin/ml/models` | GET | Liste modèles ML (placeholder) | ✅ Admin |
-| `/admin/apikeys` | GET | Liste clés API (placeholder) | ✅ Admin |
+| `/admin/health` | GET | Health check admin | [OK] Admin |
+| `/admin/status` | GET | Stats système (users, logs, cache, ML) | [OK] Admin |
+| `/admin/users` | GET | Liste tous les utilisateurs | [OK] Admin |
+| `/admin/logs/list` | GET | Liste fichiers logs disponibles | [OK] Admin |
+| `/admin/cache/stats` | GET | Stats cache (placeholder) | [OK] Admin |
+| `/admin/cache/clear` | DELETE | Clear cache par type | [OK] Admin |
+| `/admin/ml/models` | GET | Liste modèles ML (placeholder) | [OK] Admin |
+| `/admin/apikeys` | GET | Liste clés API (placeholder) | [OK] Admin |
 
-### Phase 2 (User Management + Logs) - 🟡 À venir
+### Phase 2 (User Management + Logs) -  À venir
 
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
@@ -144,7 +144,7 @@ static/
 | `GET /admin/logs/stats` | GET | Statistiques logs (errors, warnings) |
 | `GET /admin/logs/tail` | GET | Tail -f temps réel (SSE) |
 
-### Phase 3 (Cache + ML) - ✅ Opérationnel (Dec 2025)
+### Phase 3 (Cache + ML) -  Opérationnel (Dec 2025)
 
 | Endpoint | Méthode | Description |
 |----------|---------|-------------|
@@ -159,18 +159,18 @@ static/
 | `DELETE /admin/ml/jobs/{job_id}` | DELETE | Cancel job |
 
 **ML Training RÉEL (Phase 3.5 - Dec 2025):**
-- ✅ REAL PyTorch Training (pas de mock!)
-- ✅ Regime Models: btc_regime_detector, btc_regime_hmm, stock_regime_detector
-- ✅ Volatility Models: volatility_forecaster
-- ✅ Epochs: 100, Patience: 15, Durée: 2-5 min (GPU) / 10-20 min (CPU)
-- ✅ Metrics réels: accuracy, precision, recall, f1_score, mse, mae, r2
-- ✅ ModelRegistry sauvegardé dans `models/registry.json`
+- [OK] REAL PyTorch Training (pas de mock!)
+- [OK] Regime Models: btc_regime_detector, btc_regime_hmm, stock_regime_detector
+- [OK] Volatility Models: volatility_forecaster
+- [OK] Epochs: 100, Patience: 15, Durée: 2-5 min (GPU) / 10-20 min (CPU)
+- [OK] Metrics réels: accuracy, precision, recall, f1_score, mse, mae, r2
+- [OK] ModelRegistry sauvegardé dans `models/registry.json`
 
-### Phase 4 (API Keys) - 🔴 À venir
+### Phase 4 (API Keys) -  À venir
 
 ---
 
-## 🖥️ Interface Admin Dashboard
+## Interface Admin Dashboard
 
 ### Accès
 
@@ -184,32 +184,32 @@ static/
 
 **6 Onglets :**
 
-1. **📊 Overview** - Vue d'ensemble système
+1. ** Overview** - Vue d'ensemble système
    - Stats cards (Total Users, Admin Users, Cache Types, ML Models)
    - Status général
 
-2. **👥 User Management** - ✅ Phase 1 opérationnel
+2. ** User Management** - [OK] Phase 1 opérationnel
    - Table users avec badges de rôles colorés
    - Colonnes: User ID, Label, Roles, Status, Created
    - [Phase 2] CRUD operations (Create, Edit, Delete)
 
-3. **📝 Logs Viewer** - 🟡 Phase 2
+3. ** Logs Viewer** - [Pending] Phase 2
    - Liste fichiers logs
    - Filtres (level, search, date)
    - Pagination
    - Stats (errors, warnings)
 
-4. **⚡ Cache Management** - 🔴 Phase 3
+4. ** Cache Management** - [Negative] Phase 3
    - Stats par cache type
    - Clear cache
    - Cache warming
 
-5. **🤖 ML Models** - 🔴 Phase 3
+5. ** ML Models** - [Negative] Phase 3
    - Liste modèles ML
    - Retraining jobs
    - Versioning
 
-6. **🔑 API Keys** - 🔴 Phase 4
+6. ** API Keys** - [Negative] Phase 4
    - Liste clés API (masquées)
    - Usage statistics
 
@@ -235,7 +235,7 @@ window.addEventListener('activeUserChanged', (event) => {
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Test RBAC Backend
 
@@ -253,26 +253,26 @@ curl "http://localhost:8080/admin/health" -H "X-User: demo"
 
 1. Ouvrir `http://localhost:8080/admin-dashboard.html`
 2. Sélectionner user "demo" (viewer)
-   - ❌ Message d'erreur : "Access denied. Admin role required."
+   - [Error] Message d'erreur : "Access denied. Admin role required."
 3. Switch vers user "jack" (admin)
-   - ✅ Stats cards se remplissent
-   - ✅ Onglet "User Management" affiche la table
-   - ✅ Menu "Admin ▾" visible
+   - [OK] Stats cards se remplissent
+   - [OK] Onglet "User Management" affiche la table
+   - [OK] Menu "Admin ▾" visible
 
 ### Test Navigation
 
 1. Menu "Admin ▾" → "Dashboard"
-   - ✅ Redirection vers admin-dashboard.html
+   - [OK] Redirection vers admin-dashboard.html
 2. Menu "Admin ▾" → "User Management"
-   - ✅ Redirection vers admin-dashboard.html#users
-   - ✅ Onglet "User Management" actif
+   - [OK] Redirection vers admin-dashboard.html#users
+   - [OK] Onglet "User Management" actif
 3. Clic sur onglets
-   - ✅ Hash URL mis à jour
-   - ✅ Contenu onglet chargé
+   - [OK] Hash URL mis à jour
+   - [OK] Contenu onglet chargé
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Mode Développement
 
@@ -286,7 +286,7 @@ const checkAdminRole = () => {
                 location.port === '8080';
 
   if (isDev) {
-    console.debug('🔧 Dev mode detected - Admin role forced');
+    console.debug(' Dev mode detected - Admin role forced');
     return true; // Menu visible pour tous
   }
   // Production: vérifier rôles réels
@@ -313,7 +313,7 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 
 ---
 
-## 📊 Statistiques Phase 1
+## Statistiques Phase 1
 
 **Backend :**
 - 8 endpoints créés
@@ -335,7 +335,7 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 
 ---
 
-## 🚀 Roadmap
+## Roadmap
 
 ### Phase 2 - User Management + Logs Viewer (À venir)
 
@@ -359,7 +359,7 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 - [ ] Frontend filters UI
 - [ ] Real-time tail (SSE ou WebSocket)
 
-### Phase 3 - Cache + ML Models - ✅ Terminée (Dec 2025)
+### Phase 3 - Cache + ML Models -  Terminée (Dec 2025)
 
 **Cache Management :**
 - [x] Service `services/cache_manager.py` (unified)
@@ -387,7 +387,7 @@ DEV_OPEN_API=1  # Bypass RBAC checks (DANGER: dev only!)
 
 ---
 
-## 🔗 Références
+## Références
 
 **Code Sources :**
 - Backend: [api/admin_router.py](../api/admin_router.py)

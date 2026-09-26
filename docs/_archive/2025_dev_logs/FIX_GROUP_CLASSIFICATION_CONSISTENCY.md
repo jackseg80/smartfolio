@@ -4,10 +4,10 @@
 
 Pour jack avec API (192 assets), les différentes pages affichaient des classifications incohérentes :
 
-- ✅ **analytics-unified.html** : Affichage correct avec les bonnes valeurs pour tous les 11 groupes
-- ❌ **dashboard.html** : N'affichait pas tous les 11 groupes dans Portfolio Overview
-- ❌ **risk-dashboard.html** : Affichait les 11 groupes mais Gaming/NFT et L2/Scaling à 0% (faux)
-- ❌ **rebalance.html** : Ne montrait pas tous les groupes
+- [OK] **analytics-unified.html** : Affichage correct avec les bonnes valeurs pour tous les 11 groupes
+- [Error] **dashboard.html** : N'affichait pas tous les 11 groupes dans Portfolio Overview
+- [Error] **risk-dashboard.html** : Affichait les 11 groupes mais Gaming/NFT et L2/Scaling à 0% (faux)
+- [Error] **rebalance.html** : Ne montrait pas tous les groupes
 
 ## Cause Racine
 
@@ -31,7 +31,7 @@ Les autres pages :
 **Avant** : Fonction vide qui ne chargeait rien
 ```javascript
 async function loadAssetGroups() {
-    console.debug('🔍 Asset groups ready via unified functions');
+    console.debug(' Asset groups ready via unified functions');
     // Plus besoin de charger, les fonctions sont directement disponibles
 }
 ```
@@ -40,17 +40,17 @@ async function loadAssetGroups() {
 ```javascript
 async function loadAssetGroups() {
     try {
-        console.debug('🔄 [Dashboard] Force reloading taxonomy for proper asset classification...');
+        console.debug(' [Dashboard] Force reloading taxonomy for proper asset classification...');
         const { forceReloadTaxonomy, UNIFIED_ASSET_GROUPS } = await import('./shared-asset-groups.js');
         await forceReloadTaxonomy();
 
         if (!Object.keys(UNIFIED_ASSET_GROUPS || {}).length) {
-            console.warn('⚠️ [Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
+            console.warn(' [Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
         } else {
-            console.log('✅ [Dashboard] Taxonomy loaded:', Object.keys(UNIFIED_ASSET_GROUPS).length, 'groupes');
+            console.log(' [Dashboard] Taxonomy loaded:', Object.keys(UNIFIED_ASSET_GROUPS).length, 'groupes');
         }
     } catch (error) {
-        console.error('❌ [Dashboard] Failed to load taxonomy:', error);
+        console.error(' [Dashboard] Failed to load taxonomy:', error);
     }
 }
 ```
@@ -59,7 +59,7 @@ async function loadAssetGroups() {
 ```javascript
 async function groupAssetsByAliases(items) {
     try {
-        console.log('🔄 [Dashboard] Classifying', items.length, 'assets with unified taxonomy');
+        console.log(' [Dashboard] Classifying', items.length, 'assets with unified taxonomy');
         const { groupAssetsByClassification } = await import('./shared-asset-groups.js');
 
         if (!groupAssetsByClassification) {
@@ -67,10 +67,10 @@ async function groupAssetsByAliases(items) {
         }
 
         const result = groupAssetsByClassification(items);
-        console.log('✅ [Dashboard] Unified grouping succeeded, found', result.length, 'groups');
+        console.log(' [Dashboard] Unified grouping succeeded, found', result.length, 'groups');
         return result;
     } catch (error) {
-        console.warn('⚠️ [Dashboard] Unified grouping failed, using fallback:', error);
+        console.warn(' [Dashboard] Unified grouping failed, using fallback:', error);
         // ... fallback code
     }
 }
@@ -121,7 +121,7 @@ backgroundColor: values.map((_, i) => PORTFOLIO_COLORS[i % PORTFOLIO_COLORS.leng
 import('./shared-asset-groups.js').then(module => {
     groupAssetsByClassification = module.groupAssetsByClassification;
     getAssetGroup = module.getAssetGroup;
-    console.debug('✅ Risk Dashboard: Unified asset groups loaded');
+    console.debug(' Risk Dashboard: Unified asset groups loaded');
 });
 ```
 
@@ -129,7 +129,7 @@ import('./shared-asset-groups.js').then(module => {
 ```javascript
 async function initAssetGroups() {
     try {
-        console.debug('🔄 [Risk Dashboard] Force reloading taxonomy for proper asset classification...');
+        console.debug(' [Risk Dashboard] Force reloading taxonomy for proper asset classification...');
         const module = await import('./shared-asset-groups.js');
         await module.forceReloadTaxonomy();
 
@@ -137,12 +137,12 @@ async function initAssetGroups() {
         getAssetGroup = module.getAssetGroup;
 
         if (!Object.keys(module.UNIFIED_ASSET_GROUPS || {}).length) {
-            console.warn('⚠️ [Risk Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
+            console.warn(' [Risk Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
         } else {
-            console.log('✅ [Risk Dashboard] Taxonomy loaded:', Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
+            console.log(' [Risk Dashboard] Taxonomy loaded:', Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
         }
     } catch (error) {
-        console.error('❌ [Risk Dashboard] Failed to load taxonomy:', error);
+        console.error(' [Risk Dashboard] Failed to load taxonomy:', error);
     }
 }
 
@@ -162,7 +162,7 @@ import('./shared-asset-groups.js').then(async module => {
         ASSET_GROUPS = module.UNIFIED_ASSET_GROUPS;
         // ...
     } catch (taxonomyError) {
-        console.warn('❌ [rebalance] Force reload taxonomy failed:', taxonomyError.message);
+        console.warn(' [rebalance] Force reload taxonomy failed:', taxonomyError.message);
         // ...
     }
 });
@@ -174,7 +174,7 @@ let taxonomyReady = false;
 
 async function initAssetGroupsSystem() {
     try {
-        console.debug('🔄 [Rebalance] Force reloading taxonomy for proper asset classification...');
+        console.debug(' [Rebalance] Force reloading taxonomy for proper asset classification...');
         const module = await import('./shared-asset-groups.js');
 
         await module.forceReloadTaxonomy();
@@ -184,14 +184,14 @@ async function initAssetGroupsSystem() {
         groupAssetsByClassification = module.groupAssetsByClassification;
 
         if (!Object.keys(ASSET_GROUPS || {}).length) {
-            console.warn('⚠️ [Rebalance] Taxonomy non chargée – risque de "Others" gonflé');
+            console.warn(' [Rebalance] Taxonomy non chargée – risque de "Others" gonflé');
         } else {
-            console.log('✅ [Rebalance] Taxonomy loaded:', Object.keys(ASSET_GROUPS).length, 'groupes');
+            console.log(' [Rebalance] Taxonomy loaded:', Object.keys(ASSET_GROUPS).length, 'groupes');
         }
 
         taxonomyReady = true;
     } catch (taxonomyError) {
-        console.error('❌ [Rebalance] Failed to load taxonomy:', taxonomyError);
+        console.error(' [Rebalance] Failed to load taxonomy:', taxonomyError);
         taxonomyReady = false;
     }
 }
@@ -251,17 +251,17 @@ curl "http://localhost:8080/api/risk/dashboard?source=cointracking_api&user_id=j
 
 Chaque page log maintenant :
 ```
-🔄 [PageName] Force reloading taxonomy for proper asset classification...
-✅ [PageName] Taxonomy loaded: 221 groupes
-🔄 [PageName] Classifying N assets with unified taxonomy
-✅ [PageName] Unified grouping succeeded, found 11 groups
+ [PageName] Force reloading taxonomy for proper asset classification...
+[OK] [PageName] Taxonomy loaded: 221 groupes
+ [PageName] Classifying N assets with unified taxonomy
+[OK] [PageName] Unified grouping succeeded, found 11 groups
 ```
 
 **En cas de problème** :
 ```
-⚠️ [PageName] Taxonomy non chargée – risque de "Others" gonflé
-❌ [PageName] Failed to load taxonomy: [error]
-⚠️ [PageName] Unified grouping failed, using fallback: [error]
+[Warning] [PageName] Taxonomy non chargée – risque de "Others" gonflé
+[Error] [PageName] Failed to load taxonomy: [error]
+[Warning] [PageName] Unified grouping failed, using fallback: [error]
 ```
 
 ## Fichiers Modifiés
@@ -281,10 +281,10 @@ Chaque page log maintenant :
   - **Après**: 0.2% → "0.2%" | 0.8% → "0.8%" | 44.3% → "44.3%"
   - **Problème résolu**: Affichage précis avec 1 décimale, plus de perte d'info pour petites allocations
 - `static/rebalance.html` (lignes 1854-1896)
-- **`services/portfolio_metrics.py` (lignes 170-179)** ✅ **FIX BACKEND #1**
+- **`services/portfolio_metrics.py` (lignes 170-179)** [OK] **FIX BACKEND #1**
   - Initialisation `exposure_by_group` avec **tous les 11 groupes canoniques** à 0.0
   - Utilisé par le service centralisé de métriques
-- **`api/risk_endpoints.py` (lignes 865-895)** ✅ **FIX BACKEND #2 (CRITIQUE!)**
+- **`api/risk_endpoints.py` (lignes 865-895)** [OK] **FIX BACKEND #2 (CRITIQUE!)**
   - **C'était le vrai problème!** L'endpoint `/api/risk/dashboard` calculait `exposure_by_group` localement
   - Initialisation `exposure_by_group` avec **tous les 11 groupes canoniques** à 0.0
   - **Avant** : Dict vide `{}`, puis ajout seulement des groupes présents → Gaming/NFT et L2/Scaling manquaient si 0%
@@ -299,5 +299,5 @@ Créé `test_jack_api_classification.py` pour analyser la classification backend
 
 **Date** : Oct 2025
 **Auteur** : Claude Code
-**Status** : ✅ Completed
+**Status** : [OK] Completed
 

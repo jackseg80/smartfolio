@@ -8,15 +8,15 @@ Ensure **100% parity** between Flask (legacy) and FastAPI (new) implementations.
 
 ## Parsing Logic Comparison
 
-### ✅ Ported Functions
+### Ported Functions
 
 | Function | Flask | FastAPI | Status |
 |----------|-------|---------|--------|
-| `parse_comparison()` | ✅ | ✅ | **Identical** |
-| BMO special handling | ✅ | ✅ | **Identical** |
-| Regex value extraction | ✅ | ✅ | **Identical** |
-| Operator evaluation | ✅ | ✅ | **Identical** |
-| Newline stripping | ✅ | ✅ | **Identical** |
+| `parse_comparison()` | OK | OK | **Identical** |
+| BMO special handling | OK | OK | **Identical** |
+| Regex value extraction | OK | OK | **Identical** |
+| Operator evaluation | OK | OK | **Identical** |
+| Newline stripping | OK | OK | **Identical** |
 
 ---
 
@@ -61,7 +61,7 @@ Ensure **100% parity** between Flask (legacy) and FastAPI (new) implementations.
 - Each sub-indicator has own threshold
 
 **FastAPI behavior**:
-- ✅ **Identical** (line 247-266)
+- [OK] **Identical** (line 247-266)
 - Regex: `r'(>=?\s*[\d.]+)\s*\(([^)]+)\)'`
 - Uses `zip(vals, thrs)` to match values/thresholds
 
@@ -71,7 +71,7 @@ Ensure **100% parity** between Flask (legacy) and FastAPI (new) implementations.
 
 **FastAPI regex**: `r'(>=|<=|>|<)\s*([\d.,]+)'`
 
-**Status**: ✅ **Identical**
+**Status**: [OK] **Identical**
 
 ### Numeric Extraction
 
@@ -79,7 +79,7 @@ Ensure **100% parity** between Flask (legacy) and FastAPI (new) implementations.
 
 **FastAPI**: `re.search(r'[\d.,]+', val_raw.replace(',', ''))`
 
-**Status**: ✅ **Identical**
+**Status**: [OK] **Identical**
 
 ---
 
@@ -282,7 +282,7 @@ time curl -s "http://localhost:8080/api/crypto-toolbox" > /dev/null
 
 ### Step 5: Validation Checklist
 
-Mark as ✅ if passing:
+Mark as [OK] if passing:
 
 - [ ] **Correctness**: `total_count` matches (±1 tolerance)
 - [ ] **Correctness**: `critical_count` matches exactly
@@ -293,9 +293,9 @@ Mark as ✅ if passing:
 - [ ] **Performance**: Cache hit <50ms
 - [ ] **Stability**: 10 consecutive requests succeed (no browser crashes)
 
-**If all ✅**: Proceed to Commit 7 (switch default flag)
+**If all [OK]**: Proceed to Commit 7 (switch default flag)
 
-**If any ❌**: Investigate and fix before proceeding
+**If any [Error]**: Investigate and fix before proceeding
 
 ---
 
@@ -303,8 +303,8 @@ Mark as ✅ if passing:
 
 | Field | Flask | FastAPI | Reason |
 |-------|-------|---------|--------|
-| `cached` | ❌ Absent or `false` | ✅ `true`/`false` | FastAPI has cache |
-| `cache_age_seconds` | ❌ Absent | ✅ Present | FastAPI feature |
+| `cached` | [Error] Absent or `false` | OK `true`/`false` | FastAPI has cache |
+| `cache_age_seconds` | [Error] Absent | [OK] Present | FastAPI feature |
 | `scraped_at` | Timestamp A | Timestamp B | Different scrape times |
 
 ---
@@ -313,13 +313,13 @@ Mark as ✅ if passing:
 
 If any of these fail, **rollback to Flask** (`CRYPTO_TOOLBOX_NEW=0`):
 
-- ❌ `total_count` mismatch (>1 indicator difference)
-- ❌ `critical_count` mismatch
-- ❌ Missing indicators (name not found)
-- ❌ Parsing errors in logs (>5% of requests)
-- ❌ Response time >10 seconds (timeout)
-- ❌ Browser crashes (>10% of requests)
-- ❌ Memory leak (browser memory >500MB after 1 hour)
+- [Error] `total_count` mismatch (>1 indicator difference)
+- [Error] `critical_count` mismatch
+- [Error] Missing indicators (name not found)
+- [Error] Parsing errors in logs (>5% of requests)
+- [Error] Response time >10 seconds (timeout)
+- [Error] Browser crashes (>10% of requests)
+- [Error] Memory leak (browser memory >500MB after 1 hour)
 
 **Rollback procedure**:
 ```bash

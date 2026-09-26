@@ -65,7 +65,7 @@ class CacheManager:
             "type": "function_scope"
         }
 
-        logger.info(f"✅ Cache manager initialized with {len(self._cache_registry)} registered caches")
+        logger.info(f" Cache manager initialized with {len(self._cache_registry)} registered caches")
 
     def register_cache(self, name: str, cache_dict: Dict, ttl: int = 3600, description: str = ""):
         """Register a cache for management"""
@@ -155,7 +155,7 @@ class CacheManager:
 
         if cache_name == "coingecko_proxy":
             # Special case: cannot clear function-scoped cache
-            logger.warning(f"⚠️ Cannot clear coingecko_proxy cache (function-scoped) - requested by {admin_user}")
+            logger.warning(f" Cannot clear coingecko_proxy cache (function-scoped) - requested by {admin_user}")
             return {
                 "ok": False,
                 "cache": cache_name,
@@ -164,7 +164,7 @@ class CacheManager:
             }
 
         if cache_name not in self._cache_registry:
-            logger.warning(f"❌ Cache '{cache_name}' not found - requested by {admin_user}")
+            logger.warning(f" Cache '{cache_name}' not found - requested by {admin_user}")
             return {
                 "ok": False,
                 "cache": cache_name,
@@ -176,7 +176,7 @@ class CacheManager:
         entries_before = len(cache)
         cache.clear()
 
-        logger.info(f"✅ Cache '{cache_name}' cleared ({entries_before} entries) by {admin_user}")
+        logger.info(f" Cache '{cache_name}' cleared ({entries_before} entries) by {admin_user}")
 
         return {
             "ok": True,
@@ -200,7 +200,7 @@ class CacheManager:
                 "cleared_entries": entries_before
             })
 
-        logger.info(f"✅ All caches cleared ({total_cleared} total entries) by {admin_user}")
+        logger.info(f" All caches cleared ({total_cleared} total entries) by {admin_user}")
 
         return {
             "ok": True,

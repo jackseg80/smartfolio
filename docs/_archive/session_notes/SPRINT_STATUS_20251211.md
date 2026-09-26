@@ -1,6 +1,6 @@
 # Sprint Status - Audit SmartFolio (11 Décembre 2025)
 
-## 📊 Vue d'ensemble
+## Vue d'ensemble
 
 **Session:** Audit complet projet SmartFolio
 **Date:** 11-12 Décembre 2025
@@ -13,7 +13,7 @@
 
 ---
 
-## ✅ Sprints Terminés
+## Sprints Terminés
 
 ### Sprint 2 - Robustesse & Production (7.5h) - Commit `5ad23e9`
 
@@ -79,11 +79,11 @@
 
 #### 2. Duplications Python analysées
 - **ml_pipeline_manager vs _optimized:**
-  - ✅ **Pas de duplication** - Modules séparés légitimes
+  - [OK] **Pas de duplication** - Modules séparés légitimes
   - `ml_pipeline_manager.py` = Facade legacy (compatibilité)
   - `ml_pipeline_manager_optimized.py` = Pipeline moderne
 - **stop_loss_backtest vs v2:**
-  - ✅ **Pas de duplication** - Héritage légitime
+  - [OK] **Pas de duplication** - Héritage légitime
   - `stop_loss_backtest.py` = Version base
   - `stop_loss_backtest_v2.py` = Extension avec Fixed Variable method
 
@@ -178,13 +178,13 @@
 
 ---
 
-### Sprint 5 - Tests Python (4h) - **✅ TERMINÉ** (11 Décembre 2025)
+### Sprint 5 - Tests Python (4h) - ** TERMINÉ** (11 Décembre 2025)
 
 **Objectif:** Sécuriser les modules Python critiques avec couverture de tests complète
 
 **Modules testés:**
 
-#### 1. Market Opportunities Scanner (2h) - **26 tests** ✅
+#### 1. Market Opportunities Scanner (2h) - **26 tests**
 
 **Fichier créé:** `tests/unit/test_opportunity_scanner.py` (26 tests)
 
@@ -225,11 +225,11 @@
   - Cohérence ETF_SECTOR_MAPPING → secteurs valides
   - ETFs géographiques corrects (VGK, VPL, VWO, EWJ)
 
-**Résultat:** **26/26 tests passent** ✅
+**Résultat:** **26/26 tests passent** [OK]
 
 ---
 
-#### 2. Governance Freeze Semantics (2h) - **38 tests** ✅
+#### 2. Governance Freeze Semantics (2h) - **38 tests**
 
 **Fichier créé:** `tests/unit/test_governance_freeze_semantics.py` (38 tests)
 
@@ -241,33 +241,33 @@
 
 - **FULL_FREEZE semantics** (7 tests)
   - Tout bloqué sauf emergency_exits
-  - Validation: new_purchases ❌
-  - Validation: sell_to_stables ❌
-  - Validation: asset_rotations ❌
-  - Validation: hedge_operations ❌
-  - Validation: risk_reductions ❌
-  - Validation: emergency_exits ✅
+  - Validation: new_purchases [Error]
+  - Validation: sell_to_stables [Error]
+  - Validation: asset_rotations [Error]
+  - Validation: hedge_operations [Error]
+  - Validation: risk_reductions [Error]
+  - Validation: emergency_exits [OK]
 
 - **S3_ALERT_FREEZE semantics** (6 tests)
   - Opérations protectives autorisées
-  - Validation: new_purchases ❌
-  - Validation: sell_to_stables ✅ (rotations↓ stables OK)
-  - Validation: asset_rotations ❌
-  - Validation: hedge_operations ✅ (protection capital)
-  - Validation: risk_reductions ✅
+  - Validation: new_purchases [Error]
+  - Validation: sell_to_stables [OK] (rotations↓ stables OK)
+  - Validation: asset_rotations [Error]
+  - Validation: hedge_operations [OK] (protection capital)
+  - Validation: risk_reductions [OK]
 
 - **ERROR_FREEZE semantics** (6 tests)
   - Opérations mitigation risque autorisées
-  - Validation: new_purchases ❌
-  - Validation: sell_to_stables ✅
-  - Validation: asset_rotations ❌
-  - Validation: hedge_operations ✅
-  - Validation: risk_reductions ✅ (prioritaires)
+  - Validation: new_purchases [Error]
+  - Validation: sell_to_stables [OK]
+  - Validation: asset_rotations [Error]
+  - Validation: hedge_operations [OK]
+  - Validation: risk_reductions [OK] (prioritaires)
 
 - **Normal mode** (3 tests)
   - Toutes opérations autorisées si freeze=None
   - Freeze type inconnu = mode normal
-  - Validation: toutes opérations ✅
+  - Validation: toutes opérations [OK]
 
 - **Edge cases** (3 tests)
   - Operation type inconnue → blocked
@@ -289,7 +289,7 @@
   - new_purchases bloqué pendant freeze
   - asset_rotations bloqué pendant freeze
 
-**Résultat:** **38/38 tests passent** ✅
+**Résultat:** **38/38 tests passent** [OK]
 
 ---
 
@@ -338,9 +338,9 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 
 **Impact:**
 
-- ✅ Conversions EUR → USD précises
-- ✅ Taux auto-refresh toutes les 4h
-- ✅ Fallback graceful si API indisponible
+- [OK] Conversions EUR → USD précises
+- [OK] Taux auto-refresh toutes les 4h
+- [OK] Fallback graceful si API indisponible
 
 **Fichiers modifiés:**
 
@@ -359,17 +359,17 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 
 **Solutions appliquées:**
 
-1. **total_return_30d** ✅ **IMPLÉMENTÉ**
+1. **total_return_30d** [OK] **IMPLÉMENTÉ**
    - Utilise `portfolio_analytics.calculate_performance_metrics(window="30d")`
    - Cohérent avec change_7d existant
    - Retourne performance réelle sur 30 jours
 
-2. **sharpe_ratio, max_drawdown, volatility** ✅ **DOCUMENTÉ**
-   - Disponibles via `/api/risk/dashboard` (endpoint vérifié ✅)
+2. **sharpe_ratio, max_drawdown, volatility** [OK] **DOCUMENTÉ**
+   - Disponibles via `/api/risk/dashboard` (endpoint vérifié [OK])
    - Nécessitent historique de prix + calculs complexes (RiskManager)
    - Changé de `0.0` → `None` avec commentaires explicatifs
 
-3. **target_allocation, change_24h par groupe** ✅ **DOCUMENTÉ**
+3. **target_allocation, change_24h par groupe** [OK] **DOCUMENTÉ**
    - target_allocation: Nécessite config user (future feature)
    - change_24h par groupe: Nécessite historique par asset (future feature)
    - Global change_24h disponible au niveau portfolio
@@ -393,10 +393,10 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 
 **Améliorations:**
 
-- ✅ Pattern générique `*_results.json` (catch-all futurs test results)
-- ✅ Pattern `.coverage.*` (parallel test coverage)
-- ✅ Patterns pytest: `pytest_report.json`, `junit_*.xml`
-- ✅ Commentaires clarifiés (Phase 3 E2E, generic patterns)
+- [OK] Pattern générique `*_results.json` (catch-all futurs test results)
+- [OK] Pattern `.coverage.*` (parallel test coverage)
+- [OK] Patterns pytest: `pytest_report.json`, `junit_*.xml`
+- [OK] Commentaires clarifiés (Phase 3 E2E, generic patterns)
 
 **Impact:**
 
@@ -410,12 +410,12 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 
 ---
 
-## 🚧 Sprint 6 - Améliorations Optionnelles (~10h)
+## Sprint 6 - Améliorations Optionnelles (~10h)
 
 **Tâches:**
 1. **Standardiser modules ES6 frontend (4h)**
-   - 69 fichiers utilisent ES6 modules ✅
-   - 16 fichiers utilisent scripts classiques + globals ❌
+   - 69 fichiers utilisent ES6 modules [OK]
+   - 16 fichiers utilisent scripts classiques + globals [Error]
    - Migrer les 16 fichiers vers ES6
 
 2. **Résoudre TODOs critiques (6h)**
@@ -435,48 +435,48 @@ EUR_TO_USD_RATE = fx_service._resolve_rate("EUR")  # Cache 4h + API live
 
 ---
 
-## 📈 Métriques de Progrès
+## Métriques de Progrès
 
 ### Sprints 2-5 Complétés
 
 | Catégorie | Sévérité | Items | Temps Estimé | Temps Réel | Status |
 |-----------|----------|-------|--------------|------------|--------|
-| Safe debugLogger | 🟠 HAUTE | 53 fichiers | 3h | 1.5h | ✅ DONE |
-| Endpoints API | 🟠 HAUTE | 10 fichiers | 2h | 1.5h | ✅ DONE |
-| Console logs | 🟠 HAUTE | 881 logs | 2h | 1h | ✅ DONE |
-| Singletons thread-safe | 🔴 CRITIQUE | 8 fichiers | 1.5h | 3h | ✅ DONE |
-| Duplications JS | 🟡 MOYENNE | 2 fonctions | 1h | 1h | ✅ DONE |
-| Duplications Python | 🟡 MOYENNE | 0 (analysé) | 1h | 0.5h | ✅ DONE |
-| Docs chemins | 🟢 BASSE | 3 refs | 15min | 15min | ✅ DONE |
-| Exception handling | 🔴 CRITIQUE | 21 fichiers | 5h | 3h | ✅ DONE |
-| **Tests Python critiques** | **🟡 MOYENNE** | **64 tests** | **8h** | **4h** | **✅ DONE** |
-| **TOTAL SPRINTS 2-5** | - | - | **24h** | **~16h** | ✅ DONE |
+| Safe debugLogger | [Pending] HAUTE | 53 fichiers | 3h | 1.5h |  DONE |
+| Endpoints API | [Pending] HAUTE | 10 fichiers | 2h | 1.5h |  DONE |
+| Console logs | [Pending] HAUTE | 881 logs | 2h | 1h |  DONE |
+| Singletons thread-safe | [Negative] CRITIQUE | 8 fichiers | 1.5h | 3h |  DONE |
+| Duplications JS | [Pending] MOYENNE | 2 fonctions | 1h | 1h |  DONE |
+| Duplications Python | [Pending] MOYENNE | 0 (analysé) | 1h | 0.5h |  DONE |
+| Docs chemins | [Positive] BASSE | 3 refs | 15min | 15min |  DONE |
+| Exception handling | [Negative] CRITIQUE | 21 fichiers | 5h | 3h |  DONE |
+| **Tests Python critiques** | **[Pending] MOYENNE** | **64 tests** | **8h** | **4h** | ** DONE** |
+| **TOTAL SPRINTS 2-5** | - | - | **24h** | **~16h** |  DONE |
 
 ### Sprint 6 Restant
 
 | Catégorie | Sévérité | Items | Temps Estimé | Status |
 |-----------|----------|-------|--------------|--------|
-| Tests JavaScript (Allocation/DI) | 🟢 BASSE | 2 modules | 4h | ⏸️ OPTIONAL |
-| Modules ES6 | 🟢 BASSE | 16 fichiers | 4h | ⏸️ OPTIONAL |
-| TODOs critiques | 🟢 BASSE | 7 items | 6h | ⏸️ OPTIONAL |
-| .gitignore | 🟢 BASSE | Artifacts | <1h | ⏸️ OPTIONAL |
-| **TOTAL SPRINT 6** | - | - | **14h** | ⏸️ OPTIONAL |
+| Tests JavaScript (Allocation/DI) | [Positive] BASSE | 2 modules | 4h |  OPTIONAL |
+| Modules ES6 | [Positive] BASSE | 16 fichiers | 4h |  OPTIONAL |
+| TODOs critiques | [Positive] BASSE | 7 items | 6h |  OPTIONAL |
+| .gitignore | [Positive] BASSE | Artifacts | <1h |  OPTIONAL |
+| **TOTAL SPRINT 6** | - | - | **14h** |  OPTIONAL |
 
 ---
 
-## 🎯 Recommandations pour Reprise
+## Recommandations pour Reprise
 
-### État Actuel - Sprint 5 Terminé ✅
+### État Actuel - Sprint 5 Terminé
 
 **Modules Python critiques sécurisés:**
 
-- ✅ Market Opportunities Scanner (26 tests)
-- ✅ Governance Freeze Semantics (38 tests)
+- [OK] Market Opportunities Scanner (26 tests)
+- [OK] Governance Freeze Semantics (38 tests)
 
 **Modules JavaScript sans tests:**
 
-- ⚠️ Allocation Engine V2 (JavaScript) - Nécessite Jest ou tests e2e
-- ⚠️ Decision Index V2 (JavaScript) - Nécessite Jest ou tests e2e
+- [Warning] Allocation Engine V2 (JavaScript) - Nécessite Jest ou tests e2e
+- [Warning] Decision Index V2 (JavaScript) - Nécessite Jest ou tests e2e
 
 ### Prochaine Étape Suggérée
 
@@ -521,35 +521,35 @@ pytest tests/unit/test_governance_freeze_semantics.py -v
 # Dev server (après modifications backend)
 .venv\Scripts\Activate.ps1
 python -m uvicorn api.main:app --port 8080
-# ⚠️ IMPORTANT: Toujours demander redémarrage manuel (pas de --reload)
+# IMPORTANT: Toujours demander redémarrage manuel (pas de --reload)
 ```
 
 ---
 
-## 📝 Notes Importantes
+## Notes Importantes
 
 ### Points d'Attention
 
 1. **formatCurrency - 2 Implémentations Légitimes:**
    - `shared-ml-functions.js`: Global, multi-devises, conversion
    - `wealth-saxo-summary.js`: Local, USD uniquement, Saxo tile
-   - ⚠️ Ne PAS tenter de les fusionner à nouveau
+   - [Warning] Ne PAS tenter de les fusionner à nouveau
 
 2. **Duplications Python - Design Patterns Légitimes:**
    - `ml_pipeline_manager` vs `_optimized`: Modules séparés
    - `stop_loss_backtest` vs `v2`: Héritage intentionnel
-   - ✅ Aucune consolidation nécessaire
+   - [OK] Aucune consolidation nécessaire
 
-3. **Tests Python - TERMINÉ ✅ (Sprint 5)**
-   - ~~Market Opportunities~~ → **26 tests créés** ✅
-   - ~~Governance Freeze Semantics~~ → **38 tests créés** ✅
+3. **Tests Python - TERMINÉ [OK] (Sprint 5)**
+   - ~~Market Opportunities~~ → **26 tests créés** [OK]
+   - ~~Governance Freeze Semantics~~ → **38 tests créés** [OK]
    - Tests JavaScript reportés (Allocation Engine V2, Decision Index V2)
    - → **Modules Python critiques sécurisés**
 
-4. **Exception Handling - TERMINÉ ✅**
+4. **Exception Handling - TERMINÉ [OK]**
    - ~~30 fichiers avec `except Exception: pass` restants~~ → **0 fichier restant**
    - ~~Risque: Erreurs silencieuses en production~~ → **Éliminé**
-   - ✅ Tous les paths critiques ont du logging approprié
+   - [OK] Tous les paths critiques ont du logging approprié
 
 ### Artifacts Générés
 
@@ -570,28 +570,28 @@ a963990 fix(dashboard): restore formatCurrency for Saxo tile
 
 ---
 
-## ✅ Validation Finale
+## Validation Finale
 
 ### Ce qui fonctionne (Production-Ready)
 
-- ✅ **Frontend 100% crash-proof** (debugLogger fallback)
-- ✅ **Backend 100% thread-safe** (8 singletons sécurisés)
-- ✅ **Console production propre** (881 logs masqués quand debug OFF)
-- ✅ **API endpoints centralisés** (10 fichiers nettoyés)
-- ✅ **Documentation chemins corrects**
-- ✅ **Saxo tile affiche correctement** (hotfix appliqué)
-- ✅ **Exception handling complet** (35 corrections, 21 fichiers)
-- ✅ **0 erreur silencieuse** dans le code production
-- ✅ **Observabilité système complète**
-- ✅ **Tests Python critiques** (64 tests, 100% passent) ⭐ **SPRINT 5**
-- ✅ **Market Opportunities sécurisé** (26 tests) ⭐ **SPRINT 5**
-- ✅ **Governance Freeze sécurisé** (38 tests) ⭐ **SPRINT 5**
-- ✅ **TODO critique EUR/USD** (FX service dynamique) ⭐ **SPRINT 5 BONUS**
+- [OK] **Frontend 100% crash-proof** (debugLogger fallback)
+- [OK] **Backend 100% thread-safe** (8 singletons sécurisés)
+- [OK] **Console production propre** (881 logs masqués quand debug OFF)
+- [OK] **API endpoints centralisés** (10 fichiers nettoyés)
+- [OK] **Documentation chemins corrects**
+- [OK] **Saxo tile affiche correctement** (hotfix appliqué)
+- [OK] **Exception handling complet** (35 corrections, 21 fichiers)
+- [OK] **0 erreur silencieuse** dans le code production
+- [OK] **Observabilité système complète**
+- [OK] **Tests Python critiques** (64 tests, 100% passent)  **SPRINT 5**
+- [OK] **Market Opportunities sécurisé** (26 tests)  **SPRINT 5**
+- [OK] **Governance Freeze sécurisé** (38 tests)  **SPRINT 5**
+- [OK] **TODO critique EUR/USD** (FX service dynamique)  **SPRINT 5 BONUS**
 
 ### Ce qui reste (Optionnel)
 
-- ⏸️ **Tests JavaScript** (Allocation Engine V2, Decision Index V2) - Setup Jest requis
-- ⏸️ **Améliorations optionnelles** (Sprint 6) - Nice to have
+- **Tests JavaScript** (Allocation Engine V2, Decision Index V2) - Setup Jest requis
+- **Améliorations optionnelles** (Sprint 6) - Nice to have
 
 ### Temps Restant Estimé
 
@@ -600,7 +600,7 @@ a963990 fix(dashboard): restore formatCurrency for Saxo tile
 
 ---
 
-## 🚀 Pour Démarrer une Nouvelle Session
+## Pour Démarrer une Nouvelle Session
 
 **Contexte à fournir à Claude :**
 

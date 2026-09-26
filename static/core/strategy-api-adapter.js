@@ -235,7 +235,7 @@ export async function calculateIntelligentDecisionIndexAPI(context) {
     let finalResult;
 
     if (MIGRATION_CONFIG.allocation.topdown_v2) {
-      debugLog('🏗️ Using Allocation Engine V2 for hierarchical allocation');
+      debugLog("Using Allocation Engine V2 for hierarchical allocation");
 
       // Récupérer positions actuelles depuis le store ou context
       const currentPositions = await getCurrentPositions();
@@ -262,9 +262,9 @@ export async function calculateIntelligentDecisionIndexAPI(context) {
       if (v2Allocation) {
         // Succès V2 - convertir au format legacy
         finalResult = convertV2AllocationToLegacyFormat(v2Allocation, context);
-        debugLog('✅ V2 allocation successful, converted to legacy format');
-        debugLog('🔍 V2 allocation details:', v2Allocation);
-        debugLog('🔍 Final result targets count:', finalResult.targets?.length || 0);
+        debugLog("[OK] V2 allocation successful, converted to legacy format");
+        debugLog("V2 allocation details:", v2Allocation);
+        debugLog("Final result targets count:", finalResult.targets?.length || 0);
       } else {
         finalResult = unavailableDecision('Allocation engine could not produce a verified allocation');
       }
@@ -391,7 +391,7 @@ async function getCurrentPositions() {
         throw new Error('No portfolio source selected');
       }
       const apiResponse = await window.globalConfig.apiRequest('/balances/current', {
-        params: { source: currentSource }  // 🔧 FIX: Pass source parameter for multi-tenant isolation
+        params: { source: currentSource }  //  FIX: Pass source parameter for multi-tenant isolation
       });
       return apiResponse?.items || [];
     }
@@ -419,7 +419,7 @@ function extractRiskBudgetFromContext(context) {
   if (targetStablesPct == null) {
     console.debug('[adapter] missing target_stables_pct - check market-regimes pipeline');
   } else {
-    console.debug('🎯 Single source stables target:', targetStablesPct + '%');
+    console.debug("Single source stables target:", targetStablesPct + '%');
   }
 
   return {
@@ -442,7 +442,7 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
     rationale: `V2 engine allocation (${v2Allocation.metadata.phase} phase)`
   }));
 
-  // ✅ FIX: Calculer le VRAI Decision Index (0-100) avec formule pondérée
+  //  FIX: Calculer le VRAI Decision Index (0-100) avec formule pondérée
   // Comme documenté dans DECISION_INDEX_V2.md et services/execution/strategy_registry.py
   const cycleScore = context.cycleData?.score;
   const onchainScore = context.onchainScore;
@@ -485,7 +485,7 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
   // Score final clampé [0, 100]
   const decisionScore = Math.max(0, Math.min(100, Math.round(rawDecisionScore * phaseFactor)));
 
-  debugLog('🎯 Decision Index calculated:', {
+  debugLog("Decision Index calculated:", {
     inputs: { cycleScore, onchainScore, riskScore },
     weights: { wCycle, wOnchain, wRisk },
     rawScore: rawDecisionScore.toFixed(1),
@@ -534,16 +534,16 @@ function convertV2AllocationToLegacyFormat(v2Allocation, context) {
  * @returns {object} Map { groupTopLevel -> % } de 11 entrées, somme ≈ 100
  */
 export function buildTheoreticalTargets(u) {
-  (window.debugLogger?.warn || console.warn)('🚨 buildTheoreticalTargets FONCTION OVERRIDE APPELÉE !', new Date().toISOString());
+  (window.debugLogger?.warn || console.warn)("[Alert] buildTheoreticalTargets FONCTION OVERRIDE APPELÉE !", new Date().toISOString());
 
   // VERROUILLAGE STABLES: Utiliser source canonique pour cohérence parfaite
   if (u?.targets_by_group) {
-    (window.debugLogger?.info || console.log)('✅ STABLES VERROUILLÉES: Utilisation source canonique u.targets_by_group');
-    console.debug('🔒 buildTheoreticalTargets source: CANONICAL_TARGETS_BY_GROUP', u.targets_by_group);
+    (window.debugLogger?.info || console.log)("[OK] STABLES VERROUILLÉES: Utilisation source canonique u.targets_by_group");
+    console.debug("buildTheoreticalTargets source: CANONICAL_TARGETS_BY_GROUP", u.targets_by_group);
     return u.targets_by_group;
   }
 
-  (window.debugLogger?.warn || console.warn)('⚠️ Canonical targets unavailable');
+  (window.debugLogger?.warn || console.warn)("[Warning] Canonical targets unavailable");
   return {};
 }
 

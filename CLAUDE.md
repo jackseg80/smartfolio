@@ -14,7 +14,7 @@ from services.balance_service import balance_service
 async def endpoint(user: str = Depends(get_required_user), source: str = Query("cointracking")):
     res = await balance_service.resolve_current_balances(source=source, user_id=user)
 
-# ⚠️ SUPPRIMÉ: get_active_user n'existe plus → TOUJOURS utiliser get_required_user
+# SUPPRIMÉ: get_active_user n'existe plus → TOUJOURS utiliser get_required_user
 ```
 
 ```javascript

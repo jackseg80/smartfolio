@@ -38,7 +38,7 @@ def assign_locations_to_actions(
         - If split results in trades < min_trade_usd, consolidate to biggest exchange
     """
     logger.info(
-        f"🔧 assign_locations_to_actions called with "
+        f" assign_locations_to_actions called with "
         f"{len(rows)} rows, {len(plan.get('actions', []))} actions"
     )
 
@@ -57,10 +57,10 @@ def assign_locations_to_actions(
             holdings[sym][loc] += val
 
     logger.info(
-        f"📍 assign_locations_to_actions: "
+        f" assign_locations_to_actions: "
         f"{len(locations_seen)} locations found: {sorted(locations_seen)}"
     )
-    logger.info(f"📍 Sample holdings: {dict(list(holdings.items())[:3])}")
+    logger.info(f" Sample holdings: {dict(list(holdings.items())[:3])}")
 
     actions = plan.get("actions") or []
     out_actions: List[Dict[str, Any]] = []

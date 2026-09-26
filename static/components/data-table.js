@@ -358,10 +358,10 @@ class DataTable {
                 ${this.options.exportable ? `
                     <div class="dt-actions">
                         <button class="dt-btn" data-action="export-csv">
-                            📄 CSV
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> CSV
                         </button>
                         <button class="dt-btn" data-action="export-json">
-                            📋 JSON
+                            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> JSON
                         </button>
                     </div>
                 ` : ''}
@@ -394,7 +394,7 @@ class DataTable {
                 <tr>
                     <td colspan="${this.options.columns.length}">
                         <div class="dt-empty">
-                            <div class="dt-empty-icon">📭</div>
+                            <div class="dt-empty-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Empty" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#inbox"></use></svg></div>
                             ${this.options.emptyMessage}
                         </div>
                     </td>

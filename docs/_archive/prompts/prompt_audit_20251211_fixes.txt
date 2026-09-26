@@ -12,7 +12,7 @@ _global_singleton: Optional[Class] = None
 def get_singleton():
     global _global_singleton
     if _global_singleton is None:
-        _global_singleton = Class()  # ⚠️ Race condition!
+        _global_singleton = Class()  # [Warning] Race condition!
     return _global_singleton
 ```
 
@@ -73,9 +73,9 @@ def get_singleton():
 ## Changes Made Per File
 
 For each file:
-1. ✅ Added `import threading` at top of file
-2. ✅ Added `_<name>_lock = threading.Lock()` after global variable declaration
-3. ✅ Wrapped initialization in double-checked locking pattern:
+1. [OK] Added `import threading` at top of file
+2. [OK] Added `_<name>_lock = threading.Lock()` after global variable declaration
+3. [OK] Wrapped initialization in double-checked locking pattern:
    - First check without lock (fast path)
    - Lock acquisition
    - Second check inside lock (prevents race condition)
@@ -120,7 +120,7 @@ import services.orchestration.hybrid_orchestrator
 "
 ```
 
-Result: ✅ All 6 files have thread locks defined correctly
+Result: [OK] All 6 files have thread locks defined correctly
 
 ## Performance Impact
 
@@ -132,8 +132,8 @@ Result: ✅ All 6 files have thread locks defined correctly
 ## Related Files Previously Fixed
 
 These files were already fixed in a previous session:
-- ✅ connectors/coingecko.py (`_coingecko_lock`)
-- ✅ services/ml/model_registry.py (`_registry_lock`)
+- [OK] connectors/coingecko.py (`_coingecko_lock`)
+- [OK] services/ml/model_registry.py (`_registry_lock`)
 
 ## Total Files with Thread-Safe Singletons
 

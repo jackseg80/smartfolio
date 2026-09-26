@@ -5,40 +5,40 @@
 
 ---
 
-## 📊 État Actuel
+## État Actuel
 
-### ✅ Ce qui Fonctionne (100%)
+### Ce qui Fonctionne (100%)
 
 **Backend:**
-- ✅ Dynamic knowledge base (lit CLAUDE.md avec cache 5 min)
-- ✅ Endpoints `/api/ai/refresh-knowledge` et `/api/ai/knowledge-stats`
-- ✅ Multi-provider (Groq + Claude API)
-- ✅ Knowledge base explique correctement Decision Index, Risk Score, etc.
+- [OK] Dynamic knowledge base (lit CLAUDE.md avec cache 5 min)
+- [OK] Endpoints `/api/ai/refresh-knowledge` et `/api/ai/knowledge-stats`
+- [OK] Multi-provider (Groq + Claude API)
+- [OK] Knowledge base explique correctement Decision Index, Risk Score, etc.
 
 **Frontend:**
-- ✅ Modal s'ouvre/ferme (bouton ✨ + Ctrl+K)
-- ✅ Questions rapides affichées
-- ✅ Intégration dans 4 pages (dashboard, risk, analytics, wealth)
+- [OK] Modal s'ouvre/ferme (bouton  + Ctrl+K)
+- [OK] Questions rapides affichées
+- [OK] Intégration dans 4 pages (dashboard, risk, analytics, wealth)
 
 **Tests Réussis (Quick Test):**
-- ✅ Test 1: Modal fonctionne
-- ✅ Test 2: Questions rapides (partiellement - voir problèmes)
-- ✅ Test 3: Knowledge base dynamique (parfait)
-- ✅ Test 5: Refresh knowledge (parfait)
+- [OK] Test 1: Modal fonctionne
+- [OK] Test 2: Questions rapides (partiellement - voir problèmes)
+- [OK] Test 3: Knowledge base dynamique (parfait)
+- [OK] Test 5: Refresh knowledge (parfait)
 
 ---
 
-## ❌ Problèmes Identifiés (Tests User jack)
+## Problèmes Identifiés (Tests User jack)
 
 ### Problème 1: Dashboard Context Incomplet
 
 **Symptôme:**
 L'IA ne voit QUE les cryptos. Manque:
-- ❌ Bourse (positions Saxo)
-- ❌ Patrimoine (wealth/banks)
-- ❌ Scores de risque
-- ❌ Régimes de marché
-- ❌ Decision Index, ML Sentiment
+- [Error] Bourse (positions Saxo)
+- [Error] Patrimoine (wealth/banks)
+- [Error] Scores de risque
+- [Error] Régimes de marché
+- [Error] Decision Index, ML Sentiment
 
 **Exemple:**
 ```
@@ -72,7 +72,7 @@ IA: "Je n'ai pas accès à vos données de portefeuille spécifiques."
 
 **Alors que les logs montrent:**
 ```
-INFO api.risk_endpoints: ✅ Returning cached risk dashboard (cache hit)
+INFO api.risk_endpoints: [OK] Returning cached risk dashboard (cache hit)
 ```
 
 **Cause Probable:**
@@ -91,7 +91,7 @@ const response = await fetch('/api/risk/dashboard', {
 
 ---
 
-## 🔧 Solutions Proposées
+## Solutions Proposées
 
 ### Solution 1: Enrichir Dashboard Context (Prioritaire)
 
@@ -167,10 +167,10 @@ export async function buildDashboardContext() {
 ```
 
 **Endpoints à vérifier:**
-- ✅ `/api/risk/dashboard` (existe, testé)
-- ❓ `/api/bourse/dashboard` (vérifier si existe)
-- ❓ `/api/wealth/patrimoine` (vérifier endpoint exact)
-- ❓ `/api/ml/unified-state` (vérifier endpoint exact)
+- [OK] `/api/risk/dashboard` (existe, testé)
+- `/api/bourse/dashboard` (vérifier si existe)
+- `/api/wealth/patrimoine` (vérifier endpoint exact)
+- `/api/ml/unified-state` (vérifier endpoint exact)
 
 ---
 
@@ -236,7 +236,7 @@ export async function buildRiskDashboardContext() {
 
 ---
 
-## 📝 Fichiers à Modifier
+## Fichiers à Modifier
 
 | Fichier | Lignes | Action |
 |---------|--------|--------|
@@ -248,7 +248,7 @@ export async function buildRiskDashboardContext() {
 
 ---
 
-## 🔍 Debug Étapes (À Faire Avant Modification)
+## Debug Étapes (À Faire Avant Modification)
 
 ### 1. Vérifier window.getUnifiedState()
 
@@ -301,7 +301,7 @@ curl "http://localhost:8080/api/analytics/unified" -H "X-User: jack"
 
 ---
 
-## 🎯 Plan de Travail (Nouvelle Session)
+## Plan de Travail (Nouvelle Session)
 
 ### Étape 1: Debug (15 min)
 1. Console F12 → Vérifier `window.getUnifiedState()`
@@ -317,11 +317,11 @@ curl "http://localhost:8080/api/analytics/unified" -H "X-User: jack"
 1. Relancer Quick Test avec user `jack`
 2. Vérifier Console F12 pour logs debug
 3. Vérifier que l'IA voit maintenant:
-   - ✅ Crypto
-   - ✅ Bourse
-   - ✅ Patrimoine
-   - ✅ Risk Score
-   - ✅ Decision Index, ML Sentiment, Regime
+   - [OK] Crypto
+   - [OK] Bourse
+   - [OK] Patrimoine
+   - [OK] Risk Score
+   - [OK] Decision Index, ML Sentiment, Regime
 
 ### Étape 4: Commit & Push (10 min)
 1. Commit fixes
@@ -330,7 +330,7 @@ curl "http://localhost:8080/api/analytics/unified" -H "X-User: jack"
 
 ---
 
-## 📚 Références Rapides
+## Références Rapides
 
 ### Documentation
 - **AI Chat Global:** [docs/AI_CHAT_GLOBAL.md](AI_CHAT_GLOBAL.md)
@@ -353,12 +353,12 @@ IA: "Je n'ai pas accès à vos données" ← FAUX (API fonctionne selon logs)
 **Knowledge Base:**
 ```
 User: "Explique Decision Index"
-IA: "65 (valid) ou 45 (invalid), binaire" ← CORRECT ✅
+IA: "65 (valid) ou 45 (invalid), binaire" ← CORRECT [OK]
 ```
 
 ---
 
-## 🚀 Commandes Rapides
+## Commandes Rapides
 
 ### Démarrer Serveur
 ```bash
@@ -385,7 +385,7 @@ Get-Content logs\app.log -Wait -Tail 20
 
 ---
 
-## ✅ Checklist Avant de Commencer
+## Checklist Avant de Commencer
 
 - [ ] Lire ce document complet
 - [ ] Démarrer serveur backend
@@ -398,7 +398,7 @@ Get-Content logs\app.log -Wait -Tail 20
 
 ---
 
-## 📊 État Git
+## État Git
 
 **Branche actuelle:** `main` (local)
 **Branche feature:** `feature/ai-chat-global-dynamic-kb` (créée, pas pushée)

@@ -1,15 +1,15 @@
 # AI Chat with Groq - Documentation
 
 > **Date:** Dec 2025
-> **Status:** ✅ Production Ready
+> **Status:** [OK] Production Ready
 > **Provider:** Groq API (Free Tier)
 > **Model:** Llama 3.1 70B Versatile
 
-## 📋 Vue d'ensemble
+## Vue d'ensemble
 
 Système de chat IA intégré dans le dashboard Saxo Bank pour fournir une analyse intelligente du portefeuille d'actions en temps réel.
 
-## 🎯 Fonctionnalités
+## Fonctionnalités
 
 ### Backend - API Router
 **Fichier:** `api/ai_chat_router.py`
@@ -20,10 +20,10 @@ Système de chat IA intégré dans le dashboard Saxo Bank pour fournir une analy
 - `GET /api/ai/quick-questions` - Questions prédéfinies
 
 **Provider:** Groq API
-- ✅ Gratuit avec limites généreuses (14k tokens/min)
-- ✅ Ultra rapide (~500 tokens/seconde)
-- ✅ Llama 3.1 70B (qualité rivalisant GPT-4)
-- ✅ Pas d'installation requise
+- [OK] Gratuit avec limites généreuses (14k tokens/min)
+- [OK] Ultra rapide (~500 tokens/seconde)
+- [OK] Llama 3.1 70B (qualité rivalisant GPT-4)
+- [OK] Pas d'installation requise
 
 ### Frontend - UI Integration
 **Fichier:** `static/saxo-dashboard.html`
@@ -44,7 +44,7 @@ Système de chat IA intégré dans le dashboard Saxo Bank pour fournir une analy
 
 **Champ ajouté:** `groq_api_key`
 
-## 🔧 Installation
+## Installation
 
 ### 1. Obtenir une clé API Groq (gratuite)
 
@@ -56,9 +56,9 @@ Système de chat IA intégré dans le dashboard Saxo Bank pour fournir une analy
 
 **Via l'interface:**
 1. Ouvrir Settings → Clés API
-2. Trouver "🤖 Groq API Key (AI Chat - Gratuit)"
+2. Trouver " Groq API Key (AI Chat - Gratuit)"
 3. Coller votre clé (format: `gsk_...`)
-4. Cliquer "💾 Sauvegarder les clés API"
+4. Cliquer " Sauvegarder les clés API"
 5. La clé sera masquée automatiquement
 
 **Via fichier (alternative):**
@@ -74,10 +74,10 @@ Système de chat IA intégré dans le dashboard Saxo Bank pour fournir une analy
 ### 3. Tester
 
 1. Ouvrir `saxo-dashboard.html`
-2. Cliquer sur "🤖 Ask AI" dans le header
+2. Cliquer sur " Ask AI" dans le header
 3. Essayer une question rapide ou poser votre propre question
 
-## 💡 Usage
+## Usage
 
 ### Questions rapides disponibles
 
@@ -116,20 +116,20 @@ Recommandation: Considérez rééquilibrer pour réduire l'exposition
 à une seule position au-dessus de 25%.
 ```
 
-## 🔐 Sécurité
+## Sécurité
 
 ### Stockage des clés
-- ✅ Séparation `config.json` (UI) / `secrets.json` (API keys)
-- ✅ Clés masquées dans l'interface (format: `gsk_••••••Eci7`)
-- ✅ Multi-tenant: isolation par user (`data/users/{user_id}/`)
-- ✅ Header `X-User` requis pour tous les endpoints
+- [OK] Séparation `config.json` (UI) / `secrets.json` (API keys)
+- [OK] Clés masquées dans l'interface (format: `gsk_••••••Eci7`)
+- [OK] Multi-tenant: isolation par user (`data/users/{user_id}/`)
+- [OK] Header `X-User` requis pour tous les endpoints
 
 ### Limitations Groq (Free Tier)
 - 14,000 tokens/minute
 - 30 requêtes/minute
 - Pas de données de training (Groq ne stocke rien)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Problème: La clé disparaît après avoir quitté Settings
 
@@ -143,7 +143,7 @@ const apiKeys = [
   'cointracking_api_key',
   'cointracking_api_secret',
   'fred_api_key',
-  'groq_api_key',  // ✅ ADDED
+  'groq_api_key',  // [OK] ADDED
   'debug_token'
 ];
 ```
@@ -172,7 +172,7 @@ cat data/users/jack/secrets.json | grep -A 2 "groq"
 
 **Normal:** Groq est ultra-rapide (~500 tokens/s), mais la première requête peut prendre 2-3 secondes.
 
-## 📊 Architecture
+## Architecture
 
 ### Flow de données
 
@@ -207,7 +207,7 @@ Règles:
 - Mentionne les limites si nécessaire
 ```
 
-## 🔄 Logging & Debug
+## Logging & Debug
 
 ### Logs backend
 ```python
@@ -218,9 +218,9 @@ logger.info(f"AI chat for user {user}: {usage['total_tokens']} tokens used")
 ### Logs frontend
 ```javascript
 // Console browser (F12)
-🔍 [loadSettings] groq_api_key: gsk_Tcyy...
-✅ [saveSecretIfProvided] groq_api_key SAUVEGARDÉE
-🔍 [saveSettings] groq_api_key présent: gsk_Tcyy...
+ [loadSettings] groq_api_key: gsk_Tcyy...
+[OK] [saveSecretIfProvided] groq_api_key SAUVEGARDÉE
+ [saveSettings] groq_api_key présent: gsk_Tcyy...
 ```
 
 ### Test endpoint
@@ -232,7 +232,7 @@ logger.info(f"AI chat for user {user}: {usage['total_tokens']} tokens used")
 3. Vérifier fichier secrets.json
 4. Tester cache
 
-## 📚 Fichiers modifiés
+## Fichiers modifiés
 
 ### Backend
 - `api/ai_chat_router.py` (NEW) - Router principal
@@ -253,7 +253,7 @@ logger.info(f"AI chat for user {user}: {usage['total_tokens']} tokens used")
 ### Test
 - `static/test_groq_settings.html` (NEW) - Page de debug
 
-## 🚀 Évolutions futures possibles
+## Évolutions futures possibles
 
 ### Alternatives providers (gratuits)
 - **Google Gemini** - 60 req/min gratuit, multimodal
@@ -267,16 +267,16 @@ logger.info(f"AI chat for user {user}: {usage['total_tokens']} tokens used")
 - [ ] Analyse comparative multi-périodes
 - [ ] Suggestions de rééquilibrage automatiques
 
-## 📝 Notes de version
+## Notes de version
 
 ### v1.0 - Dec 2025 (Initial Release)
-- ✅ Backend router avec Groq API
-- ✅ UI modal dans saxo-dashboard
-- ✅ Configuration Settings
-- ✅ Fix persistence bug (WealthContextBar)
-- ✅ Questions rapides prédéfinies
-- ✅ Contexte portfolio automatique
-- ✅ Multi-tenant support
+- [OK] Backend router avec Groq API
+- [OK] UI modal dans saxo-dashboard
+- [OK] Configuration Settings
+- [OK] Fix persistence bug (WealthContextBar)
+- [OK] Questions rapides prédéfinies
+- [OK] Contexte portfolio automatique
+- [OK] Multi-tenant support
 
 ---
 

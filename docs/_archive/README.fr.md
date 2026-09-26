@@ -2,7 +2,7 @@
 
 Plateforme intelligente de gestion de patrimoine cross-asset (Crypto, Bourse, Banque) avec IA, ML avancé et gestion unifiée des risques. Architecture modulaire autour de 6 pages canoniques optimisées pour la prise de décision en temps réel.
 
-## 🎯 Features Principales
+## Features Principales
 
 - **Decision Engine** avec gouvernance intelligente (approvals AI/manuels, freeze semantics)
 - **Rebalancing dynamique** basé sur cycle marché, régime, concentration wallet
@@ -13,7 +13,7 @@ Plateforme intelligente de gestion de patrimoine cross-asset (Crypto, Bourse, Ba
 - **Simulateur Pipeline** : test complet Decision → Risk Budget → Targets → Governance → Execution
 - **Multi-tenant** : isolation complète des données par utilisateur et source
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prérequis
 - Python 3.10+
@@ -67,7 +67,7 @@ source .venv/bin/activate
 - **Dashboard** : http://localhost:8080/static/dashboard.html
 - **API Docs** : http://localhost:8080/docs
 
-## 📊 Pages Principales
+## Pages Principales
 
 | Page | Description | URL |
 |------|-------------|-----|
@@ -79,7 +79,7 @@ source .venv/bin/activate
 | **Simulations** | Simulateur pipeline complet | `/static/simulations.html` |
 | **Saxo Dashboard** | Bourse (stocks, ETFs, fonds) avec stop-loss intelligent | `/static/saxo-dashboard.html` |
 
-## 🏗️ Architecture
+## Architecture
 
 ### Backend (FastAPI)
 ```
@@ -120,16 +120,16 @@ data/
     └── config/sources.json          # Modules actifs
 ```
 
-## 🔒 Sécurité
+## Sécurité
 
-- ✅ **Secrets management** : `.env` template, pre-commit hooks (detect-secrets + gitleaks)
-- ✅ **Frontend sécurisé** : 464 console.log → debugLogger, ESLint (no-console, no-eval)
-- ✅ **HTTP headers** : CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
-- ✅ **Tests automatisés** : validation headers + sécurité
+- [OK] **Secrets management** : `.env` template, pre-commit hooks (detect-secrets + gitleaks)
+- **Frontend sécurisé** : 464 console.log → debugLogger, ESLint (no-console, no-eval)
+- [OK] **HTTP headers** : CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
+- [OK] **Tests automatisés** : validation headers + sécurité
 
-📖 Détails complets : [SECURITY.md](SECURITY.md)
+ Détails complets : [SECURITY.md](SECURITY.md)
 
-## 📚 Documentation
+## Documentation
 
 ### Essentiels
 - **[CLAUDE.md](CLAUDE.md)** - Guide pour agents IA (règles critiques, patterns, quick checks)
@@ -159,9 +159,9 @@ data/
 - **[Contributing](CONTRIBUTING.md)** - Guidelines contribution
 
 ### Index Complet
-📖 **[Index Documentation](docs/index.md)** - Liste complète des docs disponibles
+ **[Index Documentation](docs/index.md)** - Liste complète des docs disponibles
 
-## 🔧 Configuration
+## Configuration
 
 ### Multi-Utilisateurs
 6 utilisateurs configurés : `demo`, `jack`, `donato`, `elda`, `roberto`, `clea`
@@ -184,7 +184,7 @@ FRED_API_KEY=your_key_here             # Macro data
 REDIS_URL=redis://localhost:6379/0     # Cache avancé (optionnel)
 ```
 
-## 📊 Endpoints Principaux
+## Endpoints Principaux
 
 ```bash
 # Health & Config
@@ -216,9 +216,9 @@ POST /api/sources/upload                         # Upload fichier
 GET  /api/sources/test                           # Tester source
 ```
 
-📖 API complète : http://localhost:8080/docs (Swagger UI)
+ API complète : http://localhost:8080/docs (Swagger UI)
 
-## 🧪 Tests
+## Tests
 
 ```bash
 # Activer environnement
@@ -238,7 +238,7 @@ pytest tests/e2e -v
 pytest --cov=services --cov=api --cov-report=html
 ```
 
-## 🎯 Règles Critiques (Développeurs)
+## Règles Critiques (Développeurs)
 
 ### 1. Multi-Tenant OBLIGATOIRE
 ```python
@@ -257,16 +257,16 @@ const balanceResult = await window.loadBalanceData(true);
 
 ### 2. Risk Score = Positif (0-100)
 - **Convention** : Plus haut = plus robuste
-- **❌ INTERDIT** : Ne jamais inverser avec `100 - scoreRisk`
+- ** INTERDIT** : Ne jamais inverser avec `100 - scoreRisk`
 
 ### 3. Decision Index vs Régime
 - **Decision Index** : Qualité technique allocation (65/45 fixe)
 - **Score de Régime** : État marché (0-100 variable)
 - **Phase** : Basée UNIQUEMENT sur Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
 
-📖 Détails : [CLAUDE.md](CLAUDE.md)
+ Détails : [CLAUDE.md](CLAUDE.md)
 
-## 🤝 Contributing
+## Contributing
 
 Contributions bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour guidelines.
 
@@ -277,15 +277,15 @@ Contributions bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour guidelin
 4. Push branch (`git push origin feature/amazing-feature`)
 5. Ouvrir Pull Request
 
-## 📝 Changelog
+## Changelog
 
 Voir [CHANGELOG.md](CHANGELOG.md) pour l'historique complet des versions.
 
-## 📄 Licence
+## Licence
 
 Ce projet est un starter/template pour usage personnel ou éducatif.
 
-## 🆘 Support
+## Support
 
 - **Documentation** : [docs/index.md](docs/index.md)
 - **Issues** : Pour bugs et feature requests
@@ -293,6 +293,6 @@ Ce projet est un starter/template pour usage personnel ou éducatif.
 
 ---
 
-**Status** : ✅ Production Stable (Oct 2025)
+**Status** : [OK] Production Stable (Oct 2025)
 **Version** : 3.0
 **Stack** : Python 3.10+ • FastAPI • Vanilla JS (ES6) • Redis (optionnel)

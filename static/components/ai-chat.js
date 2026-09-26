@@ -8,7 +8,7 @@ export class AIChatComponent {
     constructor(options = {}) {
         this.page = options.page || 'unknown';
         this.contextBuilder = options.contextBuilder || (() => ({}));
-        // ✅ USER ISOLATION: Use globalConfig (already isolated per user)
+        //  USER ISOLATION: Use globalConfig (already isolated per user)
         this.provider = window.globalConfig?.get('aiProvider') || 'groq';
         this.includeDocs = window.globalConfig?.get('aiIncludeDocs') !== false;  // Default true
         this.messages = [];
@@ -123,7 +123,7 @@ export class AIChatComponent {
             `;
         } else if (role === 'assistant') {
             const formattedContent = this.formatMarkdown(content);
-            const usageInfo = usage ? `<small class="ai-chat-usage">✓ ${usage.total_tokens} tokens used</small>` : '';
+            const usageInfo = usage ? `<small class="ai-chat-usage"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> ${usage.total_tokens} tokens used</small>` : '';
 
             messageDiv.innerHTML = `
                 <div class="ai-chat-message-content">
@@ -135,7 +135,7 @@ export class AIChatComponent {
         } else if (role === 'error') {
             messageDiv.innerHTML = `
                 <div class="ai-chat-message-content ai-chat-error">
-                    <strong>⚠️ Error:</strong>
+                    <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Error:</strong>
                     <div>${this.escapeHtml(content)}</div>
                 </div>
             `;
@@ -193,7 +193,7 @@ export class AIChatComponent {
 
     switchProvider(newProvider) {
         this.provider = newProvider;
-        // ✅ USER ISOLATION: Use globalConfig (already isolated per user)
+        //  USER ISOLATION: Use globalConfig (already isolated per user)
         window.globalConfig?.set('aiProvider', newProvider);
         console.debug(`AI provider switched to: ${newProvider}`);
     }

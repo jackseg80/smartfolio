@@ -3,24 +3,24 @@
 > **AI-friendly text export for portfolio recommendations**
 > Last updated: Oct 2025
 
-## 🎯 Overview
+## Overview
 
 Système d'export des recommandations de portfolio (BUY/HOLD/SELL) en format texte structuré (Markdown), optimisé pour analyse par IA (ChatGPT, Claude, etc.) ou archivage.
 
 **Fonctionnalités principales :**
-- ✅ Export de 3 horizons temporels en un seul fichier
-- ✅ Format Markdown structuré et lisible
-- ✅ Métadonnées contextuelles (date, user, portfolio)
-- ✅ Statistiques de résumé par timeframe
-- ✅ Table complète des recommandations
+- [OK] Export de 3 horizons temporels en un seul fichier
+- [OK] Format Markdown structuré et lisible
+- [OK] Métadonnées contextuelles (date, user, portfolio)
+- [OK] Statistiques de résumé par timeframe
+- [OK] Table complète des recommandations
 
 ---
 
-## 📁 Localisation
+## Localisation
 
 ### Frontend
 - **Page** : `static/saxo-dashboard.html` → Onglet "Recommendations"
-- **Bouton** : "📄 Export Text (All Timeframes)" dans le header du tableau
+- **Bouton** : " Export Text (All Timeframes)" dans le header du tableau
 
 ### Backend (API)
 - **Endpoint** : `GET /api/ml/bourse/portfolio-recommendations`
@@ -33,7 +33,7 @@ Système d'export des recommandations de portfolio (BUY/HOLD/SELL) en format tex
 
 ---
 
-## 🔧 Fonctionnement
+## Fonctionnement
 
 ### 1. Horizons temporels exportés
 
@@ -74,7 +74,7 @@ async function exportRecommendationsToText() {
 
 ---
 
-## 📄 Format du fichier exporté
+## Format du fichier exporté
 
 ### Structure générale
 
@@ -107,8 +107,8 @@ async function exportRecommendationsToText() {
 
 | Symbol | Name | Action | Target | Stop Loss | R/R | Confidence | Rationale |
 |--------|------|--------|--------|-----------|-----|------------|----------|
-| BRKb | BRKb | STRONG BUY | N/A | N/A | N/A | 96% | ⚠️ Technical: RSI 91... |
-| AAPL | AAPL | HOLD | N/A | N/A | N/A | 97% | ⚠️ Technical: RSI 57... |
+| BRKb | BRKb | STRONG BUY | N/A | N/A | N/A | 96% | [Warning] Technical: RSI 91... |
+| AAPL | AAPL | HOLD | N/A | N/A | N/A | 97% | [Warning] Technical: RSI 57... |
 
 ---
 
@@ -137,30 +137,30 @@ async function exportRecommendationsToText() {
 
 ### Données actuellement disponibles
 
-**✅ Données exportées :**
-- Symbol, Name, Action, Confidence ✅
-- Rationale (tronqué à 50 caractères) ✅
-- Summary Statistics (counts par action) ✅
+**[OK] Données exportées :**
+- Symbol, Name, Action, Confidence [OK]
+- Rationale (tronqué à 50 caractères) [OK]
+- Summary Statistics (counts par action) [OK]
 
-**⚠️ Données actuellement "N/A" :**
-- Market Context (Cycle Score, Regime, Risk Level, ML Sentiment) ❌
-- Target Price ❌
-- Stop Loss ❌
-- Risk/Reward Ratio ❌
+**[Warning] Données actuellement "N/A" :**
+- Market Context (Cycle Score, Regime, Risk Level, ML Sentiment) [Error]
+- Target Price [Error]
+- Stop Loss [Error]
+- Risk/Reward Ratio [Error]
 
 **Raison** : Ces métriques ne sont pas retournées par l'endpoint API actuellement. L'algorithme se concentre sur la classification (BUY/HOLD/SELL) et la confidence.
 
 ---
 
-## 🤖 Optimisé pour analyse IA
+## Optimisé pour analyse IA
 
 ### Pourquoi ce format ?
 
 **Markdown structuré** :
-- ✅ Sections hiérarchiques (`##`, `###`) faciles à parser
-- ✅ Tables bien formattées (`|` séparateurs)
-- ✅ Métadonnées en début de fichier
-- ✅ Notes explicatives en fin de fichier
+- [OK] Sections hiérarchiques (`##`, `###`) faciles à parser
+- [OK] Tables bien formattées (`|` séparateurs)
+- [OK] Métadonnées en début de fichier
+- [OK] Notes explicatives en fin de fichier
 
 **Cas d'usage IA** :
 1. **Upload dans ChatGPT/Claude** :
@@ -192,11 +192,11 @@ async function exportRecommendationsToText() {
 
 ---
 
-## 📊 Cas d'usage
+## Cas d'usage
 
 ### 1. Sélection de titres (Portfolio Screening)
 
-**Possible ✅ avec données actuelles :**
+**Possible [OK] avec données actuelles :**
 - Identifier Strong Buy sur multiple timeframes
 - Prioriser par Confidence (95%+ = haute confiance)
 - Voir évolution des recommandations (court → moyen → long)
@@ -234,7 +234,7 @@ ROG (Roche):
 
 ### 3. Limitations actuelles
 
-**Impossible ❌ sans Target/Stop/R/R :**
+**Impossible [Error] sans Target/Stop/R/R :**
 - Calcul de position sizing optimal
 - Gestion du risque (où placer stop ?)
 - Estimation du potentiel (combien gagner ?)
@@ -247,7 +247,7 @@ ROG (Roche):
 
 ---
 
-## 🧪 Exemples de résultats
+## Exemples de résultats
 
 ### Distribution des actions par timeframe
 
@@ -272,14 +272,14 @@ ROG (Roche):
 
 ---
 
-## 🔧 Implémentation technique
+## Implémentation technique
 
 ### Frontend (saxo-dashboard.html)
 
 **Bouton d'export (ligne 793)** :
 ```html
 <button id="btnExportTextRecs" class="btn secondary small">
-    📄 Export Text (All Timeframes)
+     Export Text (All Timeframes)
 </button>
 ```
 
@@ -317,14 +317,14 @@ if (rec.rationale) {
 ```
 
 **États du bouton** :
-1. Normal : "📄 Export Text (All Timeframes)"
-2. Loading : "⏳ Generating..." (disabled)
-3. Success : "✅ Downloaded!" (2 secondes, puis reset)
+1. Normal : " Export Text (All Timeframes)"
+2. Loading : "[Pending] Generating..." (disabled)
+3. Success : "[OK] Downloaded!" (2 secondes, puis reset)
 4. Error : Alert + reset
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Erreur : "Failed to fetch recommendations"
 
@@ -342,7 +342,7 @@ if (rec.rationale) {
 
 **Cause** : `rationale` n'est pas une string (array ou objet)
 
-**Solution** : ✅ Déjà corrigé (commit `2028df6`)
+**Solution** : [OK] Déjà corrigé (commit `2028df6`)
 - Le code gère maintenant string, array, et objects
 
 ### Export vide ou données manquantes
@@ -356,7 +356,7 @@ if (rec.rationale) {
 
 ---
 
-## 📚 Références
+## Références
 
 ### Code
 - Frontend : [static/saxo-dashboard.html:4520-4642](../static/saxo-dashboard.html#L4520-L4642)
@@ -373,7 +373,7 @@ if (rec.rationale) {
 
 ---
 
-## 🔮 Améliorations futures
+## Améliorations futures
 
 ### P1 - Court terme
 - [ ] Ajouter Target Price, Stop Loss, R/R au fichier (si API retourne)

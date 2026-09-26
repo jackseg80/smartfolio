@@ -32,7 +32,7 @@ console.log('');
 
 for (let blended = 45; blended <= 65; blended++) {
   const stables = calculateStables(blended, riskScore);
-  const match = stables === targetStables ? ' ✅ MATCH!' : '';
+  const match = stables === targetStables ? ' OK MATCH!' : '';
   console.log('  Blended=' + blended + ' → Stables=' + stables + '%' + match);
 }
 
@@ -48,7 +48,7 @@ console.log('');
 
 for (let risk = 50; risk <= 70; risk++) {
   const stables = calculateStables(blendedScore, risk);
-  const match = stables === targetStables ? ' ✅ MATCH!' : '';
+  const match = stables === targetStables ? ' OK MATCH!' : '';
   console.log('  Risk=' + risk + ' → Stables=' + stables + '%' + match);
 }
 

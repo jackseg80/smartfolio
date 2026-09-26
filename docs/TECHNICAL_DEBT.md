@@ -1,25 +1,25 @@
 # Dette Technique - Suivi et Roadmap
 
 > **Dernière mise à jour** : Février 2026 (refactoring majeur complété)
-> **Statut global** : 🟢 Excellent - Refactoring majeur terminé (19 tâches complétées)
+> **Statut global** : [Positive] Excellent - Refactoring majeur terminé (19 tâches complétées)
 
 Ce document centralise les TODO, FIXME et items de dette technique identifiés dans le codebase, avec priorités et plan de résolution.
 
-## 📊 Vue d'Ensemble
+## Vue d'Ensemble
 
 | Catégorie | Items | Priorité | Action |
 |-----------|-------|----------|--------|
-| **Features futures** | 6 | 🟢 LOW | Backlog product |
-| **À implémenter** | 2 | 🟡 MEDIUM | Plan d'implémentation |
-| **Refactoring Fév 2026** | 19 | ✅ DONE | Voir section dédiée |
-| **HIGH priority résolus** | 2 | ✅ DONE | Complétés Oct 2025 |
-| **MEDIUM priority résolus** | 3 | ✅ DONE | Complétés Oct 2025 |
+| **Features futures** | 6 | [Positive] LOW | Backlog product |
+| **À implémenter** | 2 | [Pending] MEDIUM | Plan d'implémentation |
+| **Refactoring Fév 2026** | 19 |  DONE | Voir section dédiée |
+| **HIGH priority résolus** | 2 |  DONE | Complétés Oct 2025 |
+| **MEDIUM priority résolus** | 3 |  DONE | Complétés Oct 2025 |
 
 **Total actif** : ~8 items features (dette technique majeure résolue)
 
 ---
 
-## ✅ DONE - Refactoring Majeur Février 2026
+## DONE - Refactoring Majeur Février 2026
 
 > Voir rapport complet: [`docs/REFACTORING_2026_REPORT.md`](REFACTORING_2026_REPORT.md)
 
@@ -48,20 +48,20 @@ Ce document centralise les TODO, FIXME et items de dette technique identifiés d
 
 ---
 
-## ✅ DONE - Migration Risk Dashboard (4 items - Oct 2025)
+## DONE - Migration Risk Dashboard (4 items - Oct 2025)
 
 **Contexte** : Refactoring Risk Dashboard vers architecture modulaire (Oct 2025)
 
 ### Migration complétée
 
-#### `static/modules/risk-cycles-tab.js` ✅
+#### `static/modules/risk-cycles-tab.js` OK
 - 1397 lignes de code complet
 - Chart Bitcoin avec halvings, prix historique, cycle score
 - Indicateurs on-chain avec catégories v2
 - Calibration historique automatique
 - Cache intelligent et lazy-loading
 
-#### `static/modules/risk-targets-tab.js` ✅
+#### `static/modules/risk-targets-tab.js` OK
 - 442 lignes de code complet
 - 5 stratégies (macro, CCS, cycle, blend, smart)
 - Action plan avec validation
@@ -77,7 +77,7 @@ Ce document centralise les TODO, FIXME et items de dette technique identifiés d
 
 ---
 
-## 🟢 LOW - Features Non Implémentées (6 items)
+## LOW - Features Non Implémentées (6 items)
 
 Ces items sont des fonctionnalités futures, pas des bugs. Backlog product.
 
@@ -104,18 +104,18 @@ Ces items sont des fonctionnalités futures, pas des bugs. Backlog product.
 **Justification** : Backtesting avancé = Phase 4
 **Action recommandée** : Spécifier requirements avant implémentation
 
-### ✅ InteractiveDashboard.js - SUPPRIMÉ (Nov 2025)
+### InteractiveDashboard.js - SUPPRIMÉ (Nov 2025)
 
-#### `static/components/InteractiveDashboard.js` (4 TODO) ✅ DONE
+#### `static/components/InteractiveDashboard.js` (4 TODO)  DONE
 **Statut** : Supprimé le 3 novembre 2025
 **Justification** : Déprécié, remplacé par dashboards modernes, aucune dépendance trouvée
 **Résultat** : -1229 lignes de code obsolète
 
 ---
 
-## ✅ DONE - HIGH Priority Resolved (2 items - Oct 2025)
+## DONE - HIGH Priority Resolved (2 items - Oct 2025)
 
-### 1. Wallet Stats ✅
+### 1. Wallet Stats
 
 #### `static/core/unified-insights-v2.js:580-588`
 **Statut** : Implémenté
@@ -135,7 +135,7 @@ const walletStats = {
 
 **Résultat** : Allocations dynamiques maintenant basées sur les stats wallet réelles
 
-### 2. Governance Endpoint ✅
+### 2. Governance Endpoint
 
 #### `static/modules/risk-targets-tab.js:423`
 **Statut** : Implémenté
@@ -153,9 +153,9 @@ const walletStats = {
 
 ---
 
-## ✅ DONE - MEDIUM Priority Resolved (3 items - Oct 2025)
+## DONE - MEDIUM Priority Resolved (3 items - Oct 2025)
 
-### 1. Governance Overrides Display ✅
+### 1. Governance Overrides Display
 
 #### `static/components/UnifiedInsights.js:571`
 **Statut** : Déjà implémenté (découvert lors de l'audit)
@@ -169,7 +169,7 @@ if (overrides > 0) badges.push(`Overrides ${overrides}`);
 
 **Résultat** : Display badges avec count des overrides manuels dans UnifiedInsights header
 
-### 2. Fix getApiUrl() Duplication Bug ✅
+### 2. Fix getApiUrl() Duplication Bug
 
 #### `static/global-config.js:242-252`
 **Statut** : Implémenté
@@ -198,7 +198,7 @@ getApiUrl(endpoint, additionalParams = {}) {
 
 **Résultat** : API URLs correctes indépendamment de la configuration base URL
 
-### 3. Replace Hardcoded URLs ✅
+### 3. Replace Hardcoded URLs
 
 #### `static/risk-dashboard.html:2906`
 **Statut** : Implémenté
@@ -222,7 +222,7 @@ const r = await fetch(url);
 
 ---
 
-## 🟡 MEDIUM - À Implémenter (2 items)
+## MEDIUM - À Implémenter (2 items)
 
 ### 1. Modules Additionnels (1 TODO) - Priority LOW
 
@@ -253,7 +253,7 @@ showNotification('Configuration sources sauvegardée', 'success');
 
 ---
 
-## ✅ DONE - Nettoyage Majeur Nov 2025 (6 items)
+## DONE - Nettoyage Majeur Nov 2025 (6 items)
 
 **Date nettoyage** : 3 novembre 2025
 
@@ -286,7 +286,7 @@ showNotification('Configuration sources sauvegardée', 'success');
 
 ---
 
-## ✅ DONE - Archives Nettoyées Oct 2025 (7 items)
+## DONE - Archives Nettoyées Oct 2025 (7 items)
 
 **Date nettoyage** : 10 octobre 2025
 
@@ -303,7 +303,7 @@ Fichiers supprimés :
 
 ---
 
-## 🎯 Plan d'Action Recommandé
+## Plan d'Action Recommandé
 
 ### Court Terme (< 1 semaine)
 
@@ -329,22 +329,22 @@ Fichiers supprimés :
 
 ---
 
-## 📏 Métriques
+## Métriques
 
 ### Réduction Dette (Oct-Nov 2025)
 
 | Métrique | Oct 2025 | Nov 2025 | Delta |
 |----------|----------|----------|-------|
-| TODO/FIXME total | 26 → 8 | 8 → ~5 | -21 ✅✅ |
-| Fichiers backup | 7 → 0 | 0 | -7 ✅ |
-| Taille backups | 400 KB → 0 KB | 0 KB | -100% ✅ |
-| Fichiers obsolètes | - | -5 fichiers | -3500+ lignes ✅✅ |
-| Tests vides | - | -9 tests | -151 lignes ✅ |
-| Items HIGH priority | 2 → 0 | ✅ 0 | -2 ✅ |
-| Items MEDIUM priority | 4 → 1 | ✅ 1 | -3 ✅ |
-| Migration Risk Dashboard | 4 TODO | ✅ DONE | -4 ✅ |
-| Technical Debt Oct 2025 | 3 TODO | ✅ DONE | -3 ✅ |
-| **Nettoyage Nov 2025** | - | **✅ DONE** | **-3650+ lignes** ✅✅
+| TODO/FIXME total | 26 → 8 | 8 → ~5 | -21 [OK][OK] |
+| Fichiers backup | 7 → 0 | 0 | -7 [OK] |
+| Taille backups | 400 KB → 0 KB | 0 KB | -100% [OK] |
+| Fichiers obsolètes | - | -5 fichiers | -3500+ lignes [OK][OK] |
+| Tests vides | - | -9 tests | -151 lignes [OK] |
+| Items HIGH priority | 2 → 0 | [OK] 0 | -2 [OK] |
+| Items MEDIUM priority | 4 → 1 | [OK] 1 | -3 [OK] |
+| Migration Risk Dashboard | 4 TODO |  DONE | -4 [OK] |
+| Technical Debt Oct 2025 | 3 TODO |  DONE | -3 [OK] |
+| **Nettoyage Nov 2025** | - | ** DONE** | **-3650+ lignes** [OK][OK]
 
 ### Tendance
 
@@ -353,16 +353,16 @@ Oct 2025 début: 26 items (baseline)
 Oct 2025 nettoyage: 26 → 18 items (-31% cleanup)
 Oct 2025 migration: 18 → 14 items (-22% completion)
 Oct 2025 HIGH priority: 14 → 12 items (-14% fixes)
-Oct 2025 MEDIUM fixes: 12 → 8 items (-33% fixes) ⬅ NEW
+Oct 2025 MEDIUM fixes: 12 → 8 items (-33% fixes)  NEW
 Target Nov 2025: 8 items → 4 items (implémenter Settings API)
 Target Dec 2025: 4 items → <3 items (dette sous contrôle)
 ```
 
-**Progrès Session 10 Oct 2025** : -3 items (Governance Overrides, getApiUrl, URLs hardcodées) ✅
+**Progrès Session 10 Oct 2025** : -3 items (Governance Overrides, getApiUrl, URLs hardcodées) [OK]
 
 ---
 
-## 🔍 Comment Utiliser ce Document
+## Comment Utiliser ce Document
 
 ### Ajouter un TODO
 
@@ -383,7 +383,7 @@ Target Dec 2025: 4 items → <3 items (dette sous contrôle)
 
 1. Implémenter la solution
 2. Supprimer le commentaire TODO du code
-3. Déplacer l'item vers section ✅ DONE
+3. Déplacer l'item vers section  DONE
 4. Mettre à jour les métriques
 
 ### Review
@@ -394,7 +394,7 @@ Target Dec 2025: 4 items → <3 items (dette sous contrôle)
 
 ---
 
-## 📚 Ressources
+## Ressources
 
 - [REFACTORING_SUMMARY.md](../REFACTORING_SUMMARY.md) - Plan refactoring global
 - [TODO_WEALTH_MERGE.md](TODO_WEALTH_MERGE.md) - Roadmap Wealth
@@ -405,5 +405,5 @@ Target Dec 2025: 4 items → <3 items (dette sous contrôle)
 
 **Dernière review** : 10 octobre 2025
 **Prochaine review** : 1er novembre 2025
-**Statut global** : 🟢 Dette sous contrôle, roadmap claire
+**Statut global** : [Positive] Dette sous contrôle, roadmap claire
 

@@ -15,9 +15,9 @@ Ce dossier contient les notes de sessions de développement archivées.
 ## Raison de l'archivage
 
 Ces fichiers sont des notes temporaires créées pendant le développement. Ils ont été archivés pour :
-- ✅ Garder la racine du projet propre
-- ✅ Préserver l'historique pour référence future
-- ✅ Éviter confusion entre docs actifs et notes de session
+- [OK] Garder la racine du projet propre
+- [OK] Préserver l'historique pour référence future
+- [OK] Éviter confusion entre docs actifs et notes de session
 
 ## Docs Actives
 

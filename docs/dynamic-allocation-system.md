@@ -158,25 +158,25 @@ if (data.iter1_targets && cap > 0) {
 ## Bénéfices Mesurables
 
 ### Cohérence
-- ✅ Rebalance utilise les cibles cappées (iter1_targets) d'Analytics
-- ✅ Le cap de governance est effectivement appliqué dans les trades
-- ✅ Plus de "Others 31%" aberrant
-- ✅ Source unique `u.targets_by_group`
+- [OK] Rebalance utilise les cibles cappées (iter1_targets) d'Analytics
+- [OK] Le cap de governance est effectivement appliqué dans les trades
+- [OK] Plus de "Others 31%" aberrant
+- [OK] Source unique `u.targets_by_group`
 
 ### Adaptabilité
-- ✅ Stables suivent risk budget (était ignoré)
-- ✅ Allocations s'adaptent au cycle (bull/bear/hedge)
-- ✅ Diversification selon concentration wallet
+- [OK] Stables suivent risk budget (était ignoré)
+- [OK] Allocations s'adaptent au cycle (bull/bear/hedge)
+- [OK] Diversification selon concentration wallet
 
 ### Performance
-- ✅ Élimination code dupliqué (4 fichiers → 1)
-- ✅ Calculs cachés et optimisés
-- ✅ Synchronisation temps réel
+- [OK] Élimination code dupliqué (4 fichiers → 1)
+- [OK] Calculs cachés et optimisés
+- [OK] Synchronisation temps réel
 
 ### UX
-- ✅ Interface cohérente entre pages
-- ✅ Allocations "intelligentes" vs arbitraires
-- ✅ Transparence des calculs
+- [OK] Interface cohérente entre pages
+- [OK] Allocations "intelligentes" vs arbitraires
+- [OK] Transparence des calculs
 
 ## Tests de Validation
 
@@ -219,4 +219,4 @@ walletStats = { topWeightSymbol: 'BTC', topWeightPct: 50 }
 
 ---
 
-**Impact Global**: Transformation d'un système rigide à presets vers une allocation véritablement intelligente et contextuelle. 🎯
+**Impact Global**: Transformation d'un système rigide à presets vers une allocation véritablement intelligente et contextuelle.

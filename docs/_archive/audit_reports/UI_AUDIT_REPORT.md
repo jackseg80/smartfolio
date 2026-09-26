@@ -13,13 +13,13 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 
 | Catégorie | Score | Statut |
 |-----------|-------|--------|
-| Système de couleurs | 7/10 | ⚠️ Bien structuré mais duplications |
-| Typographie | 6/10 | ⚠️ Incohérences de tailles |
-| Composants UI | 5/10 | ❌ Fragmenté, pas de bibliothèque |
-| Graphiques | 4/10 | ❌ Multiples bibliothèques non unifiées |
-| Accessibilité | 5/10 | ⚠️ Partielle, modals problématiques |
-| Responsive | 8/10 | ✅ Bon, breakpoints cohérents |
-| Architecture CSS | 5/10 | ⚠️ Fichiers monolithiques, duplications |
+| Système de couleurs | 7/10 | [Warning] Bien structuré mais duplications |
+| Typographie | 6/10 | [Warning] Incohérences de tailles |
+| Composants UI | 5/10 | [Error] Fragmenté, pas de bibliothèque |
+| Graphiques | 4/10 | [Error] Multiples bibliothèques non unifiées |
+| Accessibilité | 5/10 | [Warning] Partielle, modals problématiques |
+| Responsive | 8/10 | [OK] Bon, breakpoints cohérents |
+| Architecture CSS | 5/10 | [Warning] Fichiers monolithiques, duplications |
 
 ---
 
@@ -29,22 +29,22 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 
 | Page | Lignes | CSS | Problèmes |
 |------|--------|-----|-----------|
-| **dashboard.html** | 899 | shared + theme-compat | ✅ Bien structurée |
-| **analytics-unified.html** | 493 | + analytics-unified-theme | ✅ Bonnes pratiques (critical CSS) |
-| **risk-dashboard.html** | 285 | + risk-dashboard.css | ✅ Structure claire |
-| **rebalance.html** | 288 | + rebalance.css | ✅ Deux onglets cohérents |
-| **execution.html** | 1190 | ⚠️ Inline massif | ❌ Business logic inline |
-| **simulations.html** | 1846 | ⚠️ CSS inline extensif | ❌ Fichier trop volumineux |
-| **wealth-dashboard.html** | 1341 | ⚠️ Inline styles | ⚠️ Modal inline vs overlay |
-| **saxo-dashboard.html** | 6656 | ⚠️ >6000 lignes CSS inline | ❌ CRITIQUE - refactoring urgent |
+| **dashboard.html** | 899 | shared + theme-compat | [OK] Bien structurée |
+| **analytics-unified.html** | 493 | + analytics-unified-theme | [OK] Bonnes pratiques (critical CSS) |
+| **risk-dashboard.html** | 285 | + risk-dashboard.css | [OK] Structure claire |
+| **rebalance.html** | 288 | + rebalance.css | [OK] Deux onglets cohérents |
+| **execution.html** | 1190 | [Warning] Inline massif | [Error] Business logic inline |
+| **simulations.html** | 1846 | [Warning] CSS inline extensif | [Error] Fichier trop volumineux |
+| **wealth-dashboard.html** | 1341 | [Warning] Inline styles | [Warning] Modal inline vs overlay |
+| **saxo-dashboard.html** | 6656 | [Warning] >6000 lignes CSS inline | [Error] CRITIQUE - refactoring urgent |
 
 ### Incohérences de Structure
 
 ```
-❌ saxo-dashboard.html: 6656 lignes (CSS inline massif)
-❌ simulations.html: 1846 lignes (contrôles flyout custom)
-❌ execution.html: 1190 lignes (logique métier inline)
-✅ analytics-unified.html: 493 lignes (bien modulaire)
+[Error] saxo-dashboard.html: 6656 lignes (CSS inline massif)
+[Error] simulations.html: 1846 lignes (contrôles flyout custom)
+[Error] execution.html: 1190 lignes (logique métier inline)
+[OK] analytics-unified.html: 493 lignes (bien modulaire)
 ```
 
 ---
@@ -73,20 +73,20 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 [data-theme="dark"] --theme-surface: #0e1620
 ```
 
-### ❌ Problème #1: Couleurs Hardcodées
+### Problème #1: Couleurs Hardcodées
 
 **risk-dashboard.css (lignes 1124-1150)**:
 ```css
 .tooltip {
-  background: #0e1528;    /* ❌ Hardcodé */
-  color: #e9f0ff;         /* ❌ Hardcodé */
+  background: #0e1528;    /* [Error] Hardcodé */
+  color: #e9f0ff;         /* [Error] Hardcodé */
   border: 1px solid #243355;
 }
 ```
 
 **Impact**: Les tooltips ne suivent pas le thème light/dark.
 
-### ❌ Problème #2: Palette AI Isolée
+### Problème #2: Palette AI Isolée
 
 **ai-components.css** définit son propre système:
 ```css
@@ -97,7 +97,7 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 
 **Impact**: Les composants AI ont une apparence différente du reste.
 
-### ❌ Problème #3: Decision Index Panel Différent
+### Problème #3: Decision Index Panel Différent
 
 **decision-index-panel.css**:
 ```css
@@ -106,7 +106,7 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 --di-color-risk: #f7768e
 ```
 
-### ❌ Problème #4: Variantes de Succès Incohérentes
+### Problème #4: Variantes de Succès Incohérentes
 
 | Fichier | Couleur "Success Light" |
 |---------|------------------------|
@@ -116,7 +116,7 @@ L'audit révèle un projet avec une **base solide** (système de thème CSS vari
 
 **3 couleurs différentes pour le même concept!**
 
-### ❌ Problème #5: Opacités Non Standardisées
+### Problème #5: Opacités Non Standardisées
 
 ```css
 /* Même couleur, opacités différentes partout */
@@ -141,18 +141,18 @@ rgba(122, 162, 247, 0.25)  /* Autre endroit */
 
 ### Famille de Police
 
-✅ **Cohérent** - Toutes les pages utilisent:
+[OK] **Cohérent** - Toutes les pages utilisent:
 ```css
 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', ...
 ```
 
-❌ **Exception**: `risk-dashboard.css` utilise Monaco/Consolas pour les métriques.
+[Error] **Exception**: `risk-dashboard.css` utilise Monaco/Consolas pour les métriques.
 
 ---
 
 ## 4. Composants UI
 
-### 4.1 Graphiques - CRITIQUE ❌
+### 4.1 Graphiques - CRITIQUE
 
 **Problème**: 3 bibliothèques différentes sans interface commune.
 
@@ -168,7 +168,7 @@ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', ...
 - Thèmes non synchronisés
 - Bundle JS plus lourd
 
-### 4.2 Tooltips - Partiellement Unifié ⚠️
+### 4.2 Tooltips - Partiellement Unifié
 
 **3 systèmes coexistent**:
 
@@ -187,19 +187,19 @@ tooltip: { formatter: function() { return '...'; } }
 <span aria-label="Info">Badge</span>
 ```
 
-### 4.3 Modals/Dialogs - CRITIQUE ❌
+### 4.3 Modals/Dialogs - CRITIQUE
 
 **3 implémentations incompatibles**:
 
 | Fichier | Approche | Accessibilité |
 |---------|----------|---------------|
-| export-button.js | Divs + inline CSS | ❌ Aucune ARIA |
-| decision-index-panel.js | Class-based + CSS injecté | ✅ Complète |
-| wealth-dashboard.html | Inline HTML | ⚠️ Partielle |
+| export-button.js | Divs + inline CSS | [Error] Aucune ARIA |
+| decision-index-panel.js | Class-based + CSS injecté | [OK] Complète |
+| wealth-dashboard.html | Inline HTML | [Warning] Partielle |
 
 **Export Modal - Problématique**:
 ```javascript
-// ❌ Pas d'accessibilité
+// [Error] Pas d'accessibilité
 overlay.style.cssText = `position: fixed; ...`;
 modal.className = 'export-modal';
 // Manque: role="dialog", aria-modal="true", focus trap
@@ -207,18 +207,18 @@ modal.className = 'export-modal';
 
 **Decision Index - Bonne pratique**:
 ```html
-<!-- ✅ Accessible -->
+<!-- [OK] Accessible -->
 <div role="dialog" aria-labelledby="title" aria-modal="true">
 ```
 
-### 4.4 Tables - Fragmenté ❌
+### 4.4 Tables - Fragmenté
 
 **Aucun composant table réutilisable**:
 - Chaque page reconstruit ses tables en HTML
 - Pas de tri/filtrage/pagination unifié
 - Styles dupliqués
 
-### 4.5 Boutons - Incohérent ⚠️
+### 4.5 Boutons - Incohérent
 
 **shared-theme.css**:
 ```css
@@ -246,7 +246,7 @@ modal.className = 'export-modal';
 
 ## 5. Loading States & Erreurs
 
-### États de Chargement - Non Unifié ⚠️
+### États de Chargement - Non Unifié
 
 **shared-ml-functions.js**:
 ```javascript
@@ -267,11 +267,11 @@ try {
     showLoadingState();
     // ...
 } catch (error) {
-    console.error('...'); // ❌ Pas de feedback utilisateur
+    console.error('...'); //  Pas de feedback utilisateur
 }
 ```
 
-### Gestion d'Erreurs - Incohérente ❌
+### Gestion d'Erreurs - Incohérente
 
 - Certains composants: Toast auto-dismiss (5s)
 - Certains: Console.error seulement
@@ -281,13 +281,13 @@ try {
 
 ## 6. Responsive Design
 
-### ✅ Points Positifs
+### Points Positifs
 
 - **Breakpoints cohérents**: 768px, 1024px, 1400px, 2000px
 - **Grid auto-fit**: `repeat(auto-fit, minmax(300px, 1fr))`
 - **Container responsive**: `max-width: none` ou `95vw`
 
-### ⚠️ Points d'Attention
+### Points d'Attention
 
 | Page | Container | Problème |
 |------|-----------|----------|
@@ -302,10 +302,10 @@ try {
 
 | Fichier | Lignes | Statut |
 |---------|--------|--------|
-| risk-dashboard.css | 2321 | ❌ À découper |
-| decision-index-panel.css | 815 | ⚠️ Acceptable |
-| analytics-unified-theme.css | 960 | ⚠️ Acceptable |
-| ai-components.css | 746 | ✅ OK |
+| risk-dashboard.css | 2321 | [Error] À découper |
+| decision-index-panel.css | 815 | [Warning] Acceptable |
+| analytics-unified-theme.css | 960 | [Warning] Acceptable |
+| ai-components.css | 746 |  OK |
 
 ### Duplications Identifiées
 
@@ -321,10 +321,10 @@ shared-ml-styles.css
 
 ```css
 /* governance-panel.css utilise: */
-var(--theme-surface-hover)  /* ❌ Non défini dans shared-theme.css */
+var(--theme-surface-hover)  /* [Error] Non défini dans shared-theme.css */
 
 /* rebalance.css utilise: */
-var(--brand-primary-subtle) /* ❌ Non défini partout */
+var(--brand-primary-subtle) /* [Error] Non défini partout */
 ```
 
 ---
@@ -377,7 +377,7 @@ Mix de Web Components (Shadow DOM) et classes globales:
 
 **Export Modal**: Pas de focus trap
 ```javascript
-// ❌ Le focus peut sortir du modal
+// [Error] Le focus peut sortir du modal
 overlay.onclick = () => overlay.remove();
 ```
 

@@ -6,13 +6,13 @@
 
 ---
 
-## Problem 1: Risk Score Inversion (VIOLATES RISK_SEMANTICS.md ❌)
+## Problem 1: Risk Score Inversion (VIOLATES RISK_SEMANTICS.md )
 
 ### Violation
 Both `risk-dashboard.html` and `analytics-unified.html` were **inverting the Risk Score**:
 
 ```javascript
-// ❌ BEFORE (INCORRECT - violates docs/RISK_SEMANTICS.md)
+// [Error] BEFORE (INCORRECT - violates docs/RISK_SEMANTICS.md)
 const riskAdjusted = 100 - riskScore; // "Haut risque = bas score"
 totalScore += riskAdjusted * 0.20;
 
@@ -21,25 +21,25 @@ const blended = ... + ((100 - riskScore) * wRisk);
 ```
 
 ### Canonical Rule (docs/RISK_SEMANTICS.md)
-> **⚠️ Règle Canonique — Sémantique Risk**
+> **[Warning] Règle Canonique — Sémantique Risk**
 >
 > Le **Risk Score** est un indicateur **positif** de robustesse, borné **[0..100]**.
 >
 > **Convention** : Plus haut = plus robuste (risque perçu plus faible).
 >
-> **❌ Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
+> ** Interdit** : Ne jamais inverser avec `100 - scoreRisk`.
 
 ### Fix Applied
 ```javascript
-// ✅ AFTER (CORRECT - respects RISK_SEMANTICS.md)
+// [OK] AFTER (CORRECT - respects RISK_SEMANTICS.md)
 // Risk contribution : 20% (score direct, plus haut = plus robuste)
 totalScore += riskScore * 0.20;
 ```
 
 **Files Modified**:
-- `static/risk-dashboard.html:3506-3512` ✅
-- `static/analytics-unified.html:945-984` ✅
-- `static/dashboard.html:230-239` ✅
+- `static/risk-dashboard.html:3506-3512` OK
+- `static/analytics-unified.html:945-984` OK
+- `static/dashboard.html:230-239` OK
 
 ---
 
@@ -49,7 +49,7 @@ totalScore += riskScore * 0.20;
 
 **`risk-dashboard.html`** used:
 ```javascript
-// Formula: 50% CCS Mixte + 30% On-Chain + 20% (100-Risk) ❌
+// Formula: 50% CCS Mixte + 30% On-Chain + 20% (100-Risk) [Error]
 const ccsMixteScore = state.cycle?.ccsStar; // CCS + Cycle blended
 const blended = (ccsMixteScore * 0.50) + (onchainScore * 0.30) + ((100 - riskScore) * 0.20);
 ```
@@ -57,13 +57,13 @@ const blended = (ccsMixteScore * 0.50) + (onchainScore * 0.30) + ((100 - riskSco
 **`analytics-unified.html`** used:
 ```javascript
 // Formula: Variable weights based on confidence + contradictions
-// Used cycleScore (NOT CCS Mixte) ❌
+// Used cycleScore (NOT CCS Mixte) [Error]
 const blended = (cycleScore * wCycle) + (onchainScore * wOnchain) + ((100 - riskScore) * wRisk);
 ```
 
 **Result**: Different scores on different pages for the same market data!
 
-### After (Unified ✅)
+### After (Unified )
 
 **CANONICAL FORMULA** (used on all pages):
 ```javascript
@@ -84,7 +84,7 @@ if (onchainScore != null) {
   totalWeight += 0.30;
 }
 if (riskScore != null) {
-  totalScore += riskScore * 0.20; // ✅ Direct, NO inversion
+  totalScore += riskScore * 0.20; // [OK] Direct, NO inversion
   totalWeight += 0.20;
 }
 
@@ -114,8 +114,8 @@ store.get('scores.blended');   // Final DI score
 1. Open `risk-dashboard.html` and note scores
 2. Open `analytics-unified.html` (same user, same source)
 3. **Expected**: CCS Mixte, On-Chain, Risk Score, Blended Score are **identical**
-4. **Before fix**: CCS=62 vs 54, OnChain=35 vs 42, Risk=37 vs 50 ❌
-5. **After fix**: All scores match ✅
+4. **Before fix**: CCS=62 vs 54, OnChain=35 vs 42, Risk=37 vs 50 [Error]
+5. **After fix**: All scores match [OK]
 
 ---
 
@@ -130,7 +130,7 @@ analytics-unified: DI = (varied weights) × (varied scores) × ((100-50) inverte
 ### After Fix
 ```
 Both pages: DI = 0.5×CCSMixte + 0.3×OnChain + 0.2×Risk (same formula, same scores)
-Result: Stable, consistent DI across all refreshes ✅
+Result: Stable, consistent DI across all refreshes [OK]
 ```
 
 ---
@@ -188,8 +188,8 @@ describe('Score Consistency', () => {
 **Root Cause**: Violation of RISK_SEMANTICS.md canonical rule + different formulas across pages
 
 **Fix**:
-1. ✅ Remove Risk Score inversion everywhere
-2. ✅ Unify blended score formula: 50% CCS Mixte + 30% On-Chain + 20% Risk (direct)
-3. ✅ Consistent scores across all pages
+1. [OK] Remove Risk Score inversion everywhere
+2. [OK] Unify blended score formula: 50% CCS Mixte + 30% On-Chain + 20% Risk (direct)
+3. [OK] Consistent scores across all pages
 
 **Result**: Recommendations now **stable** across refreshes when market data hasn't changed

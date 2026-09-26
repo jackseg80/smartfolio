@@ -1,9 +1,9 @@
-// ⚙️ Unifier l’URL d’import du module (pas de ?v=3 ici)
+//  Unifier l’URL d’import du module (pas de ?v=3 ici)
 import { cycleScoreFromMonths, getCurrentCycleMonths } from './cycle-navigator.js';
 // Note: calibrateCycleParams & getCycleParams seront importés à la volée, ce qui
 // évite tout problème si le bouton est injecté après coup.
 
-// 🔗 CSP Compliance: Replace inline onclick handlers with event listeners
+//  CSP Compliance: Replace inline onclick handlers with event listeners
 document.addEventListener('click', async (e) => {
   // Calibration button (existing)
   const calibrateBtn = e.target?.closest('#btn-calibrate');
@@ -12,11 +12,11 @@ document.addEventListener('click', async (e) => {
       const { calibrateCycleParams, getCycleParams } = await import('./cycle-navigator.js');
       const res = calibrateCycleParams(); // ancres par défaut
       console.debug('Cycle params calibrés:', getCycleParams(), 'score=', res.score);
-      // ✅ Redessiner le même canvas (force refresh after calibration)
+      //  Redessiner le même canvas (force refresh after calibration)
       if (window.Chart) {
         await createBitcoinCycleChart('bitcoin-cycle-chart', true);
       } else {
-        debugLogger.debug('📊 Chart.js not loaded, skipping chart refresh');
+        debugLogger.debug("Chart.js not loaded, skipping chart refresh");
       }
       // Also clear cycle content cache as calibration affects data
       const cycleContentConfig = CACHE_CONFIG.CYCLE_CONTENT;
@@ -144,7 +144,7 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-// 🆕 Oct 2025: Toggle breakdown panel (expose globally for onclick handlers)
+//  Oct 2025: Toggle breakdown panel (expose globally for onclick handlers)
 window.toggleBreakdown = function (panelId) {
   const panel = document.getElementById(panelId);
   if (panel) {
@@ -217,16 +217,16 @@ function clearAllPersistentCache() {
     });
   });
 
-  // ✅ FIX: Also clear risk-dashboard-balance cache with pattern matching
+  //  FIX: Also clear risk-dashboard-balance cache with pattern matching
   // Format: risk-dashboard-balance:user:source:minUsd
   Object.keys(localStorage).forEach(key => {
     if (key.startsWith('risk-dashboard-balance:')) {
       localStorage.removeItem(key);
-      debugLogger.debug(`🧹 Cleared balance cache: ${key}`);
+      debugLogger.debug(`Cleared balance cache: ${key}`);
     }
   });
 
-  debugLogger.debug(`🧹 All persistent cache cleared for source ${dataSource}`);
+  debugLogger.debug(`All persistent cache cleared for source ${dataSource}`);
 }
 
 // Re-render on currency change (ensure rate then refresh)
@@ -251,12 +251,12 @@ function loadCalibrationParams() {
       const data = JSON.parse(saved);
       // Vérifier que les données ne sont pas trop anciennes (24h)
       if (Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
-        console.debug('✅ Paramètres calibrés chargés depuis localStorage', data.params);
+        console.debug("[OK] Paramètres calibrés chargés depuis localStorage", data.params);
         return data.params;
       }
     }
   } catch (error) {
-    debugLogger.error('❌ Erreur chargement paramètres:', error);
+    debugLogger.error("[Error] Erreur chargement paramètres:", error);
   }
   return null;
 }
@@ -264,7 +264,7 @@ function loadCalibrationParams() {
 // Écouter les mises à jour de paramètres depuis d'autres pages
 window.addEventListener('message', (event) => {
   if (event.data.type === 'CYCLE_PARAMS_UPDATED') {
-    console.debug('🔄 Paramètres de cycle mis à jour depuis autre page');
+    console.debug("Paramètres de cycle mis à jour depuis autre page");
     // Recharger les données avec les nouveaux paramètres
     setTimeout(refreshDashboard, 1000);
   }
@@ -272,7 +272,7 @@ window.addEventListener('message', (event) => {
 
 // Track current data source to detect changes
 let lastKnownDataSource = globalConfig.get('data_source');
-console.debug(`📊 Risk Dashboard initialized with data source: ${lastKnownDataSource}`);
+console.debug(`Risk Dashboard initialized with data source: ${lastKnownDataSource}`);
 
 // Listen for data source changes from settings
 window.addEventListener('storage', function (e) {
@@ -282,7 +282,7 @@ window.addEventListener('storage', function (e) {
 
     const currentSource = globalConfig.get('data_source');
     if (currentSource && currentSource !== lastKnownDataSource) {
-      console.debug(`🔄 Data source changed from ${lastKnownDataSource} to ${currentSource}, auto-refreshing...`);
+      console.debug(`Data source changed from ${lastKnownDataSource} to ${currentSource}, auto-refreshing...`);
       lastKnownDataSource = currentSource;
       // Clear cache when source changes
       clearAllPersistentCache();
@@ -293,7 +293,7 @@ window.addEventListener('storage', function (e) {
 
 // Listen for explicit data source change events
 window.addEventListener('dataSourceChanged', (event) => {
-  console.debug(`🔄 Explicit data source change: ${event.detail.oldSource} → ${event.detail.newSource}`);
+  console.debug(`Explicit data source change: ${event.detail.oldSource} → ${event.detail.newSource}`);
   lastKnownDataSource = event.detail.newSource;
   // Clear cache when source changes
   clearAllPersistentCache();
@@ -302,7 +302,7 @@ window.addEventListener('dataSourceChanged', (event) => {
   // Reload Phase 3A data with new source/user context
   setTimeout(() => {
     if (document.querySelector('.advanced-risk-panel') && typeof loadPhase3AData === 'function') {
-      console.debug('🔄 Reloading Phase 3A data after source change...');
+      console.debug("Reloading Phase 3A data after source change...");
       loadPhase3AData().catch(e => debugLogger.warn('Phase 3A reload failed:', e.message));
     }
   }, 1000);
@@ -310,11 +310,11 @@ window.addEventListener('dataSourceChanged', (event) => {
 
 // Listen for active user changes to reload Phase 3A data
 window.addEventListener('activeUserChanged', (event) => {
-  console.debug(`🔄 Active user changed: ${event.detail?.oldUser || 'unknown'} → ${event.detail?.newUser || 'unknown'}`);
+  console.debug(`Active user changed: ${event.detail?.oldUser || 'unknown'} → ${event.detail?.newUser || 'unknown'}`);
   // Reload Phase 3A data with new user context
   setTimeout(() => {
     if (document.querySelector('.advanced-risk-panel') && typeof loadPhase3AData === 'function') {
-      console.debug('🔄 Reloading Phase 3A data after user change...');
+      console.debug("Reloading Phase 3A data after user change...");
       loadPhase3AData().catch(e => debugLogger.warn('Phase 3A reload failed:', e.message));
     }
   }, 500);
@@ -425,23 +425,23 @@ async function fetchRiskData() {
     const apiBaseUrl = globalConfig.get('api_base_url');
     const minUsd = globalConfig.get('min_usd_threshold');
 
-    console.debug(`🔍 Risk Overview using data source: ${dataSource}`);
+    console.debug(`Risk Overview using data source: ${dataSource}`);
 
     // Use globalConfig to build the API URL with the configured source
     const url = globalConfig.getApiUrl('/balances/current', { min_usd: minUsd });
 
     // Utiliser directement les données de balance et calculer le risque côté client
-    // 🔧 FIX: Include csv_selected_file in cache key for proper isolation
+    //  FIX: Include csv_selected_file in cache key for proper isolation
     // Use window.userSettings directly (updated by WealthContextBar before event emission)
     const csvFile = window.userSettings?.csv_selected_file || 'latest';
     const saxoFile = window.userSettings?.saxo_selected_file || 'latest';
 
-    console.debug(`🔍 DEBUG - csvFile from window.userSettings: '${csvFile}'`);
-    console.debug(`🔍 DEBUG - saxoFile from window.userSettings: '${saxoFile}'`);
+    console.debug(`DEBUG - csvFile from window.userSettings: '${csvFile}'`);
+    console.debug(`DEBUG - saxoFile from window.userSettings: '${saxoFile}'`);
 
     const cacheKey = `risk-dashboard-balance:${localStorage.getItem('activeUser')}:${dataSource}:${csvFile}:${minUsd}`;
 
-    console.debug(`🔍 fetchRiskData - csvFile: '${csvFile}', dataSource: '${dataSource}', cacheKey: '${cacheKey}'`);
+    console.debug(`fetchRiskData - csvFile: '${csvFile}', dataSource: '${dataSource}', cacheKey: '${cacheKey}'`);
 
     const balanceResult = await fetchCached(
       cacheKey,
@@ -450,12 +450,12 @@ async function fetchRiskData() {
     );
 
     // Use the real backend endpoint for risk dashboard
-    // ✅ Inclure source et user_id pour isolation multi-tenant
-    // ✅ NOUVEAU (Phase 5.5): Shadow Mode V2 + Dual Window
-    // 🔧 FIX: Add cache buster to force backend recalculation when CSV changes
+    //  Inclure source et user_id pour isolation multi-tenant
+    //  NOUVEAU (Phase 5.5): Shadow Mode V2 + Dual Window
+    //  FIX: Add cache buster to force backend recalculation when CSV changes
     const cacheBuster = csvFile !== 'latest' ? csvFile : Date.now().toString().substring(0, 10);
 
-    console.debug(`🔍 fetchRiskData - calling /api/risk/dashboard with _csv_hint: '${cacheBuster}'`);
+    console.debug(`fetchRiskData - calling /api/risk/dashboard with _csv_hint: '${cacheBuster}'`);
 
     const apiResult = await window.globalConfig.apiRequest('/api/risk/dashboard', {
       params: {
@@ -463,20 +463,20 @@ async function fetchRiskData() {
         min_usd: minUsd,
         price_history_days: analysisDays,
         lookback_days: corrDays,
-        risk_version: 'v2_active',  // 🆕 V2 Active: V2 est autoritaire (Oct 2025)
+        risk_version: 'v2_active',  //  V2 Active: V2 est autoritaire (Oct 2025)
         use_dual_window: true,       // Dual-window metrics actives
-        _csv_hint: cacheBuster        // 🔧 Hint for backend cache: changes when CSV changes
+        _csv_hint: cacheBuster        //  Hint for backend cache: changes when CSV changes
       }
     });
 
-    // 🔍 DEBUG: Log la réponse brute COMPLÈTE pour diagnostiquer les erreurs
-    console.debug('🔍 Raw API response (full object):', apiResult);
-    console.debug('🔍 Has risk_metrics?', !!apiResult?.risk_metrics);
-    console.debug('🔍 Response keys:', apiResult ? Object.keys(apiResult) : 'null');
+    //  DEBUG: Log la réponse brute COMPLÈTE pour diagnostiquer les erreurs
+    console.debug("Raw API response (full object):", apiResult);
+    console.debug("Has risk_metrics?", !!apiResult?.risk_metrics);
+    console.debug("Response keys:", apiResult ? Object.keys(apiResult) : 'null');
 
     // Vérifier que apiResult est valide avant de l'utiliser
     if (!apiResult || !apiResult.risk_metrics) {
-      debugLogger.error('❌ Invalid API response structure:', {
+      debugLogger.error("[Error] Invalid API response structure:", {
         hasApiResult: !!apiResult,
         hasRiskMetrics: !!apiResult?.risk_metrics,
         responseType: typeof apiResult,
@@ -486,15 +486,15 @@ async function fetchRiskData() {
       throw new Error(`Invalid API response: ${apiResult ? 'missing risk_metrics' : 'null response'} - Check backend logs`);
     }
 
-    // 🔍 DEBUG: Log la réponse brute avec nouveaux champs V2 (seulement si valide)
-    console.debug('🔍 Parsed API response (Shadow Mode V2):', JSON.stringify({
+    //  DEBUG: Log la réponse brute avec nouveaux champs V2 (seulement si valide)
+    console.debug("Parsed API response (Shadow Mode V2):", JSON.stringify({
       // Legacy scores
       sharpe_legacy: apiResult.risk_metrics.sharpe_ratio,
       var95: apiResult.risk_metrics.var_95_1d,
       risk_score_legacy: apiResult.risk_metrics.risk_score,
       structural_legacy: apiResult.risk_metrics.risk_score_structural,
       window_used: apiResult.risk_metrics.window_used,
-      // V2 Shadow Mode info (🔧 FIX: Chemin correct!)
+      // V2 Shadow Mode info ( FIX: Chemin correct!)
       risk_version_info: apiResult.risk_metrics.risk_version_info ? {
         active_version: apiResult.risk_metrics.risk_version_info.active_version,
         risk_score_v2: apiResult.risk_metrics.risk_version_info.risk_score_v2,
@@ -510,12 +510,12 @@ async function fetchRiskData() {
     } catch (_) { /* ignore */ }
 
     const m = apiResult.risk_metrics;
-    debugLogger.debug(`🧪 SHADOW V2 - Risk metrics from API: VaR 95%: ${(m.var_95_1d * 100).toFixed(2)}%, Sharpe: ${m.sharpe_ratio.toFixed(2)}, Risk Score: ${m.risk_score} (authoritative), Structural: ${m.risk_score_structural || 'N/A'}, Window: ${m.window_used?.actual_data_points || '?'} pts, risk_version_info: ${m.risk_version_info ? 'PRESENT ✅' : 'MISSING ❌'}`);
+    debugLogger.debug(`SHADOW V2 - Risk metrics from API: VaR 95%: ${(m.var_95_1d * 100).toFixed(2)}%, Sharpe: ${m.sharpe_ratio.toFixed(2)}, Risk Score: ${m.risk_score} (authoritative), Structural: ${m.risk_score_structural || 'N/A'}, Window: ${m.window_used?.actual_data_points || '?'} pts, risk_version_info: ${m.risk_version_info ? "PRESENT [OK]" : "MISSING [Error]"}`);
 
     // The backend already provides the correct structure, just return it
     return apiResult;
   } catch (error) {
-    debugLogger.error('❌ Risk API call failed:', {
+    debugLogger.error("[Error] Risk API call failed:", {
       errorMessage: error.message,
       errorStack: error.stack,
       errorType: error.constructor.name,
@@ -688,7 +688,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   const recommendations = [];
 
   // VaR recommendations (VaR renvoyé en valeur positive)
-  // ⚠️ MODIFIÉ (Phase 1.1): Suppression % stables hardcodé, branché sur risk_budget API
+  //  MODIFIÉ (Phase 1.1): Suppression % stables hardcodé, branché sur risk_budget API
   if (metrics.var_95_1d > 0.08) {
     const riskBudget = fullData?.risk_budget || fullData?.regime?.risk_budget;
     const targetStables = riskBudget?.target_stables_pct;
@@ -700,7 +700,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
 
     recommendations.push({
       priority: 'high',
-      icon: '🛡️',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Protection\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#shield-check\"></use></svg>",
       title: 'Reduce daily loss risk',
       description: 'Your VaR of ' + formatPercent(metrics.var_95_1d) + ' is high.',
       action: action
@@ -711,7 +711,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (metrics.sharpe_ratio < 1.0) {
     recommendations.push({
       priority: 'medium',
-      icon: '📈',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>",
       title: 'Improve risk-adjusted return',
       description: 'Sharpe ratio of ' + safeFixed(metrics.sharpe_ratio) + ' - look for assets with a better risk/return ratio.',
       action: 'Consider reducing memecoins, increasing BTC/ETH'
@@ -722,7 +722,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (correlations.diversification_ratio < 0.4) {
     recommendations.push({
       priority: 'high',
-      icon: '🔄',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>",
       title: 'Improve diversification',
       description: 'Very low diversification ratio (' + safeFixed(correlations.diversification_ratio) + '). Portfolio too correlated.',
       action: 'Add uncorrelated assets: privacy coins, stablecoins, different sectors'
@@ -730,7 +730,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   } else if (correlations.diversification_ratio < 0.7) {
     recommendations.push({
       priority: 'medium',
-      icon: '🔄',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Refresh\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-path\"></use></svg>",
       title: 'Improve diversification',
       description: 'Limited diversification (' + safeFixed(correlations.diversification_ratio) + ').',
       action: 'Broaden sectors and reduce highly correlated pairs'
@@ -741,7 +741,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (correlations.effective_assets < 3) {
     recommendations.push({
       priority: 'medium',
-      icon: '⚖️',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Balanced\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#scale\"></use></svg>",
       title: 'Reduce concentration',
       description: 'Portfolio se comporte comme ' + safeFixed(correlations.effective_assets, 1) + ' actifs seulement.',
       action: 'Rebalance: limit any asset to <20% of portfolio'
@@ -752,7 +752,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (metrics.max_drawdown > 0.6) {
     recommendations.push({
       priority: 'high',
-      icon: '📉',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Decline\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-down\"></use></svg>",
       title: 'Protect against extreme drops',
       description: 'Max drawdown of ' + formatPercent(metrics.max_drawdown) + ' very high.',
       action: 'Defensive strategy: DCA, stop-loss, or hedging with stablecoins'
@@ -765,7 +765,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
     if (highCorrels.length > 0) {
       recommendations.push({
         priority: 'medium',
-        icon: '🔗',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Link\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#link\"></use></svg>",
         title: 'Reduce high correlations',
         description: 'Correlations >75% detected between ' + highCorrels.map(c => c.asset1 + '-' + c.asset2).join(', '),
         action: 'Diversify towards less correlated sectors (BTC vs ETH vs niche sectors)'
@@ -777,7 +777,7 @@ function generateRecommendations(metrics, correlations, groups, fullData) {
   if (recommendations.length === 0) {
     recommendations.push({
       priority: 'low',
-      icon: '✅',
+      icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg>",
       title: 'Well-balanced portfolio',
       description: 'Your risk metrics are within acceptable crypto standards.',
       action: 'Continue monitoring and adjust according to market conditions'
@@ -797,7 +797,7 @@ let groupAssetsByClassification, getAssetGroup;
 // Load unified asset groups dynamically with forced taxonomy reload
 async function initAssetGroups() {
   try {
-    console.debug('🔄 [Risk Dashboard] Force reloading taxonomy for proper asset classification...');
+    console.debug("[Risk Dashboard] Force reloading taxonomy for proper asset classification...");
     const module = await import('../shared-asset-groups.js');
     await module.forceReloadTaxonomy();
 
@@ -805,12 +805,12 @@ async function initAssetGroups() {
     getAssetGroup = module.getAssetGroup;
 
     if (!Object.keys(module.UNIFIED_ASSET_GROUPS || {}).length) {
-      debugLogger.warn('⚠️ [Risk Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
+      debugLogger.warn("[Warning] [Risk Dashboard] Taxonomy non chargée – risque de \"Others\" gonflé");
     } else {
-      debugLogger.debug('✅ [Risk Dashboard] Taxonomy loaded:', Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
+      debugLogger.debug("[OK] [Risk Dashboard] Taxonomy loaded:", Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
     }
   } catch (error) {
-    debugLogger.error('❌ [Risk Dashboard] Failed to load taxonomy:', error);
+    debugLogger.error("[Error] [Risk Dashboard] Failed to load taxonomy:", error);
   }
 }
 
@@ -818,7 +818,7 @@ async function initAssetGroups() {
 initAssetGroups();
 
 async function groupAssetsByAliases(items) {
-  console.debug('🔍 [Risk Dashboard] Grouping', items.length, 'assets by unified taxonomy');
+  console.debug("[Risk Dashboard] Grouping", items.length, 'assets by unified taxonomy');
 
   // Utiliser le système unifié si disponible
   if (groupAssetsByClassification) {
@@ -827,7 +827,7 @@ async function groupAssetsByAliases(items) {
 
   // Si pas encore chargé, charger maintenant
   try {
-    console.debug('⏳ [Risk Dashboard] Taxonomy not loaded yet, importing now...');
+    console.debug("[Pending] [Risk Dashboard] Taxonomy not loaded yet, importing now...");
     const module = await import('../shared-asset-groups.js');
     await module.forceReloadTaxonomy();
     groupAssetsByClassification = module.groupAssetsByClassification;
@@ -835,7 +835,7 @@ async function groupAssetsByAliases(items) {
     return groupAssetsByClassification(items);
   } catch (error) {
     // Fallback simple si le module n'est pas encore chargé
-    debugLogger.warn('⚠️ [Risk Dashboard] Unified groups failed to load, using simple fallback:', error);
+    debugLogger.warn("[Warning] [Risk Dashboard] Unified groups failed to load, using simple fallback:", error);
     return items.map(item => ({
       label: item.symbol,
       value: parseFloat(item.value_usd || 0),
@@ -944,7 +944,7 @@ function updateAlertsDisplay(alertsData) {
 
     const viewHistoryBtn = document.createElement('button');
     viewHistoryBtn.className = 'alerts-history-btn';
-    viewHistoryBtn.textContent = '📋 View All History';
+    viewHistoryBtn.textContent = "View All History";
     viewHistoryBtn.setAttribute('data-action', 'view-alerts-history');
 
     historyButton.appendChild(viewHistoryBtn);
@@ -1158,18 +1158,18 @@ async function calculateOnChainScore() {
     // Dynamic weighting always enabled (V2 production mode)
     const composite = calculateCompositeScoreV2(indicators, true);
 
-    console.debug(`📊 Composite result: score=${composite.score}, version=${composite.version}, hasDynamic=${!!composite.dynamicWeighting}`);
+    console.debug(`Composite result: score=${composite.score}, version=${composite.version}, hasDynamic=${!!composite.dynamicWeighting}`);
 
     if (composite.dynamicWeighting) {
-      console.debug(`🤖 Dynamic weighting applied: ${composite.dynamicWeighting.phase.name} phase`);
+      console.debug(`Dynamic weighting applied: ${composite.dynamicWeighting.phase.name} phase`);
     }
 
     if (composite.score === null) {
-      debugLogger.warn('⚠️ No real on-chain data available - returning null score');
+      debugLogger.warn("[Warning] No real on-chain data available - returning null score");
       return null;
     }
 
-    console.debug(`📊 On-Chain Score: ${composite.score} (${composite.message})`);
+    console.debug(`On-Chain Score: ${composite.score} (${composite.message})`);
 
     // Stocker les métadonnées enrichies V2 pour utilisation par SMART
     store.set('scores.onchain_metadata', {
@@ -1191,40 +1191,40 @@ async function calculateOnChainScore() {
     // Analyze contradictory signals V2
     const contradictions = analyzeContradictorySignals(composite.categoryBreakdown);
     if (contradictions.length > 0) {
-      debugLogger.warn(`⚠️ ${contradictions.length} signaux contradictoires détectés:`, contradictions);
+      debugLogger.warn(`Warning ${contradictions.length} signaux contradictoires détectés:`, contradictions);
       store.set('scores.contradictory_signals', contradictions);
     }
 
     // Log des alertes critiques
     if (composite.criticalZoneCount > 0) {
-      debugLogger.warn(`🚨 ${composite.criticalZoneCount} indicateur(s) en zone critique!`);
+      debugLogger.warn(`Alert ${composite.criticalZoneCount} indicateur(s) en zone critique!`);
 
       const criticalIndicators = composite.contributors.filter(c => c.inCriticalZone);
       criticalIndicators.forEach(indicator => {
-        debugLogger.warn(`  ⚠️ ${indicator.name}: ${indicator.originalValue}% (seuil: ${indicator.raw_threshold})`);
+        debugLogger.warn(`  Warning ${indicator.name}: ${indicator.originalValue}% (seuil: ${indicator.raw_threshold})`);
       });
     }
 
     // Log de la répartition par catégorie
     Object.entries(composite.categoryBreakdown).forEach(([category, data]) => {
-      const emoji = category === 'onchain_fundamentals' ? '🔗' :
-        category === 'cycle_technical' ? '📊' : '😨';
+      const emoji = category === 'onchain_fundamentals' ? "Link" :
+        category === 'cycle_technical' ? "Analytics" : "High risk";
       console.debug(`  ${emoji} ${data.description}: ${data.score}/100 (${data.contributorsCount} indicateurs)`);
     });
 
     if (indicators._metadata?.missing_apis?.length > 0) {
-      debugLogger.warn('⚠️ Missing APIs:', indicators._metadata.missing_apis);
+      debugLogger.warn("[Warning] Missing APIs:", indicators._metadata.missing_apis);
     }
 
     return composite.score;
   } catch (error) {
-    debugLogger.error('❌ Erreur calcul On-Chain Score:', error);
+    debugLogger.error("[Error] Erreur calcul On-Chain Score:", error);
     return null; // Retourner null au lieu de fallback trompeur
   }
 }
 
-// ❌ SUPPRIMÉ: calculateRiskScore() locale (divergeait de l'orchestrator)
-// ✅ Maintenant calculé par risk-data-orchestrator.js (source unique SSOT)
+//  SUPPRIMÉ: calculateRiskScore() locale (divergeait de l'orchestrator)
+//  Maintenant calculé par risk-data-orchestrator.js (source unique SSOT)
 
 // Calculate strategic Blended Score (nouvelle formule market-aware)
 function calculateBlendedScore(ccsMixteScore, onchainScore, riskScore) {
@@ -1233,7 +1233,7 @@ function calculateBlendedScore(ccsMixteScore, onchainScore, riskScore) {
     return 50; // Fallback neutre
   }
 
-  console.debug('🎯 Calcul Blended Score stratégique:', {
+  console.debug("Calcul Blended Score stratégique:", {
     ccsMixte: ccsMixteScore,
     onchain: onchainScore,
     risk: riskScore
@@ -1255,11 +1255,11 @@ function calculateBlendedScore(ccsMixteScore, onchainScore, riskScore) {
     totalWeight += 0.30;
     console.debug('  → On-Chain contribution:', onchainScore * 0.30);
   } else {
-    debugLogger.warn('  ⚠️ On-Chain Score non disponible (APIs payantes requises) - poids redistribué');
+    debugLogger.warn("[Warning] On-Chain Score non disponible (APIs payantes requises) - poids redistribué");
   }
 
   // Risk contribution : 20% (score direct, plus haut = plus robuste)
-  // ✅ Respecte docs/RISK_SEMANTICS.md - NE PAS inverser
+  //  Respecte docs/RISK_SEMANTICS.md - NE PAS inverser
   if (riskScore != null) {
     totalScore += riskScore * 0.20;
     totalWeight += 0.20;
@@ -1267,7 +1267,7 @@ function calculateBlendedScore(ccsMixteScore, onchainScore, riskScore) {
   }
 
   const finalScore = totalWeight > 0 ? totalScore / totalWeight : 50;
-  console.debug('🎯 Final Blended Score:', finalScore, '(weight:', totalWeight, ')');
+  console.debug("Final Blended Score:", finalScore, '(weight:', totalWeight, ')');
 
   return Math.max(0, Math.min(100, finalScore));
 }
@@ -1285,17 +1285,17 @@ function applyDecisionState(score) {
   } catch (e) { /* no-op */ }
 }
 
-// ✅ REMPLACÉ: Load scores from orchestrator (SSOT)
+//  REMPLACÉ: Load scores from orchestrator (SSOT)
 async function loadScoresFromStore() {
   try {
-    console.debug('🔄 Waiting for orchestrator hydration...');
+    console.debug("Waiting for orchestrator hydration...");
 
-    // ✅ Attendre hydratation complète du store par l'orchestrator
+    //  Attendre hydratation complète du store par l'orchestrator
     if (!store.getState()?._hydrated) {
       await new Promise(resolve => {
         const handler = (e) => {
           if (e.detail?.hydrated) {
-            debugLogger.debug('✅ Store hydrated by orchestrator, source:', e.detail.source);
+            debugLogger.debug("[OK] Store hydrated by orchestrator, source:", e.detail.source);
             resolve();
           }
         };
@@ -1303,7 +1303,7 @@ async function loadScoresFromStore() {
       });
     }
 
-    // ✅ Lire scores depuis store (source unique)
+    //  Lire scores depuis store (source unique)
     const state = store.snapshot();
     const onchainScore = state.scores?.onchain;
     const riskScore = state.scores?.risk;
@@ -1311,7 +1311,7 @@ async function loadScoresFromStore() {
     const ccsScore = state.ccs?.score;
     const ccsMixteScore = state.cycle?.ccsStar;
 
-    console.debug('📊 Scores loaded from orchestrator:', {
+    console.debug("Scores loaded from orchestrator:", {
       onchain: onchainScore,
       risk: riskScore,
       blended: blendedScore,
@@ -1321,18 +1321,18 @@ async function loadScoresFromStore() {
       duration: state._hydration_duration_ms + 'ms'
     });
 
-    // ✅ Mettre à jour UI
+    //  Mettre à jour UI
     updateScoreDisplays(onchainScore, riskScore, blendedScore, ccsScore);
     const cycleScore = state.scores?.cycle ?? null;
     updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore);
 
-    // ✅ Compatibility: Store in localStorage for legacy cross-page access
+    //  Compatibility: Store in localStorage for legacy cross-page access
     const dataSource = globalConfig.get('data_source') || 'unknown';
     const __user = localStorage.getItem('activeUser');
     const __prefix = (k) => `${k}:${__user}`;
     try {
-      // ✅ FIX: Ne pas stocker de strings vides - seulement stocker si la valeur existe
-      // ⚠️ IMPORTANT: Toujours stocker le timestamp, même si certains scores sont null
+      //  FIX: Ne pas stocker de strings vides - seulement stocker si la valeur existe
+      //  IMPORTANT: Toujours stocker le timestamp, même si certains scores sont null
       if (onchainScore !== null && onchainScore !== undefined) {
         localStorage.setItem(__prefix('risk_score_onchain'), onchainScore.toString());
       } else {
@@ -1361,8 +1361,8 @@ async function loadScoresFromStore() {
     return { onchainScore, riskScore, blendedScore, ccsScore, ccsMixteScore };
 
   } catch (error) {
-    debugLogger.error('❌ Erreur chargement scores depuis store:', error);
-    // ✅ Fallback: Use partial data if available
+    debugLogger.error("[Error] Erreur chargement scores depuis store:", error);
+    //  Fallback: Use partial data if available
     const state = store.snapshot();
     return {
       onchainScore: state.scores?.onchain ?? null,
@@ -1374,7 +1374,7 @@ async function loadScoresFromStore() {
   }
 }
 
-// ❌ OBSOLÈTE: calculateAllScores() supprimée (remplacée par loadScoresFromStore)
+//  OBSOLÈTE: calculateAllScores() supprimée (remplacée par loadScoresFromStore)
 // L'orchestrator est maintenant la source unique de vérité (SSOT)
 
 // ====== Market Regime Functions ======
@@ -1393,7 +1393,7 @@ function updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore = 
     const regimeData = getRegimeDisplayData(blendedScore, onchainScore, riskScore, cycleScore);
     const regime = regimeData.regime;
 
-    console.debug('📊 Market Regime calculated:', regime);
+    console.debug("Market Regime calculated:", regime);
 
     // Update Market Regime display
     const regimeDot = document.getElementById('regime-dot');
@@ -1418,7 +1418,7 @@ function updateMarketRegime(blendedScore, onchainScore, riskScore, cycleScore = 
     }
 
   } catch (error) {
-    debugLogger.error('❌ Error updating market regime:', error);
+    debugLogger.error("Error updating market regime:", error);
 
     const regimeText = document.getElementById('regime-text');
     if (regimeText) {
@@ -1470,7 +1470,7 @@ window.toggleSection = function (sectionId) {
     // Observe lazy elements; only force-load if they are near viewport
     setTimeout(() => {
       const lazyElements = content.querySelectorAll('[data-lazy-load]');
-      debugLogger.debug(`🔍 Section ${sectionId} expanded, checking ${lazyElements.length} lazy elements`);
+      debugLogger.debug(`Section ${sectionId} expanded, checking ${lazyElements.length} lazy elements`);
 
       const isNearViewport = (el, margin = 150) => {
         try {
@@ -1483,10 +1483,10 @@ window.toggleSection = function (sectionId) {
       lazyElements.forEach(element => {
         if (!element.classList.contains('lazy-loaded') && !element.classList.contains('lazy-error')) {
           if (isNearViewport(element)) {
-            debugLogger.debug(`📊 Element near viewport; loading now in section ${sectionId}`);
+            debugLogger.debug(`Element near viewport; loading now in section ${sectionId}`);
             window.lazyLoader?.loadVisibleElement(element);
           } else {
-            debugLogger.debug(`👁️ Element not near viewport; ensuring observer is attached`);
+            debugLogger.debug(`Element not near viewport; ensuring observer is attached`);
             if (window.lazyLoader?.intersectionObserver) {
               try { window.lazyLoader.intersectionObserver.observe(element); } catch (_) { }
             }
@@ -1496,7 +1496,7 @@ window.toggleSection = function (sectionId) {
     }, 100);
   } else {
     content.style.display = 'none';
-    arrow.textContent = '▶';
+    arrow.textContent = "Run";
     localStorage.setItem(`section_${sectionId}_collapsed`, 'true');
   }
 }
@@ -1513,7 +1513,7 @@ function initializeSectionStates() {
     if (content && arrow) {
       if (isCollapsed) {
         content.style.display = 'none';
-        arrow.textContent = '▶';
+        arrow.textContent = "Run";
       } else {
         content.style.display = '';
         arrow.textContent = '▼';
@@ -1522,7 +1522,7 @@ function initializeSectionStates() {
         setTimeout(() => {
           const lazyElements = content.querySelectorAll('[data-lazy-load]');
           if (lazyElements.length > 0) {
-            debugLogger.debug(`🔍 Section ${sectionId} is open by default, checking ${lazyElements.length} lazy elements`);
+            debugLogger.debug(`Section ${sectionId} is open by default, checking ${lazyElements.length} lazy elements`);
 
             lazyElements.forEach(element => {
               if (!element.classList.contains('lazy-loaded') && !element.classList.contains('lazy-error')) {
@@ -1535,10 +1535,10 @@ function initializeSectionStates() {
                 };
 
                 if (isNearViewport(element)) {
-                  debugLogger.debug(`📊 Element near viewport; loading now in open section ${sectionId}`);
+                  debugLogger.debug(`Element near viewport; loading now in open section ${sectionId}`);
                   setTimeout(() => { window.lazyLoader?.loadVisibleElement(element); }, 300);
                 } else {
-                  debugLogger.debug(`👁️ Element not near viewport; ensuring observer is attached`);
+                  debugLogger.debug(`Element not near viewport; ensuring observer is attached`);
                   if (window.lazyLoader?.intersectionObserver) {
                     try { window.lazyLoader.intersectionObserver.observe(element); } catch (_) { }
                   }
@@ -1570,12 +1570,12 @@ async function refreshDashboard(forceRefresh = false) {
   if (refreshMenuBtn) refreshMenuBtn.disabled = true;
   const forceRefreshBtn = document.getElementById('force-refresh-btn');
   if (forceRefreshBtn) forceRefreshBtn.disabled = true;
-  refreshBtn.textContent = forceRefresh ? '🔄 Force Refreshing…' : '🔄 Refreshing…';
+  refreshBtn.textContent = forceRefresh ? "Force Refreshing…" : "Refreshing…";
 
   // Clear cache if force refresh is requested
   if (forceRefresh) {
     clearAllPersistentCache();
-    debugLogger.debug('🧹 Force refresh: all cache cleared');
+    debugLogger.debug("Force refresh: all cache cleared");
   }
 
   // Update loading state
@@ -1619,7 +1619,7 @@ async function refreshDashboard(forceRefresh = false) {
         await loadBlendedCCS();
       }
 
-      // ✅ Load scores from orchestrator (SSOT)
+      //  Load scores from orchestrator (SSOT)
       await loadScoresFromStore();
 
       // Force sidebar update after all scores are calculated
@@ -1633,7 +1633,7 @@ async function refreshDashboard(forceRefresh = false) {
       // Also update cycles content (contains composite score display) 
       if (finalState.ccs?.score && finalState.cycle?.months) {
         await renderCyclesContent();
-        console.debug('🔄 Cycles content updated with latest data');
+        console.debug("Cycles content updated with latest data");
       }
 
       debugLogger.debug('Risk dashboard refreshed successfully');
@@ -1672,7 +1672,7 @@ async function refreshDashboard(forceRefresh = false) {
     refreshBtn.disabled = false;
     if (refreshMenuBtn) refreshMenuBtn.disabled = false;
     if (forceRefreshBtn) forceRefreshBtn.disabled = false;
-    refreshBtn.textContent = '🔄 Refresh';
+    refreshBtn.textContent = "Refresh";
   }
 }
 
@@ -1720,7 +1720,7 @@ function updateRiskDashboardBadges(data) {
       });
     }
 
-    debugLogger.debug('🏷️ Risk dashboard badges updated');
+    debugLogger.debug("Risk dashboard badges updated");
   } catch (error) {
     debugLogger.warn('Risk badge update failed:', error);
   }
@@ -1729,7 +1729,7 @@ function updateRiskDashboardBadges(data) {
 function renderRiskDashboard(data) {
   const container = document.getElementById('risk-dashboard-content');
   if (!container) {
-    debugLogger.warn('⚠️ risk-dashboard-content not found in DOM, skipping legacy render');
+    debugLogger.warn("[Warning] risk-dashboard-content not found in DOM, skipping legacy render");
     return;
   }
   if (!data || !data.risk_metrics || !data.correlation_metrics || !data.portfolio_summary) {
@@ -1741,7 +1741,7 @@ function renderRiskDashboard(data) {
   if (data.test_mode) {
     testModeBanner = `
           <div style="background: var(--info-bg); border: 1px solid var(--info); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; text-align: center;">
-            <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;">🧪 TEST MODE - Real Data</div>
+            <div style="color: var(--info); font-weight: 600; margin-bottom: 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> TEST MODE - Real Data</div>
             <div style="color: var(--theme-text-muted); font-size: 0.9rem;">
               Demo portfolio using the real price history cache (${data.test_holdings?.length || 0} assets, ${formatMoney(data.portfolio_summary.total_value)})
             </div>
@@ -1777,7 +1777,7 @@ function renderRiskDashboard(data) {
   // Helper functions are defined at the top of the script
 
   // Prépare: HTML recommandations et alertes pour la section top-summary
-  // ✅ MODIFIÉ (Phase 1.1): Passe fullData pour accès à risk_budget
+  //  MODIFIÉ (Phase 1.1): Passe fullData pour accès à risk_budget
   const recos = generateRecommendations(m, c, p.groups || {}, data);
   const recommendationsHtml = (() => {
     return recos.map(rec => `
@@ -1788,7 +1788,7 @@ function renderRiskDashboard(data) {
               <span class="recommendation-priority">${rec.priority === 'high' ? 'PRIORITÉ' : rec.priority === 'medium' ? 'Important' : 'Info'}</span>
             </div>
             <div class="recommendation-description">${rec.description}</div>
-            <div class="recommendation-action">▶️ ${rec.action}</div>
+            <div class="recommendation-action"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Run" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#play"></use></svg> ${rec.action}</div>
           </div>
         `).join('');
   })();
@@ -1817,7 +1817,7 @@ function renderRiskDashboard(data) {
         `).join('')
   ) : `
         <div class="alert alert-low">
-          <strong>✅ All Clear</strong><br>
+          <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> All Clear</strong><br>
           <em>No significant risk alerts at this time.</em>
         </div>
       `;
@@ -1829,18 +1829,18 @@ function renderRiskDashboard(data) {
           <summary>
             <div>Risk Overview & Recommendations</div>
             <div class="summary-right">
-              <span class="badge badge-alerts">⚠️ ${alertCount} alerts${breakdown}</span>
-              <span class="badge badge-recos">💡 ${recos.length} recs</span>
+              <span class="badge badge-alerts"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${alertCount} alerts${breakdown}</span>
+              <span class="badge badge-recos"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${recos.length} recs</span>
               <span class="chevron">›</span>
             </div>
           </summary>
           <div class="top-summary">
           <!-- Points clés -->
           <div class="risk-card">
-            <h3>📋 Key points of your portfolio</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Key points of your portfolio</h3>
             <div class="insights-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .75rem;">
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">🎯 Risk Level</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Risk Level</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${(() => {
       const riskScore = m.risk_score || 0;
@@ -1854,7 +1854,7 @@ function renderRiskDashboard(data) {
                 </div>
               </div>
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">📊 Diversification</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Diversification</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${(() => {
       const div = c.diversification_ratio || 0;
@@ -1865,7 +1865,7 @@ function renderRiskDashboard(data) {
                 </div>
               </div>
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">⚡ Performance/Risk</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Performance/Risk</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${(() => {
       const sharpe = m.sharpe_ratio || 0;
@@ -1876,7 +1876,7 @@ function renderRiskDashboard(data) {
                 </div>
               </div>
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">🔝 Concentration</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Up" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up"></use></svg> Concentration</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${(() => {
       const t5 = insights.top5Share;
@@ -1887,7 +1887,7 @@ function renderRiskDashboard(data) {
                 </div>
               </div>
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">💵 Stablecoins</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Stablecoins</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${(() => {
       const s = insights.stableShare;
@@ -1896,7 +1896,7 @@ function renderRiskDashboard(data) {
                 </div>
               </div>
               <div class="insight-item">
-                <div style="font-weight: 600; color: var(--theme-text);">🧪 Calculation Data</div>
+                <div style="font-weight: 600; color: var(--theme-text);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Calculation Data</div>
                 <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">
                   ${p.num_assets || (balances?.length || 'N/A')} assets used
                 </div>
@@ -1906,13 +1906,13 @@ function renderRiskDashboard(data) {
 
           <!-- Risk Alerts -->
           <div class="risk-card">
-            <h3>⚠️ Risk Alerts</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Risk Alerts</h3>
             ${alertsHtml}
           </div>
 
           <!-- Recommandations d'amélioration -->
           <div class="risk-card">
-            <h3>💡 Improvement Recommendations</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Improvement Recommendations</h3>
             ${recommendationsHtml}
           </div>
           </div>
@@ -1985,7 +1985,7 @@ function renderRiskDashboard(data) {
         <!-- Key Insights moved to Top Summary -->
 
         <div class="risk-grid">
-          <!-- 🆕 Risk Score Card (Oct 2025) -->
+          <!-- [New] Risk Score Card (Oct 2025) -->
           <div class="risk-card">
             <h3>Risk Score <span style="font-size:.8rem; color: var(--theme-text); opacity:.7; font-weight:500; margin-left:.5rem;"><br>Robustness Indicator [0-100]</span></h3>
 
@@ -1996,7 +1996,7 @@ function renderRiskDashboard(data) {
                 ${safeFixed(m.risk_score, 1)}/100
               </span>
               <button class="btn-breakdown-toggle" onclick="toggleBreakdown('risk-score-breakdown')" title="View penalty details" aria-label="Show Risk Score calculation details" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75em; background: rgba(125, 207, 255, 0.15); border: 1px solid var(--brand-primary); border-radius: 4px; color: var(--brand-primary); cursor: pointer;">
-                🔍 Details
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Details
               </button>
             </div>
 
@@ -2013,7 +2013,7 @@ function renderRiskDashboard(data) {
                   <span class="breakdown-cumul" style="color: var(--brand-primary); font-weight: 600; min-width: 50px; text-align: right;">50.0</span>
                 </div>
                 ${(() => {
-      // 🔧 Oct 2025: Use V2 breakdown when v2_active, otherwise legacy
+      //  Oct 2025: Use V2 breakdown when v2_active, otherwise legacy
       const breakdown = m.structural_breakdown || {};
       let cumul = 50.0;
       const rows = [];
@@ -2054,7 +2054,7 @@ function renderRiskDashboard(data) {
 
             <!-- Metric Interpretation -->
             <div class="metric-interpretation">
-              💡 ${getScoreInterpretation(m.risk_score)}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getScoreInterpretation(m.risk_score)}
             </div>
 
             <!-- Dual Window Badges -->
@@ -2063,7 +2063,7 @@ function renderRiskDashboard(data) {
               ${m.dual_window.long_term?.available ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                   <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Long-Term window: Computes the Risk Score over ${m.dual_window.long_term.window_days} days of history excluding recent assets. Covers ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}% of portfolio value with ${m.dual_window.long_term.asset_count} assets with sufficient history. More stable and reliable metrics than full intersection.">
-                    📈 Long-Term (${m.dual_window.long_term.window_days}d, ${m.dual_window.long_term.asset_count} assets, ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}%) <span style="color: var(--brand-primary); opacity: 0.6;">ℹ️</span>
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Long-Term (${m.dual_window.long_term.window_days}d, ${m.dual_window.long_term.asset_count} assets, ${(m.dual_window.long_term.coverage_pct * 100).toFixed(0)}%) <span style="color: var(--brand-primary); opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
                   </span>
                   <span style="font-size: 0.85em; font-weight: 600; color: var(--brand-primary);">
                     Sharpe: ${safeFixed(m.dual_window.long_term.metrics?.sharpe_ratio, 2)}
@@ -2071,7 +2071,7 @@ function renderRiskDashboard(data) {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 0.85em; color: var(--text-secondary); cursor: help;" title="Full Intersection window: Minimum common period including ALL assets (${m.dual_window.full_intersection.asset_count} assets). Over ${m.dual_window.full_intersection.window_days} days only because recent assets limit the history. Metrics may be unstable if window is short. Used for comparison and divergence detection.">
-                    🔍 Full Intersection (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets) <span style="color: var(--text-secondary); opacity: 0.6;">ℹ️</span>
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg> Full Intersection (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets) <span style="color: var(--text-secondary); opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
                   </span>
                   <span style="font-size: 0.85em; color: ${Math.abs(m.dual_window.full_intersection.metrics?.sharpe_ratio - m.dual_window.long_term.metrics?.sharpe_ratio) > 0.5 ? 'var(--theme-error)' : 'var(--text-secondary)'};">
                     Sharpe: ${safeFixed(m.dual_window.full_intersection.metrics?.sharpe_ratio, 2)}
@@ -2080,17 +2080,17 @@ function renderRiskDashboard(data) {
                 ${m.dual_window.exclusions?.excluded_pct > 0.2 ? `
                 <div style="margin-top: 6px; padding: 4px 8px; background: rgba(247, 118, 142, 0.15); border-radius: 4px; cursor: help;" title="Assets excluded from Long-Term window due to history < ${m.dual_window.long_term.window_days}j : ${m.dual_window.exclusions.excluded_assets.map(a => a.symbol).join(', ')}. Represent ${(m.dual_window.exclusions.excluded_pct * 100).toFixed(1)}% of total value. The Risk Score is calculated only on the ${m.dual_window.long_term.asset_count} assets with sufficient history for more stability.">
                   <span style="font-size: 0.8em; color: var(--theme-error);">
-                    ⚠️ ${m.dual_window.exclusions.excluded_assets.length} assets excluded (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% value) - short history <span style="opacity: 0.6;">ℹ️</span>
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> ${m.dual_window.exclusions.excluded_assets.length} assets excluded (${(m.dual_window.exclusions.excluded_pct * 100).toFixed(0)}% value) - short history <span style="opacity: 0.6;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
                   </span>
                 </div>
                 ` : ''}
                 <div style="margin-top: 6px; font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-                  ✓ Authoritative score based on Long-Term (stable)
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Authoritative score based on Long-Term (stable)
                 </div>
               ` : `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 0.85em; color: var(--theme-warning);">
-                    ⚠️ Full Intersection only (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets)
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Full Intersection only (${m.dual_window.full_intersection.window_days}d, ${m.dual_window.full_intersection.asset_count} assets)
                   </span>
                   <span style="font-size: 0.85em; color: var(--text-secondary);">
                     Sharpe: ${safeFixed(m.dual_window.full_intersection.metrics?.sharpe_ratio, 2)}
@@ -2098,7 +2098,7 @@ function renderRiskDashboard(data) {
                 </div>
                 <div style="margin-top: 6px; padding: 4px 8px; background: rgba(255, 158, 100, 0.15); border-radius: 4px;">
                   <span style="font-size: 0.8em; color: var(--theme-warning);">
-                    ⚠️ Long-term cohort unavailable - metrics on short window (${m.dual_window.exclusions?.reason || 'unknown'})
+                    <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Long-term cohort unavailable - metrics on short window (${m.dual_window.exclusions?.reason || 'unknown'})
                   </span>
                 </div>
               `}
@@ -2110,7 +2110,7 @@ function renderRiskDashboard(data) {
             <div style="margin: 8px 0; padding: 8px; background: rgba(187, 154, 247, 0.1); border-radius: 6px; border-left: 3px solid #bb9af7;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <span style="font-size: 0.8em; font-weight: 600; color: #bb9af7;">
-                  🏗️ Structural Score - Comparison
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="In progress" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Structural Score - Comparison
                 </span>
               </div>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em;">
@@ -2135,7 +2135,7 @@ function renderRiskDashboard(data) {
               </div>
               <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(187, 154, 247, 0.2);">
                 <div style="font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-                  ℹ️ V2 = pure structure (HHI, memes, GRI, div) | Legacy = hybrid (+ VaR, CVaR, DD, Vol)
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> V2 = pure structure (HHI, memes, GRI, div) | Legacy = hybrid (+ VaR, CVaR, DD, Vol)
                 </div>
               </div>
             </div>
@@ -2173,7 +2173,7 @@ function renderRiskDashboard(data) {
                 <div style="margin: 8px 0; padding: 8px; background: rgba(122, 162, 247, 0.1); border-radius: 6px; border-left: 3px solid ${color};">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 0.8em; font-weight: 600; color: ${color};">
-                      🏗️ Structure Modulation V2
+                      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="In progress" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Structure Modulation V2
                     </span>
                     <span style="font-size: 0.7em; color: var(--text-tertiary); font-style: italic;">
                       active
@@ -2205,7 +2205,7 @@ function renderRiskDashboard(data) {
                   </div>
                   <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(122, 162, 247, 0.2);">
                     <div style="font-size: 0.75em; color: var(--text-tertiary); font-style: italic;">
-                      ℹ️ Modulation based on structural quality (HHI, memes, GRI, diversification)
+                      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Modulation based on structural quality (HHI, memes, GRI, diversification)
                     </div>
                   </div>
                 </div>
@@ -2222,7 +2222,7 @@ function renderRiskDashboard(data) {
             </div>
 
             <div class="metric-benchmark">
-              📊 <strong>Benchmarks:</strong> Very robust (≥80), Robust (≥65), Moderate (≥50), Fragile (≥35)
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Benchmarks:</strong> Very robust (≥80), Robust (≥65), Moderate (≥50), Fragile (≥35)
             </div>
           </div>
 
@@ -2241,7 +2241,7 @@ function renderRiskDashboard(data) {
                 </span>
               </div>
               <div class="metric-interpretation">
-                💡 ${getMetricHealth('var_95_1d', m.var_95_1d).interpretation}
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('var_95_1d', m.var_95_1d).interpretation}
               </div>
 
               <div class="metric-row">
@@ -2267,7 +2267,7 @@ function renderRiskDashboard(data) {
                   <span class="metric-value hinted" data-key="cvar99_1d" data-value="${m.cvar_99_1d}">${formatPercent(m.cvar_99_1d)}</span>
                 </div>
                 <div style="font-size: 0.75rem; color: var(--theme-text-muted); font-style: italic; margin-top: var(--space-xs);">
-                  ℹ️ Average loss beyond VaR
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> Average loss beyond VaR
                 </div>
               </div>
             </details>
@@ -2283,7 +2283,7 @@ function renderRiskDashboard(data) {
                 </span>
               </div>
               <div class="metric-interpretation">
-                💡 ${getMetricHealth('max_drawdown', m.max_drawdown).interpretation}
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('max_drawdown', m.max_drawdown).interpretation}
               </div>
 
               <div class="metric-row">
@@ -2293,7 +2293,7 @@ function renderRiskDashboard(data) {
             </div>
 
             <div class="metric-benchmark">
-              📊 <strong>VaR:</strong> Conservative: -4%, Typical: -7%, Aggressive: -12% • <strong>Drawdown:</strong> Good: -30%, Typical: -50%, Extreme: -70%+
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>VaR:</strong> Conservative: -4%, Typical: -7%, Aggressive: -12% • <strong>Drawdown:</strong> Good: -30%, Typical: -50%, Extreme: -70%+
             </div>
           </div>
 
@@ -2307,7 +2307,7 @@ function renderRiskDashboard(data) {
               </span>
             </div>
             <div class="metric-interpretation">
-              💡 ${getMetricHealth('volatility_annualized', m.volatility_annualized).interpretation}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('volatility_annualized', m.volatility_annualized).interpretation}
             </div>
             <div class="metric-row">
               <span class="metric-label">Sharpe Ratio</span>
@@ -2316,7 +2316,7 @@ function renderRiskDashboard(data) {
               </span>
             </div>
             <div class="metric-interpretation">
-              💡 ${getMetricHealth('sharpe_ratio', m.sharpe_ratio).interpretation}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('sharpe_ratio', m.sharpe_ratio).interpretation}
             </div>
             <div class="metric-row">
               <span class="metric-label">Sortino Ratio</span>
@@ -2325,14 +2325,14 @@ function renderRiskDashboard(data) {
               </span>
             </div>
             <div class="metric-interpretation">
-              💡 ${getMetricHealth('sortino_ratio', m.sortino_ratio).interpretation}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('sortino_ratio', m.sortino_ratio).interpretation}
             </div>
             <div class="metric-row">
               <span class="metric-label">Calmar Ratio</span>
               <span class="metric-value">${safeFixed(m.calmar_ratio)}</span>
             </div>
             <div class="metric-benchmark">
-              📊 <strong>Benchmarks crypto:</strong> Excellent: >1.5, Good: >1.0, Acceptable: >0.5 (Sharpe)
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Benchmarks crypto:</strong> Excellent: >1.5, Good: >1.0, Acceptable: >0.5 (Sharpe)
             </div>
           </div>
 
@@ -2346,7 +2346,7 @@ function renderRiskDashboard(data) {
               </span>
             </div>
             <div class="metric-interpretation">
-              💡 ${getMetricHealth('diversification_ratio', c.diversification_ratio).interpretation}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('diversification_ratio', c.diversification_ratio).interpretation}
             </div>
             <div class="metric-row">
               <span class="metric-label">Effective Assets</span>
@@ -2355,10 +2355,10 @@ function renderRiskDashboard(data) {
               </span>
             </div>
             <div class="metric-interpretation">
-              💡 ${getMetricHealth('effective_assets', c.effective_assets).interpretation}
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> ${getMetricHealth('effective_assets', c.effective_assets).interpretation}
             </div>
             <div class="metric-benchmark">
-              📊 <strong>Diversification:</strong> Excellent: >0.7, Limited: 0.4-0.7, Low: <0.4
+              <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> <strong>Diversification:</strong> Excellent: >0.7, Limited: 0.4-0.7, Low: <0.4
             </div>
 
             ${c.top_correlations && c.top_correlations.length ? `
@@ -2405,12 +2405,12 @@ window.BITCOIN_HALVINGS = BITCOIN_HALVINGS;
 function renderError(message) {
   const container = document.getElementById('risk-dashboard-content');
   if (!container) {
-    debugLogger.warn('⚠️ risk-dashboard-content not found in DOM, skipping error render');
+    debugLogger.warn("[Warning] risk-dashboard-content not found in DOM, skipping error render");
     return;
   }
   container.innerHTML = `
         <div class="error">
-          <h3>❌ Error Loading Dashboard</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Error Loading Dashboard</h3>
           <p>${message}</p>
           <button class="refresh-btn" onclick="refreshDashboard()">Try Again</button>
         </div>
@@ -2420,17 +2420,17 @@ function renderError(message) {
 function renderBackendUnavailable(message) {
   const container = document.getElementById('risk-dashboard-content');
   if (!container) {
-    debugLogger.warn('⚠️ risk-dashboard-content not found in DOM, skipping error render');
+    debugLogger.warn("[Warning] risk-dashboard-content not found in DOM, skipping error render");
     return;
   }
   container.innerHTML = `
         <div style="text-align: center; padding: 3rem; background: var(--warning-bg); border: 1px solid var(--warning); border-radius: var(--radius-lg); color: var(--theme-text);">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></div>
           <h3 style="color: var(--warning); margin-bottom: 1rem;">Risk Backend Unavailable</h3>
           <p style="margin-bottom: 1.5rem; color: var(--theme-text-muted);">${message}</p>
           
           <div style="background: var(--theme-bg); padding: 1.5rem; border-radius: var(--radius-md); margin: 1.5rem 0; text-align: left;">
-            <h4 style="color: var(--theme-text); margin-bottom: 1rem;">📋 To display real risk data:</h4>
+            <h4 style="color: var(--theme-text); margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> To display real risk data:</h4>
             <ol style="color: var(--theme-text-muted); line-height: 1.6;">
               <li>Start the Python backend server: <code style="background: var(--theme-surface); padding: 0.2rem 0.4rem; border-radius: 3px;">python main.py</code></li>
               <li>Initialize the price history cache: <code style="background: var(--theme-surface); padding: 0.2rem 0.4rem; border-radius: 3px;">python scripts/init_price_history.py</code></li>
@@ -2439,12 +2439,12 @@ function renderBackendUnavailable(message) {
           </div>
 
           <div style="margin-top: 2rem;">
-            <button class="refresh-btn" onclick="refreshDashboard()">🔄 Retry</button>
-            <button class="refresh-btn" onclick="testEndpoint()" style="background: var(--info); margin-left: 0.5rem;">🧪 Tester l'API</button>
+            <button class="refresh-btn" onclick="refreshDashboard()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry</button>
+            <button class="refresh-btn" onclick="testEndpoint()" style="background: var(--info); margin-left: 0.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg> Tester l'API</button>
           </div>
           
           <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--theme-border); color: var(--theme-text-muted); font-size: 0.85rem;">
-            💡 <strong>Note :</strong> This dashboard now exclusively uses real data calculated by the Python backend. 
+            <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> <strong>Note :</strong> This dashboard now exclusively uses real data calculated by the Python backend.
             Simulated data has been removed to ensure the authenticity of risk metrics.
           </div>
         </div>
@@ -2454,17 +2454,17 @@ function renderBackendUnavailable(message) {
 function renderApiError(message) {
   const container = document.getElementById('risk-dashboard-content');
   if (!container) {
-    debugLogger.warn('⚠️ risk-dashboard-content not found in DOM, skipping API error render');
+    debugLogger.warn("[Warning] risk-dashboard-content not found in DOM, skipping API error render");
     return;
   }
   container.innerHTML = `
         <div style="text-align: center; padding: 3rem; background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius-lg);">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">🚨</div>
+          <div style="font-size: 3rem; margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg></div>
           <h3 style="color: var(--danger); margin-bottom: 1rem;">Backend API Error</h3>
           <p style="margin-bottom: 1.5rem; color: var(--theme-text-muted);">${message}</p>
 
           <div style="background: var(--theme-bg); padding: 1.5rem; border-radius: var(--radius-md); margin: 1.5rem 0;">
-            <h4 style="color: var(--theme-text); margin-bottom: 1rem;">🔧 Troubleshooting suggestions:</h4>
+            <h4 style="color: var(--theme-text); margin-bottom: 1rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Tools" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wrench-screwdriver"></use></svg> Troubleshooting suggestions:</h4>
             <ul style="color: var(--theme-text-muted); text-align: left; line-height: 1.6;">
               <li>Check that the CoinTracking portfolio contains valid data</li>
               <li>Make sure the configured price sources are accessible</li>
@@ -2472,7 +2472,7 @@ function renderApiError(message) {
             </ul>
           </div>
 
-          <button class="refresh-btn" onclick="refreshDashboard()">🔄 Retry</button>
+          <button class="refresh-btn" onclick="refreshDashboard()"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry</button>
         </div>
       `;
 }
@@ -2991,7 +2991,7 @@ async function applyAction() {
   }
 
   try {
-    // ✅ Use globalConfig.apiRequest() to automatically add X-User header
+    //  Use globalConfig.apiRequest() to automatically add X-User header
     const result = await globalConfig.apiRequest(`/api/alerts/${currentAlert.id}/apply`, {
       method: 'POST',
       headers: {
@@ -3054,10 +3054,10 @@ function startAlertMonitoring() {
       30000,
       'S3 Alerts Polling'
     );
-    debugLogger.info('✅ S3 Alert monitoring started with managed interval');
+    debugLogger.info("[OK] S3 Alert monitoring started with managed interval");
   } else {
     alertPollingInterval = setInterval(checkForNewS3Alerts, 30000);
-    debugLogger.warn('⚠️ S3 Alert monitoring started with standard interval (network manager not available)');
+    debugLogger.warn("[Warning] S3 Alert monitoring started with standard interval (network manager not available)");
   }
 
   // Initial check
@@ -3066,7 +3066,7 @@ function startAlertMonitoring() {
 
 async function checkForNewS3Alerts() {
   try {
-    // ✅ Use apiRequestWithRetry with silent fail for polling (fallback to apiRequest if not available)
+    //  Use apiRequestWithRetry with silent fail for polling (fallback to apiRequest if not available)
     let currentAlerts;
 
     if (typeof globalConfig.apiRequestWithRetry === 'function') {
@@ -3215,17 +3215,17 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeOptio
 // CACHE_CONFIG and clearAllPersistentCache moved earlier in file for proper initialization order
 
 function initPersistentCache() {
-  debugLogger.debug('🗄️ Initializing persistent cache system...');
+  debugLogger.debug("Initializing persistent cache system...");
 
   // Check existing cached scores
   const cachedScores = getCachedData('SCORES');
   if (cachedScores) {
     const age = Math.round((Date.now() - cachedScores.timestamp) / (1000 * 60));
-    debugLogger.debug(`✅ Found cached scores (${age} minutes old)`);
+    debugLogger.debug(`[OK] Found cached scores (${age} minutes old)`);
 
     // Restore scores in localStorage for compatibility
     const dataSource = globalConfig.get('data_source') || 'unknown';
-    // ✅ FIX: Ne pas stocker de strings vides - seulement stocker si la valeur existe
+    //  FIX: Ne pas stocker de strings vides - seulement stocker si la valeur existe
     if (cachedScores.data.onchainScore !== null && cachedScores.data.onchainScore !== undefined) {
       localStorage.setItem('risk_score_onchain', cachedScores.data.onchainScore.toString());
     }
@@ -3248,11 +3248,11 @@ function initPersistentCache() {
   window.originalClearCache = window.clearCache;
   window.clearCache = function (force = false) {
     if (force) {
-      debugLogger.debug('🧹 Force clearing all cache');
+      debugLogger.debug("Force clearing all cache");
       clearAllPersistentCache();
       window.originalClearCache?.();
     } else {
-      debugLogger.debug('⏭️ Selective cache clear - keeping valid cached data');
+      debugLogger.debug("Selective cache clear - keeping valid cached data");
       cleanExpiredCache();
     }
   };
@@ -3275,7 +3275,7 @@ function setCachedData(type, data) {
 
   try {
     localStorage.setItem(sourceAwareKey, JSON.stringify(cacheEntry));
-    debugLogger.debug(`💾 Cached ${type} data for source ${dataSource} (TTL: ${Math.round(config.ttl / (1000 * 60 * 60))}h)`);
+    debugLogger.debug(`Cached ${type} data for source ${dataSource} (TTL: ${Math.round(config.ttl / (1000 * 60 * 60))}h)`);
     return true;
   } catch (error) {
     debugLogger.warn(`Failed to cache ${type}:`, error);
@@ -3300,7 +3300,7 @@ function getCachedData(type) {
 
     if (isExpired) {
       localStorage.removeItem(sourceAwareKey);
-      debugLogger.debug(`⏰ Expired cache removed: ${type} for source ${dataSource}`);
+      debugLogger.debug(`Expired cache removed: ${type} for source ${dataSource}`);
       return null;
     }
 
@@ -3361,13 +3361,13 @@ function updateScoreDisplays(onchainScore, riskScore, blendedScore, ccsScore) {
     if (elBlend && blendedScore != null) elBlend.textContent = String(Math.round(blendedScore));
     if (elCcs && ccsScore != null) elCcs.textContent = String(Math.round(ccsScore));
 
-    // ✅ CRITIQUE: Mettre à jour l'affichage Risk Score dans Risk Overview (ligne 4238)
+    //  CRITIQUE: Mettre à jour l'affichage Risk Score dans Risk Overview (ligne 4238)
     const riskDisplayEl = document.querySelector('[data-score="risk-display"]');
     if (riskDisplayEl && riskScore != null) {
       riskDisplayEl.textContent = `${riskScore.toFixed(1)}/100`;
     }
 
-    debugLogger.debug('📊 Score displays updated from cache');
+    debugLogger.debug("Score displays updated from cache");
   } catch (error) {
     debugLogger.warn('Error updating score displays:', error);
   }
@@ -3375,7 +3375,7 @@ function updateScoreDisplays(onchainScore, riskScore, blendedScore, ccsScore) {
 
 /**
  * Monitor loading states and show error message if they take too long
- * ✅ NEW (Nov 2025): Prevent infinite loading states
+ *  NEW (Nov 2025): Prevent infinite loading states
  */
 function initLoadingTimeoutMonitor() {
   const TIMEOUT_MS = 15000; // 15 seconds
@@ -3402,16 +3402,16 @@ function initLoadingTimeoutMonitor() {
         setTimeout(() => {
           const stillLoading = container.querySelector('.loading');
           if (stillLoading) {
-            debugLogger.warn(`⏱️ Loading timeout for ${name} (${TIMEOUT_MS}ms)`);
+            debugLogger.warn(`Loading timeout for ${name} (${TIMEOUT_MS}ms)`);
             stillLoading.innerHTML = `
                   <div class="error-state">
-                    <div class="error-icon">⚠️</div>
+                    <div class="error-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></div>
                     <div class="error-title">Loading Timeout</div>
                     <div class="error-message">
                       ${name} is taking longer than expected to load.
                     </div>
                     <button class="retry-btn" onclick="refreshDashboard(true)">
-                      🔄 Retry
+                      <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Retry
                     </button>
                   </div>
                 `;
@@ -3425,7 +3425,7 @@ function initLoadingTimeoutMonitor() {
     observer.observe(container, { childList: true, subtree: true });
   });
 
-  debugLogger.debug('✅ Loading timeout monitor initialized (15s timeout)');
+  debugLogger.debug("Loading timeout monitor initialized (15s timeout)");
 }
 
 // Initialize on DOM ready
@@ -3436,21 +3436,21 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // Initialize data source tracking for cross-tab synchronization
   window.lastKnownDataSource = globalConfig.get('data_source');
-  debugLogger.debug(`🔗 Risk Dashboard initialized with data source: ${window.lastKnownDataSource}`);
+  debugLogger.debug(`Risk Dashboard initialized with data source: ${window.lastKnownDataSource}`);
 
   // Initialize persistent cache system
   initPersistentCache();
   debugLogger.debug('Persistent cache system initialized');
 
-  // ✅ Initialize loading state timeout monitor
+  //  Initialize loading state timeout monitor
   initLoadingTimeoutMonitor();
 
   // Listen for data source changes and clear cache
   window.addEventListener('dataSourceChanged', (event) => {
-    debugLogger.debug('🔄 Data source changed, clearing cache and reloading...', event.detail);
-    clearCache(true);  // ✅ FIX: Force clear all cache when source changes
+    debugLogger.debug("Data source changed, clearing cache and reloading...", event.detail);
+    clearCache(true);  //  FIX: Force clear all cache when source changes
     // Reload the dashboard after source change
-    // ✅ Delay increased to 500ms to give backend time to write config.json
+    //  Delay increased to 500ms to give backend time to write config.json
     setTimeout(() => refreshDashboard(true), 500);
   });
 
@@ -3481,12 +3481,12 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Initialize store state synchronization
   setTimeout(async () => {
     try {
-      debugLogger.debug('🔄 Syncing store state...');
+      debugLogger.debug("Syncing store state...");
       await store.syncGovernanceState();
       await store.syncMLSignals();
-      debugLogger.debug('✅ Store state synced');
+      debugLogger.debug("[OK] Store state synced");
     } catch (error) {
-      debugLogger.warn('⚠️ Failed to sync store state:', error);
+      debugLogger.warn("Failed to sync store state:", error);
     }
   }, 500);
 
@@ -3501,7 +3501,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       const previousSource = window.lastKnownDataSource;
 
       if (currentSource && currentSource !== previousSource) {
-        debugLogger.debug(`🔄 Data source changed from ${previousSource} to ${currentSource}, clearing cache and reloading...`);
+        debugLogger.debug(`Data source changed from ${previousSource} to ${currentSource}, clearing cache and reloading...`);
         window.lastKnownDataSource = currentSource;
         clearCache();
         // Reload the risk dashboard after source change

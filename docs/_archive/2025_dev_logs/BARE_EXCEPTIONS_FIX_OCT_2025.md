@@ -13,7 +13,7 @@ Les bare exception handlers (`except Exception: pass`) masquent les erreurs sile
 try:
     # Some operation
 except Exception:
-    pass  # ❌ Swallows all errors silently
+    pass  # [Error] Swallows all errors silently
 ```
 
 ## Contexte de l'Audit
@@ -49,7 +49,7 @@ try:
             "recommendation": "Ajouter des assets moins corrélés"
         })
 except Exception:
-    pass  # ❌ Silent failure
+    pass  # [Error] Silent failure
 ```
 
 **Après** :
@@ -71,7 +71,7 @@ try:
             "recommendation": "Ajouter des assets moins corrélés"
         })
 except Exception as e:
-    logger.warning(f"Failed to calculate diversification alert: {e}")  # ✅ Proper logging
+    logger.warning(f"Failed to calculate diversification alert: {e}")  #  Proper logging
 ```
 
 **Impact** : Les erreurs de calcul de diversification sont maintenant loggées, facilitant le debugging des problèmes de corrélation matrix.
@@ -93,7 +93,7 @@ try:
     if audit_data['idempotency_hit']:
         logger.info(f"METRICS: recompute_idempotency_hit_total=1 user={audit_data['user']}")
 except:
-    pass  # ❌ Silent failure
+    pass  # [Error] Silent failure
 ```
 
 **Après** :
@@ -105,7 +105,7 @@ try:
     if audit_data['idempotency_hit']:
         logger.info(f"METRICS: recompute_idempotency_hit_total=1 user={audit_data['user']}")
 except Exception as e:
-    logger.debug(f"Failed to log recompute metrics: {e}")  # ✅ Debug level (non-critical)
+    logger.debug(f"Failed to log recompute metrics: {e}")  #  Debug level (non-critical)
 ```
 
 **Impact** : Les échecs de logging des métriques analytics sont maintenant visibles, permettant de détecter les problèmes de structure `audit_data`.
@@ -125,7 +125,7 @@ if idempotency_key:
     try:
         _RECOMPUTE_CACHE[idempotency_key] = {"response": response_payload, "ts": calc_timestamp.timestamp()}
     except Exception:
-        pass  # ❌ Silent failure
+        pass  # [Error] Silent failure
 ```
 
 **Après** :
@@ -135,7 +135,7 @@ if idempotency_key:
     try:
         _RECOMPUTE_CACHE[idempotency_key] = {"response": response_payload, "ts": calc_timestamp.timestamp()}
     except Exception as e:
-        logger.warning(f"Failed to cache idempotent response for key {idempotency_key}: {e}")  # ✅ Warning level
+        logger.warning(f"Failed to cache idempotent response for key {idempotency_key}: {e}")  #  Warning level
 ```
 
 **Impact** : Les problèmes de cache (memory errors, serialization issues) sont maintenant détectables, permettant d'identifier les clés problématiques.
@@ -151,10 +151,10 @@ Les "bare exceptions" détectées sont en fait **des exceptions spécifiques ave
 ```python
 except json.JSONDecodeError:
     # Message mal formé, ignorer
-    pass  # ✅ OK - Specific exception with clear comment
+    pass  #  OK - Specific exception with clear comment
 
 except WebSocketDisconnect:
-    pass  # ✅ OK - Normal WebSocket disconnection flow
+    pass  #  OK - Normal WebSocket disconnection flow
 ```
 
 **Raison** : Ces patterns sont intentionnels et documentés. `JSONDecodeError` et `WebSocketDisconnect` sont des exceptions attendues dans le flow normal.
@@ -169,7 +169,7 @@ except ImportError as fallback_error:
     ct_api = None
 else:
     # Fallback OK: ne pas écraser ct_api
-    pass  # ✅ OK - else block, not except
+    pass  #  OK - else block, not except
 ```
 
 **Raison** : Il ne s'agit pas d'une bare exception. Le `pass` est dans la clause `else` du try/except.
@@ -185,20 +185,20 @@ api/execution_endpoints.py (2 fixes: lignes 1730-1731, 1744-1745)
 
 ## Tests Effectués
 
-✅ **Risk Dashboard** : `GET /api/risk/dashboard?source=cointracking&user_id=demo`
+[OK] **Risk Dashboard** : `GET /api/risk/dashboard?source=cointracking&user_id=demo`
 - Réponse : `{"success": true, "risk_metrics": {...}}` avec toutes les métriques calculées
 - Aucune régression détectée
 
-✅ **Governance Signals Recompute** : `POST /execution/governance/signals/recompute`
+[OK] **Governance Signals Recompute** : `POST /execution/governance/signals/recompute`
 - Endpoint accessible (nécessite auth RBAC `governance_admin`)
 - Cache idempotency et metrics logging fonctionnels
 
 ## Impact Production
 
-- ✅ **Pas de breaking changes** : Les fixes n'affectent que le logging, pas la logique
-- ✅ **Observabilité améliorée** : Les erreurs précédemment silencieuses sont maintenant tracées
-- ✅ **Performance** : Impact négligeable (logging uniquement en cas d'erreur)
-- ✅ **Debugging** : Facilite grandement l'identification des problèmes en production
+- [OK] **Pas de breaking changes** : Les fixes n'affectent que le logging, pas la logique
+- [OK] **Observabilité améliorée** : Les erreurs précédemment silencieuses sont maintenant tracées
+- [OK] **Performance** : Impact négligeable (logging uniquement en cas d'erreur)
+- [OK] **Debugging** : Facilite grandement l'identification des problèmes en production
 
 ## Recommandations
 
@@ -206,7 +206,7 @@ api/execution_endpoints.py (2 fixes: lignes 1730-1731, 1744-1745)
 
 1. **Pattern à suivre** pour les try/except :
 ```python
-# ✅ BON PATTERN
+# BON PATTERN
 try:
     risky_operation()
 except SpecificException as e:
@@ -227,12 +227,12 @@ except SpecificException as e:
 
 | Fichier | Ligne | Type | Action |
 |---------|-------|------|--------|
-| `api/risk_endpoints.py` | 1549 | ❌ Bare exception | **Corrigé** (warning log) |
-| `api/execution_endpoints.py` | 1730 | ❌ Bare exception | **Corrigé** (debug log) |
-| `api/execution_endpoints.py` | 1744 | ❌ Bare exception | **Corrigé** (warning log) |
-| `api/realtime_endpoints.py` | 155 | ✅ Spécifique (JSONDecodeError) | Aucune action |
-| `api/realtime_endpoints.py` | 160 | ✅ Spécifique (WebSocketDisconnect) | Aucune action |
-| `api/main.py` | 468 | ✅ else: block | Aucune action |
+| `api/risk_endpoints.py` | 1549 | [Error] Bare exception | **Corrigé** (warning log) |
+| `api/execution_endpoints.py` | 1730 | [Error] Bare exception | **Corrigé** (debug log) |
+| `api/execution_endpoints.py` | 1744 | [Error] Bare exception | **Corrigé** (warning log) |
+| `api/realtime_endpoints.py` | 155 | [OK] Spécifique (JSONDecodeError) | Aucune action |
+| `api/realtime_endpoints.py` | 160 | [OK] Spécifique (WebSocketDisconnect) | Aucune action |
+| `api/main.py` | 468 | [OK] else: block | Aucune action |
 
 **Total** : 3 fixes critiques appliqués, 3 faux positifs documentés.
 

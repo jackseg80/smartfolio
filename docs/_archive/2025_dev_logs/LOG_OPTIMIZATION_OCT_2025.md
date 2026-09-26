@@ -1,35 +1,35 @@
 # Optimisation des Logs Répétitifs - Octobre 2025
 
-## 📋 Résumé
+## Résumé
 
 **Date**: 17 octobre 2025
 **Priorité**: HIGH
-**Statut**: ✅ Complété
+**Statut**: [OK] Complété
 
 Optimisation des logs DEBUG répétitifs qui polluaient la console avec des centaines d'appels identiques, rendant le debugging difficile.
 
 ---
 
-## 🎯 Problème Identifié
+## Problème Identifié
 
 Lors du chargement de `risk-dashboard.html`, la console était polluée par des logs répétitifs:
 
 ```
 [CAP-SELECTOR] selectPolicyCapPercent: {...}  (x50+)
 [CAP-SELECTOR] selectEffectiveCap -> POLICY CAP: 4  (x50+)
-🚨 [allocateRiskyBudget] CALLED - riskyPercentage: 37  (x20+)
-🔍 DEBUG proposeTargets - before normalization BTC: 35.0  (x30+)
-🔍 DEBUG applyTargets - BTC allocation: 36.9  (x10+)
+[Alert] [allocateRiskyBudget] CALLED - riskyPercentage: 37  (x20+)
+ DEBUG proposeTargets - before normalization BTC: 35.0  (x30+)
+ DEBUG applyTargets - BTC allocation: 36.9  (x10+)
 ```
 
 **Impact**:
-- ❌ Console illisible (200+ logs identiques sur quelques secondes)
-- ❌ Performance dégradée (overhead des logs)
-- ❌ Debugging difficile (logs importants noyés)
+- [Error] Console illisible (200+ logs identiques sur quelques secondes)
+- [Error] Performance dégradée (overhead des logs)
+- [Error] Debugging difficile (logs importants noyés)
 
 ---
 
-## ✅ Solution Implémentée
+## Solution Implémentée
 
 ### Feature Flags Conditionnels
 
@@ -52,14 +52,14 @@ window.__DEBUG_MARKET_REGIMES_VERBOSE__ // market-regimes.js (allocateRiskyBudge
 
 **Avant**:
 ```javascript
-console.debug('🔍 DEBUG proposeTargets - before normalization BTC:', proposedTargets.BTC);
+console.debug(' DEBUG proposeTargets - before normalization BTC:', proposedTargets.BTC);
 // Appelé 30+ fois → 30+ logs identiques
 ```
 
 **Après**:
 ```javascript
 if (window.__DEBUG_TARGETS_VERBOSE__) {
-  console.debug('🔍 DEBUG proposeTargets - before normalization BTC:', proposedTargets.BTC);
+  console.debug(' DEBUG proposeTargets - before normalization BTC:', proposedTargets.BTC);
 }
 // Aucun log par défaut, activable si besoin
 ```
@@ -97,14 +97,14 @@ if (window.__DEBUG_GOVERNANCE_VERBOSE__) {
 
 **Avant**:
 ```javascript
-debugLogger.debug('🚨 [allocateRiskyBudget] CALLED - riskyPercentage:', riskyPercentage, ...);
+debugLogger.debug(' [allocateRiskyBudget] CALLED - riskyPercentage:', riskyPercentage, ...);
 // Appelé 20+ fois → 20+ logs identiques
 ```
 
 **Après**:
 ```javascript
 if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-  debugLogger.debug('🚨 [allocateRiskyBudget] CALLED - riskyPercentage:', riskyPercentage, ...);
+  debugLogger.debug(' [allocateRiskyBudget] CALLED - riskyPercentage:', riskyPercentage, ...);
 }
 ```
 
@@ -114,7 +114,7 @@ if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### Mode Normal (Production/Dev Standard)
 
@@ -173,7 +173,7 @@ location.reload();
 
 ---
 
-## 📊 Résultats
+## Résultats
 
 ### Avant Optimisation
 
@@ -199,16 +199,16 @@ Console à l'ouverture de risk-dashboard.html:
 - 0 log applyTargets (désactivé par défaut)
 
 TOTAL: ~0 log répétitif
-→ Console propre ✅
-→ Performance optimale ✅
-→ Logs activables sur demande ✅
+→ Console propre [OK]
+→ Performance optimale [OK]
+→ Logs activables sur demande [OK]
 ```
 
 **Réduction**: **110+ → 0** logs répétitifs (-100%)
 
 ---
 
-## 🎯 Catégories de Logs
+## Catégories de Logs
 
 ### 1. Logs Toujours Actifs (Importants)
 
@@ -216,16 +216,16 @@ Ces logs restent **toujours visibles** car ils sont critiques:
 
 ```javascript
 // Erreurs
-debugLogger.error('❌ API failed:', error);
+debugLogger.error(' API failed:', error);
 console.error('Fatal error:', err);
 
 // Warnings importants
-debugLogger.warn('⚠️ Cache expired');
+debugLogger.warn(' Cache expired');
 console.warn('API rate limit approaching');
 
 // Informations de haut niveau
-console.log('✅ Dashboard initialized');
-console.log('✅ Store hydrated successfully');
+console.log(' Dashboard initialized');
+console.log(' Store hydrated successfully');
 ```
 
 ### 2. Logs Conditionnels Verbeux (Debug)
@@ -235,7 +235,7 @@ Ces logs sont **désactivés par défaut**, activables via feature flags:
 ```javascript
 // Targets (window.__DEBUG_TARGETS_VERBOSE__)
 if (window.__DEBUG_TARGETS_VERBOSE__) {
-  console.debug('🔍 DEBUG proposeTargets - before normalization...');
+  console.debug(' DEBUG proposeTargets - before normalization...');
 }
 
 // Governance (window.__DEBUG_GOVERNANCE_VERBOSE__)
@@ -245,13 +245,13 @@ if (window.__DEBUG_GOVERNANCE_VERBOSE__) {
 
 // Market Regimes (window.__DEBUG_MARKET_REGIMES_VERBOSE__)
 if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
-  debugLogger.debug('🚨 [allocateRiskyBudget] CALLED...');
+  debugLogger.debug(' [allocateRiskyBudget] CALLED...');
 }
 ```
 
 ---
 
-## 🛠️ Guidelines pour Ajouter des Logs
+## Guidelines pour Ajouter des Logs
 
 ### Principe
 
@@ -263,13 +263,13 @@ if (window.__DEBUG_MARKET_REGIMES_VERBOSE__) {
 Si vous devez ajouter un log de debug dans une fonction appelée fréquemment:
 
 ```javascript
-// ❌ MAUVAIS: Log toujours actif (pollue la console)
+// [Error] MAUVAIS: Log toujours actif (pollue la console)
 export function calculateSomething(value) {
   console.debug('Calculating:', value);  // Appelé 50x → 50 logs
   return value * 2;
 }
 
-// ✅ BON: Log conditionnel (propre par défaut)
+// [OK] BON: Log conditionnel (propre par défaut)
 export function calculateSomething(value) {
   if (window.__DEBUG_MY_MODULE_VERBOSE__) {
     console.debug('Calculating:', value);  // Activable sur demande
@@ -291,7 +291,7 @@ Exemples:
 
 ---
 
-## 🔗 Fichiers Modifiés
+## Fichiers Modifiés
 
 | Fichier | Lignes Modifiées | Feature Flag |
 |---------|------------------|--------------|
@@ -304,7 +304,7 @@ Exemples:
 
 ---
 
-## 📝 Commit
+## Commit
 
 ```
 feat(logs): add conditional verbose logging with feature flags
@@ -331,23 +331,23 @@ Files:
 - static/components/risk-sidebar-full.js
 - docs/LOG_OPTIMIZATION_OCT_2025.md (new)
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
 ---
 
-## 📅 Historique
+## Historique
 
 **17 octobre 2025** - v1.0.0
-- ✅ Identification des logs répétitifs (110+ occurrences)
-- ✅ Création de 3 feature flags conditionnels
-- ✅ Optimisation de 4 fichiers
-- ✅ Réduction console pollution: -100% logs répétitifs
-- ✅ Documentation complète
+- [OK] Identification des logs répétitifs (110+ occurrences)
+- [OK] Création de 3 feature flags conditionnels
+- [OK] Optimisation de 4 fichiers
+- [OK] Réduction console pollution: -100% logs répétitifs
+- [OK] Documentation complète
 
 ---
 
 **Auteur**: Claude Code
-**Status**: ✅ Complété
+**Status**: [OK] Complété
 **Impact**: High (lisibilité console + performance)

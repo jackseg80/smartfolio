@@ -1,4 +1,4 @@
-# Risk Score V2 - Implementation Complete 🎯
+# Risk Score V2 - Implementation Complete
 
 ## Objectif
 Implémenter un **Risk Score V2** basé sur le **Dual-Window Blend** avec **pénalités**, pour diverger du Legacy sur les portfolios "degen" (actifs récents, memecoins jeunes).
@@ -173,9 +173,9 @@ Tests sur portfolios réels :
 
 | Portfolio | Stables | Majors | Altcoins | Ajustements | Score avant | **Score après** |
 |-----------|---------|--------|----------|-------------|-------------|-----------------|
-| **Low Risk** | 12% | 53% | 35% | +10 +5 -5 = **+10** | 59 | **69** ✅ |
-| **Medium Risk** | 0% | 54% | 46% | -10 +5 -10 = **-15** | 57 | **47** ⚠️ |
-| **API (192 assets)** | 6% | 60%+ | <30% | +5 +10 +0 = **+15** | 62 | **77** ✅ |
+| **Low Risk** | 12% | 53% | 35% | +10 +5 -5 = **+10** | 59 | **69** [OK] |
+| **Medium Risk** | 0% | 54% | 46% | -10 +5 -10 = **-15** | 57 | **47** [Warning] |
+| **API (192 assets)** | 6% | 60%+ | <30% | +5 +10 +0 = **+15** | 62 | **77** [OK] |
 
 **Différenciation obtenue** :
 - Avant : Low (59) vs Medium (57) = 2 points
@@ -229,12 +229,12 @@ Tests sur portfolios réels :
 
 **Résultat actuel** (portfolio demo + API, 72j historique) :
 ```
-✅ Legacy Risk Score: 85.0
-✅ Risk Score V2: 85.0 (mode: full_intersection_only)
+[OK] Legacy Risk Score: 85.0
+[OK] Risk Score V2: 85.0 (mode: full_intersection_only)
    Penalty Excluded: 0.0
    Penalty Young Memes: 0.0 (0 memes)
-📊 DIVERGENCE: +0.0 points
-✅ Portfolio sain : Legacy ≈ V2
+ DIVERGENCE: +0.0 points
+[OK] Portfolio sain : Legacy ≈ V2
 ```
 
 **Pourquoi divergence = 0 ?**
@@ -271,10 +271,10 @@ curl "http://localhost:8080/api/risk/dashboard?source=cointracking&user_id=demo&
 ```
 
 **Vérifications** :
-- ✅ `risk_version_info` présent
-- ✅ Legacy et V2 affichés côte à côte
-- ✅ Structural scores séparés
-- ⚠️ `blend_metadata: null` (normal, pas assez d'historique pour blend)
+- [OK] `risk_version_info` présent
+- [OK] Legacy et V2 affichés côte à côte
+- [OK] Structural scores séparés
+- [Warning] `blend_metadata: null` (normal, pas assez d'historique pour blend)
 
 ---
 
@@ -284,14 +284,14 @@ Pour observer une **vraie divergence Legacy ≠ V2**, il faudrait tester avec :
 
 ### Portfolio "Degen" Typique
 ```
-BTC:   30% (365j historique) ✅ Long-Term
-ETH:   20% (365j historique) ✅ Long-Term
-USDC:  10% (365j historique) ✅ Long-Term
+BTC:   30% (365j historique) [OK] Long-Term
+ETH:   20% (365j historique) [OK] Long-Term
+USDC:  10% (365j historique) [OK] Long-Term
 
-PEPE:  15% (55j historique)  ❌ Exclu + Memecoin
-BONK:  10% (45j historique)  ❌ Exclu + Memecoin
-WIF:    8% (30j historique)  ❌ Exclu + Memecoin
-NewAlt: 7% (20j historique)  ❌ Exclu
+PEPE:  15% (55j historique)  [Error] Exclu + Memecoin
+BONK:  10% (45j historique)  [Error] Exclu + Memecoin
+WIF:    8% (30j historique)  [Error] Exclu + Memecoin
+NewAlt: 7% (20j historique)  [Error] Exclu
 
 → Long-Term cohort: 60% du portfolio (BTC+ETH+USDC)
 → Exclusions: 40% du portfolio
@@ -308,7 +308,7 @@ Penalties:
 - Young Memes: -25 (33% memes jeunes > 30% seuil)
 Total penalties: -55 points
 
-Divergence: -30 points (V2 << Legacy) ⚠️  DEGEN détecté
+Divergence: -30 points (V2 << Legacy) [Warning]  DEGEN détecté
 ```
 
 ---
@@ -363,19 +363,19 @@ GET /api/risk/dashboard?
 
 ## Résumé Exécutif
 
-✅ **Risk Score V2 implémenté** avec Dual-Window Blend + Pénalités
-✅ **Shadow Mode fonctionnel** : Legacy et V2 côte à côte dans l'API
-✅ **Frontend prêt** : Badges affichant les deux scores
-✅ **Tests OK** : Portfolio sain (demo) → divergence = 0 (attendu)
-⏳ **Validation en cours** : Besoin de tester sur portfolios degen réels
+[OK] **Risk Score V2 implémenté** avec Dual-Window Blend + Pénalités
+[OK] **Shadow Mode fonctionnel** : Legacy et V2 côte à côte dans l'API
+[OK] **Frontend prêt** : Badges affichant les deux scores
+[OK] **Tests OK** : Portfolio sain (demo) → divergence = 0 (attendu)
+[Pending] **Validation en cours** : Besoin de tester sur portfolios degen réels
 
 **Impact attendu** :
-- Portfolio sain (BTC/ETH/stables, historique long) → Legacy ≈ V2 ✅
-- Portfolio degen (memecoins jeunes, 40%+ récents) → V2 << Legacy ⚠️
+- Portfolio sain (BTC/ETH/stables, historique long) → Legacy ≈ V2 [OK]
+- Portfolio degen (memecoins jeunes, 40%+ récents) → V2 << Legacy [Warning]
 
 ---
 
 **Date d'implémentation** : 2025-10-03
 **Version** : Risk Score V2 - Shadow Mode (Phase 5.6)
-**Statut** : ✅ Implémenté et testé
+**Statut** : [OK] Implémenté et testé
 

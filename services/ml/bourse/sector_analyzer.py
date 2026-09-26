@@ -272,7 +272,7 @@ class SectorAnalyzer:
                 # Test connection
                 self.redis_client.ping()
                 self.cache_enabled = True
-                logger.info("✅ Redis cache enabled for stock scores (TTL: 4h)")
+                logger.info(" Redis cache enabled for stock scores (TTL: 4h)")
             except Exception as e:
                 logger.info(f"Redis cache disabled: {e}")
                 self.cache_enabled = False
@@ -303,7 +303,7 @@ class SectorAnalyzer:
 
             if cached_data:
                 score_data = json.loads(cached_data)
-                logger.info(f"📦 Cache hit for {symbol} ({horizon})")
+                logger.info(f" Cache hit for {symbol} ({horizon})")
                 return score_data
             else:
                 return None
@@ -355,7 +355,7 @@ class SectorAnalyzer:
                 else:
                     results[symbol] = None
 
-            logger.info(f"📦 Batch cache check: {hits}/{len(symbols)} hits ({horizon})")
+            logger.info(f" Batch cache check: {hits}/{len(symbols)} hits ({horizon})")
             return results
 
         except Exception as e:
@@ -383,7 +383,7 @@ class SectorAnalyzer:
                 STOCK_SCORE_CACHE_TTL,
                 cached_json
             )
-            logger.info(f"💾 Cached score for {symbol} ({horizon}, TTL: 4h)")
+            logger.info(f" Cached score for {symbol} ({horizon}, TTL: 4h)")
         except Exception as e:
             logger.warning(f"Cache write error for {symbol}: {e}")
 
@@ -415,7 +415,7 @@ class SectorAnalyzer:
             # Execute all SETEXs in single roundtrip
             pipe.execute()
 
-            logger.info(f"💾 Batch cached {len(scores)} scores ({horizon}, TTL: 4h)")
+            logger.info(f" Batch cached {len(scores)} scores ({horizon}, TTL: 4h)")
 
         except Exception as e:
             logger.warning(f"Batch cache write error: {e}")
@@ -469,7 +469,7 @@ class SectorAnalyzer:
             keys = self.redis_client.keys(pattern)
             if keys:
                 deleted = self.redis_client.delete(*keys)
-                logger.info(f"🗑️ Cleared {deleted} cached stock scores")
+                logger.info(f" Cleared {deleted} cached stock scores")
                 return deleted
             else:
                 logger.info("No cached keys to clear")
@@ -503,7 +503,7 @@ class SectorAnalyzer:
             if cached_score is not None:
                 return cached_score
 
-            logger.info(f"📈 Analyzing individual stock: {symbol} (horizon: {horizon})")
+            logger.info(f" Analyzing individual stock: {symbol} (horizon: {horizon})")
 
             # Get lookback days based on horizon
             lookback_days = self._get_lookback_days(horizon)
@@ -582,7 +582,7 @@ class SectorAnalyzer:
             Dict with momentum, value, diversification scores
         """
         try:
-            logger.info(f"📊 Analyzing sector ETF: {sector_etf} (horizon: {horizon})")
+            logger.info(f" Analyzing sector ETF: {sector_etf} (horizon: {horizon})")
 
             # Get lookback days based on horizon
             lookback_days = self._get_lookback_days(horizon)
@@ -847,7 +847,7 @@ class SectorAnalyzer:
 
                     # Fetch scores for cache misses only
                     if symbols_to_analyze:
-                        logger.info(f"🔄 Analyzing {len(symbols_to_analyze)} uncached stocks")
+                        logger.info(f" Analyzing {len(symbols_to_analyze)} uncached stocks")
                         score_tasks = [
                             self.analyze_individual_stock(symbol, horizon=horizon)
                             for symbol in symbols_to_analyze
@@ -908,9 +908,9 @@ class SectorAnalyzer:
                             "rationale": rationale
                         })
 
-                logger.info(f"✅ Found {len(stocks)} stocks for {sector_etf}")
+                logger.info(f" Found {len(stocks)} stocks for {sector_etf}")
             else:
-                logger.warning(f"⚠️ No stocks mapped for {sector_etf}, returning ETF only")
+                logger.warning(f" No stocks mapped for {sector_etf}, returning ETF only")
 
             return recommendations
 

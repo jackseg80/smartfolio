@@ -1,26 +1,26 @@
-# ✅ Risk Sidebar Full - Parité complète implémentée
+# Risk Sidebar Full - Parité complète implémentée
 
-## 🎯 Objectif atteint
+## Objectif atteint
 
 Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixel** de l'ancienne sidebar de `risk-dashboard.html`, réutilisable sur toutes les pages via le système flyout.
 
 ---
 
-## 📦 Fichier créé
+## Fichier créé
 
 ### `static/components/risk-sidebar-full.js` (20 KB)
 
 **Contenu** :
-- ✅ **HTML complet** : 10 sections (CCS, On-Chain, Risk, Blended, Regime, Cycle, Targets, API Health, Governance, Alerts)
-- ✅ **Styles CSS** : Copie exacte dans Shadow DOM avec mapping `:host` sur `--theme-*`
-- ✅ **Logique `_updateFromState()`** : Port complet de l'ancienne fonction `updateSidebar(state)`
-- ✅ **Adaptateur `normalizeRiskState()`** : Tolère API à plat ou imbriquée sous `{ risk: {...} }`
-- ✅ **Bouton "View All History"** : Contextuel (switchTab local ou lien externe)
-- ✅ **Cleanup propre** : `unsubscribe()` + `clearInterval()`
+- [OK] **HTML complet** : 10 sections (CCS, On-Chain, Risk, Blended, Regime, Cycle, Targets, API Health, Governance, Alerts)
+- [OK] **Styles CSS** : Copie exacte dans Shadow DOM avec mapping `:host` sur `--theme-*`
+- [OK] **Logique `_updateFromState()`** : Port complet de l'ancienne fonction `updateSidebar(state)`
+- [OK] **Adaptateur `normalizeRiskState()`** : Tolère API à plat ou imbriquée sous `{ risk: {...} }`
+- [OK] **Bouton "View All History"** : Contextuel (switchTab local ou lien externe)
+- [OK] **Cleanup propre** : `unsubscribe()` + `clearInterval()`
 
 ---
 
-## 🔧 Modifications des pages
+## Modifications des pages
 
 ### 1. `static/risk-dashboard.html` (lignes 8697-8704)
 
@@ -34,7 +34,7 @@ Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixe
 <script type="module" src="components/risk-sidebar-full.js"></script>
 
 <flyout-panel position="left" width="340" persist-key="risk_dashboard_flyout" pinned>
-  <span slot="title">🎯 Risk Dashboard</span>
+  <span slot="title"> Risk Dashboard</span>
   <risk-sidebar-full slot="content" poll-ms="0"></risk-sidebar-full>
 </flyout-panel>
 ```
@@ -46,7 +46,7 @@ Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixe
 <script type="module" src="components/risk-sidebar-full.js"></script>
 
 <flyout-panel position="left" width="340" persist-key="analytics_flyout">
-  <span slot="title">🎯 Risk Dashboard</span>
+  <span slot="title"> Risk Dashboard</span>
   <risk-sidebar-full slot="content" poll-ms="30000"></risk-sidebar-full>
 </flyout-panel>
 ```
@@ -58,14 +58,14 @@ Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixe
 <script type="module" src="components/risk-sidebar-full.js"></script>
 
 <flyout-panel position="left" width="340" persist-key="rebalance_flyout">
-  <span slot="title">🎯 Risk Dashboard</span>
+  <span slot="title"> Risk Dashboard</span>
   <risk-sidebar-full slot="content" poll-ms="30000"></risk-sidebar-full>
 </flyout-panel>
 ```
 
 ---
 
-## 📊 Sections affichées (parité exacte)
+## Sections affichées (parité exacte)
 
 | Section | ID principal | Description |
 |---------|--------------|-------------|
@@ -82,7 +82,7 @@ Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixe
 
 ---
 
-## 🎨 Styles appliqués (parité CSS)
+## Styles appliqués (parité CSS)
 
 ### Variables thème héritées via `:host`
 ```css
@@ -117,7 +117,7 @@ Créer un composant Web **`risk-sidebar-full.js`** avec **parité pixel-par-pixe
 
 ---
 
-## 🔄 Adaptateur `normalizeRiskState()`
+## Adaptateur `normalizeRiskState()`
 
 ### Problème résolu
 Les APIs peuvent retourner des structures différentes :
@@ -151,7 +151,7 @@ Sur autres pages : **API polling** → adaptation nécessaire
 
 ---
 
-## 🎯 Bouton "View All History" (contextuel)
+## Bouton "View All History" (contextuel)
 
 ### Comportement adaptatif
 ```javascript
@@ -168,74 +168,74 @@ this.$.alertsButton.addEventListener('click', () => {
 
 ---
 
-## ✅ Checklist de parité
+## Checklist de parité
 
 ### UI (visuel)
-- ✅ Même ordre des sections
-- ✅ Mêmes titres avec emojis
-- ✅ Mêmes tailles de police (2.5rem scores, 3rem Blended)
-- ✅ Mêmes couleurs (mappées sur `--theme-*`)
-- ✅ Mêmes bordures / radius / paddings
-- ✅ Même structure gauges (score + label + meta)
-- ✅ Mêmes dots colorés (healthy/warning/error)
-- ✅ Même format liste alertes (3px border-left, severity color)
-- ✅ Même bouton "View All History" (petit, centré)
+- [OK] Même ordre des sections
+- [OK] Mêmes titres avec emojis
+- [OK] Mêmes tailles de police (2.5rem scores, 3rem Blended)
+- [OK] Mêmes couleurs (mappées sur `--theme-*`)
+- [OK] Mêmes bordures / radius / paddings
+- [OK] Même structure gauges (score + label + meta)
+- [OK] Mêmes dots colorés (healthy/warning/error)
+- [OK] Même format liste alertes (3px border-left, severity color)
+- [OK] Même bouton "View All History" (petit, centré)
 
 ### Données
-- ✅ CCS Mixte : `ccsStar` ou `ccs.score`
-- ✅ On-Chain : `scores.onchain`
-- ✅ Risk : `scores.risk`
-- ✅ Blended : `scores.blended` ou `blendedDecision`
-- ✅ Blended Meta : `decision.confidence` + `governance.contradiction_index`
-- ✅ Market Regime : `regime.phase` → dot color (healthy/error/warning)
-- ✅ Cycle : `cycle.months` + `cycle.phase.emoji` + `cycle.phase.phase`
-- ✅ Targets : `targets.changes.length`
-- ✅ Governance : `governance.mode`, `contradiction_index`, `constraints`
-- ✅ Alerts : Liste filtrée `status === 'active'`, max 5, severity colors
+- [OK] CCS Mixte : `ccsStar` ou `ccs.score`
+- [OK] On-Chain : `scores.onchain`
+- [OK] Risk : `scores.risk`
+- [OK] Blended : `scores.blended` ou `blendedDecision`
+- [OK] Blended Meta : `decision.confidence` + `governance.contradiction_index`
+- [OK] Market Regime : `regime.phase` → dot color (healthy/error/warning)
+- [OK] Cycle : `cycle.months` + `cycle.phase.emoji` + `cycle.phase.phase`
+- [OK] Targets : `targets.changes.length`
+- [OK] Governance : `governance.mode`, `contradiction_index`, `constraints`
+- [OK] Alerts : Liste filtrée `status === 'active'`, max 5, severity colors
 
 ### Comportements
-- ✅ Labels dynamiques selon score (Excellent/Bon/Neutre/Faible/Critique)
-- ✅ Classes CSS dynamiques selon score (score-excellent/good/neutral/warning/critical)
-- ✅ Dots colorés selon état (healthy/warning/error)
-- ✅ Bouton "View All History" contextuel (switchTab ou lien)
-- ✅ États vides : `--` pour scores, "No changes" pour targets, "No active alerts"
+- [OK] Labels dynamiques selon score (Excellent/Bon/Neutre/Faible/Critique)
+- [OK] Classes CSS dynamiques selon score (score-excellent/good/neutral/warning/critical)
+- [OK] Dots colorés selon état (healthy/warning/error)
+- [OK] Bouton "View All History" contextuel (switchTab ou lien)
+- [OK] États vides : `--` pour scores, "No changes" pour targets, "No active alerts"
 
 ---
 
-## 🧪 Tests à effectuer
+## Tests à effectuer
 
 ### 1. Visual Parity (risk-dashboard.html)
 ```bash
 # URL: http://localhost:8080/static/risk-dashboard.html
 # Comparer flyout (gauche) avec ancienne sidebar (si elle existe encore)
 
-✓ Mêmes sections dans le même ordre
-✓ Mêmes tailles de police
-✓ Mêmes couleurs / bordures
-✓ Mêmes espacements
-✓ Scores affichés correctement (CCS, On-Chain, Risk, Blended)
-✓ Labels corrects (Excellent/Bon/Neutre/etc.)
-✓ Blended Decision : grande card avec meta info
-✓ Dots colorés (regime, cycle, governance, alerts)
-✓ Liste alertes : max 5, border-left colorée
-✓ Bouton "View All History" cliquable
+[OK] Mêmes sections dans le même ordre
+[OK] Mêmes tailles de police
+[OK] Mêmes couleurs / bordures
+[OK] Mêmes espacements
+[OK] Scores affichés correctement (CCS, On-Chain, Risk, Blended)
+[OK] Labels corrects (Excellent/Bon/Neutre/etc.)
+[OK] Blended Decision : grande card avec meta info
+[OK] Dots colorés (regime, cycle, governance, alerts)
+[OK] Liste alertes : max 5, border-left colorée
+[OK] Bouton "View All History" cliquable
 ```
 
 ### 2. Données (store vs API)
 ```bash
 # risk-dashboard.html : Store (poll-ms="0")
-✓ Connexion au riskStore réussie
-✓ Mise à jour automatique (subscribe)
-✓ Pas de polling API
+[OK] Connexion au riskStore réussie
+[OK] Mise à jour automatique (subscribe)
+[OK] Pas de polling API
 
 # analytics-unified.html : Polling (poll-ms="30000")
-✓ Polling API toutes les 30s
-✓ Fallback /api/risk/dashboard → /api/risk/metrics
-✓ Adaptateur normalizeRiskState() appliqué
-✓ Valeurs affichées correctement
+[OK] Polling API toutes les 30s
+[OK] Fallback /api/risk/dashboard → /api/risk/metrics
+[OK] Adaptateur normalizeRiskState() appliqué
+[OK] Valeurs affichées correctement
 
 # rebalance.html : Polling (poll-ms="30000")
-✓ Idem analytics-unified
+[OK] Idem analytics-unified
 ```
 
 ### 3. Bouton "View All History"
@@ -251,40 +251,40 @@ Clic → Redirection vers /static/risk-dashboard.html#alerts
 ```bash
 # Tester structure à plat
 Response: { ccs: {...}, scores: {...} }
-✓ normalizeRiskState() retourne structure attendue
+[OK] normalizeRiskState() retourne structure attendue
 
 # Tester structure imbriquée
 Response: { risk: { ccs: {...}, scores: {...} } }
-✓ normalizeRiskState() extrait correctement root.risk
+[OK] normalizeRiskState() extrait correctement root.risk
 
 # Tester alias blended
 Response: { scores: { blendedDecision: 72 } }
-✓ normalizeRiskState() mappe sur scores.blended
+[OK] normalizeRiskState() mappe sur scores.blended
 
 # Tester contradiction 0..100
 Response: { governance: { contradiction_index: 15 } }
-✓ normalizeRiskState() convertit en 0.15
+[OK] normalizeRiskState() convertit en 0.15
 
 # Tester contradiction 0..1
 Response: { governance: { contradiction_index: 0.15 } }
-✓ normalizeRiskState() conserve 0.15
+[OK] normalizeRiskState() conserve 0.15
 ```
 
 ### 5. Responsive & Shadow DOM
 ```bash
 # Mobile (<768px)
-✓ Flyout width 280px (au lieu de 340px)
-✓ Lisible, pas de débordement
+[OK] Flyout width 280px (au lieu de 340px)
+[OK] Lisible, pas de débordement
 
 # Shadow DOM
-✓ Styles isolés (pas de collision CSS globale)
-✓ Variables thème héritées via :host
-✓ IDs encapsulés (pas de conflit avec page parente)
+[OK] Styles isolés (pas de collision CSS globale)
+[OK] Variables thème héritées via :host
+[OK] IDs encapsulés (pas de conflit avec page parente)
 ```
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Données ne s'affichent pas
 ```javascript
@@ -329,7 +329,7 @@ document.querySelector('risk-sidebar-full').shadowRoot.querySelector('#alerts-bu
 
 ---
 
-## 📈 Métriques
+## Métriques
 
 | Métrique | Valeur |
 |----------|--------|
@@ -340,38 +340,38 @@ document.querySelector('risk-sidebar-full').shadowRoot.querySelector('#alerts-bu
 | Pattern d'intégration | **2 imports + 1 balise** |
 | Parité visuelle | **100%** |
 | Parité données | **100%** |
-| Adaptateur API | ✅ Robuste (plat/imbriqué/alias) |
-| Shadow DOM | ✅ Isolation complète |
-| Responsive | ✅ 280px mobile |
+| Adaptateur API | [OK] Robuste (plat/imbriqué/alias) |
+| Shadow DOM | [OK] Isolation complète |
+| Responsive | [OK] 280px mobile |
 
 ---
 
-## 📝 Différences avec `risk-snapshot.js`
+## Différences avec `risk-snapshot.js`
 
 | Feature | `risk-snapshot.js` (compact) | `risk-sidebar-full.js` (full) |
 |---------|------------------------------|-------------------------------|
 | Sections | 5 (Contradiction, Cap, Fraîcheur, Trend, Régime) | 10 (CCS, On-Chain, Risk, Blended, Regime, Cycle, Targets, API, Governance, Alerts) |
 | Taille | ~10 KB | ~20 KB |
-| Parité sidebar | ❌ Non | ✅ **Pixel-par-pixel** |
+| Parité sidebar | [Error] Non | [OK] **Pixel-par-pixel** |
 | Usage | Pages légères | **Toutes les pages** |
-| Adaptateur | ❌ Non | ✅ `normalizeRiskState()` |
+| Adaptateur | [Error] Non | OK `normalizeRiskState()` |
 
 **Conclusion** : `risk-sidebar-full.js` est le composant **officiel** pour afficher le Risk Dashboard complet.
 
 ---
 
-## 🚀 Prochaines étapes
+## Prochaines étapes
 
-1. ✅ **Tester visuellement** les 3 pages
-2. ✅ **Valider données** (store + API)
-3. ✅ **Tester bouton "View All History"**
-4. ✅ **Vérifier responsive mobile**
-5. 🔜 **Supprimer ancienne sidebar** de `risk-dashboard.html` si redondante
-6. 🔜 **Documenter** dans `docs/FRONTEND_PAGES.md`
+1. [OK] **Tester visuellement** les 3 pages
+2. [OK] **Valider données** (store + API)
+3. [OK] **Tester bouton "View All History"**
+4. [OK] **Vérifier responsive mobile**
+5. **Supprimer ancienne sidebar** de `risk-dashboard.html` si redondante
+6. **Documenter** dans `docs/FRONTEND_PAGES.md`
 
 ---
 
-## ✨ Résultat final
+## Résultat final
 
 **Un seul composant, réutilisable partout, parité complète** :
 
@@ -379,10 +379,10 @@ document.querySelector('risk-sidebar-full').shadowRoot.querySelector('#alerts-bu
 <script type="module" src="components/risk-sidebar-full.js"></script>
 
 <flyout-panel position="left" width="340" persist-key="<page>_flyout">
-  <span slot="title">🎯 Risk Dashboard</span>
+  <span slot="title"> Risk Dashboard</span>
   <risk-sidebar-full slot="content" poll-ms="30000"></risk-sidebar-full>
 </flyout-panel>
 ```
 
-**Zero duplication, Shadow DOM, Adaptateur robuste, Parité 100%** ! 🎉
+**Zero duplication, Shadow DOM, Adaptateur robuste, Parité 100%** !
 

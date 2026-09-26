@@ -1,7 +1,7 @@
 # Backend Quick Wins - 13 Décembre 2025
 
 **Session**: Backend Performance Optimizations
-**Status**: ✅ Complété (2 optimisations)
+**Status**: [OK] Complété (2 optimisations)
 **Impact**: -95% temps backtest + pagination complète alertes
 
 ---
@@ -21,32 +21,32 @@
 
 ### Optimisations Déjà Faites (Sessions Précédentes)
 
-✅ **Cache Taxonomy** (commit 5ec428e)
+[OK] **Cache Taxonomy** (commit 5ec428e)
 - `@cached_property` dans portfolio_metrics.py
 - -80% latence portfolio metrics
 - N+1 file reads éliminé
 
-✅ **Paralléliser Scheduler** (déjà dans le code)
+[OK] **Paralléliser Scheduler** (déjà dans le code)
 - `asyncio.gather()` dans api/scheduler.py ligne 355
 - Warmers API parallélisés
 - -60% temps warmup
 
-✅ **Pagination Multi-Asset** (déjà présente)
+[OK] **Pagination Multi-Asset** (déjà présente)
 - `/api/multi-asset/assets` avec limit/offset (lignes 46-47)
 - Pagination complète
 
-✅ **Pagination Patrimoine** (déjà présente)
+[OK] **Pagination Patrimoine** (déjà présente)
 - `/api/wealth/patrimoine/items` avec limit/offset (lignes 59-60)
 - Pagination complète
 
 ### Optimisations Nouvelles (Cette Session)
 
-🆕 **Remplacer iterrows()** (2 fichiers backtest)
-🆕 **Compléter pagination alerts** (offset manquant)
+[New] **Remplacer iterrows()** (2 fichiers backtest)
+[New] **Compléter pagination alerts** (offset manquant)
 
 ---
 
-## Fix #1: Vectorisation Backtests - iterrows() → Boolean Indexing 🚀
+## Fix #1: Vectorisation Backtests - iterrows() → Boolean Indexing
 
 **Problème**: Boucles `iterrows()` dans fichiers de backtest stop loss
 
@@ -58,7 +58,7 @@
 
 **stop_loss_backtest.py** (lignes 175-188 - ancienne version):
 ```python
-# ❌ ANTI-PATTERN: iterrows() 100x plus lent que vectorisé
+# ANTI-PATTERN: iterrows() 100x plus lent que vectorisé
 for date, row in holding_data.iterrows():
     # Check if stop loss hit (using low of the day)
     if row['low'] <= stop_loss_price:
@@ -195,7 +195,7 @@ print(f"Speedup: {iterrows_time/vectorized_time:.1f}x")
 
 ---
 
-## Fix #2: Pagination Complète Alerts - Offset Ajouté ✅
+## Fix #2: Pagination Complète Alerts - Offset Ajouté
 
 **Problème**: Endpoint `/api/alerts/list` avait `limit` mais pas `offset`
 
@@ -217,7 +217,7 @@ async def list_alerts(
     alerts = engine.get_active_alerts()
     # ... filtrage et tri ...
 
-    # ❌ Seulement limit, pas de offset
+    # Seulement limit, pas de offset
     alerts = alerts[:limit]
 
     return {"ok": True, "alerts": response_alerts, "count": len(response_alerts)}
@@ -236,7 +236,7 @@ async def list_alerts(
 async def list_alerts(
     severity: Optional[str] = Query(None, ...),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of alerts to return"),
-    offset: int = Query(0, ge=0, description="Number of alerts to skip for pagination"),  # ✅ Ajouté
+    offset: int = Query(0, ge=0, description="Number of alerts to skip for pagination"),  # [OK] Ajouté
     engine: AlertEngine = Depends(get_alert_engine),
     current_user: User = Depends(get_current_user)
 ):
@@ -249,9 +249,9 @@ async def list_alerts(
 
     # PERFORMANCE FIX (Dec 2025): Apply pagination with offset
     total_count = len(alerts)
-    alerts = alerts[offset:offset + limit]  # ✅ Offset + limit
+    alerts = alerts[offset:offset + limit]  # [OK] Offset + limit
 
-    # ✅ Metadata pagination ajoutées
+    # Metadata pagination ajoutées
     return {
         "ok": True,
         "alerts": response_alerts,
@@ -437,8 +437,8 @@ Commits granulaires permettent rollback sélectif.
 ## Backlog Restant
 
 Sur les **47 problèmes initiaux** de l'audit :
-- ✅ **19 résolus** (13 backend + 6 frontend)
-- 🔄 **28 restants**
+- [OK] **19 résolus** (13 backend + 6 frontend)
+- **28 restants**
 
 **Top 3 priorités restantes backend** :
 
@@ -457,8 +457,8 @@ Sur les **47 problèmes initiaux** de l'audit :
 ## Conclusion
 
 **Session Backend Quick Wins** ajoute **2 optimisations** ciblées :
-- ✅ **Backtests 21× plus rapides** (iterrows → vectorisé)
-- ✅ **Pagination alerts complète** (offset ajouté)
+- [OK] **Backtests 21× plus rapides** (iterrows → vectorisé)
+- [OK] **Pagination alerts complète** (offset ajouté)
 
 **Impact global cumulé (Sessions 12+13)** :
 - Backend : 13 fixes (-80-99% latence sur endpoints critiques)

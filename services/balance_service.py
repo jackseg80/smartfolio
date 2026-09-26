@@ -213,7 +213,7 @@ class BalanceService:
 
         # --- Determine effective source for user ---
         effective_source = data_router.get_effective_source()
-        logger.info(f"🎯 Effective source for user '{user_id}': {effective_source}")
+        logger.info(f" Effective source for user '{user_id}': {effective_source}")
 
         # --- API Mode ---
         if effective_source == "cointracking_api" and source in ("cointracking_api", "auto"):
@@ -237,7 +237,7 @@ class BalanceService:
         if source == "cointracking_api":
             return await self._legacy_api_mode(user_id)
 
-        # ✅ FIX: Use _try_csv_mode() which reads V2 config, instead of _legacy_csv_mode()
+        # [OK] FIX: Use _try_csv_mode() which reads V2 config, instead of _legacy_csv_mode()
         if source == "cointracking":
             csv_result = await self._try_csv_mode(data_router, user_id)
             if csv_result:
@@ -246,7 +246,7 @@ class BalanceService:
             return await self._legacy_csv_mode()
 
         # --- Final fallback: Return error instead of loading wrong data ---
-        # ⚠️ SÉCURITÉ: Ne JAMAIS charger de données globales partagées
+        # [Warning] SÉCURITÉ: Ne JAMAIS charger de données globales partagées
         # Si aucune source valide n'est trouvée, retourner une erreur explicite
         logger.error(f"No valid data source found for user {user_id} with source={source}")
         return {
@@ -270,7 +270,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG [_try_api_mode]: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
+            logger.info(f" DEBUG [_try_api_mode]: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
 
             if not (api_key and api_secret):
                 logger.warning(f"No CoinTracking API credentials configured for user {user_id}")
@@ -280,9 +280,9 @@ class BalanceService:
                 from connectors.cointracking_api import get_current_balances as _ctapi_bal
 
                 # Pass API keys directly to connector
-                logger.info(f"🔄 DEBUG [_try_api_mode]: Calling CoinTracking API for user {user_id}...")
+                logger.info(f" DEBUG [_try_api_mode]: Calling CoinTracking API for user {user_id}...")
                 api_result = await _ctapi_bal(api_key=api_key, api_secret=api_secret)
-                logger.info(f"✅ DEBUG [_try_api_mode]: CoinTracking API returned {len(api_result.get('items', []))} items")
+                logger.info(f" DEBUG [_try_api_mode]: CoinTracking API returned {len(api_result.get('items', []))} items")
                 items = []
 
                 for r in api_result.get("items", []):
@@ -294,7 +294,7 @@ class BalanceService:
                         "location": r.get("location") or "CoinTracking",
                     })
 
-                logger.info(f"✅ API mode successful for user {user_id}: {len(items)} items")
+                logger.info(f" API mode successful for user {user_id}: {len(items)} items")
                 return {"source_used": "cointracking_api", "items": items}
 
             except RuntimeError as e:
@@ -326,7 +326,7 @@ class BalanceService:
             Balance data dict if successful, None otherwise
         """
         try:
-            # ✅ FIX: First check for V2 config selected_csv_file
+            # [OK] FIX: First check for V2 config selected_csv_file
             csv_file = None
             config_path = self.base_dir / "data" / "users" / user_id / "config.json"
             if config_path.exists():
@@ -461,7 +461,7 @@ class BalanceService:
             credentials = data_router.get_api_credentials()
             api_key = credentials.get("api_key")
             api_secret = credentials.get("api_secret")
-            logger.info(f"🔑 DEBUG: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
+            logger.info(f" DEBUG: has_api_key={bool(api_key)}, has_api_secret={bool(api_secret)}")
 
             # 1) Load snapshot by exchange via CT-API
             snap = await load_ctapi_exchanges(min_usd=0.0, api_key=api_key, api_secret=api_secret)
@@ -603,7 +603,7 @@ class BalanceService:
                 # Try cache fallback
                 cached = await auth_service.get_cached_positions(max_age_hours=24)
                 if cached:
-                    logger.info(f"✅ Using cached Saxo positions for user {user_id}")
+                    logger.info(f" Using cached Saxo positions for user {user_id}")
                     return {"source_used": "saxobank_api_cached", "items": cached}
                 return None
 
@@ -615,7 +615,7 @@ class BalanceService:
 
             # Fetch data from Saxo
             oauth_client = SaxoOAuthClient(user_id=user_id)
-            logger.info(f"📊 Fetching Saxo positions for user {user_id}...")
+            logger.info(f" Fetching Saxo positions for user {user_id}...")
 
             positions = await oauth_client.get_positions(access_token, account_key)
             balances = await oauth_client.get_balances(access_token, account_key)
@@ -626,7 +626,7 @@ class BalanceService:
             # Cache for offline fallback
             await auth_service.cache_positions(items)
 
-            logger.info(f"✅ Saxo API mode successful for user {user_id}: {len(items)} items")
+            logger.info(f" Saxo API mode successful for user {user_id}: {len(items)} items")
             return {"source_used": "saxobank_api", "items": items}
 
         except Exception as e:
@@ -638,7 +638,7 @@ class BalanceService:
                 auth_service = SaxoAuthService(user_id, str(self.base_dir))
                 cached = await auth_service.get_cached_positions(max_age_hours=24)
                 if cached:
-                    logger.info(f"✅ Using cached Saxo positions after error for user {user_id}")
+                    logger.info(f" Using cached Saxo positions after error for user {user_id}")
                     return {"source_used": "saxobank_api_cached", "items": cached}
             except Exception as cache_error:
                 logger.error(f"Cache fallback also failed: {cache_error}")
@@ -717,7 +717,7 @@ class BalanceService:
                 logger.error(f"Error normalizing Saxo position: {e}")
                 continue
 
-        logger.info(f"📊 Normalized {len(items)} Saxo positions")
+        logger.info(f" Normalized {len(items)} Saxo positions")
         return items
 
 
@@ -729,4 +729,4 @@ class BalanceService:
 # This will be used by all consumers
 balance_service = BalanceService()
 
-logger.info("✅ BalanceService singleton created")
+logger.info(" BalanceService singleton created")

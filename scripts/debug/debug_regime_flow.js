@@ -50,7 +50,7 @@ scenarios.forEach(scenario => {
   console.log('    - base_risky: ' + riskBudget.base_risky.toFixed(3));
 
   const delta = riskBudget.target_stables_pct - scenario.observed_stables;
-  const match = Math.abs(delta) < 1 ? '✅' : '❌';
+  const match = Math.abs(delta) < 1 ? 'OK' : 'Error';
 
   console.log('  Comparison:');
   console.log('    - Calculated: ' + riskBudget.target_stables_pct + '%');

@@ -8,7 +8,7 @@ Voir le fichier d’origine pour l’historique git.
 
 Successfully completed a comprehensive refactoring of API endpoints to improve security, reduce fragmentation, and establish consistent patterns.
 
-## ✅ Completed Actions
+## Completed Actions
 
 ### 1. Security Improvements
 - Removed dangerous debug endpoints
@@ -26,6 +26,6 @@ Successfully completed a comprehensive refactoring of API endpoints to improve s
 - Updated frontend/test consumers
 - Validation tools: `find_broken_consumers.py`, `verify_openapi_changes.py`, smoke tests
 
-## 🔄 Breaking Changes Summary
+## Breaking Changes Summary
 - See `CHANGELOG.md` for the authoritative list and migration checklist.
 

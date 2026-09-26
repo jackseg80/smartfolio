@@ -5,7 +5,7 @@
 
 ---
 
-## Phase 1 + 2 Implémentées ✅
+## Phase 1 + 2 Implémentées
 
 ### Changements appliqués
 
@@ -72,15 +72,15 @@ Get-Content logs/api.log | Select-String "CAP_FLOW" | Select-Object -Last 20
 
 ### Scénarios d'Oscillation
 
-#### ✅ **Stable (OK)**
+#### **Stable (OK)**
 ```
 cap_final=0.0796 (7.96%)
-cap_final=0.0797 (7.97%)  # +1 bps ✅
+cap_final=0.0797 (7.97%)  # +1 bps [OK]
 cap_final=0.0796 (7.96%)
 ```
 → Variation < 0.5%, dead zone actif
 
-#### ⚠️ **Oscillation Micro (Acceptable)**
+#### **Oscillation Micro (Acceptable)**
 ```
 cap_final=0.0770 (7.70%)
 cap_final=0.0774 (7.74%)  # +4 bps
@@ -88,11 +88,11 @@ cap_final=0.0777 (7.77%)  # +3 bps (converge)
 ```
 → Smoothing 80/20 converge, OK
 
-#### ❌ **Oscillation Problématique**
+#### **Oscillation Problématique**
 ```
 cap_final=0.0770 (7.70%)
-cap_final=0.0800 (8.00%)  # +30 bps ❌ (bypass dead zone)
-cap_final=0.0770 (7.70%)  # -30 bps ❌
+cap_final=0.0800 (8.00%)  # +30 bps [Error] (bypass dead zone)
+cap_final=0.0770 (7.70%)  # -30 bps [Error]
 ```
 → Regarder `cap_stale`, `stale_state`, `contradiction`
 
@@ -232,7 +232,7 @@ self._last_contradiction = contradiction
 - [ ] `stale_state` stable (pas normal ↔ stale chaque run)
 - [ ] `contradiction` stable (pas de spikes > 0.2 entre runs)
 
-Si **tous les checks OK** → Problème résolu ✅
+Si **tous les checks OK** → Problème résolu [OK]
 
 Si **oscillation persiste** → Analyser logs, identifier variable instable, implémenter Phase 3
 

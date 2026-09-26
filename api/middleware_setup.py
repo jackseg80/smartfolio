@@ -87,7 +87,7 @@ def setup_middlewares(
             "X-User",
         ],
     )
-    logger.info(f"✅ CORS configured with {len(cors_origins or default_origins)} allowed origins")
+    logger.info(f" CORS configured with {len(cors_origins or default_origins)} allowed origins")
 
     # ========== HTTPS Redirect (Configurable) ==========
     # HTTPS redirect contrôlé via SECURITY_FORCE_HTTPS
@@ -95,9 +95,9 @@ def setup_middlewares(
     # Pour serveur public avec SSL : mettre à True
     if settings.security.force_https:
         app.add_middleware(HTTPSRedirectMiddleware)
-        logger.info("🔒 HTTPSRedirectMiddleware activé (SECURITY_FORCE_HTTPS=true)")
+        logger.info(" HTTPSRedirectMiddleware activé (SECURITY_FORCE_HTTPS=true)")
     else:
-        logger.info("⚠️  HTTPSRedirectMiddleware désactivé (SECURITY_FORCE_HTTPS=false)")
+        logger.info("  HTTPSRedirectMiddleware désactivé (SECURITY_FORCE_HTTPS=false)")
 
     # ========== Trusted Host Configuration ==========
     # TrustedHost config selon l'environnement
@@ -107,11 +107,11 @@ def setup_middlewares(
     if allowed_hosts_env:
         # Si ALLOWED_HOSTS défini, utiliser la liste (comma-separated)
         allowed_hosts = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
-        logger.info(f"🔒 TrustedHostMiddleware: custom allowed_hosts={allowed_hosts}")
+        logger.info(f" TrustedHostMiddleware: custom allowed_hosts={allowed_hosts}")
     elif debug:
         # En développement, plus permissif pour les tests
         allowed_hosts = ["*"]
-        logger.info("🔒 TrustedHostMiddleware: dev mode (allow all hosts)")
+        logger.info(" TrustedHostMiddleware: dev mode (allow all hosts)")
     else:
         raise RuntimeError("ALLOWED_HOSTS must be configured in production")
 
@@ -120,15 +120,15 @@ def setup_middlewares(
     # ========== GZip Compression ==========
     # Compression GZip pour améliorer les performances
     app.add_middleware(GZipMiddleware, minimum_size=1000)
-    logger.info("✅ GZip compression enabled (minimum_size=1000)")
+    logger.info(" GZip compression enabled (minimum_size=1000)")
 
     # ========== Rate Limiting (Production Only) ==========
     # Rate limiting (production only)
     if environment == "production" or not debug:
         app.add_middleware(RateLimitMiddleware)
-        logger.info("✅ Rate limiting middleware enabled (production mode)")
+        logger.info(" Rate limiting middleware enabled (production mode)")
     else:
-        logger.info("⚠️  Rate limiting middleware disabled (development mode)")
+        logger.info("  Rate limiting middleware disabled (development mode)")
 
     # ========== Custom HTTP Middlewares ==========
     # Middleware order (applied in reverse):
@@ -139,19 +139,19 @@ def setup_middlewares(
 
     # Security headers (CSP, HSTS, etc.)
     app.middleware("http")(add_security_headers_middleware)
-    logger.info("✅ Security headers middleware registered")
+    logger.info(" Security headers middleware registered")
 
     # Request timing and structured logging
     app.middleware("http")(request_timing_middleware)
-    logger.info("✅ Request timing middleware registered")
+    logger.info(" Request timing middleware registered")
 
     # Request logger (debug mode)
     app.middleware("http")(request_logger_middleware)
-    logger.info("✅ Request logger middleware registered")
+    logger.info(" Request logger middleware registered")
 
     # No-cache for static files (development only)
     app.middleware("http")(no_cache_dev_middleware)
-    logger.info("✅ No-cache dev middleware registered")
+    logger.info(" No-cache dev middleware registered")
 
     @app.middleware("http")
     async def default_authentication_middleware(request: Request, call_next):
@@ -181,6 +181,6 @@ def setup_middlewares(
             )
         return await call_next(request)
 
-    logger.info("🔒 Default authentication middleware registered (dual/cookie modes)")
+    logger.info(" Default authentication middleware registered (dual/cookie modes)")
 
-    logger.info("🎯 All middlewares configured successfully")
+    logger.info(" All middlewares configured successfully")

@@ -263,7 +263,7 @@ def test_user_id(request) -> str:
         async def test_balance_resolution(test_user_id):
             result = await balance_service.resolve_current_balances(
                 source="cointracking",
-                user_id=test_user_id  # ✅ Isolé, unique
+                user_id=test_user_id  # [OK] Isolé, unique
             )
             assert result["ok"]
     """
@@ -294,7 +294,7 @@ def test_user_config(test_user_id) -> Dict[str, str]:
         def test_portfolio_metrics(test_user_config):
             response = client.get(
                 "/portfolio/metrics",
-                params=test_user_config  # ✅ user_id + source
+                params=test_user_config  # [OK] user_id + source
             )
             assert response.status_code == 200
     """

@@ -415,7 +415,7 @@ class RiskSummaryCard extends HTMLElement {
         let html = `
             <div class="card-header">
                 <a href="${this.linkTo}" class="card-title">
-                    <span class="card-icon">🛡️</span>
+                    <span class="card-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg></span>
                     Risk Summary
                 </a>
                 <span class="status-badge status-${statusClass}">${statusLabel}</span>
@@ -482,7 +482,7 @@ class RiskSummaryCard extends HTMLElement {
     _renderError(message) {
         this._card.innerHTML = `
             <div class="error">
-                ⚠️ Error loading risk data<br>
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Error loading risk data<br>
                 <small>${message}</small>
             </div>
         `;

@@ -1,22 +1,22 @@
 # Portfolio Monitoring - Real Data Integration (October 2025)
 
-## 📋 Résumé
+## Résumé
 
 **Date** : 10 octobre 2025
 **Priorité** : HIGH
-**Statut** : ✅ Complété
+**Statut** : [OK] Complété
 
 Connexion des endpoints de monitoring portfolio (`api/portfolio_monitoring.py`) aux **vraies données** via les services existants (portfolio analytics, risk management, sources resolver).
 
 ---
 
-## 🎯 Objectif
+## Objectif
 
 Remplacer les données mock par des données marché réelles pour permettre un monitoring production-ready du portfolio.
 
 ### Avant (Mock Data)
 ```python
-# ❌ Données simulées hardcodées
+# Données simulées hardcodées
 def get_mock_portfolio_data():
     return {
         "total_value": 433032.21,  # Valeur fixe
@@ -27,7 +27,7 @@ def get_mock_portfolio_data():
 
 ### Après (Real Data)
 ```python
-# ✅ Vraies données depuis services
+# Vraies données depuis services
 async def get_real_portfolio_data(source, user_id):
     res = await resolve_current_balances(source=source, user_id=user_id)  # Sources System
     metrics = portfolio_analytics.calculate_portfolio_metrics(balances_data)  # Service portfolio
@@ -37,7 +37,7 @@ async def get_real_portfolio_data(source, user_id):
 
 ---
 
-## 🔧 Changements Apportés
+## Changements Apportés
 
 ### 1. Nouvelle Fonction `get_real_portfolio_data()`
 
@@ -96,10 +96,10 @@ async def get_real_portfolio_data(source, user_id):
 #### 2.1. `/api/portfolio/metrics` (ligne 232)
 
 **Changements** :
-- ✅ Accepte `source` et `user_id` comme paramètres Query
-- ✅ Utilise `await get_real_portfolio_data()` si `USE_MOCK_MONITORING=false`
-- ✅ Calcul déviations maximales depuis vraies allocations
-- ✅ Détermination statut (`healthy`, `warning`, `critical`) basée sur déviations réelles
+- [OK] Accepte `source` et `user_id` comme paramètres Query
+- [OK] Utilise `await get_real_portfolio_data()` si `USE_MOCK_MONITORING=false`
+- [OK] Calcul déviations maximales depuis vraies allocations
+- [OK] Détermination statut (`healthy`, `warning`, `critical`) basée sur déviations réelles
 
 **Exemple requête** :
 ```bash
@@ -125,12 +125,12 @@ curl "http://localhost:8080/api/portfolio/metrics?source=cointracking&user_id=de
 #### 2.2. `/api/portfolio/alerts` (ligne 289)
 
 **Changements** :
-- ✅ Accepte `source` et `user_id`
-- ✅ Génère alertes depuis vraies déviations d'allocation
-- ✅ Alerte si déviation > 5% (warning) ou > 10% (critical)
-- ✅ Alerte si change_24h < -10% (baisse significative)
-- ✅ Alerte si change_24h > +15% (hausse exceptionnelle)
-- ✅ Isolation multi-tenant : alertes filtrées par `(user_id, source)`
+- [OK] Accepte `source` et `user_id`
+- [OK] Génère alertes depuis vraies déviations d'allocation
+- [OK] Alerte si déviation > 5% (warning) ou > 10% (critical)
+- [OK] Alerte si change_24h < -10% (baisse significative)
+- [OK] Alerte si change_24h > +15% (hausse exceptionnelle)
+- [OK] Isolation multi-tenant : alertes filtrées par `(user_id, source)`
 
 **Exemple requête** :
 ```bash
@@ -166,15 +166,15 @@ curl "http://localhost:8080/api/portfolio/alerts?source=cointracking&user_id=jac
 #### 2.3. `/api/portfolio/performance` (ligne 470)
 
 **Changements** :
-- ✅ Accepte `source`, `user_id`, `period_days`
-- ✅ Charge **historique réel** depuis `portfolio_analytics._load_historical_data(user_id, source)`
-- ✅ Calcul métriques depuis snapshots historiques :
+- [OK] Accepte `source`, `user_id`, `period_days`
+- [OK] Charge **historique réel** depuis `portfolio_analytics._load_historical_data(user_id, source)`
+- [OK] Calcul métriques depuis snapshots historiques :
   - Total Return sur période
   - Volatilité quotidienne et annualisée
   - Max Drawdown (perte maximale depuis peak)
   - Sharpe Ratio (risk-adjusted return)
   - Best/Worst day performance
-- ✅ Retourne série temporelle complète avec daily_return et drawdown
+- [OK] Retourne série temporelle complète avec daily_return et drawdown
 
 **Exemple requête** :
 ```bash
@@ -208,11 +208,11 @@ curl "http://localhost:8080/api/portfolio/performance?source=cointracking&user_i
 #### 2.4. `/api/portfolio/dashboard-summary` (ligne 722)
 
 **Changements** :
-- ✅ Accepte `source` et `user_id`
-- ✅ Agrège données depuis `get_real_portfolio_data()`
-- ✅ Filtre alertes par `(user_id, source)`
-- ✅ Calcul statut global depuis déviations + nombre d'alertes
-- ✅ Retourne métriques enrichies : `change_7d`, `asset_count`, `diversity_score`
+- [OK] Accepte `source` et `user_id`
+- [OK] Agrège données depuis `get_real_portfolio_data()`
+- [OK] Filtre alertes par `(user_id, source)`
+- [OK] Calcul statut global depuis déviations + nombre d'alertes
+- [OK] Retourne métriques enrichies : `change_7d`, `asset_count`, `diversity_score`
 
 **Exemple requête** :
 ```bash
@@ -253,7 +253,7 @@ curl "http://localhost:8080/api/portfolio/dashboard-summary?source=cointracking&
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 ### Mode Mock (Par Défaut)
 
@@ -293,7 +293,7 @@ pkill -f uvicorn
 
 ---
 
-## 🧪 Tests
+## Tests
 
 ### Test Rapide (Mock Data)
 
@@ -325,7 +325,7 @@ curl "http://localhost:8080/api/portfolio/metrics?source=cointracking&user_id=ja
 # User jack (source API CoinTracking)
 curl "http://localhost:8080/api/portfolio/metrics?source=cointracking_api&user_id=jack"
 
-# ✅ Chaque combinaison (user_id, source) est isolée
+# Chaque combinaison (user_id, source) est isolée
 ```
 
 ### Test Real Data
@@ -347,7 +347,7 @@ curl "http://localhost:8080/api/portfolio/metrics?source=cointracking&user_id=de
 
 ---
 
-## 🚧 Limites Actuelles & TODOs
+## Limites Actuelles & TODOs
 
 ### TODOs dans `get_real_portfolio_data()` (lignes 114-146)
 
@@ -395,7 +395,7 @@ data["change_24h"] = 0.0  # Nécessite service pricing avec historique
 
 ---
 
-## 📊 Architecture Data Flow
+## Architecture Data Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -438,7 +438,7 @@ data["change_24h"] = 0.0  # Nécessite service pricing avec historique
 
 ---
 
-## 📝 Changements dans Fichiers
+## Changements dans Fichiers
 
 ### api/portfolio_monitoring.py
 
@@ -457,38 +457,38 @@ data["change_24h"] = 0.0  # Nécessite service pricing avec historique
 
 ---
 
-## ✅ Validation
+## Validation
 
 ### Checklist de Validation
 
-- ✅ Syntaxe Python valide (`python -m py_compile`)
-- ✅ Imports fonctionnels (`import api.portfolio_monitoring`)
-- ✅ Router inclus dans `api/main.py` (ligne 79, 1760)
-- ✅ 4 endpoints testés avec mock data (200 OK)
-- ✅ Isolation multi-tenant vérifiée (paramètres `user_id`, `source`)
-- ✅ Fallback gracieux sur mock/empty data en cas d'erreur
-- ✅ Logging approprié pour debug (`logger.info`, `logger.error`)
-- ✅ Documentation docstrings complète sur tous endpoints
+- [OK] Syntaxe Python valide (`python -m py_compile`)
+- [OK] Imports fonctionnels (`import api.portfolio_monitoring`)
+- [OK] Router inclus dans `api/main.py` (ligne 79, 1760)
+- [OK] 4 endpoints testés avec mock data (200 OK)
+- [OK] Isolation multi-tenant vérifiée (paramètres `user_id`, `source`)
+- [OK] Fallback gracieux sur mock/empty data en cas d'erreur
+- Logging approprié pour debug (`logger.info`, `logger.error`)
+- [OK] Documentation docstrings complète sur tous endpoints
 
 ---
 
-## 🎯 Impact Codebase
+## Impact Codebase
 
 **Score avant** : 8.2/10
 **Score après** : **8.7/10** (+0.5)
 
 **Améliorations** :
-- ✅ ML Completeness : 6.5/10 → 9/10 (+2.5)
-- ✅ Production Readiness : 8/10 → 9/10 (+1.0)
-- ✅ Error Handling : 7/10 → 8/10 (+1.0)
+- [OK] ML Completeness : 6.5/10 → 9/10 (+2.5)
+- [OK] Production Readiness : 8/10 → 9/10 (+1.0)
+- Error Handling : 7/10 → 8/10 (+1.0)
 
 **Nouveaux risques** :
-- ⚠️ Performances : Appels séquentiels à `portfolio_analytics` non optimisés (MEDIUM)
-- ⚠️ Cache : Pas de cache LRU sur `get_real_portfolio_data()` (LOW)
+- [Warning] Performances : Appels séquentiels à `portfolio_analytics` non optimisés (MEDIUM)
+- [Warning] Cache : Pas de cache LRU sur `get_real_portfolio_data()` (LOW)
 
 ---
 
-## 🔗 Liens Utiles
+## Liens Utiles
 
 **Fichiers modifiés** :
 - `api/portfolio_monitoring.py` (principal)
@@ -512,7 +512,7 @@ data["change_24h"] = 0.0  # Nécessite service pricing avec historique
 
 ---
 
-## 🚀 Mise en Production
+## Mise en Production
 
 ### Étapes de Déploiement
 
@@ -555,18 +555,18 @@ mv api/portfolio_monitoring.py.backup api/portfolio_monitoring.py
 
 ---
 
-## 📅 Historique
+## Historique
 
 **10 octobre 2025** - v1.0.0 Initial Release
-- ✅ Connexion 4 endpoints aux services réels
-- ✅ Fonction `get_real_portfolio_data()` production-ready
-- ✅ Isolation multi-tenant stricte
-- ✅ Fallback mock data pour compatibilité backward
-- ✅ Documentation complète
+- [OK] Connexion 4 endpoints aux services réels
+- [OK] Fonction `get_real_portfolio_data()` production-ready
+- [OK] Isolation multi-tenant stricte
+- [OK] Fallback mock data pour compatibilité backward
+- [OK] Documentation complète
 
 ---
 
 **Auteur** : Claude Code
 **Reviewer** : À assigner
-**Status** : ✅ Ready for Review
+**Status** : [OK] Ready for Review
 

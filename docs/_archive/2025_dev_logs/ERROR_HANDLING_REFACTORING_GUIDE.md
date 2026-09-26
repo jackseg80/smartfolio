@@ -5,11 +5,11 @@
 Version: 1.1
 Date: October 25, 2025
 Last Update: Session End - 19:00
-Status: ✅ File 1/5 Complete (37/171 exceptions refactored = 22%)
+Status: [OK] File 1/5 Complete (37/171 exceptions refactored = 22%)
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Overview](#overview)
 2. [Session Summary](#session-summary)
@@ -21,7 +21,7 @@ Status: ✅ File 1/5 Complete (37/171 exceptions refactored = 22%)
 
 ---
 
-## 🎯 Overview
+## Overview
 
 **Goal:** Replace 171 broad `except Exception` handlers in 5 critical files with standardized decorators.
 
@@ -31,13 +31,13 @@ Status: ✅ File 1/5 Complete (37/171 exceptions refactored = 22%)
 - Tested and validated with 62/62 total tests passing
 
 **Current Progress:**
-- ✅ Phase 1: Infrastructure (100% complete)
-- 🟡 Phase 2: Application (22% complete - 37/171 exceptions refactored)
-- ✅ **File 1/5 Complete:** `api/unified_ml_endpoints.py` (37/47 = 79%)
+- [OK] Phase 1: Infrastructure (100% complete)
+- [Pending] Phase 2: Application (22% complete - 37/171 exceptions refactored)
+- [OK] **File 1/5 Complete:** `api/unified_ml_endpoints.py` (37/47 = 79%)
 
 ---
 
-## 📊 Session Summary
+## Session Summary
 
 ### Completed (Session Oct 25, 2025)
 
@@ -48,9 +48,9 @@ Status: ✅ File 1/5 Complete (37/171 exceptions refactored = 22%)
 - **Commits:** 4 commits (1 refactor + 3 critical bug fixes)
 
 **Patterns Applied:**
-- ✅ 28 API endpoints → `@handle_api_errors` decorator
-- ✅ 8 helper functions → `@handle_service_errors` decorator
-- ⚠️ 10 complex exceptions → Kept intentionally (multi-level fallbacks)
+- [OK] 28 API endpoints → `@handle_api_errors` decorator
+- [OK] 8 helper functions → `@handle_service_errors` decorator
+- [Warning] 10 complex exceptions → Kept intentionally (multi-level fallbacks)
 
 **Critical Bugs Fixed:**
 1. **Sentiment endpoint 500 error** - Orphaned except block removed
@@ -64,7 +64,7 @@ Status: ✅ File 1/5 Complete (37/171 exceptions refactored = 22%)
 
 ---
 
-## 🤔 Why Incremental Approach
+## Why Incremental Approach
 
 ### Token Optimization Decision
 
@@ -81,7 +81,7 @@ Refactoring all 171 exceptions in one session would require **40-50k tokens** (c
 
 ---
 
-## 🔧 Refactoring Patterns
+## Refactoring Patterns
 
 ### Pattern A: Graceful Fallback (Most Common)
 
@@ -264,7 +264,7 @@ async def _load_all_volatility_background():
 
 ---
 
-## 📝 Step-by-Step Guide
+## Step-by-Step Guide
 
 ### For Each File to Refactor
 
@@ -362,13 +362,13 @@ git commit -m "refactor(<module>): replace broad exceptions with decorators (X�
 
 Phase 2/2 - Error Handling Refactoring
 
-🤖 Generated with Claude Code
+ Generated with Claude Code
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 ### Pre-Commit Tests
 
@@ -410,7 +410,7 @@ curl http://localhost:8080/api/ml/status
 
 ---
 
-## 📊 Remaining Work
+## Remaining Work
 
 ### File 1: api/unified_ml_endpoints.py
 - **Total:** 49 exceptions
@@ -483,7 +483,7 @@ curl http://localhost:8080/api/ml/status
 
 ---
 
-## 📈 Progress Tracking
+## Progress Tracking
 
 ### Overall Stats
 
@@ -499,20 +499,20 @@ curl http://localhost:8080/api/ml/status
 
 | File | Total | Done | Remaining | % | Status |
 |------|-------|------|-----------|---|--------|
-| api/unified_ml_endpoints.py | 47 | 37 | 10 | 79% | ✅ **DONE** |
-| services/execution/governance.py | 41 | 0 | 41 | 0% | ⏳ Next |
-| services/alerts/alert_storage.py | 35 | 0 | 35 | 0% | 📋 Queued |
-| services/execution/exchange_adapter.py | 24 | 0 | 24 | 0% | 📋 Queued |
-| services/ml/orchestrator.py | 22 | 0 | 22 | 0% | 📋 Queued |
+| api/unified_ml_endpoints.py | 47 | 37 | 10 | 79% |  **DONE** |
+| services/execution/governance.py | 41 | 0 | 41 | 0% | [Pending] Next |
+| services/alerts/alert_storage.py | 35 | 0 | 35 | 0% |  Queued |
+| services/execution/exchange_adapter.py | 24 | 0 | 24 | 0% |  Queued |
+| services/ml/orchestrator.py | 22 | 0 | 22 | 0% |  Queued |
 | **TOTAL** | **171** | **37** | **134** | **22%** | **In Progress** |
 
 **Note:** 10 exceptions kept intentionally in unified_ml_endpoints.py (complex multi-level fallback patterns where decorators are insufficient).
 
 ---
 
-## 💡 Tips & Best Practices
+## Tips & Best Practices
 
-### DO ✅
+### DO
 
 1. **Keep fallbacks minimal** - Only essential keys
 2. **Preserve business logic** - Don't change function behavior
@@ -521,7 +521,7 @@ curl http://localhost:8080/api/ml/status
 5. **Document refactoring** - Add "REFACTORED" comment in docstring
 6. **Use include_traceback=True** - For debugging production issues
 
-### DON'T ❌
+### DON'T
 
 1. **Don't change function signatures** - Keep APIs stable
 2. **Don't skip testing** - Always validate changes
@@ -532,7 +532,7 @@ curl http://localhost:8080/api/ml/status
 
 ---
 
-## 🔗 References
+## References
 
 - **Infrastructure:** `shared/error_handlers.py`
 - **Tests:** `tests/unit/test_error_handlers.py`
@@ -542,7 +542,7 @@ curl http://localhost:8080/api/ml/status
 
 ---
 
-## 📞 Questions?
+## Questions?
 
 If you encounter edge cases not covered in this guide:
 

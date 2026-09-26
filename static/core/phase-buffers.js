@@ -22,7 +22,7 @@ function loadBuffersFromStorage() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
-      console.debug('📦 PhaseBuffers: No persisted data found');
+      console.debug("PhaseBuffers: No persisted data found");
       return;
     }
 
@@ -45,13 +45,13 @@ function loadBuffersFromStorage() {
       }
     }
 
-    console.debug(`📦 PhaseBuffers: Loaded from storage:`, {
+    console.debug(`PhaseBuffers: Loaded from storage:`, {
       buffers: loadedCount,
       pruned: prunedCount,
       total_samples: Array.from(timeSeriesBuffers.values()).reduce((sum, arr) => sum + arr.length, 0)
     });
   } catch (error) {
-    console.warn('⚠️ PhaseBuffers: Failed to load from storage:', error);
+    console.warn("[Warning] PhaseBuffers: Failed to load from storage:", error);
   }
 }
 
@@ -66,9 +66,9 @@ function saveBuffersToStorage() {
     }
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    console.debug('💾 PhaseBuffers: Saved to storage:', Object.keys(data).length, 'buffers');
+    console.debug("PhaseBuffers: Saved to storage:", Object.keys(data).length, 'buffers');
   } catch (error) {
-    console.warn('⚠️ PhaseBuffers: Failed to save to storage:', error);
+    console.warn("[Warning] PhaseBuffers: Failed to save to storage:", error);
   }
 }
 
@@ -84,7 +84,7 @@ loadBuffersFromStorage();
  */
 export function pushSample(key, value, maxSize = 60) {
   if (typeof value !== 'number' || !isFinite(value)) {
-    (window.debugLogger?.warn || console.warn)(`⚠️ PhaseBuffers: Invalid value for ${key}:`, value);
+    (window.debugLogger?.warn || console.warn)(`[Warning] PhaseBuffers: Invalid value for ${key}:`, value);
     return getSeries(key, 1); // Return current buffer without pushing
   }
 
@@ -95,7 +95,7 @@ export function pushSample(key, value, maxSize = 60) {
   const lastSample = arr[arr.length - 1];
   if (lastSample && t <= lastSample.t) {
     t = lastSample.t + 1; // Increment to ensure uniqueness
-    console.debug(`⏰ PhaseBuffers: Adjusted timestamp for ${key} to avoid collision`);
+    console.debug(`PhaseBuffers: Adjusted timestamp for ${key} to avoid collision`);
   }
 
   arr.push({ t, v: value });
@@ -103,11 +103,11 @@ export function pushSample(key, value, maxSize = 60) {
   // Maintain max size
   if (arr.length > maxSize) {
     const removed = arr.shift();
-    console.debug(`🗑️ PhaseBuffers: Trimmed old ${key} sample from ${new Date(removed.t).toLocaleTimeString()}`);
+    console.debug(`PhaseBuffers: Trimmed old ${key} sample from ${new Date(removed.t).toLocaleTimeString()}`);
   }
 
   timeSeriesBuffers.set(key, arr);
-  console.debug(`📈 PhaseBuffers: Pushed ${key} sample:`, { value, bufferSize: arr.length, timestamp: new Date(t).toLocaleTimeString() });
+  console.debug(`PhaseBuffers: Pushed ${key} sample:`, { value, bufferSize: arr.length, timestamp: new Date(t).toLocaleTimeString() });
 
   // Persist to storage after each update
   saveBuffersToStorage();
@@ -126,11 +126,11 @@ export function getSeries(key, lastN = 14) {
   const series = arr.slice(-lastN).map(({v}) => v);
 
   if (series.length === 0) {
-    console.debug(`📊 PhaseBuffers: No data for ${key}`);
+    console.debug(`PhaseBuffers: No data for ${key}`);
     return [];
   }
 
-  console.debug(`📊 PhaseBuffers: Retrieved ${key} series:`, {
+  console.debug(`PhaseBuffers: Retrieved ${key} series:`, {
     length: series.length,
     range: series.length > 0 ? `${series[0].toFixed(3)} → ${series[series.length-1].toFixed(3)}` : 'empty',
     requested: lastN
@@ -170,7 +170,7 @@ export function calculateSlope(series) {
   // Relative change: (last - first) / |first|
   const slope = (last - first) / Math.abs(first);
 
-  console.debug(`📈 PhaseBuffers: Calculated slope:`, {
+  console.debug(`PhaseBuffers: Calculated slope:`, {
     first: first.toFixed(4),
     last: last.toFixed(4),
     slope: (slope * 100).toFixed(2) + '%',
@@ -208,7 +208,7 @@ export function getBufferStatus() {
 export function clearAllBuffers() {
   const count = timeSeriesBuffers.size;
   timeSeriesBuffers.clear();
-  (window.debugLogger?.debug || console.log)(`🗑️ PhaseBuffers: Cleared ${count} buffers`);
+  (window.debugLogger?.debug || console.log)(`PhaseBuffers: Cleared ${count} buffers`);
 }
 
 /**
@@ -218,9 +218,9 @@ export function clearAllBuffers() {
 export function clearBuffer(key) {
   const existed = timeSeriesBuffers.delete(key);
   if (existed) {
-    (window.debugLogger?.debug || console.log)(`🗑️ PhaseBuffers: Cleared buffer '${key}'`);
+    (window.debugLogger?.debug || console.log)(`PhaseBuffers: Cleared buffer '${key}'`);
   } else {
-    (window.debugLogger?.warn || console.warn)(`⚠️ PhaseBuffers: Buffer '${key}' not found`);
+    (window.debugLogger?.warn || console.warn)(`[Warning] PhaseBuffers: Buffer '${key}' not found`);
   }
 }
 
@@ -235,13 +235,13 @@ if (typeof window !== 'undefined' && window.location?.hostname === 'localhost') 
     calculateSlope
   };
 
-  console.debug('🔧 Debug: window.debugPhaseBuffers available for inspection');
+  console.debug("Debug: window.debugPhaseBuffers available for inspection");
 }
 
 // Auto-persist on page unload (preserve data across sessions)
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
-    console.debug('💾 PhaseBuffers: Persisting buffers before unload');
+    console.debug("PhaseBuffers: Persisting buffers before unload");
     saveBuffersToStorage();
   });
 }

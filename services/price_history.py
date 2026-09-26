@@ -198,7 +198,7 @@ class PriceHistory:
                 # Trier et dédupliquer au cas où
                 history = sorted(list({ts: (ts, px) for ts, px in history}.values()))
                 binance_circuit.record_success()
-                logger.info(f"✅ Téléchargé {len(history)} points pour {symbol} (<=1000)")
+                logger.info(f" Téléchargé {len(history)} points pour {symbol} (<=1000)")
                 await asyncio.sleep(BINANCE_REQUEST_DELAY)
                 return history
 
@@ -242,7 +242,7 @@ class PriceHistory:
             # Déduplication et tri UNE SEULE FOIS après la boucle (optimisation)
             history = sorted(list({ts: (ts, px) for ts, px in history}.values()))[-days:]
             binance_circuit.record_success()
-            logger.info(f"✅ Téléchargé {len(history)} points pour {symbol} (>1000)")
+            logger.info(f" Téléchargé {len(history)} points pour {symbol} (>1000)")
             return history
 
         except Exception as e:
@@ -313,7 +313,7 @@ class PriceHistory:
                 history.append((ts, close_price))
 
             history = sorted(history)[-days:]
-            logger.info(f"✅ Kraken: {resolved} -> {len(history)} points")
+            logger.info(f" Kraken: {resolved} -> {len(history)} points")
             await asyncio.sleep(BINANCE_REQUEST_DELAY)
             return history
         except Exception as e:
@@ -357,7 +357,7 @@ class PriceHistory:
                     history.append((ts, close_price))
                 history = sorted(list({ts: (ts, px) for ts, px in history}.values()))
                 if history:
-                    logger.info(f"✅ Bitget: {symbol} -> {len(history)} points (<=1000)")
+                    logger.info(f" Bitget: {symbol} -> {len(history)} points (<=1000)")
                 await asyncio.sleep(BINANCE_REQUEST_DELAY)
                 return history
 
@@ -386,7 +386,7 @@ class PriceHistory:
 
             history = sorted(history)[-days:]
             if history:
-                logger.info(f"✅ Bitget: {symbol} -> {len(history)} points (>1000)")
+                logger.info(f" Bitget: {symbol} -> {len(history)} points (>1000)")
             return history
         except Exception as e:
             logger.debug(f"Bitget fallback échec pour {symbol}: {e}")
@@ -449,7 +449,7 @@ class PriceHistory:
                     break
                     
         if not history:
-            logger.error(f"❌ Échec téléchargement {resolved_symbol}")
+            logger.error(f" Échec téléchargement {resolved_symbol}")
             return False
             
         # Sauvegarder l'historique (async I/O)
@@ -461,7 +461,7 @@ class PriceHistory:
             self._last_update[resolved_symbol] = int(time.time())
             await self._save_last_update()
 
-            logger.info(f"✅ Sauvegardé {len(history)} points pour {resolved_symbol}")
+            logger.info(f" Sauvegardé {len(history)} points pour {resolved_symbol}")
             return True
 
         except Exception as e:
@@ -599,7 +599,7 @@ class PriceHistory:
             await asyncio.sleep(BINANCE_REQUEST_DELAY)
 
         successful = sum(1 for success in results.values() if success)
-        logger.info(f"✅ Mis à jour {successful}/{len(symbols)} symboles")
+        logger.info(f" Mis à jour {successful}/{len(symbols)} symboles")
 
         return results
 

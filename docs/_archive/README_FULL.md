@@ -4,24 +4,24 @@
 
 Cette plateforme consolidée offre une navigation simplifiée autour de 6 pages canoniques - **Portfolio**, **Analytics**, **Risk**, **Rebalance**, **Execution** et **Settings** - avec un système de filtrage contextuel permettant de gérer l'ensemble de votre patrimoine depuis une interface unique.
 
-## 🚀 **Fonctionnalités Principales**
+## **Fonctionnalités Principales**
 
-- 🎯 **Rebalancing intelligent** avec allocations dynamiques et exec hints par exchange
-- 🏛️ **Decision Engine avec gouvernance** : Single-writer architecture, approbations AI/manuelles
-- 🧠 **Machine Learning avancé** : LSTM, Transformers, modèles prédictifs
-- 📊 **Analytics sophistiqués** : Métriques Sharpe, Calmar, drawdown, VaR/CVaR
-- 🛡️ **Gestion des risques** avec matrices de corrélation et stress testing
-- 📈 **Interface moderne** avec 35+ dashboards et navigation unifiée
-- 🔄 **Synchronisation de scores** : Architecture single-source-of-truth avec cache localStorage
-- 🔗 **Multi-sources** : CoinTracking CSV/API, exchanges, données temps réel
+- **Rebalancing intelligent** avec allocations dynamiques et exec hints par exchange
+- **Decision Engine avec gouvernance** : Single-writer architecture, approbations AI/manuelles
+- **Machine Learning avancé** : LSTM, Transformers, modèles prédictifs
+- **Analytics sophistiqués** : Métriques Sharpe, Calmar, drawdown, VaR/CVaR
+- **Gestion des risques** avec matrices de corrélation et stress testing
+- **Interface moderne** avec 35+ dashboards et navigation unifiée
+- **Synchronisation de scores** : Architecture single-source-of-truth avec cache localStorage
+- **Multi-sources** : CoinTracking CSV/API, exchanges, données temps réel
 
-## 📖 **Documentation**
+## **Documentation**
 
 - **[Navigation & Architecture](docs/navigation.md)** - Structure des menus et liens profonds
 - **[Architecture Technique](docs/architecture.md)** - Hiérarchie décisionnelle SMART → Decision Engine
 - **[Modules Patrimoniaux](docs/wealth-modules.md)** - Crypto, Bourse, Banque, Divers
 
-## 🔄 **Synchronisation des Scores Cross-Dashboard**
+## **Synchronisation des Scores Cross-Dashboard**
 
 Architecture **single-source-of-truth** garantissant la cohérence des données entre tous les dashboards :
 
@@ -48,7 +48,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - Event listeners `storage` : Synchronisation automatique cross-tab
 - Logs détaillés : Traçabilité complète des calculs et stockage
 
-## 🧠 **Système ML/IA**
+## **Système ML/IA**
 
 - **Auto-initialisation** : 5 modèles ML s'initialisent automatiquement au démarrage
 - **Prédiction de volatilité** : LSTM avec mécanismes d'attention (BTC/ETH/SOL)
@@ -58,7 +58,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Decision Engine** : Gouvernance unifiée avec signaux ML temps réel (78%+ confidence)
 - **Rebalancing automatique** : Moteur ML avec contraintes de risque
 
-## 🚨 **Système d'Alertes Prédictives (Phase 1)**
+## **Système d'Alertes Prédictives (Phase 1)**
 
 - **Évaluation automatique** : Surveillance continue des signaux ML avec évaluation toutes les 60s
 - **6 types d'alertes ML** : Volatilité élevée, changements de régime, corrélation systémique, contradictions ML, baisse de confiance, coûts d'exécution
@@ -71,7 +71,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Gouvernance intégrée** : Suggestions automatiques freeze/slow selon sévérité
 - **Respect Phase 0** : Non-intrusif, transparence totale, contrôle utilisateur
 
-## 🚨 **Système d'Alertes Phase 2A : Phase-Aware Alerting** ✅
+## **Système d'Alertes Phase 2A : Phase-Aware Alerting**
 
 - **Intelligence Phase-Aware** : Système d'alertes contextuel avec phase lagging (15min) et persistance (3 ticks)
 - **Gating Matrix Advanced** : Activation/atténuation/blocage des alertes par phase (BTC/ETH/Large/Alt)
@@ -82,7 +82,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Métriques Prometheus** : 10+ métriques Phase 2A (transitions, gating, neutralisations, performance)
 - **Tests Production** : 8 tests unitaires, 6 tests d'intégration, benchmarks (0.9μs gating, 1M+ ops/sec)
 
-## 🚨 **Phase 2B2 : Cross-Asset Correlation System** ✅
+## **Phase 2B2 : Cross-Asset Correlation System**
 
 **Système de corrélation cross-asset temps réel avec détection de spikes**
 
@@ -107,7 +107,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Tests complets** : 4 tests unitaires, 3 tests intégration validés
 - **UI Debug** : `debug_phase2b2_cross_asset.html` - Interface test interactive
 
-## 🧠 **Phase 2C : ML Alert Predictions System** ✅  
+## **Phase 2C : ML Alert Predictions System**
 
 **Alertes prédictives ML pour anticiper événements marché 24-48h**
 
@@ -125,12 +125,12 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Ensemble Models** : RandomForest (60%) + GradientBoosting (40%)
 - **Drift Detection** : Performance monitoring + auto-retraining
 
-### API ML Unifiée 🔄
+### API ML Unifiée
 
 - `/api/ml/predict` - Prédictions temps réel multi-horizon (unifié)
 - `/api/ml/status` - Santé pipeline + métriques modèles
 - `/api/ml/volatility/predict/{symbol}` - Prédictions volatilité spécialisées
-- `/api/ml/debug/pipeline-info` - Debug pipeline (🔒 admin-only)
+- `/api/ml/debug/pipeline-info` - Debug pipeline ( admin-only)
 
 ### Production Features
 
@@ -139,7 +139,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Performance Target** : <200ms batch prediction, <100MB memory
 - **Métriques Prometheus** : 8+ métriques ML monitoring spécialisées
 
-## 🔄 **Refactoring d'Architecture - DÉCEMBRE 2024** ✅
+## **Refactoring d'Architecture - DÉCEMBRE 2024**
 
 **API consolidée, sécurisée et prête pour production**
 
@@ -150,7 +150,7 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 - **Governance unifié** : `/api/governance/approve/{resource_id}` pour toutes approbations
 - **Alertes centralisées** : Toutes les opérations sous `/api/alerts/*`
 
-### Breaking Changes ⚠️
+### Breaking Changes
 
 - **Supprimé** : `/api/ml-predictions/*` → `/api/ml/*`
 - **Supprimé** : `/api/test/*` et `/api/alerts/test/*` (sécurité)
@@ -161,25 +161,25 @@ Architecture **single-source-of-truth** garantissant la cohérence des données 
 
 Voir `REFACTORING_SUMMARY.md` pour guide complet et outils de validation.
 
-## 🎯 **Phase 3 Frontend Integration - PRODUCTION READY** ✅
+## **Phase 3 Frontend Integration - PRODUCTION READY**
 
 **Score global E2E : 95.8/100 - EXCELLENT**
 
-### Phase 3A : Advanced Risk Engine ✅
+### Phase 3A : Advanced Risk Engine
 
 - **VaR Multi-méthodes** : Paramétrique (479.22$), Historique (473.71$), Monte Carlo
 - **Stress Testing** : Scénarios de marché avec simulations de crise
 - **Performance** : API VaR 35.9ms moyenne, P95 47.4ms
 - **Intégration UI** : Dashboard unifié avec mode avancé toggle
 
-### Phase 3B : Real-time Streaming ✅  
+### Phase 3B : Real-time Streaming
 
 - **WebSocket Engine** : Redis Streams avec connexions temps réel
 - **Broadcast System** : Diffusion multi-client (5ms latence)
 - **Résilience** : 100% récupération automatique après arrêt/redémarrage
 - **Performance** : 100% taux de succès concurrent, 2.35 req/s throughput
 
-### Phase 3C : Hybrid Intelligence ✅
+### Phase 3C : Hybrid Intelligence
 
 - **Explainable AI** : Signaux ML avec traçabilité complète
 - **Human-in-the-loop** : Validation manuelle + feedback learning
@@ -194,7 +194,7 @@ Voir `REFACTORING_SUMMARY.md` pour guide complet et outils de validation.
 - **Compatibility** : 83.3/100 GOOD - Support multi-navigateur validé
 - **Fichiers** : `tests/e2e/` - Suite complète automatisée avec rapports
 
-## 📊 **Analytics Avancés**
+## **Analytics Avancés**
 
 - **Métriques de performance** : Ratios Sharpe, Sortino, Calmar, Omega
 - **Analyse de drawdown** : Périodes, durées, taux de récupération
@@ -204,35 +204,35 @@ Voir `REFACTORING_SUMMARY.md` pour guide complet et outils de validation.
 
 ---
 
-## 📋 **Navigation Rapide**
+## **Navigation Rapide**
 
-### 🎯 **Démarrage**
+### **Démarrage**
 
 - [Démarrage rapide](#démarrage-rapide) - Installation et premier lancement
 - [Configuration](#configuration) - Variables d'environnement et setup
 - [Interfaces principales](#interfaces-principales) - Dashboards et navigation
 
-### 🚨 **Système d'Alertes**
+### **Système d'Alertes**
 
 - [Phase 1 - Alertes Prédictives](#système-dalertes-prédictives-phase-1) - 6 types d'alertes ML temps réel
 - [Phase 2A - Phase-Aware](#système-dalertes-phase-2a--phase-aware-alerting-) - Intelligence contextuelle
 - [Phase 2B2 - Cross-Asset](#phase-2b2--cross-asset-correlation-system-) - Corrélations cross-asset
 - [Phase 2C - ML Predictions](#phase-2c--ml-alert-predictions-system-) - Prédictions ML 24-48h
 
-### 🧠 **ML & Analytics**
+### **ML & Analytics**
 
 - [Machine Learning](#machine-learning) - Modèles LSTM, Transformers, prédictions
-- [Analytics Avancés](#analytics-avancés) - Métriques, comparaisons, backtesting
+- [Analytics Avancés](#analytics-avancés-1) - Métriques, comparaisons, backtesting
 - [Gestion des Risques](#gestion-des-risques) - VaR, corrélations, stress testing
 
-### 🎯 **Phase 3 Production**
+### **Phase 3 Production**
 
 - [Phase 3A - Advanced Risk](#phase-3a--advanced-risk-engine-) - VaR multi-méthodes, stress testing
 - [Phase 3B - Real-time](#phase-3b--real-time-streaming-) - WebSocket Redis, broadcast multi-client
 - [Phase 3C - Intelligence](#phase-3c--hybrid-intelligence-) - AI explicable + human-in-the-loop
 - [Tests E2E Production](#tests-e2e-production) - Suite complète validation 95.8/100
 
-### 🔧 **API & Développement**
+### **API & Développement**
 
 - [Endpoints API](#endpoints-api) - Documentation complète des APIs
 - [Architecture](#architecture) - Structure du code et composants
@@ -242,7 +242,7 @@ Voir `REFACTORING_SUMMARY.md` pour guide complet et outils de validation.
 
 ## Démarrage rapide
 
-### 🚀 **Installation**
+### **Installation**
 
 ```bash
 # Cloner et installer les dépendances
@@ -257,21 +257,21 @@ uvicorn api.main:app --port 8080
 python crypto_toolbox_api.py  # Port 8001
 ```
 
-### 🎯 **Interfaces Principales**
+### **Interfaces Principales**
 
 | Interface | URL | Description |
 |-----------|-----|-------------|
-| 🏠 **Dashboard Principal** | `static/dashboard.html` | Vue d'ensemble avec métriques temps réel |
-| 🧠 **ML Pipeline Dashboard** | `static/unified-ml-dashboard.html` | **NOUVEAU** - Interface ML complète avec 67 modèles détectés |
-| 🤖 **AI Dashboard** | `static/ai-dashboard.html` | **MàJ** - Signaux ML temps réel du Decision Engine (confidence 78%+) |
-| 📊 **Analytics Avancés** | `static/advanced-analytics.html` | **NOUVEAU** - Métriques sophistiquées et comparaisons |
-| 🛡️ **Risk Dashboard** | `static/risk-dashboard.html` | Analyse de risque avec scoring V2 + GovernancePanel intégré |
-| ⚖️ **Rebalancing** | `static/rebalance.html` | Planification et exécution des rééquilibrages |
-| 📈 **Portfolio Optimization** | `static/portfolio-optimization.html` | Optimisation moderne avec contraintes |
-| 🔄 **Backtesting** | `static/backtesting.html` | Tests historiques multi-stratégies |
-| 🔧 **Debug & Tests** | `static/debug-menu.html` | Outils de développement et diagnostics |
+|  **Dashboard Principal** | `static/dashboard.html` | Vue d'ensemble avec métriques temps réel |
+|  **ML Pipeline Dashboard** | `static/unified-ml-dashboard.html` | **NOUVEAU** - Interface ML complète avec 67 modèles détectés |
+|  **AI Dashboard** | `static/ai-dashboard.html` | **MàJ** - Signaux ML temps réel du Decision Engine (confidence 78%+) |
+|  **Analytics Avancés** | `static/advanced-analytics.html` | **NOUVEAU** - Métriques sophistiquées et comparaisons |
+|  **Risk Dashboard** | `static/risk-dashboard.html` | Analyse de risque avec scoring V2 + GovernancePanel intégré |
+|  **Rebalancing** | `static/rebalance.html` | Planification et exécution des rééquilibrages |
+|  **Portfolio Optimization** | `static/portfolio-optimization.html` | Optimisation moderne avec contraintes |
+|  **Backtesting** | `static/backtesting.html` | Tests historiques multi-stratégies |
+|  **Debug & Tests** | `static/debug-menu.html` | Outils de développement et diagnostics |
 
-### 🎯 **Accès Rapide**
+### **Accès Rapide**
 
 - **Dashboard complet** : <http://localhost:8080/static/dashboard.html>
 - **ML Training** : <http://localhost:8080/static/advanced-ml-dashboard.html>  
@@ -282,7 +282,7 @@ python crypto_toolbox_api.py  # Port 8001
 
 ## Configuration UI et Données
 
-### 🧩 Source unique des “Sources de données” (Single Source of Truth)
+### Source unique des “Sources de données” (Single Source of Truth)
 
 - La liste des sources est centralisée dans `static/global-config.js` via `window.DATA_SOURCES` (+ ordre via `window.DATA_SOURCE_ORDER`).
 - `static/settings.html` se construit dynamiquement depuis cette liste:
@@ -290,7 +290,7 @@ python crypto_toolbox_api.py  # Port 8001
   - Groupe “Sources de démo” (kind: `stub`) et “Sources CoinTracking” (kind: `csv`/`api`) dans l’onglet “Source”.
 - Ajouter/enlever une source = modifier `DATA_SOURCES` uniquement; l’UI, les validations et le résumé se mettent à jour partout.
 
-### 💱 Devise d’affichage et conversion en temps réel
+### Devise d’affichage et conversion en temps réel
 
 - La devise d’affichage se règle dans `settings.html` (réglages rapides ou onglet Pricing) et est partagée via `global-config`.
 - Conversion réelle des montants à l’affichage:
@@ -304,16 +304,16 @@ python crypto_toolbox_api.py  # Port 8001
 
 ---
 
-## Architecture Consolidée ⚡
+## Architecture Consolidée
 
-### 🎯 **Optimisations Récentes**
+### **Optimisations Récentes**
 
 **CTRL+C Signal Handling Fix** (Critique) :
 
-- ✅ **Gestion des signaux Windows** : Correction définitive du blocage CTRL+C sur uvicorn --reload
-- ✅ **Imports sécurisés** : Remplacement aiohttp par mocks pour éviter le blocage de signaux
-- ✅ **177 endpoints** restaurés : 90 API routes + 87 routes système complètement fonctionnels
-- ✅ **Service fallbacks** : Patterns d'import sécurisés avec gestion d'erreur gracieuse
+- [OK] **Gestion des signaux Windows** : Correction définitive du blocage CTRL+C sur uvicorn --reload
+- [OK] **Imports sécurisés** : Remplacement aiohttp par mocks pour éviter le blocage de signaux
+- [OK] **177 endpoints** restaurés : 90 API routes + 87 routes système complètement fonctionnels
+- [OK] **Service fallbacks** : Patterns d'import sécurisés avec gestion d'erreur gracieuse
 
 **Endpoints API Unifiés** (-40% de doublons) :
 
@@ -324,15 +324,15 @@ python crypto_toolbox_api.py  # Port 8001
 
 **Bénéfices** :
 
-- ✅ **Développement fluide** : CTRL+C fonctionne parfaitement sur Windows
-- ✅ **Robustesse** : Fallbacks et gestion d'erreur pour tous les services critiques  
-- ✅ **+50% maintenabilité** avec source unique par domaine
-- ✅ **+90% clarté** architecture et navigation simplifiées
-- ✅ **Performance** cache unifié avec TTL adaptatif
+- [OK] **Développement fluide** : CTRL+C fonctionne parfaitement sur Windows
+- [OK] **Robustesse** : Fallbacks et gestion d'erreur pour tous les services critiques
+- [OK] **+50% maintenabilité** avec source unique par domaine
+- [OK] **+90% clarté** architecture et navigation simplifiées
+- [OK] **Performance** cache unifié avec TTL adaptatif
 
 ---
 
-## 🏛️ Decision Engine & Gouvernance
+## Decision Engine & Gouvernance
 
 ### **Architecture Single-Writer Unifiée**
 
@@ -364,19 +364,19 @@ python crypto_toolbox_api.py  # Port 8001
 
 ## Machine Learning
 
-### 🧠 **Modèles Disponibles**
+### **Modèles Disponibles**
 
 | Modèle | Endpoint | Description |
 |--------|----------|-------------|
-| **🚀 ML Unifié** | `/api/ml/predict` | **CONSOLIDÉ** - Prédictions de tous les modèles |
-| **📊 Statut Système** | `/api/ml/status` | **CONSOLIDÉ** - État de santé système ML |
-| **⚙️ Entraînement** | `/api/ml/train` | **CONSOLIDÉ** - Entraînement background |
-| **🧹 Cache Management** | `/api/ml/cache/clear` | **CONSOLIDÉ** - Nettoyage cache unifié |
+| ** ML Unifié** | `/api/ml/predict` | **CONSOLIDÉ** - Prédictions de tous les modèles |
+| ** Statut Système** | `/api/ml/status` | **CONSOLIDÉ** - État de santé système ML |
+| ** Entraînement** | `/api/ml/train` | **CONSOLIDÉ** - Entraînement background |
+| ** Cache Management** | `/api/ml/cache/clear` | **CONSOLIDÉ** - Nettoyage cache unifié |
 | **Volatility LSTM** | `/api/ml/volatility/predict/{symbol}` | Prédiction volatilité avec attention |
 | **Regime Detector** | `/api/ml/regime/current` | Classification bull/bear/neutral |
 | **Correlation Forecaster** | `/api/ml/correlation/matrix/current` | Corrélations prédictives |
 
-### 📊 **Fonctionnalités ML**
+### **Fonctionnalités ML**
 
 - **Auto-initialisation** : 5 modèles se lancent automatiquement au démarrage (3s)
 - **Decision Engine** : Governance unifiée avec signaux ML temps réel (confidence 78%+)
@@ -386,7 +386,7 @@ python crypto_toolbox_api.py  # Port 8001
 - **Feature Engineering** : 50+ indicateurs crypto-spécifiques automatiques
 - **Model Persistence** : Sauvegarde/chargement optimisé avec cache intelligent
 
-### 🏛️ **Decision Engine & Gouvernance**
+### **Decision Engine & Gouvernance**
 
 - **Single-writer Architecture** : Un seul système de décision unifié
 - **Signaux ML temps réel** : Volatilité (BTC/ETH/SOL ~55%), Régime (Bull 68%), Sentiment (F&G 65)
@@ -395,42 +395,42 @@ python crypto_toolbox_api.py  # Port 8001
 - **Endpoints governance** : `/execution/governance/signals`, `/execution/governance/init-ml`
 - **Interface UI** : GovernancePanel intégré dans Risk Dashboard
 
-### 📊 **Tableau Unifié des Scores** (`unified-scores.html`)
+### **Tableau Unifié des Scores** (`unified-scores.html`)
 
 **Interface de consolidation pour éliminer la confusion des scores multiples** :
 
-- **🎯 Vue d'ensemble complète** : Tous les scores importants sur une seule page
-- **🏛️ Decision Engine** : Score de décision, ML Confidence, État de gouvernance
-- **🎯 CCS Market Score** : CCS Original, CCS Mixte, Phase de marché
-- **🛡️ Risk Assessment** : Risk Score Portfolio, On-Chain Composite, Score Décisionnel
-- **🧠 ML Analytics** : Volatility Prediction, Regime Detection, Correlation Score
-- **💼 Portfolio Health** : Sharpe Ratio, Diversification, Performance 30j
-- **⚡ Execution Status** : Execution Score, Mode, Trades récents
-- **🔄 Actualisation automatique** : Mise à jour toutes les 30 secondes
-- **🎨 Codage couleur** : Excellent (vert) → Bon → Modéré → Faible (rouge)
+- ** Vue d'ensemble complète** : Tous les scores importants sur une seule page
+- ** Decision Engine** : Score de décision, ML Confidence, État de gouvernance
+- ** CCS Market Score** : CCS Original, CCS Mixte, Phase de marché
+- ** Risk Assessment** : Risk Score Portfolio, On-Chain Composite, Score Décisionnel
+- ** ML Analytics** : Volatility Prediction, Regime Detection, Correlation Score
+- ** Portfolio Health** : Sharpe Ratio, Diversification, Performance 30j
+- ** Execution Status** : Execution Score, Mode, Trades récents
+- ** Actualisation automatique** : Mise à jour toutes les 30 secondes
+- ** Codage couleur** : Excellent (vert) → Bon → Modéré → Faible (rouge)
 
-### 🖥️ **Dashboard ML Unifié** (`unified-ml-dashboard.html`)
+### **Dashboard ML Unifié** (`unified-ml-dashboard.html`)
 
 **Interface de contrôle complète pour le pipeline ML** avec :
 
-- **📊 Architecture Consolidée** : Système ML unifié (-65% endpoints, architecture optimisée)
-- **🎛️ Contrôles Avancés** : Chargement par catégorie, modèles individuels, cache management
-- **📈 Métriques Performance** : Suivi en temps réel des modèles chargés et performances
-- **🔍 Logs Détaillés** : Journal complet des opérations ML avec horodatage
-- **🚀 Intégration Complète** : Navigation unifiée via menu "AI → ML Pipeline"
+- ** Architecture Consolidée** : Système ML unifié (-65% endpoints, architecture optimisée)
+- ** Contrôles Avancés** : Chargement par catégorie, modèles individuels, cache management
+- ** Métriques Performance** : Suivi en temps réel des modèles chargés et performances
+- ** Logs Détaillés** : Journal complet des opérations ML avec horodatage
+- ** Intégration Complète** : Navigation unifiée via menu "AI → ML Pipeline"
 
 **Fonctionnalités principales :**
 
 ```
-✅ Pipeline Status          → Surveillance système ML consolidé
-✅ Load Volatility Models   → Chargement batch ou par symbol (BTC, ETH, etc.)
-✅ Load Regime Model        → Détection de régimes market (bull/bear/neutral)
-✅ Performance Summary      → Métriques agrégées et état des modèles
-✅ Cache Management         → Optimisation mémoire et nettoyage intelligent
-✅ Real-time Logging        → Traçabilité complète des opérations ML
+[OK] Pipeline Status          → Surveillance système ML consolidé
+[OK] Load Volatility Models   → Chargement batch ou par symbol (BTC, ETH, etc.)
+[OK] Load Regime Model        → Détection de régimes market (bull/bear/neutral)
+[OK] Performance Summary      → Métriques agrégées et état des modèles
+[OK] Cache Management         → Optimisation mémoire et nettoyage intelligent
+[OK] Real-time Logging        → Traçabilité complète des opérations ML
 ```
 
-### 🔄 **Synchronisation Configuration**
+### **Synchronisation Configuration**
 
 - **Frontend-Backend Sync** : Configuration automatiquement synchronisée entre `settings.html` et modèles ML
 - **Adaptation temps réel** : Changement de source de données (CSV → stub → API) sans réentraînement manuel
@@ -444,7 +444,7 @@ python crypto_toolbox_api.py  # Port 8001
 
 ## Analytics Avancés
 
-### 📈 **Métriques Sophistiquées**
+### **Métriques Sophistiquées**
 
 | Endpoint | Fonctionnalité |
 |----------|----------------|
@@ -454,19 +454,19 @@ python crypto_toolbox_api.py  # Port 8001
 | `/analytics/advanced/risk-metrics` | VaR, CVaR, skewness, kurtosis |
 | `/analytics/advanced/timeseries` | Données pour graphiques interactifs |
 
-### 🎯 **Fonctionnalités Analytics**
+### **Fonctionnalités Analytics**
 
 - **Performance Metrics** : Calculs de ratios avancés avec benchmarking
 - **Drawdown Analysis** : Détection automatique des périodes de baisse
 - **Strategy Comparison** : Rebalancing vs Buy&Hold vs Momentum avec scoring
 - **Risk Assessment** : Value at Risk 95% et Conditional VaR
 - **Distribution Analysis** : Asymétrie, aplatissement, normalité des returns
-- **⚖️ Rebalancing** : `static/rebalance.html` - Génération des plans intelligents avec sync CCS
-- **🏷️ Alias Manager** : `static/alias-manager.html` - Gestion des taxonomies
-- **⚙️ Settings** : `static/settings.html` - Configuration centralisée (**commencez ici**)
-- **🔧 Debug Menu** : `static/debug-menu.html` - Centre de contrôle debug avec accès aux 49 tests
-- **🚀 Multi-Asset Dashboard** : `static/multi-asset-dashboard.html` - Dashboard correlation et analyse multi-actifs
-- **🎨 AI Components Demo** : `static/ai-components-demo.html` - Démonstration des composants IA interactifs
+- ** Rebalancing** : `static/rebalance.html` - Génération des plans intelligents avec sync CCS
+- ** Alias Manager** : `static/alias-manager.html` - Gestion des taxonomies
+- ** Settings** : `static/settings.html` - Configuration centralisée (**commencez ici**)
+- ** Debug Menu** : `static/debug-menu.html` - Centre de contrôle debug avec accès aux 49 tests
+- ** Multi-Asset Dashboard** : `static/multi-asset-dashboard.html` - Dashboard correlation et analyse multi-actifs
+- ** AI Components Demo** : `static/ai-components-demo.html` - Démonstration des composants IA interactifs
 
 ---
 
@@ -485,7 +485,7 @@ python crypto_toolbox_api.py  # Port 8001
   - Exemptions: `/static/*`, `/data/*`, `/health*`.
   - Headers renvoyés: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, et `Retry-After` (429).
 
-> 🔧 **Dernières améliorations** :
+>  **Dernières améliorations** :
 >
 > - **Cache persistant intelligent** : Scores risk-dashboard persistent avec TTL automatique (12h scores, 6h CCS, 4h onchain)
 > - **Cache Market Cycles** : Onglet cycles avec détection changements (12h HTML, 24h Chart.js, 6h données)
@@ -502,7 +502,7 @@ python crypto_toolbox_api.py  # Port 8001
 - Swagger / OpenAPI : <http://127.0.0.1:8080/docs>
 - Healthcheck : <http://127.0.0.1:8080/healthz>
 
-### 🤖 Pipeline ML Optimisé v2.0
+### Pipeline ML Optimisé v2.0
 
 **Architecture :**
 
@@ -525,7 +525,7 @@ python crypto_toolbox_api.py  # Port 8001
 - `POST /api/ml/memory/optimize` - Optimisation mémoire
 - `GET /api/ml/debug/pipeline-info` - Diagnostics système
 
-### 🔧 Outils de debug et diagnostic
+### Outils de debug et diagnostic
 
 - **Mode debug** : `toggleDebug()` dans la console pour activer/désactiver les logs
 - **Menu Debug Intégré** : Accès direct aux 49 tests organisés en 5 catégories (Core, API, UI, Performance, Validation)
@@ -535,16 +535,16 @@ python crypto_toolbox_api.py  # Port 8001
 - **Troubleshooting** : Guide complet dans `TROUBLESHOOTING.md`
 - **Centre de Contrôle Debug** : `/debug-menu.html` avec accès centralisé à tous les outils
 
-> 💡 **Workflow recommandé** : Commencez par Settings pour configurer vos clés API et paramètres, puis naviguez via les menus unifiés.
+>  **Workflow recommandé** : Commencez par Settings pour configurer vos clés API et paramètres, puis naviguez via les menus unifiés.
 
-### 🔍 **Système de Tooltips Contextuelles**
+### **Système de Tooltips Contextuelles**
 
 Un système d'aide intégré fournit des informations contextuelles sur toutes les tuiles :
 
 - **Activation** : Survol de la souris sur n'importe quelle tuile/carte
 - **Informations affichées** :
-  - 📋 **Fonction** : Description de ce que fait la tuile
-  - 🔗 **Source de données** : D'où viennent les informations (API, fichiers, calculs)
+  - **Fonction** : Description de ce que fait la tuile
+  - **Source de données** : D'où viennent les informations (API, fichiers, calculs)
 - **Design responsive** :
   - Desktop : Tooltips flottantes avec animations
   - Mobile : Positionnement fixe en bas d'écran
@@ -560,13 +560,13 @@ Le système est automatiquement chargé via `static/components/tooltips.js` sur 
 
 ---
 
-## 🗄️ Cache Persistant & Performance
+## Cache Persistant & Performance
 
-### 📊 **Système de Cache Intelligent**
+### **Système de Cache Intelligent**
 
 Le **Risk Dashboard** (`static/risk-dashboard.html`) utilise désormais un système de cache persistant pour éviter les recalculs inutiles des scores.
 
-#### ⏰ **Configuration TTL (Time-To-Live)**
+#### **Configuration TTL (Time-To-Live)**
 
 | Type de Données | TTL | Fréquence de Mise à Jour |
 |------------------|-----|--------------------------|
@@ -575,27 +575,27 @@ Le **Risk Dashboard** (`static/risk-dashboard.html`) utilise désormais un syst�
 | **Indicateurs On-Chain** | 4 heures | 6× par jour |
 | **Métriques de Risque** | 8 heures | 3× par jour |
 
-#### 🔄 **Fonctionnalités**
+#### **Fonctionnalités**
 
 - **Cache Automatique** : Sauvegarde transparente des scores calculés
 - **Chargement Instantané** : Restauration immediate des scores valides
 - **Nettoyage Auto** : Suppression automatique des caches expirés
 - **Logs Détaillés** : Suivi de l'âge du cache en temps réel
 
-#### 🎛️ **Interface Utilisateur**
+#### **Interface Utilisateur**
 
-- **🔄 Refresh Data** : Utilise le cache si valide, sinon recalcule
-- **🧹 Force Refresh** : Ignore le cache et recalcule tout (bouton rouge)
+- ** Refresh Data** : Utilise le cache si valide, sinon recalcule
+- ** Force Refresh** : Ignore le cache et recalcule tout (bouton rouge)
 - **Indicateurs d'État** : Affichage de l'âge du cache dans les logs console
 
-#### 💡 **Avantages Performance**
+#### **Avantages Performance**
 
 - **Temps de chargement** : Instantané avec cache (vs 3-5s recalcul)
 - **Économie ressources** : Évite les appels API répétitifs
 - **Expérience utilisateur** : Plus de scores qui "disparaissent" au refresh
 - **Flexibilité** : Contournement possible avec force refresh
 
-#### 📈 **Cache Intelligent Market Cycles** *(NOUVEAU)*
+#### **Cache Intelligent Market Cycles** *(NOUVEAU)*
 
 Le système étend le cache aux onglets **Market Cycles** avec détection intelligente des changements :
 
@@ -605,12 +605,12 @@ Le système étend le cache aux onglets **Market Cycles** avec détection intell
 | **Configuration Chart.js** | 24 heures | Bitcoin cycle + params |
 | **Données cycliques** | 6 heures | CCS + régime + scores |
 
-**🎯 Impact Performance** :
+** Impact Performance** :
 
 - **Chargement onglet** : Instantané depuis cache (vs 2-3s rebuild)
 - **Graphique Bitcoin** : Recréation depuis config (vs fetch + render)
 - **Auto-détection** : Rebuild seulement si données critiques changent
-- **Force refresh** : Bouton "🔄 Refresh Cycles" pour nettoyage manuel
+- **Force refresh** : Bouton " Refresh Cycles" pour nettoyage manuel
 
 ```javascript
 // Exemple d'utilisation en console
@@ -645,7 +645,7 @@ Les deux paires de variables sont acceptées :
 - `CT_API_KEY` / `CT_API_SECRET`
 - `COINTRACKING_API_KEY` / `COINTRACKING_API_SECRET`
 
-> 💬 (Optionnel) Chemin CSV CoinTracking si vous utilisez la source "cointracking"
+>  (Optionnel) Chemin CSV CoinTracking si vous utilisez la source "cointracking"
 > Si non défini, l'app recherche automatiquement en priorité les fichiers :
 >
 > 1. Balance by Exchange (priorité) : data/raw/CoinTracking - Balance by Exchange - *.csv
@@ -864,25 +864,25 @@ POST /api/ml/cache/clear                       # Nettoyage cache ML
 
 ---
 
-## 5) Rebalancing Location-Aware 🎯
+## 5) Rebalancing Location-Aware
 
 ### 5.1 Fonctionnement intelligent des locations
 
 Le système privilégie **les exports CSV CoinTracking** qui contiennent les vraies informations de location :
 
-**🔍 Sources de données (par priorité) :**
+** Sources de données (par priorité) :**
 
 1. **Balance by Exchange CSV** : Données exactes avec vraies locations (recommandé)
 2. **API CoinTracking** : Utilisée en fallback mais peut avoir des problèmes de classification
 3. **Current Balance CSV** : Totaux globaux sans information de location
 
-**🎯 Génération d'actions intelligentes :**
+** Génération d'actions intelligentes :**
 
 - Chaque action indique l'**exchange spécifique** : Kraken, Binance, Ledger Wallets, etc.
 - **Découpe proportionnelle** : Si BTC est sur Kraken (200$) et Binance (100$), une vente de 150$ devient : "Sell on Kraken 100$" + "Sell on Binance 50$"
 - **Priorité d'exécution** : CEX (rapide) → DeFi (moyen) → Cold Storage (complexe)
 
-**🚀 Exemple concret :**
+** Exemple concret :**
 
 ```json
 // Au lieu de "Sell BTC 1000$ on Multiple exchanges"
@@ -892,24 +892,24 @@ Le système privilégie **les exports CSV CoinTracking** qui contiennent les vra
 
 ### 5.2 Classification des exchanges par priorité
 
-**🟢 CEX (Centralized Exchanges) - Priorité 1-15 :**
+**[Positive] CEX (Centralized Exchanges) - Priorité 1-15 :**
 
 - Binance, Kraken, Coinbase, Bitget, Bybit, OKX, Huobi, KuCoin
 - **exec_hint** : `"Sell on Binance"`, `"Buy on Kraken"`
 
-**🟡 Wallets/DeFi - Priorité 20-39 :**
+**[Pending] Wallets/DeFi - Priorité 20-39 :**
 
 - MetaMask, Phantom, Uniswap, PancakeSwap, Curve, Aave
 - **exec_hint** : `"Sell on MetaMask (DApp)"`, `"Sell on Uniswap (DeFi)"`
 
-**🔴 Hardware/Cold - Priorité 40+ :**
+**[Negative] Hardware/Cold - Priorité 40+ :**
 
 - Ledger Wallets, Trezor, Cold Storage
 - **exec_hint** : `"Sell on Ledger Wallets (complex)"`
 
 ---
 
-## 6) Intégration CCS → Rebalance 🎯
+## 6) Intégration CCS → Rebalance
 
 ### 6.1 Interface `window.rebalanceAPI`
 
@@ -932,7 +932,7 @@ window.rebalanceAPI.clearDynamicTargets();
 
 ### 6.2 Indicateurs visuels
 
-- **🎯 CCS 75** : Indicateur affiché quand des targets dynamiques sont actifs
+- ** CCS 75** : Indicateur affiché quand des targets dynamiques sont actifs
 - **Génération automatique** : Le plan peut se générer automatiquement (`autoRun: true`)
 - **Switching transparent** : Passage manuel ↔ dynamique sans conflit
 
@@ -959,10 +959,10 @@ window.rebalanceAPI.clearDynamicTargets();
 
 **Menu cohérent** sur toutes les interfaces :
 
-- **🏠 Dashboard** : Vue d'ensemble du portfolio avec analytics
-- **⚖️ Rebalancing** : Génération des plans de rebalancement
-- **🏷️ Alias Manager** : Gestion des taxonomies (activé après génération d'un plan)
-- **⚙️ Settings** : Configuration centralisée des paramètres
+- ** Dashboard** : Vue d'ensemble du portfolio avec analytics
+- ** Rebalancing** : Génération des plans de rebalancement
+- ** Alias Manager** : Gestion des taxonomies (activé après génération d'un plan)
+- ** Settings** : Configuration centralisée des paramètres
 
 ### 5.3 Interface principale - `static/rebalance.html`
 
@@ -1083,13 +1083,13 @@ Le système de pricing offre **3 modes intelligents** pour enrichir les actions 
 
 ### 7.1 Modes de pricing
 
-**🚀 Local (rapide)** : `pricing=local`
+** Local (rapide)** : `pricing=local`
 
 - Calcule les prix à partir des balances : `price = value_usd / amount`
 - Le plus rapide, idéal pour des données fraîches CoinTracking
 - Source affichée : **Prix locaux**
 
-**⚡ Hybride (recommandé)** : `pricing=hybrid` (défaut)
+** Hybride (recommandé)** : `pricing=hybrid` (défaut)
 
 - Commence par les prix locaux
 - Bascule automatiquement vers les prix marché si :
@@ -1097,7 +1097,7 @@ Le système de pricing offre **3 modes intelligents** pour enrichir les actions 
   - Écart > 5% entre local et marché (`PRICE_HYBRID_DEVIATION_PCT`)
 - Combine rapidité et précision
 
-**🎯 Auto/Marché (précis)** : `pricing=auto`
+** Auto/Marché (précis)** : `pricing=auto`
 
 - Utilise exclusivement les prix live des APIs (CoinGecko → Binance → cache)
 - Le plus précis mais plus lent
@@ -1220,7 +1220,7 @@ curl -s "http://127.0.0.1:8080/portfolio/breakdown-locations?source=cointracking
 ### 10.1 Mode Debug global (UI)
 
 - Activation rapide:
-  - Double‑clic sur `⚙️ Settings`
+  - Double‑clic sur ` Settings`
   - Raccourci clavier: `Alt+D`
   - Paramètre URL: `?debug=true`
 - Effets:
@@ -1261,7 +1261,7 @@ curl -s "http://127.0.0.1:8080/portfolio/breakdown-locations?source=cointracking
 
 ## 12) Système de gestion des risques
 
-### 🛡️ Risk Management System
+### Risk Management System
 
 Système institutionnel complet d'analyse et de surveillance des risques avec **données en temps réel** et **insights contextuels crypto**.
 
@@ -1303,16 +1303,16 @@ GET /api/risk/dashboard            # Dashboard complet temps réel
 
 ## 13) Système de scoring V2 avec gestion des corrélations
 
-### 🚀 **Mise à niveau majeure du système de scoring**
+### **Mise à niveau majeure du système de scoring**
 
 Le système V2 remplace l'ancien scoring basique par une approche intelligente qui :
 
 #### **Catégorisation logique des indicateurs**
 
-- **🔗 On-Chain Pure (40%)** : Métriques blockchain fondamentales (MVRV, NUPL, SOPR)
-- **📊 Cycle/Technical (35%)** : Signaux de timing et cycle (Pi Cycle, CBBI, RSI)  
-- **😨 Sentiment Social (15%)** : Psychologie et adoption (Fear & Greed, Google Trends)
-- **🌐 Market Context (10%)** : Structure de marché et données temporelles
+- ** On-Chain Pure (40%)** : Métriques blockchain fondamentales (MVRV, NUPL, SOPR)
+- ** Cycle/Technical (35%)** : Signaux de timing et cycle (Pi Cycle, CBBI, RSI)
+- ** Sentiment Social (15%)** : Psychologie et adoption (Fear & Greed, Google Trends)
+- ** Market Context (10%)** : Structure de marché et données temporelles
 
 #### **Gestion intelligente des corrélations**
 
@@ -1359,7 +1359,7 @@ python crypto_toolbox_api.py
 
 ## 14) Intégration Kraken & Execution
 
-### 🚀 Kraken Trading Integration
+### Kraken Trading Integration
 
 Intégration complète avec l'API Kraken pour exécution de trades temps réel.
 
@@ -1400,7 +1400,7 @@ GET /analytics/performance/summary   # Analytics de performance (résumé)
 
 ## 14) Classification intelligente & Rebalancing avancé
 
-### 🧠 Smart Classification System
+### Smart Classification System
 
 Système de classification AI-powered pour taxonomie automatique des cryptos.
 
@@ -1429,7 +1429,7 @@ Système de classification AI-powered pour taxonomie automatique des cryptos.
 
 ## 15) Surveillance avancée & Monitoring
 
-### 🔍 Advanced Monitoring System
+### Advanced Monitoring System
 
 Système complet de surveillance multi-dimensionnelle des connexions et services.
 
@@ -1461,7 +1461,7 @@ POST /api/monitoring/test          # Tests manuels de connexions
 
 ## 16) Corrections récentes & Améliorations critiques
 
-### 🔧 Corrections Dashboard & Synchronisation (Août 2025)
+### Corrections Dashboard & Synchronisation (Août 2025)
 
 **Problèmes résolus :**
 
@@ -1478,7 +1478,7 @@ POST /api/monitoring/test          # Tests manuels de connexions
 - **Architecture hybride** : API + CSV fallback pour garantir la cohérence des données
 - **Asset grouping** : Fonction `groupAssetsByAliases()` unifiée pour comptage cohérent des assets
 
-### 📊 Architecture Hybride API + CSV
+### Architecture Hybride API + CSV
 
 Le système utilise maintenant une approche hybride intelligente :
 
@@ -1499,7 +1499,7 @@ if (response.ok) {
 }
 ```
 
-### 🔍 Accès CSV via Uvicorn
+### Accès CSV via Uvicorn
 
 **Configuration FastAPI** mise à jour dans `api/main.py` :
 
@@ -1516,7 +1516,7 @@ app.mount("/data", StaticFiles(directory=str(DATA_DIR)), name="data")
 - Fallback local : `../data/raw/CoinTracking - Current Balance.csv`
 - Gestion automatique selon le contexte d'exécution
 
-### 🎯 Stratégies CCS Différenciées
+### Stratégies CCS Différenciées
 
 Les boutons de stratégie retournent maintenant des allocations distinctes :
 
@@ -1525,84 +1525,84 @@ Les boutons de stratégie retournent maintenant des allocations distinctes :
 - **Cycle Bull Market** : BTC 55%, ETH 25%, Stablecoins 5%, SOL 10%, L1/L0 5%
 - **Blended Strategy** : Moyenne pondérée des stratégies
 
-### ✅ Tests de Validation
+### Tests de Validation
 
 Tous les cas d'usage critiques ont été testés et validés :
 
-- ✅ Affichage du graphique portfolio overview
-- ✅ Totaux identiques entre dashboards (422431$, 183 assets)
-- ✅ Accès CSV fonctionnel via uvicorn
-- ✅ Sync CCS vers rebalance.html opérationnelle
-- ✅ Stratégies différenciées actives
+- [OK] Affichage du graphique portfolio overview
+- [OK] Totaux identiques entre dashboards (422431$, 183 assets)
+- [OK] Accès CSV fonctionnel via uvicorn
+- [OK] Sync CCS vers rebalance.html opérationnelle
+- [OK] Stratégies différenciées actives
 
 ---
 
 ## 17) Roadmap & Prochaines étapes
 
-### ✅ Fonctionnalités complétées (Phase 1-4)
+### Fonctionnalités complétées (Phase 1-4)
 
-**🏗️ Infrastructure & Base**
+**[In progress] Infrastructure & Base**
 
-- ✅ **Interface unifiée** avec navigation bi-sectionnelle (Analytics vs Engine)
-- ✅ **Configuration centralisée** avec synchronisation .env
-- ✅ **Gestion intelligente des plans** avec persistance cross-page
-- ✅ **Système de theming** dark/light avec cohérence globale
+- [OK] **Interface unifiée** avec navigation bi-sectionnelle (Analytics vs Engine)
+- [OK] **Configuration centralisée** avec synchronisation .env
+- [OK] **Gestion intelligente des plans** avec persistance cross-page
+- [OK] **Système de theming** dark/light avec cohérence globale
 
-**📊 Analytics & Risk (Phase 2)**
+** Analytics & Risk (Phase 2)**
 
-- ✅ **Dashboard portfolio** avec analytics avancées et visualisations
-- ✅ **🛡️ Système de gestion des risques** institutionnel complet
-- ✅ **Classification automatique** IA avec 11 groupes (90% précision)  
-- ✅ **Rebalancing location-aware** avec exec hints intelligents
+- [OK] **Dashboard portfolio** avec analytics avancées et visualisations
+- [OK] ** Système de gestion des risques** institutionnel complet
+- [OK] **Classification automatique** IA avec 11 groupes (90% précision)
+- [OK] **Rebalancing location-aware** avec exec hints intelligents
 
-**🚀 Execution & Trading (Phase 3)**  
+** Execution & Trading (Phase 3)**
 
-- ✅ **Intégration Kraken complète** avec API trading temps réel
-- ✅ **Dashboard d'exécution** avec monitoring live et gestion d'ordres
-- ✅ **Historique & analytics** des trades avec métriques de performance
-- ✅ **Surveillance avancée** multi-endpoint avec alerting intelligent
+- [OK] **Intégration Kraken complète** avec API trading temps réel
+- [OK] **Dashboard d'exécution** avec monitoring live et gestion d'ordres
+- [OK] **Historique & analytics** des trades avec métriques de performance
+- [OK] **Surveillance avancée** multi-endpoint avec alerting intelligent
 
-**🧠 Intelligence & Optimization (Phase 4)**
+** Intelligence & Optimization (Phase 4)**
 
-- ✅ **Rebalancing engine avancé** multi-stratégie avec détection de régime
-- ✅ **Performance attribution** Brinson-style avec décomposition
-- ✅ **Backtesting engine** avec coûts de transaction et benchmarks
-- ✅ **Smart classification** hybrid AI avec confidence scoring
-- ✅ **Portfolio Optimization** Markowitz avec 6 objectifs et contraintes crypto
-- ✅ **ML Models & Endpoints** API machine learning pour analytics prédictifs
-- ✅ **Multi-Asset Management** corrélation et gestion multi-actifs avancée
+- [OK] **Rebalancing engine avancé** multi-stratégie avec détection de régime
+- [OK] **Performance attribution** Brinson-style avec décomposition
+- [OK] **Backtesting engine** avec coûts de transaction et benchmarks
+- [OK] **Smart classification** hybrid AI avec confidence scoring
+- [OK] **Portfolio Optimization** Markowitz avec 6 objectifs et contraintes crypto
+- [OK] **ML Models & Endpoints** API machine learning pour analytics prédictifs
+- [OK] **Multi-Asset Management** corrélation et gestion multi-actifs avancée
 
-### 🎯 Prochaines phases (Phase 5+)
+### Prochaines phases (Phase 5+)
 
-**⬜ Phase 5: Multi-Exchange & Scaling**
+**[Pending] Phase 5: Multi-Exchange & Scaling**
 
-- ⬜ **Binance Integration**: Support complet API Binance
-- ⬜ **Cross-Exchange Arbitrage**: Détection et exécution d'opportunités
-- ⬜ **Advanced Order Types**: Support OCO, trailing stops, iceberg
-- ✅ **Portfolio Optimization**: Optimisation Markowitz avec 34+ actifs, contraintes crypto-spécifiques
+- [Pending] **Binance Integration**: Support complet API Binance
+- [Pending] **Cross-Exchange Arbitrage**: Détection et exécution d'opportunités
+- [Pending] **Advanced Order Types**: Support OCO, trailing stops, iceberg
+- [OK] **Portfolio Optimization**: Optimisation Markowitz avec 34+ actifs, contraintes crypto-spécifiques
 
-**⬜ Phase 6: AI & Predictive Analytics**
+**[Pending] Phase 6: AI & Predictive Analytics**
 
-- ⬜ **ML Risk Models**: Modèles prédictifs de risque avec deep learning
-- ⬜ **Sentiment Analysis**: Intégration données sentiment et social
-- ⬜ **Predictive Rebalancing**: Rebalancement prédictif basé sur signaux
-- ⬜ **Automated Strategies**: Stratégies entièrement automatisées
+- [Pending] **ML Risk Models**: Modèles prédictifs de risque avec deep learning
+- [Pending] **Sentiment Analysis**: Intégration données sentiment et social
+- [Pending] **Predictive Rebalancing**: Rebalancement prédictif basé sur signaux
+- [Pending] **Automated Strategies**: Stratégies entièrement automatisées
 
-**⬜ Phase 7: Enterprise & Compliance**
+**[Pending] Phase 7: Enterprise & Compliance**
 
-- ⬜ **Multi-Tenant**: Support multi-utilisateurs avec isolation
-- ⬜ **Compliance Reporting**: Rapports réglementaires automatisés
-- ⬜ **Audit Trail**: Traçabilité complète pour conformité
-- ⬜ **White-Label**: Solution white-label pour clients institutionnels
+- [Pending] **Multi-Tenant**: Support multi-utilisateurs avec isolation
+- [Pending] **Compliance Reporting**: Rapports réglementaires automatisés
+- [Pending] **Audit Trail**: Traçabilité complète pour conformité
+- [Pending] **White-Label**: Solution white-label pour clients institutionnels
 
-**⬜ Phase 8: Advanced Infrastructure**
+**[Pending] Phase 8: Advanced Infrastructure**
 
-- ⬜ **Real-time Streaming**: WebSocket pour données temps réel
-- ⬜ **Microservices**: Architecture distribuée scalable
-- ⬜ **Docker & Kubernetes**: Containerisation et orchestration
-- ⬜ **Cloud Deployment**: Déploiement multi-cloud avec HA
+- [Pending] **Real-time Streaming**: WebSocket pour données temps réel
+- [Pending] **Microservices**: Architecture distribuée scalable
+- [Pending] **Docker & Kubernetes**: Containerisation et orchestration
+- [Pending] **Cloud Deployment**: Déploiement multi-cloud avec HA
 
-## 📊 Portfolio Optimization
+## Portfolio Optimization
 
 ### Features
 
@@ -1631,7 +1631,7 @@ Tous les cas d'usage critiques ont été testés et validés :
 - **Symbol normalization** : Support variants CoinTracking (SOL2→SOL, WETH→ETH)
 - **Numerical stability** : Protection contre cas edge (vol=0, corrélations extrêmes)
 
-### API Endpoints Alertes 🚨
+### API Endpoints Alertes
 
 ```bash
 # Alertes actives avec filtres
@@ -1669,7 +1669,7 @@ POST /api/alerts/config/reload
 GET /api/alerts/config/current
 ```
 
-### API Endpoints Portfolio 📊
+### API Endpoints Portfolio
 
 ```bash
 # Optimisation portfolio
@@ -1743,71 +1743,71 @@ POST /api/backtesting/run
   - 365 jours = Équilibre qualité/diversité  
   - 730+ jours = Conservateur, cryptos établies uniquement
 
-### 🚀 Nouvelles fonctionnalités Portfolio Optimization (Août 2025)
+### Nouvelles fonctionnalités Portfolio Optimization (Août 2025)
 
 **Core Features Implemented:**
 
-- ✅ **"Sell to 0%" trades** : Génération automatique des ordres de vente pour assets exclus
-- ✅ **Dynamic min_weight** : Calcul adaptatif selon nombre d'actifs (évite contraintes infaisables)  
-- ✅ **CoinTracking API integration** : Source de données cointracking_api exposée avec fallback
-- ✅ **Max correlation exposure** : Contrainte de corrélation avec calcul matrice avancé
-- ✅ **Numerical stability** : Protection Sharpe ratio, fallback SLSQP robuste
-- ✅ **Enhanced UI controls** : Contrôles min_weight, target_volatility, correlation, analysis intégrée
-- ✅ **Portfolio Analysis endpoint** : Suggestions d'optimisation basées sur métriques actuelles
-- ✅ **Symbol normalization** : Gestion variants CoinTracking (ex: SOL2 → SOL)
+- [OK] **"Sell to 0%" trades** : Génération automatique des ordres de vente pour assets exclus
+- [OK] **Dynamic min_weight** : Calcul adaptatif selon nombre d'actifs (évite contraintes infaisables)
+- [OK] **CoinTracking API integration** : Source de données cointracking_api exposée avec fallback
+- [OK] **Max correlation exposure** : Contrainte de corrélation avec calcul matrice avancé
+- [OK] **Numerical stability** : Protection Sharpe ratio, fallback SLSQP robuste
+- [OK] **Enhanced UI controls** : Contrôles min_weight, target_volatility, correlation, analysis intégrée
+- [OK] **Portfolio Analysis endpoint** : Suggestions d'optimisation basées sur métriques actuelles
+- [OK] **Symbol normalization** : Gestion variants CoinTracking (ex: SOL2 → SOL)
 
 **Advanced Optimization Suite:**
 
-- ✅ **Risk Budgeting** : Allocation par contribution au risque avec budgets sectoriels personnalisés
-- ✅ **Multi-Period Optimization** : Optimisation sur plusieurs horizons temporels (30j, 90j, 365j)
-- ✅ **Transaction Costs Integration** : Prise en compte des frais de trading dans l'optimisation
-- ✅ **Backtesting Engine** : Validation historique avec 6 stratégies et métriques avancées
-- ✅ **Real Data Testing** : Validé sur portfolio 420k$ avec 183 actifs en production
+- [OK] **Risk Budgeting** : Allocation par contribution au risque avec budgets sectoriels personnalisés
+- [OK] **Multi-Period Optimization** : Optimisation sur plusieurs horizons temporels (30j, 90j, 365j)
+- [OK] **Transaction Costs Integration** : Prise en compte des frais de trading dans l'optimisation
+- [OK] **Backtesting Engine** : Validation historique avec 6 stratégies et métriques avancées
+- [OK] **Real Data Testing** : Validé sur portfolio 420k$ avec 183 actifs en production
 
-### 🔧 Améliorations techniques récentes (Août 2025)
+### Améliorations techniques récentes (Août 2025)
 
-- ✅ **Système de logging conditionnel** : Debug désactivable en production via `toggleDebug()`
-- ✅ **Validation des inputs** : Système complet de validation côté frontend
-- ✅ **Performance optimization** : Support optimisé pour portfolios 1000+ assets
-- ✅ **Error handling** renforcé avec try/catch appropriés et feedback UI
-- ✅ **Documentation troubleshooting** : Guide complet de résolution des problèmes
+- [OK] **Système de logging conditionnel** : Debug désactivable en production via `toggleDebug()`
+- [OK] **Validation des inputs** : Système complet de validation côté frontend
+- [OK] **Performance optimization** : Support optimisé pour portfolios 1000+ assets
+- **Error handling** renforcé avec try/catch appropriés et feedback UI
+- [OK] **Documentation troubleshooting** : Guide complet de résolution des problèmes
 
-### 🔥 **CORRECTION CRITIQUE** (27 Août 2025) - Bug majeur résolu
+### **CORRECTION CRITIQUE** (27 Août 2025) - Bug majeur résolu
 
-**❌ Problème** : Settings montrait "📊 Balances: ❌ Vide" et analytics en erreur
-**✅ Solution** :
+**[Error] Problème** : Settings montrait " Balances: [Error] Vide" et analytics en erreur
+**[OK] Solution** :
 
 - **API parsing fix** : Correction `api/main.py:370` (`raw.get("items", [])` au lieu de `raw or []`)
 - **CSV detection dynamique** : Support complet des fichiers datés `CoinTracking - Balance by Exchange - 26.08.2025.csv`
 - **Frontend unification** : `global-config.js` utilise maintenant l'API backend au lieu d'accès direct aux fichiers
 
-**🎯 Résultat** : 945 assets détectés → 116 assets >$100 affichés → $420,554 portfolio total ✅
+** Résultat** : 945 assets détectés → 116 assets >$100 affichés → $420,554 portfolio total [OK]
 
-**📁 Nouveaux modules créés** :
+** Nouveaux modules créés** :
 
 - `static/debug-logger.js` : Logging conditionnel intelligent
 - `static/input-validator.js` : Validation renforcée avec XSS protection
 - `static/performance-optimizer.js` : Optimisations pour gros portfolios
 - `api/csv_endpoints.py` : Téléchargement automatique CoinTracking (400+ lignes)
 
-### 🎯 **SYSTÈME DE REBALANCING INTELLIGENT** (28 Août 2025) - Architecture Révolutionnaire
+### **SYSTÈME DE REBALANCING INTELLIGENT** (28 Août 2025) - Architecture Révolutionnaire
 
-**🧠 Nouvelle Architecture Stratégique :**
+** Nouvelle Architecture Stratégique :**
 
 #### Core Components
 
-- **📊 CCS Mixte (Score Directeur)** : Blending CCS + Bitcoin Cycle (sigmoïde calibré)
-- **🔗 On-Chain Composite** : MVRV, NVT, Puell Multiple, Fear & Greed avec cache stabilisé
-- **🛡️ Risk Score** : Métriques portfolio unifiées (backend consistency)
-- **⚖️ Score Blended** : Formule stratégique **50% CCS Mixte + 30% On-Chain + 20% (100-Risk)**
+- ** CCS Mixte (Score Directeur)** : Blending CCS + Bitcoin Cycle (sigmoïde calibré)
+- ** On-Chain Composite** : MVRV, NVT, Puell Multiple, Fear & Greed avec cache stabilisé
+- ** Risk Score** : Métriques portfolio unifiées (backend consistency)
+- ** Score Blended** : Formule stratégique **50% CCS Mixte + 30% On-Chain + 20% (100-Risk)**
 
 #### Market Regime System (4 Régimes)
 
 ```javascript
-🔵 Accumulation (0-39)  : BTC+10%, ETH+5%, Alts-15%, Stables 15%, Memes 0%
-🟢 Expansion (40-69)    : Équilibré, Stables 20%, Memes max 5%
-🟡 Euphorie (70-84)     : BTC-5%, ETH+5%, Alts+10%, Memes max 15%
-🔴 Distribution (85-100): BTC+5%, ETH-5%, Alts-15%, Stables 30%, Memes 0%
+ Accumulation (0-39)  : BTC+10%, ETH+5%, Alts-15%, Stables 15%, Memes 0%
+[Positive] Expansion (40-69)    : Équilibré, Stables 20%, Memes max 5%
+[Pending] Euphorie (70-84)     : BTC-5%, ETH+5%, Alts+10%, Memes max 15%
+[Negative] Distribution (85-100): BTC+5%, ETH-5%, Alts-15%, Stables 30%, Memes 0%
 ```
 
 #### Dynamic Risk Budget
@@ -1818,14 +1818,14 @@ POST /api/backtesting/run
 
 #### SMART Targeting System
 
-**🧠 Allocation Intelligence Artificielle**
+** Allocation Intelligence Artificielle**
 
 - **Analyse Multi-Scores** : Combine Blended Score (régime), On-Chain (divergences), Risk Score (contraintes)
 - **Régime de Marché** : Adapte automatiquement l'allocation selon le régime détecté (Accumulation/Expansion/Euphorie/Distribution)
 - **Risk-Budget Dynamic** : Calcule le budget risqué optimal avec formule `RiskCap = 1 - 0.5 × (Risk/100)`
 - **Confidence Scoring** : Attribue un score de confiance basé sur la cohérence des signaux
 
-**⚙️ Overrides Automatiques**
+** Overrides Automatiques**
 
 ```javascript
 // Conditions d'override automatique
@@ -1836,7 +1836,7 @@ POST /api/backtesting/run
 - Blended Score > 90 → Mode "Distribution Forcée"
 ```
 
-**📋 Trading Rules Engine**
+** Trading Rules Engine**
 
 - **Seuils Minimum** : Change >3%, ordre >$200, variation relative >20%
 - **Circuit Breakers** : Stop si drawdown >-25%, force stables si On-Chain <45
@@ -1844,12 +1844,12 @@ POST /api/backtesting/run
 - **Taille Ordres** : Max 10% portfolio par trade individuel
 - **Validation** : Plans d'exécution phasés avec priorité (High→Medium→Low)
 
-**🎯 Exemple d'Allocation SMART**
+** Exemple d'Allocation SMART**
 
 ```javascript
 // Régime Expansion (Score Blended: 55) + Risk Moderate (65) + On-Chain Bullish (75)
 {
-  "regime": "🟢 Expansion",
+  "regime": "[Positive] Expansion",
   "risk_budget": { "risky": 67%, "stables": 33% },
   "allocation": {
     "BTC": 32%,      // Base régime + slight boost car On-Chain fort
@@ -1871,25 +1871,25 @@ POST /api/backtesting/run
 
 #### Corrections Critiques
 
-**🐛 Dashboard Loading Issues (résolu)**
+** Dashboard Loading Issues (résolu)**
 
 - **Problème** : "Cannot set properties of null (setting 'textContent')"
 - **Cause** : Fonction `updateSidebar()` cherchait l'élément DOM `ccs-score` qui n'existe plus dans la nouvelle structure HTML
 - **Solution** : Suppression des références DOM obsolètes et mise à jour des sélecteurs
 
-**🔄 Cycle Analysis Tab (résolu)**  
+** Cycle Analysis Tab (résolu)**
 
 - **Problème** : "Loading cycle analysis..." ne finissait jamais de charger
 - **Cause** : Logic inverse dans `switchTab()` - `renderCyclesContent()` appelé seulement quand PAS sur l'onglet cycles
 - **Solution** : Correction de la logique pour appeler `renderCyclesContent()` lors de l'activation de l'onglet
 
-**📊 Score Consistency (résolu)**
+** Score Consistency (résolu)**
 
 - **Problème** : Risk Score différent entre sidebar (barre de gauche) et Risk Overview (onglet principal)
 - **Cause** : Deux calculs différents - sidebar utilisait `calculateRiskScore()` custom, Risk Overview utilisait `risk_metrics.risk_score` du backend
 - **Solution** : Unification pour utiliser la même source backend `riskData?.risk_metrics?.risk_score ?? 50`
 
-**🎯 Strategic Scores Display (résolu)**
+** Strategic Scores Display (résolu)**
 
 - **Problème** : On-Chain, Risk et Blended scores affichaient `--` et "Loading..." en permanence  
 - **Cause** : Chemins incorrects dans `updateSidebar()` - cherchait `state.onchain?.composite_score` au lieu de `state.scores?.onchain`
@@ -1902,9 +1902,9 @@ POST /api/backtesting/run
 - **Market Cycles Tab** : Graphiques Bitcoin cycle avec analyse de position
 - **Strategic Targeting** : SMART button avec allocations régime-aware
 
-**🎯 Résultat** : Système de rebalancing institutionnel market-aware avec intelligence artificielle intégrée
+** Résultat** : Système de rebalancing institutionnel market-aware avec intelligence artificielle intégrée
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Signal Handling (CTRL+C) sur Windows
 
@@ -1913,7 +1913,7 @@ POST /api/backtesting/run
 **Solution implémentée** :
 
 ```bash
-# ✅ CTRL+C fonctionne maintenant parfaitement
+# CTRL+C fonctionne maintenant parfaitement
 uvicorn api.main:app --port 8080
 # Press CTRL+C -> arrêt propre en ~2s
 ```
@@ -1961,20 +1961,20 @@ localStorage.getItem('risk_scores_cache')
 curl http://localhost:8080/api/ml/status
 ```
 
-### 🔧 Prochaines améliorations
+### Prochaines améliorations
 
-- ⬜ **Tests unitaires complets** pour tous les modules
-- ⬜ **Documentation API** avec exemples et tutoriels
-- ⬜ **Retry mechanisms** automatiques sur échec réseau
-- ⬜ **Cache intelligent** avec TTL adaptatif
-- ⬜ **Backtesting** du système SMART avec données historiques
-- ⬜ **Machine Learning** pour optimisation des seuils de régimes
+- [Pending] **Tests unitaires complets** pour tous les modules
+- [Pending] **Documentation API** avec exemples et tutoriels
+- [Pending] **Retry mechanisms** automatiques sur échec réseau
+- [Pending] **Cache intelligent** avec TTL adaptatif
+- [Pending] **Backtesting** du système SMART avec données historiques
+- [Pending] **Machine Learning** pour optimisation des seuils de régimes
 
 ---
 
-**🎉 Ce projet représente maintenant une plateforme complète de trading & risk management institutionnel market-aware avec plus de 20,000 lignes de code, 49 tests organisés, système de régimes de marché IA, rebalancing intelligent automatisé, et infrastructure Docker production-ready.**
+** Ce projet représente maintenant une plateforme complète de trading & risk management institutionnel market-aware avec plus de 20,000 lignes de code, 49 tests organisés, système de régimes de marché IA, rebalancing intelligent automatisé, et infrastructure Docker production-ready.**
 
-## 🧭 Synchronisation & Source de Vérité (v2)
+## Synchronisation & Source de Vérité (v2)
 
 Nouvelle architecture avec gouvernance comme source unique des scores décisionnels:
 

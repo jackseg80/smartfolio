@@ -365,13 +365,13 @@ async def rebalance_plan(
     )
 
     logger.debug(
-        f"🔧 BEFORE assign_locations_to_actions: plan has {len(plan.get('actions', []))} actions"
+        f" BEFORE assign_locations_to_actions: plan has {len(plan.get('actions', []))} actions"
     )
     plan = assign_locations_to_actions(
         plan, rows, min_trade_usd=float(payload.get("min_trade_usd", 25.0))
     )
     logger.debug(
-        f"🔧 AFTER assign_locations_to_actions: plan has {len(plan.get('actions', []))} actions"
+        f" AFTER assign_locations_to_actions: plan has {len(plan.get('actions', []))} actions"
     )
 
     # enrichissement prix (selon "pricing")

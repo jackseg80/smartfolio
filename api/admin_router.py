@@ -618,7 +618,7 @@ async def get_cache_stats(
     """
     try:
         stats = cache_manager.get_cache_stats(cache_name)
-        logger.info(f"✅ Cache stats retrieved by {user}" + (f" for {cache_name}" if cache_name else ""))
+        logger.info(f" Cache stats retrieved by {user}" + (f" for {cache_name}" if cache_name else ""))
         return success_response(stats)
 
     except Exception as e:
@@ -647,7 +647,7 @@ async def clear_cache(
         # Clear users cache si demandé
         if cache_name in ["all", "users"]:
             clear_users_cache()
-            logger.info(f"✅ Users cache cleared by {user}")
+            logger.info(f" Users cache cleared by {user}")
 
         # Clear cache via CacheManager
         result = cache_manager.clear_cache(cache_name, admin_user=user)
@@ -679,7 +679,7 @@ async def list_caches(user: str = Depends(require_admin_role)):
     """
     try:
         available_caches = cache_manager.get_available_caches()
-        logger.info(f"✅ Cache list retrieved by {user}")
+        logger.info(f" Cache list retrieved by {user}")
         return success_response({
             "caches": available_caches,
             "count": len(available_caches)
@@ -709,7 +709,7 @@ async def clear_expired_entries(
     """
     try:
         result = cache_manager.clear_expired(cache_name)
-        logger.info(f"✅ Expired entries cleared by {user}" + (f" from {cache_name}" if cache_name else " from all caches"))
+        logger.info(f" Expired entries cleared by {user}" + (f" from {cache_name}" if cache_name else " from all caches"))
         return success_response(result)
 
     except Exception as e:
@@ -734,7 +734,7 @@ async def list_ml_models(user: str = Depends(require_admin_role)):
     """
     try:
         models = training_executor.list_available_models()
-        logger.info(f"✅ ML models listed by {user}")
+        logger.info(f" ML models listed by {user}")
         return success_response(models)
 
     except Exception as e:
@@ -848,7 +848,7 @@ async def get_model_default_params(
             # Generic defaults
             config = TrainingConfig()
 
-        logger.info(f"✅ Default params returned for {model_name} (type: {model_type})")
+        logger.info(f" Default params returned for {model_name} (type: {model_type})")
         return success_response({
             "model_name": model_name,
             "model_type": model_type,
@@ -901,7 +901,7 @@ async def trigger_model_training(
                 code=status.HTTP_400_BAD_REQUEST
             )
 
-        logger.info(f"✅ Training triggered for {model_name} by {user} (custom_config={config is not None})")
+        logger.info(f" Training triggered for {model_name} by {user} (custom_config={config is not None})")
         return success_response(result)
 
     except Exception as e:
@@ -941,7 +941,7 @@ async def list_training_jobs(
                 )
 
         jobs = training_executor.list_jobs(status_filter=status_enum, limit=limit)
-        logger.info(f"✅ Training jobs listed by {user}")
+        logger.info(f" Training jobs listed by {user}")
         return success_response(jobs)
 
     except Exception as e:
@@ -975,7 +975,7 @@ async def get_job_status(
                 code=status.HTTP_404_NOT_FOUND
             )
 
-        logger.info(f"✅ Job status retrieved for {job_id} by {user}")
+        logger.info(f" Job status retrieved for {job_id} by {user}")
         return success_response(job)
 
     except Exception as e:
@@ -1009,7 +1009,7 @@ async def cancel_training_job(
                 code=status.HTTP_400_BAD_REQUEST
             )
 
-        logger.info(f"✅ Job {job_id} cancelled by {user}")
+        logger.info(f" Job {job_id} cancelled by {user}")
         return success_response(result)
 
     except Exception as e:
@@ -1037,7 +1037,7 @@ async def get_auto_trainer_status(user: str = Depends(require_admin_role)):
 
         status_info = ml_auto_trainer.get_status()
 
-        logger.info(f"✅ Auto-trainer status retrieved by {user}")
+        logger.info(f" Auto-trainer status retrieved by {user}")
         return success_response(status_info)
 
     except Exception as e:
@@ -1061,7 +1061,7 @@ async def start_auto_trainer(user: str = Depends(require_admin_role)):
 
         ml_auto_trainer.start()
 
-        logger.info(f"✅ Auto-trainer started by {user}")
+        logger.info(f" Auto-trainer started by {user}")
         return success_response({
             "message": "ML Auto-Trainer started successfully",
             "schedule": {
@@ -1092,7 +1092,7 @@ async def stop_auto_trainer(user: str = Depends(require_admin_role)):
 
         ml_auto_trainer.stop()
 
-        logger.info(f"✅ Auto-trainer stopped by {user}")
+        logger.info(f" Auto-trainer stopped by {user}")
         return success_response({
             "message": "ML Auto-Trainer stopped successfully"
         })
@@ -1137,7 +1137,7 @@ async def trigger_auto_trainer_job(
                 code=status.HTTP_400_BAD_REQUEST
             )
 
-        logger.info(f"✅ Auto-trainer job {job_id} triggered by {user}")
+        logger.info(f" Auto-trainer job {job_id} triggered by {user}")
         return success_response(result)
 
     except Exception as e:

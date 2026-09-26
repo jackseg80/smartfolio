@@ -5,16 +5,16 @@
 > **Navigateur** : Chromium (Desktop Chrome)
 > **Timeout par test** : 30s
 
-## 📊 Résumé Actuel
+## Résumé Actuel
 
 | Métrique | Valeur | Notes |
 |----------|--------|-------|
 | **Tests totaux** | 72 | 4 suites (analytics, risk-dashboard, rebalance, simulator) |
-| **Tests passés** | **53** | **74% de réussite** ✅ |
+| **Tests passés** | **53** | **74% de réussite** [OK] |
 | **Tests échoués** | 19 | 26% (éléments HTML manquants ou timeouts) |
 | **Amélioration** | +34% | Avant corrections: 43/72 (60%) |
 
-## 🎯 Corrections Appliquées (Oct 2025)
+## Corrections Appliquées (Oct 2025)
 
 ### 1. Sélecteurs CSS (28 corrections)
 
@@ -22,10 +22,10 @@
 **Solution** : Pattern `.or()` pour séparer attributs et sélecteurs text
 
 ```javascript
-// ❌ Avant (erreur parsing)
+// [Error] Avant (erreur parsing)
 page.locator('[data-section="ml"], text=/ml/i')
 
-// ✅ Après (syntaxe correcte)
+// [OK] Après (syntaxe correcte)
 page.locator('[data-section=ml]').or(page.locator('text=/ml/i'))
 ```
 
@@ -64,11 +64,11 @@ page.locator('[data-section=ml]').or(page.locator('text=/ml/i'))
 document.querySelectorAll('.tab-button').forEach(btn => {
   const isActive = btn.dataset.tab === tabName;
   btn.classList.toggle('active', isActive);
-  btn.setAttribute('aria-selected', isActive ? 'true' : 'false'); // ✅
+  btn.setAttribute('aria-selected', isActive ? 'true' : 'false'); // [OK]
 });
 ```
 
-## ⚠️ Tests Échouant (19 restants)
+## Tests Échouant (19 restants)
 
 ### Breakdown par Type
 
@@ -85,10 +85,10 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 **Raison principale** : Lazy-loading des tabs + éléments générés dynamiquement
 
 ```
-❌ should display active alerts table           → Timeout waiting for alerts
-❌ should display Risk Score metric              → Timeout loading risk-overview
-❌ should generate action plan                   → Timeout loading targets-tab
-❌ should maintain data consistency across tabs  → Timeout switching tabs
+[Error] should display active alerts table           → Timeout waiting for alerts
+[Error] should display Risk Score metric              → Timeout loading risk-overview
+[Error] should generate action plan                   → Timeout loading targets-tab
+[Error] should maintain data consistency across tabs  → Timeout switching tabs
 ```
 
 **Solution recommandée** : Augmenter timeouts ou ajouter waitFor explicites
@@ -98,9 +98,9 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 **Raison principale** : Section ML dans tab-panel caché par défaut
 
 ```
-❌ should load analytics page successfully       → data-section="ml" not visible on load
-❌ should display volatility predictions         → ML section not expanded
-❌ should load ML predictions in less than 10s   → Timeout too strict
+[Error] should load analytics page successfully       → data-section="ml" not visible on load
+[Error] should display volatility predictions         → ML section not expanded
+[Error] should load ML predictions in less than 10s   → Timeout too strict
 ```
 
 **Solution recommandée** : Tests doivent naviguer vers onglet ML avant vérification
@@ -110,8 +110,8 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 **Raison principale** : Presets chargés depuis JSON externe
 
 ```
-❌ should display 10 presets                     → data-preset attribute missing
-❌ should select "Euphorie" preset               → Preset element structure different
+[Error] should display 10 presets                     → data-preset attribute missing
+[Error] should select "Euphorie" preset               → Preset element structure different
 ```
 
 **Solution recommandée** : Ajouter `data-preset` aux éléments HTML générés
@@ -119,13 +119,13 @@ document.querySelectorAll('.tab-button').forEach(btn => {
 #### 4. rebalance.spec.js (2 échecs)
 
 ```
-❌ should load user portfolio data               → total-value element not found
-❌ should link to execution history              → Navigation timeout
+[Error] should load user portfolio data               → total-value element not found
+[Error] should link to execution history              → Navigation timeout
 ```
 
 **Solution recommandée** : Vérifier structure HTML de rebalance.html
 
-## 🚀 Lancer les Tests
+## Lancer les Tests
 
 ### Prérequis
 
@@ -153,7 +153,7 @@ npx playwright test --ui
 npx playwright show-report tests/e2e-report
 ```
 
-### ⚠️ Important
+### Important
 
 **Le serveur backend doit être actif** :
 ```bash
@@ -165,7 +165,7 @@ python -m uvicorn api.main:app --port 8080
 npx playwright test
 ```
 
-## 📝 Structure des Tests
+## Structure des Tests
 
 ```
 tests/e2e/
@@ -176,7 +176,7 @@ tests/e2e/
 └── KNOWN_FAILURES.md       (documentation des échecs connus)
 ```
 
-## 🔄 Workflow de Contribution
+## Workflow de Contribution
 
 ### Ajouter un nouveau test
 
@@ -209,7 +209,7 @@ test('should display risk score', async ({ page }) => {
 });
 ```
 
-## 🎯 Roadmap
+## Roadmap
 
 ### Court terme (prochaine itération)
 
@@ -229,14 +229,14 @@ test('should display risk score', async ({ page }) => {
 - [ ] Tests mobile (viewport responsive)
 - [ ] CI/CD intégration (GitHub Actions)
 
-## 📚 Ressources
+## Ressources
 
 - [Playwright Documentation](https://playwright.dev/)
 - [Best Practices](https://playwright.dev/docs/best-practices)
 - [Sélecteurs robustes](https://playwright.dev/docs/locators)
 - [Debugging](https://playwright.dev/docs/debug)
 
-## 🐛 Debugging
+## Debugging
 
 ### Tests qui timeout
 
@@ -261,7 +261,7 @@ npx playwright test --trace on
 npx playwright show-trace tests/e2e-report/trace.zip
 ```
 
-## ✅ Definition of Done pour Tests E2E
+## Definition of Done pour Tests E2E
 
 - [ ] Test passe localement (2+ runs)
 - [ ] HTML a les attributs nécessaires (`data-*`, `role`)
@@ -271,6 +271,6 @@ npx playwright show-trace tests/e2e-report/trace.zip
 
 ---
 
-**Statut** : 🟢 Tests E2E opérationnels (74% de réussite)
+**Statut** : [Positive] Tests E2E opérationnels (74% de réussite)
 **Maintenance** : Vérifier tous les trimestres ou après refonte HTML majeure
 

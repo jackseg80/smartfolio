@@ -9,6 +9,7 @@
  */
 
 import { store } from '../core/risk-dashboard-store.js';
+import { setIcon } from '../core/icons.js';
 
 class GovernancePanel {
   constructor(container) {
@@ -46,14 +47,14 @@ class GovernancePanel {
     const html = `
       <div class="governance-panel" id="governance-panel">
         <div class="governance-header">
-          <h2>🏛️ Decision Engine</h2>
+          <h2><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Bank" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-library"></use></svg> Decision Engine</h2>
           <div class="header-badges">
             <div class="transparency-badge" id="transparency-badge" title="Transparency Level">
-              <span class="badge-icon">🔍</span>
+              <span class="badge-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Search" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#magnifying-glass"></use></svg></span>
               <span class="badge-text" id="transparency-level">Normal</span>
             </div>
             <div class="alerts-badge" id="alerts-badge" title="Active Alerts" style="display: none;">
-              <span class="badge-icon">🚨</span>
+              <span class="badge-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Alert" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-circle"></use></svg></span>
               <span class="badge-text" id="alerts-count">0</span>
             </div>
           </div>
@@ -65,11 +66,11 @@ class GovernancePanel {
         <div class="governance-content" id="governance-content">
           <!-- Status Section with Enhanced Transparency -->
           <div class="governance-section">
-            <h4>📊 System Status</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> System Status</h4>
             <div class="status-grid-compact">
               <div class="status-card primary">
                 <div class="status-header">
-                  <span class="status-icon">🏛️</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Bank" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-library"></use></svg></span>
                   <span class="status-title">State</span>
                 </div>
                 <div class="status-content">
@@ -80,7 +81,7 @@ class GovernancePanel {
               
               <div class="status-card secondary">
                 <div class="status-header">
-                  <span class="status-icon">🎛️</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg></span>
                   <span class="status-title">Mode</span>
                 </div>
                 <div class="status-content">
@@ -93,7 +94,7 @@ class GovernancePanel {
               
               <div class="status-card">
                 <div class="status-header">
-                  <span class="status-icon">📋</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg></span>
                   <span class="status-title">Policy</span>
                 </div>
                 <div class="status-content">
@@ -103,7 +104,7 @@ class GovernancePanel {
               
               <div class="status-card">
                 <div class="status-header">
-                  <span class="status-icon">⚡</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg></span>
                   <span class="status-title">Cooldown</span>
                 </div>
                 <div class="status-content">
@@ -113,7 +114,7 @@ class GovernancePanel {
               
               <div class="status-card" id="freeze-status-card" style="display: none;">
                 <div class="status-header">
-                  <span class="status-icon">❄️</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Frozen" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#pause-circle"></use></svg></span>
                   <span class="status-title">Auto-Unfreeze</span>
                 </div>
                 <div class="status-content">
@@ -126,7 +127,7 @@ class GovernancePanel {
               
               <div class="status-card warning">
                 <div class="status-header">
-                  <span class="status-icon">⚠️</span>
+                  <span class="status-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></span>
                   <span class="status-title">Contradiction</span>
                 </div>
                 <div class="status-content">
@@ -138,11 +139,11 @@ class GovernancePanel {
           
           <!-- ML Signals Section -->
           <div class="governance-section">
-            <h4>🧠 ML Signals</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Signals</h4>
             <div class="signals-cards" id="ml-signals">
               <div class="signal-card">
                 <div class="signal-header">
-                  <span class="signal-icon">🎯</span>
+                  <span class="signal-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg></span>
                   <span class="signal-title">Confidence</span>
                 </div>
                 <div class="signal-metrics">
@@ -156,7 +157,7 @@ class GovernancePanel {
               
               <div class="signal-card">
                 <div class="signal-header">
-                  <span class="signal-icon">📊</span>
+                  <span class="signal-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></span>
                   <span class="signal-title">Decision Score</span>
                 </div>
                 <div class="signal-metrics">
@@ -172,12 +173,12 @@ class GovernancePanel {
           
           <!-- Mode Selection Section -->
           <div class="governance-section">
-            <h4>🎛️ Governance Mode</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg> Governance Mode</h4>
             <div class="mode-selector" id="mode-selector">
               <select class="gov-select" id="governance-mode-select" aria-label="Governance mode">
-                <option value="manual">🤝 Manual</option>
-                <option value="ai_assisted">🤖 AI Assisted</option>
-                <option value="full_ai">🚀 Full AI</option>
+                <option value="manual">Manual</option>
+                <option value="ai_assisted">AI Assisted</option>
+                <option value="full_ai">Full AI</option>
               </select>
               <button class="gov-btn secondary" id="btn-change-mode">
                 Change Mode
@@ -187,73 +188,73 @@ class GovernancePanel {
 
           <!-- Actions Section -->
           <div class="governance-section">
-            <h4>⚡ Actions</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Actions</h4>
             <div class="actions-grid">
               <button class="gov-btn primary" id="btn-refresh" title="Refresh governance state">
-                🔄 Refresh
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Refresh
               </button>
               <button class="gov-btn secondary" id="btn-propose" title="Propose test decision">
-                📋 Propose
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Propose
               </button>
               <button class="gov-btn info" id="btn-cooldown-check" title="Check cooldown status">
-                ⏱️ Cooldown
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pending" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clock"></use></svg> Cooldown
               </button>
               <button class="gov-btn warning" id="btn-freeze" title="Freeze system (emergency stop)">
-                ❄️ Freeze
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Frozen" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#pause-circle"></use></svg> Freeze
               </button>
               <button class="gov-btn success" id="btn-unfreeze" title="Unfreeze system" disabled>
-                🔥 Unfreeze
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="High" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#fire"></use></svg> Unfreeze
               </button>
             </div>
           </div>
           
           <!-- State Transitions Section (shown for DRAFT/REVIEWED/APPROVED plans) -->
           <div class="governance-section state-transitions" id="state-transitions" style="display: none;">
-            <h4>🔄 Plan Transitions</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Plan Transitions</h4>
             <div class="transition-flow">
               <div class="transition-step">
                 <button class="transition-btn" id="btn-review" disabled>
-                  📝 Review
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="File" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#document-text"></use></svg> Review
                 </button>
               </div>
               <div class="transition-arrow">→</div>
               <div class="transition-step">
                 <button class="transition-btn" id="btn-approve-transition" disabled>
-                  ✅ Approve
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Approve
                 </button>
               </div>
               <div class="transition-arrow">→</div>
               <div class="transition-step">
                 <button class="transition-btn" id="btn-activate" disabled>
-                  🚀 Activate
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Activate
                 </button>
               </div>
               <div class="transition-arrow">→</div>
               <div class="transition-step">
                 <button class="transition-btn" id="btn-execute" disabled>
-                  ⚡ Execute
+                  <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Execute
                 </button>
               </div>
             </div>
             <div class="transition-actions">
               <button class="gov-btn danger" id="btn-cancel-plan" title="Cancel current plan">
-                ❌ Cancel Plan
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Cancel Plan
               </button>
             </div>
           </div>
           
           <!-- Pending Decision Section (shown when DRAFT state) -->
           <div class="governance-section pending-decision" id="pending-decision" style="display: none;">
-            <h4>📋 Pending Decision</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Pending Decision</h4>
             <div class="decision-summary" id="decision-summary">
               <p>No pending decisions</p>
             </div>
             <div class="decision-actions">
               <button class="gov-btn success" id="btn-approve">
-                ✅ Approve
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="OK" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#check-circle"></use></svg> Approve
               </button>
               <button class="gov-btn danger" id="btn-reject">
-                ❌ Reject
+                <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> Reject
               </button>
             </div>
           </div>
@@ -264,7 +265,7 @@ class GovernancePanel {
       <div class="governance-modal" id="approval-modal" style="display: none;">
         <div class="modal-content">
           <div class="modal-header">
-            <h3>📋 Decision Approval</h3>
+            <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Overview" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#clipboard-document-list"></use></svg> Decision Approval</h3>
             <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="modal-body" id="modal-body">
@@ -282,7 +283,7 @@ class GovernancePanel {
       <div class="governance-modal confirmation-modal" id="confirmation-modal" style="display: none;">
         <div class="modal-content">
           <div class="modal-header">
-            <h3><span id="confirmation-icon">⚠️</span> <span id="confirmation-title">Confirm Action</span></h3>
+            <h3><span id="confirmation-icon"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg></span> <span id="confirmation-title">Confirm Action</span></h3>
             <button class="modal-close" id="confirmation-close" aria-label="Close">&times;</button>
           </div>
           <div class="modal-body">
@@ -338,7 +339,7 @@ class GovernancePanel {
     document.getElementById('btn-freeze').addEventListener('click', () => {
       this.showConfirmation({
         title: 'Freeze System',
-        icon: '❄️',
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Frozen\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#pause-circle\"></use></svg>",
         message: 'This will immediately stop all automated trading and put the system in emergency mode.',
         details: `
           <div class="confirmation-warning">
@@ -358,7 +359,7 @@ class GovernancePanel {
     document.getElementById('btn-unfreeze').addEventListener('click', () => {
       this.showConfirmation({
         title: 'Unfreeze System',
-        icon: '🔥', 
+        icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"High\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#fire\"></use></svg>",
         message: 'This will restore the system to normal operation.',
         details: `
           <div class="confirmation-info">
@@ -466,7 +467,7 @@ class GovernancePanel {
       const refreshBtn = document.getElementById('btn-refresh');
       if (refreshBtn) {
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '⏳ Refreshing...';
+        refreshBtn.innerHTML = "[Pending] Refreshing...";
       }
 
       // Try to sync governance state with graceful error handling
@@ -502,7 +503,7 @@ class GovernancePanel {
 
       if (refreshBtn) {
         refreshBtn.disabled = false;
-        refreshBtn.innerHTML = '🔄 Refresh';
+        setIcon(refreshBtn, 'arrow-path', 'Refresh');
       }
 
       if (!silent) {
@@ -519,7 +520,7 @@ class GovernancePanel {
       const refreshBtn = document.getElementById('btn-refresh');
       if (refreshBtn) {
         refreshBtn.disabled = false;
-        refreshBtn.innerHTML = '🔄 Refresh';
+        setIcon(refreshBtn, 'arrow-path', 'Refresh');
       }
     }
   }
@@ -818,7 +819,7 @@ class GovernancePanel {
       if (targets.length === 0 || Math.abs(totalWeight - 1) > 0.001) {
         this.showNotification('Select a valid target allocation before proposing a decision', 'warning');
         btn.disabled = false;
-        btn.textContent = '📋 Propose';
+        btn.textContent = "Propose";
         return;
       }
       const reason = `Selected target allocation in ${currentMode} mode`;
@@ -832,7 +833,7 @@ class GovernancePanel {
       }
 
       btn.disabled = false;
-      btn.textContent = '📋 Propose';
+      btn.textContent = "Propose";
       
     } catch (error) {
       debugLogger.error('Propose decision error:', error);
@@ -850,12 +851,12 @@ class GovernancePanel {
     modalBody.innerHTML = `
       <div class="approval-details">
         <div class="detail-section">
-          <h4>📊 Decision Summary</h4>
+          <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Decision Summary</h4>
           <p>The system has proposed a new allocation strategy based on current ML signals.</p>
         </div>
         
         <div class="detail-section">
-          <h4>🧠 ML Analysis</h4>
+          <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Model" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cpu-chip"></use></svg> ML Analysis</h4>
           <table class="details-table">
             <tr>
               <td>Confidence Level:</td>
@@ -877,7 +878,7 @@ class GovernancePanel {
         </div>
         
         <div class="detail-section">
-          <h4>⚙️ Execution Policy</h4>
+          <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Execution Policy</h4>
           <table class="details-table">
             <tr>
               <td>Mode:</td>
@@ -895,7 +896,7 @@ class GovernancePanel {
         </div>
         
         <div class="detail-section warning">
-          <h4>⚠️ Important Notes</h4>
+          <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Important Notes</h4>
           <ul>
             <li>This decision will override current allocation targets</li>
             <li>Execution will follow the policy constraints above</li>
@@ -917,7 +918,7 @@ class GovernancePanel {
     this.currentIdempotencyKey = this.generateIdempotencyKey();
     
     // Set modal content
-    document.getElementById('confirmation-icon').textContent = options.icon || '⚠️';
+    setIcon(document.getElementById('confirmation-icon'), options.icon || 'exclamation-triangle', 'Confirmation');
     document.getElementById('confirmation-title').textContent = options.title || 'Confirm Action';
     document.getElementById('confirmation-message').textContent = options.message || 'Are you sure?';
     document.getElementById('confirmation-action-text').textContent = options.actionText || 'Confirm';

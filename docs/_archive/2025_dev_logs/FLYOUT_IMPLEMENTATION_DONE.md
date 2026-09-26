@@ -1,6 +1,6 @@
-# ✅ Implémentation Flyout Panel - Terminée
+# Implémentation Flyout Panel - Terminée
 
-## 📦 Fichiers créés
+## Fichiers créés
 
 ### Composants Web (Shadow DOM)
 
@@ -20,7 +20,7 @@
    - Affichage : Contradiction, Cap, Fraîcheur, Trend, Régime
    - Loading/error visuels discrets
 
-## 🔧 Fichiers modifiés
+## Fichiers modifiés
 
 ### Core
 
@@ -59,33 +59,33 @@
    </flyout-panel>
    ```
 
-## 🗑️ Fichiers supprimés
+## Fichiers supprimés
 
 - `static/components/risk-sidebar.js` (legacy)
 - `static/components/risk-sidebar.css` (legacy)
 
-## ✅ Fonctionnalités implémentées
+## Fonctionnalités implémentées
 
 ### UI (flyout-panel)
-- ✅ Handle hover (survol zone gauche → panel apparaît)
-- ✅ Pin/Unpin (épingle le panel, état persistant localStorage)
-- ✅ Esc close (ferme si non pinned)
-- ✅ ARIA complet (`aria-expanded`, `aria-pressed`)
-- ✅ Responsive (<768px : 280px width, 36px handle)
-- ✅ Thème hérité (variables CSS `--theme-*`)
-- ✅ Shadow DOM (isolation CSS complète)
+- [OK] Handle hover (survol zone gauche → panel apparaît)
+- [OK] Pin/Unpin (épingle le panel, état persistant localStorage)
+- [OK] Esc close (ferme si non pinned)
+- [OK] ARIA complet (`aria-expanded`, `aria-pressed`)
+- [OK] Responsive (<768px : 280px width, 36px handle)
+- [OK] Thème hérité (variables CSS `--theme-*`)
+- [OK] Shadow DOM (isolation CSS complète)
 
 ### Data (risk-snapshot)
-- ✅ Store subscribe (event-based, attend `riskStoreReady`)
-- ✅ Polling fallback (si pas de store, configurable via `poll-ms`)
-- ✅ Timeout 5s sur fetch + AbortController
-- ✅ Fallback API (`/api/risk/dashboard` → `/api/risk/metrics`)
-- ✅ Import sélecteurs (`selectors/governance.js`) avec fallback
-- ✅ Affichage : Contradiction (barre), Cap journalier, Fraîcheur (dot), Trend (delta), Régime
-- ✅ États visuels : loading (opacity), erreur (⚠ dans trend)
-- ✅ Cleanup propre (`unsubscribe`, `clearInterval`)
+- [OK] Store subscribe (event-based, attend `riskStoreReady`)
+- [OK] Polling fallback (si pas de store, configurable via `poll-ms`)
+- [OK] Timeout 5s sur fetch + AbortController
+- [OK] Fallback API (`/api/risk/dashboard` → `/api/risk/metrics`)
+- [OK] Import sélecteurs (`selectors/governance.js`) avec fallback
+- [OK] Affichage : Contradiction (barre), Cap journalier, Fraîcheur (dot), Trend (delta), Régime
+- [OK] États visuels : loading (opacity), erreur ([Warning] dans trend)
+- [OK] Cleanup propre (`unsubscribe`, `clearInterval`)
 
-## 🧪 Tests à effectuer
+## Tests à effectuer
 
 ### Fonctionnels
 ```bash
@@ -94,22 +94,22 @@ python -m uvicorn api.main:app --port 8080
 
 # 2. Tester risk-dashboard.html
 # URL: http://localhost:8080/static/risk-dashboard.html
-# ✓ Panel visible à gauche (pinned par défaut)
-# ✓ Données chargées via store (pas de polling)
-# ✓ Contradiction, Cap, Fraîcheur affichés
-# ✓ Pin/Unpin fonctionne (état persistant après reload)
+# Panel visible à gauche (pinned par défaut)
+# Données chargées via store (pas de polling)
+# Contradiction, Cap, Fraîcheur affichés
+# Pin/Unpin fonctionne (état persistant après reload)
 
 # 3. Tester analytics-unified.html
 # URL: http://localhost:8080/static/analytics-unified.html
-# ✓ Handle visible à gauche (48px)
-# ✓ Survol handle → panel apparaît
-# ✓ Polling toutes les 30s
-# ✓ Pin → panel reste affiché
-# ✓ Esc → panel se ferme (si non pinned)
+# Handle visible à gauche (48px)
+# Survol handle → panel apparaît
+# Polling toutes les 30s
+# Pin → panel reste affiché
+# Esc → panel se ferme (si non pinned)
 
 # 4. Tester rebalance.html
 # URL: http://localhost:8080/static/rebalance.html
-# ✓ Même comportement que analytics-unified
+# Même comportement que analytics-unified
 ```
 
 ### Robustesse
@@ -118,7 +118,7 @@ python -m uvicorn api.main:app --port 8080
 # Simuler erreur API, vérifier console :
 # [risk-snapshot] Primary API failed: ...
 # [risk-snapshot] /api/risk/metrics not OK: ...
-# → Panel affiche ⚠ dans trend
+# → Panel affiche  dans trend
 
 # 2. Timeout 5s → Pas de blocage
 # Simuler latence API > 5s
@@ -149,12 +149,12 @@ python -m uvicorn api.main:app --port 8080
 ```bash
 # 1. Mobile (<768px)
 # DevTools → Responsive mode 375px width
-# ✓ Panel width = 280px (au lieu de 340px)
-# ✓ Handle width = 36px (au lieu de 48px)
-# ✓ Texte lisible (font-size: 0.875rem)
+# Panel width = 280px (au lieu de 340px)
+# Handle width = 36px (au lieu de 48px)
+# Texte lisible (font-size: 0.875rem)
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Panel ne s'affiche pas
 ```javascript
@@ -193,7 +193,7 @@ import('../selectors/governance.js').then(console.log);
 }
 ```
 
-## 📊 Métriques
+## Métriques
 
 | Métrique | Valeur |
 |----------|--------|
@@ -203,26 +203,26 @@ import('../selectors/governance.js').then(console.log);
 | Lignes de code ajoutées | ~500 |
 | Pages intégrées | 3 (risk-dashboard, analytics-unified, rebalance) |
 | Pattern d'intégration | 2 imports + 1 balise = **3 lignes par page** |
-| Shadow DOM | ✅ Isolation CSS complète |
-| Event-based store | ✅ Plus de busy-loop |
-| Fallback API | ✅ Robuste (timeout, retry) |
-| Accessibilité | ✅ ARIA complet |
-| Responsive | ✅ Mobile-friendly |
+| Shadow DOM | [OK] Isolation CSS complète |
+| Event-based store | [OK] Plus de busy-loop |
+| Fallback API | [OK] Robuste (timeout, retry) |
+| Accessibilité | [OK] ARIA complet |
+| Responsive | [OK] Mobile-friendly |
 
-## 📋 Option B: Unified Endpoint (Documented, Not Implemented)
+## Option B: Unified Endpoint (Documented, Not Implemented)
 
 **Strategy**: Create `/api/risk/unified` endpoint that returns complete data structure, eliminating need for frontend calculations and conditional hiding.
 
 **Benefits**:
-- ✅ All sections visible on all pages
-- ✅ Consistent UX everywhere
-- ✅ Single source of truth
-- ✅ Centralized calculation logic
+- [OK] All sections visible on all pages
+- [OK] Consistent UX everywhere
+- [OK] Single source of truth
+- [OK] Centralized calculation logic
 
 **Trade-offs**:
-- ⚠️ Backend work required (2-3 days dev)
-- ⚠️ More complex endpoint (orchestrates multiple APIs)
-- ⚠️ Migration/rollout effort (1 week)
+- [Warning] Backend work required (2-3 days dev)
+- [Warning] More complex endpoint (orchestrates multiple APIs)
+- [Warning] Migration/rollout effort (1 week)
 
 **Documentation**: `docs/OPTION_B_UNIFIED_RISK_ENDPOINT.md`
 
@@ -233,7 +233,7 @@ import('../selectors/governance.js').then(console.log);
 
 ---
 
-## ⚠️ Known Limitations
+## Known Limitations
 
 1. **Partial Data on Non-Dashboard Pages**:
    - analytics-unified.html and rebalance.html show only 4/10 sections
@@ -248,7 +248,7 @@ import('../selectors/governance.js').then(console.log);
 
 ---
 
-## 🚀 Prochaines étapes
+## Prochaines étapes
 
 1. **Tests utilisateur** : Valider UX sur les 3 pages
 2. **Documentation** : Mettre à jour `docs/FRONTEND_PAGES.md`
@@ -256,7 +256,7 @@ import('../selectors/governance.js').then(console.log);
 4. **Autres pages** : Ajouter flyout sur `execution.html`, `simulations.html`, etc.
 5. **Considérer Option B** : Si données complètes nécessaires partout
 
-## 📝 Commits à créer
+## Commits à créer
 
 ```bash
 git add static/components/utils.js
@@ -281,7 +281,7 @@ git rm static/components/risk-sidebar.js static/components/risk-sidebar.css
 git commit -m "chore(cleanup): remove legacy risk-sidebar components"
 ```
 
-## ✨ Résultat
+## Résultat
 
 **Un seul pattern réutilisable partout** :
 ```html
@@ -294,5 +294,5 @@ git commit -m "chore(cleanup): remove legacy risk-sidebar components"
 </flyout-panel>
 ```
 
-**Zero duplication**, **Shadow DOM**, **Event-based**, **Robuste** ! 🎉
+**Zero duplication**, **Shadow DOM**, **Event-based**, **Robuste** !
 

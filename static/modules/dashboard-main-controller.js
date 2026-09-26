@@ -7,7 +7,7 @@ import { formatUSD } from '../core/formatters.js';
 import { waitForWealthContextReady } from '../core/wealth-context-ready.js';
 // Note: fetchSaxoSummary imported dynamically in refreshSaxoTile()
 
-// ✅ Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
+//  Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
 const colorForScore = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' : 'var(--danger)';
 
 /**
@@ -51,17 +51,17 @@ function updatePhaseChips(unifiedState) {
             }
         }
     } catch (error) {
-        debugLogger.warn('⚠️ Failed to update phase chips:', error);
+        debugLogger.warn("Failed to update phase chips:", error);
     }
 }
 
 async function refreshGI() {
     try {
-        console.debug('🧠 Refreshing Global Insight with intelligent analysis...');
+        console.debug("Refreshing Global Insight with intelligent analysis...");
 
         // Use sophisticated unified intelligence
         const unifiedState = await getUnifiedState();
-        console.debug('✅ Unified state loaded:', {
+        console.debug("[OK] Unified state loaded:", {
             decision_score: unifiedState.decision?.score,
             cycle_score: unifiedState.cycle?.score,
             onchain_score: unifiedState.onchain?.score,
@@ -123,7 +123,7 @@ async function refreshGI() {
         if (recoEl) {
             if (recommendations.length > 0) {
                 const topReco = recommendations[0];
-                const urgencyIcon = topReco.priority === 'critical' ? '🚨' : topReco.priority === 'high' ? '⚠️' : topReco.priority === 'medium' ? '💡' : 'ℹ️';
+                const urgencyIcon = topReco.priority === 'critical' ? "Alert" : topReco.priority === 'high' ? "Warning" : topReco.priority === 'medium' ? "Insight" : "Info";
                 recoEl.innerHTML = `${urgencyIcon} ${topReco.title}`;
                 recoEl.title = `${topReco.reason} | Source: ${topReco.source || 'Unified intelligence'}`;
 
@@ -136,13 +136,13 @@ async function refreshGI() {
                 };
                 recoEl.style.color = priorityColors[topReco.priority] || 'var(--theme-text)';
             } else {
-                recoEl.innerHTML = '🧘 No urgent action';
+                recoEl.innerHTML = "No urgent action";
                 recoEl.style.color = 'var(--success)';
                 recoEl.title = 'All modules are in agreement - stable situation';
             }
         }
 
-        console.debug('✅ Global Insight refreshed with:', {
+        console.debug("[OK] Global Insight refreshed with:", {
             decision_score: unifiedState.decision.score,
             confidence: unifiedState.decision.confidence,
             recommendations_count: recommendations.length,
@@ -156,7 +156,7 @@ async function refreshGI() {
         updateGlobalInsightMeta();
 
     } catch (error) {
-        debugLogger.warn('⚠️ Global Insight unavailable:', error);
+        debugLogger.warn("[Warning] Global Insight unavailable:", error);
         console.debug('Error details:', error.stack || error);
 
         // Keep missing decision inputs explicit in the summary card.
@@ -194,7 +194,7 @@ async function refreshGI() {
 
         const reco = document.getElementById('gi-reco');
         if (reco) {
-            reco.textContent = '⚠️ Decision unavailable';
+            reco.textContent = "[Warning] Decision unavailable";
             reco.title = 'Complete verified inputs are required';
         }
 
@@ -206,7 +206,7 @@ async function refreshGI() {
 // SMART LOADING - Load data directly if not available in store
 async function loadUnifiedDataForDashboard() {
     try {
-        debugLogger.debug('🔄 Loading unified data for dashboard...');
+        debugLogger.debug("Loading unified data for dashboard...");
 
         // Import and run the same cache-intelligent loader from analytics-unified
         const { getCurrentCycleMonths, cycleScoreFromMonths, getCyclePhase } = await import('../modules/cycle-navigator.js');
@@ -223,7 +223,7 @@ async function loadUnifiedDataForDashboard() {
             await store.syncGovernanceState();
             await store.syncMLSignals();
         } catch { }
-        debugLogger.debug('✅ Cycle data loaded for dashboard');
+        debugLogger.debug("[OK] Cycle data loaded for dashboard");
 
         // 2. Try to get cached scores from localStorage (from analytics-unified cache)
         const getCachedScore = (key) => {
@@ -248,7 +248,7 @@ async function loadUnifiedDataForDashboard() {
         if (cachedOnchain && typeof cachedOnchain.score === 'number') {
             store.set('scores.onchain', cachedOnchain.score);
             store.set('scores.onchain_metadata', cachedOnchain.metadata);
-            debugLogger.debug('✅ On-chain data loaded from cache for dashboard');
+            debugLogger.debug("[OK] On-chain data loaded from cache for dashboard");
         }
 
         // Try cached risk data
@@ -256,14 +256,14 @@ async function loadUnifiedDataForDashboard() {
         if (cachedRisk && cachedRisk.risk_metrics?.risk_score) {
             store.set('scores.risk', cachedRisk.risk_metrics.risk_score);
             store.set('risk.risk_metrics', cachedRisk.risk_metrics); // Full risk metrics for sophisticated analysis
-            debugLogger.debug('✅ Risk data loaded from cache for dashboard');
+            debugLogger.debug("[OK] Risk data loaded from cache for dashboard");
         }
 
         // Try cached blended data
         const cachedBlended = getCachedScore('analytics_unified_blended');
         if (cachedBlended && typeof cachedBlended.score === 'number') {
             store.set('scores.blended', cachedBlended.score);
-            debugLogger.debug('✅ Blended score loaded from cache for dashboard');
+            debugLogger.debug("[OK] Blended score loaded from cache for dashboard");
         } else {
             // Calculate the blend only when every observed component is present.
             const state = store.snapshot();
@@ -275,18 +275,18 @@ async function loadUnifiedDataForDashboard() {
                 const blended = (cycleScore * 0.50) + (onchainScore * 0.30) + (riskScore * 0.20);
                 const blendedScore = Math.round(Math.max(0, Math.min(100, blended)));
                 store.set('scores.blended', blendedScore);
-                debugLogger.debug('✅ Blended score calculated for dashboard');
+                debugLogger.debug("[OK] Blended score calculated for dashboard");
             } else {
                 store.set('scores.blended', null);
                 debugLogger.warn('Blended score unavailable: one or more components are missing');
             }
         }
 
-        debugLogger.debug('🎯 Dashboard data loading completed');
+        debugLogger.debug("Dashboard data loading completed");
         refreshGI();
 
     } catch (error) {
-        debugLogger.error('❌ Error loading dashboard data:', error);
+        debugLogger.error("Error loading dashboard data:", error);
         // Fallback to basic calculation
         refreshGI();
     }
@@ -298,15 +298,15 @@ async function waitForStoreReady() {
     const hasPartialScores = state.cycle?.score != null && state.scores?.onchain != null && state.scores?.risk != null;
 
     if (hasBlended) {
-        debugLogger.debug('🎯 Store ready with blended data, refreshing Global Insight');
+        debugLogger.debug("Store ready with blended data, refreshing Global Insight");
         if (typeof state.risk?.risk_budget?.target_stables_pct !== 'number') {
             try {
                 const { calculateRiskBudget } = await import('../modules/market-regimes.js');
                 const riskBudget = calculateRiskBudget(state.scores.blended, state.scores.risk ?? null);
                 store.set('risk.risk_budget', riskBudget);
-                console.debug('✅ Risk budget calculated from complete scores:', { target_stables_pct: riskBudget.target_stables_pct });
+                console.debug("[OK] Risk budget calculated from complete scores:", { target_stables_pct: riskBudget.target_stables_pct });
             } catch (fallbackError) {
-                debugLogger.warn('⚠️ Unable to synthesize risk budget fallback:', fallbackError);
+                debugLogger.warn("[Warning] Unable to synthesize risk budget fallback:", fallbackError);
             }
         }
         refreshGI();
@@ -314,12 +314,12 @@ async function waitForStoreReady() {
     }
 
     if (hasPartialScores) {
-        debugLogger.debug('🔁 Partial store data, running unified loader to compute blended score...');
+        debugLogger.debug("Partial store data, running unified loader to compute blended score...");
         await loadUnifiedDataForDashboard();
         return;
     }
 
-    debugLogger.debug('⏳ No store data, loading directly for dashboard...');
+    debugLogger.debug("[Pending] No store data, loading directly for dashboard...");
     await loadUnifiedDataForDashboard();
 }
 
@@ -333,7 +333,7 @@ function updateGlobalInsightMeta() {
         const ml = store.get('governance.ml_signals');
         const state = (typeof store.snapshot === 'function' ? store.snapshot() : store.getState?.()) || window.realDataStore || {};
 
-        // ✅ NEW: Get scores calculation timestamp
+        //  NEW: Get scores calculation timestamp
         const scoresTimestamp = state._hydration_timestamp || null;
         const scoresAge = scoresTimestamp ? Date.now() - scoresTimestamp : null;
 
@@ -346,24 +346,24 @@ function updateGlobalInsightMeta() {
             const ageMinutes = scoresAge / (60 * 1000);
 
             if (ageHours >= 6) {
-                scoresStatus = '⚠️ Scores >6h';
+                scoresStatus = "[Warning] Scores >6h";
                 scoresColor = 'var(--danger)';
                 needsRefresh = true;
             } else if (ageHours >= 4) {
                 const hours = Math.floor(ageHours);
-                scoresStatus = `⏱️ Scores ${hours}h`;
+                scoresStatus = `[Pending] Scores ${hours}h`;
                 scoresColor = 'var(--warning)';
                 needsRefresh = true;
             } else if (ageMinutes >= 60) {
                 const hours = Math.floor(ageHours);
-                scoresStatus = `✅ Scores ${hours}h`;
+                scoresStatus = `[OK] Scores ${hours}h`;
                 scoresColor = 'var(--success)';
             } else {
-                scoresStatus = '✅ Fresh';
+                scoresStatus = "[OK] Fresh";
                 scoresColor = 'var(--success)';
             }
         } else {
-            scoresStatus = '❓ Unknown';
+            scoresStatus = "Unknown";
             scoresColor = 'var(--theme-text-muted)';
             needsRefresh = true;
         }
@@ -414,11 +414,11 @@ function updateGlobalInsightMeta() {
         if (scoresTimestamp) {
             const calcTime = new Date(scoresTimestamp).toLocaleString('en-US');
             const ageHours = Math.round((scoresAge / (60 * 60 * 1000)) * 10) / 10;
-            const refreshAction = needsRefresh ? '⚠️ REFRESH RECOMMENDED' : 'ℹ️ Scores are fresh';
-            metaEl.title = `Scores calculated: ${calcTime} (${ageHours}h ago)\nML signals: ${ts ? ts.toLocaleString('en-US') : 'N/A'}\n\n${refreshAction}\nClick the 🔄 button to recalculate`;
+            const refreshAction = needsRefresh ? "[Warning] REFRESH RECOMMENDED" : "Scores are fresh";
+            metaEl.title = `Scores calculated: ${calcTime} (${ageHours}h ago)\nML signals: ${ts ? ts.toLocaleString('en-US') : 'N/A'}\n\n${refreshAction}\nClick the button to recalculate`;
         }
 
-        console.debug('🏷️ Global Insight meta updated:', {
+        console.debug("Global Insight meta updated:", {
             scoresStatus,
             scoresAge: scoresAge ? `${Math.round(scoresAge / 60000)}min` : null,
             needsRefresh,
@@ -436,7 +436,7 @@ function updateGlobalInsightMeta() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // Subscribe to store changes for reactive updates
-    // ✅ Debounce augmenté de 300ms à 500ms pour réduire les appels
+    //  Debounce augmenté de 300ms à 500ms pour réduire les appels
     store.subscribe(() => {
         clearTimeout(window.giRefreshTimer);
         window.giRefreshTimer = setTimeout(() => {
@@ -448,15 +448,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Listen for user changes to clear and reload store
     window.addEventListener('activeUserChanged', (event) => {
         const { oldUser, newUser } = event.detail;
-        console.debug(`🔄 User changed from ${oldUser} to ${newUser}, clearing store...`);
+        console.debug(`User changed from ${oldUser} to ${newUser}, clearing store...`);
         store.clearAndRehydrate();
     });
 
-    // ✅ NEW: Refresh scores button click handler
+    //  NEW: Refresh scores button click handler
     const refreshScoresBtn = document.getElementById('refresh-scores-btn');
     if (refreshScoresBtn) {
         refreshScoresBtn.addEventListener('click', async () => {
-            console.debug('🔄 Manual scores refresh requested...');
+            console.debug("Manual scores refresh requested...");
 
             // Visual feedback: spinning animation
             refreshScoresBtn.style.animation = 'spin 1s linear infinite';
@@ -505,16 +505,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 await refreshGI();
                 updateGlobalInsightMeta();
 
-                console.debug('✅ Scores refreshed successfully');
+                console.debug("[OK] Scores refreshed successfully");
 
                 // Show success toast
                 if (window.debugLogger?.success) {
-                    window.debugLogger.success('✅ Scores recalculated successfully');
+                    window.debugLogger.success("[OK] Scores recalculated successfully");
                 }
             } catch (error) {
-                console.error('❌ Failed to refresh scores:', error);
+                console.error("Failed to refresh scores:", error);
                 if (window.debugLogger?.error) {
-                    window.debugLogger.error('❌ Score recalculation failed. Open Risk Dashboard manually.');
+                    window.debugLogger.error("[Error] Score recalculation failed. Open Risk Dashboard manually.");
                 }
 
                 // Fallback: open risk-dashboard in new tab
@@ -533,22 +533,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // État global
 let dashboardData = { portfolio: null, connections: null, recentActivity: null, executionStats: null };
-// ❌ REMOVED: let portfolioChart = null; → Using window.portfolioChart instead to avoid reference mismatch
+//  REMOVED: let portfolioChart = null; → Using window.portfolioChart instead to avoid reference mismatch
 
-// ✅ Guards pour éviter les appels concurrents
+//  Guards pour éviter les appels concurrents
 let isLoadingDashboard = false;
 let isRefreshingSaxo = false;
 let isRefreshingBanks = false;
 let isRefreshingGlobal = false;
 
-// ✅ Interval IDs for cleanup (prevent memory leaks on page refresh)
+//  Interval IDs for cleanup (prevent memory leaks on page refresh)
 let dashboardRefreshInterval = null;
 let saxoRefreshInterval = null;
 let banksRefreshInterval = null;
 let globalRefreshInterval = null;
 let giRefreshInterval = null;
 
-// ✅ AbortController for event listeners cleanup
+//  AbortController for event listeners cleanup
 let eventListenersController = null;
 
 /**
@@ -564,7 +564,7 @@ function setupExportButtons() {
                 openExportModal('global', '/api/wealth/global/export-lists', 'global-overview', cryptoSource, window.currentFileKey || null);
             });
         });
-        console.debug('✅ Global Overview export button initialized');
+        console.debug("[OK] Global Overview export button initialized");
     }
 
     // Crypto export button
@@ -581,7 +581,7 @@ function setupExportButtons() {
                 openExportModal('crypto', '/api/portfolio/export-lists', 'crypto-portfolio', cryptoSource);
             });
         });
-        console.debug('✅ Crypto export button initialized');
+        console.debug("[OK] Crypto export button initialized");
     }
 
     // Saxo export button
@@ -593,7 +593,7 @@ function setupExportButtons() {
                 openExportModal('saxo', '/api/saxo/export-lists', 'saxo-portfolio', null, fileKey);
             });
         });
-        console.debug('✅ Saxo export button initialized');
+        console.debug("[OK] Saxo export button initialized");
     }
 
     // Wealth export button
@@ -604,7 +604,7 @@ function setupExportButtons() {
                 openExportModal('wealth', '/api/wealth/export-lists', 'wealth-items');
             });
         });
-        console.debug('✅ Wealth export button initialized');
+        console.debug("[OK] Wealth export button initialized");
     }
 
     // PDF export button
@@ -620,12 +620,12 @@ function setupExportButtons() {
                 });
             });
         });
-        console.debug('✅ PDF export button initialized');
+        console.debug("[OK] PDF export button initialized");
     }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.debug('📊 Dashboard unifié initialisé');
+    console.debug("Dashboard unifié initialisé");
     // Navigation thématique initialisée automatiquement
 
     // Appliquer le thème immédiatement
@@ -654,14 +654,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize data source tracking only after the context bar has applied
     // the selected source to globalConfig.
     window.lastKnownDataSource = globalConfig.get('data_source');
-    console.debug(`📊 Dashboard initialized with data source: ${window.lastKnownDataSource}`);
+    console.debug(`Dashboard initialized with data source: ${window.lastKnownDataSource}`);
 
     await loadDashboardData();
 
-    // ✅ Store interval IDs for proper cleanup
+    //  Store interval IDs for proper cleanup
     dashboardRefreshInterval = setInterval(loadDashboardData, 60000);
 
-    // ✅ Initialize wealth tiles sequentially to avoid race conditions
+    //  Initialize wealth tiles sequentially to avoid race conditions
     await refreshSaxoTile();
     await refreshPatrimoineTile();
     await refreshGlobalTile();
@@ -675,17 +675,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     giRefreshInterval = setInterval(() => {
         const currentSource = globalConfig.get('data_source');
         if (currentSource && currentSource !== window.lastKnownDataSource) {
-            console.debug(`🔄 Periodic check: Data source changed from ${window.lastKnownDataSource} to ${currentSource}`);
+            console.debug(`Periodic check: Data source changed from ${window.lastKnownDataSource} to ${currentSource}`);
             window.lastKnownDataSource = currentSource;
             loadDashboardData();
         }
     }, 5000);
 
-    // ✅ Setup AbortController for event listeners cleanup
+    //  Setup AbortController for event listeners cleanup
     eventListenersController = new AbortController();
     const signal = eventListenersController.signal;
 
-    // ✅ Setup export buttons click handlers
+    //  Setup export buttons click handlers
     setupExportButtons();
 
     // Écouter les changements de thème et source pour synchronisation cross-tab
@@ -699,8 +699,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const previousSource = window.lastKnownDataSource;
 
             if (currentSource && currentSource !== previousSource) {
-                console.debug(`🔄 Data source changed from ${previousSource} to ${currentSource}, reloading dashboard...`);
-                console.debug('🔄 Storage event triggered data source change - forcing portfolio refresh...');
+                console.debug(`Data source changed from ${previousSource} to ${currentSource}, reloading dashboard...`);
+                console.debug("Storage event triggered data source change - forcing portfolio refresh...");
                 window.lastKnownDataSource = currentSource;
 
                 // Clear portfolio chart cache on source change
@@ -727,8 +727,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, { signal });
 
     window.addEventListener('dataSourceChanged', (event) => {
-        console.debug(`🔄 Source changée: ${event.detail.oldSource} → ${event.detail.newSource}`);
-        console.debug('🔄 Forcing complete portfolio refresh due to data source change...');
+        console.debug(`Source changée: ${event.detail.oldSource} → ${event.detail.newSource}`);
+        console.debug("Forcing complete portfolio refresh due to data source change...");
 
         // Clear portfolio cache when source changes
         if (window.portfolioChart) {
@@ -736,9 +736,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.portfolioChart = null;
         }
 
-        // ✅ FIX: Clear scores from store when source changes
+        //  FIX: Clear scores from store when source changes
         // Scores are source-specific, so we need to invalidate them
-        console.debug('🧹 Clearing scores from store (source changed)');
+        console.debug("Clearing scores from store (source changed)");
         store.set('scores.onchain', null);
         store.set('scores.risk', null);
         store.set('scores.blended', null);
@@ -763,7 +763,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 state.timestamp = Date.now();
                 localStorage.setItem('risk-dashboard-state', JSON.stringify(state));
-                console.debug('✅ Persisted store cleared from scores');
+                console.debug("[OK] Persisted store cleared from scores");
             }
         } catch (e) {
             console.warn('Failed to clear persisted store:', e);
@@ -782,9 +782,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadDashboardData();
     }, { signal });
 
-    // ✅ FIX: Listen for Bourse source changes and refresh Saxo tiles
+    //  FIX: Listen for Bourse source changes and refresh Saxo tiles
     window.addEventListener('bourseSourceChanged', async (event) => {
-        console.debug('🏦 Bourse source changed:', event.detail);
+        console.debug("Bourse source changed:", event.detail);
 
         // Invalidate Saxo summary cache to force reload with new source
         const { invalidateSaxoCache } = await import('../modules/wealth-saxo-summary.js');
@@ -794,7 +794,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         await refreshSaxoTile();
         await refreshGlobalTile();
 
-        console.debug('✅ Saxo tiles refreshed with new source');
+        console.debug("[OK] Saxo tiles refreshed with new source");
     }, { signal });
 
     // Reformat values when display currency changes
@@ -802,7 +802,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const key = ev?.detail?.key;
             if (key === 'display_currency') {
-                console.debug('💱 Display currency changed, re-rendering amounts...');
+                console.debug("Display currency changed, re-rendering amounts...");
                 const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
                 const maybeRender = () => {
                     if (dashboardData && dashboardData.portfolio) {
@@ -837,7 +837,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } catch (e) { debugLogger.warn('Re-render on rate update failed:', e); }
     }, { signal });
 
-    // ✅ Setup cleanup on page unload (CRITICAL for preventing memory leaks)
+    //  Setup cleanup on page unload (CRITICAL for preventing memory leaks)
     window.addEventListener('beforeunload', cleanupDashboard);
 });
 
@@ -846,7 +846,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Clears all intervals and event listeners
  */
 function cleanupDashboard() {
-    console.debug('🧹 Cleaning up dashboard resources...');
+    console.debug("Cleaning up dashboard resources...");
 
     // Clear all intervals
     if (dashboardRefreshInterval) {
@@ -882,31 +882,31 @@ function cleanupDashboard() {
         window.portfolioChart = null;
     }
 
-    // ✅ Clear all cached data references
+    //  Clear all cached data references
     dashboardData.portfolio = null;
     dashboardData.connections = null;
     dashboardData.recentActivity = null;
     dashboardData.executionStats = null;
 
-    // ✅ Clear guards
+    //  Clear guards
     isLoadingDashboard = false;
     isRefreshingSaxo = false;
     isRefreshingBanks = false;
     isRefreshingGlobal = false;
 
-    console.debug('✅ Dashboard cleanup complete');
+    console.debug("[OK] Dashboard cleanup complete");
 }
 
 async function loadDashboardData() {
-    // ✅ Guard: éviter appels concurrents
+    //  Guard: éviter appels concurrents
     if (isLoadingDashboard) {
-        console.debug('⏭️ loadDashboardData already in progress, skipping...');
+        console.debug("loadDashboardData already in progress, skipping...");
         return;
     }
 
     isLoadingDashboard = true;
     try {
-        // ✅ CRITICAL: Clear old data to prevent memory leaks
+        //  CRITICAL: Clear old data to prevent memory leaks
         dashboardData.portfolio = null;
         dashboardData.connections = null;
         dashboardData.recentActivity = null;
@@ -914,7 +914,7 @@ async function loadDashboardData() {
 
         // Clear any potential cached data
         const currentTimestamp = Date.now();
-        console.debug(`🔄 loadDashboardData called at ${currentTimestamp} with source: ${globalConfig.get('data_source')}`);
+        console.debug(`loadDashboardData called at ${currentTimestamp} with source: ${globalConfig.get('data_source')}`);
 
         // Charger d'abord les groupes depuis alias-manager
         await loadAssetGroups();
@@ -929,7 +929,7 @@ async function loadDashboardData() {
             loadRiskAlerts()          // Dashboard V2
         ]);
         const portfolioResult = portfolioData.status === 'fulfilled' ? portfolioData.value : null;
-        console.debug('📊 About to update portfolio display with:', {
+        console.debug("About to update portfolio display with:", {
             hasData: !!portfolioResult,
             totalValue: portfolioResult?.metrics?.total_value_usd,
             assetCount: portfolioResult?.metrics?.asset_count
@@ -947,7 +947,7 @@ async function loadDashboardData() {
         updateScoresDisplay(scoresData.status === 'fulfilled' ? scoresData.value : null);
         updateSystemStatus();         // Dashboard V2 (merged Exchange + Health)
 
-        console.debug('✅ Dashboard data loaded successfully');
+        console.debug("[OK] Dashboard data loaded successfully");
     } catch (e) {
         console.error('Erreur chargement dashboard:', e);
         showError('Unable to load dashboard data. Check your connection.');
@@ -960,7 +960,7 @@ async function loadDashboardData() {
 async function loadPortfolioData() {
     try {
         const currentSource = globalConfig.get('data_source');
-        console.debug(`📊 Loading REAL portfolio data with source: ${currentSource}`);
+        console.debug(`Loading REAL portfolio data with source: ${currentSource}`);
         return await loadRealCSVPortfolioData();
     } catch (e) {
         console.error('Erreur portfolio CSV non disponible:', e);
@@ -972,7 +972,7 @@ async function loadPortfolioData() {
 // Fallback: API should always be available with new architecture
 async function loadDirectCSV() {
     const configuredSource = globalConfig.get('data_source');
-    console.warn(`⚠️ API not available, cannot load data for source: ${configuredSource}`);
+    console.warn(`[Warning] API not available, cannot load data for source: ${configuredSource}`);
 
     return {
         success: false,
@@ -982,9 +982,9 @@ async function loadDirectCSV() {
 }
 
 async function loadRealCSVPortfolioData() {
-    console.debug('🔄 Loading portfolio data using configured source...');
+    console.debug("Loading portfolio data using configured source...");
     const currentSource = globalConfig.get('data_source');
-    console.debug(`📊 Using data source: ${currentSource}`);
+    console.debug(`Using data source: ${currentSource}`);
 
     // Update source display (show actual CSV filename when using CSV files)
     const sourceDisplay = document.getElementById('portfolio-source-display');
@@ -1012,12 +1012,12 @@ async function loadRealCSVPortfolioData() {
     }
 
     // Load balances first (original working code)
-    console.debug('📡 About to call window.loadBalanceData()...');
+    console.debug("About to call window.loadBalanceData()...");
     let balanceResult;
 
     try {
         balanceResult = await window.loadBalanceData();
-        console.debug('📊 Balance result received:', {
+        console.debug("Balance result received:", {
             success: balanceResult?.success,
             source: balanceResult?.source,
             hasData: !!balanceResult?.data,
@@ -1025,7 +1025,7 @@ async function loadRealCSVPortfolioData() {
             dataItemsCount: balanceResult?.data?.items?.length || 0
         });
     } catch (error) {
-        debugLogger.warn('📊 API not available, trying direct CSV access...', error.message);
+        debugLogger.warn("API not available, trying direct CSV access...", error.message);
         // Fallback: try direct CSV access since API is not available
         balanceResult = await loadDirectCSV();
     }
@@ -1057,8 +1057,8 @@ async function loadRealCSVPortfolioData() {
     const totalValue = balances.reduce((sum, it) => sum + (parseFloat(it.value_usd) || 0), 0);
     const assetCount = balances.length;
 
-    console.debug(`✅ REAL data loaded: ${assetCount} assets, total: $${totalValue.toFixed(2)}`);
-    console.debug('📊 Final portfolio metrics calculated:', {
+    console.debug(`[OK] REAL data loaded: ${assetCount} assets, total: $${totalValue.toFixed(2)}`);
+    console.debug("Final portfolio metrics calculated:", {
         source: currentSource,
         totalValue: totalValue,
         assetCount: assetCount,
@@ -1085,12 +1085,12 @@ async function loadRealCSVPortfolioData() {
             const performanceData = pnlData.data?.performance || pnlData.performance;
             if (performanceData && performanceData.performance_available) {
                 performance = performanceData;
-                debugLogger.debug('✅ [PNL] P&L loaded from API:', {
+                debugLogger.debug("[OK] [PNL] P&L loaded from API:", {
                     pnl: performance.absolute_change_usd,
                     pnlPct: performance.percentage_change
                 });
             } else {
-                debugLogger.warn('⚠️ [PNL] Performance data not available:', {
+                debugLogger.warn("[Warning] [PNL] Performance data not available:", {
                     hasPerformanceData: !!performanceData,
                     performanceAvailable: performanceData?.performance_available,
                     fullResponse: pnlData
@@ -1098,7 +1098,7 @@ async function loadRealCSVPortfolioData() {
             }
         }
     } catch (e) {
-        debugLogger.warn('⚠️ Could not fetch P&L from API:', e.message);
+        debugLogger.warn("[Warning] Could not fetch P&L from API:", e.message);
     }
 
     return {
@@ -1122,7 +1122,7 @@ async function loadConnectionsStatus() {
     try {
         // NOTE: /api/exchanges/status endpoint intentionally not implemented (optional feature)
         // For now, check if exchanges are configured via API keys in backend
-        debugLogger.debug('📡 Loading exchange connections status...');
+        debugLogger.debug("Loading exchange connections status...");
 
         // Temporary: Return mock data based on actual exchange adapter registrations
         // The exchange_adapter.py registers exchanges: simulator, binance, kraken
@@ -1192,11 +1192,11 @@ async function loadExecutionStatus() {
     */
 }
 
-// ✅ FIX: Charger les scores depuis le STORE au lieu de localStorage
+//  FIX: Charger les scores depuis le STORE au lieu de localStorage
 // Cela synchronise avec les autres pages (analytics-unified, rebalance) qui utilisent le store
 async function loadScoresData() {
     try {
-        console.debug('📊 Loading scores data from store...');
+        console.debug("Loading scores data from store...");
 
         // Lire directement depuis le store (comme Global Insight)
         const state = store.snapshot();
@@ -1231,13 +1231,13 @@ async function loadScoresData() {
         }
 
         if (hasValidScores) {
-            console.debug('✅ Scores loaded from store:', result);
+            console.debug("[OK] Scores loaded from store:", result);
             return result;
         }
 
         // Fallback: Si le store est vide, essayer localStorage COMME BEFORE
         // (pour compatibilité si risk-dashboard n'a pas encore chargé le store)
-        console.debug('⚠️ Store empty, trying localStorage fallback...');
+        console.debug("[Warning] Store empty, trying localStorage fallback...");
         const __user = localStorage.getItem('activeUser');
         const get = (k) => {
             const withPrefix = localStorage.getItem(`${k}:${__user}`);
@@ -1283,11 +1283,11 @@ async function loadScoresData() {
         }
 
         if (hasFallbackScores) {
-            console.debug('✅ Scores loaded from localStorage fallback:', fallbackResult);
+            console.debug("[OK] Scores loaded from localStorage fallback:", fallbackResult);
             return fallbackResult;
         }
 
-        console.debug('⚠️ No scores available from store or localStorage');
+        console.debug("[Warning] No scores available from store or localStorage");
         return null;
 
     } catch (e) {
@@ -1297,7 +1297,7 @@ async function loadScoresData() {
 }
 
 async function updatePortfolioDisplay(data) {
-    console.debug('📊 updatePortfolioDisplay called with:', {
+    console.debug("updatePortfolioDisplay called with:", {
         hasData: !!data,
         isOk: data?.ok,
         totalValue: data?.metrics?.total_value_usd,
@@ -1305,7 +1305,7 @@ async function updatePortfolioDisplay(data) {
     });
 
     if (!data || !data.ok) {
-        console.debug('❌ Portfolio data invalid or missing, showing empty state');
+        console.debug("[Error] Portfolio data invalid or missing, showing empty state");
 
         // Hide normal metrics
         const metricsContainer = document.querySelector('#crypto .metric');
@@ -1368,7 +1368,7 @@ async function updatePortfolioDisplay(data) {
 
     const dailyPnl = performance?.absolute_change_usd || 0;
     const dailyPnlPct = performance?.percentage_change || 0;
-    debugLogger.debug('🔍 [PNL Display] Values:', {
+    debugLogger.debug("[PNL Display] Values:", {
         raw_performance: performance,
         absolute_change_usd: performance?.absolute_change_usd,
         percentage_change: performance?.percentage_change,
@@ -1388,7 +1388,7 @@ async function updatePortfolioDisplay(data) {
 
     document.getElementById('assets-count').textContent = metrics.asset_count || 0;
 
-    console.debug('✅ Portfolio display updated:', {
+    console.debug("[OK] Portfolio display updated:", {
         totalValueDisplayed: document.getElementById('total-value').textContent,
         assetsCountDisplayed: document.getElementById('assets-count').textContent,
         sourceDisplayed: document.getElementById('portfolio-source-display')?.textContent
@@ -1409,7 +1409,7 @@ function updateConnectionsDisplay(data) {
     const container = document.getElementById('connections-grid');
     // Dashboard V2: connections-grid removed, handled by updateSystemStatus
     if (!container) {
-        debugLogger.debug('⏭️ connections-grid not found, skipping (handled by System Status)');
+        debugLogger.debug("connections-grid not found, skipping (handled by System Status)");
         return;
     }
 
@@ -1515,7 +1515,7 @@ function updateScoresDisplay(scoresData) {
 
     // Dashboard V2: Scores tile removed (merged into Global Insight)
     if (!container) {
-        debugLogger.debug('⏭️ scores-content not found, skipping (merged into Global Insight)');
+        debugLogger.debug("scores-content not found, skipping (merged into Global Insight)");
         return;
     }
 
@@ -1523,7 +1523,7 @@ function updateScoresDisplay(scoresData) {
         // Aucun score disponible - afficher message avec lien vers risk-dashboard
         container.innerHTML = `
                     <div style="text-align: center; padding: var(--space-lg); color: var(--theme-text-muted);">
-                        <div style="font-size: 2rem; margin-bottom: var(--space-md);">📊</div>
+                        <div style="font-size: 2rem; margin-bottom: var(--space-md);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
                         <div style="margin-bottom: var(--space-md);">No risk scores available</div>
                         <a href="risk-dashboard.html"
                            class="action-btn"
@@ -1548,7 +1548,7 @@ function updateScoresDisplay(scoresData) {
     // Compter combien de scores sont disponibles
     const availableScores = [risk, onchain, blended, ccs].filter(s => s !== null && s !== undefined).length;
 
-    // ✅ Couleurs conformes CLAUDE.md: Plus haut = plus robuste = VERT
+    //  Couleurs conformes CLAUDE.md: Plus haut = plus robuste = VERT
     const getScoreColor = (score) => {
         if (score > 70) return 'var(--success)';  // Robuste = vert
         if (score >= 40) return 'var(--warning)';  // Moyen = orange
@@ -1567,7 +1567,7 @@ function updateScoresDisplay(scoresData) {
     if (blended !== undefined && blended !== null) {
         scoresHTML += `
                     <div class="metric" style="margin: 6px 0;">
-                        <span class="metric-label">⚖️ Strategic Score</span>
+                        <span class="metric-label"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balanced" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#scale"></use></svg> Strategic Score</span>
                         <span class="metric-value" style="color: ${getScoreColor(blended)};">
                             ${Math.round(blended)}/100
                             <span style="font-size: 0.8em; color: var(--theme-text-muted);">(${getScoreLabel(blended)})</span>
@@ -1579,7 +1579,7 @@ function updateScoresDisplay(scoresData) {
     if (ccs !== undefined && ccs !== null) {
         scoresHTML += `
                     <div class="metric" style="margin: 6px 0;">
-                        <span class="metric-label">📊 CCS Score</span>
+                        <span class="metric-label"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> CCS Score</span>
                         <span class="metric-value" style="color: ${getScoreColor(ccs)};">
                             ${Math.round(ccs)}/100
                             <span style="font-size: 0.8em; color: var(--theme-text-muted);">(${getScoreLabel(ccs)})</span>
@@ -1591,7 +1591,7 @@ function updateScoresDisplay(scoresData) {
     if (onchain !== undefined && onchain !== null) {
         scoresHTML += `
                     <div class="metric" style="margin: 6px 0;">
-                        <span class="metric-label">🔗 On-Chain</span>
+                        <span class="metric-label"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Link" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#link"></use></svg> On-Chain</span>
                         <span class="metric-value" style="color: ${getScoreColor(onchain)};">
                             ${Math.round(onchain)}/100
                             <span style="font-size: 0.8em; color: var(--theme-text-muted);">(${getScoreLabel(onchain)})</span>
@@ -1603,7 +1603,7 @@ function updateScoresDisplay(scoresData) {
     if (risk !== undefined && risk !== null) {
         scoresHTML += `
                     <div class="metric" style="margin: 6px 0;">
-                        <span class="metric-label">🛡️ Risk</span>
+                        <span class="metric-label"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Protection" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#shield-check"></use></svg> Risk</span>
                         <span class="metric-value" style="color: ${getScoreColor(risk)};">
                             ${Math.round(risk)}/100
                             <span style="font-size: 0.8em; color: var(--theme-text-muted);">(${getScoreLabel(risk)})</span>
@@ -1616,7 +1616,7 @@ function updateScoresDisplay(scoresData) {
     if (scoresHTML === '') {
         scoresHTML = `
                     <div style="text-align: center; color: var(--theme-text-muted); padding: var(--space-md);">
-                        <div>📊 No scores available</div>
+                        <div><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> No scores available</div>
                         <div style="font-size: 0.9em; margin-top: var(--space-xs);">
                             Visit the risk dashboard to generate scores
                         </div>
@@ -1631,7 +1631,7 @@ function updateScoresDisplay(scoresData) {
                     <!-- Message informatif si scores partiels -->
                     ${availableScores > 0 && availableScores < 4 ? `
                     <div style="text-align: center; font-size: 0.75em; color: var(--theme-text-muted); margin-top: 6px; padding: 4px; background: var(--theme-surface-elevated); border-radius: 4px;">
-                        💡 Visit <a href="risk-dashboard.html" style="color: var(--brand-primary);">Risk Dashboard</a> to calculate all scores
+                        <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#light-bulb"></use></svg> Visit <a href="risk-dashboard.html" style="color: var(--brand-primary);">Risk Dashboard</a> to calculate all scores
                     </div>
                     ` : ''}
 
@@ -1713,18 +1713,18 @@ let ASSET_GROUPS = null;
 // Force reload taxonomy pour classification correcte des 11 groupes
 async function loadAssetGroups() {
     try {
-        console.debug('🔄 [Dashboard] Force reloading taxonomy for proper asset classification...');
+        console.debug("[Dashboard] Force reloading taxonomy for proper asset classification...");
         const module = await import('../shared-asset-groups.js');
         await module.forceReloadTaxonomy();
 
         // Lire via module.* pour obtenir le live binding (pas de destructuration stale)
         if (!Object.keys(module.UNIFIED_ASSET_GROUPS || {}).length) {
-            debugLogger.warn('⚠️ [Dashboard] Taxonomy non chargée – risque de "Others" gonflé');
+            debugLogger.warn("[Warning] [Dashboard] Taxonomy non chargée – risque de \"Others\" gonflé");
         } else {
-            debugLogger.debug('✅ [Dashboard] Taxonomy loaded:', Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
+            debugLogger.debug("[OK] [Dashboard] Taxonomy loaded:", Object.keys(module.UNIFIED_ASSET_GROUPS).length, 'groupes');
         }
     } catch (error) {
-        debugLogger.error('❌ [Dashboard] Failed to load taxonomy:', error);
+        debugLogger.error("[Error] [Dashboard] Failed to load taxonomy:", error);
     }
 }
 
@@ -1799,7 +1799,7 @@ function parseCSVLineLocal(line) {
 async function groupAssetsByAliases(items) {
     // Utiliser la fonction unifiée de groupement directement depuis le module
     try {
-        debugLogger.debug('🔄 [Dashboard] Classifying', items.length, 'assets with unified taxonomy');
+        debugLogger.debug("[Dashboard] Classifying", items.length, 'assets with unified taxonomy');
         const { groupAssetsByClassification } = await import('../shared-asset-groups.js');
 
         if (!groupAssetsByClassification) {
@@ -1807,10 +1807,10 @@ async function groupAssetsByAliases(items) {
         }
 
         const result = groupAssetsByClassification(items);
-        debugLogger.debug('✅ [Dashboard] Unified grouping succeeded, found', result.length, 'groups');
+        debugLogger.debug("[OK] [Dashboard] Unified grouping succeeded, found", result.length, 'groups');
         return result;
     } catch (error) {
-        debugLogger.warn('⚠️ [Dashboard] Unified grouping failed, using fallback:', error);
+        debugLogger.warn("[Warning] [Dashboard] Unified grouping failed, using fallback:", error);
         // Fallback qui utilise aussi le groupement par classification
         const groups = new Map();
         const resolveGroup = (typeof window !== 'undefined' && typeof window.getAssetGroup === 'function')
@@ -1838,7 +1838,7 @@ async function groupAssetsByAliases(items) {
 
             // Debug temporaire pour voir les classifications
             if (parseFloat(item.value_usd || 0) > 100) { // Seulement pour les assets significatifs
-                debugLogger.debug(`🔍 ${symbol} → ${group} ($${parseFloat(item.value_usd || 0).toFixed(2)})`);
+                debugLogger.debug(`Search ${symbol} → ${group} ($${parseFloat(item.value_usd || 0).toFixed(2)})`);
             }
 
             if (!groups.has(group)) {
@@ -1867,7 +1867,7 @@ let taxonomyAPICache = null;
         if (response.ok) {
             const data = await response.json();
             taxonomyAPICache = data.aliases || {};
-            debugLogger.debug('✅ Taxonomy cache loaded asynchronously');
+            debugLogger.debug("[OK] Taxonomy cache loaded asynchronously");
         }
     } catch (e) {
         debugLogger.warn('Could not preload taxonomy cache:', e);
@@ -1902,8 +1902,8 @@ async function updatePortfolioChart(balancesData) {
     console.debug('updatePortfolioChart - balancesData:', balancesData);
 
     if (!balancesData || !balancesData.items) {
-        console.debug('❌ No balances data or items');
-        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--warning);">⏳ Loading data...</div>';
+        console.debug("[Error] No balances data or items");
+        document.getElementById('portfolio-chart').innerHTML = "<div style=\"text-align: center; padding: 20px; color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Pending\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#clock\"></use></svg> Loading data...</div>";
         return;
     }
 
@@ -1911,23 +1911,23 @@ async function updatePortfolioChart(balancesData) {
 
     let canvas = document.getElementById('portfolioChartCanvas');
     if (!canvas) {
-        console.debug('❌ Canvas element not found, creating it...');
+        console.debug("[Error] Canvas element not found, creating it...");
         // Créer le canvas manquant
         const chartContainer = document.getElementById('portfolio-chart');
         if (chartContainer) {
             chartContainer.innerHTML = '<canvas id="portfolioChartCanvas"></canvas>';
             canvas = document.getElementById('portfolioChartCanvas');
-            console.debug('✅ Canvas element created successfully');
+            console.debug("[OK] Canvas element created successfully");
         } else {
-            console.debug('❌ Portfolio chart container not found');
+            console.debug("[Error] Portfolio chart container not found");
             return;
         }
     }
 
     // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
-        console.debug('❌ Chart.js not loaded, trying to reload...');
-        document.getElementById('portfolio-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded - reload the page</div>';
+        console.debug("[Error] Chart.js not loaded, trying to reload...");
+        document.getElementById('portfolio-chart').innerHTML = "<div style=\"text-align: center; padding: 20px; color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Chart.js not loaded - reload the page</div>";
         return;
     }
 
@@ -1958,10 +1958,10 @@ async function updatePortfolioChart(balancesData) {
 
     // Si aucune donnée, afficher un message explicatif
     if (labels.length === 0 || total === 0) {
-        console.debug('❌ No chart data available, showing placeholder');
+        console.debug("[Error] No chart data available, showing placeholder");
         document.getElementById('portfolio-chart').innerHTML = `
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: var(--theme-text-muted);">
-                        <div style="font-size: 2rem; margin-bottom: 12px;">📊</div>
+                        <div style="font-size: 2rem; margin-bottom: 12px;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
                         <div style="font-weight: 600; margin-bottom: 4px;">Data loading in progress</div>
                         <div style="font-size: 0.875rem;">The chart will display when data is available</div>
                     </div>
@@ -2053,14 +2053,14 @@ async function updateSaxoChart(positions, cashBalance = 0) {
 
     let canvas = document.getElementById('saxoChartCanvas');
     if (!canvas) {
-        console.debug('❌ Saxo canvas element not found');
+        console.debug("[Error] Saxo canvas element not found");
         return;
     }
 
     // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
-        console.debug('❌ Chart.js not loaded');
-        document.getElementById('saxo-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded</div>';
+        console.debug("[Error] Chart.js not loaded");
+        document.getElementById('saxo-chart').innerHTML = "<div style=\"text-align: center; padding: 20px; color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Chart.js not loaded</div>";
         return;
     }
 
@@ -2081,7 +2081,7 @@ async function updateSaxoChart(positions, cashBalance = 0) {
         grouped[assetClass].count += 1;
     });
 
-    // ✅ Add cash as a separate category if present
+    //  Add cash as a separate category if present
     if (cashBalance > 0) {
         grouped['CASH'] = { label: 'Cash', value: cashBalance, count: 1 };
     }
@@ -2176,23 +2176,23 @@ async function updateWealthChart(breakdown, counts) {
 
     let canvas = document.getElementById('wealthChartCanvas');
     if (!canvas) {
-        console.debug('❌ Wealth canvas element not found');
+        console.debug("[Error] Wealth canvas element not found");
         return;
     }
 
     if (typeof Chart === 'undefined') {
-        console.debug('❌ Chart.js not loaded');
-        document.getElementById('wealth-chart').innerHTML = '<div style="text-align: center; padding: 20px; color: var(--danger);">❌ Chart.js not loaded</div>';
+        console.debug("[Error] Chart.js not loaded");
+        document.getElementById('wealth-chart').innerHTML = "<div style=\"text-align: center; padding: 20px; color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Chart.js not loaded</div>";
         return;
     }
 
     const ctx = canvas.getContext('2d');
 
     const categories = [
-        { key: 'liquidity', label: '💰 Liquidity', value: breakdown.liquidity || 0, color: '#3b82f6' },
-        { key: 'tangible', label: '🏠 Tangible Assets', value: breakdown.tangible || 0, color: '#10b981' },
-        { key: 'insurance', label: '🛡️ Insurance', value: breakdown.insurance || 0, color: '#8b5cf6' },
-        { key: 'liability', label: '💳 Liabilities', value: Math.abs(breakdown.liability || 0), color: '#ef4444' }
+        { key: 'liquidity', label: "Liquidity", value: breakdown.liquidity || 0, color: '#3b82f6' },
+        { key: 'tangible', label: "Tangible Assets", value: breakdown.tangible || 0, color: '#10b981' },
+        { key: 'insurance', label: "Insurance", value: breakdown.insurance || 0, color: '#8b5cf6' },
+        { key: 'liability', label: "Liabilities", value: Math.abs(breakdown.liability || 0), color: '#ef4444' }
     ];
 
     const nonZeroCategories = categories.filter(cat => cat.value > 0);
@@ -2280,7 +2280,7 @@ async function updatePortfolioBreakdown(balancesData) {
         return;
     }
     if (!balancesData || !balancesData.items) {
-        container.innerHTML = '<div style="color: var(--danger);">❌ No data</div>';
+        container.innerHTML = "<div style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> No data</div>";
         return;
     }
 
@@ -2315,9 +2315,9 @@ async function updatePortfolioBreakdown(balancesData) {
 
 // Forcer un refresh des données avec la source actuelle
 async function forceRefreshData() {
-    console.debug('🔄 Force refresh demandé par utilisateur');
-    console.debug('📊 Current source before refresh:', globalConfig.get('data_source'));
-    console.debug('📊 Known source before refresh:', window.lastKnownDataSource);
+    console.debug("Force refresh demandé par utilisateur");
+    console.debug("Current source before refresh:", globalConfig.get('data_source'));
+    console.debug("Known source before refresh:", window.lastKnownDataSource);
 
     // Clear any potential caches
     if (window.portfolioChart) {
@@ -2336,7 +2336,7 @@ async function forceRefreshData() {
 
 // Function for debugging - call from browser console
 window.debugPortfolioData = async function () {
-    console.group('🔍 Portfolio Data Debug');
+    console.group("Portfolio Data Debug");
 
     const currentSource = globalConfig.get('data_source');
     debugLogger.debug('Current configured source:', currentSource);
@@ -2350,14 +2350,14 @@ window.debugPortfolioData = async function () {
         globalConfig.set('data_source', 'stub');
         const stubResult = await window.loadBalanceData(true);
         const stubTotal = stubResult.data?.items?.reduce((sum, item) => sum + (item.value_usd || 0), 0) || 0;
-        debugLogger.debug('✅ Stub source response:', {
+        debugLogger.debug("[OK] Stub source response:", {
             success: stubResult.success,
             itemCount: stubResult.data?.items?.length,
             totalValue: stubTotal,
             source: stubResult.source
         });
     } catch (e) {
-        debugLogger.error('❌ Stub source failed:', e);
+        debugLogger.error("[Error] Stub source failed:", e);
     }
 
     // Test cointracking source
@@ -2365,14 +2365,14 @@ window.debugPortfolioData = async function () {
         globalConfig.set('data_source', 'cointracking');
         const csvResult = await window.loadBalanceData(true);
         const csvTotal = csvResult.data?.items?.reduce((sum, item) => sum + (item.value_usd || 0), 0) || 0;
-        debugLogger.debug('✅ CoinTracking source response:', {
+        debugLogger.debug("[OK] CoinTracking source response:", {
             success: csvResult.success,
             itemCount: csvResult.data?.items?.length,
             totalValue: csvTotal,
             source: csvResult.source
         });
     } catch (e) {
-        debugLogger.error('❌ CoinTracking source failed:', e);
+        debugLogger.error("[Error] CoinTracking source failed:", e);
     }
 
     // Restore original source
@@ -2382,7 +2382,7 @@ window.debugPortfolioData = async function () {
     debugLogger.debug(`Testing current configured source: ${currentSource}`);
     try {
         const currentResponse = await window.loadBalanceData();
-        debugLogger.debug('✅ Current source via loadBalanceData():', {
+        debugLogger.debug("[OK] Current source via loadBalanceData():", {
             success: currentResponse?.success,
             source: currentResponse?.source,
             hasData: !!currentResponse?.data,
@@ -2395,7 +2395,7 @@ window.debugPortfolioData = async function () {
             debugLogger.debug('Calculated total from current source:', total);
         }
     } catch (e) {
-        debugLogger.error('❌ Current source failed:', e);
+        debugLogger.error("[Error] Current source failed:", e);
     }
 
     console.groupEnd();
@@ -2552,14 +2552,14 @@ window.debugPortfolioData = async function () {
 
 // === SAXO TILE FUNCTIONS ===
 async function refreshSaxoTile() {
-    // ✅ Guard: éviter appels concurrents
+    //  Guard: éviter appels concurrents
     if (isRefreshingSaxo) {
-        console.debug('⏭️ refreshSaxoTile already in progress, skipping...');
+        console.debug("refreshSaxoTile already in progress, skipping...");
         return;
     }
 
     isRefreshingSaxo = true;
-    debugLogger.debug('🏦 Refreshing Saxo tile...');
+    debugLogger.debug("Refreshing Saxo tile...");
 
     const totalValueEl = document.getElementById('saxo-total-value');
     const positionsCountEl = document.getElementById('saxo-positions-count');
@@ -2568,7 +2568,7 @@ async function refreshSaxoTile() {
 
     try {
         // Dynamic import to access module functions
-        // ✅ CRITICAL: Add timestamp to bust browser cache and ensure latest code is loaded
+        //  CRITICAL: Add timestamp to bust browser cache and ensure latest code is loaded
         const { fetchSaxoSummary, formatCurrency, getMetricColor } = await import(`../modules/wealth-saxo-summary.js?v=${Date.now()}`);
         debugLogger.debug('[Saxo Tile] Module imported successfully, calling fetchSaxoSummary...');
         const summary = await fetchSaxoSummary();
@@ -2592,13 +2592,13 @@ async function refreshSaxoTile() {
                 if (summary.needsConnection) {
                     // Utilisateur non connecté à Saxo API
                     emptyStateEl.innerHTML = `
-                        <span style="color: var(--warning);">⚠️ Not connected to Saxo API</span><br>
+                        <span style="color: var(--warning);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Warning" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#exclamation-triangle"></use></svg> Not connected to Saxo API</span><br>
                         <a href="settings.html#sources">Connect in Settings > Sources</a>
                     `;
                 } else if (summary.error && summary.error !== 'unknown error') {
                     // Erreur API spécifique
                     emptyStateEl.innerHTML = `
-                        <span style="color: var(--danger);">❌ ${summary.asof || 'API Error'}</span><br>
+                        <span style="color: var(--danger);"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Error" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#x-circle"></use></svg> ${summary.asof || 'API Error'}</span><br>
                         <a href="settings.html#sources">Check configuration</a>
                     `;
                 } else {
@@ -2631,7 +2631,7 @@ async function refreshSaxoTile() {
             if (positionsCountEl) positionsCountEl.textContent = summary.positions_count.toString();
             if (lastImportEl) lastImportEl.textContent = summary.asof;
 
-            debugLogger.debug('✅ Saxo tile updated:', {
+            debugLogger.debug("[OK] Saxo tile updated:", {
                 total_value: summary.total_value,
                 positions_count: summary.positions_count,
                 asof: summary.asof
@@ -2690,7 +2690,7 @@ async function refreshSaxoTile() {
                         cashBalance = 0; // Manual entries don't have cash balance
                         debugLogger.debug(`[Saxo Tile Chart] Manual mode: Transformed ${items.length} items to ${positions.length} positions`);
                     } else {
-                        // ✅ Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
+                        //  Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
                         positions = positionsData.data?.positions || positionsData.positions || [];
                         cashBalance = positionsData.data?.cash_balance || 0;
                     }
@@ -2729,14 +2729,14 @@ async function refreshSaxoTile() {
 }
 
 async function refreshPatrimoineTile() {
-    // ✅ Guard: éviter appels concurrents
+    //  Guard: éviter appels concurrents
     if (isRefreshingBanks) {
-        console.debug('⏭️ refreshPatrimoineTile already in progress, skipping...');
+        console.debug("refreshPatrimoineTile already in progress, skipping...");
         return;
     }
 
     isRefreshingBanks = true;
-    debugLogger.debug('💼 Refreshing Patrimoine tile...');
+    debugLogger.debug("Refreshing Patrimoine tile...");
 
     const netWorthEl = document.getElementById('wealth-net-worth');
     const assetsLiabilitiesEl = document.getElementById('wealth-assets-liabilities');
@@ -2788,7 +2788,7 @@ async function refreshPatrimoineTile() {
 
             if (emptyStateEl) emptyStateEl.style.display = 'none';
 
-            debugLogger.debug('✅ Patrimoine tile updated:', {
+            debugLogger.debug("[OK] Patrimoine tile updated:", {
                 net_worth: netWorth,
                 total_assets: totalAssets,
                 total_liabilities: totalLiabilities,
@@ -2813,14 +2813,14 @@ async function refreshPatrimoineTile() {
 }
 
 async function refreshGlobalTile() {
-    // ✅ Guard: éviter appels concurrents
+    //  Guard: éviter appels concurrents
     if (isRefreshingGlobal) {
-        console.debug('⏭️ refreshGlobalTile already in progress, skipping...');
+        console.debug("refreshGlobalTile already in progress, skipping...");
         return;
     }
 
     isRefreshingGlobal = true;
-    debugLogger.debug('🌐 Refreshing Global tile...');
+    debugLogger.debug("Refreshing Global tile...");
 
     const statusEl = document.getElementById('global-status');
     const totalValueEl = document.getElementById('global-total-value');
@@ -2835,20 +2835,20 @@ async function refreshGlobalTile() {
         const currentSource = (window.globalConfig && window.globalConfig.get('data_source')) || 'auto';
         const minThreshold = (window.globalConfig && window.globalConfig.get('min_usd_threshold')) || 1.0;
 
-        // ✅ FIX: Pre-load exchange rates for EUR and CHF conversions
+        //  FIX: Pre-load exchange rates for EUR and CHF conversions
         if (window.currencyManager) {
             try {
                 await Promise.all([
                     window.currencyManager.ensureRate('EUR'),
                     window.currencyManager.ensureRate('CHF')
                 ]);
-                debugLogger.debug('💱 Exchange rates loaded (EUR, CHF)');
+                debugLogger.debug("Exchange rates loaded (EUR, CHF)");
             } catch (err) {
                 debugLogger.warn('Currency rates pre-load failed, using fallbacks', err);
             }
         }
 
-        // ✅ FIX: Get Bourse source from WealthContextBar (handles both CSV and API modes)
+        //  FIX: Get Bourse source from WealthContextBar (handles both CSV and API modes)
         let bourseFileKey = null;
         let bourseSourceParam = null;
         const bourseSource = window.wealthContextBar?.getContext()?.bourse;
@@ -2964,8 +2964,8 @@ async function refreshGlobalTile() {
         if (breakdownEl && data.total_value_usd > 0) {
             const modules = [
                 { name: 'Crypto', icon: '₿', value: data.breakdown.crypto, color: '#3b82f6', bgColor: 'rgba(59, 130, 246, 0.1)' },
-                { name: 'Stocks', icon: '📈', value: data.breakdown.saxo, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
-                { name: 'Wealth', icon: '💼', value: data.breakdown.wealth, color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' }
+                { name: 'Stocks', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Growth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#arrow-trending-up\"></use></svg>", value: data.breakdown.saxo, color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.1)' },
+                { name: 'Wealth', icon: "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Wealth\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#briefcase\"></use></svg>", value: data.breakdown.wealth, color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.1)' }
             ].filter(m => m.value > 0);
 
             breakdownEl.innerHTML = modules.map(m => {
@@ -3040,13 +3040,13 @@ async function refreshGlobalTile() {
             wealthPct: data.breakdown?.wealth ? ((data.breakdown.wealth / data.total_value_usd) * 100).toFixed(1) : 'N/A'
         });
 
-        debugLogger.debug('✅ Global tile updated:', data);
+        debugLogger.debug("[OK] Global tile updated:", data);
 
     } catch (error) {
         debugLogger.error('[Global Tile] Error refreshing:', error);
 
         if (totalValueEl) totalValueEl.textContent = '--';
-        if (breakdownEl) breakdownEl.innerHTML = '<div style="text-align:center;color:var(--danger);font-size:0.85rem;padding:var(--space-lg);">❌ Loading error</div>';
+        if (breakdownEl) breakdownEl.innerHTML = "<div style=\"text-align:center;color:var(--danger);font-size:0.85rem;padding:var(--space-lg);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Loading error</div>";
 
         if (statusEl) {
             statusEl.textContent = 'Error';
@@ -3066,7 +3066,7 @@ async function refreshGlobalTile() {
  */
 async function loadMarketRegimes() {
     try {
-        debugLogger.debug('📈 Loading market regimes...');
+        debugLogger.debug("Loading market regimes...");
 
         // Fetch regime data for BTC, ETH, and Stock
         const [btcRes, ethRes, stockRes] = await Promise.all([
@@ -3079,7 +3079,7 @@ async function loadMarketRegimes() {
             fetch('/api/ml/bourse/regime?benchmark=SPY&lookback_days=365')
                 .then(r => r.ok ? r.json() : null)
                 .catch(() => {
-                    debugLogger.debug('⏭️ Stock regime endpoint not available (404), skipping');
+                    debugLogger.debug("Stock regime endpoint not available (404), skipping");
                     return null;
                 })
         ]);
@@ -3144,9 +3144,9 @@ async function loadMarketRegimes() {
             document.getElementById('regime-stock-conf').textContent = 'Endpoint not available';
         }
 
-        debugLogger.debug('✅ Market regimes loaded');
+        debugLogger.debug("[OK] Market regimes loaded");
     } catch (error) {
-        debugLogger.error('❌ Failed to load market regimes:', error);
+        debugLogger.error("Failed to load market regimes:", error);
     }
 }
 
@@ -3155,7 +3155,7 @@ async function loadMarketRegimes() {
  */
 async function loadRiskAlerts() {
     try {
-        debugLogger.debug('🚨 Loading risk alerts...');
+        debugLogger.debug("Loading risk alerts...");
 
         const activeUser = localStorage.getItem('activeUser');
         const source = window.globalConfig?.get('data_source') || localStorage.getItem('data_source');
@@ -3175,7 +3175,7 @@ async function loadRiskAlerts() {
             })
                 .then(r => r.ok ? r.json() : null)
                 .catch(() => {
-                    debugLogger.debug('⏭️ Alerts endpoint not available (404), skipping');
+                    debugLogger.debug("Alerts endpoint not available (404), skipping");
                     return null;
                 })
         ]);
@@ -3231,16 +3231,16 @@ async function loadRiskAlerts() {
                 container.innerHTML = alerts.map(alert => {
                     // Map severity S1-S4 to CSS classes
                     let severityClass = 'info';
-                    let icon = 'ℹ️';
+                    let icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
                     if (alert.severity === 'S1') {
                         severityClass = 'critical';
-                        icon = '🚨';
+                        icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Alert\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-circle\"></use></svg>";
                     } else if (alert.severity === 'S2') {
                         severityClass = 'warning';
-                        icon = '⚠️';
+                        icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg>";
                     } else if (alert.severity === 'S3') {
                         severityClass = 'info';
-                        icon = 'ℹ️';
+                        icon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
                     }
 
                     // Create alert message from alert_type
@@ -3251,18 +3251,18 @@ async function loadRiskAlerts() {
                 if (alertsCountEl) alertsCountEl.textContent = alertsRes.length;
             } else if (alertsRes === null) {
                 // Endpoint not available
-                container.innerHTML = '<div class="alert-item info" style="text-align:center;">ℹ️ Alerts endpoint not available</div>';
+                container.innerHTML = "<div class=\"alert-item info\" style=\"text-align:center;\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Info\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg> Alerts endpoint not available</div>";
                 if (alertsCountEl) alertsCountEl.textContent = '--';
             } else {
                 // No alerts
-                container.innerHTML = '<div class="alert-item success">✅ No active alerts</div>';
+                container.innerHTML = "<div class=\"alert-item success\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"OK\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#check-circle\"></use></svg> No active alerts</div>";
                 if (alertsCountEl) alertsCountEl.textContent = '0';
             }
         }
 
-        debugLogger.debug('✅ Risk alerts loaded');
+        debugLogger.debug("[OK] Risk alerts loaded");
     } catch (error) {
-        debugLogger.error('❌ Failed to load risk alerts:', error);
+        debugLogger.error("Failed to load risk alerts:", error);
     }
 }
 
@@ -3271,7 +3271,7 @@ async function loadRiskAlerts() {
  */
 async function updateSystemStatus() {
     try {
-        debugLogger.debug('⚡ Updating system status...');
+        debugLogger.debug("Updating system status...");
 
         // API Status
         const apiStatusEl = document.getElementById('api-status');
@@ -3279,14 +3279,14 @@ async function updateSystemStatus() {
             try {
                 const healthRes = await fetch('/health').then(r => r.json());
                 if (healthRes?.status === 'ok') {
-                    apiStatusEl.textContent = '✓ Online';
+                    apiStatusEl.textContent = "Online";
                     apiStatusEl.style.color = 'var(--success)';
                 } else {
-                    apiStatusEl.textContent = '⚠ Degraded';
+                    apiStatusEl.textContent = "[Warning] Degraded";
                     apiStatusEl.style.color = 'var(--warning)';
                 }
             } catch {
-                apiStatusEl.textContent = '✗ Offline';
+                apiStatusEl.textContent = "Offline";
                 apiStatusEl.style.color = 'var(--danger)';
             }
         }
@@ -3294,7 +3294,7 @@ async function updateSystemStatus() {
         // Exchanges Status (optional endpoint - NOTE: /exchanges/status intentionally not implemented)
         const exchangesEl = document.getElementById('exchanges-status');
         if (exchangesEl) {
-            // ✅ Disabled to avoid 404 console errors - endpoint is optional
+            //  Disabled to avoid 404 console errors - endpoint is optional
             // NOTE: Uncomment if /exchanges/status endpoint is needed in the future
             /*
             try {
@@ -3333,9 +3333,9 @@ async function updateSystemStatus() {
         // Data Freshness (from existing function)
         updateSystemHealth();
 
-        debugLogger.debug('✅ System status updated');
+        debugLogger.debug("[OK] System status updated");
     } catch (error) {
-        debugLogger.error('❌ Failed to update system status:', error);
+        debugLogger.error("Failed to update system status:", error);
     }
 }
 
@@ -3347,4 +3347,4 @@ window.loadMarketRegimes = loadMarketRegimes;
 window.loadRiskAlerts = loadRiskAlerts;
 window.updateSystemStatus = updateSystemStatus;
 
-// ✅ REMOVED: Auto-refresh Global tile moved to main DOMContentLoaded listener to avoid duplicates
+//  REMOVED: Auto-refresh Global tile moved to main DOMContentLoaded listener to avoid duplicates

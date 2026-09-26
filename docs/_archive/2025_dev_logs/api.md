@@ -52,7 +52,7 @@ Flux actuel centré sur **pages dédiées** et import fichier :
 - Le calcul **P&L Today** côté Bourse peut dépendre de données `prev_close`. Si indisponible, il peut être 0.
 - L’intégration Bourse n’est pas encore alignée sur le même modèle que Crypto (c’est la **roadmap**).
 
-## Wealth (Phase 2 complétée ✅)
+## Wealth (Phase 2 complétée )
 
 > **Statut** : Namespace Wealth **opérationnel**, endpoints disponibles, lecture legacy active. Phase 2 terminée (Sep 2025).
 

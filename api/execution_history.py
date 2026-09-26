@@ -248,22 +248,22 @@ async def get_execution_trends(
             trend_data = trends["trends"]
             
             if trend_data.get("volume_trend") == "increasing":
-                insights.append("📈 Trading volume is increasing - good activity level")
+                insights.append(" Trading volume is increasing - good activity level")
             elif trend_data.get("volume_trend") == "decreasing":
-                insights.append("📉 Trading volume is decreasing - consider market conditions")
+                insights.append(" Trading volume is decreasing - consider market conditions")
             
             if trend_data.get("success_trend") == "improving":
-                insights.append("✅ Success rate is improving - execution quality getting better")
+                insights.append(" Success rate is improving - execution quality getting better")
             elif trend_data.get("success_trend") == "degrading":
-                insights.append("⚠️ Success rate is degrading - review execution strategy")
+                insights.append(" Success rate is degrading - review execution strategy")
                 
             overall_success = trend_data.get("overall_success_rate", 0)
             if overall_success >= 95:
-                insights.append("🎯 Excellent overall success rate")
+                insights.append(" Excellent overall success rate")
             elif overall_success >= 90:
-                insights.append("👍 Good overall success rate")
+                insights.append("[OK] Good overall success rate")
             else:
-                insights.append("🔧 Success rate needs improvement")
+                insights.append(" Success rate needs improvement")
         
         enhanced_trends = {
             **trends,

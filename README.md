@@ -1,14 +1,14 @@
 # SmartFolio
 
-Intelligent cross-asset wealth management platform (Crypto, Stock Market, Banking) with AI, advanced ML, and unified risk management. Modular architecture built around 15+ specialized pages optimized for real-time decision making.
+SmartFolio is a portfolio management application for crypto, stocks and banking. It combines portfolio reporting, risk analysis, allocation tools and machine learning across dedicated modules.
 
-Designed to simplify the management of large crypto portfolios (>200 assets) via a smart 11-group taxonomy, and currently specialized for CoinTracking (API & CSV) data sources.
+Crypto holdings are organized into 11 asset groups, with support for CoinTracking API and CSV data sources.
 
 ## Main Features
 
-The platform is built around **3 Specialized Modules** powered by a shared AI Core.
+Three modules share risk analysis, allocation and machine learning services.
 
-### 🚀 Crypto (Core Module)
+### Crypto (Core Module)
 
 - **Decision Engine**: Automated governance with "Freeze Semantics" to prevent panic selling.
 - **Phase Engine**: Proactive detection of market regimes (Bitcoin Season vs Altseason) with auto-tilts.
@@ -17,19 +17,19 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 - **Smart Taxonomy**: Automatically groups hundreds of tokens into 11 Canonical Groups (BTC, ETH, SOL, AI, DeFi...) to drastically reduce cognitive load for large wallets.
 - **CoinTracking Native**: Deep integration with CoinTracking (API & CSV) to handle complex transaction histories and real-time balances accurately.
 
-### 📈 Stock Market (Saxo Module)
+### Stock Market (Saxo Module)
 
 - **Market Opportunities**: AI Scanner that detects portfolio gaps and suggests Stocks/ETFs.
 - **Intelligent Stop Loss**: 6 adaptive methods (Trailing, Volatility-based) to protect gains.
 - **Risk Analytics**: Specific beta and correlation analysis against S&P 500.
 
-### 🏛️ Wealth & Banking
+### Wealth & Banking
 
 - **P&L Today**: Real-time performance tracking with "Anchor Points" (Midnight/Session).
 - **Unified View**: Cross-asset aggregation (Crypto + Stocks + Bank) in your reference currency.
 - **Structure Analysis**: Monitoring of liquidity ratios (Stable/Cash vs Risky Assets).
 
-### 🧠 Shared Intelligence (Cross-Module)
+### Shared Intelligence (Cross-Module)
 
 - **AI Chat Assistant**: Global AI assistant with context awareness (Groq free / Claude premium)
   - Context-aware: Automatically sees current page data (portfolio, risk, opportunities)
@@ -45,7 +45,7 @@ The platform is built around **3 Specialized Modules** powered by a shared AI Co
 - **ML Sentiment**: Proprietary sentiment score (0-100) - NOT Fear & Greed Index (alternative.me). Formula: `50 + (sentiment_ml × 50)` where sentiment ∈ [-1, 1].
 - **Multi-Tenant**: Complete isolation of data and configurations per user.
 
-## 📸 Gallery
+## Gallery
 
 <div align="center">
   <img src="docs/images/dashboard_preview.png" alt="SmartFolio Dashboard" width="100%"/>
@@ -227,14 +227,14 @@ data/
     └── wealth/wealth.json           # Unified wealth data (assets, liabilities)
 ```
 
-## 🔒 Security
+## Security
 
-- ✅ **Secrets management**: `.env` template, pre-commit hooks (detect-secrets + gitleaks)
-- ✅ **Secure frontend**: 464 console.log → debugLogger, ESLint (no-console, no-eval)
-- ✅ **HTTP headers**: CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
-- ✅ **Automated tests**: header & security validation
+- [OK] **Secrets management**: `.env` template, pre-commit hooks (detect-secrets + gitleaks)
+- **Secure frontend**: 464 console.log → debugLogger, ESLint (no-console, no-eval)
+- [OK] **HTTP headers**: CSP, X-Content-Type-Options, X-Frame-Options, rate limiting
+- [OK] **Automated tests**: header & security validation
 
-📖 Complete details: [SECURITY.md](docs/SECURITY.md),
+ Complete details: [SECURITY.md](docs/SECURITY.md),
 [AUTHENTICATION.md](docs/AUTHENTICATION.md), and
 [EXTERNAL_ACCESS_CADDY.md](docs/EXTERNAL_ACCESS_CADDY.md)
 
@@ -276,7 +276,7 @@ data/
 
 ### Complete Index
 
-📖 **[Documentation Index](docs/index.md)** - Complete list of available docs
+ **[Documentation Index](docs/index.md)** - Complete list of available docs
 
 ## Configuration
 
@@ -349,7 +349,7 @@ POST /api/ai/refresh-knowledge                   # Force reload docs from .md fi
 GET  /api/ai/knowledge-stats                     # Cache statistics
 ```
 
-📖 Complete API: <http://localhost:8080/docs> (Swagger UI)
+ Complete API: <http://localhost:8080/docs> (Swagger UI)
 
 ## Tests
 
@@ -392,7 +392,7 @@ const balanceResult = await window.loadBalanceData(true);
 ### 2. Risk Score = Positive (0-100)
 
 - **Convention**: Higher = more robust
-- **❌ FORBIDDEN**: Never invert with `100 - scoreRisk`
+- ** FORBIDDEN**: Never invert with `100 - scoreRisk`
 
 ### 3. Decision Index vs Regime
 
@@ -400,7 +400,7 @@ const balanceResult = await window.loadBalanceData(true);
 - **Regime Score**: Market state (0-100 variable)
 - **Phase**: Based ONLY on Cycle Score (<70=bearish, 70-90=moderate, ≥90=bullish)
 
-📖 Details: [CLAUDE.md](CLAUDE.md)
+ Details: [CLAUDE.md](CLAUDE.md)
 
 ## Contributing
 
@@ -430,6 +430,6 @@ This project is a starter/template for personal or educational use.
 
 ---
 
-**Status**: ✅ Production Stable (Feb 2026)
+**Status**: [OK] Production Stable (Feb 2026)
 **Version**: 4.0
 **Stack**: Python 3.10+ • FastAPI • Vanilla JS (ES6) • Redis (optional)

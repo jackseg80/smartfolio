@@ -3,7 +3,7 @@
  * Sliders, toggles, presets avec debounce et badges automatiques
  */
 
-console.debug('🎛️ SIM: SimControls loaded');
+console.debug("SIM: SimControls loaded");
 
 export class SimControls {
   constructor(containerId, onUpdateCallback) {
@@ -98,13 +98,13 @@ export class SimControls {
     this.container.innerHTML = `
       <div class="sim-controls-wrapper">
         <div class="controls-header">
-          <h3>🎛️ Simulation Controls</h3>
+          <h3><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Controls" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#adjustments-horizontal"></use></svg> Simulation Controls</h3>
           <div class="preset-controls">
             <select id="sim-preset-select" class="preset-select">
               <option value="">Choisir un preset...</option>
             </select>
-            <button id="sim-export-btn" class="btn secondary">📤 Export</button>
-            <button id="sim-reset-btn" class="btn secondary">🔄 Reset</button>
+            <button id="sim-export-btn" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Upload" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-up-tray"></use></svg> Export</button>
+            <button id="sim-reset-btn" class="btn secondary"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Refresh" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Reset</button>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export class SimControls {
         <div class="controls-content">
           <!-- Pipeline Mode Section -->
           <div class="control-section pipeline-mode-section">
-            <h4>⚙️ Pipeline Mode</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Settings" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cog-6-tooth"></use></svg> Pipeline Mode</h4>
             <div class="pipeline-mode-toggle">
               <label class="pipeline-option ${this.state.pipelineMode === 'production' ? 'active' : ''}">
                 <input type="radio" name="pipeline-mode" value="production" ${this.state.pipelineMode === 'production' ? 'checked' : ''} />
@@ -141,7 +141,7 @@ export class SimControls {
 
           <!-- Decision Inputs Section -->
           <div class="control-section">
-            <h4>📊 Decision Inputs</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Decision Inputs</h4>
             <div class="controls-grid">
               ${this.renderSlider('cycleScore', 'Cycle Score', 0, 100, 1, '%')}
               ${this.renderSlider('onChainScore', 'OnChain Score', 0, 100, 1, '%')}
@@ -168,7 +168,7 @@ export class SimControls {
 
           <!-- Phase Engine Section -->
           <div class="control-section">
-            <h4>🌊 Phase Engine</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Cycle" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-path"></use></svg> Phase Engine</h4>
             <div class="controls-grid">
               <div class="control-group">
                 <label>
@@ -197,7 +197,7 @@ export class SimControls {
 
           <!-- Risk Budget Section (hidden in production mode) -->
           <div class="control-section risk-budget-section" id="risk-budget-section" style="${this.state.pipelineMode === 'production' ? 'display:none' : ''}">
-            <h4>💰 Risk Budget (Custom Mode)</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Risk Budget (Custom Mode)</h4>
             <div class="controls-grid">
               <div class="control-group">
                 <label>Courbe DI→Stables</label>
@@ -227,7 +227,7 @@ export class SimControls {
 
           <!-- Governance Section -->
           <div class="control-section">
-            <h4>🏛️ Governance Caps</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Bank" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#building-library"></use></svg> Governance Caps</h4>
             <div class="controls-grid">
               ${this.renderSlider('cap_L2', 'Cap L2/Scaling', 5, 30, 1, '%')}
               ${this.renderSlider('cap_DeFi', 'Cap DeFi', 2, 20, 1, '%')}
@@ -245,7 +245,7 @@ export class SimControls {
 
           <!-- Execution Section -->
           <div class="control-section">
-            <h4>⚡ Execution (Simulation)</h4>
+            <h4><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Activity" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bolt"></use></svg> Execution (Simulation)</h4>
             <div class="controls-grid">
               ${this.renderSlider('global_threshold', 'Seuil Global', 0.5, 10, 0.1, '%')}
               ${this.renderSlider('bucket_threshold', 'Seuil Bucket', 0.2, 5, 0.1, '%')}
@@ -303,15 +303,15 @@ export class SimControls {
     let sentimentState, stateIcon, stateClass;
     if (value < 25) {
       sentimentState = 'Extreme Fear';
-      stateIcon = '🔴';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Negative\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-fear';
     } else if (value > 75) {
       sentimentState = 'Extreme Greed';
-      stateIcon = '🟢';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-greed';
     } else {
       sentimentState = 'Neutral';
-      stateIcon = '🟡';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Pending\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-neutral';
     }
 
@@ -322,7 +322,7 @@ export class SimControls {
         <label for="sim-sentimentScore" style="display: flex; justify-content: space-between; align-items: center;">
           <span>
             ML Sentiment (Override)
-            <span class="sentiment-tooltip" title="Sentiment is NOT a component of the DI. It is a contextual OVERRIDE that modifies allocation targets in case of extreme sentiment (Fear<25 or Greed>75).">ℹ️</span>
+            <span class="sentiment-tooltip" title="Sentiment is NOT a component of the DI. It is a contextual OVERRIDE that modifies allocation targets in case of extreme sentiment (Fear<25 or Greed>75)."><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg></span>
           </span>
           <span class="value-display" id="sim-sentimentScore-value">${value}%</span>
         </label>
@@ -350,8 +350,8 @@ export class SimControls {
           background: ${value < 25 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)'};
           color: ${value < 25 ? 'var(--danger)' : 'var(--success)'};
           border: 1px solid ${value < 25 ? 'var(--danger)' : 'var(--success)'};
-        ">
-          ⚡ Override ${value < 25 ? 'Protection' : 'Prise de profits'} actif
+ ">
+ Override ${value < 25 ? 'Protection' : 'Prise de profits'} actif
         </div>
         ` : ''}
       </div>
@@ -383,7 +383,7 @@ export class SimControls {
       // Valeurs directes
       return obj[path] || 0;
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('🎛️ SIM: getNestedValue error for path:', path, error);
+      (window.debugLogger?.warn || console.warn)("SIM: getNestedValue error for path:", path, error);
       return 0;
     }
   }
@@ -492,15 +492,15 @@ export class SimControls {
     let sentimentState, stateIcon, stateClass;
     if (value < 25) {
       sentimentState = 'Extreme Fear';
-      stateIcon = '🔴';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Negative\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-fear';
     } else if (value > 75) {
       sentimentState = 'Extreme Greed';
-      stateIcon = '🟢';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Positive\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-greed';
     } else {
       sentimentState = 'Neutral';
-      stateIcon = '🟡';
+      stateIcon = "<svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Pending\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#information-circle\"></use></svg>";
       stateClass = 'sentiment-neutral';
     }
 
@@ -511,7 +511,7 @@ export class SimControls {
     // Mettre à jour l'indicateur central
     const indicator = controlGroup.querySelector('.sentiment-indicator span:nth-child(2)');
     if (indicator) {
-      indicator.textContent = `${stateIcon} ${sentimentState}`;
+      indicator.innerHTML = `${stateIcon} ${sentimentState}`;
     }
 
     // Mettre à jour le slider
@@ -538,7 +538,7 @@ export class SimControls {
         `;
         controlGroup.appendChild(badge);
       }
-      badge.textContent = `⚡ Override ${value < 25 ? 'Protection' : 'Prise de profits'} actif`;
+      badge.textContent = `${value < 25 ? 'Protection' : 'Profit-taking'} override active`;
       badge.style.background = value < 25 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)';
       badge.style.color = value < 25 ? 'var(--danger)' : 'var(--success)';
       badge.style.border = `1px solid ${value < 25 ? 'var(--danger)' : 'var(--success)'}`;
@@ -719,11 +719,11 @@ export class SimControls {
           break;
 
         default:
-          (window.debugLogger?.warn || console.warn)('🎛️ SIM: Unknown control ID:', id);
+          (window.debugLogger?.warn || console.warn)("SIM: Unknown control ID:", id);
           break;
       }
     } catch (error) {
-      debugLogger.error('🎛️ SIM: mapValueToState error:', error, { id, value });
+      debugLogger.error("SIM: mapValueToState error:", error, { id, value });
     }
   }
 
@@ -829,7 +829,7 @@ export class SimControls {
 
       this.presets = data.presets || [];
     } catch (error) {
-      (window.debugLogger?.warn || console.warn)('🎭 SIM: Failed to load presets:', error);
+      (window.debugLogger?.warn || console.warn)("SIM: Failed to load presets:", error);
       this.presets = [];
     }
   }
@@ -859,7 +859,7 @@ export class SimControls {
     this.isLoadingPreset = false;
     this.debouncedUpdate();
 
-    (window.debugLogger?.debug || console.log)('🎭 SIM: presetLoaded -', { name: preset.name, version: preset.version });
+    (window.debugLogger?.debug || console.log)("SIM: presetLoaded -", { name: preset.name, version: preset.version });
   }
 
   updateUI() {

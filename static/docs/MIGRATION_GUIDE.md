@@ -13,7 +13,7 @@ Guide pour migrer de la logique frontend `calculateIntelligentDecisionIndex` ver
 ```
 Frontend Legacy          Adaptateur             Backend API
 ┌─────────────────┐     ┌─────────────────┐    ┌─────────────────┐
-│calculateIntel...│────▶│strategy-api-    │───▶│/api/strategy/   │
+│calculateIntel...│────│strategy-api-    │───│/api/strategy/   │
 │unified-insights │     │adapter.js       │    │preview          │
 │                 │     │                 │    │                 │
 │Logique dispersée│     │Feature flags    │    │Strategy Registry│

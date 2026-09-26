@@ -1,6 +1,6 @@
 # Cap Stability Fix - October 2025
 
-## 🎯 Problem Summary
+## Problem Summary
 
 **Observed**: Cap and allocation variations despite constant scores
 - Cap oscillations: 1% → 7% → 1% (backend)
@@ -11,7 +11,7 @@
 
 ---
 
-## 🔍 Root Causes Identified
+## Root Causes Identified
 
 ### 1. **DUAL CAP CALCULATION** (Backend vs Frontend)
 
@@ -79,14 +79,14 @@ if (riskScore >= 80) {
 ```
 
 **With observed scores**:
-- Divergence = |65 - 33| = 32pts → **+10% stables** ✅
-- Risk = 90 ≥ 80 → **stables ≥ 50%** ✅
+- Divergence = |65 - 33| = 32pts → **+10% stables** [OK]
+- Risk = 90 ≥ 80 → **stables ≥ 50%** [OK]
 
 **→ Overrides add 10-20% stables on top of base calculation!**
 
 ---
 
-## 🛠️ Fixes Applied
+## Fixes Applied
 
 ### Level 1: Context Audit
 
@@ -113,7 +113,7 @@ _last_cap: 7.7% (smoothing preserves this value)
 ```javascript
 // CACHE RÉACTIVÉ (Oct 2025) - TTL 30s pour stabilité
 if (_riskBudgetCache.key === cacheKey && now - _riskBudgetCache.timestamp < 30000) {
-  console.debug('💰 Risk Budget from cache:', cacheKey);
+  console.debug(' Risk Budget from cache:', cacheKey);
   return JSON.parse(JSON.stringify(_riskBudgetCache.data));
 }
 ```
@@ -145,11 +145,11 @@ flags.onchain_div = flip(flags.onchain_div, divergence, 30, 20);  // ÉLARGI
 const backendCap = state.governance?.execution_policy?.cap_daily;  // cap_daily en fraction (0-1)
 if (backendCap != null && typeof backendCap === 'number' && backendCap > 0 && backendCap <= 1) {
   const backendCapPct = backendCap * 100;  // Convertir en %
-  console.debug(`🔗 Backend cap available: ${backendCapPct.toFixed(1)}%`);
+  console.debug(` Backend cap available: ${backendCapPct.toFixed(1)}%`);
 
   // Appliquer cap backend comme limite MAX supplémentaire
   finalRisky = Math.min(finalRisky, backendCapPct);
-  console.debug(`🔗 finalRisky after backend cap: ${finalRisky.toFixed(1)}%`);
+  console.debug(` finalRisky after backend cap: ${finalRisky.toFixed(1)}%`);
 }
 ```
 
@@ -171,21 +171,21 @@ if (backendCap != null && backendCap > 0 && finalRisky <= (backendCap * 100)) {
 
 #### Created: `tests/unit/test_cap_stability.py`
 
-**Test Results** (All PASSING ✅):
+**Test Results** (All PASSING [OK]):
 
 ```
 1. Cap stability with constant scores
    Tick 1: 7.7% → Tick 5: 8.2%
-   Max variation: 0.21% < 2% ✅
+   Max variation: 0.21% < 2% [OK]
 
 2. Cap not below floor
-   Cap backend: 8.0% ✅
+   Cap backend: 8.0% [OK]
 
 3. No cap reset on NaN score
-   Cap: 8.0% → 8.1% (variation: 0.12% < 15%) ✅
+   Cap: 8.0% → 8.1% (variation: 0.12% < 15%) [OK]
 
 4. Manual mode bypass
-   Cap: 15.0% exact ✅
+   Cap: 15.0% exact [OK]
 ```
 
 **Test Command**:
@@ -195,7 +195,7 @@ if (backendCap != null && backendCap > 0 && finalRisky <= (backendCap * 100)) {
 
 ---
 
-## 📊 Impact Analysis
+## Impact Analysis
 
 ### Before Fix
 
@@ -220,23 +220,23 @@ if (backendCap != null && backendCap > 0 && finalRisky <= (backendCap * 100)) {
 
 ---
 
-## 🎯 Validation Criteria
+## Validation Criteria
 
-✅ **With constant scores (Cycle=100, OnChain=33, Risk=90, DI=65)**:
-- Cap varies < 2% between 3 ticks ✅ (0.21% observed)
-- Allocations stables/risky vary < 2% ✅
+[OK] **With constant scores (Cycle=100, OnChain=33, Risk=90, DI=65)**:
+- Cap varies < 2% between 3 ticks [OK] (0.21% observed)
+- Allocations stables/risky vary < 2% [OK]
 
-✅ **Semantics mode fixed** (no flip legacy ↔ v2) ✅
+[OK] **Semantics mode fixed** (no flip legacy ↔ v2) [OK]
 
-✅ **Cache active** (no recalc if rounded scores identical) ✅
+[OK] **Cache active** (no recalc if rounded scores identical) [OK]
 
-✅ **Explicit logs when cap overridden** (manual/stale/error/failsafe) ✅
+[OK] **Explicit logs when cap overridden** (manual/stale/error/failsafe) [OK]
 
-✅ **Complete documentation** for future v2 migration ✅
+ **Complete documentation** for future v2 migration [OK]
 
 ---
 
-## 🚀 Deployment Instructions
+## Deployment Instructions
 
 ### 1. Apply Changes
 ```bash
@@ -287,7 +287,7 @@ window._riskBudgetCache  // Should show cached values
 
 ---
 
-## 🔮 Future Work: Complete V2 Migration
+## Future Work: Complete V2 Migration
 
 **Current Status**: Hybrid mode (legacy default → v2_conservative)
 
@@ -302,7 +302,7 @@ window._riskBudgetCache  // Should show cached values
 
 ---
 
-## 📚 References
+## References
 
 - **Main Discussion**: Audit & Debug "Cap Actif" thread (Oct 2025)
 - **Related Docs**:
@@ -321,7 +321,7 @@ window._riskBudgetCache  // Should show cached values
 ---
 
 **Last Updated**: October 8, 2025
-**Status**: ✅ COMPLETED
+**Status**: [OK] COMPLETED
 **Stability Achieved**: Max variation 0.21% < 2%
 **Next Review**: October 2025 (monitor production metrics)
 

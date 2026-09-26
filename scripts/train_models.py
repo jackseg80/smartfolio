@@ -95,10 +95,10 @@ def _chronological_split_indices(samples, purge_days: int = 30):
 
 # GPU Configuration
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-logger.info(f"🔥 Using device: {device}")
+logger.info(f" Using device: {device}")
 if torch.cuda.is_available():
-    logger.info(f"🚀 GPU: {torch.cuda.get_device_name(0)}")
-    logger.info(f"💾 GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+    logger.info(f" GPU: {torch.cuda.get_device_name(0)}")
+    logger.info(f" GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
 
 def enable_gpu_performance_mode():
     """Optimisations RTX 40xx: TF32, AMP-friendly, cudnn benchmark."""
@@ -992,7 +992,7 @@ def save_models(
         with open(regime_path / "regime_metadata.pkl", 'wb') as f:
             pickle.dump(metadata, f)
         
-        logger.info(f"✅ Regime model saved to {regime_path}")
+        logger.info(f" Regime model saved to {regime_path}")
     
     # 2. Entraîner les modèles de volatilité pour les symboles sélectionnés
     if symbols is None:
@@ -1043,14 +1043,14 @@ def save_models(
                 with open(volatility_path / f"{symbol}_metadata.pkl", 'wb') as f:
                     pickle.dump(vol_metadata, f)
 
-                logger.info(f"✅ Volatility model for {symbol} saved (R²={vol_metadata.get('r2_score'):.4f})")
+                logger.info(f" Volatility model for {symbol} saved (R²={vol_metadata.get('r2_score'):.4f})")
             else:
-                logger.warning(f"⚠️ Skipped saving {symbol} volatility model (R²={vol_metadata.get('r2_score'):.4f} < threshold {min_r2})")
+                logger.warning(f" Skipped saving {symbol} volatility model (R²={vol_metadata.get('r2_score'):.4f} < threshold {min_r2})")
         else:
-            logger.warning(f"❌ Failed to train volatility model for {symbol}")
+            logger.warning(f" Failed to train volatility model for {symbol}")
     
-    logger.info(f"\n🎉 Training completed!")
-    logger.info(f"📍 Models location: {models_path}")
+    logger.info(f"\n Training completed!")
+    logger.info(f" Models location: {models_path}")
     
     return True
 
@@ -1085,7 +1085,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     
-    logger.info("🚀 Starting ML model training...")
+    logger.info(" Starting ML model training...")
     
     # Determine what to train
     train_regime = not args.skip_regime
@@ -1117,4 +1117,4 @@ if __name__ == "__main__":
         ret30_thr=args.ret30_thr,
         vol_pct=args.vol_pct,
     )
-    logger.info("✅ Model training complete!")
+    logger.info(" Model training complete!")

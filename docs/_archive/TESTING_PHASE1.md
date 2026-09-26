@@ -2,7 +2,7 @@
 
 > **Objectif**: Valider le système d'alertes prédictives production-ready intégrant anti-bruit, RBAC, hot-reload et observabilité.
 
-## 🚀 Démarrage Rapide
+## Démarrage Rapide
 
 ### Prérequis
 
@@ -20,7 +20,7 @@ test_phase1_alerting.bat
 chmod +x test_phase1_alerting.sh && ./test_phase1_alerting.sh
 ```
 
-## 🧪 Tests par Composant
+## Tests par Composant
 
 ### 1. Tests Unitaires
 
@@ -35,11 +35,11 @@ python -m pytest tests/unit/test_alert_engine.py::TestAlertEngine::test_escalati
 
 **Couvre**:
 
-- ✅ Initialisation AlertEngine avec config file
-- ✅ Hot-reload automatique configuration
-- ✅ Évaluation alertes avec signaux ML
-- ✅ Escalade automatique 2x S2 → S3
-- ✅ Collecte métriques observabilité
+- [OK] Initialisation AlertEngine avec config file
+- [OK] Hot-reload automatique configuration
+- [OK] Évaluation alertes avec signaux ML
+- [OK] Escalade automatique 2x S2 → S3
+- [OK] Collecte métriques observabilité
 
 ### 2. Tests d'Intégration API
 
@@ -54,12 +54,12 @@ python -m pytest tests/integration/test_alerts_api.py::TestAlertsAPI::test_confi
 
 **Couvre**:
 
-- ✅ GET `/api/alerts/active` avec filtres
-- ✅ POST `/api/alerts/acknowledge/{alert_id}`
-- ✅ POST `/api/alerts/snooze/{alert_id}` avec validation
-- ✅ GET `/api/alerts/metrics` (JSON + Prometheus)
-- ✅ GET `/api/alerts/health` pour monitoring
-- ✅ POST `/api/alerts/config/reload` avec RBAC
+- [OK] GET `/api/alerts/active` avec filtres
+- [OK] POST `/api/alerts/acknowledge/{alert_id}`
+- [OK] POST `/api/alerts/snooze/{alert_id}` avec validation
+- [OK] GET `/api/alerts/metrics` (JSON + Prometheus)
+- [OK] GET `/api/alerts/health` pour monitoring
+- [OK] POST `/api/alerts/config/reload` avec RBAC
 
 ### 3. Tests Manuels Interactifs
 
@@ -73,13 +73,13 @@ python tests/manual/test_config_hot_reload.py
 
 **Scenarios**:
 
-- 🔍 Health checks API + composants
-- 🛡️ Endpoints gouvernance avec RBAC
-- 📊 Métriques au format Prometheus
-- 🔥 Hot-reload configuration temps réel
-- 📋 Validation structure config JSON
+- Health checks API + composants
+- Endpoints gouvernance avec RBAC
+- Métriques au format Prometheus
+- Hot-reload configuration temps réel
+- Validation structure config JSON
 
-## 🎯 Scenarios de Test Manuels
+## Scenarios de Test Manuels
 
 ### Scenario 1: Cycle Complet d'Alerte
 
@@ -135,9 +135,9 @@ curl -X POST http://localhost:8080/api/governance/freeze \
 curl http://localhost:8080/api/governance/state
 ```
 
-## 📊 Validation des Résultats
+## Validation des Résultats
 
-### ✅ Critères de Succès
+### Critères de Succès
 
 **Tests Unitaires**:
 
@@ -157,7 +157,7 @@ curl http://localhost:8080/api/governance/state
 - Config reload détecte les modifications
 - TTL auto-unfreeze s'affiche dans governance state
 
-### ⚠️ Échecs Normaux
+### Échecs Normaux
 
 **RBAC Protection** (401/403):
 
@@ -170,7 +170,7 @@ curl http://localhost:8080/api/governance/state
 - Peut échouer si fichier config verrouillé
 - Délai ~60s pour auto-detection
 
-## 🔧 Debug Common Issues
+## Debug Common Issues
 
 ### Server Non Accessible
 
@@ -202,7 +202,7 @@ pip install pytest pytest-asyncio
 python -m pytest tests/unit/test_alert_engine.py -v -s --tb=short
 ```
 
-## 📈 Métriques de Performance
+## Métriques de Performance
 
 ### Objectifs Phase 1
 
@@ -224,15 +224,15 @@ curl http://localhost:8080/api/alerts/metrics/prometheus
 curl http://localhost:8080/api/alerts/health | jq .components
 ```
 
-## 🎉 Validation Finale
+## Validation Finale
 
 **Le système Phase 1 est prêt si**:
 
-- ✅ Script `test_phase1_alerting.bat` passe entièrement
-- ✅ Health check retourne "healthy"
-- ✅ Config hot-reload fonctionne
-- ✅ Métriques Prometheus valides
-- ✅ RBAC bloque accès non autorisés (401/403)
-- ✅ TTL auto-unfreeze visible dans governance state
+- [OK] Script `test_phase1_alerting.bat` passe entièrement
+- [OK] Health check retourne "healthy"
+- [OK] Config hot-reload fonctionne
+- [OK] Métriques Prometheus valides
+- [OK] RBAC bloque accès non autorisés (401/403)
+- [OK] TTL auto-unfreeze visible dans governance state
 
 **Production Readiness**: Le système respecte les patterns Phase 0, intègre anti-bruit robuste, et fournit observabilité complète pour monitoring operationnel.

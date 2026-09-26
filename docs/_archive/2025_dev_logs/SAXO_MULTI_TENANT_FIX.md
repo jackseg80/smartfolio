@@ -17,7 +17,7 @@ def _load_snapshot(user_id: Optional[str] = None) -> Dict[str, Any]:
         if sources_data:
             return sources_data
 
-    # ❌ FALLBACK INCORRECT: Si user_id fourni mais pas de données,
+    # FALLBACK INCORRECT: Si user_id fourni mais pas de données,
     # on fallback vers le fichier legacy PARTAGÉ data/wealth/saxo_snapshot.json
     _ensure_storage()
     with _STORAGE_PATH.open("r") as handle:
@@ -43,7 +43,7 @@ def _load_snapshot(user_id: Optional[str] = None) -> Dict[str, Any]:
         sources_data = _load_from_sources_fallback(user_id)
         if sources_data:
             return sources_data
-        # ✅ FIX: Si user_id fourni mais pas de données → retourner vide
+        # FIX: Si user_id fourni mais pas de données → retourner vide
         logger.debug(f"No Saxo data found for user {user_id}, returning empty snapshot")
         return {"portfolios": []}
 
@@ -59,25 +59,25 @@ def _load_snapshot(user_id: Optional[str] = None) -> Dict[str, Any]:
 ```bash
 # User sans données Saxo → portfolio vide
 curl -H "X-User: clea" http://localhost:8080/api/saxo/portfolios
-# → {"portfolios": []}  ✅
+# → {"portfolios": []}
 
 # User avec données Saxo → son portfolio
 curl -H "X-User: jack" http://localhost:8080/api/saxo/portfolios
-# → {"portfolios": [{"positions_count": 28, ...}]}  ✅
+# → {"portfolios": [{"positions_count": 28, ...}]}
 ```
 
 **Tests unitaires**:
 ```bash
 pytest tests/unit/test_saxo_adapter_isolation.py -v
-# 4 tests passent ✅
+# 4 tests passent
 ```
 
 ## Impact
 
-- ✅ Isolation multi-tenant restaurée
-- ✅ Users sans données Saxo voient un dashboard vide (pas de données d'autres users)
-- ✅ Mode legacy (user_id=None) continue de fonctionner
-- ✅ Tests de non-régression ajoutés
+- [OK] Isolation multi-tenant restaurée
+- [OK] Users sans données Saxo voient un dashboard vide (pas de données d'autres users)
+- [OK] Mode legacy (user_id=None) continue de fonctionner
+- [OK] Tests de non-régression ajoutés
 
 ## Fichiers Modifiés
 
@@ -89,7 +89,7 @@ pytest tests/unit/test_saxo_adapter_isolation.py -v
 
 - Issue: Users seeing jack's portfolio in saxo-dashboard.html
 - Fix Date: Oct 12, 2025
-- Tested: ✅ API, ✅ Frontend, ✅ Unit tests
+- Tested: [OK] API, [OK] Frontend, [OK] Unit tests
 - Severity: Critical (data leak)
 - Status: FIXED
 

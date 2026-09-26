@@ -101,7 +101,8 @@ export function addAIButtonToNav() {
     const fab = document.createElement('button');
     fab.id = 'aiFAB';
     fab.className = 'ai-chat-fab';
-    fab.title = 'Assistant IA (Ctrl+K)';
+    fab.title = 'AI assistant (Ctrl+K)';
+    fab.setAttribute('aria-label', 'Open AI assistant');
     fab.onclick = openAIChat;
 
     document.body.appendChild(fab);

@@ -1,11 +1,11 @@
-# 📊 Système de Prédiction des Cycles Bitcoin
+# Système de Prédiction des Cycles Bitcoin
 
 > Documentation technique du modèle de scoring et validation des cycles Bitcoin
 > Dernière mise à jour: Janvier 2026
 
 ---
 
-## 🎯 Vue d'Ensemble
+## Vue d'Ensemble
 
 Le système de prédiction des cycles Bitcoin utilise un **modèle double-sigmoïde** pour calculer un score de cycle (0-100) basé sur le nombre de mois écoulés depuis le dernier halving. Ce score est utilisé pour:
 
@@ -16,7 +16,7 @@ Le système de prédiction des cycles Bitcoin utilise un **modèle double-sigmo�
 
 ---
 
-## 📐 Modèle Mathématique
+## Modèle Mathématique
 
 ### Formule Double-Sigmoïde
 
@@ -50,7 +50,7 @@ score = (base ^ p_shape) × 100
 
 ---
 
-## 🔄 Calibration Automatique
+## Calibration Automatique
 
 Le système implémente une **calibration automatique** basée sur les cycles historiques pour optimiser les paramètres.
 
@@ -99,21 +99,21 @@ Les paramètres calibrés sont sauvegardés dans `localStorage`:
 
 ---
 
-## 📈 Phases du Cycle
+## Phases du Cycle
 
 Le modèle définit 5 phases basées sur le score et les mois post-halving:
 
 | Phase | Mois | Score Typique | Emoji | Stratégie |
 |-------|------|---------------|-------|-----------|
-| **Accumulation** | 0-6 | 0-30 | 🟡 | BTC/ETH focus, alts réduits |
-| **Bull Build** | 7-18 | 30-90 | 🟢 | Montée progressive, alts augmentent |
-| **Peak/Euphoria** | 19-24 | 80-100 | 🟣 | Alt season, attention au top |
-| **Bear Market** | 25-36 | 10-40 | 🔴 | Stables max, alts réduits fortement |
-| **Pré-Accumulation** | 37-48 | 5-20 | ⚫ | Retour progressif BTC/ETH |
+| **Accumulation** | 0-6 | 0-30 | Pending | BTC/ETH focus, alts réduits |
+| **Bull Build** | 7-18 | 30-90 | Positive | Montée progressive, alts augmentent |
+| **Peak/Euphoria** | 19-24 | 80-100 | Info | Alt season, attention au top |
+| **Bear Market** | 25-36 | 10-40 | Negative | Stables max, alts réduits fortement |
+| **Pré-Accumulation** | 37-48 | 5-20 | Neutral | Retour progressif BTC/ETH |
 
 ---
 
-## 🎲 Multiplicateurs d'Allocation
+## Multiplicateurs d'Allocation
 
 Chaque phase applique des multiplicateurs aux classes d'actifs:
 
@@ -133,7 +133,7 @@ Chaque phase applique des multiplicateurs aux classes d'actifs:
 
 ---
 
-## 🔬 Métriques de Validation
+## Métriques de Validation
 
 ### Précision du Modèle
 
@@ -144,9 +144,9 @@ Le système calcule 3 métriques clés:
 3. **Précision Globale** - `100 - (total_error / num_cycles / 2)`
 
 **Seuils de qualité:**
-- ✅ **Excellent:** Erreur pics < 15, Erreur creux < 20, Précision > 80%
-- ⚠️ **Moyen:** Erreur pics < 30, Erreur creux < 35, Précision > 60%
-- ❌ **Faible:** Au-delà de ces seuils → Recalibration recommandée
+- [OK] **Excellent:** Erreur pics < 15, Erreur creux < 20, Précision > 80%
+- [Warning] **Moyen:** Erreur pics < 30, Erreur creux < 35, Précision > 60%
+- [Error] **Faible:** Au-delà de ces seuils → Recalibration recommandée
 
 ### Confidence Score
 
@@ -166,7 +166,7 @@ confidence = base_confidence + calibration_bonus
 
 ---
 
-## 🔗 Intégration avec CCS (Crypto Composite Score)
+## Intégration avec CCS (Crypto Composite Score)
 
 ### Blending Formula
 
@@ -187,7 +187,7 @@ CCS* (blended) = CCS × (1 - weight) + CycleScore × weight
 
 ---
 
-## 📊 Graphiques et Visualisation
+## Graphiques et Visualisation
 
 ### Bitcoin Cycle Chart
 
@@ -201,7 +201,7 @@ Le graphique principal ([cycle-analysis.html](../static/cycle-analysis.html)) af
 
 **Adaptation contextuelle:**
 - Si `enable_dynamic_weighting = true`, la ligne de cycle change de couleur selon la phase
-- Couleurs phases: Accumulation (🟡), Bull (🟢), Peak (🟣), Bear (🔴), Pré-Acc (⚫)
+- Couleurs phases: Accumulation (Pending), Bull (Positive), Peak (Info), Bear (Negative), Pré-Acc (Neutral)
 
 ### Cycle Position Indicator (Feb 2026)
 
@@ -224,7 +224,7 @@ Tableau comparatif des métriques-clé par cycle (halving date/price, peak date/
 
 ---
 
-## ⚙️ Configuration et Réglages
+## Configuration et Réglages
 
 ### Variables Globales
 
@@ -254,7 +254,7 @@ CYCLE_PARAMS = {
 
 ---
 
-## 🚀 Utilisation
+## Utilisation
 
 ### 1. Analyse Manuelle
 
@@ -298,17 +298,17 @@ console.log(`Phase: ${result.phase.description}`);
 
 ---
 
-## 🔍 Diagnostic et Debug
+## Diagnostic et Debug
 
 ### Console Logs
 
 Le système émet des logs structurés:
 
 ```javascript
-✅ Cycle navigator module loaded successfully
-🎯 Calibration historique automatique (fresh): { params, score }
-🔍 DEBUG getCurrentCycleMonths: { lastHalving, now, totalMonths }
-💾 Paramètres calibrés sauvegardés: { m_rise_center: 7.2, ... }
+[OK] Cycle navigator module loaded successfully
+ Calibration historique automatique (fresh): { params, score }
+ DEBUG getCurrentCycleMonths: { lastHalving, now, totalMonths }
+ Paramètres calibrés sauvegardés: { m_rise_center: 7.2, ... }
 ```
 
 ### LocalStorage Inspection
@@ -333,17 +333,17 @@ location.reload();
 
 ---
 
-## 📚 Références et Contexte
+## Références et Contexte
 
 ### Halvings Bitcoin
 
 | Date | Block | Reward | Statut |
 |------|-------|--------|--------|
-| 2012-11-28 | 210,000 | 25 BTC | ✅ Confirmé |
-| 2016-07-09 | 420,000 | 12.5 BTC | ✅ Confirmé |
-| 2020-05-11 | 630,000 | 6.25 BTC | ✅ Confirmé |
-| 2024-04-20 | 840,000 | 3.125 BTC | ✅ Confirmé |
-| **2028-04-01** | 1,050,000 | 1.5625 BTC | 🔮 Estimé |
+| 2012-11-28 | 210,000 | 25 BTC | [OK] Confirmé |
+| 2016-07-09 | 420,000 | 12.5 BTC | [OK] Confirmé |
+| 2020-05-11 | 630,000 | 6.25 BTC | [OK] Confirmé |
+| 2024-04-20 | 840,000 | 3.125 BTC | [OK] Confirmé |
+| **2028-04-01** | 1,050,000 | 1.5625 BTC |  Estimé |
 
 ### Théorie des Cycles
 
@@ -362,7 +362,7 @@ Le modèle repose sur l'observation empirique que:
 
 ---
 
-## 🛠️ Maintenance
+## Maintenance
 
 ### Checklist Annuelle
 
@@ -381,7 +381,7 @@ Le modèle repose sur l'observation empirique que:
 
 ---
 
-## 📞 Support
+## Support
 
 **Fichiers concernés:**
 - [`static/cycle-analysis.html`](../static/cycle-analysis.html) - Page d'analyse

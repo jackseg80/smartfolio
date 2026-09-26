@@ -591,7 +591,7 @@ class RegimeDetector:
         Returns:
             Regime labels array
         """
-        logger.info("🚀🚀🚀 PHASE 2.5 - NEW SCORING FORMULA ACTIVE (v2025-10-19-15:51) 🚀🚀🚀")
+        logger.info(" PHASE 2.5 - NEW SCORING FORMULA ACTIVE (v2025-10-19-15:51) ")
         logger.info("Creating initial regime labels using HMM")
         
         # Select key features for HMM
@@ -741,13 +741,13 @@ class RegimeDetector:
 
         try:
             # DIAGNOSTIC: Log input data size
-            logger.info(f"📥 Input data: {len(multi_asset_data)} assets")
+            logger.info(f" Input data: {len(multi_asset_data)} assets")
             for symbol, df in multi_asset_data.items():
                 logger.info(f"   {symbol}: {len(df)} days of data (from {df.index.min()} to {df.index.max()})")
 
             # Prepare features
             features_df = self.prepare_regime_features(multi_asset_data)
-            logger.info(f"📈 Features prepared: {len(features_df)} samples with {len(features_df.columns)} features")
+            logger.info(f" Features prepared: {len(features_df)} samples with {len(features_df.columns)} features")
 
             if len(features_df) < 100:
                 raise ValueError(f"Insufficient data: {len(features_df)} samples (minimum 100 required)")
@@ -764,7 +764,7 @@ class RegimeDetector:
                 raise ValueError(f"Price data must contain 'close' or 'Close' column. Found: {price_df.columns.tolist()}")
 
             # Create rule-based labels
-            logger.info("📊 Using rule-based labeling for training (replacing HMM)")
+            logger.info(" Using rule-based labeling for training (replacing HMM)")
             rule_labels = create_rule_based_labels(price_df)
 
             # Align with features (features_df may be shorter due to feature calculations)
@@ -778,7 +778,7 @@ class RegimeDetector:
 
             # Log class distribution for verification
             class_dist = np.bincount(regime_labels, minlength=self.num_regimes)
-            logger.info(f"📊 Rule-based class distribution: {class_dist.tolist()}")
+            logger.info(f" Rule-based class distribution: {class_dist.tolist()}")
             logger.info(f"   Bear Market: {class_dist[0]} samples ({100*class_dist[0]/len(regime_labels):.1f}%)")
             logger.info(f"   Correction: {class_dist[1]} samples ({100*class_dist[1]/len(regime_labels):.1f}%)")
             logger.info(f"   Bull Market: {class_dist[2]} samples ({100*class_dist[2]/len(regime_labels):.1f}%)")
@@ -786,7 +786,7 @@ class RegimeDetector:
 
             # DIAGNOSTIC: Log class distribution BEFORE any processing
             class_distribution = np.bincount(regime_labels, minlength=self.num_regimes)
-            logger.info(f"📊 Class distribution BEFORE train/val split: {class_distribution.tolist()}")
+            logger.info(f" Class distribution BEFORE train/val split: {class_distribution.tolist()}")
             logger.info(f"   Regime counts: Bear={class_distribution[0]}, Correction={class_distribution[1]}, "
                        f"Bull={class_distribution[2]}, Expansion={class_distribution[3]}")
             logger.info(f"   Total samples: {len(regime_labels)}")
@@ -794,8 +794,8 @@ class RegimeDetector:
             # Check for severely imbalanced classes
             min_samples = class_distribution.min()
             if min_samples < 2:
-                # ✅ FIX: Use WARNING instead of ERROR since we have fallback logic
-                logger.warning(f"⚠️  Class imbalance detected: Some regimes have <2 samples!")
+                # [OK] FIX: Use WARNING instead of ERROR since we have fallback logic
+                logger.warning(f"  Class imbalance detected: Some regimes have <2 samples!")
                 logger.warning(f"   Distribution: {class_distribution.tolist()}")
                 logger.warning(f"   Rare regimes (<2 samples): {[self.regime_names[i] for i in range(self.num_regimes) if class_distribution[i] < 2]}")
                 logger.warning("   Chronological validation may omit a rare regime")

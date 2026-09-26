@@ -1,7 +1,7 @@
 # Portfolio History Partitioning - 12 Décembre 2025
 
 **Suite de**: [PERFORMANCE_FIXES_BONUS_2025-12-12.md](PERFORMANCE_FIXES_BONUS_2025-12-12.md)
-**Status**: ✅ Complété
+**Status**: [OK] Complété
 **Impact**: O(n) → O(1) access, -90% latence lecture/écriture
 
 ---
@@ -298,10 +298,10 @@ rm -rf data/portfolio_history/
 ## Backward Compatibility
 
 **Garanties** :
-- ✅ Lecture automatique depuis legacy file si partition vide
-- ✅ Pas de breaking changes API
-- ✅ Migration idempotente (safe to run multiple times)
-- ✅ Backup automatique avant migration
+- [OK] Lecture automatique depuis legacy file si partition vide
+- [OK] Pas de breaking changes API
+- [OK] Migration idempotente (safe to run multiple times)
+- [OK] Backup automatique avant migration
 
 **Fallback Logic** (`services/portfolio.py:560-605`) :
 ```python

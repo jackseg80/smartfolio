@@ -2,9 +2,9 @@
 
 > **Version:** 1.0
 > **Date:** October 2025
-> **Status:** ✅ Production Ready
+> **Status:** [OK] Production Ready
 
-## 📋 Vue d'Ensemble
+## Vue d'Ensemble
 
 Système d'export unifié permettant d'exporter les listes d'assets et leurs classifications pour les 3 modules principaux : **Crypto**, **Bourse (Saxo)**, et **Banques**.
 
@@ -12,7 +12,7 @@ Système d'export unifié permettant d'exporter les listes d'assets et leurs cla
 
 ---
 
-## 🎯 Fonctionnalités
+## Fonctionnalités
 
 ### **Crypto Export**
 - **Assets actifs** : Symbol, Group, Amount, Value USD, Location
@@ -32,7 +32,7 @@ Système d'export unifié permettant d'exporter les listes d'assets et leurs cla
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ### **Backend (Python)**
 
@@ -106,7 +106,7 @@ function setupExportButtons() {
 
 ---
 
-## 📊 Structure des Données Exportées
+## Structure des Données Exportées
 
 ### **Crypto (JSON)**
 ```json
@@ -154,14 +154,14 @@ Healthcare,5600.00,4.38%,3
 
 ### **Banks (Markdown)**
 ```markdown
-# 🏦 Bank Accounts Export
+# Bank Accounts Export
 
 **Exported:** 2025-10-29T12:00:00Z
 
 **Total Balance:** $125,450.00
 **Accounts Count:** 5
 
-## 💳 Accounts
+## Accounts
 
 | Bank Name | Account Type | Balance | Currency | Balance USD |
 |-----------|--------------|---------|----------|-------------|
@@ -171,7 +171,7 @@ Healthcare,5600.00,4.38%,3
 
 ---
 
-## 🔐 Sécurité & Multi-Tenant
+## Sécurité & Multi-Tenant
 
 ### **Backend**
 - **Header `X-User` obligatoire** : Injection via `Depends(get_active_user)`
@@ -185,7 +185,7 @@ Healthcare,5600.00,4.38%,3
 
 ---
 
-## 🎨 UI/UX
+## UI/UX
 
 ### **Dashboard Principal** (dashboard.html)
 - **Boutons statiques** dans les 3 tuiles (Crypto, Bourse, Banque)
@@ -195,7 +195,7 @@ Healthcare,5600.00,4.38%,3
 
 ### **Modal d'Export**
 - **3 options de format** : Cards cliquables (JSON, CSV, Markdown)
-- **Icônes** : 📄 JSON, 📊 CSV, 📝 Markdown
+- **Icônes** :  JSON,  CSV,  Markdown
 - **Description** : Usage de chaque format
 - **Status** : Barre de progression avec feedback temps réel
 - **Auto-close** : 2s après téléchargement réussi
@@ -212,7 +212,7 @@ Exemples :
 
 ---
 
-## 🚀 Usage
+## Usage
 
 ### **Backend - Appel Direct**
 ```bash
@@ -250,7 +250,7 @@ import('./modules/export-button.js').then(({ openExportModal }) => {
 
 ---
 
-## 🔧 Extension / Maintenance
+## Extension / Maintenance
 
 ### **Ajouter un Nouveau Module**
 
@@ -292,7 +292,7 @@ btn.addEventListener('click', () => {
 
 ---
 
-## 📝 Tests
+## Tests
 
 ### **Tests Unitaires**
 ```python
@@ -323,27 +323,27 @@ test('Crypto export flow', async () => {
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### **404 Not Found**
-- ❌ **Cause** : Serveur pas redémarré après ajout endpoints
-- ✅ **Solution** : Redémarrer `uvicorn api.main:app --port 8080`
+- [Error] **Cause** : Serveur pas redémarré après ajout endpoints
+- [OK] **Solution** : Redémarrer `uvicorn api.main:app --port 8080`
 
 ### **Données Vides (Saxo)**
-- ❌ **Cause** : Secteurs "Unknown" car mapping manquant
-- ✅ **Solution** : Vérifier `SECTOR_MAP` dans saxo_endpoints.py (ligne 372-395)
+- [Error] **Cause** : Secteurs "Unknown" car mapping manquant
+- [OK] **Solution** : Vérifier `SECTOR_MAP` dans saxo_endpoints.py (ligne 372-395)
 
 ### **Mauvaise Source (Crypto)**
-- ❌ **Cause** : Source non passée en paramètre
-- ✅ **Solution** : Vérifier `window.globalConfig.get('data_source')` dans console
+- [Error] **Cause** : Source non passée en paramètre
+- [OK] **Solution** : Vérifier `window.globalConfig.get('data_source')` dans console
 
 ### **Header X-User Manquant**
-- ❌ **Cause** : Appel direct sans header
-- ✅ **Solution** : Ajouter `-H "X-User: {username}"` dans curl
+- [Error] **Cause** : Appel direct sans header
+- [OK] **Solution** : Ajouter `-H "X-User: {username}"` dans curl
 
 ---
 
-## 📚 Références
+## Références
 
 ### **Documentation Liée**
 - [CLAUDE.md](../CLAUDE.md) - Guide principal développement
@@ -359,7 +359,7 @@ test('Crypto export flow', async () => {
 
 ---
 
-## 📊 Métriques
+## Métriques
 
 ### **Performance**
 - Export JSON : ~50ms (10 assets)
@@ -368,10 +368,10 @@ test('Crypto export flow', async () => {
 - Taille fichiers : 2-10 KB moyenne
 
 ### **Couverture**
-- 3 modules (Crypto, Saxo, Banks) ✅
-- 3 formats (JSON, CSV, Markdown) ✅
-- Multi-tenant (user isolation) ✅
-- Source-aware (context dynamique) ✅
+- 3 modules (Crypto, Saxo, Banks) [OK]
+- 3 formats (JSON, CSV, Markdown) [OK]
+- Multi-tenant (user isolation) [OK]
+- Source-aware (context dynamique) [OK]
 
 ---
 

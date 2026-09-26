@@ -1,3 +1,5 @@
+import { setIcon } from '../core/icons.js';
+
 // static/components/risk-snapshot.js
 // Web Component Data pour affichage Risk avec store subscribe + fallback API polling
 
@@ -131,7 +133,7 @@ class RiskSnapshot extends HTMLElement {
   _setError(msg) {
     if (!this.$?.trend) return;
     if (msg) {
-      this.$.trend.textContent = '⚠';
+      setIcon(this.$.trend, 'exclamation-triangle', 'Warning');
       this.$.trend.title = msg;
     } else {
       this.$.trend.title = '';
@@ -144,7 +146,7 @@ class RiskSnapshot extends HTMLElement {
     if (!Number.isFinite(prev)) return '→';
     const delta = curr - prev;
     if (Math.abs(delta) < 0.05) return '→';
-    return delta > 0 ? '↗' : '↘';
+    return delta > 0 ? "Up" : "Down";
   }
 
   _updateFromState(/** @type {RiskState} */ s) {
