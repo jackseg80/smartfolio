@@ -611,7 +611,7 @@ function setupExportButtons() {
     const pdfExportBtn = document.getElementById('pdf-export-btn');
     if (pdfExportBtn) {
         pdfExportBtn.addEventListener('click', () => {
-            import('./pdf-export.js').then(({ exportPageToPDF }) => {
+            import('./pdf-export.js?v=20260927-pdf-compression-2').then(({ exportPageToPDF }) => {
                 exportPageToPDF({
                     element: document.querySelector('main.wrap'),
                     title: 'Dashboard Report',

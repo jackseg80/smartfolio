@@ -29,7 +29,9 @@ Le dashboard est capturé à l'échelle 1, puis chaque page est réduite à au p
 1,5 million de pixels et encodée en JPEG, qualité 0,72. Cette limite réduit le
 poids par rapport à l'ancienne capture PNG sans perte ; elle vise un PDF d'une
 page inférieur à 1–2 Mo sur un écran courant. La taille réelle dépend de la
-page. `imageQuality` et `maxImagePixels` restent réglables.
+page. Les scripts du dashboard et l'export utilisent une URL versionnée pour
+que le navigateur recharge la compression après mise à jour. `imageQuality` et
+`maxImagePixels` restent réglables.
 
 ## Morning Brief
 
