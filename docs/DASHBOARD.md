@@ -25,10 +25,11 @@ la tuile Stock Market.
 
 ## Export PDF
 
-Le dashboard est capturé dans une image JPEG intégrée au PDF, qualité 0,88 par
-défaut. Cette compression réduit fortement le poids par rapport à l'ancienne
-capture PNG sans perte ; l'image reste imprimable. `imageQuality` permet de
-régler la qualité pour les autres pages qui réutilisent le module.
+Le dashboard est capturé à l'échelle 1, puis chaque page est réduite à au plus
+1,5 million de pixels et encodée en JPEG, qualité 0,72. Cette limite réduit le
+poids par rapport à l'ancienne capture PNG sans perte ; elle vise un PDF d'une
+page inférieur à 1–2 Mo sur un écran courant. La taille réelle dépend de la
+page. `imageQuality` et `maxImagePixels` restent réglables.
 
 ## Morning Brief
 

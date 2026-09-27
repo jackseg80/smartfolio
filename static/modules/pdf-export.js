@@ -122,6 +122,26 @@ function _addHeaderFooter(pdf, title, pageCount) {
   }
 }
 
+/** Embed a page image with a per-page pixel budget before JPEG encoding. */
+function _addCanvasImage(pdf, source, x, y, widthMm, heightMm, imageQuality, maxImagePixels, sourceY = 0, sourceHeight = source.height) {
+  const pixelCount = source.width * sourceHeight;
+  const resizeScale = Math.min(1, Math.sqrt(maxImagePixels / pixelCount));
+  const width = Math.max(1, Math.round(source.width * resizeScale));
+  const height = Math.max(1, Math.round(sourceHeight * resizeScale));
+  let imageCanvas = source;
+
+  if (resizeScale < 1 || sourceY > 0 || sourceHeight !== source.height) {
+    imageCanvas = document.createElement('canvas');
+    imageCanvas.width = width;
+    imageCanvas.height = height;
+    imageCanvas.getContext('2d').drawImage(
+      source, 0, sourceY, source.width, sourceHeight, 0, 0, width, height
+    );
+  }
+
+  pdf.addImage(imageCanvas.toDataURL('image/jpeg', imageQuality), 'JPEG', x, y, widthMm, heightMm);
+}
+
 /**
  * Export a page element to PDF.
  *
@@ -133,6 +153,7 @@ function _addHeaderFooter(pdf, title, pageCount) {
  * @param {string} [options.orientation='portrait'] - 'portrait' or 'landscape'
  * @param {number} [options.scale=2] - Render scale (2 = retina quality)
  * @param {number} [options.imageQuality=0.88] - JPEG quality for compact PDFs
+ * @param {number} [options.maxImagePixels=2500000] - Maximum raster pixels per PDF page
  * @param {string[]} [options.hideSelectors=[]] - CSS selectors to hide during capture
  */
 export async function exportPageToPDF(options = {}) {
@@ -144,6 +165,7 @@ export async function exportPageToPDF(options = {}) {
     orientation = 'portrait',
     scale = 2,
     imageQuality = 0.88,
+    maxImagePixels = 2_500_000,
     hideSelectors = ['.pdf-hide', '.icon-btn', '.refresh-btn', 'nav', 'domain-nav', '.page-header button'],
   } = options;
 
@@ -210,13 +232,12 @@ export async function exportPageToPDF(options = {}) {
 
     const imgWidth = usableWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const imageFormat = 'JPEG';
-    const imageMimeType = 'image/jpeg';
     const quality = Math.max(0.5, Math.min(1, Number(imageQuality) || 0.88));
+    const pixelBudget = Math.max(100_000, Number(maxImagePixels) || 2_500_000);
 
     if (imgHeight <= usableHeight) {
       // Single page
-      pdf.addImage(canvas.toDataURL(imageMimeType, quality), imageFormat, margin, 15, imgWidth, imgHeight);
+      _addCanvasImage(pdf, canvas, margin, 15, imgWidth, imgHeight, quality, pixelBudget);
     } else {
       // Multi-page: slice canvas
       const totalPages = Math.ceil(imgHeight / usableHeight);
@@ -228,15 +249,8 @@ export async function exportPageToPDF(options = {}) {
         const srcY = page * sliceHeight;
         const srcH = Math.min(sliceHeight, canvas.height - srcY);
 
-        // Create a slice canvas
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = srcH;
-        const sliceCtx = sliceCanvas.getContext('2d');
-        sliceCtx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
-
         const sliceImgHeight = (srcH * imgWidth) / canvas.width;
-        pdf.addImage(sliceCanvas.toDataURL(imageMimeType, quality), imageFormat, margin, 15, imgWidth, sliceImgHeight);
+        _addCanvasImage(pdf, canvas, margin, 15, imgWidth, sliceImgHeight, quality, pixelBudget, srcY, srcH);
       }
     }
 

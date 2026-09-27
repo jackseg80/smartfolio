@@ -617,6 +617,9 @@ function setupExportButtons() {
                     title: 'Dashboard Report',
                     filename: 'smartfolio-dashboard',
                     button: pdfExportBtn,
+                    scale: 1,
+                    imageQuality: 0.72,
+                    maxImagePixels: 1_500_000,
                 });
             });
         });
