@@ -204,20 +204,9 @@
             window.addEventListener('wealth:change', (event) => {
                 debugLogger.debug('Wealth context changed in Saxo dashboard:', event.detail);
                 currentWealthContext = { ...event.detail };
-
-                // Update UI based on context changes
-                updateContextualDisplay();
             });
 
             debugLogger.debug("[OK] WealthContextBar integrated for Saxo dashboard");
-        }
-
-        function updateContextualDisplay() {
-            // Update currency display based on context
-            if (currentPortfolioData && currentWealthContext.currency !== 'USD') {
-                // Could implement currency conversion here
-                debugLogger.debug(`Display currency preference: ${currentWealthContext.currency}`);
-            }
         }
 
         // Refresh active tab content (called after data reload)

@@ -236,11 +236,20 @@ def get_cache_info() -> dict:
     """
     now = time.time()
     age = now - _RATES_CACHE_TIMESTAMP if _RATES_CACHE_TIMESTAMP > 0 else None
+    source_age = now - _RATES_SOURCE_TIMESTAMP if _RATES_SOURCE_TIMESTAMP > 0 else None
+    rates_verified = bool(
+        _VERIFIED_CURRENCIES
+        and source_age is not None
+        and 0 <= source_age <= 4 * 86400
+    )
 
     return {
         "cached_currencies": len(_RATES_TO_USD),
         "cache_age_seconds": age,
         "cache_ttl_seconds": _RATES_CACHE_TTL,
         "cache_fresh": age < _RATES_CACHE_TTL if age is not None else False,
-        "last_update": datetime.fromtimestamp(_RATES_CACHE_TIMESTAMP).isoformat() if _RATES_CACHE_TIMESTAMP > 0 else None
+        "last_update": datetime.fromtimestamp(_RATES_CACHE_TIMESTAMP).astimezone().isoformat() if _RATES_CACHE_TIMESTAMP > 0 else None,
+        "source": "exchange-rate-api" if rates_verified else "fallback",
+        "source_updated": datetime.fromtimestamp(_RATES_SOURCE_TIMESTAMP).astimezone().isoformat() if _RATES_SOURCE_TIMESTAMP > 0 else None,
+        "rates_verified": rates_verified,
     }

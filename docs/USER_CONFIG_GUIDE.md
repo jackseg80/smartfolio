@@ -36,7 +36,7 @@ data/users/{user_id}/
 
 ### Devise d'affichage
 
-Le paramètre `display_currency` pilote la conversion des montants du dashboard. Le sélecteur Currency de la barre supérieure et les sélecteurs de Settings utilisent ce même paramètre : un changement dans l'un est immédiatement reflété dans l'autre. Le choix est également conservé dans le contexte utilisateur et dans le paramètre d'URL `ccy`.
+La barre de contexte affiche les taux indicatifs vérifiés « 1 USD = … EUR / … CHF » avec l'heure de mise à jour fournie par le prestataire. Elle masque les taux de secours et indique leur indisponibilité si aucune donnée récente et vérifiée n'est accessible. Le paramètre `display_currency` de Settings reste utilisé par les vues Risk, Rebalance et Execution qui prennent en charge la conversion. Le dashboard principal reste en USD et affiche ses équivalents EUR/CHF séparément.
 
 ### secrets.json - Clés API Sensibles
 

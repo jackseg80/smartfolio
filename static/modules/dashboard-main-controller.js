@@ -800,45 +800,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.debug("[OK] Saxo tiles refreshed with new source");
     }, { signal });
 
-    // Reformat values when display currency changes
-    window.addEventListener('configChanged', (ev) => {
-        try {
-            const key = ev?.detail?.key;
-            if (key === 'display_currency') {
-                console.debug("Display currency changed, re-rendering amounts...");
-                const cur = (window.globalConfig && window.globalConfig.get('display_currency')) || 'USD';
-                const maybeRender = () => {
-                    if (dashboardData && dashboardData.portfolio) {
-                        updatePortfolioDisplay(dashboardData.portfolio);
-                    }
-                    if (dashboardData && dashboardData.recentActivity) {
-                        updateRecentActivity(dashboardData.recentActivity);
-                    }
-                    if (dashboardData && dashboardData.executionStats) {
-                        updateExecutionStatus(dashboardData.executionStats);
-                    }
-                };
-                if (window.currencyManager && cur !== 'USD') {
-                    window.currencyManager.ensureRate(cur).then(maybeRender).catch(maybeRender);
-                } else {
-                    maybeRender();
-                }
-            }
-        } catch (e) {
-            debugLogger.warn('Currency change re-render failed:', e);
-        }
-        // Update meta badge (Updated / Contrad / Cap)
-        updateGlobalInsightMeta();
-    }, { signal });
-
-    // Also re-render when async rate fetch completes
-    window.addEventListener('currencyRateUpdated', () => {
-        try {
-            if (dashboardData && dashboardData.portfolio) updatePortfolioDisplay(dashboardData.portfolio);
-            if (dashboardData && dashboardData.recentActivity) updateRecentActivity(dashboardData.recentActivity);
-            if (dashboardData && dashboardData.executionStats) updateExecutionStatus(dashboardData.executionStats);
-        } catch (e) { debugLogger.warn('Re-render on rate update failed:', e); }
-    }, { signal });
+    // Global Overview values are intentionally shown in USD with EUR/CHF equivalents.
+    window.addEventListener('configChanged', () => updateGlobalInsightMeta(), { signal });
 
     //  Setup cleanup on page unload (CRITICAL for preventing memory leaks)
     window.addEventListener('beforeunload', cleanupDashboard);

@@ -990,6 +990,7 @@ window.currencyManager = (function () {
   const rates = { ...FALLBACK_RATES };
   let fetching = null;
   let lastFetch = 0;
+  let rateStatus = { source: 'fallback', sourceUpdated: null, ratesVerified: false, cacheFresh: false };
   const CACHE_TTL = 3600000; // 1 hour cache
 
   async function fetchAllRates() {
@@ -997,11 +998,14 @@ window.currencyManager = (function () {
     try {
       const apiUrl = (typeof globalConfig !== 'undefined' && globalConfig.getApiUrl)
         ? globalConfig.getApiUrl('/api/fx/rates?base=USD')
-        : 'http://localhost:8080/api/fx/rates?base=USD';
+        : '/api/fx/rates?base=USD';
 
       const res = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+          'Content-Type': 'application/json',
+          ...(window.authGuard?.getAuthHeaders?.() || {})
+        }
       });
 
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1020,6 +1024,12 @@ window.currencyManager = (function () {
         }
 
         lastFetch = Date.now();
+        rateStatus = {
+          source: response.meta?.source || 'unknown',
+          sourceUpdated: response.meta?.updated || null,
+          ratesVerified: response.meta?.rates_verified === true,
+          cacheFresh: response.meta?.cache_fresh === true
+        };
         return true;
       } else {
         throw new Error('Invalid response format');
@@ -1092,7 +1102,7 @@ window.currencyManager = (function () {
     });
   } catch (_) { }
 
-  return { ensureRate, getRateSync };
+  return { ensureRate, getRateSync, getRateStatus: () => ({ ...rateStatus }) };
 })();
 
 /**

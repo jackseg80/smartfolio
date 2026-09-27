@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Currency Selector — 2026-09-27
+### FX Rates — 2026-09-27
 
-- Synchronisation du sélecteur Currency de la barre supérieure avec `display_currency` : les montants affichés suivent maintenant USD/EUR/CHF, et les changements effectués dans Settings mettent à jour le sélecteur.
-- Conservation du choix par utilisateur et dans `ccy` ; chargement du taux de conversion à la sélection.
-- Documentation mise à jour dans [USER_CONFIG_GUIDE.md](docs/USER_CONFIG_GUIDE.md).
+- Remplacement du sélecteur Currency trompeur par les taux indicatifs USD/EUR et USD/CHF, avec l'heure de mise à jour du fournisseur. Les valeurs de secours ne sont pas affichées comme des cours actuels.
+- L'endpoint FX signale la source, la fraîcheur du cache et la vérification du taux; le chargement frontend envoie les en-têtes JWT requis.
+- Suppression de l'état de devise du contexte `wealthCtx` et du paramètre URL `ccy`, avec nettoyage des anciennes valeurs sauvegardées. Le réglage Settings reste utilisé par Risk, Rebalance et Execution. Documentation mise à jour dans [USER_CONFIG_GUIDE.md](docs/USER_CONFIG_GUIDE.md).
 
 ### AI Chat — 2026-09-27
 

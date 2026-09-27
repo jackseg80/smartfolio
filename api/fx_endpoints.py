@@ -42,13 +42,17 @@ async def get_fx_rates(
             },
             "meta": {
                 "currencies": 11,
-                "updated": "2025-10-27"
+                "updated": "<provider update timestamp>",
+                "source": "exchange-rate-api",
+                "rates_verified": True,
+                "cache_fresh": True
             }
         }
     """
     try:
         base = base.upper()
         rates = get_rates(base_currency=base)
+        cache_info = get_cache_info()
 
         logger.info(f"[fx] Served {len(rates)} rates with base={base}")
 
@@ -59,7 +63,10 @@ async def get_fx_rates(
             },
             meta={
                 "currencies": len(rates),
-                "updated": "2025-10-27"
+                "updated": cache_info["source_updated"],
+                "source": cache_info["source"],
+                "rates_verified": cache_info["rates_verified"],
+                "cache_fresh": cache_info["cache_fresh"]
             }
         )
     except Exception as e:

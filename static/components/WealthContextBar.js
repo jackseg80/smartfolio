@@ -1,13 +1,13 @@
 // WealthContextBar - Barre de contexte patrimoine globale (ES module)
-// Filtres account/bourse/ccy persistés localStorage + querystring
+// Filtres account/bourse persistés localStorage + querystring
+import '../core/auth-guard.js';
 
 class WealthContextBar {
   constructor() {
     this.storageKey = 'wealthCtx';
     this.defaults = {
       account: 'all',
-      bourse: 'all',
-      currency: 'USD'
+      bourse: 'all'
     };
     this.context = this.loadContext();
     this.isInitialized = false;
@@ -33,11 +33,22 @@ class WealthContextBar {
 
   loadContext() {
     try {
-      // Priorité : querystring > configuration globale > localStorage > defaults
+      // Priorité : querystring > localStorage (namespacé par user) > defaults
       const params = new URLSearchParams(location.search);
       const activeUser = localStorage.getItem('activeUser');
       const userKey = `wealth_ctx:${activeUser}`;
       const stored = JSON.parse(localStorage.getItem(userKey) || '{}');
+
+      // Remove the former currency selector state while preserving source filters.
+      if (Object.prototype.hasOwnProperty.call(stored, 'currency')) {
+        delete stored.currency;
+        localStorage.setItem(userKey, JSON.stringify(stored));
+      }
+      if (params.has('ccy')) {
+        params.delete('ccy');
+        const query = params.toString();
+        history.replaceState(history.state, '', `${location.pathname}${query ? `?${query}` : ''}${location.hash}`);
+      }
 
       // Migration Sources V1 → V2: Migrer anciennes clés vers nouvelles clés
       let account = params.get('account') || stored.account || this.defaults.account;
@@ -61,8 +72,7 @@ class WealthContextBar {
 
       return {
         account: account,
-        bourse: bourse,
-        currency: params.get('ccy') || window.globalConfig?.get('display_currency') || stored.currency || this.defaults.currency
+        bourse: bourse
       };
     } catch (error) {
       console.debug('Error loading wealth context:', error);
@@ -104,14 +114,14 @@ class WealthContextBar {
 
   updateQueryString() {
     const params = new URLSearchParams(location.search);
+    params.delete('ccy');
 
     // Mettre à jour les paramètres (ne pas ajouter si valeur par défaut)
     Object.entries(this.context).forEach(([key, value]) => {
-      const paramKey = key === 'currency' ? 'ccy' : key;
       if (value !== this.defaults[key] && value !== 'all') {
-        params.set(paramKey, value);
+        params.set(key, value);
       } else {
-        params.delete(paramKey);
+        params.delete(key);
       }
     });
 
@@ -1014,6 +1024,7 @@ class WealthContextBar {
         border-bottom: 1px solid var(--theme-border);
         padding: 0.5rem 1rem;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 1rem;
         font-size: 0.85rem;
@@ -1029,6 +1040,11 @@ class WealthContextBar {
       .wealth-context-bar .context-label {
         color: var(--theme-text-muted);
         font-weight: 600;
+      }
+      .wealth-context-bar .fx-rates {
+        color: var(--theme-text-muted);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
       }
       .wealth-context-bar select {
         background: var(--theme-bg);
@@ -1091,13 +1107,9 @@ class WealthContextBar {
         </select>
       </div>
 
-      <div class="context-group">
-        <label for="wealth-currency" class="context-label">Currency:</label>
-        <select id="wealth-currency" aria-label="Display currency">
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-          <option value="CHF">CHF</option>
-        </select>
+      <div class="context-group fx-rates" aria-live="polite">
+        <span class="context-label">FX:</span>
+        <span id="wealth-fx-rates">Loading…</span>
       </div>
 
       <div class="spacer"></div>
@@ -1120,6 +1132,7 @@ class WealthContextBar {
 
     this.bindEvents();
     this.isInitialized = true;
+    this.loadFxRates();
 
     // Charger et appliquer les deux sources avant d'annoncer que le contexte
     // est prêt. Les pages peuvent ainsi attendre la vraie source active au
@@ -1151,7 +1164,7 @@ class WealthContextBar {
       }
     });
 
-    // Mettre à jour les autres selects (module, currency)
+    // Mettre à jour les autres selects (module)
     this.updateSelects();
 
     // Initialize global status badge
@@ -1293,42 +1306,6 @@ class WealthContextBar {
   }
 
   bindEvents() {
-    // Gestion des changements
-    ['currency'].forEach(key => {
-      const select = document.getElementById(`wealth-${key}`);
-      if (select) {
-        select.addEventListener('change', (e) => {
-          const currency = e.target.value;
-          if (!['USD', 'EUR', 'CHF'].includes(currency)) return;
-
-          this.context[key] = currency;
-          if (!window.userSettings) window.userSettings = {};
-          window.userSettings.display_currency = currency;
-          window.globalConfig?.set('display_currency', currency);
-          this.saveContext();
-
-          if (currency !== 'USD') {
-            Promise.resolve(window.currencyManager?.ensureRate(currency)).catch(error => {
-              console.debug('[WealthContextBar] Could not load display currency rate:', error);
-            });
-          }
-        });
-      }
-    });
-
-    // Keep the global selector synchronized with Settings and other controls.
-    window.addEventListener('configChanged', (event) => {
-      if (event.detail?.key !== 'display_currency') return;
-      const currency = event.detail.newValue;
-      if (!['USD', 'EUR', 'CHF'].includes(currency) || currency === this.context.currency) return;
-
-      this.context.currency = currency;
-      if (!window.userSettings) window.userSettings = {};
-      window.userSettings.display_currency = currency;
-      this.updateSelects();
-      this.saveContext();
-    });
-
     // Gestion spéciale pour 'account' qui doit changer la source de données
     // Avec debounce 250ms pour éviter PUT multiples lors navigation clavier
     const accountSelect = document.getElementById('wealth-account');
@@ -1387,8 +1364,37 @@ class WealthContextBar {
     });
   }
 
+  async loadFxRates() {
+    const ratesElement = document.getElementById('wealth-fx-rates');
+    if (!ratesElement || !window.currencyManager) return;
+
+    try {
+      await window.currencyManager.ensureRate('EUR');
+      const status = window.currencyManager.getRateStatus?.();
+      if (!status?.ratesVerified || !status.cacheFresh) {
+        ratesElement.textContent = 'Unavailable';
+        ratesElement.title = 'Verified current exchange rates are unavailable; reference fallback rates are hidden.';
+        return;
+      }
+
+      const eur = window.currencyManager.getRateSync('EUR');
+      const chf = window.currencyManager.getRateSync('CHF');
+      const sourceDate = status.sourceUpdated ? new Date(status.sourceUpdated) : null;
+      const updated = sourceDate && !Number.isNaN(sourceDate.valueOf())
+        ? sourceDate.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+        : 'unknown';
+
+      ratesElement.textContent = `EUR ${eur.toFixed(4)} · CHF ${chf.toFixed(4)}`;
+      ratesElement.title = `1 USD = ${eur.toFixed(4)} EUR · ${chf.toFixed(4)} CHF. Indicative rates from ExchangeRate-API. Provider update: ${updated}.`;
+    } catch (error) {
+      ratesElement.textContent = 'Unavailable';
+      ratesElement.title = 'Could not load verified current exchange rates.';
+      console.debug('[WealthContextBar] Could not load verified FX rates:', error);
+    }
+  }
+
   updateSelects() {
-    ['account', 'bourse', 'currency'].forEach(key => {
+    ['account', 'bourse'].forEach(key => {
       const select = document.getElementById(`wealth-${key}`);
       if (select) {
         select.value = this.context[key];
