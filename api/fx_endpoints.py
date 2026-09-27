@@ -45,7 +45,8 @@ async def get_fx_rates(
                 "updated": "<provider update timestamp>",
                 "source": "exchange-rate-api",
                 "rates_verified": True,
-                "cache_fresh": True
+                "cache_fresh": True,
+                "verified_currencies": ["EUR", "CHF"]
             }
         }
     """
@@ -66,7 +67,8 @@ async def get_fx_rates(
                 "updated": cache_info["source_updated"],
                 "source": cache_info["source"],
                 "rates_verified": cache_info["rates_verified"],
-                "cache_fresh": cache_info["cache_fresh"]
+                "cache_fresh": cache_info["cache_fresh"],
+                "verified_currencies": cache_info["verified_currencies"]
             }
         )
     except Exception as e:

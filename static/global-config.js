@@ -1028,7 +1028,8 @@ window.currencyManager = (function () {
           source: response.meta?.source || 'unknown',
           sourceUpdated: response.meta?.updated || null,
           ratesVerified: response.meta?.rates_verified === true,
-          cacheFresh: response.meta?.cache_fresh === true
+          cacheFresh: response.meta?.cache_fresh === true,
+          verifiedCurrencies: response.meta?.verified_currencies || []
         };
         return true;
       } else {

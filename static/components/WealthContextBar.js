@@ -1371,7 +1371,8 @@ class WealthContextBar {
     try {
       await window.currencyManager.ensureRate('EUR');
       const status = window.currencyManager.getRateStatus?.();
-      if (!status?.ratesVerified || !status.cacheFresh) {
+      const verifiedCurrencies = new Set(status?.verifiedCurrencies || []);
+      if (!status?.ratesVerified || !status.cacheFresh || !verifiedCurrencies.has('EUR') || !verifiedCurrencies.has('CHF')) {
         ratesElement.textContent = 'Unavailable';
         ratesElement.title = 'Verified current exchange rates are unavailable; reference fallback rates are hidden.';
         return;

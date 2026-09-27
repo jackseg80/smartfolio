@@ -252,4 +252,5 @@ def get_cache_info() -> dict:
         "source": "exchange-rate-api" if rates_verified else "fallback",
         "source_updated": datetime.fromtimestamp(_RATES_SOURCE_TIMESTAMP).astimezone().isoformat() if _RATES_SOURCE_TIMESTAMP > 0 else None,
         "rates_verified": rates_verified,
+        "verified_currencies": sorted(_VERIFIED_CURRENCIES),
     }
