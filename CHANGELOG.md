@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Global Overview et Export PDF — 2026-09-27
 
 - Global Overview utilise le même fichier Saxo sélectionné que la tuile Stock Market et inclut son cash converti en USD. Cela corrige l'écart observé de 9 846 $ sur les captures fournies.
-- Le PDF capture désormais la page en JPEG plutôt qu'en PNG sans perte. Le dashboard applique une échelle 1, une qualité 0,72 et un maximum de 1,5 million de pixels par page ; le module garde une qualité par défaut de 0,88, réglable avec `imageQuality` et `maxImagePixels`.
+- Le PDF capture la page en JPEG plutôt qu'en PNG sans perte. Après un premier export trop compressé (97 Ko), le dashboard applique une échelle 2, une qualité 0,88 et un maximum de 6 millions de pixels par page, pour améliorer la netteté du texte en zoom tout en visant 1–2 Mo par page. Le module garde des réglages génériques configurables via `imageQuality` et `maxImagePixels`.
 - Les modules du dashboard et d'export portent une version d'URL dédiée pour éviter qu'un ancien JavaScript en cache conserve l'export PNG de 30 Mo.
 - Syntaxe vérifiée pour le module PDF et l'endpoint Global Overview.
 

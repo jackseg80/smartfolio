@@ -611,15 +611,15 @@ function setupExportButtons() {
     const pdfExportBtn = document.getElementById('pdf-export-btn');
     if (pdfExportBtn) {
         pdfExportBtn.addEventListener('click', () => {
-            import('./pdf-export.js?v=20260927-pdf-compression-2').then(({ exportPageToPDF }) => {
+            import('./pdf-export.js?v=20260927-pdf-quality-3').then(({ exportPageToPDF }) => {
                 exportPageToPDF({
                     element: document.querySelector('main.wrap'),
                     title: 'Dashboard Report',
                     filename: 'smartfolio-dashboard',
                     button: pdfExportBtn,
-                    scale: 1,
-                    imageQuality: 0.72,
-                    maxImagePixels: 1_500_000,
+                    scale: 2,
+                    imageQuality: 0.88,
+                    maxImagePixels: 6_000_000,
                 });
             });
         });

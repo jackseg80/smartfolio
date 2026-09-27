@@ -25,13 +25,12 @@ la tuile Stock Market.
 
 ## Export PDF
 
-Le dashboard est capturé à l'échelle 1, puis chaque page est réduite à au plus
-1,5 million de pixels et encodée en JPEG, qualité 0,72. Cette limite réduit le
-poids par rapport à l'ancienne capture PNG sans perte ; elle vise un PDF d'une
-page inférieur à 1–2 Mo sur un écran courant. La taille réelle dépend de la
-page. Les scripts du dashboard et l'export utilisent une URL versionnée pour
-que le navigateur recharge la compression après mise à jour. `imageQuality` et
-`maxImagePixels` restent réglables.
+Le dashboard est capturé à l'échelle 2, puis chaque page est réduite à au plus
+6 millions de pixels et encodée en JPEG, qualité 0,88. Ce réglage vise un texte
+plus net en zoom tout en gardant un PDF d'une page autour de 1–2 Mo sur un écran
+courant. La taille réelle dépend du contenu. Les scripts du dashboard et
+l'export utilisent une URL versionnée pour que le navigateur recharge ces
+réglages après mise à jour. `imageQuality` et `maxImagePixels` restent réglables.
 
 ## Morning Brief
 
