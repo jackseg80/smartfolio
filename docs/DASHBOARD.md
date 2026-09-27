@@ -51,3 +51,13 @@ Vérification utilisateur après déploiement :
 4. Vérifier que le Morning Brief n'apparaît plus en haut de la page.
 
 La fixture navigateur ne constitue pas une validation du portefeuille réel.
+
+## Déploiement Robot 2 vérifié
+
+Le 27 septembre 2026 à 13:02 CEST, le code `03db2fd1` a été récupéré sur
+`main`, reconstruit et activé avec Docker Compose v2. Le conteneur
+`smartfolio-api` est `healthy` et `/healthz` retourne HTTP 200 avec `ok: true`.
+Les réponses HTTP de `dashboard.html`, `dashboard-main-controller.js` et
+`wealth-saxo-summary.js` ont les mêmes empreintes SHA-256 que les fichiers validés.
+L'image précédente est conservée sous `smartfolio-prod-rollback:pre-03db2fd1`.
+Le contrôle du portefeuille réel par l'utilisateur reste à effectuer.

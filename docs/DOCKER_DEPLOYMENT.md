@@ -252,6 +252,37 @@ Le script s'occupe de tout.
 
 ---
 
+## Robot 2 : utiliser Docker Compose v2
+
+Contrôle du 27 septembre 2026 : le dépôt actif est `/home/jack/smartfolio`,
+branche `main`. Docker Compose v2.40.3 est installé (`docker compose`).
+L'ancien `docker-compose` v1.29.2 échoue lors d'une recréation avec
+`KeyError: ContainerConfig`. Le script `deploy.sh` utilise encore cette ancienne
+commande : sur Robot 2, privilégier les commandes v2 ci-dessous.
+
+Après vérification des changements locaux et préservation de toute modification
+fonctionnelle du serveur :
+
+```bash
+cd /home/jack/smartfolio
+git branch --show-current
+git status --short
+git diff --ignore-space-at-eol --stat
+git diff --cached --stat
+git pull --ff-only origin main
+docker compose build smartfolio
+docker compose up -d --no-deps smartfolio
+docker compose ps
+curl -fsS http://192.168.1.200:8080/healthz
+```
+
+Ne pas utiliser de reset pour effacer des modifications locales. Les données et
+logs sont montés depuis le serveur ; ils ne sont pas supprimés par la recréation
+du seul service `smartfolio`. Vérifier également les fichiers réellement servis,
+car un conteneur sain ne prouve pas à lui seul que le nouveau frontend est actif.
+
+---
+
 ## Maintenance et Dépannage
 
 ### Le service ne démarre pas ou est "unhealthy"
