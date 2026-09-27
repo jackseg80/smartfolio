@@ -9,7 +9,6 @@
     <link rel="modulepreload" href="components/tooltips.js">
     <link rel="modulepreload" href="components/view-toggle.js">
     <link rel="modulepreload" href="components/data-freshness.js">
-    <link rel="modulepreload" href="components/morning-brief-card.js">
     <link rel="modulepreload" href="modules/dashboard-main-controller.js">
     <link rel="modulepreload" href="core/auth-guard.js">
     <link rel="modulepreload" href="core/view-mode-manager.js">
@@ -25,7 +24,6 @@
     <script type="module" src="components/tooltips.js"></script>
     <script type="module" src="components/view-toggle.js"></script>
     <script type="module" src="components/data-freshness.js"></script>
-    <script type="module" src="components/morning-brief-card.js"></script>
     <script type="module" src="network-state-manager.js"></script>
     <script type="module" src="core/sentry-init.js"></script>
     <script type="module">
@@ -107,15 +105,6 @@
         #overview { min-height: 240px; }
         #market-regime { min-height: 240px; }
         #risk-alerts { min-height: 240px; }
-
-        .morning-brief-container {
-            margin-bottom: 20px;
-            min-height: 54px; /* Height of collapsed header */
-        }
-
-        .morning-brief-container:has(morning-brief-card:not([collapsed])) {
-            min-height: 300px; /* Approximate height when expanded */
-        }
 
         .card:hover {
             border-color: var(--brand-primary);
@@ -568,11 +557,6 @@
                 <button id="pdf-export-btn" class="btn btn-secondary pdf-hide" style="font-size:0.8rem;padding:6px 12px;" title="Export page as PDF">Export PDF</button>
                 <view-toggle></view-toggle>
             </div>
-        </div>
-
-        <!-- MORNING BRIEF -->
-        <div class="morning-brief-container">
-            <morning-brief-card auto-refresh="900" collapsed></morning-brief-card>
         </div>
 
         <!-- LEVEL 1: WEALTH -->

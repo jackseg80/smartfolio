@@ -15,7 +15,8 @@ let _cachedForSource = null; // Track which source the cache is for (CRITICAL!)
 const CACHE_TTL = 300000; // 5 minutes (optimized for cross-page sharing)
 
 // LocalStorage keys for cross-page caching
-const CACHE_KEY_PREFIX = 'saxo_summary_';
+// Nouveau contrat : positions et cash partagés entre total et graphique.
+const CACHE_KEY_PREFIX = 'saxo_summary_v2_';
 
 /**
  * Load cache from localStorage (cross-page persistent cache)
@@ -226,7 +227,7 @@ export async function fetchSaxoSummary() {
                 _cacheTimestamp = now;
                 _cachedForUser = activeUser;
                 _cachedForSource = bourseSource;
-                saveCacheToStorage(activeUser, bourseSource, summary);
+                saveCacheToStorage(activeUser, bourseSource, summary, now);
 
                 (window.debugLogger?.debug || console.log)(`[Saxo Summary] [OK] V2 manual source loaded: ${items.length} items`);
                 return summary;
@@ -362,21 +363,6 @@ export async function fetchSaxoSummary() {
             firstPosition: positions[0] ? {symbol: positions[0].symbol || positions[0].asset_name, value: positions[0].market_value_usd || positions[0].value} : null
         });
 
-        if (positions.length === 0) {
-            const summary = {
-                total_value: 0,
-                positions_count: 0,
-                asof: 'No data',
-                isEmpty: true
-            };
-            _cachedSummary = summary;
-            _cacheTimestamp = now;
-            _cachedForUser = activeUser;
-            _cachedForSource = bourseSource;
-            saveCacheToStorage(activeUser, bourseSource, summary, now);
-            return summary;
-        }
-
         //  CRITICAL: Always use backend total_value if available (includes cash + positions)
         let totalValue = 0;
         let cashBalance = 0;
@@ -468,7 +454,9 @@ export async function fetchSaxoSummary() {
             total_value: totalValue,
             positions_count: positions.length,
             asof: latestDate,
-            isEmpty: false
+            isEmpty: positions.length === 0 && cashBalance <= 0,
+            positions,
+            cash_balance: cashBalance
         };
 
         //  CRITICAL: Verify source didn't change during async fetch (race condition protection)

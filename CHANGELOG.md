@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-02-10
+## [Unreleased]
+
+### Dashboard — 2026-09-27
+
+- Correction du camembert Stock Market : le graphique partage les positions et le cash du résumé, avec la même source CSV/API/manuelle que le total affiché.
+- Prise en charge des classes d'actifs directes, des valeurs USD, des portefeuilles uniquement en cash et du retour après un état vide. Les anciens caches sans positions sont invalidés.
+- Retrait du Morning Brief du dashboard, de son chargement JavaScript et de ses styles dédiés. Le service, l'API et la tâche planifiée existants restent disponibles.
+- Validation : 7 tests de régression JavaScript ; 3 160 tests Python réussis, 13 ignorés ; proportions 60/30/10 vérifiées dans Chromium avec des données de test.
+- Utilisation et contrôle manuel : [Dashboard](docs/DASHBOARD.md).
 
 ### Plan d'Amelioration v5 — 11 Items Complete (Feb 2026)
 

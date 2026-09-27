@@ -2043,36 +2043,28 @@ async function updatePortfolioChart(balancesData) {
 async function updateSaxoChart(positions, cashBalance = 0) {
     console.debug('updateSaxoChart - positions:', positions, 'cash:', cashBalance);
 
-    if (!positions || positions.length === 0) {
-        const container = document.getElementById('saxo-chart');
-        if (container) {
-            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--theme-text-muted);">No positions</div>';
-        }
-        return;
-    }
+    const container = document.getElementById('saxo-chart');
+    if (!container) return;
 
-    let canvas = document.getElementById('saxoChartCanvas');
-    if (!canvas) {
-        console.debug("[Error] Saxo canvas element not found");
-        return;
+    // Libérer le graphique avant un état vide ou une nouvelle source.
+    if (window.saxoChart) {
+        window.saxoChart.destroy();
+        window.saxoChart = null;
     }
-
-    // Vérifier que Chart.js est chargé
     if (typeof Chart === 'undefined') {
-        console.debug("[Error] Chart.js not loaded");
-        document.getElementById('saxo-chart').innerHTML = "<div style=\"text-align: center; padding: 20px; color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Chart.js not loaded</div>";
+        container.textContent = 'Chart unavailable';
         return;
     }
-
-    const ctx = canvas.getContext('2d');
+    positions = positions || [];
 
     // Regrouper par asset_class
     const grouped = {};
     positions.forEach(pos => {
         // Extract asset_class from tags (format: "asset_class:EQUITY")
         const assetClassTag = pos.tags?.find(t => t.startsWith('asset_class:'));
-        const assetClass = assetClassTag ? assetClassTag.split(':')[1] : 'OTHER';
-        const value = pos.market_value || 0;
+        const assetClass = (assetClassTag?.split(':')[1] || pos.asset_class || 'OTHER').toUpperCase();
+        const value = Number(pos.market_value_usd ?? pos.market_value ?? pos.value_usd ?? pos.value ?? 0);
+        if (!Number.isFinite(value) || value <= 0) return;
 
         if (!grouped[assetClass]) {
             grouped[assetClass] = { label: assetClass, value: 0, count: 0 };
@@ -2083,7 +2075,10 @@ async function updateSaxoChart(positions, cashBalance = 0) {
 
     //  Add cash as a separate category if present
     if (cashBalance > 0) {
-        grouped['CASH'] = { label: 'Cash', value: cashBalance, count: 1 };
+        const cash = grouped['CASH'] || { label: 'Cash', value: 0, count: 0 };
+        cash.value += Number(cashBalance);
+        cash.count += 1;
+        grouped['CASH'] = cash;
     }
 
     // Convertir en tableau et trier
@@ -2099,11 +2094,25 @@ async function updateSaxoChart(positions, cashBalance = 0) {
         return;
     }
 
-    // Détruire l'ancien graphique s'il existe
-    if (window.saxoChart) {
-        window.saxoChart.destroy();
-        window.saxoChart = null;
+    // Un état vide a pu retirer le canvas : le recréer au prochain chargement.
+    let canvas = document.getElementById('saxoChartCanvas');
+    if (!canvas) {
+        container.replaceChildren();
+        const description = document.createElement('div');
+        description.id = 'saxo-chart-desc';
+        description.className = 'sr-only';
+        canvas = document.createElement('canvas');
+        canvas.id = 'saxoChartCanvas';
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Stock portfolio pie chart');
+        canvas.setAttribute('aria-describedby', 'saxo-chart-desc');
+        container.append(description, canvas);
     }
+    const description = document.getElementById('saxo-chart-desc');
+    if (description) description.textContent = sortedData.map(item =>
+        `${item.label}: ${((item.value / total) * 100).toFixed(1)}%`
+    ).join(', ');
+    const ctx = canvas.getContext('2d');
 
     // Obtenir les couleurs du thème actuel
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -2637,67 +2646,9 @@ async function refreshSaxoTile() {
                 asof: summary.asof
             });
 
-            // Fetch detailed positions for chart
+            // Utiliser exactement les positions et le cash du total affiché.
             try {
-                const activeUser = localStorage.getItem('activeUser');
-                const bourseSource = window.wealthContextBar?.getContext()?.bourse;
-                let apiUrl;
-                let isManualSource = false;
-
-                // Check if Manual mode (manual_bourse)
-                if (bourseSource === 'manual_bourse') {
-                    apiUrl = `/api/sources/v2/bourse/balances`;
-                    isManualSource = true;
-                    debugLogger.debug(`[Saxo Tile Chart] Using Manual mode: ${bourseSource}`);
-                }
-                // Check if API mode (api:saxobank_api)
-                else if (bourseSource && bourseSource.startsWith('api:')) {
-                    // API mode: use api-positions endpoint with cache (FAST, no live API call)
-                    apiUrl = `/api/saxo/api-positions?use_cache=true&max_cache_age_hours=24`;
-                    debugLogger.debug(`[Saxo Tile Chart] Using API mode (cached): ${bourseSource}`);
-                }
-                // Check if CSV mode (saxo:file_key)
-                else if (bourseSource && bourseSource !== 'all' && bourseSource.startsWith('saxo:')) {
-                    const key = bourseSource.substring(5);
-                    apiUrl = `/api/saxo/positions?user_id=${activeUser}&file_key=${key}`;
-                    debugLogger.debug(`[Saxo Tile Chart] Using CSV mode with file_key: ${key}`);
-                }
-                // Default: latest CSV
-                else {
-                    apiUrl = `/api/saxo/positions?user_id=${activeUser}`;
-                }
-
-                const positionsResponse = await fetch(apiUrl, {
-                    headers: { 'X-User': activeUser }
-                });
-
-                if (positionsResponse.ok) {
-                    const positionsData = await positionsResponse.json();
-
-                    let positions, cashBalance;
-                    if (isManualSource) {
-                        // Manual mode: transform BalanceItem[] to positions format
-                        const items = positionsData.data?.items || positionsData.items || [];
-                        positions = items.map(item => ({
-                            symbol: item.symbol,
-                            asset_name: item.alias || item.symbol,
-                            quantity: item.amount || 0,
-                            market_value: item.value_usd || 0,
-                            asset_class: item.asset_class || 'EQUITY',
-                            currency: item.currency || 'USD',
-                            broker: item.location || 'Manual'
-                        }));
-                        cashBalance = 0; // Manual entries don't have cash balance
-                        debugLogger.debug(`[Saxo Tile Chart] Manual mode: Transformed ${items.length} items to ${positions.length} positions`);
-                    } else {
-                        //  Handle backend response format: {ok: true, data: {positions: [...], total_value: ..., cash_balance: ...}}
-                        positions = positionsData.data?.positions || positionsData.positions || [];
-                        cashBalance = positionsData.data?.cash_balance || 0;
-                    }
-
-                    debugLogger.debug(`[Saxo Tile Chart] Extracted ${positions.length} positions + cash=$${cashBalance} for chart`);
-                    await updateSaxoChart(positions, cashBalance);
-                }
+                await updateSaxoChart(summary.positions, summary.cash_balance);
             } catch (chartError) {
                 debugLogger.warn('[Saxo Tile] Could not update chart:', chartError);
             }

@@ -246,8 +246,9 @@ Le workflow de développement et de mise en production est simple :
 Le script s'occupe de tout.
 
 **Quand utiliser `--skip-build` ?**
-- **Rebuild complet (défaut)** : Obligatoire si vous modifiez `Dockerfile.prod` ou `requirements.txt`.
-- **Restart rapide (`--skip-build`)** : Suffisant si vous ne modifiez que du code Python (`.py`), des fichiers statiques (HTML/JS) ou de la configuration (`.json`). Le redémarrage ne prend que quelques secondes.
+- **Rebuild complet (défaut)** : Nécessaire pour les changements de code Python, de fichiers statiques HTML/JS, de configuration embarquée, de `Dockerfile.prod` ou de dépendances. La configuration Compose actuelle monte uniquement les données et les logs ; le code et les fichiers statiques sont copiés dans l'image.
+- **Restart rapide (`--skip-build`)** : Réservé au redémarrage de l'image existante lorsque son contenu n'a pas changé. Un restart seul ne publie pas les nouveaux fichiers HTML/JS récupérés par `git pull`.
+- Après mise à jour, vérifier le commit sur le serveur, la santé du conteneur et le contenu réellement servi. Pour le dashboard, suivre le [contrôle manuel](DASHBOARD.md#validation).
 
 ---
 
