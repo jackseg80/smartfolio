@@ -34,6 +34,10 @@ data/users/{user_id}/
 }
 ```
 
+### Devise d'affichage
+
+Le paramètre `display_currency` pilote la conversion des montants du dashboard. Le sélecteur Currency de la barre supérieure et les sélecteurs de Settings utilisent ce même paramètre : un changement dans l'un est immédiatement reflété dans l'autre. Le choix est également conservé dans le contexte utilisateur et dans le paramètre d'URL `ccy`.
+
 ### secrets.json - Clés API Sensibles
 
 **Contenu** : Toutes les clés API et secrets

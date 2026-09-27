@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Currency Selector — 2026-09-27
+
+- Synchronisation du sélecteur Currency de la barre supérieure avec `display_currency` : les montants affichés suivent maintenant USD/EUR/CHF, et les changements effectués dans Settings mettent à jour le sélecteur.
+- Conservation du choix par utilisateur et dans `ccy` ; chargement du taux de conversion à la sélection.
+- Documentation mise à jour dans [USER_CONFIG_GUIDE.md](docs/USER_CONFIG_GUIDE.md).
+
 ### AI Chat — 2026-09-27
 
 - Remplacement du modèle Groq retiré `llama-3.3-70b-versatile` par `openai/gpt-oss-120b`, recommandé par Groq. L’interface et la documentation signalent que le forfait gratuit reste disponible, avec des quotas et une tarification qui dépendent du plan du compte.

@@ -33,7 +33,7 @@ class WealthContextBar {
 
   loadContext() {
     try {
-      // Priorité : querystring > localStorage (namespacé par user) > defaults
+      // Priorité : querystring > configuration globale > localStorage > defaults
       const params = new URLSearchParams(location.search);
       const activeUser = localStorage.getItem('activeUser');
       const userKey = `wealth_ctx:${activeUser}`;
@@ -62,7 +62,7 @@ class WealthContextBar {
       return {
         account: account,
         bourse: bourse,
-        currency: params.get('ccy') || stored.currency || this.defaults.currency
+        currency: params.get('ccy') || window.globalConfig?.get('display_currency') || stored.currency || this.defaults.currency
       };
     } catch (error) {
       console.debug('Error loading wealth context:', error);
@@ -1298,10 +1298,35 @@ class WealthContextBar {
       const select = document.getElementById(`wealth-${key}`);
       if (select) {
         select.addEventListener('change', (e) => {
-          this.context[key] = e.target.value;
+          const currency = e.target.value;
+          if (!['USD', 'EUR', 'CHF'].includes(currency)) return;
+
+          this.context[key] = currency;
+          if (!window.userSettings) window.userSettings = {};
+          window.userSettings.display_currency = currency;
+          window.globalConfig?.set('display_currency', currency);
           this.saveContext();
+
+          if (currency !== 'USD') {
+            Promise.resolve(window.currencyManager?.ensureRate(currency)).catch(error => {
+              console.debug('[WealthContextBar] Could not load display currency rate:', error);
+            });
+          }
         });
       }
+    });
+
+    // Keep the global selector synchronized with Settings and other controls.
+    window.addEventListener('configChanged', (event) => {
+      if (event.detail?.key !== 'display_currency') return;
+      const currency = event.detail.newValue;
+      if (!['USD', 'EUR', 'CHF'].includes(currency) || currency === this.context.currency) return;
+
+      this.context.currency = currency;
+      if (!window.userSettings) window.userSettings = {};
+      window.userSettings.display_currency = currency;
+      this.updateSelects();
+      this.saveContext();
     });
 
     // Gestion spéciale pour 'account' qui doit changer la source de données
