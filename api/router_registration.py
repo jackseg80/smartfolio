@@ -243,7 +243,7 @@ def register_routers(app: FastAPI) -> None:
     # ========== AI Chat ==========
     from api.ai_chat_router import router as ai_chat_router
 
-    app.include_router(ai_chat_router)  # AI Chat with Groq (free tier)
+    app.include_router(ai_chat_router)  # AI Chat with Groq
     logger.info(" AI Chat router registered")
 
     # ========== Crypto Toolbox (Optional) ==========

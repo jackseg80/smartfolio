@@ -446,7 +446,7 @@ Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécial
 - **CoinTracking**: API + Secret pour données temps réel
 - **CoinGecko**: Classification et prix crypto
 - **FRED**: Données macro-économiques
-- **AI Providers**: Groq (gratuit), Claude, OpenAI, Grok
+- **AI Providers**: Groq (GPT-OSS 120B; quotas et facturation selon le plan), Claude, OpenAI, Grok
 
 ### Saxo OAuth
 - **Status**: Connected/Disconnected
@@ -454,13 +454,13 @@ Ce dashboard est une vue d'ensemble - pour détails, utiliser les pages spécial
 - **Expiration**: Date d'expiration du token
 
 ### AI Chat Configuration
-- **Provider par défaut**: Groq (gratuit) ou Claude (premium)
+- **Provider par défaut**: Groq (GPT-OSS 120B) ou Claude (premium)
 - **Include Docs**: Inclusion de la knowledge base
 - **Token Budget**: ~3500 tokens par requête
 
 ### Recommandations
 - Configurer CoinTracking API pour données temps réel
-- Configurer Groq API pour AI Chat gratuit
+- Configurer Groq API pour AI Chat (GPT-OSS 120B; disponibilité et prix selon le plan)
 - Connecter Saxo OAuth pour données bourse
 """
 }

@@ -1,14 +1,14 @@
 # Global AI Chat System - Documentation Complète
 
 > **Status:** [OK] 100% implémenté + Unifié (Dec 2025)
-> **Dernière mise à jour:** Dec 28, 2025
+> **Dernière mise à jour:** Sep 27, 2026
 
 ## Vue d'ensemble
 
 Système d'assistant IA **unifié et global** disponible sur toutes les pages SmartFolio avec :
 - **Contexte dynamique** : L'IA voit automatiquement les données de la page courante
 - **Documentation dynamique** : Knowledge Base chargée depuis docs/*.md (mises à jour auto)
-- **Multi-provider** : Groq (gratuit) + Claude/OpenAI/Grok (premium)
+- **Multi-provider** : Groq + Claude/OpenAI/Grok ; limites et coûts selon le fournisseur et le compte
 - **Unification complète** : saxo-dashboard migré du système inline vers le système global
 
 ## Nouveautés (Dec 28, 2025)
@@ -45,7 +45,7 @@ api/
 ```
 
 **Fonctionnalités:**
-- [OK] Support Groq API (gratuit, Llama 3.3 70B)
+- [OK] Support Groq API (`openai/gpt-oss-120b`; disponibilité et prix selon le plan Groq)
 - [OK] Support Claude API (payant, Sonnet 3.5)
 - [OK] Context formatters par type de page (Risk, Analytics, Wealth, Portfolio)
 - [OK] Documentation SmartFolio injectée automatiquement (~1500 tokens)
@@ -121,8 +121,8 @@ Liste les providers disponibles et leur configuration.
   "providers": [
     {
       "id": "groq",
-      "name": "Groq (Llama 3.3 70B)",
-      "model": "llama-3.3-70b-versatile",
+      "name": "Groq (GPT-OSS 120B)",
+      "model": "openai/gpt-oss-120b",
       "configured": true,
       "free": true,
       "vision": false
@@ -333,16 +333,17 @@ PAGE_DOC_FILES = {
 
 ## Configuration
 
-### Groq API (Gratuit)
+### Groq API
 
 1. Obtenir clé : https://console.groq.com/keys
 2. Ajouter dans **Settings > API Keys > Groq API Key**
 3. Format : `gsk_...`
 
-**Limites gratuites:**
-- 14,000 tokens/min
-- 30 requêtes/min
-- Modèle : Llama 3.3 70B
+**Modèle par défaut :** `openai/gpt-oss-120b` (GPT-OSS 120B).
+
+Groq propose plusieurs plans. La disponibilité du modèle, les limites et la
+facturation dépendent du plan du compte ; vérifier les [modèles et leurs prix](https://console.groq.com/docs/models)
+ainsi que les [limites du compte](https://console.groq.com/docs/rate-limits).
 
 ### Claude API (Premium)
 
@@ -479,7 +480,7 @@ L'utilisateur peut :
 | Conversation (5 messages) | ~500 |
 | **Total par requête** | **~3500-4500** |
 
-Groq free tier: **14k tokens/min** → OK pour usage normal
+Les limites de requêtes Groq dépendent du modèle et du plan du compte.
 
 ---
 

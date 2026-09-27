@@ -172,7 +172,7 @@ export class AIChatComponent {
         this.availableProviders.forEach(provider => {
             const option = document.createElement('option');
             option.value = provider.id;
-            option.textContent = `${provider.name} ${provider.free ? '(Free)' : '(Premium)'}`;
+            option.textContent = `${provider.name} ${provider.free ? '(Free plan available)' : '(Paid)'}`;
             option.disabled = !provider.configured;
 
             if (!provider.configured) {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### AI Chat — 2026-09-27
+
+- Remplacement du modèle Groq retiré `llama-3.3-70b-versatile` par `openai/gpt-oss-120b`, recommandé par Groq. L’interface et la documentation signalent que le forfait gratuit reste disponible, avec des quotas et une tarification qui dépendent du plan du compte.
+
 ### Dashboard — 2026-09-27
 
 - Correction du camembert Stock Market : le graphique partage les positions et le cash du résumé, avec la même source CSV/API/manuelle que le total affiché.

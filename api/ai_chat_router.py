@@ -3,7 +3,7 @@ AI Chat Router - Multi-Provider Support (4 Providers)
 Provides AI-powered analysis and chat for portfolio insights
 
 Providers:
-- Groq (Free): 14,000 tokens/min, 30 req/min, Llama 3.3 70B
+- Groq: GPT-OSS 120B (availability, limits, and pricing depend on the account plan)
 - Claude API (Premium): Claude 3.5 Sonnet, vision capable, smarter analysis
 - Grok (Premium): xAI Grok Beta, fast and capable
 - OpenAI (Premium): GPT-4o, vision capable, industry standard
@@ -65,9 +65,9 @@ def _extract_page_id(page_name: str) -> str:
 # Provider configurations
 PROVIDERS = {
     "groq": {
-        "name": "Groq (Llama 3.3 70B)",
+        "name": "Groq (GPT-OSS 120B)",
         "url": "https://api.groq.com/openai/v1/chat/completions",
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "key_field": "groq_api_key",
         "max_tokens_default": 1024,
         "free": True,
@@ -178,7 +178,7 @@ async def chat_with_ai(
     Chat with AI assistant for portfolio analysis.
 
     Supports multiple providers:
-    - Groq (free tier) with Llama 3.3 70B
+    - Groq with GPT-OSS 120B (availability and pricing depend on the account plan)
     - Claude API (premium) with Sonnet 3.5
     - Grok (premium) with xAI Grok Beta
     - OpenAI (premium) with GPT-4o
@@ -306,7 +306,12 @@ async def _call_groq(user: str, api_key: str, request: ChatRequest) -> ChatRespo
             logger.error(f"Groq API error for user {user}: {e.response.status_code} - {e.response.text}")
 
         error_msg = f"Groq API error: {e.response.status_code}"
-        if error_detail:
+        if e.response.status_code == 404:
+            error_msg = (
+                f"Groq model '{GROQ_MODEL}' is unavailable or not enabled for this API key. "
+                "Check model access and your Groq plan."
+            )
+        elif error_detail:
             error_msg += f" - {error_detail.get('error', {}).get('message', '')}"
 
         return ChatResponse(
