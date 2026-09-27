@@ -684,27 +684,29 @@ async def global_summary(
             else:
                 # CSV mode: use file_key
                 logger.info(f"[wealth][global] Loading Saxo positions with file_key={bourse_file_key}")
-                saxo_positions = await saxo_adapter.list_positions(user_id=user, file_key=bourse_file_key)
+                from services.portfolio_export_service import read_saxo_cash, resolve_saxo_file_key
+
+                effective_file_key = resolve_saxo_file_key(user, bourse_file_key)
+                saxo_positions = await saxo_adapter.list_positions(
+                    user_id=user, file_key=effective_file_key
+                )
                 logger.info(f"[wealth][global] Got {len(saxo_positions)} Saxo positions")
                 breakdown["saxo"] = sum((p.market_value or 0.0) for p in saxo_positions)
 
-                # Add cash/liquidities if available
+                # Use the same selected CSV for positions and cash, and include
+                # its normalized USD value in the global wealth breakdown.
                 try:
-                    import json
-                    cash_key = bourse_file_key or "default"
-                    cash_dir = Path(f"data/users/{user}/saxobank/cash")
-                    cash_file = cash_dir / f"{cash_key}_cash.json"
-
-                    if cash_file.exists():
-                        with open(cash_file, 'r', encoding='utf-8') as f:
-                            cash_data = json.load(f)
-                            cash_amount = float(cash_data.get("cash_amount", 0.0))
-                            breakdown["saxo"] += cash_amount
-                            logger.info(f"[wealth][global] Added cash ${cash_amount:.2f} to Saxo total")
+                    cash = read_saxo_cash(user, effective_file_key)
+                    cash_value_usd = float(cash.get("value_usd", 0.0) or 0.0)
+                    breakdown["saxo"] += cash_value_usd
+                    if cash_value_usd:
+                        logger.info(
+                            f"[wealth][global] Added cash ${cash_value_usd:.2f} USD to Saxo total"
+                        )
                 except Exception as cash_error:
                     logger.debug(f"[wealth][global] Cash file not found or error (non-blocking): {cash_error}")
 
-                logger.info(f"[wealth][global] saxo={breakdown['saxo']:.2f} USD for user={user} file_key={bourse_file_key}")
+                logger.info(f"[wealth][global] saxo={breakdown['saxo']:.2f} USD for user={user} file_key={effective_file_key}")
         else:
             logger.warning(f"[wealth][global] Saxo module not available for user={user}")
     except Exception as e:

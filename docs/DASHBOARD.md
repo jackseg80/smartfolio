@@ -18,6 +18,18 @@ Un portefeuille uniquement en cash reste affichable ; le canvas est recréé
 si un état vide l'a retiré. Le cache `saxo_summary_v2_` contient les données du
 résumé et du graphique, séparées par utilisateur et source.
 
+Global Overview utilise le même fichier CSV Saxo sélectionné et ajoute son
+cash après conversion en USD. Le résolveur `resolve_saxo_file_key()` et
+`read_saxo_cash()` assurent que la valeur Stocks agrégée correspond à celle de
+la tuile Stock Market.
+
+## Export PDF
+
+Le dashboard est capturé dans une image JPEG intégrée au PDF, qualité 0,88 par
+défaut. Cette compression réduit fortement le poids par rapport à l'ancienne
+capture PNG sans perte ; l'image reste imprimable. `imageQuality` permet de
+régler la qualité pour les autres pages qui réutilisent le module.
+
 ## Morning Brief
 
 Le bloc a été retiré du dashboard à la demande de l'utilisateur : le résumé

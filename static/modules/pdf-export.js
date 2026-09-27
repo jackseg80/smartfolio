@@ -132,6 +132,7 @@ function _addHeaderFooter(pdf, title, pageCount) {
  * @param {HTMLButtonElement} [options.button] - Button to show loading state on
  * @param {string} [options.orientation='portrait'] - 'portrait' or 'landscape'
  * @param {number} [options.scale=2] - Render scale (2 = retina quality)
+ * @param {number} [options.imageQuality=0.88] - JPEG quality for compact PDFs
  * @param {string[]} [options.hideSelectors=[]] - CSS selectors to hide during capture
  */
 export async function exportPageToPDF(options = {}) {
@@ -142,6 +143,7 @@ export async function exportPageToPDF(options = {}) {
     button = null,
     orientation = 'portrait',
     scale = 2,
+    imageQuality = 0.88,
     hideSelectors = ['.pdf-hide', '.icon-btn', '.refresh-btn', 'nav', 'domain-nav', '.page-header button'],
   } = options;
 
@@ -208,10 +210,13 @@ export async function exportPageToPDF(options = {}) {
 
     const imgWidth = usableWidth;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const imageFormat = 'JPEG';
+    const imageMimeType = 'image/jpeg';
+    const quality = Math.max(0.5, Math.min(1, Number(imageQuality) || 0.88));
 
     if (imgHeight <= usableHeight) {
       // Single page
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', margin, 15, imgWidth, imgHeight);
+      pdf.addImage(canvas.toDataURL(imageMimeType, quality), imageFormat, margin, 15, imgWidth, imgHeight);
     } else {
       // Multi-page: slice canvas
       const totalPages = Math.ceil(imgHeight / usableHeight);
@@ -231,7 +236,7 @@ export async function exportPageToPDF(options = {}) {
         sliceCtx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
 
         const sliceImgHeight = (srcH * imgWidth) / canvas.width;
-        pdf.addImage(sliceCanvas.toDataURL('image/png'), 'PNG', margin, 15, imgWidth, sliceImgHeight);
+        pdf.addImage(sliceCanvas.toDataURL(imageMimeType, quality), imageFormat, margin, 15, imgWidth, sliceImgHeight);
       }
     }
 

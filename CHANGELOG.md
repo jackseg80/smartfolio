@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation : 7 tests de régression JavaScript ; 3 160 tests Python réussis, 13 ignorés ; proportions 60/30/10 vérifiées dans Chromium avec des données de test.
 - Utilisation et contrôle manuel : [Dashboard](docs/DASHBOARD.md).
 
+### Global Overview et Export PDF — 2026-09-27
+
+- Global Overview utilise le même fichier Saxo sélectionné que la tuile Stock Market et inclut son cash converti en USD. Cela corrige l'écart observé de 9 846 $ sur les captures fournies.
+- Le PDF capture désormais la page en JPEG à qualité 0,88, au lieu d'intégrer une image PNG sans perte. La qualité reste réglable avec `imageQuality`.
+- Syntaxe vérifiée pour le module PDF et l'endpoint Global Overview.
+
 ### Plan d'Amelioration v5 — 11 Items Complete (Feb 2026)
 
 **Period:** February 7-10, 2026
