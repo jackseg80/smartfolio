@@ -1,6 +1,6 @@
 # Dashboard
 
-Mise à jour : 27 septembre 2026.
+Mise à jour : 28 septembre 2026.
 
 Page : `static/dashboard.html`.
 
@@ -22,6 +22,20 @@ Global Overview utilise le même fichier CSV Saxo sélectionné et ajoute son
 cash après conversion en USD. Le résolveur `resolve_saxo_file_key()` et
 `read_saxo_cash()` assurent que la valeur Stocks agrégée correspond à celle de
 la tuile Stock Market.
+
+## Global Insight
+
+Les derniers scores calculés sont conservés dans `localStorage`, par utilisateur
+et source de données, avec leur date réelle de calcul. Ils restent visibles après
+une fermeture de session ou une période hors ligne et sont restaurés au prochain
+chargement du dashboard. Un changement d'utilisateur ou de source recharge le
+cache correspondant sans mélanger les portefeuilles.
+
+Le bouton de rafraîchissement ouvre le Risk Dashboard dans une iframe cachée et
+lui demande un recalcul forcé. La tuile affiche un état de chargement pendant
+l'opération et ne considère le calcul terminé qu'après l'écriture de nouveaux
+scores pour la même source. En cas d'échec, les derniers scores enregistrés
+restent affichés et un message indique que l'actualisation a échoué.
 
 ## Export PDF
 

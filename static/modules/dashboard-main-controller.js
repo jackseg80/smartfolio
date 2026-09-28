@@ -9,6 +9,127 @@ import { waitForWealthContextReady } from '../core/wealth-context-ready.js';
 
 //  Couleur conforme CLAUDE.md: Plus haut = plus robuste = VERT
 const colorForScore = (s) => s > 70 ? 'var(--success)' : s >= 40 ? 'var(--warning)' : 'var(--danger)';
+let isRefreshingGlobalInsight = false;
+let globalInsightRefreshStatus = null;
+
+function getGlobalInsightScoreKey() {
+    const user = localStorage.getItem('activeUser');
+    const source = window.globalConfig?.get('data_source') || 'unknown';
+    return user ? `global-insight-scores:${user}:${source}` : null;
+}
+
+function readGlobalInsightScoreCache() {
+    try {
+        const key = getGlobalInsightScoreKey();
+        const cached = key ? JSON.parse(localStorage.getItem(key) || 'null') : null;
+        const user = localStorage.getItem('activeUser');
+        const source = window.globalConfig?.get('data_source') || 'unknown';
+        if (!cached || cached.user !== user || cached.source !== source || !Number.isFinite(cached.timestamp)) return null;
+        return cached;
+    } catch {
+        return null;
+    }
+}
+
+function persistGlobalInsightScores(unifiedState = null, timestampOverride = null) {
+    try {
+        const user = localStorage.getItem('activeUser');
+        const key = getGlobalInsightScoreKey();
+        if (!user || !key) return null;
+
+        const state = store.snapshot();
+        const scores = {
+            decision: unifiedState?.decision?.score ?? state.scores?.blended ?? null,
+            cycle: unifiedState?.cycle?.score ?? state.cycle?.score ?? null,
+            onchain: unifiedState?.onchain?.score ?? state.scores?.onchain ?? null,
+            risk: unifiedState?.risk?.score ?? state.scores?.risk ?? null
+        };
+        const hasComponentScore = ['onchain', 'risk', 'decision'].some(name => Number.isFinite(scores[name]));
+        if (!hasComponentScore) return null;
+
+        const previous = readGlobalInsightScoreCache();
+        const unchanged = previous && Object.keys(scores).every(name => previous.scores?.[name] === scores[name]);
+        const timestamp = Number.isFinite(timestampOverride)
+            ? timestampOverride
+            : (unchanged
+                ? previous.timestamp
+                : (previous
+                    ? Date.now()
+                    : (Number.isFinite(state._hydration_timestamp) ? state._hydration_timestamp : Date.now())));
+
+        localStorage.setItem(key, JSON.stringify({
+            version: 1,
+            user,
+            source: window.globalConfig?.get('data_source') || 'unknown',
+            timestamp,
+            scores
+        }));
+
+        if (!Number.isFinite(state._hydration_timestamp)) {
+            store.set('_hydration_timestamp', timestamp, 'global-insight-score-cache');
+        }
+        return timestamp;
+    } catch (error) {
+        debugLogger.warn('Failed to persist Global Insight scores:', error);
+        return null;
+    }
+}
+
+function restoreGlobalInsightScores({ force = false } = {}) {
+    const cached = readGlobalInsightScoreCache();
+    const user = localStorage.getItem('activeUser');
+    const source = window.globalConfig?.get('data_source') || 'unknown';
+    const timestampKey = `risk_score_timestamp:${user}`;
+    const legacySource = localStorage.getItem(`risk_score_data_source:${user}`);
+    const legacyTimestamp = Number(localStorage.getItem(timestampKey));
+    const readLegacyScore = key => {
+        const value = localStorage.getItem(`${key}:${user}`);
+        return value === null ? null : Number(value);
+    };
+    const legacy = (!cached && legacySource === source && Number.isFinite(legacyTimestamp)) ? {
+        version: 1,
+        user,
+        source,
+        timestamp: legacyTimestamp,
+        scores: {
+            decision: readLegacyScore('risk_score_blended'),
+            cycle: null,
+            onchain: readLegacyScore('risk_score_onchain'),
+            risk: readLegacyScore('risk_score_risk')
+        }
+    } : null;
+    const snapshot = cached || legacy;
+    if (!snapshot) return false;
+
+    const state = store.snapshot();
+    const currentScores = {
+        decision: state.scores?.blended ?? null,
+        cycle: state.cycle?.score ?? null,
+        onchain: state.scores?.onchain ?? null,
+        risk: state.scores?.risk ?? null
+    };
+    const hasCurrent = ['decision', 'cycle', 'onchain', 'risk'].some(name => Number.isFinite(currentScores[name]));
+    const sameScores = Object.keys(snapshot.scores).every(name => (
+        snapshot.scores[name] == null || snapshot.scores[name] === currentScores[name]
+    ));
+    const currentTimestamp = Number(state._hydration_timestamp) || 0;
+    if (!force && hasCurrent && snapshot.timestamp < currentTimestamp && !sameScores) return false;
+
+    const updates = { '_hydration_timestamp': snapshot.timestamp };
+    if (Number.isFinite(snapshot.scores.decision)) updates['scores.blended'] = snapshot.scores.decision;
+    if (Number.isFinite(snapshot.scores.cycle)) updates['cycle.score'] = snapshot.scores.cycle;
+    if (Number.isFinite(snapshot.scores.onchain)) updates['scores.onchain'] = snapshot.scores.onchain;
+    if (Number.isFinite(snapshot.scores.risk)) updates['scores.risk'] = snapshot.scores.risk;
+    store.update(updates, 'global-insight-score-cache-hydrate');
+
+    if (legacy) persistGlobalInsightScores(null, legacy.timestamp);
+    debugLogger.debug('Global Insight scores restored from persistent cache:', {
+        user,
+        source,
+        ageHours: Math.round((Date.now() - snapshot.timestamp) / 360000) / 10
+    });
+    return true;
+}
 
 /**
  * Update Phase Engine chips visually (Dashboard V2)
@@ -153,6 +274,7 @@ async function refreshGI() {
         updatePhaseChips(unifiedState);
 
         // Update the meta badge with governance data
+        persistGlobalInsightScores(unifiedState);
         updateGlobalInsightMeta();
 
     } catch (error) {
@@ -199,6 +321,7 @@ async function refreshGI() {
         }
 
         // Update meta badge even in fallback
+        persistGlobalInsightScores();
         updateGlobalInsightMeta();
     }
 }
@@ -328,6 +451,15 @@ function updateGlobalInsightMeta() {
     try {
         const metaEl = document.getElementById('gi-meta');
         if (!metaEl) return;
+        if (isRefreshingGlobalInsight) {
+            metaEl.textContent = 'Updating scores from Risk Dashboard… This may take up to 2 minutes.';
+            return;
+        }
+        if (globalInsightRefreshStatus) {
+            metaEl.textContent = globalInsightRefreshStatus;
+            metaEl.style.color = globalInsightRefreshStatus.startsWith('Refresh failed') ? 'var(--warning)' : 'var(--success)';
+            return;
+        }
 
         // Get data from store
         const ml = store.get('governance.ml_signals');
@@ -450,6 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const { oldUser, newUser } = event.detail;
         console.debug(`User changed from ${oldUser} to ${newUser}, clearing store...`);
         store.clearAndRehydrate();
+        restoreGlobalInsightScores({ force: true });
+        setTimeout(waitForStoreReady, 0);
     });
 
     //  NEW: Refresh scores button click handler
@@ -457,52 +591,77 @@ document.addEventListener('DOMContentLoaded', () => {
     if (refreshScoresBtn) {
         refreshScoresBtn.addEventListener('click', async () => {
             console.debug("Manual scores refresh requested...");
+            const metaEl = document.getElementById('gi-meta');
+            const user = localStorage.getItem('activeUser');
+            const source = window.globalConfig?.get('data_source') || 'unknown';
+            const timestampKey = `risk_score_timestamp:${user}`;
+            const previousTimestamp = Number(localStorage.getItem(timestampKey)) || 0;
+            const refreshStartedAt = Date.now();
+            let iframe = null;
 
-            // Visual feedback: spinning animation
+            isRefreshingGlobalInsight = true;
+            globalInsightRefreshStatus = null;
             refreshScoresBtn.style.animation = 'spin 1s linear infinite';
             refreshScoresBtn.disabled = true;
+            if (metaEl) metaEl.textContent = 'Updating scores from Risk Dashboard… This may take up to 2 minutes.';
 
             try {
-                // Open risk-dashboard in background iframe to trigger calculation
-                const iframe = document.createElement('iframe');
+                iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
                 iframe.src = 'risk-dashboard.html?auto_calc=true';
-                document.body.appendChild(iframe);
-
-                // Wait for scores to be calculated (listen for storage event)
-                await new Promise((resolve, reject) => {
+                const freshScores = new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => {
-                        reject(new Error('Timeout waiting for scores'));
-                    }, 30000); // 30s timeout
+                        clearInterval(checkInterval);
+                        reject(new Error('Timed out waiting for recalculated scores'));
+                    }, 120000);
 
-                    // Listen for store persistence
-                    const storageListener = (e) => {
-                        if (e.key && e.key.startsWith('risk-dashboard-state:')) {
-                            clearTimeout(timeout);
-                            window.removeEventListener('storage', storageListener);
-                            resolve();
-                        }
-                    };
-                    window.addEventListener('storage', storageListener);
-
-                    // Also check periodically
                     const checkInterval = setInterval(() => {
-                        const state = store.getState?.() || {};
-                        if (state.scores?.onchain != null || state.scores?.risk != null) {
+                        const timestamp = Number(localStorage.getItem(timestampKey)) || 0;
+                        const updatedSource = localStorage.getItem(`risk_score_data_source:${user}`);
+                        let refreshResult = null;
+                        try { refreshResult = JSON.parse(localStorage.getItem(`risk_score_refresh_result:${user}`) || 'null'); } catch { }
+                        if (refreshResult?.startedAt >= refreshStartedAt && refreshResult.status === 'failed') {
                             clearTimeout(timeout);
                             clearInterval(checkInterval);
-                            window.removeEventListener('storage', storageListener);
-                            resolve();
+                            reject(new Error('Risk Dashboard could not refresh the scores'));
+                            return;
                         }
-                    }, 1000);
+                        if (refreshResult?.startedAt < refreshStartedAt || refreshResult?.status !== 'success') return;
+                        if (timestamp <= previousTimestamp || updatedSource !== source) return;
+
+                        const onchain = Number(localStorage.getItem(`risk_score_onchain:${user}`));
+                        const risk = Number(localStorage.getItem(`risk_score_risk:${user}`));
+                        const blended = Number(localStorage.getItem(`risk_score_blended:${user}`));
+                        const validScore = value => Number.isFinite(value) && value >= 0 && value <= 100;
+                        if (!validScore(onchain) || !validScore(risk)) return;
+
+                        clearTimeout(timeout);
+                        clearInterval(checkInterval);
+                        resolve({
+                            timestamp,
+                            onchain,
+                            risk,
+                            blended: validScore(blended) ? blended : null
+                        });
+                    }, 500);
                 });
+                document.body.appendChild(iframe);
+                const scores = await freshScores;
 
-                // Clean up iframe
-                document.body.removeChild(iframe);
-
-                // Reload store and refresh display
-                store.hydrate();
+                const currentState = store.snapshot();
+                const cycleScore = currentState.cycle?.score;
+                const blended = scores.blended ?? (Number.isFinite(cycleScore)
+                    ? Math.round(Math.max(0, Math.min(100, cycleScore * 0.5 + scores.onchain * 0.3 + scores.risk * 0.2)))
+                    : null);
+                store.update({
+                    'scores.onchain': scores.onchain,
+                    'scores.risk': scores.risk,
+                    'scores.blended': blended,
+                    '_hydration_timestamp': scores.timestamp
+                }, 'global-insight-manual-refresh');
+                persistGlobalInsightScores(null, scores.timestamp);
                 await refreshGI();
+                globalInsightRefreshStatus = null;
                 updateGlobalInsightMeta();
 
                 console.debug("[OK] Scores refreshed successfully");
@@ -513,21 +672,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error("Failed to refresh scores:", error);
-                if (window.debugLogger?.error) {
-                    window.debugLogger.error("[Error] Score recalculation failed. Open Risk Dashboard manually.");
-                }
-
-                // Fallback: open risk-dashboard in new tab
-                window.open('risk-dashboard.html', '_blank');
+                restoreGlobalInsightScores({ force: true });
+                await refreshGI();
+                globalInsightRefreshStatus = 'Refresh failed. Last saved scores remain available.';
+                updateGlobalInsightMeta();
+                if (window.debugLogger?.error) window.debugLogger.error("[Error] Score recalculation failed.");
             } finally {
-                // Reset button state
+                isRefreshingGlobalInsight = false;
+                if (iframe?.isConnected) iframe.remove();
                 refreshScoresBtn.style.animation = 'none';
                 refreshScoresBtn.disabled = false;
+                updateGlobalInsightMeta();
             }
         });
     }
 
     // Smart initial load - wait for data to be ready
+    restoreGlobalInsightScores();
     setTimeout(waitForStoreReady, 800); // Give time for analytics-unified to start loading
 });
 
@@ -780,6 +941,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Update the known source immediately
         window.lastKnownDataSource = event.detail.newSource;
+        restoreGlobalInsightScores({ force: true });
 
         // Force complete reload of dashboard data
         loadDashboardData();

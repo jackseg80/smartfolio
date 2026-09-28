@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Global Insight — 2026-09-28
+
+- Conservation locale des derniers scores par utilisateur et source, avec leur véritable date de calcul, pour les restaurer après une reconnexion ou une longue absence.
+- Le bouton Refresh déclenche maintenant un recalcul forcé dans le Risk Dashboard, signale le chargement et attend l'écriture des nouveaux scores avant de conclure. En cas d'échec, les scores précédents restent disponibles.
+- Détails et consignes de validation : [Dashboard](docs/DASHBOARD.md).
+
 ### FX Rates — 2026-09-27
 
 - Remplacement du sélecteur Currency trompeur par les taux indicatifs USD/EUR et USD/CHF, avec l'heure de mise à jour du fournisseur. Les valeurs de secours ne sont pas affichées comme des cours actuels.

@@ -9,7 +9,7 @@
     <link rel="modulepreload" href="components/tooltips.js">
     <link rel="modulepreload" href="components/view-toggle.js">
     <link rel="modulepreload" href="components/data-freshness.js">
-    <link rel="modulepreload" href="modules/dashboard-main-controller.js?v=20260927-pdf-quality-3">
+    <link rel="modulepreload" href="modules/dashboard-main-controller.js?v=20260928-global-insight-refresh-1">
     <link rel="modulepreload" href="core/auth-guard.js">
     <link rel="modulepreload" href="core/view-mode-manager.js">
     <link rel="modulepreload" href="shared-asset-groups.js">
@@ -56,7 +56,7 @@
     <script src="performance-optimizer.js"></script>
     <script src="global-config.js"></script>
     <script src="appearance.js"></script>
-    <script type="module" src="modules/dashboard-main-controller.js?v=20260927-pdf-quality-3"></script>
+    <script type="module" src="modules/dashboard-main-controller.js?v=20260928-global-insight-refresh-1"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
     <style>
@@ -761,7 +761,7 @@
                     <a href="analytics-unified.html" class="card-title" style="text-decoration: none; color: inherit;">
                         <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Insight" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg></span> Global Insight
                     </a>
-                    <button class="icon-btn" id="refresh-scores-btn" title="Refresh scores (recalculate from Risk Dashboard)" aria-label="Refresh scores" style="font-size: 0.9rem;">
+                    <button class="icon-btn" id="refresh-scores-btn" title="Recalculate scores from Risk Dashboard" aria-label="Refresh scores" style="font-size: 0.9rem;">
                         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M13.65 2.35C12.2 0.9 10.21 0 8 0 3.58 0 0.01 3.58 0.01 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L9 7h7V0l-2.35 2.35z" fill="currentColor"/>
                         </svg>
@@ -796,7 +796,7 @@
                 <div id="gi-reco"
                     style="margin-top: 12px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; font-size: 0.9em;">
                 </div>
-                <div id="gi-meta"
+                <div id="gi-meta" aria-live="polite"
                     style="text-align: center; font-size: 11px; color: var(--theme-text-muted); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--theme-border);">
                 </div>
             </div>

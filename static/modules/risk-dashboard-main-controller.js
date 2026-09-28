@@ -155,6 +155,22 @@ window.toggleBreakdown = function (panelId) {
 
 // Import core modules
 import { store } from '../core/risk-dashboard-store.js';
+
+let dashboardAutoCalcStartedAt = null;
+
+function updateDashboardAutoCalcStatus(status) {
+  if (!dashboardAutoCalcStartedAt) return;
+  try {
+    const user = localStorage.getItem('activeUser');
+    const source = globalConfig.get('data_source') || 'unknown';
+    localStorage.setItem(`risk_score_refresh_result:${user}`, JSON.stringify({
+      status,
+      source,
+      startedAt: dashboardAutoCalcStartedAt,
+      updatedAt: Date.now()
+    }));
+  } catch (_) { }
+}
 import { fetchCached, clearCache } from '../core/fetcher.js';
 
 // Import CCS modules
@@ -1621,6 +1637,7 @@ async function refreshDashboard(forceRefresh = false) {
 
       //  Load scores from orchestrator (SSOT)
       await loadScoresFromStore();
+      updateDashboardAutoCalcStatus('success');
 
       // Force sidebar update after all scores are calculated
       const finalState = store.snapshot();
@@ -1639,6 +1656,7 @@ async function refreshDashboard(forceRefresh = false) {
       debugLogger.debug('Risk dashboard refreshed successfully');
 
     } else {
+      updateDashboardAutoCalcStatus('failed');
       // Handle API error with informative message, but still compute partial scores (on-chain + defaults)
       store.set('ui.apiStatus.backend', 'error');
       const errorType = riskData?.error_type || 'unknown';
@@ -1663,6 +1681,7 @@ async function refreshDashboard(forceRefresh = false) {
     }
 
   } catch (err) {
+    updateDashboardAutoCalcStatus('failed');
     debugLogger.error('Dashboard error:', err);
     store.set('ui.apiStatus.backend', 'error');
     renderBackendUnavailable('Error connecting to risk backend');
@@ -3473,10 +3492,13 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Initialize section collapse states
   initializeSectionStates();
 
-  // Load initial data
-  // Init analysis window UI then first refresh
-  // controls removed
-  refreshDashboard();
+  // A dashboard-triggered refresh must bypass cached data and calculate fresh scores.
+  const forceInitialRefresh = new URLSearchParams(window.location.search).get('auto_calc') === 'true';
+  if (forceInitialRefresh) {
+    dashboardAutoCalcStartedAt = Date.now();
+    updateDashboardAutoCalcStatus('running');
+  }
+  refreshDashboard(forceInitialRefresh);
 
   // Initialize store state synchronization
   setTimeout(async () => {
