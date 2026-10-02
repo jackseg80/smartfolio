@@ -61,7 +61,7 @@ def test_recommendations_dom_contracts():
     if not node:
         pytest.skip('Node required for browser regression tests')
     root = Path(__file__).resolve().parents[2]
-    result = subprocess.run([node, 'tests/unit/bourse_page_contracts.cjs'], cwd=root,
+    result = subprocess.run([node, '--experimental-vm-modules', 'tests/unit/bourse_page_contracts.cjs'], cwd=root,
                             capture_output=True, text=True, timeout=30)
     if "Cannot find module 'jsdom'" in result.stderr:
         pytest.skip('Install npm dev dependencies to execute DOM contracts')

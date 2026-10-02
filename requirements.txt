@@ -46,6 +46,7 @@ aiofiles>=23.0.0  # Async file I/O for price history cache
 
 # Testing & Browser Automation
 selenium>=4.35.0  # E2E browser testing
+playwright==1.63.0  # External browser diagnostics
 
 # Monitoring & Logging (Development)
 # Note: These are optional for basic usage
