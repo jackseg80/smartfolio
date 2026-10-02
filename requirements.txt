@@ -56,4 +56,4 @@ psutil>=5.9.0  # System resource monitoring (CPU, RAM usage)
 pyarrow
 
 # Verified exchange sessions for calendar-day stock volatility targets
-exchange-calendars>=4.5,<5
+exchange-calendars==4.13.2

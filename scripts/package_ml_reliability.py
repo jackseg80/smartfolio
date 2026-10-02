@@ -76,7 +76,7 @@ def main():
         original = git("show", BASE+":"+name)
         if content.replace(b"\r\n",b"\n") == original.replace(b"\r\n",b"\n"):
             continue
-        if not name.startswith(("api/", "services/", "static/", "tests/", "docs/")) and name not in (".gitignore", ".gitattributes", "requirements.txt"):
+        if not name.startswith(("api/", "services/", "static/", "tests/", "docs/")) and name not in (".gitignore", ".gitattributes", ".dockerignore", "Dockerfile", "requirements.txt"):
             raise ValueError("Unexpected modified path: "+name)
         paths["code/"+name] = ROOT/name
     for name in NEW_FILES:
