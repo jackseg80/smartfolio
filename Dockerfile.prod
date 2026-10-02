@@ -15,7 +15,9 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     DEBIAN_FRONTEND=noninteractive \
     PORT=${PORT} \
-    WORKERS=${WORKERS}
+    WORKERS=${WORKERS} \
+    ML_AUTO_TRAIN=0 \
+    ML_DATA_REFRESH=1
 
 # Install system dependencies for Playwright + curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -55,7 +57,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright and browsers (only Chromium to save ~200MB vs all browsers)
 # This layer is expensive (~300MB), cached unless requirements change
-RUN pip install playwright && playwright install chromium --with-deps
+RUN playwright install chromium --with-deps
 
 # Copy application code (frequently changes, so last layer)
 COPY . .
