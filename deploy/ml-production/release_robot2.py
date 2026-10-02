@@ -93,9 +93,9 @@ FROM ${BASE_IMAGE}
 USER root
 WORKDIR /app
 COPY code/ /app/
-RUN pip install --no-cache-dir "exchange-calendars==4.13.2" "PyJWT==2.15.0" && pip check
+RUN pip install --no-cache-dir "exchange-calendars==4.13.2" "PyJWT==2.15.0" "playwright==1.63.0" && pip check
 COPY public/models/validated_risk/ /app/models/validated_risk/
-ENV PYTHONDONTWRITEBYTECODE=1 ML_AUTO_TRAIN=0
+ENV PYTHONDONTWRITEBYTECODE=1 ML_AUTO_TRAIN=0 ML_DATA_REFRESH=1
 LABEL smartfolio.release="ml-reliability-20261002"
 ''')
     subprocess.run(['docker', 'tag', OLD, BASE_TAG], check=True)
@@ -145,7 +145,7 @@ def config_from(old):
     keys = ('User', 'Env', 'Cmd', 'Healthcheck', 'WorkingDir', 'Entrypoint', 'StopSignal', 'StopTimeout', 'Shell', 'Labels', 'Tty', 'OpenStdin', 'StdinOnce', 'ExposedPorts', 'Volumes')
     config = {k: v for k, v in old['Config'].items() if k in keys}
     config['Image'] = IMAGE
-    config['Env'] = [x for x in config['Env'] if not x.startswith(('ML_AUTO_TRAIN=', 'ML_PORTFOLIO_SNAPSHOT='))] + ['ML_AUTO_TRAIN=0']
+    config['Env'] = [x for x in config['Env'] if not x.startswith(('ML_AUTO_TRAIN=', 'ML_PORTFOLIO_SNAPSHOT=', 'ML_DATA_REFRESH='))] + ['ML_AUTO_TRAIN=0', 'ML_DATA_REFRESH=1']
     config['Labels'] = {**(config.get('Labels') or {}), **inspect(IMAGE)['Config']['Labels']}
     config['HostConfig'] = json.loads(json.dumps(old['HostConfig']))
     config['NetworkingConfig'] = {'EndpointsConfig': {n: {'Aliases': [NAME]} for n in old['NetworkSettings']['Networks']}}
@@ -257,8 +257,8 @@ def switch(args):
         assert {(m['Source'], m['Destination'], m['RW']) for m in current['Mounts']} == {(m['Source'], m['Destination'], m['RW']) for m in old['Mounts']}
         a = dict(x.split('=', 1) for x in old['Config']['Env'] if '=' in x)
         b = dict(x.split('=', 1) for x in current['Config']['Env'] if '=' in x)
-        assert {k: v for k, v in a.items() if k not in ('ML_AUTO_TRAIN', 'ML_PORTFOLIO_SNAPSHOT')} == {k: v for k, v in b.items() if k not in ('ML_AUTO_TRAIN', 'ML_PORTFOLIO_SNAPSHOT')}
-        assert b['ML_AUTO_TRAIN'] == '0' and b.get('RUN_SCHEDULER') == a.get('RUN_SCHEDULER')
+        assert {k: v for k, v in a.items() if k not in ('ML_AUTO_TRAIN', 'ML_PORTFOLIO_SNAPSHOT', 'ML_DATA_REFRESH')} == {k: v for k, v in b.items() if k not in ('ML_AUTO_TRAIN', 'ML_PORTFOLIO_SNAPSHOT', 'ML_DATA_REFRESH')}
+        assert b['ML_DATA_REFRESH'] == '1' and b['ML_AUTO_TRAIN'] == '0' and b.get('RUN_SCHEDULER') == a.get('RUN_SCHEDULER')
         emit({'status': 'production_ready', 'image': current['Image'], 'commit': args.commit, 'started': current['State']['StartedAt'], 'rollback_container': BACKUP, 'private_backup_local_only': True, 'mounts_preserved': True, 'scheduler_preserved': True, 'auto_training_disabled': True}, 'deployment-result.json')
     except Exception:
         if renamed:
