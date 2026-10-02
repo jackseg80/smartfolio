@@ -77,3 +77,36 @@ async def test_current_endpoint_exposes_missing_model_metadata(monkeypatch):
     assert data['confidence'] is None
     assert data['hmm_availability'] == 'Unavailable'
     assert data['hmm_unavailability_reason'] == 'No compatible ETH artifact'
+
+
+@pytest.mark.asyncio
+async def test_history_cache_invalidates_when_same_day_close_is_revised(monkeypatch):
+    import api.ml_crypto_endpoints as module
+    index = pd.date_range('2026-10-01', periods=2)
+    history = [(int(d.timestamp()), 100.0) for d in index]
+    prepare = AsyncMock()
+    class Detector:
+        async def prepare_regime_features(self, **kwargs):
+            await prepare()
+            return pd.DataFrame({'drawdown_from_peak': [-0.5, -0.4],
+                'days_since_peak': 30, 'trend_30d': [0.08, 0.154 if history[-1][1] > 100 else 0.14],
+                'market_volatility': 0.3}, index=index)
+        def load_model(self, name):
+            return False
+    monkeypatch.setattr(module, 'BTCRegimeDetector', Detector)
+    monkeypatch.setattr(module.price_history, 'get_cached_history', lambda *args, **kwargs: history)
+    monkeypatch.setattr(module, '_regime_history_cache', {})
+    async def get():
+        response = await module.get_crypto_regime_history(symbol='ETH', lookback_days=365)
+        assert response.status_code == 200
+        return json.loads(response.body)['data']
+    first = await get()
+    assert first['regimes'][-1] == 'Bull Market'
+    assert await get() == first
+    assert prepare.await_count == 1
+    history[-1] = (history[-1][0], 101.0)  # Same date, changed close.
+    revised = await get()
+    assert revised['dates'] == first['dates']
+    assert revised['regimes'][-1] == 'Expansion'
+    assert revised['source_history_revision'] != first['source_history_revision']
+    assert prepare.await_count == 2

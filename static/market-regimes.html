@@ -190,7 +190,7 @@
                         </td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-confidence">--</td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-btc-method">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
+                        <td id="comparison-btc-trigger" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Loading...</td>
                       </tr>
                       <tr>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">⟠ Ethereum</td>
@@ -199,7 +199,7 @@
                         </td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-confidence">--</td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-eth-method">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD ≤ -30%, 20d</td>
+                        <td id="comparison-eth-trigger" style="padding: 0.75rem; border: 1px solid var(--theme-border);">Loading...</td>
                       </tr>
                     </tbody>
                   </table>
@@ -608,6 +608,7 @@
         if (btcData) {
           const btc = btcData.data || btcData;
           if (btc.current_regime) {
+            document.getElementById('comparison-btc-trigger').textContent = btc.rule_diagnostic?.reason || btc.rule_reason || 'No economic rule matched';
             const btcEl = document.getElementById('comparison-btc-regime');
             btcEl.textContent = btc.current_regime;
             btcEl.className = 'regime-chip ' + getRegimeClass(btc.current_regime);
@@ -619,6 +620,7 @@
         if (ethData) {
           const eth = ethData.data || ethData;
           if (eth.current_regime) {
+            document.getElementById('comparison-eth-trigger').textContent = eth.rule_diagnostic?.reason || eth.rule_reason || 'No economic rule matched';
             const ethEl = document.getElementById('comparison-eth-regime');
             ethEl.textContent = eth.current_regime;
             ethEl.className = 'regime-chip ' + getRegimeClass(eth.current_regime);

@@ -30,3 +30,17 @@ test('API reason is visible, stale chart is destroyed, and a successful retry cl
     expect(document.getElementById('eth-regime-error-message').style.display).toBe('none');
     expect(document.getElementById('eth-regime-chart-container').classList.contains('loading')).toBe(false);
 });
+
+test('a one-day Expansion has a nonzero zone and a visible latest-observation marker',async()=>{
+    const revised = {...history, regimes:['Bear Market','Bull Market','Expansion']};
+    fetch.mockResolvedValue({ok:true,status:200,json:async()=>({ok:true,data:revised})});
+    await initializeETHRegimeChart();
+    const [,config] = Chart.mock.calls.at(-1);
+    const box = config.options.plugins.annotation.annotations.regime_2_2;
+    expect(box.xMax-box.xMin).toBe(24*60*60*1000);
+    expect(box.backgroundColor).toBe('rgba(59, 130, 246, 0.2)');
+    expect(config.data.datasets[0].pointRadius({dataIndex:2})).toBe(4);
+    expect(config.data.datasets[0].pointBackgroundColor({dataIndex:2})).toBe('#3b82f6');
+    expect(config.data.datasets[0].pointRadius({dataIndex:1})).toBe(0);
+    expect(document.getElementById('eth-regime-history-note').textContent).toContain('Latest observation: 2026-10-01 — Expansion');
+});

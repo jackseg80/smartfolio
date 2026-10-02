@@ -94,7 +94,8 @@ async function loadETHRegimeData(lookbackDays) {
         }
         if (note) {
             note.textContent = [historyResult.data.note, historyResult.data.history_limitation,
-                `${historyResult.data.dates?.length || 0} observed days; ${historyResult.data.unknown_days || 0} Unknown days.`].filter(Boolean).join(' ');
+                `${historyResult.data.dates?.length || 0} observed days; ${historyResult.data.unknown_days || 0} Unknown days.`,
+                historyResult.data.dates?.length ? `Latest observation: ${historyResult.data.dates.at(-1)} — ${historyResult.data.regimes?.at(-1) || 'Unknown'}.` : ''].filter(Boolean).join(' ');
         }
 
         // Create timeline chart
@@ -151,7 +152,8 @@ function createTimelineChart(historyData) {
                     borderWidth: 3,
                     fill: false,
                     tension: 0.1,
-                    pointRadius: 0,
+                    pointRadius: context => context.dataIndex === dates.length - 1 ? 4 : 0,
+                    pointBackgroundColor: context => ETH_REGIME_CONFIG.regimeColors[regimes[context.dataIndex]]?.border || '#627eea',
                     pointHoverRadius: 5,
                     order: 1  // Draw on top of annotations
                 }
@@ -247,8 +249,10 @@ function createRegimeBoxAnnotations(dates, regimes) {
                 // Create box annotation for this regime period
                 annotations[`regime_${startIndex}_${endIndex}`] = {
                     type: 'box',
-                    xMin: dates[startIndex],
-                    xMax: dates[endIndex],
+                    // Daily observations occupy half a day on either side of their timestamp.
+                    // Equal endpoints would make a one-day regime invisible.
+                    xMin: Date.parse(dates[startIndex]) - 12 * 60 * 60 * 1000,
+                    xMax: Date.parse(dates[endIndex]) + 12 * 60 * 60 * 1000,
                     yScaleID: 'y',
                     backgroundColor: regimeConfig.bg,
                     borderColor: 'transparent',

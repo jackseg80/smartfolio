@@ -49,7 +49,7 @@ class BTCRegimeDetector:
             0: 'Sustained bear market with significant drawdown (>30%)',
             1: 'Market pullback or high volatility period (10-30% drawdown)',
             2: 'Stable uptrend with low drawdown and moderate volatility',
-            3: 'Strong post-crash recovery at +30%/month or higher'
+            3: 'Recovery of at least +15% over 30 days after a deep drawdown'
         }
 
         # HMM model (trained on features)
