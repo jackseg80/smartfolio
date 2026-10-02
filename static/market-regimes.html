@@ -391,7 +391,7 @@
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip expansion" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery +30%/mo</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery +15%/30d after deep drawdown</small>
                 </div>
               </div>
 
@@ -464,6 +464,7 @@
                   <canvas id="eth-regime-timeline-chart" style="position: absolute; top: 0; left: 0; height: 100%; width: 100%;" role="img" aria-label="Ethereum regime detection timeline chart"></canvas>
                 </div>
                 <div id="eth-regime-error-message" class="error-state" style="display: none;"></div>
+                <p id="eth-regime-history-note" aria-live="polite" style="color: var(--theme-text-secondary); font-size: 0.875rem;"></p>
               </div>
 
               <!-- Info Note -->
@@ -471,7 +472,7 @@
                 <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Ethereum Detection:</strong>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
                   <li><strong>Separate methods:</strong> Economic rules and latent HMM states are reported independently</li>
-                  <li><strong>Crypto-Adjusted Thresholds:</strong> Bear &le; -30% (20d+), Bull &gt; -20% (vol &lt;60%), Expansion +30%/mo</li>
+                  <li><strong>Crypto-Adjusted Thresholds:</strong> Bear &le; -30% (20d+), Bull &gt; -20% (vol &lt;60%), Expansion +15%/30d after deep drawdown</li>
                   <li><strong>Timeline Chart:</strong> Interactive regime visualization with price history</li>
                 </ul>
               </div>
@@ -531,7 +532,7 @@
             document.getElementById('eth-current-regime-confidence').textContent = data.confidence == null ? 'Unavailable — rule diagnostic' : confidencePercent + '% · state posterior';
 
             const methodBadge = document.getElementById('eth-current-regime-method');
-            methodBadge.textContent = detectionMethod === 'rule_based' ? 'Rule-Based' : 'HMM';
+            methodBadge.textContent = detectionMethod === 'rule_based' ? 'Rule-Based diagnostic' : detectionMethod === 'hmm' ? 'HMM state' : 'Unavailable';
             methodBadge.className = 'detection-method ' + detectionMethod;
 
             const reasonCard = document.getElementById('eth-regime-reason-card');
@@ -550,9 +551,15 @@
           }
         } else {
           const errorText = await response.text();
-          debugLogger.error('ETH regime API error:', response.status, errorText);
-          document.getElementById('eth-current-regime-name').textContent = 'API Error';
+          let reason = errorText || `ETH regime API returned HTTP ${response.status}`;
+          try { const body = JSON.parse(errorText); reason = body.error || body.detail || body.message || reason; } catch { /* Keep the actual text response. */ }
+          if (typeof reason !== 'string') reason = JSON.stringify(reason);
+          debugLogger.error(`ETH regime API error (${response.status}): ${reason}`);
+          document.getElementById('eth-current-regime-name').textContent = 'Unavailable';
           document.getElementById('eth-current-regime-confidence').textContent = '--';
+          document.getElementById('eth-current-regime-method').textContent = 'Unavailable';
+          document.getElementById('eth-current-regime-reason').textContent = reason;
+          document.getElementById('eth-regime-reason-card').style.display = 'block';
         }
       } catch (error) {
         debugLogger.error('Failed to load ETH regime:', error);
@@ -605,7 +612,7 @@
             btcEl.textContent = btc.current_regime;
             btcEl.className = 'regime-chip ' + getRegimeClass(btc.current_regime);
             document.getElementById('comparison-btc-confidence').textContent = (btc.confidence == null ? 'Unavailable' : (btc.confidence == null ? 'Unavailable' : (btc.confidence * 100).toFixed(1)) + '% · state posterior');
-            document.getElementById('comparison-btc-method').textContent = btc.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
+            document.getElementById('comparison-btc-method').textContent = btc.detection_method === 'rule_based' ? 'Rule-Based diagnostic' : btc.detection_method === 'hmm' ? 'HMM state' : 'Unavailable';
           }
         }
 
@@ -616,7 +623,7 @@
             ethEl.textContent = eth.current_regime;
             ethEl.className = 'regime-chip ' + getRegimeClass(eth.current_regime);
             document.getElementById('comparison-eth-confidence').textContent = (eth.confidence == null ? 'Unavailable' : (eth.confidence == null ? 'Unavailable' : (eth.confidence * 100).toFixed(1)) + '% · state posterior');
-            document.getElementById('comparison-eth-method').textContent = eth.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
+            document.getElementById('comparison-eth-method').textContent = eth.detection_method === 'rule_based' ? 'Rule-Based diagnostic' : eth.detection_method === 'hmm' ? 'HMM state' : 'Unavailable';
           }
         }
 

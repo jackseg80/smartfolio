@@ -108,7 +108,7 @@ async def get_crypto_regime(
             'data_as_of': result.get('data_as_of')
         }
 
-        response_data.update({key: result.get(key) for key in ("nature", "availability", "probability_kind", "hmm_state", "hmm_state_features", "economic_mapping_verified", "rule_diagnostic")})
+        response_data.update({key: result.get(key) for key in ("nature", "availability", "probability_kind", "hmm_state", "hmm_state_features", "economic_mapping_verified", "rule_diagnostic", "hmm_availability", "hmm_unavailability_reason")})
 
         return success_response(response_data)
 
@@ -168,11 +168,12 @@ async def get_crypto_regime_history(
 
         # Load symbol-specific HMM model for fallback
         model_file = f"{symbol.lower()}_regime_hmm.pkl"
-        if not detector.load_model(model_file):
-            return error_response("HMM history unavailable: explicit administrator training is required", code=503)
-
-        features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
-        hmm_labels = detector.hmm_model.predict(features_scaled)
+        hmm_available = detector.load_model(model_file)
+        if hmm_available:
+            features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
+            hmm_labels = detector.hmm_model.predict(features_scaled)
+        else:
+            hmm_labels = None
 
         # Pre-calculate rolling minimum drawdown for Expansion detection (performance optimization)
         features_df['lookback_180d_min_dd'] = features_df['drawdown_from_peak'].rolling(
@@ -203,15 +204,20 @@ async def get_crypto_regime_history(
             if rule_result:
                 regime_names.append(rule_result['regime_name'])
                 regime_ids.append(rule_result['regime_id'])
-            else:
-                # Fallback to HMM
+            elif hmm_available:
+                # Fallback to an actual HMM state, never an economic label.
                 hmm_label = int(hmm_labels[i])
                 regime_names.append(f"State {chr(65+hmm_label)}")
                 regime_ids.append(4 + hmm_label)
+            else:
+                regime_names.append('Unknown')
+                regime_ids.append(8)
 
         # Smooth regime sequence to remove short-lived transitions (<7 days)
-        regime_ids = smooth_regime_sequence(regime_ids, min_duration=7)
-        label_mapping = {**dict(enumerate(REGIME_NAMES)), **{4+i: f"State {chr(65+i)}" for i in range(detector.num_regimes)}}
+        # Without a model, preserve every unknown interval instead of smoothing it away.
+        if hmm_available:
+            regime_ids = smooth_regime_sequence(regime_ids, min_duration=7)
+        label_mapping = {**dict(enumerate(REGIME_NAMES)), **({4+i: f"State {chr(65+i)}" for i in range(detector.num_regimes)} if hmm_available else {8: 'Unknown'})}
         regime_names = [label_mapping[rid] for rid in regime_ids]
 
         # Format response
@@ -225,8 +231,12 @@ async def get_crypto_regime_history(
             'regime_id_mapping': label_mapping,
             'economic_mapping_verified': False,
             'id_encoding': 'Rule diagnostics 0-3; unmapped HMM states 4-7',
-            'events': get_btc_events(features_df.index.min(), features_df.index.max()),
-            'note': 'Hybrid detection (rule-based + HMM fallback) with 7-day minimum duration smoothing.'
+            'events': get_btc_events(features_df.index.min(), features_df.index.max()) if symbol == 'BTC' else [],
+            'hmm_available': hmm_available,
+            'unknown_days': regime_names.count('Unknown'),
+            'rule_classified_days': sum(rid < 4 for rid in regime_ids),
+            'note': ('Hybrid diagnostics with 7-day retrospective smoothing.' if hmm_available else
+                     'Partial rule-based history; unmatched periods remain Unknown. No compatible HMM artifact and no state probabilities.'),
         }
 
         # Store in cache
@@ -234,7 +244,8 @@ async def get_crypto_regime_history(
         logger.debug(f"[Cache STORE] Cached regime history for {cache_key}")
 
         response_data["retrospective"] = True
-        response_data["history_limitation"] = "Full-sequence HMM and smoothing use later observations; not real-time decision evidence"
+        response_data["history_limitation"] = ("Full-sequence HMM and smoothing use later observations; not real-time decision evidence" if hmm_available else
+                                              "Rules reconstructed on the requested historical window; unknown intervals retained. Not point-in-time decision evidence.")
         return success_response(response_data)
 
     except Exception as e:
