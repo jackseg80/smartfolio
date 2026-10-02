@@ -13,6 +13,8 @@ import pandas as pd
 from datetime import datetime
 import logging
 import time
+import hashlib
+import json
 
 from api.utils import success_response, error_response
 from services.ml.models.btc_regime_detector import BTCRegimeDetector
@@ -139,21 +141,20 @@ async def get_crypto_regime_history(
     try:
         logger.info(f"GET /api/ml/crypto/regime-history - symbol={symbol}, lookback_days={lookback_days}")
 
-        # Check cache first
+        # A refresh may revise today's close without changing the final date.
+        history = price_history.get_cached_history(symbol, days=lookback_days)
+        if history is None or len(history) == 0:
+            return error_response(f"No historical data available for {symbol}", code=404)
+        history_revision = hashlib.sha256(json.dumps(history, separators=(',', ':')).encode()).hexdigest()
         cache_key = f"{symbol}_{lookback_days}"
         if cache_key in _regime_history_cache:
             cached_data, cache_time = _regime_history_cache[cache_key]
-            if time.time() - cache_time < _CACHE_TTL:
+            if time.time() - cache_time < _CACHE_TTL and cached_data.get('source_history_revision') == history_revision:
                 logger.debug(f"[Cache HIT] Returning cached regime history for {cache_key}")
                 return success_response(cached_data)
             else:
                 logger.debug(f"[Cache EXPIRED] Removing stale cache for {cache_key}")
                 del _regime_history_cache[cache_key]
-
-        # Get data
-        history = price_history.get_cached_history(symbol, days=lookback_days)
-        if history is None or len(history) == 0:
-            return error_response(f"No historical data available for {symbol}", code=404)
 
         data = pd.DataFrame(history, columns=['timestamp', 'close'])
         data['timestamp'] = pd.to_datetime(data['timestamp'], unit='s')
@@ -228,6 +229,7 @@ async def get_crypto_regime_history(
             'regime_ids': regime_ids,
             'symbol': symbol,
             'lookback_days': lookback_days,
+            'source_history_revision': history_revision,
             'regime_id_mapping': label_mapping,
             'economic_mapping_verified': False,
             'id_encoding': 'Rule diagnostics 0-3; unmapped HMM states 4-7',
