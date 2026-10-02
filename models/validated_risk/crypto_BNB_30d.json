@@ -1,0 +1,64 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "BNB",
+  "market": "crypto",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-crypto-BNB-d63248ee19e01f85",
+  "dataset_sha256": "d63248ee19e01f853b008c198ad6fa901530835b8bb1575d36dd07f261bc0988",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 365,
+  "schema_version": 1,
+  "training_start": "2018-02-04T00:00:00+00:00",
+  "training_end": "2025-02-28T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.5600320758634065,
+        "ewma": 0.4610912252252784,
+        "ridge": 0.4582148749576425,
+        "lstm": 0.5631399487265362
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": 0.006238137076303163,
+      "learned_wins": 6,
+      "windows": 10,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.8197517782978112,
+          "mae": 0.22624404922976063,
+          "rows": 335
+        },
+        "ewma": {
+          "qlike": 0.6241632306770537,
+          "mae": 0.2167667595231917,
+          "rows": 335
+        },
+        "ridge": {
+          "qlike": 0.406098439342578,
+          "mae": 0.2306037037829564,
+          "rows": 335
+        },
+        "lstm": {
+          "qlike": 0.3551398387581282,
+          "mae": 0.2049919167068531,
+          "rows": 335
+        }
+      },
+      "learned_confirmation_improvement": 0.34937141538749805,
+      "interval_coverage": 0.37910447761194027
+    }
+  },
+  "interval": null
+}

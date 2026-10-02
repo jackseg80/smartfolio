@@ -1,0 +1,86 @@
+{
+  "method": "ridge",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "mean": [
+    0.46522309260725175,
+    0.5295025669210511,
+    0.5496980000746006,
+    0.5429026002894762,
+    0.02523608655040261
+  ],
+  "scale": [
+    0.26182986423238697,
+    0.1989168473835662,
+    0.16044415853023755,
+    0.19266210380857748,
+    0.026067578661940847
+  ],
+  "coef": [
+    -0.000787276231781341,
+    0.001913483433957385,
+    0.043040296502330835,
+    0.049390429182033256,
+    0.014440011140997584
+  ],
+  "intercept": 0.5176298608760306,
+  "asset": "AMD",
+  "market": "stocks",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-AMD-7ad7093c8bcb8c73",
+  "dataset_sha256": "7ad7093c8bcb8c736df9d5effd2ead011b3710ab45bbb2eb729d8bf5ae46615d",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2006-05-12T00:00:00+00:00",
+  "training_end": "2025-02-26T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ridge. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.4441775882091313,
+        "ewma": 0.3660398563404785,
+        "ridge": 0.3039393584321495,
+        "lstm": 0.3470305367386773
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": 0.16965501661263116,
+      "learned_wins": 27,
+      "windows": 33,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.4232668050399327,
+          "mae": 0.19937853468570857,
+          "rows": 230
+        },
+        "ewma": {
+          "qlike": 0.33016117628020136,
+          "mae": 0.19180764263571065,
+          "rows": 230
+        },
+        "ridge": {
+          "qlike": 0.22150899051086198,
+          "mae": 0.15185922034832094,
+          "rows": 230
+        },
+        "lstm": {
+          "qlike": 0.243666724043548,
+          "mae": 0.1506134524345189,
+          "rows": 230
+        }
+      },
+      "learned_confirmation_improvement": 0.3290883167835833,
+      "interval_coverage": 0.8434782608695652
+    }
+  },
+  "interval": null
+}

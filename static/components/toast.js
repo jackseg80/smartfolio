@@ -53,7 +53,8 @@ export class Toast {
         flex-direction: column;
         gap: var(--space-3, 0.75rem);
         pointer-events: none;
-        max-width: 450px;
+        max-width: min(450px, calc(100vw - 2rem));
+        box-sizing: border-box;
       }
 
       /* Individual Toast */
@@ -70,7 +71,7 @@ export class Toast {
         max-width: 450px;
         pointer-events: auto;
         opacity: 0;
-        transform: translateX(calc(100% + var(--space-6, 1.5rem)));
+        transform: translateY(0.5rem);
         transition: opacity var(--transition-normal),
                     transform var(--transition-normal);
       }
@@ -82,7 +83,7 @@ export class Toast {
 
       .toast.removing {
         opacity: 0;
-        transform: translateX(calc(100% + var(--space-6, 1.5rem)));
+        transform: translateY(0.5rem);
       }
 
       /* Toast Icon */
@@ -181,10 +182,13 @@ export class Toast {
           right: var(--space-4, 1rem);
           bottom: var(--space-4, 1rem);
           max-width: none;
+          width: auto;
         }
         .toast {
           min-width: 0;
-          max-width: none;
+          max-width: 100%;
+          box-sizing: border-box;
+          overflow-wrap: anywhere;
         }
       }
     `;

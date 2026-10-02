@@ -125,10 +125,10 @@ function updateCurrentRegimeSummary(data) {
 
     const confidenceEl = document.getElementById('stock-regime-confidence');
     if (confidenceEl) {
-        const confidence = (data.confidence * 100).toFixed(1);
-        confidenceEl.textContent = `${confidence}%`;
+        const confidence = data.confidence == null ? null : (data.confidence * 100).toFixed(1);
+        confidenceEl.textContent = confidence == null ? 'Unavailable - rule diagnostic' : `${confidence}% - state posterior`;
         const conf = data.confidence;
-        confidenceEl.style.color = conf >= 0.8 ? 'var(--success)' : conf >= 0.6 ? 'var(--warning)' : 'var(--danger)';
+        confidenceEl.style.color = conf == null ? 'var(--theme-text-muted)' : conf >= 0.8 ? 'var(--success)' : conf >= 0.6 ? 'var(--warning)' : 'var(--danger)';
     }
 
     // Update probabilities chart if available

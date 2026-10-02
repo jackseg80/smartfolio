@@ -97,8 +97,7 @@ async def load_volatility_models(
             background_tasks.add_task(_load_all_volatility_background)
             return {
                 "success": True,
-                "message": "Loading all volatility models in background",
-                "estimated_duration_minutes": 2
+                "message": "Loading all volatility models in background"
             }
         else:
             results = pipeline_manager.load_all_volatility_models()

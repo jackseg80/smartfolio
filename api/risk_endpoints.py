@@ -30,6 +30,11 @@ COMPUTE_ON_STUB_SOURCES = (os.getenv("COMPUTE_ON_STUB_SOURCES", "false").strip()
 _risk_cache = {}
 
 
+def risk_dashboard_cache_key(**context) -> str:
+    """Separate users, sources and every calculation window/coverage option."""
+    return repr(("risk_dashboard_v3", tuple(sorted(context.items()))))
+
+
 @router.get("/portfolio-reference")
 async def get_portfolio_reference(
     source: str = Query(..., description="Explicit portfolio data source"),
@@ -937,7 +942,7 @@ async def get_risk_dashboard(
         # Check cache (TTL: 30 min = 1800 seconds, optimized per CACHE_TTL_OPTIMIZATION.md)
         # FIX: Include _csv_hint in cache key to invalidate when CSV changes (Oct 2025)
         csv_hint_part = f":{_csv_hint}" if _csv_hint else ""
-        cache_key = f"risk_dashboard:{user}:{source}:{min_usd}:{risk_version}{csv_hint_part}"
+        cache_key = risk_dashboard_cache_key(user=user, source=source, min_usd=min_usd, risk_version=risk_version, csv_hint=csv_hint_part, price_history_days=price_history_days, lookback_days=lookback_days, use_dual_window=use_dual_window, min_history_days=min_history_days, min_coverage_pct=min_coverage_pct, min_asset_count=min_asset_count)
 
         logger.info(f" Risk dashboard request: user={user}, source={source}, csv_hint={_csv_hint}, cache_key={cache_key}")
 

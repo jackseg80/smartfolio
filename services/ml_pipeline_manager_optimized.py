@@ -3,6 +3,7 @@ ML Pipeline Manager - Version Optimisée
 Gestion intelligente des modèles ML avec lazy loading, gestion mémoire et cache LRU
 """
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Union
@@ -248,12 +249,12 @@ class OptimizedMLPipelineManager:
             "metadata_exists": metadata_file.exists(),
             "model_loaded": "regime" in self.model_cache.cache,
             "model_cached": "regime" in self.model_cache.cache,
-            "last_updated": self._get_last_modified(self.regime_path)
+            "last_updated": datetime.fromtimestamp(model_file.stat().st_mtime).isoformat() if model_file.exists() else None
         }
     
     def _get_correlation_status(self) -> Dict[str, Any]:
         """Statut des modèles de corrélation"""
-        model_files = list(self.correlation_path.glob("*.pkl"))
+        model_files = list(self.correlation_path.glob("*correlation*.pth"))
         cached_count = len([k for k in self.model_cache.cache.keys() if k.startswith("correlation_")])
         
         return {
@@ -343,9 +344,12 @@ class OptimizedMLPipelineManager:
             metadata = safe_pickle_load(metadata_path)
 
             scaler = safe_pickle_load(scaler_path)
+            feature_names = metadata.get("feature_columns") or metadata.get("features_used")
+            if not isinstance(feature_names, list) or not feature_names or getattr(scaler, "n_features_in_", None) != len(feature_names):
+                raise ValueError("Artifact feature schema or scaler compatibility is unverified")
             
             # Charger le modèle PyTorch avec compatibilité maximum
-            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
+            model = safe_torch_load(model_path, map_location='cpu', weights_only=True)
             
             if hasattr(model, 'eval'):
                 model.eval()
@@ -423,9 +427,12 @@ class OptimizedMLPipelineManager:
             metadata = safe_pickle_load(metadata_path)
 
             scaler = safe_pickle_load(scaler_path)
+            feature_names = metadata.get("feature_columns") or metadata.get("features_used")
+            if not isinstance(feature_names, list) or not feature_names or getattr(scaler, "n_features_in_", None) != len(feature_names):
+                raise ValueError("Artifact feature schema or scaler compatibility is unverified")
             
             # Charger le modèle PyTorch avec compatibilité maximum
-            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
+            model = safe_torch_load(model_path, map_location='cpu', weights_only=True)
             
             if hasattr(model, 'eval'):
                 model.eval()
@@ -464,99 +471,8 @@ class OptimizedMLPipelineManager:
             return False
     
     async def load_regime_model_async(self) -> bool:
-        """Charger le modèle de régime de façon optimisée"""
-        model_key = "regime"
-        
-        # Vérifier le cache
-        if self.model_cache.get(model_key) is not None:
-            self.stats["cache_hits"] += 1
-            logger.info("Regime model already cached")
-            return True
-        
-        self.stats["cache_misses"] += 1
-        
-        with self.loading_lock:
-            if self.model_cache.get(model_key) is not None:
-                return True
-            
-            self.loading_status[model_key] = "loading"
-        
-        try:
-            start_time = time.time()
-            
-            model_path = self.regime_path / "regime_neural_best.pth"
-            metadata_path = self.regime_path / "regime_metadata.pkl"
-            scaler_path = self.regime_path / "regime_scaler.pkl"
-            features_path = self.regime_path / "regime_features.pkl"
-            
-            if not model_path.exists():
-                logger.warning("Regime model file not found")
-                self.loading_status[model_key] = "failed"
-                return False
-            
-            # Estimer la taille
-            model_size_mb = self._estimate_model_size(model_path)
-            
-            # Charger tous les composants avec gestion d'erreur robuste (safe loading)
-            try:
-                metadata = safe_pickle_load(metadata_path)
-            except Exception as e:
-                logger.warning(f"Failed to load metadata, using fallback: {e}")
-                metadata = {"model_type": "regime_classifier", "version": "2.0.0", "accuracy": 0.78}
+        return await asyncio.to_thread(self.load_regime_model)
 
-            try:
-                scaler = safe_pickle_load(scaler_path)
-            except Exception as e:
-                logger.warning(f"Failed to load scaler with safe pickle: {e}")
-                from sklearn.preprocessing import StandardScaler
-                scaler = StandardScaler()
-
-            try:
-                features = safe_pickle_load(features_path)
-            except Exception as e:
-                logger.warning(f"Failed to load features, using fallback: {e}")
-                features = ["price_change_1d", "price_change_7d", "volatility_7d", "volatility_30d", "rsi"]
-            
-            # Charger le modèle avec compatibilité maximum
-            model = safe_torch_load(model_path, map_location='cpu', weights_only=False)
-            
-            if hasattr(model, 'eval'):
-                model.eval()
-            
-            load_time = time.time() - start_time
-            
-            # Stocker dans le cache
-            model_data = {
-                "model": model,
-                "scaler": scaler,
-                "features": features,
-                "metadata": metadata,
-                "loaded_at": datetime.now().isoformat(),
-                "load_time_seconds": load_time,
-                "type": "regime",
-                "is_mock": False,
-                "size_mb": model_size_mb
-            }
-            
-            self.model_cache.put(model_key, model_data, model_size_mb)
-            
-            # Mettre à jour les stats
-            self.stats["models_loaded_total"] += 1
-            self.stats["average_load_time"] = (
-                self.stats["average_load_time"] * (self.stats["models_loaded_total"] - 1) + load_time
-            ) / self.stats["models_loaded_total"]
-            
-            self.loading_status[model_key] = "loaded"
-            
-            logger.info(f"Regime model loaded successfully in {load_time:.2f}s (size: {model_size_mb:.1f}MB)")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to load regime model: {e}")
-            self.loading_status[model_key] = "failed"
-            self.stats["loading_errors"] += 1
-            return False
-    
     def load_regime_model(self) -> bool:
         """Charger le modèle de régime de façon optimisée (version synchrone)"""
         model_key = "regime"
@@ -594,12 +510,14 @@ class OptimizedMLPipelineManager:
                     scaler = safe_pickle_load(scaler_path)
 
                     features = safe_pickle_load(features_path)
+                    if not isinstance(features, list) or not features or getattr(scaler, "n_features_in_", None) != len(features):
+                        raise ValueError("Regime artifact feature schema is incompatible")
                     
                     # Charger le modèle avec compatibilité PyTorch
                     model = safe_torch_load(
                         model_path,
                         map_location='cpu',
-                        weights_only=False,
+                        weights_only=True,
                     )
                     
                     if hasattr(model, 'eval'):
@@ -629,58 +547,11 @@ class OptimizedMLPipelineManager:
                     return True
                     
                 except Exception as load_error:
-                    logger.warning(f"Failed to load real regime model, using fallback mock: {load_error}")
-                    
-                    # Fallback to mock model (comme dans l'original)
-                    mock_metadata = {
-                        "model_type": "regime_classifier",
-                        "version": "1.0.0",
-                        "accuracy": 0.75,
-                        "classes": ["Bear Market", "Correction", "Bull Market", "Expansion"]
-                    }
-                    
-                    class MockScaler:
-                        def transform(self, X):
-                            return X
-                        def inverse_transform(self, X):
-                            return X
-                    
-                    mock_features = ["price_change_1d", "volume_change_1d", "rsi", "macd", "bollinger_position"]
-                    
-                    class MockRegimeModel:
-                        def __init__(self):
-                            self.classes = ["Bear Market", "Correction", "Bull Market", "Expansion"]
-                        
-                        def eval(self):
-                            pass
-                        
-                        def predict(self, X):
-                            import random
-                            return random.choice(self.classes)
-                    
-                    mock_model = MockRegimeModel()
-                    
-                    model_data = {
-                        "model": mock_model,
-                        "scaler": MockScaler(),
-                        "features": mock_features,
-                        "metadata": mock_metadata,
-                        "loaded_at": datetime.now().isoformat(),
-                        "type": "regime",
-                        "is_mock": True
-                    }
-                    
-                    # Ajouter au cache
-                    self.model_cache.put(model_key, model_data, 10)  # Mock model très léger
-                    self.loading_status[model_key] = "loaded"
-                    
-                    load_time = time.time() - start_time
-                    self.stats["total_loading_time"] += load_time
-                    self.stats["models_loaded"] += 1
-                    
-                    logger.info(f"Mock regime model loaded successfully in {load_time:.2f}s")
-                    return True
-            
+                    logger.warning("Regime artifact loading failed: %s", load_error)
+                    self.loading_status[model_key] = "failed"
+                    self.stats["loading_errors"] += 1
+                    return False
+
         except Exception as e:
             logger.error(f"Failed to load regime model: {e}")
             self.loading_status[model_key] = "failed"

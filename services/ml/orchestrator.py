@@ -874,7 +874,7 @@ class MLOrchestrator:
         """Load regime detection model for auto-startup"""
         try:
             from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
-            await pipeline_manager.load_regime_model()
+            pipeline_manager.load_regime_model()
             self.model_status['regime'] = 'ready'
             logger.info("Regime model loaded successfully")
             return {"success": True, "message": "Regime model loaded"}

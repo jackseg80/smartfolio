@@ -504,6 +504,7 @@
         }
         const total = Object.keys(components).length;
         subtitle.textContent = `${counts.healthy}/${total} components healthy` +
+            (counts.disabled ? ` | ${counts.disabled} disabled${health.environment === 'isolated_preview' ? ' intentionally' : ''}` : '') +
             (counts.degraded ? ` | ${counts.degraded} degraded` : '') +
             (counts.unhealthy ? ` | ${counts.unhealthy} unhealthy` : '') +
             (health.environment ? ` | env: ${health.environment}` : '');

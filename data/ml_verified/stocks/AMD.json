@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XNYS",
+  "fetched_at": "2026-09-30T13:28:59.543563+00:00",
+  "file": "AMD.csv",
+  "sha256": "7ad7093c8bcb8c736df9d5effd2ead011b3710ab45bbb2eb729d8bf5ae46615d",
+  "dataset_id": "verified-daily-stocks-AMD-7ad7093c8bcb8c73"
+}

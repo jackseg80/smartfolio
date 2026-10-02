@@ -1,3 +1,5 @@
+import { checkAuth } from '../core/auth-guard.js';
+import { hasAdminNavigation } from '../core/role-policy.js';
 // Composant de navigation unifié (ES module, zéro dépendance)
 // Injecte un <header class="app-header"> sticky avec liens actifs et menu Admin.
 
@@ -58,37 +60,15 @@ window.getActiveUser = window.getCurrentUser;
 // Vérification des rôles RBAC pour menu Admin
 const checkAdminRole = () => {
   try {
-    // MODE DEV : Forcer admin si localhost ou dev
-    const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ||
-      location.hostname.includes('dev') || location.port === '8080';
-
-    if (isDev) {
-      console.debug("Dev mode detected - Admin role forced");
-      return true;
-    }
-
-    // Vérifier localStorage pour rôles utilisateur
-    const userRoles = localStorage.getItem('user_roles');
-    if (userRoles) {
-      const roles = JSON.parse(userRoles);
-      return roles.includes('governance_admin') || roles.includes('ml_admin');
-    }
-
-    // Fallback: vérifier variables globales ou cookies
-    if (window.userRoles) {
-      return window.userRoles.includes('governance_admin') || window.userRoles.includes('ml_admin');
-    }
-
-    // Par défaut, masquer le menu Admin
-    return false;
-  } catch (error) {
-    console.debug('Error checking admin roles:', error);
-    return false;
-  }
+    // Les rôles proviennent de la session vérifiée, indépendamment du port.
+    const user = JSON.parse(localStorage.getItem('userInfo') || 'null');
+    return hasAdminNavigation(user, localStorage.getItem('activeUser'));
+  } catch (_) { return false; }
 };
 
-const initUnifiedNav = () => {
+const initUnifiedNav = async () => {
   try {
+    if (!await checkAuth()) return;
     if (window.__navInitialized) return;
     // Ne pas injecter quand nav=off (ex: iframes intégrées)
     const params = new URLSearchParams(location.search);
@@ -99,7 +79,7 @@ const initUnifiedNav = () => {
     const style = document.createElement('style');
     style.textContent = `
       .app-header { position: sticky; top: 0; z-index: 1000; background: var(--theme-surface); border-bottom: 1px solid var(--theme-border); box-shadow: var(--shadow-sm); height: var(--header-height); display: flex; align-items: center; }
-      .app-header .nav-inner { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: 1rem; height: 100%; }
+      .app-header .nav-inner { width: 100%; max-width: none; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; gap: 1rem; height: 100%; }
       .app-header .brand { font-weight: 700; color: var(--theme-text); letter-spacing: .3px; }
       .app-header nav a { color: var(--theme-text-muted); text-decoration: none; padding: .5rem .75rem; border-radius: var(--radius-sm); transition: background var(--transition-fast), color var(--transition-fast); }
       .app-header nav a:hover { background: var(--theme-bg); color: var(--theme-text); }
@@ -133,7 +113,7 @@ const initUnifiedNav = () => {
       .app-header .user-switcher label { margin: 0; }
       .app-header .user-switcher select { min-width: 120px; }
       .app-header .nav-separator { width: 1px; height: 24px; background: var(--theme-border); margin: 0 0.75rem; opacity: 0.6; align-self: center; list-style: none; }
-      @media (max-width: 1024px) { .app-header nav { display: flex; flex-wrap: wrap; gap: .25rem; } .app-header .nav-inner { gap: .5rem; } .app-header .nav-separator { display: none; } }
+      @media (max-width: 1024px) { .app-header { height:auto; position:relative; } .app-header .nav-inner { flex-wrap:wrap; padding:.5rem 1rem; } .app-header .main-nav { flex:1 1 100%; min-width:0; } .app-header .main-nav > ul { flex-wrap:wrap; } .app-header .submenu { position:static; min-width:0; }  .app-header nav { display: flex; flex-wrap: wrap; gap: .25rem; } .app-header .nav-inner { gap: .5rem; } .app-header .nav-separator { display: none; } }
       @media (max-width: 720px) { .app-header nav a { padding: .4rem .6rem; font-size: 14px; } .app-header .notification-badge { padding: .3rem .5rem; font-size: .75em; } }
     `;
     document.head.appendChild(style);
@@ -165,7 +145,7 @@ const initUnifiedNav = () => {
     header.innerHTML = `
       <div class="nav-inner">
         <div class="brand">SmartFolio</div>
-        <nav class="main-nav" aria-label="Navigation principale">
+        <nav class="main-nav" aria-label="Main navigation">
           <ul class="menu">
             <!-- DASHBOARD -->
             <li><a href="dashboard.html" data-route="dashboard.html">Dashboard</a></li>

@@ -2660,3 +2660,10 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* Live data can widen the Risk header and grid unless their flex/grid minima are bounded. */
+@media (max-width: 768px) {
+  .page-header { flex-wrap: wrap; }
+  .header-controls { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+  .dashboard-layout { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-layout .main-content { min-width: 0; width: 100%; max-width: 100%; }
+}

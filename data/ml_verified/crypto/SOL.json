@@ -1,0 +1,12 @@
+{
+  "provider": "binance_spot_public_market_data",
+  "research_artifact_id": "crypto-forecast-history-acquisition-v1-7d67c83f07ff241e",
+  "acquisition_manifest_sha256": "a53c49b4d0ad95a80126c0db07eaa0eb6125df74c14c8f22d7f3e91e00b1be63",
+  "original_ohlcv_sha256": "4bcbb196e72d93422961dc19ea11845ec21cd17d8e6f4944946f20fc7eed6d22",
+  "adjustment_policy": "Unadjusted Binance Spot USDT daily closes",
+  "file": "SOL.csv",
+  "sha256": "968df98033cb7a0769cb82742e9a44f9dfd5917f19509502a8528819b187fae6",
+  "dataset_id": "verified-daily-crypto-SOL-968df98033cb7a07",
+  "fetched_at": "2026-09-30T11:57:45.071393+00:00",
+  "refresh_raw_response_sha256": "470a1f08543b1f25f2e3e53dc295b0c011de946561ec7854f9c713b05520f7e2"
+}

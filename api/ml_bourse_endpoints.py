@@ -85,7 +85,7 @@ recommendations_orchestrator = RecommendationsOrchestrator()
 class VolatilityForecastResponse(BaseModel):
     """Response model for volatility forecast"""
     symbol: str
-    timestamp: str
+    timestamp: Optional[str] = None
     predictions: Dict[str, Any]
     model_type: str
     lookback_days: int
@@ -103,7 +103,7 @@ class RegimeDetectionResponse(BaseModel):
     confidence: Optional[float] = None
     regime_probabilities: Dict[str, float]
     benchmark: str
-    timestamp: str
+    timestamp: Optional[str] = None
     characteristics: Dict[str, str]
     model_type: Optional[str] = None
     model_validation: Optional[Dict[str, Any]] = None
@@ -114,7 +114,7 @@ class CorrelationForecastResponse(BaseModel):
     """Response model for correlation forecast"""
     symbols: List[str]
     predictions: Dict[str, Any]
-    timestamp: str
+    timestamp: Optional[str] = None
     horizons: List[int]
     model_type: str
     note: Optional[str] = None
@@ -123,12 +123,17 @@ class CorrelationForecastResponse(BaseModel):
 class SignalsResponse(BaseModel):
     """Response model for ML signals"""
     symbol: str
-    timestamp: str
-    overall_signal: float
-    confidence: float
+    timestamp: Optional[str] = None
+    overall_signal: Optional[float] = None
+    confidence: Optional[float] = None
     signals: Dict[str, Dict[str, float]]
     recommendation: str
     technical_indicators: Dict[str, float]
+    availability: str = "Unavailable"
+    nature: str = "diagnostic"
+    reason: str = "No verified technical observation"
+    data_as_of: Optional[str] = None
+    provider: Optional[str] = None
     error: Optional[str] = None
 
 
@@ -166,10 +171,11 @@ async def forecast_volatility(
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 
-@router.get("/api/ml/bourse/regime", response_model=RegimeDetectionResponse)
+@router.get("/api/ml/bourse/regime")
 async def detect_regime(
     benchmark: str = Query("SPY", description="Market benchmark ticker"),
     lookback_days: int = Query(7300, ge=60, le=10950, description="Days of history (20 years default to capture 4-5 full market cycles, max 30 years)"),
+    force_retrain: bool = Query(False, description="Deprecated: reads never train models")
 ):
     """
     Detect current market regime (Bull/Bear/Consolidation/Distribution).
@@ -189,7 +195,7 @@ async def detect_regime(
             force_retrain=False
         )
 
-        return RegimeDetectionResponse(**result)
+        return result
 
     except ValueError as e:
         logger.error(f"Validation error in regime detection: {e}")
@@ -199,7 +205,7 @@ async def detect_regime(
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
 
 
-@router.get("/api/ml/bourse/correlation", response_model=CorrelationForecastResponse)
+@router.get("/api/ml/bourse/correlation")
 async def forecast_correlation(
     symbols: str = Query("AAPL,MSFT,GOOGL", description="Comma-separated stock tickers"),
     lookback_days: int = Query(365, ge=90, le=1825, description="Days of history"),
@@ -333,96 +339,19 @@ async def get_ml_dashboard(
 
 
 @router.post("/api/ml/bourse/train")
-async def train_models(
-    symbols: str = Query("AAPL,MSFT,GOOGL", description="Comma-separated stock tickers"),
-    lookback_days: int = Query(730, ge=365, le=3650, description="Training data period"),
-    user: str = Depends(require_admin_role),
-) -> dict:
-    """
-    Train ML models on historical stock data.
-
-    This endpoint trains:
-    - Volatility predictor (LSTM)
-    - Regime detector (HMM + NN)
-    - Correlation forecaster (Transformer)
-
-    Training can take several minutes.
-
-    Example:
-        POST /api/ml/bourse/train?symbols=AAPL,MSFT,GOOGL&lookback_days=730
-    """
-    try:
-        symbols_list = [s.strip().upper() for s in symbols.split(',')]
-
-        logger.info(f"Training ML models for {len(symbols_list)} symbols (lookback={lookback_days}d)")
-
-        results = []
-
-        for symbol in symbols_list:
+async def train_models(symbols: str = Query("SPY,QQQ"), lookback_days: int = Query(730, ge=365, le=3650), user: str = Depends(require_admin_role)) -> dict:
+    import asyncio
+    from services.ml.risk_evaluation import evaluate
+    from services.ml.reliability import capability_service
+    results = []
+    for asset in [s.strip().upper() for s in symbols.split(",")][:20]:
+        for horizon in (7,30):
             try:
-                # Train volatility model
-                vol_result = await stocks_ml_adapter.predict_volatility(
-                    symbol=symbol,
-                    lookback_days=lookback_days,
-                    train_if_missing=True,
-                )
-                if vol_result.get('model_type') != 'LSTM':
-                    raise RuntimeError('Volatility training did not produce a verified model')
-                results.append({
-                    'symbol': symbol,
-                    'model': 'volatility',
-                    'status': 'success',
-                    'model_type': vol_result.get('model_type', 'LSTM')
-                })
-            except Exception as e:
-                logger.error(f"Failed to train volatility model for {symbol}: {e}")
-                results.append({
-                    'symbol': symbol,
-                    'model': 'volatility',
-                    'status': 'failed',
-                    'error': str(e)
-                })
-
-        # Train regime detector (once, uses benchmark)
-        try:
-            regime_result = await stocks_ml_adapter.detect_market_regime(
-                benchmark="SPY",
-                lookback_days=lookback_days,
-                force_retrain=True,
-            )
-            if regime_result.get('model_type') != 'causal_neural':
-                raise RuntimeError('Regime training did not produce a verified model')
-            results.append({
-                'model': 'regime_detector',
-                'status': 'success',
-                'current_regime': regime_result.get('current_regime', 'Unknown')
-            })
-        except Exception as e:
-            logger.error(f"Failed to train regime detector: {e}")
-            results.append({
-                'model': 'regime_detector',
-                'status': 'failed',
-                'error': str(e)
-            })
-
-        results.append({
-            'model': 'correlation_forecaster',
-            'status': 'unavailable',
-            'reason': 'Temporal out-of-sample validation is not implemented for this model',
-        })
-
-        return {
-            'status': 'completed_with_unavailable_models' if any(
-                item['status'] != 'success' for item in results
-            ) else 'completed',
-            'timestamp': datetime.now().isoformat(),
-            'training_results': results,
-            'lookback_days': lookback_days
-        }
-
-    except Exception as e:
-        logger.error(f"Error training models: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+                result = await asyncio.to_thread(evaluate, capability_service, "stocks", asset, horizon, publish=True)
+            except Exception as exc:
+                result = {"asset": asset, "horizon": horizon, "state": "not_evaluable", "reason": str(exc), "published": False}
+            results.append(result)
+    return {"success": True, "training_results": results, "user_id": user, "action": "explicit_frozen_risk_evaluation"}
 
 
 @router.get("/api/ml/bourse/model-info")
@@ -599,7 +528,9 @@ async def get_regime_history(
             "total_samples": total_samples,
             "regime_distribution": regime_distribution,
             "regime_id_mapping": regime_id_counts,
-            "detection_method": "rule_based",  # Indicate we use objective criteria
+            "detection_method": "rule_based",
+            "nature": "diagnostic", "retrospective": True,
+            "history_limitation": "Rule labels and minimum-duration smoothing reconstruct history using later observations; not real-time decision evidence",
             "events": events,
             "timestamp": datetime.now().isoformat()
         }
@@ -851,277 +782,80 @@ async def get_portfolio_recommendations(
 async def get_market_opportunities(
     request: Request,
     user: str = Depends(get_required_user),
-    horizon: str = Query("medium", description="Time horizon: short (1-3M), medium (6-12M), long (2-3Y)"),
-    source: Optional[str] = Query(None, description="Data source: manual_bourse, saxobank_api"),
-    file_key: Optional[str] = Query(None, description="Saxo CSV file key"),
-    min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum gap percentage to consider"),
-    sector_targets: Optional[str] = Query(None, description="Optional JSON object of industry target percentages totaling 100%")
+    horizon: str = Query("medium", description="Holding horizon; no validated forward-return forecast"),
+    source: Optional[str] = Query(None, description="Explicit active stock source"),
+    file_key: Optional[str] = Query(None, description="Selected Saxo CSV file key"),
+    min_gap_pct: float = Query(5.0, ge=0.0, le=50.0, description="Minimum certain sector deviation in percentage points"),
+    sector_targets: Optional[str] = Query(None, max_length=3000, description="Industry percentages totaling 100%"),
+    candidate_sector: str = Query("all", description="Explore sector ETFs or stocks within one economic sector"),
 ) -> dict:
-    """
-    Get market opportunities outside current portfolio.
-
-    Identifies sector gaps and suggests:
-    - Underweight/missing sectors
-    - Top opportunities to buy (stocks + ETFs)
-    - Positions to trim to fund opportunities
-    - Portfolio reallocation impact
-
-    Example:
-        GET /api/bourse/opportunities?user_id=jack&horizon=medium&min_gap_pct=5.0
-    """
+    import asyncio
+    from services.ml.bourse.market_snapshot import load_snapshot
+    from services.ml.bourse.market_analysis import analyze
+    from services.ml.bourse.opportunity_scanner import parse_sector_targets
+    from api.utils.formatters import success_response
     try:
-        logger.info(f" Market opportunities requested (user={user}, horizon={horizon})")
-
-        # Validate horizon
-        if horizon not in ["short", "medium", "long"]:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid horizon '{horizon}'. Must be: short, medium, or long"
-            )
-
-        from services.ml.bourse.opportunity_scanner import parse_sector_targets
-        try:
-            target_allocations = parse_sector_targets(sector_targets)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-
-        # Import httpx at the beginning (may be used later)
-        import httpx
-
-        # 1. Get user positions from Manual/API/CSV
-        if source == "manual_bourse":
-            # Manual mode: load from Sources V2
-            from services.sources import source_registry
-            from pathlib import Path
-
-            project_root = Path(__file__).parent.parent
-            manual_source = source_registry.get_source("manual_bourse", user, project_root)
-
-            if not manual_source:
-                return {
-                    "gaps": [],
-                    "opportunities": [],
-                    "suggested_sales": [],
-                    "impact": {},
-                    "message": "Manual bourse source not available",
-                    "generated_at": datetime.now().isoformat()
-                }
-
-            result = await manual_source.get_balances()
-            # get_balances() returns List[BalanceItem] directly, not a dict
-            items = result if isinstance(result, list) else []
-
-            # Transform BalanceItem (dataclass) to positions format
-            positions = [
-                {
-                    "symbol": item.symbol,
-                    "asset_name": item.alias or item.symbol,
-                    "quantity": float(item.amount or 0),
-                    "market_value": float(item.value_usd or 0),
-                    "market_value_usd": float(item.value_usd or 0),
-                    "asset_class": item.asset_class or "EQUITY",
-                    "currency": item.currency or "USD",
-                    "broker": item.location or "Manual"
-                }
-                for item in items
-            ]
-
-        else:
-            # API or CSV mode: use HTTP endpoints
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                if source == "saxobank_api":
-                    # API mode: use api-positions endpoint
-                    positions_url = f"{API_BASE_URL}/api/saxo/api-positions"
-                    pos_response = await client.get(
-                        positions_url,
-                        headers=_forward_authenticated_headers(request, user)
-                    )
-                    # Handle 401 Unauthorized specifically (Saxo not connected)
-                    if pos_response.status_code == 401:
-                        raise HTTPException(
-                            status_code=401,
-                            detail="Saxo Bank not connected - please connect first via Dashboard"
-                        )
-                    pos_response.raise_for_status()
-                    positions_data = pos_response.json()
-                    positions = positions_data.get("data", {}).get("positions", [])
-                else:
-                    # CSV mode: use positions endpoint
-                    positions_url = f"{API_BASE_URL}/api/saxo/positions"
-
-                    pos_response = await client.get(
-                        positions_url,
-                        headers=_forward_authenticated_headers(request, user),
-                        params={"file_key": file_key} if file_key else None,
-                    )
-                    pos_response.raise_for_status()
-                    positions_data = pos_response.json()
-                    positions = positions_data.get("positions", [])
-
-        if not positions:
-            return {
-                "gaps": [],
-                "opportunities": [],
-                "suggested_sales": [],
-                "impact": {},
-                "message": "No positions found",
-                "generated_at": datetime.now().isoformat()
-            }
-
-        # Debug: Log position format
-        if positions and len(positions) > 0:
-            logger.debug(f" Sample position keys: {list(positions[0].keys())}")
-            logger.debug(f" Sample position: {positions[0]}")
-
-        # 2. Scan for opportunities
-        from services.ml.bourse.opportunity_scanner import OpportunityScanner
-        scanner = OpportunityScanner()
-
-        scan_result = await scanner.scan_opportunities(
-            positions=positions,
-            horizon=horizon,
-            min_gap_pct=min_gap_pct,
-            target_allocations=target_allocations,
-        )
-
-        gaps = scan_result.get("top_gaps", [])
-
-        # 3. Build opportunities list (for now, use sector ETFs)
-        from services.ml.bourse.sector_analyzer import SectorAnalyzer
-        from services.ml.bourse.opportunity_scanner import SECTOR_MAPPING
-        sector_analyzer = SectorAnalyzer()
-
-        opportunities = []
-        held_symbols = {
-            str(p.get("symbol") or p.get("instrument_id") or p.get("ticker") or "")
-            .split(":", 1)[0].upper()
-            for p in positions
-        }
-        for gap in gaps:
-            sector = gap.get("sector")
-            etf = gap.get("etf")
-            gap_pct = gap.get("gap_pct", 0)
-
-            # Get top stocks in sector (ETF + top 6 individual stocks with scores)
-            # Increased from 3 to 6 to include international blue-chips (US + Europe + Asia)
-            top_stocks = await sector_analyzer.get_top_stocks_in_sector(
-                sector_etf=etf,
-                top_n=6,
-                horizon=horizon,
-                score_individually=True  # Enable individual stock scoring
-            )
-
-            # Calculate capital needed based on gap and portfolio size
-            # Note: Saxo positions use "market_value" field (already in USD)
-            total_value = sum(p.get("market_value", 0) or p.get("market_value_usd", 0) for p in positions)
-            capital_needed = (gap_pct / 100) * total_value
-
-            if top_stocks:
-                for stock in top_stocks:
-                    stock_symbol = str(stock.get("symbol") or "").split(":", 1)[0].upper()
-                    if not stock_symbol or stock_symbol in held_symbols:
-                        continue
-                    if stock.get("type") != "ETF" and stock.get("composite_score") is None:
-                        # A sector score is not evidence for an unpriced stock.
-                        continue
-                    if stock.get("type") != "ETF":
-                        reported_sector = stock.get("reported_sector")
-                        if SECTOR_MAPPING.get(reported_sector) != sector:
-                            # Static candidate lists can drift or contain errors.
-                            continue
-                    # Use individual stock scores if available, otherwise fall back to sector scores
-                    stock_score = _finite_number(stock.get("composite_score"), gap.get("score"))
-                    stock_momentum = _finite_number(stock.get("momentum_score"), gap.get("momentum_score") if stock.get("type") == "ETF" else None)
-                    stock_value = _finite_number(stock.get("value_score"), gap.get("value_score") if stock.get("type") == "ETF" else None)
-                    stock_diversification = _finite_number(stock.get("diversification_score"), None)
-                    stock_confidence = min(
-                        1.0,
-                        max(0.0, _finite_number(stock.get("confidence"), _finite_number(gap.get("confidence"), 0.0))),
-                    )
-
-                    opportunities.append({
-                        "symbol": stock.get("symbol"),
-                        "name": stock.get("name", f"{sector} ETF"),
-                        "sector": sector,
-                        "type": stock.get("type", "ETF"),
-                        "score": stock_score,
-                        "confidence": stock_confidence,
-                        "action": "REVIEW",
-                        "horizon": horizon,
-                        "capital_needed": round(capital_needed, 2),
-                        "capital_needed_is_sector_budget": True,
-                        "confidence_kind": "data_coverage",
-                        "score_kind": "historical_risk_adjusted_screen",
-                        "score_components_available": [name for name, value in
-                            (("momentum", stock_momentum), ("value", stock_value), ("diversification", stock_diversification))
-                            if value is not None],
-                        "rationale": stock.get("rationale", f"{sector} sector gap: {gap_pct:.1f}% underweight"),
-                        "momentum_score": stock_momentum,
-                        "value_score": stock_value,
-                        "diversification_score": stock_diversification
-                    })
-
-        # Sort opportunities by score (descending)
-        opportunities.sort(key=lambda x: x.get("score", 0), reverse=True)
-
-        # Limit to top 35 (to show ETF + international stock recommendations)
-        # Increased from 20 to 35 to accommodate 6 stocks per gap (was 3)
-        opportunities = opportunities[:35]
-
-        # 4. Detect sales to fund opportunities
-        from services.ml.bourse.portfolio_gap_detector import PortfolioGapDetector
-        gap_detector = PortfolioGapDetector()
-
-        # Calculate capital needed per SECTOR (not per stock suggestion)
-        # Each stock in a gap carries the full gap capital, so deduplicate by sector
-        seen_sectors = set()
-        total_capital_needed = 0
-        for opp in opportunities:
-            sector = opp.get("sector")
-            if sector not in seen_sectors:
-                seen_sectors.add(sector)
-                total_capital_needed += opp.get("capital_needed", 0)
-
-        sales_result = await gap_detector.detect_sales(
-            positions=positions,
-            opportunities=opportunities,
-            total_capital_needed=total_capital_needed
-        )
-
-        suggested_sales = sales_result.get("suggested_sales", [])
-
-        # 5. Calculate reallocation impact
-        impact = await gap_detector.calculate_reallocation_impact(
-            current_positions=positions,
-            suggested_sales=suggested_sales,
-            opportunities=opportunities
-        )
-
-        return {
-            "gaps": gaps,
-            "opportunities": opportunities,
-            "suggested_sales": suggested_sales,
-            "impact": impact,
-            "summary": {
-                "total_gaps": len(gaps),
-                "total_opportunities": len(opportunities),
-                "total_sales": len(suggested_sales),
-                "capital_needed": total_capital_needed,
-                "capital_freed": sales_result.get("total_freed", 0),
-                "sufficient_capital": sales_result.get("sufficient", False)
-            },
-            "horizon": horizon,
-            "candidate_universe": "curated_stocks_and_sector_etfs",
-            "horizon_details": scan_result.get("horizon_details"),
-            "target_source": scan_result.get("target_source"),
-            "target_allocations": scan_result.get("target_allocations"),
-            "classification_coverage": scan_result.get("classification_coverage"),
-            "unclassified_pct": scan_result.get("unclassified_pct"),
-            "generated_at": datetime.now().isoformat()
-        }
-
+        targets = parse_sector_targets(sector_targets)
+        snapshot = await load_snapshot(user, source, file_key, request, API_BASE_URL)
+        result = await asyncio.wait_for(analyze(snapshot, horizon, candidate_sector, targets, min_gap_pct), 105)
+        response = success_response(result)
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+    except (ValueError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="The data checks timed out; no partial allocation conclusion is returned") from None
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"Error getting market opportunities: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+    except Exception:
+        logger.error("Market Opportunities analysis failed without publishing private payloads")
+        raise HTTPException(status_code=503, detail="The selected-source analysis is unavailable") from None
+
+
+@router.post("/api/bourse/opportunities/scenario")
+async def simulate_market_opportunities(request: Request, user: str = Depends(get_required_user)):
+    """Read-only arithmetic. No persistence, broker calls, orders, or background work."""
+    import asyncio
+    from services.ml.bourse.market_snapshot import load_snapshot, number
+    from services.ml.bourse.market_analysis import analyze, simulate, scenario_history, PublicMarketData
+    from services.ml.bourse.opportunity_scanner import parse_sector_targets
+    from api.utils.formatters import success_response
+    try:
+        body = await request.body()
+        if len(body) > 16000:
+            raise ValueError('Scenario request is too large')
+        params = json.loads(body)
+        allowed = {'source', 'file_key', 'horizon', 'candidate_sector', 'sector_targets', 'min_gap_pct', 'scenario'}
+        if not isinstance(params, dict) or set(params) - allowed:
+            raise ValueError('Invalid scenario request fields')
+        gap = number(params.get('min_gap_pct', 5), 'Sector deviation threshold')
+        if not 0 <= gap <= 50:
+            raise ValueError('Sector deviation threshold must be between 0 and 50')
+        scenario = params.get('scenario')
+        if not isinstance(scenario, dict):
+            raise ValueError('A manual scenario is required')
+        if 'include_history' in scenario and not isinstance(scenario['include_history'], bool):
+            raise ValueError('History option must be a boolean')
+        snapshot = await load_snapshot(user, params.get('source'), params.get('file_key'), request, API_BASE_URL)
+        async def calculate():
+            provider = PublicMarketData()
+            analysis = await analyze(snapshot, params.get('horizon', 'medium'), params.get('candidate_sector', 'all'),
+                                     parse_sector_targets(params.get('sector_targets')), gap, provider)
+            result = simulate(analysis, scenario)
+            if scenario.get('include_history'):
+                result['historical_risk'] = await scenario_history(analysis, result, provider)
+            # Private holdings are already in the authenticated scan; only scenario results are returned here.
+            result.pop('positions_after', None)
+            return dict(context=analysis['context'], snapshot_id=analysis['snapshot_id'], scenario=result)
+        response = success_response(await asyncio.wait_for(calculate(), 150))
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+    except (ValueError, FileNotFoundError, TypeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail='Scenario data checks timed out; no estimated result is returned') from None
+    except HTTPException:
+        raise
+    except Exception:
+        logger.error('Market Opportunities scenario failed without publishing private payloads')
+        raise HTTPException(status_code=503, detail='Scenario calculation is unavailable') from None

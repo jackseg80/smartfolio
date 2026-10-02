@@ -219,7 +219,13 @@ async def _fetch_with_cache_and_fallback(
             age = (datetime.now() - _cache[cache_key]["timestamp"]).total_seconds()
             logger.info(f"Using stale cache (age: {age:.1f}s) due to API error {e.response.status_code}")
             return stale_data
-        raise HTTPException(status_code=e.response.status_code, detail=f"CoinGecko API error and no cache available")
+        # Une erreur d'authentification fournisseur ne doit pas déconnecter la session SmartFolio.
+        upstream_status = e.response.status_code
+        proxy_status = 502 if upstream_status in (401, 403) else upstream_status
+        raise HTTPException(
+            status_code=proxy_status,
+            detail=f"CoinGecko API error (upstream status {upstream_status}) and no cache available",
+        ) from e
 
     except HTTPException:
         raise

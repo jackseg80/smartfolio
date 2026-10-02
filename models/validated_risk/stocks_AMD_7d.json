@@ -1,0 +1,70 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "AMD",
+  "market": "stocks",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-AMD-7ad7093c8bcb8c73",
+  "dataset_sha256": "7ad7093c8bcb8c736df9d5effd2ead011b3710ab45bbb2eb729d8bf5ae46615d",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2006-05-12T00:00:00+00:00",
+  "training_end": "2025-03-21T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 1.230296852906386,
+        "ewma": 0.6616649825578592,
+        "ridge": 0.6814086681866061,
+        "lstm": 0.7542219947062662
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.029839399317191928,
+      "learned_wins": 21,
+      "windows": 33,
+      "confirmation": {
+        "persistence": {
+          "qlike": 2.2489986372457107,
+          "mae": 0.2988387952646164,
+          "rows": 246
+        },
+        "ewma": {
+          "qlike": 0.8094482361306641,
+          "mae": 0.2739870938280064,
+          "rows": 246
+        },
+        "ridge": {
+          "qlike": 0.8316014268502133,
+          "mae": 0.22081851157346424,
+          "rows": 246
+        },
+        "lstm": {
+          "qlike": 0.8414884216692305,
+          "mae": 0.22079667000787645,
+          "rows": 246
+        }
+      },
+      "learned_confirmation_improvement": -0.027368261157064477,
+      "interval_coverage": 0.9186991869918699
+    }
+  },
+  "interval": {
+    "level": 0.9,
+    "width": 0.5748605588953944,
+    "confirmation_coverage": 0.9186991869918699,
+    "calibration_rows": 121,
+    "confirmation_rows": 246
+  }
+}

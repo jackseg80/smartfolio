@@ -312,6 +312,7 @@ class TrainingExecutor:
         Returns:
             Dict with training metrics
         """
+        raise ValueError("Legacy training is unavailable: use /api/ml/train for validated daily-risk evaluation. No unvalidated artifact is published.")
         try:
             # Import training functions from scripts
             import sys

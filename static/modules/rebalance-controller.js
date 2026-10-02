@@ -287,7 +287,9 @@
 
         // Utiliser les stratégies de l'API si disponibles, sinon utiliser des stratégies par défaut
         if (response && response.ok && response.strategies) {
-          availableStrategies = response.strategies;
+          availableStrategies = Array.isArray(response.strategies)
+            ? Object.fromEntries(response.strategies.map(strategy => [strategy.id, strategy]))
+            : response.strategies;
         } else {
           // Stratégies par défaut si l'API n'est pas disponible
           availableStrategies = {
@@ -407,6 +409,8 @@
           try { delete availableStrategies['defi_focused']; } catch (e) { }
         }
 
+        // Les modèles d'allocation statiques sont utilisables avant le chargement du contexte dynamique.
+        renderStrategiesUI();
         // Tenter d'ajouter les stratégies dynamiques en premier (sans bloquer en cas d'erreur)
         try {
           // Ajouter l'allocation suggérée (Unified Analytics) en premier
@@ -1430,8 +1434,8 @@
     function renderDonuts(plan) {
       const cw = plan?.current_weights_pct || {};
       const tw = plan?.target_weights_pct || {};
-      $("#donutCurrent").innerHTML = donutSVG(cw, "Actuel");
-      $("#donutTarget").innerHTML = donutSVG(tw, "Cible");
+      $("#donutCurrent").innerHTML = donutSVG(cw, "Current");
+      $("#donutTarget").innerHTML = donutSVG(tw, "Target");
 
       const names = Object.keys(tw).length ? Object.keys(tw) : Object.keys(cw);
       const html = (names || []).map((g, i) => `<span><span class="dot" style="background:${COLORS[i % COLORS.length]}"></span>${g}</span>`).join("");

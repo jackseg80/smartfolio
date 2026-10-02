@@ -1,4 +1,6 @@
+import { riskRequestScope, riskRequestParams } from '../core/risk-request.js';
 //  Unifier l’URL d’import du module (pas de ?v=3 ici)
+import { ensureSelectedSource } from '../core/selected-source.js';
 import { cycleScoreFromMonths, getCurrentCycleMonths } from './cycle-navigator.js';
 // Note: calibrateCycleParams & getCycleParams seront importés à la volée, ce qui
 // évite tout problème si le bouton est injecté après coup.
@@ -437,7 +439,8 @@ function updateWindowLabel(v) {
 async function fetchRiskData() {
   try {
     // Get the configured data source dynamically
-    const dataSource = globalConfig.get('data_source');
+    const dataSource = await ensureSelectedSource();
+    if (!dataSource) throw new Error('Unavailable: no authenticated portfolio source is selected. Choose a source in Settings.');
     const apiBaseUrl = globalConfig.get('api_base_url');
     const minUsd = globalConfig.get('min_usd_threshold');
 
@@ -474,15 +477,7 @@ async function fetchRiskData() {
     console.debug(`fetchRiskData - calling /api/risk/dashboard with _csv_hint: '${cacheBuster}'`);
 
     const apiResult = await window.globalConfig.apiRequest('/api/risk/dashboard', {
-      params: {
-        source: dataSource,
-        min_usd: minUsd,
-        price_history_days: analysisDays,
-        lookback_days: corrDays,
-        risk_version: 'v2_active',  //  V2 Active: V2 est autoritaire (Oct 2025)
-        use_dual_window: true,       // Dual-window metrics actives
-        _csv_hint: cacheBuster        //  Hint for backend cache: changes when CSV changes
-      }
+      params: riskRequestParams({...riskRequestScope(), source: dataSource, file: csvFile})
     });
 
     //  DEBUG: Log la réponse brute COMPLÈTE pour diagnostiquer les erreurs
@@ -1723,8 +1718,8 @@ function updateRiskDashboardBadges(data) {
     if (window.riskDashboardBadges.cycles) {
       window.riskDashboardBadges.cycles.updateData({
         source: 'Market Cycles',
-        updated: now,
-        contradiction: Math.round(Math.random() * 50), // Placeholder
+        updated: null,
+        contradiction: null, // Aucun taux de contradiction mesure pour le diagnostic heuristique
         status: 'ok'
       });
     }
@@ -1733,8 +1728,8 @@ function updateRiskDashboardBadges(data) {
     if (window.riskDashboardBadges.targets) {
       window.riskDashboardBadges.targets.updateData({
         source: 'Targets',
-        updated: now,
-        contradiction: Math.round(Math.random() * 30), // Placeholder
+        updated: null,
+        contradiction: null, // Aucun taux de contradiction mesure pour les cibles
         status: 'ok'
       });
     }

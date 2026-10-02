@@ -16,3 +16,16 @@ window.resolveBourseSourceSelection = async function (source) {
     if (!selected) throw new Error('The selected stock source is unavailable');
     return { type: 'csv', fileKey: selected.file_path?.split(/[\\/]/).pop() || null };
 };
+
+/** Restore the authenticated account's existing source without persisting settings. */
+window.readConfiguredBourseSource = async function () {
+    const user = localStorage.getItem('activeUser');
+    if (!user) return null;
+    const { getAuthHeaders } = await import('./auth-guard.js');
+    const response = await fetch(window.getApiBase() + '/api/sources/v2/bourse/active', {headers:getAuthHeaders()});
+    if (!response.ok || localStorage.getItem('activeUser') !== user) return null;
+    const raw = await response.json(); const data = raw.data || raw;
+    const source = data.active_source;
+    if (data.category !== 'bourse' || data.status === 'not_found' || !['saxobank_csv','saxobank_api','manual_bourse'].includes(source)) return null;
+    return source;
+};

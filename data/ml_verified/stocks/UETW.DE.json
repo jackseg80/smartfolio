@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XFRA",
+  "fetched_at": "2026-09-30T13:29:29.667733+00:00",
+  "file": "UETW.DE.csv",
+  "sha256": "0175b2736b9a6f7ee06828f195c52bac7f2034e5fd4545ad1e262b747d031c8f",
+  "dataset_id": "verified-daily-stocks-UETW.DE-0175b2736b9a6f7e"
+}

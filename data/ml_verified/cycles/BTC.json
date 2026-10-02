@@ -1,0 +1,12 @@
+{
+  "file": "BTC.csv",
+  "sha256": "c9ff8bb28c0a560fcff1d2912a2143dd8efb2d7e60ce0f88424a780ceed3dc3b",
+  "dataset_id": "coinmetrics-btc-reference-c9ff8bb28c0a560f",
+  "provider": "Coin Metrics Community / PriceUSD daily reference rate",
+  "source_url": "https://raw.githubusercontent.com/coinmetrics/data/master/csv/btc.csv",
+  "raw_response_sha256": "06495ff8e643432e6948b7b4686ce44fc106217287dabdc1b38351d9ddec46c3",
+  "fetched_at": "2026-10-01T06:43:21.167418+00:00",
+  "method": "Vendor USD reference rate, distinct from Binance USDT exchange closes. Retrospective historical cycle comparison only; not used to train or infer volatility forecasts.",
+  "license": "CC BY-NC 4.0",
+  "attribution": "Coin Metrics Community https://github.com/coinmetrics/data"
+}

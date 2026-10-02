@@ -101,31 +101,26 @@ def test_holding_horizon_is_distinct_from_signal_and_not_a_performance_claim():
 
 @pytest.mark.asyncio
 async def test_opportunities_forward_selected_csv_and_auth_before_scanning(monkeypatch):
+    import json
     from starlette.requests import Request
     import api.ml_bourse_endpoints as endpoints
-    captured = {}
-    class Response:
-        def raise_for_status(self): pass
-        def json(self): return {'positions': []}
-    class Client:
-        def __init__(self, **kwargs): pass
-        async def __aenter__(self): return self
-        async def __aexit__(self, *args): pass
-        async def get(self, url, **kwargs):
-            captured.update(kwargs)
-            return Response()
-    monkeypatch.setattr('httpx.AsyncClient', Client)
+    from services.ml.bourse import market_snapshot, market_analysis
+    loader = AsyncMock(return_value={'positions': [], 'snapshot_id': 'test'})
+    analyst = AsyncMock(return_value={'version': 2, 'context': {'user_id': 'alice'}})
+    monkeypatch.setattr(market_snapshot, 'load_snapshot', loader)
+    monkeypatch.setattr(market_analysis, 'analyze', analyst)
     request = Request({'type': 'http', 'headers': [(b'authorization', b'Bearer test-token')]})
-    result = await endpoints.get_market_opportunities(request=request, user='alice', horizon='short', source='saxobank',
-        file_key='selected.csv', min_gap_pct=5, sector_targets=None)
-    assert result['opportunities'] == []
-    assert captured['params'] == {'file_key': 'selected.csv'}
-    assert captured['headers']['X-User'] == 'alice'
-    assert captured['headers']['Authorization'] == 'Bearer test-token'
-    captured.clear()
+    result = await endpoints.get_market_opportunities(request=request, user='alice', horizon='short', source='saxobank_csv',
+        file_key='selected.csv', min_gap_pct=5, sector_targets=None, candidate_sector='all')
+    assert json.loads(result.body)['data']['version'] == 2
+    assert loader.call_args.args[:3] == ('alice', 'saxobank_csv', 'selected.csv')
+    assert loader.call_args.args[3] is request
+    assert endpoints._forward_authenticated_headers(request, 'alice')['Authorization'] == 'Bearer test-token'
+    assert endpoints._forward_authenticated_headers(request, 'alice')['X-User'] == 'alice'
+    loader.reset_mock()
     from fastapi import HTTPException
     with pytest.raises(HTTPException) as error:
-        await endpoints.get_market_opportunities(request=request, user='alice', horizon='short', source='saxobank',
-            file_key='selected.csv', min_gap_pct=5, sector_targets='{"Technology":101}')
-    assert error.value.status_code == 400
-    assert captured == {}
+        await endpoints.get_market_opportunities(request=request, user='alice', horizon='short', source='saxobank_csv',
+            file_key='selected.csv', min_gap_pct=5, sector_targets='{"Technology":101}', candidate_sector='all')
+    assert error.value.status_code == 422
+    loader.assert_not_called()

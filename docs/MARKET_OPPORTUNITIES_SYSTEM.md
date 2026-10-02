@@ -1,698 +1,85 @@
-# Market Opportunities System
+# Market Opportunities v2
 
-> **Date:** October 2025
-> **Status:** Production
-> **Module:** ML Bourse - Market Opportunities
-> **Author:** Crypto Rebalancer Team
+Manual stock-portfolio decision support. The authenticated scan explains source evidence, industry uncertainty and historical candidate screens. It does not generate broker orders or validated forward-return forecasts.
 
-## Vue d'ensemble
+## Contract and source selection
 
-Le **Market Opportunities System** identifie automatiquement des opportunités d'investissement **en dehors du portefeuille actuel**, en analysant les gaps sectoriels et en suggérant des réallocations intelligentes.
+- `GET /api/bourse/opportunities`: authenticated `get_required_user`, no-store JSON envelope, `data.version=2`.
+- Parameters: `source`, `file_key`, `horizon`, `candidate_sector`, `sector_targets`, `min_gap_pct`.
+- Active source and selected Saxo CSV come from the authenticated user's existing configuration. A conflicting request is rejected. A missing file never selects a newer CSV or demo account.
+- CSV positions retain ISIN, exact listing, quote currency, asset class and quantity. Value currency comes from the original header, before the legacy connector removes its unit. Current verified FX converts those dated source values to USD. No indicative FX or parity fallback is accepted.
+- Missing source valuations remain `null`, with the position retained. They are never turned into zero. Unknown values block full-portfolio sector bounds, concentration percentages and scenario valuation.
+- Cash comes only from `<selected_csv>_cash.json`. Missing cash remains unavailable. USD cash and non-USD cash are dated separately from securities. Current verified FX is used for non-USD cash.
+- Import/file dates are labeled `imported_at`; financial `valuation_as_of` remains null when the CSV does not provide a trustworthy valuation date. Acquisition dates are not inferred from notification/value/import dates.
+- Manual positions are supported with an explicit USD value contract; cash remains unavailable. Saxo API positions require an explicit USD valuation contract; unavailable contracts fail visibly rather than guess units.
+- Private snapshots are request-scoped and never stored in a shared classification/result cache. `snapshot_id` prevents using a scenario after changes to the user, CSV contents/selection, cash record or verified FX.
 
-**Objectifs:**
-- Détecter les secteurs sous-représentés ou manquants
-- Identifier les meilleures opportunités d'achat (actions + ETFs)
-- Suggérer des ventes intelligentes pour financer les opportunités
-- Simuler l'impact de la réallocation sur le risque et la diversification
+## Industry evidence and independent dimensions
 
-**Différence avec Recommendations Tab:**
-- **Recommendations Tab**: Analyse positions existantes (BUY/HOLD/SELL)
-- **Market Opportunities Tab**: Identifie nouvelles opportunités hors portfolio
+`fund_exposure.py` accepts a fixed public iShares product catalog by exact ISIN. The adapter checks the matching page identity, the **Fund** table (never Benchmark), its own observation date, finite non-negative weights, duplicate sectors, and total weights. The observation must be no more than 45 days old and not future-dated. Receipts include issuer URL, observation/retrieval dates and a public-document hash.
 
----
+Supported public identities:
 
-## Architecture
+- iShares Core MSCI World UCITS ETF: IE00B4L5Y983, [issuer product page](https://www.ishares.com/uk/individual/en/products/251882/ishares-msci-world-ucits-etf-acc-fund).
+- iShares Core MSCI EM IMI UCITS ETF: IE00BKM4GZ66, [issuer product page](https://www.ishares.com/uk/individual/en/products/264659/ishares-core-msci-em-imi-ucits-etf).
 
-### Backend Components
+Only visible sector rows are accepted. Omitted rows, cash and unrecognized labels stay unclassified; partial totals are not scaled to 100%. Unsupported funds expose the missing adapter explicitly. An index factsheet is not treated as actual fund composition. Issuer failures or changed page shapes do not invent weights.
+
+Individual equities use a secondary Yahoo company-sector profile only when its listing and quote currency match. The URL and retrieval date are shown. An effective sector date is unavailable, and this weaker evidence is labeled separately from dated issuer look-through.
+
+Geography is independent of industries. Company domicile is labeled as domicile, not revenue exposure. No verified fund geography adapter is presently included. Asset classes remain source metadata; broad ETF names and geographic labels never become economic sectors. Non-industry fund exposures remain outside industry coverage. An equity-only denominator is not guessed.
+
+Coverage is explicitly scoped: all valued securities, or only the known-value subset when some positions lack values. The subset coverage is not full-portfolio coverage.
+
+## Targets and conservative intervals
+
+Default industry targets reproduce the legacy normalized midpoint of static sector ranges. They are a **generic reference**, with no current-index or personal-policy claim. Complete user-entered targets total 100% and are labeled `personal_policy`.
+
+With complete valuations, an industry's lower bound is its verified allocation. Its upper bound adds all unclassified securities weight, capped at 100%. A sector is certainly underweight only when `target - upper_bound` exceeds the selected threshold; certainly overweight only when `lower_bound - target` exceeds it. Unknown composition can make all assessments Indeterminate. Missing position valuations make all full-portfolio bounds unavailable. Zero certain gaps does not establish balance.
+
+Targets use all valued securities excluding saved cash, not an inferred equity sleeve. This scope is shown beside the target controls and in responses.
+
+## Candidate exploration and historical ranking
+
+Exploration runs independently of certain gaps. The default universe contains the eleven curated sector ETFs. Choosing one sector additionally examines all stocks in that sector's existing curated list. This is not the whole investable market or a suitability screen.
+
+Exact mapped held listings are excluded. A matching candidate ISIN, when the provider supplies it, also excludes a different listing of the same instrument. Missing candidate ISIN leaves that deduplication incomplete. Fund constituent overlap is unassessed and disclosed. Stock candidates require their actual reported industry to match the curated industry. ETF names describe mandate; they do not establish a 100% industry composition.
+
+Prices come from the existing verified adjusted-price pipeline, with no synthetic or proxy series. Today is excluded, listing quote currencies are checked, and complete sessions through the latest completed exchange date are required. Unsupported calendars, holes, stale observations, ambiguous currencies and insufficient history produce explicit reasons. Non-USD histories use dated actual FX with the existing maximum three-day backward alignment tolerance, not current spot FX.
+
+Historical windows: short 42 sessions, medium 189, long 756. Their associated holding horizons remain planning labels, not tested return predictions.
 
 ```
-services/ml/bourse/
-├── opportunity_scanner.py       # Scan secteurs S&P 500 vs portfolio
-├── sector_analyzer.py           # Analyse momentum/value/diversification
-└── portfolio_gap_detector.py    # Suggestions ventes intelligentes
+score = clip(50 + 15 * mean(daily USD returns)
+             / sample_std(daily USD returns) * sqrt(window_sessions), 0, 100)
 ```
 
-### Frontend UI
+A full window plus one starting close is required. Return, annualized historical volatility, dates, currency and method accompany the score. No value/dividend-yield composite, confidence probability or invented diversification component is added. Ranks are suppressed if candidates end on different dates. Scores describe historical adjusted prices and are not forward validated.
 
-```
-static/saxo-dashboard.html
-└── Onglet "Market Opportunities"
-    ├── Portfolio Gaps (Cards secteurs manquants)
-    ├── Top Opportunities (Tableau triable)
-    ├── Suggested Sales (Suggestions ventes)
-    └── Impact Simulator (Allocation avant/après)
-```
+## Holding reviews and manual scenarios
 
-### API Endpoint
+Holding reviews show generic concentration triggers (10% only with complete valuations), missing classification/valuation evidence and missing acquisition data. They do not turn unknown holding periods or unknown stop orders into automatic sale permission. Automatic sales remain empty with a specific eligibility explanation; absence of a sale is not a favorable portfolio judgment.
 
-```
-GET /api/bourse/opportunities
-    ?user_id=<user>
-    &horizon=<short|medium|long>
-    &file_key=<optional>
-    &min_gap_pct=<float>
-```
+`POST /api/bourse/opportunities/scenario` performs read-only arithmetic. No persistence, order service, broker execution, commit or deployment is called. The request contains the selected source/settings and a manual `scenario` with:
 
----
+- current `snapshot_id`;
+- 1–50 unique changes: `side`, stable holding/candidate `id`, positive finite `amount_usd`;
+- explicit non-negative `costs_usd`, `slippage_pct` from 0 to 10;
+- `acknowledge_dated_values: true`;
+- optional boolean `include_history`.
 
-## Méthodologie de Scoring
+Sales cannot exceed held snapshot value. Purchases must be current screened candidates. Combined purchases and costs cannot exceed saved cash plus sales. Securities plus cash after the changes must equal before total minus estimated friction. No executable share quantity, purchase capital recommendation, fund-composition assumption, tax-lot rule or stop-order assurance is created. Purchased ETFs remain unclassified without a verified decomposition.
 
-### 3-Pillar Scoring System
+Optional historical risk requires exact USD histories for **all** nonzero positions in both scenarios and common return intervals with the same start and end dates. The full selected signal window and at least 60 daily intervals are required. Historical volatility uses fixed current USD weights, zero-return cash and a daily-rebalanced approximation. Candidate correlation is measured against the actual before portfolio on those same intervals. Partial holdings are not used as a portfolio proxy. Missing histories leave volatility unavailable with counts/reasons. No validated 0–100 Risk Score is implemented.
 
-Chaque gap sectoriel est scoré sur une échelle 0-100 selon 3 piliers:
+## Frontend and confidentiality
 
-#### 1. Momentum Score (40%)
+The Market Opportunities tab uses `static/components/market-opportunities.js`. It checks authenticated account/source/CSV context and request revision before and after asynchronous body decoding, clears obsolete results and prevents markup injection through provider text or URLs. All visible labels and errors are in English.
 
-**Indicateurs:**
-- Price momentum 3M/6M (rendements récents)
-- RSI (14-day) - Détection surachat/survente
-- Relative strength vs SPY (performance relative)
+The existing Recommendations tab and its independent ML work are preserved. API v2 intentionally replaces the old opportunities payload; external clients must migrate to the versioned contract. Export returns only authorized aggregate audit controls and method metadata, never holdings, amounts, account identifiers, file names, private hashes or keys.
 
-**Formule:**
-```python
-momentum_score = (
-    price_momentum_score * 0.35 +
-    rsi_score * 0.35 +
-    relative_strength_score * 0.30
-)
-```
+## Validation and open data work
 
-**Interprétation:**
-- **>70**: Momentum fort (secteur en tendance haussière)
-- **50-70**: Momentum modéré
-- **<50**: Momentum faible (attendre meilleur timing)
+Synthetic test fixtures verify strict CSV selection, currencies, null valuations, partial issuer receipts, interval bounds, identity matching, real-history requirements and cash conservation. API tests verify authenticated context, validation and no-store responses. DOM tests cover missing evidence, provider text and late responses. Public issuer pages and US/Swiss price series are checked separately from a read-only real-account audit.
 
-#### 2. Value Score (30%)
-
-**Indicateurs:**
-- P/E Ratio (valorisation vs moyenne marché)
-- PEG Ratio (croissance ajustée, si disponible)
-- Dividend Yield (rendement dividendes)
-
-**Formule:**
-```python
-value_score = (
-    pe_score * 0.40 +
-    peg_score * 0.35 +
-    div_yield_score * 0.25
-)
-```
-
-**Interprétation:**
-- **>70**: Secteur sous-évalué (bon point d'entrée)
-- **50-70**: Valorisation neutre
-- **<50**: Secteur surévalué (attendre correction)
-
-#### 3. Diversification Score (30%)
-
-**Indicateurs:**
-- Corrélation avec positions existantes
-- Volatilité relative
-- Exposition sectorielle manquante
-
-**Formule:**
-```python
-diversification_score = (
-    correlation_score * 0.50 +
-    volatility_score * 0.30 +
-    sector_exposure_score * 0.20
-)
-```
-
-**Interprétation:**
-- **>70**: Excellente diversification (faible corrélation)
-- **50-70**: Diversification modérée
-- **<50**: Faible diversification (redondant avec positions)
-
-### Composite Opportunity Score
-
-```python
-opportunity_score = (
-    momentum_score * 0.40 +
-    value_score * 0.30 +
-    diversification_score * 0.30
-)
-```
-
-**Seuils décision:**
-- **≥75**: Opportunité exceptionnelle (strong buy)
-- **60-75**: Opportunité solide (buy)
-- **50-60**: Opportunité acceptable (considérer)
-- **<50**: Opportunité faible (éviter)
-
----
-
-## Secteurs Standard (GICS Level 1)
-
-Le système utilise les 11 secteurs GICS standard du S&P 500:
-
-| Secteur | Range Cible | ETF Proxy | Description |
-|---------|-------------|-----------|-------------|
-| **Technology** | 15-30% | XLK | Information Technology |
-| **Healthcare** | 10-18% | XLV | Healthcare |
-| **Financials** | 10-18% | XLF | Financial Services |
-| **Consumer Discretionary** | 8-15% | XLY | Consumer Cyclical |
-| **Communication Services** | 8-15% | XLC | Communication Services |
-| **Industrials** | 8-15% | XLI | Industrials |
-| **Consumer Staples** | 5-12% | XLP | Consumer Defensive |
-| **Energy** | 3-10% | XLE | Energy |
-| **Utilities** | 2-8% | XLU | Utilities |
-| **Real Estate** | 2-8% | XLRE | Real Estate / REITs |
-| **Materials** | 2-8% | XLB | Materials |
-
-**Note:** Les secteurs Yahoo Finance sont mappés automatiquement aux secteurs GICS standard.
-
----
-
-## Horizons Temporels
-
-### Short-term (1-3 mois)
-
-**Objectif:** Tactical plays, rotations sectorielles courtes
-
-**Pondérations scoring:**
-- Momentum: 50% (priorité tendance court terme)
-- Value: 20%
-- Diversification: 30%
-
-**Recommandations:**
-- ETFs sectoriels (liquidité élevée)
-- Pas d'actions individuelles (trop volatiles)
-
-### Mid-term (6-12 mois)
-
-**Objectif:** Thématiques sectorielles, positionnement stratégique
-
-**Pondérations scoring:**
-- Momentum: 40% (équilibré)
-- Value: 30%
-- Diversification: 30%
-
-**Recommandations:**
-- Mix ETFs + actions solides (large caps)
-- Secteurs en tendance structurelle
-
-### Long-term (2-3 ans)
-
-**Objectif:** Mégatrends, allocation stratégique durable
-
-**Pondérations scoring:**
-- Momentum: 30%
-- Value: 40% (priorité valorisation long terme)
-- Diversification: 30%
-
-**Recommandations:**
-- Actions quality (large caps stables)
-- ETFs diversifiés
-- Focus dividendes et croissance durable
-
----
-
-## Contraintes de Réallocation
-
-### Protection Portfolio (Hard Limits)
-
-| Contrainte | Valeur | Rationale |
-|------------|--------|-----------|
-| **Max vente par position** | 30% | Évite liquidation forcée |
-| **Top N holdings protégés** | 2 | Préserve colonne vertébrale portfolio |
-| **Détention minimale** | 30 jours | Évite wash sales, frais transaction |
-| **Max allocation par secteur** | 25% | Diversification obligatoire |
-| **Protection stop loss** | Validation | Respect trailing stops existants |
-
-### Logique de Détection des Ventes
-
-**Critères prioritaires:**
-
-1. **Over-concentration (>15% portfolio)**
-   - Score: +50 points si >15%
-   - Rationale: "Over-concentrated (X% of portfolio)"
-
-2. **Weak momentum (3M return <-10%)**
-   - Score: +50 points si <-10%
-   - Rationale: "Weak momentum (-X% 3M)"
-
-3. **Negative return (<0%)**
-   - Score: +20 points
-   - Rationale: "Negative momentum (-X% 3M)"
-
-4. **Near stop loss (-10% to -5%)**
-   - Score: ×0.5 (réduction score vente)
-   - Rationale: "Near stop loss (reduce caution)"
-
-**Exclusions:**
-- Top 2 holdings (jamais vendus)
-- Positions <30 jours (trop récentes)
-- Positions protégées par stop loss
-
----
-
-## API Reference
-
-### Endpoint Principal
-
-```http
-GET /api/bourse/opportunities
-```
-
-**Query Parameters:**
-
-| Paramètre | Type | Requis | Default | Description |
-|-----------|------|--------|---------|-------------|
-| `user_id` | string | OK | - | User ID (multi-tenant) |
-| `horizon` | string | Error | `"medium"` | Time horizon: `short`/`medium`/`long` |
-| `file_key` | string | Error | `null` | Saxo CSV file key (optional) |
-| `min_gap_pct` | float | Error | `5.0` | Minimum gap percentage (0-50) |
-
-**Response Format:**
-
-```json
-{
-  "gaps": [
-    {
-      "sector": "Utilities",
-      "current_pct": 0.0,
-      "target_pct": 12.0,
-      "gap_pct": 12.0,
-      "etf": "XLU",
-      "score": 87.3,
-      "confidence": 0.85,
-      "momentum_score": 82.0,
-      "value_score": 91.0,
-      "diversification_score": 89.0
-    }
-  ],
-  "opportunities": [
-    {
-      "symbol": "XLU",
-      "name": "Utilities Select Sector SPDR",
-      "sector": "Utilities",
-      "type": "ETF",
-      "score": 87.3,
-      "confidence": 0.85,
-      "action": "BUY",
-      "horizon": "medium",
-      "capital_needed": 12000.0,
-      "rationale": "Utilities sector gap: 12.0% underweight"
-    }
-  ],
-  "suggested_sales": [
-    {
-      "symbol": "NVDA",
-      "current_value": 25000.0,
-      "sale_pct": 30.0,
-      "sale_value": 7500.0,
-      "rationale": "Over-concentrated (25.0% of portfolio)",
-      "stop_loss_safe": true
-    }
-  ],
-  "impact": {
-    "before": {
-      "Technology": 52.0,
-      "Healthcare": 10.0,
-      "Utilities": 0.0
-    },
-    "after": {
-      "Technology": 38.0,
-      "Healthcare": 10.0,
-      "Utilities": 12.0
-    },
-    "risk_before": 7.2,
-    "risk_after": 6.4,
-    "total_freed": 15000.0,
-    "total_invested": 12000.0
-  },
-  "summary": {
-    "total_gaps": 3,
-    "total_opportunities": 5,
-    "total_sales": 2,
-    "capital_needed": 12000.0,
-    "capital_freed": 15000.0,
-    "sufficient_capital": true
-  },
-  "horizon": "medium",
-  "generated_at": "2025-10-28T14:30:00Z"
-}
-```
-
----
-
-## Frontend UI Guide
-
-### Onglet "Market Opportunities"
-
-**Accès:** Dashboard Bourse → Tab "Market Opportunities"
-
-### 1. Horizon Selector
-
-```
-┌─────────────────────────────────────────────────┐
-│ Investment Horizon                              │
-│ [1-3 Months] [6-12 Months (OK)] [2-3 Years]     │
-│ [ Scan for Opportunities]                     │
-└─────────────────────────────────────────────────┘
-```
-
-**Actions:**
-- Sélectionner horizon → Adapte scoring
-- Cliquer "Scan" → Lance analyse complète
-
-### 2. Portfolio Gaps (Cards)
-
-```
-┌────────────┐ ┌────────────┐ ┌────────────┐
-│ Utilities  │ │ Financials │ │ Real Estate│
-│ Score: 87  │ │ Score: 78  │ │ Score: 72  │
-│ 0% → 12%   │ │ 0% → 8%    │ │ 0% → 5%    │
-│ Gap: 12%   │ │ Gap: 8%    │ │ Gap: 5%    │
-│ ETF: XLU   │ │ ETF: XLF   │ │ ETF: XLRE  │
-└────────────┘ └────────────┘ └────────────┘
-```
-
-**Interprétation:**
-- **Score >70** (vert): Opportunité forte
-- **Score 50-70** (orange): Opportunité modérée
-- **Score <50** (gris): Opportunité faible
-
-### 3. Top Opportunities (Table)
-
-| Symbol | Sector | Score | Type | Capital Needed | Rationale |
-|--------|--------|-------|------|----------------|-----------|
-| XLU | Utilities | 87 | ETF | €12,000 | Utilities sector gap: 12.0% underweight |
-| XLF | Financials | 78 | ETF | €8,000 | Financials sector gap: 8.0% underweight |
-
-**Actions:**
-- Tri par colonne (Symbol, Score, Capital)
-- Top 10 opportunités affichées
-
-### 4. Suggested Sales (Table)
-
-| Symbol | Current Value | Sell % | Frees | Rationale |
-|--------|---------------|--------|-------|-----------|
-| NVDA | €25,000 | 30% | +€7,500 | Over-concentrated (25.0% of portfolio) |
-| META | €10,000 | 50% | +€5,000 | High valuation, weak momentum |
-
-**Actions:**
-- Visualisation des positions à réduire
-- Capital libéré pour financer opportunités
-
-### 5. Impact Simulator
-
-```
-┌──────────────────────────────────────────────────┐
-│ Risk Score: 7.2 → 6.4                            │
-│ Capital Freed: €15,000                           │
-│ Capital Invested: €12,000                        │
-├──────────────────────────────────────────────────┤
-│ Sector Allocation Changes                        │
-│ Technology:  52% → 38% (-14%)                    │
-│ Utilities:    0% → 12% (+12%)                    │
-│ Financials:   0% → 8% (+8%)                      │
-└──────────────────────────────────────────────────┘
-```
-
-**Interprétation:**
-- Avant/Après allocation sectorielle
-- Impact sur risk score
-- Capital net libéré
-
----
-
-## Exemples d'utilisation
-
-### Cas 1: Portfolio Tech-Heavy
-
-**Situation:**
-- Tech: 52% (over-concentration)
-- Utilities: 0%
-- Financials: 0%
-- Real Estate: 0%
-
-**Action:**
-```javascript
-// User: Clic "Scan Opportunities" (horizon: medium 6-12M)
-```
-
-**Résultat:**
-- **3 gaps détectés:** Utilities, Financials, Real Estate
-- **Top opportunity:** XLU (Utilities ETF) - Score 87
-- **Suggested sale:** NVDA 30% → Libère €8,000
-- **Impact:** Tech 52% → 38%, Utilities 0% → 12%, Risk 7.2 → 6.4
-
-### Cas 2: Portfolio Bien Diversifié
-
-**Situation:**
-- Allocation équilibrée sur 8 secteurs
-- Aucun gap >5%
-
-**Action:**
-```javascript
-// User: Clic "Scan Opportunities"
-```
-
-**Résultat:**
-```
-No significant sector gaps detected. Portfolio is well-diversified!
-```
-
-### Cas 3: Portfolio Sans Liquidité
-
-**Situation:**
-- Gaps détectés: Utilities (12%), Financials (8%)
-- Aucune position sur-concentrée
-- Top 3 holdings protégés
-
-**Action:**
-```javascript
-// User: Clic "Scan Opportunities"
-```
-
-**Résultat:**
-- Opportunités identifiées
-- **Suggested sales:** Vide (aucune position éligible)
-- Message: "No sales needed. Portfolio has sufficient liquidity..."
-
----
-
-## Maintenance & Evolution
-
-### P0 (Implémenté)
-
-[OK] Scan secteurs S&P 500 vs portfolio
-[OK] Scoring 3-pillar (Momentum/Value/Diversification)
-[OK] Suggestions ventes intelligentes (max 30%, top 2 protected)
-[OK] Impact simulator (avant/après allocation)
-[OK] Frontend UI complet (onglet dédié)
-
-### P1 (Q1 2026)
-
-- [ ] Top 3 stocks par secteur (pas seulement ETF)
-- [ ] Backtesting suggestions (track performance)
-- [ ] Alertes auto quand nouveaux gaps (>10%)
-- [ ] Intégration module execution (buy/sell orders)
-
-### P2 (Q2 2026)
-
-- [ ] ML pour affiner scoring (historical winners)
-- [ ] Corrélation cross-asset (bourse + crypto)
-- [ ] Simulation Monte Carlo (scénarios multiples)
-- [ ] Export rapport PDF (comme Recommendations)
-
----
-
-## Troubleshooting
-
-### Problème: Aucun gap détecté
-
-**Cause:** Portfolio déjà bien diversifié ou `min_gap_pct` trop élevé
-
-**Solution:**
-```javascript
-// Réduire le seuil min_gap_pct
-const url = `/api/bourse/opportunities?user_id=jack&min_gap_pct=2.0`;
-```
-
-### Problème: Erreur "No positions found"
-
-**Cause:** Fichier Saxo CSV non chargé ou user_id incorrect
-
-**Solution:**
-1. Vérifier que Saxo CSV est uploadé
-2. Vérifier `localStorage.getItem('activeUser')`
-3. Vérifier `file_key` dans URL
-
-### Problème: Scores tous à 50
-
-**Cause:** Données Yahoo Finance indisponibles (rate limit ou symbole invalide)
-
-**Solution:**
-- Attendre quelques minutes (rate limit Yahoo Finance)
-- Vérifier logs backend: `logs/app.log`
-- Vérifier que ETF proxy est valide (XLU, XLF, etc.)
-
-### Problème: Suggested sales vide malgré gaps
-
-**Cause:** Aucune position éligible (toutes protégées ou récentes <30j)
-
-**Solution:**
-- Normal si top 2 holdings représentent >80% portfolio
-- Vérifier dates d'acquisition des positions
-- Réduire protection (modifier `TOP_N_PROTECTED` dans code)
-
----
-
-## Dépendances
-
-### Backend
-
-```python
-# services/ml/bourse/opportunity_scanner.py
-from services.ml.bourse.sector_analyzer import SectorAnalyzer
-
-# services/ml/bourse/sector_analyzer.py
-from services.ml/bourse.data_sources import StocksDataSource
-from services.ml.bourse.technical_indicators import TechnicalIndicators
-import yfinance as yf  # Free Yahoo Finance API
-
-# services/ml/bourse/portfolio_gap_detector.py
-from services.ml.bourse.stop_loss_calculator import StopLossCalculator
-```
-
-### Frontend
-
-```javascript
-// Dépendances globales
-window.API_BASE_URL  // Config API
-window.safeFetch()   // HTTP wrapper
-localStorage.getItem('activeUser')  // Multi-user
-formatCurrency()     // Formatage devises
-```
-
----
-
-## Sources de Données
-
-### Yahoo Finance (yfinance)
-
-**Utilisé pour:**
-- Prix OHLCV (ETFs sectoriels)
-- Fundamental data (P/E, PEG, Dividend Yield)
-- Benchmarks (SPY)
-
-**Limites:**
-- Rate limit: ~2000 requests/hour
-- Délai données: 15 min (free tier)
-- Pas de top holdings ETF (future P1)
-
-**Fallback:**
-- Cache local (TTL 4h pour secteurs)
-- Scores neutres (50) si données manquantes
-
-### S&P 500 Secteurs (Static)
-
-**Configuration:**
-- 11 secteurs GICS Level 1
-- Targets ranges basés sur composition S&P 500
-- ETF proxy par secteur (XLK, XLV, etc.)
-
-**Mise à jour:**
-- Annuelle (composition secteurs S&P change peu)
-- Fichier: `opportunity_scanner.py` → `STANDARD_SECTORS`
-
----
-
-## Sécurité & Permissions
-
-### Multi-Tenant Isolation
-
-```python
-# Backend: TOUJOURS user_id dans query
-@router.get("/api/bourse/opportunities")
-async def get_market_opportunities(
-    user_id: str = Query(..., description="User ID")  # Required!
-):
-    # ...
-```
-
-```javascript
-// Frontend: TOUJOURS activeUser
-const activeUser = localStorage.getItem('activeUser') || 'demo';
-const url = `/api/bourse/opportunities?user_id=${activeUser}`;
-```
-
-### Data Privacy
-
-- **Pas de logs positions** (seulement agrégats)
-- **Pas de sharing inter-users**
-- **Cache isolé par user**
-
----
-
-## Performance
-
-### Backend
-
-**Optimisations:**
-- Cache Yahoo Finance data (4h TTL)
-- Async/await pour paralléliser fetches
-- Limit top 10 opportunities (pas tout S&P 500)
-
-**Latence moyenne:**
-- Cold start (no cache): ~8-12s
-- Warm cache: ~2-3s
-
-### Frontend
-
-**Optimisations:**
-- Lazy loading onglet (charge au clic)
-- Pas de refresh auto (user trigger manual)
-- Render incrémental (gaps → opportunities → sales → impact)
-
-**UX:**
-- Loading states pendant scan
-- Feedback immédiat (bouton "Scanning...")
-- Success message ("[OK] Scan Complete")
-
----
-
-## Logs & Debugging
-
-### Backend Logs
-
-```bash
-# Lire logs scan opportunities
-Get-Content logs\app.log -Wait -Tail 50 | Select-String "Market opportunities"
-
-# Logs typiques
-# INFO:  Market opportunities requested (user=jack, horizon=medium)
-# INFO: Detected 3 sector gaps
-# INFO:  Scan complete: 3 gaps scored, top 3 selected
-```
-
-### Frontend Debug
-
-```javascript
-// Console logs (si debugLogger enabled)
-debugLogger.info('Loading market opportunities (horizon: medium)');
-debugLogger.info('Market opportunities loaded:', data);
-
-// Inspect last data
-console.log(lastOpportunitiesData);
-```
-
----
-
-## Changelog
-
-### v1.0 (October 2025)
-
-- [OK] Initial release
-- [OK] 3-pillar scoring system
-- [OK] Intelligent sales suggestions
-- [OK] Impact simulator
-- [OK] Full UI integration
-
----
-
-*Documentation générée pour Market Opportunities System - Crypto Rebalancer*
-*Pour questions: Voir CLAUDE.md section "Features Avancées"*
+Remaining data work: issuer adapters for unsupported funds, trustworthy financial valuation dates/complete CSV values, exact candidate ISIN coverage, fund constituent overlap, personal tax/holding/stop-order constraints, personal target policy, and fund geography. Their absence stays visible. No new provider account, credentials, environment or private data image is needed for the implemented adapters.

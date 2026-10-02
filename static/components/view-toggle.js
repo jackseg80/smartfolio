@@ -104,17 +104,20 @@ template.innerHTML = `
     /* Tooltip */
     .view-btn[data-tooltip]::after {
         content: attr(data-tooltip);
+        display: none;
         position: absolute;
         bottom: calc(100% + 8px);
-        left: 50%;
-        transform: translateX(-50%);
+        right: 0;
+        max-width: min(280px, calc(100vw - 2rem));
+        width: max-content;
+        box-sizing: border-box;
         padding: 6px 10px;
         background: var(--theme-text, #1e293b);
         color: var(--theme-bg, #ffffff);
         font-size: 12px;
         font-weight: 400;
         border-radius: 6px;
-        white-space: nowrap;
+        white-space: normal;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.2s, visibility 0.2s;
@@ -122,20 +125,22 @@ template.innerHTML = `
         z-index: 1000;
     }
 
-    .view-btn[data-tooltip]:hover::after {
+    .view-btn[data-tooltip]:hover::after,
+    .view-btn[data-tooltip]:focus-visible::after {
+        display: block;
         opacity: 1;
         visibility: visible;
     }
 </style>
 
-<div class="view-toggle" role="radiogroup" aria-label="Mode d'affichage">
+<div class="view-toggle" role="radiogroup" aria-label="View mode">
     <button class="view-btn" data-mode="simple" role="radio" aria-checked="false"
-            data-tooltip="Vue simplifi\u00e9e : m\u00e9triques cl\u00e9s uniquement">
+            data-tooltip="Simple view: key metrics only">
         <span class="icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></span>
         <span class="label">Simple</span>
     </button>
     <button class="view-btn" data-mode="pro" role="radio" aria-checked="true"
-            data-tooltip="Vue pro : toutes les donn\u00e9es et graphiques">
+            data-tooltip="Pro view: all data and charts">
         <span class="icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Simulation" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#beaker"></use></svg></span>
         <span class="label">Pro</span>
     </button>

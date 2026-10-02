@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XSWX",
+  "fetched_at": "2026-09-30T13:29:06.836889+00:00",
+  "file": "UBSG.SW.csv",
+  "sha256": "1b8b5d3510f6e246d9b439ca5d150c38f6c833172a545cdf860e5f32db16f141",
+  "dataset_id": "verified-daily-stocks-UBSG.SW-1b8b5d3510f6e246"
+}

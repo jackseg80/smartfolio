@@ -824,6 +824,7 @@ class WealthContextBar {
       }
     }
 
+    if (!skipSave && !window.smartfolioPreviewReadOnly) {
     //  FIX: Synchroniser Sources V2 pour Bourse
     // Mapper vers l'ID source V2 correspondant
     let sourcesV2Id = 'saxobank_csv'; // Par défaut, assumer CSV Saxo
@@ -873,6 +874,7 @@ class WealthContextBar {
       // Non-bloquant, on continue
     }
 
+    }
     // Pour Bourse/Saxo, mettre à jour le contexte seulement (pas de globalConfig)
     // car c'est géré séparément par le module Wealth
     this.context.bourse = selectedValue;
@@ -1019,6 +1021,12 @@ class WealthContextBar {
 
     const style = document.createElement('style');
     style.textContent = `
+      @media (max-width: 768px) {
+        .wealth-context-bar { position:relative !important; top:auto !important; flex-wrap:wrap; height:auto; }
+        .wealth-context-bar .context-group { min-width:0; max-width:100%; flex-wrap:wrap; }
+        .wealth-context-bar .badges, .wealth-context-bar .badge { flex-wrap:wrap; max-width:100%; }
+        .wealth-context-bar .spacer { display:none; }
+      }
       .wealth-context-bar {
         background: var(--theme-surface);
         border-bottom: 1px solid var(--theme-border);

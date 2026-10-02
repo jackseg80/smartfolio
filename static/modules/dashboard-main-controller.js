@@ -3166,10 +3166,10 @@ async function loadMarketRegimes() {
         // BTC
         if (btcRes?.data?.current_regime) {
             const regime = btcRes.data.current_regime;
-            const conf = btcRes.data.confidence || 0;
+            const conf = btcRes.data.state_probabilities && Number.isFinite(btcRes.data.confidence) ? btcRes.data.confidence : null;
 
             document.getElementById('regime-btc-status').textContent = regime;
-            document.getElementById('regime-btc-conf').textContent = `${Math.round(conf * 100)}% confidence`;
+            document.getElementById('regime-btc-conf').textContent = conf == null ? 'Descriptive diagnostic; probability unavailable' : `${Math.round(conf * 100)}% state probability (not a forecast)`;
 
             // Update class based on regime - canonical names
             const regimeClass = regime.toLowerCase().replace(/\s+/g, '-');
@@ -3177,45 +3177,45 @@ async function loadMarketRegimes() {
             statusEl.className = 'regime-status ' + regimeClass;
             const barEl = document.getElementById('regime-btc-bar');
             barEl.className = 'regime-progress-fill ' + regimeClass;
-            barEl.style.width = `${conf * 100}%`;
+            barEl.style.width = conf == null ? '0%' : `${conf * 100}%`;
         } else {
-            document.getElementById('regime-btc-status').textContent = 'Loading...';
-            document.getElementById('regime-btc-conf').textContent = '--';
+            document.getElementById('regime-btc-status').textContent = 'Unavailable';
+            document.getElementById('regime-btc-conf').textContent = 'Verified diagnostic unavailable';
         }
 
         // ETH
         if (ethRes?.data?.current_regime) {
             const regime = ethRes.data.current_regime;
-            const conf = ethRes.data.confidence || 0;
+            const conf = ethRes.data.state_probabilities && Number.isFinite(ethRes.data.confidence) ? ethRes.data.confidence : null;
 
             document.getElementById('regime-eth-status').textContent = regime;
-            document.getElementById('regime-eth-conf').textContent = `${Math.round(conf * 100)}% confidence`;
+            document.getElementById('regime-eth-conf').textContent = conf == null ? 'Descriptive diagnostic; probability unavailable' : `${Math.round(conf * 100)}% state probability (not a forecast)`;
 
             const regimeClassEth = regime.toLowerCase().replace(/\s+/g, '-');
             const statusEl = document.getElementById('regime-eth-status');
             statusEl.className = 'regime-status ' + regimeClassEth;
             const barElEth = document.getElementById('regime-eth-bar');
             barElEth.className = 'regime-progress-fill ' + regimeClassEth;
-            barElEth.style.width = `${conf * 100}%`;
+            barElEth.style.width = conf == null ? '0%' : `${conf * 100}%`;
         } else {
-            document.getElementById('regime-eth-status').textContent = 'Loading...';
-            document.getElementById('regime-eth-conf').textContent = '--';
+            document.getElementById('regime-eth-status').textContent = 'Unavailable';
+            document.getElementById('regime-eth-conf').textContent = 'Verified diagnostic unavailable';
         }
 
         // Stock Market (different API structure - no 'data' wrapper)
         if (stockRes?.current_regime) {
             const regime = stockRes.current_regime;
-            const conf = stockRes.confidence || 0;
+            const conf = stockRes.state_probabilities && Number.isFinite(stockRes.confidence) ? stockRes.confidence : null;
 
             document.getElementById('regime-stock-status').textContent = regime;
-            document.getElementById('regime-stock-conf').textContent = `${Math.round(conf * 100)}% confidence`;
+            document.getElementById('regime-stock-conf').textContent = conf == null ? 'Descriptive diagnostic; probability unavailable' : `${Math.round(conf * 100)}% state probability (not a forecast)`;
 
             const regimeClassStock = regime.toLowerCase().replace(/\s+/g, '-');
             const statusElStock = document.getElementById('regime-stock-status');
             statusElStock.className = 'regime-status ' + regimeClassStock;
             const barElStock = document.getElementById('regime-stock-bar');
             barElStock.className = 'regime-progress-fill ' + regimeClassStock;
-            barElStock.style.width = `${conf * 100}%`;
+            barElStock.style.width = conf == null ? '0%' : `${conf * 100}%`;
         } else {
             // Fallback if stock regime endpoint not available
             document.getElementById('regime-stock-status').textContent = 'N/A';

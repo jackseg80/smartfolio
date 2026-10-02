@@ -1,0 +1,436 @@
+{
+  "crypto_BTC_7d.json": {
+    "sha256": "2d5d40a563983719cf497da5c9fb859ab2f0e992fb59b27a820408cb2e2d77f8",
+    "dataset_id": "verified-daily-crypto-BTC-039ed8266a4b213f",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_BTC_30d.json": {
+    "sha256": "ea1f7916841cc6171892aea7be21e28f04f462f6698be0a0641a1abd061319ca",
+    "dataset_id": "verified-daily-crypto-BTC-039ed8266a4b213f",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_ETH_7d.json": {
+    "sha256": "5c9eb1502ba58b54ae0f1dca52c5533aec9237842b1c839dcb2476b1fe6b197d",
+    "dataset_id": "verified-daily-crypto-ETH-cf74467c03ff4a30",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_ETH_30d.json": {
+    "sha256": "5711dc5f41f1135d004b9aa31d766c6e46723b2f1d741d55f02a5ef41de36484",
+    "dataset_id": "verified-daily-crypto-ETH-cf74467c03ff4a30",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_SOL_7d.json": {
+    "sha256": "5de4778adc27a9cf1212e3be5adc81ce9c9baded36c889e6383c9174f69ba567",
+    "dataset_id": "verified-daily-crypto-SOL-968df98033cb7a07",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_SOL_30d.json": {
+    "sha256": "945b89e5f78b73ce9541ada99982491f55bf33c177f90893ee032721660283be",
+    "dataset_id": "verified-daily-crypto-SOL-968df98033cb7a07",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_SPY_7d.json": {
+    "sha256": "b54242ce545bc99f572b36ff9f62da00e51a3be671feed83485e36b9f399af42",
+    "dataset_id": "verified-daily-stocks-SPY-b6f8651cfebbb4fe",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_SPY_30d.json": {
+    "sha256": "b832a4b67294b1cf32f7049e808fe0cc91b1bbf40eca10c267c6495614e2ddc6",
+    "dataset_id": "verified-daily-stocks-SPY-b6f8651cfebbb4fe",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_QQQ_7d.json": {
+    "sha256": "1fca31862b1aaae63d5a4903c70a6142261556d193c731e3ad5496cbea21b7e0",
+    "dataset_id": "verified-daily-stocks-QQQ-eaee46a64f88df58",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_QQQ_30d.json": {
+    "sha256": "7748c0cf11425d7f3534fc32bbec9ad62622dfbb58963f446642b1962f63ba5f",
+    "dataset_id": "verified-daily-stocks-QQQ-eaee46a64f88df58",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_MSFT_7d.json": {
+    "sha256": "e01f6f0ce2c8fc226e833a2b54529b7bc1e5f1fd73b771c16b47a049ef84dd88",
+    "dataset_id": "verified-daily-stocks-MSFT-566e082c46cd8906",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_MSFT_30d.json": {
+    "sha256": "71a23b91ed5e81053c8dfeebf29bb73cf5d7f7051b5fdec032b4d61076ee3677",
+    "dataset_id": "verified-daily-stocks-MSFT-566e082c46cd8906",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_TSLA_7d.json": {
+    "sha256": "4a11c5718c45781a332056c6622616c3fcbc334fe1358a1bba97e4a8a8d8b2bb",
+    "dataset_id": "verified-daily-stocks-TSLA-fcfa0baab0b72028",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_TSLA_30d.json": {
+    "sha256": "892cf507888ad8712ae9918fb0c5e5f258f225096cca656c329b6505522b56f3",
+    "dataset_id": "verified-daily-stocks-TSLA-fcfa0baab0b72028",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_GOOGL_7d.json": {
+    "sha256": "4a5ac3214a48c39fc7cb617c19cb492c02c7d1ae6609299a39f6e858acc4697a",
+    "dataset_id": "verified-daily-stocks-GOOGL-9c9f3bd95b24fb11",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_GOOGL_30d.json": {
+    "sha256": "3ea4ecff7233708a80801778e9c092260c404bcbc018302a7c95b95dd28f411b",
+    "dataset_id": "verified-daily-stocks-GOOGL-9c9f3bd95b24fb11",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_WFRD_7d.json": {
+    "sha256": "06e611512f0258922616b1b0c5d4d7dda4a9b8187b70a6c14ea2646d5afe416f",
+    "dataset_id": "verified-daily-stocks-WFRD-474900fe3459c1e2",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_WFRD_30d.json": {
+    "sha256": "e98d27c610656acfbcebf0728ba14c89ca04f2d39b6522a75ac3a6200ad246f3",
+    "dataset_id": "verified-daily-stocks-WFRD-474900fe3459c1e2",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_KO_7d.json": {
+    "sha256": "a0250c6957743c88515897e4492308ec051789db0c914dbe8c971437b0afc18e",
+    "dataset_id": "verified-daily-stocks-KO-cdfebaf84baad2b5",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_KO_30d.json": {
+    "sha256": "1b450beba836dd62926debbe70e2cc546ba1b91fe32596f3be0938a3510c84b8",
+    "dataset_id": "verified-daily-stocks-KO-cdfebaf84baad2b5",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AAPL_7d.json": {
+    "sha256": "2e9c7227a74a0b0c6ecbba9a8b2e41c0aeda2db7634aaf8d3cea7122e4242458",
+    "dataset_id": "verified-daily-stocks-AAPL-1843633f24c0be74",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AAPL_30d.json": {
+    "sha256": "74dbeb6c25c5230d55a63730d4057d99f0391b913593870bdf89e51ec806f9df",
+    "dataset_id": "verified-daily-stocks-AAPL-1843633f24c0be74",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AMD_7d.json": {
+    "sha256": "6b52580bbf2d353863406b4f8130b8038c8faa86432d0dec35590a6a668b0dbe",
+    "dataset_id": "verified-daily-stocks-AMD-7ad7093c8bcb8c73",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AMD_30d.json": {
+    "sha256": "305b4bb4c5bd2109b6d0cff4c3a8fc2b8996920aed96ac01b832c046dc570153",
+    "dataset_id": "verified-daily-stocks-AMD-7ad7093c8bcb8c73",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_BRK-B_7d.json": {
+    "sha256": "0ab8ec90d4bc3dec8953274e7ac7e68b56ce9b059bbfc318f326f152fc647c95",
+    "dataset_id": "verified-daily-stocks-BRK-B-1d4056be01faf95d",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_BRK-B_30d.json": {
+    "sha256": "272bdda49d41fa304aa717313785788c9d6d7e1b3b6ee442dc4a0e98f39cdb61",
+    "dataset_id": "verified-daily-stocks-BRK-B-1d4056be01faf95d",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_META_7d.json": {
+    "sha256": "1962d17eb95ff666d576a45c25db3515b993c6c6896e202b1ac93244be201c5b",
+    "dataset_id": "verified-daily-stocks-META-a496f00e3cd164f3",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_META_30d.json": {
+    "sha256": "8635a3ba25fbcd47919c39d212816b796d19cdb1e32d0463c629794dc9c8e642",
+    "dataset_id": "verified-daily-stocks-META-a496f00e3cd164f3",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_PLTR_7d.json": {
+    "sha256": "3a50bd87941598bb369482dd6ca2cabd650f912b9f760cab11502c518b6b6794",
+    "dataset_id": "verified-daily-stocks-PLTR-c1be2854367e8184",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_PLTR_30d.json": {
+    "sha256": "5af7596eccac45a1a0dfac1462be60e584958b163332c19f857c6b8c6febd8cc",
+    "dataset_id": "verified-daily-stocks-PLTR-c1be2854367e8184",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_CRSP_7d.json": {
+    "sha256": "a9dc460d043e9ae9256fcdf91d8173a0d5c9e8b7f117f97c8bcfd08f8f77a560",
+    "dataset_id": "verified-daily-stocks-CRSP-31e2319311f2f303",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_CRSP_30d.json": {
+    "sha256": "a7dd685bf873bcef9ede19bca81bec073428b204dc0fb706690022b42742e66c",
+    "dataset_id": "verified-daily-stocks-CRSP-31e2319311f2f303",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_NVDA_7d.json": {
+    "sha256": "b09135fe9ab47d7d5664e2c8574f79bd8b48495f4bca78e2f224278417841290",
+    "dataset_id": "verified-daily-stocks-NVDA-0296acb6aa6521d7",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_NVDA_30d.json": {
+    "sha256": "e0cf64e9a72f47f1422e5fa2ce08e553ba78147a88af7e1dc71ecec743a2be5e",
+    "dataset_id": "verified-daily-stocks-NVDA-0296acb6aa6521d7",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_VWO_7d.json": {
+    "sha256": "3c2d724caae7fe6a5457ce6d2590872aec46d2edcfbb557d71ed18bc132d7d57",
+    "dataset_id": "verified-daily-stocks-VWO-46a14a42c91acfc0",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_VWO_30d.json": {
+    "sha256": "c4f5f9df0b770842f8b35f7147a41cda001e5724ed122d78549f14170ab96b29",
+    "dataset_id": "verified-daily-stocks-VWO-46a14a42c91acfc0",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLI_7d.json": {
+    "sha256": "15e00fd6ddbe0cb70bdd6e00723af43786e131c32fdaa712edba813fe8bd384f",
+    "dataset_id": "verified-daily-stocks-XLI-936e93689b67036a",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLI_30d.json": {
+    "sha256": "fc04dc4938321b0aceccb7af7050d06921d3ebbf48a33395ce7df43b8b30674f",
+    "dataset_id": "verified-daily-stocks-XLI-936e93689b67036a",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_VGK_7d.json": {
+    "sha256": "a4a2da199b022bfb1bb44cf791b3f37a15f5dc893175a6237d2398433c3e4195",
+    "dataset_id": "verified-daily-stocks-VGK-c00acbcbc4b98a6e",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_VGK_30d.json": {
+    "sha256": "c67953bd9bd20c4ee5abefc1a472b48b5a48aa088bd7a3f0a3b18d132e0086bb",
+    "dataset_id": "verified-daily-stocks-VGK-c00acbcbc4b98a6e",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLU_7d.json": {
+    "sha256": "305e73466e37dcdb57c146b392d24322aa32cb0b7895405333f1348a547a40ad",
+    "dataset_id": "verified-daily-stocks-XLU-b6c92932039cd2ae",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLU_30d.json": {
+    "sha256": "46fdcb2e812bfa9420e38af9a7242c1d23d50b477a49a70b35fc054c1278a687",
+    "dataset_id": "verified-daily-stocks-XLU-b6c92932039cd2ae",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLP_7d.json": {
+    "sha256": "e121b801476a78c6642995b500493acf0777910a948518a50e89ec770acb1f05",
+    "dataset_id": "verified-daily-stocks-XLP-d6b6fdc79d5ee51c",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_XLP_30d.json": {
+    "sha256": "00555407ae710195c3c7ea8533a0abb12cf4d6fadd8708cf050498ad84ec94fd",
+    "dataset_id": "verified-daily-stocks-XLP-d6b6fdc79d5ee51c",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_BNB_7d.json": {
+    "sha256": "66f9038985a41233a3a64f7787ad330dceb74dd1063538ced5427fbbe9509258",
+    "dataset_id": "verified-daily-crypto-BNB-d63248ee19e01f85",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_BNB_30d.json": {
+    "sha256": "ce0cdb29d6e413fe3cd7de233776f582e98d10035595c0aa09ae9c9706d75bed",
+    "dataset_id": "verified-daily-crypto-BNB-d63248ee19e01f85",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_LINK_7d.json": {
+    "sha256": "2772d31c2f7aac3422d0a3c01f65d17fb46339bb44a2ed404a37d9c54f4df9b8",
+    "dataset_id": "verified-daily-crypto-LINK-b93c2c5e76e38634",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_LINK_30d.json": {
+    "sha256": "a195b65cde9b2ba3b4b65f760de0565bce919c1d2f509a660f4e293dbedceb74",
+    "dataset_id": "verified-daily-crypto-LINK-b93c2c5e76e38634",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_LTC_7d.json": {
+    "sha256": "5d2ef167c1a8bb2575cc36013e5df23df6456387f39f512ee01f8847063c976e",
+    "dataset_id": "verified-daily-crypto-LTC-f1a8474dd8c48ea5",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_LTC_30d.json": {
+    "sha256": "21809d63b5c959f23a79c6a6262537d44f03bdb07ae837701671414b8b73bfbc",
+    "dataset_id": "verified-daily-crypto-LTC-f1a8474dd8c48ea5",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_ADA_7d.json": {
+    "sha256": "0489472685ae19d13539321e4bb756372f05980ff6a9bbf6772c4fe6ce37fb91",
+    "dataset_id": "verified-daily-crypto-ADA-daceae3a5ead5f22",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_ADA_30d.json": {
+    "sha256": "e28402d6552dbaaff0278b81c1e63a5a1757fe8a5337ff7f229ac0a890fc6b74",
+    "dataset_id": "verified-daily-crypto-ADA-daceae3a5ead5f22",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_XRP_7d.json": {
+    "sha256": "3121c754dd6a7653df45c0f84ab5ed943861a4f94e9612128eebf6900ff766f0",
+    "dataset_id": "verified-daily-crypto-XRP-da324441ae0b4bbb",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_XRP_30d.json": {
+    "sha256": "9d3fcf2a98e049ad9a4856cfd6724b9a1547a3c0ebdb8765282a3dd5f6c46ed4",
+    "dataset_id": "verified-daily-crypto-XRP-da324441ae0b4bbb",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_DOT_7d.json": {
+    "sha256": "dcc0e73eae9ebb6d35ed875d2907761766587f944942920fc61babb67094b8f6",
+    "dataset_id": "verified-daily-crypto-DOT-602624fb9c11bb21",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_DOT_30d.json": {
+    "sha256": "45f4c8fbe11517868b86135d289b9887657c6f1699ba4b20430651f5c7ea46f2",
+    "dataset_id": "verified-daily-crypto-DOT-602624fb9c11bb21",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_BCH_7d.json": {
+    "sha256": "68ce274aec84845e3b91c19bd03fc802c628ad476093ec920df32fa02660dd2c",
+    "dataset_id": "verified-daily-crypto-BCH-abf046c2e64d86e3",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "crypto_BCH_30d.json": {
+    "sha256": "a3c94c13ffa8b8dc7d049a062434479bbeac21596532f1900fe912d9ee8de981",
+    "dataset_id": "verified-daily-crypto-BCH-abf046c2e64d86e3",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AGGS.SW_7d.json": {
+    "sha256": "c6e0e4422d573bda06d12b8ef004ba812da962c144010ca738de0240f314c42f",
+    "dataset_id": "verified-daily-stocks-AGGS.SW-77b71c4c952b89bd",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_AGGS.SW_30d.json": {
+    "sha256": "2ae4dc07276984c1d9cc881df0d8c8ab1434c916ba135c76edbd038e0f4f509d",
+    "dataset_id": "verified-daily-stocks-AGGS.SW-77b71c4c952b89bd",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_SLHN.SW_7d.json": {
+    "sha256": "d5292cd59d3f519e7b27ea4b520c11cf9d9661a5d384c5b0ece4a9464aacde48",
+    "dataset_id": "verified-daily-stocks-SLHN.SW-406966df98b2cb79",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  },
+  "stocks_SLHN.SW_30d.json": {
+    "sha256": "097ab4b8eb23a88e44f3cb6cbf7d530ce5285bcf5350bb0de7caf82d57427cc2",
+    "dataset_id": "verified-daily-stocks-SLHN.SW-406966df98b2cb79",
+    "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+    "validation_state": "retrospectively_validated",
+    "governance_eligible": false
+  }
+}

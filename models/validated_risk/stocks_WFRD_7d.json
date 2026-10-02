@@ -1,0 +1,64 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "WFRD",
+  "market": "stocks",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-WFRD-474900fe3459c1e2",
+  "dataset_sha256": "474900fe3459c1e23cd2b153d9bfcdeebb7cf6c7f612a4b1aeebbd40074fcaa6",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2021-05-13T00:00:00+00:00",
+  "training_end": "2025-03-21T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 1.5205986795958737,
+        "ewma": 0.6152829473013536,
+        "ridge": 0.6468809886996182,
+        "lstm": 0.8204711288720002
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.05135530171420233,
+      "learned_wins": 2,
+      "windows": 3,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.7331431273364902,
+          "mae": 0.1356209539698665,
+          "rows": 246
+        },
+        "ewma": {
+          "qlike": 0.3540312268347197,
+          "mae": 0.12615637538920418,
+          "rows": 246
+        },
+        "ridge": {
+          "qlike": 0.3131839716314551,
+          "mae": 0.09736079522781614,
+          "rows": 246
+        },
+        "lstm": {
+          "qlike": 0.4076130220803509,
+          "mae": 0.10015801425707764,
+          "rows": 246
+        }
+      },
+      "learned_confirmation_improvement": 0.11537754894805996,
+      "interval_coverage": 1.0
+    }
+  },
+  "interval": null
+}

@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XFRA",
+  "fetched_at": "2026-09-30T13:29:22.669732+00:00",
+  "file": "FLXI.DE.csv",
+  "sha256": "60736fbe59631e049fac1fe4e260dfe588ab92e90551e14115fec7e259d8ab0f",
+  "dataset_id": "verified-daily-stocks-FLXI.DE-60736fbe59631e04"
+}

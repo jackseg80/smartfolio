@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 from services.ml.orchestrator import get_orchestrator, get_ml_predictions
 from services.ml_pipeline_manager_optimized import optimized_pipeline_manager as pipeline_manager
-from api.deps import get_required_user
+from api.deps import get_required_user, require_admin_role
 from api.utils.formatters import success_response, error_response
 from shared.error_handlers import handle_api_errors, handle_service_errors
 from .cache_utils import get_ml_cache, cache_get, cache_set
@@ -67,84 +67,41 @@ class SentimentResponse(BaseModel):
     fallback={"predictions": {}, "regime_prediction": None, "volatility_forecast": None, "model_status": {}},
     reraise_http_errors=True
 )
-async def unified_predictions(request: PredictionRequest):
-    """
-    Prédictions ML unifiées - volatilité, régime, corrélations
-    Support multi-horizon: horizons=[1, 7, 30] pour 1j, 7j, 30j
-    """
-    ml_cache = get_ml_cache()
-    cache_key = f"predictions_{hash(str(request.dict()))}"
-    cached_result = cache_get(ml_cache, cache_key, 300)  # 5 min cache
-    if cached_result:
-        return cached_result
-
-    orchestrator = get_orchestrator()
-    horizons = request.horizons if request.horizons else [request.horizon_days]
-
-    predictions = await get_ml_predictions(symbols=request.assets)
-
-    enhanced_predictions = {}
-    if request.include_volatility and len(horizons) > 1:
-        enhanced_predictions = await _get_multi_horizon_predictions(
-            request.assets, horizons, request.include_confidence
-        )
-
-    final_predictions = predictions.get("predictions", {})
-    if enhanced_predictions:
-        for symbol in request.assets:
-            if symbol in enhanced_predictions:
-                if symbol not in final_predictions:
-                    final_predictions[symbol] = {}
-                final_predictions[symbol].update(enhanced_predictions[symbol])
-
-    if request.include_confidence:
-        final_predictions = await _add_confidence_metrics(final_predictions, request.assets)
-
-    result = PredictionResponse(
-        success=True,
-        predictions=final_predictions,
-        regime_prediction=predictions.get("regime") if request.include_regime else None,
-        volatility_forecast=predictions.get("volatility") if request.include_volatility else None,
-        model_status=predictions.get("model_status", {}),
-        timestamp=datetime.now().isoformat()
-    )
-
-    cache_set(ml_cache, cache_key, result)
-    logger.info(f"Unified predictions generated for {len(request.assets)} assets, horizons: {horizons}")
-    return result
+async def unified_predictions(request: PredictionRequest, user: str = Depends(get_required_user), source: str = Query("cointracking")):
+    from services.ml.reliability import capability_service
+    from api.schemas.ml_contract import ModelType, Horizon
+    horizons = request.horizons or [request.horizon_days]
+    results = {}
+    for asset in request.assets:
+        results[asset] = {}
+        for days in horizons:
+            h = {1: Horizon.D1, 7: Horizon.D7, 30: Horizon.D30, 90: Horizon.D90}.get(days)
+            record = await capability_service.result(asset, "crypto", ModelType.VOLATILITY, h)
+            results[asset][f"{days}d"] = record.model_dump(mode="json")
+    return PredictionResponse(success=True, predictions=results,
+        volatility_forecast={"available": any(r["value"] is not None for v in results.values() for r in v.values()), "predictions": results, "user_id": user, "source": source},
+        regime_prediction=None, model_status={"reason": "Per-result availability is authoritative"}, timestamp=datetime.now().isoformat())
 
 
 # ===== VOLATILITY PREDICTIONS =====
 
 @router.get("/volatility/predict/{symbol}")
 @handle_api_errors(fallback={"volatility_forecast": None})
-async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le=365)) -> dict:
-    """
-    Prédiction de volatilité pour un asset spécifique
-    """
-    ml_cache = get_ml_cache()
-    cache_key = f"volatility_{symbol}_{horizon_days}"
-    cached_result = cache_get(ml_cache, cache_key, 600)  # 10 min cache
-    if cached_result:
-        return cached_result
-
-    orchestrator = get_orchestrator()
-    prediction = await orchestrator.predict_volatility(symbol, horizon_days)
-
-    result = success_response({
-        "symbol": symbol,
-        "horizon_days": horizon_days,
-        "volatility_forecast": prediction,
-        "timestamp": datetime.now().isoformat()
-    })
-
-    cache_set(ml_cache, cache_key, result)
-    return result
+async def predict_volatility(symbol: str, horizon_days: int = Query(30, ge=1, le=365),
+    user: str = Depends(get_required_user), source: str = Query("cointracking")) -> dict:
+    from services.ml.reliability import capability_service
+    from api.schemas.ml_contract import ModelType, Horizon
+    horizon = {7: Horizon.D7, 30: Horizon.D30}.get(horizon_days)
+    record = await capability_service.result(symbol, "crypto", ModelType.VOLATILITY, horizon)
+    return success_response({"symbol": symbol, "horizon_days": horizon_days,
+        "available": record.value is not None, "reason": record.reason,
+        "volatility_forecast": record.value, "prediction": record.value,
+        "result": record.model_dump(mode="json"), "user_id": user, "source": source})
 
 
 @router.post("/volatility/train-portfolio")
 @handle_api_errors(fallback={"trainable_assets": 0, "loaded": 0, "results": {}})
-async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)) -> dict:
+async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None), user: str = Depends(require_admin_role)) -> dict:
     """Alias that preloads requested volatility models instead of training."""
     req_symbols = symbols or ["BTC", "ETH"]
     results = {}
@@ -153,7 +110,7 @@ async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)) -> d
     loaded = sum(1 for v in results.values() if v)
     return success_response({
         "trainable_assets": len(req_symbols),
-        "estimated_duration_minutes": 1,
+        "action": "load_existing_artifacts",
         "results": results,
         "loaded": loaded
     })
@@ -161,12 +118,12 @@ async def alias_train_portfolio(symbols: Optional[List[str]] = Query(None)) -> d
 
 @router.post("/volatility/batch-predict")
 @handle_api_errors(fallback={"predictions": {}})
-async def alias_batch_predict(payload: Dict[str, Any] = Body(default={})) -> dict:
+async def alias_batch_predict(payload: Dict[str, Any] = Body(default={}), user: str = Depends(get_required_user), source: str = Query("cointracking")) -> dict:
     """Alias that forwards to unified /predict."""
     assets = payload.get("symbols") or payload.get("assets") or ["BTC", "ETH"]
     horizons = [1, 7, 30]
     req = PredictionRequest(assets=assets, horizons=horizons, include_regime=False, include_volatility=True)
-    return await unified_predictions(req)
+    return await unified_predictions(req, user, source)
 
 
 # ===== REGIME PREDICTIONS =====
@@ -302,65 +259,11 @@ async def get_symbol_sentiment(
     days: int = Query(1, ge=1, le=30, description="Number of days for sentiment analysis"),
     include_breakdown: bool = Query(True, description="Include detailed source breakdown")
 ):
-    """
-    Get sentiment analysis for a cryptocurrency symbol
-    """
-    logger.debug(f"Getting sentiment analysis for {symbol} over {days} days")
-
-    ml_cache = get_ml_cache()
-    cache_key = f"sentiment:{symbol}:{days}:{include_breakdown}"
-    cached_result = cache_get(ml_cache, cache_key, 900)
-    if cached_result:
-        logger.debug(f"Returning cached sentiment for {symbol}")
-        return cached_result
-
-    try:
-        from services.execution.governance import governance_engine
-        current_state = await governance_engine.get_current_state()
-        signals = current_state.signals if current_state else None
-    except Exception as e:
-        logger.warning(f"Could not get verified governance sentiment: {e}")
-        signals = None
-
-    is_available = bool(
-        signals
-        and getattr(signals, "available", False)
-        and isinstance(signals.sentiment, dict)
-        and signals.sentiment
-    )
-    if not is_available:
-        result = SentimentResponse(
-            success=False,
-            symbol=symbol.upper(),
-            aggregated_sentiment={
-                "available": False,
-                "reason": "No verified sentiment observation is available",
-                "analysis_period_days": days
-            },
-            sources_used=[],
-            metadata={"timestamp": datetime.now().isoformat(), "data_quality": "unavailable"}
-        )
-        cache_set(ml_cache, cache_key, result)
-        return result
-
-    result = SentimentResponse(
-        success=True,
-        symbol=symbol.upper(),
-        aggregated_sentiment={
-            "available": True,
-            **signals.sentiment,
-            "analysis_period_days": days
-        },
-        sources_used=list(signals.sources_used),
-        metadata={
-            "timestamp": datetime.now().isoformat(),
-            "data_quality": "reported_by_governance",
-            "last_updated": datetime.now().isoformat()
-        }
-    )
-
-    cache_set(ml_cache, cache_key, result)
-    return result
+    """No asset sentiment model has an independently validated adapter."""
+    return SentimentResponse(success=False, symbol=symbol.upper(),
+        aggregated_sentiment={"available": False, "value": None, "availability": "Unavailable",
+            "reason": "No validated asset sentiment model. Fear & Greed is a separate external crypto-market indicator."},
+        sources_used=[], metadata={"validation_state": "not_evaluable"})
 
 
 # ===== CORRELATION ENDPOINT =====

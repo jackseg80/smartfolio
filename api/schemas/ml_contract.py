@@ -31,6 +31,35 @@ class Horizon(str, Enum):
     D90 = "90d"
 
 
+class Availability(str, Enum):
+    AVAILABLE = "Available"
+    PARTIAL = "Partial"
+    UNAVAILABLE = "Unavailable"
+    EXPERIMENTAL = "Experimental"
+    REJECTED = "Rejected"
+
+
+class Provenance(BaseModel):
+    provider: Optional[str] = None
+    dataset_id: Optional[str] = None
+    evaluation_dataset_id: Optional[str] = None
+    observation_sha256: Optional[str] = None
+    code_version: Optional[str] = None
+    artifact_sha256: Optional[str] = None
+    training_start: Optional[datetime] = None
+    training_end: Optional[datetime] = None
+    adjustment_policy: Optional[str] = None
+    method: Optional[str] = None
+
+
+class ValidationStatus(BaseModel):
+    state: Literal["descriptive", "retrospectively_validated", "unvalidated", "rejected", "not_evaluable"] = "not_evaluable"
+    reason: str
+    protocol_id: Optional[str] = None
+    evaluated_at: Optional[datetime] = None
+    metrics: Dict[str, Any] = Field(default_factory=dict)
+
+
 class ConfidenceLevel(str, Enum):
     """Confidence levels for intervals."""
     LOW = "80"
@@ -54,21 +83,23 @@ class ModelMetadata(BaseModel):
 
 
 class UncertaintyMeasures(BaseModel):
-    """Mesures d'incertitude standardisées"""
+    """Uncertainty measures standardisées"""
     std: Optional[float] = Field(None, description="Prediction standard deviation")
     lower_bound: Optional[float] = Field(None, description="Lower bound (PI)")
     upper_bound: Optional[float] = Field(None, description="Upper bound (PI)")
     confidence_level: Optional[ConfidenceLevel] = Field(None, description="Confidence level")
-    calibration_score: Optional[float] = Field(None, ge=0, le=1, description="Score de calibration [0,1]")
+    nominal_coverage: Optional[float] = Field(None, ge=0, le=1, description="Nominal prediction interval coverage")
+    confirmation_coverage: Optional[float] = Field(None, ge=0, le=1, description="Observed coverage on reserved confirmation data")
+    calibration_score: Optional[float] = Field(None, ge=0, le=1, description="Calibration score [0,1]")
 
 
 class QualityMetrics(BaseModel):
     """Prediction quality metrics."""
     model_config = {"protected_namespaces": ()}
 
-    confidence: float = Field(ge=0, le=1, description="Overall confidence [0,1]")
+    confidence: Optional[float] = Field(None, ge=0, le=1, description="Evaluated confidence [0,1]; absent when not evaluated")
     data_freshness: Optional[float] = Field(None, description="Data freshness (hours)")
-    feature_coverage: Optional[float] = Field(None, ge=0, le=1, description="Couverture features [0,1]")
+    feature_coverage: Optional[float] = Field(None, ge=0, le=1, description="Feature coverage [0,1]")
     model_health: Optional[float] = Field(None, ge=0, le=1, description="Model health [0,1]")
 
 
@@ -80,7 +111,9 @@ class UnifiedMLRequest(BaseModel):
 
     assets: List[str] = Field(max_length=50, description="Assets to analyze")
     model_type: ModelType = Field(description="Requested prediction type")
-    horizon: Optional[Horizon] = Field(None, description="Horizon temporel")
+    horizon: Optional[Horizon] = Field(None, description="Time horizon")
+    market: Literal["crypto", "stocks"] = "crypto"
+    source: str = Field("cointracking", min_length=1, max_length=100, description="Selected portfolio source")
 
     # Options de qualité
     include_uncertainty: bool = Field(False, description="Include uncertainty measures")
@@ -89,14 +122,14 @@ class UnifiedMLRequest(BaseModel):
 
     # Paramètres contextuels
     context: Optional[Dict[str, Any]] = Field(None, description="Additional context")
-    cache_ttl: Optional[int] = Field(300, description="TTL cache en secondes")
+    cache_ttl: Optional[int] = Field(300, description="Cache TTL in seconds")
 
 
 class BatchMLRequest(BaseModel):
     """Requête ML batch pour multiple modèles/horizons"""
     assets: List[str] = Field(max_length=20, description="Assets to analyze")
     requests: List[Dict[str, Any]] = Field(max_length=10, description="Multiple requests")
-    global_options: Optional[Dict[str, Any]] = Field(None, description="Options globales")
+    global_options: Optional[Dict[str, Any]] = Field(None, description="Global options")
 
 
 # === REPONSES UNIFIEES ===
@@ -104,13 +137,24 @@ class BatchMLRequest(BaseModel):
 class UnifiedPrediction(BaseModel):
     """Single prediction with uncertainty."""
     asset: str = Field(description="Target asset")
-    value: float = Field(description="Predicted value")
+    value: Optional[Union[float, str, Dict[str, Any]]] = Field(None, description="Observed or predicted value; null when unavailable")
+    market: Literal["crypto", "stocks"] = "crypto"
+    nature: Literal["diagnostic", "forecast"] = "forecast"
+    target: str = "unspecified"
+    horizon: Optional[Horizon] = None
+    unit: Optional[str] = None
+    availability: Availability = Availability.UNAVAILABLE
+    reason: str = "No verified result is available"
+    data_as_of: Optional[datetime] = None
+    target_date: Optional[datetime] = None
+    validation: ValidationStatus = Field(default_factory=lambda: ValidationStatus(reason="No evaluation record"))
+    provenance: Provenance = Field(default_factory=Provenance)
 
     # Incertitude (optionnel)
-    uncertainty: Optional[UncertaintyMeasures] = Field(None, description="Mesures d'incertitude")
+    uncertainty: Optional[UncertaintyMeasures] = Field(None, description="Uncertainty measures")
 
     # Qualité
-    quality: QualityMetrics = Field(description="Quality metrics")
+    quality: QualityMetrics = Field(default_factory=QualityMetrics, description="Measured quality metrics")
 
     # Métadonnées (optionnel)
     metadata: Optional[ModelMetadata] = Field(None, description="Model metadata")
@@ -128,15 +172,17 @@ class UnifiedMLResponse(BaseModel):
     predictions: List[UnifiedPrediction] = Field(description="Predictions per asset")
 
     # Agrégations (optionnel)
-    aggregated: Optional[Dict[str, float]] = Field(None, description="Aggregated metrics")
+    aggregated: Optional[Dict[str, Any]] = Field(None, description="Aggregated metrics")
+    user_id: Optional[str] = None
+    source: Optional[str] = None
 
     # Contexte global
-    processed_at: datetime = Field(default_factory=datetime.now, description="Timestamp traitement")
+    processed_at: datetime = Field(default_factory=datetime.now, description="Processing timestamp")
     cache_hit: bool = Field(False, description="Result served from cache")
-    processing_time_ms: Optional[float] = Field(None, description="Temps de traitement")
+    processing_time_ms: Optional[float] = Field(None, description="Processing time")
 
     # Gestion d'erreurs
-    warnings: List[str] = Field(default_factory=list, description="Avertissements")
+    warnings: List[str] = Field(default_factory=list, description="Warnings")
     failed_assets: List[str] = Field(default_factory=list, description="Failed assets")
 
 
@@ -159,12 +205,12 @@ class VolatilityPrediction(UnifiedPrediction):
 class SentimentPrediction(UnifiedPrediction):
     """Prédiction de sentiment avec détails"""
     sentiment_breakdown: Optional[Dict[str, float]] = Field(None, description="Breakdown by source")
-    fear_greed_index: Optional[float] = Field(None, ge=0, le=100, description="Indice Fear & Greed")
+    fear_greed_index: Optional[float] = Field(None, ge=0, le=100, description="External Fear & Greed index")
 
 
 class RiskScorePrediction(UnifiedPrediction):
     """Score de risque avec composantes"""
-    components: Optional[Dict[str, float]] = Field(None, description="Composantes du score")
+    components: Optional[Dict[str, float]] = Field(None, description="Score components")
     risk_category: Optional[str] = Field(None, description="Risk category")
 
 
@@ -176,16 +222,16 @@ class ModelHealth(BaseModel):
 
     model_name: str = Field(description="Model name")
     version: str = Field(description="Version")
-    is_healthy: bool = Field(description="Health status")
+    is_healthy: Optional[bool] = Field(None, description="Measured health status; unknown without inference evidence")
     last_prediction: Optional[datetime] = Field(None, description="Last prediction")
     error_rate_24h: Optional[float] = Field(None, description="24-hour error rate")
     avg_confidence: Optional[float] = Field(None, description="Average confidence")
-    drift_score: Optional[float] = Field(None, description="Score de drift")
+    drift_score: Optional[float] = Field(None, description="Measured drift score")
 
 
 class MLSystemHealth(BaseModel):
     """Overall ML system health."""
-    overall_health: float = Field(ge=0, le=1, description="Overall health [0,1]")
+    overall_health: Optional[float] = Field(None, ge=0, le=1, description="Measured overall health [0,1]")
     models_status: List[ModelHealth] = Field(description="Status by model")
     system_metrics: Dict[str, Any] = Field(default_factory=dict, description="System metrics")
     last_check: datetime = Field(default_factory=datetime.now, description="Last check")
@@ -210,4 +256,4 @@ def create_fallback_response(
 
 def validate_prediction_quality(prediction: UnifiedPrediction, min_confidence: float = 0.3) -> bool:
     """Valider la qualité d'une prédiction"""
-    return prediction.quality.confidence >= min_confidence
+    return prediction.quality.confidence is not None and prediction.quality.confidence >= min_confidence

@@ -125,24 +125,10 @@ class SpecializedBourseAnalytics:
         try:
             import yfinance as yf
 
-            # Convert exchange suffix to Yahoo format if needed
-            # :xlon -> .L (London), :xpar -> .PA (Paris), :xetr -> .DE (Frankfurt)
-            exchange_suffix = ''
-            if ':' in ticker:
-                exchange = ticker.split(':')[1].lower()
-                exchange_map = {
-                    'xlon': '.L',      # London
-                    'xpar': '.PA',     # Paris
-                    'xetr': '.DE',     # Frankfurt
-                    'xams': '.AS',     # Amsterdam
-                    'xswx': '.SW',     # Swiss
-                    'xmil': '.MI',     # Milan
-                    'xnas': '',        # NASDAQ (no suffix needed)
-                    'xnys': '',        # NYSE (no suffix needed)
-                }
-                exchange_suffix = exchange_map.get(exchange, '')
-
-            yf_ticker = clean_ticker + exchange_suffix
+            from services.ml.bourse.currency_detector import CurrencyExchangeDetector
+            base, _, venue = ticker.partition(':')
+            hints = {'xswx':'SWX','xvtx':'SWX','xlon':'LSE','xams':'AMS','xmil':'MIL','xetr':'XETRA','xnas':'NASDAQ','xnys':'NYSE'}
+            yf_ticker, _, _ = CurrencyExchangeDetector().detect_currency_and_exchange(base.upper(), exchange_hint=hints.get(venue.lower()))
             logger.debug(f"[sector-lookup] Trying yfinance for {yf_ticker} (from {ticker})")
 
             stock = yf.Ticker(yf_ticker)

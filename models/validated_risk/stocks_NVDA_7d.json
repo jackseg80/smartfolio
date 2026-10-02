@@ -1,0 +1,64 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "NVDA",
+  "market": "stocks",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-NVDA-0296acb6aa6521d7",
+  "dataset_sha256": "0296acb6aa6521d71c4d2ff7c01a8a5085aa5fdc1aa82e5ea89ca0f7147e4844",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2006-05-12T00:00:00+00:00",
+  "training_end": "2025-03-21T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.967426232362087,
+        "ewma": 0.6174278143954819,
+        "ridge": 0.6526165942623066,
+        "lstm": 0.8729673308000838
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.0569925407414269,
+      "learned_wins": 18,
+      "windows": 33,
+      "confirmation": {
+        "persistence": {
+          "qlike": 1.2734858983295103,
+          "mae": 0.16788626744875784,
+          "rows": 246
+        },
+        "ewma": {
+          "qlike": 0.5035430809676007,
+          "mae": 0.14455523727335087,
+          "rows": 246
+        },
+        "ridge": {
+          "qlike": 0.5033250143127374,
+          "mae": 0.12373470679499167,
+          "rows": 246
+        },
+        "lstm": {
+          "qlike": 0.8412490152745422,
+          "mae": 0.12389770803763112,
+          "rows": 246
+        }
+      },
+      "learned_confirmation_improvement": 0.00043306454423786,
+      "interval_coverage": 1.0
+    }
+  },
+  "interval": null
+}

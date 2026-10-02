@@ -8,3 +8,11 @@
 *.md text eol=lf
 *.sh text eol=lf
 *.ps1 text eol=crlf
+
+# Validated artifact receipts fingerprint exact bytes; preserve across checkout platforms.
+services/ml/reliability.py -text
+services/ml/risk_evaluation.py -text
+api/schemas/ml_contract.py -text
+data/ml_verified/** -text
+models/validated_risk/** -text
+outputs/ml-reliability/evaluations/** -text

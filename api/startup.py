@@ -18,29 +18,11 @@ logger = logging.getLogger(__name__)
 
 
 async def initialize_ml_models():
-    """
-    Initialize ML models for Governance Engine.
-
-    Returns:
-        int: Number of models successfully initialized
-    """
-    try:
-        from services.ml.orchestrator import get_orchestrator
-        orchestrator = get_orchestrator()
-
-        # Force models to ready status
-        models_initialized = 0
-        for model_type in ['volatility', 'regime', 'correlation', 'sentiment', 'rebalancing']:
-            if model_type in orchestrator.model_status:
-                orchestrator.model_status[model_type] = 'ready'
-                models_initialized += 1
-
-        logger.info(f" {models_initialized} ML models forced to ready status")
-        return models_initialized
-
-    except Exception as ml_error:
-        logger.error(f" ML initialization failed: {ml_error}")
-        return 0
+    """Report loaded artifacts without forcing any readiness or training."""
+    from services.ml.reliability import capability_service
+    count = sum(entry["loaded"] for entry in capability_service.catalog())
+    logger.info("ML artifacts actually loaded: %s; inference remains on demand", count)
+    return count
 
 
 async def initialize_governance_engine():
@@ -187,39 +169,9 @@ async def initialize_task_scheduler():
 
 
 async def initialize_ml_auto_trainer():
-    """
-    Initialize ML Auto-Trainer for automatic periodic model retraining.
-
-    Returns:
-        bool: True if auto-trainer started successfully
-
-    Note:
-        - Trains regime models daily (3am)
-        - Trains volatility models daily (midnight)
-        - Uses MLTrainingScheduler rules to check if retraining is needed
-        - Integrates with TrainingExecutor for background jobs
-    """
-    try:
-        import os
-        from services.ml.auto_trainer import ml_auto_trainer
-
-        # Check if auto-training is enabled (default: enabled)
-        auto_train_enabled = os.getenv("ML_AUTO_TRAIN", "1").strip() == "1"
-
-        if not auto_train_enabled:
-            logger.info(" ML Auto-Trainer disabled (ML_AUTO_TRAIN != 1)")
-            return False
-
-        # Start the scheduler
-        ml_auto_trainer.start()
-
-        logger.info(" ML Auto-Trainer initialized successfully")
-        return True
-
-    except Exception as e:
-        logger.warning(f" ML Auto-Trainer initialization failed (non-blocking): {e}")
-        logger.info(" Models will only train manually via Admin Dashboard")
-        return False
+    """Training is restricted to explicit administrator evaluations."""
+    logger.info("ML auto-training disabled: use explicit administrator actions")
+    return False
 
 
 async def background_startup_tasks():
@@ -236,34 +188,33 @@ async def background_startup_tasks():
         # Initialize ML models
         models_count = await initialize_ml_models()
 
-        if models_count > 0:
-            # Initialize Governance Engine
-            governance_ok = await initialize_governance_engine()
+        # Initialize Governance Engine
+        governance_ok = await initialize_governance_engine()
 
-            # Initialize Alert Engine
-            alerts_ok = await initialize_alert_engine()
+        # Initialize Alert Engine
+        alerts_ok = await initialize_alert_engine()
 
-            # Initialize Playwright (optional, for crypto-toolbox scraping)
-            # Note: Browser not launched unless router enabled in api/main.py
-            playwright_ok = await initialize_playwright_browser()
+        # Initialize Playwright (optional, for crypto-toolbox scraping)
+        # Note: Browser not launched unless router enabled in api/main.py
+        playwright_ok = await initialize_playwright_browser()
 
-            # Initialize Task Scheduler (optional, periodic tasks)
-            # Note: Only starts if RUN_SCHEDULER=1
-            scheduler_ok = await initialize_task_scheduler()
+        # Initialize Task Scheduler (optional, periodic tasks)
+        # Note: Only starts if RUN_SCHEDULER=1
+        scheduler_ok = await initialize_task_scheduler()
 
-            # Initialize ML Auto-Trainer (optional, automatic model retraining)
-            # Note: Only starts if ML_AUTO_TRAIN=1 (default: enabled)
-            ml_auto_trainer_ok = await initialize_ml_auto_trainer()
+        # Initialize ML Auto-Trainer (optional, automatic model retraining)
+        # Note: Only starts if ML_AUTO_TRAIN=1 (default: enabled)
+        ml_auto_trainer_ok = await initialize_ml_auto_trainer()
 
-            logger.info(
-                f" Startup complete: "
-                f"ML={models_count} models, "
-                f"Governance={'OK' if governance_ok else 'Warning'}, "
-                f"Alerts={'OK' if alerts_ok else 'Warning'}, "
-                f"Playwright={'OK' if playwright_ok else 'Next'}, "
-                f"Scheduler={'OK' if scheduler_ok else 'Paused'}, "
-                f"ML-AutoTrain={'OK' if ml_auto_trainer_ok else 'Paused'}"
-            )
+        logger.info(
+            f" Startup complete: "
+            f"ML={models_count} models, "
+            f"Governance={'OK' if governance_ok else 'Warning'}, "
+            f"Alerts={'OK' if alerts_ok else 'Warning'}, "
+            f"Playwright={'OK' if playwright_ok else 'Next'}, "
+            f"Scheduler={'OK' if scheduler_ok else 'Paused'}, "
+            f"ML-AutoTrain={'OK' if ml_auto_trainer_ok else 'Paused'}"
+        )
 
     except Exception as e:
         logger.info(f" Background loading failed, models will load on demand: {e}")

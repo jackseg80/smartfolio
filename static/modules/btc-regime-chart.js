@@ -19,6 +19,10 @@ const BTC_REGIME_CONFIG = {
         'Bull Market': { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e', label: 'Bull' },
         'Expansion': { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', label: 'Expansion' },
         'Insufficient Data': { bg: 'rgba(156, 163, 175, 0.2)', border: '#9ca3af', label: 'N/A' },
+        'State A': { bg: 'rgba(139, 92, 246, 0.2)', border: '#8b5cf6', label: 'State A' },
+        'State B': { bg: 'rgba(6, 182, 212, 0.2)', border: '#06b6d4', label: 'State B' },
+        'State C': { bg: 'rgba(148, 163, 184, 0.2)', border: '#94a3b8', label: 'State C' },
+        'State D': { bg: 'rgba(217, 70, 239, 0.2)', border: '#d946ef', label: 'State D' },
         'Unknown': { bg: 'rgba(107, 114, 128, 0.2)', border: '#6b7280', label: 'Unknown' }
     },
     eventColors: {
@@ -145,8 +149,8 @@ function updateCurrentRegimeSummary(currentRegime) {
     // Update confidence
     const confidenceEl = document.getElementById('btc-current-regime-confidence');
     if (confidenceEl) {
-        const confidence = (currentRegime.confidence * 100).toFixed(1);
-        confidenceEl.textContent = `${confidence}%`;
+        const confidence = currentRegime.confidence == null ? null : (currentRegime.confidence*100).toFixed(1);
+        confidenceEl.textContent = confidence == null ? "Unavailable — rule diagnostic" : confidence+"% · state posterior";
     }
 
     // Update detection method
@@ -402,28 +406,9 @@ function createProbabilitiesChart(hmmProbabilities, currentRegime, confidence, d
         window.btcProbabilitiesChart.destroy();
     }
 
-    // For rule-based detection, adjust probabilities to match detected regime
-    // This ensures the chart reflects the actual hybrid detection, not just HMM
-    let probabilities = { ...hmmProbabilities };
-    let chartSubtitle = '';
-
-    if (detectionMethod === 'rule_based' && currentRegime) {
-        // Redistribute probabilities: detected regime gets confidence, others share remainder
-        const totalRegimes = Object.keys(probabilities).length;
-        const remainder = (1 - confidence) / Math.max(1, totalRegimes - 1);
-
-        for (const regime of Object.keys(probabilities)) {
-            if (regime === currentRegime) {
-                probabilities[regime] = confidence;
-            } else {
-                probabilities[regime] = remainder;
-            }
-        }
-        chartSubtitle = '(Rule-Based Detection)';
-    } else {
-        chartSubtitle = '(HMM Model)';
-    }
-
+    // Economic rules do not define a probability distribution.
+    const probabilities = { ...hmmProbabilities };
+    const chartSubtitle = '(Latent states A–D; not future price direction)';
     const labels = Object.keys(probabilities);
     const data = Object.values(probabilities).map(v => v * 100);
     const colors = labels.map(regime => BTC_REGIME_CONFIG.regimeColors[regime]?.border || '#6b7280');

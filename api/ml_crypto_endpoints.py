@@ -6,7 +6,8 @@ Endpoints:
 - GET /api/ml/crypto/regime-history: Historical regime timeline
 """
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Depends
+from api.deps import get_required_user
 from typing import Optional, List, Dict, Any
 import pandas as pd
 from datetime import datetime
@@ -18,7 +19,7 @@ from services.ml.models.btc_regime_detector import BTCRegimeDetector
 from services.price_history import price_history
 from services.regime_constants import REGIME_NAMES, smooth_regime_sequence
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_required_user)])
 logger = logging.getLogger(__name__)
 
 # Simple in-memory cache for regime history (TTL: 4 hours)
@@ -103,10 +104,11 @@ async def get_crypto_regime(
             'benchmark': symbol,
             'lookback_days': lookback_days,
             'prediction_date': result['prediction_date'],
-            'model_metadata': result['model_metadata']
+            'model_metadata': result['model_metadata'],
+            'data_as_of': result.get('data_as_of')
         }
 
-        logger.info(f"Regime detected: {result['regime_name']} (method={result['detection_method']}, confidence={result['confidence']:.2f})")
+        response_data.update({key: result.get(key) for key in ("nature", "availability", "probability_kind", "hmm_state", "hmm_state_features", "economic_mapping_verified", "rule_diagnostic")})
 
         return success_response(response_data)
 
@@ -167,7 +169,7 @@ async def get_crypto_regime_history(
         # Load symbol-specific HMM model for fallback
         model_file = f"{symbol.lower()}_regime_hmm.pkl"
         if not detector.load_model(model_file):
-            await detector.train_hmm(symbol=symbol, lookback_days=3650)
+            return error_response("HMM history unavailable: explicit administrator training is required", code=503)
 
         features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
         hmm_labels = detector.hmm_model.predict(features_scaled)
@@ -204,12 +206,13 @@ async def get_crypto_regime_history(
             else:
                 # Fallback to HMM
                 hmm_label = int(hmm_labels[i])
-                regime_names.append(detector.regime_names[hmm_label])
-                regime_ids.append(hmm_label)
+                regime_names.append(f"State {chr(65+hmm_label)}")
+                regime_ids.append(4 + hmm_label)
 
         # Smooth regime sequence to remove short-lived transitions (<7 days)
         regime_ids = smooth_regime_sequence(regime_ids, min_duration=7)
-        regime_names = [REGIME_NAMES[rid] for rid in regime_ids]
+        label_mapping = {**dict(enumerate(REGIME_NAMES)), **{4+i: f"State {chr(65+i)}" for i in range(detector.num_regimes)}}
+        regime_names = [label_mapping[rid] for rid in regime_ids]
 
         # Format response
         response_data = {
@@ -219,7 +222,9 @@ async def get_crypto_regime_history(
             'regime_ids': regime_ids,
             'symbol': symbol,
             'lookback_days': lookback_days,
-            'regime_id_mapping': {i: name for i, name in enumerate(detector.regime_names)},
+            'regime_id_mapping': label_mapping,
+            'economic_mapping_verified': False,
+            'id_encoding': 'Rule diagnostics 0-3; unmapped HMM states 4-7',
             'events': get_btc_events(features_df.index.min(), features_df.index.max()),
             'note': 'Hybrid detection (rule-based + HMM fallback) with 7-day minimum duration smoothing.'
         }
@@ -228,6 +233,8 @@ async def get_crypto_regime_history(
         _regime_history_cache[cache_key] = (response_data, time.time())
         logger.debug(f"[Cache STORE] Cached regime history for {cache_key}")
 
+        response_data["retrospective"] = True
+        response_data["history_limitation"] = "Full-sequence HMM and smoothing use later observations; not real-time decision evidence"
         return success_response(response_data)
 
     except Exception as e:
@@ -327,249 +334,18 @@ def _detect_regime_rule_based_optimized(
 
 
 @router.get("/regime-forecast")
-async def get_crypto_regime_forecast(
-    symbol: str = Query("BTC", description="Cryptocurrency symbol"),
-    lookback_days: int = Query(90, ge=30, le=365, description="Context window (days)")
-):
-    """
-    Get Bitcoin regime FORECAST with recent context and future predictions.
-
-    FOCUS: Where we're GOING (predictive) rather than where we were (historical).
-
-    Returns:
-        - Recent 90-day context (for trend visualization)
-        - Current regime with high confidence (hybrid rules + HMM)
-        - Transition probabilities (7/30-day forecast)
-        - Momentum indicators (drawdown/volatility trends)
-        - Conditional scenarios (if +10%, if -10%)
-
-    Args:
-        symbol: Crypto symbol (default: BTC)
-        lookback_days: Context window (30-365 days, default 90)
-
-    Returns:
-        {
-            "current_regime": {...},
-            "recent_context": {
-                "dates": [...],  # Last 90 days
-                "prices": [...],
-                "regimes": [...]
-            },
-            "forecast": {
-                "transition_probabilities": {...},
-                "momentum_indicators": {...},
-                "scenarios": [...]
-            }
-        }
-    """
-    try:
-        logger.info(f"GET /api/ml/crypto/regime-forecast - symbol={symbol}, lookback_days={lookback_days}")
-
-        # Get current regime using existing endpoint (already works well!)
-        detector = BTCRegimeDetector()
-        current_regime_result = await detector.predict_regime(symbol=symbol, lookback_days=3650)
-
-        # Get recent context for trend visualization (last N days)
-        history = price_history.get_cached_history(symbol, days=lookback_days)
-        if history is None or len(history) == 0:
-            return error_response(f"No historical data available for {symbol}", code=404)
-
-        data = pd.DataFrame(history, columns=['timestamp', 'close'])
-        data['timestamp'] = pd.to_datetime(data['timestamp'], unit='s')
-        data.set_index('timestamp', inplace=True)
-
-        # Prepare features for recent context
-        features_df = await detector.prepare_regime_features(symbol=symbol, lookback_days=lookback_days)
-
-        if len(features_df) == 0:
-            return error_response("Insufficient data for forecast", code=400)
-
-        # Get recent regime timeline (simplified, just for context visualization)
-        model_file = f"{symbol.lower()}_regime_hmm.pkl"
-        if not detector.load_model(model_file):
-            await detector.train_hmm(symbol=symbol, lookback_days=3650)
-
-        features_scaled = detector.scaler.transform(features_df[detector.feature_columns])
-        hmm_predictions = detector.hmm_model.predict(features_scaled)
-        recent_regimes = [detector.regime_names[int(pred)] for pred in hmm_predictions]
-
-        # Calculate momentum indicators (trend direction)
-        latest_features = features_df.iloc[-1]
-        last_30d_features = features_df.tail(30)
-
-        drawdown_trend = "improving" if last_30d_features['drawdown_from_peak'].diff().mean() > 0 else "worsening"
-        volatility_trend = "decreasing" if last_30d_features['market_volatility'].diff().mean() < 0 else "increasing"
-
-        # Calculate transition probabilities (simplified heuristic)
-        current_regime_name = current_regime_result['regime_name']
-        current_drawdown = latest_features['drawdown_from_peak']
-        current_volatility = latest_features['market_volatility']
-        current_trend = latest_features.get('trend_30d', 0)
-
-        # Simple scenario-based forecasting
-        scenarios = []
-
-        # Scenario 1: If price +10%
-        new_dd_up = current_drawdown + 0.10
-        if new_dd_up > -0.05:
-            likely_regime_up = "Bull Market"
-        elif new_dd_up > -0.20:
-            likely_regime_up = "Expansion"
-        else:
-            likely_regime_up = current_regime_name
-        scenarios.append({
-            "scenario": "Price +10%",
-            "price_change": "+10%",
-            "likely_regime": likely_regime_up,
-            "probability": 0.7 if likely_regime_up != current_regime_name else 0.9
-        })
-
-        # Scenario 2: If price -10%
-        new_dd_down = current_drawdown - 0.10
-        if new_dd_down < -0.30:
-            likely_regime_down = "Bear Market"
-        elif new_dd_down < -0.10:
-            likely_regime_down = "Correction"
-        else:
-            likely_regime_down = current_regime_name
-        scenarios.append({
-            "scenario": "Price -10%",
-            "price_change": "-10%",
-            "likely_regime": likely_regime_down,
-            "probability": 0.7 if likely_regime_down != current_regime_name else 0.9
-        })
-
-        # Scenario 3: If trend continues
-        trend_direction = "up" if current_trend > 0 else "down"
-        scenarios.append({
-            "scenario": f"Trend continues ({trend_direction})",
-            "price_change": f"{current_trend*100:+.1f}% (30d momentum)",
-            "likely_regime": current_regime_name,
-            "probability": 0.8
-        })
-
-        # Format response
-        response_data = {
-            'current_regime': {
-                'regime': current_regime_result['regime_name'],
-                'confidence': current_regime_result['confidence'],
-                'method': current_regime_result['detection_method'],
-                'reason': current_regime_result.get('rule_reason', 'HMM prediction'),
-                'probabilities': current_regime_result.get('regime_probabilities', {})
-            },
-            'recent_context': {
-                'dates': features_df.index.strftime('%Y-%m-%d').tolist(),
-                'prices': data.loc[features_df.index, 'close'].tolist(),
-                'regimes': recent_regimes,
-                'period_days': lookback_days
-            },
-            'momentum_indicators': {
-                'drawdown_current': float(current_drawdown),
-                'drawdown_trend': drawdown_trend,
-                'volatility_current': float(current_volatility),
-                'volatility_trend': volatility_trend,
-                'trend_30d': float(current_trend),
-                'trend_direction': trend_direction
-            },
-            'scenarios': scenarios,
-            'symbol': symbol,
-            'forecast_date': datetime.now().isoformat()
-        }
-
-        logger.info(f"Regime forecast generated: {current_regime_name} (method={current_regime_result['detection_method']})")
-
-        return success_response(response_data)
-
-    except ValueError as e:
-        logger.error(f"ValueError in get_crypto_regime_history: {e}")
-        return error_response(str(e), code=400)
-    except Exception as e:
-        logger.error(f"Error in get_crypto_regime_history: {e}", exc_info=True)
-        return error_response(f"Failed to build regime timeline: {str(e)}", code=500)
+async def get_crypto_regime_forecast(symbol: str = Query("BTC"), lookback_days: int = Query(90, ge=30, le=365)):
+    return success_response({"available": False, "availability": "Experimental", "nature": "forecast",
+        "forecast": None, "symbol": symbol,
+        "reason": "Regime transition and conditional scenario probabilities have no independent forecasting validation. Use current rule diagnostics and HMM latent-state posteriors separately."})
 
 
 @router.get("/regime/validate")
 async def validate_regime_detector(
     symbol: str = Query("BTC", description="Cryptocurrency symbol")
 ):
-    """
-    Validate regime detector on known Bitcoin bear markets.
+    """Legacy retrospective validation is unavailable without dated inference."""
+    return success_response({"symbol": symbol, "availability": "Unavailable", "validation_state": "not_evaluable",
+        "bear_market_recall": None, "results": [], "status": "Unavailable",
+        "reason": "The legacy test queried current observations for historical events. It cannot establish historical recall or real-time decision quality."})
 
-    Tests:
-    - 2014-2015: Mt.Gox crash (-85%)
-    - 2018: Crypto Winter (-84%)
-    - 2022: Luna/FTX (-77%)
-
-    Returns validation report with recall metrics.
-    """
-    try:
-        logger.info(f"GET /api/ml/crypto/regime/validate - symbol={symbol}")
-
-        # Known bear market periods (manual labeling)
-        known_bear_markets = [
-            {'name': '2014-2015 Mt.Gox', 'start': '2014-01-01', 'end': '2015-01-14', 'max_dd': -0.85},
-            {'name': '2018 Crypto Winter', 'start': '2018-01-01', 'end': '2018-12-15', 'max_dd': -0.84},
-            {'name': '2022 Luna/FTX', 'start': '2022-05-01', 'end': '2022-11-21', 'max_dd': -0.77}
-        ]
-
-        detector = BTCRegimeDetector()
-
-        # Validate each bear market
-        results = []
-        for bear in known_bear_markets:
-            try:
-                # Get data for this period
-                start = pd.to_datetime(bear['start'])
-                end = pd.to_datetime(bear['end'])
-                days = (end - start).days
-
-                # Predict regime for this period
-                regime = await detector.predict_regime(symbol=symbol, lookback_days=days + 365)
-
-                detected_as_bear = regime['regime_name'] == 'Bear Market'
-                confidence = regime['confidence']
-
-                results.append({
-                    'period': bear['name'],
-                    'expected': 'Bear Market',
-                    'detected': regime['regime_name'],
-                    'correct': detected_as_bear,
-                    'confidence': confidence,
-                    'method': regime['detection_method'],
-                    'max_drawdown': bear['max_dd']
-                })
-
-                logger.info(f"{bear['name']}: Detected as {regime['regime_name']} ({'OK' if detected_as_bear else 'Error'})")
-
-            except Exception as e:
-                logger.error(f"Failed to validate {bear['name']}: {e}")
-                results.append({
-                    'period': bear['name'],
-                    'expected': 'Bear Market',
-                    'detected': 'Error',
-                    'correct': False,
-                    'error': str(e)
-                })
-
-        # Calculate metrics
-        total = len(results)
-        correct = sum(1 for r in results if r.get('correct'))
-        recall = correct / total if total > 0 else 0
-
-        validation_report = {
-            'validation_date': datetime.now().isoformat(),
-            'symbol': symbol,
-            'total_tests': total,
-            'correct_detections': correct,
-            'bear_market_recall': recall,
-            'results': results,
-            'status': 'PASS' if recall >= 0.90 else 'FAIL'
-        }
-
-        logger.info(f"Validation complete: {correct}/{total} bear markets detected (recall={recall:.1%})")
-
-        return success_response(validation_report)
-
-    except Exception as e:
-        logger.error(f"Error in validate_regime_detector: {e}", exc_info=True)
-        return error_response(f"Validation failed: {str(e)}", code=500)

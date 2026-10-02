@@ -8,8 +8,9 @@ Ce module gère:
 Extrait de unified_ml_endpoints.py pour modularité (Fév 2026).
 """
 
-from fastapi import APIRouter, BackgroundTasks
-from typing import List
+from fastapi import APIRouter, BackgroundTasks, Depends
+from api.deps import require_admin_role
+from typing import List, Literal
 import logging
 from datetime import datetime
 from pydantic import BaseModel
@@ -20,7 +21,7 @@ from .cache_utils import get_ml_cache
 from .model_endpoints import load_regime_model
 
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["ML Training"])
+router = APIRouter(tags=["ML Training"], dependencies=[Depends(require_admin_role)])
 
 
 class TrainingRequest(BaseModel):
@@ -29,6 +30,7 @@ class TrainingRequest(BaseModel):
     lookback_days: int = 730
     include_market_indicators: bool = True
     save_models: bool = True
+    market: Literal["crypto", "stocks"] = "crypto"
 
 
 @router.post("/train")
@@ -48,7 +50,8 @@ async def train_models(
         request.assets,
         request.lookback_days,
         request.include_market_indicators,
-        request.save_models
+        request.save_models,
+        request.market
     )
 
     # Invalider les caches de prédiction
@@ -60,7 +63,7 @@ async def train_models(
         "success": True,
         "message": f"Training started for {len(request.assets)} assets",
         "assets": request.assets,
-        "estimated_duration_minutes": len(request.assets) * 2,
+        "action": "evaluate_frozen_volatility_protocol",
         "background_task": True
     }
 
@@ -70,24 +73,30 @@ async def _train_models_background(
     assets: List[str],
     lookback_days: int,
     include_market_indicators: bool,
-    save_models: bool
+    save_models: bool,
+    market: Literal["crypto", "stocks"] = "crypto"
 ):
     """
     Tâche d'entraînement en arrière-plan
     """
-    orchestrator = get_orchestrator()
-
-    await orchestrator.train_models(
-        assets=assets,
-        lookback_days=lookback_days,
-        include_market_indicators=include_market_indicators,
-        save_models=save_models
-    )
-
-    logger.info(f"Background training completed for assets: {assets}")
+    import asyncio
+    import json
+    from services.ml.risk_evaluation import evaluate
+    from services.ml.reliability import capability_service
+    reports = []
+    for asset in assets:
+        for horizon in (7, 30):
+            try:
+                reports.append(await asyncio.to_thread(evaluate, capability_service, market, asset.upper(), horizon, publish=save_models))
+            except Exception as exc:
+                reports.append({"asset": asset, "horizon": horizon, "state": "not_evaluable", "reason": str(exc), "published": False})
+    destination = capability_service.root / "outputs/ml-reliability/admin-evaluation.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(reports, indent=2, allow_nan=False), encoding="utf-8")
+    logger.info("Explicit ML evaluation completed; conclusions recorded at %s", destination)
 
 
 @router.post("/regime/train")
 async def alias_regime_train() -> dict:
     """Alias that loads the regime model."""
-    return await load_regime_model()
+    return {"success": False, "availability": "Unavailable", "reason": "Legacy training alias retired. Use the explicit administrator evaluation workflow."}

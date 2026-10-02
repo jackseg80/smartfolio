@@ -111,6 +111,14 @@ function validateParameters(algorithm) {
   return errors;
 }
 
+async function selectedOptimizationSource() {
+  const { ensureSelectedSource } = await import('../core/selected-source.js');
+  const source = await ensureSelectedSource();
+  if (!source) throw new Error('No authenticated portfolio source is selected');
+  document.getElementById('source').value = source;
+  return source;
+}
+
 // Optimisation principale
 async function runOptimization() {
   const activeTab = document.querySelector('.tab-btn.active');
@@ -131,7 +139,7 @@ async function runOptimization() {
   try {
     // Paramètres de base
     const baseParams = {
-      source: document.getElementById('source').value,
+      source: await selectedOptimizationSource(),
       min_usd: parseFloat(document.getElementById('minusd').value),
       min_history_days: 365,
       lookback_days: parseInt(document.getElementById('lookback').value),
@@ -603,7 +611,7 @@ async function compareAlgorithms() {
     for (const algo of compareList) {
       try {
         const baseParams = {
-          source: document.getElementById('source').value,
+          source: await selectedOptimizationSource(),
           min_usd: parseFloat(document.getElementById('minusd').value),
           lookback_days: parseInt(document.getElementById('lookback').value)
         };
@@ -855,11 +863,12 @@ function loadParameters() {
 }
 
 // Event listeners
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   setupAlgorithmTabs();
 
   // Charger paramètres sauvegardés
   loadParameters();
+  try { await selectedOptimizationSource(); } catch (error) { setStatus(error.message); }
 
   // Event listeners boutons
   document.getElementById('runBtn').addEventListener('click', runOptimization);

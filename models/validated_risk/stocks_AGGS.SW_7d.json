@@ -1,0 +1,70 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "AGGS.SW",
+  "market": "stocks",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-AGGS.SW-77b71c4c952b89bd",
+  "dataset_sha256": "77b71c4c952b89bd377fdd88f9fcf1dbfa94034b25ca2c2398be2e0d026c0483",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-28T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2018-07-25T00:00:00+00:00",
+  "training_end": "2025-03-21T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.8139504919202281,
+        "ewma": 0.4344072503847807,
+        "ridge": 0.6387003256458532,
+        "lstm": 2.113002900629115
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.4702800772319473,
+      "learned_wins": 0,
+      "windows": 9,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.7172943807809411,
+          "mae": 0.015384350738320753,
+          "rows": 245
+        },
+        "ewma": {
+          "qlike": 0.5745319255131712,
+          "mae": 0.01566413080371305,
+          "rows": 245
+        },
+        "ridge": {
+          "qlike": 0.5851336618428429,
+          "mae": 0.013541740995289403,
+          "rows": 245
+        },
+        "lstm": {
+          "qlike": 2.3087648211625464,
+          "mae": 0.10450028579775561,
+          "rows": 245
+        }
+      },
+      "learned_confirmation_improvement": -0.018452823696789578,
+      "interval_coverage": 0.926530612244898
+    }
+  },
+  "interval": {
+    "level": 0.9,
+    "width": 0.03508584635091386,
+    "confirmation_coverage": 0.926530612244898,
+    "calibration_rows": 119,
+    "confirmation_rows": 245
+  }
+}

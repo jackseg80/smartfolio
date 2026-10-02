@@ -183,6 +183,17 @@ class CurrencyExchangeDetector:
             logger.debug(f" Symbol transformation: {symbol} → {transformed_symbol}")
             symbol = transformed_symbol
 
+        # Legacy callers sometimes append the Yahoo venue before resolving a
+        # currency-qualified Saxo alias, e.g. WRDUSW_CHF.SW.
+        if '.' in symbol:
+            qualified_base, qualified_suffix = symbol.rsplit('.', 1)
+            if re.search(r'_[A-Z]{3}$', qualified_base.upper()):
+                if qualified_suffix.upper() != 'SW':
+                    raise ValueError(f'Unverified currency-qualified venue: {symbol}')
+                if exchange_hint and self._parse_exchange_hint(symbol, exchange_hint)[0] != '.SW':
+                    raise ValueError(f'Conflicting exchange information for {symbol}')
+                return self.detect_currency_and_exchange(qualified_base, isin=isin, exchange_hint='SWX')
+
         # An explicit trading venue identifies the listing. A domicile (ISIN)
         # or a generic symbol map must not override it (e.g. SAP on NYSE).
         if exchange_hint:

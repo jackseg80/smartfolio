@@ -2,6 +2,7 @@
 Health Router - Health Check and Utility Endpoints
 Extracted from api/main.py for better organization
 """
+import os
 import base64
 import logging
 from datetime import datetime
@@ -66,7 +67,6 @@ async def health_detailed():
 @router.get("/health/redis")
 async def health_redis():
     """Test Redis connectivity"""
-    import os
     try:
         import redis.asyncio as aioredis
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -151,7 +151,6 @@ async def health_all():
 
     Use this endpoint for monitoring dashboards and alerting systems.
     """
-    import os
     import asyncio
     from datetime import datetime
 
@@ -255,7 +254,12 @@ async def health_all():
         }
 
     # Compute overall status
-    statuses = [c.get("status") for c in results["components"].values()]
+    preview = os.getenv("ML_TEST_PREVIEW") == "1"
+    if preview:
+        results["environment"] = "isolated_preview"
+        results["components"]["scheduler"]["reason"] = "Intentionally disabled in the isolated preview"
+    statuses = [c.get("status") for c in results["components"].values()
+                if not (preview and c.get("status") == "disabled" and c.get("enabled") is False)]
     if all(s == "healthy" for s in statuses):
         results["overall_status"] = "healthy"
     elif any(s == "unhealthy" for s in statuses):

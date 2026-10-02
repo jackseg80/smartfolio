@@ -14,9 +14,9 @@ from services.execution.score_registry import ScoreRegistry, CanonicalScores, Sc
 
 
 @pytest.fixture
-def score_registry():
+def score_registry(tmp_path):
     """Fixture pour un ScoreRegistry avec config par défaut"""
-    registry = ScoreRegistry()
+    registry = ScoreRegistry(str(tmp_path / "score_registry.json"))
     # Force l'utilisation du fallback pour les tests (pas de fichier config)
     registry.config = registry.fallback_config
     registry.config_loaded_at = datetime.now()

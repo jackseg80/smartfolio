@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XAMS",
+  "fetched_at": "2026-09-30T13:29:07.946692+00:00",
+  "file": "IWDA.AS.csv",
+  "sha256": "0ddc5cd83671a7d468b8064633f71355bbab4946e5d6c75b4c9e7befa9d695e8",
+  "dataset_id": "verified-daily-stocks-IWDA.AS-0ddc5cd83671a7d4"
+}

@@ -714,7 +714,7 @@
     <!-- Scripts -->
     <script type="module">
     // ===== AUTH GUARD (Dec 2025) =====
-    import { checkAuth } from './core/auth-guard.js';
+    import { checkAuth, getAuthHeaders } from './core/auth-guard.js';
     await checkAuth();  // Vérifie authentification + redirect si nécessaire
     // =================================
 
@@ -802,12 +802,12 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/status', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
                     if (response.status === 403) {
-                        showError(`Access denied. Admin role required. Current user: "${activeUser}". Please switch to an admin user (e.g., "jack") using the user selector.`);
+                        showError(`Access denied. Admin role required. Current user: "${activeUser}". Sign in with an account that has the admin role.`);
                         return;
                     }
                     throw new Error(`HTTP ${response.status}`);
@@ -846,12 +846,12 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/users', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
                     if (response.status === 403) {
-                        container.innerHTML = `<div class="error-message">Access denied. Admin role required.<br><br>Current user: <strong>"${activeUser}"</strong><br><br>Please switch to an admin user (e.g., "jack") using the user selector in the top right corner.</div>`;
+                        container.innerHTML = `<div class="error-message">Access denied. Admin role required.<br><br>Current user: <strong>"${activeUser}"</strong><br><br>Sign in with an account that has the admin role.</div>`;
                         return;
                     }
                     throw new Error(`HTTP ${response.status}`);
@@ -997,7 +997,7 @@
                 if (currentLogsSearch) params.append('search', currentLogsSearch);
 
                 const response = await fetch(`/admin/logs/read?${params}`, {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -1194,7 +1194,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     },
                     body: JSON.stringify({
                         user_id: userId,
@@ -1265,7 +1265,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     },
                     body: JSON.stringify({
                         label: label,
@@ -1322,7 +1322,7 @@
                 const response = await fetch(url, {
                     method: 'DELETE',
                     headers: {
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     }
                 });
 
@@ -1394,7 +1394,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     },
                     body: formData
                 });
@@ -1461,7 +1461,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     },
                     body: JSON.stringify({
                         new_password: newPassword
@@ -1533,7 +1533,7 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/stats', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -1599,7 +1599,7 @@
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/cache/clear?cache_name=${encodeURIComponent(cacheName)}`, {
                     method: 'DELETE',
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 const result = await response.json();
@@ -1627,7 +1627,7 @@
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/clear?cache_name=all', {
                     method: 'DELETE',
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 const result = await response.json();
@@ -1651,7 +1651,7 @@
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/cache/clear-expired', {
                     method: 'POST',
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 const result = await response.json();
@@ -1699,7 +1699,7 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/models', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -1787,7 +1787,7 @@
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/ml/train/${encodeURIComponent(modelName)}?model_type=${encodeURIComponent(modelType)}`, {
                     method: 'POST',
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 const result = await response.json();
@@ -1811,7 +1811,7 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/jobs', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -1888,7 +1888,7 @@
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch(`/admin/ml/jobs/${encodeURIComponent(jobId)}`, {
                     method: 'DELETE',
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 const result = await response.json();
@@ -1912,7 +1912,7 @@
             try {
                 const activeUser = localStorage.getItem('activeUser') || '';
                 const response = await fetch('/admin/ml/jobs', {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) return;
@@ -1968,7 +1968,7 @@
 
                 // Fetch model manifest from EXISTING endpoint
                 const response = await fetch(`/api/ml/registry/models/${modelName}`, {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -2127,7 +2127,7 @@
 
                 // Fetch version history from EXISTING endpoint
                 const response = await fetch(`/api/ml/registry/models/${targetModel}/versions`, {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -2260,7 +2260,7 @@
 
                 // Fetch default parameters from NEW endpoint
                 const response = await fetch(`/admin/ml/models/${modelName}/default-params`, {
-                    headers: { 'X-User': activeUser }
+                    headers: getAuthHeaders()
                 });
 
                 if (!response.ok) {
@@ -2412,7 +2412,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User': activeUser
+                        ...getAuthHeaders()
                     },
                     body: JSON.stringify(config)
                 });

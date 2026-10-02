@@ -1,0 +1,335 @@
+{
+  "asset": "AGGS.SW",
+  "market": "stocks",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-AGGS.SW-77b71c4c952b89bd",
+  "dataset_sha256": "77b71c4c952b89bd377fdd88f9fcf1dbfa94034b25ca2c2398be2e0d026c0483",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-28T00:00:00+00:00",
+  "annualization": 252,
+  "state": "retrospectively_validated",
+  "selected": "ewma",
+  "reference": "ewma",
+  "folds": [
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2020-07-31T00:00:00+00:00",
+      "calibration_start": "2020-09-02T00:00:00+00:00",
+      "calibration_end": "2021-02-01T00:00:00+00:00",
+      "test_start": "2021-03-04T00:00:00+00:00",
+      "test_end": "2021-08-03T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.13225160199875097,
+          "mae": 0.006442938396766418,
+          "rows": 105
+        },
+        "ewma": {
+          "qlike": 0.11169476978676188,
+          "mae": 0.005980246986050544,
+          "rows": 105
+        },
+        "ridge": {
+          "qlike": 0.14230020269085147,
+          "mae": 0.007874791711858297,
+          "rows": 105
+        },
+        "lstm": {
+          "qlike": 1.9149494181837496,
+          "mae": 0.0924046651216625,
+          "rows": 105
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2021-02-01T00:00:00+00:00",
+      "calibration_start": "2021-03-04T00:00:00+00:00",
+      "calibration_end": "2021-08-03T00:00:00+00:00",
+      "test_start": "2021-09-03T00:00:00+00:00",
+      "test_end": "2022-02-02T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.1391710241963971,
+          "mae": 0.007648808026830699,
+          "rows": 107
+        },
+        "ewma": {
+          "qlike": 0.14376460952745032,
+          "mae": 0.007694510912726129,
+          "rows": 107
+        },
+        "ridge": {
+          "qlike": 0.09514297485717475,
+          "mae": 0.006793190124032291,
+          "rows": 107
+        },
+        "lstm": {
+          "qlike": 1.5628949495275786,
+          "mae": 0.08827494569788076,
+          "rows": 107
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2021-08-03T00:00:00+00:00",
+      "calibration_start": "2021-09-03T00:00:00+00:00",
+      "calibration_end": "2022-02-02T00:00:00+00:00",
+      "test_start": "2022-03-07T00:00:00+00:00",
+      "test_end": "2022-08-03T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.22040672903575245,
+          "mae": 0.01209134510531783,
+          "rows": 103
+        },
+        "ewma": {
+          "qlike": 0.24188043477706822,
+          "mae": 0.013621883628226061,
+          "rows": 103
+        },
+        "ridge": {
+          "qlike": 0.6506633965126217,
+          "mae": 0.02049148276946941,
+          "rows": 103
+        },
+        "lstm": {
+          "qlike": 1.7904909101975521,
+          "mae": 0.18257671697641856,
+          "rows": 103
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2022-02-02T00:00:00+00:00",
+      "calibration_start": "2022-03-07T00:00:00+00:00",
+      "calibration_end": "2022-08-03T00:00:00+00:00",
+      "test_start": "2022-09-05T00:00:00+00:00",
+      "test_end": "2023-02-01T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.3450959950884156,
+          "mae": 0.01954589771431422,
+          "rows": 106
+        },
+        "ewma": {
+          "qlike": 0.1976897338390091,
+          "mae": 0.017858553730541654,
+          "rows": 106
+        },
+        "ridge": {
+          "qlike": 0.939722010305567,
+          "mae": 0.02749990017130063,
+          "rows": 106
+        },
+        "lstm": {
+          "qlike": 1.8193538414089159,
+          "mae": 0.21279695993916564,
+          "rows": 106
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2022-08-03T00:00:00+00:00",
+      "calibration_start": "2022-09-05T00:00:00+00:00",
+      "calibration_end": "2023-02-01T00:00:00+00:00",
+      "test_start": "2023-03-06T00:00:00+00:00",
+      "test_end": "2023-08-04T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.09299913484104572,
+          "mae": 0.010141600651117019,
+          "rows": 104
+        },
+        "ewma": {
+          "qlike": 0.10987092265243761,
+          "mae": 0.011722087961140056,
+          "rows": 104
+        },
+        "ridge": {
+          "qlike": 0.11961733036356438,
+          "mae": 0.008428495908141626,
+          "rows": 104
+        },
+        "lstm": {
+          "qlike": 1.8570463703978208,
+          "mae": 0.1471710454009646,
+          "rows": 104
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2023-02-01T00:00:00+00:00",
+      "calibration_start": "2023-03-06T00:00:00+00:00",
+      "calibration_end": "2023-08-04T00:00:00+00:00",
+      "test_start": "2023-09-05T00:00:00+00:00",
+      "test_end": "2024-02-02T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.053370313212652606,
+          "mae": 0.006520033530667072,
+          "rows": 105
+        },
+        "ewma": {
+          "qlike": 0.055612333037108067,
+          "mae": 0.006870633665242661,
+          "rows": 105
+        },
+        "ridge": {
+          "qlike": 0.09898763368978804,
+          "mae": 0.008624422315034963,
+          "rows": 105
+        },
+        "lstm": {
+          "qlike": 1.2931241504037192,
+          "mae": 0.09991489020134299,
+          "rows": 105
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2023-08-04T00:00:00+00:00",
+      "calibration_start": "2023-09-05T00:00:00+00:00",
+      "calibration_end": "2024-02-02T00:00:00+00:00",
+      "test_start": "2024-03-06T00:00:00+00:00",
+      "test_end": "2024-08-05T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.18899418323502307,
+          "mae": 0.009179148407582648,
+          "rows": 103
+        },
+        "ewma": {
+          "qlike": 0.1329507742727046,
+          "mae": 0.009044651510739753,
+          "rows": 103
+        },
+        "ridge": {
+          "qlike": 0.12133553993331034,
+          "mae": 0.0091057647739816,
+          "rows": 103
+        },
+        "lstm": {
+          "qlike": 1.299770651481192,
+          "mae": 0.09651560229435112,
+          "rows": 103
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2024-02-02T00:00:00+00:00",
+      "calibration_start": "2024-03-06T00:00:00+00:00",
+      "calibration_end": "2024-08-05T00:00:00+00:00",
+      "test_start": "2024-09-05T00:00:00+00:00",
+      "test_end": "2025-02-04T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.057054648223192124,
+          "mae": 0.005349631876888386,
+          "rows": 103
+        },
+        "ewma": {
+          "qlike": 0.06116414057634533,
+          "mae": 0.005825010209856784,
+          "rows": 103
+        },
+        "ridge": {
+          "qlike": 0.0766407771770241,
+          "mae": 0.00688046318070129,
+          "rows": 103
+        },
+        "lstm": {
+          "qlike": 1.6960474545244053,
+          "mae": 0.09530555987363606,
+          "rows": 103
+        }
+      }
+    },
+    {
+      "train_start": "2018-07-25T00:00:00+00:00",
+      "train_end": "2024-08-05T00:00:00+00:00",
+      "calibration_start": "2024-09-05T00:00:00+00:00",
+      "calibration_end": "2025-02-04T00:00:00+00:00",
+      "test_start": "2025-03-07T00:00:00+00:00",
+      "test_end": "2025-08-06T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.2631430572077364,
+          "mae": 0.013696081806003875,
+          "rows": 103
+        },
+        "ewma": {
+          "qlike": 0.2665715105711037,
+          "mae": 0.013885521943909828,
+          "rows": 103
+        },
+        "ridge": {
+          "qlike": 0.2473155685616292,
+          "mae": 0.013781347921531061,
+          "rows": 103
+        },
+        "lstm": {
+          "qlike": 1.7993021336685249,
+          "mae": 0.1005196878341498,
+          "rows": 103
+        }
+      }
+    }
+  ],
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.16583185411544069,
+        "ewma": 0.14679991433777656,
+        "ridge": 0.27685838156572573,
+        "lstm": 1.6703310977548285
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.8859573782086381,
+      "learned_wins": 3,
+      "windows": 9,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.4615924007362289,
+          "mae": 0.013251841363402295,
+          "rows": 229
+        },
+        "ewma": {
+          "qlike": 0.39924568226584944,
+          "mae": 0.012767324012423501,
+          "rows": 229
+        },
+        "ridge": {
+          "qlike": 0.2782748418320174,
+          "mae": 0.0125488050690314,
+          "rows": 229
+        },
+        "lstm": {
+          "qlike": 1.8349181610982235,
+          "mae": 0.09902125986697,
+          "rows": 229
+        }
+      },
+      "learned_confirmation_improvement": 0.3029984939280572,
+      "interval_coverage": 0.7991266375545851
+    }
+  },
+  "interval": null,
+  "lstm": {
+    "state": "evaluated",
+    "reason": "Corrected trailing sequences, train-only normalization, fixed seed 1729, 12 epochs; no legacy checkpoint reuse"
+  },
+  "published": true,
+  "artifact": "models\\validated_risk\\stocks_AGGS.SW_30d.json",
+  "artifact_sha256": "2ae4dc07276984c1d9cc881df0d8c8ab1434c916ba135c76edbd038e0f4f509d"
+}

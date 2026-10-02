@@ -304,7 +304,7 @@
       </div>
       <div class="stat">
         <div class="stat-value" id="groups-count">-</div>
-        <div class="stat-label">Groupes</div>
+        <div class="stat-label">Groups</div>
       </div>
       <div class="stat">
         <div class="stat-value" id="memory-count">-</div>
@@ -549,64 +549,36 @@
     async function loadData() {
       try {
         const apiBase = globalConfig?.get('api_base_url') || window.location.origin;
-        let data;
-        
-        try {
-          const response = await fetch(`${apiBase}/taxonomy`);
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          data = await response.json();
-        } catch (apiError) {
-          debugLogger.warn('Taxonomy API unavailable, using mock data:', apiError);
-          data = await getMockTaxonomyData();
-        }
-
-        allAliases = data.aliases || {};
-        allGroups = data.groups || [];
-
-        const defaults = ['BTC', 'ETH', 'Stablecoins', 'SOL', 'L1/L0 majors', 'L2/Scaling', 'DeFi', 'AI/Data', 'Gaming/NFT', 'Memecoins', 'Others'];
-        defaults.forEach(g => { if (!allGroups.includes(g)) allGroups.push(g); });
-
-        const lastPlan = window.globalConfig?.getLastPlanData();
-        if (lastPlan && lastPlan.unknown_aliases) {
-          lastPlan.unknown_aliases.forEach(a => { if (!allAliases[a]) allAliases[a] = 'Others'; });
-        }
-
+        const response = await fetch(`${apiBase}/taxonomy`);
+        if (!response.ok) throw new Error(`Taxonomy API HTTP ${response.status}`);
+        const data = await response.json();
+        if (!data.aliases || !Array.isArray(data.groups)) throw new Error('Taxonomy API returned an invalid reference');
+        allAliases = { ...data.aliases };
+        allGroups = [...data.groups];
+        const pending = window.globalConfig?.getLastPlanData()?.unknown_aliases || [];
+        for (const alias of pending) if (!(alias in allAliases)) allAliases[alias] = 'Unclassified';
         updateStats(data);
         populateGroupSelectors();
         filterAliases();
-
         document.getElementById('loading').style.display = 'none';
         document.getElementById('aliases-container').style.display = 'block';
         document.getElementById('stats').style.display = 'flex';
-
-      } catch (e) {
-        debugLogger.error('Critical error in loadData:', e);
-        document.getElementById('loading').innerHTML = `Error: ${e.message}`;
-        
-        // Fallback to ensure basic functionality
-        try {
-          const fallbackData = await getMockTaxonomyData();
-          allAliases = fallbackData.aliases || {};
-          allGroups = fallbackData.groups || [];
-          
-          updateStats(fallbackData);
-          populateGroupSelectors();
-          filterAliases();
-          
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('aliases-container').style.display = 'block';
-          document.getElementById('stats').style.display = 'flex';
-        } catch (fallbackError) {
-          debugLogger.error('Even fallback failed:', fallbackError);
-          document.getElementById('loading').innerHTML = `[Error] Critical error: ${fallbackError.message}`;
-        }
+      } catch (error) {
+        allAliases = {}; allGroups = [];
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('loading').textContent = `Unavailable: ${error.message}`;
+        document.getElementById('aliases-container').style.display = 'none';
+        document.getElementById('stats').style.display = 'none';
       }
     }
 
     function updateStats(data) {
-      document.getElementById('total-aliases').textContent = Object.keys(allAliases).length;
+      const registered = Object.keys(data.aliases || {}).length;
+      const pending = Object.keys(allAliases).length - registered;
+      document.getElementById('total-aliases').textContent = String(registered);
+      document.querySelector('#total-aliases + .stat-label').textContent = `Registered aliases${pending ? ` + ${pending} local unclassified proposals` : ''}`;
       document.getElementById('groups-count').textContent = allGroups.length;
-      document.getElementById('memory-count').textContent = data.storage?.in_memory_count || 0;
+      document.getElementById('memory-count').textContent = data.storage?.in_memory_count ?? 'Unavailable';
     }
 
     function populateGroupSelectors() {
@@ -645,7 +617,7 @@
       <td><span class="group-badge ${group.toLowerCase().replace(/[^a-z]/g, '')}">${group}</span></td>
       <td class="alias-actions">
         <select onchange="changeGroup('${alias}', this.value)" style="width:140px">
-          ${allGroups.map(g => `<option value="${g}" ${g === group ? 'selected' : ''}>${g}</option>`).join('')}
+          ${group === 'Unclassified' ? '<option value="" selected disabled>Unclassified proposal</option>' : ''}${allGroups.map(g => `<option value="${g}" ${g === group ? 'selected' : ''}>${g}</option>`).join('')}
         </select>
         <button class="btn danger small" onclick="deleteAlias('${alias}')"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Delete" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#trash"></use></svg></button>
       </td>`;

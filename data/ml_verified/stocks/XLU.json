@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XNYS",
+  "fetched_at": "2026-09-30T13:29:26.763610+00:00",
+  "file": "XLU.csv",
+  "sha256": "b6c92932039cd2ae5bb3fe0a7aff63dc5dec15f81325a49be483d05164140db6",
+  "dataset_id": "verified-daily-stocks-XLU-b6c92932039cd2ae"
+}

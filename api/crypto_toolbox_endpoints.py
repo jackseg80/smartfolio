@@ -101,7 +101,24 @@ REDIS_CACHE_KEY = "crypto_toolbox:data"
 # Lifecycle Hooks (called from api/startup.py)
 # ============================================================================
 
+_browser_start_lock = asyncio.Lock()
+
+
 async def startup_playwright():
+    """Serialize browser startup and recover a disconnected driver."""
+    async with _browser_start_lock:
+        if _browser is not None:
+            if _browser.is_connected():
+                return
+            await shutdown_playwright()
+        try:
+            await _startup_playwright_locked()
+        except Exception:
+            await shutdown_playwright()
+            raise
+
+
+async def _startup_playwright_locked():
     """
     Initialize Playwright and launch browser (called at app startup).
 
@@ -263,7 +280,15 @@ async def _scrape_crypto_toolbox() -> Dict[str, Any]:
             await page.goto(CRYPTO_TOOLBOX_URL, timeout=15000)
             # Wait for table instead of networkidle (faster)
             await page.wait_for_selector("table tbody tr", timeout=10000)
-            await asyncio.sleep(0.5)  # Reduced delay for client-side hydration
+            # Les lignes existent avant les valeurs: attendre les chiffres hydratés,
+            # sans accepter les placeholders zéro comme observations.
+            await page.wait_for_function("""() => {
+                const cells=[...document.querySelectorAll('table tbody tr')]
+                    .map(row=>row.querySelectorAll('td')).filter(c=>c.length>=3);
+                const values=cells.map(c=>Number.parseFloat(c[1].innerText.replace(/,/g,'')))
+                    .filter(Number.isFinite);
+                return values.length>=10 && values.filter(v=>v!==0).length/values.length>.2;
+            }""", timeout=20000)
 
             # Parse table rows
             rows = await page.locator("table tbody tr").all()

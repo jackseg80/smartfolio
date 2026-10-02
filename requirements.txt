@@ -54,3 +54,6 @@ prometheus-fastapi-instrumentator==8.1.0
 psutil>=5.9.0  # System resource monitoring (CPU, RAM usage)
 
 pyarrow
+
+# Verified exchange sessions for calendar-day stock volatility targets
+exchange-calendars>=4.5,<5

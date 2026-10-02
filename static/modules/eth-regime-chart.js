@@ -18,6 +18,10 @@ const ETH_REGIME_CONFIG = {
         'Bull Market': { bg: 'rgba(34, 197, 94, 0.2)', border: '#22c55e', label: 'Bull' },
         'Expansion': { bg: 'rgba(59, 130, 246, 0.2)', border: '#3b82f6', label: 'Expansion' },
         'Insufficient Data': { bg: 'rgba(156, 163, 175, 0.2)', border: '#9ca3af', label: 'N/A' },
+        'State A': { bg: 'rgba(139, 92, 246, 0.2)', border: '#8b5cf6', label: 'State A' },
+        'State B': { bg: 'rgba(6, 182, 212, 0.2)', border: '#06b6d4', label: 'State B' },
+        'State C': { bg: 'rgba(148, 163, 184, 0.2)', border: '#94a3b8', label: 'State C' },
+        'State D': { bg: 'rgba(217, 70, 239, 0.2)', border: '#d946ef', label: 'State D' },
         'Unknown': { bg: 'rgba(107, 114, 128, 0.2)', border: '#6b7280', label: 'Unknown' }
     },
     defaultTimeframe: 365 // 1 year
