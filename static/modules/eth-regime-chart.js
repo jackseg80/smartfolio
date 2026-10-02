@@ -80,12 +80,21 @@ async function loadETHRegimeData(lookbackDays) {
         // Show loading state
         showLoadingState();
 
+        const error = document.getElementById('eth-regime-error-message');
+        if (error) error.style.display = 'none';
+        const note = document.getElementById('eth-regime-history-note');
+        if (note) note.textContent = '';
+
         // Fetch historical timeline
         const historyResponse = await fetch(`/api/ml/crypto/regime-history?symbol=ETH&lookback_days=${lookbackDays}`);
         const historyResult = await historyResponse.json();
 
-        if (!historyResult.ok) {
-            throw new Error(historyResult.error || 'Failed to fetch regime history');
+        if (!historyResponse.ok || !historyResult.ok) {
+            throw new Error(historyResult.error || historyResult.detail || `ETH regime history API returned HTTP ${historyResponse.status}`);
+        }
+        if (note) {
+            note.textContent = [historyResult.data.note, historyResult.data.history_limitation,
+                `${historyResult.data.dates?.length || 0} observed days; ${historyResult.data.unknown_days || 0} Unknown days.`].filter(Boolean).join(' ');
         }
 
         // Create timeline chart
@@ -286,6 +295,10 @@ function hideLoadingState() {
  */
 function showErrorState(errorMessage) {
     hideLoadingState();
+    if (ethRegimeChart) {
+        ethRegimeChart.destroy();
+        ethRegimeChart = null;
+    }
 
     const errorMsg = document.getElementById('eth-regime-error-message');
     if (errorMsg) {
@@ -300,5 +313,5 @@ function showErrorState(errorMessage) {
 export function refreshETHRegimeChart() {
     const activeButton = document.querySelector('.eth-regime-timeframe-selector button.active');
     const days = activeButton ? parseInt(activeButton.dataset.days) : ETH_REGIME_CONFIG.defaultTimeframe;
-    loadETHRegimeData(days);
+    return loadETHRegimeData(days);
 }

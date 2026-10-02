@@ -318,12 +318,37 @@ class BTCRegimeDetector:
         if len(features_df) == 0:
             raise ValueError("No features available for prediction")
 
+        # The economic rules do not depend on a fitted HMM artifact.
+        rule_based_result = self._detect_regime_rule_based(features_df)
+
         # Load symbol-specific HMM model (BTC and ETH have different distributions)
         model_file = f"{symbol.lower()}_regime_hmm.pkl"
         if self.hmm_model is None or getattr(self, "_loaded_path", None) != self.models_dir / model_file:
             model_loaded = self.load_model(model_file)
             if not model_loaded:
-                raise ValueError(f"No compatible HMM artifact for {symbol}; explicit administrator training is required")
+                reason = f"No compatible HMM artifact for {symbol}; no latent-state probabilities were computed."
+                rule = rule_based_result if rule_based_result and rule_based_result['rule_priority'] >= 0.85 else None
+                return {
+                    'predicted_regime': rule['regime_id'] if rule else None,
+                    'regime_name': rule['regime_name'] if rule else 'Unknown',
+                    'confidence': None,
+                    'regime_info': self.regime_descriptions[rule['regime_id']] if rule else {'description': 'No economic rule matched'},
+                    'detection_method': 'rule_based' if rule else 'unavailable',
+                    'rule_reason': (rule['reason'] + '. ' if rule else 'No economic rule matched the latest observations. ') + reason,
+                    'regime_probabilities': {},
+                    'prediction_date': datetime.now().isoformat(),
+                    'data_as_of': features_df.index[-1].isoformat(),
+                    'model_metadata': {'trained_at': None, 'features_used': 0, 'hmm_available': False},
+                    'nature': 'diagnostic',
+                    'availability': 'Partial' if rule else 'Unavailable',
+                    'probability_kind': 'unavailable',
+                    'hmm_state': None,
+                    'hmm_state_features': {},
+                    'hmm_availability': 'Unavailable',
+                    'hmm_unavailability_reason': reason,
+                    'economic_mapping_verified': False,
+                    'rule_diagnostic': {k: v for k, v in (rule or {}).items() if k != 'rule_priority'},
+                }
 
         # Normalize features
         features_scaled = self.scaler.transform(features_df[self.feature_columns])
@@ -360,9 +385,6 @@ class BTCRegimeDetector:
                 'features_used': len(self.feature_columns)
             }
         }
-
-        # HYBRID SYSTEM: Try rule-based detection first
-        rule_based_result = self._detect_regime_rule_based(features_df)
 
         # Fuse predictions
         fused = self._fuse_predictions(rule_based_result, hmm_result)
