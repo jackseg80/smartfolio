@@ -105,6 +105,7 @@
 
   <!-- Phase 3A: Advanced Risk Analysis -->
   <script type="module">
+    import { ensureSelectedSource } from './core/selected-source.js';
     // ====== Phase 3A: Advanced Risk Analysis ======
 
     async function loadAdvancedRiskComponents() {
@@ -116,6 +117,11 @@
         }
 
         const advancedContent = document.getElementById('advanced-risk-content');
+        const source = await ensureSelectedSource();
+        if (!source) {
+          advancedContent.innerHTML = '<div class="warning">Unavailable: no authenticated portfolio source is selected. Choose a source in Settings.</div>';
+          return;
+        }
         advancedContent.innerHTML = '';
 
         // Create Advanced Risk Analysis Panel
@@ -245,7 +251,8 @@
 
         const metrics = data.risk_metrics;
         const exposureByGroup = metrics.exposure_by_group || {};
-        const gri = metrics.group_risk_index || 0;
+        const gri = metrics.group_risk_index;
+        if (typeof gri !== 'number' || !Number.isFinite(gri)) throw new Error('The GRI measure is unavailable');
 
         const topGroups = Object.entries(exposureByGroup)
           .sort(([, a], [, b]) => b - a)
@@ -318,9 +325,9 @@
           </div>
           <div class="gri-interpretation">
             <div class="metric-interpretation hinted" data-key="gri_interpretation">
-              ${gri < 3 ? 'Portfolio faible risque' :
-                gri < 6 ? 'Portfolio risque modere' :
-                'Portfolio haut risque - Considerer diversifier'}
+              ${gri < 3 ? 'Low risk portfolio' :
+                gri < 6 ? 'Moderate risk portfolio' :
+                'High risk portfolio - consider diversification'}
             </div>
           </div>
         `;

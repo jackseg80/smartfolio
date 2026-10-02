@@ -1,0 +1,64 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "TSLA",
+  "market": "stocks",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-TSLA-fcfa0baab0b72028",
+  "dataset_sha256": "fcfa0baab0b7202843fe05f963062a357f7ec5b0549291775ea6f849b4612559",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2010-11-04T00:00:00+00:00",
+  "training_end": "2025-02-26T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.32101465915482064,
+        "ewma": 0.2621604855453528,
+        "ridge": 0.266998960962232,
+        "lstm": 0.2859745571825788
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.01845615828340441,
+      "learned_wins": 15,
+      "windows": 24,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.12307273218093508,
+          "mae": 0.08916264511245613,
+          "rows": 230
+        },
+        "ewma": {
+          "qlike": 0.11047207315495575,
+          "mae": 0.0861674200995824,
+          "rows": 230
+        },
+        "ridge": {
+          "qlike": 0.09214915167128733,
+          "mae": 0.08249423667211525,
+          "rows": 230
+        },
+        "lstm": {
+          "qlike": 0.10641254353678006,
+          "mae": 0.08892621477421125,
+          "rows": 230
+        }
+      },
+      "learned_confirmation_improvement": 0.16586021209149782,
+      "interval_coverage": 1.0
+    }
+  },
+  "interval": null
+}

@@ -302,3 +302,14 @@ def test_user_config(test_user_id) -> Dict[str, str]:
         "user_id": test_user_id,
         "source": "cointracking"  # Source par défaut pour tests
     }
+
+@pytest.fixture(autouse=True)
+def isolate_request_rate_buckets():
+    """Each test starts with fresh buckets; within-test rate limits stay active."""
+    from services.rate_limiter import get_rate_limiter
+    limiter = get_rate_limiter()
+    if hasattr(limiter, "buckets"):
+        limiter.buckets.clear()
+    yield
+    if hasattr(limiter, "buckets"):
+        limiter.buckets.clear()

@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XLON",
+  "fetched_at": "2026-09-30T13:28:58.441079+00:00",
+  "file": "GLEN.L.csv",
+  "sha256": "03cb353ece42369718c46995cebb89acae4e9a179460f593aadb55382dd7d232",
+  "dataset_id": "verified-daily-stocks-GLEN.L-03cb353ece423697"
+}

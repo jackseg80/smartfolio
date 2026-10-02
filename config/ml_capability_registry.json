@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "research_reference": "CRYPTO_FORECAST_RESEARCH_STATUS_2026-09-13.md",
+  "capabilities": {
+    "direction": {
+      "availability": "Rejected",
+      "validation_state": "rejected",
+      "nature": "forecast",
+      "reason": "Existing causal crypto research failed its economic gates. Directional, funding and hurdle experiments remain closed.",
+      "reactivation_allowed": false
+    },
+    "alerts": {
+      "availability": "Rejected",
+      "validation_state": "rejected",
+      "reason": "ML alert predictor is disabled; reactivation is outside this implementation.",
+      "reactivation_allowed": false
+    },
+    "correlation_transformer": {
+      "availability": "Experimental",
+      "validation_state": "unvalidated",
+      "reason": "No independent comparison with historical correlation references. Retraining cannot certify forecasting quality."
+    },
+    "cycle": {
+      "availability": "Experimental",
+      "validation_state": "descriptive",
+      "nature": "diagnostic",
+      "reason": "Heuristic market-cycle diagnostic; not a validated forecast."
+    }
+  }
+}

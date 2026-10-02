@@ -750,7 +750,8 @@ const balanceCache = {
  * Fonction centralisée pour charger les données de balance selon la source configurée
  */
 window.loadBalanceData = async function (forceRefresh = false) {
-  const dataSource = globalConfig.get('data_source');
+  const { ensureSelectedSource } = await import('./core/selected-source.js');
+  const dataSource = await ensureSelectedSource();
   const apiBaseUrl = globalConfig.get('api_base_url');
   const currentUser = localStorage.getItem('activeUser');
 

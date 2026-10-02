@@ -1,3 +1,4 @@
+import { riskRequestScope, riskRequestParams } from './risk-request.js';
 // static/core/risk-data-orchestrator.js
 // Orchestrateur centralisé pour hydrater le risk store avec toutes les métriques calculées
 // Utilisé par rebalance.html, analytics-unified.html, execution.html pour parité avec risk-dashboard.html
@@ -80,15 +81,7 @@ export async function hydrateRiskStore() {
         debugLogger.debug(`hydrateRiskStore - fetching risk data with source: '${currentSource}', _csv_hint: '${cacheBuster}'`);
 
         const riskData = await window.globalConfig.apiRequest('/api/risk/dashboard', {
-          params: {
-            source: currentSource,  //  FIX: Pass source parameter for multi-tenant isolation
-            min_usd: 1.0,
-            price_history_days: 365,
-            lookback_days: 90,
-            use_dual_window: true,  // Cohérent avec risk-dashboard-main-controller.js
-            risk_version: 'v2_active',
-            _csv_hint: cacheBuster  //  Invalide cache backend quand CSV change
-          }
+          params: riskRequestParams(riskRequestScope())
         });
         return riskData;
       } catch (err) {

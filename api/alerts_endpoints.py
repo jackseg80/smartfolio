@@ -638,13 +638,15 @@ async def get_health_status(
             storage_healthy = False
         
         # Statut global
-        overall_status = "healthy" if (scheduler_healthy and storage_healthy) else "degraded"
+        preview = os.getenv("ML_TEST_PREVIEW") == "1"
+        overall_status = "healthy" if (storage_healthy and (scheduler_healthy or preview)) else "degraded"
         
         return {
             "status": overall_status,
             "components": {
                 "scheduler": {
-                    "status": "healthy" if scheduler_healthy else "unhealthy",
+                    "status": "disabled" if preview else "healthy" if scheduler_healthy else "unhealthy",
+                    "reason": "Intentionally disabled in the isolated preview" if preview else None,
                     "is_active": engine.is_scheduler,
                     "last_evaluation_seconds_ago": last_eval_age
                 },

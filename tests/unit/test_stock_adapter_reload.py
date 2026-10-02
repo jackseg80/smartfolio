@@ -1,59 +1,39 @@
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
-
-import pandas as pd
 import pytest
-
 from services.ml.bourse.stocks_adapter import StocksMLAdapter
+from api.schemas.ml_contract import UnifiedPrediction
 
 
 @pytest.mark.asyncio
-async def test_volatility_model_uses_resolved_listing_and_preserves_requested_symbol():
-    data = pd.DataFrame({'close': range(100, 190)}, index=pd.bdate_range('2026-01-01', periods=90))
-    data.attrs['history_symbol'] = 'IWDA.AS'
+async def test_volatility_model_uses_resolved_listing_and_preserves_requested_symbol(monkeypatch):
+    from services.ml.reliability import capability_service
     adapter = object.__new__(StocksMLAdapter)
-    adapter.data_source = SimpleNamespace(get_ohlcv_data=AsyncMock(return_value=data))
-    predictor = SimpleNamespace(models={}, metadata={})
-    def load(symbol):
-        predictor.models[symbol] = object()
-        predictor.metadata[symbol] = {'validated_against_baseline': True}
-    predictor.load_model = Mock(side_effect=load)
-    predictor.train_model = Mock(side_effect=AssertionError('GET must never train'))
-    predictor.predict_volatility = Mock(return_value={'predictions': {}})
-    adapter.volatility_predictor = predictor
-
-    result = await adapter.predict_volatility('IWDA:xams')
-
-    predictor.load_model.assert_called_once_with('IWDA.AS')
-    assert predictor.predict_volatility.call_args.kwargs['symbol'] == 'IWDA.AS'
-    predictor.train_model.assert_not_called()
-    assert result['symbol'] == 'IWDA:xams'
-    assert result['model_type'] == 'LSTM'
+    adapter.volatility_predictor = Mock()
+    adapter.volatility_predictor.train_model.side_effect=AssertionError("Reads never train")
+    async def result(asset,market,kind,horizon):
+        return UnifiedPrediction(asset=asset,market=market,horizon=horizon,value=None,reason="Verified artifact unavailable")
+    mock=AsyncMock(side_effect=result)
+    monkeypatch.setattr(capability_service,"result",mock)
+    response=await adapter.predict_volatility("IWDA:xams")
+    assert all(call.args[0]=="IWDA.AS" for call in mock.call_args_list)
+    assert response["symbol"]=="IWDA:xams"
+    assert response["model_type"]=="verified_daily_risk"
+    assert response["predictions"]["1d"]["predicted_volatility"] is None
+    adapter.volatility_predictor.train_model.assert_not_called()
+    adapter.volatility_predictor.load_model.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_saved_regime_model_is_loaded_before_quality_gate():
-    data = pd.DataFrame({'close': range(100, 190)}, index=pd.bdate_range('2026-01-01', periods=90))
-    adapter = object.__new__(StocksMLAdapter)
-    adapter.data_source = SimpleNamespace(get_benchmark_data_cached=AsyncMock(return_value=data))
-    detector = SimpleNamespace(neural_model=None, training_metadata={})
-    def load():
-        detector.neural_model = object()
-        detector.training_metadata = {'temporal_test_accuracy': 0.8, 'baseline_test_accuracy': 0.5}
-        return True
-    detector.load_model = Mock(side_effect=load)
-    detector.train_model = Mock(side_effect=AssertionError('GET must never train'))
-    detector.predict_regime = Mock(return_value={
-        'predicted_regime': 2, 'confidence': 0.7,
-        'regime_probabilities': {'Bull Market': 0.7},
-    })
-    adapter.regime_detector = detector
-
-    result = await adapter.detect_market_regime()
-
-    assert result['model_type'] == 'causal_neural'
-    detector.load_model.assert_called_once()
-    detector.train_model.assert_not_called()
+async def test_legacy_regime_quality_gate_cannot_certify_a_probability(monkeypatch):
+    from services.ml.reliability import capability_service
+    adapter=object.__new__(StocksMLAdapter)
+    adapter.regime_detector=Mock()
+    monkeypatch.setattr(capability_service,"result",AsyncMock(return_value=UnifiedPrediction(asset="SPY",market="stocks",nature="diagnostic",value="Bull Market",reason="Descriptive trailing-price rules")))
+    response=await adapter.detect_market_regime(force_retrain=True)
+    assert response["model_type"]=="descriptive_rules"
+    assert response["confidence"] is None and response["regime_probabilities"]=={}
+    adapter.regime_detector.train_model.assert_not_called()
+    adapter.regime_detector.load_model.assert_not_called()
 
 
 def test_stock_reload_preserves_validation_temperature(monkeypatch, tmp_path):

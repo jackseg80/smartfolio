@@ -67,194 +67,48 @@ function handleMLPollingVisibility() {
 
 // Chargement du statut ML global et prédictions - UTILISE SOURCE CENTRALISÉE
 async function loadMLPredictions() {
+  const set = (id,value) => { const el=document.getElementById(id); if(el) el.textContent=value ?? 'Unavailable'; };
   try {
-    //  FIX Nov 2025: Récupérer l'user actif pour multi-tenant
-    const activeUser = localStorage.getItem('activeUser');
-
-    // 1) Statut ML global depuis source unifiée
-    const { getUnifiedMLStatus } = await import('../shared-ml-functions.js');
-    const mlStatus = await getUnifiedMLStatus();
-
-    if (mlStatus && mlStatus.individual) {
-      // Statistiques globales depuis source centralisée
-      document.getElementById('ml-active-models').textContent = `${mlStatus.totalLoaded}/${mlStatus.totalModels}`;
-
-      // Confiance depuis source centralisée
-      const confidencePercent = Math.round((mlStatus.confidence || 0) * 100);
-      document.getElementById('ml-avg-confidence').textContent = `${confidencePercent}%`;
-
-      // Dernière mise à jour depuis source centralisée
-      document.getElementById('ml-last-update').textContent =
-        mlStatus.timestamp ? new Date(mlStatus.timestamp).toLocaleTimeString('en-US') : '--';
-
-      // Statuts des modèles individuels depuis source centralisée
-      const individual = mlStatus.individual;
-
-      // Volatility LSTM depuis source centralisée
-      const volModelsLoaded = individual.volatility.loaded;
-      const volSymbols = individual.volatility.symbols || 0;
-      const volStatus = volModelsLoaded > 0 ? 'active' : 'inactive';
-      const volStatusEl = document.getElementById('ml-vol-model-status');
-      const volDetailsEl = document.getElementById('ml-vol-model-details');
-      if (volStatusEl && volDetailsEl) {
-        volStatusEl.textContent = `${volStatus.charAt(0).toUpperCase() + volStatus.slice(1)}`;
-        volDetailsEl.textContent = `${volModelsLoaded} models • ${volSymbols} symbols`;
-      }
-
-      // Regime HMM depuis source centralisée
-      const regimeStatus = individual.regime.loaded > 0 ? 'active' : 'inactive';
-      const regimeStatusEl = document.getElementById('ml-regime-model-status');
-      const regimeDetailsEl = document.getElementById('ml-regime-model-details');
-      if (regimeStatusEl && regimeDetailsEl) {
-        regimeStatusEl.textContent = `${regimeStatus.charAt(0).toUpperCase() + regimeStatus.slice(1)}`;
-        regimeDetailsEl.textContent = individual.regime.available ? 'Model available' : 'Not available';
-      }
-
-      // Correlation Transformer depuis source centralisée
-      const corrModelsLoaded = individual.correlation.loaded;
-      const corrStatus = corrModelsLoaded > 0 ? 'active' : 'inactive';
-      const corrStatusEl = document.getElementById('ml-corr-model-status');
-      const corrDetailsEl = document.getElementById('ml-corr-model-details');
-      if (corrStatusEl && corrDetailsEl) {
-        corrStatusEl.textContent = `${corrStatus.charAt(0).toUpperCase() + corrStatus.slice(1)}`;
-        corrDetailsEl.textContent = `${corrModelsLoaded} models loaded`;
-      }
-
-      // Sentiment Composite depuis source centralisée
-      const sentStatusEl = document.getElementById('ml-sent-model-status');
-      const sentDetailsEl = document.getElementById('ml-sent-model-details');
-      if (sentStatusEl && sentDetailsEl) {
-        const sentStatus = individual.sentiment.loaded > 0 ? 'active' : 'inactive';
-        sentStatusEl.textContent = `${sentStatus.charAt(0).toUpperCase() + sentStatus.slice(1)}`;
-        sentDetailsEl.textContent = individual.sentiment.available ? 'Composite API available' : 'Not available';
-      }
-
-      debugLogger.debug(`[OK] ML Status chargé depuis source centralisée: ${mlStatus.source}`);
-    } else {
-      debugLogger.warn("[Warning] Impossible de charger le statut ML unifié, utilisation des API individuelles...");
-      // Fallback vers l'ancien système si source centralisée échoue
-      await loadMLPredictionsFallback();
+    const { apiCall } = await import('../core/fetcher.js');
+    const { StorageService } = await import('../core/storage-service.js');
+    const source = StorageService.getDataSource() || 'cointracking';
+    const response = await apiCall('/api/ml/overview?mode=portfolio&source='+encodeURIComponent(source));
+    const data = response.data;
+    if (!response.ok || !data?.results) throw new Error('Overview unavailable');
+    set('ml-active-models', data.counts.models_loaded);
+    set('ml-avg-confidence', 'Unavailable — no calibrated confidence');
+    set('ml-last-update', data.observed_at ? new Date(data.observed_at).toLocaleString() : null);
+    for (const asset of ['BTC','ETH']) {
+      const result=data.results.find(r=>r.asset===asset && r.horizon==='7d');
+      set('ml-vol-'+asset.toLowerCase(), result?.value == null ? 'Unavailable' : (result.value*100).toFixed(1)+'% (7 calendar days)');
     }
-
-    // 2) Volatilité BTC/ETH
-    const volResponse = await fetch('/api/ml/volatility/predict/BTC?horizon_days=1', {
-      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
-    });
-    if (volResponse.ok) {
-      const volData = await volResponse.json();
-      const vol = volData.volatility_forecast?.volatility_forecast || volData.volatility;
-      document.getElementById('ml-vol-btc').textContent =
-        vol ? `${(vol * 100).toFixed(1)}%` : '--';
+    set('ml-regime', data.results.find(r=>r.asset==='BTC' && r.nature==='diagnostic')?.value);
+    const sentiment=data.results.find(r=>r.target==='external_fear_greed');
+    set('ml-sentiment', sentiment?.value == null ? 'Unavailable' : sentiment.value+'/100 · external indicator');
+    for(const [key,id] of [['volatility','vol'],['regime','regime'],['correlation','corr'],['sentiment','sent']]) {
+      const capability=data.capabilities.find(c=>c.id===key);
+      set('ml-'+id+'-model-status', capability?.availability);
+      set('ml-'+id+'-model-details', capability?.reason);
     }
-
-    const volETHResponse = await fetch('/api/ml/volatility/predict/ETH?horizon_days=1', {
-      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
-    });
-    if (volETHResponse.ok) {
-      const volETHData = await volETHResponse.json();
-      const vol = volETHData.volatility_forecast?.volatility_forecast || volETHData.volatility;
-      document.getElementById('ml-vol-eth').textContent =
-        vol ? `${(vol * 100).toFixed(1)}%` : '--';
-    }
-
-    // 3) Régime de marché
-    const regimeResponse = await fetch('/api/ml/regime/current', {
-      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
-    });
-    if (regimeResponse.ok) {
-      const regimeData = await regimeResponse.json();
-      const regimeEl = document.getElementById('ml-regime');
-      if (regimeData.regime_prediction) {
-        const regime = regimeData.regime_prediction.regime_name || '--';
-        regimeEl.textContent = regime;
-        const regimeClass = regime.toLowerCase().replace(/\s+/g, '-');
-        regimeEl.className = `metric-value regime-${regimeClass}`;
-      }
-    }
-
-    // 4) ML Sentiment
-    const sentResponse = await fetch('/api/ml/sentiment/symbol/BTC?days=1', {
-      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
-    });
-    if (sentResponse.ok) {
-      const sentData = await sentResponse.json();
-      const sentEl = document.getElementById('ml-sentiment');
-      if (sentData.success && sentData.aggregated_sentiment) {
-        // Lire depuis source_breakdown.fear_greed (sentiment ML converti)
-        const fearGreedSource = sentData.aggregated_sentiment.source_breakdown?.fear_greed;
-        if (fearGreedSource) {
-          // Convertir sentiment (-1 à 1) en échelle 0-100
-          const score = Math.max(0, Math.min(100, Math.round(50 + (fearGreedSource.average_sentiment * 50))));
-          sentEl.textContent = score;
-          sentEl.className = `metric-value sentiment-${score < 25 ? 'fear' : score > 75 ? 'greed' : 'neutral'}`;
-        }
-      }
-    }
-
-  } catch (error) {
-    debugLogger.warn('ML predictions update failed:', error);
+  } catch(error) {
+    for(const id of ['ml-active-models','ml-avg-confidence','ml-last-update','ml-vol-btc','ml-vol-eth','ml-regime','ml-sentiment']) set(id,'Unavailable');
+    debugLogger.warn('ML overview failed:',error);
   }
 }
 
-// Fallback vers ancien système si source centralisée échoue
-async function loadMLPredictionsFallback() {
-  try {
-    //  FIX Nov 2025: Récupérer l'user actif pour multi-tenant
-    const activeUser = localStorage.getItem('activeUser');
+async function loadMLPredictionsFallback() { return loadMLPredictions(); }
 
-    // Ancien système comme fallback
-    const statusResponse = await fetch('/api/ml/status', {
-      headers: { 'X-User': activeUser }  //  FIX: Passer l'user actif
-    });
-    if (statusResponse.ok) {
-      const statusData = await statusResponse.json();
-      const pipeline = statusData.pipeline_status || {};
-
-      const totalLoaded = Math.min(Math.max(0, pipeline.loaded_models_count || 0), 4);
-      document.getElementById('ml-active-models').textContent = `${totalLoaded}/4`;
-
-      const confidencePercent = Math.min(100, Math.round((totalLoaded / 4) * 100));
-      document.getElementById('ml-avg-confidence').textContent = `${confidencePercent}%`;
-
-      const lastUpdate = pipeline.timestamp || statusData.timestamp;
-      document.getElementById('ml-last-update').textContent =
-        lastUpdate ? new Date(lastUpdate).toLocaleTimeString('en-US') : '--';
-
-      debugLogger.debug("[Warning] Using ML fallback system");
-    }
-  } catch (error) {
-    debugLogger.error('ML fallback also failed:', error);
-  }
-}
-
-// Chargement du statut pipeline ML
 async function loadMLPipelineStatus() {
+  const container = document.getElementById('ml-pipeline-container');
+  if (!container) return;
   try {
-    const response = await fetch('/api/ml/debug/pipeline-info', {
-      headers: { 'X-Admin-Key': 'crypto-rebal-admin-2024' }
-    });
-
-    const container = document.getElementById('ml-pipeline-container');
-
-    if (response.ok) {
-      const data = await response.json();
-      container.innerHTML = `
-        <div>Models Loaded: ${data.models_loaded || 0}/4</div>
-        <div>Cache Size: ${data.cache_size || 0} entries</div>
-        <div>Last Update: ${data.last_update || 'Never'}</div>
-        <div>Status: <span style="color: var(--success);">${data.status || 'Unknown'}</span></div>
-      `;
-    } else if (response.status === 401 || response.status === 403) {
-      container.innerHTML = "<div style=\"color: var(--warning);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Warning\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#exclamation-triangle\"></use></svg> Admin access required for pipeline info</div>";
-    } else {
-      container.innerHTML = "<div style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Pipeline status unavailable</div>";
-    }
-
-  } catch (error) {
-    debugLogger.warn('Pipeline status update failed:', error);
-    document.getElementById('ml-pipeline-container').innerHTML =
-      "<div style=\"color: var(--danger);\"><svg class=\"sf-icon\" width=\"1em\" height=\"1em\" viewBox=\"0 0 20 20\" fill=\"currentColor\" role=\"img\" aria-label=\"Error\" focusable=\"false\" style=\"vertical-align:-.15em\"><use href=\"/static/assets/icons/heroicons.svg#x-circle\"></use></svg> Connection error</div>";
-  }
+    const { apiCall } = await import('../core/fetcher.js');
+    const { StorageService } = await import('../core/storage-service.js');
+    const response = await apiCall('/api/ml/overview?mode=portfolio&source='+encodeURIComponent(StorageService.getDataSource() || 'cointracking'));
+    if (!response.ok || !response.data?.counts) throw new Error('ML snapshot unavailable');
+    const counts = response.data.counts;
+    container.textContent = 'Files present: '+counts.files_present+' · Models loaded: '+counts.models_loaded+' · Successful snapshot forecasts: '+counts.successful_inferences;
+  } catch(error) { container.textContent = 'Unavailable — authenticated ML snapshot could not be loaded'; }
 }
 
 // Actions Admin ML - Event Handlers
@@ -264,7 +118,8 @@ async function triggerMLRetraining() {
   try {
     const response = await fetch('/api/ml/train', {
       method: 'POST',
-      headers: { 'X-Admin-Key': 'crypto-rebal-admin-2024' }
+      body: JSON.stringify({assets:['BTC','ETH','SOL'],market:'crypto',save_models:true}),
+      headers: (await import('../core/auth-guard.js')).getAuthHeaders()
     });
 
     if (response.ok) {
@@ -283,7 +138,7 @@ async function clearMLCache() {
   try {
     const response = await fetch('/api/ml/cache/clear', {
       method: 'DELETE',
-      headers: { 'X-Admin-Key': 'crypto-rebal-admin-2024' }
+      headers: (await import('../core/auth-guard.js')).getAuthHeaders()
     });
 
     if (response.ok) {
@@ -304,7 +159,7 @@ function downloadMLLogs() {
 async function showMLDebug() {
   try {
     const response = await fetch('/api/ml/debug/pipeline-info', {
-      headers: { 'X-Admin-Key': 'crypto-rebal-admin-2024' }
+      headers: (await import('../core/auth-guard.js')).getAuthHeaders()
     });
 
     if (response.ok) {

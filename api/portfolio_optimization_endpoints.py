@@ -19,7 +19,8 @@ from services.portfolio_optimization import (
 )
 from services.price_history import get_cached_history
 from services.price_utils import price_history_to_dataframe, validate_price_data
-from connectors import cointracking as ct_file
+from api.deps import get_required_user
+from api.unified_data import get_unified_filtered_balances
 from services.pricing import FIAT_STABLE_FIXED
 import re
 
@@ -91,7 +92,8 @@ async def optimize_portfolio(
     request: OptimizationRequest,
     source: str = Query("cointracking", description="Data source"),
     min_usd: float = Query(100, description="Minimum USD value to include"),
-    min_history_days: int = Query(365, description="Minimum history days required")
+    min_history_days: int = Query(365, description="Minimum history days required"),
+    user: str = Depends(get_required_user)
 ):
     """
     Optimize portfolio allocation using advanced Markowitz optimization
@@ -134,80 +136,8 @@ async def optimize_portfolio(
         
         optimizer = PortfolioOptimizer()
         
-        # Get current portfolio using the same logic as /balances/current
-        if source == "stub":
-            balances_response = {
-                "source_used": "stub", 
-                "items": [
-                    {"symbol": "BTC", "value_usd": 105000.0, "amount": 2.5, "location": "Kraken"},
-                    {"symbol": "ETH", "value_usd": 47250.0, "amount": 15.75, "location": "Binance"},
-                    {"symbol": "USDC", "value_usd": 25000.0, "amount": 25000.0, "location": "Coinbase"},
-                    {"symbol": "SOL", "value_usd": 23400.0, "amount": 180.0, "location": "Phantom"},
-                    {"symbol": "AVAX", "value_usd": 13500.0, "amount": 450.0, "location": "Ledger"},
-                ]
-            }
-        elif source == "cointracking_api":
-            # Try to use CoinTracking API data via unified connector
-            try:
-                result = await ct_file.get_unified_balances_by_exchange("cointracking_api")
-                items = []
-                if 'detailed_holdings' in result:
-                    for exchange, holdings in (result.get('detailed_holdings') or {}).items():
-                        for holding in holdings:
-                            if holding.get('value_usd', 0) >= min_usd:
-                                items.append(holding)
-                elif 'items' in result:
-                    for item in result.get('items') or []:
-                        if item.get('value_usd', 0) >= min_usd:
-                            items.append(item)
-                balances_response = {"source_used": "cointracking_api", "items": items}
-            except Exception as e:
-                logger.warning(f"CoinTracking API failed: {e}, falling back to CSV")
-                # Fallback to CSV data
-                try:
-                    result = ct_file.get_balances_by_exchange_from_csv()
-                    items = []
-                    if 'detailed_holdings' in result:
-                        for exchange, holdings in result['detailed_holdings'].items():
-                            for holding in holdings:
-                                if holding.get('value_usd', 0) >= min_usd:
-                                    items.append(holding)
-                    balances_response = {"source_used": "cointracking_csv_fallback", "items": items}
-                except Exception as e:
-                    logger.warning(f"CSV fallback failed: {e}, using stub data")
-                    # Final fallback to stub
-                    balances_response = {
-                        "source_used": "stub_fallback", 
-                        "items": [
-                            {"symbol": "BTC", "value_usd": 50000.0, "amount": 1.0, "location": "Kraken"},
-                            {"symbol": "ETH", "value_usd": 30000.0, "amount": 10.0, "location": "Binance"},
-                            {"symbol": "SOL", "value_usd": 10000.0, "amount": 100.0, "location": "Phantom"}
-                        ]
-                    }
-        else:
-            # Default cointracking = CSV data
-            try:
-                result = ct_file.get_balances_by_exchange_from_csv()
-                # Convert detailed_holdings to flat items list
-                items = []
-                if 'detailed_holdings' in result:
-                    for exchange, holdings in result['detailed_holdings'].items():
-                        for holding in holdings:
-                            if holding.get('value_usd', 0) >= min_usd:
-                                items.append(holding)
-                balances_response = {"source_used": "cointracking", "items": items}
-            except Exception as e:
-                logger.warning(f"Default CSV balances failed: {e}, using stub data")
-                # Fallback to stub data
-                balances_response = {
-                    "source_used": "stub", 
-                    "items": [
-                        {"symbol": "BTC", "value_usd": 50000.0, "amount": 1.0, "location": "Kraken"},
-                        {"symbol": "ETH", "value_usd": 30000.0, "amount": 10.0, "location": "Binance"},
-                        {"symbol": "SOL", "value_usd": 10000.0, "amount": 100.0, "location": "Phantom"}
-                    ]
-                }
-        
+        balances_response = await get_unified_filtered_balances(user_id=user, source=source, min_usd=min_usd)
+
         if not balances_response.get("items"):
             raise HTTPException(status_code=400, detail="No portfolio data found")
         
@@ -470,6 +400,8 @@ async def optimize_portfolio(
             optimization_details=optimization_details
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Portfolio optimization failed: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Optimization failed: {str(e)}")
@@ -479,30 +411,11 @@ async def analyze_portfolio(
     source: str = Query("cointracking", description="Data source: cointracking|stub"),
     min_usd: float = Query(50, description="Ignore holdings below this value for stats"),
     target_assets: int = Query(30, description="Desired number of assets to optimize"),
+    user: str = Depends(get_required_user),
 ):
     """Analyze current portfolio and suggest optimization parameters."""
     try:
-        # Load balances (CSV or stub)
-        if source == "stub":
-            balances_response = {
-                "source_used": "stub",
-                "items": [
-                    {"symbol": "BTC", "value_usd": 105000.0, "amount": 2.5, "location": "Kraken"},
-                    {"symbol": "ETH", "value_usd": 47250.0, "amount": 15.75, "location": "Binance"},
-                    {"symbol": "USDC", "value_usd": 25000.0, "amount": 25000.0, "location": "Coinbase"},
-                    {"symbol": "SOL", "value_usd": 23400.0, "amount": 180.0, "location": "Phantom"},
-                    {"symbol": "AVAX", "value_usd": 13500.0, "amount": 450.0, "location": "Ledger"},
-                ]
-            }
-        else:
-            result = ct_file.get_balances_by_exchange_from_csv()
-            items = []
-            if 'detailed_holdings' in result:
-                for _, holdings in result['detailed_holdings'].items():
-                    for holding in holdings:
-                        if holding.get('value_usd', 0) >= min_usd:
-                            items.append(holding)
-            balances_response = {"source_used": "cointracking", "items": items}
+        balances_response = await get_unified_filtered_balances(user_id=user, source=source, min_usd=min_usd)
 
         items = balances_response.get("items") or []
         if not items:
@@ -817,7 +730,8 @@ async def optimize_portfolio_advanced(
     source: str = Query("cointracking", description="Data source"),
     min_usd: float = Query(100, description="Minimum USD value to include"),
     min_history_days: int = Query(365, description="Minimum history days required"),
-    risk_free_rate: float = Query(0.02, description="Risk-free rate for Sharpe calculation")
+    risk_free_rate: float = Query(0.02, description="Risk-free rate for Sharpe calculation"),
+    user: str = Depends(get_required_user)
 ):
     """
     Advanced portfolio optimization with sophisticated algorithms:
@@ -852,47 +766,7 @@ async def optimize_portfolio_advanced(
         optimizer = PortfolioOptimizer()
         optimizer.risk_free_rate = risk_free_rate
 
-        # Get portfolio data (same logic as standard optimization)
-        if source == "stub":
-            balances_response = {
-                "source_used": "stub",
-                "items": [
-                    {"symbol": "BTC", "value_usd": 105000.0, "amount": 2.5, "location": "Kraken"},
-                    {"symbol": "ETH", "value_usd": 47250.0, "amount": 15.75, "location": "Binance"},
-                    {"symbol": "USDC", "value_usd": 25000.0, "amount": 25000.0, "location": "Coinbase"},
-                    {"symbol": "SOL", "value_usd": 23400.0, "amount": 180.0, "location": "Phantom"},
-                    {"symbol": "AVAX", "value_usd": 13500.0, "amount": 450.0, "location": "Ledger"},
-                ]
-            }
-        elif source == "cointracking_api":
-            try:
-                result = await ct_file.get_unified_balances_by_exchange("cointracking_api")
-                items = []
-                if 'detailed_holdings' in result:
-                    for exchange, holdings in (result.get('detailed_holdings') or {}).items():
-                        for holding in holdings:
-                            if holding.get('value_usd', 0) >= min_usd:
-                                items.append(holding)
-                balances_response = {"source_used": "cointracking_api", "items": items}
-            except Exception as e:
-                logger.warning(f"CoinTracking API failed: {e}, falling back to CSV")
-                result = ct_file.get_balances_by_exchange_from_csv()
-                items = []
-                if 'detailed_holdings' in result:
-                    for exchange, holdings in result['detailed_holdings'].items():
-                        for holding in holdings:
-                            if holding.get('value_usd', 0) >= min_usd:
-                                items.append(holding)
-                balances_response = {"source_used": "cointracking_csv_fallback", "items": items}
-        else:
-            result = ct_file.get_balances_by_exchange_from_csv()
-            items = []
-            if 'detailed_holdings' in result:
-                for exchange, holdings in result['detailed_holdings'].items():
-                    for holding in holdings:
-                        if holding.get('value_usd', 0) >= min_usd:
-                            items.append(holding)
-            balances_response = {"source_used": "cointracking", "items": items}
+        balances_response = await get_unified_filtered_balances(user_id=user, source=source, min_usd=min_usd)
 
         if not balances_response.get("items"):
             raise HTTPException(status_code=400, detail="No portfolio data found")
@@ -1133,40 +1007,6 @@ async def optimize_portfolio_advanced(
         raise HTTPException(status_code=500, detail=f"Advanced optimization failed: {str(e)}")
 
 @router.post("/backtest")
-async def backtest_optimization(
-    request: OptimizationRequest,
-    test_periods: int = Query(12, description="Number of monthly rebalancing periods to test"),
-    source: str = Query("cointracking"),
-    min_usd: float = Query(100)
-) -> dict:
-    """
-    Backtest optimization strategy over historical periods
-    """
-
-    try:
-        # This would implement rolling optimization backtest
-        # For now, return a placeholder structure
-
-        results = {
-            "success": True,
-            "backtest_summary": {
-                "test_periods": test_periods,
-                "total_return": 0.15,  # 15% annual
-                "volatility": 0.28,    # 28% annual
-                "sharpe_ratio": 0.54,
-                "max_drawdown": -0.35, # -35%
-                "win_rate": 0.67,      # 67% winning months
-                "average_rebalancing_cost": 0.002  # 0.2% per rebalance
-            },
-            "period_returns": [
-                {"period": i, "return": np.random.normal(0.01, 0.08)}
-                for i in range(test_periods)
-            ],
-            "note": "Backtesting implementation in progress. This is sample data."
-        }
-
-        return results
-
-    except Exception as e:
-        logger.error(f"Backtesting failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Backtesting failed: {str(e)}")
+async def backtest_optimization(request: OptimizationRequest, user: str = Depends(get_required_user)) -> dict:
+    """An unimplemented backtest must never return simulated performance."""
+    raise HTTPException(status_code=501, detail="Optimization backtesting is unavailable: no historical implementation has been validated")

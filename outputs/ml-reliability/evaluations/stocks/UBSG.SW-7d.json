@@ -1,0 +1,8 @@
+{
+  "asset": "UBSG.SW",
+  "market": "stocks",
+  "horizon": 7,
+  "state": "not_evaluable",
+  "reason": "Stock history contains missing or unexpected exchange sessions",
+  "published": false
+}

@@ -9,7 +9,8 @@ Ce module gère:
 Extrait de unified_ml_endpoints.py pour modularité (Fév 2026).
 """
 
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Depends
+from api.deps import require_admin_role
 from typing import Dict, Optional, Any
 import logging
 
@@ -66,11 +67,13 @@ async def get_model_versions_registry(model_name: str) -> dict:
     for version, manifest in registry.models[model_name].items():
         versions_info.append({
             "version": version,
-            "status": manifest.status,
+            "status": manifest.to_dict()["status"],
             "created_at": manifest.created_at,
             "model_type": manifest.model_type,
             "file_size": manifest.file_size,
-            "validation_metrics": manifest.validation_metrics,
+            "validation_metrics": manifest.to_dict()["validation_metrics"],
+            "availability": manifest.availability,
+            "validation_reason": manifest.validation_reason,
             "tags": manifest.tags
         })
 
@@ -91,7 +94,8 @@ async def update_model_status(
     model_name: str,
     version: str,
     status: ModelStatus,
-    reason: Optional[str] = Body(None)
+    reason: Optional[str] = Body(None),
+    user: str = Depends(require_admin_role)
 ) -> dict:
     """
     Mettre à jour le statut d'un modèle
@@ -118,7 +122,8 @@ async def update_model_performance_metrics(
     model_name: str,
     version: str,
     validation_metrics: Optional[Dict[str, float]] = Body(None),
-    test_metrics: Optional[Dict[str, float]] = Body(None)
+    test_metrics: Optional[Dict[str, float]] = Body(None),
+    user: str = Depends(require_admin_role)
 ) -> dict:
     """
     Mettre à jour les métriques de performance d'un modèle

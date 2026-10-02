@@ -794,7 +794,7 @@ function updateAnalyticsBadges() {
 function updateRiskMetrics() {
   try {
     const riskData = store.get('risk');
-    const riskScore = store.get('scores.risk');
+    const riskScore = riskData?.risk_metrics?.risk_score;
 
     // Update VaR
     const varElement = document.getElementById('risk-var-value');

@@ -278,6 +278,12 @@ class BTCRegimeDetector:
             return False
 
         data = safe_pickle_load(model_path)
+        columns = data.get("feature_columns")
+        if not isinstance(columns, list) or not columns or any("future" in c or "target" in c for c in columns):
+            raise ValueError("HMM feature schema is incompatible")
+        if getattr(data.get("scaler"), "n_features_in_", None) != len(columns) or getattr(data.get("hmm_model"), "n_features", None) != len(columns):
+            raise ValueError("HMM scaler/state feature dimensions are incompatible")
+        self._loaded_path = model_path
         self.hmm_model = data['hmm_model']
         self.scaler = data['scaler']
         self.feature_columns = data['feature_columns']
@@ -313,12 +319,11 @@ class BTCRegimeDetector:
             raise ValueError("No features available for prediction")
 
         # Load symbol-specific HMM model (BTC and ETH have different distributions)
-        if self.hmm_model is None:
-            model_file = f"{symbol.lower()}_regime_hmm.pkl"
+        model_file = f"{symbol.lower()}_regime_hmm.pkl"
+        if self.hmm_model is None or getattr(self, "_loaded_path", None) != self.models_dir / model_file:
             model_loaded = self.load_model(model_file)
             if not model_loaded:
-                logger.info(f"No trained model found for {symbol}, training HMM...")
-                await self.train_hmm(symbol, lookback_days)
+                raise ValueError(f"No compatible HMM artifact for {symbol}; explicit administrator training is required")
 
         # Normalize features
         features_scaled = self.scaler.transform(features_df[self.feature_columns])
@@ -326,7 +331,7 @@ class BTCRegimeDetector:
         # HMM prediction (baseline)
         regime_sequence = self.hmm_model.predict(features_scaled)
         regime_id = int(regime_sequence[-1])
-        regime_name = self.regime_names[regime_id]
+        regime_name = f"State {chr(65 + regime_id)}"
 
         # Get regime probabilities
         probabilities = self.hmm_model.predict_proba(features_scaled)
@@ -334,14 +339,13 @@ class BTCRegimeDetector:
         # CRITICAL: Apply Bayesian prior to avoid dangerous overconfidence
         # Prevents 100% confidence that misleads users - model can't predict black swans
         # Same as regime_detector.py:955-960 (Neural Network version)
-        min_uncertainty = 0.15  # Force at least 15% total uncertainty
-        uniform_prior = np.ones(self.num_regimes) / self.num_regimes  # [0.25, 0.25, 0.25, 0.25]
-        probabilities_calibrated = (1 - min_uncertainty) * probabilities + min_uncertainty * uniform_prior
+        probabilities_calibrated = probabilities  # Posterior state probabilities, not empirically calibrated forecasts
 
         # Use calibrated probabilities for confidence
         regime_confidence = float(probabilities_calibrated[-1, regime_id])
 
-        regime_info = self.regime_descriptions[regime_id]
+        regime_info = {"state": regime_name, "economic_mapping_verified": False,
+            "learned_feature_means": dict(zip(self.feature_columns, self.scaler.inverse_transform(self.hmm_model.means_)[regime_id].tolist()))}
 
         # Baseline HMM result
         hmm_result = {
@@ -350,6 +354,7 @@ class BTCRegimeDetector:
             'confidence': regime_confidence,
             'regime_info': regime_info,
             'prediction_date': datetime.now().isoformat(),
+            'data_as_of': features_df.index[-1].isoformat(),
             'model_metadata': {
                 'trained_at': self.training_metadata.get('trained_at'),
                 'features_used': len(self.feature_columns)
@@ -367,7 +372,7 @@ class BTCRegimeDetector:
         if fused.get('method') == 'rule_based':
             result['predicted_regime'] = fused['regime_id']
             result['regime_name'] = fused['regime_name']
-            result['confidence'] = fused['confidence']
+            result['confidence'] = None
             result['regime_info'] = self.regime_descriptions[fused['regime_id']]
             result['detection_method'] = 'rule_based'
             result['rule_reason'] = fused['reason']
@@ -378,11 +383,18 @@ class BTCRegimeDetector:
         if return_probabilities:
             # Use calibrated probabilities (with Bayesian prior applied)
             result['regime_probabilities'] = {
-                self.regime_names[i]: float(probabilities_calibrated[-1, i])
+                f'State {chr(65 + i)}': float(probabilities_calibrated[-1, i])
                 for i in range(self.num_regimes)
             }
 
-        logger.info(f"Regime: {result['regime_name']} (confidence={result['confidence']:.3f}, method={result['detection_method']})")
+        result["nature"] = "diagnostic"
+        result["availability"] = "Experimental"
+        result["probability_kind"] = "latent_state_posterior_not_future_direction"
+        result["hmm_state"] = f"State {chr(65 + regime_id)}"
+        result["hmm_state_features"] = {f"State {chr(65+i)}": dict(zip(self.feature_columns, self.scaler.inverse_transform(self.hmm_model.means_)[i].tolist())) for i in range(self.num_regimes)}
+        result["economic_mapping_verified"] = False
+        result["rule_diagnostic"] = {k:v for k,v in (rule_based_result or {}).items() if k != "rule_priority"}
+        logger.info(f"Regime diagnostic: {result['regime_name']}")
 
         return result
 
@@ -417,7 +429,7 @@ class BTCRegimeDetector:
             return {
                 'regime_id': 0,
                 'regime_name': 'Bear Market',
-                'confidence': min(0.95, 0.85 + abs(drawdown) * 0.2),
+                'rule_priority': min(0.95, 0.85 + abs(drawdown) * 0.2),
                 'method': 'rule_based',
                 'reason': f'Drawdown {drawdown:.1%} sustained {int(days_since_peak)} days, trend {trend_30d:.1%}'
             }
@@ -429,7 +441,7 @@ class BTCRegimeDetector:
             return {
                 'regime_id': 3,
                 'regime_name': 'Expansion',
-                'confidence': 0.90,
+                'rule_priority': 0.90,
                 'method': 'rule_based',
                 'reason': f'Recovery from {lookback_dd:.1%} at +{trend_30d:.1%}/30d'
             }
@@ -439,7 +451,7 @@ class BTCRegimeDetector:
             return {
                 'regime_id': 2,
                 'regime_name': 'Bull Market',
-                'confidence': 0.88,
+                'rule_priority': 0.88,
                 'method': 'rule_based',
                 'reason': f'Stable uptrend: DD={drawdown:.1%}, vol={volatility:.1%}'
             }
@@ -449,20 +461,20 @@ class BTCRegimeDetector:
             return {
                 'regime_id': 2,
                 'regime_name': 'Bull Market',
-                'confidence': 0.85,
+                'rule_priority': 0.85,
                 'method': 'rule_based',
                 'reason': f'Recovery uptrend: DD={drawdown:.1%}, trend={trend_30d:.1%}'
             }
 
         # Rule 5: CORRECTION - elevated volatility OR deep DD with flat trend
         if (drawdown < -0.10 and volatility > 0.65) or (drawdown < -0.20 and abs(trend_30d) < 0.10):
-            confidence = 0.85
+            rule_priority = 0.85
             if drawdown < -0.20:
-                confidence = 0.90
+                rule_priority = 0.90
             return {
                 'regime_id': 1,
                 'regime_name': 'Correction',
-                'confidence': confidence,
+                'rule_priority': rule_priority,
                 'method': 'rule_based',
                 'reason': f'Drawdown {drawdown:.1%} + Elevated volatility {volatility:.1%}'
             }
@@ -485,7 +497,7 @@ class BTCRegimeDetector:
         Returns:
             Fused prediction with method indicator
         """
-        if rule_based and rule_based['confidence'] >= 0.85:
+        if rule_based and rule_based['rule_priority'] >= 0.85:
             # High confidence rule-based → override HMM
             return rule_based
         else:

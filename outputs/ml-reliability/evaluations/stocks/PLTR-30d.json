@@ -1,0 +1,191 @@
+{
+  "asset": "PLTR",
+  "market": "stocks",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-PLTR-c1be2854367e8184",
+  "dataset_sha256": "c1be2854367e81846c55bd8ceeb0f4865f4e2315e36a8a7b988d285171921a6d",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "state": "retrospectively_validated",
+  "selected": "lstm",
+  "reference": "ewma",
+  "folds": [
+    {
+      "train_start": "2021-02-09T00:00:00+00:00",
+      "train_end": "2023-02-17T00:00:00+00:00",
+      "calibration_start": "2023-03-21T00:00:00+00:00",
+      "calibration_end": "2023-08-18T00:00:00+00:00",
+      "test_start": "2023-09-20T00:00:00+00:00",
+      "test_end": "2024-02-16T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 1.0670608009946323,
+          "mae": 0.2994063100694063,
+          "rows": 104
+        },
+        "ewma": {
+          "qlike": 0.7750305319166219,
+          "mae": 0.2974738238843696,
+          "rows": 104
+        },
+        "ridge": {
+          "qlike": 0.41007495663164334,
+          "mae": 0.23418665846789682,
+          "rows": 104
+        },
+        "lstm": {
+          "qlike": 0.36400993074767085,
+          "mae": 0.2287154785544063,
+          "rows": 104
+        }
+      }
+    },
+    {
+      "train_start": "2021-02-09T00:00:00+00:00",
+      "train_end": "2023-08-18T00:00:00+00:00",
+      "calibration_start": "2023-09-20T00:00:00+00:00",
+      "calibration_end": "2024-02-16T00:00:00+00:00",
+      "test_start": "2024-03-21T00:00:00+00:00",
+      "test_end": "2024-08-20T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.41034806035129023,
+          "mae": 0.17859870716364912,
+          "rows": 105
+        },
+        "ewma": {
+          "qlike": 0.2970147352053743,
+          "mae": 0.17694670714980087,
+          "rows": 105
+        },
+        "ridge": {
+          "qlike": 0.18237786762372887,
+          "mae": 0.14195466588228883,
+          "rows": 105
+        },
+        "lstm": {
+          "qlike": 0.18230655832525672,
+          "mae": 0.14232911407540014,
+          "rows": 105
+        }
+      }
+    },
+    {
+      "train_start": "2021-02-09T00:00:00+00:00",
+      "train_end": "2024-02-16T00:00:00+00:00",
+      "calibration_start": "2024-03-21T00:00:00+00:00",
+      "calibration_end": "2024-08-20T00:00:00+00:00",
+      "test_start": "2024-09-20T00:00:00+00:00",
+      "test_end": "2025-02-19T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.7312687176329621,
+          "mae": 0.2429946846402184,
+          "rows": 103
+        },
+        "ewma": {
+          "qlike": 0.5543898402108254,
+          "mae": 0.23687023056456294,
+          "rows": 103
+        },
+        "ridge": {
+          "qlike": 0.2516170388228395,
+          "mae": 0.19513151844559593,
+          "rows": 103
+        },
+        "lstm": {
+          "qlike": 0.20933271756464403,
+          "mae": 0.17896622264559253,
+          "rows": 103
+        }
+      }
+    },
+    {
+      "train_start": "2021-02-09T00:00:00+00:00",
+      "train_end": "2024-08-20T00:00:00+00:00",
+      "calibration_start": "2024-09-20T00:00:00+00:00",
+      "calibration_end": "2025-02-19T00:00:00+00:00",
+      "test_start": "2025-03-24T00:00:00+00:00",
+      "test_end": "2025-08-20T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.13891589921265138,
+          "mae": 0.1546391327108952,
+          "rows": 104
+        },
+        "ewma": {
+          "qlike": 0.1557463943124736,
+          "mae": 0.167275426863149,
+          "rows": 104
+        },
+        "ridge": {
+          "qlike": 0.19155585864736224,
+          "mae": 0.153395073461093,
+          "rows": 104
+        },
+        "lstm": {
+          "qlike": 0.173582096080959,
+          "mae": 0.1521563631364286,
+          "rows": 104
+        }
+      }
+    }
+  ],
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected lstm. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.586898369547884,
+        "ewma": 0.4455453754113238,
+        "ridge": 0.2589064304313935,
+        "lstm": 0.23230782567963262
+      },
+      "learned_candidate": "lstm",
+      "learned_improvement": 0.47859895198066416,
+      "learned_wins": 3,
+      "windows": 4,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.31185575728790244,
+          "mae": 0.18071583878192662,
+          "rows": 230
+        },
+        "ewma": {
+          "qlike": 0.3219525383664098,
+          "mae": 0.18557732502592256,
+          "rows": 230
+        },
+        "ridge": {
+          "qlike": 0.16972865846508534,
+          "mae": 0.1338447484147736,
+          "rows": 230
+        },
+        "lstm": {
+          "qlike": 0.16576344392126355,
+          "mae": 0.1436949953689447,
+          "rows": 230
+        }
+      },
+      "learned_confirmation_improvement": 0.4851308060425651,
+      "interval_coverage": 0.908695652173913
+    }
+  },
+  "interval": {
+    "level": 0.9,
+    "width": 0.30820232480541904,
+    "confirmation_coverage": 0.908695652173913,
+    "calibration_rows": 106,
+    "confirmation_rows": 230
+  },
+  "lstm": {
+    "state": "evaluated",
+    "reason": "Corrected trailing sequences, train-only normalization, fixed seed 1729, 12 epochs; no legacy checkpoint reuse"
+  },
+  "published": true,
+  "artifact": "models\\validated_risk\\stocks_PLTR_30d.json",
+  "artifact_sha256": "5af7596eccac45a1a0dfac1462be60e584958b163332c19f857c6b8c6febd8cc"
+}

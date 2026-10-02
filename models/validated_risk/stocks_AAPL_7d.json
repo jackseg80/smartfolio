@@ -1,0 +1,64 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "AAPL",
+  "market": "stocks",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-AAPL-1843633f24c0be74",
+  "dataset_sha256": "1843633f24c0be7488b230440e14bf10f010c7c45dc9d0fb4f3f50de1e32e066",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "schema_version": 1,
+  "training_start": "2006-05-12T00:00:00+00:00",
+  "training_end": "2025-03-21T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.9060555778785433,
+        "ewma": 0.5730823071268882,
+        "ridge": 0.574706055253962,
+        "lstm": 0.8996324345721128
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": -0.0028333593741785013,
+      "learned_wins": 19,
+      "windows": 33,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.9877851581870916,
+          "mae": 0.09504319512231792,
+          "rows": 246
+        },
+        "ewma": {
+          "qlike": 0.5275535363704524,
+          "mae": 0.09487744220073333,
+          "rows": 246
+        },
+        "ridge": {
+          "qlike": 0.5186168413667377,
+          "mae": 0.07944413485098425,
+          "rows": 246
+        },
+        "lstm": {
+          "qlike": 0.9510707359785432,
+          "mae": 0.08412610769396936,
+          "rows": 246
+        }
+      },
+      "learned_confirmation_improvement": 0.01693988266138613,
+      "interval_coverage": 1.0
+    }
+  },
+  "interval": null
+}

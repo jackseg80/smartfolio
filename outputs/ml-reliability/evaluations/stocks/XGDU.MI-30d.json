@@ -1,0 +1,8 @@
+{
+  "asset": "XGDU.MI",
+  "market": "stocks",
+  "horizon": 30,
+  "state": "not_evaluable",
+  "reason": "Daily close dataset is invalid",
+  "published": false
+}

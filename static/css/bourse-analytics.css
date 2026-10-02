@@ -261,3 +261,20 @@
     font-size: 1.25rem;
   }
 }
+
+
+.dashboard-header { flex-wrap:wrap; gap:1rem; }
+.dashboard-header > div { min-width:0; max-width:100%; }
+@media (max-width:768px) {
+  .dashboard-header { flex-direction:column; align-items:flex-start; }
+  .dashboard-header > div { flex-wrap:wrap; }
+  .dashboard-header h1 { font-size:1.5rem; overflow-wrap:anywhere; }
+}
+/* Mobile controls and grids keep their content inside the page. */
+.dashboard-card { min-width: 0; }
+@media (max-width: 768px) {
+  .custom-stress-control { flex-wrap: wrap; }
+  .custom-stress-control > label { flex: 0 0 100% !important; }
+  #customStressSlider { min-width: 0; }
+  #customStressValue { flex: 0 0 auto !important; }
+}

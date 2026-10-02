@@ -26,6 +26,8 @@ class ModelStatus(str, Enum):
     """Possible model states."""
     TRAINING = "training"
     TRAINED = "trained"
+    EXPERIMENTAL = "experimental"
+    REJECTED = "rejected"
     VALIDATED = "validated"
     DEPLOYED = "deployed"
     DEPRECATED = "deprecated"
@@ -65,6 +67,10 @@ class ModelManifest:
     tags: Optional[List[str]] = None
     description: Optional[str] = None
     author: Optional[str] = None
+    availability: str = "Experimental"
+    validation_state: str = "not_evaluable"
+    validation_reason: str = "Legacy training metrics have no causal confirmation evidence"
+    legacy_metrics: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convertir en dictionnaire pour sérialisation"""
@@ -73,6 +79,10 @@ class ModelManifest:
         for date_field in ['created_at', 'updated_at']:
             if result.get(date_field):
                 result[date_field] = result[date_field].isoformat()
+        if self.validation_state != "retrospectively_validated":
+            result["status"] = ModelStatus.EXPERIMENTAL if self.status not in (ModelStatus.REJECTED, ModelStatus.DEPRECATED, ModelStatus.FAILED) else self.status
+            result["validation_metrics"] = None
+            result["test_metrics"] = None
         return result
 
     @classmethod
@@ -83,6 +93,8 @@ class ModelManifest:
             if data.get(date_field):
                 data[date_field] = datetime.fromisoformat(data[date_field])
 
+        if data.get("validation_state") != "retrospectively_validated":
+            data["legacy_metrics"] = data.get("legacy_metrics") or {"validation": data.get("validation_metrics"), "test": data.get("test_metrics")}
         return cls(**data)
 
 

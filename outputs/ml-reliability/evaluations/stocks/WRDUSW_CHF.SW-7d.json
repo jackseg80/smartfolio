@@ -1,0 +1,8 @@
+{
+  "asset": "WRDUSW_CHF.SW",
+  "market": "stocks",
+  "horizon": 7,
+  "state": "not_evaluable",
+  "reason": "[Errno 2] No such file or directory: 'C:\\\\Users\\\\jacks\\\\.codex\\\\worktrees\\\\ml-reliability-current\\\\smartfolio\\\\data\\\\ml_verified\\\\stocks\\\\WRDUSW_CHF.SW.json'",
+  "published": false
+}

@@ -14,7 +14,8 @@ Il importe et expose les sous-routers modulaires:
 Refactoré en modules (Fév 2026): 1728L -> ~50L orchestrateur.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from api.deps import get_required_user
 import logging
 
 # Import des sous-routers modulaires
@@ -33,7 +34,7 @@ from api.ml.training_endpoints import TrainingRequest
 logger = logging.getLogger(__name__)
 
 # Router principal qui agrège tous les sous-routers
-router = APIRouter(prefix="/api/ml", tags=["Machine Learning"])
+router = APIRouter(prefix="/api/ml", tags=["Machine Learning"], dependencies=[Depends(get_required_user)])
 
 # Inclure tous les sous-routers
 router.include_router(model_router)

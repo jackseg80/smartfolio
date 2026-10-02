@@ -1,176 +1,77 @@
-"""
-ML Unified Contract Endpoints - Prédictions avec contrat unifié
+"""Authenticated adapters to the shared, read-only capability service."""
+from fastapi import APIRouter, Depends, Query
+from typing import Optional
+from datetime import datetime, timezone
+from api.deps import get_required_user
+from api.schemas.ml_contract import UnifiedMLRequest, UnifiedMLResponse, ModelType, Horizon
+from services.ml.reliability import capability_service
 
-Ce module gère:
-- Endpoint de prédiction unifié avec gating et incertitude
-- Prédiction de volatilité avec contrat unifié
-
-Extrait de unified_ml_endpoints.py pour modularité (Fév 2026).
-"""
-
-from fastapi import APIRouter, Query
-from typing import Dict, Optional, Any
-import logging
-import numpy as np
-from datetime import datetime
-
-from services.ml.orchestrator import get_orchestrator
-from shared.error_handlers import handle_service_errors
-from .gating import get_gating_system
-from api.schemas.ml_contract import (
-    UnifiedMLRequest, UnifiedMLResponse, ModelType, Horizon,
-    UnifiedPrediction, QualityMetrics, UncertaintyMeasures,
-    ModelMetadata, create_fallback_response
-)
-
-logger = logging.getLogger(__name__)
 router = APIRouter(tags=["ML Unified Contract"])
 
+@router.get("/overview")
+async def overview(user: str = Depends(get_required_user), source: str = Query("cointracking", min_length=1, max_length=100), market: str = Query("crypto", pattern="^(crypto|stocks)$"), assets: str = Query("BTC,ETH,SOL", max_length=1000), mode: str = Query("benchmarks", pattern="^(portfolio|benchmarks)$"), limit: int = Query(25, ge=1, le=250), file_key: str | None = Query(None)):
+    context = None
+    if mode == "portfolio":
+        from services.ml.portfolio_context import read_context, select_assets
+        try:
+            raw = await read_context(user, source, market, file_key)
+            symbols, context = select_assets(raw, market, limit)
+        except (ValueError, FileNotFoundError, OSError) as exc:
+            symbols = []
+            context = dict(availability="Unavailable", reason=str(exc), held_positions=None, selected_assets=0)
+    else:
+        symbols = list(dict.fromkeys(a.strip().upper() for a in assets.split(",") if a.strip()))[:50]
+    if capability_service.refresh_observations:
+        import asyncio
+        semaphore=asyncio.Semaphore(4)
+        async def prepare(asset):
+            async with semaphore:
+                try:
+                    await asyncio.to_thread(capability_service.history,market,asset)
+                except (ValueError,FileNotFoundError,OSError):
+                    pass  # The result adapter exposes the exact unavailable reason.
+        await asyncio.gather(*(prepare(asset) for asset in symbols))
+    result = await capability_service.overview(user, source, symbols, market)
+    result["scope"] = "selected_authenticated_portfolio" if mode == "portfolio" else "explicit_market_universe"
+    result["portfolio_context"] = context
+    return result
 
 @router.post("/unified/predict", response_model=UnifiedMLResponse)
-async def unified_predict(request: UnifiedMLRequest):
-    """
-    Endpoint unifié de prédiction ML avec gating et incertitude
-
-    Supports: volatility, sentiment, risk scoring
-    """
-    start_time = datetime.now()
-    gating_system = get_gating_system()
-
-    try:
-        logger.debug(f"Unified prediction request: {request.model_type} for {len(request.assets)} assets")
-
-        predictions = []
-        failed_assets = []
-        warnings = []
-
-        for asset in request.assets:
-            try:
-                raw_prediction = await _get_raw_prediction(
-                    asset, request.model_type, request.horizon
-                )
-                if raw_prediction is None or not np.isfinite(raw_prediction):
-                    raise ValueError("Verified model output is unavailable")
-
-                model_key = f"{request.model_type.value}_{request.horizon.value if request.horizon else 'default'}"
-
-                gated_prediction, accepted = gating_system.gate_prediction(
-                    asset=asset,
-                    raw_prediction=raw_prediction,
-                    model_key=model_key,
-                    model_type=request.model_type,
-                    context={}
-                )
-
-                if not accepted or gated_prediction is None:
-                    failed_assets.append(asset)
-                    warnings.append(f"{asset}: prediction rejected by quality gate")
-                    continue
-
-                if request.include_metadata:
-                    gated_prediction.metadata = ModelMetadata(
-                        name=model_key,
-                        version="1.0.0",
-                        model_type=request.model_type,
-                        horizon=request.horizon
-                    )
-
-                if gated_prediction.quality.confidence >= request.confidence_threshold:
-                    predictions.append(gated_prediction)
-                else:
-                    failed_assets.append(asset)
-                    warnings.append(f"{asset}: confidence below threshold")
-
-            except Exception as e:
-                logger.error(f"Failed to predict for {asset}: {e}")
-                failed_assets.append(asset)
-                warnings.append(f"{asset}: {str(e)}")
-
-        processing_time = (datetime.now() - start_time).total_seconds() * 1000
-
-        aggregated = {}
-        if predictions:
-            values = [p.value for p in predictions]
-            confidences = [p.quality.confidence for p in predictions]
-            aggregated = {
-                "avg_prediction": float(np.mean(values)),
-                "avg_confidence": float(np.mean(confidences)),
-                "prediction_range": [float(min(values)), float(max(values))]
-            }
-
-        return UnifiedMLResponse(
-            success=len(predictions) > 0,
-            model_type=request.model_type,
-            horizon=request.horizon,
-            predictions=predictions,
-            aggregated=aggregated,
-            processing_time_ms=processing_time,
-            warnings=warnings,
-            failed_assets=failed_assets
-        )
-
-    except Exception as e:
-        logger.error(f"Unified prediction failed: {e}")
-        return create_fallback_response(
-            request.model_type,
-            request.assets,
-            f"Unified prediction error: {str(e)}"
-        )
-
+async def unified_predict(request: UnifiedMLRequest, user: str = Depends(get_required_user)):
+    start = datetime.now(timezone.utc)
+    results = [await capability_service.result(asset, request.market, request.model_type, request.horizon) for asset in request.assets]
+    capability_service.journal(user, request.source, results)
+    if not request.include_uncertainty:
+        for result in results:
+            result.uncertainty = None
+    return UnifiedMLResponse(success=True, model_type=request.model_type, horizon=request.horizon,
+        predictions=results, user_id=user, source=request.source,
+        failed_assets=[r.asset for r in results if r.value is None],
+        warnings=[f"{r.asset}: {r.reason}" for r in results if r.value is None],
+        processing_time_ms=(datetime.now(timezone.utc)-start).total_seconds()*1000)
 
 @router.get("/unified/volatility/{symbol}", response_model=UnifiedMLResponse)
-async def unified_volatility_predict(
-    symbol: str,
-    horizon: Horizon = Query(Horizon.D30, description="Prediction horizon"),
-    include_uncertainty: bool = Query(True, description="Include uncertainty measures"),
-    include_metadata: bool = Query(False, description="Include model metadata")
-):
-    """
-    Prédiction de volatilité avec contrat unifié
-    """
-    request = UnifiedMLRequest(
-        assets=[symbol.upper()],
-        model_type=ModelType.VOLATILITY,
-        horizon=horizon,
-        include_uncertainty=include_uncertainty,
-        include_metadata=include_metadata
-    )
-
-    return await unified_predict(request)
-
+async def unified_volatility_predict(symbol: str, horizon: Horizon = Query(Horizon.D30),
+    include_uncertainty: bool = Query(True), include_metadata: bool = Query(False),
+    source: str = Query("cointracking"), market: str = Query("crypto", pattern="^(crypto|stocks)$"),
+    user: str = Depends(get_required_user)):
+    return await unified_predict(UnifiedMLRequest(assets=[symbol.upper()], model_type=ModelType.VOLATILITY,
+        horizon=horizon, market=market, source=source, include_uncertainty=include_uncertainty,
+        include_metadata=include_metadata), user)
 
 async def _get_raw_prediction(asset: str, model_type: ModelType, horizon: Optional[Horizon]) -> Optional[float]:
-    """
-    Obtenir une prédiction brute selon le type de modèle
+    """Compatibility helper; diagnostics never masquerade as forecasts."""
+    result = await capability_service.result(asset, "crypto", model_type, horizon)
+    return result.value if result.nature == "forecast" and isinstance(result.value, (int, float)) else None
 
-    Cette fonction fait le bridge avec les services ML existants
-    """
-    orchestrator = get_orchestrator()
 
-    if model_type == ModelType.VOLATILITY:
-        days_mapping = {
-            Horizon.H1: 1/24,
-            Horizon.H4: 4/24,
-            Horizon.D1: 1,
-            Horizon.D7: 7,
-            Horizon.D30: 30,
-            Horizon.D90: 90
-        }
-        days = days_mapping.get(horizon, 30)
-        result = await orchestrator.predict_volatility(asset, int(days))
-
-        if isinstance(result, dict) and 'prediction' in result:
-            return float(result['prediction'])
-        elif isinstance(result, (int, float)):
-            return float(result)
-        return None
-
-    elif model_type == ModelType.SENTIMENT:
-        return None
-
-    elif model_type == ModelType.RISK:
-        return None
-
-    else:
-        logger.warning(f"Unsupported model type: {model_type}")
-        return None
+@router.get("/cycle-history")
+async def cycle_history(user: str = Depends(get_required_user)):
+    """Verified observed closes for descriptive cycle comparisons; no forecast."""
+    import asyncio
+    from services.ml.cycle_diagnostics import historical_cycle_comparison
+    try:
+        close, receipt = await asyncio.to_thread(capability_service.history, "crypto", "BTC")
+        return historical_cycle_comparison(capability_service.root, close, receipt)
+    except (ValueError, FileNotFoundError, OSError) as exc:
+        return {"availability": "Unavailable", "reason": str(exc), "cycles": []}

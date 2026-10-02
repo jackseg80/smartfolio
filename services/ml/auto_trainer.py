@@ -59,45 +59,9 @@ class MLAutoTrainer:
         logger.info(" ML Auto-Trainer initialized")
 
     def start(self):
-        """Start the auto-trainer scheduler"""
-        if self._is_running:
-            logger.warning("Auto-trainer already running")
-            return
-
-        # Schedule regime models training (daily - 3am)
-        self.scheduler.add_job(
-            func=self._train_regime_models,
-            trigger=CronTrigger(hour=3, minute=0),
-            id='regime_training_daily',
-            name='Daily Regime Models Training',
-            replace_existing=True
-        )
-
-        # Schedule volatility models training (daily - midnight)
-        self.scheduler.add_job(
-            func=self._train_volatility_models,
-            trigger=CronTrigger(hour=0, minute=0),
-            id='volatility_training_daily',
-            name='Daily Volatility Models Training',
-            replace_existing=True
-        )
-
-        # Schedule correlation models training (weekly - Sunday 4am)
-        self.scheduler.add_job(
-            func=self._train_correlation_models,
-            trigger=CronTrigger(day_of_week='sun', hour=4, minute=0),
-            id='correlation_training_weekly',
-            name='Weekly Correlation Models Training',
-            replace_existing=True
-        )
-
-        self.scheduler.start()
-        self._is_running = True
-
-        logger.info(" ML Auto-Trainer started")
-        logger.info("   • Regime models: Daily at 3am")
-        logger.info("   • Volatility models: Daily at midnight")
-        logger.info("   • Correlation models: Every Sunday at 4am")
+        """Retired: model training requires an explicit protected action."""
+        logger.info("Automatic ML training is disabled by the reliability protocol")
+        return False
 
     def stop(self):
         """Stop the auto-trainer scheduler"""

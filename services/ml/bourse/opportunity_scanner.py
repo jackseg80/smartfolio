@@ -306,7 +306,8 @@ class OpportunityScanner:
             logger.info(f" Scanning opportunities for {len(positions)} positions (horizon: {horizon})")
 
             # 1. Extract current sector allocation
-            current_allocation = self._extract_sector_allocation(positions)
+            classified_positions = self._classify_positions(positions)
+            current_allocation = self._extract_sector_allocation(classified_positions)
             logger.debug(f"Current allocation: {current_allocation}")
 
             # 2. Detect gaps vs standard sectors
@@ -334,6 +335,8 @@ class OpportunityScanner:
                 "all_gaps": scored_gaps,
                 "top_gaps": top_gaps,
                 "current_allocation": current_allocation,
+                "_classified_positions": classified_positions,
+                "sector_assessment": self._describe_sector_bounds(current_allocation, targets, unclassified_pct),
                 "target_allocations": targets if targets is not None else default_sector_targets(),
                 "target_source": "user" if targets is not None else "generic_reference",
                 "classification_coverage": (100.0 - unclassified_pct) / 100.0,
@@ -389,71 +392,48 @@ class OpportunityScanner:
             logger.info(f" {symbol} → Error fetching sector: {e}")
             return "Unknown"
 
-    def _extract_sector_allocation(self, positions: List[Dict[str, Any]]) -> Dict[str, float]:
-        """
-        Extract sector allocation from portfolio positions.
-        Automatically enriches positions with sectors from Yahoo Finance if missing.
+    def _classify_positions(self, positions):
+        """One classified copy for scan and impact; preserve the source snapshot."""
+        classified = []
+        for position in positions:
+            row = dict(position)
+            raw = row.get("sector")
+            if not raw or raw == "Unknown":
+                symbol = row.get("symbol") or row.get("instrument_id")
+                raw = self._enrich_position_with_sector(symbol) if symbol else None
+            raw = raw or "Unknown"
+            sector = SECTOR_MAPPING.get(raw, raw)
+            if sector not in STANDARD_SECTORS:
+                sector = next((mapped for label, mapped in SECTOR_MAPPING.items()
+                               if label.lower() in raw.lower()), "Other")
+            row["sector"] = sector
+            classified.append(row)
+        return classified
 
-        Args:
-            positions: List of positions with sector info
+    def _extract_sector_allocation(self, positions):
+        classified = self._classify_positions(positions)
+        values = {}
+        for row in classified:
+            value = row.get("market_value", 0) or row.get("market_value_usd", 0)
+            values[row["sector"]] = values.get(row["sector"], 0) + value
+        total = sum(values.values())
+        return {sector: value / total * 100 for sector, value in values.items()} if total > 0 else {}
 
-        Returns:
-            Dict mapping sector → allocation percentage
-        """
-        try:
-            # Calculate total portfolio value
-            # Note: Saxo positions use "market_value" field (already in USD)
-            total_value = sum(p.get("market_value", 0) or p.get("market_value_usd", 0) for p in positions)
-
-            if total_value == 0:
-                logger.warning("Total portfolio value is 0")
-                return {}
-
-            # Group by sector
-            sector_values = {}
-            for pos in positions:
-                # Try to get existing sector, otherwise enrich from Yahoo Finance
-                sector_raw = pos.get("sector")
-
-                if not sector_raw or sector_raw == "Unknown":
-                    # Support both "symbol" and "instrument_id" field names
-                    symbol = pos.get("symbol") or pos.get("instrument_id")
-                    if symbol:
-                        sector_raw = self._enrich_position_with_sector(symbol)
-                        # Do not mutate the selected portfolio snapshot.
-
-                sector_raw = sector_raw or "Unknown"
-
-                # Map to GICS sector
-                sector = SECTOR_MAPPING.get(sector_raw, sector_raw)
-
-                # Skip if not a standard sector
-                if sector not in STANDARD_SECTORS and sector != "Unknown":
-                    # Try fuzzy match
-                    matched = False
-                    for key in SECTOR_MAPPING.keys():
-                        if key.lower() in sector_raw.lower():
-                            sector = SECTOR_MAPPING[key]
-                            matched = True
-                            break
-                    if not matched:
-                        sector = "Other"
-
-                # Use "market_value" field (already in USD for Saxo positions)
-                value = pos.get("market_value", 0) or pos.get("market_value_usd", 0)
-                sector_values[sector] = sector_values.get(sector, 0) + value
-
-            # Convert to percentages
-            allocation = {
-                sector: (value / total_value) * 100
-                for sector, value in sector_values.items()
-            }
-
-            return allocation
-
-        except Exception as e:
-            logger.error(f"Error extracting sector allocation: {e}", exc_info=True)
-            return {}
+    def _describe_sector_bounds(self, allocation, targets, unclassified_pct):
+        """Bounds express unknown fund exposure, never a ranked buy signal."""
+        targets = targets if targets is not None else default_sector_targets()
+        rows = []
+        for sector in INDUSTRY_SECTORS:
+            known = allocation.get(sector, 0.0)
+            upper = min(100.0, known + unclassified_pct)
+            minimum_gap = max(0.0, targets[sector] - upper)
+            possible_gap = max(0.0, targets[sector] - known)
+            rows.append({"sector": sector, "known_pct": known, "possible_total_pct": upper,
+                         "target_pct": targets[sector], "minimum_gap_pct": minimum_gap,
+                         "possible_gap_pct": possible_gap,
+                         "status": "Verified underweight" if minimum_gap > 0 else
+                                   "Indeterminate" if possible_gap > 0 else "No underweight"})
+        return rows
 
     def _detect_gaps(
         self,

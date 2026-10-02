@@ -218,133 +218,24 @@ const ML_CACHE_TTL = 15 * 60 * 1000; // 15 minutes (optimized: ML orchestrator r
  * Priority 1: Governance Engine -> Priority 2: ML Status API -> Priority 3: Stable fallback
  */
 export async function getUnifiedMLStatus() {
-    // Check cache
-    if (mlUnifiedCache.data && (Date.now() - mlUnifiedCache.timestamp) < ML_CACHE_TTL) {
-        return mlUnifiedCache.data;
-    }
-
-    (window.debugLogger?.debug || console.log)("Fetching unified ML status (same logic as AI Dashboard)...");
-
-    let result = {
-        totalLoaded: 0,
-        totalModels: 4,
-        confidence: 0,
-        source: 'unknown',
-        timestamp: new Date().toISOString(),
+    // No stale result cache: identity/source changes must take effect immediately.
+    const source = window.globalConfig?.get?.('data_source') || 'cointracking';
+    const data = await fetchMLStatus('overview?source=' + encodeURIComponent(source));
+    return {
+        totalLoaded: data?.counts?.models_loaded ?? null,
+        totalModels: data?.counts?.files_present ?? null,
+        confidence: null,
+        source: data ? 'verified_overview' : 'unavailable',
+        timestamp: data?.observed_at ?? null,
+        available: Boolean(data),
+        reason: data ? 'Confidence requires an evaluation record' : 'ML overview unavailable',
         individual: {
-            volatility: { loaded: 0, symbols: 0 },
-            regime: { loaded: 0, available: false },
-            correlation: { loaded: 0 },
-            sentiment: { loaded: 1, available: true }
+            volatility: { loaded: null, available: false },
+            regime: { loaded: null, available: false },
+            correlation: { loaded: null, available: false },
+            sentiment: { loaded: null, available: false }
         }
     };
-
-    try {
-        // PRIORITY 1: Governance Engine (exactly like AI Dashboard)
-        try {
-            const apiBase = window.getApiBase();
-            const govResponse = await fetch(`${apiBase}/execution/governance/signals`);
-            if (govResponse.ok) {
-                const govData = await govResponse.json();
-                if (govData.signals?.sources_used) {
-                    const sourcesCount = govData.signals.sources_used.length;
-                    const confidence = govData.signals.confidence || 0;
-
-                    result = {
-                        totalLoaded: Math.min(sourcesCount, 4), // Cap to 4 max
-                        totalModels: 4,
-                        confidence: Math.min(confidence, 1.0), // Cap to 100%
-                        source: 'governance_engine',
-                        timestamp: govData.timestamp || new Date().toISOString(),
-                        individual: {
-                            volatility: { loaded: sourcesCount > 0 ? 1 : 0, symbols: Math.min(sourcesCount * 2, 10) },
-                            regime: { loaded: sourcesCount > 1 ? 1 : 0, available: true },
-                            correlation: { loaded: sourcesCount > 2 ? 1 : 0 },
-                            sentiment: { loaded: 1, available: true }
-                        },
-                        // Real governance data for badge (no fabrication)
-                        contradictionIndex: govData.signals?.contradiction_index ?? null,
-                        signalsTimestamp: govData.signals?.timestamp || null,
-                        derivedPolicy: govData.derived_policy || null
-                    };
-                    (window.debugLogger?.debug || console.log)(`[OK] Governance Engine: ${result.totalLoaded}/4 sources, ${(confidence * 100).toFixed(1)}% confidence`);
-                    mlUnifiedCache = { data: result, timestamp: Date.now() };
-                    return result;
-                }
-            }
-        } catch (e) {
-            console.debug('Governance ML fetch failed:', e.message);
-        }
-
-        // PRIORITY 2: ML Status API (exactly like AI Dashboard fallback)
-        try {
-            const apiBase = window.getApiBase();
-            const mlResponse = await fetch(`${apiBase}/api/ml/status`);
-            if (mlResponse.ok) {
-                const mlData = await mlResponse.json();
-                const pipeline = mlData.pipeline_status || {};
-
-                const loadedCount = Math.max(0, Math.min(pipeline.loaded_models_count || 0, 4)); // Cap 0-4
-                if (loadedCount > 0) {
-                    const volModels = pipeline.volatility_models || {};
-                    const regimeModels = pipeline.regime_models || {};
-                    const corrModels = pipeline.correlation_models || {};
-
-                    result = {
-                        totalLoaded: loadedCount,
-                        totalModels: 4,
-                        confidence: Math.min(loadedCount / 4, 1.0), // Cap to 100%
-                        source: 'ml_api',
-                        timestamp: pipeline.timestamp || mlData.timestamp || new Date().toISOString(),
-                        individual: {
-                            volatility: {
-                                loaded: Math.min(Math.max(0, volModels.models_loaded || 0), 4),
-                                symbols: Math.min(Math.max(0, volModels.available_symbols?.length || 0), 10)
-                            },
-                            regime: {
-                                loaded: regimeModels.model_loaded ? 1 : 0,
-                                available: regimeModels.model_exists || false
-                            },
-                            correlation: {
-                                loaded: Math.min(Math.max(0, corrModels.models_loaded || 0), 4)
-                            },
-                            sentiment: { loaded: 1, available: true }
-                        }
-                    };
-                    (window.debugLogger?.debug || console.log)(`[OK] ML API: ${result.totalLoaded}/4 models loaded`);
-                    mlUnifiedCache = { data: result, timestamp: Date.now() };
-                    return result;
-                }
-            }
-        } catch (e) {
-            console.debug('ML Status API fetch failed:', e.message);
-        }
-
-        // PRIORITY 3: Stable fallback (exactly like AI Dashboard)
-        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-        result = {
-            totalLoaded: 4, // Same stable count as AI Dashboard
-            totalModels: 4,
-            confidence: 0.75 + ((dayOfYear % 7) * 0.01), // 75-82% stable by day
-            source: 'stable_fallback',
-            timestamp: new Date().toISOString(),
-            individual: {
-                volatility: { loaded: 1, symbols: 4 },
-                regime: { loaded: 1, available: true },
-                correlation: { loaded: 1 },
-                sentiment: { loaded: 1, available: true }
-            }
-        };
-        (window.debugLogger?.debug || console.log)(`[OK] Stable fallback: ${result.totalLoaded}/4 models, ${(result.confidence * 100).toFixed(1)}% confidence`);
-
-    } catch (error) {
-        debugLogger.error("[Error] All ML status sources failed:", error);
-        result.source = 'error';
-        result.confidence = 0;
-    }
-
-    mlUnifiedCache = { data: result, timestamp: Date.now() };
-    return result;
 }
 
 /**

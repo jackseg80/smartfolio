@@ -11,7 +11,7 @@ python-dotenv>=1.0.1
 
 # Authentication & Security
 bcrypt>=4.0.0  # Password hashing (direct bcrypt, no passlib wrapper)
-PyJWT==2.14.0  # JWT token generation/validation (HS256)
+PyJWT==2.15.0  # JWT token generation/validation (HS256)
 
 # HTTP Clients & Networking
 httpx>=0.24.0
@@ -46,6 +46,7 @@ aiofiles>=23.0.0  # Async file I/O for price history cache
 
 # Testing & Browser Automation
 selenium>=4.35.0  # E2E browser testing
+playwright==1.63.0  # External browser diagnostics
 
 # Monitoring & Logging (Development)
 # Note: These are optional for basic usage
@@ -54,3 +55,6 @@ prometheus-fastapi-instrumentator==8.1.0
 psutil>=5.9.0  # System resource monitoring (CPU, RAM usage)
 
 pyarrow
+
+# Verified exchange sessions for calendar-day stock volatility targets
+exchange-calendars==4.13.2

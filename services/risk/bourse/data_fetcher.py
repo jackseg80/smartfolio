@@ -158,8 +158,8 @@ class BourseDataFetcher:
         )
 
         # A currency-qualified Saxo line must never use another trading currency.
-        expected_currency = (base_symbol.rsplit('_', 1)[1].upper()
-                             if re.search(r'_[A-Z]{3}$', base_symbol.upper()) else None)
+        qualified_currency = re.search(r'_([A-Z]{3})(?:\.[A-Z]{1,3})?$', base_symbol.upper())
+        expected_currency = qualified_currency.group(1) if qualified_currency else None
 
         # Verified 1:1 corporate action: ROG was replaced by ROP on SIX.
         # Source: https://www.roche.com/investors/updates/inv-update-2026-03-16

@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XLON",
+  "fetched_at": "2026-09-30T13:29:19.038483+00:00",
+  "file": "SMH.L.csv",
+  "sha256": "dd475a3eb04d1bc897449193ca829aa7b4cdda404a6cf8bb47e8e5c4f9d70822",
+  "dataset_id": "verified-daily-stocks-SMH.L-dd475a3eb04d1bc8"
+}

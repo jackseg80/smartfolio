@@ -54,6 +54,18 @@
     }
     .main-content {
       transition: opacity 0.3s;
+      min-width: 0;
+    }
+    .dashboard-layout, .tab-content, .tab-pane, .ml-card, .card-content {
+      min-width: 0;
+    }
+    .card-header, .card-actions, .header-controls {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .card-title {
+      min-width: 0;
+      overflow-wrap: anywhere;
     }
   </style>
 
@@ -132,7 +144,7 @@
 
     <!-- Main Content -->
     <div class="dashboard-layout">
-      <div class="main-content">
+      <div class="main-content"><p>Descriptive regime diagnostics. HMM state probabilities are not future-rise probabilities. Reconstructed timelines are retrospective.</p>
         <div class="tab-content">
           <div class="tab-pane active" id="regimes-tab" role="tabpanel">
             <div id="regimes-badge-container" class="badge-container"></div>
@@ -168,8 +180,8 @@
                           <span id="comparison-stock-regime" class="regime-chip">--</span>
                         </td>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-confidence">--</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">HMM Only</td>
-                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">DD &le; -15%, 30d</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);" id="comparison-stock-method">Unavailable</td>
+                        <td style="padding: 0.75rem; border: 1px solid var(--theme-border);">Drawdown / MA200 rules</td>
                       </tr>
                       <tr>
                         <td style="padding: 0.75rem; border: 1px solid var(--theme-border); font-weight: 600;">₿ Bitcoin</td>
@@ -196,8 +208,8 @@
                 <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-sm);">
                   <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Pinned" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#bookmark"></use></svg> Key Differences:</strong>
                   <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                    <li><strong>Stock Market:</strong> Pure HMM statistical model, traditional thresholds</li>
-                    <li><strong>Bitcoin & Ethereum:</strong> Hybrid Rule-Based + HMM, crypto-adjusted thresholds (3x higher volatility)</li>
+                    <li><strong>Stock Market:</strong> Economic rule diagnostics; experimental HMM states are shown separately</li>
+                    <li><strong>Bitcoin & Ethereum:</strong> Economic rules with crypto thresholds; state probabilities are not forecasts</li>
                     <li><strong>Why Different?</strong> Crypto volatility (60-100% annual) vs Stocks (15-25%) requires distinct detection logic</li>
                   </ul>
                 </div>
@@ -209,7 +221,7 @@
               <div class="card-header" style="margin-bottom: 1.5rem;">
                 <div class="card-title">
                   <span class="card-icon" aria-hidden="true"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg></span>
-                  Stock Market Regime Detection (HMM)
+                  Stock Market Regime Diagnostics (Rules)
                   <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
                     Hidden Markov Model
                   </small>
@@ -223,18 +235,18 @@
                   <div class="metric-value">
                     <span id="stock-regime-name" class="regime-chip">Loading...</span>
                   </div>
-                  <small>HMM Detection</small>
+                  <small>Economic rule diagnostic</small>
                 </div>
 
                 <div class="metric-card">
                   <h5>Confidence</h5>
                   <div class="metric-value" id="stock-regime-confidence">--</div>
-                  <small>Detection Certainty</small>
+                  <small>State posterior only; no future-rise probability</small>
                 </div>
 
                 <div class="metric-card">
                   <h5>Model</h5>
-                  <div class="metric-value">HMM</div>
+                  <div class="metric-value">Rule-Based</div>
                   <small>Hidden Markov Model</small>
                 </div>
 
@@ -268,29 +280,29 @@
               <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-surface-elevated); border-radius: var(--radius-sm); display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;">
                 <div class="legend-item">
                   <span class="regime-chip bear-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bear Market</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD &le; -15%, 30d+</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Drawdown from 200-day high &le; -20%</small>
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip correction" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Correction</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">DD 10-15% + Vol &gt;30%</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Drawdown &le; -10% or price below MA200</small>
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip bull-market" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Bull Market</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Price &gt; MA200, Vol &lt;25%</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Remaining cases after bear, correction and expansion rules</small>
                 </div>
                 <div class="legend-item">
                   <span class="regime-chip expansion" style="display: inline-block; padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem;">Expansion</span>
-                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Recovery +15%/mo</small>
+                  <small style="display: block; margin-top: 0.25rem; color: var(--theme-text-muted);">Price more than 20% above MA200</small>
                 </div>
               </div>
 
               <!-- Info Footer -->
               <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--info); border-radius: var(--radius-sm);">
-                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Stock Market Detection:</strong>
+                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Descriptive stock regime rules:</strong>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                  <li><strong>HMM Model:</strong> Statistical pattern recognition for market regimes</li>
-                  <li><strong>States:</strong> Bear Market, Correction, Bull Market, Expansion</li>
-                  <li><strong>Thresholds:</strong> Traditional stock market parameters (DD &le; -15%, 30 days)</li>
+                  <li><strong>Method:</strong> Daily-close economic rules; descriptive diagnosis only</li>
+                  <li><strong>Rule categories:</strong> Bear Market, Correction, Bull Market, Expansion. HMM latent states remain A–D without verified economic mapping.</li>
+                  <li><strong>Precedence:</strong> Bear, Correction, Expansion, then Bull. Uses 200 daily observations.</li>
                   <li><strong>Events:</strong> COVID crash, Fed policy changes annotated for context</li>
                 </ul>
               </div>
@@ -301,9 +313,9 @@
               <div class="card-header" style="margin-bottom: 1.5rem;">
                 <div class="card-title">
                   <span class="card-icon" aria-hidden="true">₿</span>
-                  Bitcoin Regime Detection (Hybrid System)
+                  Bitcoin Regime Diagnostics
                   <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
-                    Rule-Based + HMM Fusion
+                    Economic rules + separate latent HMM states
                   </small>
                 </div>
               </div>
@@ -315,13 +327,13 @@
                   <div class="metric-value">
                     <span id="btc-current-regime-name" class="regime-chip">Loading...</span>
                   </div>
-                  <small>Hybrid Detection</small>
+                  <small>Descriptive diagnosis</small>
                 </div>
 
                 <div class="metric-card">
                   <h5>Confidence</h5>
                   <div class="metric-value" id="btc-current-regime-confidence">--</div>
-                  <small>Detection Certainty</small>
+                  <small>State posterior only; no future-rise probability</small>
                 </div>
 
                 <div class="metric-card pro-only">
@@ -329,7 +341,7 @@
                   <div class="metric-value">
                     <span id="btc-current-regime-method" class="detection-method">--</span>
                   </div>
-                  <small>Rule-Based or HMM</small>
+                  <small>Rules; HMM states are separate</small>
                 </div>
 
                 <div class="metric-card pro-only" id="btc-regime-reason-card" style="display: none;">
@@ -385,10 +397,10 @@
 
               <!-- Info Footer -->
               <div style="margin-top: 1.5rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--brand-primary); border-radius: var(--radius-sm);">
-                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Hybrid Detection:</strong>
+                <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Descriptive diagnosis:</strong>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                  <li><strong>Rule-Based (≥85% confidence):</strong> Clear cases using drawdown, duration, and trend thresholds</li>
-                  <li><strong>HMM (nuanced):</strong> Statistical model for corrections and consolidations</li>
+                  <li><strong>Rule-Based diagnostic:</strong> Drawdown, duration, and trend thresholds; no evaluated probability</li>
+                  <li><strong>HMM latent states:</strong> Experimental statistical states; economic labels require a verified mapping</li>
                   <li><strong>Crypto-Adjusted:</strong> Thresholds adapted for Bitcoin volatility (3x higher than stocks)</li>
                   <li><strong>Events:</strong> Mt.Gox, FTX, COVID crashes annotated for context</li>
                 </ul>
@@ -400,9 +412,9 @@
               <div class="card-header" style="margin-bottom: 1.5rem;">
                 <div class="card-title">
                   <span class="card-icon" aria-hidden="true">⟠</span>
-                  Ethereum Regime Detection (Hybrid System)
+                  Ethereum Regime Diagnostics
                   <small style="font-size: 0.75rem; font-weight: 400; color: var(--theme-text-muted); margin-left: 0.5rem;">
-                    Rule-Based + HMM Fusion
+                    Economic rules + separate latent HMM states
                   </small>
                 </div>
               </div>
@@ -414,13 +426,13 @@
                   <div class="metric-value">
                     <span id="eth-current-regime-name" class="regime-chip">Loading...</span>
                   </div>
-                  <small>Hybrid Detection</small>
+                  <small>Descriptive diagnosis</small>
                 </div>
 
                 <div class="metric-card">
                   <h5>Confidence</h5>
                   <div class="metric-value" id="eth-current-regime-confidence">--</div>
-                  <small>Detection Certainty</small>
+                  <small>State posterior only; no future-rise probability</small>
                 </div>
 
                 <div class="metric-card">
@@ -428,7 +440,7 @@
                   <div class="metric-value">
                     <span id="eth-current-regime-method" class="detection-method">--</span>
                   </div>
-                  <small>Rule-Based or HMM</small>
+                  <small>Rules; HMM states are separate</small>
                 </div>
 
                 <div class="metric-card" id="eth-regime-reason-card" style="display: none;">
@@ -458,7 +470,7 @@
               <div style="margin-bottom: 1rem; padding: 1rem; background: var(--theme-bg); border-left: 3px solid var(--success); border-radius: var(--radius-sm);">
                 <strong><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Info" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#information-circle"></use></svg> About Ethereum Detection:</strong>
                 <ul style="margin: 0.5rem 0 0 1.5rem; color: var(--theme-text-muted); font-size: 0.9rem;">
-                  <li><strong>Same Hybrid System:</strong> Uses identical rule-based + HMM fusion as Bitcoin</li>
+                  <li><strong>Separate methods:</strong> Economic rules and latent HMM states are reported independently</li>
                   <li><strong>Crypto-Adjusted Thresholds:</strong> Bear &le; -30% (20d+), Bull &gt; -20% (vol &lt;60%), Expansion +30%/mo</li>
                   <li><strong>Timeline Chart:</strong> Interactive regime visualization with price history</li>
                 </ul>
@@ -508,7 +520,7 @@
 
           if (data.current_regime && data.confidence !== undefined) {
             const regimeName = data.current_regime;
-            const confidencePercent = (data.confidence * 100).toFixed(1);
+            const confidencePercent = (data.confidence == null ? 'Unavailable' : (data.confidence * 100).toFixed(1));
             const detectionMethod = data.detection_method;
             const ruleReason = data.rule_reason;
 
@@ -516,7 +528,7 @@
             regimeChip.textContent = regimeName;
             regimeChip.className = 'regime-chip ' + regimeName.toLowerCase().replace(' ', '-');
 
-            document.getElementById('eth-current-regime-confidence').textContent = confidencePercent + '%';
+            document.getElementById('eth-current-regime-confidence').textContent = data.confidence == null ? 'Unavailable — rule diagnostic' : confidencePercent + '% · state posterior';
 
             const methodBadge = document.getElementById('eth-current-regime-method');
             methodBadge.textContent = detectionMethod === 'rule_based' ? 'Rule-Based' : 'HMM';
@@ -582,7 +594,8 @@
           const stockEl = document.getElementById('comparison-stock-regime');
           stockEl.textContent = stockData.current_regime;
           stockEl.className = 'regime-chip ' + getRegimeClass(stockData.current_regime);
-          document.getElementById('comparison-stock-confidence').textContent = (stockData.confidence * 100).toFixed(1) + '%';
+          document.getElementById('comparison-stock-method').textContent = stockData.model_type === 'descriptive_rules' || stockData.detection_method === 'rule_based' ? 'Rule-Based diagnostic' : 'HMM state';
+          document.getElementById('comparison-stock-confidence').textContent = (stockData.confidence == null ? 'Unavailable' : (stockData.confidence == null ? 'Unavailable' : (stockData.confidence * 100).toFixed(1)) + '% · state posterior');
         }
 
         if (btcData) {
@@ -591,7 +604,7 @@
             const btcEl = document.getElementById('comparison-btc-regime');
             btcEl.textContent = btc.current_regime;
             btcEl.className = 'regime-chip ' + getRegimeClass(btc.current_regime);
-            document.getElementById('comparison-btc-confidence').textContent = (btc.confidence * 100).toFixed(1) + '%';
+            document.getElementById('comparison-btc-confidence').textContent = (btc.confidence == null ? 'Unavailable' : (btc.confidence == null ? 'Unavailable' : (btc.confidence * 100).toFixed(1)) + '% · state posterior');
             document.getElementById('comparison-btc-method').textContent = btc.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
           }
         }
@@ -602,7 +615,7 @@
             const ethEl = document.getElementById('comparison-eth-regime');
             ethEl.textContent = eth.current_regime;
             ethEl.className = 'regime-chip ' + getRegimeClass(eth.current_regime);
-            document.getElementById('comparison-eth-confidence').textContent = (eth.confidence * 100).toFixed(1) + '%';
+            document.getElementById('comparison-eth-confidence').textContent = (eth.confidence == null ? 'Unavailable' : (eth.confidence == null ? 'Unavailable' : (eth.confidence * 100).toFixed(1)) + '% · state posterior');
             document.getElementById('comparison-eth-method').textContent = eth.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM';
           }
         }
@@ -636,11 +649,11 @@
           return [
             asset,
             data.current_regime || 'N/A',
-            ((data.confidence || 0) * 100).toFixed(1),
+            (data.confidence == null ? 'Unavailable' : (data.confidence*100).toFixed(1)),
             data.detection_method === 'rule_based' ? 'Rule-Based' : 'HMM',
-            ((data.drawdown_from_peak || 0) * 100).toFixed(1),
-            ((data.market_volatility || 0) * 100).toFixed(1),
-            ((data.trend_30d || 0) * 100).toFixed(1)
+            (data.drawdown_from_peak == null ? 'Unavailable' : (data.drawdown_from_peak * 100).toFixed(1)),
+            (data.market_volatility == null ? 'Unavailable' : (data.market_volatility * 100).toFixed(1)),
+            (data.trend_30d == null ? 'Unavailable' : (data.trend_30d * 100).toFixed(1))
           ].join(',');
         };
 

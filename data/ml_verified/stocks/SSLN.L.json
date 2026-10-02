@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XLON",
+  "fetched_at": "2026-09-30T13:29:25.379918+00:00",
+  "file": "SSLN.L.csv",
+  "sha256": "1b82180d6fca8bb772624e398fcd0840c67a8071aa3e09b6604a1f3d751ff26f",
+  "dataset_id": "verified-daily-stocks-SSLN.L-1b82180d6fca8bb7"
+}

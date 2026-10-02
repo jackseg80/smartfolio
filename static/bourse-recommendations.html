@@ -184,13 +184,13 @@
             <!-- Market Opportunities Tab -->
             <div id="opportunities" class="tab-content">
                 <!-- Banner -->
-                <div class="dashboard-card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                <div class="dashboard-card br-hero-card">
                     <div style="padding: 1rem;">
                         <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; color: white;">
                             <svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Global" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#globe-alt"></use></svg> Market Opportunities
                         </h2>
                         <p style="margin: 0; opacity: 0.9; font-size: 0.875rem;">
-                            Discover underweight sectors and new investment opportunities.
+                            Review portfolio evidence and historical candidates for manual decisions.
                         </p>
                     </div>
                 </div>
@@ -225,7 +225,7 @@
                 <div class="dashboard-card" style="padding:1rem;margin-bottom:1.5rem;">
                     <details>
                         <summary>Sector allocation targets</summary>
-                        <p>Default: generic industry reference. Set targets below to express your allocation policy. Targets apply to the selected securities portfolio.</p>
+                        <p>Default: generic industry reference. Set targets below to express your allocation policy. Targets apply to all valued securities, excluding saved cash. This is not an equity-only denominator.</p>
                         <label><input type="checkbox" id="useCustomSectorTargets"> Use my sector targets (total 100%)</label>
                         <fieldset id="sectorTargetInputs" disabled style="border:0;min-width:0;padding:1rem 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:1rem;">
 <label>Technology (%)<input type="number" min="0" max="100" step="0.01" value="19.57" data-sector-target="Technology" style="width:100%;box-sizing:border-box;"></label>
@@ -243,31 +243,31 @@
                         <p id="sectorTargetStatus" role="status">Generic reference selected.</p>
                     </details>
                     <p id="opportunityMethod" role="status">Historical screening. No validated forward-return forecast.</p>
-                    <p>Sector gaps account conservatively for unclassified exposure, including broad funds without sector look-through. Candidates in the same sector are alternatives sharing one sector budget; do not add their budgets.</p>
+                    <p>Industry intervals retain unknown fund weights. Candidate exploration is independent of confirmed gaps. No automatic buy or sale decision is produced.</p>
                 </div>
 
                 <!-- Portfolio Gaps (Sectors) -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Portfolio Gaps (Underweight Sectors)</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg> Industry Exposure and Evidence</h3>
                         <div class="card-badge" id="gapsCount">0 gaps</div>
                     </div>
-                    <div id="portfolioGaps">
+                    <div id="portfolioGaps" class="mo-content">
                         <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
-                            Click "Scan" to identify sector gaps
+                            Run a scan to assess sector evidence and uncertainty.
                         </div>
                     </div>
                 </div>
 
-                <!-- Top Opportunities -->
+                <!-- Candidate Exploration -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Top Opportunities</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Target" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#cursor-arrow-rays"></use></svg> Candidate Exploration</h3>
                         <div class="card-badge" id="opportunitiesCount">0 opportunities</div>
                     </div>
-                    <div id="opportunitiesTable">
+                    <div id="opportunitiesTable" class="mo-content">
                         <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
-                            No opportunities yet. Run scan first.
+                            Explore candidates after checking the selected source.
                         </div>
                     </div>
                 </div>
@@ -275,12 +275,12 @@
                 <!-- Suggested Sales -->
                 <div class="dashboard-card" style="margin-bottom: 1.5rem;">
                     <div class="card-header">
-                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Suggested Sales (To Fund Opportunities)</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Balance" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#wallet"></use></svg> Holding Reviews and Sale Limits</h3>
                         <div class="card-badge" id="salesCount">0 suggestions</div>
                     </div>
-                    <div id="suggestedSales">
+                    <div id="suggestedSales" class="mo-content">
                         <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
-                            No sales suggestions yet. Run scan first.
+                            Run a scan to review concentration and missing sale evidence.
                         </div>
                     </div>
                 </div>
@@ -288,10 +288,10 @@
                 <!-- Impact Simulator -->
                 <div class="dashboard-card">
                     <div class="card-header">
-                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Reallocation Impact Simulator</h3>
+                        <h3 class="card-title"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Growth" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrow-trending-up"></use></svg> Manual Scenario</h3>
                         <div class="card-badge">Before / After</div>
                     </div>
-                    <div id="impactSimulator">
+                    <div id="impactSimulator" class="mo-content">
                         <div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">
                             Impact analysis will appear here after scan
                         </div>
@@ -343,6 +343,13 @@
                 debugLogger.debug(`[Warning] wealthContextBar not ready, using localStorage: ${bourseSource}`);
             }
 
+            if (!bourseSource || bourseSource === 'all') {
+                bourseSource = await window.readConfiguredBourseSource();
+                if (bourseSource && window.wealthContextBar) {
+                    const contextValue = bourseSource === 'saxobank_csv' ? 'saxo:saxobank_csv' : bourseSource;
+                    window.wealthContextBar.setContext({bourse:contextValue});
+                }
+            }
             // Reset state
             currentFileKey = null;
             window.saxoSourceType = null;
@@ -389,6 +396,7 @@
         }
 
         function invalidateOpportunities() {
+            window.marketOpportunities?.invalidate();
             opportunityRevision++;
             lastOpportunitiesData = null;
             document.getElementById('opportunityMethod').textContent = 'Settings changed. Run a new scan.';
@@ -504,14 +512,14 @@
                 }
 
                 const fullRecsUrl = `${window.getApiBase()}${recsUrl}`;
-                const response = await window.safeFetch(fullRecsUrl, {
+                const response = await window.safeFetch(fullRecsUrl, { timeout: 120000, maxRetries: 0,
                     headers: { 'X-User': activeUser }
                 });
 
                 if (revision !== recommendationRevision) return;
                 if (!response?.ok) {
                     // Handle 401 Unauthorized (Saxo not connected)
-                    if (response.status === 401) {
+                    if (response?.status === 401) {
                         tableContainer.innerHTML = `
                             <div style="padding: 3rem; text-align: center;">
                                 <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
@@ -696,7 +704,7 @@
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('name')">Name ${getSortIcon('name')}</th>
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('action')">Action ${getSortIcon('action')}</th>
                                 <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('rr')">R/R ${getSortIcon('rr')}</th>
-                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('confidence')">Signal agreement ${getSortIcon('confidence')}</th>
+                                <th scope="col" style="${thStyle} text-align: center;" onclick="sortRecommendations('confidence')">Rule agreement ${getSortIcon('confidence')}</th>
                                 <th scope="col" style="${thStyle} text-align: left;" onclick="sortRecommendations('sector')">Sector ${getSortIcon('sector')}</th>
                                 <th scope="col" style="${thStyle} text-align: right;" onclick="sortRecommendations('weight')">Weight ${getSortIcon('weight')}</th>
                             </tr>
@@ -786,7 +794,7 @@
                                     <div style="font-size: 1.25rem; font-weight: 700;">${getActionBadge(rec.action)}</div>
                                 </div>
                                 <div>
-                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Signal agreement (not probability)</div>
+                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Rule agreement (not a probability)</div>
                                     <div style="font-size: 1.25rem; font-weight: 700;">${Math.round(rec.confidence * 100)}%</div>
                                 </div>
                                 <div>
@@ -844,7 +852,7 @@
                 currentRecommendations.forEach((rec, idx) => {
                     markdownText += `## ${idx + 1}. ${rec.symbol} - ${rec.name || ''}\n`;
                     markdownText += `- **Action:** ${rec.action}\n`;
-                    markdownText += `- **Signal agreement (not a probability):** ${Math.round(rec.confidence * 100)}%\n`;
+                    markdownText += `- **Rule agreement (not a probability):** ${Math.round(rec.confidence * 100)}%\n`;
                     markdownText += `- **Sector:** ${rec.sector}\n`;
                     if (rec.tactical_advice) markdownText += `- **Advice:** ${rec.tactical_advice}\n`;
                     markdownText += `\n`;
@@ -871,7 +879,7 @@
         }
 
         // ==================== MARKET OPPORTUNITIES ====================
-        function setupOpportunitiesListeners() {
+        async function setupOpportunitiesListeners() {
             const targetToggle = document.getElementById('useCustomSectorTargets');
             const targetInputs = document.getElementById('sectorTargetInputs');
             function targetsChanged() {
@@ -879,391 +887,29 @@
                 invalidateOpportunities();
                 try {
                     readSectorTargets();
-                    document.getElementById('sectorTargetStatus').textContent = targetToggle.checked ? 'Custom targets: total 100%.' : 'Generic reference selected.';
+                    document.getElementById('sectorTargetStatus').textContent = targetToggle.checked ? 'Personal targets: total 100%.' : 'Generic reference selected.';
                 } catch (error) {
                     document.getElementById('sectorTargetStatus').textContent = error.message;
                 }
             }
             targetToggle.addEventListener('change', targetsChanged);
             targetInputs.addEventListener('input', targetsChanged);
-            const horizonButtons = document.querySelectorAll('[data-opp-horizon]');
-            horizonButtons.forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    horizonButtons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    currentHorizon = btn.getAttribute('data-opp-horizon');
-                    invalidateOpportunities();
-                });
+            const buttons = document.querySelectorAll('[data-opp-horizon]');
+            buttons.forEach(btn => btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); currentHorizon = btn.dataset.oppHorizon;
+                invalidateOpportunities();
+            }));
+            const { mountMarketOpportunities } = await import('./components/market-opportunities.js');
+            window.marketOpportunities = mountMarketOpportunities({
+                readTargets: readSectorTargets, invalidatePage: invalidateOpportunities,
+                getContext: () => ({ user: localStorage.getItem('activeUser') || '',
+                    source: ({ csv: 'saxobank_csv', manual: 'manual_bourse', api: 'saxobank_api' })[window.saxoSourceType],
+                    fileKey: currentFileKey, horizon: currentHorizon,
+                    selection: window.wealthContextBar?.getContext()?.bourse || localStorage.getItem('bourseSource') })
             });
-
-            const scanBtn = document.getElementById('btnScanOpportunities');
-            if (scanBtn) {
-                scanBtn.addEventListener('click', async () => {
-                    await loadMarketOpportunities();
-                });
-            }
-
-            const exportBtn = document.getElementById('btnExportTextOpps');
-            if (exportBtn) {
-                exportBtn.addEventListener('click', async () => {
-                    await exportOpportunitiesToText();
-                });
-            }
         }
 
-        async function loadMarketOpportunities() {
-            const revision = ++opportunityRevision;
-            const activeUser = localStorage.getItem('activeUser') || '';
-            const scanBtn = document.getElementById('btnScanOpportunities');
-            const originalText = scanBtn.textContent;
-
-            // Check if source is configured
-            if (!window.saxoSourceType) {
-                const authMessage = `
-                    <div style="padding: 3rem; text-align: center;">
-                        <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Analytics" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#chart-bar"></use></svg></div>
-                        <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Source not configured</h2>
-                        <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
-                            Please select a Stock data source in the Dashboard.
-                        </p>
-                        <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
-                            Go to Saxo Dashboard →
-                        </a>
-                    </div>
-                `;
-                document.getElementById('portfolioGaps').innerHTML = authMessage;
-                document.getElementById('opportunitiesTable').innerHTML = '';
-                document.getElementById('suggestedSales').innerHTML = '';
-                document.getElementById('impactSimulator').innerHTML = '';
-                return;
-            }
-
-            try {
-                scanBtn.disabled = true;
-                scanBtn.textContent = "Scanning...";
-
-                document.getElementById('portfolioGaps').innerHTML = '<div class="loading">Analyzing sector gaps...</div>';
-                document.getElementById('opportunitiesTable').innerHTML = '<div class="loading">Identifying opportunities...</div>';
-                document.getElementById('suggestedSales').innerHTML = '<div class="loading">Calculating suggested sales...</div>';
-                document.getElementById('impactSimulator').innerHTML = '<div class="loading">Computing impact...</div>';
-
-                const targets = readSectorTargets();
-                let url = `/api/bourse/opportunities?horizon=${currentHorizon}`;
-                if (targets) url += `&sector_targets=${encodeURIComponent(JSON.stringify(targets))}`;
-                if (window.saxoSourceType === 'manual') {
-                    url += `&source=manual_bourse`;
-                } else if (window.saxoSourceType === 'api') {
-                    url += `&source=saxobank_api`;
-                } else if (window.saxoSourceType === 'csv' && currentFileKey) {
-                    url += `&file_key=${encodeURIComponent(currentFileKey)}`;
-                }
-
-                const fullUrl = `${window.getApiBase()}${url}`;
-                const response = await window.safeFetch(fullUrl, {
-                    headers: { 'X-User': activeUser }
-                });
-
-                if (revision !== opportunityRevision) return;
-                if (!response?.ok) {
-                    // Handle 401 Unauthorized (Saxo not connected)
-                    if (response.status === 401) {
-                        const authMessage = `
-                            <div style="padding: 3rem; text-align: center;">
-                                <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
-                                <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
-                                <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
-                                    Please connect to your Saxo Bank account to view opportunities.
-                                </p>
-                                <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
-                                    Go to Saxo Dashboard →
-                                </a>
-                            </div>
-                        `;
-                        document.getElementById('portfolioGaps').innerHTML = authMessage;
-                        document.getElementById('opportunitiesTable').innerHTML = '';
-                        document.getElementById('suggestedSales').innerHTML = '';
-                        document.getElementById('impactSimulator').innerHTML = '';
-                        scanBtn.textContent = originalText;
-                        scanBtn.disabled = false;
-                        return;
-                    }
-                    throw new Error('Opportunities endpoint failed');
-                }
-
-                if (revision !== opportunityRevision) return;
-                const data = response.data || response;
-                lastOpportunitiesData = data;
-                document.getElementById('opportunityMethod').textContent = `${horizonDescription(data.horizon_details)} Targets: ${data.target_source === 'user' ? 'your allocation' : 'generic reference'}. Industry classification coverage: ${Number.isFinite(data.classification_coverage) ? (100 * data.classification_coverage).toFixed(0) + '%' : 'unavailable'}.`;
-
-                renderGapsCards(data.gaps || []);
-                renderOpportunitiesTable(data.opportunities || []);
-                renderSuggestedSales(data.suggested_sales || []);
-                renderImpactSimulator(data.impact || {});
-
-                document.getElementById('gapsCount').textContent = `${data.gaps?.length || 0} gaps`;
-                document.getElementById('opportunitiesCount').textContent = `${data.opportunities?.length || 0} opportunities`;
-                document.getElementById('salesCount').textContent = `${data.suggested_sales?.length || 0} suggestions`;
-
-                scanBtn.textContent = "[OK] Done";
-
-            } catch (error) {
-                if (revision !== opportunityRevision) return;
-                debugLogger.error('Failed to load opportunities:', error);
-                // Check if error message contains 401 or unauthorized
-                const isAuthError = error.message?.includes('401') || error.message?.toLowerCase().includes('unauthorized') || error.message?.toLowerCase().includes('not connected');
-                if (isAuthError) {
-                    const authMessage = `
-                        <div style="padding: 3rem; text-align: center;">
-                            <div style="font-size: 4rem; margin-bottom: 1.5rem;"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Locked" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#lock-closed"></use></svg></div>
-                            <h2 style="margin-bottom: 1rem; color: var(--theme-text);">Saxo Connection Required</h2>
-                            <p style="color: var(--theme-text-muted); margin-bottom: 1.5rem;">
-                                Please connect to your Saxo Bank account to view opportunities.
-                            </p>
-                            <a href="saxo-dashboard.html" class="btn primary" style="padding: 0.75rem 1.5rem; text-decoration: none;">
-                                Go to Saxo Dashboard →
-                            </a>
-                        </div>
-                    `;
-                    document.getElementById('portfolioGaps').innerHTML = authMessage;
-                } else {
-                    document.getElementById('portfolioGaps').innerHTML = `<div class="error-message">${error.message}</div>`;
-                }
-                for (const id of ['opportunitiesTable', 'suggestedSales', 'impactSimulator']) {
-                    document.getElementById(id).textContent = 'Scan unavailable. Correct the settings or retry.';
-                }
-                scanBtn.textContent = "Error";
-            } finally {
-                scanBtn.textContent = originalText;
-                scanBtn.disabled = false;
-            }
-        }
-
-        function renderGapsCards(gaps) {
-            const container = document.getElementById('portfolioGaps');
-
-            if (!gaps || gaps.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No sector gap with enough verified market data to rank.</div>`;
-                return;
-            }
-
-            container.innerHTML = `
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; padding: 1rem;">
-                    ${gaps.map(gap => {
-                        const score = finiteNumber(gap.score);
-                        const scoreColor = score !== null && score >= 70 ? 'var(--success)' : score !== null && score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
-                        return `
-                            <div style="padding: 1.5rem; background: var(--theme-bg); border-radius: var(--radius-md); border: 1px solid var(--theme-border);">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                                    <h4 style="margin: 0; font-size: 1rem; font-weight: 600;">${gap.sector}</h4>
-                                    <div style="font-size: 1.25rem; font-weight: 700; color: ${scoreColor};">${formatNumber(gap.score, 0)}</div>
-                                </div>
-                                <div style="margin-bottom: 0.75rem;">
-                                    <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Current / Target</div>
-                                    <div style="font-size: 1.125rem; font-weight: 600;">${formatNumber(gap.current_pct)}% → ${formatNumber(gap.target_pct)}%</div>
-                                </div>
-                                <div style="padding: 0.5rem; background: var(--theme-surface); border-radius: var(--radius-sm); font-size: 0.75rem;">
-                                    <div style="color: var(--theme-text-muted);">Minimum verified gap: <strong style="color: var(--warning);">${formatNumber(gap.gap_pct)}%</strong></div>
-                                    <div style="color: var(--theme-text-muted); margin-top: 0.25rem;">ETF: <strong>${gap.etf}</strong></div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
-        }
-
-        function renderOpportunitiesTable(opportunities) {
-            const container = document.getElementById('opportunitiesTable');
-
-            if (!opportunities || opportunities.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No verified opportunities identified for this horizon.</div>`;
-                return;
-            }
-
-            container.innerHTML = `
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Name</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sector</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Historical screen</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Type</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Rationale</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${opportunities.map(opp => {
-                                const score = finiteNumber(opp.score);
-                                const scoreColor = score !== null && score >= 70 ? 'var(--success)' : score !== null && score >= 50 ? 'var(--warning)' : 'var(--theme-text-muted)';
-                                return `
-                                    <tr style="border-bottom: 1px solid var(--theme-border);">
-                                        <td style="padding: 0.75rem; font-weight: 600;">${escapeText(opp.symbol)}<div style="font-size:0.75rem;">REVIEW</div></td>
-                                        <td style="padding: 0.75rem; color: var(--theme-text-muted);">${escapeText(opp.name || opp.symbol)}</td>
-                                        <td style="padding: 0.75rem;">${escapeText(opp.sector)}</td>
-                                        <td style="padding: 0.75rem; text-align: center; color: ${scoreColor}; font-weight: 600;">${formatNumber(opp.score, 0)}</td>
-                                        <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--info-bg); color: var(--info); border-radius: var(--radius-sm); font-size: 0.75rem;">${escapeText(opp.type)}</span></td>
-                                        <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${escapeText(opp.rationale)}
-                                            <div>Available components: ${escapeText((opp.score_components_available || []).join(', ') || 'none')}. Diversification: ${formatNumber(opp.diversification_score, 0)}.</div>
-                                            <div>Data coverage: ${Number.isFinite(opp.confidence) ? (100 * opp.confidence).toFixed(0) + '%' : 'N/A'}; not a success probability.</div>
-                                            <div>Shared sector budget: USD ${formatNumber(opp.capital_needed, 2)} (alternatives, not cumulative).</div>
-                                        </td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        function renderSuggestedSales(sales) {
-            const container = document.getElementById('suggestedSales');
-
-            if (!sales || sales.length === 0) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No verified sale candidates. A holding date of at least 30 days and a strong reason to trim are required.</div>`;
-                return;
-            }
-
-            container.innerHTML = `
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Symbol</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Current Value</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Sell %</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Frees</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--theme-text-muted);">Rationale</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${sales.map(sale => `
-                                <tr style="border-bottom: 1px solid var(--theme-border);">
-                                    <td style="padding: 0.75rem; font-weight: 600;">${sale.symbol}</td>
-                                    <td style="padding: 0.75rem; text-align: right;">$${sale.current_value?.toLocaleString() || 'N/A'}</td>
-                                    <td style="padding: 0.75rem; text-align: center;"><span style="padding: 0.25rem 0.5rem; background: var(--warning-bg); color: var(--warning); border-radius: var(--radius-sm); font-weight: 600;">${sale.sale_pct?.toFixed(0) || 0}%</span></td>
-                                    <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: var(--success);">+$${sale.sale_value?.toLocaleString() || 'N/A'}</td>
-                                    <td style="padding: 0.75rem; font-size: 0.875rem; color: var(--theme-text-muted);">${sale.rationale}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        function renderImpactSimulator(impact) {
-            const container = document.getElementById('impactSimulator');
-
-            if (!impact || !impact.before || !impact.after) {
-                container.innerHTML = `<div style="padding: 2rem; text-align: center; color: var(--theme-text-muted);">No impact data available.</div>`;
-                return;
-            }
-
-            const allSectors = new Set([...Object.keys(impact.before), ...Object.keys(impact.after)]);
-
-            container.innerHTML = `
-                <div style="padding: 1.5rem;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                        <div style="text-align: center; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
-                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Risk Score</div>
-                            <div style="font-size: 1.5rem; font-weight: 700;">
-                                <span style="color: var(--warning);">${impact.risk_before?.toFixed(1) || 'N/A'}</span>
-                                → <span style="color: var(--success);">${impact.risk_after?.toFixed(1) || 'N/A'}</span>
-                            </div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: var(--theme-bg); border-radius: var(--radius-md);">
-                            <div style="font-size: 0.75rem; color: var(--theme-text-muted);">Capital Freed</div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: var(--success);">$${Math.round(impact.total_freed || 0).toLocaleString()}</div>
-                        </div>
-                    </div>
-
-                    <h4 style="margin-bottom: 1rem;">Sector Allocation Changes</h4>
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid var(--theme-border); background: var(--theme-bg-subtle);">
-                                <th scope="col" style="padding: 0.75rem; text-align: left;">Sector</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right;">Before</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right;">After</th>
-                                <th scope="col" style="padding: 0.75rem; text-align: right;">Change</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${Array.from(allSectors).map(sector => {
-                                const beforePct = impact.before[sector] || 0;
-                                const afterPct = impact.after[sector] || 0;
-                                const change = afterPct - beforePct;
-                                const changeColor = change > 0 ? 'var(--success)' : change < 0 ? 'var(--danger)' : 'var(--theme-text-muted)';
-                                return `
-                                    <tr style="border-bottom: 1px solid var(--theme-border);">
-                                        <td style="padding: 0.75rem; font-weight: 600;">${sector}</td>
-                                        <td style="padding: 0.75rem; text-align: right;">${beforePct.toFixed(1)}%</td>
-                                        <td style="padding: 0.75rem; text-align: right; font-weight: 600;">${afterPct.toFixed(1)}%</td>
-                                        <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: ${changeColor};">${change > 0 ? '+' : ''}${change.toFixed(1)}%</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        async function exportOpportunitiesToText() {
-            const btn = document.getElementById('btnExportTextOpps');
-            const originalText = btn.textContent;
-
-            try {
-                btn.disabled = true;
-                btn.textContent = "[Pending] Generating...";
-
-                if (!lastOpportunitiesData) {
-                    Toast.warning('No data to export. Run a scan first.');
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                    return;
-                }
-
-                let markdownText = `# Market Opportunities Export\n\n`;
-                markdownText += `**Generated:** ${new Date().toLocaleString()}\n`;
-                markdownText += `**Method:** ${document.getElementById('opportunityMethod').textContent}\nCandidates are alternatives sharing one sector budget, not cumulative orders.\n\n`;
-
-                markdownText += `## Portfolio Gaps\n`;
-                (lastOpportunitiesData.gaps || []).forEach(gap => {
-                    markdownText += `- **${gap.sector}**: ${formatNumber(gap.current_pct)}% → ${formatNumber(gap.target_pct)}% (ETF: ${gap.etf})\n`;
-                });
-
-                markdownText += `\n## Top Opportunities\n`;
-                (lastOpportunitiesData.opportunities || []).forEach(opp => {
-                    markdownText += `- **${opp.symbol}** (${opp.sector}): REVIEW; historical score ${formatNumber(opp.score, 0)}; data coverage ${formatNumber(opp.confidence * 100, 0)}%; shared sector budget USD ${formatNumber(opp.capital_needed, 2)} - ${opp.rationale}\n`;
-                });
-
-                markdownText += `\n## Suggested Sales\n`;
-                (lastOpportunitiesData.suggested_sales || []).forEach(sale => {
-                    markdownText += `- **${sale.symbol}**: Sell ${sale.sale_pct?.toFixed(0) || 0}% (€${sale.sale_value?.toLocaleString() || 'N/A'}) - ${sale.rationale}\n`;
-                });
-
-                const blob = new Blob([markdownText], { type: 'text/plain;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `opportunities-${new Date().toISOString().split('T')[0]}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                btn.textContent = "[OK] Downloaded!";
-                setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
-
-            } catch (error) {
-                debugLogger.error('Export failed:', error);
-                btn.textContent = originalText;
-                btn.disabled = false;
-            }
-        }
     </script>
 </body>
 </html>

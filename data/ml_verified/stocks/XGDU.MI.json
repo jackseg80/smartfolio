@@ -1,0 +1,18 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XMIL",
+  "fetched_at": "2026-09-30T13:29:16.788383+00:00",
+  "file": "XGDU.MI.csv",
+  "sha256": "3c24718e321535a96d4a0fb49a085eab1902624eac27b80a4f10436e0f72ec81",
+  "dataset_id": "verified-daily-stocks-XGDU.MI-3c24718e321535a9",
+  "original_provider_sha256": "0090dd7c7085cb3b0ed4b58a73329df0a265715b09bab321d28c43f80cd1bdd8",
+  "raw_archive": "raw\\0090dd7c7085cb3b0ed4b58a73329df0a265715b09bab321d28c43f80cd1bdd8\\XGDU.MI.csv",
+  "observation_filter": {
+    "excluded_dates": [
+      "2026-09-29"
+    ],
+    "policy": "Exclude non-session/incomplete dates and trailing invalid provider rows; never fill an interior missing close"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "method": "ewma",
+  "features": [
+    "rv7",
+    "rv30",
+    "rv90",
+    "ewma",
+    "abs_return"
+  ],
+  "asset": "LINK",
+  "market": "crypto",
+  "horizon": 7,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-crypto-LINK-b93c2c5e76e38634",
+  "dataset_sha256": "b93c2c5e76e38634e50670ccd6d8b2d9fcb66e0035378f13a9c39182dc259047",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 365,
+  "schema_version": 1,
+  "training_start": "2019-04-16T00:00:00+00:00",
+  "training_end": "2025-03-23T00:00:00+00:00",
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ewma. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.785757161736025,
+        "ewma": 0.39641179012965605,
+        "ridge": 0.39236140740102726,
+        "lstm": 0.47208759702241526
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": 0.010217614181717516,
+      "learned_wins": 5,
+      "windows": 7,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.826181634819982,
+          "mae": 0.2904042802146811,
+          "rows": 358
+        },
+        "ewma": {
+          "qlike": 0.4322524640485216,
+          "mae": 0.25184635934945654,
+          "rows": 358
+        },
+        "ridge": {
+          "qlike": 0.4382207991802995,
+          "mae": 0.2715655428692356,
+          "rows": 358
+        },
+        "lstm": {
+          "qlike": 0.4543395428517475,
+          "mae": 0.21750345924571676,
+          "rows": 358
+        }
+      },
+      "learned_confirmation_improvement": -0.013807521363505604,
+      "interval_coverage": 0.9357541899441341
+    }
+  },
+  "interval": {
+    "level": 0.9,
+    "width": 0.5457812093803812,
+    "confirmation_coverage": 0.9357541899441341,
+    "calibration_rows": 176,
+    "confirmation_rows": 358
+  }
+}

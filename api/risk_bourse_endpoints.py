@@ -871,7 +871,8 @@ async def get_dividend_analysis(
         dividends = None
         try:
             import yfinance as yf
-            ticker_obj = yf.Ticker(ticker)
+            from services.ml.portfolio_context import stock_symbol
+            ticker_obj = yf.Ticker(stock_symbol(ticker))
             dividends = ticker_obj.dividends
         except Exception as e:
             logger.warning(f"Could not fetch dividends for {ticker}: {e}")

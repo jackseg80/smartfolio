@@ -1,0 +1,155 @@
+{
+  "asset": "WFRD",
+  "market": "stocks",
+  "horizon": 30,
+  "protocol_id": "ml-risk-2026-09-30-v1",
+  "dataset_id": "verified-daily-stocks-WFRD-474900fe3459c1e2",
+  "dataset_sha256": "474900fe3459c1e23cd2b153d9bfcdeebb7cf6c7f612a4b1aeebbd40074fcaa6",
+  "code_version": "753382359cb9d21bfa992304d1acc27903585c433451a699be449cad8d2eabd1",
+  "data_end": "2026-09-29T00:00:00+00:00",
+  "annualization": 252,
+  "state": "retrospectively_validated",
+  "selected": "ridge",
+  "reference": "ewma",
+  "folds": [
+    {
+      "train_start": "2021-05-13T00:00:00+00:00",
+      "train_end": "2023-05-22T00:00:00+00:00",
+      "calibration_start": "2023-06-22T00:00:00+00:00",
+      "calibration_end": "2023-11-21T00:00:00+00:00",
+      "test_start": "2023-12-22T00:00:00+00:00",
+      "test_end": "2024-05-22T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.32989124031521355,
+          "mae": 0.1312020654366776,
+          "rows": 104
+        },
+        "ewma": {
+          "qlike": 0.31933334952171666,
+          "mae": 0.12594892491177537,
+          "rows": 104
+        },
+        "ridge": {
+          "qlike": 0.19358210050329047,
+          "mae": 0.12713689435499656,
+          "rows": 104
+        },
+        "lstm": {
+          "qlike": 0.17099235010574423,
+          "mae": 0.11917049208689834,
+          "rows": 104
+        }
+      }
+    },
+    {
+      "train_start": "2021-05-13T00:00:00+00:00",
+      "train_end": "2023-11-21T00:00:00+00:00",
+      "calibration_start": "2023-12-22T00:00:00+00:00",
+      "calibration_end": "2024-05-22T00:00:00+00:00",
+      "test_start": "2024-06-24T00:00:00+00:00",
+      "test_end": "2024-11-20T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.14116476754518154,
+          "mae": 0.0834606102645018,
+          "rows": 106
+        },
+        "ewma": {
+          "qlike": 0.1470001460732448,
+          "mae": 0.09016597578136566,
+          "rows": 106
+        },
+        "ridge": {
+          "qlike": 0.09196676831136812,
+          "mae": 0.06787821780774646,
+          "rows": 106
+        },
+        "lstm": {
+          "qlike": 0.19645312121643385,
+          "mae": 0.09406305614476355,
+          "rows": 106
+        }
+      }
+    },
+    {
+      "train_start": "2021-05-13T00:00:00+00:00",
+      "train_end": "2024-05-22T00:00:00+00:00",
+      "calibration_start": "2024-06-24T00:00:00+00:00",
+      "calibration_end": "2024-11-20T00:00:00+00:00",
+      "test_start": "2024-12-23T00:00:00+00:00",
+      "test_end": "2025-05-21T00:00:00+00:00",
+      "scores": {
+        "persistence": {
+          "qlike": 0.7189035642424951,
+          "mae": 0.32255839102791667,
+          "rows": 102
+        },
+        "ewma": {
+          "qlike": 0.6875955713809654,
+          "mae": 0.29420776661823017,
+          "rows": 102
+        },
+        "ridge": {
+          "qlike": 0.7580739709832426,
+          "mae": 0.26177839352801585,
+          "rows": 102
+        },
+        "lstm": {
+          "qlike": 0.8563766852536862,
+          "mae": 0.2646848095809878,
+          "rows": 102
+        }
+      }
+    }
+  ],
+  "validation": {
+    "state": "retrospectively_validated",
+    "reason": "Frozen walk-forward protocol; selected ridge. Learned model gates: QLIKE >=5%, folds >=2/3, MAE control and reserved confirmation.",
+    "protocol_id": "ml-risk-2026-09-30-v1",
+    "metrics": {
+      "development_qlike": {
+        "persistence": 0.3966531907009634,
+        "ewma": 0.38464302232530895,
+        "ridge": 0.3478742799326337,
+        "lstm": 0.40794071885862143
+      },
+      "learned_candidate": "ridge",
+      "learned_improvement": 0.09559186117661678,
+      "learned_wins": 2,
+      "windows": 3,
+      "confirmation": {
+        "persistence": {
+          "qlike": 0.05607918146654067,
+          "mae": 0.05405499936009712,
+          "rows": 230
+        },
+        "ewma": {
+          "qlike": 0.06863219807132125,
+          "mae": 0.059364545546682114,
+          "rows": 230
+        },
+        "ridge": {
+          "qlike": 0.03990339395550471,
+          "mae": 0.04840983325690626,
+          "rows": 230
+        },
+        "lstm": {
+          "qlike": 0.04019781989595063,
+          "mae": 0.0444242081324885,
+          "rows": 230
+        }
+      },
+      "learned_confirmation_improvement": 0.418590762399335,
+      "interval_coverage": 1.0
+    }
+  },
+  "interval": null,
+  "lstm": {
+    "state": "evaluated",
+    "reason": "Corrected trailing sequences, train-only normalization, fixed seed 1729, 12 epochs; no legacy checkpoint reuse"
+  },
+  "published": true,
+  "artifact": "models\\validated_risk\\stocks_WFRD_30d.json",
+  "artifact_sha256": "e98d27c610656acfbcebf0728ba14c89ca04f2d39b6522a75ac3a6200ad246f3"
+}

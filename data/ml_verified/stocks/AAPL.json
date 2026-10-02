@@ -1,0 +1,10 @@
+{
+  "provider": "Yahoo Finance via yfinance",
+  "yfinance_version": "1.0",
+  "adjustment_policy": "auto_adjust=True: split/dividend-adjusted daily closes; current vendor revisions, not a point-in-time corporate-action archive",
+  "exchange_calendar": "XNYS",
+  "fetched_at": "2026-09-30T13:28:57.175156+00:00",
+  "file": "AAPL.csv",
+  "sha256": "1843633f24c0be7488b230440e14bf10f010c7c45dc9d0fb4f3f50de1e32e066",
+  "dataset_id": "verified-daily-stocks-AAPL-1843633f24c0be74"
+}

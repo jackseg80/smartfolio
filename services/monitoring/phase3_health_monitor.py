@@ -419,7 +419,10 @@ class Phase3HealthMonitor:
             
             metrics = {
                 "explanation_time_ms": explanation_time_ms,
-                "last_explanation_confidence": explanation.confidence if explanation else 0,
+                "last_explanation_confidence": None,
+                "probe_explanation_confidence": explanation.confidence if explanation else None,
+                "probe_scope": "synthetic_connectivity_only",
+                "validation_state": "unvalidated",
                 "explanation_methods": ["shap", "lime", "custom"],
                 "explanations_generated": 1
             }

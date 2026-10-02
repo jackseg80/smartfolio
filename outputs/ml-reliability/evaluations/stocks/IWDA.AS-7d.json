@@ -1,0 +1,8 @@
+{
+  "asset": "IWDA.AS",
+  "market": "stocks",
+  "horizon": 7,
+  "state": "not_evaluable",
+  "reason": "Daily close dataset is invalid",
+  "published": false
+}

@@ -428,3 +428,10 @@ SmartFolio dispose d'un **système d'audit complet et automatisé**:
 **Méthode:** Multi-agents parallèles + automation GitHub Actions
 **Dernière mise à jour:** 29 Janvier 2026
 **Prochaine revue:** Janvier 2026
+
+## Remise à niveau ML — 30 septembre 2026
+
+- [Inventaire](ML_RELIABILITY_INVENTORY_2026-09-30.md)
+- [Protocole gelé](ML_RELIABILITY_PROTOCOL_2026-09-30.md)
+- [Rapport par lot et résultats](ML_RELIABILITY_DELIVERY_2026-09-30.md)
+- [Livraison et retour arrière](ML_RELIABILITY_RELEASE_2026-09-30.md)

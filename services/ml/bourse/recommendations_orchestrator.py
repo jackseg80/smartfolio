@@ -18,6 +18,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from services.ml.bourse.horizons import RECOMMENDATION_HORIZONS
 import logging
+import asyncio
 
 from services.ml.bourse.technical_indicators import TechnicalIndicators
 from services.ml.bourse.scoring_engine import ScoringEngine
@@ -99,34 +100,35 @@ class RecommendationsOrchestrator:
             # Generate recommendations for each position
             recommendations = []
             unavailable_symbols = []
-            for pos in positions:
+            semaphore = asyncio.Semaphore(4)
+            async def analyze_one(pos):
                 symbol = pos.get("instrument_id") or pos.get("symbol") or pos.get("ticker") or "UNKNOWN"
-                try:
-                    rec = await self._analyze_position(
-                        position=pos,
-                        technical=technical,
-                        scoring=scoring,
-                        decision=decision,
-                        targets=targets,
-                        market_regime=market_regime,
-                        regime_probabilities=regime_probabilities,
-                        sector_analysis=sector_analysis,
-                        benchmark_data=benchmark_data,
-                        lookback_days=history_days,
-                        signal_days=signal_days,
-                        total_portfolio_value=total_value,
-                        available_cash_usd=cash_amount,
-                    )
-
-                    if rec:
-                        recommendations.append(rec)
-                    else:
-                        unavailable_symbols.append(symbol)
-
-                except Exception as e:
-                    logger.error(f"Error analyzing position {pos.get('symbol', 'unknown')}: {e}")
+                async with semaphore:
+                    try:
+                        rec = await self._analyze_position(
+                            position=pos,
+                            technical=technical,
+                            scoring=scoring,
+                            decision=decision,
+                            targets=targets,
+                            market_regime=market_regime,
+                            regime_probabilities=regime_probabilities,
+                            sector_analysis=sector_analysis,
+                            benchmark_data=benchmark_data,
+                            lookback_days=history_days,
+                            signal_days=signal_days,
+                            total_portfolio_value=total_value,
+                            available_cash_usd=cash_amount,
+                        )
+                        return symbol, rec
+                    except Exception as error:
+                        logger.warning("Position analysis unavailable for %s: %s", symbol, error)
+                        return symbol, None
+            for symbol, rec in await asyncio.gather(*(analyze_one(pos) for pos in positions)):
+                if rec:
+                    recommendations.append(rec)
+                else:
                     unavailable_symbols.append(symbol)
-                    continue
 
             # Apply portfolio-level adjustments
             recommendations = adjuster.adjust_recommendations(
@@ -356,6 +358,9 @@ class RecommendationsOrchestrator:
             "sector": sector_data.get('sector', 'Unknown') if sector_data else 'Unknown',
             "action": decision_result['action'],
             "confidence": decision_result['confidence'],
+            "nature": "diagnostic", "validation_state": "descriptive",
+            "confidence_is_probability": False, "method": "weighted_technical_rules",
+            "data_as_of": hist_data.index[-1].isoformat(),
             "confidence_kind": "signal_agreement_not_probability",
             "data_coverage": score_result['data_coverage'],
             "missing_signals": score_result['missing_signals'],
@@ -527,24 +532,22 @@ class RecommendationsOrchestrator:
             positions_returns = {}
             positions_values = {}
 
-            for pos in positions:
-                symbol = pos.get('instrument_id', pos.get('symbol', pos.get('ticker')))
+            semaphore = asyncio.Semaphore(4)
+            async def sector_history(pos):
+                symbol = pos.get('instrument_id') or pos.get('symbol') or pos.get('ticker')
                 if not symbol:
-                    continue
-
-                # Store position value
-                value = pos.get('market_value', 0) or 0
+                    return
+                value = pos.get('market_value', 0) or pos.get('market_value_usd', 0) or 0
                 if value > 0:
                     positions_values[symbol] = positions_values.get(symbol, 0.0) + float(value)
-
-                # Fetch historical data
-                try:
-                    price_data = await data_fetcher.fetch_historical_prices(symbol, start_date, end_date)
-                    if len(price_data) >= 30:
-                        returns = price_data['close'].pct_change().dropna()
-                        positions_returns[symbol] = returns
-                except Exception as e:
-                    logger.warning(f"Failed to fetch {symbol}: {e}")
+                async with semaphore:
+                    try:
+                        price_data = await data_fetcher.fetch_historical_prices(symbol, start_date, end_date)
+                        if len(price_data) >= 30:
+                            positions_returns[symbol] = price_data['close'].pct_change().dropna()
+                    except Exception as error:
+                        logger.warning("Sector history unavailable for %s: %s", symbol, error)
+            await asyncio.gather(*(sector_history(pos) for pos in positions))
 
             if len(positions_returns) < 2:
                 logger.warning("Not enough positions with data for sector analysis")

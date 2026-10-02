@@ -1,3 +1,5 @@
+import { getAuthHeaders } from './core/auth-guard.js';
+import { riskRequestScope, riskRequestParams, formatRiskScore } from './core/risk-request.js';
 /**
  * Analytics Unified - Dynamic Data Loading
  * Récupère les vraies données depuis les APIs backend
@@ -111,47 +113,18 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function getScoresFromLocalStorage() {
-    try {
-        // Primary: values saved by risk-dashboard
-        const onchainLS = parseFloat(localStorage.getItem('risk_score_onchain'));
-        const riskLS = parseFloat(localStorage.getItem('risk_score_risk'));
-        const blendedLS = parseFloat(localStorage.getItem('risk_score_blended'));
-        const ccsLS = parseFloat(localStorage.getItem('risk_score_ccs'));
-
-        let onchain = Number.isFinite(onchainLS) ? onchainLS : null;
-        let risk = Number.isFinite(riskLS) ? riskLS : null;
-        let blended = Number.isFinite(blendedLS) ? blendedLS : null;
-        let ccs = Number.isFinite(ccsLS) ? ccsLS : null;
-
-        // Fallback: unified store (set by analytics-unified inline loader)
-        try {
-            const s = window.riskStore ? window.riskStore.snapshot() : null;
-            if (onchain == null && typeof s?.scores?.onchain === 'number') onchain = s.scores.onchain;
-            if (risk == null && typeof s?.scores?.risk === 'number') risk = s.scores.risk;
-            if (blended == null && typeof s?.scores?.blended === 'number') blended = s.scores.blended;
-            if (ccs == null) {
-                if (typeof s?.scores?.ccs === 'number') ccs = s.scores.ccs;
-                else if (typeof s?.ccs?.score === 'number') ccs = s.ccs.score;
-            }
-        } catch (_) { }
-
-        const timestamp = localStorage.getItem('risk_score_timestamp');
-        return {
-            onchain: Number.isFinite(onchain) ? onchain : null,
-            risk: Number.isFinite(risk) ? risk : null,
-            blended: Number.isFinite(blended) ? blended : null,
-            ccs: Number.isFinite(ccs) ? ccs : null,
-            timestamp
-        };
-    } catch (_) {
-        return { onchain: null, risk: null, blended: null, ccs: null, timestamp: null };
-    }
+    // Les anciennes clés globales ne prouvent ni utilisateur, ni source, ni fraîcheur.
+    const state = window.riskStore?.snapshot?.();
+    const scores = state?.scores || {};
+    return {onchain: scores.onchain ?? null, risk: scores.risk ?? null,
+        blended: scores.blended ?? null, ccs: scores.ccs ?? state?.ccs?.score ?? null,
+        timestamp: null};
 }
 
 function refreshScoresFromLocalStorage() {
     const scores = getScoresFromLocalStorage();
     if (scores.onchain != null) {
-        updateMetric('risk-kpi-onchain', Math.round(scores.onchain), 'Fondamentaux on-chain');
+        updateMetric('risk-kpi-onchain', Math.round(scores.onchain), 'On-chain fundamentals');
     }
     if (scores.blended != null) {
         updateMetric('risk-kpi-blended', Math.round(scores.blended), 'CCS × Cycle (synthesis)');
@@ -255,15 +228,15 @@ async function loadRiskData() {
         return;
     }
 
-    const riskData = await fetchWithCache('risk-dashboard', async () => {
-        const minUsd = globalConfig?.get('min_usd_threshold') || 10;
-        const url = `${API_BASE}/api/risk/dashboard?source=${encodeURIComponent(source)}&min_usd=${minUsd}&price_history_days=365&lookback_days=90`;
-        const response = await fetch(url, {
-            headers: { 'X-User': activeUser }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-    });
+    const scope = riskRequestScope();
+    let riskData = null;
+    try {
+        const params = riskRequestParams(scope);
+        const response = await fetch(`${API_BASE}/api/risk/dashboard?${new URLSearchParams(params)}`, {headers: getAuthHeaders()});
+        if (!response.ok) throw new Error(`Risk API HTTP ${response.status}`);
+        riskData = await response.json();
+        if (JSON.stringify(scope) !== JSON.stringify(riskRequestScope())) return;
+    } catch (_) { showRiskError(); return; }
 
     if (!(riskData?.success && riskData?.risk_metrics)) {
         showRiskError();
@@ -274,9 +247,9 @@ async function loadRiskData() {
 
     // Core risk metrics
     updateMetric('risk-var', formatPercent(Math.abs(metrics.var_95_1d)), '95% confidence level');
-    updateMetric('risk-drawdown', formatPercent(Math.abs(metrics.max_drawdown)), 'Current cycle');
-    updateMetric('risk-volatility', formatPercent(metrics.volatility_annualized), '30-day annualized');
-    updateMetric('risk-score', `${metrics.risk_score || '--'}/100`, getRiskLevel(metrics.risk_score));
+    updateMetric('risk-drawdown', formatPercent(Math.abs(metrics.max_drawdown)), 'Historical drawdown · 365-day history');
+    updateMetric('risk-volatility', formatPercent(metrics.volatility_annualized), '90-day returns · annualized');
+    updateMetric('risk-score', formatRiskScore(metrics.risk_score), getRiskLevel(metrics.risk_score));
 
     // Note: Risk alerts now loaded dynamically via startRiskAlertsPolling()
 
@@ -285,18 +258,18 @@ async function loadRiskData() {
     if (typeof corr.diversification_ratio === 'number') {
         updateMetric('risk-kpi-diversification', (corr.diversification_ratio).toFixed(2), 'Portfolio correlation');
     } else {
-        updateMetric('risk-kpi-diversification', '--', 'Indisponible');
+        updateMetric('risk-kpi-diversification', '--', 'Unavailable');
     }
     if (typeof corr.effective_assets === 'number') {
         updateMetric('risk-kpi-effective-assets', Math.round(corr.effective_assets), 'Non-redundant assets');
     } else {
-        updateMetric('risk-kpi-effective-assets', '--', 'Indisponible');
+        updateMetric('risk-kpi-effective-assets', '--', 'Unavailable');
     }
 
     // Scores depuis le Risk Dashboard (source de vérité)
     const ls = getScoresFromLocalStorage();
     if (ls.onchain != null) {
-        updateMetric('risk-kpi-onchain', Math.round(ls.onchain), 'Fondamentaux on-chain');
+        updateMetric('risk-kpi-onchain', Math.round(ls.onchain), 'On-chain fundamentals');
     } else {
         updateMetric('risk-kpi-onchain', '--', 'On-chain fundamentals (coming soon)');
     }
@@ -332,7 +305,7 @@ async function loadRiskData() {
     try {
         cacheStats = await fetchWithCache('cache-stats', async () => {
             const response = await fetch(`${API_BASE}/api/performance/cache/stats`, {
-                headers: { 'X-User': activeUser }
+                headers: getAuthHeaders()
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
@@ -341,7 +314,7 @@ async function loadRiskData() {
     try {
         memoryStats = await fetchWithCache('memory-stats', async () => {
             const response = await fetch(`${API_BASE}/api/performance/system/memory`, {
-                headers: { 'X-User': activeUser }
+                headers: getAuthHeaders()
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return await response.json();
@@ -412,16 +385,18 @@ async function loadMonitoringData() {
     const activeUser = localStorage.getItem('activeUser');
 
     try {
-        const url = `${API_BASE}/analytics/advanced/metrics?days=365`;
+        const {source} = riskRequestScope();
+        const url = `${API_BASE}/analytics/advanced/metrics?${new URLSearchParams({days:365,source})}`;
         const response = await fetch(url, {
-            headers: { 'X-User': activeUser }
+            headers: getAuthHeaders()
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
+        const number = (value, digits=2) => Number.isFinite(value) ? value.toFixed(digits) : 'Unavailable';
         // Update 4 KPIs
         updateMetric('monitor-total-return', `${(data.total_return_pct).toFixed(1)}%`, 'Over the period');
-        updateMetric('monitor-sharpe', (data.sharpe_ratio).toFixed(2), 'Risk-adjusted');
+        updateMetric('monitor-sharpe', number(data.sharpe_ratio), 'Risk-adjusted');
         updateMetric('monitor-volatility', `${(data.volatility_pct).toFixed(1)}%`, 'Market risk');
         updateMetric('monitor-drawdown', `${Math.abs(data.max_drawdown_pct).toFixed(1)}%`, 'Worst drawdown');
 
@@ -429,10 +404,11 @@ async function loadMonitoringData() {
         const breakdown = document.getElementById('advanced-metrics-breakdown');
         if (breakdown) {
             breakdown.innerHTML = `
+                  <p>${data.provenance?.reason || 'Historical diagnostic'} Coverage: ${number((data.provenance?.coverage_by_current_value ?? NaN)*100,1)}% · Observed window: ${data.provenance?.data_start?.slice(0,10) || 'Unavailable'} – ${data.provenance?.data_as_of?.slice(0,10) || 'Unavailable'} · ${data.provenance?.observed_returns ?? 'Unavailable'} daily returns</p>
                   <div style="display:flex; justify-content:space-between;"><span>Volatility:</span><span>${data.volatility_pct.toFixed(1)}%</span></div>
-                  <div style="display:flex; justify-content:space-between;"><span>Sortino:</span><span>${data.sortino_ratio.toFixed(2)}</span></div>
-                  <div style="display:flex; justify-content:space-between;"><span>Omega:</span><span>${data.omega_ratio.toFixed(2)}</span></div>
-                  <div style="display:flex; justify-content:space-between;"><span>Positive Months:</span><span>${data.positive_months_pct.toFixed(1)}%</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Sortino:</span><span>${number(data.sortino_ratio)}</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Omega:</span><span>${number(data.omega_ratio)}</span></div>
+                  <div style="display:flex; justify-content:space-between;"><span>Positive Months:</span><span>${number(data.positive_months_pct,1)}%</span></div>
               `;
         }
     } catch (error) {
