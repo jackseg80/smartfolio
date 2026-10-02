@@ -170,14 +170,31 @@ def wait_ready(name, port):
     raise RuntimeError('Readiness timeout')
 
 
+
+def copy_local_data(destination):
+    assert destination.resolve().is_relative_to(ROOT.resolve()) and not destination.exists()
+    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    # Root-owned runtime files are read through a read-only bind, never chmodded at source.
+    code = (
+        "from pathlib import Path; import shutil,os; source=Path('/source'); "
+        "assert not any(p.is_symlink() for p in source.rglob('*')); "
+        "target=Path('/backup')/"+repr(destination.name)+"; shutil.copytree(source,target); "
+        "[os.chown(p,"+str(os.getuid())+","+str(os.getgid())+") for p in [target,*target.rglob('*')]]"
+    )
+    result = subprocess.run(['docker', 'run', '--rm', '--network', 'none', '--user', '0:0',
+                             '--entrypoint', 'python', '--mount', 'type=bind,src='+str(PROD/'data')+',dst=/source,readonly',
+                             '--mount', 'type=bind,src='+str(destination.parent)+',dst=/backup',
+                             OLD, '-B', '-c', code], capture_output=True)
+    assert result.returncode == 0, 'Host-only private backup failed; source permissions unchanged'
+
+
 def preflight(args):
     old = invariant()
     assert args.commit == inspect(IMAGE)['Config']['Labels']['org.opencontainers.image.revision']
     assert not (ROOT / 'preflight').exists(), 'Preflight already exists; preserve its results'
     folder = ROOT / 'preflight'
     folder.mkdir(mode=0o700)
-    assert not any(p.is_symlink() for p in (PROD / 'data').rglob('*')), 'Reject symlinked data for write-path validation'
-    shutil.copytree(PROD / 'data', folder / 'data')
+    copy_local_data(folder / 'data')
     (folder / 'logs').mkdir()
     (folder / 'cache').mkdir()
     assert not (folder / 'data/ml_verified').exists(), 'Public dataset target already exists'
@@ -224,7 +241,7 @@ def switch(args):
     subprocess.run(['docker', 'stop', NAME], check=True, stdout=subprocess.DEVNULL)
     renamed = False
     try:
-        shutil.copytree(PROD / 'data', private / 'data', symlinks=True)
+        copy_local_data(private / 'data')
         assert not (PROD / 'data/ml_verified').exists(), 'Public dataset target already exists'
         temp = PROD / 'data/ml_verified.delivery-20261002'
         assert not temp.exists()
