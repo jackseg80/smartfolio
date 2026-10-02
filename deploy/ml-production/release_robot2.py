@@ -93,7 +93,7 @@ FROM ${BASE_IMAGE}
 USER root
 WORKDIR /app
 COPY code/ /app/
-RUN pip install --no-cache-dir "exchange-calendars==4.13.2" && pip check
+RUN pip install --no-cache-dir "exchange-calendars==4.13.2" "PyJWT==2.15.0" && pip check
 COPY public/models/validated_risk/ /app/models/validated_risk/
 ENV PYTHONDONTWRITEBYTECODE=1 ML_AUTO_TRAIN=0
 LABEL smartfolio.release="ml-reliability-20261002"

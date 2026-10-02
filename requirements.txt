@@ -11,7 +11,7 @@ python-dotenv>=1.0.1
 
 # Authentication & Security
 bcrypt>=4.0.0  # Password hashing (direct bcrypt, no passlib wrapper)
-PyJWT==2.14.0  # JWT token generation/validation (HS256)
+PyJWT==2.15.0  # JWT token generation/validation (HS256)
 
 # HTTP Clients & Networking
 httpx>=0.24.0
