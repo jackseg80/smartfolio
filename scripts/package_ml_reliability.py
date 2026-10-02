@@ -69,7 +69,7 @@ def main():
         if artifact["dataset_id"] != receipt["dataset_id"] or entry["governance_eligible"] is not False:
             raise ValueError("Artifact/dataset mismatch or unexpected governance eligibility")
     paths = {}
-    for name in git("diff", "--name-only", BASE).decode().splitlines():
+    for name in git("diff", "--name-only", "--diff-filter=M", BASE).decode().splitlines():
         if name in SKIP:
             continue
         content = (ROOT/name).read_bytes()

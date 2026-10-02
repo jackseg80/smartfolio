@@ -348,4 +348,3 @@ async def validate_regime_detector(
     return success_response({"symbol": symbol, "availability": "Unavailable", "validation_state": "not_evaluable",
         "bear_market_recall": None, "results": [], "status": "Unavailable",
         "reason": "The legacy test queried current observations for historical events. It cannot establish historical recall or real-time decision quality."})
-
