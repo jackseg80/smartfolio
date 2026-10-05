@@ -36,7 +36,7 @@ function fixture(mode, partial = false) {
       if (url.pathname === '/saxo-dashboard.html') {
         let html = fs.readFileSync(path.join(root, 'static/saxo-dashboard.html'), 'utf8');
         html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, script => script.includes('let currentPortfolioData') ? script : '');
-        html = html.replace('<head>', `<head><script>
+        html = html.replace('<head>', `<head><style>view-toggle { display: inline-block; width: 160px; }</style><script>
           localStorage.setItem('activeUser', 'alice'); localStorage.setItem('bourseSource', 'saxo:old.csv');
           window.getApiBase = () => ''; window.globalConfig = { getApiUrl: path => path };
           window.debugLogger = { debug(){}, info(){}, warn(){}, error(...args){ console.error(...args); } };

@@ -23,6 +23,17 @@ Date : 5 octobre 2026. Statut : plan validé par l'utilisateur ; implémentation
 
 Commandes de contrôle : activation de `.venv`, puis pytest ciblé sur les deux nouveaux fichiers de tests, les exports, FX, isolation Saxo et import du prix moyen, avec `--no-cov`; `node tests/e2e/saxo-valuation-check.cjs`; vérifications de syntaxe Python/JavaScript et `git diff --check`.
 
+## Contrôle Robot2 du 6 octobre 2026 et correctif de compatibilité
+
+- Le checkout Robot2 et le conteneur utilisent `1f156c50` (PR #70) ; API et Redis sains. Les 13 fichiers applicatifs contrôlés et les ressources statiques servies correspondent à la livraison après normalisation CRLF/LF. Les modifications locales préexistantes du serveur restent préservées.
+- API authentifiée : bon CSV sélectionné, totaux courant/global/export concordants, référence EUR fidèle au CSV, cash historique non vérifié exclu, CSV inchangé. Refus sans token 401, identité incohérente 403 et CSV absent 404.
+- Défaut réel : `yfinance` 1.7.0 sur Robot2 retourne des `pandas.Timestamp` pour le cours et les bornes de séance, alors que le checkout initial avait été qualifié avec des secondes epoch (`yfinance` 1.0). `int(Timestamp)` échoue ; les 30 positions retombent sur la référence CSV, avec état partiel explicite. Un conteneur sain ne suffisait donc pas à qualifier les cours.
+- Correctif : normaliser secondes epoch et dates avec fuseau en UTC ; refuser une date sans fuseau. Conserver le cours daté si seules les bornes de séance sont inutilisables. Tests dédiés aux trois formats : nombre, datetime et pandas.Timestamp.
+- Alias exact UBS `WRDUSW_CHF` sur SIX : `WRDUSW.SW`, uniquement avec ISIN `IE00BD4TXV59` et cotation CHF. [La fiche UBS](https://swissfunddata.ch/sfdpub/docs/fsm-8522_03_03-20240630-en.pdf) établit le lien ISIN/ticker/share class ; la devise CHF actuelle est vérifiée dans les métadonnées Yahoo du 6 octobre 2026. La fiche datée de 2024 indiquait USD ; elle ne prouve pas la devise actuelle. `WRDUSY.SW` représente une autre part (distribution), et ne constitue pas un substitut.
+- 40 tests ciblés réussis et lint réussi. Qualification du correctif en mémoire dans un processus isolé du conteneur : 30/30 cours, aucune valeur manquante, quantités contrôlées, somme positions/cash et export cohérents, CSV inchangé. Cache de contrôle temporaire séparé ; aucun fichier applicatif ou réglage de production modifié. Le JWT de contrôle éphémère et les montants restent sur Robot2 ; seuls compteurs et booléens sont rapatriés.
+- Navigateur réel du conteneur : mode historique EUR, cash historique exclu, état partiel visible, Refresh appelle `force=true`, aucun défaut JavaScript. Débordement mobile observé dans l’en-tête avec le vrai sélecteur de vue ; correction par flex-wrap des groupes et largeur bornée. La correction CSS est qualifiée via une réponse CSS substituée uniquement dans le navigateur isolé : desktop/mobile sans débordement. Contrat navigateur local renforcé avec la largeur du sélecteur ; réussi.
+- Cette qualification du correctif en mémoire ne constitue pas un redéploiement. Reconstruire le service avec Compose v2 puis refaire le contrôle authentifié avant de conclure que la production est corrigée.
+
 ## Objectif et décisions proposées
 
 Afficher par défaut la valorisation estimée des positions importées aux derniers cours disponibles, avec une vue `At export` fidèle au fichier. Conserver les deux bases distinctes et afficher leurs dates, devises, sources et limites.

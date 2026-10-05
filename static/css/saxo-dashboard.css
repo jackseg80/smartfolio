@@ -28,6 +28,8 @@
 
 .dashboard-header {
     display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
@@ -35,6 +37,12 @@
     background: var(--theme-surface);
     border-radius: var(--radius-lg);
     border: 1px solid var(--theme-border);
+}
+
+.dashboard-header > div {
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .dashboard-grid {
