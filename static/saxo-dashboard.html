@@ -92,6 +92,15 @@
             </div>
         </div>
 
+        <div class="valuation-controls" id="valuationControls" hidden>
+            <label for="valuationMode">Valuation:</label>
+            <select id="valuationMode" onchange="loadCurrentSaxoData()">
+                <option value="current">Current valuation</option>
+                <option value="export">At export</option>
+            </select>
+            <div id="valuationStatus" class="valuation-status" role="status" aria-live="polite"></div>
+        </div>
+
         <!-- Navigation contextuelle Bourse Domain (Feb 2026) -->
         <domain-nav domain="bourse"></domain-nav>
 
@@ -105,7 +114,7 @@
         <div id="dashboardContent" style="display: none;">
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('overview', event)">Vue d'ensemble</button>
+                <button class="tab-btn active" onclick="switchTab('overview', event)">Overview</button>
                 <button class="tab-btn pro-only" onclick="switchTab('positions', event)">Positions</button>
             </div>
 
@@ -180,6 +189,33 @@
         let currentWealthContext = {
             module: 'bourse'
         };
+        let saxoLoadGeneration = 0;
+        let saxoAbortController = null;
+        const valuationRefreshInterval = 30 * 60 * 1000;
+        let lastValuationLoad = 0;
+        function formatValuationAmount(value) {
+            if (value === null || value === undefined) return 'Unavailable';
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: currentPortfolioData?.currency || 'USD' }).format(value);
+        }
+        function displayedPortfolioTotal() {
+            return currentPortfolioData?.summary?.total_value ?? currentPortfolioData?.summary?.total_value_usd ?? 0;
+        }
+        function renderValuationStatus(data) {
+            const status = document.getElementById('valuationStatus');
+            status.dataset.partial = String(data.coverage.partial);
+            const date = data.oldest_quote_at ? new Date(data.oldest_quote_at).toLocaleString() : 'Unknown';
+            const coverage = data.mode === 'current' ? `${data.coverage.updated}/${data.coverage.positions} positions updated. Oldest price: ${date}.` : `Export date: ${data.export_date || 'Unknown'} (inferred from filename). Original currency: ${data.currency}.`;
+            const comparison = data.comparison ? ` Positions change since export: ${data.comparison.change.toFixed(2)} ${data.comparison.currency} (${data.comparison.change_pct.toFixed(2)}%).` : '';
+            status.textContent = coverage + comparison + ' ' + data.warnings.join(' ');
+        }
+        setInterval(() => {
+            if (!document.hidden && window.saxoSourceType === 'csv' && document.getElementById('valuationMode').value === 'current') loadCurrentSaxoData();
+        }, valuationRefreshInterval);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && window.saxoSourceType === 'csv' && Date.now() - lastValuationLoad >= valuationRefreshInterval) loadCurrentSaxoData();
+        });
+        window.addEventListener('pagehide', () => saxoAbortController?.abort());
+        Object.defineProperty(window, 'currentFileKey', { get: () => currentFileKey });
         let currentFileKey = null;  // Track selected Saxo file
 
         // Expose portfolio data to window for AI Chat context builder
@@ -286,7 +322,7 @@
                         total_value: 0
                     };
                 }
-                const value = pos.market_value_usd || pos.market_value || 0;
+                const value = pos.market_value_display ?? pos.market_value_usd ?? pos.market_value ?? 0;
                 symbolGroups[symbol].total_quantity += pos.quantity || 0;
                 symbolGroups[symbol].total_value += value;
             });
@@ -352,6 +388,10 @@
         // 2. Parallel API calls (list + cash) → ~200ms gain
         // 3. Force refresh option to bypass cache
         async function loadCurrentSaxoData(forceRefresh = false) {
+            const generation = ++saxoLoadGeneration;
+            saxoAbortController?.abort();
+            saxoAbortController = new AbortController();
+            const signal = saxoAbortController.signal;
             debugLogger.debug("Loading Saxo data from active source...");
 
             try {
@@ -378,7 +418,7 @@
                 // Determine source type from bourseSource
                 const isManualSource = bourseSource === 'manual_bourse';
                 const isApiSource = bourseSource && bourseSource.startsWith('api:');
-                const isCsvSource = bourseSource && bourseSource.startsWith('saxo:');
+                const isCsvSource = !isManualSource && !isApiSource;
 
                 debugLogger.debug(`Source detection: ${bourseSource} → ${isManualSource ? 'MANUAL' : isApiSource ? 'API' : isCsvSource ? 'CSV' : 'UNKNOWN'}`);
 
@@ -400,7 +440,7 @@
                 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
                 // Check cache first (skip if force refresh)
-                if (!forceRefresh) {
+                if (!forceRefresh && !isCsvSource) {
                     try {
                         const cached = localStorage.getItem(cacheKey);
                         if (cached) {
@@ -409,6 +449,8 @@
                                 debugLogger.debug(`Using cached portfolio data (cacheKey: ${cacheKey})`);
                                 debugLogger.debug(`Cached cash amount: $${cashAmount || 0}`);
                                 currentPortfolioData = data;
+                                data.positions?.forEach(p => { p.display_value = p.market_value_usd ?? p.market_value; });
+                                data.summary?.top_holdings?.forEach(p => { p.display_value = p.market_value_usd ?? p.market_value; });
                                 window.portfolioCash = cashAmount || 0;
 
                                 // Show cache indicator
@@ -437,6 +479,8 @@
                     }
                 }
 
+                document.getElementById('valuationControls').hidden = !isCsvSource;
+                document.getElementById('btnForceRefresh').title = isCsvSource ? 'Retrieve latest market prices' : 'Force data reload';
                 let portfolioData;
 
                 // Load from Sources V2 if manual mode
@@ -616,103 +660,22 @@
                     }
 
                 } else {
-                    // Load from CSV
-                    debugLogger.debug("Loading Saxo data from CSV...");
-
-                    //  Use currentFileKey which has been resolved by resolveFileKeyFromSource()
-                    // No need to re-resolve here (already done at init or on source change)
-                    const fileKey = currentFileKey;
-                    debugLogger.debug(`Using file_key: ${fileKey || 'null (backend will resolve from config)'}`);
-
-                    // Build URLs
-                    let portfoliosUrl = '/api/saxo/portfolios';
-                    if (fileKey) {
-                        portfoliosUrl += `?file_key=${encodeURIComponent(fileKey)}`;
-                        debugLogger.debug(`Loading portfolio with file_key: ${fileKey}`);
-                    } else {
-                        debugLogger.debug(`Loading portfolio without file_key (backend auto-select from config)`);
-                    }
-
-                    // OPTIMIZATION: Parallel fetch of list + cash (independent calls)
-                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
-                    const fullUrl = `${window.getApiBase()}${portfoliosUrl}`;
-                    debugLogger.debug(`Calling API: ${fullUrl} with X-User: ${activeUser}`);
-
-                    const [listResponse] = await Promise.all([
-                        fetch(fullUrl, {
-                            headers: { 'X-User': activeUser }
-                        }),
-                        loadPortfolioCash(fileKey) // Fail if selected CSV cash cannot be read.
-                    ]);
-
-                    if (!listResponse.ok) {
-                        debugLogger.warn(`[Error] HTTP ${listResponse.status}: ${listResponse.statusText}`);
-                        showNoDataState(`[Error] HTTP Error ${listResponse.status}: ${listResponse.statusText}`);
-                        return;
-                    }
-
-                    const listResult = await listResponse.json();
-
-                    //  FIX: /api/saxo/portfolios returns {portfolios: [...]} directly (no wrapper)
-                    const portfolios = listResult.portfolios || [];
-
-                    // Debug: log FULL response structure
-                    debugLogger.debug("Full API Response:", listResult);
-                    debugLogger.debug("Portfolio data:", {
-                        hasPortfolios: portfolios.length > 0,
-                        portfolioCount: portfolios.length,
-                        firstPortfolioId: portfolios[0]?.portfolio_id
+                    const { fetchCsvValuation, resolveCsvFileKey } = await import('./modules/saxo-valuation.js');
+                    const fileKey = await resolveCsvFileKey(bourseSource, signal);
+                    portfolioData = await fetchCsvValuation(fileKey, {
+                        mode: document.getElementById('valuationMode').value,
+                        force: forceRefresh, signal
                     });
-
-                    if (!portfolios || portfolios.length === 0) {
-                        debugLogger.warn('âš ï¸ Aucun portfolio CSV trouvé. Vérifiez que vos fichiers sont dans data/users/{user}/saxobank/data/ ou imports/');
-                        showNoDataState("No Saxo CSV found. Please import a Saxo Bank CSV file.");
-                        return;
-                    }
-
-                    // Get first portfolio
-                    const portfolio = portfolios[0];
-                    const portfolioId = portfolio.portfolio_id;
-
-                    if (!portfolioId) {
-                        debugLogger.warn('Portfolio ID manquant.');
-                        showNoDataState("Error: Portfolio ID missing");
-                        return;
-                    }
-
-                    // Load full portfolio details
-                    let detailUrl = `/api/saxo/portfolios/${portfolioId}`;
-                    if (fileKey) {
-                        detailUrl += `?file_key=${encodeURIComponent(fileKey)}`;
-                    }
-
-                    // Use fetch directly (safeFetch may not be loaded yet due to race condition)
-                    const detailResponse = await fetch(`${window.getApiBase()}${detailUrl}`, {
-                        headers: { 'X-User': activeUser }
-                    });
-
-                    if (!detailResponse.ok) {
-                        debugLogger.warn('Error loading portfolio.');
-                        showNoDataState("Error loading portfolio");
-                        return;
-                    }
-
-                    //  FIX: /api/saxo/portfolios/{id} returns portfolio object directly (no wrapper)
-                    portfolioData = await detailResponse.json();
-
-                    if (!portfolioData || !portfolioData.portfolio_id) {
-                        debugLogger.warn('Error loading portfolio.');
-                        showNoDataState("Error loading portfolio");
-                        return;
-                    }
-
-                    debugLogger.debug("[OK] Portfolio loaded:", {
-                        id: portfolioData.portfolio_id,
-                        positionsCount: portfolioData.positions?.length || 0,
-                        totalValue: portfolioData.total_value_usd
-                    });
+                    if (generation !== saxoLoadGeneration || activeUser !== localStorage.getItem('activeUser')) return;
+                    currentFileKey = portfolioData.file_key;
+                    window.portfolioCash = portfolioData.cash.value_display || 0;
+                    lastValuationLoad = Date.now();
+                    renderValuationStatus(portfolioData);
                 }
 
+                if (generation !== saxoLoadGeneration) return;
+                portfolioData.positions?.forEach(p => { p.display_value = 'market_value_display' in p ? p.market_value_display : p.market_value_usd ?? p.market_value; });
+                portfolioData.summary?.top_holdings?.forEach(p => { p.display_value = 'market_value_display' in p ? p.market_value_display : p.market_value_usd ?? p.market_value; });
                 // Store portfolio data
                 currentPortfolioData = portfolioData;
 
@@ -766,6 +729,7 @@
                 }
 
             } catch (error) {
+                if (error.name === "AbortError" || generation !== saxoLoadGeneration) return;
                 debugLogger.error('Error loading Saxo data:', error);
                 showError("Error loading data: " + error.message);
             }
@@ -774,7 +738,7 @@
         function loadOverviewData(data) {
             // Safe access to data properties
             const summary = data?.summary || {};
-            const totalValue = Number(summary.total_value_usd || 0);
+            const totalValue = Number(summary.total_value ?? summary.total_value_usd ?? 0);
             const totalPositions = summary.total_positions || data?.positions?.length || 0;
             const assetAllocation = summary.asset_allocation || {};
             const currencyExposure = summary.currency_exposure || {};
@@ -789,8 +753,8 @@
 
             // Portfolio Summary
             const summaryHtml = `
-                <div class="metric-large">$${totalWithCash.toLocaleString()}</div>
-                <div class="metric-label">Total Portfolio Value</div>
+                <div class="metric-large">${formatValuationAmount(totalWithCash)}</div>
+                <div class="metric-label">${data.mode === "export" && !data.cash?.included ? "Positions value at export" : "Total Portfolio Value"}</div>
                 <div style="margin-top: 1rem;">
                     <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
                         <span>Positions:</span>
@@ -859,7 +823,7 @@
                             <div class="allocation-item" style="${style}">
                                 <div class="allocation-percentage">${Number(percentage).toFixed(1)}%</div>
                                 <div class="allocation-label">${assetClass}</div>
-                                ${isCash ? `<div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">$${savedCash.toLocaleString()}</div>` : ''}
+                                ${isCash ? `<div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">${formatValuationAmount(savedCash)}</div>` : ''}
                             </div>
                         `;
                     }).join('')}
@@ -874,7 +838,7 @@
                                 <div class="currency-percentage">${percentage.toFixed(1)}%</div>
                                 <div class="currency-code">${currency}</div>
                                 <div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-top: 0.25rem;">
-                                    $${(totalValue * percentage / 100).toLocaleString()}
+                                    ${formatValuationAmount(totalValue * percentage / 100)}
                                 </div>
                             </div>
                         `).join('')}
@@ -908,13 +872,13 @@
                             <tr>
                                 <td><strong>${displayName}</strong></td>
                                 <td><code style="font-size: 0.85rem; color: var(--theme-text-muted);">${symbol}</code></td>
-                                <td>$${Number(position.market_value_usd || position.market_value || 0).toLocaleString()}</td>
+                                <td>${formatValuationAmount(position.display_value)}</td>
                                 <td>
                                     <span class="asset-class-badge asset-class-${(position.asset_class || 'other').toLowerCase()}">
                                         ${position.asset_class || 'N/A'}
                                     </span>
                                 </td>
-                                <td>${totalValue > 0 ? (((position.market_value_usd || position.market_value || 0) / totalValue) * 100).toFixed(1) : 0}%</td>
+                                <td>${totalValue > 0 ? (((position.display_value || 0) / totalValue) * 100).toFixed(1) : 0}%</td>
                             </tr>
                         `}).join('')}
                     </tbody>
@@ -1187,7 +1151,7 @@
 
                 // Reload overview to show updated value
                 if (currentPortfolioData) {
-                    loadOverviewData(currentPortfolioData);
+                    await loadCurrentSaxoData();
                 }
 
                 debugLogger.info(`Cash amount saved: ${cashAmount} ${currency} → $${cashAmountUSD.toFixed(2)} USD`);
@@ -1219,13 +1183,13 @@
                     consolidated.push(positions[0]);
                 } else {
                     let filteredPositions = positions;
-                    const values = positions.map(p => p.market_value_usd || 0).sort((a, b) => b - a);
+                    const values = positions.map(p => p.display_value || 0).sort((a, b) => b - a);
                     const largest = values[0];
                     const sumOthers = values.slice(1).reduce((sum, v) => sum + v, 0);
 
-                    if (values.length > 1 && Math.abs(largest - sumOthers) / Math.max(largest, 1) < 0.05) {
+                    if (!currentPortfolioData.mode && values.length > 1 && Math.abs(largest - sumOthers) / Math.max(largest, 1) < 0.05) {
                         const sortedPositions = positions.slice().sort((a, b) =>
-                            (b.market_value_usd || 0) - (a.market_value_usd || 0)
+                            (b.display_value || 0) - (a.display_value || 0)
                         );
                         filteredPositions = sortedPositions.slice(1);
                         debugLogger.info(`Saxo summary detected for ${key}: removed summary line, keeping ${filteredPositions.length} detail lots`);
@@ -1234,7 +1198,7 @@
                     const total = {
                         ...filteredPositions[0],
                         quantity: filteredPositions.reduce((sum, p) => sum + (p.quantity || 0), 0),
-                        market_value_usd: filteredPositions.reduce((sum, p) => sum + (p.market_value_usd || 0), 0),
+                        display_value: filteredPositions.some(p => p.display_value == null) ? null : filteredPositions.reduce((sum, p) => sum + p.display_value, 0),
                         lots_count: filteredPositions.length
                     };
                     consolidated.push(total);
@@ -1250,8 +1214,8 @@
                                 <th scope="col" onclick="sortPositionsTable('symbol')" style="cursor: pointer; user-select: none;">Symbol <span id="sortIcon-symbol"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('quantity')" style="cursor: pointer; user-select: none;">Quantity <span id="sortIcon-quantity"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('market_value')" style="cursor: pointer; user-select: none;">Market Value <span id="sortIcon-market_value">▼</span></th>
-                                <th scope="col" onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">P&L Value <span id="sortIcon-pnl_value"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
-                                <th scope="col" onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">P&L % <span id="sortIcon-pnl_pct"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_value')" style="cursor: pointer; user-select: none;">${currentPortfolioData.mode ? "P&L at export" : "P&L Value"} <span id="sortIcon-pnl_value"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
+                                <th scope="col" onclick="sortPositionsTable('pnl_pct')" style="cursor: pointer; user-select: none;">${currentPortfolioData.mode ? "P&L % at export" : "P&L %"} <span id="sortIcon-pnl_pct"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('currency')" style="cursor: pointer; user-select: none;">Currency <span id="sortIcon-currency"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('asset_class')" style="cursor: pointer; user-select: none;">Asset Class <span id="sortIcon-asset_class"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
                                 <th scope="col" onclick="sortPositionsTable('weight')" style="cursor: pointer; user-select: none;">Weight <span id="sortIcon-weight"><svg class="sf-icon" width="1em" height="1em" viewBox="0 0 20 20" fill="currentColor" role="img" aria-label="Exchange" focusable="false" style="vertical-align:-.15em"><use href="/static/assets/icons/heroicons.svg#arrows-right-left"></use></svg></span></th>
@@ -1259,12 +1223,12 @@
                         </thead>
                         <tbody>
                             ${consolidated
-                    .sort((a, b) => (b.market_value_usd || 0) - (a.market_value_usd || 0))
+                    .sort((a, b) => (b.display_value || 0) - (a.display_value || 0))
                     .map(position => {
                         const name = position.name || position.instrument || position.symbol || 'Unknown';
                         const symbol = position.symbol || 'N/A';
                         const displayName = name !== symbol ? name : (position.isin || name);
-                        const weight = ((position.market_value_usd / currentPortfolioData.summary.total_value_usd) * 100);
+                        const weight = displayedPortfolioTotal() > 0 ? ((position.display_value || 0) / displayedPortfolioTotal()) * 100 : 0;
 
                         const lotsCount = position.lots_count || 0;
                         const fragmentationBadge = lotsCount > 1 ?
@@ -1275,7 +1239,7 @@
                                     data-instrument="${displayName.replace(/"/g, '&quot;')}"
                                     data-symbol="${symbol}"
                                     data-quantity="${position.quantity}"
-                                    data-market_value="${position.market_value_usd}"
+                                    data-market_value="${position.display_value}"
                                     data-pnl_value="${position.pnl_value || 0}"
                                     data-pnl_pct="${position.pnl_pct || 0}"
                                     data-currency="${position.currency}"
@@ -1288,7 +1252,7 @@
                                     </td>
                                     <td><code style="font-size: 0.85rem;">${symbol}</code></td>
                                     <td>${position.quantity.toLocaleString()}</td>
-                                    <td><strong>$${position.market_value_usd.toLocaleString()}</strong></td>
+                                    <td><strong>${formatValuationAmount(position.display_value)}</strong><div class="valuation-status">${position.valuation_status || ""} ${position.quote_type || ""} ${position.quote_at || ""}</div></td>
                                     <td style="color: ${(position.pnl_value || 0) >= 0 ? 'var(--success)' : 'var(--danger)'}; font-weight: 600;">
                                         ${(position.pnl_value || 0) >= 0 ? '+' : ''}${(position.pnl_value || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                     </td>
@@ -1377,7 +1341,7 @@
                                 <div class="allocation-percentage">${percentage.toFixed(1)}%</div>
                                 <div class="allocation-label">${assetClass}</div>
                                 <div style="font-size: 0.7rem; color: var(--theme-text-muted); margin-top: 0.25rem;">
-                                    $${(currentPortfolioData.summary.total_value_usd * percentage / 100).toLocaleString()}
+                                    ${formatValuationAmount(displayedPortfolioTotal() * percentage / 100)}
                                 </div>
                             </div>
                         `).join('')}
@@ -1401,9 +1365,9 @@
                                 </div>
                             </div>
                             <div style="text-align: right;">
-                                <div style="font-weight: 600;">$${position.market_value_usd.toLocaleString()}</div>
+                                <div style="font-weight: 600;">${formatValuationAmount(position.display_value)}</div>
                                 <div style="font-size: 0.8rem; color: var(--theme-text-muted);">
-                                    ${((position.market_value_usd / currentPortfolioData.summary.total_value_usd) * 100).toFixed(1)}%
+                                    ${(displayedPortfolioTotal() > 0 ? ((position.display_value || 0) / displayedPortfolioTotal()) * 100 : 0).toFixed(1)}%
                                 </div>
                             </div>
                         </div>

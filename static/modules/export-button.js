@@ -26,6 +26,7 @@
  */
 
 // Import UIModal dynamically
+import { getAuthHeaders } from '../core/auth-guard.js';
 let UIModal = null;
 
 async function loadUIModal() {
@@ -172,6 +173,10 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
         // Build URL with format only
         const activeUser = localStorage.getItem('activeUser');
         let url = `${window.globalConfig?.API_BASE_URL || ''}${endpoint}?format=${format}`;
+        if (module === 'saxo') {
+            const mode = window.currentPortfolioData?.mode || 'current';
+            url += `&mode=${encodeURIComponent(mode)}`;
+        }
 
         // Add source for Crypto and Global Overview (passed as parameter or from context)
         if (module === 'crypto' || module === 'global') {
@@ -195,9 +200,7 @@ async function handleExport(module, endpoint, filename, format, contentElement, 
 
         // Fetch export with X-User header (multi-tenant)
         const response = await fetch(url, {
-            headers: {
-                'X-User': activeUser
-            }
+            headers: { ...getAuthHeaders(), 'X-User': activeUser }
         });
 
         if (!response.ok) {

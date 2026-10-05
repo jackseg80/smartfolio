@@ -604,6 +604,7 @@ async def global_summary(
     """
     from datetime import datetime
 
+    saxo_valuation = None
     breakdown = {
         "crypto": 0.0,
         "saxo": 0.0,
@@ -682,35 +683,18 @@ async def global_summary(
                     logger.error(f"[wealth][global] Saxo cache read failed: {api_error}", exc_info=True)
                     breakdown["saxo"] = 0.0
             else:
-                # CSV mode: use file_key
-                logger.info(f"[wealth][global] Loading Saxo positions with file_key={bourse_file_key}")
-                from services.portfolio_export_service import read_saxo_cash, resolve_saxo_file_key
-
-                effective_file_key = resolve_saxo_file_key(user, bourse_file_key)
-                saxo_positions = await saxo_adapter.list_positions(
-                    user_id=user, file_key=effective_file_key
-                )
-                logger.info(f"[wealth][global] Got {len(saxo_positions)} Saxo positions")
-                breakdown["saxo"] = sum((p.market_value or 0.0) for p in saxo_positions)
-
-                # Use the same selected CSV for positions and cash, and include
-                # its normalized USD value in the global wealth breakdown.
-                try:
-                    cash = read_saxo_cash(user, effective_file_key)
-                    cash_value_usd = float(cash.get("value_usd", 0.0) or 0.0)
-                    breakdown["saxo"] += cash_value_usd
-                    if cash_value_usd:
-                        logger.info(
-                            f"[wealth][global] Added cash ${cash_value_usd:.2f} USD to Saxo total"
-                        )
-                except Exception as cash_error:
-                    logger.debug(f"[wealth][global] Cash file not found or error (non-blocking): {cash_error}")
-
-                logger.info(f"[wealth][global] saxo={breakdown['saxo']:.2f} USD for user={user} file_key={effective_file_key}")
+                from services.saxo_valuation_service import get_valuation
+                from starlette.concurrency import run_in_threadpool
+                if not bourse_file_key and isinstance(bourse_source, str) and bourse_source.startswith('saxo:') and bourse_source[5:].endswith('.csv'):
+                    bourse_file_key = bourse_source[5:]
+                valued = await run_in_threadpool(get_valuation, user, bourse_file_key)
+                breakdown['saxo'] = valued['summary']['total_value']
+                saxo_valuation = {k: v for k, v in valued.items() if k not in {'positions', 'summary'}}
         else:
             logger.warning(f"[wealth][global] Saxo module not available for user={user}")
     except Exception as e:
         logger.error(f"[wealth][global] saxo failed for user={user}: {e}", exc_info=True)
+        saxo_valuation = {'coverage': {'partial': True}, 'warnings': ['Stock Market valuation is unavailable.']}
 
     # 3) Wealth items (net worth: assets - liabilities)
     try:
@@ -752,7 +736,7 @@ async def global_summary(
                 logger.debug(f"[wealth][global] Crypto P&L calculation skipped: {e}")
 
         # Calculate P&L for saxo module (use 'saxobank' as source)
-        if breakdown["saxo"] > 0:
+        if breakdown["saxo"] > 0 and saxo_valuation is None:
             try:
                 saxo_metrics = {"total_value_usd": breakdown["saxo"]}
                 saxo_perf = portfolio_analytics.calculate_performance_metrics(
@@ -801,8 +785,10 @@ async def global_summary(
     return {
         "total_value_usd": total_value_usd,
         "breakdown": breakdown,
+        "saxo_valuation": saxo_valuation,
         "pnl_today": pnl_today,
         "pnl_today_pct": pnl_today_pct,
+        "pnl_today_scope": 'crypto_only' if saxo_valuation is not None else 'crypto_and_saxo',
         "user_id": user,
         "timestamp": datetime.utcnow().isoformat(),
     }
@@ -855,21 +841,37 @@ async def export_global_lists(
         # Match the individual crypto export's summation order and precision.
         source_totals["Crypto"] = sum(crypto_values)
 
-        saxo_export = build_saxo_export_data(user_id=user, file_key=bourse_file_key)
+        from starlette.concurrency import run_in_threadpool
+        try:
+            saxo_export = await run_in_threadpool(build_saxo_export_data, user_id=user, file_key=bourse_file_key, valuation_mode='current')
+        except FileNotFoundError:
+            # Un utilisateur sans portefeuille Saxo peut exporter crypto et patrimoine.
+            # Une sélection explicite/configurée invalide reste une erreur.
+            if isinstance(bourse_file_key, str) and bourse_file_key:
+                raise
+            import json
+            config_path = Path(f'data/users/{user}/config.json')
+            configured = {}
+            if config_path.is_file():
+                configured = json.loads(config_path.read_text(encoding='utf-8'))
+            if configured.get('sources', {}).get('bourse', {}).get('selected_csv_file'):
+                raise
+            saxo_export = {'positions': [], 'valuation': {'mode': 'current', 'currency': 'USD', 'file_key': None,
+                'coverage': {'partial': True}, 'oldest_quote_at': None, 'warnings': ['No Saxo CSV is available.']}}
         for position in saxo_export["positions"]:
-            value_usd = float(position["market_value_usd"])
-            source_totals["Stock Market"] += value_usd
+            value_usd = float(position['market_value_usd']) if position['market_value_usd'] is not None else None
+            source_totals["Stock Market"] += value_usd or 0
             items.append({
                 "source": "Stock Market",
                 "category": position["asset_class"],
                 "asset": position["symbol"],
                 "type": position["instrument"],
                 "quantity": position["quantity"],
-                "original_value": position["quantity"],
-                "currency": position["currency"],
+                "original_value": position.get('export_value', position["quantity"]),
+                "currency": position.get('export_currency', position["currency"]),
                 "value_usd": value_usd,
                 "classification": position["classification"],
-                "notes": position["classification_basis"],
+                "notes": ' / '.join(str(v) for v in (position['classification_basis'], position.get('valuation_status'), position.get('quote_at')) if v),
             })
 
         for item in list_items(user):
@@ -889,6 +891,7 @@ async def export_global_lists(
             })
 
         export_data = {
+            "saxo_valuation": saxo_export.get("valuation"),
             "items": items,
             "summary": {
                 "by_source_usd": source_totals,

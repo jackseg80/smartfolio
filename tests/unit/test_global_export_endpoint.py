@@ -57,3 +57,19 @@ async def test_global_export_concatenates_crypto_stock_cash_and_wealth(monkeypat
     }
     assert [item["asset"] for item in payload["items"]] == ["BTC", "AAPL:xnas", "CASH:EUR", "Mortgage"]
     assert payload["items"][2]["classification"] == "Cash"
+
+
+@pytest.mark.asyncio
+async def test_global_export_without_saxo_keeps_other_sources_and_marks_absence(monkeypatch):
+    async def crypto(**_kwargs):
+        return {'items': [{'symbol': 'BTC', 'amount': 1, 'value_usd': 125, 'location': 'Ledger'}]}
+    def no_saxo(**_kwargs):
+        raise FileNotFoundError('No Saxo CSV found')
+    monkeypatch.setattr('services.balance_service.balance_service.resolve_current_balances', crypto)
+    monkeypatch.setattr(portfolio_export_service, 'build_saxo_export_data', no_saxo)
+    monkeypatch.setattr(wealth_service, 'list_items', lambda _user: [])
+    response = await export_global_lists(user='no-saxo-test', source='cointracking', min_usd_threshold=1, format='json', bourse_file_key=None)
+    payload = json.loads(response.body)['data']
+    assert payload['summary']['total_value_usd'] == 125
+    assert payload['saxo_valuation']['coverage']['partial']
+    assert payload['saxo_valuation']['warnings']
