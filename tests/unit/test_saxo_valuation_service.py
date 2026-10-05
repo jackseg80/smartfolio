@@ -286,3 +286,40 @@ def test_current_fx_requires_verified_currency_quotes(monkeypatch, missing):
         assert rate == pytest.approx(0.8)
         assert info['fresh']
         assert calls == ['EUR', 'CHF']
+
+
+@pytest.mark.parametrize('kind', ['epoch', 'datetime', 'pandas'])
+def test_provider_supports_old_and_new_yahoo_timestamp_metadata(monkeypatch, kind):
+    import yfinance
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    def formatted(value):
+        if kind == 'epoch': return value
+        aware = datetime.fromtimestamp(value, timezone.utc)
+        return pd.Timestamp(aware).tz_convert('America/New_York') if kind == 'pandas' else aware
+    history = pd.DataFrame({'Stock Splits': [0]}, index=pd.to_datetime(['2026-09-22']))
+    class Ticker:
+        def history(self, **kwargs): return history
+        def get_history_metadata(self):
+            return {'currency': 'USD', 'regularMarketPrice': 100, 'regularMarketTime': formatted(timestamp),
+                    'currentTradingPeriod': {'regular': {'start': formatted(timestamp-100), 'end': formatted(timestamp+100)}}}
+    monkeypatch.setattr(yfinance, 'Ticker', lambda _symbol: Ticker())
+    quote = quotes.fetch_yahoo_quote('MSFT', '2026-09-22')
+    assert quote['quote_at'] == datetime.fromtimestamp(timestamp, timezone.utc).isoformat()
+    assert quote['quote_type'] == 'intraday'
+
+
+def test_ambiguous_naive_market_timestamp_is_not_promoted():
+    with pytest.raises(ValueError, match='timezone'):
+        quotes._market_timestamp(datetime(2026, 10, 5, 16, 0))
+
+
+@pytest.mark.parametrize('isin,currency,accepted', [
+    ('IE00BD4TXV59', 'CHF', True), ('IE00BD4TXV59', 'USD', False), ('wrong', 'CHF', False), (None, 'CHF', False)])
+def test_exact_ubs_chf_alias_checks_isin_and_quote_currency(reference, current_quotes, isin, currency, accepted):
+    reference['positions'][0].update(symbol='WRDUSW_CHF:xswx', isin=isin)
+    current_quotes['currency'] = currency
+    assert quotes.yahoo_symbol('WRDUSW_CHF:xswx') == 'WRDUSW.SW'
+    assert quotes.yahoo_symbol('WRDUSW_CHF:xvtx') == 'WRDUSW.SW'
+    assert quotes.yahoo_symbol('WRDUSW_CHF:xlon') == 'WRDUSW_CHF.L'
+    result = valuation.value_reference(reference)
+    assert (result['positions'][0]['price_source'] == 'yahoo') == accepted

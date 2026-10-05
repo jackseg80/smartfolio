@@ -9,6 +9,7 @@ import os
 import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from numbers import Real
 
 from filelock import FileLock
 
@@ -36,7 +37,32 @@ LISTING_REPLACEMENTS = {
 }
 
 
+# Alias Saxo exact, qualifié par ISIN et devise ; aucune suppression générique de suffixe.
+UBS_WORLD_CHF = {
+    'symbol': 'WRDUSW.SW', 'currency': 'CHF', 'isin': 'IE00BD4TXV59',
+    'source': 'https://swissfunddata.ch/sfdpub/docs/fsm-8522_03_03-20240630-en.pdf',
+}
+LISTING_ALIASES = {f'WRDUSW_CHF:{mic}': UBS_WORLD_CHF for mic in ('xswx', 'xvtx')}
+
+
+def _market_timestamp(value) -> int:
+    """Accept epoch seconds and timezone-aware Yahoo datetime/Timestamp metadata."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError('Market timestamp timezone unavailable')
+        seconds = value.timestamp()
+    elif isinstance(value, Real) and not isinstance(value, bool):
+        seconds = float(value)
+    else:
+        raise ValueError('Invalid market timestamp')
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise ValueError('Invalid market timestamp')
+    return int(seconds)
+
+
 def yahoo_symbol(symbol: str) -> str:
+    if symbol in LISTING_ALIASES:
+        return LISTING_ALIASES[symbol]['symbol']
     base, sep, mic = symbol.partition(':')
     if not base or any(ch in base for ch in '/\\'):
         raise ValueError('Invalid instrument identifier')
@@ -77,6 +103,7 @@ def fetch_yahoo_quote(symbol: str, export_date: str | None) -> dict:
     stamp = metadata.get('regularMarketTime')
     if not currency or not stamp or price is None or not math.isfinite(float(price)) or float(price) <= 0:
         raise ValueError('Quote currency, price or market timestamp unavailable')
+    stamp = _market_timestamp(stamp)
     factor = 1.0
     if export_date:
         if 'Stock Splits' not in history:
@@ -92,7 +119,10 @@ def fetch_yahoo_quote(symbol: str, export_date: str | None) -> dict:
     session = metadata.get('currentTradingPeriod', {}).get('regular', {})
     quote_type = 'latest_available'
     if session.get('start') and session.get('end'):
-        quote_type = 'intraday' if session['start'] <= int(stamp) < session['end'] else 'last_close'
+        try:
+            quote_type = 'intraday' if _market_timestamp(session['start']) <= stamp < _market_timestamp(session['end']) else 'last_close'
+        except ValueError:
+            pass  # Un cours réel reste daté même si les bornes de séance sont inexploitables.
     # Les splits ne prouvent pas l'absence de fusion, scission ou changement de titre
     # sur plusieurs années. Ces quantités restent des estimations explicites.
     quantity_verified = bool(export_date)

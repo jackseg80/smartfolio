@@ -12,7 +12,7 @@ from pathlib import Path
 
 from connectors.saxo_import import SaxoImportConnector
 from services import fx_service
-from services.saxo_quote_service import get_quote, yahoo_symbol
+from services.saxo_quote_service import LISTING_ALIASES, get_quote, yahoo_symbol
 
 ROOT = Path(__file__).resolve().parents[1]
 MONTHS = dict(zip(('janv', 'fevr', 'mars', 'avr', 'mai', 'juin', 'juil', 'aout', 'sept', 'oct', 'nov', 'dec'), range(1, 13)))
@@ -119,7 +119,13 @@ def value_reference(reference: dict, mode: str = 'current', currency: str = 'USD
         supported_symbols = {p['symbol'] for p in positions if p['asset_class'] not in {'Bond', 'CFD', 'Option', 'Warrant'}}
         def fetch(symbol):
             try:
-                return symbol, get_quote(yahoo_symbol(symbol), export_date, force)
+                alias = LISTING_ALIASES.get(symbol)
+                if alias and any(p.get('isin') != alias['isin'] for p in positions if p['symbol'] == symbol):
+                    return symbol, None
+                quote = get_quote(yahoo_symbol(symbol), export_date, force)
+                if alias and quote and quote['currency'] != alias['currency']:
+                    return symbol, None
+                return symbol, quote
             except (ValueError, OSError, TimeoutError):
                 return symbol, None
         with ThreadPoolExecutor(max_workers=4) as pool:
