@@ -18,9 +18,10 @@ async function setup(source = 'saxo:selected') {
     w.wealthContextBar = { getContext: () => ({ bourse: source }) };
     w.availableSources = [{ key: 'selected', file_path: 'data/users/alice/saxobank/data/selected file.csv' }];
     w._availableSourcesUser = 'alice';
+    w.getApiBase = () => '';
     const calls = [];
     let payload = { positions: [
-        { tags: ['asset_class:EQUITY'], market_value: 60 },
+        { tags: ['asset_class:EQUITY'], market_value: 999, market_value_usd: 60 },
         { tags: ['asset_class:ETF'], market_value: 30 },
     ], asof: '2026-09-27T09:00:00Z' };
     let cash = 10;
@@ -30,6 +31,19 @@ async function setup(source = 'saxo:selected') {
     };
     w.fetch = async (url, options) => {
         calls.push({ url, options });
+        if (url === '/api/users/sources') {
+            return { ok: true, json: async () => ({ sources: w.availableSources }) };
+        }
+        if (url.startsWith('/api/saxo/valuation?')) {
+            const positions = payload.positions.map(p => ({ ...p,
+                market_value_usd: p.market_value_usd ?? p.market_value,
+                market_value_display: p.market_value_usd ?? p.market_value }));
+            return { ok: true, json: async () => ({ ok: true, data: {
+                positions, cash: { value_display: cash }, coverage: { partial: false },
+                summary: { total_value: positions.reduce((sum, p) => sum + (p.market_value_usd || 0), cash),
+                    total_positions: positions.length }, oldest_quote_at: '2026-10-06T12:00:00Z'
+            } }) };
+        }
         assert.equal(url, '/api/sources/v2/bourse/balances');
         return { ok: true, json: async () => payload };
     };
@@ -42,8 +56,14 @@ async function setup(source = 'saxo:selected') {
         this.setExport('safeFetch', safeFetch);
         this.setExport('formatUSD', value => `$${value.toFixed(2)}`);
     }, { context });
+    const auth = new vm.SyntheticModule(['getAuthHeaders'], function () {
+        this.setExport('getAuthHeaders', () => ({ 'X-User': 'alice', Authorization: 'Bearer test' }));
+    }, { context });
+    const valuation = new vm.SourceTextModule(fs.readFileSync('static/modules/saxo-valuation.js', 'utf8'), { context });
+    await valuation.link(() => auth);
+    await valuation.evaluate();
     const summary = new vm.SourceTextModule(summaryCode, { context });
-    await summary.link(() => dependency);
+    await summary.link(specifier => specifier.includes('saxo-valuation') ? valuation : dependency);
     await summary.evaluate();
     const chartCode = controller.slice(controller.indexOf('async function updateSaxoChart('), controller.indexOf('// Create or update Wealth chart'));
     const refreshCode = controller.slice(controller.indexOf('async function refreshSaxoTile('), controller.indexOf('async function refreshPatrimoineTile('));
@@ -68,12 +88,12 @@ test('selected CSV: tile total and chart share positions and cash, with no dupli
         assert.equal(env.w.document.getElementById('saxo-total-value').textContent, '$100.00');
         assert.deepEqual(categories(env.w.saxoChart), { EQUITY: 60, ETF: 30, Cash: 10 });
         assert.equal(env.calls.length, 2);
-        for (const call of env.calls) {
+        for (const call of env.calls.filter(call => call.url.startsWith('/api/saxo/valuation?'))) {
             assert.equal(new URL(call.url, 'http://localhost').searchParams.get('file_key'), 'selected file.csv');
             assert.equal(call.options.headers['X-User'], 'alice');
         }
         await env.tile.refreshSaxoTile();
-        assert.equal(env.calls.length, 2, 'cached summary still contains chart data');
+        assert.equal(env.calls.length, 4, 'each summary reads the common valuation; no duplicate chart request');
     } finally { env.close(); }
 });
 

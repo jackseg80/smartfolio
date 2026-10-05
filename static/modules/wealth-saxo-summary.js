@@ -4,6 +4,7 @@
  */
 import { safeFetch } from '../core/fetcher.js';
 import { formatUSD } from '../core/formatters.js';
+import { fetchCsvValuation, resolveCsvFileKey } from './saxo-valuation.js';
 
 // Re-export formatUSD as formatCurrency for backward compatibility
 export { formatUSD as formatCurrency };
@@ -15,8 +16,7 @@ let _cachedForSource = null; // Track which source the cache is for (CRITICAL!)
 const CACHE_TTL = 300000; // 5 minutes (optimized for cross-page sharing)
 
 // LocalStorage keys for cross-page caching
-// Nouveau contrat : positions et cash partagés entre total et graphique.
-const CACHE_KEY_PREFIX = 'saxo_summary_v2_';
+const CACHE_KEY_PREFIX = 'saxo_summary_valuation_v1_';
 
 /**
  * Load cache from localStorage (cross-page persistent cache)
@@ -145,6 +145,21 @@ export async function fetchSaxoSummary() {
     }
 
     (window.debugLogger?.debug || console.log)(`[Saxo Summary] Fetching for user: ${activeUser}, source: ${bourseSource}`);
+
+    // Même valorisation et cash que Stock Market ; pas de cache de présentation ancien.
+    if (bourseSource.startsWith('saxo:') || bourseSource === 'all' || bourseSource === 'saxobank_csv') {
+        const fileKey = await resolveCsvFileKey(bourseSource);
+        const data = await fetchCsvValuation(fileKey);
+        if (activeUser !== localStorage.getItem('activeUser') || bourseSource !== window.wealthContextBar?.getContext()?.bourse) {
+            throw new Error('Portfolio context changed during valuation');
+        }
+        return {
+            total_value: data.summary.total_value, positions_count: data.summary.total_positions,
+            cash_balance: data.cash.value_display || 0, positions: data.positions.map(p => ({ ...p, market_value: p.market_value_usd })),
+            asof: `${data.coverage.partial ? 'Partial valuation' : 'Latest available prices'} · ${data.oldest_quote_at || 'Unknown date'}`,
+            isEmpty: false, source: 'csv', valuation: data,
+        };
+    }
 
     // Invalider le cache si l'utilisateur OU la source a changé
     if (_cachedForUser && (_cachedForUser !== activeUser || _cachedForSource !== bourseSource)) {

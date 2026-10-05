@@ -2999,6 +2999,17 @@ async function refreshGlobalTile() {
 
         // Update total value
         if (totalValueEl) totalValueEl.textContent = formatUSD(data.total_value_usd);
+        let valuationStatus = document.getElementById('global-valuation-status');
+        if (!valuationStatus && totalValueEl) {
+            valuationStatus = document.createElement('div');
+            valuationStatus.id = 'global-valuation-status';
+            valuationStatus.setAttribute('role', 'status');
+            valuationStatus.style.fontSize = '0.85rem';
+            totalValueEl.parentElement.appendChild(valuationStatus);
+        }
+        if (valuationStatus) {
+            valuationStatus.textContent = data.saxo_valuation?.coverage?.partial ? 'Partial Stock Market valuation — see Stock Market for details.' : '';
+        }
 
         // Update currency conversions (EUR and CHF)
         const eurEl = document.getElementById('global-total-eur');
@@ -3026,6 +3037,7 @@ async function refreshGlobalTile() {
 
         // Update P&L Today if available (Dashboard V2)
         const pnlTodayEl = document.getElementById('global-pnl-today');
+        if (pnlTodayEl) pnlTodayEl.title = data.pnl_today_scope === 'crypto_only' ? 'Crypto P&L only. Stock P&L today is unavailable; Stock Market shows the change since export.' : '';
         if (pnlTodayEl && data.pnl_today !== undefined) {
             const pnlValue = data.pnl_today;
             const pnlColor = pnlValue >= 0 ? 'var(--success)' : 'var(--danger)';

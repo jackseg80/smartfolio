@@ -10,6 +10,9 @@ from fastapi import APIRouter, Body, Depends, File, Form, HTTPException, Query, 
 
 from adapters.saxo_adapter import ingest_file, get_portfolio_detail, list_portfolios_overview
 from api.deps import get_required_user
+from api.deps import get_current_user_jwt
+from api.utils.formatters import success_response
+from starlette.concurrency import run_in_threadpool
 from connectors.saxo_import import SaxoImportConnector
 from api.wealth_endpoints import (
     get_accounts as wealth_get_accounts,
@@ -25,6 +28,27 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/saxo", tags=["Saxo Bank"])
 
 _MODULE = "saxo"
+
+
+@router.get('/valuation')
+async def get_saxo_valuation(
+    user: str = Depends(get_required_user),
+    authenticated_user: str = Depends(get_current_user_jwt),
+    file_key: Optional[str] = Query(None, description='Exact Saxo CSV filename'),
+    mode: str = Query('current', pattern='^(current|export)$'),
+    currency: str = Query('USD', pattern='^[A-Z]{3}$'),
+    force: bool = Query(False, description='Refresh market quotes, subject to provider cooldown'),
+) -> dict:
+    if user != authenticated_user:
+        raise HTTPException(403, detail='User identity mismatch')
+    from services.saxo_valuation_service import get_valuation
+    try:
+        result = await run_in_threadpool(get_valuation, user, file_key, mode, currency, force)
+        return success_response(result)
+    except FileNotFoundError as exc:
+        raise HTTPException(404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
 
 
 def _legacy_log(path: str) -> None:
@@ -411,7 +435,8 @@ async def save_portfolio_cash(
 async def export_saxo_lists(
     user: str = Depends(get_required_user),
     format: str = Query("json", regex="^(json|csv|markdown)$"),
-    file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load")
+    file_key: Optional[str] = Query(None, description="Specific Saxo CSV file to load"),
+    mode: str = Query('current', pattern='^(current|export)$'),
 ) -> dict:
     """
     Export Saxo positions and sectors lists in multiple formats.
@@ -430,7 +455,7 @@ async def export_saxo_lists(
 
         from services.portfolio_export_service import build_saxo_export_data
 
-        export_data = build_saxo_export_data(user_id=user, file_key=file_key)
+        export_data = await run_in_threadpool(build_saxo_export_data, user_id=user, file_key=file_key, valuation_mode=mode)
 
         # Formater selon le format demandé
         formatter = ExportFormatter('saxo')

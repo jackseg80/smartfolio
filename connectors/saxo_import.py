@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import unicodedata
 from datetime import datetime
+from numbers import Real
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +64,9 @@ class SaxoImportConnector:
             'avg price': 'Entry Price',
             'prix moyen': 'Entry Price',
             'prix revient': 'Entry Price',  # Saxo uses "Prix revient" in some exports
+            'prix actuel': 'Current Price',
+            'current price': 'Current Price',
+            'account currency': 'Account Currency',
         }
 
     def _canonical_column_name(self, name: str) -> str:
@@ -78,6 +82,10 @@ class SaxoImportConnector:
         seen = set()
         for column in df.columns:
             canonical = self._canonical_column_name(column)
+            if canonical in {'valeur actuelle eur', 'market value eur'}:
+                df.attrs['value_currency'] = 'EUR'
+            elif canonical in {'valeur actuelle usd', 'market value usd'}:
+                df.attrs['value_currency'] = 'USD'
             target = self.column_aliases.get(canonical)
             if target and target not in seen:
                 rename_map[column] = target
@@ -89,7 +97,7 @@ class SaxoImportConnector:
     def _to_float(self, value: Union[str, int, float]) -> float:
         if value is None:
             return 0.0
-        if isinstance(value, (int, float)):
+        if isinstance(value, Real):
             if pd.isna(value):
                 return 0.0
             return float(value)
@@ -163,7 +171,7 @@ class SaxoImportConnector:
             df = pd.read_excel(file_path)
             return self._normalize_dataframe(df)
 
-    def process_saxo_file(self, file_path: Union[str, Path], user_id: Optional[str] = None) -> Dict[str, Union[List, Dict, str]]:
+    def process_saxo_file(self, file_path: Union[str, Path], user_id: Optional[str] = None, convert_values: bool = True) -> Dict[str, Union[List, Dict, str]]:
         """
         Process Saxo Bank export file and return standardized data
 
@@ -185,7 +193,10 @@ class SaxoImportConnector:
 
             for idx, row in df.iterrows():
                 try:
-                    position = self._process_position(row, user_id=user_id)
+                    if 'Account Currency' not in row and df.attrs.get('value_currency'):
+                        row = row.copy()
+                        row['Account Currency'] = df.attrs['value_currency']
+                    position = self._process_position(row, user_id=user_id, convert_values=convert_values)
                     if position:
                         positions.append(position)
                 except (ValueError, KeyError, TypeError) as e:
@@ -195,7 +206,7 @@ class SaxoImportConnector:
             return {
                 "positions": positions,
                 "total_positions": len(positions),
-                "total_market_value_usd": sum(p.get("market_value_usd", 0) for p in positions),
+                "total_market_value_usd": sum(p.get("market_value_usd") or 0 for p in positions),
                 "currencies": list(set(p.get("currency", "USD") for p in positions)),
                 "asset_classes": list(set(p.get("asset_class", "Unknown") for p in positions)),
                 "errors": errors,
@@ -212,7 +223,7 @@ class SaxoImportConnector:
                 "source": "saxo_bank"
             }
 
-    def _process_position(self, row: pd.Series, user_id: Optional[str] = None) -> Optional[Dict]:
+    def _process_position(self, row: pd.Series, user_id: Optional[str] = None, convert_values: bool = True) -> Optional[Dict]:
         """
         Process a single position row with enrichment via instruments registry.
 
@@ -312,9 +323,9 @@ class SaxoImportConnector:
 
             # Convert market_value from account base currency to USD
             # NOTE: market_value is in account_base_currency (e.g., EUR), NOT in instrument_currency!
-            market_value_usd = self._convert_to_usd(market_value, account_base_currency)
+            market_value_usd = self._convert_to_usd(market_value, account_base_currency) if convert_values else None
 
-            logger.debug(f"[saxo_import] {instrument_raw}: {market_value} {account_base_currency} → {market_value_usd:.2f} USD (instrument quoted in {instrument_currency})")
+            logger.debug("[saxo_import] %s: %s %s → %s USD", instrument_raw, market_value, account_base_currency, market_value_usd)
 
             # Enrichissement via registry (nom lisible, exchange, etc.)
             # Priority: ISIN > Symbol > Instrument name
@@ -338,6 +349,7 @@ class SaxoImportConnector:
                 "instrument": instrument_raw,  # Keep original nice name
                 "name": display_name,  # Keep original nice name
                 "quantity": quantity,
+                "export_price": self._to_float(row.get('Current Price', 0)) or None,
                 "market_value": market_value,  # In account base currency (EUR)
                 "market_value_usd": market_value_usd,  # Converted to USD
                 "currency": enriched_currency,  # Instrument's trading currency

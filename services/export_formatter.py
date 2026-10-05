@@ -199,8 +199,53 @@ class ExportFormatter:
 
     # ===== SAXO FORMATTERS =====
 
+    @staticmethod
+    def _safe_csv_cell(value):
+        if isinstance(value, str) and value.lstrip().startswith(('=', '+', '-', '@')):
+            return "'" + value
+        return value
+
+    def _valuation_to_csv(self, data: Dict[str, Any]) -> str:
+        output = io.StringIO()
+        writer = csv.writer(output, lineterminator='\n')
+        meta = data['valuation']
+        currency = meta['currency']
+        writer.writerow(['# Saxo valuation', meta['mode'], currency, meta['file_key']])
+        writer.writerow(['Export date', meta['export_date'] or 'Unknown', 'Oldest price', meta['oldest_quote_at'] or 'Unknown'])
+        writer.writerow(['Partial valuation', str(meta['coverage']['partial'])])
+        for warning in meta['warnings']:
+            writer.writerow(['Warning', warning])
+        writer.writerow(['Symbol', 'Instrument', 'Quantity', f'Value {currency}', 'Quote currency', 'Price date', 'Price source', 'Valuation status', 'Classification'])
+        for p in data['positions']:
+            value = p.get('market_value_display')
+            row = [p.get('symbol'), p.get('instrument'), p.get('quantity'),
+                   '' if value is None else f'{value:.2f}', p.get('quote_currency', p.get('currency')),
+                   p.get('quote_at') or 'Unknown', p.get('price_source', 'recorded_cash'),
+                   p.get('valuation_status'), p.get('classification')]
+            writer.writerow([self._safe_csv_cell(cell) for cell in row])
+        writer.writerow([f'Total {currency}', f"{data['summary']['total_value']:.2f}"])
+        return output.getvalue()
+
+    def _valuation_to_markdown(self, data: Dict[str, Any]) -> str:
+        meta = data['valuation']
+        lines = ['# Saxo portfolio valuation', '', f"**Valuation:** {meta['mode']} ({meta['currency']})",
+                 f"**Export date:** {meta['export_date'] or 'Unknown'}",
+                 f"**Oldest price:** {meta['oldest_quote_at'] or 'Unknown'}",
+                 f"**Partial:** {meta['coverage']['partial']}",
+                 f"**Total:** {data['summary']['total_value']:.2f} {meta['currency']}", '']
+        lines.extend(f'- {warning}' for warning in meta['warnings'])
+        lines.extend(['', '| Symbol | Quantity | Value | Price date | Status |', '|---|---:|---:|---|---|'])
+        for p in data['positions']:
+            value = p.get('market_value_display')
+            amount = 'Unavailable' if value is None else f'{value:.2f}'
+            symbol = str(p.get('symbol', '')).replace('|', '\\|').replace('\n', ' ')
+            lines.append(f"| {symbol} | {p['quantity']} | {amount} | {p.get('quote_at') or 'Unknown'} | {p.get('valuation_status')} |")
+        return '\n'.join(lines)
+
     def _saxo_to_csv(self, data: Dict[str, Any]) -> str:
         """Format Saxo data as CSV."""
+        if data.get('valuation'):
+            return self._valuation_to_csv(data)
         output = io.StringIO()
         writer = csv.writer(output, lineterminator="\n")
         writer.writerow([f"# Saxo Bank Portfolio Export - {self.timestamp}"])
@@ -225,6 +270,8 @@ class ExportFormatter:
 
     def _saxo_to_markdown(self, data: Dict[str, Any]) -> str:
         """Format Saxo data as Markdown."""
+        if data.get('valuation'):
+            return self._valuation_to_markdown(data)
         lines = []
 
         # Header
@@ -450,6 +497,11 @@ class ExportFormatter:
         """Format all portfolio sources as one spreadsheet-safe table."""
         output = io.StringIO()
         writer = csv.writer(output, lineterminator="\n")
+        if data.get('saxo_valuation'):
+            meta = data['saxo_valuation']
+            writer.writerow(['# Stock Market valuation', meta['mode'], meta['currency'], meta['file_key'], 'Partial', meta['coverage']['partial'], 'Oldest price', meta['oldest_quote_at']])
+            for warning in meta['warnings']:
+                writer.writerow(['# Stock Market warning', warning])
         writer.writerow([f"# Global Overview Export - {self.timestamp}"])
         writer.writerow([])
         writer.writerow(["Source", "Category", "Asset", "Type", "Quantity", "Original Value", "Currency", "Value USD", "Classification", "Notes"])
@@ -457,7 +509,7 @@ class ExportFormatter:
             writer.writerow([
                 item.get("source", ""), item.get("category", ""), item.get("asset", ""), item.get("type", ""),
                 item.get("quantity", ""), item.get("original_value", ""), item.get("currency", ""),
-                f"{float(item.get('value_usd', 0) or 0):.2f}", item.get("classification", ""), item.get("notes", ""),
+                '' if item.get('value_usd') is None else f"{float(item['value_usd']):.2f}", item.get("classification", ""), item.get("notes", ""),
             ])
         writer.writerow([])
         writer.writerow(["Source", "Total USD"])
@@ -482,6 +534,10 @@ class ExportFormatter:
         ]
         for source, value in summary.get("by_source_usd", {}).items():
             lines.append(f"| {source} | ${float(value or 0):,.2f} |")
+        if data.get('saxo_valuation'):
+            meta = data['saxo_valuation']
+            lines.extend(['', f"**Stock Market valuation:** {meta['mode']} / {meta['oldest_quote_at'] or 'Unknown date'} / partial: {meta['coverage']['partial']}"])
+            lines.extend(f'- {warning}' for warning in meta['warnings'])
         lines.extend([
             "",
             "## Holdings",
@@ -492,6 +548,6 @@ class ExportFormatter:
         for item in data.get("items", []):
             lines.append(
                 f"| {item.get('source', '')} | {item.get('category', '')} | {item.get('asset', '')} | "
-                f"{item.get('type', '')} | ${float(item.get('value_usd', 0) or 0):,.2f} | {item.get('classification', '')} |"
+                f"{item.get('type', '')} | {('Unavailable' if item.get('value_usd') is None else '$' + format(float(item['value_usd']), ',.2f'))} | {item.get('classification', '')} |"
             )
         return "\n".join(lines)

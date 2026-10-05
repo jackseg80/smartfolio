@@ -144,8 +144,35 @@ def read_saxo_cash(user_id: str, file_key: Optional[str]) -> dict[str, Any]:
     }
 
 
-def build_saxo_export_data(user_id: str, file_key: Optional[str] = None) -> dict[str, Any]:
+def build_saxo_export_data(user_id: str, file_key: Optional[str] = None, valuation_mode: Optional[str] = None) -> dict[str, Any]:
     """Build positions, cash and classifications for Saxo exports."""
+    if valuation_mode is not None:
+        from services.saxo_valuation_service import get_valuation
+        valuation = get_valuation(user_id, file_key if isinstance(file_key, str) else None, valuation_mode)
+        positions = []
+        totals = {}
+        for raw in valuation['positions']:
+            classification, basis = classify_saxo_position(raw)
+            position = dict(raw, classification=classification, classification_basis=basis,
+                            entry_price=raw.get('avg_price') or 0)
+            positions.append(position)
+            _add_total(totals, classification, raw['market_value_display'] or 0)
+        cash = valuation['cash']
+        if cash['included'] and cash['amount']:
+            positions.append({'symbol': f"CASH:{cash['currency']}", 'instrument': 'Saxo cash balance',
+                              'asset_class': 'Cash', 'quantity': cash['amount'], 'currency': cash['currency'],
+                              'market_value_display': cash['value_display'],
+                              'market_value_usd': cash['value_display'] if valuation['currency'] == 'USD' else None,
+                              'classification': 'Cash', 'classification_basis': 'Cash', 'entry_price': 0,
+                              'valuation_status': 'recorded_cash', 'quote_at': cash['asof']})
+            _add_total(totals, 'Cash', cash['value_display'])
+        total = valuation['summary']['total_value']
+        return {'positions': positions, 'valuation': {k: v for k, v in valuation.items() if k not in {'positions', 'summary'}},
+                'summary': dict(valuation['summary'], currency=valuation['currency']),
+                'classifications': [{'name': name, 'value_display': value['value_usd'],
+                                     'value_usd': value['value_usd'] if valuation['currency'] == 'USD' else None,
+                                     'percentage': value['value_usd'] / total * 100 if total else 0,
+                                     'asset_count': value['count']} for name, value in totals.items()]}
     positions: list[dict[str, Any]] = []
     classification_totals: dict[str, dict[str, float | int]] = {}
     effective_file_key = resolve_saxo_file_key(user_id, file_key)

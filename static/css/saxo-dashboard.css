@@ -543,3 +543,9 @@
     background: var(--info);
     color: white;
 }
+/* Contrôles de valorisation et provenance des cours. */
+.valuation-controls { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: 1rem 0; }
+.valuation-controls[hidden] { display: none; }
+.valuation-controls select { padding: .65rem; color: var(--theme-text); background: var(--theme-surface); border: 1px solid var(--theme-border); border-radius: var(--radius-sm); }
+.valuation-status { flex: 1 1 300px; color: var(--theme-text-muted); font-size: .85rem; overflow-wrap: anywhere; }
+.valuation-status[data-partial="true"] { color: var(--warning, #b45309); }
