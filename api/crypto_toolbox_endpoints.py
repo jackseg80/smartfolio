@@ -512,6 +512,11 @@ async def _get_data(force: bool = False) -> Dict[str, Any]:
 # API Endpoints
 # ============================================================================
 
+async def get_cached_crypto_toolbox_data(*, force: bool = False) -> dict:
+    """Shared cache path for HTTP routes and the internal scheduler."""
+    return await _get_data(force=force)
+
+
 @router.get("")
 async def get_crypto_toolbox_data(force: bool = Query(False, description="Force refresh bypassing cache")) -> dict:
     """
@@ -527,7 +532,7 @@ async def get_crypto_toolbox_data(force: bool = Query(False, description="Force 
         HTTPException 502: If scraping fails
     """
     try:
-        return await _get_data(force=force)
+        return await get_cached_crypto_toolbox_data(force=force)
     except Exception as e:
         logger.exception(" Crypto-toolbox scraping error")
         raise HTTPException(
@@ -544,7 +549,7 @@ async def force_refresh() -> dict:
     Returns:
         Fresh data with cache_age_seconds=0
     """
-    return await _get_data(force=True)
+    return await get_cached_crypto_toolbox_data(force=True)
 
 
 @router.get("/health")

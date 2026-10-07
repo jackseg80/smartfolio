@@ -932,6 +932,30 @@ async def get_risk_dashboard(
     # FIX: CSV hint for cache invalidation (Oct 2025)
     _csv_hint: Optional[str] = Query(None, description="Hint for cache invalidation when CSV changes (filename or timestamp)")
 ) -> dict:
+    """Return the authenticated portfolio view."""
+    return await build_risk_dashboard(
+        source=source,
+        pricing=pricing,
+        min_usd=min_usd,
+        price_history_days=price_history_days,
+        lookback_days=lookback_days,
+        user=user,
+        risk_version=risk_version,
+        use_dual_window=use_dual_window,
+        min_history_days=min_history_days,
+        min_coverage_pct=min_coverage_pct,
+        min_asset_count=min_asset_count,
+        _csv_hint=_csv_hint,
+    )
+
+
+async def build_risk_dashboard(
+    *, user: str, source: str, pricing: str = "local", min_usd: float = 1.0,
+    price_history_days: int = 30, lookback_days: int = 30,
+    risk_version: str = "v2_active", use_dual_window: bool = True,
+    min_history_days: int = 180, min_coverage_pct: float = 0.80,
+    min_asset_count: int = 5, _csv_hint: Optional[str] = None,
+) -> dict:
     """
     Endpoint pour dashboard de risque temps réel
     Combine toutes les métriques de risque en une seule réponse
