@@ -549,66 +549,25 @@ async def job_api_warmers():
     try:
         logger.info(f" [{job_id}] Starting API warmers...")
 
-        import httpx
-        import json
+        from api.cache_warmup import warm_user_caches
 
-        # Load active users from config
-        try:
-            with open("config/users.json", "r", encoding="utf-8") as f:
-                users_config = json.load(f)
-                active_users = [
-                    user["id"]
-                    for user in users_config.get("users", [])
-                    if user.get("status") == "active"
-                ]
-        except Exception as e:
-            logger.warning(f" [{job_id}] Failed to load users config: {e}, using fallback")
-            active_users = ["jack"]  # Fallback to jack if config fails
-
+        # Une configuration invalide ne doit pas choisir un utilisateur de repli.
+        with open("config/users.json", "r", encoding="utf-8") as f:
+            users_config = json.load(f)
+        active_users = [user["id"] for user in users_config.get("users", [])
+                        if user.get("status") == "active"]
         if not active_users:
-            logger.warning(f" [{job_id}] No active users found, skipping warmers")
             await _update_job_status(job_id, "skipped", 0, "No active users")
             return
 
-        logger.info(f"   Warming caches for {len(active_users)} active users: {', '.join(active_users)}")
-
-        # Critical endpoints to warm (use Depends(get_required_user) - need X-User header)
-        endpoint_templates = [
-            "/balances/current?source=cointracking",
-            "/portfolio/metrics?source=cointracking",
-            "/api/risk/dashboard?source=cointracking",
-        ]
-
-        base_url = os.getenv("API_BASE_URL", "http://localhost:8080")
-
-        # PERFORMANCE FIX: Parallelize API warmup calls for all users
-        async def warm_endpoint(client: httpx.AsyncClient, endpoint: str, user_id: str):
-            """Warm a single endpoint for a specific user"""
-            try:
-                url = f"{base_url}{endpoint}"
-                headers = {"X-User": user_id}
-                response = await client.get(url, headers=headers)
-
-                if response.status_code == 200:
-                    logger.debug(f"    Warmed [{user_id}]: {endpoint}")
-                else:
-                    logger.warning(f"    Warm failed [{user_id}] ({response.status_code}): {endpoint}")
-            except Exception as e:
-                logger.warning(f"    Warm error [{user_id}]: {endpoint} - {e}")
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            # Create warmup tasks for all users x endpoints
-            tasks = [
-                warm_endpoint(client, endpoint, user_id)
-                for user_id in active_users
-                for endpoint in endpoint_templates
-            ]
-            # Execute all warmup calls in parallel
-            await asyncio.gather(*tasks, return_exceptions=True)
-
+        summary = await warm_user_caches(active_users, source="cointracking")
         duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.info(f" [{job_id}] API warmers completed in {duration_ms:.0f}ms")
-        await _update_job_status(job_id, "success", duration_ms)
+        error = None
+        if summary["failures"]:
+            error = (f"{len(summary['failures'])}/{summary['attempted']} cache operations failed: "
+                     + "; ".join(summary["failures"]))
+            logger.warning(" [%s] %s", job_id, error)
+        await _update_job_status(job_id, "error" if error else "success", duration_ms, error)
 
     except Exception as e:
         duration_ms = (datetime.now() - start).total_seconds() * 1000
@@ -627,16 +586,11 @@ async def job_crypto_toolbox_refresh():
     try:
         logger.info(f" [{job_id}] Starting crypto-toolbox indicators refresh...")
 
-        import httpx
+        from api.crypto_toolbox_endpoints import get_cached_crypto_toolbox_data
 
-        # Call the FastAPI crypto-toolbox endpoint with force refresh
-        base_url = os.getenv("API_BASE_URL", "http://localhost:8080")
-        url = f"{base_url}/api/crypto-toolbox?force=true"
-
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url)
-            response.raise_for_status()
-            data = response.json()
+        data = await asyncio.wait_for(get_cached_crypto_toolbox_data(force=True), timeout=30.0)
+        if data.get("ok") is False or data.get("scraping_failed"):
+            raise RuntimeError("Crypto Toolbox refresh did not produce fresh data")
 
         duration_ms = (datetime.now() - start).total_seconds() * 1000
 
@@ -654,46 +608,11 @@ async def job_crypto_toolbox_refresh():
 
 
 async def job_daily_ml_training():
-    """
-    Entraîne les modèles ML lourds chaque jour à 3h du matin.
-
-    - Regime detection (20 ans, ~60-90s)
-    - Correlation forecaster (20 ans, ~30-40s)
-
-    Total: ~2 minutes par jour
-    """
-    job_id = "daily_ml_training"
-    start = datetime.now()
-
-    try:
-        logger.info(f" [{job_id}] Starting daily ML training (20 years data)...")
-
-        from services.ml.bourse.stocks_adapter import StocksMLAdapter
-
-        adapter = StocksMLAdapter()
-
-        # Force retrain regime detection with 20 years of data
-        regime_result = await adapter.detect_market_regime(
-            benchmark="SPY",
-            lookback_days=7300,  # 20 ans
-            force_retrain=True   # Ignore cache age
-        )
-
-        duration_ms = (datetime.now() - start).total_seconds() * 1000
-
-        logger.info(f" [{job_id}] Regime model trained: {regime_result['current_regime']} "
-                   f"({regime_result['confidence']:.1%} confidence) in {duration_ms:.0f}ms")
-
-        await _update_job_status(job_id, "success", duration_ms)
-
-        # TODO: Ajouter correlation forecaster si nécessaire
-        # await adapter.forecast_correlation([...], force_retrain=True)
-
-    except Exception as e:
-        duration_ms = (datetime.now() - start).total_seconds() * 1000
-        logger.exception(f" [{job_id}] Daily ML training failed")
-        await _update_job_status(job_id, "error", duration_ms, str(e))
-        # Ne pas lever exception - retry demain
+    """Retained job ID for observability; capability reads do not train models."""
+    # L'adaptateur actuel est descriptif et n'entraîne pas de modèle pendant une lecture.
+    reason = "Stock regime retraining is disabled: the current capability adapter is read-only"
+    logger.info(" [daily_ml_training] %s", reason)
+    await _update_job_status("daily_ml_training", "skipped", 0.0, reason)
 
 
 async def job_morning_brief():
@@ -946,7 +865,7 @@ async def initialize_scheduler() -> bool:
             job_daily_ml_training,
             CronTrigger(hour=3, minute=0, timezone="Europe/Zurich", jitter=300),
             id="daily_ml_training",
-            name="Daily ML Training (20y data)",
+            name="Stock regime retraining (disabled)",
             **job_defaults
         )
 

@@ -11,6 +11,7 @@ Implémente un système hybride Redis ZSET/HASH + fichier JSON + in-memory avec:
 """
 
 import json
+import re
 import logging
 import os
 import tempfile
@@ -53,6 +54,34 @@ def _serialize_for_json(obj: Any) -> Any:
         return [_serialize_for_json(item) for item in obj]
     else:
         return obj
+
+_OPTIONAL_ALERT_DATES = ("acknowledged_at", "snooze_until", "resolved_at", "applied_at")
+
+
+def _redis_null(value):
+    """Recognize only the known legacy encoding of an optional Redis null."""
+    return value in (None, "", "null") or (
+        isinstance(value, str) and re.fullmatch(r"userdata: 0x[0-9a-fA-F]+", value) is not None
+    )
+
+
+def _decode_redis_alert(raw):
+    alert = dict(raw)
+    alert["created_at"] = datetime.fromisoformat(alert["created_at"])
+    for field in _OPTIONAL_ALERT_DATES:
+        value = alert.get(field)
+        alert[field] = None if _redis_null(value) else datetime.fromisoformat(value)
+    for field in ("acknowledged_by", "applied_by"):
+        if alert.get(field) != "null" and _redis_null(alert.get(field)):
+            alert[field] = None
+    for field in ("data", "suggested_action", "escalation_sources"):
+        if field in alert and isinstance(alert[field], str):
+            alert[field] = json.loads(alert[field])
+    # Les anciens tableaux Lua vides ont été réencodés comme objets JSON.
+    if alert.get("escalation_sources") == {}:
+        alert["escalation_sources"] = []
+    return Alert(**alert)
+
 
 class AlertStorage:
     """
@@ -815,6 +844,18 @@ class AlertStorage:
     
     def _update_alert_field(self, alert_id: str, fields: Dict[str, str]) -> bool:
         """Met à jour des champs d'une alerte spécifique"""
+        if self.storage_mode == "redis" and self.redis_available:
+            try:
+                updated = self._update_alert_script(
+                    keys=[self.ALERTS_HASH_PREFIX, self.ACTIVE_ALERTS_SET],
+                    args=[alert_id, json.dumps(_serialize_for_json(fields))],
+                )
+                return bool(updated)
+            except Exception as e:
+                logger.warning("Redis alert update failed: %s", type(e).__name__)
+                self._degraded_metrics["redis_failures"] += 1
+                if not self.enable_fallback_cascade:
+                    return False
         try:
             with self._file_lock():
                 data = self._load_json_data()
@@ -869,7 +910,9 @@ class AlertStorage:
                 for key, value in pairs(alert_table) do
                     table.insert(fields, key)
                     -- Convert value to string (handles nested tables, numbers, etc.)
-                    if type(value) == 'table' then
+                    if value == cjson.null then
+                        table.insert(fields, '')
+                    elseif type(value) == 'table' then
                         table.insert(fields, cjson.encode(value))
                     else
                         table.insert(fields, tostring(value))
@@ -884,6 +927,8 @@ class AlertStorage:
                 -- Add to active set if active
                 if is_active == '1' then
                     redis.call('SADD', KEYS[3], alert_id)
+                else
+                    redis.call('SREM', KEYS[3], alert_id)
                 end
 
                 return {1, 'stored'}
@@ -933,6 +978,14 @@ class AlertStorage:
                             alert_hash[alert_data[j]] = alert_data[j + 1]
                         end
                         
+                        -- Normaliser les dates nulles historiques uniquement pour cette lecture.
+                        for _, field in ipairs({'acknowledged_at', 'resolved_at', 'snooze_until', 'applied_at'}) do
+                            local value = alert_hash[field]
+                            if value == 'null' or (value and string.match(value, '^userdata: 0x%x+$')) then
+                                alert_hash[field] = ''
+                            end
+                        end
+
                         -- Check if should include
                         local should_include = true
                         
@@ -943,14 +996,8 @@ class AlertStorage:
                             should_include = false
                         end
                         
-                        -- Skip if snoozed (unless include_snoozed)
-                        if not include_snoozed and alert_hash.snooze_until and alert_hash.snooze_until ~= '' then
-                            -- Simple timestamp comparison (assumes ISO format can be compared as strings)
-                            if alert_hash.snooze_until > tostring(current_time) then
-                                should_include = false
-                            end
-                        end
-                        
+                        -- Le filtrage des dates de report est fait en Python (ISO et fuseaux).
+
                         if should_include then
                             table.insert(result, cjson.encode(alert_hash))
                         end
@@ -971,9 +1018,20 @@ class AlertStorage:
                 end
                 
                 for field, value in pairs(updates) do
+                    if value == cjson.null then value = '' end
+                    if type(value) == 'table' then value = cjson.encode(value) end
                     redis.call('HSET', hash_key, field, value)
                 end
                 
+                local function has_date(field)
+                    local value = redis.call('HGET', hash_key, field)
+                    return value and value ~= '' and value ~= 'null' and not string.match(value, '^userdata: 0x%x+$')
+                end
+                if has_date('acknowledged_at') or has_date('resolved_at') then
+                    redis.call('SREM', KEYS[2], alert_id)
+                else
+                    redis.call('SADD', KEYS[2], alert_id)
+                end
                 return 1
             """)
             
@@ -998,6 +1056,9 @@ class AlertStorage:
 
             # Serialize non-JSON-serializable objects (Phase Enum, etc.)
             serialized_dict = _serialize_for_json(alert_dict)
+            # Préserver la forme JSON des listes vides avant le passage par Lua.
+            for field in ("data", "suggested_action", "escalation_sources"):
+                serialized_dict[field] = json.dumps(serialized_dict[field])
 
             # Convert to JSON for Lua script
             alert_data = json.dumps(serialized_dict)
@@ -1059,25 +1120,23 @@ class AlertStorage:
             
             # Parse results
             alerts = []
+            decode_errors = 0
             for alert_json in result:
                 try:
-                    alert_dict = json.loads(alert_json)
-                    
-                    # Convert timestamps back
-                    alert_dict['created_at'] = datetime.fromisoformat(alert_dict['created_at'])
-                    for date_field in ['acknowledged_at', 'snooze_until', 'resolved_at', 'applied_at']:
-                        if alert_dict.get(date_field) and alert_dict[date_field] != '':
-                            alert_dict[date_field] = datetime.fromisoformat(alert_dict[date_field])
-                        else:
-                            alert_dict[date_field] = None
-                    
-                    alert = Alert(**alert_dict)
+                    alert = _decode_redis_alert(json.loads(alert_json))
+                    if not include_snoozed and alert.snooze_until and alert.snooze_until.timestamp() > current_time:
+                        continue
                     alerts.append(alert)
                     
                 except Exception as e:
-                    logger.error(f"Failed to parse alert from Redis: {e}")
+                    decode_errors += 1
+                    logger.error("Failed to parse alert from Redis: %s", type(e).__name__)
                     continue
             
+            if decode_errors:
+                self._degraded_metrics["redis_failures"] += 1
+                if decode_errors == len(result):
+                    return None, "redis_decode_error"
             logger.debug(f"Retrieved {len(alerts)} active alerts from Redis")
             return alerts, "success"
             

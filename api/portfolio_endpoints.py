@@ -60,6 +60,18 @@ async def portfolio_metrics(
     window: str = Query("24h"),  # "24h", "7d", "30d", "ytd"
     min_usd: float = Query(1.0)  # Default 1.0 to match dashboard behavior
 ):
+    """Return the authenticated portfolio view."""
+    return await build_portfolio_metrics(
+        user=user,
+        source=source,
+        anchor=anchor,
+        window=window,
+        min_usd=min_usd,
+    )
+
+
+async def build_portfolio_metrics(*, user: str, source: str, anchor: str = "prev_snapshot",
+                                  window: str = "24h", min_usd: float = 1.0):
     """
     Métriques calculées du portfolio avec P&L configurable.
 

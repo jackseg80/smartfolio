@@ -495,187 +495,86 @@ class TestJobStalenessMonitor:
 # ============================================================================
 
 class TestJobApiWarmers:
-    """Tests for job_api_warmers."""
+    @pytest.mark.asyncio
+    async def test_successful_warmup(self, mock_users_config):
+        warmer = AsyncMock(return_value={"attempted": 6, "succeeded": 6, "failures": []})
+        with patch("builtins.open", mock_open(read_data=mock_users_config)):
+            with patch("api.cache_warmup.warm_user_caches", warmer):
+                await job_api_warmers()
+        warmer.assert_awaited_once_with(["jack", "demo"], source="cointracking")
+        assert get_job_status()["api_warmers"]["status"] == "success"
 
     @pytest.mark.asyncio
-    async def test_successful_warmup(self, mock_users_config_single):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch('builtins.open', mock_open(read_data=mock_users_config_single)):
-            with patch('httpx.AsyncClient', return_value=mock_client):
+    @pytest.mark.parametrize("failures", [["jack/cointracking/risk: HTTP 401"], ["balances", "metrics", "risk"]])
+    async def test_partial_and_total_failures_are_errors(self, mock_users_config_single, failures):
+        warmer = AsyncMock(return_value={"attempted": 3, "succeeded": 3-len(failures), "failures": failures})
+        with patch("builtins.open", mock_open(read_data=mock_users_config_single)):
+            with patch("api.cache_warmup.warm_user_caches", warmer):
                 await job_api_warmers()
-
-        status = get_job_status()
-        assert status["api_warmers"]["status"] == "success"
-        # 3 endpoints x 1 user = 3 calls
-        assert mock_client.get.call_count == 3
+        entry = get_job_status()["api_warmers"]
+        assert entry["status"] == "error"
+        assert f"{len(failures)}/3" in entry["error"]
 
     @pytest.mark.asyncio
     async def test_no_active_users(self):
-        empty_config = json.dumps({"users": []})
-        with patch('builtins.open', mock_open(read_data=empty_config)):
-            await job_api_warmers()
-
-        status = get_job_status()
-        assert status["api_warmers"]["status"] == "skipped"
-
-    @pytest.mark.asyncio
-    async def test_warmup_with_failing_endpoints(self, mock_users_config_single):
-        """Individual endpoint failures don't crash the job."""
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch('builtins.open', mock_open(read_data=mock_users_config_single)):
-            with patch('httpx.AsyncClient', return_value=mock_client):
+        with patch("builtins.open", mock_open(read_data='{"users": []}')):
+            with patch("api.cache_warmup.warm_user_caches", new_callable=AsyncMock) as warmer:
                 await job_api_warmers()
-
-        status = get_job_status()
-        assert status["api_warmers"]["status"] == "success"
+        warmer.assert_not_awaited()
+        assert get_job_status()["api_warmers"]["status"] == "skipped"
 
     @pytest.mark.asyncio
-    async def test_httpx_client_exception(self, mock_users_config_single):
-        """Exception creating httpx client triggers error status."""
-        with patch('builtins.open', mock_open(read_data=mock_users_config_single)):
-            with patch('httpx.AsyncClient', side_effect=Exception("Cannot create client")):
+    @pytest.mark.parametrize("payload", [None, "bad json", '{"users": [{"status": "active"}]}'])
+    async def test_invalid_config_never_uses_fallback_identity(self, payload):
+        opener = mock_open(read_data=payload or "") if payload else MagicMock(side_effect=OSError("missing config"))
+        with patch("builtins.open", opener):
+            with patch("api.cache_warmup.warm_user_caches", new_callable=AsyncMock) as warmer:
                 await job_api_warmers()
-
-        status = get_job_status()
-        assert status["api_warmers"]["status"] == "error"
+        warmer.assert_not_awaited()
+        assert get_job_status()["api_warmers"]["status"] == "error"
 
     @pytest.mark.asyncio
-    async def test_uses_env_base_url(self, mock_users_config_single):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
+    async def test_internal_exception_is_reported(self, mock_users_config_single):
+        with patch("builtins.open", mock_open(read_data=mock_users_config_single)):
+            with patch("api.cache_warmup.warm_user_caches", new_callable=AsyncMock, side_effect=RuntimeError("internal failure")):
+                await job_api_warmers()
+        assert get_job_status()["api_warmers"]["status"] == "error"
 
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch.dict(os.environ, {"API_BASE_URL": "http://custom:9090"}):
-            with patch('builtins.open', mock_open(read_data=mock_users_config_single)):
-                with patch('httpx.AsyncClient', return_value=mock_client):
-                    await job_api_warmers()
-
-        # Verify custom URL was used
-        call_args = mock_client.get.call_args_list[0]
-        url_arg = call_args[0][0] if call_args[0] else call_args[1].get("url", "")
-        assert "http://custom:9090" in str(url_arg)
-
-
-# ============================================================================
-# CRYPTO TOOLBOX
-# ============================================================================
 
 class TestJobCryptoToolboxRefresh:
-    """Tests for job_crypto_toolbox_refresh."""
+    @pytest.mark.asyncio
+    async def test_refresh_uses_shared_cache(self):
+        refresh = AsyncMock(return_value={"total_count": 35, "critical_count": 5})
+        with patch("api.crypto_toolbox_endpoints.get_cached_crypto_toolbox_data", refresh):
+            await job_crypto_toolbox_refresh()
+        refresh.assert_awaited_once_with(force=True)
+        assert get_job_status()["crypto_toolbox_refresh"]["status"] == "success"
 
     @pytest.mark.asyncio
-    async def test_successful_refresh(self):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"total_count": 35, "critical_count": 5}
-        mock_response.raise_for_status = MagicMock()
-
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(return_value=mock_response)
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch('httpx.AsyncClient', return_value=mock_client):
+    @pytest.mark.parametrize("result", [{"scraping_failed": True}, {"ok": False}])
+    async def test_stale_fallback_is_not_a_successful_refresh(self, result):
+        with patch("api.crypto_toolbox_endpoints.get_cached_crypto_toolbox_data", new_callable=AsyncMock, return_value=result):
             await job_crypto_toolbox_refresh()
-
-        status = get_job_status()
-        assert status["crypto_toolbox_refresh"]["status"] == "success"
+        assert get_job_status()["crypto_toolbox_refresh"]["status"] == "error"
 
     @pytest.mark.asyncio
-    async def test_api_error(self):
-        mock_client = AsyncMock()
-        mock_client.get = AsyncMock(side_effect=Exception("Connection refused"))
-        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client.__aexit__ = AsyncMock(return_value=False)
-
-        with patch('httpx.AsyncClient', return_value=mock_client):
+    async def test_refresh_failure(self):
+        with patch("api.crypto_toolbox_endpoints.get_cached_crypto_toolbox_data", new_callable=AsyncMock, side_effect=RuntimeError("scrape failed")):
             await job_crypto_toolbox_refresh()
+        assert get_job_status()["crypto_toolbox_refresh"]["status"] == "error"
 
-        status = get_job_status()
-        assert status["crypto_toolbox_refresh"]["status"] == "error"
-
-
-# ============================================================================
-# DAILY ML TRAINING
-# ============================================================================
 
 class TestJobDailyMlTraining:
-    """Tests for job_daily_ml_training."""
-
     @pytest.mark.asyncio
-    async def test_successful_training(self):
-        mock_adapter = MagicMock()
-        mock_adapter.detect_market_regime = AsyncMock(return_value={
-            "current_regime": "BULL_MARKET",
-            "confidence": 0.85,
-        })
-
-        mock_module = MagicMock()
-        mock_module.StocksMLAdapter = MagicMock(return_value=mock_adapter)
-
-        with patch.dict(sys.modules, {
-            'services.ml.bourse.stocks_adapter': mock_module,
-        }):
+    async def test_read_only_capability_is_not_used_as_a_training_operation(self):
+        adapter = MagicMock()
+        with patch.dict(sys.modules, {"services.ml.bourse.stocks_adapter": adapter}):
             await job_daily_ml_training()
+        adapter.StocksMLAdapter.assert_not_called()
+        entry = get_job_status()["daily_ml_training"]
+        assert entry["status"] == "skipped"
+        assert "read-only" in entry["error"]
 
-        status = get_job_status()
-        assert status["daily_ml_training"]["status"] == "success"
-        mock_adapter.detect_market_regime.assert_called_once_with(
-            benchmark="SPY",
-            lookback_days=7300,
-            force_retrain=True,
-        )
-
-    @pytest.mark.asyncio
-    async def test_training_failure(self):
-        mock_adapter = MagicMock()
-        mock_adapter.detect_market_regime = AsyncMock(side_effect=Exception("Model error"))
-
-        mock_module = MagicMock()
-        mock_module.StocksMLAdapter = MagicMock(return_value=mock_adapter)
-
-        with patch.dict(sys.modules, {
-            'services.ml.bourse.stocks_adapter': mock_module,
-        }):
-            await job_daily_ml_training()
-
-        status = get_job_status()
-        assert status["daily_ml_training"]["status"] == "error"
-        assert "Model error" in status["daily_ml_training"]["error"]
-
-    @pytest.mark.asyncio
-    async def test_import_failure(self):
-        """When StocksMLAdapter can't be imported, job sets error."""
-        with patch.dict(sys.modules, {
-            'services.ml.bourse.stocks_adapter': None,
-        }):
-            await job_daily_ml_training()
-
-        status = get_job_status()
-        assert status["daily_ml_training"]["status"] == "error"
-
-
-# ============================================================================
-# SCHEDULER LOCK
-# ============================================================================
 
 class TestAcquireSchedulerLock:
     """Tests for _acquire_scheduler_lock (Redis distributed lock)."""
