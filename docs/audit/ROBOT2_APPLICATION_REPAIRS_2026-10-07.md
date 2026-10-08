@@ -98,7 +98,7 @@ Les cinq modifications locales observées sur Robot2 (debug HTML, scripts de té
   docker compose build smartfolio
   docker compose up -d --no-deps smartfolio
   docker compose ps smartfolio
-  curl -fsS http://192.168.1.200:8080/healthz
+  curl --retry 30 --retry-connrefused --retry-delay 2 --max-time 5 -fsS http://192.168.1.200:8080/healthz
 )
 ```
 
@@ -156,8 +156,18 @@ Si le test nécessite un retour à l'image sauvegardée, exécuter dans le même
   docker image tag smartfolio-rollback:before-robot2-repairs-20261007 smartfolio-smartfolio:latest
   docker compose up -d --no-deps --no-build --force-recreate smartfolio
   docker compose ps smartfolio
-  curl -fsS http://192.168.1.200:8080/healthz
+  curl --retry 30 --retry-connrefused --retry-delay 2 --max-time 5 -fsS http://192.168.1.200:8080/healthz
 )
 ```
 
 Ce retour arrière restaure le code exécuté. Il ne restaure pas les éventuels acquittements/reports d'alertes réalisés pendant le test ni les caches renouvelés. Aucune opération de migration ou purge de Redis n'est incluse dans la livraison.
+
+## Complément d'intégration — 8 octobre 2026
+
+La qualification en production du commit `1019ccc6` confirme Crypto Toolbox à 20:00 le 7 octobre et à 08:00 le 8 octobre, ainsi que le statut ML `skipped` à 03:03 le 8 octobre. Le préchauffage garde un échec explicite pour le portefeuille vide de `toto` (20/21 opérations réussies). Ces observations ne valident pas un nouvel entraînement ML.
+
+La CI de la PR d'intégration a signalé `multidict 6.7.1`, dépendance transitive préexistante, pour CVE-2026-104874. `requirements.txt` exige désormais `multidict>=6.9.1,<7.0`, compatible avec `aiohttp`. Référence : [avis de sécurité](https://github.com/advisories/GHSA-54p9-h82j-f925). Aucun contrôle de sécurité n'est désactivé.
+
+La suite unitaire rejouée avec `multidict 6.9.1` passe : **3 344 tests réussis, 13 ignorés**, 17 avertissements, 107,01 s. Un échange HTTP réel local avec `aiohttp 3.13.3` préserve les en-têtes et paramètres répétés. Les onze régressions Redis du lot applicatif restent celles de la validation initiale ; aucun code Redis n'a changé dans ce complément.
+
+Ce changement de dépendance n'est pas installé dans le conteneur Robot2 déjà déployé : une reconstruction et un déploiement distincts sont nécessaires pour l'y appliquer. Les contrôles de santé des commandes ci-dessus réessaient désormais pendant le démarrage de l'API, y compris lors du retour arrière.
